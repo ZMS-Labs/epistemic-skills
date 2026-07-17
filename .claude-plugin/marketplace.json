@@ -4,39 +4,14 @@
     "name": "ZMS Labs"
   },
   "metadata": {
-    "description": "Epistemic-discipline skills for Claude Code — how an agent knows things before, during, and after work. Composes with the superpowers workflow skills.",
-    "version": "1.0.0"
+    "description": "Epistemic-discipline skills for agentic coding — how an agent knows things before, during, and after work. One package, six self-triggering skills. Composes with the superpowers workflow layer.",
+    "version": "2.0.0"
   },
   "plugins": [
     {
-      "name": "using-epistemic-skills",
-      "source": "./plugins/using-epistemic-skills",
-      "description": "Start here: the router. Which discipline applies to a task, in what order, and how each one's output feeds the next. Install this plus whichever skills you want."
-    },
-    {
-      "name": "applying-formal-rigor",
-      "source": "./plugins/applying-formal-rigor",
-      "description": "Graduate-level formal-theory floor for design and complexity decisions: name the precise construct, derive the conclusion (incl. recurrences, Master Theorem, lower bounds), sweep every relevant lens."
-    },
-    {
-      "name": "blindspot-pass",
-      "source": "./plugins/blindspot-pass",
-      "description": "Pre-dispatch epistemic reconnaissance: surface the unknown-unknowns before committing effort, then rewrite the request to aim at the real target."
-    },
-    {
-      "name": "gauntlet",
-      "source": "./plugins/gauntlet",
-      "description": "Adversarial-review staple: multi-lens panel review of a frozen subject with falsifier discipline, mechanical evidence verification, and a computed GO/CONDITIONAL/NO-GO verdict."
-    },
-    {
-      "name": "evidence-research",
-      "source": "./plugins/evidence-research",
-      "description": "Scholarly evidence with two independent engines: Consensus discovers what the literature says, Scite interrogates how each finding was received — supporting/contrasting citations and retractions."
-    },
-    {
-      "name": "evidence-locked-uat",
-      "source": "./plugins/evidence-locked-uat",
-      "description": "UAT where no agent certifies its own work: separated actor / blinded verifier / deterministic judge, evidence packets, and a verdict vocabulary that cannot round INCONCLUSIVE up to PASS."
+      "name": "epistemic-skills",
+      "source": "./plugins/epistemic-skills",
+      "description": "The full collection in one install: using-epistemic-skills (router) + applying-formal-rigor + blindspot-pass + gauntlet + evidence-research + evidence-locked-uat. Each skill activates only when its own trigger matches."
     }
   ]
 }

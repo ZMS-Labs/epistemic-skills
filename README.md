@@ -35,26 +35,25 @@ Most tasks fire zero or one. The router's value is the case where more than one 
 
 ## Install
 
-### Claude Code (plugin marketplace)
+### Claude Code (plugin marketplace) — one command
 
 ```
 /plugin marketplace add ZMS-Labs/epistemic-skills
-/plugin install using-epistemic-skills@epistemic-skills
-/plugin install applying-formal-rigor@epistemic-skills
-/plugin install blindspot-pass@epistemic-skills
-/plugin install gauntlet@epistemic-skills
-/plugin install evidence-research@epistemic-skills
-/plugin install evidence-locked-uat@epistemic-skills
+/plugin install epistemic-skills@epistemic-skills
 ```
 
-Each skill is a separate plugin — install only what you want.
+That installs all six skills as a single package. Each one **self-triggers** — it
+activates only when its own `description` matches the task, so you get à-la-carte
+behavior from a one-command install; you're never paying attention-cost for a skill a
+task doesn't need.
 
 ### Using these in any harness
 
-The skills are just files. In this repo each lives at
-`plugins/<name>/skills/<name>/` — a `SKILL.md` plus any references, scripts, and
-role-agent definitions. That layout follows the [Agent Skills spec](https://agentskills.io/specification),
-so any harness that reads skills or context files can use them:
+The skills are just files. They live under `plugins/epistemic-skills/skills/<name>/` — a
+`SKILL.md` plus any references, scripts, and role-agent definitions — following the
+[Agent Skills spec](https://agentskills.io/specification), so any harness that reads
+skills or context files can use them. Point your agent at the whole `skills/` directory
+(the trivial integration) or a single `SKILL.md`:
 
 - **Point your agent at the `SKILL.md`.** Its frontmatter `description` is the trigger
   ("use when…"); the body is the method. Load it as a skill, an `AGENTS.md`/`GEMINI.md`
