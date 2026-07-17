@@ -70,6 +70,21 @@ def _file_line_count(path: Path) -> int | None:
         return None
 
 
+def _is_binary(path: Path) -> bool | None:
+    """True if the file looks binary, None if it can't be read.
+
+    Same NUL-in-prefix heuristic git uses. Exists because a line-oriented oracle
+    cannot observe the contents of a binary blob: counting newlines in a .pyc
+    yields a number, so a bare line-bounds check would certify [V some.pyc:5] as
+    verified even though "line 5" is meaningless there. See ORACLE ADEQUACY below.
+    """
+    try:
+        with path.open("rb") as fh:
+            return b"\x00" in fh.read(8000)
+    except OSError:
+        return None
+
+
 def verify_tag(path: str, line: int, evidence_root: Path) -> TagResult:
     raw = f"[V {path}:{line}]"
     # Resolve path against evidence root. Treat path as relative if not absolute.
@@ -82,6 +97,22 @@ def verify_tag(path: str, line: int, evidence_root: Path) -> TagResult:
 
     if not resolved.exists() or not resolved.is_file():
         return TagResult(raw=raw, path=path, line=line, status="H", reason="File Not Found")
+
+    # ORACLE ADEQUACY (F13, gauntlet-plugin-publish-2026-07-17): fail CLOSED when the
+    # oracle cannot observe what the tag asserts. A line citation into a binary blob is
+    # not verifiable by a line-oriented check, so it must never be certified [V] —
+    # downgrade to [H] and say why. The precedent: a text-grep scrub certified that a
+    # committed .pyc embedded no local path; it did (marshalled co_filename), and the
+    # grep was structurally incapable of seeing it. An oracle that cannot fail is not
+    # evidence.
+    binary = _is_binary(resolved)
+    if binary is None:
+        return TagResult(raw=raw, path=path, line=line, status="H", reason="File Not Readable")
+    if binary:
+        return TagResult(
+            raw=raw, path=path, line=line, status="H",
+            reason="Binary File - line citation not verifiable by a text oracle",
+        )
 
     if line < 1:
         return TagResult(raw=raw, path=path, line=line, status="H", reason="Line Out of Bounds")

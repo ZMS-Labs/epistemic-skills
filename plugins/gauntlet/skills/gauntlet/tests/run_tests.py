@@ -68,7 +68,7 @@ def main():
          {"subject": "anything", "axis": "fixed", "depth": "quick", "domains": ["infra"], "risk_classes": []},
          lambda r: r["selection"]["judge"] == "pragmatic-judge"),
         ("mutex pair never co-selected without contrast",
-         {"subject": "cloud sovereignty tradeoff for self-hosted services", "axis": "open", "depth": "max",
+         {"subject": "cloud sovereignty tradeoff for homelab services", "axis": "open", "depth": "max",
           "domains": ["cloud", "sovereignty", "self-hosting", "infra"], "risk_classes": []},
          lambda r: sum(1 for e in r["selection"]["evaluators"]
                        if e["id"] in ("cloud-native-purist", "local-first-survivalist")) <= 1),
@@ -122,6 +122,12 @@ def main():
     except AssertionError as e:
         print(f"[FAIL] consult_packet: {e}")
         failures.append("consult_packet")
+
+    try:
+        test_verify_evidence_fails_closed_on_binary()
+    except AssertionError as e:
+        print(f"[FAIL] verify_evidence fail-closed: {e}")
+        failures.append("verify_evidence-fail-closed")
 
     print(f"\n{'ALL PASS' if not failures else 'FAILURES: ' + ', '.join(failures)}")
     return 0 if not failures else 1
@@ -205,6 +211,41 @@ def test_lens_stats_aggregation():
     finally:
         os.unlink(path)
     print("[PASS] lens_stats aggregation + lifecycle threshold flags")
+
+
+def test_verify_evidence_fails_closed_on_binary():
+    """F13 regression (gauntlet-plugin-publish-2026-07-17).
+
+    A [V path:line] tag citing a BINARY file must downgrade to [H]: a line-oriented
+    oracle cannot observe binary content, and before this guard the verifier counted
+    newlines in a .pyc and certified the tag 100% verified. An oracle that cannot fail
+    is not evidence. Also asserts the positive control -- a real text citation still
+    verifies -- so the guard cannot pass by rejecting everything.
+    """
+    import py_compile
+    import tempfile
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import verify_evidence
+
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        blob = root / "blob.pyc"
+        py_compile.compile(str(ROOT / "scripts" / "select_lenses.py"), cfile=str(blob))
+        text = root / "real.md"
+        text.write_text("line one\nline two\n", encoding="utf-8")
+
+        binary_tag = verify_evidence.verify_tag("blob.pyc", 5, root)
+        assert binary_tag.status == "H", f"binary [V] must fail closed, got {binary_tag.status}"
+        assert "Binary" in binary_tag.reason, f"reason must name the cause, got {binary_tag.reason!r}"
+
+        # positive control: the guard must not have broken ordinary verification
+        text_tag = verify_evidence.verify_tag("real.md", 1, root)
+        assert text_tag.status == "V", f"text [V] must still verify, got {text_tag.status}"
+
+        missing = verify_evidence.verify_tag("nope.md", 1, root)
+        assert missing.status == "H"
+    print("[PASS] verify_evidence fails closed on binary [V] tags (F13 regression)")
+
 
 if __name__ == "__main__":
     raise SystemExit(main())
