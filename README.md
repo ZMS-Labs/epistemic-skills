@@ -1,8 +1,10 @@
 # epistemic-skills
 
-Epistemic-discipline skills for [Claude Code](https://claude.com/claude-code) — how an agent **knows** things before, during, and after work.
+Epistemic-discipline skills for agentic coding — how an agent **knows** things before, during, and after work.
 
-Most public skill collections cover the *workflow* layer: test-driven development, systematic debugging, plan writing (see [superpowers](https://github.com/obra/superpowers), which these skills are designed to compose with). This collection covers the layer underneath: the disciplines that keep an agent's claims tethered to evidence and its effort aimed at the real target.
+**Harness-agnostic.** The skills are plain [Agent Skills](https://agentskills.io/specification) (`SKILL.md` + supporting files) describing *methods*, not any one tool's mechanics. They run in any harness that can load a skill or a context file — Claude Code, Codex, Cursor, Gemini, or your own agent loop. Where a step needs a runtime primitive (concurrent sub-agents, a structured-output schema, an MCP tool), the skill states the **contract** and points at a labeled *reference implementation* for one harness; other harnesses meet the same contract with their own primitives. See [Using these in any harness](#using-these-in-any-harness).
+
+Most skill collections cover the *workflow* layer: test-driven development, systematic debugging, plan writing (see [superpowers](https://github.com/obra/superpowers), which these compose with). This collection covers the layer underneath: the disciplines that keep an agent's claims tethered to evidence and its effort aimed at the real target.
 
 **Start with `using-epistemic-skills`** — the router. It answers *which* of these applies to a given task, in *what order*, and how each one's output feeds the next. The five below are the disciplines it routes to; install the router plus whichever ones you want.
 
@@ -33,6 +35,8 @@ Most tasks fire zero or one. The router's value is the case where more than one 
 
 ## Install
 
+### Claude Code (plugin marketplace)
+
 ```
 /plugin marketplace add ZMS-Labs/epistemic-skills
 /plugin install using-epistemic-skills@epistemic-skills
@@ -44,6 +48,34 @@ Most tasks fire zero or one. The router's value is the case where more than one 
 ```
 
 Each skill is a separate plugin — install only what you want.
+
+### Using these in any harness
+
+The skills are just files. In this repo each lives at
+`plugins/<name>/skills/<name>/` — a `SKILL.md` plus any references, scripts, and
+role-agent definitions. That layout follows the [Agent Skills spec](https://agentskills.io/specification),
+so any harness that reads skills or context files can use them:
+
+- **Point your agent at the `SKILL.md`.** Its frontmatter `description` is the trigger
+  ("use when…"); the body is the method. Load it as a skill, an `AGENTS.md`/`GEMINI.md`
+  include, a Cursor rule, or plain context.
+- **Meet the contract, not the tool.** A few skills need a runtime primitive. Each states
+  the harness-agnostic contract and labels its Claude Code implementation as a *reference*:
+  - **gauntlet** Step 5 wants *concurrent, context-isolated role-agents behind a barrier*.
+    Any parallel-subagent primitive works; with none, use the documented degrade fallback
+    (sequential isolated calls). Role-agent definitions are in each plugin's `agents/`
+    directory — register them however your harness registers agents, or inline the persona
+    text if it has no agent concept.
+  - **evidence-locked-uat** wants the *actor / blinded-verifier / deterministic-judge*
+    roles kept in separate contexts — same subagent story.
+  - **evidence-research** needs the Consensus and/or Scite tools (MCP); identify them by
+    server, not by any harness's tool-naming. It degrades explicitly when one is absent.
+  - **applying-formal-rigor** and **blindspot-pass** are pure method — no runtime
+    dependency at all.
+- **`using-epistemic-skills`** is the router; read it first to see which skill a task needs
+  and how their outputs chain.
+
+The scripts (`gauntlet/scripts/*.py`) are stdlib-only Python and run anywhere Python does.
 
 ## Design principles
 

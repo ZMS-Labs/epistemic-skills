@@ -34,8 +34,11 @@ URL), STOP and report `BLOCKED_ENVIRONMENT` — do not substitute code reading f
 
 ## Step 2 — Run the Workflow
 
-Read `references/workflow-template.mjs` and invoke the Workflow tool with its content as
-`script` and:
+Orchestrate the roles as concurrent, context-isolated sub-agents behind a barrier — the
+separation of actor / verifier / judge is the mechanism, so they must not share context.
+`references/workflow-template.mjs` is a Claude Code reference implementation (invoke the
+Workflow tool with its content as `script`); other harnesses meet the same contract with
+their own subagent primitive. Parameters:
 
 ```json
 {

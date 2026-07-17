@@ -33,9 +33,9 @@ skill prevents is citing a refuted or retracted paper as support.**
 ## Non-negotiable boundaries (inherited and binding)
 
 - This skill is the **mandatory prerequisite before every scholarly-connector
-  tool call** — every Consensus variant (`mcp__claude_ai_Consensus__search`,
-  `consensus_search`, `consensus_fetch`, …) **and every Scite variant**
-  (`mcp__scite__*` or any tool whose server is api.scite.ai). No direct-call
+  tool call** — every Consensus tool and every Scite tool, however your harness
+  names them (e.g. in Claude Code, `mcp__claude_ai_Consensus__search` and
+  `mcp__scite__*`; identify them by server — the Consensus MCP, and api.scite.ai). No direct-call
   exception: a trivial lookup, a known DOI, or a single fetch still requires
   this skill first. If a call is about to happen and this skill is not active,
   stop, load it, then continue.
@@ -104,8 +104,9 @@ connector rules) warrant. Record every query, filters, counts, IDs. `Top N of
 M` is a plan cap, not scarcity evidence.
 
 ### 4. Interrogate (Scite leads) — the reception pass
-**Harness note (2026-07-17, see reference/scite-profile.md):** the Claude
-Code Scite MCP returns slim records only — no inline tallies or citation
+**Harness note (observed in Claude Code, 2026-07-17, see reference/scite-profile.md;
+your harness may differ — the live-schema rule above governs):** that Scite MCP returns
+slim records only — no inline tallies or citation
 contexts. The reception pass there runs at **filter level**: retraction/
 notice checks via `has_retraction`/`has_concern` membership tests, reception
 signal via `contrasting_from`/`supporting_from` threshold tests. Record

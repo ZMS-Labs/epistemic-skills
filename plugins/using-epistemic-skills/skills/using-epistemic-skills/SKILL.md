@@ -6,9 +6,9 @@ description: Entry point and router for the epistemic-skills collection — read
 # Using Epistemic Skills — the router
 
 These five skills are one system: **how an agent knows things** before, during, and after
-work. Superpowers (if you have it) is the *workflow* layer — brainstorming, TDD,
-systematic-debugging, writing-plans, verification-before-completion. This collection is the
-*epistemics* layer underneath it: the disciplines that keep every claim tethered to
+work. A **workflow-skill layer** (such as [superpowers](https://github.com/obra/superpowers)) —
+brainstorming, TDD, systematic-debugging, plan-writing, verification-before-completion — covers
+*how you do* the work. This collection is the *epistemics* layer underneath it: the disciplines that keep every claim tethered to
 evidence and every effort aimed at the real target. This skill is the map; it routes you to
 the right member and tells you how they chain. **It never does the work itself — always read
 the skill it points you to.**
@@ -90,10 +90,11 @@ resemblance:
    actor never judges its own work; the highest-stakes verdicts want a different-family or
    deterministic judge.
 
-## Composition with superpowers
+## Composition with a workflow-skill layer
 
-If both are installed, the epistemic skills **interleave** with the workflow skills rather
-than replacing them:
+If you also run a workflow-skill layer (such as superpowers), the epistemic skills
+**interleave** with the workflow skills rather than replacing them (skill names below are
+superpowers' — map them to your layer's equivalents):
 
 - **blindspot-pass** runs *before* `brainstorming` — recon the territory, then design.
 - **applying-formal-rigor** runs *inside* `brainstorming` / design — derive the choice.

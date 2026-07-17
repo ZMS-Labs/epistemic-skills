@@ -1,3 +1,6 @@
+// CLAUDE CODE REFERENCE IMPLEMENTATION of the evidence-locked-UAT role separation
+// (actor / blinded verifier / deterministic judge as concurrent isolated sub-agents).
+// Other harnesses meet the same contract with their own subagent primitive.
 export const meta = {
   name: 'evidence-locked-uat',
   description: 'Evidence-locked UAT: compile contracts, human-mode actor executes, blinded verifier judges, deterministic gate',
