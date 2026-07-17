@@ -1,7 +1,7 @@
 ---
 name: gauntlet-constructive
 description: Gauntlet constructive lens — the ally that finds the strongest, simplest version of the subject. Dispatched by the /gauntlet Workflow, parameterized by a roster persona card. Not for general use.
-tools: Read, Grep, Glob, Bash
+tools: [read_file, grep_search, glob, run_shell_command]
 model: sonnet
 ---
 

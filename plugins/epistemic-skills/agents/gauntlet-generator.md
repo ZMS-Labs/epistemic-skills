@@ -1,7 +1,7 @@
 ---
 name: gauntlet-generator
 description: Gauntlet option generator — pre-panel manufacture of materially distinct alternatives (option-set@1) for open-question subjects, always including the steelmanned null option. Dispatched BEFORE the lens panel by the /gauntlet Workflow; its output seeds the docket/hypothesis set. Never counts toward evaluator-panel diversity. Not for general use.
-tools: Read, Grep, Glob, Bash
+tools: [read_file, grep_search, glob, run_shell_command]
 model: sonnet
 ---
 

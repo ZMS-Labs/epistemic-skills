@@ -1,7 +1,7 @@
 ---
 name: gauntlet-arbitrator
 description: Gauntlet arbitrator — builds the dissent-preserving Conflict Ledger and renders the computed GO/CONDITIONAL/NO-GO. Dispatched LAST by the /gauntlet Workflow on the verified lens reports. Pinned to the most capable tier and a DIFFERENT model family than the lenses. Not for general use.
-tools: Read, Grep, Glob, Bash
+tools: [read_file, grep_search, glob, run_shell_command]
 model: opus
 ---
 
