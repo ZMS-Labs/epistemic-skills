@@ -170,4 +170,4 @@ The gauntlet's honest status is stated in its own roadmap section. Shipped and v
 
 ## License
 
-GPT 3.0 — see [LICENSE](LICENSE).
+see [LICENSE](LICENSE).
