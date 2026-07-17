@@ -1,8 +1,0 @@
-{
-  "name": "blindspot-pass",
-  "description": "Pre-dispatch epistemic reconnaissance: surface the unknown-unknowns before committing effort, then rewrite the request to aim at the real target.",
-  "version": "1.0.1",
-  "author": {
-    "name": "ZMS Labs"
-  }
-}
