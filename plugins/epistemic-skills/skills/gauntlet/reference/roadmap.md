@@ -16,7 +16,7 @@ falsifiability contract on every finding (SHIPPED — schema-enforced, structura
 falsifier check) · compiled mechanical checks / judge-token-free refutation
 (SHIPPED — verify_evidence.py, validate_roster.py, selector constraint fixtures)
 · certified arbitrator (planted-flaw seat battery + degraded-control gate —
-**NOT BUILT**, design only) · replayable spend-accounted log (`meter==log`)
+**BUILT + RUN 2026-07-17: 10/10 catch, certified at standard rigor** — `evals/arbitrator-certification/`) · replayable spend-accounted log (`meter==log`)
 (SHIPPED — Workflow journal + selection replay records).
 
 **Bundle A — Generation rigor (better findings):**
@@ -50,8 +50,10 @@ falsifier check) · compiled mechanical checks / judge-token-free refutation
 
 - **Phase 0 (largely done; two honest gaps):** the `/gauntlet` staple + docket
   modes + depth dial + aliases + registry/selector/validator (2026-07-10).
-  Gaps: certified arbitrator NOT built; the past-subject regression battery is
-  **designed but unrun** (`evals/` — no behavioral claims until it runs).
+  Status: certified arbitrator **BUILT + RUN** (2026-07-17, 10/10 planted-flaw catch,
+  `evals/arbitrator-certification/`); the past-subject behavioral regression battery has a
+  **smoke subset run** (`evals/results-smoke-2026-07-11.md`, non-inferiority only) with the
+  full 24×4 sweep still unrun — no behavioral-superiority claim until it runs.
 - **Phase 0.6 — Registry + selector (DONE 2026-07-10):** machine-readable
   `roster/registry.json` + lens.schema.json, four workflow roles, lifecycle
   states, deterministic constrained selector with replay records, generated

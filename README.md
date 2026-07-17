@@ -85,7 +85,7 @@ The scripts (`gauntlet/scripts/*.py`) are stdlib-only Python and run anywhere Py
 
 These skills are extracted from a private fleet where they run as standing discipline, hardened by daily use and adversarial review.
 
-The gauntlet's honest status is stated in its own roadmap section: the staple, falsifiability contract, mechanical evidence checks, and the validated deterministic selector are shipped; the certified-arbitrator battery and behavioral regression battery are designed but not yet built or run.
+The gauntlet's honest status is stated in its own roadmap section. Shipped and validated: the staple, the falsifiability contract, mechanical evidence checks, the deterministic selector, and — as of 2026-07-17 — the **certified-arbitrator battery**, which runs the arbitrator blind against 10 planted defect classes it must catch and scored **10/10 (certified at standard rigor)**; the battery, scorer, and results are in [`evals/arbitrator-certification/`](plugins/epistemic-skills/skills/gauntlet/evals/arbitrator-certification/) so the claim is reproducible. Still partial: the behavioral battery has only a smoke subset run (non-inferiority, not superiority); the full sweep and the later measurement bundle remain designs — stated as such, never claimed done.
 
 ## License
 
