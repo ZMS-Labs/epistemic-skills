@@ -1,0 +1,20 @@
+{
+  "name": "epistemic-skills",
+  "interface": {
+    "displayName": "ZMS Labs Epistemic Skills"
+  },
+  "plugins": [
+    {
+      "name": "epistemic-skills",
+      "source": {
+        "source": "local",
+        "path": "./plugins/epistemic-skills"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}

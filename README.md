@@ -47,6 +47,17 @@ activates only when its own `description` matches the task, so you get à-la-car
 behavior from a one-command install; you're never paying attention-cost for a skill a
 task doesn't need.
 
+### Codex (plugin marketplace)
+
+```powershell
+codex plugin marketplace add ZMS-Labs/epistemic-skills --ref main
+codex plugin add epistemic-skills@epistemic-skills
+```
+
+The repository includes native Claude and Codex manifests backed by the same skill
+files. Harness-specific packaging does not fork the methods or their supporting
+resources.
+
 ### Using these in any harness
 
 The skills are just files. They live under `plugins/epistemic-skills/skills/<name>/` — a
@@ -54,6 +65,10 @@ The skills are just files. They live under `plugins/epistemic-skills/skills/<nam
 [Agent Skills spec](https://agentskills.io/specification), so any harness that reads
 skills or context files can use them. Point your agent at the whole `skills/` directory
 (the trivial integration) or a single `SKILL.md`:
+
+```bash
+npx skills add https://github.com/ZMS-Labs/epistemic-skills/tree/main/plugins/epistemic-skills/skills
+```
 
 - **Point your agent at the `SKILL.md`.** Its frontmatter `description` is the trigger
   ("use when…"); the body is the method. Load it as a skill, an `AGENTS.md`/`GEMINI.md`

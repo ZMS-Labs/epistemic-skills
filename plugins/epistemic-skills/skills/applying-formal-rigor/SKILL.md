@@ -1,6 +1,6 @@
 ---
 name: applying-formal-rigor
-description: Use when making any non-trivial design, architecture, schema, data-modeling, concurrency, caching, consistency, indexing, or algorithmic decision with two or more viable options, OR when justifying why one option is correct. Symptoms you need this: "both are fine", "it'll be slow", "this violates normalization", "stale data", "just pick one". Sets a graduate-level formal-theory floor for the analysis.
+description: 'Use when making any non-trivial design, architecture, schema, data-modeling, concurrency, caching, consistency, indexing, or algorithmic decision with two or more viable options, OR when justifying why one option is correct. Symptoms you need this: "both are fine", "it''ll be slow", "this violates normalization", "stale data", "just pick one". Sets a graduate-level formal-theory floor for the analysis.'
 ---
 
 # Applying Formal Rigor
