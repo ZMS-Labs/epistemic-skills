@@ -54,7 +54,35 @@ codex plugin marketplace add ZMS-Labs/epistemic-skills --ref main
 codex plugin add epistemic-skills@epistemic-skills
 ```
 
-The repository includes native Claude and Codex manifests backed by the same skill
+### Cursor
+
+**Official / team marketplace (preferred once listed or imported):**
+
+- In Agent chat: `/add-plugin epistemic-skills` (after the repo is on the Cursor Marketplace or your team marketplace)
+- Or: Customize → Plugins → import / browse → install **epistemic-skills**
+
+This repo is a Cursor multi-plugin marketplace (`\.cursor-plugin/marketplace.json`) with one plugin at `plugins/epistemic-skills/` (manifest: `plugins/epistemic-skills/.cursor-plugin/plugin.json`). Import the GitHub repo as a [team marketplace](https://cursor.com/docs/plugins) or submit it at [cursor.com/marketplace/publish](https://cursor.com/marketplace/publish).
+
+**Local install (dev / before marketplace listing):**
+
+```powershell
+# Windows (junction) — from a clone of this repo
+New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.cursor\plugins\local" | Out-Null
+$src  = (Resolve-Path .\plugins\epistemic-skills).Path
+$dest = Join-Path $env:USERPROFILE '.cursor\plugins\local\epistemic-skills'
+if (Test-Path $dest) { Remove-Item $dest -Force -Recurse }
+cmd /c mklink /J "$dest" "$src"
+```
+
+```bash
+# macOS / Linux
+mkdir -p ~/.cursor/plugins/local
+ln -sfn "$(pwd)/plugins/epistemic-skills" ~/.cursor/plugins/local/epistemic-skills
+```
+
+Then reload the window (**Developer: Reload Window**). Confirm the six skills appear under Customize → Skills.
+
+The repository includes native Claude, Codex, and Cursor manifests backed by the same skill
 files. Harness-specific packaging does not fork the methods or their supporting
 resources.
 
