@@ -1,0 +1,22 @@
+{
+  "name": "epistemic-skills",
+  "owner": {
+    "name": "ZMS Labs"
+  },
+  "metadata": {
+    "description": "Epistemic-discipline skills for Claude Code — how an agent knows things before, during, and after work. Composes with the superpowers workflow skills.",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "applying-formal-rigor",
+      "source": "./plugins/applying-formal-rigor",
+      "description": "Graduate-level formal-theory floor for design decisions: name the precise construct, derive the conclusion, sweep every relevant lens."
+    },
+    {
+      "name": "blindspot-pass",
+      "source": "./plugins/blindspot-pass",
+      "description": "Pre-dispatch epistemic reconnaissance: surface the unknown-unknowns before committing effort, then rewrite the request to aim at the real target."
+    }
+  ]
+}

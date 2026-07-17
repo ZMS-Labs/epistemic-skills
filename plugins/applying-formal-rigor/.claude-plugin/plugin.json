@@ -1,0 +1,8 @@
+{
+  "name": "applying-formal-rigor",
+  "description": "Graduate-level formal-theory floor for design decisions: name the precise construct, derive the conclusion, sweep every relevant lens.",
+  "version": "1.0.0",
+  "author": {
+    "name": "ZMS Labs"
+  }
+}
