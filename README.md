@@ -4,11 +4,28 @@ Epistemic-discipline skills for [Claude Code](https://claude.com/claude-code) �
 
 Most public skill collections cover the *workflow* layer: test-driven development, systematic debugging, plan writing (see [superpowers](https://github.com/obra/superpowers), which these skills are designed to compose with). This collection covers the layer underneath: the disciplines that keep an agent's claims tethered to evidence and its effort aimed at the real target.
 
+**Start with `using-epistemic-skills`** — the router. It answers *which* of these applies to a given task, in *what order*, and how each one's output feeds the next. The five below are the disciplines it routes to; install the router plus whichever ones you want.
+
+## The arc
+
+The skills are one system — *how an agent knows things* before, during, and after work — with each ending at a defined boundary and handing off to the next:
+
+```
+ recon              decide                     gate               prove
+ blindspot-pass  →  applying-formal-rigor   →  gauntlet        →  evidence-locked-uat
+ (rewrites the      (derives the design;       (computed          (blinded verdict on
+  request)           evidence-research          GO/NO-GO on         a finished UI change)
+                     grounds any premise)       a frozen subject)
+```
+
+Most tasks fire zero or one. The router's value is the case where more than one applies.
+
 ## Skills
 
 | Skill | What it disciplines |
 |---|---|
-| **applying-formal-rigor** | Design decisions. Sets a graduate-level formal-theory floor: name the *precise* construct (the exact normal form, the named isolation anomaly, the consistency guarantee in the lattice), **derive** the conclusion instead of asserting it, and sweep every relevant lens instead of stopping at the first one. Ships with a 7-lens theory battery (relational, concurrency, distributed consistency, complexity, type theory, information theory, architecture formalisms). |
+| **using-epistemic-skills** | The entry point. Routes a task to the right discipline(s), sequences them (recon → design → evidence → gate → verify), and defines the handoff contracts so the skills compose without overreaching. Read it first; it never does the work itself. |
+| **applying-formal-rigor** | Design *and complexity* decisions. Sets a graduate-level formal-theory floor: name the *precise* construct (the exact normal form, the named isolation anomaly, the Master-Theorem case, the Ω lower bound), **derive** the conclusion instead of asserting it, and sweep every relevant lens. Ships a 7-lens theory battery; lens 4 is a full standalone Big-O / complexity analysis (recurrences, lower bounds, optimization convergence). |
 | **blindspot-pass** | The moment *before* work begins. A cheap read-only reconnaissance pass that surfaces landmines, hidden context, exemplars, and the questions an expert would ask — then **rewrites the request** so downstream work aims at the territory, not the map. Technique from Thariq Shihipar (Anthropic), *"A Field Guide to Claude Fable 5: Finding Your Unknowns"* (2026). |
 | **evidence-research** | Claims about *the literature*. Two engines answering different questions: **Consensus** discovers what the literature says; **Scite** interrogates how each paper was *received* — supporting vs contrasting citation statements, retractions and editorial notices. Consensus finds the witnesses; Scite runs the cross-examination. Prevents the worst failure: citing a refuted or retracted paper as support. Requires the Consensus and/or Scite MCP connectors; degrades explicitly and visibly when one is absent rather than quietly narrowing its claims. |
 | **evidence-locked-uat** | Claims that UI-facing work is *done*. No agent certifies its own work: the actor drives, a **blinded verifier** judges from evidence alone, and the judge is deterministic script code. Per-case evidence packets, triage tiers, and a strict verdict vocabulary where `INCONCLUSIVE` is reported as `INCONCLUSIVE` — never rounded up to PASS. Ships the full standard and agent directive it operationalizes. |
@@ -18,6 +35,7 @@ Most public skill collections cover the *workflow* layer: test-driven developmen
 
 ```
 /plugin marketplace add ZMS-Labs/epistemic-skills
+/plugin install using-epistemic-skills@epistemic-skills
 /plugin install applying-formal-rigor@epistemic-skills
 /plugin install blindspot-pass@epistemic-skills
 /plugin install gauntlet@epistemic-skills

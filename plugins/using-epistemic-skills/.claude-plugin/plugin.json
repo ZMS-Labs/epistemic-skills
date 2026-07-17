@@ -1,0 +1,6 @@
+{
+  "name": "using-epistemic-skills",
+  "description": "Entry point and router for the epistemic-skills collection: which discipline applies to a task, in what order, and how each one's output feeds the next.",
+  "version": "1.0.0",
+  "author": { "name": "ZMS Labs" }
+}

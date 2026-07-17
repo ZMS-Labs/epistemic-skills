@@ -74,11 +74,23 @@ Load the section for whichever lens fired. Each gives: the constructs you must b
 
 **Name the parameter, always.** `LIMIT k OFFSET n` is **O(n+k)** (produce-and-discard n rows) → a full traversal is **O(N²/k)**; keyset/cursor is **O(log N + k)** per page, **O(N)** for the traversal. "Slow" is not an analysis; "O(offset), quadratic over a full crawl" is.
 
-**Derivation template:** define the operation/workload mix → cost per op (worst + amortized) → aggregate over the realistic N and access pattern → compare named complexities → name the constant-factor / cache / IO effects only after the asymptotics.
+**Recurrences — solve, don't eyeball.** A recursive procedure's cost is a recurrence `T(n) = a·T(n/b) + f(n)` (a subproblems each of size n/b, f(n) to split/combine); solve it by the **Master Theorem** against the watershed `n^(log_b a)`:
+- f(n) = O(n^c), c < log_b a → **Θ(n^(log_b a))** (leaves dominate).
+- f(n) = Θ(n^(log_b a)) → **Θ(n^(log_b a) · log n)** (balanced — merge sort's `2T(n/2)+O(n) = Θ(n log n)`).
+- f(n) = Ω(n^c), c > log_b a (+ regularity) → **Θ(f(n))** (root dominates).
+Subtract-and-conquer recurrences aren't Master-shaped — name them directly: `T(n)=T(n-1)+O(1)→O(n)`, `T(n)=T(n-1)+O(n)→O(n²)`, `T(n)=2T(n-1)+O(1)→O(2ⁿ)` (the naive-Fibonacci exponential-branching trap). Akra–Bazzi generalizes to unequal subproblem sizes.
 
-**Canonical questions:** Cost in which parameter, worst and amortized? What's the workload's read/write/scan mix? Does an index turn a scan into a seek? Is a sort implied, and does index order remove it? Are we trading space for time deliberately?
+**Prove the lower bound, then stop.** An analysis isn't done at "it's O(n log n)"; it's done when you've stated the problem's **lower bound Ω(·)** and whether you're at it. Comparison sort is Ω(n log n) (merge sort is optimal — no gain to chase); search in an unsorted array is Ω(n); anything that must read all input is Ω(n). Naming the lower bound converts "could be faster" into "provably cannot be faster."
 
-**Undershoot:** "fast/slow/scales/won't scale" with no complexity class and no parameter.
+**Optimization must CONVERGE.** Re-deriving the same code must reach a fixed point: `O(n²)→O(n log n)→at-bound→stable`. An analysis that *always* finds another improvement is one of three failures — a **hallucinated** optimization, a **trade-off** miscounted as a strict win (O(n)→O(log n) time bought with O(1)→O(n) space is a trade-off, not an improvement), or a **missed lower bound**. Label the terminal state: `improvable` (concrete gain named) / `trade-off` (dimension moved at a cost) / `converged` (at the proven bound) / `optimal-for-constraints` (better exists but a stated constraint forbids it). Genuine gains come from named substitutions: linear→binary search O(n)→O(log n) on sorted data; list-membership→hash-set O(n)→O(1); recompute→prefix-array O(n)→O(1); repeated subproblems→memoization/DP.
+
+**Hidden costs the source hides.** Asymptotics live under syntax: string concatenation in a loop is often O(n²); slice/spread makes implicit O(n) copies; a regex compiled or JSON parsed *inside* a loop multiplies the body; one network/disk op dwarfs any in-memory constant. Count the work the language performs, not the lines you wrote.
+
+**Derivation template:** define the operation/workload mix → cost per op (worst + amortized) → recurrence if recursive (solve via Master/Akra–Bazzi) → aggregate over the realistic N and access pattern → compare named complexities → state the Ω lower bound and convergence state → name constant-factor / cache / IO effects only after the asymptotics.
+
+**Canonical questions:** Cost in which parameter, worst and amortized? What recurrence, and its Master-Theorem case? What is the problem's Ω lower bound, and are we at it? Is the proposed speedup a strict win or a space/time trade-off? What's the workload's read/write/scan mix? Does an index turn a scan into a seek? Is a sort implied, and does index order remove it?
+
+**Undershoot:** "fast/slow/scales/won't scale" with no complexity class and no parameter; "we can optimize it" with no named lower bound to say whether you already have.
 
 ---
 

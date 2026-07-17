@@ -9,9 +9,14 @@
   },
   "plugins": [
     {
+      "name": "using-epistemic-skills",
+      "source": "./plugins/using-epistemic-skills",
+      "description": "Start here: the router. Which discipline applies to a task, in what order, and how each one's output feeds the next. Install this plus whichever skills you want."
+    },
+    {
       "name": "applying-formal-rigor",
       "source": "./plugins/applying-formal-rigor",
-      "description": "Graduate-level formal-theory floor for design decisions: name the precise construct, derive the conclusion, sweep every relevant lens."
+      "description": "Graduate-level formal-theory floor for design and complexity decisions: name the precise construct, derive the conclusion (incl. recurrences, Master Theorem, lower bounds), sweep every relevant lens."
     },
     {
       "name": "blindspot-pass",
