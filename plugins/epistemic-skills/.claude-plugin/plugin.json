@@ -1,7 +1,7 @@
 {
   "name": "epistemic-skills",
   "description": "The full epistemic-discipline collection in one package: a router plus formal rigor, blindspot reconnaissance, scholarly evidence, evidence-locked UAT, and multi-lens adversarial review. Each skill self-triggers by relevance.",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "author": {
     "name": "ZMS Labs"
   }

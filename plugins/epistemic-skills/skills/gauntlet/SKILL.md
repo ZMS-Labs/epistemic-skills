@@ -379,11 +379,18 @@ and examples; it never overrides the protocol.
 Shipped today: the staple, falsifiability contract, mechanical evidence checks,
 replayable Workflow log, the machine-readable registry + deterministic selector
 (mechanically validated: registry schema, 1000 selector constraint fixtures,
-targeted regressions — `tests/run_tests.py`). **NOT yet built:** the certified
-arbitrator (planted-flaw seat battery), the behavioral regression battery
-(designed in `evals/`, unrun), and everything in Phases 1-3 (generation rigor,
-adjudication rigor, measurement bundle). Each later piece is integrated only if
-it **measures cost-positive** on the battery. Full map: `reference/roadmap.md`.
+targeted regressions — `tests/run_tests.py`). **Certified arbitrator: BUILT and RUN**
+(2026-07-17) — the planted-flaw seat battery (`evals/arbitrator-certification/`) runs the
+arbitrator blind against 10 defect classes it must catch (fabricated citation, binary-file
+`[V]`, correlated-as-independent, malformed falsifier, inadequate oracle, unresolved-P1
+rounding, shadow-seat leakage, false-high, prompt-injection, polish-over-evidence);
+result **10/10 catch, CERTIFIED at standard rigor** (verdict-match 8/10, the two
+divergences being defensible more-conservative calls, not misses — see the battery's
+`results-2026-07-17.md`). **Still partial/unbuilt:** the behavioral battery has only a
+**smoke subset run** (`evals/results-smoke-2026-07-11.md` — non-inferiority, not
+superiority; the full 24×4 sweep is unrun), and Phases 1-3 (generation rigor, adjudication
+rigor, measurement bundle) remain designs. Each later piece is integrated only if it
+**measures cost-positive**. Full map: `reference/roadmap.md`.
 
 ## Resources
 
