@@ -116,3 +116,10 @@ plan-writing, verification-before-completion).
 | "I'll just start and find out" | Finding out mid-implementation is the expensive path this prevents. |
 | "This is just recon, let me also fix the thing I found" | Stop. The skill ends at understanding. Capture the fix as a note; don't act. |
 | "I'll list questions without answering them" | An unanswered question is a deferral. Best-guess every one. |
+
+## Local overlay
+
+If a `LOCAL.md` exists alongside this SKILL.md, read it after this file — it binds
+the protocol to the local environment (paths, registries, standing incidents,
+sibling-skill integrations). An overlay may add bindings and examples; it never
+overrides the protocol.

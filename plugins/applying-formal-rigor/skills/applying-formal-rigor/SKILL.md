@@ -85,3 +85,10 @@ For a fork, produce: per-lens construct + derivation → a comparison keyed by t
 - *Synthesis:* B dominates on normalization, complexity, blast radius. A's only edge — join-free single-row read — is recoverable under B via a covering index / array aggregation. **Verdict: B**, edge recovered.
 
 **REQUIRED REFERENCE:** the full formal apparatus per lens — definitions, the derivation templates, and the canonical decision questions — is in `theory-battery.md`. Load it when a lens fires and you need the exact construct.
+
+## Local overlay
+
+If a `LOCAL.md` exists alongside this SKILL.md, read it after this file — it binds
+the protocol to the local environment (paths, registries, standing incidents,
+sibling-skill integrations). An overlay may add bindings and examples; it never
+overrides the protocol.
