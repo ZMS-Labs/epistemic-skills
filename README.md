@@ -35,19 +35,25 @@ Most tasks fire zero or one. The router's value is the case where more than one 
 
 ## Install
 
-### Claude Code (plugin marketplace) — one command
+**One package, many manifests, same files.** Cores live once under
+`plugins/epistemic-skills/skills/` (and role-agents under
+`plugins/epistemic-skills/agents/`). Root `skills/` and `agents/` are symlinks to
+those paths so harnesses that only scan the repo root (Gemini CLI) still find
+them. Install with **exactly one** mechanism per harness — do not also copy the
+same skills into that harness's user-skills directory, or you will get duplicate
+triggers.
+
+Each skill **self-triggers** from its frontmatter `description`, so one install
+gives à-la-carte behavior: you only pay attention-cost when a skill matches.
+
+### Claude Code
 
 ```
 /plugin marketplace add ZMS-Labs/epistemic-skills
 /plugin install epistemic-skills@epistemic-skills
 ```
 
-That installs all six skills as a single package. Each one **self-triggers** — it
-activates only when its own `description` matches the task, so you get à-la-carte
-behavior from a one-command install; you're never paying attention-cost for a skill a
-task doesn't need.
-
-### Codex (plugin marketplace)
+### Codex
 
 ```powershell
 codex plugin marketplace add ZMS-Labs/epistemic-skills --ref main
@@ -56,17 +62,26 @@ codex plugin add epistemic-skills@epistemic-skills
 
 ### Cursor
 
-**Official / team marketplace (preferred once listed or imported):**
+**Recommended for personal / public use:** submit or install via the
+[Cursor Marketplace](https://cursor.com/marketplace/publish) (GitHub repo
+`ZMS-Labs/epistemic-skills`). Root `.cursor-plugin/plugin.json` is the
+single-plugin entry point. After it is listed:
 
-- In Agent chat: `/add-plugin epistemic-skills` (after the repo is on the Cursor Marketplace or your team marketplace)
-- Or: Customize → Plugins → import / browse → install **epistemic-skills**
+```text
+/add-plugin epistemic-skills
+```
 
-This repo is a Cursor multi-plugin marketplace (`\.cursor-plugin/marketplace.json`) with one plugin at `plugins/epistemic-skills/` (manifest: `plugins/epistemic-skills/.cursor-plugin/plugin.json`). Import the GitHub repo as a [team marketplace](https://cursor.com/docs/plugins) or submit it at [cursor.com/marketplace/publish](https://cursor.com/marketplace/publish).
+Or: Customize → Plugins → browse/install **epistemic-skills**.
+
+**Team marketplace** (Cursor Teams/Enterprise): only needed if you want
+*private* org distribution. Import this same GitHub repo; `.cursor-plugin/marketplace.json`
+indexes the nested plugin at `plugins/epistemic-skills/`. Public MIT users can
+skip team marketplaces entirely.
 
 **Local install (dev / before marketplace listing):**
 
 ```powershell
-# Windows (junction) — from a clone of this repo
+# Windows — from a clone of this repo
 New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.cursor\plugins\local" | Out-Null
 $src  = (Resolve-Path .\plugins\epistemic-skills).Path
 $dest = Join-Path $env:USERPROFILE '.cursor\plugins\local\epistemic-skills'
@@ -80,42 +95,54 @@ mkdir -p ~/.cursor/plugins/local
 ln -sfn "$(pwd)/plugins/epistemic-skills" ~/.cursor/plugins/local/epistemic-skills
 ```
 
-Then reload the window (**Developer: Reload Window**). Confirm the six skills appear under Customize → Skills.
+Then **Developer: Reload Window**. Success check: all six skills visible under
+Customize → Skills, and they auto-trigger on matching prompts.
 
-The repository includes native Claude, Codex, and Cursor manifests backed by the same skill
-files. Harness-specific packaging does not fork the methods or their supporting
-resources.
+Do **not** also run `npx skills add` into `~/.cursor/skills/` for this package
+while the plugin is installed — that is a second copy of the same triggers.
 
-### Using these in any harness
+### Gemini CLI / Antigravity
 
-The skills are just files. They live under `plugins/epistemic-skills/skills/<name>/` — a
-`SKILL.md` plus any references, scripts, and role-agent definitions — following the
-[Agent Skills spec](https://agentskills.io/specification), so any harness that reads
-skills or context files can use them. Point your agent at the whole `skills/` directory
-(the trivial integration) or a single `SKILL.md`:
+```bash
+gemini extensions install https://github.com/ZMS-Labs/epistemic-skills --consent
+# local dev against a clone:
+gemini extensions link /path/to/epistemic-skills
+```
+
+Requires a restart of the Gemini session after install/link. Root `skills/`
+(symlink) is what the extension loader discovers; `gemini-extension.json` +
+`GEMINI.md` are the extension entrypoints.
+
+Antigravity can install from the same GitHub URL (`agy plugin install …`) or
+import an already-linked Gemini extension (`agy plugin import gemini`). Prefer
+one of those paths — not both plus a manual skills copy.
+
+### Universal / any other harness
+
+The skills follow the [Agent Skills spec](https://agentskills.io/specification).
+Point your agent at `plugins/epistemic-skills/skills/` (or the root `skills/`
+symlink) or a single `SKILL.md`:
 
 ```bash
 npx skills add https://github.com/ZMS-Labs/epistemic-skills/tree/main/plugins/epistemic-skills/skills
 ```
 
-- **Point your agent at the `SKILL.md`.** Its frontmatter `description` is the trigger
-  ("use when…"); the body is the method. Load it as a skill, an `AGENTS.md`/`GEMINI.md`
-  include, a Cursor rule, or plain context.
-- **Meet the contract, not the tool.** A few skills need a runtime primitive. Each states
-  the harness-agnostic contract and labels its Claude Code implementation as a *reference*:
-  - **gauntlet** Step 5 wants *concurrent, context-isolated role-agents behind a barrier*.
-    Any parallel-subagent primitive works; with none, use the documented degrade fallback
-    (sequential isolated calls). Role-agent definitions are in each plugin's `agents/`
-    directory — register them however your harness registers agents, or inline the persona
-    text if it has no agent concept.
-  - **evidence-locked-uat** wants the *actor / blinded-verifier / deterministic-judge*
-    roles kept in separate contexts — same subagent story.
-  - **evidence-research** needs the Consensus and/or Scite tools (MCP); identify them by
-    server, not by any harness's tool-naming. It degrades explicitly when one is absent.
-  - **applying-formal-rigor** and **blindspot-pass** are pure method — no runtime
-    dependency at all.
-- **`using-epistemic-skills`** is the router; read it first to see which skill a task needs
-  and how their outputs chain.
+Use this path **only** when the harness has no native plugin/extension install.
+If you already installed via Claude, Codex, Cursor, or Gemini above, skip
+`npx skills add` for those same skills.
+
+- **Point your agent at the `SKILL.md`.** Frontmatter `description` is the trigger;
+  the body is the method.
+- **Meet the contract, not the tool.** A few skills need a runtime primitive. Each
+  states a harness-agnostic contract and labels one reference implementation:
+  - **gauntlet** Step 5: *concurrent, context-isolated role-agents behind a barrier*
+    (degrade: sequential isolated calls). Role-agent definitions are in `agents/`.
+  - **evidence-locked-uat**: keep *actor / blinded-verifier / deterministic-judge*
+    in separate contexts.
+  - **evidence-research**: Consensus and/or Scite MCP (identify by server); degrade
+    explicitly when absent.
+  - **applying-formal-rigor** and **blindspot-pass**: pure method — no runtime dependency.
+- **`using-epistemic-skills`** is the router; read it first.
 
 The scripts (`gauntlet/scripts/*.py`) are stdlib-only Python and run anywhere Python does.
 
