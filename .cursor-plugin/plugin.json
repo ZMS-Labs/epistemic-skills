@@ -1,0 +1,15 @@
+{
+  "name": "epistemic-skills",
+  "displayName": "Epistemic Skills",
+  "description": "The full epistemic-discipline collection in one package: a router plus formal rigor, blindspot reconnaissance, scholarly evidence, evidence-locked UAT, and multi-lens adversarial review.",
+  "version": "2.2.0",
+  "author": {
+    "name": "ZMS Labs",
+    "url": "https://github.com/ZMS-Labs"
+  },
+  "homepage": "https://github.com/ZMS-Labs/epistemic-skills",
+  "repository": "https://github.com/ZMS-Labs/epistemic-skills",
+  "license": "MIT",
+  "skills": "./plugins/epistemic-skills/skills/",
+  "agents": "./plugins/epistemic-skills/agents/"
+}
