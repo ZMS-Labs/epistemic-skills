@@ -1,7 +1,7 @@
 {
   "name": "gauntlet",
   "description": "Consolidated adversarial-review staple: multi-lens panel review of a frozen subject with falsifier discipline, mechanical evidence verification, a 102-lens registry with deterministic selection, and a computed GO/CONDITIONAL/NO-GO verdict.",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": {
     "name": "ZMS Labs"
   }

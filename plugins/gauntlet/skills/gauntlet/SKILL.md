@@ -260,6 +260,17 @@ per admission round 1): for every claim of the form "verified/tested/passes",
 check the cited oracle actually exercises the asserted behavior — a mocked
 dependency, a test that can't fail, or a check green for unrelated reasons is
 an inadequate oracle; downgrade the claim's tier to `[H]` and flag it.
+**Oracles FAIL CLOSED (non-negotiable):** a check whose tool is absent, whose
+command errored, or that is structurally incapable of observing what the claim
+asserts yields `[H]`/ERROR — **never** a verified negative. Absence of evidence
+produced by a broken oracle is not evidence of absence. Two mandatory guards:
+(a) **verify the tool exists before trusting its silence** — an empty result from
+a missing binary is indistinguishable from a clean result; (b) **match the oracle
+to the medium** — a line/text oracle (`grep`, `git grep -I`, line-bounds checks)
+cannot read binary content, so it may never clear a claim about a binary
+artifact; enumerate binary blobs and use a binary-aware check. `verify_evidence.py`
+enforces (b) for `[V path:line]` tags by design. Prove a scan can fail (plant a
+positive, watch it fire) before believing it passed.
 
 ### Step 7 — Arbitrate + bounded reinstatement
 
