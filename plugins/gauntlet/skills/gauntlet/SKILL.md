@@ -218,7 +218,12 @@ in autonomous flow, select without blocking.
 orchestrate the panel as a **dynamic Workflow** (`assets/gauntlet-workflow.template.js`)
 that fans out the selected lenses with a **barrier before arbitration**, and
 dispatch each lens as a **predefined role-agent** (`gauntlet-adversary` /
-`-constructive` / `-metatextual`), NOT a fresh general-purpose agent. Dispatch
+`-constructive` / `-metatextual`), NOT a fresh general-purpose agent. **Agent-type
+resolution:** these definitions live in this skill's sibling `agents/` directory. Some
+harnesses namespace plugin-provided agents (`gauntlet:gauntlet-adversary`); if the bare
+name does not resolve, try the namespaced form, and if neither registers, say so and use
+the degrade fallback below — never silently substitute a general-purpose agent, which
+drops the falsifier contract and evidence tiers the role prompt carries. Dispatch
 the **shadow-seat lens** in the same fan-out as the core panel — same contract,
 same barrier; skipping it starves the probation lifecycle of data. Its report is
 withheld from the arbitrator (shadow semantics, Step 4). The role
@@ -380,7 +385,7 @@ it **measures cost-positive** on the battery. Full map: `reference/roadmap.md`.
   orchestration + predefined role-agents; the required way to run the panel at
   depth ≥ standard.
 - Panel Workflow template: `assets/gauntlet-workflow.template.js`
-- Role agents: `agents/gauntlet-{adversary,constructive,metatextual,arbitrator}.md`
+- Role agents: `gauntlet-{adversary,constructive,metatextual,arbitrator}` — definitions in the sibling `agents/` directory (plugin root when installed as a plugin, so the harness registers them)
 - Deep-mode MCP protocol: `reference/deep-mode-mcp.md`
 - DeepReason role boundary: `reference/deepreason-integration.md`
 - Engine config: `config/operator.yaml`
