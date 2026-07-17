@@ -8,7 +8,7 @@
   },
   "homepage": "https://github.com/ZMS-Labs/epistemic-skills",
   "repository": "https://github.com/ZMS-Labs/epistemic-skills",
-  "license": "MIT",
+  "license": "GPL-3.0",
   "keywords": [
     "agent-skills",
     "epistemics",

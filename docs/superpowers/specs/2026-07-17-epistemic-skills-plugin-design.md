@@ -1,29 +1,35 @@
-# Epistemic Skills Plugin Integration Design
+# Epistemic Skills — packaging design (as shipped)
 
-Make the `epistemic-skills` repository installable as a Cursor plugin (and keep Claude/Codex packaging) while retaining the nested directory layout under `plugins/epistemic-skills/`.
+**Status: implemented** (plugin package **2.3.0**, 2026-07-17).
+
+Make `ZMS-Labs/epistemic-skills` installable across Claude Code, Codex, Cursor,
+Gemini CLI, and Antigravity while keeping a single nested skill tree.
 
 ## Decision (implemented)
 
-Ship **both** Cursor discovery shapes so clone-as-plugin and team-marketplace import both work:
-
 | Path | Role |
 |---|---|
-| `.cursor-plugin/plugin.json` | Whole-repo single plugin (explicit `skills`/`agents` paths into the nested tree) |
-| `.cursor-plugin/marketplace.json` | Team / multi-plugin marketplace index |
-| `plugins/epistemic-skills/.cursor-plugin/plugin.json` | Nested plugin manifest when marketplace resolves `./plugins/epistemic-skills` |
+| `plugins/epistemic-skills/skills/` | Canonical skill cores (six) |
+| `plugins/epistemic-skills/agents/` | Gauntlet role-agents (five) |
+| `skills/`, `agents/` | Root **symlinks** into the nested tree (Gemini / root scanners) |
+| `.claude-plugin/marketplace.json` + nested `.claude-plugin/plugin.json` | Claude Code marketplace |
+| `.agents/plugins/marketplace.json` + nested `.codex-plugin/plugin.json` | Codex marketplace |
+| `.cursor-plugin/plugin.json` | Cursor whole-repo single plugin (path overrides into nested tree) |
+| `.cursor-plugin/marketplace.json` + nested `.cursor-plugin/plugin.json` | Cursor team-marketplace index |
+| `gemini-extension.json` + `GEMINI.md` | Gemini CLI extension |
+| `plugin.json` (repo root) | Antigravity native plugin (`agy`; schema: name + description only) |
 
-No root symlinks — Cursor supports explicit component paths, which avoids Windows symlink fragility.
+License for the repository is **GPL-3.0** ([LICENSE](../../../LICENSE)); harness
+manifests that carry a `license` field should say `GPL-3.0`.
 
-Claude (`.claude-plugin/`) and Codex (`.agents/plugins/` + `.codex-plugin/`) keep the same nested source tree.
+## Verification (done)
 
-## Verification
+1. Manifest JSON valid; versions aligned at **2.3.0** where the format allows a version field (Antigravity root `plugin.json` does not — schema forbids extra properties).
+2. `gemini extensions validate` passes; `agy plugin validate` reports 6 skills + 5 agents.
+3. Cursor local install: junction `plugins/epistemic-skills` → `~/.cursor/plugins/local/epistemic-skills`, then Reload Window; skills visible and auto-trigger observed.
+4. Public Cursor Marketplace listing: **not yet** — packaging ready; publisher sign-in required at cursor.com/marketplace/publish.
 
-1. Manifest JSON is valid; `skills/` and `agents/` resolve under `plugins/epistemic-skills/`.
-2. Local install: junction/symlink `plugins/epistemic-skills` → `~/.cursor/plugins/local/epistemic-skills`, then **Developer: Reload Window**.
-3. Customize → Skills lists all six: `using-epistemic-skills`, `applying-formal-rigor`, `blindspot-pass`, `evidence-research`, `evidence-locked-uat`, `gauntlet`.
-4. Agents listed: `gauntlet-adversary`, `gauntlet-constructive`, `gauntlet-metatextual`, `gauntlet-generator`, `gauntlet-arbitrator`.
+## Out of scope / deferred
 
-## Out of scope (this change)
-
-- Gemini / Antigravity extension packaging (can follow later via `gemini-extension.json`).
-- Cursor Marketplace public listing (submit at cursor.com/marketplace/publish after push).
+- Official Cursor Marketplace acceptance (human publisher application + Cursor review).
+- Native Antigravity marketplace catalog (agy has no curated catalog equivalent yet; GitHub/`agy plugin install` is the distribution path).

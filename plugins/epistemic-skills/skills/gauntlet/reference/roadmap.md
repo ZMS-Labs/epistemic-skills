@@ -52,8 +52,9 @@ falsifier check) · compiled mechanical checks / judge-token-free refutation
   modes + depth dial + aliases + registry/selector/validator (2026-07-10).
   Status: certified arbitrator **BUILT + RUN** (2026-07-17, 10/10 planted-flaw catch,
   `evals/arbitrator-certification/`); the past-subject behavioral regression battery has a
-  **smoke subset run** (`evals/results-smoke-2026-07-11.md`, non-inferiority only) with the
-  full 24×4 sweep still unrun — no behavioral-superiority claim until it runs.
+  **smoke subset run** (non-inferiority only; smoke notes are not shipped as a standalone
+  file in this public package) with the full 24×4 sweep still unrun — no
+  behavioral-superiority claim until it runs.
 - **Phase 0.6 — Registry + selector (DONE 2026-07-10):** machine-readable
   `roster/registry.json` + lens.schema.json, four workflow roles, lifecycle
   states, deterministic constrained selector with replay records, generated

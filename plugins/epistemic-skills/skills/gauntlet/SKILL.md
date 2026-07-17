@@ -387,8 +387,9 @@ rounding, shadow-seat leakage, false-high, prompt-injection, polish-over-evidenc
 result **10/10 catch, CERTIFIED at standard rigor** (verdict-match 8/10, the two
 divergences being defensible more-conservative calls, not misses — see the battery's
 `results-2026-07-17.md`). **Still partial/unbuilt:** the behavioral battery has only a
-**smoke subset run** (`evals/results-smoke-2026-07-11.md` — non-inferiority, not
-superiority; the full 24×4 sweep is unrun), and Phases 1-3 (generation rigor, adjudication
+**smoke subset run** (non-inferiority, not
+superiority; the full 24×4 sweep is unrun; smoke notes are not shipped as a standalone
+file in this public package), and Phases 1-3 (generation rigor, adjudication
 rigor, measurement bundle) remain designs. Each later piece is integrated only if it
 **measures cost-positive**. Full map: `reference/roadmap.md`.
 

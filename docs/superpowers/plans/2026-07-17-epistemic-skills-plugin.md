@@ -1,117 +1,50 @@
-# Epistemic Skills Plugin Integration Implementation Plan
+# Epistemic Skills Plugin Integration — plan (completed)
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **Status: completed 2026-07-17.** This plan is retained as a historical record.
+> Current packaging truth: [2026-07-17-epistemic-skills-plugin-design.md](../specs/2026-07-17-epistemic-skills-plugin-design.md) and the root [README.md](../../../README.md).
 
-**Goal:** Make the `epistemic-skills` repository installable as a plugin/extension for Gemini (Antigravity) and Cursor using root manifests and symlinks while maintaining the nested structure.
+**Goal:** Make the repository installable as a Gemini extension, Antigravity plugin, and Cursor plugin while keeping the nested `plugins/epistemic-skills/` layout.
 
-**Architecture:** Create root-level configuration files `gemini-extension.json` and `.cursor-plugin/plugin.json`. Use symlinks/junctions at the root pointing to the nested `skills` and `agents` directories to make them discoverable.
+**Shipped outcome (v2.3.0):**
 
-**Tech Stack:** PowerShell, git, JSON
+| Task | Result |
+|---|---|
+| Gemini `gemini-extension.json` + `GEMINI.md` | Done; `gemini extensions validate` passes |
+| Root `skills/` + `agents/` symlinks | Done (git symlinks → nested tree) |
+| Cursor `.cursor-plugin/plugin.json` + `marketplace.json` + nested plugin manifest | Done |
+| Antigravity root `plugin.json` | Done; `agy plugin validate` / install OK |
+| README multi-harness install | Done |
+| Public Cursor Marketplace listing | Deferred — packaging ready; publisher application requires operator sign-in |
 
----
-
-### Task 1: Create Gemini Extension Manifest
-
-**Files:**
-- Create: `gemini-extension.json`
-
-- [ ] **Step 1: Write the manifest content**
-  Create `gemini-extension.json` with the following content:
-  ```json
-  {
-    "name": "epistemic-skills",
-    "description": "The full epistemic-discipline collection in one package: a router plus formal rigor, blindspot reconnaissance, scholarly evidence, evidence-locked UAT, and multi-lens adversarial review.",
-    "version": "2.2.0"
-  }
-  ```
-
-- [ ] **Step 2: Commit**
-  Run:
-  ```powershell
-  git add gemini-extension.json
-  git commit -m "feat: add gemini-extension.json manifest"
-  ```
+**Version note:** Early draft snippets below said `2.2.0`; shipped package version is **2.3.0**. License is **GPL-3.0** (see root `LICENSE`), not MIT.
 
 ---
 
-### Task 2: Create Cursor Plugin Manifest
+### Task 1: Gemini Extension Manifest — [x]
 
-**Files:**
-- Create: `.cursor-plugin/plugin.json`
+- [x] `gemini-extension.json` with name, description, version, `contextFileName: GEMINI.md`
+- [x] Commit
 
-- [ ] **Step 1: Write the Cursor plugin manifest**
-  Create `.cursor-plugin/plugin.json` with the following content:
-  ```json
-  {
-    "name": "epistemic-skills",
-    "displayName": "Epistemic Skills",
-    "description": "The full epistemic-discipline collection in one package: a router plus formal rigor, blindspot reconnaissance, scholarly evidence, evidence-locked UAT, and multi-lens adversarial review.",
-    "version": "2.2.0",
-    "author": {
-      "name": "ZMS Labs",
-      "url": "https://github.com/ZMS-Labs"
-    },
-    "homepage": "https://github.com/ZMS-Labs/epistemic-skills",
-    "repository": "https://github.com/ZMS-Labs/epistemic-skills",
-    "license": "MIT",
-    "skills": "./plugins/epistemic-skills/skills/",
-    "agents": "./plugins/epistemic-skills/agents/"
-  }
-  ```
+### Task 2: Cursor Plugin Manifest — [x]
 
-- [ ] **Step 2: Commit**
-  Run:
-  ```powershell
-  git add .cursor-plugin/plugin.json
-  git commit -m "feat: add .cursor-plugin/plugin.json manifest"
-  ```
+- [x] `.cursor-plugin/plugin.json` with skills/agents path overrides into nested tree
+- [x] `.cursor-plugin/marketplace.json` for team marketplace import
+- [x] `plugins/epistemic-skills/.cursor-plugin/plugin.json`
+- [x] Commit
 
----
+### Task 3: Root skills/agents symlinks — [x]
 
-### Task 3: Create Skills and Agents Symlinks
+- [x] `skills` → `plugins/epistemic-skills/skills`
+- [x] `agents` → `plugins/epistemic-skills/agents`
+- [x] Commit
 
-**Files:**
-- Create: `skills` (symlink/junction)
-- Create: `agents` (symlink/junction)
+### Task 4: Validate — [x]
 
-- [ ] **Step 1: Create symlinks at the root**
-  Run the following commands in PowerShell (under workspace root `y:\dev\epistemic-skills`):
-  ```powershell
-  cmd /c mklink /d skills plugins\epistemic-skills\skills
-  cmd /c mklink /d agents plugins\epistemic-skills\agents
-  ```
+- [x] `gemini extensions validate`
+- [x] `agy plugin validate` / local install
+- [x] Cursor local plugin junction + reload (skills visible; auto-trigger observed)
 
-- [ ] **Step 2: Commit symlinks to Git**
-  Run:
-  ```powershell
-  git add skills agents
-  git commit -m "feat: add skills and agents symlinks at root"
-  ```
+### Task 5: Antigravity native plugin — [x]
 
----
-
-### Task 4: Validate and Test Installation
-
-**Files:**
-- None (Verification task)
-
-- [ ] **Step 1: Run Gemini extensions validation**
-  Run:
-  ```powershell
-  gemini extensions validate y:\dev\epistemic-skills
-  ```
-  Expected: Extension is valid (Exit code 0).
-
-- [ ] **Step 2: Link the extension locally**
-  Run:
-  ```powershell
-  gemini extensions link y:\dev\epistemic-skills
-  ```
-  Expected: Successful link output, confirming the extension is loaded.
-
-- [ ] **Step 3: Verify the skills list**
-  Run:
-  ```powershell
-  gemini extensions list
-  ```
-  Expected: `epistemic-skills` listed as installed and enabled with the 6 epistemic skills loaded.
+- [x] Root `plugin.json` per https://antigravity.google/schemas/v1/plugin.json
+- [x] Documented in README

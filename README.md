@@ -2,15 +2,17 @@
 
 Epistemic-discipline skills for agentic coding — how an agent **knows** things before, during, and after work.
 
-**Harness-agnostic.** The skills are plain [Agent Skills](https://agentskills.io/specification) (`SKILL.md` + supporting files) describing *methods*, not any one tool's mechanics. They run in any harness that can load a skill or a context file — Claude Code, Codex, Cursor, Gemini, or your own agent loop. Where a step needs a runtime primitive (concurrent sub-agents, a structured-output schema, an MCP tool), the skill states the **contract** and points at a labeled *reference implementation* for one harness; other harnesses meet the same contract with their own primitives. See [Using these in any harness](#using-these-in-any-harness).
+**Version 2.3.0.** **License: [GPL-3.0](LICENSE).**
+
+**Harness-agnostic.** The skills are plain [Agent Skills](https://agentskills.io/specification) (`SKILL.md` + supporting files) describing *methods*, not any one tool's mechanics. They run in any harness that can load a skill or a context file — Claude Code, Codex, Cursor, Gemini CLI, Antigravity, or your own agent loop. Where a step needs a runtime primitive (concurrent sub-agents, a structured-output schema, an MCP tool), the skill states the **contract** and points at a labeled *reference implementation* for one harness; other harnesses meet the same contract with their own primitives. See [Using these in any harness](#using-these-in-any-harness).
 
 Most skill collections cover the *workflow* layer: test-driven development, systematic debugging, plan writing (see [superpowers](https://github.com/obra/superpowers), which these compose with). This collection covers the layer underneath: the disciplines that keep an agent's claims tethered to evidence and its effort aimed at the real target.
 
-**Start with `using-epistemic-skills`** — the router. It answers *which* of these applies to a given task, in *what order*, and how each one's output feeds the next. The five below are the disciplines it routes to; install the router plus whichever ones you want.
+**Start with `using-epistemic-skills`** — the router. It answers *which* of these applies to a given task, in *what order*, and how each one's output feeds the next. The package ships **six** skills: the router plus the **five** disciplines it routes to. Install once; each skill self-triggers only when its own `description` matches.
 
 ## The arc
 
-The skills are one system — *how an agent knows things* before, during, and after work — with each ending at a defined boundary and handing off to the next:
+The five disciplines are one system — *how an agent knows things* before, during, and after work — with each ending at a defined boundary and handing off to the next:
 
 ```
  recon              decide                     gate               prove
@@ -24,27 +26,40 @@ Most tasks fire zero or one. The router's value is the case where more than one 
 
 ## Skills
 
-| Skill | What it disciplines |
+| Skill | Role |
 |---|---|
-| **using-epistemic-skills** | The entry point. Routes a task to the right discipline(s), sequences them (recon → design → evidence → gate → verify), and defines the handoff contracts so the skills compose without overreaching. Read it first; it never does the work itself. |
-| **applying-formal-rigor** | Design *and complexity* decisions. Sets a graduate-level formal-theory floor: name the *precise* construct (the exact normal form, the named isolation anomaly, the Master-Theorem case, the Ω lower bound), **derive** the conclusion instead of asserting it, and sweep every relevant lens. Ships a 7-lens theory battery; lens 4 is a full standalone Big-O / complexity analysis (recurrences, lower bounds, optimization convergence). |
-| **blindspot-pass** | The moment *before* work begins. A cheap read-only reconnaissance pass that surfaces landmines, hidden context, exemplars, and the questions an expert would ask — then **rewrites the request** so downstream work aims at the territory, not the map. Technique from Thariq Shihipar (Anthropic), *"A Field Guide to Claude Fable 5: Finding Your Unknowns"* (2026). |
-| **evidence-research** | Claims about *the literature*. Two engines answering different questions: **Consensus** discovers what the literature says; **Scite** interrogates how each paper was *received* — supporting vs contrasting citation statements, retractions and editorial notices. Consensus finds the witnesses; Scite runs the cross-examination. Prevents the worst failure: citing a refuted or retracted paper as support. Requires the Consensus and/or Scite MCP connectors; degrades explicitly and visibly when one is absent rather than quietly narrowing its claims. |
-| **evidence-locked-uat** | Claims that UI-facing work is *done*. No agent certifies its own work: the actor drives, a **blinded verifier** judges from evidence alone, and the judge is deterministic script code. Per-case evidence packets, triage tiers, and a strict verdict vocabulary where `INCONCLUSIVE` is reported as `INCONCLUSIVE` — never rounded up to PASS. Ships the full standard and agent directive it operationalizes. |
-| **gauntlet** | High-stakes decision points. A multi-lens adversarial panel reviews a *frozen* subject: a truth-gated dossier, rival failure modes each naming their own falsifier, independent lens passes from a 102-persona registry (deterministic, constraint-checked selection), mechanical evidence verification (`[V path:line]` anchoring, oracle-adequacy checks), a dissent-preserving Conflict Ledger, and a **computed** GO/CONDITIONAL/NO-GO — the reviewer cannot simply assert a verdict. Ships with the full roster, role agents, orchestration template, and a tested deterministic selector. |
+| **using-epistemic-skills** | **Router** (not a discipline). Routes a task to the right discipline(s), sequences them (recon → design → evidence → gate → verify), and defines handoff contracts. Read it first; it never does the work itself. |
+| **applying-formal-rigor** | Design *and complexity* decisions. Sets a graduate-level formal-theory floor: name the *precise* construct (the exact normal form, the named isolation anomaly, the Master-Theorem case, the Ω lower bound), **derive** the conclusion instead of asserting it, and sweep every relevant lens. Ships a 7-lens theory battery; lens 4 is a full standalone Big-O / complexity analysis. |
+| **blindspot-pass** | The moment *before* work begins. Cheap read-only reconnaissance that surfaces landmines, hidden context, exemplars, and expert questions — then **rewrites the request** so downstream work aims at the territory, not the map. Provenance: Thariq Shihipar (Anthropic), *"A Field Guide to Claude Fable 5: Finding Your Unknowns"* (2026). |
+| **evidence-research** | Claims about *the literature*. **Consensus** discovers what the literature says; **Scite** interrogates *reception* (supporting vs contrasting citations, retractions, notices). Prevents citing a refuted or retracted paper as support. Requires Consensus and/or Scite MCP; degrades explicitly when one is absent. |
+| **evidence-locked-uat** | Claims that UI-facing work is *done*. Actor drives; a **blinded verifier** judges from evidence alone; the judge is deterministic script code. Strict verdict vocabulary: `INCONCLUSIVE` is never rounded up to PASS. |
+| **gauntlet** | High-stakes decision points. Multi-lens adversarial panel on a *frozen* subject: truth-gated dossier, falsifiers, 102-persona registry with deterministic selection, mechanical `[V path:line]` evidence checks, Conflict Ledger, **computed** GO/CONDITIONAL/NO-GO. Ships roster, role-agents, orchestration template, and tested selector. |
+
+## Layout
+
+```
+epistemic-skills/                         # repo root
+├── plugins/epistemic-skills/
+│   ├── skills/<name>/SKILL.md            # canonical skill cores (six)
+│   ├── agents/                           # gauntlet role-agents (five)
+│   ├── .claude-plugin/plugin.json
+│   ├── .codex-plugin/plugin.json
+│   └── .cursor-plugin/plugin.json
+├── skills/  → plugins/epistemic-skills/skills/    # symlink (Gemini / root scanners)
+├── agents/  → plugins/epistemic-skills/agents/    # symlink
+├── .claude-plugin/marketplace.json
+├── .agents/plugins/marketplace.json      # Codex marketplace index
+├── .cursor-plugin/plugin.json            # Cursor whole-repo plugin
+├── .cursor-plugin/marketplace.json       # Cursor team-marketplace index
+├── gemini-extension.json + GEMINI.md     # Gemini CLI extension
+└── plugin.json                           # Antigravity native plugin
+```
+
+One tree of method files; harness-specific manifests only. Do not fork the skills per harness.
 
 ## Install
 
-**One package, many manifests, same files.** Cores live once under
-`plugins/epistemic-skills/skills/` (and role-agents under
-`plugins/epistemic-skills/agents/`). Root `skills/` and `agents/` are symlinks to
-those paths so harnesses that only scan the repo root (Gemini CLI) still find
-them. Install with **exactly one** mechanism per harness — do not also copy the
-same skills into that harness's user-skills directory, or you will get duplicate
-triggers.
-
-Each skill **self-triggers** from its frontmatter `description`, so one install
-gives à-la-carte behavior: you only pay attention-cost when a skill matches.
+Install with **exactly one** mechanism per harness. A second copy of the same skills (for example `npx skills add` on top of a plugin install) produces duplicate triggers.
 
 ### Claude Code
 
@@ -62,23 +77,15 @@ codex plugin add epistemic-skills@epistemic-skills
 
 ### Cursor
 
-**Recommended for personal / public use:** submit or install via the
-[Cursor Marketplace](https://cursor.com/marketplace/publish) (GitHub repo
-`ZMS-Labs/epistemic-skills`). Root `.cursor-plugin/plugin.json` is the
-single-plugin entry point. After it is listed:
+**Status:** packaging is ready (`.cursor-plugin/` manifests, version 2.3.0). The plugin is **not yet listed** on the public [Cursor Marketplace](https://cursor.com/marketplace); `/add-plugin epistemic-skills` works only after Cursor lists it or you import the repo as a [team marketplace](https://cursor.com/docs/plugins). Publisher application: [cursor.com/marketplace/publish](https://cursor.com/marketplace/publish).
 
-```text
-/add-plugin epistemic-skills
-```
+| Path | When to use |
+|---|---|
+| Local install (below) | Personal / fleet / until marketplace listing |
+| Team marketplace import of this GitHub repo | Cursor Teams/Enterprise private distribution |
+| Public marketplace `/add-plugin` | After Cursor accepts the publisher listing |
 
-Or: Customize → Plugins → browse/install **epistemic-skills**.
-
-**Team marketplace** (Cursor Teams/Enterprise): only needed if you want
-*private* org distribution. Import this same GitHub repo; `.cursor-plugin/marketplace.json`
-indexes the nested plugin at `plugins/epistemic-skills/`. Public MIT users can
-skip team marketplaces entirely.
-
-**Local install (dev / before marketplace listing):**
+**Local install:**
 
 ```powershell
 # Windows — from a clone of this repo
@@ -95,79 +102,69 @@ mkdir -p ~/.cursor/plugins/local
 ln -sfn "$(pwd)/plugins/epistemic-skills" ~/.cursor/plugins/local/epistemic-skills
 ```
 
-Then **Developer: Reload Window**. Success check: all six skills visible under
-Customize → Skills, and they auto-trigger on matching prompts.
+Then **Developer: Reload Window**. Success check: all six skills under Customize → Skills, and auto-trigger on matching prompts (for example an irreversible / stress-test ask should surface the router or `gauntlet`).
 
-Do **not** also run `npx skills add` into `~/.cursor/skills/` for this package
-while the plugin is installed — that is a second copy of the same triggers.
+Do **not** also install these skills into `~/.cursor/skills/` while the plugin is loaded.
 
-### Gemini CLI / Antigravity
-
-**Gemini CLI extension:**
+### Gemini CLI
 
 ```bash
 gemini extensions install https://github.com/ZMS-Labs/epistemic-skills --consent
-# local dev against a clone:
+# local dev:
 gemini extensions link /path/to/epistemic-skills
 ```
 
-Requires a restart of the Gemini session after install/link. Root `skills/`
-(symlink) is what the extension loader discovers; `gemini-extension.json` +
-`GEMINI.md` are the extension entrypoints.
+Restart the Gemini session after install/link. Entrypoints: `gemini-extension.json`, `GEMINI.md`, root `skills/` symlink. Validated with `gemini extensions validate`.
 
-**Antigravity native plugin** (root `plugin.json` + the same `skills/` / `agents/`
-tree):
+### Antigravity (`agy`)
+
+Native plugin marker is root [`plugin.json`](plugin.json) (Antigravity schema: `name` + `description`). Same `skills/` / `agents/` tree:
 
 ```bash
 agy plugin install https://github.com/ZMS-Labs/epistemic-skills
-# or from a local clone:
+# or:
 agy plugin install /path/to/epistemic-skills
-agy plugin validate /path/to/epistemic-skills   # optional
+agy plugin validate /path/to/epistemic-skills
 ```
 
-Prefer **one** of: native `agy plugin install`, Gemini extension link, or
-`agy plugin import gemini` — not several copies of the same skills.
+Prefer **one** of: native `agy plugin install`, Gemini extension link, or `agy plugin import gemini` — not several copies.
 
-### Universal / any other harness
+### Using these in any harness
 
-The skills follow the [Agent Skills spec](https://agentskills.io/specification).
-Point your agent at `plugins/epistemic-skills/skills/` (or the root `skills/`
-symlink) or a single `SKILL.md`:
+The skills follow the [Agent Skills spec](https://agentskills.io/specification). Point your agent at `plugins/epistemic-skills/skills/` (or the root `skills/` symlink) or a single `SKILL.md`:
 
 ```bash
 npx skills add https://github.com/ZMS-Labs/epistemic-skills/tree/main/plugins/epistemic-skills/skills
 ```
 
-Use this path **only** when the harness has no native plugin/extension install.
-If you already installed via Claude, Codex, Cursor, or Gemini above, skip
-`npx skills add` for those same skills.
+Use this **only** when the harness has no native plugin/extension install.
 
-- **Point your agent at the `SKILL.md`.** Frontmatter `description` is the trigger;
-  the body is the method.
-- **Meet the contract, not the tool.** A few skills need a runtime primitive. Each
-  states a harness-agnostic contract and labels one reference implementation:
-  - **gauntlet** Step 5: *concurrent, context-isolated role-agents behind a barrier*
-    (degrade: sequential isolated calls). Role-agent definitions are in `agents/`.
-  - **evidence-locked-uat**: keep *actor / blinded-verifier / deterministic-judge*
-    in separate contexts.
-  - **evidence-research**: Consensus and/or Scite MCP (identify by server); degrade
-    explicitly when absent.
+- **Frontmatter `description`** is the trigger; the body is the method.
+- **Meet the contract, not the tool.** Runtime needs:
+  - **gauntlet** Step 5: concurrent, context-isolated role-agents behind a barrier (degrade: sequential isolated calls). Definitions in `agents/`.
+  - **evidence-locked-uat**: actor / blinded-verifier / deterministic-judge in separate contexts.
+  - **evidence-research**: Consensus and/or Scite MCP (identify by server); degrade explicitly when absent.
   - **applying-formal-rigor** and **blindspot-pass**: pure method — no runtime dependency.
 - **`using-epistemic-skills`** is the router; read it first.
 
-The scripts (`gauntlet/scripts/*.py`) are stdlib-only Python and run anywhere Python does.
+Gauntlet scripts (`skills/gauntlet/scripts/*.py`) are stdlib-only Python.
 
 ## Design principles
 
-- **Floors, not ceilings.** Each skill states the minimum acceptable rigor for its moment, not a maximal process.
-- **Derive, don't assert.** A conclusion is earned by a chain from named theory or read evidence; "it's better" is an opinion.
-- **End at the boundary.** blindspot-pass ends at understanding (it never implements); applying-formal-rigor ends at a derived verdict. Skills that know where they stop compose cleanly.
-- **Anti-rationalization tables.** Each skill enumerates the exact excuses an agent under pressure uses to skip it, with counters.
+- **Floors, not ceilings.** Minimum rigor for the moment, not a maximal ritual.
+- **Derive, don't assert.** Conclusions are earned from named theory or read evidence.
+- **End at the boundary.** Each skill stops where the next begins.
+- **Anti-rationalization tables.** Each skill names the excuses used to skip it, with counters.
+- **Fail closed; degrade explicitly.** Missing tools yield visible limits — never a silent pass.
 
-These skills are extracted from a private fleet where they run as standing discipline, hardened by daily use and adversarial review.
+## Gauntlet status (honest)
 
-The gauntlet's honest status is stated in its own roadmap section. Shipped and validated: the staple, the falsifiability contract, mechanical evidence checks, the deterministic selector, and — as of 2026-07-17 — the **certified-arbitrator battery**, which runs the arbitrator blind against 10 planted defect classes it must catch and scored **10/10 (certified at standard rigor)**; the battery, scorer, and results are in [`evals/arbitrator-certification/`](plugins/epistemic-skills/skills/gauntlet/evals/arbitrator-certification/) so the claim is reproducible. Still partial: the behavioral battery has only a smoke subset run (non-inferiority, not superiority); the full sweep and the later measurement bundle remain designs — stated as such, never claimed done.
+Full map: [`skills/gauntlet/reference/roadmap.md`](plugins/epistemic-skills/skills/gauntlet/reference/roadmap.md).
+
+**Shipped and validated:** staple, falsifiability contract, mechanical evidence checks, deterministic selector, and — as of 2026-07-17 — the **certified-arbitrator battery** (arbitrator blind against 10 planted defect classes; **10/10 catch, certified at standard rigor**). Battery, scorer, and results: [`evals/arbitrator-certification/`](plugins/epistemic-skills/skills/gauntlet/evals/arbitrator-certification/).
+
+**Still partial:** behavioral regression battery has only a smoke-subset run (non-inferiority, not superiority); the full 24×4 sweep and later measurement bundles remain designs — stated as such, never claimed done. (Smoke-run notes are not published as a standalone file in this repo.)
 
 ## License
 
-see [LICENSE](LICENSE).
+[GPL-3.0](LICENSE) — GNU General Public License v3.0.
