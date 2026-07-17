@@ -22,6 +22,16 @@
       "name": "gauntlet",
       "source": "./plugins/gauntlet",
       "description": "Adversarial-review staple: multi-lens panel review of a frozen subject with falsifier discipline, mechanical evidence verification, and a computed GO/CONDITIONAL/NO-GO verdict."
+    },
+    {
+      "name": "evidence-research",
+      "source": "./plugins/evidence-research",
+      "description": "Scholarly evidence with two independent engines: Consensus discovers what the literature says, Scite interrogates how each finding was received — supporting/contrasting citations and retractions."
+    },
+    {
+      "name": "evidence-locked-uat",
+      "source": "./plugins/evidence-locked-uat",
+      "description": "UAT where no agent certifies its own work: separated actor / blinded verifier / deterministic judge, evidence packets, and a verdict vocabulary that cannot round INCONCLUSIVE up to PASS."
     }
   ]
 }

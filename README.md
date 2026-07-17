@@ -10,6 +10,8 @@ Most public skill collections cover the *workflow* layer: test-driven developmen
 |---|---|
 | **applying-formal-rigor** | Design decisions. Sets a graduate-level formal-theory floor: name the *precise* construct (the exact normal form, the named isolation anomaly, the consistency guarantee in the lattice), **derive** the conclusion instead of asserting it, and sweep every relevant lens instead of stopping at the first one. Ships with a 7-lens theory battery (relational, concurrency, distributed consistency, complexity, type theory, information theory, architecture formalisms). |
 | **blindspot-pass** | The moment *before* work begins. A cheap read-only reconnaissance pass that surfaces landmines, hidden context, exemplars, and the questions an expert would ask — then **rewrites the request** so downstream work aims at the territory, not the map. Technique from Thariq Shihipar (Anthropic), *"A Field Guide to Claude Fable 5: Finding Your Unknowns"* (2026). |
+| **evidence-research** | Claims about *the literature*. Two engines answering different questions: **Consensus** discovers what the literature says; **Scite** interrogates how each paper was *received* — supporting vs contrasting citation statements, retractions and editorial notices. Consensus finds the witnesses; Scite runs the cross-examination. Prevents the worst failure: citing a refuted or retracted paper as support. Requires the Consensus and/or Scite MCP connectors; degrades explicitly and visibly when one is absent rather than quietly narrowing its claims. |
+| **evidence-locked-uat** | Claims that UI-facing work is *done*. No agent certifies its own work: the actor drives, a **blinded verifier** judges from evidence alone, and the judge is deterministic script code. Per-case evidence packets, triage tiers, and a strict verdict vocabulary where `INCONCLUSIVE` is reported as `INCONCLUSIVE` — never rounded up to PASS. Ships the full standard and agent directive it operationalizes. |
 | **gauntlet** | High-stakes decision points. A multi-lens adversarial panel reviews a *frozen* subject: a truth-gated dossier, rival failure modes each naming their own falsifier, independent lens passes from a 102-persona registry (deterministic, constraint-checked selection), mechanical evidence verification (`[V path:line]` anchoring, oracle-adequacy checks), a dissent-preserving Conflict Ledger, and a **computed** GO/CONDITIONAL/NO-GO — the reviewer cannot simply assert a verdict. Ships with the full roster, role agents, orchestration template, and a tested deterministic selector. |
 
 ## Install
@@ -19,6 +21,8 @@ Most public skill collections cover the *workflow* layer: test-driven developmen
 /plugin install applying-formal-rigor@epistemic-skills
 /plugin install blindspot-pass@epistemic-skills
 /plugin install gauntlet@epistemic-skills
+/plugin install evidence-research@epistemic-skills
+/plugin install evidence-locked-uat@epistemic-skills
 ```
 
 Each skill is a separate plugin — install only what you want.
@@ -30,7 +34,7 @@ Each skill is a separate plugin — install only what you want.
 - **End at the boundary.** blindspot-pass ends at understanding (it never implements); applying-formal-rigor ends at a derived verdict. Skills that know where they stop compose cleanly.
 - **Anti-rationalization tables.** Each skill enumerates the exact excuses an agent under pressure uses to skip it, with counters.
 
-These skills are extracted from a private fleet where they run as standing discipline, hardened by daily use and adversarial review. More are planned (scholarly evidence-research, evidence-locked UAT) as their extraction completes.
+These skills are extracted from a private fleet where they run as standing discipline, hardened by daily use and adversarial review.
 
 The gauntlet's honest status is stated in its own roadmap section: the staple, falsifiability contract, mechanical evidence checks, and the validated deterministic selector are shipped; the certified-arbitrator battery and behavioral regression battery are designed but not yet built or run.
 

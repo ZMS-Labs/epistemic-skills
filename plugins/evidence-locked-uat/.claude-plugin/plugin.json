@@ -1,0 +1,8 @@
+{
+  "name": "evidence-locked-uat",
+  "description": "User acceptance testing where no agent certifies its own work: separated actor / blinded verifier / deterministic judge roles, per-case evidence packets, and a strict verdict vocabulary that cannot round INCONCLUSIVE up to PASS.",
+  "version": "1.0.0",
+  "author": {
+    "name": "ZMS Labs"
+  }
+}
