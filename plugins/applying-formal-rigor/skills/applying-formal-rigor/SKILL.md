@@ -17,6 +17,7 @@ This is a **floor, not a ceiling** — the minimum bar for any non-trivial decis
 
 - Any decision with ≥2 viable options (schema shape, store placement, cache strategy, isolation level, index, algorithm, data structure, API contract, propagation model).
 - Any time you're about to assert one option is "correct/better/cleaner."
+- **Analyzing or justifying the complexity of an algorithm or piece of code** — "what's the Big-O of this", "is this optimal", "can this be faster" — use the complexity lens (4): name the class *and its parameter*, solve the recurrence, prove the Ω lower bound, and report a convergence state rather than an open-ended hunt for speedups.
 - Reviewing someone else's design rationale for rigor.
 
 **When NOT to use:** purely mechanical edits with one correct answer; pure preference with no objective axis (naming a variable). If there's a *theorem* that bears on it, this applies.
@@ -51,7 +52,7 @@ Run the decision through the lens index below. For each lens that bears on it, n
 1. **Relational & normalization** — FDs, Armstrong's axioms, attribute closure, candidate keys, 1NF→6NF/BCNF/DKNF, **MVD/4NF**, **JD/5NF**, lossless-join & dependency-preserving decomposition, relational algebra, anomaly classes.
 2. **Transaction & concurrency** — ACID, schedules, **conflict/view serializability** (precedence graph), recoverability (recoverable/ACA/strict), **isolation levels & their anomalies** (dirty, non-repeatable, **phantom**, write-skew), 2PL/SS2PL, MVCC, OCC, deadlock.
 3. **Distributed data & consistency** — **CAP, PACELC**, the **consistency lattice** (linearizable > sequential > causal > PRAM > eventual) + **session guarantees** (read-your-writes, monotonic reads/writes, writes-follow-reads), **quorums (R+W>N)**, Lamport/vector clocks, **CRDTs / LWW registers**, consensus (Paxos/Raft), 2PC/saga/outbox.
-4. **Complexity & algorithms** — asymptotic (O/Θ/Ω), **amortized** (aggregate/accounting/potential), worst vs average, space-time tradeoff, complexity classes, data-structure operation profiles, **index theory** (B+-tree seek vs scan, covering, selectivity).
+4. **Complexity & algorithms** — asymptotic (O/Θ/Ω), **amortized** (aggregate/accounting/potential), worst vs average, space-time tradeoff, **recurrences + Master Theorem / Akra–Bazzi**, **lower-bound (Ω) proof + optimization convergence** (an optimization analysis must reach a fixed point — always finding another gain signals a hallucination, an uncounted trade-off, or a missed bound), named optimization substitutions, complexity classes, data-structure operation profiles, **index theory** (B+-tree seek vs scan, covering, selectivity). *This lens is the full standalone complexity/Big-O analysis, not only the design-fork case.*
 5. **Type theory & formal methods** — **make illegal states unrepresentable**, invariants, pre/postconditions, loop invariants, totality, refinement, algebraic data types, parametricity.
 6. **Information theory** — entropy, encoding/compression bounds, **hashing & collision** (birthday bound), cardinality estimation (HLL).
 7. **Architecture formalisms** — coupling/cohesion, **SSOT / normalization-for-code** (same anomaly theory applied to config/state), idempotency, referential transparency, **blast radius / failure domains**, reversibility.
