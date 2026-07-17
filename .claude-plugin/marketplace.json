@@ -17,6 +17,11 @@
       "name": "blindspot-pass",
       "source": "./plugins/blindspot-pass",
       "description": "Pre-dispatch epistemic reconnaissance: surface the unknown-unknowns before committing effort, then rewrite the request to aim at the real target."
+    },
+    {
+      "name": "gauntlet",
+      "source": "./plugins/gauntlet",
+      "description": "Adversarial-review staple: multi-lens panel review of a frozen subject with falsifier discipline, mechanical evidence verification, and a computed GO/CONDITIONAL/NO-GO verdict."
     }
   ]
 }
