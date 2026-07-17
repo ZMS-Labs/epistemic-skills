@@ -103,6 +103,8 @@ while the plugin is installed — that is a second copy of the same triggers.
 
 ### Gemini CLI / Antigravity
 
+**Gemini CLI extension:**
+
 ```bash
 gemini extensions install https://github.com/ZMS-Labs/epistemic-skills --consent
 # local dev against a clone:
@@ -113,9 +115,18 @@ Requires a restart of the Gemini session after install/link. Root `skills/`
 (symlink) is what the extension loader discovers; `gemini-extension.json` +
 `GEMINI.md` are the extension entrypoints.
 
-Antigravity can install from the same GitHub URL (`agy plugin install …`) or
-import an already-linked Gemini extension (`agy plugin import gemini`). Prefer
-one of those paths — not both plus a manual skills copy.
+**Antigravity native plugin** (root `plugin.json` + the same `skills/` / `agents/`
+tree):
+
+```bash
+agy plugin install https://github.com/ZMS-Labs/epistemic-skills
+# or from a local clone:
+agy plugin install /path/to/epistemic-skills
+agy plugin validate /path/to/epistemic-skills   # optional
+```
+
+Prefer **one** of: native `agy plugin install`, Gemini extension link, or
+`agy plugin import gemini` — not several copies of the same skills.
 
 ### Universal / any other harness
 
