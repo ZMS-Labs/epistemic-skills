@@ -1,11 +1,11 @@
 ---
 name: gauntlet
-description: The consolidated adversarial-review staple. Auto-fires (triage-gated) at high-stakes, irreversible, one-way-door, or high-blast-radius decision points in the superpowers workflow, and on explicit request ("gauntlet", "stress-test this", "sovereign gauntlet", "red-team-gauntlet", "deep-mode review", "GO/NO-GO review"). Fuses Sovereign-Gauntlet evidence-verified lens review with DeepReason conjecture→falsify→reinstate mechanics and a computed GO/CONDITIONAL/NO-GO verdict. Use before approving architecture/design (during brainstorming approval), before writing-plans on risky steps, at finishing-a-development-branch / pre-merge for irreversible-infra or security changes, and as a verification-before-completion escalation for high-stakes hard-to-verify claims. Do NOT use for reversible low-stakes work, lookups, ordinary code review, or deterministic test-failure triage.
+description: The consolidated adversarial-review staple. Auto-fires (triage-gated) at high-stakes, irreversible, one-way-door, or high-blast-radius decision points in your development workflow, and on explicit request ("gauntlet", "stress-test this", "sovereign gauntlet", "red-team-gauntlet", "deep-mode review", "GO/NO-GO review"). Fuses Sovereign-Gauntlet evidence-verified lens review with DeepReason conjecture→falsify→reinstate mechanics and a computed GO/CONDITIONAL/NO-GO verdict. Use before approving architecture/design (during brainstorming approval), before writing-plans on risky steps, at finishing-a-development-branch / pre-merge for irreversible-infra or security changes, and as a verification-before-completion escalation for high-stakes hard-to-verify claims. Do NOT use for reversible low-stakes work, lookups, ordinary code review, or deterministic test-failure triage.
 ---
 
 # The Gauntlet — consolidated adversarial-review staple
 
-The fleet's standing **adversarial-review reflex**. One staple with a depth
+A standing **adversarial-review reflex**. One staple with a depth
 dial, fusing three lineages into one:
 
 - **Sovereign-Gauntlet** discipline — machine-readable lens registry
@@ -23,7 +23,7 @@ dial, fusing three lineages into one:
 
 > **Provenance:** merged from a 3-agent bake-off (2026-07-07) — Cursor's
 > auto-firing MCP-wired skill as the spine, Codex's durable-plugin + labeled
-> docket-modes + role-boundary discipline, Claude's consolidation + phased
+> docket-modes + role-boundary discipline, a consolidation pass + phased
 > self-measured roadmap.
 
 ## Relationship to the other gates (READ FIRST)
@@ -40,7 +40,8 @@ red-team gate, override P1/P2 semantics, or convert hypotheses into facts.
 
 ## Auto-fire discipline (staple, not nag)
 
-`using-superpowers` makes this self-suggest. It **fires on a blast-radius
+A skill-triggering harness (e.g. superpowers' `using-superpowers`) makes this
+self-suggest. It **fires on a blast-radius
 trigger**, then Step-2 triage decides whether to run the full engine:
 
 - **Triggers (consider firing):** irreversible / one-way-door; infra-class
@@ -212,38 +213,43 @@ The **judge seat must use a different model family than the lenses** when
 configurable. Show the panel for operator sign-off when they are in the loop;
 in autonomous flow, select without blocking.
 
-### Step 5 — Independent lens passes (STANDARD: Workflow + role-agents)
+### Step 5 — Independent lens passes (STANDARD: concurrent isolated role-agents)
 
-**Standard method (depth ≥ standard) — see `reference/execution-model.md`:**
-orchestrate the panel as a **dynamic Workflow** (`assets/gauntlet-workflow.template.js`)
-that fans out the selected lenses with a **barrier before arbitration**, and
-dispatch each lens as a **predefined role-agent** (`gauntlet-adversary` /
-`-constructive` / `-metatextual`), NOT a fresh general-purpose agent. **Agent-type
-resolution:** these definitions live in this skill's sibling `agents/` directory. Some
-harnesses namespace plugin-provided agents (`gauntlet:gauntlet-adversary`); if the bare
-name does not resolve, try the namespaced form, and if neither registers, say so and use
-the degrade fallback below — never silently substitute a general-purpose agent, which
-drops the falsifier contract and evidence tiers the role prompt carries. Dispatch
-the **shadow-seat lens** in the same fan-out as the core panel — same contract,
-same barrier; skipping it starves the probation lifecycle of data. Its report is
-withheld from the arbitrator (shadow semantics, Step 4). The role
-agent carries the base discipline (falsifier contract, `[V]`/`[I]`/`[H]` evidence
-tiers, verbalized sampling) in its system prompt; the roster card is injected as
-`{{PERSONA_SPEC}}`. Structured schemas force the `finding-set@1` contract —
-findings with no structurally-observable falsifier (method + threshold +
-timeframe) are rejected at the tool layer. The Workflow journal
-is the append-only replayable record and `budget.spent()` is the meter (two
-DeepReason disciplines, delivered natively).
+**The contract (harness-agnostic).** Run the selected lenses as **concurrent,
+context-isolated sub-agent invocations behind a barrier before arbitration**, each
+dispatched as a **predefined role-agent** (adversary / constructive / metatextual),
+NOT a fresh general-purpose agent. The role agent carries the base discipline
+(falsifier contract, `[V]`/`[I]`/`[H]` evidence tiers, verbalized sampling) in its
+system prompt; the roster card is injected as `{{PERSONA_SPEC}}`. Findings with no
+structurally-observable falsifier (method + threshold + timeframe) are rejected —
+enforce this with a structured-output schema (`finding-set@1`) if your harness has one,
+by explicit instruction otherwise. Keep an append-only record of the run and a token/step
+meter. Also dispatch the **shadow-seat lens** in the same fan-out (same contract, same
+barrier; skipping it starves the probation lifecycle) — its report is withheld from the
+arbitrator (shadow semantics, Step 4).
 
-**Independence is the value — never make the lenses a team.** They must not see
-each other's findings before arbitration; the Workflow `parallel()` barrier
-keeps them concurrent + isolated. (Agent teams are allowed ONLY at Step-7
-bounded reinstatement.)
+**Reference implementation (one harness).** In Claude Code this is a dynamic Workflow
+(`assets/gauntlet-workflow.template.js`, `reference/execution-model.md`): `parallel()`
+gives the isolation barrier, the journal is the replayable record, `budget.spent()` is the
+meter, and structured schemas enforce the falsifier contract at the tool layer. Other
+harnesses meet the same contract with their own primitives (a parallel-subagent API, a
+task pool, or — worst case — the degrade fallback below).
 
-**Degrade fallback (`orchestration: manual-degraded`, disclose loudly):** when
-Workflow is unavailable/unauthorized, consecutive `Agent` calls with strict
-per-lens context partition — still the role-agents, still the falsifier
-contract. Save reports to `reports/<lens>.md`.
+**Agent-type resolution.** The role-agent definitions live in the `agents/` directory
+(at the plugin/skill root, where your harness registers them). Some harnesses namespace
+them (`gauntlet:gauntlet-adversary`); if the bare name does not resolve, try the
+namespaced form, and if neither registers, **say so and use the degrade fallback** — never
+silently substitute a general-purpose agent, which drops the falsifier contract and
+evidence tiers the role prompt carries.
+
+**Independence is the value — never make the lenses a team.** They must not see each
+other's findings before arbitration; the barrier keeps them concurrent + isolated. (Agent
+teams are allowed ONLY at Step-7 bounded reinstatement.)
+
+**Degrade fallback (`orchestration: manual-degraded`, disclose loudly):** when no
+concurrent-subagent primitive is available, run consecutive isolated agent calls with
+strict per-lens context partition — still the role-agents, still the falsifier contract.
+Save reports to `reports/<lens>.md`.
 
 ### Step 6 — Mechanical criticism
 
@@ -296,10 +302,10 @@ ruling — no open-ended cycles. Calibration rulings (disagreement with a
 
 **When:** `max` depth OR a one-way-door / irreversible risk class — AND only with
 operator authorization (it needs a signed-in browser; never silent, never on the
-autonomous path). Skip otherwise. Rationale: Step 7's arbitrator is a Claude
-agent, so the highest-stakes verdicts lack a cross-*family* check; an independent
-GPT-5.6 Pro read supplies the grader-family independence the eval program treats
-as the gold standard for a certified result.
+autonomous path). Skip otherwise. Rationale: Step 7's arbitrator is a
+same-model-family agent, so the highest-stakes verdicts lack a cross-*family* check; an
+independent read from a different model family supplies the grader-family independence the
+eval program treats as the gold standard for a certified result.
 
 **How (baked in — `scripts/consult_packet.py`):**
 1. `python scripts/consult_packet.py build --input run.json --stub resp.json` assembles a
@@ -381,9 +387,9 @@ it **measures cost-positive** on the battery. Full map: `reference/roadmap.md`.
 
 ## Resources
 
-- **Execution model (STANDARD): `reference/execution-model.md`** — Workflow
-  orchestration + predefined role-agents; the required way to run the panel at
-  depth ≥ standard.
+- **Execution model (STANDARD): `reference/execution-model.md`** — the orchestration
+  contract (concurrent isolated role-agents + barrier) and a Claude Code reference
+  implementation; the required way to run the panel at depth ≥ standard.
 - Panel Workflow template: `assets/gauntlet-workflow.template.js`
 - Role agents: `gauntlet-{adversary,constructive,metatextual,arbitrator}` — definitions in the sibling `agents/` directory (plugin root when installed as a plugin, so the harness registers them)
 - Deep-mode MCP protocol: `reference/deep-mode-mcp.md`

@@ -1,3 +1,6 @@
+// Gauntlet panel orchestration — CLAUDE CODE REFERENCE IMPLEMENTATION of the
+// harness-agnostic Step-5 contract (concurrent isolated role-agents + barrier).
+// Other harnesses meet the same contract with their own subagent primitive.
 // Gauntlet panel orchestration — the STANDARD execution model (Phase 0.6).
 // generate_options (open axis) -> deterministic fan-out -> barrier -> mechanical
 // criticism -> arbitrate -> verdict. Pass the frozen dossier + the selection made by

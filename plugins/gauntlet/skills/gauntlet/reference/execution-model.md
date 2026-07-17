@@ -7,6 +7,13 @@
 
 ## Two decisions, now standard
 
+> **Scope.** This document is the **Claude Code reference implementation** of the
+> harness-agnostic Step-5 contract (concurrent, context-isolated role-agents behind a
+> barrier). The *contract* is what binds; the Workflow-tool specifics below are one way to
+> meet it. On a harness without a parallel-subagent primitive, use the degrade fallback
+> (consecutive isolated agent calls) — the isolation and falsifier discipline are the
+> invariants, not the Workflow API.
+
 ### 1. Orchestrate the panel as a dynamic Workflow (not consecutive subagents)
 
 The panel is a deterministic **fan-out → barrier → mechanical-criticism →

@@ -9,7 +9,7 @@ Step 8, not optional.
 
 Aggregate + threshold check: `python scripts/lens_stats.py` (add `--json` for machine
 output). This ledger lives in the durable repo (commit it with the run), never only in
-the `~/.claude/skills` cache.
+the deployed skill cache (`~/.claude/skills` or your harness's equivalent).
 
 ## Record schema (one line per run)
 
