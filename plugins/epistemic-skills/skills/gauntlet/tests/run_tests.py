@@ -129,6 +129,24 @@ def main():
         print(f"[FAIL] verify_evidence fail-closed: {e}")
         failures.append("verify_evidence-fail-closed")
 
+    try:
+        test_materialized_role_binding()
+    except AssertionError as e:
+        print(f"[FAIL] materialized role binding: {e}")
+        failures.append("materialized-role-binding")
+
+    try:
+        test_role_frontmatter_is_cross_runtime_portable()
+    except AssertionError as e:
+        print(f"[FAIL] role frontmatter portability: {e}")
+        failures.append("role-frontmatter-portability")
+
+    try:
+        test_codex_agent_renderer()
+    except AssertionError as e:
+        print(f"[FAIL] Codex agent renderer: {e}")
+        failures.append("codex-agent-renderer")
+
     print(f"\n{'ALL PASS' if not failures else 'FAILURES: ' + ', '.join(failures)}")
     return 0 if not failures else 1
 
@@ -245,6 +263,96 @@ def test_verify_evidence_fails_closed_on_binary():
         missing = verify_evidence.verify_tag("nope.md", 1, root)
         assert missing.status == "H"
     print("[PASS] verify_evidence fails closed on binary [V] tags (F13 regression)")
+
+
+def test_materialized_role_binding():
+    """A runtime without native custom-agent registration keeps the exact role contract.
+
+    This is the portability regression: Codex packaged the role files but did not
+    register them as collaboration agent types. The fallback must materialize the
+    canonical role definition and selected persona into a deterministic prompt,
+    reject unresolved placeholders, and record hashes for replay.
+    """
+    import hashlib
+    import json as _json
+    import subprocess
+    import tempfile
+
+    script = ROOT / "scripts" / "materialize_role.py"
+    with tempfile.TemporaryDirectory() as td:
+        tmp = Path(td)
+        persona = tmp / "persona.md"
+        dossier = tmp / "dossier.md"
+        output = tmp / "binding.json"
+        persona.write_text("Audit the publication boundary and name falsifiers.\n", encoding="utf-8")
+        dossier.write_text("# Frozen dossier\nOnly verified facts may be used.\n", encoding="utf-8")
+
+        result = subprocess.run(
+            [PY, str(script), "--role", "gauntlet-adversary", "--persona", str(persona),
+             "--dossier", str(dossier), "--out", str(output)],
+            capture_output=True, text=True, cwd=ROOT,
+        )
+        assert result.returncode == 0, result.stdout + result.stderr
+        record = _json.loads(output.read_text(encoding="utf-8"))
+        prompt = record["prompt"]
+        assert "{{PERSONA_SPEC}}" not in prompt
+        assert persona.read_text(encoding="utf-8").strip() in prompt
+        assert dossier.read_text(encoding="utf-8").strip() in prompt
+        assert "Falsifier contract" in prompt or "falsifier contract" in prompt
+        assert record["binding_mode"] == "materialized-role"
+        assert record["role"] == "gauntlet-adversary"
+        assert record["role_sha256"] == hashlib.sha256(
+            record["role_source"].encode("utf-8")
+        ).hexdigest()
+        assert len(record["persona_sha256"]) == 64
+        assert len(record["dossier_sha256"]) == 64
+
+        bad = subprocess.run(
+            [PY, str(script), "--role", "not-a-role", "--persona", str(persona),
+             "--dossier", str(dossier), "--out", str(output)],
+            capture_output=True, text=True, cwd=ROOT,
+        )
+        assert bad.returncode != 0
+    print("[PASS] materialized role binding preserves exact contract + replay hashes")
+
+
+def test_role_frontmatter_is_cross_runtime_portable():
+    """Shared role files must not pin vendor-specific models or tool identifiers."""
+    agents_root = ROOT.parent.parent / "agents"
+    role_files = sorted(agents_root.glob("gauntlet-*.md"))
+    assert len(role_files) == 5, f"expected five canonical roles, found {len(role_files)}"
+    for role_file in role_files:
+        text = role_file.read_text(encoding="utf-8")
+        assert text.startswith("---\n"), f"missing frontmatter: {role_file.name}"
+        frontmatter = text.split("---", 2)[1]
+        assert "\nmodel:" not in frontmatter, f"vendor-specific model pin in {role_file.name}"
+        assert "\ntools:" not in frontmatter, f"vendor-specific tool names in {role_file.name}"
+        assert "\nname:" in frontmatter and "\ndescription:" in frontmatter
+    print("[PASS] shared role frontmatter is portable across Claude/Cursor/Gemini")
+
+
+def test_codex_agent_renderer():
+    """Codex's user-agent registry receives all five canonical Markdown roles."""
+    import subprocess
+    import tempfile
+    import tomllib
+
+    script = ROOT / "scripts" / "render_codex_agents.py"
+    with tempfile.TemporaryDirectory() as td:
+        out = Path(td) / "agents"
+        result = subprocess.run(
+            [PY, str(script), "--out", str(out)],
+            capture_output=True, text=True, cwd=ROOT,
+        )
+        assert result.returncode == 0, result.stdout + result.stderr
+        rendered = sorted(out.glob("gauntlet-*.toml"))
+        assert len(rendered) == 5, f"expected five Codex agents, found {len(rendered)}"
+        adversary = tomllib.loads((out / "gauntlet-adversary.toml").read_text(encoding="utf-8"))
+        assert adversary["name"] == "gauntlet-adversary"
+        assert "hostile scrutiny" in adversary["description"]
+        assert "Falsifier contract" in adversary["developer_instructions"]
+        assert "tools:" not in adversary["developer_instructions"]
+    print("[PASS] Codex renderer registers all five canonical roles")
 
 
 if __name__ == "__main__":

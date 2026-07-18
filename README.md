@@ -2,7 +2,7 @@
 
 Epistemic-discipline skills for agentic coding — how an agent **knows** things before, during, and after work.
 
-**Version 2.3.0.** **License: [GPL-3.0](LICENSE).**
+**Version 2.3.1.** **License: [GPL-3.0-or-later](LICENSE).**
 
 **Harness-agnostic.** The skills are plain [Agent Skills](https://agentskills.io/specification) (`SKILL.md` + supporting files) describing *methods*, not any one tool's mechanics. They run in any harness that can load a skill or a context file — Claude Code, Codex, Cursor, Gemini CLI, Antigravity, or your own agent loop. Where a step needs a runtime primitive (concurrent sub-agents, a structured-output schema, an MCP tool), the skill states the **contract** and points at a labeled *reference implementation* for one harness; other harnesses meet the same contract with their own primitives. See [Using these in any harness](#using-these-in-any-harness).
 
@@ -73,11 +73,19 @@ Install with **exactly one** mechanism per harness. A second copy of the same sk
 ```powershell
 codex plugin marketplace add ZMS-Labs/epistemic-skills --ref main
 codex plugin add epistemic-skills@epistemic-skills
+# Register the five gauntlet roles in Codex's user-agent registry:
+python "$HOME/.codex/plugins/cache/epistemic-skills/epistemic-skills/2.3.1/skills/gauntlet/scripts/render_codex_agents.py" --out "$HOME/.codex/agents"
 ```
+
+Start a new Codex task after rendering the roles. Codex plugin manifests do not
+currently register custom collaboration-agent types themselves; the renderer
+bridges the canonical packaged Markdown roles into Codex's native user-agent
+TOML registry. The gauntlet also retains a hashed exact-role materialization
+fallback for a task started before registration.
 
 ### Cursor
 
-**Status:** packaging is ready (`.cursor-plugin/` manifests, version 2.3.0). The plugin is **not yet listed** on the public [Cursor Marketplace](https://cursor.com/marketplace); `/add-plugin epistemic-skills` works only after Cursor lists it or you import the repo as a [team marketplace](https://cursor.com/docs/plugins). Publisher application: [cursor.com/marketplace/publish](https://cursor.com/marketplace/publish).
+**Status:** packaging is ready (`.cursor-plugin/` manifests, version 2.3.1). The plugin is **not yet listed** on the public [Cursor Marketplace](https://cursor.com/marketplace); `/add-plugin epistemic-skills` works only after Cursor lists it or you import the repo as a [team marketplace](https://cursor.com/docs/plugins). Publisher application: [cursor.com/marketplace/publish](https://cursor.com/marketplace/publish).
 
 | Path | When to use |
 |---|---|
@@ -141,7 +149,7 @@ Use this **only** when the harness has no native plugin/extension install.
 
 - **Frontmatter `description`** is the trigger; the body is the method.
 - **Meet the contract, not the tool.** Runtime needs:
-  - **gauntlet** Step 5: concurrent, context-isolated role-agents behind a barrier (degrade: sequential isolated calls). Definitions in `agents/`.
+  - **gauntlet** Step 5: concurrent, context-isolated exact-role agents behind a barrier (degrade: sequential isolated calls). Definitions in `agents/`; runtimes without plugin-defined custom-agent registration use the replayable materialized-role adapter documented in `skills/gauntlet/reference/runtime-role-binding.md`.
   - **evidence-locked-uat**: actor / blinded-verifier / deterministic-judge in separate contexts.
   - **evidence-research**: Consensus and/or Scite MCP (identify by server); degrade explicitly when absent.
   - **applying-formal-rigor** and **blindspot-pass**: pure method — no runtime dependency.
@@ -167,4 +175,4 @@ Full map: [`skills/gauntlet/reference/roadmap.md`](plugins/epistemic-skills/skil
 
 ## License
 
-[GPL-3.0](LICENSE) — GNU General Public License v3.0.
+[GPL-3.0-or-later](LICENSE) — GNU General Public License, version 3 or (at your option) any later version.
