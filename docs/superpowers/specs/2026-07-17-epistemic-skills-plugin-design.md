@@ -1,6 +1,6 @@
 # Epistemic Skills — packaging design (as shipped)
 
-**Status: implemented** (plugin package **2.3.0**, 2026-07-17).
+**Status: implemented** (plugin package **2.3.1**, 2026-07-17).
 
 Make `ZMS-Labs/epistemic-skills` installable across Claude Code, Codex, Cursor,
 Gemini CLI, and Antigravity while keeping a single nested skill tree.
@@ -19,12 +19,12 @@ Gemini CLI, and Antigravity while keeping a single nested skill tree.
 | `gemini-extension.json` + `GEMINI.md` | Gemini CLI extension |
 | `plugin.json` (repo root) | Antigravity native plugin (`agy`; schema: name + description only) |
 
-License for the repository is **GPL-3.0** ([LICENSE](../../../LICENSE)); harness
-manifests that carry a `license` field should say `GPL-3.0`.
+License for the repository is **GPL-3.0-or-later** ([LICENSE](../../../LICENSE));
+harness manifests that carry a `license` field should say `GPL-3.0-or-later`.
 
 ## Verification (done)
 
-1. Manifest JSON valid; versions aligned at **2.3.0** where the format allows a version field (Antigravity root `plugin.json` does not — schema forbids extra properties).
+1. Manifest JSON valid; versions aligned at **2.3.1** where the format allows a version field (Antigravity root `plugin.json` does not — schema forbids extra properties).
 2. `gemini extensions validate` passes; `agy plugin validate` reports 6 skills + 5 agents.
 3. Cursor local install: junction `plugins/epistemic-skills` → `~/.cursor/plugins/local/epistemic-skills`, then Reload Window; skills visible and auto-trigger observed.
 4. Public Cursor Marketplace listing: **not yet** — packaging ready; publisher sign-in required at cursor.com/marketplace/publish.

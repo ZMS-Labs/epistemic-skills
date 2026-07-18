@@ -5,7 +5,7 @@
 
 **Goal:** Make the repository installable as a Gemini extension, Antigravity plugin, and Cursor plugin while keeping the nested `plugins/epistemic-skills/` layout.
 
-**Shipped outcome (v2.3.0):**
+**Shipped outcome (v2.3.1; initial cross-harness package was v2.3.0):**
 
 | Task | Result |
 |---|---|
@@ -16,7 +16,7 @@
 | README multi-harness install | Done |
 | Public Cursor Marketplace listing | Deferred — packaging ready; publisher application requires operator sign-in |
 
-**Version note:** Early draft snippets below said `2.2.0`; shipped package version is **2.3.0**. License is **GPL-3.0** (see root `LICENSE`), not MIT.
+**Version note:** Early draft snippets below said `2.2.0`; current package version is **2.3.1**. License is **GPL-3.0-or-later** (see root `LICENSE`), not MIT.
 
 ---
 

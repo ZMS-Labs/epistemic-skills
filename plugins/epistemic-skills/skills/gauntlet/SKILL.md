@@ -235,12 +235,15 @@ meter, and structured schemas enforce the falsifier contract at the tool layer. 
 harnesses meet the same contract with their own primitives (a parallel-subagent API, a
 task pool, or — worst case — the degrade fallback below).
 
-**Agent-type resolution.** The role-agent definitions live in the `agents/` directory
-(at the plugin/skill root, where your harness registers them). Some harnesses namespace
-them (`gauntlet:gauntlet-adversary`); if the bare name does not resolve, try the
-namespaced form, and if neither registers, **say so and use the degrade fallback** — never
-silently substitute a general-purpose agent, which drops the falsifier contract and
-evidence tiers the role prompt carries.
+**Role binding.** The canonical definitions live in the plugin-root `agents/`
+directory. First try the runtime's native bare and namespaced agent names. If the
+runtime does not support plugin-defined custom roles (or discovery fails), use
+`scripts/materialize_role.py` to bind the exact canonical role + persona + frozen
+dossier into a replayable `gauntlet-role-binding@1` record, then dispatch its `prompt`
+field to an isolated generic sub-agent. Record `role_binding: native-agent` or
+`role_binding: materialized-role`. This is an exact-role compatibility adapter, not an
+improvised substitute. If neither binding mode is possible, stop the panel. Runtime
+matrix and commands: `reference/runtime-role-binding.md`.
 
 **Independence is the value — never make the lenses a team.** They must not see each
 other's findings before arbitration; the barrier keeps them concurrent + isolated. (Agent
@@ -248,8 +251,9 @@ teams are allowed ONLY at Step-7 bounded reinstatement.)
 
 **Degrade fallback (`orchestration: manual-degraded`, disclose loudly):** when no
 concurrent-subagent primitive is available, run consecutive isolated agent calls with
-strict per-lens context partition — still the role-agents, still the falsifier contract.
-Save reports to `reports/<lens>.md`.
+strict per-lens context partition. Use either native or materialized exact-role binding;
+save binding records under `prompts/` and reports under `reports/`. Absence of a native
+custom-role registry alone does **not** require degraded orchestration.
 
 ### Step 6 — Mechanical criticism
 
@@ -400,6 +404,7 @@ rigor, measurement bundle) remain designs. Each later piece is integrated only i
   implementation; the required way to run the panel at depth ≥ standard.
 - Panel Workflow template: `assets/gauntlet-workflow.template.js`
 - Role agents: `gauntlet-{adversary,constructive,metatextual,arbitrator}` — definitions in the sibling `agents/` directory (plugin root when installed as a plugin, so the harness registers them)
+- Runtime role binding: `reference/runtime-role-binding.md` · exact-role adapter: `scripts/materialize_role.py`
 - Deep-mode MCP protocol: `reference/deep-mode-mcp.md`
 - DeepReason role boundary: `reference/deepreason-integration.md`
 - Engine config: `config/operator.yaml`
