@@ -31,7 +31,7 @@ Most tasks fire zero or one. The router's value is the case where more than one 
 | **using-epistemic-skills** | **Router** (not a discipline). Routes a task to the right discipline(s), sequences them (recon → design → evidence → gate → verify), and defines handoff contracts. Read it first; it never does the work itself. |
 | **applying-formal-rigor** | Design *and complexity* decisions. Sets a graduate-level formal-theory floor: name the *precise* construct (the exact normal form, the named isolation anomaly, the Master-Theorem case, the Ω lower bound), **derive** the conclusion instead of asserting it, and sweep every relevant lens. Ships a 7-lens theory battery; lens 4 is a full standalone Big-O / complexity analysis. |
 | **blindspot-pass** | The moment *before* work begins. Cheap read-only reconnaissance that surfaces landmines, hidden context, exemplars, and expert questions — then **rewrites the request** so downstream work aims at the territory, not the map. Provenance: Thariq Shihipar (Anthropic), *"A Field Guide to Claude Fable 5: Finding Your Unknowns"* (2026). |
-| **evidence-research** | Claims about *the literature*. **Consensus** discovers what the literature says; **Scite** interrogates *reception* (supporting vs contrasting citations, retractions, notices). Prevents citing a refuted or retracted paper as support. Requires Consensus and/or Scite MCP; degrades explicitly when one is absent. |
+| **evidence-research** | Claims about *the literature*. **Consensus** discovers; **Scite** interrogates *reception* (supporting/contrasting citations, retractions); **Zotero** (durable library) does holdings-check + deposit so the org keeps a curated shelf. Prevents citing a refuted/retracted paper as support **and** rediscovering what the library already holds. Requires the triad in tandem; degrades explicitly when a layer is absent. |
 | **evidence-locked-uat** | Claims that UI-facing work is *done*. Actor drives; a **blinded verifier** judges from evidence alone; the judge is deterministic script code. Strict verdict vocabulary: `INCONCLUSIVE` is never rounded up to PASS. |
 | **gauntlet** | High-stakes decision points. Multi-lens adversarial panel on a *frozen* subject: truth-gated dossier, falsifiers, 102-persona registry with deterministic selection, mechanical `[V path:line]` evidence checks, Conflict Ledger, **computed** GO/CONDITIONAL/NO-GO. Ships roster, role-agents, orchestration template, and tested selector. |
 
@@ -151,7 +151,7 @@ Use this **only** when the harness has no native plugin/extension install.
 - **Meet the contract, not the tool.** Runtime needs:
   - **gauntlet** Step 5: concurrent, context-isolated exact-role agents behind a barrier (degrade: sequential isolated calls). Definitions in `agents/`; runtimes without plugin-defined custom-agent registration use the replayable materialized-role adapter documented in `skills/gauntlet/reference/runtime-role-binding.md`.
   - **evidence-locked-uat**: actor / blinded-verifier / deterministic-judge in separate contexts.
-  - **evidence-research**: Consensus and/or Scite MCP (identify by server); degrade explicitly when absent.
+  - **evidence-research**: Consensus + Scite MCP + durable library (Zotero or equivalent — identify by server / Web API / LOCAL.md host); degrade explicitly when a layer is absent.
   - **applying-formal-rigor** and **blindspot-pass**: pure method — no runtime dependency.
 - **`using-epistemic-skills`** is the router; read it first.
 

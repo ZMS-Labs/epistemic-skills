@@ -33,3 +33,7 @@ harness manifests that carry a `license` field should say `GPL-3.0-or-later`.
 
 - Official Cursor Marketplace acceptance (human publisher application + Cursor review).
 - Native Antigravity marketplace catalog (agy has no curated catalog equivalent yet; GitHub/`agy plugin install` is the distribution path).
+
+## See also
+
+- [`2026-07-18-agentic-skills-packaging-architecture.md`](./2026-07-18-agentic-skills-packaging-architecture.md) — org-wide public/private packaging verdict (extend core+LOCAL overlay; no open kitchen-sink monorepo; runtime/ops stay out of this plugin). Status: decided, not implemented.
