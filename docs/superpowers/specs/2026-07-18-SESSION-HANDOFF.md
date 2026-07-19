@@ -1,5 +1,10 @@
 # Session handoff — 2026-07-18 (pre-reboot)
 
+> **Historical snapshot.** The pause and unpushed statements below describe the
+> state at capture time. Commits `5f8a190`, `95c4881`, and `395ab0b` were
+> subsequently pushed to `origin/main`. The original pre-reboot record is
+> intentionally preserved below.
+
 **Repo:** `Y:\dev\epistemic-skills` (`ZMS-Labs/epistemic-skills`)  
 **Branch:** `main`  
 **Remote:** ahead of `origin/main` by **1 commit** — **not pushed**
