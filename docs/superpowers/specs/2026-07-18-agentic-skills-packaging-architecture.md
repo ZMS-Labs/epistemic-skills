@@ -135,3 +135,4 @@ Optional public
 - Session analysis 2026-07-18 (Cursor): loopgen + `/release` evaluation → packaging fork → epistemic arc.
 - Fleet core/overlay convention: `zms-homelab` skills README (milestone 81, 2026-07-17).
 - Related shipped design: [`2026-07-17-epistemic-skills-plugin-design.md`](./2026-07-17-epistemic-skills-plugin-design.md).
+- Pre-reboot pause note: [`2026-07-18-SESSION-HANDOFF.md`](./2026-07-18-SESSION-HANDOFF.md).
