@@ -1,0 +1,32 @@
+{
+  "name": "epistemic-skills",
+  "description": "The full epistemic-discipline collection in one package: a router plus formal rigor, blindspot reconnaissance, scholarly evidence, evidence-locked UAT, and multi-lens adversarial review. Each skill self-triggers by relevance.",
+  "version": "2.3.1",
+  "author": {
+    "name": "ZMS Labs",
+    "url": "https://github.com/ZMS-Labs"
+  },
+  "homepage": "https://github.com/ZMS-Labs/epistemic-skills",
+  "repository": "https://github.com/ZMS-Labs/epistemic-skills",
+  "license": "GPL-3.0-or-later",
+  "keywords": [
+    "agent-skills",
+    "epistemics",
+    "formal-rigor",
+    "adversarial-review",
+    "uat",
+    "blindspot",
+    "evidence"
+  ],
+  "skills": "./plugins/epistemic-skills/skills/",
+  "sessionStart": {
+    "skill": "using-epistemic-skills"
+  },
+  "interface": {
+    "displayName": "Epistemic Skills",
+    "shortDescription": "Evidence-grounded methods for agentic work",
+    "longDescription": "Six composable disciplines for reconnaissance, formal reasoning, scholarly evidence, adversarial review, and evidence-locked acceptance testing.",
+    "developerName": "ZMS Labs",
+    "websiteURL": "https://github.com/ZMS-Labs/epistemic-skills"
+  }
+}

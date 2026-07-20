@@ -4,7 +4,7 @@ Epistemic-discipline skills for agentic coding — how an agent **knows** things
 
 **Version 2.3.1.** **License: [GPL-3.0-or-later](LICENSE).**
 
-**Harness-agnostic.** The skills are plain [Agent Skills](https://agentskills.io/specification) (`SKILL.md` + supporting files) describing *methods*, not any one tool's mechanics. They run in any harness that can load a skill or a context file — Claude Code, Codex, Cursor, Gemini CLI, Antigravity, or your own agent loop. Where a step needs a runtime primitive (concurrent sub-agents, a structured-output schema, an MCP tool), the skill states the **contract** and points at a labeled *reference implementation* for one harness; other harnesses meet the same contract with their own primitives. See [Using these in any harness](#using-these-in-any-harness).
+**Harness-agnostic.** The skills are plain [Agent Skills](https://agentskills.io/specification) (`SKILL.md` + supporting files) describing *methods*, not any one tool's mechanics. They run in any harness that can load a skill or a context file — Claude Code, Codex, Cursor, Gemini CLI, Kimi Code, Antigravity, or your own agent loop. Where a step needs a runtime primitive (concurrent sub-agents, a structured-output schema, an MCP tool), the skill states the **contract** and points at a labeled *reference implementation* for one harness; other harnesses meet the same contract with their own primitives. See [Using these in any harness](#using-these-in-any-harness).
 
 Most skill collections cover the *workflow* layer: test-driven development, systematic debugging, plan writing (see [superpowers](https://github.com/obra/superpowers), which these compose with). This collection covers the layer underneath: the disciplines that keep an agent's claims tethered to evidence and its effort aimed at the real target.
 
@@ -44,13 +44,16 @@ epistemic-skills/                         # repo root
 │   ├── agents/                           # gauntlet role-agents (five)
 │   ├── .claude-plugin/plugin.json
 │   ├── .codex-plugin/plugin.json
-│   └── .cursor-plugin/plugin.json
+│   ├── .cursor-plugin/plugin.json
+│   └── .kimi-plugin/plugin.json
 ├── skills/  → plugins/epistemic-skills/skills/    # symlink (Gemini / root scanners)
 ├── agents/  → plugins/epistemic-skills/agents/    # symlink
 ├── .claude-plugin/marketplace.json
 ├── .agents/plugins/marketplace.json      # Codex marketplace index
 ├── .cursor-plugin/plugin.json            # Cursor whole-repo plugin
 ├── .cursor-plugin/marketplace.json       # Cursor team-marketplace index
+├── .kimi-plugin/plugin.json              # Kimi Code whole-repo plugin
+├── .kimi-plugin/marketplace.json         # Kimi Code custom-marketplace index
 ├── gemini-extension.json + GEMINI.md     # Gemini CLI extension
 └── plugin.json                           # Antigravity native plugin
 ```
@@ -113,6 +116,33 @@ ln -sfn "$(pwd)/plugins/epistemic-skills" ~/.cursor/plugins/local/epistemic-skil
 Then **Developer: Reload Window**. Success check: all six skills under Customize → Skills, and auto-trigger on matching prompts (for example an irreversible / stress-test ask should surface the router or `gauntlet`).
 
 Do **not** also install these skills into `~/.cursor/skills/` while the plugin is loaded.
+
+### Kimi Code
+
+```
+/plugins install https://github.com/ZMS-Labs/epistemic-skills
+/reload
+```
+
+Entrypoints: root `.kimi-plugin/plugin.json` (whole-repo install above) and
+`plugins/epistemic-skills/.kimi-plugin/plugin.json` (subdirectory / local
+installs). Both manifests set `sessionStart.skill: using-epistemic-skills`, so
+the router loads into every new or resumed session and routes non-trivial work
+to the right discipline; the five disciplines still self-trigger only when
+their own `description` matches. Remove the `sessionStart` block if you prefer
+pure self-triggering.
+
+A custom-marketplace index ships at `.kimi-plugin/marketplace.json` for
+`/plugins marketplace <path-or-url>` or `KIMI_CODE_PLUGIN_MARKETPLACE_URL`.
+
+Kimi Code plugin manifests do not register custom agent types; the gauntlet
+runs its role-agents through the replayable materialized-role adapter in
+[`skills/gauntlet/reference/runtime-role-binding.md`](plugins/epistemic-skills/skills/gauntlet/reference/runtime-role-binding.md),
+with sequential isolated calls as the documented degrade for concurrent
+sub-agents.
+
+As with every harness: install exactly one mechanism — the plugin **or**
+`SKILL.md` copies under `~/.kimi-code/skills/`, not both.
 
 ### Gemini CLI
 
