@@ -1,0 +1,10 @@
+{
+  "version": "2",
+  "plugins": [
+    {
+      "id": "epistemic-skills",
+      "displayName": "Epistemic Skills",
+      "source": "https://github.com/ZMS-Labs/epistemic-skills"
+    }
+  ]
+}
