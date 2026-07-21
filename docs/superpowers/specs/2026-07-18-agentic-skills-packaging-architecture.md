@@ -39,15 +39,15 @@ Natural loopgen placement: **after** recon/decide, **before** gate/prove. Un-gat
 
 ## Territory already shipped (hidden context)
 
-Fleet milestone **81** (private `zms-homelab` `skills/README.md`) already defines:
+A private fleet tracking item (private `<private-fleet-repo>` `skills/README.md`) already defines:
 
 | Layer | Where | Rule |
 |---|---|---|
 | **Core** | Public `ZMS-Labs/epistemic-skills` | Generic protocol; kept **byte-identical** to fleet copies |
-| **Overlay** | Private `zms-homelab` `skills/*/LOCAL.md` (+ fleet-only assets) | Bindings only; **never overrides** the protocol |
+| **Overlay** | Private `<private-fleet-repo>` `skills/*/LOCAL.md` (+ fleet-only assets) | Bindings only; **never overrides** the protocol |
 | **Deploy** | Device cache = core + overlay | Cache reset must not lose skills |
 
-Org pattern: few **public** method repos vs many **private** fleet products. Overlay lives in private `zms-homelab` (worktree example: `Y:\dev\zms-homelab-wt-skill-overlay`), not in a public kitchen-sink monorepo.
+Org pattern: few **public** method repos vs many **private** fleet products. Overlay lives in the private fleet repo (via a local worktree checkout), not in a public kitchen-sink monorepo.
 
 Public plugin family resemblance (router invariants) — a skill belongs in *this* collection only if it enforces all of: floors not ceilings; derive/verify don’t assert; know where you stop; fail closed / degrade explicitly; provenance and independence.
 
@@ -86,7 +86,7 @@ Concedes: no single public clone that contains “everything.”
 
 Recover via **materialized views**:
 
-1. **Private** fleet skills index / marketplace manifest (in `zms-homelab` or private org `.github`) listing public remotes + private overlay/command paths.
+1. **Private** fleet skills index / marketplace manifest (in the private fleet repo or private org `.github`) listing public remotes + private overlay/command paths.
 2. Optional **public** README index linking *only* public packages (derived view; no private rows).
 3. Existing deploy scripts remain the device-cache materialization of (public core ⋈ private overlay).
 
@@ -106,7 +106,7 @@ Public (ZMS-Labs)
                                   (else document upstream loopgen in fleet index)
 
 Private (fleet)
-  zms-homelab/skills/           ← LOCAL.md overlays + fleet-only assets (already)
+  <private-fleet-repo>/skills/  ← LOCAL.md overlays + fleet-only assets (already)
   fleet ops commands            ← /release-class rituals (add when needed)
   private marketplace / index   ← lists public remotes + private paths
 
@@ -133,6 +133,6 @@ Optional public
 ## Provenance
 
 - Session analysis 2026-07-18 (Cursor): loopgen + `/release` evaluation → packaging fork → epistemic arc.
-- Fleet core/overlay convention: `zms-homelab` skills README (milestone 81, 2026-07-17).
+- Fleet core/overlay convention: private fleet repo skills README (2026-07-17).
 - Related shipped design: [`2026-07-17-epistemic-skills-plugin-design.md`](./2026-07-17-epistemic-skills-plugin-design.md).
-- Pre-reboot pause note: [`2026-07-18-SESSION-HANDOFF.md`](./2026-07-18-SESSION-HANDOFF.md).
+- Pre-reboot pause note: relocated to the private fleet repo (fleet-internal working material; see the public-repo hygiene sweep addendum in `docs/release/`).
