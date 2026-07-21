@@ -1,6 +1,6 @@
 {
   "name": "epistemic-skills",
-  "description": "The full epistemic-discipline collection in one package: a router plus formal rigor, blindspot reconnaissance, scholarly evidence, evidence-bound goal authoring, evidence-locked UAT, and multi-lens adversarial review.",
-  "version": "2.4.0",
+  "description": "The full epistemic-discipline collection in one package: a router plus formal rigor, blindspot reconnaissance, scholarly evidence, evidence-bound goal authoring, evidence-locked UAT, and multi-lens adversarial review, with the helix tandem layer for pairing them with a workflow-skill collection.",
+  "version": "2.5.0",
   "contextFileName": "GEMINI.md"
 }

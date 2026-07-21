@@ -2,13 +2,13 @@
 
 Epistemic-discipline skills for agentic coding — how an agent **knows** things before, during, and after work.
 
-**Version 2.4.0.** **License: [GPL-3.0-or-later](LICENSE).**
+**Version 2.5.0.** **License: [GPL-3.0-or-later](LICENSE).**
 
 **Harness-agnostic.** The skills are plain [Agent Skills](https://agentskills.io/specification) (`SKILL.md` + supporting files) describing *methods*, not any one tool's mechanics. They run in any harness that can load a skill or a context file — Claude Code, Codex, Cursor, Gemini CLI, Antigravity, or your own agent loop. Where a step needs a runtime primitive (concurrent sub-agents, a structured-output schema, an MCP tool), the skill states the **contract** and points at a labeled *reference implementation* for one harness; other harnesses meet the same contract with their own primitives. See [Using these in any harness](#using-these-in-any-harness).
 
-Most skill collections cover the *workflow* layer: test-driven development, systematic debugging, plan writing (see [superpowers](https://github.com/obra/superpowers), which these compose with). This collection covers the layer underneath: the disciplines that keep an agent's claims tethered to evidence and its effort aimed at the real target.
+Most skill collections cover the *workflow* layer: test-driven development, systematic debugging, plan writing (see [superpowers](https://github.com/obra/superpowers), which these compose with). This collection covers the layer underneath: the disciplines that keep an agent's claims tethered to evidence and its effort aimed at the real target. The `helix` skill is the pairing map for running the two layers in tandem.
 
-**Start with `using-epistemic-skills`** — the router. It answers *which* of these applies to a given task, in *what order*, and how each one's output feeds the next. The package ships **seven** skills: the router plus the **six** disciplines it routes to. Install once; each skill self-triggers only when its own `description` matches.
+**Start with `using-epistemic-skills`** — the router. It answers *which* of these applies to a given task, in *what order*, and how each one's output feeds the next. The package ships **eight** skills: the router, the **six** disciplines it routes to, and **helix** — the tandem entry point that pairs those disciplines with a workflow-skill layer such as superpowers. Install once; each skill self-triggers only when its own `description` matches.
 
 ## The arc
 
@@ -29,6 +29,7 @@ Most tasks fire zero or one. The router's value is the case where more than one 
 | Skill | Role |
 |---|---|
 | **using-epistemic-skills** | **Router** (not a discipline). Routes a task to the right discipline(s), sequences them (recon → design → evidence → gate → verify), and defines handoff contracts. Read it first; it never does the work itself. |
+| **helix** | **Tandem entry point** (not a discipline). When a workflow-skill layer (such as superpowers) runs alongside this collection, helix pairs each workflow stage with its epistemic discipline — before, inside, or after — with the epistemic member first at every boundary. It pairs stages; the two routers keep routing. |
 | **applying-formal-rigor** | Design *and complexity* decisions. Sets a graduate-level formal-theory floor: name the *precise* construct (the exact normal form, the named isolation anomaly, the Master-Theorem case, the Ω lower bound), **derive** the conclusion instead of asserting it, and sweep every relevant lens. Ships a 7-lens theory battery; lens 4 is a full standalone Big-O / complexity analysis. |
 | **blindspot-pass** | The moment *before* work begins. Cheap read-only reconnaissance that surfaces landmines, hidden context, exemplars, and expert questions — then **rewrites the request** so downstream work aims at the territory, not the map. Provenance: Thariq Shihipar (Anthropic), *"A Field Guide to Claude Fable 5: Finding Your Unknowns"* (2026). |
 | **evidence-research** | Claims about *the literature*. **Consensus** discovers; **Scite** interrogates *reception* (supporting/contrasting citations, retractions); **Zotero** (durable library) does holdings-check + deposit so the org keeps a curated shelf. Prevents citing a refuted/retracted paper as support **and** rediscovering what the library already holds. Requires the triad in tandem; degrades explicitly when a layer is absent. |
@@ -41,7 +42,7 @@ Most tasks fire zero or one. The router's value is the case where more than one 
 ```
 epistemic-skills/                         # repo root
 ├── plugins/epistemic-skills/
-│   ├── skills/<name>/SKILL.md            # canonical skill cores (seven)
+│   ├── skills/<name>/SKILL.md            # canonical skill cores (eight)
 │   ├── agents/                           # gauntlet role-agents (five)
 │   ├── .claude-plugin/plugin.json
 │   ├── .codex-plugin/plugin.json
@@ -75,7 +76,7 @@ Install with **exactly one** mechanism per harness. A second copy of the same sk
 codex plugin marketplace add ZMS-Labs/epistemic-skills --ref main
 codex plugin add epistemic-skills@epistemic-skills
 # Register the five gauntlet roles in Codex's user-agent registry:
-python "$HOME/.codex/plugins/cache/epistemic-skills/epistemic-skills/2.4.0/skills/gauntlet/scripts/render_codex_agents.py" --out "$HOME/.codex/agents"
+python "$HOME/.codex/plugins/cache/epistemic-skills/epistemic-skills/2.5.0/skills/gauntlet/scripts/render_codex_agents.py" --out "$HOME/.codex/agents"
 ```
 
 Start a new Codex task after rendering the roles. Codex plugin manifests do not
@@ -86,7 +87,7 @@ fallback for a task started before registration.
 
 ### Cursor
 
-**Status:** packaging is ready (`.cursor-plugin/` manifests, version 2.4.0). The plugin is **not yet listed** on the public [Cursor Marketplace](https://cursor.com/marketplace); `/add-plugin epistemic-skills` works only after Cursor lists it or you import the repo as a [team marketplace](https://cursor.com/docs/plugins). Publisher application: [cursor.com/marketplace/publish](https://cursor.com/marketplace/publish).
+**Status:** packaging is ready (`.cursor-plugin/` manifests, version 2.5.0). The plugin is **not yet listed** on the public [Cursor Marketplace](https://cursor.com/marketplace); `/add-plugin epistemic-skills` works only after Cursor lists it or you import the repo as a [team marketplace](https://cursor.com/docs/plugins). Publisher application: [cursor.com/marketplace/publish](https://cursor.com/marketplace/publish).
 
 | Path | When to use |
 |---|---|
@@ -111,7 +112,7 @@ mkdir -p ~/.cursor/plugins/local
 ln -sfn "$(pwd)/plugins/epistemic-skills" ~/.cursor/plugins/local/epistemic-skills
 ```
 
-Then **Developer: Reload Window**. Success check: all seven skills under Customize → Skills, and auto-trigger on matching prompts (for example an irreversible / stress-test ask should surface the router or `gauntlet`).
+Then **Developer: Reload Window**. Success check: all eight skills under Customize → Skills, and auto-trigger on matching prompts (for example an irreversible / stress-test ask should surface the router or `gauntlet`).
 
 Do **not** also install these skills into `~/.cursor/skills/` while the plugin is loaded.
 

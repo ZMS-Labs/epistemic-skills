@@ -1,7 +1,7 @@
 {
   "name": "epistemic-skills",
-  "version": "2.4.0",
-  "description": "The full epistemic-discipline collection in one package: a router plus formal rigor, blindspot reconnaissance, scholarly evidence, evidence-bound goal authoring, evidence-locked UAT, and multi-lens adversarial review.",
+  "version": "2.5.0",
+  "description": "The full epistemic-discipline collection in one package: a router plus formal rigor, blindspot reconnaissance, scholarly evidence, evidence-bound goal authoring, evidence-locked UAT, and multi-lens adversarial review, with the helix tandem layer for pairing them with a workflow-skill collection.",
   "author": {
     "name": "ZMS Labs",
     "url": "https://github.com/ZMS-Labs"
@@ -21,7 +21,7 @@
   "interface": {
     "displayName": "Epistemic Skills",
     "shortDescription": "Evidence-grounded methods for agentic work",
-    "longDescription": "A router plus six composable disciplines for reconnaissance, formal reasoning, scholarly evidence, evidence-bound goal authoring, adversarial review, and acceptance testing.",
+    "longDescription": "A router plus six composable disciplines for reconnaissance, formal reasoning, scholarly evidence, evidence-bound goal authoring, adversarial review, and acceptance testing, plus the helix tandem entry point for pairing them with a workflow-skill layer.",
     "developerName": "ZMS Labs",
     "category": "Developer Tools",
     "capabilities": [
