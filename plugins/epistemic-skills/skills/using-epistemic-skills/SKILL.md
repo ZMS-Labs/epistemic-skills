@@ -1,11 +1,11 @@
 ---
 name: using-epistemic-skills
-description: Entry point and router for the epistemic-skills collection — read at the start of non-trivial work to decide WHICH discipline applies (blindspot-pass, applying-formal-rigor, evidence-research, gauntlet, evidence-locked-uat), in what ORDER, and how each one's output feeds the next. Use when a task could touch more than one of these, when you are unsure which fires, or when sequencing them (recon → design → evidence → gate → verify). Do not use as a substitute for reading the specific skill it routes you to.
+description: Entry point and router for the epistemic-skills collection — read at the start of non-trivial work to decide WHICH discipline applies (blindspot-pass, applying-formal-rigor, evidence-research, write-goal, gauntlet, evidence-locked-uat), in what ORDER, and how each one's output feeds the next. Use when a task could touch more than one of these, when you are unsure which fires, or when sequencing them (recon → design → evidence → contract → gate → verify). Do not use as a substitute for reading the specific skill it routes you to.
 ---
 
 # Using Epistemic Skills — the router
 
-These five skills are one system: **how an agent knows things** before, during, and after
+These six disciplines are one system: **how an agent knows things** before, during, and after
 work. A **workflow-skill layer** (such as [superpowers](https://github.com/obra/superpowers)) —
 brainstorming, TDD, systematic-debugging, plan-writing, verification-before-completion — covers
 *how you do* the work. This collection is the *epistemics* layer underneath it: the disciplines that keep every claim tethered to
@@ -23,6 +23,7 @@ job. That is exactly what lets them compose without stepping on each other:
 | **blindspot-pass** | a fuzzy request + the real territory | a **rewritten, de-risked request** (never a change — it ends at *understanding*) | brainstorming / plans, or a gauntlet subject |
 | **applying-formal-rigor** | a decision with ≥2 options; a complexity question | a **derived verdict** (named construct → derivation → what the winner concedes) | the design you build, or a gauntlet dossier |
 | **evidence-research** | a claim that rests on "the research says…" | a **claim-evidence matrix + reception + holdings** (never a GO/NO-GO) | a design decision, or the gauntlet Step-0 evidence gate |
+| **write-goal** | explicit goal-authoring intent + de-risked context | an **approved, evidence-bound completion contract**; optionally a started persistent goal | the runtime's goal executor, then independent verification |
 | **gauntlet** | a **frozen** subject (often the outputs above) | a **computed GO / CONDITIONAL / NO-GO** + Conflict Ledger | the commit / merge decision |
 | **evidence-locked-uat** | a finished change + its requirements | an **evidence packet + blinded verdict** (PASS / FAIL / INCONCLUSIVE) | the ship / merge decision |
 
@@ -36,18 +37,18 @@ Most work fires **zero or one** of these. The router's value is the case where m
 applies — then they run in a natural order, each feeding the next:
 
 ```
-        ┌─ recon ─────────┐   ┌─ decide ──────────┐   ┌─ build ─┐   ┌─ gate ────┐   ┌─ prove ──────────┐
-task ──▶│ blindspot-pass  │──▶│ applying-formal-  │──▶│ (super- │──▶│ gauntlet  │──▶│ evidence-locked- │──▶ done
-        │ (unfamiliar/    │   │ rigor  +  evidence│   │ powers: │   │ (only if  │   │ uat (only if     │
-        │  fuzzy brief)   │   │ -research if a    │   │ TDD /   │   │ irrevers- │   │ UI-facing)       │
-        └─────────────────┘   │ premise needs it) │   │ plans)  │   │ ible)     │   └──────────────────┘
-                              └───────────────────┘   └─────────┘   └───────────┘
+        ┌─ recon ───────┐  ┌─ decide ─────────┐  ┌─ contract ─┐  ┌─ build ─┐  ┌─ gate ─┐  ┌─ prove ───────┐
+task ──▶│ blindspot-    │─▶│ formal-rigor +   │─▶│ write-goal │─▶│ workflow│─▶│gauntlet│─▶│ evidence-      │──▶ done
+        │ pass          │  │ evidence-research│  │ if explicit│  │ layer   │  │if needed│ │ locked-uat     │
+        └───────────────┘  └──────────────────┘  └────────────┘  └─────────┘  └────────┘  └────────────────┘
 ```
 
 - **blindspot-pass** is *upstream of everything* — it makes sure you're about to design the
   right thing. It fires before there is even a subject to freeze.
 - **applying-formal-rigor** runs *during* design; **evidence-research** is *cross-cutting* —
   called by the others whenever a premise depends on scholarly evidence, not a step of its own.
+- **write-goal** runs after intent is sufficiently de-risked and only on explicit user request;
+  it binds the intended outcome to proof and stop rules before persistent execution.
 - **gauntlet** is a *gate before an irreversible commit* — it reviews a frozen subject that is
   usually the product of the earlier steps.
 - **evidence-locked-uat** is *post-work* — the UI-facing case of proving the claim "it's done."
@@ -64,14 +65,15 @@ Match the trigger you can *observe*, not a vibe:
 | start non-trivial work in a codebase/domain you don't fully hold in context | **blindspot-pass** | the map (request) may not match the territory; cheap recon before expensive commitment |
 | choose between ≥2 designs, assert one is "better/cleaner/faster", or analyze an algorithm's complexity / Big-O | **applying-formal-rigor** | a verdict must be *derived* from named theory, not asserted; its lens 4 is the full complexity/Big-O analysis |
 | rely on "studies show…" / a scholarly or empirical premise | **evidence-research** | a paper's *reception* (supporting/contrasting/retracted) and *holdings* (durable library) decide whether it's support, a landmine, or already paid-for judgment |
+| create, refine, or start a persistent goal; define what counts as done | **write-goal** | persistent work needs an approved completion contract that resists proxy success and preserves scope, provenance, and interruptibility |
 | commit something irreversible, one-way-door, or high-blast-radius (infra, security, publish, migration) | **gauntlet** | a multi-lens panel + computed verdict beats one model's confidence on a call you can't take back |
 | claim UI-facing work is done, or merge a user-facing surface | **evidence-locked-uat** | no agent should certify its own work; a blinded verifier + deterministic judge catches the false PASS |
 
 If **none** match, none fire — this router does not manufacture work. If **two** match, run
-them in arc order (recon → decide → gate → prove) and pass each output to the next per the
+them in arc order (recon → decide → contract → gate → prove) and pass each output to the next per the
 handoff table.
 
-## Shared invariants (why these five, and not others)
+## Shared invariants (why these six, and not others)
 
 A skill belongs in this collection only if it enforces all of these. They are the family
 resemblance:
@@ -98,6 +100,8 @@ superpowers' — map them to your layer's equivalents):
 
 - **blindspot-pass** runs *before* `brainstorming` — recon the territory, then design.
 - **applying-formal-rigor** runs *inside* `brainstorming` / design — derive the choice.
+- **write-goal** runs after recon/design and before persistent execution, but only on explicit
+  goal-authoring intent; workflow execution must honor its evidence-bound contract.
 - **gauntlet** runs at `brainstorming` approval and at `finishing-a-development-branch` /
   pre-merge for irreversible changes.
 - **evidence-locked-uat** is the UI-facing instance of `verification-before-completion`.
@@ -112,9 +116,10 @@ with the right evidence) and the workflow skill carries it out.
 | Thought | Reality |
 |---|---|
 | "I'll just read this router and skip the actual skill" | The router only routes. The discipline lives in the skill it points to — read it. |
-| "The task is big, run all five" | Fire only the triggers that match. Unfired stages are ceremony; say you skipped them. |
+| "The task is big, run every discipline" | Fire only the triggers that match. Unfired stages are ceremony; say you skipped them. |
 | "blindspot-pass found a fix, let me apply it" | It ends at understanding. Capture the fix; don't act inside it. |
 | "evidence-research says GO" | It never renders a verdict. It produces evidence; the gauntlet (or you) judges. |
+| "This task is long, so I'll create a goal" | Persistence is a user-controlled state change. `write-goal` requires explicit goal-authoring or start intent. |
 | "The UAT actor also verified it passed" | The actor never certifies its own work — that's the whole point. A blinded verifier judges. |
 
 ## Local overlay

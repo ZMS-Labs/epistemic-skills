@@ -4,14 +4,14 @@
     "name": "ZMS Labs"
   },
   "metadata": {
-    "description": "Epistemic-discipline skills for agentic coding — how an agent knows things before, during, and after work. One package, six self-triggering skills. Composes with the superpowers workflow layer.",
-    "version": "2.3.1"
+    "description": "Epistemic-discipline skills for agentic coding — how an agent knows things before, during, and after work. One package, seven self-triggering skills. Composes with the superpowers workflow layer.",
+    "version": "2.4.0"
   },
   "plugins": [
     {
       "name": "epistemic-skills",
       "source": "./plugins/epistemic-skills",
-      "description": "The full collection in one install: using-epistemic-skills (router) + applying-formal-rigor + blindspot-pass + gauntlet + evidence-research + evidence-locked-uat. Each skill activates only when its own trigger matches."
+      "description": "The full collection in one install: using-epistemic-skills (router) + applying-formal-rigor + blindspot-pass + evidence-research + write-goal + gauntlet + evidence-locked-uat. Each skill activates only when its own trigger matches."
     }
   ]
 }
