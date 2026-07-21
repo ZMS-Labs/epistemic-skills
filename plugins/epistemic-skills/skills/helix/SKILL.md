@@ -1,6 +1,6 @@
 ---
 name: helix
-description: The tandem entry point when a workflow-skill layer (such as superpowers) runs alongside the epistemic-skills collection — read at the start of any non-trivial task to interleave the two strands: which epistemic discipline fires before, inside, or after each workflow stage (brainstorming, writing-plans, test-driven-development, systematic-debugging, verification-before-completion, finishing-a-development-branch), with the epistemic member first at every stage boundary. Use when both layers are installed and a task is about to begin, when a workflow skill has just fired and you must check its epistemic pair, or when sequencing the two collections is ambiguous. It pairs stages; it never replaces either collection's own router.
+description: "The tandem entry point when a workflow-skill layer (such as superpowers) runs alongside the epistemic-skills collection — read at the start of any non-trivial task to interleave the two strands: which epistemic discipline fires before, inside, or after each workflow stage (brainstorming, writing-plans, test-driven-development, systematic-debugging, verification-before-completion, finishing-a-development-branch), with the epistemic member first at every stage boundary. Use when both layers are installed and a task is about to begin, when a workflow skill has just fired and you must check its epistemic pair, or when sequencing the two collections is ambiguous. It pairs stages; it never replaces either collection's own router."
 ---
 
 # helix — two strands, one axis
