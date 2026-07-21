@@ -1,6 +1,6 @@
 ---
 name: gauntlet
-description: The consolidated adversarial-review staple. Auto-fires (triage-gated) at high-stakes, irreversible, one-way-door, or high-blast-radius decision points in your development workflow, and on explicit request ("gauntlet", "stress-test this", "sovereign gauntlet", "red-team-gauntlet", "deep-mode review", "GO/NO-GO review"). Fuses Sovereign-Gauntlet evidence-verified lens review with DeepReason conjecture→falsify→reinstate mechanics and a computed GO/CONDITIONAL/NO-GO verdict. Use before approving architecture/design (during brainstorming approval), before writing-plans on risky steps, at finishing-a-development-branch / pre-merge for irreversible-infra or security changes, and as a verification-before-completion escalation for high-stakes hard-to-verify claims. Do NOT use for reversible low-stakes work, lookups, ordinary code review, or deterministic test-failure triage.
+description: Use when approving architecture/design, before writing risky plan steps, at pre-merge for irreversible-infra or security changes, or as a verification escalation for high-stakes hard-to-verify claims. Auto-fires (triage-gated) at high-stakes, irreversible, one-way-door, or high-blast-radius decision points, and on explicit request ("gauntlet", "stress-test this", "sovereign gauntlet", "red-team-gauntlet", "deep-mode review", "GO/NO-GO review"). Do NOT use for reversible low-stakes work, lookups, ordinary code review, or deterministic/reproducible test-failure triage.
 ---
 
 # The Gauntlet — consolidated adversarial-review staple
@@ -107,9 +107,8 @@ excluded from support and listed in the dossier's exclusions. Attach its verifie
 and run record to `dossier.md`, preserving verification levels and limitations.
 After freeze, panel lenses use only that record and perform no ad hoc Consensus
 searches. If adjudication exposes a material scholarly-evidence gap, perform a
-controlled dossier reopen: record the new provenance, update the frozen record,
-and recompute every affected criticism, arbitration, and verdict stage. Never
-silently amend an existing verdict. See `reference/consensus-integration.md`.
+controlled dossier reopen (procedure: `reference/consensus-integration.md`);
+never silently amend an existing verdict.
 (5) at deep/max (optional at standard): run ONE
 **dossier challenger** before freezing — an independent agent whose only job is to
 attack the dossier, not the subject: omitted premises, contradicting sources, stale
@@ -142,9 +141,11 @@ mirror stale), verify the source-of-truth before claiming repo facts.
 ### Step 2 — Triage
 
 (1) Irreversible / high-blast-radius / security-critical? (2) Can findings be
-stated with falsifiers ("wrong if <observable>")? If **no** to (1) → skip (note
-why). If **no** to (2) → warn mechanical criticism will be weak; consider
-reframing the question.
+stated with falsifiers ("wrong if <observable>")? If **no** to (1) → skip. If
+**no** to (2) → warn mechanical criticism will be weak; consider reframing the
+question. A skip reason must name which question failed and cite specific
+evidence, not an adjective: "gauntlet: skipped — <Q1|Q2> failed because <cited
+evidence, not adjective>."
 
 ### Step 3 — Deep mode (DeepReason)
 
@@ -172,6 +173,7 @@ then run:
 ```
 python scripts/select_lenses.py --subject subject.json --out prompts/selection.json
 ```
+(plain Python — no Claude Code dependency)
 
 The selector gates by lifecycle/role/axis/contraindications, scores fit +
 uncovered-capability gain + stance diversity − overlap − cost (constrained MMR,
@@ -186,7 +188,8 @@ the selected ids.
 families at standard, ≥4 at deep/max · ≥1 domain specialist when domain
 confidence is high · no stance holds more than half the seats · mutex/counter-mode
 peers (e.g. `cloud-native-purist`/`local-first-survivalist`) never co-selected
-without a recorded intentional contrast, and then count as ONE diversity unit ·
+without a recorded intentional contrast, and then count as ONE diversity unit
+(see COLLISION_WAIVERS, `reference/lens-registry.md`) ·
 generators and judges never count toward evaluator diversity · candidates are
 never seated.
 
@@ -257,7 +260,8 @@ custom-role registry alone does **not** require degraded orchestration.
 
 ### Step 6 — Mechanical criticism
 
-(1) **Evidence truth-check:** run `scripts/verify_evidence.py` (`--rewrite`).
+(1) **Evidence truth-check:** run `scripts/verify_evidence.py` (`--rewrite`)
+(plain Python — no Claude Code dependency).
 Tiers: `[V path:line]` mechanically verified; `[I <- Vref]` inference — valid
 only while its cited `[V]` anchors verify; `[H]` hypothesis — zero weight at
 arbitration. **Semantic note (2026-07-14):** `[V]` certifies *source anchoring*
@@ -350,6 +354,8 @@ findings*, which can also mean coverage failure. Every GO (and CONDITIONAL) must
 state: capability families actually exercised · material assumptions reviewed ·
 known unknowns / untested behavior · evidence freshness · residual uncertainty.
 A high-stakes GO without a coverage statement is incomplete, not passing.
+A CONDITIONAL is not a GO — the caller MUST surface the open P2 items as
+blocking follow-ups, not proceed as if resolved.
 **Honest labeling:** scores mean best-argued-in-the-bracket, not
 true; heavy refutation or an empty survivor set is *progress*, not damage.
 Append-only: every artifact path, engine log root, reports, arbitration, summary
@@ -369,7 +375,9 @@ lenses no track record. Commit the ledger line with the run. Review anytime with
 
 ## When triage says skip
 
-Do not run deep mode or panel. Note: "gauntlet: skipped — <reason>."
+Do not run deep mode or panel. Note the reason in the format required by Step
+2: "gauntlet: skipped — <Q1|Q2> failed because <cited evidence, not
+adjective>."
 
 ## Local overlay
 

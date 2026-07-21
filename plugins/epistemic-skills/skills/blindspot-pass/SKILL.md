@@ -1,6 +1,6 @@
 ---
 name: blindspot-pass
-description: 'Use for pre-dispatch epistemic reconnaissance — surfacing the unknown-unknowns BEFORE committing effort, freezing a review subject, or dispatching work, then rewriting the request in light of what you find. Fires before non-trivial work in unfamiliar territory, before writing plans or dispatching subagents on a fuzzy brief, before locking the subject of an adversarial review, and on explicit request ("blindspot pass", "what am I missing", "find my unknowns", "recon this before we start", "de-risk the dispatch"). Do NOT fire for well-understood reversible work, factual lookups, or tasks whose territory you already hold in context. Provenance: Thariq Shihipar (Anthropic), "A Field Guide to Claude Fable 5: Finding Your Unknowns" (2026-07-03).'
+description: 'Use when about to commit effort into unfamiliar territory: before non-trivial work, before writing plans or dispatching subagents on a fuzzy brief, before locking the subject of an adversarial review, or on explicit request ("blindspot pass", "what am I missing", "find my unknowns", "recon this before we start", "de-risk the dispatch"). Do NOT fire for well-understood reversible work, factual lookups, or tasks that pass the skip gate in this skill. Provenance: Thariq Shihipar (Anthropic), "A Field Guide to Claude Fable 5: Finding Your Unknowns" (2026-07-03).'
 ---
 
 # Blindspot Pass — find the unknowns before they get expensive
@@ -15,6 +15,12 @@ description: 'Use for pre-dispatch epistemic reconnaissance — surfacing the un
 > **Provenance:** the technique is from Thariq Shihipar (Anthropic Claude Code team),
 > *"A Field Guide to Claude Fable 5: Finding Your Unknowns"* (2026-07-03). Cite the
 > essay, not any third-party skill repackaging of it.
+
+## Quick reference
+
+Report = **Landmines** (file:line) → **Hidden Context** (cited) → **What Good Looks
+Like** (2–3 examples) → **Questions** (3–5, each with a best-guess answer) →
+**Rewrite the request** → **Hand off**. Details below.
 
 ## Where this sits (the reflex, not a chore)
 
@@ -44,11 +50,15 @@ you do not fully hold in context**:
   non-trivial task; before **locking the subject of an adversarial review**; before
   a multi-agent fan-out where a wrong premise multiplies across agents; when
   the operator says "just build X" and X has hidden surface area.
-- **Never fires on:** well-understood reversible work, factual lookups, tasks whose
-  territory is already fully in context, or mechanical edits. A blindspot pass on
-  work you already understand is ceremony — skip it and say so.
+- **Never fires on:** well-understood reversible work, factual lookups, or mechanical
+  edits — or on territory that passes the skip gate below. A blindspot pass on work
+  you already understand is ceremony — skip it and say so.
+- **Skip gate (checkable, not self-assessed):** skip only if you can, right now, name
+  ≥2 concrete landmines (file:line) and the pattern's canonical example in this
+  territory without opening anything new. If you can't do that from memory, you don't
+  hold the territory — run the pass.
 - Always operator-overridable. The pass is **cheap** (one read-heavy reconnaissance
-  turn); the failure it prevents is not.
+  turn, with a recon floor — see below); the failure it prevents is not.
 
 ## The one rule
 
@@ -64,16 +74,25 @@ deliverable is a *rewritten request*, not a change.
    brief *asserts* about the territory (the brief is a map; check it). If the
    environment is degraded (a mount down, a mirror stale), verify the source-of-truth
    before trusting repo facts.
+   **Recon floor:** read at least 2–3 real artifacts (files, prior incidents, or
+   working examples) — a pass that opens zero files isn't a pass.
+   **Recon ceiling:** if recon is running long, that is itself a landmine — report it
+   and hand off rather than continuing indefinitely.
 
-2. **Report in exactly four sections** (this is the format — keep it):
+2. **Report in exactly four sections** (this is the format — keep it). Every entry in
+   every section cites a concrete artifact — file:line, a doc, or a named prior
+   incident — or explicitly states "none found, and here's why the search came up
+   empty":
    - **Landmines** — the mistakes someone new to this territory typically makes, plus
      the repo-/domain-specific potholes you can see. Concrete, with file:line where
      it's a code landmine.
    - **Hidden context** — decisions already made that constrain the work (an
      architecture choice, a convention, a prior incident, a dependency's real
      behavior). The things "everyone who's been here" knows and the brief omits.
+     Cite the artifact each item is grounded in.
    - **What good looks like** — 2–3 examples of this pattern *done well* in this
-     codebase/domain, so the target is concrete, not abstract.
+     codebase/domain, so the target is concrete, not abstract. Cite each example's
+     file:line or equivalent.
    - **Questions you should be asking** — the 3–5 questions an expert would ask before
      starting, **each with your current best-guess answer.** (Best-guess answers are
      mandatory: an unanswered question is a deferral; a best-guess is a falsifiable
@@ -92,26 +111,17 @@ deliverable is a *rewritten request*, not a change.
 
 ## Optional close-out bookend — the blast-radius quiz
 
-The essay's *after* half. Use before merging/closing a non-trivial change when the
-operator (or a future you) needs to be sure the change is understood, not just green:
-
-- Produce a short **comprehension report**: what changed, how the changed pieces
-  interact, and the mental model needed to maintain it.
-- Then a **quiz weighted toward edge cases and blast radius over trivia** — the
-  questions whose wrong answers cost the most.
-- **Fixed bar, simplify-if-fail:** at most two rounds. If the change can't be
-  explained/passed, that is evidence the change is too complex — **simplify the change
-  rather than re-quiz the explanation.** The bar tests the artifact, not the student.
-
-This bookends the epistemic arc (find unknowns before → confirm understanding after)
-without duplicating capabilities that belong to other skills (brainstorming,
-plan-writing, verification-before-completion).
+The essay's *after* half: an optional comprehension check + quiz before merging a
+non-trivial change, weighted toward edge cases and blast radius over trivia, with a
+fixed two-round bar (simplify the change rather than re-quiz the explanation). See
+[`reference/blast-radius-quiz.md`](reference/blast-radius-quiz.md) for the full
+mechanic.
 
 ## Anti-patterns (you are rationalizing if you think these)
 
 | Thought | Reality |
 |---|---|
-| "I basically know this codebase" | Then the pass is 30 seconds and confirms it. Do it, or say why you're skipping. |
+| "I basically know this codebase" | Prove it against the skip gate: name ≥2 concrete landmines (file:line) and the canonical example from memory, right now. Can't? Run the pass. |
 | "The request is clear enough" | Clarity of the *map* says nothing about the *territory*. |
 | "I'll just start and find out" | Finding out mid-implementation is the expensive path this prevents. |
 | "This is just recon, let me also fix the thing I found" | Stop. The skill ends at understanding. Capture the fix as a note; don't act. |

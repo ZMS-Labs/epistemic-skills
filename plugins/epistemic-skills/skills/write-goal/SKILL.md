@@ -1,6 +1,6 @@
 ---
 name: write-goal
-description: Author or refine an evidence-bound completion contract for a persistent, multi-turn goal. Use only when the user explicitly asks to create, write, define, refine, or start a goal; asks what would count as done; or needs a durable objective, proof standard, scope boundary, blocker policy, stop rule, or optional token budget before extended work. Do not auto-create goals from ordinary tasks, and do not execute or certify the goal inside this skill.
+description: Use when the user explicitly asks to create, write, define, refine, or start a goal; asks "what would count as done"; or needs a durable objective, proof standard, scope boundary, blocker policy, stop rule, or optional token budget before extended work — e.g. "write a goal for", "what would count as done", "define a completion contract". Do not auto-create goals from ordinary tasks, and do not execute or certify the goal inside this skill.
 ---
 
 # Write Goal
@@ -18,7 +18,7 @@ uncertainty handling, interruptibility, and cross-harness adapters.
 
 | Consumes | Produces | Does not do | Hands to |
 |---|---|---|---|
-| explicit user intent, de-risked context, and any evidence/design inputs | an approved, evidence-bound goal objective; optionally a started persistent goal | execute the work, judge its result, or call it complete | the runtime's goal executor, then independent verification |
+| explicit user intent, de-risked context, and any evidence/design inputs | an approved, evidence-bound goal objective; optionally a started persistent goal | execute the work, judge its result, or call it complete | the runtime's goal executor, then independent verification (e.g. evidence-locked-uat for UI-facing work, gauntlet for irreversible commits) |
 
 **Core invariant:** a goal is not complete merely because an easy-to-measure proxy
 moved. Completion requires the agreed proof bundle and its integrity guards.
@@ -62,7 +62,8 @@ an approved repair contract" is an end state for a learning-first goal.
 
 ### Proof bundle
 
-Specify all three layers when they are relevant:
+Specify all three layers. If a layer genuinely does not apply, state which one and why
+in one sentence — never omit it silently.
 
 1. **Primary proof** — the most direct evidence that the intended outcome exists.
 2. **Integrity guards** — checks that make the primary signal hard to game or spoof.
@@ -128,8 +129,10 @@ Check:
 - Is the target broad enough to survive one failed approach but narrow enough to stop?
 - Does the contract preserve user interrupt authority?
 
-Revise until the user approves it, unless the user's original request already supplied a
-complete contract and explicitly asked to start it.
+Revise until the user approves it. Skip the review step only when the user's request
+already states, verbatim, an end state, proof bundle, boundaries, and stop rule; if any
+field must be inferred rather than quoted from the request, present the draft for
+approval.
 
 ## 4. Start the goal through the host adapter
 
@@ -157,6 +160,46 @@ Meet the contract, not the tool name: inspect active-goal state, obtain consent,
 persistent objective, keep budgets opt-in, and preserve the proof and stop rules verbatim.
 If the harness has no persistent-goal primitive, return the approved contract without
 pretending it was started.
+
+## Worked Example (rough intention → completion contract)
+
+**Rough intention:** "fix the flaky nightly backup job."
+
+**Classification:** Performance — the path (find and fix the flake) and outcome
+(reliable nightly backups) are sufficiently understood; this is not exploratory.
+
+**Filled contract:**
+```text
+Objective
+Achieve zero unexplained failures of the nightly backup job over 14 consecutive
+scheduled runs for the homelab NAS backup target. Preserve the existing backup
+schedule and retention policy.
+
+Completion proof
+- Primary: 14/14 consecutive scheduled runs (not manual re-triggers) complete with
+  exit code 0 and a written manifest matching source file count/size.
+- Integrity: at least one run is observed under the original failure condition
+  (e.g. concurrent snapshot load) without recurrence, so the fix is not merely a
+  quieter symptom.
+- Scope and provenance: the fix lands as a reviewed commit on the canonical backup
+  repo; the 14-run window is read from the job's own scheduler log, not a
+  hand-kept tally.
+
+Boundaries
+In scope: the backup job's retry/lock logic and its scheduling wrapper. Out of
+scope: changing the backup target, retention window, or notification channel.
+
+Loop
+Inspect the last N failures for a shared root cause, apply the smallest fix that
+addresses it, verify against the full proof bundle, and repeat if a distinct
+failure mode remains.
+
+Stop rule
+Complete only when all 14 runs and the integrity check are satisfied. Stop for
+user authority if the root cause implicates shared NAS infrastructure outside the
+job itself. Use blocked only if the scheduler cannot produce a verifiable log.
+The user may interrupt, redirect, pause, or cancel at any time.
+```
 
 ## Templates
 
@@ -223,3 +266,10 @@ authority is required. Do not call uncertainty reduction the final product outco
 The design rationale, claim-evidence matrix, counterevidence, and tool-coverage limits are
 in [reference/evidence-basis.md](reference/evidence-basis.md). Evidence informs this method;
 it does not convert a context-sensitive contract into a universal formula.
+
+## Local overlay
+
+If a `LOCAL.md` exists alongside this SKILL.md, read it after this file — it binds goal-
+authoring to the local environment (which harness/runtime is active, fleet-specific
+adapters, local token-budget policy). An overlay may add bindings; it never overrides the
+completion contract.
