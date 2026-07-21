@@ -92,9 +92,9 @@ agy, and beyond:
 
 ## Placement and wiring
 
-- `skills/helix/SKILL.md` and an identical copy at
-  `plugins/epistemic-skills/skills/helix/SKILL.md` (the repo's dual-copy
-  convention; directory scan registers it).
+- `plugins/epistemic-skills/skills/helix/SKILL.md` (canonical; root
+  `skills/` is a git symlink to it, so directory scan registers it — the
+  "dual-copy" assumption in the approved draft was wrong).
 - `using-epistemic-skills/SKILL.md` (both copies) gains a one-line pointer:
   when a workflow layer is present, read `helix` for the stage pairings. The
   router remains authoritative for the epistemic-only case.

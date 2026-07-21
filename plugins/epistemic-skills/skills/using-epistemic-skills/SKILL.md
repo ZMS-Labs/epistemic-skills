@@ -94,6 +94,11 @@ resemblance:
 
 ## Composition with a workflow-skill layer
 
+**When a workflow-skill layer is present, read the `helix` skill** — it is
+the tandem entry point and carries the full stage-pairing map. The summary
+below stays as the router's own one-paragraph view; helix is authoritative
+for the interleave.
+
 If you also run a workflow-skill layer (such as superpowers), the epistemic skills
 **interleave** with the workflow skills rather than replacing them (skill names below are
 superpowers' — map them to your layer's equivalents):
