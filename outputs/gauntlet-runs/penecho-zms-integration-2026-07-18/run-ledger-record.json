@@ -1,9 +1,0 @@
-{
-  "ts": "2026-07-18T16:25:05.7123158Z",
-  "subject": "penecho-zms-integration",
-  "depth": "standard",
-  "registry_sha256": "8224ac4ad5483cb68b8f7ee2b1d7ce89674c1e955caed6d6ecb7593426feca93",
-  "verdict": "CONDITIONAL",
-  "eligible": true,
-  "note": "Exact lifecycle counters are derived from arbitration.md; the probation shadow was excluded from the verdict."
-}

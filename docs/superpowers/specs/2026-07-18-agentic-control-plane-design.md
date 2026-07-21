@@ -87,7 +87,7 @@ PRIVATE, ZMS-OWNED
     Catalog, source locks, policy, private flows, adapters, materialization,
     installation auditing, and bounded conformance evidence.
 
-  zms-homelab and product repositories
+  <private-fleet-repo> and product repositories
     Domain/project LOCAL overlays, acceptance contracts, and real run records.
 
 UPSTREAM, PINNED
@@ -181,7 +181,7 @@ Re-check repository state immediately before every commit.
 
 ### 2. Correct stale Gauntlet overlay state
 
-In the authoritative `Y:\dev\zms-homelab` checkout:
+In the authoritative `<local-checkout>/<private-fleet-repo>` checkout:
 
 - replace the claim that issue `#164` is open with its resolved state;
 - remove the temporary "until #164 lands" instruction;
@@ -224,9 +224,10 @@ owner's work is reconciled.
 
 ### 5. Correct the historical handoff
 
-Mark `2026-07-18-SESSION-HANDOFF.md` as a historical pre-reboot snapshot and add
-a concise current-state note: commits `5f8a190`, `95c4881`, and `395ab0b` were
-subsequently pushed to `origin/main`. Preserve its original pause record.
+The pre-reboot session-handoff note (git state pause/resume record) has since
+been relocated to the private fleet repo as internal working material with no
+public value; commits `5f8a190`, `95c4881`, and `395ab0b` from that session
+were subsequently pushed to `origin/main`.
 
 ### 6. Produce the first capability inventory
 
@@ -308,7 +309,7 @@ Create only when all are true:
 
 - Existing packaging verdict:
   `2026-07-18-agentic-skills-packaging-architecture.md`.
-- Historical pause record: `2026-07-18-SESSION-HANDOFF.md`.
+- Historical pause record: relocated to the private fleet repo (fleet-internal working material; see the public-repo hygiene sweep addendum in `docs/release/`).
 - ChatGPT Pro portfolio audits supplied by the operator on 2026-07-18.
 - Live verification before approval confirmed the `evidence-research` public /
   private mismatch, stale issue-`#164` overlay language, current pushed Git
