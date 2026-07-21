@@ -4,7 +4,7 @@ Epistemic-discipline skills for agentic coding — how an agent **knows** things
 
 **Version 2.6.0.** **License: [GPL-3.0-or-later](LICENSE).**
 
-**Harness-agnostic.** The skills are plain [Agent Skills](https://agentskills.io/specification) (`SKILL.md` + supporting files) describing *methods*, not any one tool's mechanics. They run in any harness that can load a skill or a context file — Claude Code, Codex, Cursor, Gemini CLI, Antigravity, or your own agent loop. Where a step needs a runtime primitive (concurrent sub-agents, a structured-output schema, an MCP tool), the skill states the **contract** and points at a labeled *reference implementation* for one harness; other harnesses meet the same contract with their own primitives. See [Using these in any harness](#using-these-in-any-harness).
+**Harness-agnostic.** The skills are plain [Agent Skills](https://agentskills.io/specification) (`SKILL.md` + supporting files) describing *methods*, not any one tool's mechanics. They run in any harness that can load a skill or a context file — Claude Code, Codex, Cursor, Gemini CLI, Antigravity, Kimi Code, or your own agent loop. Where a step needs a runtime primitive (concurrent sub-agents, a structured-output schema, an MCP tool), the skill states the **contract** and points at a labeled *reference implementation* for one harness; other harnesses meet the same contract with their own primitives. See [Using these in any harness](#using-these-in-any-harness).
 
 Most skill collections cover the *workflow* layer: test-driven development, systematic debugging, plan writing (see [superpowers](https://github.com/obra/superpowers), which these compose with). This collection covers the layer underneath: the disciplines that keep an agent's claims tethered to evidence and its effort aimed at the real target. The `helix` skill is the pairing map for running the two layers in tandem.
 
@@ -54,6 +54,7 @@ epistemic-skills/                         # repo root
 ├── .cursor-plugin/plugin.json            # Cursor whole-repo plugin
 ├── .cursor-plugin/marketplace.json       # Cursor team-marketplace index
 ├── gemini-extension.json + GEMINI.md     # Gemini CLI extension
+├── .kimi-plugin/plugin.json              # Kimi Code plugin (points at the same skills tree)
 └── plugin.json                           # Antigravity native plugin
 ```
 
@@ -138,6 +139,22 @@ agy plugin validate /path/to/epistemic-skills
 ```
 
 Prefer **one** of: native `agy plugin install`, Gemini extension link, or `agy plugin import gemini` — not several copies.
+
+### Kimi Code
+
+```text
+/plugins install https://github.com/ZMS-Labs/epistemic-skills
+# local dev, from a clone:
+/plugins install /path/to/epistemic-skills
+```
+
+Run `/reload` or start a new session after install. Entrypoint: root `.kimi-plugin/plugin.json`, which points at the same canonical `plugins/epistemic-skills/skills/` tree; its `skillInstructions` carries the Kimi tool mapping (gauntlet role agents and the UAT actor/verifier/judge dispatch through the `Agent` tool in isolated contexts). If the plugin manager is unavailable, junction the skills into the user skills directory instead — pick exactly one mechanism:
+
+```powershell
+Get-ChildItem .\plugins\epistemic-skills\skills -Directory | ForEach-Object {
+  New-Item -ItemType Junction -Path "$env:USERPROFILE\.kimi-code\skills\$($_.Name)" -Target $_.FullName
+}
+```
 
 ### Using these in any harness
 
