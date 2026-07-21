@@ -1,0 +1,354 @@
+{
+ "selection": {
+  "evaluators": [
+   {
+    "id": "behavioral-economist",
+    "version": 2,
+    "stance": "adversarial",
+    "capability": "human-factors",
+    "status": "active"
+   },
+   {
+    "id": "network-effects-strategist",
+    "version": 2,
+    "stance": "constructive",
+    "capability": "economics",
+    "status": "active"
+   },
+   {
+    "id": "opportunity-cost-accountant",
+    "version": 2,
+    "stance": "metatextual",
+    "capability": "economics",
+    "status": "active"
+   },
+   {
+    "id": "chaos-monkey",
+    "version": 2,
+    "stance": "adversarial",
+    "capability": "reliability",
+    "status": "active"
+   },
+   {
+    "id": "entropy-demon",
+    "version": 2,
+    "stance": "adversarial",
+    "capability": "maintainability",
+    "status": "active"
+   }
+  ],
+  "exploration": {
+   "id": "concurrency-interleaving-auditor",
+   "version": 1,
+   "stance": "adversarial",
+   "capability": "reliability",
+   "status": "probation",
+   "seat": "exploration"
+  },
+  "exploration_note": "rotation: concurrency-interleaving-auditor has 0 prior seatings",
+  "generators": [
+   "null-hypothesis-advocate",
+   "opposite-steelman"
+  ],
+  "gates": [
+   "red-lines-arbitrator"
+  ],
+  "judge": "pragmatic-judge",
+  "synthesis": null,
+  "judge_note": "default evidence-weighted judge; sovereign-ruler eligible for values-laden conflicts (operator values recorded)"
+ },
+ "constraint_violations": [],
+ "replay": {
+  "registry_version": "2.2.0",
+  "registry_sha256": "8224ac4ad5483cb68b8f7ee2b1d7ce89674c1e955caed6d6ecb7593426feca93",
+  "subject_vector": {
+   "subject": "Choose the best reversible path for ZMS Labs to adopt PenEcho as a pen-first visual AI canvas across iPad, iPhone, Supernote Manta, cloud APIs, subscription CLIs, and local multimodal models without premature forking or duplicate homelab control planes",
+   "axis": "open",
+   "depth": "standard",
+   "domains": [
+    "infra",
+    "ux",
+    "ai",
+    "privacy",
+    "cost",
+    "architecture"
+   ],
+   "risk_classes": [
+    "security",
+    "privacy",
+    "vendor-lock-in",
+    "maintenance",
+    "licensing",
+    "data-loss"
+   ],
+   "stakeholders": [
+    "operator",
+    "zms-labs",
+    "device-users"
+   ],
+   "horizon": "long",
+   "capability_needs": [
+    "reliability",
+    "human-factors",
+    "maintainability",
+    "economics",
+    "governance"
+   ],
+   "domain_confidence": "low",
+   "defensible_priors": false,
+   "operator_values_in_dossier": true,
+   "exclude_ids": [],
+   "include_ids": [],
+   "allow_probation_seat": true
+  },
+  "scores": {
+   "adjacent-possible-explorer": -0.125,
+   "adoption-realist": 2.375,
+   "analogical-historian": -1.625,
+   "angry-customer": 1.25,
+   "behavioral-economist": 2.875,
+   "black-swan-catalyst": -1.25,
+   "bus-factor-adversary": 2.375,
+   "century-horizon-architect": 2.75,
+   "chaos-monkey": 2.75,
+   "chesterton-gate": -0.125,
+   "cloud-native-purist": -1.25,
+   "cognitive-bias-auditor": 0.375,
+   "compliance-litigator": -0.125,
+   "data-provenance-auditor": -0.5,
+   "digital-forensicist": 0.375,
+   "disgruntled-maintainer": -0.125,
+   "distributive-justice-auditor": -0.125,
+   "dual-use-adversary": -0.125,
+   "ecological-systems-analyst": -0.125,
+   "entropy-demon": 2.75,
+   "epistemic-auditor": -1.625,
+   "ethicist": -1.125,
+   "explainability-steward": 2.375,
+   "fmea-analyst": 0.5,
+   "forensic-accountant": -1.625,
+   "game-theorist": -1.625,
+   "integration-weaver": -0.125,
+   "inversion-thinker": -0.625,
+   "local-first-survivalist": -1.125,
+   "measurement-critic": -3.125,
+   "minimalist-zen-master": -0.125,
+   "network-effects-strategist": 2.875,
+   "observability-advocate": -1.625,
+   "on-call-realist": -1.625,
+   "opportunity-cost-accountant": 2.375,
+   "performance-alchemist": -0.125,
+   "polymath-inquisitor": -1.625,
+   "predatory-regulator": -1.625,
+   "premise-auditor": -3.125,
+   "privacy-surveillance-critic": -1.25,
+   "protocol-archeologist": -0.125,
+   "resilience-engineer": 0.875,
+   "reversibility-analyst": -3.125,
+   "scalability-cliff-analyst": -1.25,
+   "scope-sentinel": -1.625,
+   "script-kiddie": -1.625,
+   "second-order-forecaster": -0.125,
+   "semantic-critic": -0.125,
+   "state-sponsored-actor": -1.625,
+   "statistical-validity-critic": -3.125,
+   "stride-security-modeler": -1.125,
+   "sunk-cost-liberator": -0.125,
+   "systemic-logician": -1.625,
+   "tech-debt-curator": 0.875,
+   "ui-ux-polisher": 0.25,
+   "unit-economics-adversary": 2.75,
+   "wcag-accessibility-expert": 0.5
+  },
+  "exclusions": [
+   [
+    "bayesian-adjudicator",
+    "role:adjudicate"
+   ],
+   [
+    "business-continuity-auditor",
+    "status:candidate"
+   ],
+   [
+    "causal-identification-auditor",
+    "status:candidate"
+   ],
+   [
+    "common-cause-dependency-auditor",
+    "status:candidate"
+   ],
+   [
+    "concurrency-interleaving-auditor",
+    "status:probation"
+   ],
+   [
+    "constraint-inverter",
+    "role:None"
+   ],
+   [
+    "constraint-negotiator",
+    "role:generate_options"
+   ],
+   [
+    "constraint-relaxer",
+    "role:None"
+   ],
+   [
+    "construct-validity-auditor",
+    "status:candidate"
+   ],
+   [
+    "contract-risk-allocation-auditor",
+    "status:candidate"
+   ],
+   [
+    "control-effectiveness-auditor",
+    "status:candidate"
+   ],
+   [
+    "decision-rights-auditor",
+    "status:candidate"
+   ],
+   [
+    "dialectical-synthesizer",
+    "role:adjudicate"
+   ],
+   [
+    "distributed-semantics-auditor",
+    "status:candidate"
+   ],
+   [
+    "effective-configuration-auditor",
+    "status:probation"
+   ],
+   [
+    "execution-dependency-auditor",
+    "status:candidate"
+   ],
+   [
+    "first-principles-engineer",
+    "role:None"
+   ],
+   [
+    "first-principles-rederiver",
+    "role:generate_options"
+   ],
+   [
+    "governance-lawyer",
+    "role:gate"
+   ],
+   [
+    "human-automation-handoff-auditor",
+    "status:candidate"
+   ],
+   [
+    "incident-command-auditor",
+    "status:candidate"
+   ],
+   [
+    "invariant-specification-auditor",
+    "status:candidate"
+   ],
+   [
+    "ip-freedom-to-operate-auditor",
+    "status:candidate"
+   ],
+   [
+    "jurisdiction-conflicts-auditor",
+    "status:probation"
+   ],
+   [
+    "lifecycle-impact-auditor",
+    "status:candidate"
+   ],
+   [
+    "liquidity-runway-auditor",
+    "status:candidate"
+   ],
+   [
+    "meta-epistemic-auditor",
+    "role:None"
+   ],
+   [
+    "null-hypothesis-advocate",
+    "role:generate_options"
+   ],
+   [
+    "opposite-steelman",
+    "role:generate_options"
+   ],
+   [
+    "pragmatic-judge",
+    "role:adjudicate"
+   ],
+   [
+    "preference-sensitivity-arbitrator",
+    "status:candidate"
+   ],
+   [
+    "premortem-facilitator",
+    "role:None"
+   ],
+   [
+    "queue-stability-auditor",
+    "status:candidate"
+   ],
+   [
+    "recovery-integrity-auditor",
+    "status:probation"
+   ],
+   [
+    "red-lines-arbitrator",
+    "role:gate"
+   ],
+   [
+    "release-cutover-auditor",
+    "status:probation"
+   ],
+   [
+    "requirements-traceability-auditor",
+    "status:candidate"
+   ],
+   [
+    "robust-decision-auditor",
+    "status:candidate"
+   ],
+   [
+    "safety-hazard-auditor",
+    "status:candidate"
+   ],
+   [
+    "sociotechnical-topology-auditor",
+    "status:candidate"
+   ],
+   [
+    "sovereign-ruler",
+    "role:adjudicate"
+   ],
+   [
+    "state-migration-compatibility-auditor",
+    "status:candidate"
+   ],
+   [
+    "value-of-information-auditor",
+    "status:candidate"
+   ],
+   [
+    "verification-oracle-auditor",
+    "role:None"
+   ],
+   [
+    "workforce-load-auditor",
+    "status:candidate"
+   ]
+  ],
+  "selected_ids": [
+   "behavioral-economist@2",
+   "network-effects-strategist@2",
+   "opportunity-cost-accountant@2",
+   "chaos-monkey@2",
+   "entropy-demon@2"
+  ],
+  "exploration_id": "concurrency-interleaving-auditor@1"
+ }
+}

@@ -1,7 +1,7 @@
 {
   "name": "epistemic-skills",
-  "version": "2.3.1",
-  "description": "The full epistemic-discipline collection in one package: a router plus formal rigor, blindspot reconnaissance, scholarly evidence, evidence-locked UAT, and multi-lens adversarial review.",
+  "version": "2.4.0",
+  "description": "The full epistemic-discipline collection in one package: a router plus formal rigor, blindspot reconnaissance, scholarly evidence, evidence-bound goal authoring, evidence-locked UAT, and multi-lens adversarial review.",
   "author": {
     "name": "ZMS Labs",
     "url": "https://github.com/ZMS-Labs"
@@ -14,13 +14,14 @@
     "epistemics",
     "formal-rigor",
     "adversarial-review",
-    "uat"
+    "uat",
+    "goal-authoring"
   ],
   "skills": "./skills/",
   "interface": {
     "displayName": "Epistemic Skills",
     "shortDescription": "Evidence-grounded methods for agentic work",
-    "longDescription": "Six composable disciplines for reconnaissance, formal reasoning, scholarly evidence, adversarial review, and evidence-locked acceptance testing.",
+    "longDescription": "A router plus six composable disciplines for reconnaissance, formal reasoning, scholarly evidence, evidence-bound goal authoring, adversarial review, and acceptance testing.",
     "developerName": "ZMS Labs",
     "category": "Developer Tools",
     "capabilities": [
@@ -29,7 +30,7 @@
     "websiteURL": "https://github.com/ZMS-Labs/epistemic-skills",
     "defaultPrompt": [
       "Route this task through the appropriate epistemic discipline.",
-      "Run a blindspot pass before we commit to this approach.",
+      "Write an evidence-bound completion contract for this goal.",
       "Stress-test this high-stakes decision with the gauntlet."
     ]
   }

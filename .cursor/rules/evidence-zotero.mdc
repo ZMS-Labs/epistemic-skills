@@ -1,0 +1,16 @@
+---
+description: Scholarly evidence + Zotero shelf — fire evidence-research triad; never always-on Zotero
+alwaysApply: false
+---
+
+# Evidence research / Zotero (ZMS Labs)
+
+When the task involves scholarly literature, "studies show", Consensus/Scite, or citing papers to justify a design:
+
+1. Read and follow the `evidence-research` skill (Consensus + Scite + Zotero triad).
+2. Org policy: `zms-homelab/docs/governance/zotero-evidence-library-policy.md` — tiers 0/1/2/3.
+3. Holdings check + deposit (or explicit `OPERATOR_PENDING` / `UNVERIFIED`) — never silent skip.
+4. CLI: `python zms-homelab/scripts/zotero/zotero_tools.py` (`doctor`, `deposit`, `watch`).
+5. Do **not** open Zotero for ordinary coding, gitops, UAT packets, or Vanta "consensus-pooled" naming.
+
+If unsure whether literature is in play: ask once, or skip Zotero and say Tier 0.

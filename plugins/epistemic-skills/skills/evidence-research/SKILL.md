@@ -171,7 +171,7 @@ the citations miss, or vice versa), record it as a coverage note.
 ### 7. Cross-validate (Consensus ↔ Scite; Zotero as third witness)
 - DOI-confirm each matrix paper in the second engine (kills single-index
   hallucination/staleness; also catches version/retraction mismatches).
-- For the core question, compare what the two engines surface: overlap =
+- For the core question, compare what Consensus and Scite surface: overlap =
   robust core; divergence = mapped explicitly as a coverage limit, never
   silently dropped.
 - When Zotero holds the same DOI, treat library metadata (title/year/DOI) as

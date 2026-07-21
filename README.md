@@ -2,24 +2,24 @@
 
 Epistemic-discipline skills for agentic coding — how an agent **knows** things before, during, and after work.
 
-**Version 2.3.1.** **License: [GPL-3.0-or-later](LICENSE).**
+**Version 2.4.0.** **License: [GPL-3.0-or-later](LICENSE).**
 
 **Harness-agnostic.** The skills are plain [Agent Skills](https://agentskills.io/specification) (`SKILL.md` + supporting files) describing *methods*, not any one tool's mechanics. They run in any harness that can load a skill or a context file — Claude Code, Codex, Cursor, Gemini CLI, Antigravity, or your own agent loop. Where a step needs a runtime primitive (concurrent sub-agents, a structured-output schema, an MCP tool), the skill states the **contract** and points at a labeled *reference implementation* for one harness; other harnesses meet the same contract with their own primitives. See [Using these in any harness](#using-these-in-any-harness).
 
 Most skill collections cover the *workflow* layer: test-driven development, systematic debugging, plan writing (see [superpowers](https://github.com/obra/superpowers), which these compose with). This collection covers the layer underneath: the disciplines that keep an agent's claims tethered to evidence and its effort aimed at the real target.
 
-**Start with `using-epistemic-skills`** — the router. It answers *which* of these applies to a given task, in *what order*, and how each one's output feeds the next. The package ships **six** skills: the router plus the **five** disciplines it routes to. Install once; each skill self-triggers only when its own `description` matches.
+**Start with `using-epistemic-skills`** — the router. It answers *which* of these applies to a given task, in *what order*, and how each one's output feeds the next. The package ships **seven** skills: the router plus the **six** disciplines it routes to. Install once; each skill self-triggers only when its own `description` matches.
 
 ## The arc
 
-The five disciplines are one system — *how an agent knows things* before, during, and after work — with each ending at a defined boundary and handing off to the next:
+The six disciplines are one system — *how an agent knows things* before, during, and after work — with each ending at a defined boundary and handing off to the next:
 
 ```
- recon              decide                     gate               prove
- blindspot-pass  →  applying-formal-rigor   →  gauntlet        →  evidence-locked-uat
- (rewrites the      (derives the design;       (computed          (blinded verdict on
-  request)           evidence-research          GO/NO-GO on         a finished UI change)
-                     grounds any premise)       a frozen subject)
+ recon              decide                  contract          gate             prove
+ blindspot-pass  →  applying-formal-rigor → write-goal     → gauntlet       → evidence-locked-uat
+ (rewrites the      (derives the design;     (binds intent    (computed         (blinded verdict on
+  request)           evidence-research        to proof and     GO/NO-GO on        a finished UI change)
+                     grounds any premise)     stop rules)      a frozen subject)
 ```
 
 Most tasks fire zero or one. The router's value is the case where more than one applies.
@@ -32,6 +32,7 @@ Most tasks fire zero or one. The router's value is the case where more than one 
 | **applying-formal-rigor** | Design *and complexity* decisions. Sets a graduate-level formal-theory floor: name the *precise* construct (the exact normal form, the named isolation anomaly, the Master-Theorem case, the Ω lower bound), **derive** the conclusion instead of asserting it, and sweep every relevant lens. Ships a 7-lens theory battery; lens 4 is a full standalone Big-O / complexity analysis. |
 | **blindspot-pass** | The moment *before* work begins. Cheap read-only reconnaissance that surfaces landmines, hidden context, exemplars, and expert questions — then **rewrites the request** so downstream work aims at the territory, not the map. Provenance: Thariq Shihipar (Anthropic), *"A Field Guide to Claude Fable 5: Finding Your Unknowns"* (2026). |
 | **evidence-research** | Claims about *the literature*. **Consensus** discovers; **Scite** interrogates *reception* (supporting/contrasting citations, retractions); **Zotero** (durable library) does holdings-check + deposit so the org keeps a curated shelf. Prevents citing a refuted/retracted paper as support **and** rediscovering what the library already holds. Requires the triad in tandem; degrades explicitly when a layer is absent. |
+| **write-goal** | Explicit requests to author or start a persistent goal. Converts intent into an approved completion contract with goal-type selection, direct proof plus anti-proxy and provenance guards, scope and blocker policy, interruptibility, and opt-in budgets. Adapted from Kimi Code's built-in `write-goal` and strengthened with a documented research basis. |
 | **evidence-locked-uat** | Claims that UI-facing work is *done*. Actor drives; a **blinded verifier** judges from evidence alone; the judge is deterministic script code. Strict verdict vocabulary: `INCONCLUSIVE` is never rounded up to PASS. |
 | **gauntlet** | High-stakes decision points. Multi-lens adversarial panel on a *frozen* subject: truth-gated dossier, falsifiers, 102-persona registry with deterministic selection, mechanical `[V path:line]` evidence checks, Conflict Ledger, **computed** GO/CONDITIONAL/NO-GO. Ships roster, role-agents, orchestration template, and tested selector. |
 
@@ -40,7 +41,7 @@ Most tasks fire zero or one. The router's value is the case where more than one 
 ```
 epistemic-skills/                         # repo root
 ├── plugins/epistemic-skills/
-│   ├── skills/<name>/SKILL.md            # canonical skill cores (six)
+│   ├── skills/<name>/SKILL.md            # canonical skill cores (seven)
 │   ├── agents/                           # gauntlet role-agents (five)
 │   ├── .claude-plugin/plugin.json
 │   ├── .codex-plugin/plugin.json
@@ -74,7 +75,7 @@ Install with **exactly one** mechanism per harness. A second copy of the same sk
 codex plugin marketplace add ZMS-Labs/epistemic-skills --ref main
 codex plugin add epistemic-skills@epistemic-skills
 # Register the five gauntlet roles in Codex's user-agent registry:
-python "$HOME/.codex/plugins/cache/epistemic-skills/epistemic-skills/2.3.1/skills/gauntlet/scripts/render_codex_agents.py" --out "$HOME/.codex/agents"
+python "$HOME/.codex/plugins/cache/epistemic-skills/epistemic-skills/2.4.0/skills/gauntlet/scripts/render_codex_agents.py" --out "$HOME/.codex/agents"
 ```
 
 Start a new Codex task after rendering the roles. Codex plugin manifests do not
@@ -85,7 +86,7 @@ fallback for a task started before registration.
 
 ### Cursor
 
-**Status:** packaging is ready (`.cursor-plugin/` manifests, version 2.3.1). The plugin is **not yet listed** on the public [Cursor Marketplace](https://cursor.com/marketplace); `/add-plugin epistemic-skills` works only after Cursor lists it or you import the repo as a [team marketplace](https://cursor.com/docs/plugins). Publisher application: [cursor.com/marketplace/publish](https://cursor.com/marketplace/publish).
+**Status:** packaging is ready (`.cursor-plugin/` manifests, version 2.4.0). The plugin is **not yet listed** on the public [Cursor Marketplace](https://cursor.com/marketplace); `/add-plugin epistemic-skills` works only after Cursor lists it or you import the repo as a [team marketplace](https://cursor.com/docs/plugins). Publisher application: [cursor.com/marketplace/publish](https://cursor.com/marketplace/publish).
 
 | Path | When to use |
 |---|---|
@@ -110,7 +111,7 @@ mkdir -p ~/.cursor/plugins/local
 ln -sfn "$(pwd)/plugins/epistemic-skills" ~/.cursor/plugins/local/epistemic-skills
 ```
 
-Then **Developer: Reload Window**. Success check: all six skills under Customize → Skills, and auto-trigger on matching prompts (for example an irreversible / stress-test ask should surface the router or `gauntlet`).
+Then **Developer: Reload Window**. Success check: all seven skills under Customize → Skills, and auto-trigger on matching prompts (for example an irreversible / stress-test ask should surface the router or `gauntlet`).
 
 Do **not** also install these skills into `~/.cursor/skills/` while the plugin is loaded.
 
@@ -152,6 +153,7 @@ Use this **only** when the harness has no native plugin/extension install.
   - **gauntlet** Step 5: concurrent, context-isolated exact-role agents behind a barrier (degrade: sequential isolated calls). Definitions in `agents/`; runtimes without plugin-defined custom-agent registration use the replayable materialized-role adapter documented in `skills/gauntlet/reference/runtime-role-binding.md`.
   - **evidence-locked-uat**: actor / blinded-verifier / deterministic-judge in separate contexts.
   - **evidence-research**: Consensus + Scite MCP + durable library (Zotero or equivalent — identify by server / Web API / LOCAL.md host); degrade explicitly when a layer is absent.
+  - **write-goal**: persistent-goal inspection/creation plus a user-question primitive when the harness provides them; otherwise it returns the approved contract without pretending to start it.
   - **applying-formal-rigor** and **blindspot-pass**: pure method — no runtime dependency.
 - **`using-epistemic-skills`** is the router; read it first.
 
