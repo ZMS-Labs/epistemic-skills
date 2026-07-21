@@ -1,6 +1,6 @@
 ---
 name: applying-formal-rigor
-description: 'Use when making any non-trivial design, architecture, schema, data-modeling, concurrency, caching, consistency, indexing, or algorithmic decision with two or more viable options, OR when justifying why one option is correct. Symptoms you need this: "both are fine", "it''ll be slow", "this violates normalization", "stale data", "just pick one". Sets a graduate-level formal-theory floor for the analysis.'
+description: 'Use when making any non-trivial design, architecture, schema, data-modeling, concurrency, caching, consistency, indexing, or algorithmic decision with two or more viable options, OR when justifying why one option is correct. Symptoms you need this: "both are fine", "it''ll be slow", "this violates normalization", "stale data", "just pick one", "N+1 query", "race condition", "which isolation level", "Big-O of this", "denormalize", "index this". Not for pure preference (no theorem or measurable property distinguishes the options) or single-viable-option implementation.'
 ---
 
 # Applying Formal Rigor
@@ -18,9 +18,9 @@ This is a **floor, not a ceiling** — the minimum bar for any non-trivial decis
 - Any decision with ≥2 viable options (schema shape, store placement, cache strategy, isolation level, index, algorithm, data structure, API contract, propagation model).
 - Any time you're about to assert one option is "correct/better/cleaner."
 - **Analyzing or justifying the complexity of an algorithm or piece of code** — "what's the Big-O of this", "is this optimal", "can this be faster" — use the complexity lens (4): name the class *and its parameter*, solve the recurrence, prove the Ω lower bound, and report a convergence state rather than an open-ended hunt for speedups.
-- Reviewing someone else's design rationale for rigor.
+- Reviewing someone else's design rationale for rigor — use the Red Flags list below as the review checklist: their write-up must *name constructs and derive*, not assert.
 
-**When NOT to use:** purely mechanical edits with one correct answer; pure preference with no objective axis (naming a variable). If there's a *theorem* that bears on it, this applies.
+**When NOT to use:** purely mechanical edits with one correct answer; genuine preference — the falsifiable test is that **no theorem or measurable property distinguishes the options** (e.g. naming a variable). If *any* functional dependency, complexity class, or consistency guarantee differs between the options, it is not preference and this applies.
 
 ## The Three Disciplines (the actual rules)
 
@@ -45,7 +45,7 @@ Show the formal chain. Examples of the required move:
 - Algorithmic: `operation profile → cost per op (worst+amortized) → aggregate over workload → verdict`.
 
 ### 3. SWEEP every relevant lens
-Run the decision through the lens index below. For each lens that bears on it, name the construct and derive. Do **not** stop at the first one that fires. A schema decision is usually *also* a complexity decision *and* an integrity-invariant decision.
+Run the decision through the lens index below. For each lens that bears on it, name the construct and derive. Do **not** stop at the first one that fires. A schema decision is usually *also* a complexity decision *and* an integrity-invariant decision. On the first pass, **enumerate all 7 lenses** and mark each **fired** or **not-applicable**, with a one-clause reason for the not-applicable ones — a skipped lens must be auditable, never silent.
 
 ## Lens Index (sweep these; details in theory-battery.md)
 
@@ -60,6 +60,19 @@ Run the decision through the lens index below. For each lens that bears on it, n
 ## Output Shape
 
 For a fork, produce: per-lens construct + derivation → a comparison keyed by the *named* properties (not vibes) → an explicit verdict → and the **synthesis move** ("take A; recover B's one advantage via the materialized-view pattern"). The dominant option rarely wins on *every* axis; name what it concedes.
+
+For a single-option justification (no fork, just "is this correct"), produce the same per-lens derivation with no comparison table — the verdict is a **confirmation** (the design is correct, here's why) or a **reversal** (the derivation contradicts the premise).
+
+## Rationalizations
+
+| Rationalization | Why it's wrong |
+|---|---|
+| "It's obviously better, no need to derive it" | Obviousness is not a formal result — this is exactly the undershoot the skill kills. Derive it anyway; if it's truly obvious the derivation is short. |
+| "Only one lens clearly applies here" | Most real decisions fire 3+ lenses. Stopping at the first salient lens is the sweep failure — run the full lens enumeration before concluding only one applies. |
+| "This is just a quick/minor decision" | The floor applies to any decision with ≥2 viable options, not just big ones. Size of the decision is not a formal axis. |
+| "The verdict is intuitively right, so the derivation is a formality" | An undeserved verdict that happens to be correct is still undershooting — the derivation is what makes it a result instead of a guess, and next time the intuition may be wrong. |
+| "There's no time to name the precise construct" | Naming the construct is what distinguishes this skill from senior-engineer instinct; skipping it under time pressure is the exact failure mode, not an exemption from it. |
+| "The other option is clearly worse, no need for a comparison table" | A dominance claim is itself a formal comparison — show what's conceded, don't assert it. |
 
 ## Red Flags — you are undershooting, STOP
 

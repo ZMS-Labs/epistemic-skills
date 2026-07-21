@@ -117,6 +117,9 @@ The verifier may not emit FLAKY (cross-run aggregate only).
 
 ## Evidence directory (`<target-repo>/artifacts/uat/<run-id>/`)
 
+This is the Level-1 evidence layout; standard.md §59 describes the aspirational full-standard
+layout for higher maturity levels — do not treat §59 as this skill's contract.
+
 ```
 manifest.json          # run-id, tier, target, commit, model, calibration_status, hashes — committed
 contracts.yaml         # committed

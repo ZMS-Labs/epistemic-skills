@@ -1,6 +1,6 @@
 ---
 name: using-epistemic-skills
-description: Entry point and router for the epistemic-skills collection — read at the start of non-trivial work to decide WHICH discipline applies (blindspot-pass, applying-formal-rigor, evidence-research, write-goal, gauntlet, evidence-locked-uat), in what ORDER, and how each one's output feeds the next. Use when a task could touch more than one of these, when you are unsure which fires, or when sequencing them (recon → design → evidence → contract → gate → verify). Do not use as a substitute for reading the specific skill it routes you to.
+description: Use when a task might need more than one of blindspot-pass, applying-formal-rigor, evidence-research, write-goal, gauntlet, or evidence-locked-uat, when unsure which one applies, or when sequencing them (recon → decide → [evidence] → contract → gate → prove). Do not use as a substitute for reading the skill it routes to. This is the entry point and router for the epistemic-skills collection.
 ---
 
 # Using Epistemic Skills — the router
@@ -23,8 +23,8 @@ job. That is exactly what lets them compose without stepping on each other:
 | **blindspot-pass** | a fuzzy request + the real territory | a **rewritten, de-risked request** (never a change — it ends at *understanding*) | brainstorming / plans, or a gauntlet subject |
 | **applying-formal-rigor** | a decision with ≥2 options; a complexity question | a **derived verdict** (named construct → derivation → what the winner concedes) | the design you build, or a gauntlet dossier |
 | **evidence-research** | a claim that rests on "the research says…" | a **claim-evidence matrix + reception + holdings** (never a GO/NO-GO) | a design decision, or the gauntlet Step-0 evidence gate |
-| **write-goal** | explicit goal-authoring intent + de-risked context | an **approved, evidence-bound completion contract**; optionally a started persistent goal | the runtime's goal executor, then independent verification |
-| **gauntlet** | a **frozen** subject (often the outputs above) | a **computed GO / CONDITIONAL / NO-GO** + Conflict Ledger | the commit / merge decision |
+| **write-goal** | explicit user intent, de-risked context, and any evidence/design inputs | an **approved, evidence-bound completion contract**; optionally a started persistent goal | the runtime's goal executor, then independent verification |
+| **gauntlet** | a **frozen** subject (a de-risked request, a derived verdict, or an evidence matrix) | a **computed GO / CONDITIONAL / NO-GO** + Conflict Ledger | the commit / merge decision |
 | **evidence-locked-uat** | a finished change + its requirements | an **evidence packet + blinded verdict** (PASS / FAIL / INCONCLUSIVE) | the ship / merge decision |
 
 "blindspot-pass ends at understanding," "evidence-research never renders a verdict,"
@@ -43,14 +43,10 @@ task ──▶│ blindspot-    │─▶│ formal-rigor +   │─▶│ write
         └───────────────┘  └──────────────────┘  └────────────┘  └─────────┘  └────────┘  └────────────────┘
 ```
 
-- **blindspot-pass** is *upstream of everything* — it makes sure you're about to design the
-  right thing. It fires before there is even a subject to freeze.
-- **applying-formal-rigor** runs *during* design; **evidence-research** is *cross-cutting* —
-  called by the others whenever a premise depends on scholarly evidence, not a step of its own.
 - **write-goal** runs after intent is sufficiently de-risked and only on explicit user request;
   it binds the intended outcome to proof and stop rules before persistent execution.
 - **gauntlet** is a *gate before an irreversible commit* — it reviews a frozen subject that is
-  usually the product of the earlier steps.
+  typically a de-risked request, a derived verdict, or an evidence matrix from the earlier steps.
 - **evidence-locked-uat** is *post-work* — the UI-facing case of proving the claim "it's done."
 
 The arc is need-driven, not mandatory: skip any stage whose trigger is absent, and say you
@@ -64,7 +60,7 @@ Match the trigger you can *observe*, not a vibe:
 |---|---|---|
 | start non-trivial work in a codebase/domain you don't fully hold in context | **blindspot-pass** | the map (request) may not match the territory; cheap recon before expensive commitment |
 | choose between ≥2 designs, assert one is "better/cleaner/faster", or analyze an algorithm's complexity / Big-O | **applying-formal-rigor** | a verdict must be *derived* from named theory, not asserted; its lens 4 is the full complexity/Big-O analysis |
-| rely on "studies show…" / a scholarly or empirical premise | **evidence-research** | a paper's *reception* (supporting/contrasting/retracted) and *holdings* (durable library) decide whether it's support, a landmine, or already paid-for judgment |
+| rely on "studies show…" / a scholarly or empirical premise, or are about to make a Consensus/Scite/Zotero (scholarly-connector) tool call | **evidence-research** | a paper's *reception* (supporting/contrasting/retracted) and *holdings* (durable library) decide whether it's support, a landmine, or already paid-for judgment |
 | create, refine, or start a persistent goal; define what counts as done | **write-goal** | persistent work needs an approved completion contract that resists proxy success and preserves scope, provenance, and interruptibility |
 | commit something irreversible, one-way-door, or high-blast-radius (infra, security, publish, migration) | **gauntlet** | a multi-lens panel + computed verdict beats one model's confidence on a call you can't take back |
 | claim UI-facing work is done, or merge a user-facing surface | **evidence-locked-uat** | no agent should certify its own work; a blinded verifier + deterministic judge catches the false PASS |
@@ -72,6 +68,9 @@ Match the trigger you can *observe*, not a vibe:
 If **none** match, none fire — this router does not manufacture work. If **two** match, run
 them in arc order (recon → decide → contract → gate → prove) and pass each output to the next per the
 handoff table.
+
+gauntlet and evidence-locked-uat can both fire on the same merge (irreversible infra/security +
+user-facing surface) — gauntlet gates first, evidence-locked-uat proves after, per arc order.
 
 ## Shared invariants (why these six, and not others)
 
@@ -94,23 +93,9 @@ resemblance:
 
 ## Composition with a workflow-skill layer
 
-**When a workflow-skill layer is present, read the `helix` skill** — it is
-the tandem entry point and carries the full stage-pairing map. The summary
-below stays as the router's own one-paragraph view; helix is authoritative
-for the interleave.
-
-If you also run a workflow-skill layer (such as superpowers), the epistemic skills
-**interleave** with the workflow skills rather than replacing them (skill names below are
-superpowers' — map them to your layer's equivalents):
-
-- **blindspot-pass** runs *before* `brainstorming` — recon the territory, then design.
-- **applying-formal-rigor** runs *inside* `brainstorming` / design — derive the choice.
-- **write-goal** runs after recon/design and before persistent execution, but only on explicit
-  goal-authoring intent; workflow execution must honor its evidence-bound contract.
-- **gauntlet** runs at `brainstorming` approval and at `finishing-a-development-branch` /
-  pre-merge for irreversible changes.
-- **evidence-locked-uat** is the UI-facing instance of `verification-before-completion`.
-- **evidence-research** grounds any premise, in any of the above, that leans on the literature.
+If you also run a workflow-skill layer (e.g. superpowers), read helix now — it carries the
+full stage-pairing map. In short: the epistemic member always fires first at a stage
+boundary; the workflow member carries the stage out.
 
 Process skills set the approach; these set what counts as knowing. When both apply, the
 epistemic discipline runs first (it decides whether you're even solving the right problem,

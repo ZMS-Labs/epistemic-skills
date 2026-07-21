@@ -1,6 +1,6 @@
 ---
 name: evidence-research
-description: Establish verifiable scholarly evidence with three layers used in tandem — Consensus (discover what the literature says), Scite (interrogate how each finding was received — supporting/contrasting citations, retractions), and a durable library substrate such as Zotero (holdings check + persist the run's matrix). Mandatory prerequisite before ANY Consensus, Scite, or Zotero scholarly-connector tool call.
+description: Use when establishing verifiable scholarly evidence for a claim or decision, or immediately before ANY Consensus, Scite, or Zotero/library-substrate tool call (mandatory prerequisite). Triggers include literature review, citation verification, "what does the research say", evidence synthesis, and systematic-review components. Do NOT use for claims about completed engineering work (verification-before-completion's job), general web search, or a single already-trusted internal document lookup.
 ---
 
 # Evidence Research — discover, interrogate, persist
@@ -40,6 +40,22 @@ a run with nothing persisted.
 | Adversarial verdict on a frozen subject | adversarial review (a red-team / gauntlet pass) | The review's evidence gate invokes THIS skill before its dossier freezes; this skill **never** renders GO/NO-GO |
 | Proving work is done | verification-before-completion | Claims about *work*; this skill covers claims about *the literature* |
 
+## When NOT to use this skill
+
+- **Verifying your own completed work** (tests pass, feature built, bug fixed)
+  belongs to verification-before-completion, not this skill — this skill
+  covers claims about *the literature*, not claims about *work*.
+- **General web search** for non-scholarly information (news, docs, product
+  pages) is out of scope — no Consensus/Scite/Zotero connector is implicated.
+- **A single already-trusted internal document lookup** (an org runbook, a
+  prior decision record you already hold) does not need a scholarly-evidence
+  pass — this skill exists for claims that need literature-grade backing.
+- **Pre-work recon on a fuzzy request** is blindspot-pass's job; it may *call*
+  this skill once a landmine needs scholarly grounding, but this skill does
+  not replace that reconnaissance step.
+- **Rendering an adversarial GO/NO-GO verdict** is never this skill's output —
+  it feeds the evidence gate of a review, it does not judge.
+
 ## Non-negotiable boundaries (inherited and binding)
 
 - This skill is the **mandatory prerequisite before every scholarly-connector
@@ -71,20 +87,14 @@ a run with nothing persisted.
 
 ## Modes
 
-Same four modes as before, now with a reception dial **and** a holdings dial:
+Four modes, each with a reception dial **and** a holdings dial:
 
-- `quick` — directional scan, 3-5 papers; **reception pass on the top 3
-  load-bearing papers only**; holdings check + deposit those same papers.
-- `standard` — decision support, 8-12 papers; **reception pass on every paper
-  that enters the claim-evidence matrix**; holdings check the matrix; deposit
-  every matrix paper (DOI-keyed).
-- `deep` — high-stakes synthesis, 15-20 papers; reception on all matrix
-  papers **plus second-order interrogation**: for the 2-3 most load-bearing
-  papers, read the contrasting citers themselves (are the contradictions
-  methodological quibbles or replication failures?); holdings + deposit as in
-  `standard`, plus tag the run's collection with the decision/claim id.
-- `formal-support` — component of a documented review; all layers' coverage
-  limits recorded explicitly.
+| Mode | Paper count | Reception depth | Holdings depth | Cross-validate scope |
+|---|---|---|---|---|
+| `quick` | 3-5 (directional scan) | Top 3 load-bearing papers only | Check + deposit those same 3 papers | Matrix rows only (§7 applies uniformly across modes) |
+| `standard` | 8-12 (decision support) | Every paper entering the claim-evidence matrix | Check the matrix; deposit every matrix paper (DOI-keyed) | Matrix rows only (§7 applies uniformly across modes) |
+| `deep` | 15-20 (high-stakes synthesis) | All matrix papers, **plus second-order**: for the 2-3 most load-bearing, read the contrasting citers themselves (methodological quibble vs. replication failure) | As `standard`, plus tag the run's collection with the decision/claim id | Matrix rows only (§7 applies uniformly across modes) |
+| `formal-support` | Component of a documented review | All layers' coverage limits recorded explicitly | Same as `standard`, scoped to the review | Matrix rows only, with coverage limits recorded explicitly (§7 + §2) |
 
 ## Required flow
 
@@ -139,14 +149,12 @@ M` is a plan cap, not scarcity evidence. Prefer new discovery for gaps the
 holdings check did not close.
 
 ### 5. Interrogate (Scite leads) — the reception pass
-**Harness note (observed in Claude Code, 2026-07-17, see reference/scite-profile.md;
-your harness may differ — the live-schema rule above governs):** that Scite MCP returns
-slim records only — no inline tallies or citation
-contexts. The reception pass there runs at **filter level**: retraction/
-notice checks via `has_retraction`/`has_concern` membership tests, reception
-signal via `contrasting_from`/`supporting_from` threshold tests. Record
-`reception: filter-level (no contexts)` and don't claim context-level
-evidence. Where a richer Scite surface exists, the full pass below applies.
+**Harness note:** the observed Claude Code Scite MCP degrades to filter-level
+reception (no inline tallies or citation contexts) — see "Reception pass —
+the workable degraded method" in `reference/scite-profile.md` for the
+mechanics and exact record label. Your harness may differ — the live-schema
+rule above governs; where a richer Scite surface exists, the full pass below
+applies.
 
 For every load-bearing paper (per the mode's dial):
 - Pull Smart Citation tallies: `supporting / contrasting / mentioning`.
@@ -221,6 +229,15 @@ matrix, synthesis, counterevidence, limitations, citations, run record) with
 the run record logging **all three layers'** queries, IDs, tallies pulled,
 holdings hits, deposits, schema observations, degradations, and timestamps.
 Fail transparently; partial verified record beats gap-filling from memory.
+
+## Common rationalizations
+
+| Rationalization | Why it's wrong |
+|---|---|
+| "The abstract said it supports X, good enough" | Abstract-level is not passage-level. Verification level must be recorded honestly (§8); an abstract claim can be contradicted by the paper's own results or methods section, and does not license a `[V]` reception claim. |
+| "Scite returned results, so reception is checked" | Results could be from a slim, anonymous-tier response indistinguishable in-band from an authenticated one (§2 auth canary). Re-probe authed via `search_collections` before trusting any reception signal, and label degraded coverage (`filter-level`, `UNVERIFIED`) rather than silently treating slim records as a full reception pass. |
+| "It's old and well-cited, skip the retraction check" | Citation count is not quality, and age does not exempt a paper from being retracted years after publication. The retraction/notice check (§5-6) is unconditional for every load-bearing paper, regardless of vintage or citation volume. |
+| "One engine found it, that's the literature" | A single engine is not triangulated. Consensus and Scite answer different epistemic questions (discovery vs. reception) and must both weigh in per §7 Cross-validate; divergence between them is a coverage limit to record, not a result to discard. |
 
 ## Adversarial-review handoff (pre-freeze evidence gate)
 

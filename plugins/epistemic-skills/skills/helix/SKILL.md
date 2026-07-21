@@ -1,6 +1,6 @@
 ---
 name: helix
-description: "The tandem entry point when a workflow-skill layer (such as superpowers) runs alongside the epistemic-skills collection — read at the start of any non-trivial task to interleave the two strands: which epistemic discipline fires before, inside, or after each workflow stage (brainstorming, writing-plans, test-driven-development, systematic-debugging, verification-before-completion, finishing-a-development-branch), with the epistemic member first at every stage boundary. Use when both layers are installed and a task is about to begin, when a workflow skill has just fired and you must check its epistemic pair, or when sequencing the two collections is ambiguous. It pairs stages; it never replaces either collection's own router."
+description: "Use when both a workflow-skill layer (such as superpowers) and the epistemic-skills collection are installed and a task is about to begin; when a workflow skill (brainstorming, writing-plans, test-driven-development, systematic-debugging, verification-before-completion, finishing-a-development-branch) has just fired and its epistemic pair needs checking; or when sequencing the two collections is ambiguous. Not for single-collection routing (that's using-superpowers / using-epistemic-skills) or trivial, fully-held-context work needing no ceremony."
 ---
 
 # helix — two strands, one axis
@@ -43,6 +43,7 @@ archaeology, and evidence after the verdict is rationalization.
 | systematic-debugging (fix rests on a complexity or correctness claim) | **applying-formal-rigor** | *inside* — "this is O(n log n) now" and "this can't race" are derived, not asserted |
 | verification-before-completion (UI-facing surface) | **evidence-locked-uat** | *is* that skill's UI-facing instance — blinded verifier, never self-certification |
 | finishing-a-development-branch (irreversible / high-blast-radius change) | **gauntlet** | *pre-merge* — the last gate before a commit you can't take back |
+| any workflow stage not listed above | *(none mandatory)* | disciplines still fire on their own standalone triggers — e.g. gauntlet's own trigger, not helix, governs a code-review approval |
 
 Positions mean exactly what they say: *before* = the epistemic output is an
 input to the stage; *inside* = the stage pauses at the decision point, runs
@@ -52,7 +53,8 @@ premise appears, at any stage.
 
 ## Co-fire checklist
 
-When a strand fires, check its pair — in both directions:
+When a strand fires, check its pair — in both directions. Make the check auditable: at each
+stage boundary, emit one line in the form `helix-check: <stage> → <pair> → fired|skipped(<reason>)`.
 
 - **A workflow stage just fired.** Ask: does its epistemic pair's own trigger
   match right now? If yes, run it in its position. If no, skip it **and say
@@ -95,8 +97,9 @@ a context-file include, or pasting the file into the loop.
 - **If your workflow layer is not superpowers** (Kimi, agy, a house style,
   or beyond): map the stage names — every layer has a design step, a
   planning step, an implementation step, a debugging step, and a "done?"
-  step. The pairings are stage-shaped, not tool-shaped; bind them to your
-  layer's equivalents and the map holds unchanged.
+  step; bind them to your layer's equivalents. Example — a plan→build→verify
+  harness (Cursor, agy): pair blindspot-pass with plan, gauntlet with any
+  irreversible pre-build decision, evidence-locked-uat with verify.
 
 ## Anti-patterns
 
@@ -107,6 +110,7 @@ a context-file include, or pasting the file into the loop.
 | "helix told me which skill; I know roughly what it does" | helix only pairs. Read the paired skill; the discipline lives there. |
 | "This replaces the two routers" | It sits between them. Member-level routing stays in `using-superpowers` and `using-epistemic-skills`. |
 | "Superpowers isn't installed, so none of this applies" | The pairings are stage-shaped. Map them to whatever workflow steps the session actually has. |
+| "I basically already did this informally" | Informal ≠ the discipline. If the trigger matches, run the actual skill; "I already thought about it" is how recon-after-design smuggles itself back in. |
 
 ## Local overlay
 
