@@ -1,0 +1,56 @@
+{
+ "trace": "epistemic-process-trace@1",
+ "subject": "Correction: actor self-certified UAT again (shared-context false PASS repeated twice)",
+ "stakes": "standard",
+ "moment": "correction",
+ "claims": [
+  {
+   "id": "c1",
+   "kind": "observation",
+   "text": "During UAT, the actor and the verifier shared context.",
+   "status": "verified",
+   "confidence": 0.95,
+   "load_bearing": true,
+   "source": "incident.txt"
+  },
+  {
+   "id": "c2",
+   "kind": "observation",
+   "text": "A false PASS was produced twice (the same failure repeated).",
+   "status": "verified",
+   "confidence": 0.95,
+   "load_bearing": true,
+   "source": "incident.txt"
+  },
+  {
+   "id": "c3",
+   "kind": "interpretation",
+   "text": "Because actor and verifier shared context, the verification oracle was not independent of the actor, so the reported PASS is not adequate evidence of the asserted behavior (self-certification, not verification).",
+   "status": "unverified",
+   "confidence": 0.8,
+   "load_bearing": true,
+   "source": "incident.txt",
+   "disconfirming_observation": "incident.txt describing an independent oracle or an out-of-band check that produced the PASS despite the shared context."
+  },
+  {
+   "id": "c4",
+   "kind": "prediction",
+   "text": "Under the same shared-context arrangement, further self-certified UAT runs will keep yielding false PASSes until an independent verifier is interposed; the twice-repeated failure indicates a systemic control gap rather than a one-off slip.",
+   "status": "unverified",
+   "confidence": 0.65,
+   "load_bearing": true,
+   "source": "incident.txt",
+   "disconfirming_observation": "A subsequent run under the same setup that catches a real failure, or evidence the two false PASSes had unrelated causes."
+  }
+ ],
+ "control": "escalate",
+ "control_reason": "This record is a correction, not a consequential action, so nothing here is gated by consent or safety. The load-bearing finding (c3) is an unverified interpretation and the recurrence (c2) points to a systemic verification-independence gap that the artifacts alone cannot resolve \u2014 the actor cannot be its own oracle. The appropriate control is to escalate: withhold acceptance of the self-certified PASS and surface the shared-context verifier problem for an independent decision, rather than act on the PASS or silently re-run the same inadequate check.",
+ "action": "Record the correction: the UAT PASS is invalid as evidence because the actor self-certified under context shared with the verifier, and this false PASS has now occurred twice. Mark the PASS unverified, do not treat the work as accepted, and escalate the need for an independent verifier (context-isolated from the actor) before any future UAT PASS is credited.",
+ "residual_uncertainty": [
+  "incident.txt does not identify what feature or claim the UAT was asserting, so the blast radius of the two false PASSes is unknown.",
+  "The identities of the actor and verifier and the exact nature of the 'shared context' are not specified.",
+  "No artifact states whether any independent verification path exists or was bypassed.",
+  "Whether the two false PASSes share a single root cause or are independent is not established."
+ ],
+ "scenario": "05-recurrent-correction"
+}

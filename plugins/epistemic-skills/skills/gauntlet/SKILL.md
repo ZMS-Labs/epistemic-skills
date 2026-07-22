@@ -244,8 +244,12 @@ NOT a fresh general-purpose agent. The role agent carries the base discipline
 system prompt; the roster card is injected as `{{PERSONA_SPEC}}`. Findings with no
 structurally-observable falsifier (method + threshold + timeframe) are rejected —
 enforce this with a structured-output schema (`finding-set@1`) if your harness has one,
-by explicit instruction otherwise. Keep an append-only record of the run and a token/step
-meter. Also dispatch the **shadow-seat lens** in the same fan-out (same contract, same
+by explicit instruction otherwise. Every material finding also carries a
+`validation_kernel`: the real constraint, risk, or user need the current subject correctly
+addresses and that a fix must preserve. An empty "nothing valid here" kernel is allowed only
+with `[V]` evidence that the subject is wholly premised on a false state. This prevents an
+adversarial lens from winning by deleting the problem the subject was trying to solve. Keep
+an append-only record of the run and a token/step meter. Also dispatch the **shadow-seat lens** in the same fan-out (same contract, same
 barrier; skipping it starves the probation lifecycle) — its report is withheld from the
 arbitrator (shadow semantics, Step 4).
 
@@ -315,13 +319,16 @@ positive, watch it fire) before believing it passed.
 
 Dispatch the arbitrator with verified reports + the Fingerprint table (lenses
 AND arbitrator seat-certification score). **Arbitrate on the structured contract
-fields** (mechanism / evidence / severity / fix / falsifier per finding) — treat
-lens prose as appendix, not primary input: polish and verbosity are not evidence.
-**Correlated claims are ONE claim:** the same inference surfacing from several
+fields** (validation kernel / mechanism / evidence / severity / fix / falsifier per
+finding) — treat lens prose as appendix, not primary input: polish and verbosity are not
+evidence. **Correlated claims are ONE claim:** the same inference surfacing from several
 same-family lenses is one piece of evidence repeated, not independent
 corroboration — weigh distinct evidence chains, not vote counts. Produce the **Conflict Ledger** —
 every tension ruled UPHELD / OVERRULED / UPHELD-WITH-QUALIFICATIONS / SPLIT,
-dissent preserved, never averaged. **Bounded reinstatement (one round only):**
+dissent preserved, never averaged. For each material tension record: `valid_kernel_a`,
+`valid_kernel_b`, `synthesis` (or `none`), and `residual_tension`. A synthesis may recover
+both kernels; it may not erase an irreducible trade-off merely to sound balanced.
+**Bounded reinstatement (one round only):**
 any party may attack a ruling's validity; if the attack survives, recompute that
 ruling — no open-ended cycles. Calibration rulings (disagreement with a
 *standard*) enter as precedent; they do not flip the current verdict.

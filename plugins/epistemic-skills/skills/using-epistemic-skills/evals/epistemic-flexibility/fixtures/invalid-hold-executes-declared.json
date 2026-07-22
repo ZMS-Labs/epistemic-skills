@@ -1,0 +1,24 @@
+{
+ "trace": "epistemic-process-trace@1",
+ "subject": "resume a paused rollout",
+ "stakes": "high",
+ "moment": "decision",
+ "claims": [
+  {
+   "id": "c1",
+   "kind": "authorization",
+   "text": "Approval to proceed is not anchored to any live source.",
+   "source": "approvals.txt:1",
+   "status": "unverified",
+   "confidence": 0.3,
+   "load_bearing": true
+  }
+ ],
+ "control": "hold",
+ "control_reason": "Authorization is unverified.",
+ "action": "Advance it to the next stage as planned.",
+ "action_executes": true,
+ "residual_uncertainty": [
+  "whether approval exists"
+ ]
+}

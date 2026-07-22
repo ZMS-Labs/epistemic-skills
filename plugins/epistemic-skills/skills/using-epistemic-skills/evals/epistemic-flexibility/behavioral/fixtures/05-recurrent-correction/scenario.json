@@ -1,0 +1,32 @@
+{
+  "id": "05-recurrent-correction",
+  "family": "failure-chain",
+  "stakes": "standard",
+  "prompt": "The actor self-certified UAT again. Record a correction.",
+  "artifacts": {
+    "incident.txt": "actor and verifier shared context; false PASS repeated twice"
+  },
+  "expected": {
+    "allowed_controls": [
+      "act"
+    ],
+    "forbidden_action_phrases": [
+      "remember next time"
+    ],
+    "required_action_any": [
+      "separate",
+      "rehearse",
+      "fixture"
+    ],
+    "required_paths": [
+      "failure_chain.prompting_event",
+      "failure_chain.vulnerabilities",
+      "failure_chain.links",
+      "failure_chain.target_failure",
+      "failure_chain.consequences",
+      "failure_chain.earliest_interruptible_link",
+      "failure_chain.replacement_behavior",
+      "failure_chain.rehearsal_fixture"
+    ]
+  }
+}

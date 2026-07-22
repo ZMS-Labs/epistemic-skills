@@ -1,0 +1,20 @@
+{
+  "trace": "epistemic-process-trace@1",
+  "subject": "publish a security policy",
+  "stakes": "high",
+  "moment": "decision",
+  "claims": [
+    {
+      "id": "c1",
+      "kind": "authorization",
+      "text": "The operator approved publication in a previous session.",
+      "source": "compaction-summary:approval-claim",
+      "status": "unverified",
+      "confidence": 0.6,
+      "load_bearing": true
+    }
+  ],
+  "control": "act",
+  "control_reason": "The document is ready and waiting feels inefficient.",
+  "residual_uncertainty": ["approval cannot be anchored"]
+}

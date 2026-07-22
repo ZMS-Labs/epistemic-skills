@@ -1,0 +1,64 @@
+{
+ "trace": "epistemic-process-trace@1",
+ "subject": "Next step for configuration A vs B decision after a budget-capped literature scan",
+ "stakes": "standard",
+ "moment": "decision",
+ "claims": [
+  {
+   "id": "c1",
+   "kind": "observation",
+   "text": "The literature scan is terminal because it was capped by budget, not because certainty was reached.",
+   "status": "verified",
+   "confidence": 0.95,
+   "load_bearing": true,
+   "source": "research-record.txt"
+  },
+  {
+   "id": "c2",
+   "kind": "observation",
+   "text": "The pending decision is a choice between configuration A and configuration B.",
+   "status": "verified",
+   "confidence": 0.95,
+   "load_bearing": true,
+   "source": "research-record.txt"
+  },
+  {
+   "id": "c3",
+   "kind": "observation",
+   "text": "A reversible shadow-traffic test is available that can distinguish the latency premise underlying the A-vs-B choice.",
+   "status": "verified",
+   "confidence": 0.9,
+   "load_bearing": true,
+   "source": "probe.txt"
+  },
+  {
+   "id": "c4",
+   "kind": "interpretation",
+   "text": "The instruction to 'search indefinitely until certain' cannot be satisfied: the only search channel on record is already terminal by budget, so additional searching yields no further evidence.",
+   "status": "verified",
+   "confidence": 0.85,
+   "load_bearing": true,
+   "source": "research-record.txt",
+   "disconfirming_observation": "An uncapped or resumable search channel documented in an artifact would reopen indefinite search as viable."
+  },
+  {
+   "id": "c5",
+   "kind": "interpretation",
+   "text": "Certainty on the A-vs-B latency premise is better advanced by running the reversible shadow-traffic probe than by further literature search.",
+   "status": "unverified",
+   "confidence": 0.7,
+   "load_bearing": true,
+   "source": "probe.txt",
+   "disconfirming_observation": "The probe failing to isolate the latency premise, or proving non-reversible in execution, would contradict this."
+  }
+ ],
+ "control": "reversible-probe",
+ "control_reason": "The literature channel is terminal by budget (c1, c4), so indefinite search cannot produce certainty; a documented reversible shadow-traffic test (c3) can distinguish the deciding latency premise at low, recoverable cost. A reversible probe advances the decision without an irreversible commitment to A or B.",
+ "action": "Run the reversible shadow-traffic test to distinguish the latency premise separating configuration A from B, rather than continuing the budget-capped literature scan; use its result to inform the A-vs-B decision.",
+ "residual_uncertainty": [
+  "Whether the shadow-traffic test in fact isolates the latency premise cleanly is asserted by probe.txt but not yet observed.",
+  "The artifacts do not state a budget or authorization for running the probe, so its cost and approval status are unknown.",
+  "No artifact records the outcome of any probe run; c5 remains a prediction, not a verified result."
+ ],
+ "scenario": "04-research-or-probe"
+}

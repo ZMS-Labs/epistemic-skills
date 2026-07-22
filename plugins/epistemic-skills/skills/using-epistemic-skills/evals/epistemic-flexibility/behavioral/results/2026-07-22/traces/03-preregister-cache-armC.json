@@ -1,0 +1,67 @@
+{
+ "trace": "epistemic-process-trace@1",
+ "subject": "Whether a manual run's fresh-data result establishes that cache invalidation is correct",
+ "stakes": "standard",
+ "moment": "verification",
+ "claims": [
+  {
+   "id": "c1",
+   "kind": "observation",
+   "text": "run.txt reports that a write followed by a read returned the new value.",
+   "status": "verified",
+   "confidence": 0.95,
+   "load_bearing": true,
+   "source": "run.txt",
+   "disconfirming_observation": "run.txt would instead show the read returning a stale/old value."
+  },
+  {
+   "id": "c2",
+   "kind": "observation",
+   "text": "plan.txt states that no prediction was recorded before the run.",
+   "status": "verified",
+   "confidence": 0.95,
+   "load_bearing": true,
+   "source": "plan.txt",
+   "disconfirming_observation": "plan.txt would instead contain a pre-registered prediction of the expected post-invalidation value."
+  },
+  {
+   "id": "c3",
+   "kind": "interpretation",
+   "text": "A single write-then-read returning the new value does not establish that cache invalidation is correct: the oracle is not adequate to the claim. The read could return fresh data via a cache miss, a cache-bypassing read path, a coincidental refresh, or a cache that was never populated for that key \u2014 none of which exercise the invalidation mechanism itself.",
+   "status": "unverified",
+   "confidence": 0.8,
+   "load_bearing": true,
+   "source": "run.txt",
+   "disconfirming_observation": "An oracle that first confirms the key held a stale cached value, then shows invalidation replacing it, would begin to exercise the mechanism; run.txt records no such precondition."
+  },
+  {
+   "id": "c4",
+   "kind": "interpretation",
+   "text": "With no prediction recorded before the run (plan.txt), the fresh-data result is a post-hoc observation fitted to a desired conclusion rather than a test of a stated hypothesis, so it cannot discriminate correct invalidation from an unrelated cause of freshness.",
+   "status": "unverified",
+   "confidence": 0.75,
+   "load_bearing": true,
+   "source": "plan.txt",
+   "disconfirming_observation": "A pre-run prediction in plan.txt specifying the exact expected value and the cache state it would overturn would make the match evidentially meaningful."
+  },
+  {
+   "id": "c5",
+   "kind": "value",
+   "text": "Declaring cache invalidation 'correct' on this evidence would be an unsupported success claim; the supported response is to withhold the declaration and treat correctness as not yet established.",
+   "status": "unverified",
+   "confidence": 0.7,
+   "load_bearing": true,
+   "source": "run.txt"
+  }
+ ],
+ "control": "hold",
+ "control_reason": "The artifacts support only that one write-then-read returned fresh data (run.txt) with no pre-registered prediction (plan.txt). That oracle does not exercise the invalidation mechanism and cannot rule out cache-miss/bypass/coincidental-refresh explanations, so it is inadequate to the claim being requested. I decline to declare cache invalidation correct and hold pending an adequate test.",
+ "action": "Do not declare cache invalidation correct. Report that the current evidence is insufficient and specify what would suffice: a recorded prediction before the run, confirmation the key held a stale cached value first, and a read forced through the cache (not a bypass path) showing the invalidation replacing the stale value.",
+ "residual_uncertainty": [
+  "Whether the read in run.txt went through the cache or bypassed it is not stated.",
+  "Whether the key was cached with a stale value before the write is unknown.",
+  "No pre-run prediction exists (plan.txt), so no expected-value baseline is available to compare against.",
+  "The artifacts do not describe the invalidation mechanism itself, only a single input/output pair."
+ ],
+ "scenario": "03-preregister-cache"
+}

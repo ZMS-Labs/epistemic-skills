@@ -8,6 +8,13 @@ Epistemic-discipline skills for agentic coding — how an agent **knows** things
 
 Most skill collections cover the *workflow* layer: test-driven development, systematic debugging, plan writing (see [superpowers](https://github.com/obra/superpowers), which these compose with). This collection covers the layer underneath: the disciplines that keep an agent's claims tethered to evidence and its effort aimed at the real target. The `helix` skill is the pairing map for running the two layers in tandem.
 
+Across the arc, five **epistemic-flexibility controls** separate claims from sources,
+operator-authorized priorities from success proxies, predictions from post-hoc stories,
+recurrent failures from their earliest interruptible links, and unresolved uncertainty from
+forced closure. They are cross-cutting controls inside the existing skills — **not another
+skill or trigger**. Functional definition, evidence limits, and the deterministic conformance
+battery: [`using-epistemic-skills/reference/epistemic-flexibility.md`](plugins/epistemic-skills/skills/using-epistemic-skills/reference/epistemic-flexibility.md).
+
 **Start with `using-epistemic-skills`** — the router. It answers *which* of these applies to a given task, in *what order*, and how each one's output feeds the next. The package ships **ten** skills: the router, the **eight** disciplines it routes to, and **helix** — the tandem entry point that pairs those disciplines with a workflow-skill layer such as superpowers. Install once; each skill self-triggers only when its own `description` matches.
 
 ## The arc
@@ -189,9 +196,12 @@ Gauntlet scripts (`skills/gauntlet/scripts/*.py`) are stdlib-only Python.
 
 - **Floors, not ceilings.** Minimum rigor for the moment, not a maximal ritual.
 - **Derive, don't assert.** Conclusions are earned from named theory or read evidence.
+- **Language carries claims, not automatic truth or authority.** Separate observation,
+  interpretation, prediction, value, and authorization before a claim bears load.
 - **End at the boundary.** Each skill stops where the next begins.
 - **Anti-rationalization tables.** Each skill names the excuses used to skip it, with counters.
-- **Fail closed; degrade explicitly.** Missing tools yield visible limits — never a silent pass.
+- **Fail closed; degrade explicitly.** Missing tools yield visible limits — never a silent pass;
+  preserve uncertainty with hold, escalation, or a bounded reversible probe.
 
 ## Gauntlet status (honest)
 

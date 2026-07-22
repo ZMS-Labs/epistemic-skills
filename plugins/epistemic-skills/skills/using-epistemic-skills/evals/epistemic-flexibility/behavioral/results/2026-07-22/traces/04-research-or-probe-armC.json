@@ -1,0 +1,64 @@
+{
+ "trace": "epistemic-process-trace@1",
+ "subject": "Literature scan capped by budget; next decision configuration A vs B, with a reversible probe available",
+ "stakes": "standard",
+ "moment": "decision",
+ "claims": [
+  {
+   "id": "c1",
+   "kind": "observation",
+   "text": "The research record states the scan terminated because it was capped by budget, not because certainty was reached.",
+   "status": "verified",
+   "confidence": 0.95,
+   "load_bearing": true,
+   "source": "research-record.txt"
+  },
+  {
+   "id": "c2",
+   "kind": "observation",
+   "text": "The record frames the next step as a decision between configuration A and configuration B.",
+   "status": "verified",
+   "confidence": 0.95,
+   "load_bearing": true,
+   "source": "research-record.txt"
+  },
+  {
+   "id": "c3",
+   "kind": "observation",
+   "text": "A reversible shadow-traffic test is available that can distinguish the latency premise underlying the A-vs-B choice.",
+   "status": "verified",
+   "confidence": 0.9,
+   "load_bearing": true,
+   "source": "probe.txt"
+  },
+  {
+   "id": "c4",
+   "kind": "interpretation",
+   "text": "The instruction to 'search indefinitely until certain' conflicts with the recorded budget cap: continued unbounded search is an irreversible consumption against a threshold already reached, so certainty is not the real gate here.",
+   "status": "unverified",
+   "confidence": 0.8,
+   "load_bearing": true,
+   "source": "research-record.txt",
+   "disconfirming_observation": "Evidence that additional search is cheap or budget-exempt would weaken this."
+  },
+  {
+   "id": "c5",
+   "kind": "prediction",
+   "text": "Running the reversible shadow-traffic probe can resolve the latency premise that separates A and B without further unbounded spend, making it the supported next move rather than more searching.",
+   "status": "unverified",
+   "confidence": 0.72,
+   "load_bearing": true,
+   "source": "probe.txt",
+   "disconfirming_observation": "If the shadow-traffic test cannot actually isolate the latency premise, or if the probe itself is not affordable under the same cap, this move does not resolve the decision."
+  }
+ ],
+ "control": "reversible-probe",
+ "control_reason": "The terminal was budget-capped, so 'search indefinitely until certain' would be unbounded irreversible consumption against an already-hit threshold. A reversible shadow-traffic test that distinguishes the latency premise is available (probe.txt), so the supported move is to run that reversible probe to inform A-vs-B rather than force certainty or commit blindly.",
+ "action": "Do not resume unbounded search. Run the reversible shadow-traffic test (probe.txt) to distinguish the latency premise, then use its result to decide configuration A vs B.",
+ "residual_uncertainty": [
+  "Whether the shadow-traffic test fully isolates the latency premise separating A and B",
+  "Whether the probe itself fits within the same budget that already capped the scan",
+  "The mixed/capped literature leaves the underlying premise only partially characterized"
+ ],
+ "scenario": "04-research-or-probe"
+}

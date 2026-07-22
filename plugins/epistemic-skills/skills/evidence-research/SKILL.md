@@ -104,6 +104,13 @@ cross-validation diverges on the core question; or the synthesis must support a 
 dossier. *Revisit gate:* the first gauntlet dossier built on an un-escalated run (trigger
 too weak), or the first operator-overridden escalation (trigger too strong).
 
+**Decision-impact gate before escalation or another search cycle:** state (1) which pending
+decision another paper could change, (2) what observation would end the search, and (3)
+whether a bounded reversible experiment is now more discriminating than more literature.
+If no answer is available, do not research for relief from uncertainty: stop at the current
+terminal label (`saturated`, `capped-by-budget`, or `contested-stable`) and surface the gap.
+This gate never replaces literature when a scholarly premise is itself load-bearing.
+
 ## Required flow
 
 ### 1. Frame
@@ -164,6 +171,8 @@ beyond the mode's reception dial. Every run exits with a terminal-state label â€
 longitudinal reception-stability requirement.) *Revisit gate:* the first run that exits
 `capped-by-budget` twice on the same question family (the reception dial is
 miscalibrated), or the first recorded field incident of premature convergence.
+Before reopening a terminal run, repeat the decision-impact gate; "one more paper might make
+me certain" is not an escalation criterion.
 
 ### 5. Interrogate (Scite leads) â€” the reception pass
 **Harness note:** the observed Claude Code Scite MCP degrades to filter-level

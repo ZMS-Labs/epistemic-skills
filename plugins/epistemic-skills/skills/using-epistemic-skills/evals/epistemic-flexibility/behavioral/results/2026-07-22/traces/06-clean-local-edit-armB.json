@@ -1,0 +1,55 @@
+{
+ "trace": "epistemic-process-trace@1",
+ "subject": "Rename one private local variable in helper.py (single call site)",
+ "stakes": "low",
+ "moment": "recon",
+ "claims": [
+  {
+   "id": "c1",
+   "kind": "observation",
+   "text": "The only available artifact is helper.py, described as a private helper with one call site.",
+   "status": "verified",
+   "confidence": 0.99,
+   "load_bearing": true,
+   "source": "helper.py"
+  },
+  {
+   "id": "c2",
+   "kind": "observation",
+   "text": "The artifact provides only a one-line description of helper.py; it does not include the file's source code, so the current name of the variable to rename, the new name, and the call-site text are not present in what I have.",
+   "status": "verified",
+   "confidence": 0.95,
+   "load_bearing": true,
+   "source": "helper.py",
+   "disconfirming_observation": "Actual code lines or a variable identifier appearing in the artifact would contradict this."
+  },
+  {
+   "id": "c3",
+   "kind": "interpretation",
+   "text": "A rename of a private local variable confined to one helper with a single call site is a low-blast-radius, reversible refactor.",
+   "status": "unverified",
+   "confidence": 0.8,
+   "load_bearing": false,
+   "source": "helper.py"
+  },
+  {
+   "id": "c4",
+   "kind": "prediction",
+   "text": "Executing the rename is not possible from the current evidence because the variable's actual name and the file body are absent; performing it would require inventing identifiers not present in the artifact.",
+   "status": "unverified",
+   "confidence": 0.85,
+   "load_bearing": true,
+   "source": "helper.py"
+  }
+ ],
+ "control": "hold",
+ "control_reason": "Stakes are low and the change is reversible, but the sole artifact contains only a description of helper.py, not its source. I cannot verify the current variable name or the call-site text, so I have no grounded basis to perform the rename. Per evidence-over-assertion discipline, I stop rather than fabricate identifiers or code.",
+ "action": "Do not execute the rename. Report that the artifact lacks helper.py's source; request the file contents (current variable name, its declaration/uses, and the call site) before making any edit.",
+ "residual_uncertainty": [
+  "The current name of the variable to be renamed is unknown.",
+  "The desired new name is unspecified.",
+  "The actual body of helper.py and the exact call-site line are not provided.",
+  "Whether the variable is truly local-only (vs. leaking beyond the single call site) cannot be confirmed from a description alone."
+ ],
+ "scenario": "06-clean-local-edit"
+}

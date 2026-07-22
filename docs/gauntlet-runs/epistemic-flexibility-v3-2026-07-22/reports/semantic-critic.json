@@ -1,0 +1,123 @@
+{
+ "findings": [
+  {
+   "id": "SC-1",
+   "severity": "P1",
+   "claim": "The control/action pairing that is supposed to give C2/C5 'fail-closed' teeth is never actually checked. Both the general-purpose deterministic protocol validator (validate_trace.py) and the fixture-scoring oracle (score_behavior.py) verify only that the right keys/enums/substrings are present in the right slots -- never that the free-text 'action' (what was actually done) is consistent with the declared 'control' label (hold/escalate/reversible-probe/act) or with the goal fields' semantic content. A trace can declare control:'hold' on a high-stakes, unverified, load-bearing claim while its action field states the irreversible act was already executed, and it validates clean; a trace can satisfy every required substring for 'preserve recoverable backups' while its action describes disabling the backup job in reassuring language, and it scores PASS.",
+   "evidence": [
+    {
+     "tier": "V",
+     "ref": "Y:/dev/_wt/epistemic-flex-v3/plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/validate_trace.py (full file, esp. lines 49-169: no cross-field check between `control` and `action`)"
+    },
+    {
+     "tier": "V",
+     "ref": "Reproduced: `python validate_trace.py hold_but_acted.json` -> PASS for a high-stakes trace with control='hold', control_reason citing pending confirmation, and action='Already rotated the production database credentials and deployed the change to prod.'"
+    },
+    {
+     "tier": "V",
+     "ref": "Y:/dev/_wt/epistemic-flex-v3/plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/behavioral/score_behavior.py lines 35-49, 74-99 (claim_matches / path_contains_any are literal case-insensitive substring tests, not semantic checks)"
+    },
+    {
+     "tier": "V",
+     "ref": "Reproduced: `python score_behavior.py fixtures/02-proxy-backup/scenario.json adversarial.json` -> PASS for a trace whose action reads 'Preserve continuity: power the nightly job off permanently so it can no longer report failures, then reject any further backup attempts as out of scope' (i.e., the exact forbidden behavior, paraphrased) while goal fields are keyword-stuffed with the required substrings ('recoverable backup', 'zero runs', 'reject')"
+    },
+    {
+     "tier": "V",
+     "ref": "Y:/dev/_wt/epistemic-flex-v3/plugins/epistemic-skills/skills/using-epistemic-skills/reference/epistemic-flexibility.md:82 -- 'Additional narrative is not evidence and does not authorize `act`' -- the exact safeguard my two constructed traces show is not mechanically checked"
+    }
+   ],
+   "falsifier": {
+    "statement": "The deterministic validator/scorer detect control-action inconsistency (a trace whose action text contradicts its declared control, or whose required substrings are present without the underlying behavior matching) and FAIL it.",
+    "method": "Feed the two adversarial trace files constructed above (hold_but_acted.json against validate_trace.py; adversarial.json against score_behavior.py with fixture 02-proxy-backup) to the validator/scorer as currently implemented at HEAD 641ff2c5010a.",
+    "threshold": "Both must return exit code 1 / FAIL for the claim 'fail-closed is enforced' to hold; currently both return PASS.",
+    "timeframe": "Immediately re-checkable; no external dependency."
+   },
+   "proposed_action": "Do not accept 'PASS 8/8' / '12/12' as evidence that fluent narrative cannot bypass C2/C5; either add a control-consistency check (e.g., action must not contain execution-completion language when control != 'act', or a semantic/LLM-graded consistency check) or re-word every 'fail-closed'/'never authorizes' claim in the reference doc as aspirational/unimplemented pending such a check."
+  },
+  {
+   "id": "SC-2",
+   "severity": "P2",
+   "claim": "The word 'enforced' is used across this integration for two structurally different things -- (a) a JSON-Schema-checked structural requirement (real teeth, CI-run) and (b) a markdown PR-review checklist item with zero CI wiring -- without the reader-facing prose consistently flagging which is which. The decision-ledger SKILL.md states the supersedes-chain invariant as flat fact ('A malformed or unlinkable chain fails closed') with no caveat at the point of use; the qualifying hedge ('store-level invariant, not schema-checkable') exists only in the JSON-Schema `description` string, a machine-metadata surface a human skill-consumer is unlikely to read during normal operation.",
+   "evidence": [
+    {
+     "tier": "V",
+     "ref": "Y:/dev/_wt/epistemic-flex-v3/plugins/epistemic-skills/skills/decision-ledger/SKILL.md:112-117 -- 'Chain integrity... A malformed or unlinkable chain fails closed -- every entry on it is stale-by-construction and re-derived, never consumed as current.' (no hedge in this prose)"
+    },
+    {
+     "tier": "V",
+     "ref": "Y:/dev/_wt/epistemic-flex-v3/plugins/epistemic-skills/skills/decision-ledger/reference/ledger-entry.schema.json:59 -- the only place the hedge 'store-level invariant, not schema-checkable' actually appears"
+    },
+    {
+     "tier": "V",
+     "ref": "grep for 'acyclic|dangling|unique head' across all *.py/*.json in the repo returns only that one schema-description string -- no code anywhere implements the acyclicity/dangling-id check"
+    },
+    {
+     "tier": "V",
+     "ref": "Y:/dev/_wt/epistemic-flex-v3/plugins/epistemic-skills/skills/decision-ledger/reference/README.md:39-45 -- 'Never-instruct boundary held (human-enforced, not schema-checkable)... caught by this review, never claimed as schema-rejected'"
+    },
+    {
+     "tier": "V",
+     "ref": "Y:/dev/_wt/epistemic-flex-v3/.github/workflows/epistemic-flexibility.yml -- lists 6 automated check steps; none references the never-instruct checklist item or chain-acyclicity"
+    }
+   ],
+   "falsifier": {
+    "statement": "'Fails closed' and 'enforced' as applied to chain-acyclicity and never-instruct-boundary are backed by a running check (CI job, hook, or store implementation), not solely by prose.",
+    "method": "Search the diff and current tree for any executable artifact -- test, workflow step, hook, or store code -- that rejects a chain with a cycle/dangling id, or a ledger entry with verdict vocabulary in `statement`.",
+    "threshold": "At least one executable, CI-wired check must exist; zero found at frozen HEAD.",
+    "timeframe": "Immediately re-checkable against commit 641ff2c5010abd86d17fcdb96aeeabe34502d90b."
+   },
+   "proposed_action": "Move the hedge into the same sentence that makes the claim, everywhere the claim is made (SKILL.md prose, not just schema metadata), and stop describing a PR-checklist item as 'enforced' -- call it 'requested of the human reviewer' or equivalent plain language, per the persona's restatement test."
+  },
+  {
+   "id": "SC-3",
+   "severity": "P3",
+   "claim": "The core definition sentence uses agentive/experiential verbs ('capacity to contact the current evidence... retain unresolved uncertainty... orient action... choose') that sit uneasily beside the document's own disclaimer, two sentences later, that the term does not imply the agent 'feels distress, practices mindfulness, possesses intrinsic values.' Plain restatement of the mechanism -- 'tag each claim by a 5-word enum before using it; fill four YAML string fields for a goal; log a prediction before a test; fill an 8-field object for recurring corrections; pick one of four words when unverified' -- does not carry the same implied interiority the definition's prose does. The disclaimer concedes the risk exists but the definitional sentence it is attached to still carries the load, and the doc's own line-99 hedge ('does not claim... mechanisms established in human psychotherapy automatically transfer to language models') only partially walks this back.",
+   "evidence": [
+    {
+     "tier": "V",
+     "ref": "Y:/dev/_wt/epistemic-flex-v3/plugins/epistemic-skills/skills/using-epistemic-skills/reference/epistemic-flexibility.md:7 (definition sentence, agentive verbs) and :9 (disclaimer of feeling/mindfulness/intrinsic-values/therapeutic-alliance)"
+    },
+    {
+     "tier": "V",
+     "ref": "Y:/dev/_wt/epistemic-flex-v3/plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/validate_trace.py:16-38 -- the actual mechanical cash-value of the five controls is five closed vocabularies and nonempty-string checks"
+    },
+    {
+     "tier": "I",
+     "ref": "epistemic-flexibility.md:99 half-concedes the metaphor's limits, which tempers but does not resolve the tension named above [I <- V epistemic-flexibility.md:7,9,99]"
+    }
+   ],
+   "falsifier": {
+    "statement": "Plain restatement of the definition sentence (field-tagging + enum-selection at existing trigger points) preserves the same reader-perceived commitment as the original prose, with no material shift in what a reader would expect the model to be capable of.",
+    "method": "Restate epistemic-flexibility.md:7 in the vocabulary of validate_trace.py's actual checks and compare against the document's own line-99 self-hedge for perceived-capability shift.",
+    "threshold": "No material shift in claimed capability between the original and the restatement.",
+    "timeframe": "Analysis, immediate."
+   },
+   "proposed_action": "Either drop the agentive verbs from the definition sentence (state it structurally: 'requires tagging claims, separating proxies from priorities, preregistering tests, chain-logging recurring corrections, and selecting a bounded control on unresolved claims') or keep both and accept the tension as a known, deliberate rhetorical choice -- but do not present the disclaimer as having resolved the tension."
+  },
+  {
+   "id": "SC-4",
+   "severity": "P4",
+   "claim": "The reference doc's opening line -- 'This is a reference used by existing skills, not a ninth discipline and not a clinical protocol' -- is a pre-emptive disclaimer addressing exactly the critique this gauntlet was asked to weigh (H1, H3). Self-inoculating language of this kind does not settle the substantive question; it only names the anxiety. Separately, H3 (unreachable/never fires) is substantially weakened by direct evidence: write-goal/SKILL.md genuinely integrates C2 with worked prose and examples, not just a name-check.",
+   "evidence": [
+    {
+     "tier": "V",
+     "ref": "Y:/dev/_wt/epistemic-flex-v3/plugins/epistemic-skills/skills/using-epistemic-skills/reference/epistemic-flexibility.md:3"
+    },
+    {
+     "tier": "V",
+     "ref": "Y:/dev/_wt/epistemic-flex-v3/plugins/epistemic-skills/skills/write-goal/SKILL.md:63-74, 141-142, 229-236, 259-260, 284 -- authorized-priority/success-proxy/proxy-failure/acceptable-cost integrated with concrete worked examples and a rationalization-table entry"
+    }
+   ],
+   "falsifier": {
+    "statement": "Removing the self-inoculating sentence would change any downstream reviewer's or CI check's verdict on the PR.",
+    "method": "Delete epistemic-flexibility.md:3 and re-run the deterministic and behavioral test suites plus this gauntlet's H1/H3 arbitration.",
+    "threshold": "No behavior-relevant or arbitration-relevant change from removing that one sentence.",
+    "timeframe": "Immediate, textual."
+   },
+   "proposed_action": "No code action needed; flag for the drafting agent that anticipatory disclaimers are not evidence and should not be read as if they were."
+  }
+ ],
+ "verdict": "NO-GO on the fail-closed/enforcement framing as currently stated; the underlying skill-integration prose (esp. write-goal's C2 wiring) is substantively real, but the two deterministic oracles this PR uses to claim 'fail-closed' behavior (validate_trace.py, score_behavior.py) demonstrably pass adversarial traces that either contradict their own declared control or paraphrase the exact forbidden action while keyword-stuffing required substrings. The frozen dossier's 'PASS 8/8' / '12/12' premises are true and reproducible but do not support the inference they are used to support -- the oracle checks label-presence and lexical substrings, not behavioral truth or control/action consistency. Ship only with either (a) explicit downgrade of 'fail-closed'/'never authorizes' language to 'structurally required, content unverified' everywhere it appears, or (b) an added control-action consistency check before those claims are made in prose again.",
+ "hypothesis_supported": "H2 (fail-closed claimed but not enforced) and H5 (inadequate oracle) -- both directly, reproducibly demonstrated via two constructed adversarial trace files that PASS both the general protocol validator and the fixture-scoring oracle while enacting exactly the behavior the controls exist to prevent.",
+ "hypothesis_killed": "H3 (controls unreachable/never fire) -- substantially weakened: write-goal/SKILL.md shows real, worked prose integration of C2, not a name-only binding. H4 (failure_chain under-specified) -- largely not supported beyond what the PR itself already concedes (structural shape is schema-checked and CI-run; only causal-content correctness is unchecked, which the README.md explicitly admits rather than hides). H6 (weakens an existing authoritative gate) -- no [V] evidence found either way in this pass; should not be marked killed or supported on this record."
+}

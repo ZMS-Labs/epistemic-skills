@@ -1,0 +1,96 @@
+{
+ "findings": [
+  {
+   "id": "F1-verdict-inflation",
+   "severity": "P2",
+   "claim": "The research synthesis reaches a strong-language verdict (\"Strongly supported\") on its own self-authored evaluation rubric for a claim that is nearly unfalsifiable as stated, while the same document explicitly concedes the evidence needed to support the actually-consequential claim (that this changes agent behavior for the better) does not exist yet. This is confirmation bias: a favorable conclusion is reached and stated with confidence disproportionate to what was actually tested.",
+   "reasoning": "The synthesis doc defines its own 'derivation test' (S = trigger/representation/operation/evidence-source/stopping-rule/memory-update), applies it to itself, and grades the hypothesis 'the skills can be enhanced by ACT/DBT/CBT' as 'Strongly supported' on the basis that 'several concrete controls can be integrated and tested' [V docs/research/2026-07-22-psychology-epistemic-skills-synthesis.md:19]. But 'can be integrated and tested' is true of almost any additional structure and says nothing about whether the integration actually improves anything -- the document's own Limits section immediately undercuts the strength of that verdict: 'Psychotherapy mechanism research often identifies statistical or conceptual mediators without fully specified functional mechanisms' [V docs/research/2026-07-22-psychology-epistemic-skills-synthesis.md:246] and 'Evidence that a human therapeutic process works does not establish that the translated process improves language-agent behavior. The four-arm behavioral evaluation is required' [V docs/research/2026-07-22-psychology-epistemic-skills-synthesis.md:247]. The dossier itself confirms the causal claim remains open: 'Behavioral superiority of the integrated arm over baseline/2.8.0/psychology-only: NOT established (four-arm ablation not yet run at freeze time -- Phase 4)' [V docs/gauntlet-runs/epistemic-flexibility-v3-2026-07-22/dossier.md:62-63]. The strong verdict word ('Strongly supported') is doing rhetorical work that the underlying evidence does not license -- a classic sentence-level tell of motivated reasoning: the author wants continued confidence in a program already implemented, and grades their own rubric to deliver it.",
+   "evidence": [
+    {
+     "tier": "V",
+     "ref": "docs/research/2026-07-22-psychology-epistemic-skills-synthesis.md:19"
+    },
+    {
+     "tier": "V",
+     "ref": "docs/research/2026-07-22-psychology-epistemic-skills-synthesis.md:246-247"
+    },
+    {
+     "tier": "V",
+     "ref": "docs/gauntlet-runs/epistemic-flexibility-v3-2026-07-22/dossier.md:62-63"
+    }
+   ],
+   "falsifier": {
+    "statement": "If the Determination row is restated using only what was actually established this session ('five controls were designed and pass a validator the same author wrote; zero evidence yet that they change agent behavior versus baseline'), the restated verdict is unchanged from 'Strongly supported.'",
+    "method": "Re-derive the table row using only the [V]-tagged facts available at freeze time (no four-arm results, no LLM-specific psychology evidence), and compare wording/confidence to the original row.",
+    "threshold": "Bias claim is refuted if the honest restatement still reads as 'strongly supported'; confirmed if it necessarily downgrades to 'untested design hypothesis, integration mechanically complete.'",
+    "timeframe": "Immediate desk re-derivation; superseded and re-testable once the Phase 4 four-arm results referenced in the handoff (docs/handoffs/2026-07-22-epistemic-flexibility-v3.md:78-104) actually land."
+   },
+   "proposed_action": "Downgrade the Determination table's verdict language to match only what is verified (mechanical integration complete, behavioral effect unestablished) before this synthesis is cited elsewhere as research support for the design."
+  },
+  {
+   "id": "F2-self-graded-oracle",
+   "severity": "P2",
+   "claim": "The deterministic conformance battery and the behavioral scorer's gold/planted-bad traces were authored in the same session, by the same reasoning process, as the validator they are scored against -- with the design's own C3 principle (preregister before seeing the result, to limit post-hoc reinterpretation) never applied reflexively to the test suite itself. The '8/8' and '12/12' PASS counts are evidence the author's fixtures match the author's validator, not independent evidence the controls discriminate real good/bad traces.",
+   "reasoning": "C3 states: 'A result without a prior prediction is evidence, but it is weaker evidence against post-hoc reinterpretation' [V .gauntlet-subject/reference.md:52-54, identical to V plugins/epistemic-skills/skills/using-epistemic-skills/reference/epistemic-flexibility.md:52-54]. Yet the handoff admits no independent party constructed or ran these fixtures: 'Needs isolated concurrent exact-role agents behind a barrier and a separate arbitrator... This session has no generic isolated-subagent primitive and therefore did not simulate independence in one context' [V docs/handoffs/2026-07-22-epistemic-flexibility-v3.md:106-112]. The spec frames the battery itself as 'a protocol conformance smoke check, not a behavioral effectiveness measurement' [V .gauntlet-subject/spec.md:108] -- an honest label -- but the dossier's 'VERIFIED premises' table nonetheless lists 'protocol fixtures PASS 8/8' and 'behavioral scorer gold/bad PASS 12/12' as reproducible facts [V docs/gauntlet-runs/epistemic-flexibility-v3-2026-07-22/dossier.md:48-49] without the same caveat attached at the point of citation, inviting a reader to treat self-graded PASS as stronger evidence than it is. This is confirmation bias in test construction: an author who just finished writing a specification will, without any adversarial intent, generate 'bad' traces that fail for the reasons they already expect and 'good' traces that pass for the reasons they already expect -- systematically under-sampling the ambiguous, boundary-case traces that would actually stress-test the rule.",
+   "evidence": [
+    {
+     "tier": "V",
+     "ref": "plugins/epistemic-skills/skills/using-epistemic-skills/reference/epistemic-flexibility.md:52-54"
+    },
+    {
+     "tier": "V",
+     "ref": "docs/handoffs/2026-07-22-epistemic-flexibility-v3.md:106-112"
+    },
+    {
+     "tier": "V",
+     "ref": ".gauntlet-subject/spec.md:108"
+    },
+    {
+     "tier": "V",
+     "ref": "docs/gauntlet-runs/epistemic-flexibility-v3-2026-07-22/dossier.md:48-49"
+    }
+   ],
+   "falsifier": {
+    "statement": "An independent constructor (different model family or a human, without reading the validator source) writes 5 novel adversarial 'should-fail' traces targeting ambiguous boundary cases (e.g. a claim that is fluently phrased as an authorization but sourced only from a memory summary); the shipped validator correctly rejects at least 4 of 5.",
+    "method": "Run plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/run_tests.py and the behavioral run_tests.py against the new, previously-unseen adversarial set; record pass/fail per trace.",
+    "threshold": "<=1/5 false-accept on the independently authored adversarial set refutes this finding (oracle generalizes); >=2/5 false-accept confirms self-grading bias inflated the reported PASS rates.",
+    "timeframe": "Before Phase 3 (independent gauntlet review) is considered satisfied; this is exactly the gap the handoff itself flags as unmet (docs/handoffs/2026-07-22-epistemic-flexibility-v3.md:106-112)."
+   },
+   "proposed_action": "Do not cite the 8/8 and 12/12 self-test PASS numbers as evidence of oracle adequacy in any later summary without the 'author-constructed, not independently adversarial' caveat attached inline."
+  },
+  {
+   "id": "F3-borrowed-authority-framing",
+   "severity": "P3",
+   "claim": "Nine human-clinical-psychology citations and prominent ACT/DBT/CBT branding are used to narrate and justify five control-flow schema fields (C1-C5), lending unearned scientific authority to what is, in the artifact itself, plain software control-theory -- confirmed by the fact that the operative schema definitions never use ACT/DBT/CBT vocabulary at all; that vocabulary appears only in the rationale/citation section, never in the executable SKILL.md instructions the agent actually consumes.",
+   "reasoning": "Grep of the actual shipped reference file shows ACT/DBT/CBT terms appear only once, inside the 'Evidence basis and degradation' section, never in the five control definitions themselves [V plugins/epistemic-skills/skills/using-epistemic-skills/reference/epistemic-flexibility.md:99]. Grep of every amended SKILL.md across the diff shows zero occurrences of ACT/DBT/CBT/defusion/cognitive-restructuring in the operative instructions (the one 'dialectical' hit is the pre-existing gauntlet lens name, not new text) [V plugins/epistemic-skills/skills/gauntlet/SKILL.md:232]. Meanwhile the spec opens with 'The design borrows process ideas from ACT, DBT, and CBT' [V .gauntlet-subject/spec.md:19-26] and the synthesis explicitly concedes the borrowed authority does not transfer: 'It does not claim that those literatures uniquely derive these controls or that mechanisms established in human psychotherapy automatically transfer to language models' [V plugins/epistemic-skills/skills/using-epistemic-skills/reference/epistemic-flexibility.md:99] and 'The same architecture can also be motivated by philosophy of science, control theory, cybernetics, high-reliability organizations, metacognition, and software safety engineering. Psychology is a generative basis, not a unique origin' [V docs/research/2026-07-22-psychology-epistemic-skills-synthesis.md:245]. Citing nine clinical meta-analyses while admitting they don't establish transfer, and while the actual executable artifact never depends on them, is a halo-effect pattern: borrow the reader's trust in peer-reviewed clinical science for a design decision the clinical science does not actually license.",
+   "evidence": [
+    {
+     "tier": "V",
+     "ref": "plugins/epistemic-skills/skills/using-epistemic-skills/reference/epistemic-flexibility.md:99"
+    },
+    {
+     "tier": "V",
+     "ref": "plugins/epistemic-skills/skills/gauntlet/SKILL.md:232"
+    },
+    {
+     "tier": "V",
+     "ref": ".gauntlet-subject/spec.md:19-26"
+    },
+    {
+     "tier": "V",
+     "ref": "docs/research/2026-07-22-psychology-epistemic-skills-synthesis.md:245"
+    }
+   ],
+   "falsifier": {
+    "statement": "Removing all ACT/DBT/CBT naming and the nine citations from spec.md and reference.md, replacing them with pure control-theory language, leaves the shipped executable artifacts (validator logic, decision-ledger schema, SKILL.md instructions) byte-identical.",
+    "method": "Diff a psychology-stripped rewrite of spec.md/reference.md's evidence-basis section against the current text; separately diff the C1-C5 field definitions and the validator/schema code paths for any dependency on the stripped section.",
+    "threshold": "Zero changes required to validator/schema/SKILL.md executable logic confirms the citations were decorative, not decision-relevant; any executable logic that actually depends on the psychology section content refutes this finding.",
+    "timeframe": "Static analysis, doable immediately without running code."
+   },
+   "proposed_action": "Relabel the evidence-basis section as 'design rationale / inspiration' rather than 'evidence basis,' and drop the implication that the clinical literature supports the control choices beyond providing a naming metaphor."
+  }
+ ],
+ "hypothesis_supported": "H1 (anthropomorphic/borrowed-authority ceremony) is partially supported from the bias angle: the ACT/DBT/CBT framing and its nine citations are confirmed (by grep) to be absent from every operative SKILL.md instruction and confined to non-executable rationale text -- consistent with the citations functioning as confirmatory decoration for a design that stands on pure control-theory grounds, not as decision-relevant evidence. H5 (inadequate oracle) is also partially supported from the self-grading angle: the dossier's 8/8 and 12/12 PASS premises are author-constructed-and-author-scored with the handoff itself admitting no independent-construction step occurred this session, so the PASS numbers cannot yet distinguish 'the validator discriminates real bad traces' from 'the validator matches the fixtures its own author expected it to match.'",
+ "hypothesis_killed": "This lens does not directly test H2 (fail-closed enforcement), H3 (unreachability without a trigger), H4 (failure_chain under-specification), or H6 (weakening an existing gate) and therefore neither confirms nor kills them -- those require the mechanical/adversarial lenses, not a bias-in-reasoning audit.",
+ "verdict": "The strongest metatextual finding is not in the mechanics of C1-C5 but in the authors' own epistemic conduct while building a tool whose entire purpose is enforcing better epistemic conduct: (1) a research-question verdict is graded 'Strongly supported' on a self-authored rubric while the document's own later sections and the dossier concede the behaviorally consequential claim is unestablished (F1); (2) the conformance and behavioral self-tests are constructed, implemented, and scored by the same undivided reasoning process the design's own C3 principle warns against trusting without independent preregistration (F2); (3) nine clinical-psychology citations lend borrowed scientific authority to a design that, by the shipped code's own structure, never actually depends on that literature (F3). None of these are fatal to the artifact's mechanical soundness -- the diff is honestly hedged in many places (UNVERIFIED labels, explicit non-goals, an unusually candid handoff) -- but the specific sentences flagged show the classic signature of an author confirming a decision already made rather than letting evidence redirect it. The debiased restatements in each falsifier are testable now, mostly without waiting for Phase 4."
+}

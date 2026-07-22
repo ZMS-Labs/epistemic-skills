@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/ZMS-Labs/epistemic-skills/main/plugins/epistemic-skills/skills/decision-ledger/reference/ledger-entry.schema.json",
   "title": "ledger-entry@1",
-  "description": "Append-only decision-ledger entry: a decision, load-bearing assumption, or operator correction persisted with provenance for later re-anchoring. STRUCTURAL ONLY — the schema enforces required fields, identifier shapes, and the closed type/durability vocabularies; it makes NO semantic claim. In particular it cannot enforce the never-instruct boundary: a verdict-carrying-but-well-formed entry validates and is caught by human review, never claimed as schema-rejected (see README.md beside this file). Entries carry no trust-contract stamp and no valid_while predicate; freshness is revisit_when plus supersedes-chain re-anchoring, owned by the consumer.",
+  "description": "Append-only decision-ledger entry: a decision, load-bearing assumption, or operator correction persisted with provenance for later re-anchoring. STRUCTURAL ONLY — the schema enforces required fields, identifier shapes, closed type/durability vocabularies, and the recurrent-correction failure-chain shape; it makes NO truth or authorization claim. In particular it cannot enforce the never-instruct boundary: a verdict-carrying-but-well-formed entry validates and is caught by human review, never claimed as schema-rejected (see README.md beside this file). Entries carry no trust-contract stamp and no valid_while predicate; freshness is revisit_when plus supersedes-chain re-anchoring, owned by the consumer.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -66,6 +66,79 @@
     "durability": {
       "enum": ["durable", "session-only"],
       "description": "Closed vocabulary. session-only entries are held only in session state and die with it; writing one emits a named durability-gap record consumed by the close-out rule."
+    },
+    "recurrence_risk": {
+      "type": "boolean",
+      "description": "Optional correction-only marker. true means the failure is likely to recur outside the corrected artifact and requires failure_chain."
+    },
+    "failure_chain": {
+      "$ref": "#/$defs/failure_chain",
+      "description": "Optional correction-only recurrent-failure analysis. Required when type=correction and recurrence_risk=true."
     }
-  }
+  },
+  "$defs": {
+    "nonempty_string_array": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "failure_chain": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "prompting_event",
+        "vulnerabilities",
+        "links",
+        "target_failure",
+        "consequences",
+        "earliest_interruptible_link",
+        "replacement_behavior",
+        "rehearsal_fixture"
+      ],
+      "properties": {
+        "prompting_event": { "type": "string", "minLength": 1 },
+        "vulnerabilities": { "$ref": "#/$defs/nonempty_string_array" },
+        "links": { "$ref": "#/$defs/nonempty_string_array" },
+        "target_failure": { "type": "string", "minLength": 1 },
+        "consequences": { "type": "string", "minLength": 1 },
+        "earliest_interruptible_link": { "type": "string", "minLength": 1 },
+        "replacement_behavior": { "type": "string", "minLength": 1 },
+        "rehearsal_fixture": { "type": "string", "minLength": 1 }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "required": ["failure_chain"]
+      },
+      "then": {
+        "properties": {
+          "type": { "const": "correction" }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": { "const": "correction" },
+          "recurrence_risk": { "const": true }
+        },
+        "required": ["type", "recurrence_risk"]
+      },
+      "then": {
+        "required": ["failure_chain"]
+      }
+    },
+    {
+      "if": {
+        "required": ["recurrence_risk"]
+      },
+      "then": {
+        "properties": {
+          "type": { "const": "correction" }
+        }
+      }
+    }
+  ]
 }

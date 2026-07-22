@@ -1,0 +1,31 @@
+{
+  "trace": "epistemic-process-trace@1",
+  "residual_uncertainty": [],
+  "scenario": "03-preregister-cache",
+  "subject": "verify cache invalidation",
+  "stakes": "standard",
+  "moment": "verification",
+  "claims": [
+    {
+      "id": "c1",
+      "kind": "prediction",
+      "text": "The cache is correct.",
+      "status": "verified",
+      "confidence": 0.95,
+      "load_bearing": true,
+      "disconfirming_observation": "a stale read"
+    }
+  ],
+  "experiment": {
+    "belief": "cache works",
+    "prediction": "fresh read",
+    "disconfirming_observation": "stale read",
+    "test": "manual run",
+    "prediction_recorded_before_result": false,
+    "result": "fresh read",
+    "update": "declare correct"
+  },
+  "control": "act",
+  "control_reason": "The run matched the explanation.",
+  "action": "Declare correct and ship now."
+}

@@ -1,0 +1,29 @@
+{
+  "trace": "epistemic-process-trace@1",
+  "subject": "evaluate cache invalidation behavior",
+  "stakes": "standard",
+  "moment": "verification",
+  "claims": [
+    {
+      "id": "c1",
+      "kind": "prediction",
+      "text": "The cache invalidates after a write.",
+      "status": "verified",
+      "confidence": 0.9,
+      "load_bearing": true,
+      "disconfirming_observation": "a stale read after the write"
+    }
+  ],
+  "experiment": {
+    "belief": "writes invalidate the cache",
+    "prediction": "the next read returns the new value",
+    "disconfirming_observation": "the next read returns the prior value",
+    "test": "write then read through the public API",
+    "prediction_recorded_before_result": false,
+    "result": "the read returned the new value",
+    "update": "declare the cache correct"
+  },
+  "control": "act",
+  "control_reason": "The observed result matched the story written afterward.",
+  "residual_uncertainty": []
+}

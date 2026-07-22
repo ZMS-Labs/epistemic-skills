@@ -1,0 +1,116 @@
+{
+ "findings": [
+  {
+   "id": "F1",
+   "severity": "P1",
+   "claim": "Every pre-existing, mechanically-enforced oracle in this repo (evidence-locked-uat's judge.py, gauntlet's lens.schema.json/validate_roster.py) was left untouched by this diff. The PR's runtime effect on 4 of the 5 controls (C1, C2, C3, C5) is prose instructing an agent to write more fields into unenforced templates (contracts.yaml, plan text, SKILL.md guidance) \u2014 no code path checks whether the agent actually did.",
+   "evidence": [
+    {
+     "tier": "V",
+     "ref": "Y:/dev/_wt/epistemic-flex-v3 git diff --stat e1f6054 641ff2c: judge.py and lens.schema.json absent from the 53-file changed list"
+    },
+    {
+     "tier": "V",
+     "ref": "plugins/epistemic-skills/skills/evidence-locked-uat/SKILL.md:33-40 (diff) \u2014 adds 'compile...into an expected observation and disconfirming observation' as prose Step 6/7, no corresponding judge.py check"
+    },
+    {
+     "tier": "V",
+     "ref": "plugins/epistemic-skills/skills/write-goal/SKILL.md:63-76 (diff) \u2014 adds Goal control template fields with no validator"
+    },
+    {
+     "tier": "V",
+     "ref": "plugins/epistemic-skills/skills/gauntlet/SKILL.md:246-250 (diff) \u2014 adds validation_kernel as arbitrator obligation, absent from gauntlet/roster/lens.schema.json"
+    }
+   ],
+   "falsifier": {
+    "statement": "judge.py, lens.schema.json, or another already-CI-wired oracle contains a check for any of expected/disconfirming observation, authorized_priority/success_proxy, or validation_kernel presence.",
+    "method": "grep -rn \"validation_kernel|disconfirming_observation|authorized_priority\" plugins/epistemic-skills/skills/evidence-locked-uat/scripts/judge.py plugins/epistemic-skills/skills/gauntlet/roster/lens.schema.json plugins/epistemic-skills/skills/gauntlet/scripts/validate_roster.py",
+    "threshold": "any non-zero hit falsifies this finding",
+    "timeframe": "immediate \u2014 re-run at HEAD or at next PR revision to this branch"
+   },
+   "proposed_action": "Adjacent-possible move: instead of new prose across 9 SKILL.md files, spend the same afternoon wiring validation_kernel into gauntlet's existing lens.schema.json (already CI-tested via gauntlet/tests/run_tests.py) and adding one field-presence check to judge.py for the UAT preregistration fields. Two cheap edits convert two of the five controls from ceremony to a real gate; leave C1/C2 as documentation until a similar host with teeth exists for them."
+  },
+  {
+   "id": "F2",
+   "severity": "P1",
+   "claim": "The new epistemic-process-trace@1 validator/behavioral-scorer/fixture harness (validate_trace.py, score_behavior.py, run_tests.py x2, 6 gold/bad fixture triads + 8 standalone fixtures, ~700 lines) has zero production consumer: no SKILL.md instructs an agent to emit a trace object, and no skill or CI step feeds a real transcript into the validator. The 'PASS 8/8' / 'PASS 12/12' premises are true only about the checker's ability to distinguish hand-authored gold/bad JSON written by the same PR.",
+   "evidence": [
+    {
+     "tier": "V",
+     "ref": "grep -rl \"validate_trace|epistemic-process-trace|score_behavior\" plugins/epistemic-skills/skills --include=SKILL.md -> zero matches"
+    },
+    {
+     "tier": "V",
+     "ref": "plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/validate_trace.py:1-7 \u2014 self-declares 'not a behavioral effectiveness measurement'"
+    },
+    {
+     "tier": "V",
+     "ref": "plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/behavioral/score_behavior.py:1-7 \u2014 self-declares 'a fixture smoke test, not evidence that the controls improve real-world performance'"
+    },
+    {
+     "tier": "I",
+     "ref": "the fixtures live only under evals/epistemic-flexibility/behavioral/fixtures/*, authored in the same commit (4f7bb45) as the validator [<- V .github/workflows/epistemic-flexibility.yml:29-32 only runs these two self-tests]"
+    }
+   ],
+   "falsifier": {
+    "statement": "any skill invocation path (not the eval harness itself) produces or consumes an epistemic-process-trace@1 object during a real task.",
+    "method": "grep -rn \"epistemic-process-trace\" across plugins/epistemic-skills/skills/*/SKILL.md and plugins/epistemic-skills/skills/*/scripts/*",
+    "threshold": "any hit outside using-epistemic-skills/evals/ and the reference doc falsifies this finding",
+    "timeframe": "immediate, and re-check at each future release for a wiring commit"
+   },
+   "proposed_action": "Do not stand up a second, parallel structured-record format. Either (a) delete this scaffold until a real skill emits the object it validates, or (b) fold its field vocabulary into the one schema that already has a live production consumption path \u2014 decision-ledger's ledger-entry.schema.json / .ledger/entries.jsonl \u2014 rather than inventing a second one that never gets real data."
+  },
+  {
+   "id": "F3",
+   "severity": "P2",
+   "claim": "The one genuinely novel, cheap, high-leverage idea in the diff \u2014 gauntlet's `validation_kernel` (arbitrator must record what the subject correctly addresses, blocking an adversarial lens from winning by deleting the problem) \u2014 rides on gauntlet's already-mechanically-enforced structured-output/arbitration machinery (finding-set@1 schema, lens.schema.json, gauntlet/tests/run_tests.py). This is the strongest 'two existing pieces newly connected' in the PR, but it was shipped as prose only, not wired into that same schema/test suite.",
+   "evidence": [
+    {
+     "tier": "V",
+     "ref": "plugins/epistemic-skills/skills/gauntlet/SKILL.md:246-256 (diff) \u2014 validation_kernel and per-tension valid_kernel_a/b fields introduced"
+    },
+    {
+     "tier": "V",
+     "ref": "grep -rn validation_kernel plugins/epistemic-skills -> single hit, in SKILL.md prose only, absent from roster/lens.schema.json"
+    }
+   ],
+   "falsifier": {
+    "statement": "validation_kernel is required in gauntlet's structured-output schema (lens.schema.json or an arbitrator finding-set schema) and checked by gauntlet/tests/run_tests.py.",
+    "method": "grep -n validation_kernel plugins/epistemic-skills/skills/gauntlet/roster/lens.schema.json plugins/epistemic-skills/skills/gauntlet/tests/run_tests.py",
+    "threshold": "a match in either file falsifies this finding",
+    "timeframe": "immediate; re-check at the next revision of this PR"
+   },
+   "proposed_action": "Ship the sideways step: add validation_kernel as a required string field to the arbitrator's structured-output contract and one assertion in gauntlet/tests/run_tests.py. ~10-line cost, converts the single best idea in the PR from ceremony to a real gate \u2014 dominates leaving it as unenforced prose on both cost and value axes."
+  },
+  {
+   "id": "F4",
+   "severity": "P2",
+   "claim": "Decision-ledger's C4 (recurrent-failure chain) is the best-built piece of the PR \u2014 a real conditional JSON-schema-shaped check with planted negative fixtures that correctly assert FAIL ('recurrent correction without chain', 'chain on decision') \u2014 but even it only checks structural presence of non-empty strings, not truthfulness: a fluently invented, causally-wrong failure_chain passes identically to a real one, and the check runs only against 3 static reference examples shipped in the repo, never against a repo's live .ledger/entries.jsonl.",
+   "evidence": [
+    {
+     "tier": "V",
+     "ref": "plugins/epistemic-skills/skills/decision-ledger/reference/validate_examples.py:80-89 \u2014 planted negative cases with expected FAIL, genuinely discriminating"
+    },
+    {
+     "tier": "V",
+     "ref": "plugins/epistemic-skills/skills/decision-ledger/reference/validate_examples.py:25-30 \u2014 nonempty()/nonempty_list() only check non-whitespace string presence, no semantic/content check"
+    },
+    {
+     "tier": "V",
+     "ref": ".github/workflows/epistemic-flexibility.yml:57-58 \u2014 CI job runs validate_examples.py against reference/ only, no glob over any repo's real .ledger/entries.jsonl"
+    }
+   ],
+   "falsifier": {
+    "statement": "validate_examples.py (or an equivalent CI step) is run against a real, non-reference .ledger/entries.jsonl produced by an actual agent session.",
+    "method": "grep -rn \"entries.jsonl\" .github/workflows/epistemic-flexibility.yml plugins/epistemic-skills/skills/decision-ledger/reference/validate_examples.py",
+    "threshold": "any match indicating live-file validation falsifies the 'reference-only' half of this claim",
+    "timeframe": "immediate; re-check when decision-ledger CI is next modified"
+   },
+   "proposed_action": "Adjacent-possible extension (cheapest real teeth in the whole PR): point validate_examples.py's glob at every repo-local .ledger/entries.jsonl found in CI (not just reference/example-*.json), so the one already-working schema gets applied to real production data instead of only to fixtures the same PR wrote. This is a smaller change than the entire epistemic-process-trace@1 scaffold (F2) and gets real enforcement instead of a self-test."
+  }
+ ],
+ "verdict": "The PR is real (53 files, +2436/-27, verified in the worktree) but almost all of its added mass is unwired prose. Of the five controls, only C4 (recurrent-failure chain) has a genuinely discriminating mechanical check \u2014 and even that runs only against three static reference examples the same PR authored, never against a real .ledger/entries.jsonl. The parallel epistemic-process-trace@1 validator/behavioral-scorer/fixture harness (~700 lines) has zero production consumer: no SKILL.md emits or reads that object; its 8/8 and 12/12 PASS results only prove the checker can tell apart hand-written gold/bad JSON written in the same commit. The dossier's 'VERIFIED premises' PASS lines are true but narrower than they read \u2014 they verify tool self-consistency, not that any of C1/C2/C3/C5 fire during real work. Adjacent-possible reading: the dominant nearby variant is not a rewrite \u2014 it is (1) deleting or deferring the standalone trace scaffold, (2) pointing the one working oracle (decision-ledger's schema check) at real live ledger files instead of only static references, and (3) wiring the single best new idea (gauntlet's validation_kernel) into the schema/tests gauntlet already has. All three are 10-30 line edits that reuse machinery already proven in this repo, versus the ~2000 lines of new parallel scaffolding that currently enforces nothing against reality.",
+ "hypothesis_supported": "H3 (unreachable/never fire) and H5 (inadequate/self-referential oracle) are both strongly supported by [V] evidence: zero SKILL.md references the new trace validator, and none of the pre-existing enforced gates (judge.py, lens.schema.json) were touched. H2 (fluent narrative can satisfy a control) is supported for C1/C2/C3/C5 (no truth-check exists at all) and partially for C4 (structural-only presence check accepts fabricated-but-well-formed chains).",
+ "hypothesis_killed": "H4 (failure_chain conditional is under-specified/not mechanically validated) is refuted specifically for decision-ledger's schema: validate_examples.py implements the conditional correctly and includes planted negative fixtures that genuinely assert FAIL \u2014 the conditional logic itself is well-specified and mechanically checked, just only against static reference data (a distinct, narrower concern captured in F4, not H4's original shape).",
+ "fix_or_move": "Ship this next, in order of cheapness-to-teeth ratio: (1) point decision-ledger's validate_examples.py glob at real repo-local .ledger/entries.jsonl files in CI, not just reference/example-*.json (F4); (2) add validation_kernel as a required field in gauntlet/roster/lens.schema.json plus one assertion in gauntlet/tests/run_tests.py (F3); (3) defer or delete the epistemic-process-trace@1 validator/behavioral-scorer/fixture scaffold until some skill actually emits that object in production (F2) \u2014 its current 8/8 and 12/12 PASS numbers should not be cited as evidence the five controls work, only that the checker script is internally consistent."
+}

@@ -1,0 +1,38 @@
+{
+  "trace": "epistemic-process-trace@1",
+  "residual_uncertainty": [],
+  "scenario": "03-preregister-cache",
+  "subject": "verify cache invalidation",
+  "stakes": "standard",
+  "moment": "verification",
+  "claims": [
+    {
+      "id": "c1",
+      "kind": "observation",
+      "text": "The unpreregistered manual run returned fresh data.",
+      "source": "run.txt:1",
+      "status": "verified",
+      "confidence": 1.0,
+      "load_bearing": false
+    },
+    {
+      "id": "c2",
+      "kind": "prediction",
+      "text": "A write invalidates every subsequent public-API read.",
+      "status": "unverified",
+      "confidence": 0.6,
+      "load_bearing": true,
+      "disconfirming_observation": "a stale public-API read after the write"
+    }
+  ],
+  "experiment": {
+    "belief": "writes invalidate the cache",
+    "prediction": "the next public-API read returns the written value",
+    "disconfirming_observation": "the next read returns the prior value",
+    "test": "rerun write/read after recording this prediction",
+    "prediction_recorded_before_result": true
+  },
+  "control": "reversible-probe",
+  "control_reason": "The first result is weaker because its prediction was written afterward.",
+  "action": "Preregister the prediction and disconfirming observation, then rerun the bounded test."
+}

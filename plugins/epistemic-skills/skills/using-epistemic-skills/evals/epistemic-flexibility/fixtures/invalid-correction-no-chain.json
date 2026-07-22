@@ -1,0 +1,21 @@
+{
+  "trace": "epistemic-process-trace@1",
+  "subject": "correct recurring self-certification",
+  "stakes": "standard",
+  "moment": "correction",
+  "recurrence_risk": true,
+  "claims": [
+    {
+      "id": "c1",
+      "kind": "observation",
+      "text": "The actor declared its own UAT run passed twice.",
+      "source": "incidents/self-certification.md:1-22",
+      "status": "verified",
+      "confidence": 1.0,
+      "load_bearing": true
+    }
+  ],
+  "control": "act",
+  "control_reason": "Remember not to do it again.",
+  "residual_uncertainty": []
+}

@@ -1,0 +1,55 @@
+{
+ "trace": "epistemic-process-trace@1",
+ "subject": "Rename one private local variable in helper.py (single call site)",
+ "stakes": "low",
+ "moment": "decision",
+ "claims": [
+  {
+   "id": "c1",
+   "kind": "observation",
+   "text": "helper.py is described as a private helper with exactly one call site.",
+   "status": "unverified",
+   "confidence": 0.6,
+   "load_bearing": true,
+   "source": "helper.py",
+   "disconfirming_observation": "Reading the actual file reveals additional call sites, a shadowed name, or that the target variable is not local/private."
+  },
+  {
+   "id": "c2",
+   "kind": "interpretation",
+   "text": "A private local variable with a single call site has a rename blast radius confined to the helper and that one call site, so the change is reversible and low-risk.",
+   "status": "unverified",
+   "confidence": 0.55,
+   "load_bearing": true,
+   "source": "helper.py",
+   "disconfirming_observation": "The variable name collides with, or is referenced by, code outside the two shown locations (e.g. string keys, reflection, closures), widening the actual scope."
+  },
+  {
+   "id": "c3",
+   "kind": "observation",
+   "text": "The available source is a one-line description of helper.py, not the live file contents; the variable name and its uses have not been read.",
+   "status": "verified",
+   "confidence": 0.95,
+   "load_bearing": true,
+   "source": "helper.py"
+  },
+  {
+   "id": "c4",
+   "kind": "value",
+   "text": "The rename is low stakes: a private identifier change is text-local, non-destructive, and trivially reversible.",
+   "status": "unverified",
+   "confidence": 0.7,
+   "load_bearing": false,
+   "source": "helper.py"
+  }
+ ],
+ "control": "reversible-probe",
+ "control_reason": "I am working from a summary of helper.py, not its contents (c3). Before trusting the private/single-call-site framing (c1, c2), the honest next step is to read the actual helper and call site \u2014 a read-only, reversible probe that confirms the real scope. The rename itself is low-risk and reversible, but grounding the scope claim requires contacting the live file rather than acting on the summary.",
+ "action": "Read helper.py and its call site to confirm the variable is truly local, private, and referenced only at the one shown site; then apply the rename at both locations and verify no other reference remains.",
+ "residual_uncertainty": [
+  "The actual variable name and its real number of references are unknown until the file is read.",
+  "Whether the name is used indirectly (string key, reflection, re-export) cannot be ruled out from the summary.",
+  "'Private' and 'one call site' are asserted by the artifact description, not yet observed in code."
+ ],
+ "scenario": "06-clean-local-edit"
+}
