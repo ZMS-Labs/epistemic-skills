@@ -1,6 +1,6 @@
 ---
 name: using-epistemic-skills
-description: Use when a task might need more than one of blindspot-pass, applying-formal-rigor, evidence-research, write-goal, gauntlet, or evidence-locked-uat, when unsure which one applies, or when sequencing them (recon → decide → [evidence] → contract → gate → prove). Do not use as a substitute for reading the skill it routes to. This is the entry point and router for the epistemic-skills collection.
+description: Use when a task might need more than one of blindspot-pass, applying-formal-rigor, evidence-research, write-goal, gauntlet, or evidence-locked-uat, when unsure which one applies, or when sequencing them (recon → decide → [evidence] → contract → gate → prove). Do not use as a substitute for reading the skill it routes to. This is the entry point and router for the epistemic-skills collection; when a workflow-skill layer (such as superpowers) is also present, helix is the tandem entry point pairing the two.
 ---
 
 # Using Epistemic Skills — the router
@@ -52,6 +52,10 @@ task ──▶│ blindspot-    │─▶│ formal-rigor +   │─▶│ write
 The arc is need-driven, not mandatory: skip any stage whose trigger is absent, and say you
 skipped it. Running a stage on work that doesn't need it is ceremony.
 
+Make the routing decision auditable, like helix's `helix-check` and gauntlet's skip record:
+emit one line in the form `router: fired=[skill] skipped=[skill(trigger-absent)]` — name
+each considered skill and, for every skip, the absent trigger, not an adjective.
+
 ## Routing — which one fires
 
 Match the trigger you can *observe*, not a vibe:
@@ -68,6 +72,9 @@ Match the trigger you can *observe*, not a vibe:
 If **none** match, none fire — this router does not manufacture work. If **two** match, run
 them in arc order (recon → decide → contract → gate → prove) and pass each output to the next per the
 handoff table.
+
+If the routed-to skill is absent or uninstalled in your harness, say so and stop — never
+improvise the discipline inline.
 
 gauntlet and evidence-locked-uat can both fire on the same merge (irreversible infra/security +
 user-facing surface) — gauntlet gates first, evidence-locked-uat proves after, per arc order.

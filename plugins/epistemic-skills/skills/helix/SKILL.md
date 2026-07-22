@@ -1,6 +1,6 @@
 ---
 name: helix
-description: "Use when both a workflow-skill layer (such as superpowers) and the epistemic-skills collection are installed and a task is about to begin; when a workflow skill (brainstorming, writing-plans, test-driven-development, systematic-debugging, verification-before-completion, finishing-a-development-branch) has just fired and its epistemic pair needs checking; or when sequencing the two collections is ambiguous. Not for single-collection routing (that's using-superpowers / using-epistemic-skills) or trivial, fully-held-context work needing no ceremony."
+description: "Use when both a workflow-skill layer (such as superpowers) and the epistemic-skills collection are installed and a task is about to begin; when a workflow skill (brainstorming, writing-plans, executing-plans, test-driven-development, systematic-debugging, verification-before-completion, finishing-a-development-branch) has just fired and its epistemic pair needs checking; or when sequencing the two collections is ambiguous. Not for single-collection routing (that's using-superpowers / using-epistemic-skills) or trivial, fully-held-context work needing no ceremony."
 ---
 
 # helix — two strands, one axis
@@ -36,37 +36,50 @@ archaeology, and evidence after the verdict is rationalization.
 |---|---|---|
 | task start (non-trivial, unfamiliar territory) | **blindspot-pass** | *before* brainstorming — recon the territory, then design |
 | brainstorming (any ≥2-option design choice) | **applying-formal-rigor** | *inside* — the choice is derived from named theory, not asserted |
-| brainstorming (a premise leans on "research says…") | **evidence-research** | *cross-cutting* — reception-check the literature before the premise bears load |
-| brainstorming approval / writing-plans (irreversible or one-way-door design) | **gauntlet** | *at approval* — freeze the design as the subject; GO/CONDITIONAL/NO-GO before planning on top of it |
-| executing-plans / persistent or long-horizon runs (explicit goal intent only) | **write-goal** | *before* persistent execution — bind the outcome to proof and stop rules |
+| any stage (a premise leans on "research says…", or any scholarly-tool call) | **evidence-research** | *cross-cutting* — reception-check the literature before the premise bears load |
+| brainstorming approval / writing-plans (irreversible or one-way-door design) | **gauntlet** | *at approval* — after the design doc is written and committed (brainstorming step 6), before writing-plans is invoked; freeze the committed design doc as the gauntlet subject |
+| persistent or long-horizon goal-mode runs (explicit goal-authoring intent only — plan execution alone is not intent) | **write-goal** | *before* persistent execution — bind the outcome to proof and stop rules |
+| subagent-driven-development / dispatching-parallel-agents (first dispatch) | **blindspot-pass** | *before* the first dispatch — recon the territory before a wrong premise multiplies across isolated agents |
 | test-driven-development / implementation | (none mandatory) | epistemic disciplines fire only on their own triggers; clean implementation needs no ceremony |
 | systematic-debugging (fix rests on a complexity or correctness claim) | **applying-formal-rigor** | *inside* — "this is O(n log n) now" and "this can't race" are derived, not asserted |
 | verification-before-completion (UI-facing surface) | **evidence-locked-uat** | *is* that skill's UI-facing instance — blinded verifier, never self-certification |
-| finishing-a-development-branch (irreversible / high-blast-radius change) | **gauntlet** | *pre-merge* — the last gate before a commit you can't take back |
+| finishing-a-development-branch (irreversible / high-blast-radius change) | **gauntlet** | *pre-merge* — after the user selects merge or push+PR (finishing-a-development-branch Step 5), before the merge/push executes |
+| receiving-code-review (feedback asserts a design claim or proposes an alternative) | **applying-formal-rigor** | *inside* — derive the claim from named theory before implementing it or pushing back on it |
 | any workflow stage not listed above | *(none mandatory)* | disciplines still fire on their own standalone triggers — e.g. gauntlet's own trigger, not helix, governs a code-review approval |
 
 Positions mean exactly what they say: *before* = the epistemic output is an
 input to the stage; *inside* = the stage pauses at the decision point, runs
 the discipline, and resumes with its verdict; *at approval* / *pre-merge* =
 the stage's exit gate; *cross-cutting* = called at the moment a qualifying
-premise appears, at any stage.
+premise appears, at any stage; *is* = the workflow stage and the discipline
+are the same act for that surface — running the stage under that surface
+condition means running the discipline.
 
 ## Co-fire checklist
 
-When a strand fires, check its pair — in both directions. Make the check auditable: at each
-stage boundary, emit one line in the form `helix-check: <stage> → <pair> → fired|skipped(<reason>)`.
+When a strand fires, check its pair — in both directions. Make the check auditable: emit one
+line per pairing row whose stage fired, in the form `helix-check: <stage> → <pair> →
+fired|skipped(<reason>)` — at each stage boundary *and* at the moment a cross-cutting
+trigger appears. Stages whose row is "(none mandatory)" emit no line — the map row itself
+is the record.
 
 - **A workflow stage just fired.** Ask: does its epistemic pair's own trigger
   match right now? If yes, run it in its position. If no, skip it **and say
   you skipped it** — an unfired pair is a stated decision, not an omission.
 - **brainstorming is starting** → did blindspot-pass run, or was its trigger
-  absent (territory already fully held in context)?
+  absent (its skip gate passed — the gate is defined in blindspot-pass, not here)?
 - **a design choice is being argued** → is "better / cleaner / faster" being
   asserted? That is applying-formal-rigor's trigger.
 - **a plan is about to be approved** → is anything in it irreversible? That
   is gauntlet's trigger, now — before effort is spent building on it.
 - **a persistent goal is being created** → only on explicit goal-authoring
   intent does write-goal fire; length of task alone is not intent.
+- **a fix rests on a complexity or correctness claim** → "this is O(n log n)
+  now" / "this can't race" is applying-formal-rigor's trigger inside
+  systematic-debugging.
+- **subagents are about to be dispatched** → did blindspot-pass run on the
+  brief being fanned out, or did its skip gate pass? A wrong premise in the
+  dispatch is copied into every isolated context.
 - **"it's done" is about to be claimed** → verification-before-completion is
   the stage; if the surface is UI-facing, the stage *is* evidence-locked-uat.
 - **a branch is about to merge** → irreversible or high-blast-radius? gauntlet
