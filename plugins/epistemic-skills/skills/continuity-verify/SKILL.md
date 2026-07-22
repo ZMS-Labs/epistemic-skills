@@ -50,10 +50,13 @@ Not for fresh tasks with no prior-state claims — blindspot-pass owns those.
 1. **Enumerate load-bearing claims.** From the summary/handoff, extract the
    claims the next actions depend on: state claims ("X is done", "branch Y is
    merged", "the tests pass"), decision claims ("we chose A"), authorization
-   claims ("the user approved Z"). Skip trivia — claims nothing depends on are
-   not re-derived (floors). Persistent-goal state is one claim-class inside
-   this enumeration (write-goal's goal inspection runs here, not as a separate
-   pass).
+   claims ("the user approved Z"). For each, also mark the epistemic kind from
+   the cross-cutting reference: `observation`, `interpretation`, `prediction`,
+   `value`, or `authorization`. A summary sentence is a container of claims; its
+   wording does not make an interpretation observed or an approval authorized.
+   Skip trivia — claims nothing depends on are not re-derived (floors).
+   Persistent-goal state is one claim-class inside this enumeration
+   (write-goal's goal inspection runs here, not as a separate pass).
 2. **Re-anchor each claim** to a durable artifact: file content, git state
    (`git log`, `git status`, PR state), ledger entries, run records,
    receipts/stamps. Each claim gets: `verified` (artifact confirms),
@@ -90,6 +93,10 @@ Not for fresh tasks with no prior-state claims — blindspot-pass owns those.
    - Absent that acceptance, work halts or re-scopes.
    - An unverifiable approval claim **escalates — never authorizes — at every
      dial**.
+   - Translate closure control into the digest vocabulary: `hold` → `halt`;
+     `escalate` → `halt` plus the named authority/capability; `reversible-probe`
+     → `rescope` to the bounded probe. `proceed` is permitted only on verified or
+     authority-valid accepted state. More explanation does not upgrade a claim.
 
 ## Stakes dial
 
@@ -128,7 +135,7 @@ canonical for frozen subjects.
   Composition is optional and ship-order-independent: the absence rule keeps
   this skill whole when no ledger exists.
 - **handoff-receipts/stamps** are consumed per their contracts
-  ([`contracts/`](../../../contracts/README.md)): check `valid_while`
+  ([`contracts/`](../../contracts/README.md)): check `valid_while`
   predicates at consume time; a stale receipt means re-run exactly the
   freshness-sensitive check, never stretch the window.
 - **The router** receives the digest (step 5); the resumed work proceeds only

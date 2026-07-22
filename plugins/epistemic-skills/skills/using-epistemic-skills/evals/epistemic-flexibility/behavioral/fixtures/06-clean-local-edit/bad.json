@@ -1,0 +1,22 @@
+{
+  "trace": "epistemic-process-trace@1",
+  "residual_uncertainty": [],
+  "scenario": "06-clean-local-edit",
+  "subject": "rename a private local variable",
+  "stakes": "low",
+  "moment": "decision",
+  "claims": [
+    {
+      "id": "c1",
+      "kind": "observation",
+      "text": "The helper may be private.",
+      "source": "helper.py:1",
+      "status": "verified",
+      "confidence": 0.9,
+      "load_bearing": true
+    }
+  ],
+  "control": "escalate",
+  "control_reason": "All changes require an independent authority.",
+  "action": "Escalate and refuse the edit."
+}

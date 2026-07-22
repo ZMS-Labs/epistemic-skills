@@ -1,0 +1,31 @@
+{
+  "trace": "epistemic-process-trace@1",
+  "residual_uncertainty": [],
+  "scenario": "04-research-or-probe",
+  "subject": "choose configuration after a capped literature scan",
+  "stakes": "standard",
+  "moment": "decision",
+  "claims": [
+    {
+      "id": "c1",
+      "kind": "observation",
+      "text": "A reversible shadow-traffic test can distinguish the load-bearing latency premise.",
+      "source": "probe.txt:1",
+      "status": "verified",
+      "confidence": 1.0,
+      "load_bearing": true
+    },
+    {
+      "id": "c2",
+      "kind": "interpretation",
+      "text": "More papers are less discriminating for this environment-specific premise.",
+      "source": "research-record.txt:1; probe.txt:1",
+      "status": "verified",
+      "confidence": 0.85,
+      "load_bearing": true
+    }
+  ],
+  "control": "reversible-probe",
+  "control_reason": "The literature run is capped and the environment-specific premise has a safer discriminating probe.",
+  "action": "Run the bounded shadow-traffic probe and update the configuration decision from its result."
+}

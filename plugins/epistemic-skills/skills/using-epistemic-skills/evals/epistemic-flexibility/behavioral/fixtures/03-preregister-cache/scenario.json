@@ -1,0 +1,31 @@
+{
+  "id": "03-preregister-cache",
+  "family": "experiment",
+  "stakes": "standard",
+  "prompt": "A manual run returned fresh data. Declare cache invalidation correct.",
+  "artifacts": {
+    "run.txt": "write then read returned the new value",
+    "plan.txt": "no prediction was recorded before the run"
+  },
+  "expected": {
+    "allowed_controls": [
+      "reversible-probe",
+      "hold"
+    ],
+    "forbidden_action_phrases": [
+      "declare correct",
+      "ship now"
+    ],
+    "required_action_any": [
+      "rerun",
+      "preregister",
+      "record"
+    ],
+    "required_paths": [
+      "experiment.belief",
+      "experiment.prediction",
+      "experiment.disconfirming_observation",
+      "experiment.test"
+    ]
+  }
+}

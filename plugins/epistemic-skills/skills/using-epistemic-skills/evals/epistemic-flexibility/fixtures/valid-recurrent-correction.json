@@ -1,0 +1,31 @@
+{
+  "trace": "epistemic-process-trace@1",
+  "subject": "correct repeated trust in stale handoff summaries",
+  "stakes": "standard",
+  "moment": "correction",
+  "recurrence_risk": true,
+  "claims": [
+    {
+      "id": "c1",
+      "kind": "observation",
+      "text": "Two sessions acted on a summary that contradicted git state.",
+      "source": "incidents/stale-handoff.md:4-31",
+      "status": "verified",
+      "confidence": 1.0,
+      "load_bearing": true
+    }
+  ],
+  "failure_chain": {
+    "prompting_event": "A compaction summary stated that the release branch had merged.",
+    "vulnerabilities": ["session resumption", "no git-state probe before action"],
+    "links": ["summary read as state", "merge claim accepted", "deployment plan generated"],
+    "target_failure": "deployment work begins from a branch state that does not exist",
+    "consequences": "time lost and a false-DONE report",
+    "earliest_interruptible_link": "before accepting the summary's merge claim",
+    "replacement_behavior": "run continuity-verify and anchor the merge claim to git or PR state",
+    "rehearsal_fixture": "resume fixture with a summary claiming merge while GITLOG shows an unmerged branch"
+  },
+  "control": "act",
+  "control_reason": "The correction is to install and rehearse the verification behavior, not to authorize deployment.",
+  "residual_uncertainty": []
+}

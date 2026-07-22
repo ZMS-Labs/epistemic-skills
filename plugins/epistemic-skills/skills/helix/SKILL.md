@@ -55,6 +55,12 @@ premise appears, at any stage; *is* = the workflow stage and the discipline
 are the same act for that surface — running the stage under that surface
 condition means running the discipline.
 
+The cross-cutting epistemic-flexibility controls do not add rows to this table. They are
+checked **inside the existing pair** that consumes them: claim/source separation in recon
+and resumption; priority/proxy separation in goal authoring; preregistration in formal
+claims and UAT; failure chains when a recurring correction is persisted; closure control
+wherever evidence remains insufficient.
+
 ## Co-fire checklist
 
 When a strand fires, check its pair — in both directions. Make the check auditable: emit one
@@ -73,15 +79,24 @@ is the record.
 - **a plan is about to be approved** → is anything in it irreversible? That
   is gauntlet's trigger, now — before effort is spent building on it.
 - **a persistent goal is being created** → only on explicit goal-authoring
-  intent does write-goal fire; length of task alone is not intent.
+  intent does write-goal fire; length of task alone is not intent. The goal contract
+  separates the operator-authorized priority from its success proxy and names proxy failure.
 - **a fix rests on a complexity or correctness claim** → "this is O(n log n)
   now" / "this can't race" is applying-formal-rigor's trigger inside
   systematic-debugging.
 - **subagents are about to be dispatched** → did blindspot-pass run on the
   brief being fanned out, or did its skip gate pass? A wrong premise in the
   dispatch is copied into every isolated context.
+- **an empirical test is about to run** → record the belief, prediction, and
+  disconfirming observation before the result exists; the consuming epistemic skill owns
+  that preregistration.
 - **"it's done" is about to be claimed** → verification-before-completion is
   the stage; if the surface is UI-facing, the stage *is* evidence-locked-uat.
+- **a recurring failure was just corrected** → decision-ledger persists the correction;
+  recurrence risk requires the earliest interruptible link, replacement behavior, and a
+  rehearsal fixture.
+- **evidence is insufficient at a boundary** → choose hold, escalate, or a reversible
+  probe; do not continue reasoning merely to manufacture `proceed`.
 - **a branch is about to merge** → irreversible or high-blast-radius? gauntlet
   gates the merge, not the retrospective.
 - **An epistemic discipline just fired standalone.** Ask: which workflow

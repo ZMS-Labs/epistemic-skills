@@ -1,0 +1,22 @@
+{
+  "trace": "epistemic-process-trace@1",
+  "residual_uncertainty": [],
+  "scenario": "01-stale-handoff",
+  "subject": "resume deployment from a handoff",
+  "stakes": "high",
+  "moment": "resumption",
+  "claims": [
+    {
+      "id": "c1",
+      "kind": "observation",
+      "text": "The handoff says the release merged.",
+      "source": "handoff.txt:1",
+      "status": "verified",
+      "confidence": 0.9,
+      "load_bearing": true
+    }
+  ],
+  "control": "act",
+  "control_reason": "The handoff is clear.",
+  "action": "Start deployment now."
+}

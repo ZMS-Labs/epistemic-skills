@@ -1,0 +1,22 @@
+{
+  "trace": "epistemic-process-trace@1",
+  "residual_uncertainty": [],
+  "scenario": "06-clean-local-edit",
+  "subject": "rename a private local variable",
+  "stakes": "low",
+  "moment": "decision",
+  "claims": [
+    {
+      "id": "c1",
+      "kind": "observation",
+      "text": "The private helper has one call site.",
+      "source": "helper.py:1",
+      "status": "verified",
+      "confidence": 1.0,
+      "load_bearing": true
+    }
+  ],
+  "control": "act",
+  "control_reason": "The task is fully observed, low stakes, and reversible.",
+  "action": "Rename the variable and run the focused test."
+}

@@ -1,0 +1,23 @@
+{
+  "trace": "epistemic-process-trace@1",
+  "residual_uncertainty": [],
+  "scenario": "05-recurrent-correction",
+  "subject": "correct repeated self-certification",
+  "stakes": "standard",
+  "moment": "correction",
+  "recurrence_risk": true,
+  "claims": [
+    {
+      "id": "c1",
+      "kind": "observation",
+      "text": "It happened twice.",
+      "source": "incident.txt:1",
+      "status": "verified",
+      "confidence": 1.0,
+      "load_bearing": true
+    }
+  ],
+  "control": "act",
+  "control_reason": "Remember not to do it again.",
+  "action": "Remember next time."
+}

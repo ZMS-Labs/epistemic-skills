@@ -67,6 +67,25 @@ For a fork, produce: per-lens construct + derivation → a comparison keyed by t
 
 For a single-option justification (no fork, just "is this correct"), produce the same per-lens derivation with no comparison table — the verdict is a **confirmation** (the design is correct, here's why) or a **reversal** (the derivation contradicts the premise).
 
+### Empirical closure — preregister the discriminating test
+
+Formal derivation closes theoretical premises; it does not manufacture runtime facts. When
+one material premise depends on observed workload, implementation behavior, latency, user
+behavior, or environment state, record **before the test**:
+
+```yaml
+belief: <the premise bearing load>
+prediction: <what should be observed if it is correct>
+disconfirming_observation: <what would count against it>
+test: <bounded action or measurement>
+prediction_recorded_before_result: true
+```
+
+Then record `result` and `update`. Until then, make the verdict conditional on the empirical
+premise or hand it to the workflow stage as a reversible probe. A result interpreted against
+a prediction written afterward is post-hoc evidence and must be labeled weaker, not silently
+promoted to confirmation.
+
 ## Rationalizations
 
 | Rationalization | Why it's wrong |
@@ -77,6 +96,7 @@ For a single-option justification (no fork, just "is this correct"), produce the
 | "The verdict is intuitively right, so the derivation is a formality" | An undeserved verdict that happens to be correct is still undershooting — the derivation is what makes it a result instead of a guess, and next time the intuition may be wrong. |
 | "There's no time to name the precise construct" | Naming the construct is what distinguishes this skill from senior-engineer instinct; skipping it under time pressure is the exact failure mode, not an exemption from it. |
 | "The other option is clearly worse, no need for a comparison table" | A dominance claim is itself a formal comparison — show what's conceded, don't assert it. |
+| "The test passed; I can now write what it was supposed to prove" | That is post-hoc reinterpretation. Preregister the prediction and disconfirming observation before the result exists. |
 
 ## Red Flags — you are undershooting, STOP
 

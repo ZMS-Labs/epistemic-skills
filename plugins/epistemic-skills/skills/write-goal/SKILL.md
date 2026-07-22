@@ -60,6 +60,20 @@ Write outcomes, not activity. "Investigate the failure" is activity. "Identify t
 reproducible cause, record evidence that distinguishes it from alternatives, and produce
 an approved repair contract" is an end state for a learning-first goal.
 
+### Authorized priority, success proxy, and acceptable cost
+
+Keep the operator-authorized priority separate from the metric used to estimate progress:
+
+- **Authorized priority** — the state or value the operator actually authorizes optimizing.
+- **Success proxy** — the observable signal used to estimate movement toward it.
+- **Proxy failure** — a concrete way the proxy can improve while the priority worsens.
+- **Acceptable cost / protected state** — what may be spent, changed, or traded away and
+  what must remain intact.
+
+A completion metric is evidence about the authorized priority, never a substitute for it.
+If the priority or acceptable cost is inferred rather than quoted, include it in the draft
+that requires user approval.
+
 ### Proof bundle
 
 Specify all three layers. If a layer genuinely does not apply, state which one and why
@@ -124,7 +138,8 @@ otherwise ask one concise question.
 Check:
 
 - Could an agent satisfy every word while missing the user's real intent?
-- Does any metric invite proxy optimization?
+- Is the authorized priority explicit, and is the success proxy clearly subordinate to it?
+- Does the contract name a concrete proxy failure and an acceptable-cost boundary?
 - Are completion and blockage observable rather than subjective?
 - Is the target broad enough to survive one failed approach but narrow enough to stop?
 - Does the contract preserve user interrupt authority?
@@ -210,6 +225,12 @@ The user may interrupt, redirect, pause, or cancel at any time.
 Objective
 Achieve [observable end state] for [intended target/user]. Preserve [protected state].
 
+Goal control
+- Authorized priority: [what the operator authorizes optimizing].
+- Success proxy: [observable signal used to estimate progress].
+- Proxy failure: [how the proxy can improve while the priority worsens].
+- Acceptable cost / protected state: [trade-off boundary].
+
 Completion proof
 - Primary: [direct evidence].
 - Integrity: [anti-proxy / anti-spoof checks].
@@ -234,6 +255,12 @@ redirect, pause, or cancel at any time.
 Objective
 Reduce uncertainty about [decision] enough to choose and justify [next action].
 
+Goal control
+- Authorized priority: [the decision quality or protected outcome the user authorizes].
+- Success proxy: [evidence threshold used to decide whether uncertainty is reduced].
+- Proxy failure: [how the threshold could be met while the real decision remains unsafe].
+- Acceptable cost / protected state: [investigation boundary].
+
 Completion proof
 - Evidence distinguishes [leading alternatives].
 - Counterevidence and coverage limits are recorded.
@@ -254,7 +281,7 @@ authority is required. Do not call uncertainty reduction the final product outco
 |---|---|
 | auto-creating a goal for every task | require explicit goal-authoring or start intent |
 | specifying activity instead of a result | name the observable durable end state |
-| treating one metric as truth | require primary, integrity, and provenance evidence |
+| treating one metric as truth | separate the authorized priority from the success proxy; name proxy failure and acceptable cost, then require primary, integrity, and provenance evidence |
 | using a performance goal for an unknown path | use a bounded learning-first contract, then convert |
 | making a detailed plan the completion criterion | plans guide work; evidence certifies outcomes |
 | declaring blocked after one obstacle | follow the runtime's real threshold and exhaust bounded in-scope alternatives |

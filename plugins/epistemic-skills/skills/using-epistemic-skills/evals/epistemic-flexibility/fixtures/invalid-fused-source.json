@@ -1,0 +1,19 @@
+{
+  "trace": "epistemic-process-trace@1",
+  "subject": "trust a request's assertion about the repository",
+  "stakes": "standard",
+  "moment": "recon",
+  "claims": [
+    {
+      "id": "c1",
+      "kind": "observation",
+      "text": "The repository uses PostgreSQL everywhere.",
+      "status": "verified",
+      "confidence": 0.95,
+      "load_bearing": true
+    }
+  ],
+  "control": "act",
+  "control_reason": "The request sounded precise.",
+  "residual_uncertainty": []
+}

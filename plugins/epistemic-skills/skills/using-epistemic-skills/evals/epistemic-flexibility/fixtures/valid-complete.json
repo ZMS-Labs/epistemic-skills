@@ -1,0 +1,51 @@
+{
+  "trace": "epistemic-process-trace@1",
+  "subject": "release an irreversible schema migration",
+  "stakes": "high",
+  "moment": "decision",
+  "claims": [
+    {
+      "id": "c1",
+      "kind": "observation",
+      "text": "The migration test passes on the recorded staging snapshot.",
+      "source": "artifacts/migration-test.txt:1-12",
+      "status": "verified",
+      "confidence": 0.98,
+      "load_bearing": true
+    },
+    {
+      "id": "c2",
+      "kind": "prediction",
+      "text": "The production-sized rehearsal will complete within the maintenance window.",
+      "status": "unverified",
+      "confidence": 0.65,
+      "load_bearing": false,
+      "disconfirming_observation": "The rehearsal exceeds 40 minutes or leaves locks after rollback."
+    },
+    {
+      "id": "c3",
+      "kind": "authorization",
+      "text": "The operator approved a reversible production-sized rehearsal, not the production migration.",
+      "source": "approvals/rehearsal.md:3-8",
+      "status": "verified",
+      "confidence": 1.0,
+      "load_bearing": true
+    }
+  ],
+  "goal": {
+    "authorized_priority": "preserve data integrity while establishing whether the migration fits the window",
+    "success_proxy": "rehearsal duration and rollback cleanliness",
+    "proxy_failure": "a fast rehearsal on an unrepresentative dataset could pass while production risk remains high",
+    "acceptable_cost": "one isolated staging rehearsal; no production writes"
+  },
+  "experiment": {
+    "belief": "the migration can finish and roll back inside the 40-minute window",
+    "prediction": "a production-sized staging rehearsal completes in under 40 minutes with no residual locks",
+    "disconfirming_observation": "duration >= 40 minutes, rollback failure, or residual locks",
+    "test": "run the migration and rollback on the production-sized staging clone",
+    "prediction_recorded_before_result": true
+  },
+  "control": "reversible-probe",
+  "control_reason": "The production migration is not authorized; the rehearsal can resolve the remaining empirical premise safely.",
+  "residual_uncertainty": ["production load may differ from the staging clone"]
+}

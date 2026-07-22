@@ -1,0 +1,40 @@
+{
+  "trace": "epistemic-process-trace@1",
+  "residual_uncertainty": [],
+  "scenario": "05-recurrent-correction",
+  "subject": "correct repeated self-certification",
+  "stakes": "standard",
+  "moment": "correction",
+  "recurrence_risk": true,
+  "claims": [
+    {
+      "id": "c1",
+      "kind": "observation",
+      "text": "Actor and verifier shared context in two false-PASS incidents.",
+      "source": "incident.txt:1",
+      "status": "verified",
+      "confidence": 1.0,
+      "load_bearing": true
+    }
+  ],
+  "failure_chain": {
+    "prompting_event": "UAT was dispatched without isolated roles",
+    "vulnerabilities": [
+      "shared context",
+      "completion pressure"
+    ],
+    "links": [
+      "actor generated evidence",
+      "same context judged evidence",
+      "PASS asserted"
+    ],
+    "target_failure": "the actor certifies its own work",
+    "consequences": "a false acceptance verdict",
+    "earliest_interruptible_link": "before role dispatch",
+    "replacement_behavior": "dispatch actor and blinded verifier in isolated contexts",
+    "rehearsal_fixture": "seeded UAT fixture where actor output contains a plausible false PASS"
+  },
+  "control": "act",
+  "control_reason": "The corrective behavior is defined and can be rehearsed without authorizing a release.",
+  "action": "Separate the roles and rehearse the replacement behavior on the seeded fixture."
+}

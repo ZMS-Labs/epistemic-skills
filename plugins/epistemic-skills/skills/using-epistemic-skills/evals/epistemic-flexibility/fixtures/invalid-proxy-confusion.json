@@ -1,0 +1,25 @@
+{
+  "trace": "epistemic-process-trace@1",
+  "subject": "improve nightly backup reliability",
+  "stakes": "standard",
+  "moment": "goal",
+  "claims": [
+    {
+      "id": "c1",
+      "kind": "value",
+      "text": "Preserve recoverable backups.",
+      "source": "operator-request:1",
+      "status": "verified",
+      "confidence": 1.0,
+      "load_bearing": true
+    }
+  ],
+  "goal": {
+    "authorized_priority": "preserve recoverable backups",
+    "success_proxy": "zero job failures",
+    "acceptable_cost": "preserve retention and verification"
+  },
+  "control": "act",
+  "control_reason": "A metric exists.",
+  "residual_uncertainty": []
+}

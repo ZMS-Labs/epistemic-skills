@@ -1,0 +1,30 @@
+{
+  "entry": "ledger-entry@1",
+  "synthetic": true,
+  "id": "stale-handoff-trust-20260722-001",
+  "at": "2026-07-22",
+  "type": "correction",
+  "statement": "Resumed work re-anchors merge and completion claims to live repository state before any downstream action.",
+  "because": "incidents/stale-handoff.md:4-31; continuity-verify/evals/resume-fixtures/README.md:64-67",
+  "supersedes": [],
+  "revisit_when": "A resumed session acts on a summary claim before checking its live anchor, or after 20 observed resumptions.",
+  "durability": "durable",
+  "recurrence_risk": true,
+  "failure_chain": {
+    "prompting_event": "A compaction summary stated that a release branch had merged.",
+    "vulnerabilities": [
+      "session resumption",
+      "no git-state probe before action"
+    ],
+    "links": [
+      "summary read as state",
+      "merge claim accepted",
+      "deployment plan generated"
+    ],
+    "target_failure": "Deployment work begins from a branch state that does not exist.",
+    "consequences": "Time loss and a false-DONE report.",
+    "earliest_interruptible_link": "Before accepting the summary's merge claim.",
+    "replacement_behavior": "Run continuity-verify and anchor the merge claim to git or PR state.",
+    "rehearsal_fixture": "A resume fixture whose summary claims merge while GITLOG shows an unmerged branch."
+  }
+}

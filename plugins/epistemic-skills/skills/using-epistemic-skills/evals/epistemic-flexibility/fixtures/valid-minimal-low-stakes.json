@@ -1,0 +1,20 @@
+{
+  "trace": "epistemic-process-trace@1",
+  "subject": "rename a local variable in a private helper",
+  "stakes": "low",
+  "moment": "decision",
+  "claims": [
+    {
+      "id": "c1",
+      "kind": "observation",
+      "text": "The helper is private and has one call site.",
+      "source": "src/helper.py:12-27",
+      "status": "verified",
+      "confidence": 0.99,
+      "load_bearing": true
+    }
+  ],
+  "control": "act",
+  "control_reason": "The change is local, reversible, and fully observed.",
+  "residual_uncertainty": []
+}
