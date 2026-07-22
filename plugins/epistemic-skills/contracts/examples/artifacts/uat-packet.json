@@ -1,0 +1,7 @@
+{
+  "packet": "uat-packet@1",
+  "synthetic": true,
+  "note": "SYNTHETIC example artifact for contracts/examples. Not a real UAT packet; exists only so the example receipt's sha256 binding is mechanically checkable.",
+  "target": "example-ui-change",
+  "environment": "synthetic-fixture"
+}

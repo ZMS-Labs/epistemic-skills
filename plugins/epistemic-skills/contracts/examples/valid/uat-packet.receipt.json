@@ -1,0 +1,33 @@
+{
+  "receipt": "handoff-receipt@1",
+  "synthetic": true,
+  "producer": {
+    "skill": "evidence-locked-uat",
+    "version": "2.6.0",
+    "sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+  },
+  "run": {
+    "id": "example-ui-change-20260722-001",
+    "at": "2026-07-22",
+    "session": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  },
+  "trigger": {
+    "matched": "ui-facing-completion",
+    "skip_gate": "n/a"
+  },
+  "subject": {
+    "ref": "4444444444444444444444444444444444444444444444444444444444444444",
+    "revision": "abc1234",
+    "sha256": "4444444444444444444444444444444444444444444444444444444444444444"
+  },
+  "artifacts": [
+    {
+      "kind": "uat-packet",
+      "path": "artifacts/uat-packet.json",
+      "sha256": "1cff847ccff8b3421715f1e34522ce911efc2f41da4df9881ca96335c989c199"
+    }
+  ],
+  "valid_while": ["subject-revision-unchanged", "environment-reachable"],
+  "coverage_limits": ["synthetic fixture: no real environment probe performed"],
+  "never_attests": ["verdict-truth", "independence-achieved", "freshness-beyond-window"]
+}

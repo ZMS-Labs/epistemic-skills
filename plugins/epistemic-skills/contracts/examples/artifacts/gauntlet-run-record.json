@@ -1,0 +1,9 @@
+{
+  "run_record": "gauntlet-run-record@1",
+  "synthetic": true,
+  "note": "SYNTHETIC example artifact for contracts/examples. Not a real gauntlet run; exists only so the example receipt's sha256 binding is mechanically checkable.",
+  "dossier_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "depth": "quick",
+  "docket_mode": "standard",
+  "independence_mode": "recorded-not-certified"
+}
