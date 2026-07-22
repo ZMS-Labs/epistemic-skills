@@ -1,11 +1,14 @@
 # Skill trust contracts + timing layer — design
 
 **Date:** 2026-07-22
-**Status:** v2 — amended after gauntlet run `trust-contract-design-2026-07-22`
+**Status:** v2.1 — amended after gauntlet run `trust-contract-design-2026-07-22`
 (verdict: NO-GO as-written, 2 P1 findings; amended per the run's arbitration,
-including its 15 conditions). The run's artifacts live under local-only
-`outputs/` and are deliberately uncommitted; the run is cited by name and date,
-not by repo path.
+including its 15 conditions), then re-gated at quick depth
+(`trust-contract-design-v2-2026-07-22`, verdict: CONDITIONAL) with the five
+pre-review conditions (C-A…C-E) landed in this touch-up. Remaining re-gate
+conditions (C-F…C-H) ride as Phase B PR requirements (PR-B1, PR-B3). The runs'
+artifacts live under local-only `outputs/` and are deliberately uncommitted;
+the runs are cited by name and date, not by repo path.
 **Type:** Cross-cutting mechanism (artifact standard + verifier) plus per-skill emit/consume edits
 **Basis:** nine-part audit of the collection at v2.6.0 (per-skill audits ×5, gap analysis, helix alignment review, gauntlet lens/verdict deep-dive, arc timing model). Findings cited by file:line throughout the audit reports; this doc records only the decisions and their derivations. The nine audit reports (or one consolidated doc with nine sections) are committed at PR-B1 under `docs/audits/2026-07-22-collection-audit/` with a synthesis index, so every constraint this design creates keeps its reasons recoverable.
 
@@ -134,7 +137,7 @@ harness-agnostic, one tree):
 {
   "receipt": "handoff-receipt@1",
   "producer": { "skill": "blindspot-pass", "version": "2.6.0", "sha256": "<sha256 of the producer SKILL.md>" },
-  "run": { "id": "<slug>-<YYYYMMDD>-<seq>", "at": "<YYYY-MM-DD>", "session": "<keyed-hash-or-null>" },
+  "run": { "id": "<subject-class-or-hash>-<YYYYMMDD>-<seq>", "at": "<YYYY-MM-DD>", "session": "<keyed-hash-or-null>" },
   "trigger": { "matched": "<closed trigger-class>", "skip_gate": "passed|fired|n/a" },
   "subject": { "ref": "<hash-or-closed-subject-class>", "revision": "<git-SHA|doc-version|null>", "sha256": "<of frozen subject artifact or null>" },
   "artifacts": [
@@ -187,10 +190,16 @@ Rules:
   semantics — "premises re-verified when stale" — outrank the downgrade rule).
   The downgrade applies only to envelope attestation when predicates are
   unevaluable or the only change is the session boundary.
-- **Supersession.** For the same producer+subject, a later receipt supersedes
-  every earlier one (the `run.id` sequence gives the total order); a superseded
-  receipt is not consumed at all — not even downgraded. This is what the drift
-  rule's re-fire produces: a new head, not a fork.
+- **Supersession (JSON receipts only, locality-bound).** For the same
+  producer+subject, a later receipt supersedes every earlier one *within the
+  artifact set presented to a single consumer at one consume point* — its own
+  run directory or the handoff set it was given (the `run.id` sequence gives
+  the total order). A superseded receipt is not consumed at all — not even
+  downgraded. This is what the drift rule's re-fire produces: a new head, not
+  a fork. Supersession is not a global registry query and the verifier does
+  not check it; stamps carry no `run.id` and are outside it. In the regime
+  order it sits below predicate-failure: a superseded-but-valid head is
+  displaced, but a stale head is still stale.
 - **Carrier: JSON receipts for artifact producers, 4-field stamps for prose.**
   File-producing skills (gauntlet, UAT, evidence-research matrix, file-written
   goal contracts) emit JSON receipts verified by `verify_receipt.py`.
@@ -199,18 +208,26 @@ Rules:
   closed vocabulary), `coverage_limits`; the producer is the emitting skill by
   construction. The stamp IS the prose carrier for lowest-common-denominator
   harnesses; the verifier never parses prose.
-- **Privacy minimization (necessity-passed fields).** `run.session` is a per-run
-  keyed hash (an equality token), never the raw harness session id. `run.at` is
+- **Privacy minimization (necessity-passed fields).** `run.session` is an
+  equality token: a session-scoped key exists only in memory for the session's
+  lifetime, and the token is recomputed per run under that key — two receipts
+  carry equal tokens iff produced in the same session; the key and the raw
+  harness session id are never persisted. `run.at` is
   day-granularity — every `valid_while` predicate consumes date precision and
   none consumes finer. `trigger.matched` is a closed trigger-class vocabulary
   and `subject.ref` is hash-or-class: no verbatim user prose is hash-bound into
-  permanent artifacts.
+  permanent artifacts. The `run.id` slug segment is the same
+  subject-class-or-hash as `subject.ref`, never free text — the ledger's
+  `run_dir` pointer exposes it publicly.
 
 ### Data axis: persistence and retention
 
-Receipts and stamps have **validity windows, not retention guarantees**: a
-receipt's purpose is consumed at the next skill step, and nothing may archive a
-receipt past staleness. What persists, where, and why:
+Receipts and stamps have **validity windows**: a stale receipt is never
+consumed *as attestation* — but a stale receipt may persist **as evidence**
+(the pilot audit trail, AC6's recorded consumption cases, run-record diffs all
+require retained receipts). Nothing may archive a receipt past staleness *as a
+live attestation input*; archival for evaluation/audit is local-only and
+labeled with its staleness state. What persists, where, and why:
 
 - **Committed (public repo):** the schema, verifier, README, synthetic example
   receipts, and one synthetic example run (marked `"example": true`). These
@@ -417,7 +434,9 @@ it now ships WITH ledger v2 in PR-B6 — see the data-axis section.)
     consumers — gauntlet Step 0 + UAT + router (PR-B1, B2, B6, B7, with the
     timing PR first). The emit-side prose PRs (B3–B5, B8) wait on ≥1 recorded
     field handoff in which a receipt was actually consumed (valid or stale),
-    observable within 30 days of normal use after PR-B1/B2 merge.
+    observable within 30 days of normal use after the first consumer-side PR
+    merges (PR-B2, B6, or B7, whichever lands first — the router consumes
+    nothing before B2).
 - **Phase C (own specs, own gates):** two new skills — decision/assumption ledger
   (the arc's missing persistence moment), continuity-verify (post-interruption
   memory→artifact re-derivation, gated on resume fixtures). Proposed by the gap
