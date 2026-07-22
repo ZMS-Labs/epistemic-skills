@@ -30,15 +30,34 @@
   (email mismatch, not missing sign-off). P2 (real-ledger validation, `validation_kernel` teeth) and
   the dogfooding gap are carried forward as follow-ups, not release blockers.
 
-## Phase 4 — Behavioral ablation — PENDING MODEL/AGENT RUNNER
+## Phase 4 — Behavioral ablation — SMOKE RUN COMPLETE (2026-07-22); superiority UNESTABLISHED
 
-- Run baseline / v2.8.0 / psychology-language-only / integrated arms.
-- Measure trap catches, clean-control regressions, calibration, tokens, latency, and user
-  correction burden.
-- Convert at least one real incident into a held-out fixture.
+- Ran baseline / v2.8.0-general / psychology-language-only / integrated arms: 6 scenarios × 4 arms × 1
+  (24 fresh isolated agents), deterministic scoring. Record:
+  `plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/behavioral/results/2026-07-22/RESULTS.md`.
+- Result: all arms 1/6, **indistinguishable** — but the smoke's harness under-specified the trace
+  schema (no `goal`/`experiment`/`failure_chain`) and all arms over-held on the clean control, so it is
+  **not a valid arm comparison**. **No behavioral superiority established. No integration-specific
+  clean-control regression** (over-hold is uniform across baseline and integrated).
+- Real value: the smoke functioned as an adversarial test of the Phase-3 P1 fix and **caught a
+  false-positive** (naive check fired on incidental execution nouns in hold-actions). Fix redesigned to
+  high-precision imperatives; protocol 10/10 → **11/11**, behavioral 12/12; **held-out regression
+  fixture** added (`fixtures/valid-hold-with-stop-action.json`) — this converts a real incident into a
+  fixture (the Phase-5 gate item).
+- Follow-up (not run): full-schema arms + ≥3 repeats for a valid superiority measurement.
 
-## Phase 5 — Release — DEFERRED
+## Phase 5 — Release — DECISION: DO NOT bump 3.0.0 (2026-07-22)
 
-- Decide whether evidence supports a 3.0.0 release.
-- Use a separate release PR for manifest/version changes.
-- Preserve honest labels if evidence supports only protocol conformance, not superiority.
+Release gate status:
+- protocol CI green — ✅ (PR #35 all checks green, incl. DCO).
+- independent gauntlet GO/CONDITIONAL with conditions closed — **CONDITIONAL** (P1 closed), but P2
+  conditions (real-ledger validation, `validation_kernel` teeth) **NOT closed**.
+- four-arm smoke shows no material clean-control regression — **inconclusive** (harness under-specified);
+  **superiority unestablished**.
+- one real incident → held-out fixture — ✅ (`valid-hold-with-stop-action.json`).
+- cross-family Step-7b adjudication — **owed, not run** (`external_gate_owed: true`).
+
+**Decision:** the evidence supports only a **protocol-conformance improvement with real control/action
+teeth**, not behavioral superiority. Keep the honest-labeled work on draft PR #35; **do not release
+3.0.0.** A v3 release remains a separate PR gated on: P2 conditions closed, a corrected full-schema
+four-arm run, and the owed cross-family adjudication.

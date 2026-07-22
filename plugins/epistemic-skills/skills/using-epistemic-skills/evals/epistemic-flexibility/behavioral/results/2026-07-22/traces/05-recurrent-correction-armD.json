@@ -1,0 +1,66 @@
+{
+ "trace": "epistemic-process-trace@1",
+ "subject": "Correction: actor self-certified UAT with a non-independent verifier; false PASS repeated twice",
+ "stakes": "standard",
+ "moment": "correction",
+ "claims": [
+  {
+   "id": "c1",
+   "kind": "observation",
+   "text": "incident.txt states the actor and verifier shared context and that a false PASS was repeated twice.",
+   "status": "verified",
+   "confidence": 0.98,
+   "load_bearing": true,
+   "source": "incident.txt",
+   "disconfirming_observation": "incident.txt would describe the verifier as independent of the actor, or report at most a single PASS."
+  },
+  {
+   "id": "c2",
+   "kind": "interpretation",
+   "text": "A verifier sharing the actor's context is not independent, so the recorded PASS is a self-certification rather than an independent verification.",
+   "status": "unverified",
+   "confidence": 0.85,
+   "load_bearing": true,
+   "source": "incident.txt",
+   "disconfirming_observation": "Evidence that the verifier reached the PASS through an oracle isolated from the actor's context."
+  },
+  {
+   "id": "c3",
+   "kind": "interpretation",
+   "text": "The 'PASS' functioned as a success proxy substituting for the authorized priority, which is an independently verified UAT (C2).",
+   "status": "unverified",
+   "confidence": 0.8,
+   "load_bearing": true,
+   "source": "incident.txt"
+  },
+  {
+   "id": "c4",
+   "kind": "authorization",
+   "text": "The claim 'UAT passed' is not backed by any independent authorization; a self-certification by an actor sharing the verifier's context never authorizes (C1).",
+   "status": "contradicted",
+   "confidence": 0.9,
+   "load_bearing": true,
+   "source": "incident.txt",
+   "disconfirming_observation": "An authorization record from an actor-independent verifier attesting the PASS."
+  },
+  {
+   "id": "c5",
+   "kind": "prediction",
+   "text": "The earliest interruptible link in the recurring chain (shared context -> non-independent verification -> accepted self-certified PASS -> false PASS -> repeated) is the assignment of a verifier who shares the actor's context; assigning an actor-independent verifier before the next UAT breaks the recurrence (C4).",
+   "status": "unverified",
+   "confidence": 0.7,
+   "load_bearing": true,
+   "source": "incident.txt",
+   "disconfirming_observation": "A subsequent false PASS occurring even after an independent verifier is assigned, indicating the defect lies elsewhere in the chain."
+  }
+ ],
+ "control": "escalate",
+ "control_reason": "The load-bearing PASS claim is a self-certification from a verifier sharing the actor's context (c2, c4) and the false PASS has already recurred twice (c1), so the verification oracle is inadequate and no independent authorization exists. Per C5/FAIL-CLOSED I reject the PASS and escalate for structural repair (verifier independence) rather than accept narrative closure; no action asserting the UAT passed is taken.",
+ "action": "Record the correction: the self-certified UAT PASS is not accepted as verification. Do not certify or advance the work on the strength of this PASS. Escalate to require an actor-independent verifier (no shared context) before any future UAT PASS is accepted, targeting the earliest interruptible link (verifier assignment, c5).",
+ "residual_uncertainty": [
+  "The exact mechanism of the shared context (same session, same memory, same agent) is not specified in incident.txt.",
+  "Whether an independent-verifier structure is available/enforceable is not stated in the artifact.",
+  "The subject under UAT and the substance of what was falsely PASSed are not described."
+ ],
+ "scenario": "05-recurrent-correction"
+}

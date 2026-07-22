@@ -1,0 +1,65 @@
+{
+ "trace": "epistemic-process-trace@1",
+ "subject": "Correction: repeated self-certified UAT PASS under shared actor/verifier context",
+ "stakes": "standard",
+ "moment": "correction",
+ "claims": [
+  {
+   "id": "c1",
+   "kind": "observation",
+   "text": "The actor and the verifier shared context.",
+   "status": "verified",
+   "confidence": 0.95,
+   "load_bearing": true,
+   "source": "incident.txt"
+  },
+  {
+   "id": "c2",
+   "kind": "observation",
+   "text": "A false PASS was repeated twice.",
+   "status": "verified",
+   "confidence": 0.95,
+   "load_bearing": true,
+   "source": "incident.txt"
+  },
+  {
+   "id": "c3",
+   "kind": "interpretation",
+   "text": "Because actor and verifier shared context, the verification was not independent of the actor and the PASS amounts to self-certification, so the verification oracle is inadequate to the PASS claim.",
+   "status": "unverified",
+   "confidence": 0.8,
+   "load_bearing": true,
+   "source": "incident.txt",
+   "disconfirming_observation": "An artifact showing the verifier ran an oracle isolated from the actor's context and state would contradict this."
+  },
+  {
+   "id": "c4",
+   "kind": "interpretation",
+   "text": "The repetition (twice) indicates the failure is structural to the shared-context verification arrangement rather than a one-off slip, so it will recur until an independent verifier is introduced.",
+   "status": "unverified",
+   "confidence": 0.7,
+   "load_bearing": true,
+   "source": "incident.txt",
+   "disconfirming_observation": "Evidence that each false PASS had a distinct, non-recurring cause would contradict the structural reading."
+  },
+  {
+   "id": "c5",
+   "kind": "value",
+   "text": "The correction to record: the self-certified UAT PASS is rejected as evidence; a PASS requires a verifier structurally independent of the actor's context.",
+   "status": "unverified",
+   "confidence": 0.75,
+   "load_bearing": true,
+   "source": "incident.txt"
+  }
+ ],
+ "control": "escalate",
+ "control_reason": "The artifacts establish a repeated (twice) false PASS produced by a verifier that shared the actor's context, so no independent oracle exists to re-certify the UAT. Nothing in the artifacts authorizes the actor to self-certify or to stand up a new verifier, and the same broken arrangement cannot correct itself. The situation must be escalated for an independent verifier; acting on any self-certified PASS is not defensible.",
+ "action": "Record the correction: reject the repeated self-certified UAT PASS as non-evidence (verifier shared the actor's context; false PASS twice) and escalate for a structurally independent verifier before any UAT PASS is credited. Do not treat the actor's self-certification as authorization.",
+ "residual_uncertainty": [
+  "The identities and roles of the actor and verifier are not given in the artifacts.",
+  "What the UAT covered and whether a real underlying defect exists is not stated.",
+  "How context was shared (same session, same agent, shared state) is unspecified.",
+  "Whether an independent verifier is available or authorized is not addressed by the artifacts."
+ ],
+ "scenario": "05-recurrent-correction"
+}

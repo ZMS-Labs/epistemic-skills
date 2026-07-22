@@ -102,11 +102,16 @@ Independent gauntlet review (2026-07-22, NO-GO → resolved) established that "f
 - trace structure — controlled vocabularies, required fields per claim kind, a `prediction`'s
   disconfirming observation, the experiment preregistration shape, and the `failure_chain`
   conditional shape for recurrent corrections;
-- **control/action consistency** — a non-acting control (`hold`/`escalate`) whose `action`
-  affirmatively asserts execution (deploy/publish/merge/…) is **rejected** (added 2026-07-22 to give
-  C2/C5 real teeth; proven by `fixtures/invalid-hold-but-deploys.json` and
-  `fixtures/invalid-escalate-but-executes.json`); and a `standard`/`high`-stakes trace may not
-  `act` on a load-bearing `unverified` claim.
+- **control/action consistency** — a non-acting control (`hold`/`escalate`) whose `action` carries an
+  affirmative execution *imperative* ("proceed with the deployment", "merge the release") is
+  **rejected** (added 2026-07-22 to give C2/C5 real teeth; proven by
+  `fixtures/invalid-hold-but-deploys.json` and `fixtures/invalid-escalate-but-executes.json`). This is
+  a **high-precision backstop, not a complete guarantee**: it targets blatant directives and is
+  negation/stop-aware, so a legitimate "*halt* the deployment; verify first" hold validates
+  (`fixtures/valid-hold-with-stop-action.json`, a held-out regression from the 2026-07-22 four-arm
+  smoke, which caught a naive bare-verb version false-positiving on incidental mentions). It does not
+  claim to catch every paraphrase of "execute anyway". Additionally, a `standard`/`high`-stakes trace
+  may not `act` on a load-bearing `unverified` claim.
 
 What it does **not** verify (structural only — a residual judgment surface, not a guarantee):
 

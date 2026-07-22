@@ -26,35 +26,49 @@ CONTROL_VOCAB = {"act", "hold", "escalate", "reversible-probe"}
 # action says "deploy now" and pass structural validation — the fluent-narrative
 # bypass the controls exist to prevent (gauntlet 2026-07-22 P1).
 NON_ACTING_CONTROLS = {"hold", "escalate"}
-# Word-boundary matched so "emergency" cannot match "merge", etc.
-_EXECUTION_RE = re.compile(
-    r"\b(deploy(?:s|ed|ment|ing)?|publish(?:es|ed|ing)?|release(?:s|d|ing)?|"
-    r"merge(?:s|d|ing)?|delete(?:s|d|ing)?|drop(?:s|ped|ping)?|overwrite(?:s|n)?|"
-    r"wipe(?:s|d|ing)?|ship(?:s|ped|ping)?|execute(?:s|d)?|launch(?:es|ed|ing)?|"
-    r"roll ?out|go live|proceed with)\b",
-    re.IGNORECASE,
+# High-precision: match affirmative execution *imperatives*, not bare verbs. A hold
+# action that merely mentions an execution noun ("handoff claims 'release merged'",
+# "halt the deployment", "do not continue deployment") must NOT trip this — only a
+# directive that actually tells the system to execute. (Calibrated against agent-
+# generated hold traces, 2026-07-22 four-arm smoke; the naive bare-verb version
+# false-positived on incidental mentions.)
+_EXEC_DIRECTIVES = (
+    "proceed with", "go ahead with", "go ahead and",
+    "deploy now", "deploy it", "start deployment", "start the deployment",
+    "run the deployment", "continue deployment", "continue the deployment",
+    "publish now", "publish the release", "publish it",
+    "merge now", "merge the release", "merge it", "merge to",
+    "ship it", "ship now", "release it to",
+    "execute now", "execute the", "roll it out", "roll out now", "go live",
+    "apply the change now", "overwrite the", "delete the", "drop the",
 )
-# Markers that neutralize an execution token in its local clause: negation or deferral.
+# Negation/deferral in a directive's local clause neutralizes it: "do not proceed
+# with", "before you merge the release", etc.
 _NEUTRALIZERS = (
-    "not ", "n't", "never", "avoid", "refrain", "without", "hold off", "instead of",
-    "rather than", "reject", "decline", "do not", "don't",
-    "before", "until", "after ", "pending", "once ", "verify", "confirm first", "first ",
+    "not ", "n't", "never", "avoid", "refrain from", "without", "hold off", "instead of",
+    "rather than", "do not", "don't", "cannot", "must not", "should not",
+    "before", "until", "after ", "pending", "once ", "unless",
+    "halt", "stop", "block", "abort", "cancel", "prevent", "postpone", "suspend", "defer",
+    "reject", "decline", "deny", "refuse", "do NOT".lower(),
 )
 
 
 def action_asserts_execution(action: str) -> str | None:
-    """Return the execution verb an `action` affirmatively asserts, or None.
+    """Return the affirmative execution directive an `action` asserts, or None.
 
-    A match is neutralized when a negation or deferral marker appears in the
-    token's local clause, so "do not deploy; verify first" does NOT count as
-    asserting execution, while "proceed with the deployment now" does.
+    Only unambiguous imperatives count; a directive is neutralized when a negation,
+    deferral, or stop verb appears in its local clause. So "halt the deployment" and
+    "do not proceed with the merge; verify first" do NOT assert execution, while
+    "proceed with the deployment now" and "merge the release to production" do.
     """
     text = action.lower()
-    for match in _EXECUTION_RE.finditer(text):
-        start = match.start()
-        clause = text[max(0, start - 45): match.end() + 15]
-        if not any(marker in clause for marker in _NEUTRALIZERS):
-            return match.group(1)
+    for directive in _EXEC_DIRECTIVES:
+        pos = text.find(directive)
+        while pos != -1:
+            clause = text[max(0, pos - 30): pos + len(directive) + 5]
+            if not any(marker in clause for marker in _NEUTRALIZERS):
+                return directive
+            pos = text.find(directive, pos + len(directive))
     return None
 
 
