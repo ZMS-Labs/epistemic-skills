@@ -1,0 +1,324 @@
+{
+ "selection": {
+  "evaluators": [
+   {
+    "id": "compliance-litigator",
+    "version": 2,
+    "stance": "adversarial",
+    "capability": "legal-compliance",
+    "status": "active"
+   },
+   {
+    "id": "century-horizon-architect",
+    "version": 2,
+    "stance": "constructive",
+    "capability": "maintainability",
+    "status": "active"
+   },
+   {
+    "id": "tech-debt-curator",
+    "version": 2,
+    "stance": "metatextual",
+    "capability": "maintainability",
+    "status": "active"
+   },
+   {
+    "id": "explainability-steward",
+    "version": 2,
+    "stance": "constructive",
+    "capability": "maintainability",
+    "status": "active"
+   },
+   {
+    "id": "integration-weaver",
+    "version": 2,
+    "stance": "constructive",
+    "capability": "interoperability",
+    "status": "active"
+   }
+  ],
+  "exploration": {
+   "id": "concurrency-interleaving-auditor",
+   "version": 1,
+   "stance": "adversarial",
+   "capability": "reliability",
+   "status": "probation",
+   "seat": "exploration"
+  },
+  "exploration_note": "rotation: concurrency-interleaving-auditor has 0 prior seatings",
+  "generators": [],
+  "gates": [],
+  "judge": "pragmatic-judge",
+  "synthesis": null,
+  "judge_note": "default evidence-weighted judge"
+ },
+ "constraint_violations": [],
+ "replay": {
+  "registry_version": "2.2.0",
+  "registry_sha256": "8224ac4ad5483cb68b8f7ee2b1d7ce89674c1e955caed6d6ecb7593426feca93",
+  "subject_vector": {
+   "subject": "adopt a handoff-receipt schema for a skills repo",
+   "axis": "fixed",
+   "depth": "standard",
+   "domains": [
+    "schema",
+    "contracts",
+    "governance"
+   ],
+   "risk_classes": [],
+   "capability_needs": [
+    "maintainability"
+   ],
+   "domain_confidence": "high"
+  },
+  "scores": {
+   "adjacent-possible-explorer": -0.125,
+   "adoption-realist": -0.125,
+   "analogical-historian": -0.125,
+   "angry-customer": -0.125,
+   "behavioral-economist": -0.125,
+   "black-swan-catalyst": -0.125,
+   "bus-factor-adversary": 2.375,
+   "century-horizon-architect": 2.875,
+   "chaos-monkey": -0.125,
+   "chesterton-gate": -0.125,
+   "cloud-native-purist": -0.125,
+   "cognitive-bias-auditor": -0.125,
+   "compliance-litigator": 0.475,
+   "data-provenance-auditor": -0.5,
+   "digital-forensicist": -0.125,
+   "disgruntled-maintainer": -0.125,
+   "distributive-justice-auditor": -0.125,
+   "dual-use-adversary": -0.125,
+   "ecological-systems-analyst": -0.125,
+   "entropy-demon": 2.375,
+   "epistemic-auditor": -0.125,
+   "ethicist": -0.125,
+   "explainability-steward": 2.375,
+   "fmea-analyst": -0.5,
+   "forensic-accountant": -0.125,
+   "game-theorist": -0.125,
+   "integration-weaver": 0.475,
+   "inversion-thinker": -0.125,
+   "local-first-survivalist": -0.125,
+   "measurement-critic": -0.125,
+   "minimalist-zen-master": -0.125,
+   "network-effects-strategist": -0.125,
+   "observability-advocate": -0.125,
+   "on-call-realist": -0.125,
+   "opportunity-cost-accountant": -0.125,
+   "performance-alchemist": -0.125,
+   "polymath-inquisitor": -0.125,
+   "predatory-regulator": -0.125,
+   "premise-auditor": -0.125,
+   "privacy-surveillance-critic": -0.125,
+   "protocol-archeologist": -0.125,
+   "resilience-engineer": -0.125,
+   "reversibility-analyst": -0.125,
+   "scalability-cliff-analyst": -0.125,
+   "scope-sentinel": -0.125,
+   "script-kiddie": -0.125,
+   "second-order-forecaster": -0.125,
+   "semantic-critic": -0.125,
+   "state-sponsored-actor": -0.125,
+   "statistical-validity-critic": -0.125,
+   "stride-security-modeler": -0.5,
+   "sunk-cost-liberator": -0.125,
+   "systemic-logician": -0.125,
+   "tech-debt-curator": 2.375,
+   "ui-ux-polisher": -0.125,
+   "unit-economics-adversary": -0.125,
+   "wcag-accessibility-expert": -0.5
+  },
+  "exclusions": [
+   [
+    "bayesian-adjudicator",
+    "role:adjudicate"
+   ],
+   [
+    "business-continuity-auditor",
+    "status:candidate"
+   ],
+   [
+    "causal-identification-auditor",
+    "status:candidate"
+   ],
+   [
+    "common-cause-dependency-auditor",
+    "status:candidate"
+   ],
+   [
+    "concurrency-interleaving-auditor",
+    "status:probation"
+   ],
+   [
+    "constraint-inverter",
+    "role:None"
+   ],
+   [
+    "constraint-negotiator",
+    "role:generate_options"
+   ],
+   [
+    "constraint-relaxer",
+    "role:None"
+   ],
+   [
+    "construct-validity-auditor",
+    "status:candidate"
+   ],
+   [
+    "contract-risk-allocation-auditor",
+    "status:candidate"
+   ],
+   [
+    "control-effectiveness-auditor",
+    "status:candidate"
+   ],
+   [
+    "decision-rights-auditor",
+    "status:candidate"
+   ],
+   [
+    "dialectical-synthesizer",
+    "role:adjudicate"
+   ],
+   [
+    "distributed-semantics-auditor",
+    "status:candidate"
+   ],
+   [
+    "effective-configuration-auditor",
+    "status:probation"
+   ],
+   [
+    "execution-dependency-auditor",
+    "status:candidate"
+   ],
+   [
+    "first-principles-engineer",
+    "role:None"
+   ],
+   [
+    "first-principles-rederiver",
+    "role:generate_options"
+   ],
+   [
+    "governance-lawyer",
+    "role:gate"
+   ],
+   [
+    "human-automation-handoff-auditor",
+    "status:candidate"
+   ],
+   [
+    "incident-command-auditor",
+    "status:candidate"
+   ],
+   [
+    "invariant-specification-auditor",
+    "status:candidate"
+   ],
+   [
+    "ip-freedom-to-operate-auditor",
+    "status:candidate"
+   ],
+   [
+    "jurisdiction-conflicts-auditor",
+    "status:probation"
+   ],
+   [
+    "lifecycle-impact-auditor",
+    "status:candidate"
+   ],
+   [
+    "liquidity-runway-auditor",
+    "status:candidate"
+   ],
+   [
+    "meta-epistemic-auditor",
+    "role:None"
+   ],
+   [
+    "null-hypothesis-advocate",
+    "role:generate_options"
+   ],
+   [
+    "opposite-steelman",
+    "role:generate_options"
+   ],
+   [
+    "pragmatic-judge",
+    "role:adjudicate"
+   ],
+   [
+    "preference-sensitivity-arbitrator",
+    "status:candidate"
+   ],
+   [
+    "premortem-facilitator",
+    "role:None"
+   ],
+   [
+    "queue-stability-auditor",
+    "status:candidate"
+   ],
+   [
+    "recovery-integrity-auditor",
+    "status:probation"
+   ],
+   [
+    "red-lines-arbitrator",
+    "role:gate"
+   ],
+   [
+    "release-cutover-auditor",
+    "status:probation"
+   ],
+   [
+    "requirements-traceability-auditor",
+    "status:candidate"
+   ],
+   [
+    "robust-decision-auditor",
+    "status:candidate"
+   ],
+   [
+    "safety-hazard-auditor",
+    "status:candidate"
+   ],
+   [
+    "sociotechnical-topology-auditor",
+    "status:candidate"
+   ],
+   [
+    "sovereign-ruler",
+    "role:adjudicate"
+   ],
+   [
+    "state-migration-compatibility-auditor",
+    "status:candidate"
+   ],
+   [
+    "value-of-information-auditor",
+    "status:candidate"
+   ],
+   [
+    "verification-oracle-auditor",
+    "role:None"
+   ],
+   [
+    "workforce-load-auditor",
+    "status:candidate"
+   ]
+  ],
+  "selected_ids": [
+   "compliance-litigator@2",
+   "century-horizon-architect@2",
+   "tech-debt-curator@2",
+   "explainability-steward@2",
+   "integration-weaver@2"
+  ],
+  "exploration_id": "concurrency-interleaving-auditor@1"
+ }
+}

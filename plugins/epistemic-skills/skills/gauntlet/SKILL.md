@@ -132,7 +132,15 @@ outputs/gauntlet-runs/<subject-slug>-<YYYY-MM-DD>/
 ### Step 1 — Lock subject + classify axis
 
 One line: subject path / revision / scope / exclusions / source-of-truth
-status. Establish the evidence root for `[V path:line]`. Classify:
+status. Establish the evidence root for `[V path:line]` **as a content hash, not
+only a path** — pin the tree with
+`python scripts/finalize_run.py --pin-evidence-root <evidence-root>` and record the
+pin in the dossier's machine-readable header (`<!-- gauntlet-dossier@1 … -->`
+block: `frozen_at`, `subject_path`, `subject_revision`, `evidence_root`,
+`evidence_root_sha256`; format in `scripts/finalize_run.py`'s docstring). Every
+`[V path:line]` verification is then hash-bound: if the evidence root changes
+after the freeze, the pin mismatch makes the invalidation detectable
+(`verify_run.py` reports `EVIDENCE-ROOT-DRIFT`). Classify:
 **fixed-artifact gate** (a specific change/plan/artifact → lenses conjecture
 rival *failure modes*) vs **open-question** (no fixed answer → rival *answers*).
 If the subject moves, restart. If the environment is degraded (a mount down, a
@@ -185,7 +193,11 @@ FROZEN — measurement showed no detectable benefit over random fill under the
 same hard constraints (recorded in `scripts/select_lenses.py`). Panel
 composition today is constraint-satisfaction + diversity-maximization, with
 task-fit carried by the hard gates and the domain-specialist seed.
-**A lens is never selected merely because its domain keyword appears**
+Domain matching canonicalizes both the subject vector and lens domains
+through a controlled alias map (`DOMAIN_ALIASES` in `scripts/select_lenses.py` —
+`finance`/`cost`/`spend` → `economics`, `ux`/`wcag`/`inclusive-design` →
+`ux-accessibility`, `infra`/`operations`/`ops` → `infra-ops`, …), so near-synonym
+vocabulary intersects instead of scoring zero. **A lens is never selected merely because its domain keyword appears**
 — role/status/axis gates run before any scoring. Load full card text only for
 the selected ids.
 
@@ -372,14 +384,33 @@ Append-only: every artifact path, engine log root, reports, arbitration, summary
 
 ### Step 9 — Append the run record (lifecycle telemetry, non-optional)
 
-Append one JSON line to `runs/ledger.jsonl` in this skill's directory — commit
-it if you version your skills (schema in `runs/README.md`): per seated lens, its upheld-unique / upheld-dup / overruled /
-unsupported / false-high counts from the arbitration, plus depth, verdict,
-registry sha, and `eligible` (true for completed standard/deep/max runs). This
-ledger is the ONLY data source for probation activation and deprecation
-thresholds (`reference/lens-registry.md`) — an unrecorded run gives probation
-lenses no track record. Commit the ledger line with the run. Review anytime with
-`python scripts/lens_stats.py`.
+Finalize the run, then append one JSON line to `runs/ledger.jsonl` in this
+skill's directory — commit it if you version your skills (schema in
+`runs/README.md`):
+
+```
+python scripts/finalize_run.py --run-dir <run-dir> --ledger-line >> runs/ledger.jsonl
+python scripts/verify_run.py --run-dir <run-dir>
+```
+
+`finalize_run.py` writes `run-record.json` (`gauntlet-run-record@1`: dossier sha +
+freeze timestamp, subject path/revision, evidence-root content pin, selection
+replay hash, per-lens report hashes, fingerprint + ruling-set refs, verdict +
+structured conditions, depth, `docket_mode`, `independence_mode`, `role_binding`,
+per-seat model FAMILY) and derives the **ledger v2** line from it in the same
+pass — the line is a pointer projection, never a second hand-authored record
+(one writable home per fact). Per seated lens it carries upheld-unique /
+upheld-dup / overruled / unsupported / false-high counts from the ruling-set,
+plus depth, verdict, registry sha, modes, per-lens model family, and `eligible`
+(true for completed standard/deep/max runs). `verify_run.py` is the post-run
+re-check: selector replay (registry drift reported explicitly), verdict
+re-derived from the ruling-set's P1/P2 fields, and the dossier→reports→
+arbitration→summary hash chain. This ledger is the ONLY data source for
+probation activation and deprecation thresholds (`reference/lens-registry.md`) —
+an unrecorded run gives probation lenses no track record. Commit the ledger line
+with the run; the run directory itself stays local-only (data axis:
+`runs/README.md`). A fully worked synthetic exemplar ships at
+`examples/example-run/`. Review anytime with `python scripts/lens_stats.py`.
 
 ## When triage says skip
 
@@ -431,6 +462,9 @@ rigor, measurement bundle) remain designs. Each later piece is integrated only i
 - Registry model, lifecycle, collision + admission policy: `reference/lens-registry.md`
 - Selector: `scripts/select_lenses.py` · Validator: `scripts/validate_roster.py`
   · Renderer: `scripts/render_roster.py` · Tests: `tests/run_tests.py`
+- Run finalization/verification: `scripts/finalize_run.py` (run record + ledger v2
+  line) · `scripts/verify_run.py` (selector replay, verdict gate, hash chain)
+- Synthetic example run (the shipped artifact-shape exemplar): `examples/example-run/`
 - Behavioral eval battery: design not yet shipped in this package (`evals/`
   currently ships only the arbitrator-certification battery)
 - Evidence verifier: `scripts/verify_evidence.py`

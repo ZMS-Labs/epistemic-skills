@@ -1,0 +1,54 @@
+[
+ {
+  "report_path": "reports\\compliance-litigator.md",
+  "total": 1,
+  "verified": 1,
+  "hallucinated": 0,
+  "accuracy_pct": 100.0,
+  "i_tags": 0,
+  "h_tags": 1,
+  "malformed_v": 0,
+  "tag_results": [
+   {
+    "raw": "[V handoff-receipt.schema.json:12]",
+    "path": "handoff-receipt.schema.json",
+    "line": 12,
+    "status": "V",
+    "reason": ""
+   }
+  ]
+ },
+ {
+  "report_path": "reports\\integration-weaver.md",
+  "total": 3,
+  "verified": 3,
+  "hallucinated": 0,
+  "accuracy_pct": 100.0,
+  "i_tags": 1,
+  "h_tags": 0,
+  "malformed_v": 0,
+  "tag_results": [
+   {
+    "raw": "[V handoff-receipt.schema.json:11]",
+    "path": "handoff-receipt.schema.json",
+    "line": 11,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V handoff-receipt.schema.json:11]",
+    "path": "handoff-receipt.schema.json",
+    "line": 11,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V skills-repo-conventions.md:5]",
+    "path": "skills-repo-conventions.md",
+    "line": 5,
+    "status": "V",
+    "reason": ""
+   }
+  ]
+ }
+]

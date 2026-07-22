@@ -36,6 +36,8 @@ def load_ledger(path):
         except json.JSONDecodeError as e:
             print(f"WARN: ledger line {i} unparseable, skipped: {e}", file=sys.stderr)
             continue
+        if isinstance(rec, dict) and rec.get("example"):
+            continue  # synthetic example lines are never lifecycle telemetry
         if isinstance(rec, dict) and isinstance(rec.get("lenses"), list):
             runs.append(rec)
         else:

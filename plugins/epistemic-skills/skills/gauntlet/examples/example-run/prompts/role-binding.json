@@ -1,0 +1,12 @@
+{
+ "binding": "gauntlet-role-binding@1",
+ "synthetic": true,
+ "note": "SYNTHETIC EXAMPLE \u2014 shape of the materialized role-binding record for one seat (compliance-litigator). The prompt field is elided in the shipped example.",
+ "binding_mode": "materialized-role",
+ "role": "gauntlet-adversary",
+ "persona": "compliance-litigator",
+ "role_sha256": "c03ba9c206f387b54958aa52c977e69c155de5072e036a78db4d70de9210e512",
+ "persona_sha256": "d850001608dd8ecec1e0d4c59cae8417f8f9d5db0547fa2ee22f867b6d19f52b",
+ "dossier_sha256": "acaed5b7182ada3f7ab2ffff39cb6186716d99c87a2238d30f58a9dc875f93fe",
+ "prompt": "SYNTHETIC \u2014 elided in the shipped example; a real record carries the full composed prompt."
+}

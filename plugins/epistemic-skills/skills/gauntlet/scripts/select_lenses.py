@@ -44,6 +44,8 @@ Panel constraints enforced (validated after selection; violation is a hard error
     the verdict. Candidates are never seated anywhere.
 
 Output: selection + full replay record (registry hash, eligibility, scores, exclusions).
+Domain matching (fit Jaccard, specialist seed, specialist constraint) canonicalizes both
+sides through DOMAIN_ALIASES first — see the comment above the map.
 Runtime cost note: load full card text ONLY for the selected ids (the registry is scored on
 compact fields; panel prompt tokens scale with panel size, not registry size).
 """
@@ -67,6 +69,65 @@ W_DOMAIN, W_CAP, W_SIGNAL, W_FAMILY_GAIN, W_STANCE_GAIN, W_OVERLAP, W_COST = 3.0
 # sophistication here; deletion is gated on a randomized shadow trial (adjudication doc).
 COST_PENALTY = {"light": 0.0, "standard": 0.25, "heavy": 1.0}
 
+# Domain vocabulary normalization (2026-07-22, collection audit 08 Part 2c): the
+# registry's domain strings are uncontrolled free text (200+ unique strings), so
+# exact-set Jaccard scored 0 for obviously on-point lenses — `finance` != `cost`
+# left both economics lenses unseated on a $120k spend decision; `ux` !=
+# `accessibility`/`wcag`/`inclusive-design` missed wcag-accessibility-expert on a
+# UX change. This CONTROLLED alias map canonicalizes both the subject vector and
+# lens domains BEFORE any domain set operation (fit Jaccard, specialist seed,
+# specialist constraint check). Conservative by design: collapse only clusters
+# whose members name the same diagnostic surface; anything ambiguous stays as-is.
+# Single writable home: here. The registry keeps its raw strings (historical runs
+# replay by id+version); canonicalization is a selector-side read transform.
+DOMAIN_ALIASES = {
+    # economics — the $120k spend-decision miss
+    "finance": "economics", "cost": "economics", "cost-benefit": "economics",
+    "spend": "economics", "cashflow": "economics", "runway": "economics",
+    "resource-allocation": "economics",
+    # ux-accessibility — the wcag-accessibility-expert miss
+    "ux": "ux-accessibility", "ui": "ux-accessibility",
+    "accessibility": "ux-accessibility", "wcag": "ux-accessibility",
+    "inclusive-design": "ux-accessibility", "microcopy": "ux-accessibility",
+    # infra-ops — three strings, one meaning
+    "infra": "infra-ops", "operations": "infra-ops", "ops": "infra-ops",
+    # security exposure
+    "internet-exposure": "security", "threat-modeling": "security",
+    # reliability & failure
+    "robustness": "reliability", "failure-design": "reliability",
+    # disaster recovery
+    "backups": "disaster-recovery", "restore": "disaster-recovery",
+    "dr": "disaster-recovery",
+    # migration & release
+    "migrations": "migration", "cutover": "migration",
+    "deployment": "release", "versioning": "release",
+    # legal & compliance
+    "legal": "legal-compliance", "compliance": "legal-compliance",
+    "regulation": "legal-compliance", "jurisdiction": "legal-compliance",
+    "licensing": "legal-compliance",
+    # governance
+    "oversight": "governance", "accountability": "governance",
+    "controls": "governance",
+    # privacy
+    "data-minimization": "privacy", "data-residency": "privacy",
+    "surveillance": "privacy",
+    # incidents & forensics
+    "incident-investigation": "incident-response",
+    "incident-history": "incident-response", "forensics": "incident-response",
+    # observability
+    "telemetry": "observability", "logging": "observability",
+    "metrics": "observability",
+    # tech debt
+    "legacy": "tech-debt", "end-of-life": "tech-debt",
+    # ml
+    "ml-evaluation": "ml",
+}
+
+
+def canon_domains(domains):
+    """Canonicalize a domain list through DOMAIN_ALIASES (identity for unmapped terms)."""
+    return {DOMAIN_ALIASES.get(d, d) for d in domains}
+
 
 def tokens(s):
     return set(re.findall(r"[a-z]{3,}", (s or "").lower()))
@@ -84,7 +145,7 @@ def load_registry():
 
 
 def fit_score(e, subj):
-    dj = jaccard(set(e["domains"]), set(subj.get("domains", [])))
+    dj = jaccard(canon_domains(e["domains"]), canon_domains(subj.get("domains", [])))
     cap = 1.0 if e["primary_capability"] in set(subj.get("capability_needs", [])) else 0.0
     subj_toks = tokens(subj.get("subject", "")) | set(subj.get("risk_classes", []))
     sig = sum(1 for s in e["positive_signals"] if tokens(s) & subj_toks)
@@ -149,11 +210,11 @@ def select_panel(entries, subj):
             take(e)
 
     # domain specialist when confidence is high — seed FIRST (it also fills a stance slot)
-    sd = set(subj.get("domains", []))
+    sd = canon_domains(subj.get("domains", []))
     if subj.get("domain_confidence") == "high" and sd and len(chosen) < size:
-        if not any(set(c["domains"]) & sd for c in chosen):
+        if not any(canon_domains(c["domains"]) & sd for c in chosen):
             for e in pool:
-                if set(e["domains"]) & sd and not violates(e):
+                if canon_domains(e["domains"]) & sd and not violates(e):
                     take(e)
                     break
 
@@ -241,6 +302,8 @@ def ledger_seat_counts(ledger_path=None):
             rec = json.loads(line)
         except json.JSONDecodeError:
             continue
+        if isinstance(rec, dict) and rec.get("example"):
+            continue  # synthetic example lines never feed rotation
         for lens in rec.get("lenses", []) if isinstance(rec, dict) else []:
             lid = lens.get("id") if isinstance(lens, dict) else None
             if lid:
@@ -344,9 +407,9 @@ def check_constraints(chosen, subj, pool):
     if any(c["status"] != "active" for c in chosen):
         errs.append("non-active lens in core panel (probation belongs in the exploration seat)")
     if subj.get("domain_confidence") == "high":
-        sd = set(subj.get("domains", []))
-        available = any(set(e["domains"]) & sd for e in pool)
-        if sd and available and not any(set(c["domains"]) & sd for c in chosen):
+        sd = canon_domains(subj.get("domains", []))
+        available = any(canon_domains(e["domains"]) & sd for e in pool)
+        if sd and available and not any(canon_domains(c["domains"]) & sd for c in chosen):
             errs.append("no domain specialist despite high domain confidence and an eligible specialist")
     return errs
 
@@ -454,7 +517,8 @@ def main():
     res = run(subj)
     out = json.dumps(res, indent=1)
     if args.out:
-        args.out.write_text(out, encoding="utf-8")
+        with open(args.out, "w", encoding="utf-8", newline="\n") as f:
+            f.write(out)
         print(f"wrote {args.out}")
     else:
         print(out)

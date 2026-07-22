@@ -1,0 +1,13 @@
+{
+  "synthetic": true,
+  "note": "Per-seat model identity for the example run. The run record and the ledger v2 line carry model_family ONLY; an exact 'model' value may appear here in a real (local-only) run but is never copied into any committed projection (data axis, runs/README.md).",
+  "seats": [
+    {"seat": "evaluator:compliance-litigator", "model_family": "synthetic-family-a"},
+    {"seat": "evaluator:century-horizon-architect", "model_family": "synthetic-family-a"},
+    {"seat": "evaluator:tech-debt-curator", "model_family": "synthetic-family-a"},
+    {"seat": "evaluator:explainability-steward", "model_family": "synthetic-family-a"},
+    {"seat": "evaluator:integration-weaver", "model_family": "synthetic-family-a"},
+    {"seat": "exploration:concurrency-interleaving-auditor", "model_family": "synthetic-family-a"},
+    {"seat": "judge:pragmatic-judge", "model_family": "synthetic-family-b"}
+  ]
+}

@@ -35,6 +35,30 @@ def main():
     if rc != 0:
         failures.append("selector-self-test")
 
+    # run-record machinery: finalize + verify self-tests, and the shipped synthetic
+    # example must verify clean (selector output + verdict re-derived, hash chain intact)
+    rc, out = sh(str(ROOT / "scripts" / "finalize_run.py"), "--self-test")
+    print(f"[{'PASS' if rc == 0 else 'FAIL'}] finalize_run self-test: {out.splitlines()[-1] if out else ''}")
+    if rc != 0:
+        failures.append("finalize-run-self-test")
+
+    rc, out = sh(str(ROOT / "scripts" / "verify_run.py"), "--self-test")
+    print(f"[{'PASS' if rc == 0 else 'FAIL'}] verify_run self-test: {out.splitlines()[-1] if out else ''}")
+    if rc != 0:
+        failures.append("verify-run-self-test")
+
+    rc, out = sh(str(ROOT / "scripts" / "verify_run.py"), "--run-dir",
+                 str(ROOT / "examples" / "example-run"))
+    print(f"[{'PASS' if rc == 0 else 'FAIL'}] example run verifies: {out.splitlines()[-1] if out else ''}")
+    if rc != 0:
+        failures.append("example-run-verification")
+
+    try:
+        test_shipped_example_ledger_line()
+    except AssertionError as e:
+        print(f"[FAIL] shipped example ledger line: {e}")
+        failures.append("example-ledger-line")
+
     # targeted regressions
     sys.path.insert(0, str(ROOT / "scripts"))
     import importlib.util
@@ -103,6 +127,25 @@ def main():
           "domains": ["data-ml", "product"], "risk_classes": []},
          lambda r: "verification-oracle-auditor" not in {s["id"] for s in r["selection"]["evaluators"]}
                    and (r["selection"]["exploration"] or {}).get("id") != "verification-oracle-auditor"),
+        # Fit-sensitive alias fixtures (audit 08 Part 2c failure cases): these assert a
+        # seating DIRECTION the aliased vocabulary produces — the constraint battery
+        # cannot validate fit, so both must fail if DOMAIN_ALIASES is reverted.
+        ("domain aliases: $120k spend decision seats an economics lens",
+         {"subject": "approve a $120k/year reserved capacity commitment", "axis": "fixed",
+          "depth": "standard", "domains": ["finance", "spend"], "risk_classes": ["spend"],
+          "domain_confidence": "high"},
+         lambda r: any(e["capability"] == "economics" for e in r["selection"]["evaluators"])),
+        ("domain aliases: UX change seats wcag-accessibility-expert",
+         {"subject": "redesign account settings page for screen-reader users", "axis": "fixed",
+          "depth": "standard", "domains": ["ux"], "risk_classes": [],
+          "domain_confidence": "high"},
+         lambda r: "wcag-accessibility-expert" in {s["id"] for s in r["selection"]["evaluators"]}),
+        ("domain aliases canonicalize both sides of the match",
+         {"subject": "x", "axis": "fixed", "depth": "quick", "domains": ["infra"], "risk_classes": []},
+         lambda r: sel.canon_domains(["finance", "cost", "spend"]) == {"economics"}
+                   and sel.canon_domains(["ux", "wcag", "inclusive-design"]) == {"ux-accessibility"}
+                   and sel.canon_domains(["infra", "operations", "ops"]) == {"infra-ops"}
+                   and sel.canon_domains(["unmapped-term"]) == {"unmapped-term"}),
     ]
     for name, subj, check in cases:
         r = sel.run(subj)
@@ -150,6 +193,31 @@ def main():
     print(f"\n{'ALL PASS' if not failures else 'FAILURES: ' + ', '.join(failures)}")
     return 0 if not failures else 1
 
+
+
+def test_shipped_example_ledger_line():
+    """runs/ledger.jsonl ships exactly one line: the example projection, marked
+    example:true, schema ledger@2, ineligible, family-granular models only."""
+    ledger = ROOT / "runs" / "ledger.jsonl"
+    lines = [l for l in ledger.read_text(encoding="utf-8").splitlines() if l.strip()]
+    assert len(lines) == 1, f"expected exactly the example line, found {len(lines)}"
+    rec = json.loads(lines[0])
+    assert rec.get("schema") == "ledger@2", rec.get("schema")
+    assert rec.get("example") is True and rec.get("eligible") is False
+    assert rec.get("run_dir") and rec.get("dossier_sha256") and rec.get("docket_mode")
+    assert rec.get("independence_mode")
+    assert all(lens.get("model") for lens in rec["lenses"]), "per-lens model family required"
+    # cross-check: the line is the finalize_run.py projection of the example run record
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("fin", ROOT / "scripts" / "finalize_run.py")
+    fin = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(fin)
+    record = json.loads((ROOT / "examples" / "example-run" / "run-record.json").read_text(encoding="utf-8"))
+    derived = fin.build_ledger_line(record, ROOT / "examples" / "example-run",
+                                    fin.load_registry_entries(), example=True)
+    assert json.loads(json.dumps(derived, sort_keys=True)) == json.loads(lines[0]), \
+        "ledger line is not the finalize_run.py derivation of the example run record"
+    print("[PASS] shipped example ledger line is the derived projection")
 
 
 def test_consult_packet():
