@@ -13,6 +13,10 @@ below is **UNVERIFIED**. No Zotero tool was available; holdings are **UNVERIFIED
 deposit was skipped. Those missing layers limit confidence and are not silently treated as
 negative findings.
 
+Follow-up: re-run the reception pass (evidence-research, standard mode) after 2026-07-24
+UTC and flip the UNVERIFIED reception stamps (the basis ran with Scite quota exhausted
+until that date).
+
 ## Claim-evidence matrix
 
 | ID | Design claim | Evidence | Application in the skill | Reception | Holdings |

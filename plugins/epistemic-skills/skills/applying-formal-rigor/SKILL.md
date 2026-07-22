@@ -49,6 +49,10 @@ Run the decision through the lens index below. For each lens that bears on it, n
 
 ## Lens Index (sweep these; details in theory-battery.md)
 
+**Load rule:** `theory-battery.md` §N corresponds to lens N — load the section for **each**
+lens that fires. The lens index names keywords; the battery holds the constructs the
+derivation must cite. Load per fired lens, never the whole file.
+
 1. **Relational & normalization** — FDs, Armstrong's axioms, attribute closure, candidate keys, 1NF→6NF/BCNF/DKNF, **MVD/4NF**, **JD/5NF**, lossless-join & dependency-preserving decomposition, relational algebra, anomaly classes.
 2. **Transaction & concurrency** — ACID, schedules, **conflict/view serializability** (precedence graph), recoverability (recoverable/ACA/strict), **isolation levels & their anomalies** (dirty, non-repeatable, **phantom**, write-skew), 2PL/SS2PL, MVCC, OCC, deadlock.
 3. **Distributed data & consistency** — **CAP, PACELC**, the **consistency lattice** (linearizable > sequential > causal > PRAM > eventual) + **session guarantees** (read-your-writes, monotonic reads/writes, writes-follow-reads), **quorums (R+W>N)**, Lamport/vector clocks, **CRDTs / LWW registers**, consensus (Paxos/Raft), 2PC/saga/outbox.
@@ -97,8 +101,6 @@ For a single-option justification (no fork, just "is this correct"), produce the
 - *Complexity/index lens:* "who prefers SMS?" is `O(disjunction width)` and unindexable under A (predicate spans columns); under B it's a single B+-tree range seek on `(method)`, `O(log N + k)`.
 - *Architecture lens:* A bakes cardinality 3 into DDL → adding a 4th method is an `ALTER` on the hot `users` table (high blast radius); B is `O(1)` rows, zero migration (reversible, low blast radius).
 - *Synthesis:* B dominates on normalization, complexity, blast radius. A's only edge — join-free single-row read — is recoverable under B via a covering index / array aggregation. **Verdict: B**, edge recovered.
-
-**REQUIRED REFERENCE:** the full formal apparatus per lens — definitions, the derivation templates, and the canonical decision questions — is in `theory-battery.md`. Load it when a lens fires and you need the exact construct.
 
 ## Local overlay
 

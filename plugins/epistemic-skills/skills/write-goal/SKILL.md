@@ -159,7 +159,8 @@ runtime exposes it; otherwise keep the criterion in the objective.
 Meet the contract, not the tool name: inspect active-goal state, obtain consent, create one
 persistent objective, keep budgets opt-in, and preserve the proof and stop rules verbatim.
 If the harness has no persistent-goal primitive, return the approved contract without
-pretending it was started.
+pretending it was started. Claude Code exposes no persistent-goal primitive; the
+return-the-contract path is the expected outcome there.
 
 ## Worked Example (rough intention → completion contract)
 
