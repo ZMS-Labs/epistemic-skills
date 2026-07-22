@@ -2,10 +2,14 @@
 
 **Date:** 2026-07-22
 **Status:** Draft for operator review — amended after gauntlet run
-`phase-c-skill-specs-2026-07-22` (2026-07-22; verdict: CONDITIONAL). The
+`phase-c-skill-specs-2026-07-22` (verdict: CONDITIONAL), then re-gated at
+quick depth (`phase-c-specs-v2-2026-07-22`) with its six landing fixes applied
+in this touch-up (AC2 blinding clause, acceptance-authority fixture,
+chain-integrity rule, delegation-artifact rule, named revisit date, AC1
+consumption-contract enumeration). The
 pre-review conditions (C-1…C-7) are landed in this amendment; the remaining
 conditions (C-8…C-10) ride as implementation-PR requirements. Run artifacts
-are local-only (`outputs/` is not committed); the run is cited by name and
+are local-only (`outputs/` is not committed); the runs are cited by name and
 date only. See the conditions table at the end of this spec.
 **Type:** New skill (discipline candidate) for the epistemic-skills collection
 **Basis:** gap analysis (`docs/audits/2026-07-22-collection-audit/06-gap-analysis.md`, candidate (a) — verdict PROPOSE, gated on resume fixtures); control-plane creation gates (`docs/superpowers/specs/2026-07-18-agentic-control-plane-design.md:285-296`).
@@ -100,7 +104,9 @@ owns those).
    authority-bound: self-acceptance of an unverified claim is permitted only
    at the `quick` dial and only for low-stakes claims. At `standard`/`deep`, a
    load-bearing unverified claim requires acceptance by a named non-self
-   authority (the operator, or an operator-delegated authority), recorded in
+   authority (the operator, or an operator-delegated authority whose delegation
+   is itself verifiable against a delegation artifact — an unverifiable
+   delegation escalates like any unverifiable approval claim), recorded in
    the digest's `accepted_unverified` field carrying the acceptor and the risk
    taken; absent that, work halts or re-scopes. An unverifiable approval claim
    escalates — never authorizes — at every dial.
@@ -139,16 +145,25 @@ gauntlet battery precedent wholesale:
 
 - **Battery architecture.** Fixture-facing inputs vs a scorer-only
   ground-truth divergence map; a deterministic stdlib `score.py` decides
-  catches — no self-judged "catch". A blinding protocol is stated in the ACs.
-- **Battery.** ≥8 fixtures: 2 false-DONE traps, 2 stale-state traps, 2
-  authorization traps (one unverifiable-approval, one forged-provenance), and
-  2 clean controls — each an interruption scenario with planted divergence
-  between the summary and the artifacts.
-- **Scoring is a confusion matrix.** Gate: ≥5/6 traps caught **and** 0 of 2
-  clean controls falsely flagged. A stamp-everything-`(UNVERIFIED)` parody
+  catches — no self-judged "catch". Fixture runs are executed by an agent
+  blinded to the scorer-only ground truth; the protocol is stated in the ACs
+  and in `evals/resume-fixtures/README.md`.
+- **Battery.** ≥9 fixtures: 2 false-DONE traps, 2 stale-state traps, 2
+  authorization traps (one unverifiable-approval, one forged-provenance), 1
+  unverifiable load-bearing state-claim trap at the standard dial (the Step-5
+  acceptance-authority falsifier — a skill that self-accepts it must fail the
+  gate), and 2 clean controls — each an interruption scenario with planted
+  divergence between the summary and the artifacts.
+- **Scoring is a confusion matrix.** Gate: ≥6/7 traps caught **and** 0 of 2
+  clean controls falsely flagged (a control is "falsely flagged" when the
+  digest marks a claim the artifacts actually confirm as contradicted or
+  `(UNVERIFIED)`). A stamp-everything-`(UNVERIFIED)` parody
   catches every trap but flags the controls — it fails by design. The parody
   is a standing acceptance probe: a null flag-everything skill is run through
-  the harness pre-merge and **must fail** the shipped gate.
+  the harness pre-merge and **must fail** the shipped gate. The gate certifies
+  catch/flag discipline; it does not certify the floors invariant (a
+  re-derive-everything null skill also passes) — floors are enforced by the
+  method review, not this harness.
 - **Independence.** ≥2 fixtures authored or adversarially extended by a
   non-author (a different model family is acceptable), or mined from real
   compacted-session logs; provenance recorded.
@@ -175,7 +190,9 @@ gauntlet battery precedent wholesale:
   supersedes-chain walk and the ledger-absence rule), the stakes dial with
   the top-3 selection rule, the fail-closed rules, the arc-ordering line, and
   the anti-pattern table.
-- AC2: the fixture battery exists, runs under the deterministic scorer, and
+- AC2: the fixture battery exists, runs under the deterministic scorer with
+  fixture runs executed by an agent **blinded to the scorer-only ground truth**
+  (protocol per `evals/resume-fixtures/README.md`), and
   meets the confusion-matrix gate in all ≥3 runs per condition — with the
   parody probe failing by design — or the PR is honest that the skill is
   parked, method documented, fixtures failing.
@@ -220,7 +237,7 @@ verdict CONDITIONAL; run artifacts local-only), mapped to where each landed:
 |---|---|---|
 | C-2 | Step 3 strengthened: mechanical `supersedes`-chain walk to the head when a ledger is present; superseded entries stale-by-construction and re-derived, never consumed as current; explicit absence rule ("if decision-ledger is absent, skip this step and say so") | spec amendment (done here — step 3) |
 | C-4 | Membership re-run against all SIX router invariants; invariant 6 (contradiction → re-scope = re-fire, never patch) demonstrated explicitly; AC4 updated | spec amendment (done here — family-resemblance section, AC4) |
-| C-5 | Fixture gate redesigned: battery architecture (fixture-facing inputs vs scorer-only ground truth, deterministic stdlib scorer, blinding); confusion-matrix scoring (≥5/6 traps AND 0/2 controls falsely flagged); ≥8 fixtures (2 false-DONE, 2 stale-state, 2 authorization, 2 clean controls); ≥2 non-author fixtures with provenance; pinned arms; ≥3 runs per condition, pass = all runs; per-fixture paired delta + binomial CI under the smoke-scale label with a named path to a real rate; parody probe as a standing acceptance check; honest-park fallback retained; gate relabeled a deterministic smoke check | spec amendment (done here — fixture gate section, AC2) |
+| C-5 | Fixture gate redesigned: battery architecture (fixture-facing inputs vs scorer-only ground truth, deterministic stdlib scorer, blinding); confusion-matrix scoring (≥6/7 traps AND 0/2 controls falsely flagged); ≥9 fixtures (2 false-DONE, 2 stale-state, 2 authorization, 1 acceptance-authority falsifier, 2 clean controls); ≥2 non-author fixtures with provenance; pinned arms; ≥3 runs per condition, pass = all runs; per-fixture paired delta + binomial CI under the smoke-scale label with a named path to a real rate; parody probe as a standing acceptance check; honest-park fallback retained; gate relabeled a deterministic smoke check | spec amendment (done here — fixture gate section, AC2) |
 | C-6 | Step 5 rewritten: self-acceptance only at `quick` dial for low-stakes claims; load-bearing unverified claims at `standard`/`deep` require a named non-self acceptor recorded in a first-class `accepted_unverified` digest field (acceptor + risk taken); otherwise halt or re-scope; approval claims escalate at every dial | spec amendment (done here — steps 4–5) |
 | C-7 (CV parts) | Top-3 selection rule (authorization > state > decision); arc-ordering line (CV fires first on resumption, digest feeds router, then blindspot-pass; write-goal inspection as one claim-class); gauntlet-Step-0 extraction named; ship-order independence stated; router row shapes for the pre-arc trigger specified in ACs | spec amendment (done here — step 1, dial, arc ordering, ship order, AC3) |
 | C-8 | Implementation PR: harness built per C-5 and run; fixtures, scorer, ground truth, pinned per-run results, and non-author provenance committed; parody probe run and committed; honest-park state if the gate is not met — never a waived gate | implementation PR (rides — noted in Phasing above) |

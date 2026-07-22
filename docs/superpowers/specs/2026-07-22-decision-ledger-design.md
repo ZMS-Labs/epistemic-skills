@@ -2,10 +2,14 @@
 
 **Date:** 2026-07-22
 **Status:** Draft for operator review — amended after gauntlet run
-`phase-c-skill-specs-2026-07-22` (2026-07-22; verdict: CONDITIONAL). The
+`phase-c-skill-specs-2026-07-22` (verdict: CONDITIONAL), then re-gated at
+quick depth (`phase-c-specs-v2-2026-07-22`) with its six landing fixes applied
+in this touch-up (AC2 blinding clause, acceptance-authority fixture,
+chain-integrity rule, delegation-artifact rule, named revisit date, AC1
+consumption-contract enumeration). The
 pre-review conditions (C-1…C-7) are landed in this amendment; the remaining
 conditions (C-8…C-10) ride as implementation-PR requirements. Run artifacts
-are local-only (`outputs/` is not committed); the run is cited by name and
+are local-only (`outputs/` is not committed); the runs are cited by name and
 date only. See the conditions table at the end of this spec.
 **Type:** New skill (discipline candidate) for the epistemic-skills collection
 **Basis:** gap analysis (`docs/audits/2026-07-22-collection-audit/06-gap-analysis.md`, candidate (b) — verdict PROPOSE, strongest candidate); control-plane creation gates (`docs/superpowers/specs/2026-07-18-agentic-control-plane-design.md:285-296`).
@@ -114,7 +118,12 @@ when unsure: log.
 append; `revisit_when` doubles as the GC horizon, with periodic compaction of
 fully superseded chains; session-only names the recovery gap — entries held
 only in session state die with it, and the durability-gap record is the
-recovery path.
+recovery path. **Chain integrity:** the schema's required fields are `entry`,
+`id`, `at`, `type`, `statement`, `because`, `revisit_when`, `durability`, and
+`supersedes` (required, possibly empty); `supersedes` links must form an
+acyclic graph with a unique head and no dangling ids; a malformed or
+unlinkable chain fails closed — every entry on it is stale-by-construction and
+re-derived, never consumed as current.
 
 **Consumption contract.** Entries are unverified, self-attested data. Their
 consumption contract is re-anchoring, full stop: a reader treats an entry as a
@@ -177,8 +186,8 @@ get ledgers, any fleet-specific close-out ritual. Additive only.
   the naming disambiguation line. No scripts needed beyond trivial validation
   — the method is prose + one schema; a validator is optional, not required.
 - AC1: the SKILL.md contains the trigger, the skip gate, the three-step
-  method, the close-out rule, the append-only rule, and the anti-pattern
-  table.
+  method, the consumption contract, the chain-integrity rule, the close-out
+  rule, the append-only rule, and the anti-pattern table.
 - AC2: the entry schema validates 2 synthetic examples (one durable, one
   session-only) and enforces required fields plus the closed
   `type`/`durability` vocabularies — structure only, no semantic claim. The
@@ -195,8 +204,9 @@ get ledgers, any fleet-specific close-out ritual. Additive only.
   explicitly demonstrated in the SKILL.md text, invariant 6 (append-only
   supersession = re-fire, never patch) included by name.
 - AC5 (behavioral follow-up, not a ship gate): post-merge, the close-out
-  gap-check hit-rate is logged over ≥20 real work batches with a named
-  revisit date. The measurement-discipline asymmetry with continuity-verify's
+  gap-check hit-rate is logged over ≥20 real work batches, revisited by
+  **2026-08-22** or at the 20th batch, whichever comes first. The
+  measurement-discipline asymmetry with continuity-verify's
   fixture gate is named, not waived: this skill is structural, so it earns a
   logged follow-up rather than a blocking behavioral gate.
 
