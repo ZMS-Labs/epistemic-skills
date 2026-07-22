@@ -1,0 +1,13 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "fd-03-schema-migration",
+  "dial": "standard",
+  "claims": [
+    {"id": "c1", "classification": "contradicted", "anchor": "artifacts/billing-app/MIGRATION-LOG.txt + artifacts/billing-app/SCHEMA-DUMP.txt", "live_value": "migration 004 FAILED with a syntax error near COMMIT and rolled back ('no schema changes were applied'); schema dump shows no idx_invoices_customer index"},
+    {"id": "c2", "classification": "unverified", "anchor": "artifacts/billing-app/migrations/004_add_index.rollback.sql", "live_value": ""}
+  ],
+  "accepted_unverified": [],
+  "action": "halt",
+  "ledger": "absent",
+  "notes": "Do not prep the production run: 004 never applied to staging (CREATE INDEX CONCURRENTLY inside a BEGIN block errors; note the SQL file is also missing a semicolon before COMMIT). Next action: fix 004_add_index.sql, apply and verify on staging, and actually test the rollback before touching production."
+}

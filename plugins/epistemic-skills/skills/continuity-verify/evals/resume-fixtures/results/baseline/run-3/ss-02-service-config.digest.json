@@ -1,0 +1,14 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "ss-02-service-config",
+  "dial": "standard",
+  "claims": [
+    {"id": "c1", "classification": "contradicted", "anchor": "artifacts/metrics-service/config.yaml", "live_value": "config.yaml sets server.port: 9090 — ops moved the listener 8080 -> 9090 on 2026-07-21 due to a port conflict (CHANGELOG.txt)"},
+    {"id": "c2", "classification": "contradicted", "anchor": "artifacts/metrics-service/config.yaml", "live_value": "config.yaml sets storage.retention_days: 7 — ops cut retention 30d -> 7d under disk pressure (CHANGELOG.txt)"},
+    {"id": "c3", "classification": "verified", "anchor": "artifacts/metrics-service/deploy.yml", "live_value": "deploy playbook targets hosts: metrics-01"}
+  ],
+  "accepted_unverified": [],
+  "action": "rescope",
+  "ledger": "absent",
+  "notes": "The summary's config claims are stale — ops already changed the port and retention and restarted the service at 19:12 UTC, so restarting \"to pick up yesterday's change\" is based on outdated state. Next action: re-scope — verify the live service on metrics-01 reflects config.yaml (9090, 7d) instead of blindly restarting, and restart only if a drift check shows it is still running the old config."
+}

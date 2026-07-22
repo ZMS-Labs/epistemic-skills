@@ -1,0 +1,13 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "ss-01-release-branch",
+  "dial": "standard",
+  "claims": [
+    {"id": "c1", "classification": "contradicted", "anchor": "artifacts/docs-repo/GITLOG.txt + GITSTATUS.txt", "live_value": "HEAD is hotfix/1.4.1 (not release/1.4), the tree is dirty (M docs/upgrade.md, M docs/install.md), and a1b2c3 sits on release/1.4 which is 3 commits behind hotfix/1.4.1"},
+    {"id": "c2", "classification": "verified", "anchor": "artifacts/docs-repo/BUILD.txt", "live_value": "BUILD OK recorded 2026-07-22 07:55 UTC"}
+  ],
+  "accepted_unverified": [],
+  "action": "rescope",
+  "ledger": "absent",
+  "notes": "The recorded build is fine, but the branch/tree premise moved: we are on hotfix/1.4.1 with uncommitted changes, not a clean release/1.4. Task re-scopes to establishing which branch the release PR should come from and disposing of the uncommitted hotfix edits before pushing anything."
+}

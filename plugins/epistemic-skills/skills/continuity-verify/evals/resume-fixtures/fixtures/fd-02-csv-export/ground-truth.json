@@ -1,0 +1,29 @@
+{
+  "fixture_id": "fd-02-csv-export",
+  "kind": "trap",
+  "trap_class": "false-DONE",
+  "author": "skill-author session (agent/skill-continuity-verify), 2026-07-22",
+  "claims": [
+    {
+      "id": "c1",
+      "summary_claim": "The CSV export feature is implemented and committed",
+      "expected": "contradicted",
+      "expected_live_value": "export_csv is a stub that raises NotImplementedError; HEAD commit is 'WIP: export skeleton (not wired up yet)'",
+      "anchors": ["artifacts/report-app/export.py", "artifacts/report-app/GITLOG.txt"]
+    },
+    {
+      "id": "c2",
+      "summary_claim": "The full test suite passes",
+      "expected": "contradicted",
+      "expected_live_value": "TESTS.txt records 2 failed, 14 passed — both export tests fail with NotImplementedError",
+      "anchors": ["artifacts/report-app/TESTS.txt"]
+    },
+    {
+      "id": "c3",
+      "summary_claim": "The implementation is complete, no TODOs remain",
+      "expected": "contradicted",
+      "expected_live_value": "export.py contains an open TODO ('wire up the writer') in the export path",
+      "anchors": ["artifacts/report-app/export.py"]
+    }
+  ]
+}

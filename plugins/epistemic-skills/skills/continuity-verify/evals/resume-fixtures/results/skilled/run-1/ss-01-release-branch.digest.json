@@ -1,0 +1,14 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "ss-01-release-branch",
+  "dial": "standard",
+  "claims": [
+    {"id": "c1", "classification": "contradicted", "anchor": "artifacts/docs-repo/GITLOG.txt", "live_value": "HEAD is hotfix/1.4.1 at d4e5f6 'urgent typo fix in upgrade guide'; release/1.4 still sits at a1b2c3 and is 3 commits behind hotfix/1.4.1."},
+    {"id": "c2", "classification": "contradicted", "anchor": "artifacts/docs-repo/GITSTATUS.txt", "live_value": "Working tree on hotfix/1.4.1 has uncommitted modifications: docs/upgrade.md and docs/install.md."},
+    {"id": "c3", "classification": "verified", "anchor": "artifacts/docs-repo/BUILD.txt"}
+  ],
+  "accepted_unverified": [],
+  "action": "rescope",
+  "ledger": "absent",
+  "notes": "Stale-state summary: the repo has moved to hotfix/1.4.1 with dirty files, so 'push release/1.4 and open the PR' no longer matches reality (and the recorded build pass predates the uncommitted edits). Re-scoped task: reconcile hotfix/1.4.1 vs release/1.4 — commit/discard the dirty edits, decide what merges where, re-run the build — then open the PR."
+}

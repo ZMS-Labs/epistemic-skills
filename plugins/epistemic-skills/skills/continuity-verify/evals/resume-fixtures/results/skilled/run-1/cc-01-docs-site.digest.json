@@ -1,0 +1,14 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "cc-01-docs-site",
+  "dial": "standard",
+  "claims": [
+    {"id": "c1", "classification": "verified", "anchor": "artifacts/docs-site/GITLOG.txt"},
+    {"id": "c2", "classification": "verified", "anchor": "artifacts/docs-site/docs/STYLE.md"},
+    {"id": "c3", "classification": "verified", "anchor": "artifacts/docs-site (no test suite or test artifacts present)"}
+  ],
+  "accepted_unverified": [],
+  "action": "proceed",
+  "ledger": "absent",
+  "notes": "All load-bearing claims re-anchored: agent/footer-year is 2 commits ahead of main with the footer at 2026 (footer.html), STYLE.md exists with the house rules, and no test suite exists. Proceed to push the branch and open the PR (note: GITLOG shows no remote configured, so a remote must be added first)."
+}

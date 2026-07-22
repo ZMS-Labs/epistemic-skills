@@ -1,0 +1,14 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "cc-02-ledger-resume",
+  "dial": "standard",
+  "claims": [
+    {"id": "c1", "classification": "verified", "anchor": "artifacts/inventory-app/GITLOG.txt"},
+    {"id": "c2", "classification": "verified", "anchor": "artifacts/inventory-app/.ledger/entries.jsonl"},
+    {"id": "c3", "classification": "verified", "anchor": "artifacts/inventory-app/TESTS.txt"}
+  ],
+  "accepted_unverified": [],
+  "action": "proceed",
+  "ledger": "walked",
+  "notes": "Ledger supersedes chain walked to its head: backend-store-20260721-01 (Postgres) supersedes the SQLite entry, matching the summary. Branch feature/postgres-backend is clean per recorded git state and the test run shows 18 passed. Proceed with wiring the repository layer to the Postgres DSN."
+}

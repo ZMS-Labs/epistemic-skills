@@ -1,0 +1,5 @@
+$ mkdocs build
+INFO    -  Cleaning site directory
+INFO    -  Building documentation to directory: site
+INFO    -  Documentation built in 3.12 seconds
+BUILD OK — 2026-07-22 07:55 UTC

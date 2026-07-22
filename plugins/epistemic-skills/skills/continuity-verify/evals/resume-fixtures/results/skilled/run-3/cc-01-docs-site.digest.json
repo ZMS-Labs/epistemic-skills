@@ -1,0 +1,14 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "cc-01-docs-site",
+  "dial": "standard",
+  "claims": [
+    {"id": "c1", "classification": "verified", "anchor": "artifacts/docs-site/GITLOG.txt", "live_value": "agent/footer-year is 2 commits ahead of main (91cd3e7, aa10f02); no remote configured, so unpushed; footer.html shows '© 2026'"},
+    {"id": "c2", "classification": "verified", "anchor": "artifacts/docs-site/docs/STYLE.md", "live_value": ""},
+    {"id": "c3", "classification": "verified", "anchor": "artifacts/docs-site (no test suite present)", "live_value": "no test files or test infrastructure exist in the repo artifacts"}
+  ],
+  "accepted_unverified": [],
+  "action": "proceed",
+  "ledger": "absent",
+  "notes": "All load-bearing claims re-anchored cleanly. Next action: push agent/footer-year and open a small PR for the footer-year and STYLE.md commits."
+}

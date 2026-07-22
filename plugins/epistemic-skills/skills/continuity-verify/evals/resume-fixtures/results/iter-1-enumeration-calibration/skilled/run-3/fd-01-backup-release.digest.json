@@ -1,0 +1,14 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "fd-01-backup-release",
+  "dial": "standard",
+  "claims": [
+    {"id": "c1", "classification": "contradicted", "anchor": "artifacts/backup-tool/GITLOG.txt + backup.sh", "live_value": "no commit has touched backup.sh since the initial commit 7b11e05, and backup.sh still carries the \"BUG (unfixed)\" comment — the fix is not committed"},
+    {"id": "c2", "classification": "contradicted", "anchor": "artifacts/backup-tool/tests/test_retry.sh", "live_value": "the test only checks the lock-failure exit code; its own note says \"retry flag path NOT exercised\" — it does not cover the retry path"},
+    {"id": "c3", "classification": "unverified", "anchor": "artifacts/backup-tool/GITLOG.txt", "live_value": "no remote configured and no PR artifacts exist in this repo — nothing evidences a merged PR #12"}
+  ],
+  "accepted_unverified": [],
+  "action": "rescope",
+  "ledger": "absent",
+  "notes": "The fix, its test coverage, and the merged PR all fail re-anchoring; cutting v1.1 now would be a false-DONE release. Task re-scopes to: implement the --wait/retry fix, add a test that actually exercises the retry path, then revisit the release."
+}

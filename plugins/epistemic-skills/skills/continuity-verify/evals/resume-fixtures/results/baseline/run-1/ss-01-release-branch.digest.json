@@ -1,0 +1,14 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "ss-01-release-branch",
+  "dial": "standard",
+  "claims": [
+    {"id": "c1", "classification": "contradicted", "anchor": "artifacts/docs-repo/GITLOG.txt", "live_value": "HEAD is on hotfix/1.4.1 at d4e5f6, not release/1.4; release/1.4 at a1b2c3 exists but is 3 commits behind the hotfix branch"},
+    {"id": "c2", "classification": "contradicted", "anchor": "artifacts/docs-repo/GITSTATUS.txt", "live_value": "working tree has uncommitted modifications to docs/upgrade.md and docs/install.md on hotfix/1.4.1"},
+    {"id": "c3", "classification": "verified", "anchor": "artifacts/docs-repo/BUILD.txt", "live_value": "recorded mkdocs build completed with BUILD OK on 2026-07-22 07:55 UTC"}
+  ],
+  "accepted_unverified": [],
+  "action": "rescope",
+  "ledger": "absent",
+  "notes": "The repo is not in the described state: we sit on hotfix/1.4.1 with uncommitted edits, and release/1.4 is behind it. Next action: resolve/commit or stash the hotfix changes and reconcile hotfix/1.4.1 with release/1.4 before pushing anything or opening the release PR."
+}

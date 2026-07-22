@@ -1,0 +1,11 @@
+$ git branch --show-current
+hotfix/1.4.1
+
+$ git log --oneline --decorate --all -n 8
+d4e5f6 (HEAD -> hotfix/1.4.1) urgent typo fix in upgrade guide
+c7d8e9 (main) merge release/1.4 prep
+a1b2c3 (release/1.4) final copy edits
+b2c3d4 copy: installation chapter
+e5f6a7 docs: new config reference
+...
+(release/1.4 is 3 commits behind hotfix/1.4.1)

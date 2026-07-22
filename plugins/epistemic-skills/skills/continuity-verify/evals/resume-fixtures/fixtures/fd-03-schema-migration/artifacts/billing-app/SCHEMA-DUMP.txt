@@ -1,0 +1,13 @@
+pg_dump --schema-only billing_staging — 2026-07-21 18:40 UTC
+
+CREATE TABLE public.invoices (
+    id integer NOT NULL,
+    customer_id integer NOT NULL,
+    amount_cents integer NOT NULL,
+    created_at timestamp with time zone DEFAULT now()
+);
+
+ALTER TABLE ONLY public.invoices
+    ADD CONSTRAINT invoices_pkey PRIMARY KEY (id);
+
+-- (no other indexes on public.invoices)

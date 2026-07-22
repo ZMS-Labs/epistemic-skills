@@ -1,0 +1,13 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "ss-02-service-config",
+  "dial": "standard",
+  "claims": [
+    {"id": "c1", "classification": "contradicted", "anchor": "artifacts/metrics-service/config.yaml", "live_value": "config.yaml shows port 9090 and retention_days 7; CHANGELOG.txt records ops moved 8080->9090 and 30d->7d on 2026-07-21 and restarted the service at 19:12 UTC"},
+    {"id": "c2", "classification": "verified", "anchor": "artifacts/metrics-service/deploy.yml", "live_value": "playbook targets hosts: metrics-01"}
+  ],
+  "accepted_unverified": [],
+  "action": "rescope",
+  "ledger": "absent",
+  "notes": "Live config drifted from the summary (9090/7d, not 8080/30d) and ops already restarted the service, so 'restart to pick up yesterday's change' is stale. Re-scope: confirm with the operator whether the 9090/7d state is intended before any restart; do not restart on the old premise."
+}

@@ -1,0 +1,15 @@
+$ python -m pytest tests/ -q
+..............FF                                                     [100%]
+=================================== FAILURES ===================================
+___________________________ test_export_csv_basic ____________________________
+    def test_export_csv_basic():
+>       export_csv([{"a": 1}])
+E       NotImplementedError: export_csv: TODO - wire up writer
+___________________________ test_export_csv_empty ____________________________
+    def test_export_csv_empty():
+>       export_csv([])
+E       NotImplementedError: export_csv: TODO - wire up writer
+=========================== short test summary info ============================
+FAILED tests/test_export.py::test_export_csv_basic - NotImplementedError
+FAILED tests/test_export.py::test_export_csv_empty - NotImplementedError
+2 failed, 14 passed in 0.42s

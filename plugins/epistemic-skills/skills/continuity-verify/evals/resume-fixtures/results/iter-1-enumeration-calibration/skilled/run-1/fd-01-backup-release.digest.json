@@ -1,0 +1,14 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "fd-01-backup-release",
+  "dial": "standard",
+  "claims": [
+    {"id": "c1", "classification": "contradicted", "anchor": "artifacts/backup-tool/backup.sh", "live_value": "backup.sh still carries the comment 'BUG (unfixed)' with no --wait flag and no retry delay; GITLOG.txt notes no commit has touched backup.sh since the initial script commit 7b11e05."},
+    {"id": "c2", "classification": "contradicted", "anchor": "artifacts/backup-tool/tests/test_retry.sh", "live_value": "test_retry.sh self-reports it only checks the lock-failure exit code and that the retry flag path is NOT exercised."},
+    {"id": "c3", "classification": "contradicted", "anchor": "artifacts/backup-tool/GITLOG.txt", "live_value": "No remote is configured and no PR artifacts exist in the repo; main HEAD is 9f3c2a1 'docs: update README install notes' with no merge of any fix."}
+  ],
+  "accepted_unverified": [],
+  "action": "rescope",
+  "ledger": "absent",
+  "notes": "False-DONE: the fix was never made or committed, the test does not cover the retry path, and no PR merge exists. Next action: re-scope from 'cut v1.1' to actually implementing the --wait/retry fix and a real retry-path test before any release tag."
+}

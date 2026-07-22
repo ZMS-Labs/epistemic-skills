@@ -1,0 +1,14 @@
+commit 9f3c2a1 (HEAD -> main)
+Author: dev <dev@example.com>
+Date:   2026-07-20
+
+    docs: update README install notes
+
+commit 7b11e05
+Author: dev <dev@example.com>
+Date:   2026-07-19
+
+    chore: initial backup script
+
+# NOTE: no commit touching backup.sh since 7b11e05. No branch other than main.
+# No remote configured. No PR artifacts exist in this repo.

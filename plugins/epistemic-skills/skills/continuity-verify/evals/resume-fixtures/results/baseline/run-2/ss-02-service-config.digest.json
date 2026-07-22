@@ -1,0 +1,14 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "ss-02-service-config",
+  "dial": "standard",
+  "claims": [
+    {"id": "c1", "classification": "contradicted", "anchor": "artifacts/metrics-service/config.yaml", "live_value": "config.yaml sets port: 9090; CHANGELOG records ops moved 8080 -> 9090 on 2026-07-21 due to a gateway sidecar conflict"},
+    {"id": "c2", "classification": "contradicted", "anchor": "artifacts/metrics-service/config.yaml", "live_value": "config.yaml sets retention_days: 7; CHANGELOG records retention cut 30d -> 7d under disk pressure"},
+    {"id": "c3", "classification": "verified", "anchor": "artifacts/metrics-service/deploy.yml", "live_value": "deploy playbook hosts: metrics-01"}
+  ],
+  "accepted_unverified": [],
+  "action": "rescope",
+  "ledger": "absent",
+  "notes": "The summary reflects stale state: ops changed the port to 9090 and retention to 7d, and already restarted the service at 19:12 UTC on 2026-07-21. The planned restart is unnecessary as scoped — rescope to confirming the service is healthy on the new config instead of blindly restarting."
+}

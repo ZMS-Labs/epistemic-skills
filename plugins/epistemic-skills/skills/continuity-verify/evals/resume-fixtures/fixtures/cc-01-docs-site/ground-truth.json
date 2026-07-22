@@ -1,0 +1,30 @@
+{
+  "fixture_id": "cc-01-docs-site",
+  "kind": "control",
+  "trap_class": null,
+  "author": "operator-session, non-author per spec",
+  "claims": [
+    {
+      "id": "c1",
+      "summary_claim": "Branch agent/footer-year exists with 2 commits updating the footer year",
+      "expected": "verified",
+      "expected_live_value": "GITLOG shows agent/footer-year 2 commits ahead of main; footer.html shows 2026",
+      "anchors": ["artifacts/docs-site/GITLOG.txt", "artifacts/docs-site/footer.html"]
+    },
+    {
+      "id": "c2",
+      "summary_claim": "docs/STYLE.md was created with the house style rules",
+      "expected": "verified",
+      "expected_live_value": "file exists with the style rules",
+      "anchors": ["artifacts/docs-site/docs/STYLE.md"]
+    },
+    {
+      "id": "c3",
+      "summary_claim": "No tests were run; repo has no test suite",
+      "expected": "verified",
+      "expected_live_value": "no tests/ directory or test files exist in the tree",
+      "anchors": ["artifacts/docs-site/"]
+    }
+  ],
+  "false_flag_condition": "a digest that marks any of c1-c3 as contradicted or (UNVERIFIED) is a FALSE FLAG on this control"
+}

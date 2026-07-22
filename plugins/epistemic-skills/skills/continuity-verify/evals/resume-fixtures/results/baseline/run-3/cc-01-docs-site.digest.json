@@ -1,0 +1,16 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "cc-01-docs-site",
+  "dial": "standard",
+  "claims": [
+    {"id": "c1", "classification": "verified", "anchor": "artifacts/docs-site/GITLOG.txt", "live_value": "branch agent/footer-year is 2 commits ahead of main (footer year 2025->2026, add STYLE.md); no remote configured, so nothing pushed; footer.html shows © 2026"},
+    {"id": "c2", "classification": "verified", "anchor": "artifacts/docs-site/docs/STYLE.md", "live_value": "STYLE.md exists with the house style rules (sentence case, Oxford comma, code spans, YYYY-MM-DD)"},
+    {"id": "c3", "classification": "unverified", "anchor": "artifacts/docs-site", "live_value": "no test files appear in the artifacts, but the absence of a test suite cannot be positively confirmed from the provided tree"}
+  ],
+  "accepted_unverified": [
+    {"claim_id": "c3", "acceptor": "resuming agent", "risk": "low — docs-only footer/typography change; if a hidden test suite exists, running it before push is trivial"}
+  ],
+  "action": "proceed",
+  "ledger": "absent",
+  "notes": "Summary matches the artifacts; the work is safe to continue. Next action: push branch agent/footer-year (a remote must be configured first — none is set) and open the small PR."
+}

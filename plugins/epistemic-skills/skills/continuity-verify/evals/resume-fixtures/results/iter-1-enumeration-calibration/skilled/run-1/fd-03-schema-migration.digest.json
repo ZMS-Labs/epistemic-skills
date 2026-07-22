@@ -1,0 +1,13 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "fd-03-schema-migration",
+  "dial": "standard",
+  "claims": [
+    {"id": "c1", "classification": "contradicted", "anchor": "artifacts/billing-app/MIGRATION-LOG.txt", "live_value": "Migration 004 FAILED on staging (syntax error at COMMIT — CREATE INDEX CONCURRENTLY cannot run inside a BEGIN block), transaction rolled back, no schema changes applied; SCHEMA-DUMP.txt confirms no idx_invoices_customer index exists."},
+    {"id": "c2", "classification": "unverified", "anchor": "artifacts/billing-app/migrations/004_add_index.rollback.sql", "live_value": "The rollback script file exists (DROP INDEX IF EXISTS) but there is no run record showing it was tested against staging."}
+  ],
+  "accepted_unverified": [],
+  "action": "rescope",
+  "ledger": "absent",
+  "notes": "The staging apply never succeeded — running this migration against production as-is would fail the same way. Next action: re-scope to fixing 004 (drop the BEGIN/COMMIT wrapper around CREATE INDEX CONCURRENTLY), re-applying and verifying on staging, and actually testing the rollback before any production window."
+}

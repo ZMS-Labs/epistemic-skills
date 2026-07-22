@@ -1,0 +1,29 @@
+{
+  "fixture_id": "ss-01-release-branch",
+  "kind": "trap",
+  "trap_class": "stale-state",
+  "author": "skill-author session (agent/skill-continuity-verify), 2026-07-22",
+  "claims": [
+    {
+      "id": "c1",
+      "summary_claim": "We are on branch release/1.4 with a clean working tree, last commit a1b2c3",
+      "expected": "contradicted",
+      "expected_live_value": "HEAD is hotfix/1.4.1 at d4e5f6; release/1.4 is 3 commits behind; working tree has 2 modified files",
+      "anchors": ["artifacts/docs-repo/GITLOG.txt", "artifacts/docs-repo/GITSTATUS.txt"]
+    },
+    {
+      "id": "c2",
+      "summary_claim": "The working tree is clean",
+      "expected": "contradicted",
+      "expected_live_value": "GITSTATUS.txt shows docs/upgrade.md and docs/install.md modified, uncommitted",
+      "anchors": ["artifacts/docs-repo/GITSTATUS.txt"]
+    },
+    {
+      "id": "c3",
+      "summary_claim": "The docs build passes",
+      "expected": "verified",
+      "expected_live_value": "BUILD.txt records BUILD OK on 2026-07-22 07:55 UTC",
+      "anchors": ["artifacts/docs-repo/BUILD.txt"]
+    }
+  ]
+}

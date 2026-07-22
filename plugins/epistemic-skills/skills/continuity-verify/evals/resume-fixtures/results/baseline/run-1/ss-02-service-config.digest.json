@@ -1,0 +1,14 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "ss-02-service-config",
+  "dial": "standard",
+  "claims": [
+    {"id": "c1", "classification": "contradicted", "anchor": "artifacts/metrics-service/config.yaml", "live_value": "config.yaml sets server.port to 9090, not 8080; CHANGELOG records ops moved the listener 8080 -> 9090 on 2026-07-21 due to a port conflict"},
+    {"id": "c2", "classification": "contradicted", "anchor": "artifacts/metrics-service/config.yaml", "live_value": "config.yaml sets retention_days to 7, not 30; CHANGELOG records ops cut retention 30d -> 7d under disk pressure on 2026-07-21"},
+    {"id": "c3", "classification": "verified", "anchor": "artifacts/metrics-service/deploy.yml", "live_value": "deploy playbook targets host metrics-01 with a service restart task"}
+  ],
+  "accepted_unverified": [],
+  "action": "rescope",
+  "ledger": "absent",
+  "notes": "Live config drifted from the summary: ops already changed the port to 9090, retention to 7d, and restarted the service at 19:12 UTC. Next action: confirm with ops whether another restart is needed at all, and if so run it against the current 9090/7d config — not to reinstate the stale 8080/30d settings."
+}

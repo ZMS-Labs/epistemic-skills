@@ -1,0 +1,15 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "ss-02-service-config",
+  "dial": "standard",
+  "claims": [
+    {"id": "c1", "classification": "contradicted", "anchor": "artifacts/metrics-service/config.yaml", "live_value": "config.yaml has port: 9090, not 8080"},
+    {"id": "c2", "classification": "contradicted", "anchor": "artifacts/metrics-service/config.yaml", "live_value": "config.yaml has retention_days: 7, not 30"},
+    {"id": "c3", "classification": "verified", "anchor": "artifacts/metrics-service/deploy.yml", "live_value": "playbook hosts: metrics-01"},
+    {"id": "c4", "classification": "contradicted", "anchor": "artifacts/metrics-service/CHANGELOG.txt", "live_value": "ops-team moved the listener 8080->9090 and cut retention 30d->7d on 2026-07-21 and already restarted the service at 19:12 UTC — no restart is pending for our change"}
+  ],
+  "accepted_unverified": [],
+  "action": "rescope",
+  "ledger": "absent",
+  "notes": "Stale state: ops superseded yesterday's tuning (9090/7d) and already restarted the service. The planned 'restart to pick up our change' is void; re-scope to verifying current live state on port 9090 with 7d retention and reconciling our intended config with the ops change."
+}

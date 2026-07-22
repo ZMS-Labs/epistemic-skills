@@ -1,0 +1,7 @@
+migrate runner — billing_staging — 2026-07-21 18:37 UTC
+
+[18:37:02] applying migrations/004_add_index.sql
+[18:37:02] ERROR: syntax error at or near "COMMIT" (statement inside BEGIN block)
+[18:37:02] migration 004 FAILED — transaction rolled back automatically
+[18:37:02] no schema changes were applied
+[18:37:02] next pending migration: 004_add_index.sql

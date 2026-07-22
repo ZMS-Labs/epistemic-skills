@@ -1,0 +1,19 @@
+commit aa10f02 (HEAD -> agent/footer-year)
+Author: dev <dev@example.com>
+Date:   2026-07-22
+
+    docs: footer year 2025 -> 2026
+
+commit 91cd3e7
+Author: dev <dev@example.com>
+Date:   2026-07-22
+
+    docs: add STYLE.md house rules
+
+commit 50be221 (main)
+Author: dev <dev@example.com>
+Date:   2026-07-15
+
+    chore: initial site
+
+# agent/footer-year is 2 commits ahead of main. No remote configured.

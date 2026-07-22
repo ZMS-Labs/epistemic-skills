@@ -1,0 +1,14 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "cc-02-ledger-resume",
+  "dial": "standard",
+  "claims": [
+    {"id": "c1", "classification": "verified", "anchor": "artifacts/inventory-app/GITLOG.txt", "live_value": "current branch feature/postgres-backend, git status clean"},
+    {"id": "c2", "classification": "verified", "anchor": "artifacts/inventory-app/.ledger/entries.jsonl", "live_value": "supersedes chain walked: backend-store-20260721-01 (Use Postgres) supersedes backend-store-20260720-01 (Use SQLite); head of chain is Postgres"},
+    {"id": "c3", "classification": "verified", "anchor": "artifacts/inventory-app/TESTS.txt", "live_value": "recorded pytest run: 18 passed in 0.31s"}
+  ],
+  "accepted_unverified": [],
+  "action": "proceed",
+  "ledger": "walked",
+  "notes": "Ledger chain walked to its head (Postgres is the live decision; the SQLite entry is superseded and was not consumed). All claims verified. Next action: wire the repository layer to the Postgres DSN."
+}

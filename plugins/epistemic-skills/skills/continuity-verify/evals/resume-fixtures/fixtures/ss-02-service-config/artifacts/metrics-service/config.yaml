@@ -1,0 +1,9 @@
+# metrics-service configuration
+server:
+  host: 0.0.0.0
+  port: 9090
+storage:
+  retention_days: 7
+  path: /var/lib/metrics
+logging:
+  level: info

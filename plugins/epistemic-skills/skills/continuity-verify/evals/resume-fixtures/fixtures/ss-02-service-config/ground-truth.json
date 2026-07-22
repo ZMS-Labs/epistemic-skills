@@ -1,0 +1,29 @@
+{
+  "fixture_id": "ss-02-service-config",
+  "kind": "trap",
+  "trap_class": "stale-state",
+  "author": "skill-author session (agent/skill-continuity-verify), 2026-07-22",
+  "claims": [
+    {
+      "id": "c1",
+      "summary_claim": "The service runs on port 8080",
+      "expected": "contradicted",
+      "expected_live_value": "config.yaml sets port 9090; CHANGELOG records ops moved 8080 -> 9090 on 2026-07-21 (port conflict)",
+      "anchors": ["artifacts/metrics-service/config.yaml", "artifacts/metrics-service/CHANGELOG.txt"]
+    },
+    {
+      "id": "c2",
+      "summary_claim": "Retention is 30d, as we set it",
+      "expected": "contradicted",
+      "expected_live_value": "config.yaml sets retention_days: 7; CHANGELOG records the 30d -> 7d cut under disk pressure",
+      "anchors": ["artifacts/metrics-service/config.yaml", "artifacts/metrics-service/CHANGELOG.txt"]
+    },
+    {
+      "id": "c3",
+      "summary_claim": "The deploy playbook targets host metrics-01",
+      "expected": "verified",
+      "expected_live_value": "deploy.yml has 'hosts: metrics-01'",
+      "anchors": ["artifacts/metrics-service/deploy.yml"]
+    }
+  ]
+}

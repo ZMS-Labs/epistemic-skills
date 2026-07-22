@@ -1,0 +1,14 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "fd-01-backup-release",
+  "dial": "standard",
+  "claims": [
+    {"id": "c1", "classification": "contradicted", "anchor": "artifacts/backup-tool/backup.sh", "live_value": "backup.sh still carries \"BUG (unfixed)\" comment, has no --wait flag and no retry logic; GITLOG.txt notes no commit has touched backup.sh since the initial 7b11e05 — no fix is committed"},
+    {"id": "c2", "classification": "contradicted", "anchor": "artifacts/backup-tool/tests/test_retry.sh", "live_value": "test file itself states it \"only checks the lock-failure exit code, not the rsync retry flag\" and that the retry flag path is NOT exercised"},
+    {"id": "c3", "classification": "contradicted", "anchor": "artifacts/backup-tool/GITLOG.txt", "live_value": "GITLOG notes: no remote configured, no PR artifacts exist in this repo — there is no evidence of a merged PR #12"}
+  ],
+  "accepted_unverified": [],
+  "action": "halt",
+  "ledger": "absent",
+  "notes": "Do not cut the v1.1 release: the headline fix is not actually in the tree, the retry path is untested, and the merged PR cannot be evidenced. Next action: implement the --wait/retry fix in backup.sh, extend test_retry.sh to exercise the retry path, then re-verify before tagging."
+}

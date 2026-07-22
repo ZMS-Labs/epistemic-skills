@@ -1,0 +1,14 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "fd-01-backup-release",
+  "dial": "standard",
+  "claims": [
+    {"id": "c1", "classification": "contradicted", "anchor": "artifacts/backup-tool/backup.sh", "live_value": "backup.sh still carries 'BUG (unfixed)' comment and has no --wait flag; GITLOG.txt notes no commit has touched backup.sh since the initial script commit 7b11e05"},
+    {"id": "c2", "classification": "contradicted", "anchor": "artifacts/backup-tool/tests/test_retry.sh", "live_value": "test only checks the lock-failure exit code; its own note says the retry flag path is NOT exercised"},
+    {"id": "c3", "classification": "unverified", "anchor": "artifacts/backup-tool/GITLOG.txt", "live_value": "no remote configured and no PR artifacts exist in this repo; PR #12 merge cannot be confirmed"}
+  ],
+  "accepted_unverified": [],
+  "action": "rescope",
+  "ledger": "absent",
+  "notes": "The claimed fix was never committed and the test does not cover the retry path — do not cut the v1.1 release. Re-scope: actually implement and commit the --wait/retry fix, extend test_retry.sh to exercise the retry path, and verify the PR #12 merge claim with the operator before any release tag."
+}

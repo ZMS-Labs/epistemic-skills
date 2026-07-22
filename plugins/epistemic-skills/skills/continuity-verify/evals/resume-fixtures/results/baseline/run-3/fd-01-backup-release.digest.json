@@ -1,0 +1,14 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "fd-01-backup-release",
+  "dial": "standard",
+  "claims": [
+    {"id": "c1", "classification": "contradicted", "anchor": "artifacts/backup-tool/backup.sh", "live_value": "backup.sh still lacks the --wait flag and carries a \"BUG (unfixed)\" comment; GITLOG.txt notes no commit has touched backup.sh since the initial script"},
+    {"id": "c2", "classification": "contradicted", "anchor": "artifacts/backup-tool/tests/test_retry.sh", "live_value": "the test only checks the lock-failure exit code and states the retry flag path is NOT exercised; it does not cover the claimed retry fix"},
+    {"id": "c3", "classification": "contradicted", "anchor": "artifacts/backup-tool/GITLOG.txt", "live_value": "no remote is configured and the log notes no PR artifacts exist in this repo — no evidence PR #12 was ever merged"}
+  ],
+  "accepted_unverified": [],
+  "action": "halt",
+  "ledger": "absent",
+  "notes": "Do not cut the v1.1 release: the claimed fix was never committed, the test does not exercise the retry path, and no PR merge is evidenced. Next action: actually fix the flock --wait/retry bug in backup.sh, add a real retry-path test, and re-verify before tagging."
+}

@@ -1,0 +1,7 @@
+CHANGELOG — metrics-service
+
+2026-07-21  ops-team: moved listener 8080 -> 9090 (port conflict with the
+            new gateway sidecar); cut retention 30d -> 7d under disk pressure
+            on metrics-01. Service restarted by ops at 19:12 UTC.
+
+2026-07-20  dev: initial tuned config (8080, 30d retention).

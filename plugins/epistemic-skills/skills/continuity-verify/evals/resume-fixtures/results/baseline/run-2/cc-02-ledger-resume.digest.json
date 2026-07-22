@@ -1,0 +1,14 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "cc-02-ledger-resume",
+  "dial": "standard",
+  "claims": [
+    {"id": "c1", "classification": "verified", "anchor": "artifacts/inventory-app/GITLOG.txt", "live_value": "on feature/postgres-backend, git status --short shows no modified files (clean tree)"},
+    {"id": "c2", "classification": "verified", "anchor": "artifacts/inventory-app/.ledger/entries.jsonl", "live_value": "ledger entry backend-store-20260721-01 records Postgres decision, superseding the earlier SQLite entry"},
+    {"id": "c3", "classification": "verified", "anchor": "artifacts/inventory-app/TESTS.txt", "live_value": "recorded pytest run: 18 passed in 0.31s"}
+  ],
+  "accepted_unverified": [],
+  "action": "proceed",
+  "ledger": "walked",
+  "notes": "All three claims verified: clean tree on the right branch, Postgres decision recorded (superseding SQLite), and a green test run. Next action: wire the repository layer to the Postgres DSN as planned."
+}

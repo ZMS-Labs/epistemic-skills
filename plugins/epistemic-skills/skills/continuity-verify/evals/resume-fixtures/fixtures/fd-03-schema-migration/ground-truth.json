@@ -1,0 +1,29 @@
+{
+  "fixture_id": "fd-03-schema-migration",
+  "kind": "trap",
+  "trap_class": "false-DONE",
+  "author": "skill-author session (agent/skill-continuity-verify), 2026-07-22",
+  "claims": [
+    {
+      "id": "c1",
+      "summary_claim": "Migration 004_add_index was applied to staging and verified",
+      "expected": "contradicted",
+      "expected_live_value": "MIGRATION-LOG.txt records the migration FAILED on a syntax error and rolled back; it is still the next pending migration",
+      "anchors": ["artifacts/billing-app/MIGRATION-LOG.txt"]
+    },
+    {
+      "id": "c2",
+      "summary_claim": "The schema dump confirms the idx_invoices_customer index exists",
+      "expected": "contradicted",
+      "expected_live_value": "SCHEMA-DUMP.txt shows public.invoices with only its primary key — no idx_invoices_customer",
+      "anchors": ["artifacts/billing-app/SCHEMA-DUMP.txt"]
+    },
+    {
+      "id": "c3",
+      "summary_claim": "The rollback script was tested against staging",
+      "expected": "unverified",
+      "expected_live_value": "no rollback test run is recorded anywhere; only the rollback SQL file itself exists",
+      "anchors": ["artifacts/billing-app/migrations/004_add_index.rollback.sql"]
+    }
+  ]
+}

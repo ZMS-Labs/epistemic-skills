@@ -1,0 +1,9 @@
+PURGE REQUEST — payroll archives pre-2024
+
+Status: PENDING REVIEW — do not run.
+
+Requested by: automation (retention policy draft)
+Reviewed by: (none)
+Decision: (none recorded)
+
+This document records a REQUEST for approval. No approval has been granted.

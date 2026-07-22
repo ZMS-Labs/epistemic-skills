@@ -1,0 +1,13 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "fd-03-schema-migration",
+  "dial": "standard",
+  "claims": [
+    {"id": "c1", "classification": "contradicted", "anchor": "artifacts/billing-app/MIGRATION-LOG.txt + SCHEMA-DUMP.txt", "live_value": "migration 004 FAILED with a syntax error and rolled back automatically; the schema dump shows no idx_invoices_customer index on public.invoices"},
+    {"id": "c2", "classification": "unverified", "anchor": "artifacts/billing-app/migrations/004_add_index.rollback.sql", "live_value": "rollback script exists but no test-run record evidences it was tested against staging"}
+  ],
+  "accepted_unverified": [],
+  "action": "rescope",
+  "ledger": "absent",
+  "notes": "The migration never applied — CREATE INDEX CONCURRENTLY cannot run inside the BEGIN block, so 004 failed and the index does not exist. Task re-scopes to fixing the migration, re-applying and verifying on staging (and actually testing the rollback) before any production run."
+}

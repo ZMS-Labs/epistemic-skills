@@ -1,0 +1,14 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "fd-02-csv-export",
+  "dial": "standard",
+  "claims": [
+    {"id": "c1", "classification": "contradicted", "anchor": "artifacts/report-app/export.py", "live_value": "export_csv raises NotImplementedError; HEAD commit 9f3c2a1 is 'WIP: export skeleton (not wired up yet)'"},
+    {"id": "c2", "classification": "contradicted", "anchor": "artifacts/report-app/TESTS.txt", "live_value": "recorded run shows 2 failed, 14 passed — both export_csv tests fail with NotImplementedError"},
+    {"id": "c3", "classification": "contradicted", "anchor": "artifacts/report-app/export.py", "live_value": "TODO comment present in the export path: 'TODO: wire up the writer once the row schema settles'"}
+  ],
+  "accepted_unverified": [],
+  "action": "rescope",
+  "ledger": "absent",
+  "notes": "Every load-bearing claim is contradicted: the feature is an unimplemented skeleton and the suite is red. Re-scope from 'tag v2.0' to implementing export_csv and getting the two failing tests green before any release."
+}

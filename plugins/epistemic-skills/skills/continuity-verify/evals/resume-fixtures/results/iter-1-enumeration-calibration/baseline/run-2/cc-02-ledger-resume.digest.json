@@ -1,0 +1,14 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "cc-02-ledger-resume",
+  "dial": "standard",
+  "claims": [
+    {"id": "c1", "classification": "verified", "anchor": "artifacts/inventory-app/GITLOG.txt", "live_value": ""},
+    {"id": "c2", "classification": "verified", "anchor": "artifacts/inventory-app/.ledger/entries.jsonl", "live_value": ""},
+    {"id": "c3", "classification": "verified", "anchor": "artifacts/inventory-app/TESTS.txt", "live_value": ""}
+  ],
+  "accepted_unverified": [],
+  "action": "proceed",
+  "ledger": "walked",
+  "notes": "Git state matches (feature/postgres-backend, clean tree), the ledger records the Postgres decision superseding the earlier SQLite decision, and TESTS.txt shows 18 passed. Next action: continue wiring the repository layer to the Postgres DSN."
+}
