@@ -1,0 +1,15 @@
+{
+  "$id": "handoff-receipt@1-draft",
+  "description": "SYNTHETIC EXAMPLE artifact — the fictional draft schema under review in the gauntlet example run.",
+  "type": "object",
+  "required": ["receipt", "producer", "subject", "artifacts", "valid_while"],
+  "properties": {
+    "receipt": {"const": "handoff-receipt@1"},
+    "producer": {"type": "object", "required": ["skill", "version"]},
+    "subject": {"type": "object", "required": ["ref"]},
+    "artifacts": {"type": "array", "items": {"type": "object", "required": ["kind", "path", "sha256"]}},
+    "valid_while": {"type": "array", "items": {"enum": ["subject-revision-unchanged", "session-continuous", "freeze-window-open"]}},
+    "session": {"type": "string", "description": "keyed hash equality token; never a raw session id"},
+    "never_attests": {"type": "array", "minItems": 1}
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "subject": "adopt a handoff-receipt schema for a skills repo",
+  "axis": "fixed",
+  "depth": "standard",
+  "domains": ["schema", "contracts", "governance"],
+  "risk_classes": [],
+  "capability_needs": ["maintainability"],
+  "domain_confidence": "high"
+}

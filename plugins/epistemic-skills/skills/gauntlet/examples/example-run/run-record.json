@@ -1,0 +1,112 @@
+{
+ "conditions": [
+  {
+   "condition": "An extension procedure for the closed valid_while vocabulary is documented in the contract README: predicates are added only by schema-version bump plus verifier release in the same PR.",
+   "falsifier": {
+    "method": "grep the contract README for an extension-procedure section",
+    "threshold": "section present, naming schema-version bump + same-PR verifier release",
+    "timeframe": "before the schema merges"
+   },
+   "owner": "schema-author"
+  }
+ ],
+ "depth": "standard",
+ "docket_mode": "manual-docket",
+ "dossier": {
+  "frozen_at": "2026-07-22T00:00:00Z",
+  "path": "dossier.md",
+  "sha256": "acaed5b7182ada3f7ab2ffff39cb6186716d99c87a2238d30f58a9dc875f93fe"
+ },
+ "evidence_root": {
+  "content_sha256": "f05efa3e24fa0c3465a367d24d4d9d23a15a443b04673205d9f3d4959a16b1c8",
+  "path": "evidence"
+ },
+ "fingerprint": {
+  "path": "reports/fingerprint.json",
+  "sha256": "35dce6b5dcb6f414b6251965c498fe47067e6afe14693017a2665d5fa3c80741"
+ },
+ "generated_by": "scripts/finalize_run.py",
+ "independence_mode": "independent",
+ "reports": [
+  {
+   "lens": "compliance-litigator",
+   "path": "reports/compliance-litigator.md",
+   "sha256": "eb9ef3f072ba9c7c379c4a617796b69a3b12c49e12bd2d0bffc97e93fa661667"
+  },
+  {
+   "lens": "integration-weaver",
+   "path": "reports/integration-weaver.md",
+   "sha256": "0632322078f8d7012b93aac76e534db080566f5fd927e8497a26d1082416396e"
+  }
+ ],
+ "role_binding": {
+  "mode": "materialized-role",
+  "ref": {
+   "path": "prompts/role-binding.json",
+   "sha256": "fec0a8d6b060851551c4d537953483a8ab20307e194981fcada3a34331f9228a"
+  }
+ },
+ "ruling_set": {
+  "path": "arbitration.md",
+  "sha256": "5b46c6cf37bbfd6951966c3d8e3678cdfe0bf592f94ca32b70c8b0633073cccd"
+ },
+ "run_id": "example-run",
+ "run_record": "gauntlet-run-record@1",
+ "seats": [
+  {
+   "model_family": "synthetic-family-a",
+   "seat": "evaluator:compliance-litigator"
+  },
+  {
+   "model_family": "synthetic-family-a",
+   "seat": "evaluator:century-horizon-architect"
+  },
+  {
+   "model_family": "synthetic-family-a",
+   "seat": "evaluator:tech-debt-curator"
+  },
+  {
+   "model_family": "synthetic-family-a",
+   "seat": "evaluator:explainability-steward"
+  },
+  {
+   "model_family": "synthetic-family-a",
+   "seat": "evaluator:integration-weaver"
+  },
+  {
+   "model_family": "synthetic-family-a",
+   "seat": "exploration:concurrency-interleaving-auditor"
+  },
+  {
+   "model_family": "synthetic-family-b",
+   "seat": "judge:pragmatic-judge"
+  }
+ ],
+ "selection": {
+  "exploration_id": "concurrency-interleaving-auditor@1",
+  "path": "prompts/selection.json",
+  "registry_sha256": "8224ac4ad5483cb68b8f7ee2b1d7ce89674c1e955caed6d6ecb7593426feca93",
+  "registry_version": "2.2.0",
+  "replay_sha256": "cc319e1a52eac62cc8b66736fe82fb02ca5116b95d55072b0f197edcb4b89ebb",
+  "selected_ids": [
+   "compliance-litigator@2",
+   "century-horizon-architect@2",
+   "tech-debt-curator@2",
+   "explainability-steward@2",
+   "integration-weaver@2"
+  ]
+ },
+ "subject": {
+  "path": "evidence/handoff-receipt.schema.json",
+  "revision": "example-rev-1"
+ },
+ "summary": {
+  "path": "GAUNTLET-SUMMARY.md",
+  "sha256": "f45020ec9a0223565d94deddefcd6256e5ffe60a5f3a351b7ec62e85c7d745c8"
+ },
+ "valid_while": {
+  "evidence_root_sha256": "f05efa3e24fa0c3465a367d24d4d9d23a15a443b04673205d9f3d4959a16b1c8",
+  "subject_revision": "example-rev-1"
+ },
+ "verdict": "CONDITIONAL"
+}

@@ -17,7 +17,19 @@
 - **Computed Verdict:** [GO / NO-GO / CONDITIONAL]
 - **Summary:** [one paragraph]
 - **Verdict gate applied:** [P1/P2 semantics]
-- **Conditions (if CONDITIONAL):** [enumerate]
+- **Conditions (if CONDITIONAL):** a fenced JSON array lifted from the ruling-set@1
+  acceptance criteria — one object per OPEN P2, `{condition, falsifier{method,
+  threshold, timeframe}, owner}`. This is the machine-readable form downstream
+  stages consume; a CONDITIONAL is not a GO and these are blocking follow-ups.
+  ~~~json
+  [
+    {
+      "condition": "<the acceptance criterion, verbatim from the ruling>",
+      "falsifier": {"method": "<how checked>", "threshold": "<pass bar>", "timeframe": "<by when>"},
+      "owner": "<who lands it>"
+    }
+  ]
+  ~~~
 - **Epistemic label:** Survivors and scores reflect **best-argued in this review**, not external truth.
 
 ## GO Coverage Statement (required for every GO / CONDITIONAL)
