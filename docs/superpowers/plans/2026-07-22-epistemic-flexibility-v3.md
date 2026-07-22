@@ -14,7 +14,16 @@
 - Add artifact-grounded behavioral scenario scorer and gold/bad self-test.
 - Add CI covering new and relevant existing stdlib checks.
 
-## Phase 3 — Independent review — COMPLETE (2026-07-22)
+## Phase 3 — Independent review — COMPLETE; P1 REOPENED by Step-7b (2026-07-22)
+
+> **UPDATE 2026-07-22 (cross-family Step-7b DISSENT, verified):** the P1 "closure" below was
+> **premature**. The added control/action check catches only near-literal phrases — a keyword matcher
+> with a **measured 100% false-negative rate** on execution paraphrases (RECALL-GAP.md +
+> `adversarial_paraphrase_battery.py`). It is a shallow tripwire, **not fail-closed**. The **P1 is
+> REOPENED**; the fail-closed dimension reverts toward NO-GO until a **structured** fix (an explicit
+> `action_executes` declaration, not free-text parsing) is built. The claims below are retained for
+> history but superseded by this note and the retraction in `reference/epistemic-flexibility.md`.
+
 
 - Froze final diff (HEAD `641ff2c`, bundle SHA256 `550bd8d6…`).
 - Ran standard gauntlet with isolated concurrent role-lenses + separate arbitrator

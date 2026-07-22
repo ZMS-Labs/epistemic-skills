@@ -102,16 +102,20 @@ Independent gauntlet review (2026-07-22, NO-GO → resolved) established that "f
 - trace structure — controlled vocabularies, required fields per claim kind, a `prediction`'s
   disconfirming observation, the experiment preregistration shape, and the `failure_chain`
   conditional shape for recurrent corrections;
-- **control/action consistency** — a non-acting control (`hold`/`escalate`) whose `action` carries an
-  affirmative execution *imperative* ("proceed with the deployment", "merge the release") is
-  **rejected** (added 2026-07-22 to give C2/C5 real teeth; proven by
-  `fixtures/invalid-hold-but-deploys.json` and `fixtures/invalid-escalate-but-executes.json`). This is
-  a **high-precision backstop, not a complete guarantee**: it targets blatant directives and is
-  negation/stop-aware, so a legitimate "*halt* the deployment; verify first" hold validates
-  (`fixtures/valid-hold-with-stop-action.json`, a held-out regression from the 2026-07-22 four-arm
-  smoke, which caught a naive bare-verb version false-positiving on incidental mentions). It does not
-  claim to catch every paraphrase of "execute anyway". Additionally, a `standard`/`high`-stakes trace
-  may not `act` on a load-bearing `unverified` claim.
+- a `standard`/`high`-stakes trace may not `act` on a load-bearing `unverified` claim.
+
+**NOT fail-closed — the control/action check is a shallow tripwire only (retracted 2026-07-22).**
+A cross-family Step-7b review DISSENTED (high confidence) and orchestrator verification confirmed it:
+the `action_asserts_execution` keyword matcher catches only near-literal execution imperatives
+("proceed with the deployment", "merge the release") and has a **measured 100% false-negative rate** on
+paraphrases — "roll this out", "make the change live", "advance it to production", "apply the migration
+now", "promote the build", "send it", "cut the release" all slip through under `hold`/`escalate`
+(battery + measurement: `evals/epistemic-flexibility/adversarial_paraphrase_battery.py`). A keyword
+matcher cannot achieve semantic recall, so **this check does NOT provide a fail-closed guarantee** and
+must not be labelled "enforced". It is retained only as a lint that trips the two most literal bypass
+phrasings; the **P1 (mechanical control/action enforcement) is REOPENED** — a sound fix requires a
+*structured* action declaration (e.g. an explicit `action_executes` boolean the agent must set, checked
+against the control), not free-text parsing. Tracked as a release gate; do not claim closure until built.
 
 What it does **not** verify (structural only — a residual judgment surface, not a guarantee):
 
