@@ -2,7 +2,9 @@
 
 Derived from `standard.md` §9 (verdicts), §47 (contracts), §59 (evidence layout), §38.3 (gate).
 The Workflow script in `workflow-template.mjs` embeds these as JSON Schema constants —
-this file is the human-readable contract; keep the two in sync.
+this file is the human-readable contract; keep the two in sync. The deterministic judge
+is `../scripts/judge.py` (canonical, stdlib Python, harness-agnostic); the `.mjs` embeds
+a verified copy of its aggregation for the Workflow tool.
 
 ## Verdict vocabulary (closed set)
 
@@ -91,6 +93,10 @@ The verifier may not emit FLAKY (cross-run aggregate only).
 
 ## Judge aggregation (deterministic, in script — never an agent)
 
+Canonical implementation: `../scripts/judge.py` (stdlib Python; run it in any harness).
+The rules below are its contract; the `.mjs` embedded copy is verified against it by
+`judge.py --self-test`.
+
 - Case status: any criterion FAIL_PRODUCT → FAIL_PRODUCT; else worst non-PASS criterion
   status (severity order: FAIL_TEST_HARNESS > BLOCKED_ENVIRONMENT > FLAKY > INCONCLUSIVE >
   NOT_RUN); else PASS.
@@ -99,6 +105,10 @@ The verifier may not emit FLAKY (cross-run aggregate only).
 - Completeness: every contract criterion must receive a verdict; a contract criterion with
   no verifier row is scored INCONCLUSIVE (never skipped). Unknown verifier ids are flagged,
   and single-orphan pairs are matched positionally with the mismatch noted.
+- Honesty fields are emitted BY the judge, not appended procedurally: `known_limitations`
+  is a Level-1 constant, `coverage_omitted` is computed (full release-tier contract×persona
+  matrix minus the cases this tier runs), and `target_commit_sha` is pinned in the gate.
+  A gate.json missing these fields is incomplete — treat it as suspect, not clean.
 
 ## gate.json
 
@@ -109,11 +119,82 @@ The verifier may not emit FLAKY (cross-run aggregate only).
   "tier": "smoke | standard | release",
   "calibration_status": "uncalibrated",
   "target": "<base URL>",
+  "target_commit_sha": "<target repo commit SHA under test>",
   "cases": [ { "case_id": "…", "criticality": "…", "status": "…", "criteria": [ … ] } ],
-  "coverage_omitted": ["<journeys/personas not run at this tier>"],
-  "known_limitations": ["Level 1: no pairwise coverage; verifier same-provider; a11y = scan + keyboard only"]
+  "coverage_omitted": ["<case-id in the full matrix this tier does not run>"],
+  "known_limitations": ["Level 1 constant — see scripts/judge.py KNOWN_LIMITATIONS"]
 }
 ```
+
+## manifest.json (normative)
+
+The integrity anchor of the packet. `hashes` seals every committed JSON/YAML artifact —
+gate, contracts, and the per-case actor/verifier outputs the gate was aggregated from —
+so a downstream consumer can detect post-hoc tampering with the verdict OR its evidence
+inputs. Screenshots are gitignored and unhashed — outside the integrity chain.
+
+```json
+{
+  "run_id": "uat-YYYYMMDD-HHMMSS-<slug>",
+  "tier": "smoke | standard | release",
+  "target": "<base URL>",
+  "target_commit_sha": "<target repo commit SHA under test>",
+  "date": "<ISO 8601 run date>",
+  "model": "<model/version for the LLM roles>",
+  "skill_version": "<skill version string>",
+  "judge_sha256": "<sha256 of the canonical judge: scripts/judge.py>",
+  "calibration_status": "uncalibrated | calibrated:<corpus-ref>@<date>",
+  "environment_fingerprint": "<build, deployment, feature flags, locale, account identity>",
+  "seed": "<sampling seed, or null>",
+  "sampling": "<temperature/sampling configuration, or null>",
+  "tool_versions": { "<tool>": "<version>" },
+  "hashes": {
+    "gate.json": "<sha256>",
+    "contracts.yaml": "<sha256>",
+    "cases/<case-id>/actor-output.json": "<sha256 — one entry per case>",
+    "verifier/<case-id>.json": "<sha256 — one entry per case>"
+  }
+}
+```
+
+`environment_fingerprint`, `seed`, `sampling`, and `tool_versions` are directive-required
+fingerprint fields (`directive.md`: "Record seed, model/version, temperature or sampling
+configuration, tool versions, and environment fingerprint"). Record them as `null` when
+genuinely inapplicable — present-and-null is honest, omitted is a gap.
+
+## Calibration status vocabulary
+
+`calibration_status` is closed: `uncalibrated | calibrated:<corpus-ref>@<date>`.
+
+- `uncalibrated` — the default and current state of every run. Disclosed, not hidden.
+- `calibrated:<corpus-ref>@<date>` — permitted only after the actor→verifier→judge
+  pipeline has been run against a named seeded-defect corpus (`<corpus-ref>`) and met the
+  standard's pre-publication policy threshold (standard.md: "seeded-defect calibration
+  within policy threshold"); `@<date>` is the date of the qualifying corpus run.
+
+Transition: `uncalibrated` → `calibrated:<corpus-ref>@<date>` happens only via a recorded
+corpus run; there is no other path, and a calibrated status silently reverts to
+`uncalibrated` when the judge, verifier prompt, or contract schema changes materially.
+**The seeded-defect corpus does not exist yet — it is the named blocker.** Building it is
+deliberately out of scope here (a ceiling, not a floor); the vocabulary exists so the gap
+is a path, not a dead end.
+
+## Verifying a packet downstream
+
+A consumer MAY recompute `release_decision` from a committed packet without re-running
+any LLM role — the aggregation over the committed actor/verifier outputs is deterministic:
+
+1. Convert `contracts.yaml` to JSON (stdlib Python ships no YAML parser by design; e.g.
+   `python -c "import yaml,json,sys; json.dump(yaml.safe_load(open('contracts.yaml')), sys.stdout)" > contracts.json`).
+2. Run the canonical judge against the packet:
+   `python <skill>/scripts/judge.py --contracts contracts.json --tier <tier> --run-id <run_id> --target <target> --commit-sha <sha> --evidence-dir <packet dir> --output -`
+3. Compare `release_decision` and per-case statuses against the committed `gate.json`;
+   verify the manifest's `hashes` over the committed files first if tamper-evidence matters.
+
+What this proves: the committed gate is the faithful deterministic aggregation of the
+committed actor/verifier outputs. What it does NOT prove: that the verifier's judgments
+were correct (they are LLM adjudications), that blinding held at run time, or anything
+about the screenshots, which are gitignored and unhashed — outside the integrity chain.
 
 ## Evidence directory (`<target-repo>/artifacts/uat/<run-id>/`)
 
@@ -121,12 +202,14 @@ This is the Level-1 evidence layout; standard.md §59 describes the aspirational
 layout for higher maturity levels — do not treat §59 as this skill's contract.
 
 ```
-manifest.json          # run-id, tier, target, commit, model, calibration_status, hashes — committed
+manifest.json          # normative schema above — run-id, tier, target, target_commit_sha,
+                       # date, model, skill_version, judge_sha256, calibration_status,
+                       # fingerprint fields, hashes of all committed artifacts — committed
 contracts.yaml         # committed
 cases/<case-id>/
-  actor-output.json    # committed
-  screenshots/*.png    # gitignored
-verifier/<case-id>.json # committed (one per case, criterion-level decisions)
+  actor-output.json    # committed (hashed in manifest.json)
+  screenshots/*.png    # gitignored and unhashed — outside the integrity chain
+verifier/<case-id>.json # committed (hashed in manifest.json; one per case, criterion-level decisions)
 gate.json              # committed
 summary.md             # committed; final-report format per directive (critical failures first,
                        # predicted usability risks labeled as predicted, coverage omitted, assumptions)

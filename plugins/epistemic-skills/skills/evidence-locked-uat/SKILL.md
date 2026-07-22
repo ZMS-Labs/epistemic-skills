@@ -43,6 +43,7 @@ their own subagent primitive. Parameters:
 ```json
 {
   "run_id": "…", "tier": "smoke|standard|release", "target_url": "…",
+  "commit_sha": "<target repo commit SHA under test>",
   "change_summary": "…", "requirement_sources": ["…"],
   "evidence_dir": "<absolute>", "target_repo_dir": "<absolute>"
 }
@@ -53,15 +54,25 @@ prompts — the information-permission boundaries in them are the mechanism.
 
 ## Step 3 — Write the report and land the evidence
 
-1. Write `<evidence_dir>/gate.json` from the Workflow return, adding
-   `coverage_omitted` (journeys/personas not run at this tier) and `known_limitations`
-   (always includes: no pairwise coverage; verifier same-provider; a11y = keyboard-path
-   procedural only; all oracle channels LLM-adjudicated at Level 1 (no deterministic
-   programmatic oracle); feedback visible <~3s is below the harness's reliable detection
-   threshold — ephemeral confirmations yield INCONCLUSIVE/predicted usability risk, not
-   PASS; `calibration_status: uncalibrated`).
-2. Write `<evidence_dir>/manifest.json`: run_id, tier, target, target repo commit SHA,
-   date, model, skill version, calibration_status, sha256 of gate.json and contracts.yaml.
+1. Write `<evidence_dir>/gate.json` from the Workflow return, or by running
+   `scripts/judge.py` directly — it is the canonical deterministic judge and any harness
+   runs it identically. The judge itself emits `coverage_omitted` (full release-tier
+   contract×persona matrix minus the cases this tier runs), `known_limitations` (Level-1
+   constant: no pairwise coverage; verifier same-provider; a11y = keyboard-path procedural
+   only; all oracle channels LLM-adjudicated at Level 1, no deterministic programmatic
+   oracle; feedback visible <~3s is below the harness's reliable detection threshold —
+   ephemeral confirmations yield INCONCLUSIVE/predicted usability risk, not PASS), and
+   `target_commit_sha`. Never add or edit these procedurally — a gate.json missing them is
+   incomplete, not clean. `calibration_status` stays `uncalibrated`: the seeded-defect
+   corpus that would permit a `calibrated:<corpus-ref>@<date>` value (vocabulary in
+   `references/schemas.md`) does not exist yet — that missing corpus is the named blocker,
+   deliberately not built here.
+2. Write `<evidence_dir>/manifest.json` per the normative schema in `references/schemas.md`:
+   run_id, tier, target, target repo commit SHA, date, model, skill version, judge-code
+   content hash (sha256 of `scripts/judge.py`), calibration_status, the directive-required
+   fingerprint fields (environment fingerprint, seed, sampling configuration, tool
+   versions), and sha256 of `gate.json`, `contracts.yaml`, every committed
+   `cases/*/actor-output.json`, and every `verifier/*.json`.
 3. Write `<evidence_dir>/summary.md` in the directive's FINAL REPORT FORMAT: decision
    first, critical failures and inconclusive criteria before passes, criterion table with
    evidence paths, predicted usability risks explicitly labeled "predicted", coverage
@@ -110,8 +121,12 @@ Full 26-row table: `references/standard.md` §61.
   section header or read by offset. The three canonical sections: §47 contracts, §59 evidence
   (aspirational full-standard layout, not this skill's contract — see `schemas.md`), §61
   anti-patterns.
-- `references/schemas.md` — canonical schemas + gate/judge rules.
-- `references/workflow-template.mjs` — the orchestration script.
+- `references/schemas.md` — canonical schemas + gate/judge rules, manifest schema,
+  calibration vocabulary, downstream verification.
+- `references/workflow-template.mjs` — the Claude Code reference orchestration script
+  (its embedded judge is a verified copy of `scripts/judge.py`).
+- `scripts/judge.py` — the canonical deterministic judge (stdlib Python, harness-agnostic;
+  `--self-test` exercises the aggregation semantics the `.mjs` copy must match).
 
 ## Local overlay
 
