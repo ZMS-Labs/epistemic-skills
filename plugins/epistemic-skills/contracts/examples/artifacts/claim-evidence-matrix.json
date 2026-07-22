@@ -1,0 +1,8 @@
+{
+  "matrix": "claim-evidence-matrix@1",
+  "synthetic": true,
+  "note": "SYNTHETIC example artifact for contracts/examples. Not a real evidence-research matrix; exists only so the example receipt's sha256 binding is mechanically checkable.",
+  "rows": [
+    { "claim": "synthetic-claim-1", "evidence": "[V synthetic-source:1]", "reception": "ungraded" }
+  ]
+}

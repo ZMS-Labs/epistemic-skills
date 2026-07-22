@@ -1,0 +1,172 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/ZMS-Labs/epistemic-skills/main/plugins/epistemic-skills/contracts/handoff-receipt.schema.json",
+  "title": "handoff-receipt@1",
+  "description": "Envelope-trust handoff receipt. A producer self-issued declaration of identity, well-formedness, provenance, and a validity window. The schema deliberately has no field capable of carrying a verdict, an approval, a confidence score, or an independence claim: the only place those words may appear is never_attests.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt",
+    "producer",
+    "run",
+    "trigger",
+    "subject",
+    "artifacts",
+    "valid_while",
+    "coverage_limits",
+    "never_attests"
+  ],
+  "properties": {
+    "receipt": {
+      "const": "handoff-receipt@1"
+    },
+    "synthetic": {
+      "type": "boolean",
+      "description": "Optional example-marking flag for committed synthetic fixtures. Carries no semantics; consumers MUST NOT branch on it."
+    },
+    "producer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["skill", "version", "sha256"],
+      "properties": {
+        "skill": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Emitting skill name."
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Skill version at emit time."
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "Content pin: sha256 of the producer SKILL.md at emit time."
+        }
+      }
+    },
+    "run": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "at", "session"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*-[0-9]{8}-[0-9]+$",
+          "description": "<subject-class-or-hash>-<YYYYMMDD>-<seq>. The slug segment is the same subject-class-or-hash as subject.ref, never free text."
+        },
+        "at": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+          "description": "Day-granularity date (YYYY-MM-DD). No predicate consumes finer precision."
+        },
+        "session": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "Equality token: keyed hash recomputed per run under a session-scoped in-memory key. The key and the raw harness session id are never persisted."
+        }
+      }
+    },
+    "trigger": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["matched", "skip_gate"],
+      "properties": {
+        "matched": {
+          "enum": [
+            "explicit-request",
+            "unfamiliar-territory",
+            "design-decision",
+            "literature-claim",
+            "goal-authoring",
+            "high-stakes-irreversible",
+            "ui-facing-completion",
+            "workflow-stage-pairing",
+            "multi-skill-routing"
+          ],
+          "description": "Closed trigger-class vocabulary; never verbatim user prose."
+        },
+        "skip_gate": {
+          "enum": ["passed", "fired", "n/a"]
+        }
+      }
+    },
+    "subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ref", "revision", "sha256"],
+      "properties": {
+        "ref": {
+          "type": "string",
+          "pattern": "^([0-9a-f]{64}|[a-z][a-z0-9-]{1,63})$",
+          "description": "Hash-or-closed-subject-class; never free text."
+        },
+        "revision": {
+          "type": ["string", "null"],
+          "description": "git-SHA, doc-version, or null. Null subjects fail closed: a null revision MUST NOT be combined with the subject-revision-unchanged predicate (verifier-enforced)."
+        },
+        "sha256": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "sha256 of the frozen subject artifact, or null."
+        }
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "path", "sha256"],
+        "properties": {
+          "kind": {
+            "enum": [
+              "rewritten-request",
+              "derived-verdict",
+              "claim-evidence-matrix",
+              "goal-contract",
+              "dossier",
+              "gauntlet-run-record",
+              "uat-packet",
+              "routing-record"
+            ]
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Relative to the artifact root."
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
+      }
+    },
+    "valid_while": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "subject-revision-unchanged",
+          "session-continuous",
+          "freeze-window-open",
+          "environment-reachable"
+        ]
+      },
+      "description": "Closed predicate vocabulary, evaluated by the consumer. Predicates are added only by schema-version bump + verifier update in the same PR; unknown predicates fail closed."
+    },
+    "coverage_limits": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "What this run did NOT check, verbatim from the skill's own degradation labels."
+    },
+    "never_attests": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string" },
+      "description": "Non-empty. Standard entries: verdict-truth, independence-achieved, freshness-beyond-window."
+    }
+  }
+}

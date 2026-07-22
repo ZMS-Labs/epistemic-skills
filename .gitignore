@@ -1,3 +1,10 @@
 __pycache__/
 *.pyc
 *.pyo
+
+# Run output roots — run directories, dossiers, live receipts over real
+# subjects, and screenshot-class captures are local-only; only schemas,
+# verifiers, READMEs, and synthetic examples commit (see
+# plugins/epistemic-skills/contracts/README.md).
+outputs/
+artifacts/uat/**/screenshots/

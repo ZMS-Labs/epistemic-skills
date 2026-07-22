@@ -1,0 +1,33 @@
+{
+  "receipt": "handoff-receipt@1",
+  "synthetic": true,
+  "producer": {
+    "skill": "evidence-research",
+    "version": "2.6.0",
+    "sha256": "5555555555555555555555555555555555555555555555555555555555555555"
+  },
+  "run": {
+    "id": "claim-set-20260722-002",
+    "at": "2026-07-22",
+    "session": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "trigger": {
+    "matched": "literature-claim",
+    "skip_gate": "passed"
+  },
+  "subject": {
+    "ref": "claim-set",
+    "revision": "2026-07-22",
+    "sha256": null
+  },
+  "artifacts": [
+    {
+      "kind": "claim-evidence-matrix",
+      "path": "artifacts/claim-evidence-matrix.json",
+      "sha256": "02ba3ce3dc540b4d33b1fadaa8cc0d25c04d859cadd85ff29f28e8978cc52972"
+    }
+  ],
+  "valid_while": ["session-continuous"],
+  "coverage_limits": ["synthetic matrix: reception ungraded; no Scite layer in fixture"],
+  "never_attests": ["verdict-truth", "independence-achieved", "freshness-beyond-window"]
+}

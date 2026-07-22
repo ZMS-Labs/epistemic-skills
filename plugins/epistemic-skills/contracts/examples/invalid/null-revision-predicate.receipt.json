@@ -1,0 +1,34 @@
+{
+  "receipt": "handoff-receipt@1",
+  "synthetic": true,
+  "_expected_failure": "NULL_REVISION_PREDICATE (subject.revision is null but subject-revision-unchanged is asserted)",
+  "producer": {
+    "skill": "gauntlet",
+    "version": "2.6.0",
+    "sha256": "1111111111111111111111111111111111111111111111111111111111111111"
+  },
+  "run": {
+    "id": "design-subject-20260722-001",
+    "at": "2026-07-22",
+    "session": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "trigger": {
+    "matched": "high-stakes-irreversible",
+    "skip_gate": "passed"
+  },
+  "subject": {
+    "ref": "design-subject",
+    "revision": null,
+    "sha256": "2222222222222222222222222222222222222222222222222222222222222222"
+  },
+  "artifacts": [
+    {
+      "kind": "gauntlet-run-record",
+      "path": "artifacts/gauntlet-run-record.json",
+      "sha256": "5f3eaf8a28128908dfbc0be50166de0c913b74e9c91badfb2309b88b40a14330"
+    }
+  ],
+  "valid_while": ["subject-revision-unchanged"],
+  "coverage_limits": ["quick depth: specialist lens cluster not run"],
+  "never_attests": ["verdict-truth", "independence-achieved", "freshness-beyond-window"]
+}
