@@ -65,5 +65,5 @@ falsifier check) · compiled mechanical checks / judge-token-free refutation
 - **Phase 3 — Measurement + substrate (Bundles C+D)** — full real-mode parity.
 
 Each later phase = its own spec, gated by measured payoff on the battery. Design
-provenance: the 3-agent bake-off design docs (2026-07-07); the operator's copy
-committed to `docs/superpowers/specs/2026-07-07-gauntlet-staple-deepreason-integration-design.md`.
+provenance: the 3-agent bake-off design docs (2026-07-07); the design doc is
+held in the operator's private repo and is not shipped in this package.

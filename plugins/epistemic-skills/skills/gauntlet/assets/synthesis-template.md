@@ -7,15 +7,25 @@
 - **Triage:** [passed | skipped — reason]
 - **DeepReason root:** [path to MCP run directory]
 - **Panel composition:** [lens list]
-- **Depth:** [quick / standard / deep]
+- **Depth:** [quick / standard / deep / max]
+- **Docket mode:** [real-deepreason / mini-deepreason / manual-docket / skipped]
+- **Independence mode:** [independent | degraded — reason]
+- **Role binding:** [native-agent | materialized-role]
 
 ## Executive Verdict
 - **Independence disclosure:** [independent | degraded]
-- **Consensus Result:** [GO / NO-GO / CONDITIONAL]
+- **Computed Verdict:** [GO / NO-GO / CONDITIONAL]
 - **Summary:** [one paragraph]
 - **Verdict gate applied:** [P1/P2 semantics]
 - **Conditions (if CONDITIONAL):** [enumerate]
 - **Epistemic label:** Survivors and scores reflect **best-argued in this review**, not external truth.
+
+## GO Coverage Statement (required for every GO / CONDITIONAL)
+- **Capability families actually exercised:** …
+- **Material assumptions reviewed:** …
+- **Known unknowns / untested behavior:** …
+- **Evidence freshness:** …
+- **Residual uncertainty:** …
 
 ## DeepReason Survivor Map (from MCP frontier)
 - [survivor-id]: [one-line thesis] — falsifier: [what would refute]
@@ -33,7 +43,7 @@ Mechanical criticism struck: [N] findings for missing/ill-formed falsifiers; [N]
 - **Experts in tension:** …
 - **The conflict:** …
 - **Evidence weight:** …
-- **Arbitration ruling:** [UPHELD | OVERRULED | SPLIT]
+- **Arbitration ruling:** [UPHELD | OVERRULED | UPHELD-WITH-QUALIFICATIONS | SPLIT]
 - **Reinstatement round (if any):** [none | attack survived → ruling recomputed]
 
 ## P1–P4 Decision Matrix

@@ -175,11 +175,17 @@ python scripts/select_lenses.py --subject subject.json --out prompts/selection.j
 ```
 (plain Python — no Claude Code dependency)
 
-The selector gates by lifecycle/role/axis/contraindications, scores fit +
+The selector gates by lifecycle/role/axis (contraindications are a score
+penalty, not a gate), scores fit +
 uncovered-capability gain + stance diversity − overlap − cost (constrained MMR,
 deterministic ID tie-break), and records a full **replay record** (registry
 sha256, subject vector, scores, exclusions, selected ids@versions) into the run
-directory. **A lens is never selected merely because its domain keyword appears**
+directory. **Honesty note (2026-07-14):** the selector's fit-scoring layer is
+FROZEN — measurement showed no detectable benefit over random fill under the
+same hard constraints (recorded in `scripts/select_lenses.py`). Panel
+composition today is constraint-satisfaction + diversity-maximization, with
+task-fit carried by the hard gates and the domain-specialist seed.
+**A lens is never selected merely because its domain keyword appears**
 — role/status/axis gates run before any scoring. Load full card text only for
 the selected ids.
 
@@ -264,7 +270,9 @@ custom-role registry alone does **not** require degraded orchestration.
 (plain Python — no Claude Code dependency).
 Tiers: `[V path:line]` mechanically verified; `[I <- Vref]` inference — valid
 only while its cited `[V]` anchors verify; `[H]` hypothesis — zero weight at
-arbitration. **Semantic note (2026-07-14):** `[V]` certifies *source anchoring*
+arbitration. Disclosure: the verifier mechanically checks `[V path:line]` tags
+only; `[I]` inference anchors are **spot-checked by the arbitrator**, not
+mechanically verified (see `scripts/verify_evidence.py`). **Semantic note (2026-07-14):** `[V]` certifies *source anchoring*
 (the cited line exists and says this), NOT that the proposition is true — a real
 citation can still support a wrong claim; truth lives in the oracle-adequacy and
 falsifier checks, not the tag. Accepted factual claims require `[V]` or anchored `[I]` → Sovereign
@@ -423,7 +431,8 @@ rigor, measurement bundle) remain designs. Each later piece is integrated only i
 - Registry model, lifecycle, collision + admission policy: `reference/lens-registry.md`
 - Selector: `scripts/select_lenses.py` · Validator: `scripts/validate_roster.py`
   · Renderer: `scripts/render_roster.py` · Tests: `tests/run_tests.py`
-- Behavioral eval battery (designed, NOT run): `evals/`
+- Behavioral eval battery: design not yet shipped in this package (`evals/`
+  currently ships only the arbitrator-certification battery)
 - Evidence verifier: `scripts/verify_evidence.py`
 - Consensus scholarly-evidence boundary: `reference/consensus-integration.md`
 - Full integration roadmap: `reference/roadmap.md`

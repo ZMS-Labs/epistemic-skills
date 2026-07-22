@@ -128,8 +128,9 @@ Removed nonexistent pseudo-slugs from SKILL.md: `blast-radius`, `ethnographer`,
 
 ## Expansion frontier bookkeeping
 
-**30 core candidates** are in the registry with complete fingerprints (status=candidate,
-provenance marks the admission gate unrun). See `roster/candidates.md` (generated).
+**Core candidates** are in the registry with complete fingerprints (status=candidate,
+provenance marks the admission gate unrun); the current count lives only in
+`roster/INDEX.md` (generated). See `roster/candidates.md` (generated).
 
 **Audited-candidate QUEUE (named, neighbor-mapped, NOT yet fingerprinted — do not select,
 do not treat as registry entries):**

@@ -4,8 +4,8 @@ Deep mode uses the `deepreason` MCP server (`python -m deepreason.mcp_server`). 
 
 ## Preconditions
 
-1. `deepreason` package installed (`pip install git+https://github.com/AHepi/DeepReason.git`).
-2. At least one provider API key set in the environment Cursor inherits (`OPENAI_API_KEY` and/or `DEEPSEEK_API_KEY` per `config/operator.yaml`).
+1. `deepreason` package installed (`pip install git+https://github.com/AHepi/DeepReason.git`). Installs MUST pin a commit or tag (e.g. `git+https://github.com/AHepi/DeepReason.git@<commit-sha-or-tag>`) — a mutable reference breaks the replay guarantee.
+2. At least one provider API key set in the environment Cursor inherits (`OPENAI_API_KEY` and/or `DEEPSEEK_API_KEY` per `config/operator.yaml`). The model names in `config/operator.yaml` are examples — verify them against current provider offerings before a run.
 3. Frozen verified dossier from Step 0 exists.
 
 ## Run directory
