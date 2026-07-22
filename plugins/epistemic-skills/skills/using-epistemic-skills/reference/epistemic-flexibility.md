@@ -102,20 +102,24 @@ Independent gauntlet review (2026-07-22, NO-GO → resolved) established that "f
 - trace structure — controlled vocabularies, required fields per claim kind, a `prediction`'s
   disconfirming observation, the experiment preregistration shape, and the `failure_chain`
   conditional shape for recurrent corrections;
-- a `standard`/`high`-stakes trace may not `act` on a load-bearing `unverified` claim.
+- a `standard`/`high`-stakes trace may not `act` on a load-bearing `unverified` claim;
+- **control/action consistency (structural — paraphrase-proof).** A non-acting control
+  (`hold`/`escalate`) MUST declare `action_executes` (boolean), and a declared `action_executes: true`
+  under such a control is **rejected**. Enforcement rests on the declared field, **not** on reading the
+  action's English — verified paraphrase-proof: the structural rule rejects 15/15 execution paraphrases
+  regardless of wording (`evals/epistemic-flexibility/adversarial_paraphrase_battery.py`).
 
-**NOT fail-closed — the control/action check is a shallow tripwire only (retracted 2026-07-22).**
-A cross-family Step-7b review DISSENTED (high confidence) and orchestrator verification confirmed it:
-the `action_asserts_execution` keyword matcher catches only near-literal execution imperatives
-("proceed with the deployment", "merge the release") and has a **measured 100% false-negative rate** on
-paraphrases — "roll this out", "make the change live", "advance it to production", "apply the migration
-now", "promote the build", "send it", "cut the release" all slip through under `hold`/`escalate`
-(battery + measurement: `evals/epistemic-flexibility/adversarial_paraphrase_battery.py`). A keyword
-matcher cannot achieve semantic recall, so **this check does NOT provide a fail-closed guarantee** and
-must not be labelled "enforced". It is retained only as a lint that trips the two most literal bypass
-phrasings; the **P1 (mechanical control/action enforcement) is REOPENED** — a sound fix requires a
-*structured* action declaration (e.g. an explicit `action_executes` boolean the agent must set, checked
-against the control), not free-text parsing. Tracked as a release gate; do not claim closure until built.
+**History (2026-07-22):** an earlier version tried to enforce this by *parsing* the action text. A
+cross-family Step-7b review DISSENTED (high confidence) and verification confirmed the keyword matcher
+had a **100% false-negative rate** on paraphrases ("roll this out", "advance it to production", …). The
+fix moved enforcement to the declared boolean above. The keyword matcher survives only as a **secondary
+mis-declaration lint** (flags an `action_executes: false` whose text nonetheless says "merge the
+release") — best-effort, explicitly not exhaustive.
+
+**Residual (stated, not eliminated):** the guarantee assumes the agent declares `action_executes`
+honestly. A deliberate mis-declaration (setting it `false` while executing, with non-blatant text) is
+not caught — but that is a single explicit, auditable field, a far smaller surface than free-text
+smuggling, and blatant lies trip the lint.
 
 What it does **not** verify (structural only — a residual judgment surface, not a guarantee):
 

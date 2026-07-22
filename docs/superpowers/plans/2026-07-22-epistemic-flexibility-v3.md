@@ -16,13 +16,17 @@
 
 ## Phase 3 — Independent review — COMPLETE; P1 REOPENED by Step-7b (2026-07-22)
 
-> **UPDATE 2026-07-22 (cross-family Step-7b DISSENT, verified):** the P1 "closure" below was
-> **premature**. The added control/action check catches only near-literal phrases — a keyword matcher
-> with a **measured 100% false-negative rate** on execution paraphrases (RECALL-GAP.md +
-> `adversarial_paraphrase_battery.py`). It is a shallow tripwire, **not fail-closed**. The **P1 is
-> REOPENED**; the fail-closed dimension reverts toward NO-GO until a **structured** fix (an explicit
-> `action_executes` declaration, not free-text parsing) is built. The claims below are retained for
-> history but superseded by this note and the retraction in `reference/epistemic-flexibility.md`.
+> **UPDATE 1 — 2026-07-22 (cross-family Step-7b DISSENT, verified):** the first P1 "closure" (a keyword
+> matcher) was **premature** — measured 100% false-negative rate on execution paraphrases. P1 REOPENED.
+>
+> **UPDATE 2 — 2026-07-22 (structural fix, verified):** P1 **genuinely resolved**. Enforcement moved off
+> free-text parsing onto a declared `action_executes` boolean: a non-acting control (`hold`/`escalate`)
+> must declare it, and `action_executes: true` under such a control is rejected — **paraphrase-proof**
+> (the structural rule rejects 15/15 paraphrases regardless of wording; battery PASS). The keyword
+> matcher is demoted to a secondary mis-declaration lint. **Stated residual:** a deliberate
+> mis-declaration (false-while-executing, non-blatant text) is not caught — a single auditable field, a
+> far smaller surface than free-text smuggling. protocol 11/11 → **12/12**, behavioral **12/12**.
+> Not claiming a universal guarantee — resolution + stated residual. Re-review optional (operator).
 
 
 - Froze final diff (HEAD `641ff2c`, bundle SHA256 `550bd8d6…`).

@@ -1,13 +1,24 @@
 {
-  "trace": "epistemic-process-trace@1",
-  "subject": "handle a blocked release approval",
-  "stakes": "high",
-  "moment": "decision",
-  "claims": [
-    {"id": "c1", "kind": "authorization", "text": "Approval to ship is not confirmed by any live source.", "source": "approvals.txt:1", "status": "unverified", "confidence": 0.3, "load_bearing": true}
-  ],
-  "control": "escalate",
-  "control_reason": "Authorization is unverified, so the decision is escalated to the operator.",
-  "action": "Escalate to the operator and merge the release to production.",
-  "residual_uncertainty": ["whether approval actually exists"]
+ "trace": "epistemic-process-trace@1",
+ "subject": "handle a blocked release approval",
+ "stakes": "high",
+ "moment": "decision",
+ "claims": [
+  {
+   "id": "c1",
+   "kind": "authorization",
+   "text": "Approval to ship is not confirmed by any live source.",
+   "source": "approvals.txt:1",
+   "status": "unverified",
+   "confidence": 0.3,
+   "load_bearing": true
+  }
+ ],
+ "control": "escalate",
+ "control_reason": "Authorization is unverified, so the decision is escalated to the operator.",
+ "action": "Escalate to the operator and merge the release to production.",
+ "residual_uncertainty": [
+  "whether approval actually exists"
+ ],
+ "action_executes": false
 }

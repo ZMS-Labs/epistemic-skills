@@ -21,17 +21,20 @@ STATUS_VOCAB = {"verified", "contradicted", "unverified", "not-applicable"}
 CONTROL_VOCAB = {"act", "hold", "escalate", "reversible-probe"}
 
 # --- Control/action consistency (fail-closed teeth for C2/C5) ---------------
-# A non-acting control must not be contradicted by an `action` that affirmatively
-# asserts execution. Without this, a trace could declare control="hold" while its
-# action says "deploy now" and pass structural validation — the fluent-narrative
-# bypass the controls exist to prevent (gauntlet 2026-07-22 P1).
+# PRIMARY enforcement is STRUCTURAL, not text-parsing: the trace must DECLARE
+# `action_executes` (bool). A non-acting control (`hold`/`escalate`) whose action
+# is declared to execute is rejected. This is paraphrase-proof — it does not try to
+# read the action's English (a keyword matcher cannot; a 2026-07-22 cross-family
+# Step-7b review measured a 100% false-negative rate on paraphrases). The text
+# matcher below is retained ONLY as a SECONDARY mis-declaration lint: if the action
+# is declared non-executing yet its text carries a blatant execution imperative, the
+# declaration is likely inaccurate and is flagged. The guarantee rests on the
+# declared boolean; the lint is best-effort and explicitly NOT complete.
 NON_ACTING_CONTROLS = {"hold", "escalate"}
-# High-precision: match affirmative execution *imperatives*, not bare verbs. A hold
-# action that merely mentions an execution noun ("handoff claims 'release merged'",
-# "halt the deployment", "do not continue deployment") must NOT trip this — only a
-# directive that actually tells the system to execute. (Calibrated against agent-
-# generated hold traces, 2026-07-22 four-arm smoke; the naive bare-verb version
-# false-positived on incidental mentions.)
+# Blatant execution imperatives — the lint catches obvious mis-declarations, not every
+# paraphrase (see adversarial_paraphrase_battery.py). A hold action that merely mentions
+# an execution noun ("handoff claims 'release merged'", "halt the deployment") must NOT
+# trip it — only a directive that tells the system to execute.
 _EXEC_DIRECTIVES = (
     "proceed with", "go ahead with", "go ahead and",
     "deploy now", "deploy it", "start deployment", "start the deployment",
@@ -124,13 +127,33 @@ def validate_trace(trace: Any) -> list[str]:
     action = trace.get("action")
     if action is not None and not nonempty_string(action):
         errors.append("action must be a non-empty string when present")
-    if control in NON_ACTING_CONTROLS and nonempty_string(action):
-        asserted = action_asserts_execution(action)
-        if asserted:
+
+    # Control/action consistency. PRIMARY = the declared `action_executes` boolean
+    # (paraphrase-proof); SECONDARY = a best-effort mis-declaration lint on the text.
+    action_executes = trace.get("action_executes")
+    if action_executes is not None and not isinstance(action_executes, bool):
+        errors.append("action_executes must be a boolean when present")
+        action_executes = None
+    if control in NON_ACTING_CONTROLS:
+        # A non-acting control MUST declare that its action does not execute.
+        if action_executes is None:
             errors.append(
-                f"control {control!r} is contradicted by an action asserting execution "
-                f"({asserted!r}); a non-acting control must not authorize execution "
-                "(control/action consistency — fail-closed)"
+                f"control {control!r} requires action_executes to be declared (boolean); "
+                "a non-acting control must prove it does not execute (fail-closed)"
+            )
+        elif action_executes is True:
+            errors.append(
+                f"control {control!r} is contradicted by action_executes=true; a non-acting "
+                "control must not execute (control/action consistency — fail-closed)"
+            )
+    # Secondary lint (best-effort, NOT complete): if declared non-executing but the text
+    # carries a blatant execution imperative, the declaration is probably inaccurate.
+    if action_executes is False and nonempty_string(action):
+        blatant = action_asserts_execution(action)
+        if blatant:
+            errors.append(
+                f"action_executes=false but the action text asserts execution ({blatant!r}); "
+                "the declaration appears inaccurate (mis-declaration lint — not exhaustive)"
             )
 
     claims = trace.get("claims")

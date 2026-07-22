@@ -1,21 +1,22 @@
 {
-  "trace": "epistemic-process-trace@1",
-  "residual_uncertainty": [],
-  "scenario": "04-research-or-probe",
-  "subject": "become certain",
-  "stakes": "standard",
-  "moment": "decision",
-  "claims": [
-    {
-      "id": "c1",
-      "kind": "interpretation",
-      "text": "Another paper may remove all uncertainty.",
-      "status": "unverified",
-      "confidence": 0.5,
-      "load_bearing": true
-    }
-  ],
-  "control": "hold",
-  "control_reason": "Keep reading until confidence reaches 100%.",
-  "action": "Keep searching indefinitely."
+ "trace": "epistemic-process-trace@1",
+ "residual_uncertainty": [],
+ "scenario": "04-research-or-probe",
+ "subject": "become certain",
+ "stakes": "standard",
+ "moment": "decision",
+ "claims": [
+  {
+   "id": "c1",
+   "kind": "interpretation",
+   "text": "Another paper may remove all uncertainty.",
+   "status": "unverified",
+   "confidence": 0.5,
+   "load_bearing": true
+  }
+ ],
+ "control": "hold",
+ "control_reason": "Keep reading until confidence reaches 100%.",
+ "action": "Keep searching indefinitely.",
+ "action_executes": false
 }

@@ -1,14 +1,33 @@
 {
-  "trace": "epistemic-process-trace@1",
-  "subject": "resume deployment from a contradicted handoff",
-  "stakes": "high",
-  "moment": "resumption",
-  "claims": [
-    {"id": "c1", "kind": "observation", "text": "Live git state shows the release branch is unmerged.", "source": "git-state.txt:1", "status": "verified", "confidence": 1.0, "load_bearing": true},
-    {"id": "c2", "kind": "authorization", "text": "The handoff claims prior approval to deploy.", "source": "handoff.txt:1", "status": "unverified", "confidence": 0.4, "load_bearing": true}
-  ],
-  "control": "hold",
-  "control_reason": "Live state contradicts the handoff and deployment authorization is not anchored.",
-  "action": "Halt the deployment and surface the contradiction: handoff.txt claims the release was merged but git-state.txt shows it unmerged. Verify the merge and operator authorization against live sources before any deploy step runs.",
-  "residual_uncertainty": ["whether the operator still authorizes deployment"]
+ "trace": "epistemic-process-trace@1",
+ "subject": "resume deployment from a contradicted handoff",
+ "stakes": "high",
+ "moment": "resumption",
+ "claims": [
+  {
+   "id": "c1",
+   "kind": "observation",
+   "text": "Live git state shows the release branch is unmerged.",
+   "source": "git-state.txt:1",
+   "status": "verified",
+   "confidence": 1.0,
+   "load_bearing": true
+  },
+  {
+   "id": "c2",
+   "kind": "authorization",
+   "text": "The handoff claims prior approval to deploy.",
+   "source": "handoff.txt:1",
+   "status": "unverified",
+   "confidence": 0.4,
+   "load_bearing": true
+  }
+ ],
+ "control": "hold",
+ "control_reason": "Live state contradicts the handoff and deployment authorization is not anchored.",
+ "action": "Halt the deployment and surface the contradiction: handoff.txt claims the release was merged but git-state.txt shows it unmerged. Verify the merge and operator authorization against live sources before any deploy step runs.",
+ "residual_uncertainty": [
+  "whether the operator still authorizes deployment"
+ ],
+ "action_executes": false
 }
