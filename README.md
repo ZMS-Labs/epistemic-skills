@@ -28,7 +28,7 @@ Most tasks fire zero or one. The router's value is the case where more than one 
 
 | Skill | Role |
 |---|---|
-| **using-epistemic-skills** | **Router** (not a discipline). Routes a task to the right discipline(s), sequences them (recon → design → evidence → gate → verify), and defines handoff contracts. Read it first; it never does the work itself. |
+| **using-epistemic-skills** | **Router** (not a discipline). Routes a task to the right discipline(s), sequences them (recon → decide → [evidence] → contract → gate → prove), and defines handoff contracts. Read it first; it never does the work itself. |
 | **helix** | **Tandem entry point** (not a discipline). When a workflow-skill layer (such as superpowers) runs alongside this collection, helix pairs each workflow stage with its epistemic discipline — before, inside, or after — with the epistemic member first at every boundary. It pairs stages; the two routers keep routing. |
 | **applying-formal-rigor** | Design *and complexity* decisions. Sets a graduate-level formal-theory floor: name the *precise* construct (the exact normal form, the named isolation anomaly, the Master-Theorem case, the Ω lower bound), **derive** the conclusion instead of asserting it, and sweep every relevant lens. Ships a 7-lens theory battery; lens 4 is a full standalone Big-O / complexity analysis. |
 | **blindspot-pass** | The moment *before* work begins. Cheap read-only reconnaissance that surfaces landmines, hidden context, exemplars, and expert questions — then **rewrites the request** so downstream work aims at the territory, not the map. Provenance: Thariq Shihipar (Anthropic), *"A Field Guide to Claude Fable 5: Finding Your Unknowns"* (2026). |
