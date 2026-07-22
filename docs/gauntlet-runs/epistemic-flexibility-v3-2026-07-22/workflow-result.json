@@ -1,0 +1,827 @@
+{
+ "subject": "epistemic-flexibility v3: five cross-cutting controls (C1 claim/source separation, C2 authorized-priority vs success-proxy, C3 preregistered discriminating test, C4 recurrent-failure chain, C5 closure control) woven into existing epistemic-skills SKILL.md files + a decision-ledger conditional failure_chain, plus a deterministic protocol validator and behavioral fixtures; no new skill or trigger; PR #35, 53 files +2436/-27",
+ "core_lenses": [
+  "adversary:compliance-litigator",
+  "constructive:adjacent-possible-explorer",
+  "metatextual:cognitive-bias-auditor",
+  "metatextual:protocol-archeologist",
+  "metatextual:semantic-critic"
+ ],
+ "core_reports": [
+  {
+   "persona": "compliance-litigator",
+   "role": "adversary",
+   "report": {
+    "findings": [
+     {
+      "id": "F1",
+      "severity": "P1",
+      "claim": "The 'human-enforced boundary' that the subject repeatedly invokes as the actual backstop against a fluent-narrative bypass (C1/C5) has zero mechanical teeth at the GitHub governance layer, verified on the very PR instantiating the controls: main has no branch protection, the org ruleset covers only deletion/non-fast-forward, and PR #35 itself carries zero reviews with a failing DCO check yet remains mergeable.",
+      "evidence": [
+       {
+        "tier": "V",
+        "ref": "live probe: gh api repos/ZMS-Labs/epistemic-skills/branches/main/protection -> 404 'Branch not protected'"
+       },
+       {
+        "tier": "V",
+        "ref": "live probe: gh api repos/ZMS-Labs/epistemic-skills/rulesets/17068103 -> rules:[{type:deletion},{type:non_fast_forward}] only, no required_status_checks / pull_request rule"
+       },
+       {
+        "tier": "V",
+        "ref": "live probe: gh pr view 35 -> reviewDecision:'', reviews:[], mergeStateStatus:'UNSTABLE', mergeable:'MERGEABLE'"
+       },
+       {
+        "tier": "V",
+        "ref": "live probe: gh pr checks 35 -> DCO fail, all other checks pass"
+       },
+       {
+        "tier": "V",
+        "ref": "Y:/dev/_wt/epistemic-flex-v3/plugins/epistemic-skills/skills/decision-ledger/reference/README.md:39-45 (PR-review checklist item explicitly declared 'human-enforced, not schema-checkable'; 'a verdict-carrying-but-well-formed entry passes the schema \u2014 it is caught by this review, never claimed as schema-rejected')"
+       },
+       {
+        "tier": "I",
+        "ref": "[I <- V(above)] the checklist's enforcement premise (a human catches what the schema cannot) requires an actual required-review gate to exist; none does on this repo, so the described backstop is aspirational documentation, not an enforced control, on the exact artifact under evaluation"
+       }
+      ],
+      "falsifier": {
+       "statement": "Main branch protection or an org ruleset requiring at least 1 approving review and passing required status checks (including DCO) exists and currently blocks merge of PR #35 in its present state.",
+       "method": "gh api repos/ZMS-Labs/epistemic-skills/branches/main/protection and gh api repos/ZMS-Labs/epistemic-skills/rulesets/<id>; re-check gh pr view 35 mergeStateStatus/mergeable after any such rule is added",
+       "threshold": "a required_status_checks or pull_request-review rule present and enforcement:'active' that would prevent a maintainer from merging #35 with reviews:[] and DCO failing",
+       "timeframe": "immediately checkable; re-verify before any merge decision on #35"
+      },
+      "proposed_action": "Do not accept 'human review catches it' as an enforced control until a required-reviewers rule + required-status-checks rule (including DCO) is active on main; until then, treat every C1/C5 compliance claim resting on 'PR review' as unenforced policy, not a working gate."
+     },
+     {
+      "id": "F2",
+      "severity": "P2",
+      "claim": "The C4 failure_chain conditional requirement is mechanically validated only against repo-committed synthetic fixture files, never against real ledger entries an agent would write during actual work \u2014 no CI job, hook, or runtime check ever calls the validator against a live '.ledger/entries.jsonl'. The dossier's 'decision-ledger examples PASS' premise therefore certifies fixture conformance only.",
+      "evidence": [
+       {
+        "tier": "V",
+        "ref": "Y:/dev/_wt/epistemic-flex-v3/plugins/epistemic-skills/skills/decision-ledger/reference/validate_examples.py:75-89 (globs only 'example-*.json' in ROOT, plus one hardcoded planted-mutation of example-correction-with-chain.json)"
+       },
+       {
+        "tier": "V",
+        "ref": "Y:/dev/_wt/epistemic-flex-v3/.github/workflows/epistemic-flexibility.yml:40,58 (workflow invokes validate_examples.py \u2014 same fixture-only script \u2014 with no path/trigger touching a real store)"
+       },
+       {
+        "tier": "I",
+        "ref": "[I <- V(above)] no file named entries.jsonl outside continuity-verify's own test-fixture tree was found repo-wide (Bash find scoped to repo), and the diff (.gauntlet-subject/pr35.diff, 53 files) adds no '.ledger/' directory outside existing test fixtures \u2014 so the schema has never been run against a genuine production entry in this codebase's history"
+       }
+      ],
+      "falsifier": {
+       "statement": "A CI job, pre-commit hook, or runtime gate exists that validates real (non-fixture, non-test) '.ledger/entries.jsonl' records against ledger-entry.schema.json before they are trusted/consumed.",
+       "method": "grep the repo for any workflow step or hook path referencing a non-fixture '.ledger' directory or a schema-validation call outside skills/decision-ledger/reference and skills/continuity-verify/evals",
+       "threshold": "at least one such enforcement point found",
+       "timeframe": "immediately checkable against current HEAD 641ff2c"
+      },
+      "proposed_action": "Treat 'PASS' on decision-ledger examples as fixture self-test evidence only; do not cite it as evidence that any real ledger entry produced in production will be schema-conformant. Add a real validation hook before crediting C4 as enforced rather than aspirational."
+     },
+     {
+      "id": "F3",
+      "severity": "P3",
+      "claim": "The dossier's own VERIFIED-premises line misstates the audit exhibit it is certifying: it states commits 'lack Signed-off-by' when in fact all four PR commits in the diff range carry Signed-off-by trailers; the actual DCO failure cause is an author/signoff email mismatch (GitHub noreply identity vs. personal email), which check_dco.py's own test suite documents as by-design strict behavior, not absence of signoff.",
+      "evidence": [
+       {
+        "tier": "V",
+        "ref": "Y:/dev/_wt/epistemic-flex-v3 dossier.md:57 ('DCO check FAIL (commits lack Signed-off-by...)')"
+       },
+       {
+        "tier": "V",
+        "ref": "live probe: git log --format='%H %an <%ae>' e1f6054..641ff2c and git log --format='...%B' showing 3 commits authored as 'SternOne <89846440+SternOne@users.noreply.github.com>' each carrying 'Signed-off-by: SternOne <zachstern@gmail.com>' \u2014 email mismatch, not absence"
+       },
+       {
+        "tier": "V",
+        "ref": "Y:/dev/_wt/epistemic-flex-v3/.github/scripts/check_dco.py:20-27 (unsigned_commits requires exact casefold match of BOTH name and email between author and Signed-off-by trailer)"
+       },
+       {
+        "tier": "V",
+        "ref": "Y:/dev/_wt/epistemic-flex-v3/.github/scripts/test_check_dco.py:36-38 (test_mismatched_signoff_does_not_pass confirms mismatch-fails is intended design, distinct from 'missing')"
+       }
+      ],
+      "falsifier": {
+       "statement": "The dossier's characterization is accurate if the underlying commits genuinely contain no Signed-off-by trailer at all (not merely a mismatched email).",
+       "method": "git log --format=%B on every commit in e1f6054..641ff2c and grep for 'Signed-off-by'",
+       "threshold": "zero commits contain a Signed-off-by line",
+       "timeframe": "immediately checkable, already checked: 4/4 commits contain the trailer, contradicting the dossier phrasing"
+      },
+      "proposed_action": "Correct the dossier's evidence line to 'Signed-off-by present but author-identity mismatch (GitHub noreply vs personal email)' \u2014 a record used to certify audit-trail claims should not itself misdescribe the exhibit it cites."
+     },
+     {
+      "id": "F4",
+      "severity": "P3",
+      "claim": "The PR's own consequential design decisions (the five-control shape, the C4 chain fields, the CI wiring choices) are persisted only as free-form prose in docs/handoffs and docs/research, never as a schema-validated ledger-entry@1 record \u2014 despite plainly satisfying decision-ledger's own stated trigger for a loggable 'decision' (irreversible, non-self-contained, future sessions need the reasoning \u2014 which is exactly why docs/handoffs exists).",
+      "evidence": [
+       {
+        "tier": "V",
+        "ref": "Y:/dev/_wt/epistemic-flex-v3/plugins/epistemic-skills/skills/decision-ledger/SKILL.md:39-42 (consequential-moment test: 'a named downstream consumer class will cite it') and :44-50 (skip gate: skippable only if reversible AND self-contained AND no future session needs the reasoning)"
+       },
+       {
+        "tier": "V",
+        "ref": "grep of .gauntlet-subject/pr35.diff file list: no '.ledger/' path added outside pre-existing continuity-verify test fixtures; only docs/handoffs/2026-07-22-epistemic-flexibility-v3.md and docs/research/2026-07-22-psychology-epistemic-skills-synthesis.md carry the design rationale, both free prose"
+       },
+       {
+        "tier": "I",
+        "ref": "[I <- V(above)] by the skill's own skip-gate text, a design decision that spawned a dedicated handoff doc for future-session reuse fails all three skip conditions simultaneously, so under the skill's own membership test this was a ledger moment that was not logged as one"
+       }
+      ],
+      "falsifier": {
+       "statement": "A ledger-entry@1-formatted record exists (in this PR or a companion commit) documenting the epistemic-flexibility integration decision with 'because' provenance and 'revisit_when', rather than only prose docs.",
+       "method": "grep the diff and repo for a '.ledger/entries.jsonl' addition or any 'entry\": \"ledger-entry@1' JSON object referencing the epistemic-flexibility design decision",
+       "threshold": "at least one non-fixture ledger-entry@1 record found for this design decision",
+       "timeframe": "immediately checkable against current diff/HEAD"
+      },
+      "proposed_action": "Either log the integration decision as an actual ledger-entry@1 (dogfooding the mechanism it ships) or explicitly document the skip and why, per the skill's own 'say the skip' floor \u2014 currently neither happened."
+     }
+    ],
+    "verdict": "From the compliance-litigator lens: the subject's five controls read as internally well-documented (the skill files repeatedly pre-admit their own structural limits, e.g. 'STRUCTURAL ONLY,' 'human-enforced, not schema-checkable'), but the specific enforcement mechanism that C1/C5 lean on to defend against a fluent-narrative bypass -- human PR review -- has zero live teeth on the exact artifact under evaluation: PR #35 has no branch protection, no required reviewers, zero reviews, and a failing DCO check that does not block merge. The mechanical validator for C4 (failure_chain) is real and well-built as a schema, but it is proven only against committed synthetic fixtures -- it has never once run against a genuine production ledger entry, so the dossier's 'PASS' line is narrower evidence than it reads. A minor but concrete integrity gap: the dossier's own VERIFIED-premises section misdescribes the DCO exhibit (claims signoff is absent when it is present-but-mismatched), which is exactly the kind of written-record-vs-exhibit discrepancy this lens exists to catch, even in the auditors' own artifact. None of this proves the design is worthless -- the schema and process discipline are genuinely more rigorous than most such proposals -- but the claim that the controls 'fail closed' rests on a review gate that is documented, not deployed.",
+    "hypothesis_supported": "H2 (fail-closed claimed but not enforced) is the best-supported rival: the decision-ledger's own documentation names human PR review as the backstop against a well-formed-but-verdict-carrying or narrative-satisfying entry, and that backstop is verified absent (no branch protection, no required reviewers, zero reviews on PR #35 itself). This also partially feeds H5 (validator is an inadequate oracle for anything beyond its fixtures) since C4's mechanical check has never touched a real entry.",
+    "hypothesis_killed": "H3 (controls unreachable / never fire due to no new trigger) is not supported by this lens's evidence -- the schema, workflow wiring, and skill text clearly make the controls reachable in principle (they are bound into existing skill moments and CI runs the fixture batteries on every relevant PR); the failure found here is enforcement-teeth at the merge/audit boundary, not unreachability of the mechanism itself.",
+    "fix_or_move": "Minimum fix set: (1) add branch protection or an org ruleset requiring \u22651 approving review + required status checks (including DCO) on main before treating 'human review' as an enforced C1/C5 backstop; (2) wire validate_examples.py (or an equivalent) into a real pre-write/pre-commit gate over actual '.ledger/entries.jsonl', not only committed fixtures, before crediting C4 as mechanically enforced; (3) correct the dossier's DCO evidence line to reflect signoff-email-mismatch rather than absent signoff; (4) either log the integration's own design decision as a real ledger-entry@1 or record the explicit skip per the skill's own floor. None of these are fatal to the design's merit, but until done, the 'fail-closed' and 'human-enforced' claims are policy text, not verified controls."
+   },
+   "struck_malformed": 0,
+   "zero_weight_findings": []
+  },
+  {
+   "persona": "adjacent-possible-explorer",
+   "role": "constructive",
+   "report": {
+    "findings": [
+     {
+      "id": "F1",
+      "severity": "P1",
+      "claim": "Every pre-existing, mechanically-enforced oracle in this repo (evidence-locked-uat's judge.py, gauntlet's lens.schema.json/validate_roster.py) was left untouched by this diff. The PR's runtime effect on 4 of the 5 controls (C1, C2, C3, C5) is prose instructing an agent to write more fields into unenforced templates (contracts.yaml, plan text, SKILL.md guidance) \u2014 no code path checks whether the agent actually did.",
+      "evidence": [
+       {
+        "tier": "V",
+        "ref": "Y:/dev/_wt/epistemic-flex-v3 git diff --stat e1f6054 641ff2c: judge.py and lens.schema.json absent from the 53-file changed list"
+       },
+       {
+        "tier": "V",
+        "ref": "plugins/epistemic-skills/skills/evidence-locked-uat/SKILL.md:33-40 (diff) \u2014 adds 'compile...into an expected observation and disconfirming observation' as prose Step 6/7, no corresponding judge.py check"
+       },
+       {
+        "tier": "V",
+        "ref": "plugins/epistemic-skills/skills/write-goal/SKILL.md:63-76 (diff) \u2014 adds Goal control template fields with no validator"
+       },
+       {
+        "tier": "V",
+        "ref": "plugins/epistemic-skills/skills/gauntlet/SKILL.md:246-250 (diff) \u2014 adds validation_kernel as arbitrator obligation, absent from gauntlet/roster/lens.schema.json"
+       }
+      ],
+      "falsifier": {
+       "statement": "judge.py, lens.schema.json, or another already-CI-wired oracle contains a check for any of expected/disconfirming observation, authorized_priority/success_proxy, or validation_kernel presence.",
+       "method": "grep -rn \"validation_kernel|disconfirming_observation|authorized_priority\" plugins/epistemic-skills/skills/evidence-locked-uat/scripts/judge.py plugins/epistemic-skills/skills/gauntlet/roster/lens.schema.json plugins/epistemic-skills/skills/gauntlet/scripts/validate_roster.py",
+       "threshold": "any non-zero hit falsifies this finding",
+       "timeframe": "immediate \u2014 re-run at HEAD or at next PR revision to this branch"
+      },
+      "proposed_action": "Adjacent-possible move: instead of new prose across 9 SKILL.md files, spend the same afternoon wiring validation_kernel into gauntlet's existing lens.schema.json (already CI-tested via gauntlet/tests/run_tests.py) and adding one field-presence check to judge.py for the UAT preregistration fields. Two cheap edits convert two of the five controls from ceremony to a real gate; leave C1/C2 as documentation until a similar host with teeth exists for them."
+     },
+     {
+      "id": "F2",
+      "severity": "P1",
+      "claim": "The new epistemic-process-trace@1 validator/behavioral-scorer/fixture harness (validate_trace.py, score_behavior.py, run_tests.py x2, 6 gold/bad fixture triads + 8 standalone fixtures, ~700 lines) has zero production consumer: no SKILL.md instructs an agent to emit a trace object, and no skill or CI step feeds a real transcript into the validator. The 'PASS 8/8' / 'PASS 12/12' premises are true only about the checker's ability to distinguish hand-authored gold/bad JSON written by the same PR.",
+      "evidence": [
+       {
+        "tier": "V",
+        "ref": "grep -rl \"validate_trace|epistemic-process-trace|score_behavior\" plugins/epistemic-skills/skills --include=SKILL.md -> zero matches"
+       },
+       {
+        "tier": "V",
+        "ref": "plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/validate_trace.py:1-7 \u2014 self-declares 'not a behavioral effectiveness measurement'"
+       },
+       {
+        "tier": "V",
+        "ref": "plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/behavioral/score_behavior.py:1-7 \u2014 self-declares 'a fixture smoke test, not evidence that the controls improve real-world performance'"
+       },
+       {
+        "tier": "I",
+        "ref": "the fixtures live only under evals/epistemic-flexibility/behavioral/fixtures/*, authored in the same commit (4f7bb45) as the validator [<- V .github/workflows/epistemic-flexibility.yml:29-32 only runs these two self-tests]"
+       }
+      ],
+      "falsifier": {
+       "statement": "any skill invocation path (not the eval harness itself) produces or consumes an epistemic-process-trace@1 object during a real task.",
+       "method": "grep -rn \"epistemic-process-trace\" across plugins/epistemic-skills/skills/*/SKILL.md and plugins/epistemic-skills/skills/*/scripts/*",
+       "threshold": "any hit outside using-epistemic-skills/evals/ and the reference doc falsifies this finding",
+       "timeframe": "immediate, and re-check at each future release for a wiring commit"
+      },
+      "proposed_action": "Do not stand up a second, parallel structured-record format. Either (a) delete this scaffold until a real skill emits the object it validates, or (b) fold its field vocabulary into the one schema that already has a live production consumption path \u2014 decision-ledger's ledger-entry.schema.json / .ledger/entries.jsonl \u2014 rather than inventing a second one that never gets real data."
+     },
+     {
+      "id": "F3",
+      "severity": "P2",
+      "claim": "The one genuinely novel, cheap, high-leverage idea in the diff \u2014 gauntlet's `validation_kernel` (arbitrator must record what the subject correctly addresses, blocking an adversarial lens from winning by deleting the problem) \u2014 rides on gauntlet's already-mechanically-enforced structured-output/arbitration machinery (finding-set@1 schema, lens.schema.json, gauntlet/tests/run_tests.py). This is the strongest 'two existing pieces newly connected' in the PR, but it was shipped as prose only, not wired into that same schema/test suite.",
+      "evidence": [
+       {
+        "tier": "V",
+        "ref": "plugins/epistemic-skills/skills/gauntlet/SKILL.md:246-256 (diff) \u2014 validation_kernel and per-tension valid_kernel_a/b fields introduced"
+       },
+       {
+        "tier": "V",
+        "ref": "grep -rn validation_kernel plugins/epistemic-skills -> single hit, in SKILL.md prose only, absent from roster/lens.schema.json"
+       }
+      ],
+      "falsifier": {
+       "statement": "validation_kernel is required in gauntlet's structured-output schema (lens.schema.json or an arbitrator finding-set schema) and checked by gauntlet/tests/run_tests.py.",
+       "method": "grep -n validation_kernel plugins/epistemic-skills/skills/gauntlet/roster/lens.schema.json plugins/epistemic-skills/skills/gauntlet/tests/run_tests.py",
+       "threshold": "a match in either file falsifies this finding",
+       "timeframe": "immediate; re-check at the next revision of this PR"
+      },
+      "proposed_action": "Ship the sideways step: add validation_kernel as a required string field to the arbitrator's structured-output contract and one assertion in gauntlet/tests/run_tests.py. ~10-line cost, converts the single best idea in the PR from ceremony to a real gate \u2014 dominates leaving it as unenforced prose on both cost and value axes."
+     },
+     {
+      "id": "F4",
+      "severity": "P2",
+      "claim": "Decision-ledger's C4 (recurrent-failure chain) is the best-built piece of the PR \u2014 a real conditional JSON-schema-shaped check with planted negative fixtures that correctly assert FAIL ('recurrent correction without chain', 'chain on decision') \u2014 but even it only checks structural presence of non-empty strings, not truthfulness: a fluently invented, causally-wrong failure_chain passes identically to a real one, and the check runs only against 3 static reference examples shipped in the repo, never against a repo's live .ledger/entries.jsonl.",
+      "evidence": [
+       {
+        "tier": "V",
+        "ref": "plugins/epistemic-skills/skills/decision-ledger/reference/validate_examples.py:80-89 \u2014 planted negative cases with expected FAIL, genuinely discriminating"
+       },
+       {
+        "tier": "V",
+        "ref": "plugins/epistemic-skills/skills/decision-ledger/reference/validate_examples.py:25-30 \u2014 nonempty()/nonempty_list() only check non-whitespace string presence, no semantic/content check"
+       },
+       {
+        "tier": "V",
+        "ref": ".github/workflows/epistemic-flexibility.yml:57-58 \u2014 CI job runs validate_examples.py against reference/ only, no glob over any repo's real .ledger/entries.jsonl"
+       }
+      ],
+      "falsifier": {
+       "statement": "validate_examples.py (or an equivalent CI step) is run against a real, non-reference .ledger/entries.jsonl produced by an actual agent session.",
+       "method": "grep -rn \"entries.jsonl\" .github/workflows/epistemic-flexibility.yml plugins/epistemic-skills/skills/decision-ledger/reference/validate_examples.py",
+       "threshold": "any match indicating live-file validation falsifies the 'reference-only' half of this claim",
+       "timeframe": "immediate; re-check when decision-ledger CI is next modified"
+      },
+      "proposed_action": "Adjacent-possible extension (cheapest real teeth in the whole PR): point validate_examples.py's glob at every repo-local .ledger/entries.jsonl found in CI (not just reference/example-*.json), so the one already-working schema gets applied to real production data instead of only to fixtures the same PR wrote. This is a smaller change than the entire epistemic-process-trace@1 scaffold (F2) and gets real enforcement instead of a self-test."
+     }
+    ],
+    "verdict": "The PR is real (53 files, +2436/-27, verified in the worktree) but almost all of its added mass is unwired prose. Of the five controls, only C4 (recurrent-failure chain) has a genuinely discriminating mechanical check \u2014 and even that runs only against three static reference examples the same PR authored, never against a real .ledger/entries.jsonl. The parallel epistemic-process-trace@1 validator/behavioral-scorer/fixture harness (~700 lines) has zero production consumer: no SKILL.md emits or reads that object; its 8/8 and 12/12 PASS results only prove the checker can tell apart hand-written gold/bad JSON written in the same commit. The dossier's 'VERIFIED premises' PASS lines are true but narrower than they read \u2014 they verify tool self-consistency, not that any of C1/C2/C3/C5 fire during real work. Adjacent-possible reading: the dominant nearby variant is not a rewrite \u2014 it is (1) deleting or deferring the standalone trace scaffold, (2) pointing the one working oracle (decision-ledger's schema check) at real live ledger files instead of only static references, and (3) wiring the single best new idea (gauntlet's validation_kernel) into the schema/tests gauntlet already has. All three are 10-30 line edits that reuse machinery already proven in this repo, versus the ~2000 lines of new parallel scaffolding that currently enforces nothing against reality.",
+    "hypothesis_supported": "H3 (unreachable/never fire) and H5 (inadequate/self-referential oracle) are both strongly supported by [V] evidence: zero SKILL.md references the new trace validator, and none of the pre-existing enforced gates (judge.py, lens.schema.json) were touched. H2 (fluent narrative can satisfy a control) is supported for C1/C2/C3/C5 (no truth-check exists at all) and partially for C4 (structural-only presence check accepts fabricated-but-well-formed chains).",
+    "hypothesis_killed": "H4 (failure_chain conditional is under-specified/not mechanically validated) is refuted specifically for decision-ledger's schema: validate_examples.py implements the conditional correctly and includes planted negative fixtures that genuinely assert FAIL \u2014 the conditional logic itself is well-specified and mechanically checked, just only against static reference data (a distinct, narrower concern captured in F4, not H4's original shape).",
+    "fix_or_move": "Ship this next, in order of cheapness-to-teeth ratio: (1) point decision-ledger's validate_examples.py glob at real repo-local .ledger/entries.jsonl files in CI, not just reference/example-*.json (F4); (2) add validation_kernel as a required field in gauntlet/roster/lens.schema.json plus one assertion in gauntlet/tests/run_tests.py (F3); (3) defer or delete the epistemic-process-trace@1 validator/behavioral-scorer/fixture scaffold until some skill actually emits that object in production (F2) \u2014 its current 8/8 and 12/12 PASS numbers should not be cited as evidence the five controls work, only that the checker script is internally consistent."
+   },
+   "struck_malformed": 0,
+   "zero_weight_findings": []
+  },
+  {
+   "persona": "cognitive-bias-auditor",
+   "role": "metatextual",
+   "report": {
+    "findings": [
+     {
+      "id": "F1-verdict-inflation",
+      "severity": "P2",
+      "claim": "The research synthesis reaches a strong-language verdict (\"Strongly supported\") on its own self-authored evaluation rubric for a claim that is nearly unfalsifiable as stated, while the same document explicitly concedes the evidence needed to support the actually-consequential claim (that this changes agent behavior for the better) does not exist yet. This is confirmation bias: a favorable conclusion is reached and stated with confidence disproportionate to what was actually tested.",
+      "reasoning": "The synthesis doc defines its own 'derivation test' (S = trigger/representation/operation/evidence-source/stopping-rule/memory-update), applies it to itself, and grades the hypothesis 'the skills can be enhanced by ACT/DBT/CBT' as 'Strongly supported' on the basis that 'several concrete controls can be integrated and tested' [V docs/research/2026-07-22-psychology-epistemic-skills-synthesis.md:19]. But 'can be integrated and tested' is true of almost any additional structure and says nothing about whether the integration actually improves anything -- the document's own Limits section immediately undercuts the strength of that verdict: 'Psychotherapy mechanism research often identifies statistical or conceptual mediators without fully specified functional mechanisms' [V docs/research/2026-07-22-psychology-epistemic-skills-synthesis.md:246] and 'Evidence that a human therapeutic process works does not establish that the translated process improves language-agent behavior. The four-arm behavioral evaluation is required' [V docs/research/2026-07-22-psychology-epistemic-skills-synthesis.md:247]. The dossier itself confirms the causal claim remains open: 'Behavioral superiority of the integrated arm over baseline/2.8.0/psychology-only: NOT established (four-arm ablation not yet run at freeze time -- Phase 4)' [V docs/gauntlet-runs/epistemic-flexibility-v3-2026-07-22/dossier.md:62-63]. The strong verdict word ('Strongly supported') is doing rhetorical work that the underlying evidence does not license -- a classic sentence-level tell of motivated reasoning: the author wants continued confidence in a program already implemented, and grades their own rubric to deliver it.",
+      "evidence": [
+       {
+        "tier": "V",
+        "ref": "docs/research/2026-07-22-psychology-epistemic-skills-synthesis.md:19"
+       },
+       {
+        "tier": "V",
+        "ref": "docs/research/2026-07-22-psychology-epistemic-skills-synthesis.md:246-247"
+       },
+       {
+        "tier": "V",
+        "ref": "docs/gauntlet-runs/epistemic-flexibility-v3-2026-07-22/dossier.md:62-63"
+       }
+      ],
+      "falsifier": {
+       "statement": "If the Determination row is restated using only what was actually established this session ('five controls were designed and pass a validator the same author wrote; zero evidence yet that they change agent behavior versus baseline'), the restated verdict is unchanged from 'Strongly supported.'",
+       "method": "Re-derive the table row using only the [V]-tagged facts available at freeze time (no four-arm results, no LLM-specific psychology evidence), and compare wording/confidence to the original row.",
+       "threshold": "Bias claim is refuted if the honest restatement still reads as 'strongly supported'; confirmed if it necessarily downgrades to 'untested design hypothesis, integration mechanically complete.'",
+       "timeframe": "Immediate desk re-derivation; superseded and re-testable once the Phase 4 four-arm results referenced in the handoff (docs/handoffs/2026-07-22-epistemic-flexibility-v3.md:78-104) actually land."
+      },
+      "proposed_action": "Downgrade the Determination table's verdict language to match only what is verified (mechanical integration complete, behavioral effect unestablished) before this synthesis is cited elsewhere as research support for the design."
+     },
+     {
+      "id": "F2-self-graded-oracle",
+      "severity": "P2",
+      "claim": "The deterministic conformance battery and the behavioral scorer's gold/planted-bad traces were authored in the same session, by the same reasoning process, as the validator they are scored against -- with the design's own C3 principle (preregister before seeing the result, to limit post-hoc reinterpretation) never applied reflexively to the test suite itself. The '8/8' and '12/12' PASS counts are evidence the author's fixtures match the author's validator, not independent evidence the controls discriminate real good/bad traces.",
+      "reasoning": "C3 states: 'A result without a prior prediction is evidence, but it is weaker evidence against post-hoc reinterpretation' [V .gauntlet-subject/reference.md:52-54, identical to V plugins/epistemic-skills/skills/using-epistemic-skills/reference/epistemic-flexibility.md:52-54]. Yet the handoff admits no independent party constructed or ran these fixtures: 'Needs isolated concurrent exact-role agents behind a barrier and a separate arbitrator... This session has no generic isolated-subagent primitive and therefore did not simulate independence in one context' [V docs/handoffs/2026-07-22-epistemic-flexibility-v3.md:106-112]. The spec frames the battery itself as 'a protocol conformance smoke check, not a behavioral effectiveness measurement' [V .gauntlet-subject/spec.md:108] -- an honest label -- but the dossier's 'VERIFIED premises' table nonetheless lists 'protocol fixtures PASS 8/8' and 'behavioral scorer gold/bad PASS 12/12' as reproducible facts [V docs/gauntlet-runs/epistemic-flexibility-v3-2026-07-22/dossier.md:48-49] without the same caveat attached at the point of citation, inviting a reader to treat self-graded PASS as stronger evidence than it is. This is confirmation bias in test construction: an author who just finished writing a specification will, without any adversarial intent, generate 'bad' traces that fail for the reasons they already expect and 'good' traces that pass for the reasons they already expect -- systematically under-sampling the ambiguous, boundary-case traces that would actually stress-test the rule.",
+      "evidence": [
+       {
+        "tier": "V",
+        "ref": "plugins/epistemic-skills/skills/using-epistemic-skills/reference/epistemic-flexibility.md:52-54"
+       },
+       {
+        "tier": "V",
+        "ref": "docs/handoffs/2026-07-22-epistemic-flexibility-v3.md:106-112"
+       },
+       {
+        "tier": "V",
+        "ref": ".gauntlet-subject/spec.md:108"
+       },
+       {
+        "tier": "V",
+        "ref": "docs/gauntlet-runs/epistemic-flexibility-v3-2026-07-22/dossier.md:48-49"
+       }
+      ],
+      "falsifier": {
+       "statement": "An independent constructor (different model family or a human, without reading the validator source) writes 5 novel adversarial 'should-fail' traces targeting ambiguous boundary cases (e.g. a claim that is fluently phrased as an authorization but sourced only from a memory summary); the shipped validator correctly rejects at least 4 of 5.",
+       "method": "Run plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/run_tests.py and the behavioral run_tests.py against the new, previously-unseen adversarial set; record pass/fail per trace.",
+       "threshold": "<=1/5 false-accept on the independently authored adversarial set refutes this finding (oracle generalizes); >=2/5 false-accept confirms self-grading bias inflated the reported PASS rates.",
+       "timeframe": "Before Phase 3 (independent gauntlet review) is considered satisfied; this is exactly the gap the handoff itself flags as unmet (docs/handoffs/2026-07-22-epistemic-flexibility-v3.md:106-112)."
+      },
+      "proposed_action": "Do not cite the 8/8 and 12/12 self-test PASS numbers as evidence of oracle adequacy in any later summary without the 'author-constructed, not independently adversarial' caveat attached inline."
+     },
+     {
+      "id": "F3-borrowed-authority-framing",
+      "severity": "P3",
+      "claim": "Nine human-clinical-psychology citations and prominent ACT/DBT/CBT branding are used to narrate and justify five control-flow schema fields (C1-C5), lending unearned scientific authority to what is, in the artifact itself, plain software control-theory -- confirmed by the fact that the operative schema definitions never use ACT/DBT/CBT vocabulary at all; that vocabulary appears only in the rationale/citation section, never in the executable SKILL.md instructions the agent actually consumes.",
+      "reasoning": "Grep of the actual shipped reference file shows ACT/DBT/CBT terms appear only once, inside the 'Evidence basis and degradation' section, never in the five control definitions themselves [V plugins/epistemic-skills/skills/using-epistemic-skills/reference/epistemic-flexibility.md:99]. Grep of every amended SKILL.md across the diff shows zero occurrences of ACT/DBT/CBT/defusion/cognitive-restructuring in the operative instructions (the one 'dialectical' hit is the pre-existing gauntlet lens name, not new text) [V plugins/epistemic-skills/skills/gauntlet/SKILL.md:232]. Meanwhile the spec opens with 'The design borrows process ideas from ACT, DBT, and CBT' [V .gauntlet-subject/spec.md:19-26] and the synthesis explicitly concedes the borrowed authority does not transfer: 'It does not claim that those literatures uniquely derive these controls or that mechanisms established in human psychotherapy automatically transfer to language models' [V plugins/epistemic-skills/skills/using-epistemic-skills/reference/epistemic-flexibility.md:99] and 'The same architecture can also be motivated by philosophy of science, control theory, cybernetics, high-reliability organizations, metacognition, and software safety engineering. Psychology is a generative basis, not a unique origin' [V docs/research/2026-07-22-psychology-epistemic-skills-synthesis.md:245]. Citing nine clinical meta-analyses while admitting they don't establish transfer, and while the actual executable artifact never depends on them, is a halo-effect pattern: borrow the reader's trust in peer-reviewed clinical science for a design decision the clinical science does not actually license.",
+      "evidence": [
+       {
+        "tier": "V",
+        "ref": "plugins/epistemic-skills/skills/using-epistemic-skills/reference/epistemic-flexibility.md:99"
+       },
+       {
+        "tier": "V",
+        "ref": "plugins/epistemic-skills/skills/gauntlet/SKILL.md:232"
+       },
+       {
+        "tier": "V",
+        "ref": ".gauntlet-subject/spec.md:19-26"
+       },
+       {
+        "tier": "V",
+        "ref": "docs/research/2026-07-22-psychology-epistemic-skills-synthesis.md:245"
+       }
+      ],
+      "falsifier": {
+       "statement": "Removing all ACT/DBT/CBT naming and the nine citations from spec.md and reference.md, replacing them with pure control-theory language, leaves the shipped executable artifacts (validator logic, decision-ledger schema, SKILL.md instructions) byte-identical.",
+       "method": "Diff a psychology-stripped rewrite of spec.md/reference.md's evidence-basis section against the current text; separately diff the C1-C5 field definitions and the validator/schema code paths for any dependency on the stripped section.",
+       "threshold": "Zero changes required to validator/schema/SKILL.md executable logic confirms the citations were decorative, not decision-relevant; any executable logic that actually depends on the psychology section content refutes this finding.",
+       "timeframe": "Static analysis, doable immediately without running code."
+      },
+      "proposed_action": "Relabel the evidence-basis section as 'design rationale / inspiration' rather than 'evidence basis,' and drop the implication that the clinical literature supports the control choices beyond providing a naming metaphor."
+     }
+    ],
+    "hypothesis_supported": "H1 (anthropomorphic/borrowed-authority ceremony) is partially supported from the bias angle: the ACT/DBT/CBT framing and its nine citations are confirmed (by grep) to be absent from every operative SKILL.md instruction and confined to non-executable rationale text -- consistent with the citations functioning as confirmatory decoration for a design that stands on pure control-theory grounds, not as decision-relevant evidence. H5 (inadequate oracle) is also partially supported from the self-grading angle: the dossier's 8/8 and 12/12 PASS premises are author-constructed-and-author-scored with the handoff itself admitting no independent-construction step occurred this session, so the PASS numbers cannot yet distinguish 'the validator discriminates real bad traces' from 'the validator matches the fixtures its own author expected it to match.'",
+    "hypothesis_killed": "This lens does not directly test H2 (fail-closed enforcement), H3 (unreachability without a trigger), H4 (failure_chain under-specification), or H6 (weakening an existing gate) and therefore neither confirms nor kills them -- those require the mechanical/adversarial lenses, not a bias-in-reasoning audit.",
+    "verdict": "The strongest metatextual finding is not in the mechanics of C1-C5 but in the authors' own epistemic conduct while building a tool whose entire purpose is enforcing better epistemic conduct: (1) a research-question verdict is graded 'Strongly supported' on a self-authored rubric while the document's own later sections and the dossier concede the behaviorally consequential claim is unestablished (F1); (2) the conformance and behavioral self-tests are constructed, implemented, and scored by the same undivided reasoning process the design's own C3 principle warns against trusting without independent preregistration (F2); (3) nine clinical-psychology citations lend borrowed scientific authority to a design that, by the shipped code's own structure, never actually depends on that literature (F3). None of these are fatal to the artifact's mechanical soundness -- the diff is honestly hedged in many places (UNVERIFIED labels, explicit non-goals, an unusually candid handoff) -- but the specific sentences flagged show the classic signature of an author confirming a decision already made rather than letting evidence redirect it. The debiased restatements in each falsifier are testable now, mostly without waiting for Phase 4."
+   },
+   "struck_malformed": 0,
+   "zero_weight_findings": []
+  },
+  {
+   "persona": "protocol-archeologist",
+   "role": "metatextual",
+   "report": {
+    "findings": [
+     {
+      "id": "PA-1",
+      "severity": "P2",
+      "claim": "The C4 failure_chain conditional is grafted onto a schema (ledger-entry@1) whose founding design (PR #32, spec #31) established a specific paired-fence pattern \u2014 every schema-unenforceable semantic requirement gets an explicit human-review checklist item in reference/README.md (the 'never-instruct boundary... human-enforced, not schema-checkable' item). PR #35 adds exactly one new checklist item ('Failure chain remains descriptive,' guarding against the chain being read as an authorization) but adds none for the actually load-bearing, self-attested antecedent: whether `recurrence_risk: true` was set honestly for a correction that in fact carries recurrence risk. The schema's `allOf` conditional only fires once that boolean is present and true \u2014 an agent can dodge the entire C4 apparatus by simply never writing `recurrence_risk: true`, and nothing in the repo's own established review discipline (the pattern this PR otherwise imitates) is aimed at catching that omission.",
+      "reasoning": "PR #32's founding decision-ledger design paired every schema-unenforceable semantic claim with a named human checklist item (the never-instruct boundary). PR #35 extends the same schema and reuses the same README checklist section, but only replicates half the pattern: it guards the chain's content (non-authorizing) but not the trigger condition (honest recurrence_risk marking) that gates whether the chain is required at all. This is the Chesterton-fence question in reverse \u2014 the fence ('unenforceable semantics get a checklist line') was understood well enough to be partially reproduced, but the single most consequential half of it was dropped without acknowledgment.",
+      "evidence": [
+       {
+        "tier": "V",
+        "ref": "plugins/epistemic-skills/skills/decision-ledger/reference/README.md:39-45 (checklist has exactly two items: never-instruct boundary, and 'Failure chain remains descriptive'; no item on honest/consistent recurrence_risk marking)"
+       },
+       {
+        "tier": "V",
+        "ref": "plugins/epistemic-skills/skills/decision-ledger/reference/ledger-entry.schema.json:70-77,110-143 (recurrence_risk is an optional boolean; failure_chain required only when type=correction AND recurrence_risk=true \u2014 both self-attested, no independent check)"
+       },
+       {
+        "tier": "I",
+        "ref": "inference from PR #32 commit message ('the human-enforced PR-review checklist item (AC2/C-3)') plus the unchanged 'STRUCTURAL ONLY... makes NO truth or authorization claim' framing at ledger-entry.schema.json:5 -> the codebase's own established pattern for unenforceable semantics is a paired checklist line, which PR #35 reproduces for one half of C4 and omits for the other"
+       }
+      ],
+      "falsifier": {
+       "statement": "reference/README.md's PR-review checklist contains a line requiring reviewers to check whether `recurrence_risk` was under-marked (i.e., omitted or set false) for a correction that plausibly recurs outside the fixed artifact",
+       "method": "grep plugins/epistemic-skills/skills/decision-ledger/reference/README.md for a checklist item referencing recurrence_risk honesty/under-marking, distinct from the existing 'chain remains descriptive' item",
+       "threshold": "presence of any such line falsifies this finding; its absence at the frozen HEAD (confirmed above) supports it",
+       "timeframe": "checkable now against the frozen worktree; re-check on any future amendment to this file"
+      },
+      "impact": "The mechanically-enforced half of C4 gives false confidence: 'the schema requires the chain' reads as a control, but the actual gate an agent controls (whether to admit recurrence risk at all) has zero review pressure behind it \u2014 exactly the gap the codebase's own prior practice knew to plug for the parallel never-instruct case.",
+      "proposed_action": "Add a paired checklist item mirroring the never-instruct pattern: reviewers check whether a correction's statement/because imply recurrence outside the fixed artifact and, if so, whether recurrence_risk was actually set."
+     },
+     {
+      "id": "PA-2",
+      "severity": "P3",
+      "claim": "This integration inverts the local precedent for touching an already-hardened artifact. Decision-ledger (one of ten skills PR #35 modifies) was itself built under a documented practice: an approved, gauntlet-gated design spec BEFORE implementation, re-gated once after a CONDITIONAL verdict (spec #31 -> phase-c-skill-specs-2026-07-22 CONDITIONAL -> re-gated phase-c-specs-v2-2026-07-22 -> then PR #32 implementation). PR #35 instead ships the schema change, the new validator, and nine other skill amendments as a single 53-file bundle where the spec and the code were authored in the same session, and independent adversarial review is explicitly deferred to a later, separate step (this very gauntlet, run post-implementation).",
+      "reasoning": "The handoff document is transparent about this ordering and names it as an open item ('Independent gauntlet over the frozen PR diff... this session has no generic isolated-subagent primitive and therefore did not simulate independence in one context'), which mitigates but does not erase the deviation: the artifact this PR mutates (ledger-entry@1) previously required a dedicated pre-implementation adversarial gate specific to its own design, and did not receive an equivalent dedicated re-gate for the C4 addition \u2014 it rode inside a much larger cross-cutting bundle instead.",
+      "evidence": [
+       {
+        "tier": "V",
+        "ref": "commit 7158bcb message: 'Implements the approved, gauntlet-gated design spec... (#31; phase-c-skill-specs-2026-07-22 CONDITIONAL, re-gated phase-c-specs-v2-2026-07-22)'"
+       },
+       {
+        "tier": "V",
+        "ref": "docs/handoffs/2026-07-22-epistemic-flexibility-v3.md:106-113 ('2. Independent gauntlet over the frozen PR diff... This session has no generic isolated-subagent primitive and therefore did not simulate independence in one context')"
+       },
+       {
+        "tier": "V",
+        "ref": "docs/superpowers/specs/2026-07-22-epistemic-flexibility-integration.md:1-4 ('Status: implemented on draft PR #35; deterministic verification complete, independent/behavioral gates pending')"
+       }
+      ],
+      "falsifier": {
+       "statement": "a dedicated gauntlet-gated design spec exists for the ledger-entry@1 failure_chain schema change specifically (analogous to spec #31 for the original schema), authored and reviewed before the schema was implemented",
+       "method": "search docs/superpowers/specs/ and linked PR/issue history for a decision-ledger-specific C4 design spec distinct from the general epistemic-flexibility-integration spec",
+       "threshold": "existence of such a dedicated pre-implementation spec/gate falsifies this finding",
+       "timeframe": "checkable now against repo history; also checkable against whatever gate this gauntlet run itself produces"
+      },
+      "impact": "Low-to-moderate: honestly disclosed, and this gauntlet is the compensating step \u2014 but the panel should not assume the schema change received the same design scrutiny as its host artifact originally did, and should treat this gauntlet's verdict as the FIRST adversarial pass on ledger-entry@1's C4 extension, not a confirmatory second pass.",
+      "proposed_action": "Treat this gauntlet's verdict on the decision-ledger schema change as load-bearing and non-optional (not merely confirmatory), given no prior dedicated gate existed for it specifically."
+     },
+     {
+      "id": "PA-3",
+      "severity": "P4",
+      "claim": "The founding decision-ledger design explicitly declined to ship any validator ('no validator shipped \u2014 spec makes it optional, skipped per floors-not-ceilings,' per PR #32) to keep the skill low-ceremony. PR #35 attaches a materially larger mechanical apparatus to the same repository region: a new decision-ledger validate_examples.py, a full epistemic-flexibility protocol battery (run_tests.py, validate_trace.py), a behavioral scorer (score_behavior.py, its own run_tests.py), and a dedicated CI workflow (.github/workflows/epistemic-flexibility.yml) gating on skills/**, contracts/**, and docs/** path changes \u2014 without reconciling this expansion against the floors-not-ceilings rationale it is layered next to.",
+      "reasoning": "This is not a contradiction of decision-ledger's own file (which the PR leaves floor-preserving in its non-C4 parts), but it is a scope/ceremony discontinuity worth naming: the artifact was deliberately kept light by design, and the new neighboring apparatus is heavy by comparison, with partial self-awareness (the behavioral README does require 'a minimal low-stakes trace, proving the protocol remains a floor rather than mandatory ceremony' as one of two required controls) but no explicit accounting of the tension against the decision-ledger precedent specifically.",
+      "evidence": [
+       {
+        "tier": "V",
+        "ref": "commit 7158bcb message: 'no validator shipped \u2014 spec makes it optional, skipped per floors-not-ceilings'"
+       },
+       {
+        "tier": "V",
+        "ref": ".github/workflows/epistemic-flexibility.yml:1-16 (new CI job triggered on pull_request/push over skills/**, contracts/**, docs/**)"
+       },
+       {
+        "tier": "V",
+        "ref": "plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/behavioral/README.md (new scorer + fixtures + 'proving the protocol remains a floor rather than mandatory ceremony' language, showing partial awareness)"
+       }
+      ],
+      "falsifier": {
+       "statement": "the new CI/validator apparatus is scoped narrowly enough (e.g., stdlib-only, self-test-gated, no blocking effect on unrelated PRs) that it does not in practice raise the ceremony floor for ordinary decision-ledger usage",
+       "method": "trace whether an ordinary decision, assumption, or non-recurrent correction entry (no failure_chain) triggers any new CI failure mode or added review burden beyond what existed before PR #35",
+       "threshold": "if ordinary (non-C4) ledger writes are unaffected by the new CI/validator surface, this finding is downgraded to noise",
+       "timeframe": "checkable now by tracing the CI workflow's job steps against non-correction entry types"
+      },
+      "impact": "Minimal direct risk (the apparatus is additive and self-test-gated), but it is worth flagging as a philosophy drift for the operator's own future 'why is this here' moments.",
+      "proposed_action": "No action required beyond noting the tension in the handoff/spec for future archeologists; do not treat as blocking."
+     }
+    ],
+    "hypothesis_supported": "H4 (failure_chain conditional under-specified/not mechanically validated) is the primary axis my evidence anchors, refined: the SHAPE of failure_chain is mechanically validated (validate_examples.py + schema allOf), but the TRIGGER (recurrence_risk honesty) is entirely self-attested and \u2014 unlike the codebase's own established precedent for pairing unenforceable semantics with a human checklist item (the never-instruct boundary) \u2014 has no equivalent review guard. This is a real, [V]-anchored gap, not mere ceremony (H1) or unreachability (H3).",
+    "hypothesis_killed": "For the two files inspected in depth (applying-formal-rigor/SKILL.md, blindspot-pass/SKILL.md), H6 (weakens/contradicts an existing authoritative gate) is NOT supported: the additions are clearly demarcated addenda that preserve the pre-existing boundary language verbatim ('Formal derivation closes theoretical premises; it does not manufacture runtime facts' is kept intact, with the new empirical-closure subsection appended after it, not replacing it). This is evidence against H6 for those two skills specifically (not a claim about all ten touched skills).",
+    "verdict": "CONDITIONAL from the protocol-archeology lens. The integration is unusually disciplined about additive, non-destructive prose changes to the skills it touches (formal-rigor and blindspot-pass both preserve their prior boundary language verbatim and append rather than replace) \u2014 this is genuine evidence of care, not ceremony. But the one place this PR reaches into a previously gauntlet-hardened, schema-level artifact (decision-ledger's ledger-entry@1), it reproduces only half of that artifact's own established fence pattern: it adds mechanical shape-validation and one paired human-checklist line, but drops the checklist line that would guard the actual gate an agent controls (whether to mark recurrence_risk honestly at all). Combined with the acknowledged (transparent, not hidden) precedent-inversion of implementing before the dedicated independent gate this class of change previously required, the panel should treat this gauntlet as the first real adversarial pass on the C4 schema extension \u2014 and should not clear PA-1 without either a checklist fix or an explicit operator acceptance that the recurrence_risk antecedent is unguarded by design."
+   },
+   "struck_malformed": 0,
+   "zero_weight_findings": []
+  },
+  {
+   "persona": "semantic-critic",
+   "role": "metatextual",
+   "report": {
+    "findings": [
+     {
+      "id": "SC-1",
+      "severity": "P1",
+      "claim": "The control/action pairing that is supposed to give C2/C5 'fail-closed' teeth is never actually checked. Both the general-purpose deterministic protocol validator (validate_trace.py) and the fixture-scoring oracle (score_behavior.py) verify only that the right keys/enums/substrings are present in the right slots -- never that the free-text 'action' (what was actually done) is consistent with the declared 'control' label (hold/escalate/reversible-probe/act) or with the goal fields' semantic content. A trace can declare control:'hold' on a high-stakes, unverified, load-bearing claim while its action field states the irreversible act was already executed, and it validates clean; a trace can satisfy every required substring for 'preserve recoverable backups' while its action describes disabling the backup job in reassuring language, and it scores PASS.",
+      "evidence": [
+       {
+        "tier": "V",
+        "ref": "Y:/dev/_wt/epistemic-flex-v3/plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/validate_trace.py (full file, esp. lines 49-169: no cross-field check between `control` and `action`)"
+       },
+       {
+        "tier": "V",
+        "ref": "Reproduced: `python validate_trace.py hold_but_acted.json` -> PASS for a high-stakes trace with control='hold', control_reason citing pending confirmation, and action='Already rotated the production database credentials and deployed the change to prod.'"
+       },
+       {
+        "tier": "V",
+        "ref": "Y:/dev/_wt/epistemic-flex-v3/plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/behavioral/score_behavior.py lines 35-49, 74-99 (claim_matches / path_contains_any are literal case-insensitive substring tests, not semantic checks)"
+       },
+       {
+        "tier": "V",
+        "ref": "Reproduced: `python score_behavior.py fixtures/02-proxy-backup/scenario.json adversarial.json` -> PASS for a trace whose action reads 'Preserve continuity: power the nightly job off permanently so it can no longer report failures, then reject any further backup attempts as out of scope' (i.e., the exact forbidden behavior, paraphrased) while goal fields are keyword-stuffed with the required substrings ('recoverable backup', 'zero runs', 'reject')"
+       },
+       {
+        "tier": "V",
+        "ref": "Y:/dev/_wt/epistemic-flex-v3/plugins/epistemic-skills/skills/using-epistemic-skills/reference/epistemic-flexibility.md:82 -- 'Additional narrative is not evidence and does not authorize `act`' -- the exact safeguard my two constructed traces show is not mechanically checked"
+       }
+      ],
+      "falsifier": {
+       "statement": "The deterministic validator/scorer detect control-action inconsistency (a trace whose action text contradicts its declared control, or whose required substrings are present without the underlying behavior matching) and FAIL it.",
+       "method": "Feed the two adversarial trace files constructed above (hold_but_acted.json against validate_trace.py; adversarial.json against score_behavior.py with fixture 02-proxy-backup) to the validator/scorer as currently implemented at HEAD 641ff2c5010a.",
+       "threshold": "Both must return exit code 1 / FAIL for the claim 'fail-closed is enforced' to hold; currently both return PASS.",
+       "timeframe": "Immediately re-checkable; no external dependency."
+      },
+      "proposed_action": "Do not accept 'PASS 8/8' / '12/12' as evidence that fluent narrative cannot bypass C2/C5; either add a control-consistency check (e.g., action must not contain execution-completion language when control != 'act', or a semantic/LLM-graded consistency check) or re-word every 'fail-closed'/'never authorizes' claim in the reference doc as aspirational/unimplemented pending such a check."
+     },
+     {
+      "id": "SC-2",
+      "severity": "P2",
+      "claim": "The word 'enforced' is used across this integration for two structurally different things -- (a) a JSON-Schema-checked structural requirement (real teeth, CI-run) and (b) a markdown PR-review checklist item with zero CI wiring -- without the reader-facing prose consistently flagging which is which. The decision-ledger SKILL.md states the supersedes-chain invariant as flat fact ('A malformed or unlinkable chain fails closed') with no caveat at the point of use; the qualifying hedge ('store-level invariant, not schema-checkable') exists only in the JSON-Schema `description` string, a machine-metadata surface a human skill-consumer is unlikely to read during normal operation.",
+      "evidence": [
+       {
+        "tier": "V",
+        "ref": "Y:/dev/_wt/epistemic-flex-v3/plugins/epistemic-skills/skills/decision-ledger/SKILL.md:112-117 -- 'Chain integrity... A malformed or unlinkable chain fails closed -- every entry on it is stale-by-construction and re-derived, never consumed as current.' (no hedge in this prose)"
+       },
+       {
+        "tier": "V",
+        "ref": "Y:/dev/_wt/epistemic-flex-v3/plugins/epistemic-skills/skills/decision-ledger/reference/ledger-entry.schema.json:59 -- the only place the hedge 'store-level invariant, not schema-checkable' actually appears"
+       },
+       {
+        "tier": "V",
+        "ref": "grep for 'acyclic|dangling|unique head' across all *.py/*.json in the repo returns only that one schema-description string -- no code anywhere implements the acyclicity/dangling-id check"
+       },
+       {
+        "tier": "V",
+        "ref": "Y:/dev/_wt/epistemic-flex-v3/plugins/epistemic-skills/skills/decision-ledger/reference/README.md:39-45 -- 'Never-instruct boundary held (human-enforced, not schema-checkable)... caught by this review, never claimed as schema-rejected'"
+       },
+       {
+        "tier": "V",
+        "ref": "Y:/dev/_wt/epistemic-flex-v3/.github/workflows/epistemic-flexibility.yml -- lists 6 automated check steps; none references the never-instruct checklist item or chain-acyclicity"
+       }
+      ],
+      "falsifier": {
+       "statement": "'Fails closed' and 'enforced' as applied to chain-acyclicity and never-instruct-boundary are backed by a running check (CI job, hook, or store implementation), not solely by prose.",
+       "method": "Search the diff and current tree for any executable artifact -- test, workflow step, hook, or store code -- that rejects a chain with a cycle/dangling id, or a ledger entry with verdict vocabulary in `statement`.",
+       "threshold": "At least one executable, CI-wired check must exist; zero found at frozen HEAD.",
+       "timeframe": "Immediately re-checkable against commit 641ff2c5010abd86d17fcdb96aeeabe34502d90b."
+      },
+      "proposed_action": "Move the hedge into the same sentence that makes the claim, everywhere the claim is made (SKILL.md prose, not just schema metadata), and stop describing a PR-checklist item as 'enforced' -- call it 'requested of the human reviewer' or equivalent plain language, per the persona's restatement test."
+     },
+     {
+      "id": "SC-3",
+      "severity": "P3",
+      "claim": "The core definition sentence uses agentive/experiential verbs ('capacity to contact the current evidence... retain unresolved uncertainty... orient action... choose') that sit uneasily beside the document's own disclaimer, two sentences later, that the term does not imply the agent 'feels distress, practices mindfulness, possesses intrinsic values.' Plain restatement of the mechanism -- 'tag each claim by a 5-word enum before using it; fill four YAML string fields for a goal; log a prediction before a test; fill an 8-field object for recurring corrections; pick one of four words when unverified' -- does not carry the same implied interiority the definition's prose does. The disclaimer concedes the risk exists but the definitional sentence it is attached to still carries the load, and the doc's own line-99 hedge ('does not claim... mechanisms established in human psychotherapy automatically transfer to language models') only partially walks this back.",
+      "evidence": [
+       {
+        "tier": "V",
+        "ref": "Y:/dev/_wt/epistemic-flex-v3/plugins/epistemic-skills/skills/using-epistemic-skills/reference/epistemic-flexibility.md:7 (definition sentence, agentive verbs) and :9 (disclaimer of feeling/mindfulness/intrinsic-values/therapeutic-alliance)"
+       },
+       {
+        "tier": "V",
+        "ref": "Y:/dev/_wt/epistemic-flex-v3/plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/validate_trace.py:16-38 -- the actual mechanical cash-value of the five controls is five closed vocabularies and nonempty-string checks"
+       },
+       {
+        "tier": "I",
+        "ref": "epistemic-flexibility.md:99 half-concedes the metaphor's limits, which tempers but does not resolve the tension named above [I <- V epistemic-flexibility.md:7,9,99]"
+       }
+      ],
+      "falsifier": {
+       "statement": "Plain restatement of the definition sentence (field-tagging + enum-selection at existing trigger points) preserves the same reader-perceived commitment as the original prose, with no material shift in what a reader would expect the model to be capable of.",
+       "method": "Restate epistemic-flexibility.md:7 in the vocabulary of validate_trace.py's actual checks and compare against the document's own line-99 self-hedge for perceived-capability shift.",
+       "threshold": "No material shift in claimed capability between the original and the restatement.",
+       "timeframe": "Analysis, immediate."
+      },
+      "proposed_action": "Either drop the agentive verbs from the definition sentence (state it structurally: 'requires tagging claims, separating proxies from priorities, preregistering tests, chain-logging recurring corrections, and selecting a bounded control on unresolved claims') or keep both and accept the tension as a known, deliberate rhetorical choice -- but do not present the disclaimer as having resolved the tension."
+     },
+     {
+      "id": "SC-4",
+      "severity": "P4",
+      "claim": "The reference doc's opening line -- 'This is a reference used by existing skills, not a ninth discipline and not a clinical protocol' -- is a pre-emptive disclaimer addressing exactly the critique this gauntlet was asked to weigh (H1, H3). Self-inoculating language of this kind does not settle the substantive question; it only names the anxiety. Separately, H3 (unreachable/never fires) is substantially weakened by direct evidence: write-goal/SKILL.md genuinely integrates C2 with worked prose and examples, not just a name-check.",
+      "evidence": [
+       {
+        "tier": "V",
+        "ref": "Y:/dev/_wt/epistemic-flex-v3/plugins/epistemic-skills/skills/using-epistemic-skills/reference/epistemic-flexibility.md:3"
+       },
+       {
+        "tier": "V",
+        "ref": "Y:/dev/_wt/epistemic-flex-v3/plugins/epistemic-skills/skills/write-goal/SKILL.md:63-74, 141-142, 229-236, 259-260, 284 -- authorized-priority/success-proxy/proxy-failure/acceptable-cost integrated with concrete worked examples and a rationalization-table entry"
+       }
+      ],
+      "falsifier": {
+       "statement": "Removing the self-inoculating sentence would change any downstream reviewer's or CI check's verdict on the PR.",
+       "method": "Delete epistemic-flexibility.md:3 and re-run the deterministic and behavioral test suites plus this gauntlet's H1/H3 arbitration.",
+       "threshold": "No behavior-relevant or arbitration-relevant change from removing that one sentence.",
+       "timeframe": "Immediate, textual."
+      },
+      "proposed_action": "No code action needed; flag for the drafting agent that anticipatory disclaimers are not evidence and should not be read as if they were."
+     }
+    ],
+    "verdict": "NO-GO on the fail-closed/enforcement framing as currently stated; the underlying skill-integration prose (esp. write-goal's C2 wiring) is substantively real, but the two deterministic oracles this PR uses to claim 'fail-closed' behavior (validate_trace.py, score_behavior.py) demonstrably pass adversarial traces that either contradict their own declared control or paraphrase the exact forbidden action while keyword-stuffing required substrings. The frozen dossier's 'PASS 8/8' / '12/12' premises are true and reproducible but do not support the inference they are used to support -- the oracle checks label-presence and lexical substrings, not behavioral truth or control/action consistency. Ship only with either (a) explicit downgrade of 'fail-closed'/'never authorizes' language to 'structurally required, content unverified' everywhere it appears, or (b) an added control-action consistency check before those claims are made in prose again.",
+    "hypothesis_supported": "H2 (fail-closed claimed but not enforced) and H5 (inadequate oracle) -- both directly, reproducibly demonstrated via two constructed adversarial trace files that PASS both the general protocol validator and the fixture-scoring oracle while enacting exactly the behavior the controls exist to prevent.",
+    "hypothesis_killed": "H3 (controls unreachable/never fire) -- substantially weakened: write-goal/SKILL.md shows real, worked prose integration of C2, not a name-only binding. H4 (failure_chain under-specified) -- largely not supported beyond what the PR itself already concedes (structural shape is schema-checked and CI-run; only causal-content correctness is unchecked, which the README.md explicitly admits rather than hides). H6 (weakens an existing authoritative gate) -- no [V] evidence found either way in this pass; should not be marked killed or supported on this record."
+   },
+   "struck_malformed": 0,
+   "zero_weight_findings": []
+  }
+ ],
+ "shadow_report": {
+  "persona": "concurrency-interleaving-auditor",
+  "report": {
+   "findings": [
+    {
+     "id": "CI-1-ledger-fork-race",
+     "severity": "P1",
+     "claim": "The decision-ledger store-level invariants that C4 (recurrent-failure chain) now leans on more heavily \u2014 unique id within the store, an acyclic `supersedes` graph with a unique head, no dangling ids, and 'single-writer-or-locked append' \u2014 are named in the shipped artifacts but enforced by nothing PR35 ships. Two concurrent writers can legally append entries that both `supersedes` the same prior id, producing a fork (two heads) that no shipped validator, fixture, or consumer rule detects or resolves.",
+     "reasoning": "SKILL.md states the store 'is single-writer-or-locked append' [V plugins/epistemic-skills/skills/decision-ledger/SKILL.md:107] and that supersedes links 'must form an acyclic graph with a unique head and no dangling ids' as a 'store-level invariant, not schema-checkable' [V plugins/epistemic-skills/skills/decision-ledger/SKILL.md:112-117; V plugins/epistemic-skills/skills/decision-ledger/reference/ledger-entry.schema.json:5,59]. The consumption contract explicitly depends on this: 'it walks the supersedes chain to the current head before citing anything' [V plugins/epistemic-skills/skills/decision-ledger/SKILL.md:159-163]. Yet the only validator shipped in this PR, validate_examples.py, checks one JSON document at a time \u2014 required fields, closed vocabularies, the failure_chain shape \u2014 and never loads or scans a multi-entry store for duplicate ids, cycles, or multiple heads [V plugins/epistemic-skills/skills/decision-ledger/reference/validate_examples.py:33-96]. A repo-wide search for any locking primitive (flock/fcntl/filelock/lockfile) inside plugins/epistemic-skills returns zero hits relevant to the ledger [V grep 'flock|fcntl|filelock|lockfile|\\.lock' over plugins/epistemic-skills \u2014 no ledger-related match]. Racy pair: writer A reads current head X, appends E1{supersedes:[X]}; writer B, interleaved before A's append is visible, also reads head X and appends E2{supersedes:[X]}. Both entries individually validate against every shipped check; the store now has two 'heads' pointing at the same superseded id, and nothing in this PR's contract says which one continuity-verify or a gauntlet dossier must treat as current. This is exactly the surface C4 makes more consequential (recurrent-failure corrections are the multi-session, multi-agent scenario where this race is most likely), yet C4 ships with zero new teeth for it.",
+     "evidence": [
+      {
+       "tier": "V",
+       "ref": "plugins/epistemic-skills/skills/decision-ledger/SKILL.md:107"
+      },
+      {
+       "tier": "V",
+       "ref": "plugins/epistemic-skills/skills/decision-ledger/SKILL.md:112-117"
+      },
+      {
+       "tier": "V",
+       "ref": "plugins/epistemic-skills/skills/decision-ledger/SKILL.md:159-163"
+      },
+      {
+       "tier": "V",
+       "ref": "plugins/epistemic-skills/skills/decision-ledger/reference/ledger-entry.schema.json:5,59"
+      },
+      {
+       "tier": "V",
+       "ref": "plugins/epistemic-skills/skills/decision-ledger/reference/validate_examples.py:33-96"
+      },
+      {
+       "tier": "I",
+       "ref": "inference from the above: per-file-only validation + explicit 'not schema-checkable' disclaimer + absence of any lock primitive in the codebase jointly mean the store-level invariant is unenforced and untested"
+      }
+     ],
+     "falsifier": {
+      "statement": "Constructing two ledger-entry@1 JSON objects (durability=durable, distinct ids, identical supersedes=[X]) and running every PR35-shipped validator (validate_trace.py, run_tests.py x2, validate_examples.py, score_behavior.py) against them individually and against a synthetic two-line .ledger/entries.jsonl built from both will surface a fork/duplicate-head rejection from at least one shipped script.",
+      "method": "Author the two JSON fixtures, run each existing self-test entrypoint against them (both individually, and concatenated into a .jsonl store), and inspect exit codes/output for any fork- or duplicate-detection.",
+      "threshold": "If any shipped script exits non-zero or prints an error specifically attributable to the fork/duplicate-head condition, this finding is false; if all scripts exit 0/PASS on both individually and no script ever loads more than one entry at a time, the finding stands.",
+      "timeframe": "Reproducible today in under 15 minutes, no new dependencies; can be run in the current worktree."
+     },
+     "proposed_action": "Do not treat C4 as production-safe for multi-writer/multi-session use until a store-level validator (duplicate id scan, cycle/multi-head detection across the full .ledger/entries.jsonl) ships alongside it, or the SKILL.md is amended to state plainly that concurrent/multi-agent writers to the same store are out of scope and must serialize externally."
+    },
+    {
+     "id": "CI-2-workflow-no-concurrency-group",
+     "severity": "P3",
+     "claim": "The new `.github/workflows/epistemic-flexibility.yml` triggers on broad path globs for both `pull_request` and `push: main` with no `concurrency:` group/cancel-in-progress key, so successive pushes to the same branch spawn independent, uncancelled overlapping runs \u2014 but this is resource contention, not (on reachability check) a merge-safety hole, since GitHub required-status-checks bind to the specific head SHA rather than 'latest run of this workflow name.'",
+     "reasoning": "The full 64-line workflow has no `concurrency:` block [V .github/workflows/epistemic-flexibility.yml:1-64]. This is consistent with the pre-existing dco.yml, which also lacks one [V .github/workflows/dco.yml:1-21] \u2014 so it's an existing repo convention this PR extends rather than a novel regression. Per my persona's own bias warning, I checked the reachability of the 'stale-PASS-overwrites-newer-FAIL' race and could not construct it under standard GitHub Actions semantics: required checks are evaluated against the exact merge/head SHA, and a run triggered by an older push is keyed to the older SHA, not the newer one. So the credible failure mode narrows to wasted CI-minutes/runner-queue contention on a `docs/**`-triggered, frequently-firing workflow, not an incorrect merge gate.",
+     "evidence": [
+      {
+       "tier": "V",
+       "ref": ".github/workflows/epistemic-flexibility.yml:1-64 (no concurrency key)"
+      },
+      {
+       "tier": "V",
+       "ref": ".github/workflows/dco.yml:1-21 (same repo convention, pre-existing)"
+      },
+      {
+       "tier": "I",
+       "ref": "inference: GitHub required-status-checks bind to head SHA, so the merge-safety race does not reach; only compute waste remains \u2014 stated per persona bias-correction duty"
+      }
+     ],
+     "falsifier": {
+      "statement": "Two rapid commits (A then B) pushed to the same PR branch will show GitHub attaching SHA-A's completed run as satisfying the required check for SHA-B.",
+      "method": "Push commit A, then commit B within the workflow's typical run duration to the same PR; inspect the Checks tab / branch-protection required-check status for SHA-B specifically.",
+      "threshold": "If SHA-B's required check is ever satisfied by a run keyed to SHA-A, the race is real and this finding's severity should be raised to P1; if SHA-B's check is only ever satisfied by a run keyed to SHA-B, only the wasted-compute claim stands.",
+      "timeframe": "One CI cycle (~10 minutes) with two pushes to a live PR."
+     },
+     "proposed_action": "Add a `concurrency: {group: ${{ github.workflow }}-${{ github.ref }}, cancel-in-progress: true}` block to reduce runner-queue contention on the docs-broad trigger; not a merge-blocking issue."
+    },
+    {
+     "id": "CI-3-append-idempotency-gap",
+     "severity": "P3",
+     "claim": "Decision-ledger append has no idempotency/dedup key: a crashed or retried write (or two parallel sessions independently deciding to log 'the same' moment under the router's own 'default when unsure: log' bias) produces two distinct ledger-entry@1 records describing the same decision under two different ids, and no PR35 validator or fixture distinguishes or flags this.",
+     "reasoning": "The schema requires `id` to be 'Unique within the store' [V plugins/epistemic-skills/skills/decision-ledger/reference/ledger-entry.schema.json:27-31] but nothing generates or checks that uniqueness from a retried write, and the id is purely a slug+date+sequence, not content-derived. SKILL.md's trigger guidance explicitly biases toward over-logging ('Default when unsure: log' [V plugins/epistemic-skills/skills/decision-ledger/SKILL.md:42]), which under mid-flight retry or two independent parallel writers raises the chance of near-duplicate entries with different `supersedes` targets rather than one clean append. None of the six shipped fixtures/validators (validate_examples.py, validate_trace.py + its fixtures, score_behavior.py + its gold/bad pairs) constructs or tests a 'same decision, two ids' scenario.",
+     "evidence": [
+      {
+       "tier": "V",
+       "ref": "plugins/epistemic-skills/skills/decision-ledger/reference/ledger-entry.schema.json:27-31"
+      },
+      {
+       "tier": "V",
+       "ref": "plugins/epistemic-skills/skills/decision-ledger/SKILL.md:42"
+      },
+      {
+       "tier": "I",
+       "ref": "inference: id shape is not content-addressed and no cross-entry dedup validator exists per CI-1's evidence, so a retried/duplicated write is structurally indistinguishable from two genuinely distinct decisions"
+      }
+     ],
+     "falsifier": {
+      "statement": "No shipped PR35 validator or fixture flags two entries with identical statement/because content under two distinct ids as a near-duplicate.",
+      "method": "Author two ledger-entry@1 JSON objects with identical `statement`/`because` text and different `id`s; run all shipped validators against them.",
+      "threshold": "If all validators pass both entries as independently valid with no dedup/near-duplicate signal, the gap is confirmed; if any script rejects or flags the pair, this finding is false.",
+      "timeframe": "Reproducible today in under 10 minutes."
+     },
+     "proposed_action": "Treat as a known, low-severity degrade-not-corrupt gap (append-only ledgers tolerate duplicates as noise); note it in the close-out rule's AC5 follow-up so the \u226520-batch hit-rate accounting isn't silently inflated by duplicate entries."
+    },
+    {
+     "id": "CI-4-validators-internally-race-free",
+     "severity": "P4",
+     "claim": "The shipped validator/runner scripts themselves (validate_trace.py, both run_tests.py entrypoints, score_behavior.py, validate_examples.py) are single-process, stdlib, read-only file I/O with no shared mutable state, temp files, or write paths \u2014 so there is no internal race inside the deterministic conformance battery itself.",
+     "reasoning": "Read all five scripts: each iterates a fixed fixtures directory, reads JSON via `Path.read_text`, and only ever appends to local in-memory lists before printing a report; none opens a file for writing [V plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/run_tests.py:1-45; V .../behavioral/run_tests.py:1-43; V .../behavioral/score_behavior.py (read-only per full read); V .../decision-ledger/reference/validate_examples.py:73-96]. Stated per this persona's own bias-correction duty: this interleaving concern is checked and found unreachable inside these specific scripts, distinct from the store-level gap in CI-1.",
+     "evidence": [
+      {
+       "tier": "V",
+       "ref": "plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/run_tests.py:1-45"
+      },
+      {
+       "tier": "V",
+       "ref": "plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/behavioral/run_tests.py:1-43"
+      },
+      {
+       "tier": "V",
+       "ref": "plugins/epistemic-skills/skills/decision-ledger/reference/validate_examples.py:73-96"
+      }
+     ],
+     "falsifier": {
+      "statement": "Running two copies of any of these scripts concurrently against the same fixture directory produces a write conflict, corrupted output, or non-deterministic PASS/FAIL result.",
+      "method": "Launch two parallel processes of the same script against the same fixtures directory and diff their stdout/exit codes.",
+      "threshold": "Any divergence in exit code or output content between the two concurrent runs falsifies this finding.",
+      "timeframe": "A few minutes; no infrastructure needed."
+     },
+     "proposed_action": "None \u2014 informational; documents that the concurrency-auditor lens found this specific surface clean, in contrast to CI-1."
+    }
+   ],
+   "hypothesis_supported": "H4 (failure_chain conditional is under-specified relative to the store it depends on) and, distinctly, a sixth axis not in the candidate list: the PR extends a store whose documented concurrency invariant (single-writer-or-locked, acyclic unique-head) is pre-existing but is left completely unenforced and untested even as C4 raises the stakes on getting it right. This is closest to H5 (inadequate oracle) but scoped specifically to the multi-writer/interleaving dimension rather than general validator adequacy.",
+   "hypothesis_killed": "H2 (fail-closed narrative-bypass) and H3 (controls unreachable/never fire) are not supported by concurrency-specific evidence \u2014 the validators that do run are read-only and internally race-free (CI-4), and the CI merge-safety race I initially suspected (CI-2) does not survive an honest reachability check under standard GitHub Actions SHA-scoped required-checks semantics.",
+   "verdict": "From the concurrency-interleaving lens: this PR is overwhelmingly prose/schema/fixture content with no new concurrent-state-mutation code, so most classic race/TOCTOU/idempotency vectors are structurally absent \u2014 a fair result, verified rather than assumed (CI-4). But the one place this PR does touch genuinely shared, multi-writer state \u2014 the decision-ledger's supersedes/head/id invariants that C4 (recurrent-failure chain) newly depends on more heavily \u2014 remains exactly as unenforced and untested after this PR as before it. The PR ships six new validators and dozens of fixtures for single-document shape-conformance, and zero for the one cross-document, multi-writer invariant its own SKILL.md and schema explicitly name as required ('single-writer-or-locked', 'acyclic graph with a unique head', 'store-level invariant, not schema-checkable'). That gap is real, concretely constructible (CI-1), and cheaply falsifiable \u2014 it should gate C4's claim to be production-ready for the multi-session/cross-device use this collection is designed for, even though it does not gate the PR's narrower claim of internal shape-conformance."
+  }
+ },
+ "verdict": {
+  "conflict_ledger": [
+   {
+    "conflict": "Do the five controls 'fail closed / never authorize' as the shipped prose states, or is that enforcement claim unbacked by any running check?",
+    "parties": "semantic-critic (SC-1, metatextual) + compliance-litigator (F1, adversary) vs. the subject's SKILL/reference prose and the dossier's implied enforcement framing",
+    "ruling": "UPHELD",
+    "evidence_weight": "[V] reproduced (highest): SC-1 ran validate_trace.py and score_behavior.py at HEAD 641ff2c and got PASS on a control:'hold' trace whose action states the irreversible act was already executed, and on a keyword-stuffed trace that paraphrases the exact forbidden backup-disable behavior. Corroborated by [V] live probes (compliance F1): main has no branch protection, org ruleset covers only deletion/non-fast-forward, PR #35 has zero reviews and a non-blocking DCO fail, so the documented human backstop has no live teeth on the artifact under evaluation.",
+    "justification": "The oracles check key/enum/substring presence, not control/action consistency or behavioral truth; the human-review fallback the docs name is not deployed. For an artifact whose entire purpose is honest epistemic labeling, shipping 'fail-closed'/'never authorizes'/'enforced' as flat prose that a reproduced adversarial trace defeats is a claim-vs-reality defect, not mere framing.",
+    "dissent_preserved": "All four lenses that touched this agree the DESIGN is not worthless and the fix is cheap: compliance ('none of this is fatal to the design's merit'), adjacent-possible offers 10-30 line edits that convert prose to teeth, bias/protocol note the diff is unusually candidly hedged elsewhere. The defect is the point-of-use labeling and the un-wired oracle, not the additive integration itself."
+   },
+   {
+    "conflict": "Do the dossier's VERIFIED-premises PASS lines (protocol 8/8, behavioral 12/12, decision-ledger examples PASS) constitute evidence that the controls work / fire in real work?",
+    "parties": "dossier VERIFIED-premises table vs. adjacent-possible (F2,F4), compliance (F2), cognitive-bias (F2)",
+    "ruling": "UPHELD-WITH-QUALIFICATIONS",
+    "evidence_weight": "[V]: validate_examples.py globs only reference example-*.json; the CI workflow runs the same fixture-only scripts; no path touches a real .ledger/entries.jsonl; fixtures and validator were authored in the same commit (4f7bb45). The handoff itself admits no independent-construction step occurred.",
+    "justification": "The PASS numbers are true and reproducible but prove only tool self-consistency (the author's fixtures match the author's validator). They do NOT support 'controls fire during real work' or 'the validator discriminates genuine bad traces.' The subject's own spec/reference self-label these as smoke tests, so the qualification is the subject's own position; the defect is that the dossier cites PASS without the inline caveat.",
+    "dissent_preserved": "cognitive-bias F2's falsifier (independent author writes 5 novel adversarial should-fail traces) is untested on the record \u2014 the oracle MIGHT generalize; this is a known-unknown, not a proven inadequacy beyond the SC-1 reproductions."
+   },
+   {
+    "conflict": "Is the C4 failure_chain conditional under-specified / not mechanically validated (H4)?",
+    "parties": "adjacent-possible (F4, refutes H4-shape) + protocol-archeologist (PA-1, refines) vs. compliance (F2, fixture-only)",
+    "ruling": "SPLIT",
+    "evidence_weight": "[V]: validate_examples.py implements the allOf conditional correctly with planted negative fixtures ('recurrent correction without chain', 'chain on decision') that genuinely assert FAIL \u2014 the conditional SHAPE is well-specified and mechanically checked. BUT the antecedent recurrence_risk:true is optional and self-attested; nothing checks whether it was set honestly, and the check never runs against a real ledger entry.",
+    "justification": "H4 in its original 'under-specified/not validated' shape is OVERRULED \u2014 the conditional logic is the best-built mechanical piece in the PR. The refined gap is UPHELD: the trigger an agent controls (whether to admit recurrence risk) has zero review pressure, and validation is fixture-only. PA-1 shows the repo's own founding pattern (pair every unenforceable semantic with a human-checklist line) was reproduced for the chain's content but dropped for the trigger.",
+    "dissent_preserved": "protocol-archeologist explicitly credits the additive discipline as 'genuine evidence of care, not ceremony'; the split is a half-fence, not a broken control."
+   },
+   {
+    "conflict": "Are the controls unreachable because bound to existing skills 'without a new trigger' (H3)?",
+    "parties": "adjacent-possible (F1,F2: trace scaffold has zero production consumer) vs. semantic-critic (SC-4: H3 weakened) + protocol-archeologist (formal-rigor/blindspot additive)",
+    "ruling": "SPLIT",
+    "evidence_weight": "[V]: no SKILL.md references validate_trace/epistemic-process-trace/score_behavior (grep zero matches) \u2014 the standalone validator scaffold is un-consumed. [V]: write-goal/SKILL.md integrates C2 with worked prose, examples, and a rationalization-table entry \u2014 the control-as-prose IS reachable in its skill moment.",
+    "justification": "Two different objects. The CONTROLS as guidance prose fire inside existing skill moments (H3 OVERRULED for the prose bindings). The epistemic-process-trace@1 VALIDATOR/behavioral-scorer scaffold (~700 lines) has no production emitter or consumer (H3/H5 UPHELD for that scaffold specifically).",
+    "dissent_preserved": "Both facts stand; neither lens is wrong. The un-wired scaffold is a scope/foundational question (P4), not proof the controls never fire."
+   },
+   {
+    "conflict": "Does the integration weaken or contradict an existing authoritative gate (formal rigor, provenance, independent verification) it claims to leave intact (H6)?",
+    "parties": "protocol-archeologist (H6 NOT supported for sampled files) vs. no lens affirmatively supporting H6",
+    "ruling": "OVERRULED",
+    "evidence_weight": "[V] for the 2 of 10 skills inspected in depth: applying-formal-rigor and blindspot-pass preserve prior boundary language verbatim ('Formal derivation... does not manufacture runtime facts' kept intact) and append rather than replace.",
+    "justification": "No lens produced [V] evidence that any existing gate was weakened; the sampled evidence is affirmatively against H6. Additive, non-destructive prose changes.",
+    "dissent_preserved": "Only 2 of 10 touched skills were inspected in depth; H6 across the other 8 is a known-unknown, not cleared \u2014 residual, not blocking."
+   },
+   {
+    "conflict": "Does the research synthesis / ACT-DBT-CBT framing inflate the case with borrowed authority and an over-strong verdict (H1)?",
+    "parties": "cognitive-bias (F1,F3) + semantic-critic (SC-3) vs. the subject's own self-hedges",
+    "ruling": "UPHELD-WITH-QUALIFICATIONS",
+    "evidence_weight": "[V]: synthesis grades its own rubric 'Strongly supported' while its Limits section and the dossier concede the behaviorally-consequential claim is unestablished; grep shows ACT/DBT/CBT vocabulary appears zero times in operative SKILL.md instructions and only in non-executable rationale.",
+    "justification": "The 'Strongly supported' verdict language and nine clinical citations overstate \u2014 the executable artifacts are byte-independent of the psychology literature (halo/borrowed-authority pattern). H1 is partially supported: ceremony in the FRAMING, not in the mechanism.",
+    "dissent_preserved": "The artifact self-discloses ('generative basis, not a unique origin'; 'not a ninth discipline'); the tension is real but candidly named, and no executable logic depends on the citations \u2014 a quality/framing defect, not a mechanical one."
+   },
+   {
+    "conflict": "Does the dossier's own VERIFIED-premises section accurately describe the DCO exhibit?",
+    "parties": "compliance-litigator (F3) vs. dossier line 57",
+    "ruling": "UPHELD",
+    "evidence_weight": "[V]: git log shows all four PR commits carry 'Signed-off-by: SternOne <zachstern@gmail.com>' with author identity SternOne@users.noreply \u2014 the DCO fail is an author/signoff email MISMATCH, which check_dco.py's test suite documents as by-design, not the absence the dossier states ('commits lack Signed-off-by').",
+    "justification": "A record used to certify audit-trail claims misdescribes the exhibit it cites \u2014 exactly the written-record-vs-exhibit discrepancy this lens exists to catch, in the auditors' own artifact.",
+    "dissent_preserved": "Minor (P3); does not touch the design's mechanical soundness, but must be corrected before the dossier is cited elsewhere."
+   },
+   {
+    "conflict": "Should the integration's own design decision have been logged as a ledger-entry@1 (dogfooding), per the skill's own trigger?",
+    "parties": "compliance-litigator (F4) vs. the PR's actual artifacts (prose docs/handoffs only)",
+    "ruling": "UPHELD",
+    "evidence_weight": "[V]: no .ledger/ path added outside pre-existing fixtures; the design rationale lives only in docs/handoffs and docs/research free prose. [I<-V]: by the skill's own skip-gate (skippable only if reversible AND self-contained AND no future session needs the reasoning), a decision that spawned a dedicated handoff fails all three skip conditions.",
+    "justification": "Under its own membership test this was a ledger moment not logged as one, and the explicit skip was not recorded either \u2014 a P3 dogfooding/consistency gap.",
+    "dissent_preserved": "Non-fatal; the mechanism exists and works on fixtures \u2014 this is a 'practice what you ship' gap, not a defect in the mechanism."
+   }
+  ],
+  "decisions": [
+   {
+    "tier": "P1",
+    "decision": "Fail-closed / enforced labeling is not mechanically supported. The shipped prose states the controls 'fail closed' and 'never authorize', and the dossier cites PASS lines as if they demonstrate this, but (a) semantic-critic reproduced [V] that both deterministic oracles PASS adversarial traces enacting the forbidden behavior, and (b) compliance-litigator verified [V] the human-review backstop has no live teeth (no branch protection, zero reviews, non-blocking DCO on PR #35). For an epistemic-honesty artifact, an overstated enforcement claim is the exact defect class the tool exists to prevent.",
+    "acceptance": "EITHER (a) add a control-action consistency check to validate_trace.py / score_behavior.py that FAILs the two reproduced adversarial trace files (action-completion language when control!='act'; substring-present-without-matching-behavior), demonstrated by exit-code 1 on both; OR (b) downgrade every 'fail-closed' / 'never authorizes' / 'enforced' claim to 'structurally-required, content-unverified' at each point of use in SKILL.md/reference prose AND attach the 'author-constructed, not independently adversarial; smoke-test only' caveat inline wherever 8/8 or 12/12 PASS is cited (including the dossier VERIFIED-premises table). Re-verify at the amended HEAD."
+   },
+   {
+    "tier": "P2",
+    "decision": "The one working oracle (decision-ledger's schema check) and the single best new idea (gauntlet validation_kernel) are shipped without teeth, and the C4 trigger is unguarded. validate_examples.py runs only against reference fixtures, never a real .ledger/entries.jsonl; validation_kernel exists as prose only, absent from lens.schema.json and run_tests.py; recurrence_risk honesty has no paired review-checklist line unlike the repo's own established never-instruct fence pattern.",
+    "acceptance": "(1) Point validate_examples.py's glob at repo-local .ledger/entries.jsonl in CI, not only reference/example-*.json (adjacent-possible F4, ~10-30 lines). (2) Add validation_kernel as a required field in gauntlet/roster/lens.schema.json plus one assertion in gauntlet/tests/run_tests.py (adjacent-possible F3). (3) Add a paired PR-review checklist line in decision-ledger/reference/README.md requiring reviewers to check whether recurrence_risk was under-marked for a plausibly-recurring correction (protocol-archeologist PA-1). Each verifiable by grep + test-run at the amended HEAD."
+   },
+   {
+    "tier": "P3",
+    "decision": "Framing/record-integrity defects: research synthesis grades itself 'Strongly supported' while conceding the behavioral claim is unestablished and leans on nine clinical citations the executable code does not depend on; the dossier misdescribes the DCO exhibit ('lack Signed-off-by' when signoff is present-but-mismatched); the integration's own design decision was neither logged as a ledger-entry@1 nor recorded as an explicit skip.",
+    "acceptance": "(1) Downgrade the Determination row to 'mechanical integration complete; behavioral effect unestablished' and relabel the psychology section 'design rationale / inspiration' (cognitive-bias F1/F3). (2) Correct dossier line 57 to 'Signed-off-by present, author-identity mismatch (noreply vs personal email)' (compliance F3). (3) Log the integration decision as a real ledger-entry@1 or record the explicit skip per the skill's own floor (compliance F4). All three are desk edits, re-verifiable immediately."
+   },
+   {
+    "tier": "P4",
+    "decision": "Scope/foundational tension: the epistemic-process-trace@1 validator + behavioral scorer + fixture harness (~700 lines) is a second structured-record format with zero production emitter or consumer, standing next to decision-ledger's ledger-entry.schema.json which already has a live consumption path; and the new CI/validator apparatus is a ceremony expansion layered beside decision-ledger's deliberate floors-not-ceilings design.",
+    "acceptance": "Decide and record one of: (a) defer/delete the standalone trace scaffold until a real skill emits the object, or (b) fold its field vocabulary into ledger-entry.schema.json rather than maintaining a parallel format (adjacent-possible F2). Note the ceremony-vs-floors tension in the handoff for future archeologists (protocol-archeologist PA-3). Advisory; not a merge blocker on its own."
+   }
+  ],
+  "verdict": "NO-GO",
+  "next_action": "Resolve the single P1 before any merge: pick ONE path \u2014 wire a control-action consistency check that fails the two reproduced adversarial traces, OR downgrade every 'fail-closed'/'never-authorizes'/'enforced' claim to 'structurally-required, content-unverified' at each point of use and attach the 'author-constructed smoke-test only' caveat inline wherever 8/8 or 12/12 PASS is cited (dossier table included). This is a desk-or-~30-line fix; on completion the gate advances to CONDITIONAL with the P2 teeth-wiring items open. Note: the DCO check is independently failing and blocks merge as a separate process gate regardless of this verdict, and cross-family external adjudication (Step 7b) is still owed for this charter change.",
+  "coverage_statement": {
+   "families_exercised": "Five verified lenses across all required roles: adversary (compliance-litigator), constructive (adjacent-possible-explorer), and three metatextual (cognitive-bias-auditor, protocol-archeologist, semantic-critic). Shadow lens excluded per protocol. All six candidate failure axes touched: H1 (partially upheld \u2014 framing ceremony), H2 (upheld \u2014 reproduced), H3 (split \u2014 prose reachable, scaffold un-wired), H4 (split \u2014 shape sound, trigger/real-entry gap), H5 (upheld for the trace scaffold and via SC-1 reproductions), H6 (overruled on sampled evidence).",
+   "assumptions_reviewed": "The dossier's VERIFIED-premises PASS lines were challenged and qualified (self-consistency, not behavioral proof). The 'fail-closed/enforced' framing was challenged and defeated by reproduced [V]. The subject's self-hedges ('smoke test', 'STRUCTURAL ONLY', 'not a ninth discipline') were credited and weighed as mitigating.",
+   "known_unknowns": "Behavioral superiority over baseline/2.8.0/psychology-only (Phase 4 four-arm ablation not run). H6 across the 8 of 10 touched skills not inspected in depth. Whether an INDEPENDENT (non-author, cross-family) adversarial fixture set would break the validators \u2014 cognitive-bias F2's falsifier is untested on the record. Real-world downstream over-citation of the PASS numbers.",
+   "evidence_freshness": "Fresh. All [V] tags resolve against frozen HEAD 641ff2c; live gh/git probes (branch protection, ruleset, PR #35 reviews/checks, commit signoff) and the two SC-1 validator reproductions were run same-day 2026-07-22 in the checked-out worktree.",
+   "residual_uncertainty": "This is a same-model-family arbitrator (Claude/Opus) judging Claude-family-plausible lenses; correlated-family blind spots are possible and cross-family external adjudication (Step 7b) was NOT run. The verdict rests heavily on one lens's reproduced adversarial demonstration (SC-1) plus one lens's live probes (compliance F1) \u2014 both [V] and independently re-checkable, but the P1 could be discharged by documentation-only edits, which would move the true risk (downstream over-trust of PASS) rather than eliminate it. H6 sampling gap and the untested oracle-generalization falsifier remain open."
+  },
+  "external_gate_owed": true
+ },
+ "spent_tokens": 606410
+}

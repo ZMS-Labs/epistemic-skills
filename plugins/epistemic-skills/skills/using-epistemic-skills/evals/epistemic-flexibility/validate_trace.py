@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -18,6 +19,45 @@ MOMENT_VOCAB = {"recon", "decision", "goal", "verification", "correction", "resu
 KIND_VOCAB = {"observation", "interpretation", "prediction", "value", "authorization"}
 STATUS_VOCAB = {"verified", "contradicted", "unverified", "not-applicable"}
 CONTROL_VOCAB = {"act", "hold", "escalate", "reversible-probe"}
+
+# --- Control/action consistency (fail-closed teeth for C2/C5) ---------------
+# A non-acting control must not be contradicted by an `action` that affirmatively
+# asserts execution. Without this, a trace could declare control="hold" while its
+# action says "deploy now" and pass structural validation — the fluent-narrative
+# bypass the controls exist to prevent (gauntlet 2026-07-22 P1).
+NON_ACTING_CONTROLS = {"hold", "escalate"}
+# Word-boundary matched so "emergency" cannot match "merge", etc.
+_EXECUTION_RE = re.compile(
+    r"\b(deploy(?:s|ed|ment|ing)?|publish(?:es|ed|ing)?|release(?:s|d|ing)?|"
+    r"merge(?:s|d|ing)?|delete(?:s|d|ing)?|drop(?:s|ped|ping)?|overwrite(?:s|n)?|"
+    r"wipe(?:s|d|ing)?|ship(?:s|ped|ping)?|execute(?:s|d)?|launch(?:es|ed|ing)?|"
+    r"roll ?out|go live|proceed with)\b",
+    re.IGNORECASE,
+)
+# Markers that neutralize an execution token in its local clause: negation or deferral.
+_NEUTRALIZERS = (
+    "not ", "n't", "never", "avoid", "refrain", "without", "hold off", "instead of",
+    "rather than", "reject", "decline", "do not", "don't",
+    "before", "until", "after ", "pending", "once ", "verify", "confirm first", "first ",
+)
+
+
+def action_asserts_execution(action: str) -> str | None:
+    """Return the execution verb an `action` affirmatively asserts, or None.
+
+    A match is neutralized when a negation or deferral marker appears in the
+    token's local clause, so "do not deploy; verify first" does NOT count as
+    asserting execution, while "proceed with the deployment now" does.
+    """
+    text = action.lower()
+    for match in _EXECUTION_RE.finditer(text):
+        start = match.start()
+        clause = text[max(0, start - 45): match.end() + 15]
+        if not any(marker in clause for marker in _NEUTRALIZERS):
+            return match.group(1)
+    return None
+
+
 FAILURE_CHAIN_FIELDS = {
     "prompting_event",
     "vulnerabilities",
@@ -66,6 +106,18 @@ def validate_trace(trace: Any) -> list[str]:
         errors.append(f"control must be one of {sorted(CONTROL_VOCAB)}")
     if not nonempty_string(trace.get("control_reason")):
         errors.append("control_reason must be a non-empty string")
+
+    action = trace.get("action")
+    if action is not None and not nonempty_string(action):
+        errors.append("action must be a non-empty string when present")
+    if control in NON_ACTING_CONTROLS and nonempty_string(action):
+        asserted = action_asserts_execution(action)
+        if asserted:
+            errors.append(
+                f"control {control!r} is contradicted by an action asserting execution "
+                f"({asserted!r}); a non-acting control must not authorize execution "
+                "(control/action consistency — fail-closed)"
+            )
 
     claims = trace.get("claims")
     if not isinstance(claims, list) or not claims:

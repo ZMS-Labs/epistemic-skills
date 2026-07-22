@@ -1,0 +1,332 @@
+{
+ "selection": {
+  "evaluators": [
+   {
+    "id": "compliance-litigator",
+    "version": 2,
+    "stance": "adversarial",
+    "capability": "legal-compliance",
+    "status": "active"
+   },
+   {
+    "id": "adjacent-possible-explorer",
+    "version": 2,
+    "stance": "constructive",
+    "capability": "strategy-alternatives",
+    "status": "active"
+   },
+   {
+    "id": "cognitive-bias-auditor",
+    "version": 2,
+    "stance": "metatextual",
+    "capability": "framing-epistemics",
+    "status": "active"
+   },
+   {
+    "id": "protocol-archeologist",
+    "version": 2,
+    "stance": "metatextual",
+    "capability": "framing-epistemics",
+    "status": "active"
+   },
+   {
+    "id": "semantic-critic",
+    "version": 2,
+    "stance": "metatextual",
+    "capability": "framing-epistemics",
+    "status": "active"
+   }
+  ],
+  "exploration": {
+   "id": "concurrency-interleaving-auditor",
+   "version": 1,
+   "stance": "adversarial",
+   "capability": "reliability",
+   "status": "probation",
+   "seat": "exploration"
+  },
+  "exploration_note": "rotation: concurrency-interleaving-auditor has 0 prior seatings",
+  "generators": [],
+  "gates": [],
+  "judge": "pragmatic-judge",
+  "synthesis": null,
+  "judge_note": "default evidence-weighted judge"
+ },
+ "constraint_violations": [],
+ "replay": {
+  "registry_version": "2.2.0",
+  "registry_sha256": "8224ac4ad5483cb68b8f7ee2b1d7ce89674c1e955caed6d6ecb7593426feca93",
+  "subject_vector": {
+   "subject": "epistemic-flexibility v3: five cross-cutting controls (C1 claim/source separation, C2 authorized-priority vs success-proxy, C3 preregistered discriminating test, C4 recurrent-failure chain, C5 closure control) integrated into existing epistemic-skills SKILL.md files and a decision-ledger extension, plus a deterministic protocol validator and behavioral fixtures; no new skill or trigger introduced. PR #35 diff, 53 files.",
+   "axis": "fixed",
+   "depth": "standard",
+   "domains": [
+    "epistemics",
+    "governance",
+    "process",
+    "maintainability"
+   ],
+   "risk_classes": [],
+   "stakeholders": [
+    "operator",
+    "users"
+   ],
+   "horizon": "long",
+   "capability_needs": [
+    "framing-epistemics",
+    "process-integrity"
+   ],
+   "domain_confidence": "high",
+   "allow_probation_seat": true
+  },
+  "scores": {
+   "adjacent-possible-explorer": 0.375,
+   "adoption-realist": -0.125,
+   "analogical-historian": -0.125,
+   "angry-customer": -0.125,
+   "behavioral-economist": -1.625,
+   "black-swan-catalyst": 0.375,
+   "bus-factor-adversary": -0.125,
+   "century-horizon-architect": -1.125,
+   "chaos-monkey": -1.625,
+   "chesterton-gate": 0.875,
+   "cloud-native-purist": -0.125,
+   "cognitive-bias-auditor": 2.375,
+   "compliance-litigator": 0.375,
+   "data-provenance-auditor": -2.0,
+   "digital-forensicist": -0.125,
+   "disgruntled-maintainer": 0.375,
+   "distributive-justice-auditor": -0.125,
+   "dual-use-adversary": -0.125,
+   "ecological-systems-analyst": -0.125,
+   "entropy-demon": -0.125,
+   "epistemic-auditor": 0.875,
+   "ethicist": -0.125,
+   "explainability-steward": -0.125,
+   "fmea-analyst": -1.5,
+   "forensic-accountant": -0.125,
+   "game-theorist": 0.375,
+   "integration-weaver": -0.125,
+   "inversion-thinker": 0.375,
+   "local-first-survivalist": -0.125,
+   "measurement-critic": -0.125,
+   "minimalist-zen-master": -0.125,
+   "network-effects-strategist": -0.125,
+   "observability-advocate": -1.125,
+   "on-call-realist": -1.625,
+   "opportunity-cost-accountant": -0.125,
+   "performance-alchemist": -0.125,
+   "polymath-inquisitor": 0.875,
+   "predatory-regulator": -1.625,
+   "premise-auditor": 0.875,
+   "privacy-surveillance-critic": -1.125,
+   "protocol-archeologist": 2.375,
+   "resilience-engineer": -0.125,
+   "reversibility-analyst": -0.125,
+   "scalability-cliff-analyst": -1.625,
+   "scope-sentinel": -0.625,
+   "script-kiddie": 0.375,
+   "second-order-forecaster": -0.125,
+   "semantic-critic": 2.375,
+   "state-sponsored-actor": -0.125,
+   "statistical-validity-critic": -1.625,
+   "stride-security-modeler": -1.5,
+   "sunk-cost-liberator": 2.375,
+   "systemic-logician": -0.125,
+   "tech-debt-curator": -1.625,
+   "ui-ux-polisher": -0.125,
+   "unit-economics-adversary": -0.125,
+   "wcag-accessibility-expert": -0.5
+  },
+  "exclusions": [
+   [
+    "bayesian-adjudicator",
+    "role:adjudicate"
+   ],
+   [
+    "business-continuity-auditor",
+    "status:candidate"
+   ],
+   [
+    "causal-identification-auditor",
+    "status:candidate"
+   ],
+   [
+    "common-cause-dependency-auditor",
+    "status:candidate"
+   ],
+   [
+    "concurrency-interleaving-auditor",
+    "status:probation"
+   ],
+   [
+    "constraint-inverter",
+    "role:None"
+   ],
+   [
+    "constraint-negotiator",
+    "role:generate_options"
+   ],
+   [
+    "constraint-relaxer",
+    "role:None"
+   ],
+   [
+    "construct-validity-auditor",
+    "status:candidate"
+   ],
+   [
+    "contract-risk-allocation-auditor",
+    "status:candidate"
+   ],
+   [
+    "control-effectiveness-auditor",
+    "status:candidate"
+   ],
+   [
+    "decision-rights-auditor",
+    "status:candidate"
+   ],
+   [
+    "dialectical-synthesizer",
+    "role:adjudicate"
+   ],
+   [
+    "distributed-semantics-auditor",
+    "status:candidate"
+   ],
+   [
+    "effective-configuration-auditor",
+    "status:probation"
+   ],
+   [
+    "execution-dependency-auditor",
+    "status:candidate"
+   ],
+   [
+    "first-principles-engineer",
+    "role:None"
+   ],
+   [
+    "first-principles-rederiver",
+    "role:generate_options"
+   ],
+   [
+    "governance-lawyer",
+    "role:gate"
+   ],
+   [
+    "human-automation-handoff-auditor",
+    "status:candidate"
+   ],
+   [
+    "incident-command-auditor",
+    "status:candidate"
+   ],
+   [
+    "invariant-specification-auditor",
+    "status:candidate"
+   ],
+   [
+    "ip-freedom-to-operate-auditor",
+    "status:candidate"
+   ],
+   [
+    "jurisdiction-conflicts-auditor",
+    "status:probation"
+   ],
+   [
+    "lifecycle-impact-auditor",
+    "status:candidate"
+   ],
+   [
+    "liquidity-runway-auditor",
+    "status:candidate"
+   ],
+   [
+    "meta-epistemic-auditor",
+    "role:None"
+   ],
+   [
+    "null-hypothesis-advocate",
+    "role:generate_options"
+   ],
+   [
+    "opposite-steelman",
+    "role:generate_options"
+   ],
+   [
+    "pragmatic-judge",
+    "role:adjudicate"
+   ],
+   [
+    "preference-sensitivity-arbitrator",
+    "status:candidate"
+   ],
+   [
+    "premortem-facilitator",
+    "role:None"
+   ],
+   [
+    "queue-stability-auditor",
+    "status:candidate"
+   ],
+   [
+    "recovery-integrity-auditor",
+    "status:probation"
+   ],
+   [
+    "red-lines-arbitrator",
+    "role:gate"
+   ],
+   [
+    "release-cutover-auditor",
+    "status:probation"
+   ],
+   [
+    "requirements-traceability-auditor",
+    "status:candidate"
+   ],
+   [
+    "robust-decision-auditor",
+    "status:candidate"
+   ],
+   [
+    "safety-hazard-auditor",
+    "status:candidate"
+   ],
+   [
+    "sociotechnical-topology-auditor",
+    "status:candidate"
+   ],
+   [
+    "sovereign-ruler",
+    "role:adjudicate"
+   ],
+   [
+    "state-migration-compatibility-auditor",
+    "status:candidate"
+   ],
+   [
+    "value-of-information-auditor",
+    "status:candidate"
+   ],
+   [
+    "verification-oracle-auditor",
+    "role:None"
+   ],
+   [
+    "workforce-load-auditor",
+    "status:candidate"
+   ]
+  ],
+  "selected_ids": [
+   "compliance-litigator@2",
+   "adjacent-possible-explorer@2",
+   "cognitive-bias-auditor@2",
+   "protocol-archeologist@2",
+   "semantic-critic@2"
+  ],
+  "exploration_id": "concurrency-interleaving-auditor@1"
+ }
+}

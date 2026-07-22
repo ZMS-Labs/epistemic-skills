@@ -1,0 +1,128 @@
+{
+ "findings": [
+  {
+   "id": "F1",
+   "severity": "P1",
+   "claim": "The 'human-enforced boundary' that the subject repeatedly invokes as the actual backstop against a fluent-narrative bypass (C1/C5) has zero mechanical teeth at the GitHub governance layer, verified on the very PR instantiating the controls: main has no branch protection, the org ruleset covers only deletion/non-fast-forward, and PR #35 itself carries zero reviews with a failing DCO check yet remains mergeable.",
+   "evidence": [
+    {
+     "tier": "V",
+     "ref": "live probe: gh api repos/ZMS-Labs/epistemic-skills/branches/main/protection -> 404 'Branch not protected'"
+    },
+    {
+     "tier": "V",
+     "ref": "live probe: gh api repos/ZMS-Labs/epistemic-skills/rulesets/17068103 -> rules:[{type:deletion},{type:non_fast_forward}] only, no required_status_checks / pull_request rule"
+    },
+    {
+     "tier": "V",
+     "ref": "live probe: gh pr view 35 -> reviewDecision:'', reviews:[], mergeStateStatus:'UNSTABLE', mergeable:'MERGEABLE'"
+    },
+    {
+     "tier": "V",
+     "ref": "live probe: gh pr checks 35 -> DCO fail, all other checks pass"
+    },
+    {
+     "tier": "V",
+     "ref": "Y:/dev/_wt/epistemic-flex-v3/plugins/epistemic-skills/skills/decision-ledger/reference/README.md:39-45 (PR-review checklist item explicitly declared 'human-enforced, not schema-checkable'; 'a verdict-carrying-but-well-formed entry passes the schema \u2014 it is caught by this review, never claimed as schema-rejected')"
+    },
+    {
+     "tier": "I",
+     "ref": "[I <- V(above)] the checklist's enforcement premise (a human catches what the schema cannot) requires an actual required-review gate to exist; none does on this repo, so the described backstop is aspirational documentation, not an enforced control, on the exact artifact under evaluation"
+    }
+   ],
+   "falsifier": {
+    "statement": "Main branch protection or an org ruleset requiring at least 1 approving review and passing required status checks (including DCO) exists and currently blocks merge of PR #35 in its present state.",
+    "method": "gh api repos/ZMS-Labs/epistemic-skills/branches/main/protection and gh api repos/ZMS-Labs/epistemic-skills/rulesets/<id>; re-check gh pr view 35 mergeStateStatus/mergeable after any such rule is added",
+    "threshold": "a required_status_checks or pull_request-review rule present and enforcement:'active' that would prevent a maintainer from merging #35 with reviews:[] and DCO failing",
+    "timeframe": "immediately checkable; re-verify before any merge decision on #35"
+   },
+   "proposed_action": "Do not accept 'human review catches it' as an enforced control until a required-reviewers rule + required-status-checks rule (including DCO) is active on main; until then, treat every C1/C5 compliance claim resting on 'PR review' as unenforced policy, not a working gate."
+  },
+  {
+   "id": "F2",
+   "severity": "P2",
+   "claim": "The C4 failure_chain conditional requirement is mechanically validated only against repo-committed synthetic fixture files, never against real ledger entries an agent would write during actual work \u2014 no CI job, hook, or runtime check ever calls the validator against a live '.ledger/entries.jsonl'. The dossier's 'decision-ledger examples PASS' premise therefore certifies fixture conformance only.",
+   "evidence": [
+    {
+     "tier": "V",
+     "ref": "Y:/dev/_wt/epistemic-flex-v3/plugins/epistemic-skills/skills/decision-ledger/reference/validate_examples.py:75-89 (globs only 'example-*.json' in ROOT, plus one hardcoded planted-mutation of example-correction-with-chain.json)"
+    },
+    {
+     "tier": "V",
+     "ref": "Y:/dev/_wt/epistemic-flex-v3/.github/workflows/epistemic-flexibility.yml:40,58 (workflow invokes validate_examples.py \u2014 same fixture-only script \u2014 with no path/trigger touching a real store)"
+    },
+    {
+     "tier": "I",
+     "ref": "[I <- V(above)] no file named entries.jsonl outside continuity-verify's own test-fixture tree was found repo-wide (Bash find scoped to repo), and the diff (.gauntlet-subject/pr35.diff, 53 files) adds no '.ledger/' directory outside existing test fixtures \u2014 so the schema has never been run against a genuine production entry in this codebase's history"
+    }
+   ],
+   "falsifier": {
+    "statement": "A CI job, pre-commit hook, or runtime gate exists that validates real (non-fixture, non-test) '.ledger/entries.jsonl' records against ledger-entry.schema.json before they are trusted/consumed.",
+    "method": "grep the repo for any workflow step or hook path referencing a non-fixture '.ledger' directory or a schema-validation call outside skills/decision-ledger/reference and skills/continuity-verify/evals",
+    "threshold": "at least one such enforcement point found",
+    "timeframe": "immediately checkable against current HEAD 641ff2c"
+   },
+   "proposed_action": "Treat 'PASS' on decision-ledger examples as fixture self-test evidence only; do not cite it as evidence that any real ledger entry produced in production will be schema-conformant. Add a real validation hook before crediting C4 as enforced rather than aspirational."
+  },
+  {
+   "id": "F3",
+   "severity": "P3",
+   "claim": "The dossier's own VERIFIED-premises line misstates the audit exhibit it is certifying: it states commits 'lack Signed-off-by' when in fact all four PR commits in the diff range carry Signed-off-by trailers; the actual DCO failure cause is an author/signoff email mismatch (GitHub noreply identity vs. personal email), which check_dco.py's own test suite documents as by-design strict behavior, not absence of signoff.",
+   "evidence": [
+    {
+     "tier": "V",
+     "ref": "Y:/dev/_wt/epistemic-flex-v3 dossier.md:57 ('DCO check FAIL (commits lack Signed-off-by...)')"
+    },
+    {
+     "tier": "V",
+     "ref": "live probe: git log --format='%H %an <%ae>' e1f6054..641ff2c and git log --format='...%B' showing 3 commits authored as 'SternOne <89846440+SternOne@users.noreply.github.com>' each carrying 'Signed-off-by: SternOne <zachstern@gmail.com>' \u2014 email mismatch, not absence"
+    },
+    {
+     "tier": "V",
+     "ref": "Y:/dev/_wt/epistemic-flex-v3/.github/scripts/check_dco.py:20-27 (unsigned_commits requires exact casefold match of BOTH name and email between author and Signed-off-by trailer)"
+    },
+    {
+     "tier": "V",
+     "ref": "Y:/dev/_wt/epistemic-flex-v3/.github/scripts/test_check_dco.py:36-38 (test_mismatched_signoff_does_not_pass confirms mismatch-fails is intended design, distinct from 'missing')"
+    }
+   ],
+   "falsifier": {
+    "statement": "The dossier's characterization is accurate if the underlying commits genuinely contain no Signed-off-by trailer at all (not merely a mismatched email).",
+    "method": "git log --format=%B on every commit in e1f6054..641ff2c and grep for 'Signed-off-by'",
+    "threshold": "zero commits contain a Signed-off-by line",
+    "timeframe": "immediately checkable, already checked: 4/4 commits contain the trailer, contradicting the dossier phrasing"
+   },
+   "proposed_action": "Correct the dossier's evidence line to 'Signed-off-by present but author-identity mismatch (GitHub noreply vs personal email)' \u2014 a record used to certify audit-trail claims should not itself misdescribe the exhibit it cites."
+  },
+  {
+   "id": "F4",
+   "severity": "P3",
+   "claim": "The PR's own consequential design decisions (the five-control shape, the C4 chain fields, the CI wiring choices) are persisted only as free-form prose in docs/handoffs and docs/research, never as a schema-validated ledger-entry@1 record \u2014 despite plainly satisfying decision-ledger's own stated trigger for a loggable 'decision' (irreversible, non-self-contained, future sessions need the reasoning \u2014 which is exactly why docs/handoffs exists).",
+   "evidence": [
+    {
+     "tier": "V",
+     "ref": "Y:/dev/_wt/epistemic-flex-v3/plugins/epistemic-skills/skills/decision-ledger/SKILL.md:39-42 (consequential-moment test: 'a named downstream consumer class will cite it') and :44-50 (skip gate: skippable only if reversible AND self-contained AND no future session needs the reasoning)"
+    },
+    {
+     "tier": "V",
+     "ref": "grep of .gauntlet-subject/pr35.diff file list: no '.ledger/' path added outside pre-existing continuity-verify test fixtures; only docs/handoffs/2026-07-22-epistemic-flexibility-v3.md and docs/research/2026-07-22-psychology-epistemic-skills-synthesis.md carry the design rationale, both free prose"
+    },
+    {
+     "tier": "I",
+     "ref": "[I <- V(above)] by the skill's own skip-gate text, a design decision that spawned a dedicated handoff doc for future-session reuse fails all three skip conditions simultaneously, so under the skill's own membership test this was a ledger moment that was not logged as one"
+    }
+   ],
+   "falsifier": {
+    "statement": "A ledger-entry@1-formatted record exists (in this PR or a companion commit) documenting the epistemic-flexibility integration decision with 'because' provenance and 'revisit_when', rather than only prose docs.",
+    "method": "grep the diff and repo for a '.ledger/entries.jsonl' addition or any 'entry\": \"ledger-entry@1' JSON object referencing the epistemic-flexibility design decision",
+    "threshold": "at least one non-fixture ledger-entry@1 record found for this design decision",
+    "timeframe": "immediately checkable against current diff/HEAD"
+   },
+   "proposed_action": "Either log the integration decision as an actual ledger-entry@1 (dogfooding the mechanism it ships) or explicitly document the skip and why, per the skill's own 'say the skip' floor \u2014 currently neither happened."
+  }
+ ],
+ "verdict": "From the compliance-litigator lens: the subject's five controls read as internally well-documented (the skill files repeatedly pre-admit their own structural limits, e.g. 'STRUCTURAL ONLY,' 'human-enforced, not schema-checkable'), but the specific enforcement mechanism that C1/C5 lean on to defend against a fluent-narrative bypass -- human PR review -- has zero live teeth on the exact artifact under evaluation: PR #35 has no branch protection, no required reviewers, zero reviews, and a failing DCO check that does not block merge. The mechanical validator for C4 (failure_chain) is real and well-built as a schema, but it is proven only against committed synthetic fixtures -- it has never once run against a genuine production ledger entry, so the dossier's 'PASS' line is narrower evidence than it reads. A minor but concrete integrity gap: the dossier's own VERIFIED-premises section misdescribes the DCO exhibit (claims signoff is absent when it is present-but-mismatched), which is exactly the kind of written-record-vs-exhibit discrepancy this lens exists to catch, even in the auditors' own artifact. None of this proves the design is worthless -- the schema and process discipline are genuinely more rigorous than most such proposals -- but the claim that the controls 'fail closed' rests on a review gate that is documented, not deployed.",
+ "hypothesis_supported": "H2 (fail-closed claimed but not enforced) is the best-supported rival: the decision-ledger's own documentation names human PR review as the backstop against a well-formed-but-verdict-carrying or narrative-satisfying entry, and that backstop is verified absent (no branch protection, no required reviewers, zero reviews on PR #35 itself). This also partially feeds H5 (validator is an inadequate oracle for anything beyond its fixtures) since C4's mechanical check has never touched a real entry.",
+ "hypothesis_killed": "H3 (controls unreachable / never fire due to no new trigger) is not supported by this lens's evidence -- the schema, workflow wiring, and skill text clearly make the controls reachable in principle (they are bound into existing skill moments and CI runs the fixture batteries on every relevant PR); the failure found here is enforcement-teeth at the merge/audit boundary, not unreachability of the mechanism itself.",
+ "fix_or_move": "Minimum fix set: (1) add branch protection or an org ruleset requiring \u22651 approving review + required status checks (including DCO) on main before treating 'human review' as an enforced C1/C5 backstop; (2) wire validate_examples.py (or an equivalent) into a real pre-write/pre-commit gate over actual '.ledger/entries.jsonl', not only committed fixtures, before crediting C4 as mechanically enforced; (3) correct the dossier's DCO evidence line to reflect signoff-email-mismatch rather than absent signoff; (4) either log the integration's own design decision as a real ledger-entry@1 or record the explicit skip per the skill's own floor. None of these are fatal to the design's merit, but until done, the 'fail-closed' and 'human-enforced' claims are policy text, not verified controls."
+}

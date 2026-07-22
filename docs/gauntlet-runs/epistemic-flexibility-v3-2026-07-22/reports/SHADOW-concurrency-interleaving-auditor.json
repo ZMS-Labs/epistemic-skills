@@ -1,0 +1,127 @@
+{
+ "findings": [
+  {
+   "id": "CI-1-ledger-fork-race",
+   "severity": "P1",
+   "claim": "The decision-ledger store-level invariants that C4 (recurrent-failure chain) now leans on more heavily \u2014 unique id within the store, an acyclic `supersedes` graph with a unique head, no dangling ids, and 'single-writer-or-locked append' \u2014 are named in the shipped artifacts but enforced by nothing PR35 ships. Two concurrent writers can legally append entries that both `supersedes` the same prior id, producing a fork (two heads) that no shipped validator, fixture, or consumer rule detects or resolves.",
+   "reasoning": "SKILL.md states the store 'is single-writer-or-locked append' [V plugins/epistemic-skills/skills/decision-ledger/SKILL.md:107] and that supersedes links 'must form an acyclic graph with a unique head and no dangling ids' as a 'store-level invariant, not schema-checkable' [V plugins/epistemic-skills/skills/decision-ledger/SKILL.md:112-117; V plugins/epistemic-skills/skills/decision-ledger/reference/ledger-entry.schema.json:5,59]. The consumption contract explicitly depends on this: 'it walks the supersedes chain to the current head before citing anything' [V plugins/epistemic-skills/skills/decision-ledger/SKILL.md:159-163]. Yet the only validator shipped in this PR, validate_examples.py, checks one JSON document at a time \u2014 required fields, closed vocabularies, the failure_chain shape \u2014 and never loads or scans a multi-entry store for duplicate ids, cycles, or multiple heads [V plugins/epistemic-skills/skills/decision-ledger/reference/validate_examples.py:33-96]. A repo-wide search for any locking primitive (flock/fcntl/filelock/lockfile) inside plugins/epistemic-skills returns zero hits relevant to the ledger [V grep 'flock|fcntl|filelock|lockfile|\\.lock' over plugins/epistemic-skills \u2014 no ledger-related match]. Racy pair: writer A reads current head X, appends E1{supersedes:[X]}; writer B, interleaved before A's append is visible, also reads head X and appends E2{supersedes:[X]}. Both entries individually validate against every shipped check; the store now has two 'heads' pointing at the same superseded id, and nothing in this PR's contract says which one continuity-verify or a gauntlet dossier must treat as current. This is exactly the surface C4 makes more consequential (recurrent-failure corrections are the multi-session, multi-agent scenario where this race is most likely), yet C4 ships with zero new teeth for it.",
+   "evidence": [
+    {
+     "tier": "V",
+     "ref": "plugins/epistemic-skills/skills/decision-ledger/SKILL.md:107"
+    },
+    {
+     "tier": "V",
+     "ref": "plugins/epistemic-skills/skills/decision-ledger/SKILL.md:112-117"
+    },
+    {
+     "tier": "V",
+     "ref": "plugins/epistemic-skills/skills/decision-ledger/SKILL.md:159-163"
+    },
+    {
+     "tier": "V",
+     "ref": "plugins/epistemic-skills/skills/decision-ledger/reference/ledger-entry.schema.json:5,59"
+    },
+    {
+     "tier": "V",
+     "ref": "plugins/epistemic-skills/skills/decision-ledger/reference/validate_examples.py:33-96"
+    },
+    {
+     "tier": "I",
+     "ref": "inference from the above: per-file-only validation + explicit 'not schema-checkable' disclaimer + absence of any lock primitive in the codebase jointly mean the store-level invariant is unenforced and untested"
+    }
+   ],
+   "falsifier": {
+    "statement": "Constructing two ledger-entry@1 JSON objects (durability=durable, distinct ids, identical supersedes=[X]) and running every PR35-shipped validator (validate_trace.py, run_tests.py x2, validate_examples.py, score_behavior.py) against them individually and against a synthetic two-line .ledger/entries.jsonl built from both will surface a fork/duplicate-head rejection from at least one shipped script.",
+    "method": "Author the two JSON fixtures, run each existing self-test entrypoint against them (both individually, and concatenated into a .jsonl store), and inspect exit codes/output for any fork- or duplicate-detection.",
+    "threshold": "If any shipped script exits non-zero or prints an error specifically attributable to the fork/duplicate-head condition, this finding is false; if all scripts exit 0/PASS on both individually and no script ever loads more than one entry at a time, the finding stands.",
+    "timeframe": "Reproducible today in under 15 minutes, no new dependencies; can be run in the current worktree."
+   },
+   "proposed_action": "Do not treat C4 as production-safe for multi-writer/multi-session use until a store-level validator (duplicate id scan, cycle/multi-head detection across the full .ledger/entries.jsonl) ships alongside it, or the SKILL.md is amended to state plainly that concurrent/multi-agent writers to the same store are out of scope and must serialize externally."
+  },
+  {
+   "id": "CI-2-workflow-no-concurrency-group",
+   "severity": "P3",
+   "claim": "The new `.github/workflows/epistemic-flexibility.yml` triggers on broad path globs for both `pull_request` and `push: main` with no `concurrency:` group/cancel-in-progress key, so successive pushes to the same branch spawn independent, uncancelled overlapping runs \u2014 but this is resource contention, not (on reachability check) a merge-safety hole, since GitHub required-status-checks bind to the specific head SHA rather than 'latest run of this workflow name.'",
+   "reasoning": "The full 64-line workflow has no `concurrency:` block [V .github/workflows/epistemic-flexibility.yml:1-64]. This is consistent with the pre-existing dco.yml, which also lacks one [V .github/workflows/dco.yml:1-21] \u2014 so it's an existing repo convention this PR extends rather than a novel regression. Per my persona's own bias warning, I checked the reachability of the 'stale-PASS-overwrites-newer-FAIL' race and could not construct it under standard GitHub Actions semantics: required checks are evaluated against the exact merge/head SHA, and a run triggered by an older push is keyed to the older SHA, not the newer one. So the credible failure mode narrows to wasted CI-minutes/runner-queue contention on a `docs/**`-triggered, frequently-firing workflow, not an incorrect merge gate.",
+   "evidence": [
+    {
+     "tier": "V",
+     "ref": ".github/workflows/epistemic-flexibility.yml:1-64 (no concurrency key)"
+    },
+    {
+     "tier": "V",
+     "ref": ".github/workflows/dco.yml:1-21 (same repo convention, pre-existing)"
+    },
+    {
+     "tier": "I",
+     "ref": "inference: GitHub required-status-checks bind to head SHA, so the merge-safety race does not reach; only compute waste remains \u2014 stated per persona bias-correction duty"
+    }
+   ],
+   "falsifier": {
+    "statement": "Two rapid commits (A then B) pushed to the same PR branch will show GitHub attaching SHA-A's completed run as satisfying the required check for SHA-B.",
+    "method": "Push commit A, then commit B within the workflow's typical run duration to the same PR; inspect the Checks tab / branch-protection required-check status for SHA-B specifically.",
+    "threshold": "If SHA-B's required check is ever satisfied by a run keyed to SHA-A, the race is real and this finding's severity should be raised to P1; if SHA-B's check is only ever satisfied by a run keyed to SHA-B, only the wasted-compute claim stands.",
+    "timeframe": "One CI cycle (~10 minutes) with two pushes to a live PR."
+   },
+   "proposed_action": "Add a `concurrency: {group: ${{ github.workflow }}-${{ github.ref }}, cancel-in-progress: true}` block to reduce runner-queue contention on the docs-broad trigger; not a merge-blocking issue."
+  },
+  {
+   "id": "CI-3-append-idempotency-gap",
+   "severity": "P3",
+   "claim": "Decision-ledger append has no idempotency/dedup key: a crashed or retried write (or two parallel sessions independently deciding to log 'the same' moment under the router's own 'default when unsure: log' bias) produces two distinct ledger-entry@1 records describing the same decision under two different ids, and no PR35 validator or fixture distinguishes or flags this.",
+   "reasoning": "The schema requires `id` to be 'Unique within the store' [V plugins/epistemic-skills/skills/decision-ledger/reference/ledger-entry.schema.json:27-31] but nothing generates or checks that uniqueness from a retried write, and the id is purely a slug+date+sequence, not content-derived. SKILL.md's trigger guidance explicitly biases toward over-logging ('Default when unsure: log' [V plugins/epistemic-skills/skills/decision-ledger/SKILL.md:42]), which under mid-flight retry or two independent parallel writers raises the chance of near-duplicate entries with different `supersedes` targets rather than one clean append. None of the six shipped fixtures/validators (validate_examples.py, validate_trace.py + its fixtures, score_behavior.py + its gold/bad pairs) constructs or tests a 'same decision, two ids' scenario.",
+   "evidence": [
+    {
+     "tier": "V",
+     "ref": "plugins/epistemic-skills/skills/decision-ledger/reference/ledger-entry.schema.json:27-31"
+    },
+    {
+     "tier": "V",
+     "ref": "plugins/epistemic-skills/skills/decision-ledger/SKILL.md:42"
+    },
+    {
+     "tier": "I",
+     "ref": "inference: id shape is not content-addressed and no cross-entry dedup validator exists per CI-1's evidence, so a retried/duplicated write is structurally indistinguishable from two genuinely distinct decisions"
+    }
+   ],
+   "falsifier": {
+    "statement": "No shipped PR35 validator or fixture flags two entries with identical statement/because content under two distinct ids as a near-duplicate.",
+    "method": "Author two ledger-entry@1 JSON objects with identical `statement`/`because` text and different `id`s; run all shipped validators against them.",
+    "threshold": "If all validators pass both entries as independently valid with no dedup/near-duplicate signal, the gap is confirmed; if any script rejects or flags the pair, this finding is false.",
+    "timeframe": "Reproducible today in under 10 minutes."
+   },
+   "proposed_action": "Treat as a known, low-severity degrade-not-corrupt gap (append-only ledgers tolerate duplicates as noise); note it in the close-out rule's AC5 follow-up so the \u226520-batch hit-rate accounting isn't silently inflated by duplicate entries."
+  },
+  {
+   "id": "CI-4-validators-internally-race-free",
+   "severity": "P4",
+   "claim": "The shipped validator/runner scripts themselves (validate_trace.py, both run_tests.py entrypoints, score_behavior.py, validate_examples.py) are single-process, stdlib, read-only file I/O with no shared mutable state, temp files, or write paths \u2014 so there is no internal race inside the deterministic conformance battery itself.",
+   "reasoning": "Read all five scripts: each iterates a fixed fixtures directory, reads JSON via `Path.read_text`, and only ever appends to local in-memory lists before printing a report; none opens a file for writing [V plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/run_tests.py:1-45; V .../behavioral/run_tests.py:1-43; V .../behavioral/score_behavior.py (read-only per full read); V .../decision-ledger/reference/validate_examples.py:73-96]. Stated per this persona's own bias-correction duty: this interleaving concern is checked and found unreachable inside these specific scripts, distinct from the store-level gap in CI-1.",
+   "evidence": [
+    {
+     "tier": "V",
+     "ref": "plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/run_tests.py:1-45"
+    },
+    {
+     "tier": "V",
+     "ref": "plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/behavioral/run_tests.py:1-43"
+    },
+    {
+     "tier": "V",
+     "ref": "plugins/epistemic-skills/skills/decision-ledger/reference/validate_examples.py:73-96"
+    }
+   ],
+   "falsifier": {
+    "statement": "Running two copies of any of these scripts concurrently against the same fixture directory produces a write conflict, corrupted output, or non-deterministic PASS/FAIL result.",
+    "method": "Launch two parallel processes of the same script against the same fixtures directory and diff their stdout/exit codes.",
+    "threshold": "Any divergence in exit code or output content between the two concurrent runs falsifies this finding.",
+    "timeframe": "A few minutes; no infrastructure needed."
+   },
+   "proposed_action": "None \u2014 informational; documents that the concurrency-auditor lens found this specific surface clean, in contrast to CI-1."
+  }
+ ],
+ "hypothesis_supported": "H4 (failure_chain conditional is under-specified relative to the store it depends on) and, distinctly, a sixth axis not in the candidate list: the PR extends a store whose documented concurrency invariant (single-writer-or-locked, acyclic unique-head) is pre-existing but is left completely unenforced and untested even as C4 raises the stakes on getting it right. This is closest to H5 (inadequate oracle) but scoped specifically to the multi-writer/interleaving dimension rather than general validator adequacy.",
+ "hypothesis_killed": "H2 (fail-closed narrative-bypass) and H3 (controls unreachable/never fire) are not supported by concurrency-specific evidence \u2014 the validators that do run are read-only and internally race-free (CI-4), and the CI merge-safety race I initially suspected (CI-2) does not survive an honest reachability check under standard GitHub Actions SHA-scoped required-checks semantics.",
+ "verdict": "From the concurrency-interleaving lens: this PR is overwhelmingly prose/schema/fixture content with no new concurrent-state-mutation code, so most classic race/TOCTOU/idempotency vectors are structurally absent \u2014 a fair result, verified rather than assumed (CI-4). But the one place this PR does touch genuinely shared, multi-writer state \u2014 the decision-ledger's supersedes/head/id invariants that C4 (recurrent-failure chain) newly depends on more heavily \u2014 remains exactly as unenforced and untested after this PR as before it. The PR ships six new validators and dozens of fixtures for single-document shape-conformance, and zero for the one cross-document, multi-writer invariant its own SKILL.md and schema explicitly name as required ('single-writer-or-locked', 'acyclic graph with a unique head', 'store-level invariant, not schema-checkable'). That gap is real, concretely constructible (CI-1), and cheaply falsifiable \u2014 it should gate C4's claim to be production-ready for the multi-session/cross-device use this collection is designed for, even though it does not gate the PR's narrower claim of internal shape-conformance."
+}

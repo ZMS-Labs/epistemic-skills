@@ -1,0 +1,12 @@
+{
+  "subject": "epistemic-flexibility v3: five cross-cutting controls (C1 claim/source separation, C2 authorized-priority vs success-proxy, C3 preregistered discriminating test, C4 recurrent-failure chain, C5 closure control) integrated into existing epistemic-skills SKILL.md files and a decision-ledger extension, plus a deterministic protocol validator and behavioral fixtures; no new skill or trigger introduced. PR #35 diff, 53 files.",
+  "axis": "fixed",
+  "depth": "standard",
+  "domains": ["epistemics", "governance", "process", "maintainability"],
+  "risk_classes": [],
+  "stakeholders": ["operator", "users"],
+  "horizon": "long",
+  "capability_needs": ["framing-epistemics", "process-integrity"],
+  "domain_confidence": "high",
+  "allow_probation_seat": true
+}

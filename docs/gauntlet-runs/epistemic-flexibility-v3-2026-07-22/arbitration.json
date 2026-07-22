@@ -1,0 +1,100 @@
+{
+ "conflict_ledger": [
+  {
+   "conflict": "Do the five controls 'fail closed / never authorize' as the shipped prose states, or is that enforcement claim unbacked by any running check?",
+   "parties": "semantic-critic (SC-1, metatextual) + compliance-litigator (F1, adversary) vs. the subject's SKILL/reference prose and the dossier's implied enforcement framing",
+   "ruling": "UPHELD",
+   "evidence_weight": "[V] reproduced (highest): SC-1 ran validate_trace.py and score_behavior.py at HEAD 641ff2c and got PASS on a control:'hold' trace whose action states the irreversible act was already executed, and on a keyword-stuffed trace that paraphrases the exact forbidden backup-disable behavior. Corroborated by [V] live probes (compliance F1): main has no branch protection, org ruleset covers only deletion/non-fast-forward, PR #35 has zero reviews and a non-blocking DCO fail, so the documented human backstop has no live teeth on the artifact under evaluation.",
+   "justification": "The oracles check key/enum/substring presence, not control/action consistency or behavioral truth; the human-review fallback the docs name is not deployed. For an artifact whose entire purpose is honest epistemic labeling, shipping 'fail-closed'/'never authorizes'/'enforced' as flat prose that a reproduced adversarial trace defeats is a claim-vs-reality defect, not mere framing.",
+   "dissent_preserved": "All four lenses that touched this agree the DESIGN is not worthless and the fix is cheap: compliance ('none of this is fatal to the design's merit'), adjacent-possible offers 10-30 line edits that convert prose to teeth, bias/protocol note the diff is unusually candidly hedged elsewhere. The defect is the point-of-use labeling and the un-wired oracle, not the additive integration itself."
+  },
+  {
+   "conflict": "Do the dossier's VERIFIED-premises PASS lines (protocol 8/8, behavioral 12/12, decision-ledger examples PASS) constitute evidence that the controls work / fire in real work?",
+   "parties": "dossier VERIFIED-premises table vs. adjacent-possible (F2,F4), compliance (F2), cognitive-bias (F2)",
+   "ruling": "UPHELD-WITH-QUALIFICATIONS",
+   "evidence_weight": "[V]: validate_examples.py globs only reference example-*.json; the CI workflow runs the same fixture-only scripts; no path touches a real .ledger/entries.jsonl; fixtures and validator were authored in the same commit (4f7bb45). The handoff itself admits no independent-construction step occurred.",
+   "justification": "The PASS numbers are true and reproducible but prove only tool self-consistency (the author's fixtures match the author's validator). They do NOT support 'controls fire during real work' or 'the validator discriminates genuine bad traces.' The subject's own spec/reference self-label these as smoke tests, so the qualification is the subject's own position; the defect is that the dossier cites PASS without the inline caveat.",
+   "dissent_preserved": "cognitive-bias F2's falsifier (independent author writes 5 novel adversarial should-fail traces) is untested on the record \u2014 the oracle MIGHT generalize; this is a known-unknown, not a proven inadequacy beyond the SC-1 reproductions."
+  },
+  {
+   "conflict": "Is the C4 failure_chain conditional under-specified / not mechanically validated (H4)?",
+   "parties": "adjacent-possible (F4, refutes H4-shape) + protocol-archeologist (PA-1, refines) vs. compliance (F2, fixture-only)",
+   "ruling": "SPLIT",
+   "evidence_weight": "[V]: validate_examples.py implements the allOf conditional correctly with planted negative fixtures ('recurrent correction without chain', 'chain on decision') that genuinely assert FAIL \u2014 the conditional SHAPE is well-specified and mechanically checked. BUT the antecedent recurrence_risk:true is optional and self-attested; nothing checks whether it was set honestly, and the check never runs against a real ledger entry.",
+   "justification": "H4 in its original 'under-specified/not validated' shape is OVERRULED \u2014 the conditional logic is the best-built mechanical piece in the PR. The refined gap is UPHELD: the trigger an agent controls (whether to admit recurrence risk) has zero review pressure, and validation is fixture-only. PA-1 shows the repo's own founding pattern (pair every unenforceable semantic with a human-checklist line) was reproduced for the chain's content but dropped for the trigger.",
+   "dissent_preserved": "protocol-archeologist explicitly credits the additive discipline as 'genuine evidence of care, not ceremony'; the split is a half-fence, not a broken control."
+  },
+  {
+   "conflict": "Are the controls unreachable because bound to existing skills 'without a new trigger' (H3)?",
+   "parties": "adjacent-possible (F1,F2: trace scaffold has zero production consumer) vs. semantic-critic (SC-4: H3 weakened) + protocol-archeologist (formal-rigor/blindspot additive)",
+   "ruling": "SPLIT",
+   "evidence_weight": "[V]: no SKILL.md references validate_trace/epistemic-process-trace/score_behavior (grep zero matches) \u2014 the standalone validator scaffold is un-consumed. [V]: write-goal/SKILL.md integrates C2 with worked prose, examples, and a rationalization-table entry \u2014 the control-as-prose IS reachable in its skill moment.",
+   "justification": "Two different objects. The CONTROLS as guidance prose fire inside existing skill moments (H3 OVERRULED for the prose bindings). The epistemic-process-trace@1 VALIDATOR/behavioral-scorer scaffold (~700 lines) has no production emitter or consumer (H3/H5 UPHELD for that scaffold specifically).",
+   "dissent_preserved": "Both facts stand; neither lens is wrong. The un-wired scaffold is a scope/foundational question (P4), not proof the controls never fire."
+  },
+  {
+   "conflict": "Does the integration weaken or contradict an existing authoritative gate (formal rigor, provenance, independent verification) it claims to leave intact (H6)?",
+   "parties": "protocol-archeologist (H6 NOT supported for sampled files) vs. no lens affirmatively supporting H6",
+   "ruling": "OVERRULED",
+   "evidence_weight": "[V] for the 2 of 10 skills inspected in depth: applying-formal-rigor and blindspot-pass preserve prior boundary language verbatim ('Formal derivation... does not manufacture runtime facts' kept intact) and append rather than replace.",
+   "justification": "No lens produced [V] evidence that any existing gate was weakened; the sampled evidence is affirmatively against H6. Additive, non-destructive prose changes.",
+   "dissent_preserved": "Only 2 of 10 touched skills were inspected in depth; H6 across the other 8 is a known-unknown, not cleared \u2014 residual, not blocking."
+  },
+  {
+   "conflict": "Does the research synthesis / ACT-DBT-CBT framing inflate the case with borrowed authority and an over-strong verdict (H1)?",
+   "parties": "cognitive-bias (F1,F3) + semantic-critic (SC-3) vs. the subject's own self-hedges",
+   "ruling": "UPHELD-WITH-QUALIFICATIONS",
+   "evidence_weight": "[V]: synthesis grades its own rubric 'Strongly supported' while its Limits section and the dossier concede the behaviorally-consequential claim is unestablished; grep shows ACT/DBT/CBT vocabulary appears zero times in operative SKILL.md instructions and only in non-executable rationale.",
+   "justification": "The 'Strongly supported' verdict language and nine clinical citations overstate \u2014 the executable artifacts are byte-independent of the psychology literature (halo/borrowed-authority pattern). H1 is partially supported: ceremony in the FRAMING, not in the mechanism.",
+   "dissent_preserved": "The artifact self-discloses ('generative basis, not a unique origin'; 'not a ninth discipline'); the tension is real but candidly named, and no executable logic depends on the citations \u2014 a quality/framing defect, not a mechanical one."
+  },
+  {
+   "conflict": "Does the dossier's own VERIFIED-premises section accurately describe the DCO exhibit?",
+   "parties": "compliance-litigator (F3) vs. dossier line 57",
+   "ruling": "UPHELD",
+   "evidence_weight": "[V]: git log shows all four PR commits carry 'Signed-off-by: SternOne <zachstern@gmail.com>' with author identity SternOne@users.noreply \u2014 the DCO fail is an author/signoff email MISMATCH, which check_dco.py's test suite documents as by-design, not the absence the dossier states ('commits lack Signed-off-by').",
+   "justification": "A record used to certify audit-trail claims misdescribes the exhibit it cites \u2014 exactly the written-record-vs-exhibit discrepancy this lens exists to catch, in the auditors' own artifact.",
+   "dissent_preserved": "Minor (P3); does not touch the design's mechanical soundness, but must be corrected before the dossier is cited elsewhere."
+  },
+  {
+   "conflict": "Should the integration's own design decision have been logged as a ledger-entry@1 (dogfooding), per the skill's own trigger?",
+   "parties": "compliance-litigator (F4) vs. the PR's actual artifacts (prose docs/handoffs only)",
+   "ruling": "UPHELD",
+   "evidence_weight": "[V]: no .ledger/ path added outside pre-existing fixtures; the design rationale lives only in docs/handoffs and docs/research free prose. [I<-V]: by the skill's own skip-gate (skippable only if reversible AND self-contained AND no future session needs the reasoning), a decision that spawned a dedicated handoff fails all three skip conditions.",
+   "justification": "Under its own membership test this was a ledger moment not logged as one, and the explicit skip was not recorded either \u2014 a P3 dogfooding/consistency gap.",
+   "dissent_preserved": "Non-fatal; the mechanism exists and works on fixtures \u2014 this is a 'practice what you ship' gap, not a defect in the mechanism."
+  }
+ ],
+ "decisions": [
+  {
+   "tier": "P1",
+   "decision": "Fail-closed / enforced labeling is not mechanically supported. The shipped prose states the controls 'fail closed' and 'never authorize', and the dossier cites PASS lines as if they demonstrate this, but (a) semantic-critic reproduced [V] that both deterministic oracles PASS adversarial traces enacting the forbidden behavior, and (b) compliance-litigator verified [V] the human-review backstop has no live teeth (no branch protection, zero reviews, non-blocking DCO on PR #35). For an epistemic-honesty artifact, an overstated enforcement claim is the exact defect class the tool exists to prevent.",
+   "acceptance": "EITHER (a) add a control-action consistency check to validate_trace.py / score_behavior.py that FAILs the two reproduced adversarial trace files (action-completion language when control!='act'; substring-present-without-matching-behavior), demonstrated by exit-code 1 on both; OR (b) downgrade every 'fail-closed' / 'never authorizes' / 'enforced' claim to 'structurally-required, content-unverified' at each point of use in SKILL.md/reference prose AND attach the 'author-constructed, not independently adversarial; smoke-test only' caveat inline wherever 8/8 or 12/12 PASS is cited (including the dossier VERIFIED-premises table). Re-verify at the amended HEAD."
+  },
+  {
+   "tier": "P2",
+   "decision": "The one working oracle (decision-ledger's schema check) and the single best new idea (gauntlet validation_kernel) are shipped without teeth, and the C4 trigger is unguarded. validate_examples.py runs only against reference fixtures, never a real .ledger/entries.jsonl; validation_kernel exists as prose only, absent from lens.schema.json and run_tests.py; recurrence_risk honesty has no paired review-checklist line unlike the repo's own established never-instruct fence pattern.",
+   "acceptance": "(1) Point validate_examples.py's glob at repo-local .ledger/entries.jsonl in CI, not only reference/example-*.json (adjacent-possible F4, ~10-30 lines). (2) Add validation_kernel as a required field in gauntlet/roster/lens.schema.json plus one assertion in gauntlet/tests/run_tests.py (adjacent-possible F3). (3) Add a paired PR-review checklist line in decision-ledger/reference/README.md requiring reviewers to check whether recurrence_risk was under-marked for a plausibly-recurring correction (protocol-archeologist PA-1). Each verifiable by grep + test-run at the amended HEAD."
+  },
+  {
+   "tier": "P3",
+   "decision": "Framing/record-integrity defects: research synthesis grades itself 'Strongly supported' while conceding the behavioral claim is unestablished and leans on nine clinical citations the executable code does not depend on; the dossier misdescribes the DCO exhibit ('lack Signed-off-by' when signoff is present-but-mismatched); the integration's own design decision was neither logged as a ledger-entry@1 nor recorded as an explicit skip.",
+   "acceptance": "(1) Downgrade the Determination row to 'mechanical integration complete; behavioral effect unestablished' and relabel the psychology section 'design rationale / inspiration' (cognitive-bias F1/F3). (2) Correct dossier line 57 to 'Signed-off-by present, author-identity mismatch (noreply vs personal email)' (compliance F3). (3) Log the integration decision as a real ledger-entry@1 or record the explicit skip per the skill's own floor (compliance F4). All three are desk edits, re-verifiable immediately."
+  },
+  {
+   "tier": "P4",
+   "decision": "Scope/foundational tension: the epistemic-process-trace@1 validator + behavioral scorer + fixture harness (~700 lines) is a second structured-record format with zero production emitter or consumer, standing next to decision-ledger's ledger-entry.schema.json which already has a live consumption path; and the new CI/validator apparatus is a ceremony expansion layered beside decision-ledger's deliberate floors-not-ceilings design.",
+   "acceptance": "Decide and record one of: (a) defer/delete the standalone trace scaffold until a real skill emits the object, or (b) fold its field vocabulary into ledger-entry.schema.json rather than maintaining a parallel format (adjacent-possible F2). Note the ceremony-vs-floors tension in the handoff for future archeologists (protocol-archeologist PA-3). Advisory; not a merge blocker on its own."
+  }
+ ],
+ "verdict": "NO-GO",
+ "next_action": "Resolve the single P1 before any merge: pick ONE path \u2014 wire a control-action consistency check that fails the two reproduced adversarial traces, OR downgrade every 'fail-closed'/'never-authorizes'/'enforced' claim to 'structurally-required, content-unverified' at each point of use and attach the 'author-constructed smoke-test only' caveat inline wherever 8/8 or 12/12 PASS is cited (dossier table included). This is a desk-or-~30-line fix; on completion the gate advances to CONDITIONAL with the P2 teeth-wiring items open. Note: the DCO check is independently failing and blocks merge as a separate process gate regardless of this verdict, and cross-family external adjudication (Step 7b) is still owed for this charter change.",
+ "coverage_statement": {
+  "families_exercised": "Five verified lenses across all required roles: adversary (compliance-litigator), constructive (adjacent-possible-explorer), and three metatextual (cognitive-bias-auditor, protocol-archeologist, semantic-critic). Shadow lens excluded per protocol. All six candidate failure axes touched: H1 (partially upheld \u2014 framing ceremony), H2 (upheld \u2014 reproduced), H3 (split \u2014 prose reachable, scaffold un-wired), H4 (split \u2014 shape sound, trigger/real-entry gap), H5 (upheld for the trace scaffold and via SC-1 reproductions), H6 (overruled on sampled evidence).",
+  "assumptions_reviewed": "The dossier's VERIFIED-premises PASS lines were challenged and qualified (self-consistency, not behavioral proof). The 'fail-closed/enforced' framing was challenged and defeated by reproduced [V]. The subject's self-hedges ('smoke test', 'STRUCTURAL ONLY', 'not a ninth discipline') were credited and weighed as mitigating.",
+  "known_unknowns": "Behavioral superiority over baseline/2.8.0/psychology-only (Phase 4 four-arm ablation not run). H6 across the 8 of 10 touched skills not inspected in depth. Whether an INDEPENDENT (non-author, cross-family) adversarial fixture set would break the validators \u2014 cognitive-bias F2's falsifier is untested on the record. Real-world downstream over-citation of the PASS numbers.",
+  "evidence_freshness": "Fresh. All [V] tags resolve against frozen HEAD 641ff2c; live gh/git probes (branch protection, ruleset, PR #35 reviews/checks, commit signoff) and the two SC-1 validator reproductions were run same-day 2026-07-22 in the checked-out worktree.",
+  "residual_uncertainty": "This is a same-model-family arbitrator (Claude/Opus) judging Claude-family-plausible lenses; correlated-family blind spots are possible and cross-family external adjudication (Step 7b) was NOT run. The verdict rests heavily on one lens's reproduced adversarial demonstration (SC-1) plus one lens's live probes (compliance F1) \u2014 both [V] and independently re-checkable, but the P1 could be discharged by documentation-only edits, which would move the true risk (downstream over-trust of PASS) rather than eliminate it. H6 sampling gap and the untested oracle-generalization falsifier remain open."
+ },
+ "external_gate_owed": true
+}

@@ -1,0 +1,91 @@
+{
+ "findings": [
+  {
+   "id": "PA-1",
+   "severity": "P2",
+   "claim": "The C4 failure_chain conditional is grafted onto a schema (ledger-entry@1) whose founding design (PR #32, spec #31) established a specific paired-fence pattern \u2014 every schema-unenforceable semantic requirement gets an explicit human-review checklist item in reference/README.md (the 'never-instruct boundary... human-enforced, not schema-checkable' item). PR #35 adds exactly one new checklist item ('Failure chain remains descriptive,' guarding against the chain being read as an authorization) but adds none for the actually load-bearing, self-attested antecedent: whether `recurrence_risk: true` was set honestly for a correction that in fact carries recurrence risk. The schema's `allOf` conditional only fires once that boolean is present and true \u2014 an agent can dodge the entire C4 apparatus by simply never writing `recurrence_risk: true`, and nothing in the repo's own established review discipline (the pattern this PR otherwise imitates) is aimed at catching that omission.",
+   "reasoning": "PR #32's founding decision-ledger design paired every schema-unenforceable semantic claim with a named human checklist item (the never-instruct boundary). PR #35 extends the same schema and reuses the same README checklist section, but only replicates half the pattern: it guards the chain's content (non-authorizing) but not the trigger condition (honest recurrence_risk marking) that gates whether the chain is required at all. This is the Chesterton-fence question in reverse \u2014 the fence ('unenforceable semantics get a checklist line') was understood well enough to be partially reproduced, but the single most consequential half of it was dropped without acknowledgment.",
+   "evidence": [
+    {
+     "tier": "V",
+     "ref": "plugins/epistemic-skills/skills/decision-ledger/reference/README.md:39-45 (checklist has exactly two items: never-instruct boundary, and 'Failure chain remains descriptive'; no item on honest/consistent recurrence_risk marking)"
+    },
+    {
+     "tier": "V",
+     "ref": "plugins/epistemic-skills/skills/decision-ledger/reference/ledger-entry.schema.json:70-77,110-143 (recurrence_risk is an optional boolean; failure_chain required only when type=correction AND recurrence_risk=true \u2014 both self-attested, no independent check)"
+    },
+    {
+     "tier": "I",
+     "ref": "inference from PR #32 commit message ('the human-enforced PR-review checklist item (AC2/C-3)') plus the unchanged 'STRUCTURAL ONLY... makes NO truth or authorization claim' framing at ledger-entry.schema.json:5 -> the codebase's own established pattern for unenforceable semantics is a paired checklist line, which PR #35 reproduces for one half of C4 and omits for the other"
+    }
+   ],
+   "falsifier": {
+    "statement": "reference/README.md's PR-review checklist contains a line requiring reviewers to check whether `recurrence_risk` was under-marked (i.e., omitted or set false) for a correction that plausibly recurs outside the fixed artifact",
+    "method": "grep plugins/epistemic-skills/skills/decision-ledger/reference/README.md for a checklist item referencing recurrence_risk honesty/under-marking, distinct from the existing 'chain remains descriptive' item",
+    "threshold": "presence of any such line falsifies this finding; its absence at the frozen HEAD (confirmed above) supports it",
+    "timeframe": "checkable now against the frozen worktree; re-check on any future amendment to this file"
+   },
+   "impact": "The mechanically-enforced half of C4 gives false confidence: 'the schema requires the chain' reads as a control, but the actual gate an agent controls (whether to admit recurrence risk at all) has zero review pressure behind it \u2014 exactly the gap the codebase's own prior practice knew to plug for the parallel never-instruct case.",
+   "proposed_action": "Add a paired checklist item mirroring the never-instruct pattern: reviewers check whether a correction's statement/because imply recurrence outside the fixed artifact and, if so, whether recurrence_risk was actually set."
+  },
+  {
+   "id": "PA-2",
+   "severity": "P3",
+   "claim": "This integration inverts the local precedent for touching an already-hardened artifact. Decision-ledger (one of ten skills PR #35 modifies) was itself built under a documented practice: an approved, gauntlet-gated design spec BEFORE implementation, re-gated once after a CONDITIONAL verdict (spec #31 -> phase-c-skill-specs-2026-07-22 CONDITIONAL -> re-gated phase-c-specs-v2-2026-07-22 -> then PR #32 implementation). PR #35 instead ships the schema change, the new validator, and nine other skill amendments as a single 53-file bundle where the spec and the code were authored in the same session, and independent adversarial review is explicitly deferred to a later, separate step (this very gauntlet, run post-implementation).",
+   "reasoning": "The handoff document is transparent about this ordering and names it as an open item ('Independent gauntlet over the frozen PR diff... this session has no generic isolated-subagent primitive and therefore did not simulate independence in one context'), which mitigates but does not erase the deviation: the artifact this PR mutates (ledger-entry@1) previously required a dedicated pre-implementation adversarial gate specific to its own design, and did not receive an equivalent dedicated re-gate for the C4 addition \u2014 it rode inside a much larger cross-cutting bundle instead.",
+   "evidence": [
+    {
+     "tier": "V",
+     "ref": "commit 7158bcb message: 'Implements the approved, gauntlet-gated design spec... (#31; phase-c-skill-specs-2026-07-22 CONDITIONAL, re-gated phase-c-specs-v2-2026-07-22)'"
+    },
+    {
+     "tier": "V",
+     "ref": "docs/handoffs/2026-07-22-epistemic-flexibility-v3.md:106-113 ('2. Independent gauntlet over the frozen PR diff... This session has no generic isolated-subagent primitive and therefore did not simulate independence in one context')"
+    },
+    {
+     "tier": "V",
+     "ref": "docs/superpowers/specs/2026-07-22-epistemic-flexibility-integration.md:1-4 ('Status: implemented on draft PR #35; deterministic verification complete, independent/behavioral gates pending')"
+    }
+   ],
+   "falsifier": {
+    "statement": "a dedicated gauntlet-gated design spec exists for the ledger-entry@1 failure_chain schema change specifically (analogous to spec #31 for the original schema), authored and reviewed before the schema was implemented",
+    "method": "search docs/superpowers/specs/ and linked PR/issue history for a decision-ledger-specific C4 design spec distinct from the general epistemic-flexibility-integration spec",
+    "threshold": "existence of such a dedicated pre-implementation spec/gate falsifies this finding",
+    "timeframe": "checkable now against repo history; also checkable against whatever gate this gauntlet run itself produces"
+   },
+   "impact": "Low-to-moderate: honestly disclosed, and this gauntlet is the compensating step \u2014 but the panel should not assume the schema change received the same design scrutiny as its host artifact originally did, and should treat this gauntlet's verdict as the FIRST adversarial pass on ledger-entry@1's C4 extension, not a confirmatory second pass.",
+   "proposed_action": "Treat this gauntlet's verdict on the decision-ledger schema change as load-bearing and non-optional (not merely confirmatory), given no prior dedicated gate existed for it specifically."
+  },
+  {
+   "id": "PA-3",
+   "severity": "P4",
+   "claim": "The founding decision-ledger design explicitly declined to ship any validator ('no validator shipped \u2014 spec makes it optional, skipped per floors-not-ceilings,' per PR #32) to keep the skill low-ceremony. PR #35 attaches a materially larger mechanical apparatus to the same repository region: a new decision-ledger validate_examples.py, a full epistemic-flexibility protocol battery (run_tests.py, validate_trace.py), a behavioral scorer (score_behavior.py, its own run_tests.py), and a dedicated CI workflow (.github/workflows/epistemic-flexibility.yml) gating on skills/**, contracts/**, and docs/** path changes \u2014 without reconciling this expansion against the floors-not-ceilings rationale it is layered next to.",
+   "reasoning": "This is not a contradiction of decision-ledger's own file (which the PR leaves floor-preserving in its non-C4 parts), but it is a scope/ceremony discontinuity worth naming: the artifact was deliberately kept light by design, and the new neighboring apparatus is heavy by comparison, with partial self-awareness (the behavioral README does require 'a minimal low-stakes trace, proving the protocol remains a floor rather than mandatory ceremony' as one of two required controls) but no explicit accounting of the tension against the decision-ledger precedent specifically.",
+   "evidence": [
+    {
+     "tier": "V",
+     "ref": "commit 7158bcb message: 'no validator shipped \u2014 spec makes it optional, skipped per floors-not-ceilings'"
+    },
+    {
+     "tier": "V",
+     "ref": ".github/workflows/epistemic-flexibility.yml:1-16 (new CI job triggered on pull_request/push over skills/**, contracts/**, docs/**)"
+    },
+    {
+     "tier": "V",
+     "ref": "plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/behavioral/README.md (new scorer + fixtures + 'proving the protocol remains a floor rather than mandatory ceremony' language, showing partial awareness)"
+    }
+   ],
+   "falsifier": {
+    "statement": "the new CI/validator apparatus is scoped narrowly enough (e.g., stdlib-only, self-test-gated, no blocking effect on unrelated PRs) that it does not in practice raise the ceremony floor for ordinary decision-ledger usage",
+    "method": "trace whether an ordinary decision, assumption, or non-recurrent correction entry (no failure_chain) triggers any new CI failure mode or added review burden beyond what existed before PR #35",
+    "threshold": "if ordinary (non-C4) ledger writes are unaffected by the new CI/validator surface, this finding is downgraded to noise",
+    "timeframe": "checkable now by tracing the CI workflow's job steps against non-correction entry types"
+   },
+   "impact": "Minimal direct risk (the apparatus is additive and self-test-gated), but it is worth flagging as a philosophy drift for the operator's own future 'why is this here' moments.",
+   "proposed_action": "No action required beyond noting the tension in the handoff/spec for future archeologists; do not treat as blocking."
+  }
+ ],
+ "hypothesis_supported": "H4 (failure_chain conditional under-specified/not mechanically validated) is the primary axis my evidence anchors, refined: the SHAPE of failure_chain is mechanically validated (validate_examples.py + schema allOf), but the TRIGGER (recurrence_risk honesty) is entirely self-attested and \u2014 unlike the codebase's own established precedent for pairing unenforceable semantics with a human checklist item (the never-instruct boundary) \u2014 has no equivalent review guard. This is a real, [V]-anchored gap, not mere ceremony (H1) or unreachability (H3).",
+ "hypothesis_killed": "For the two files inspected in depth (applying-formal-rigor/SKILL.md, blindspot-pass/SKILL.md), H6 (weakens/contradicts an existing authoritative gate) is NOT supported: the additions are clearly demarcated addenda that preserve the pre-existing boundary language verbatim ('Formal derivation closes theoretical premises; it does not manufacture runtime facts' is kept intact, with the new empirical-closure subsection appended after it, not replacing it). This is evidence against H6 for those two skills specifically (not a claim about all ten touched skills).",
+ "verdict": "CONDITIONAL from the protocol-archeology lens. The integration is unusually disciplined about additive, non-destructive prose changes to the skills it touches (formal-rigor and blindspot-pass both preserve their prior boundary language verbatim and append rather than replace) \u2014 this is genuine evidence of care, not ceremony. But the one place this PR reaches into a previously gauntlet-hardened, schema-level artifact (decision-ledger's ledger-entry@1), it reproduces only half of that artifact's own established fence pattern: it adds mechanical shape-validation and one paired human-checklist line, but drops the checklist line that would guard the actual gate an agent controls (whether to mark recurrence_risk honestly at all). Combined with the acknowledged (transparent, not hidden) precedent-inversion of implementing before the dedicated independent gate this class of change previously required, the panel should treat this gauntlet as the first real adversarial pass on the C4 schema extension \u2014 and should not clear PA-1 without either a checklist fix or an explicit operator acceptance that the recurrence_risk antecedent is unguarded by design."
+}

@@ -94,6 +94,32 @@ These controls do not create new stages:
 - continuity-verify owns source monitoring on resumption;
 - every consumer owns closure control when evidence is insufficient.
 
+## Enforcement status (what "fail-closed" does and does not mean)
+
+Independent gauntlet review (2026-07-22, NO-GO → resolved) established that "fail-closed" and
+"enforced" must be read precisely. What `validate_trace.py` **mechanically enforces**:
+
+- trace structure — controlled vocabularies, required fields per claim kind, a `prediction`'s
+  disconfirming observation, the experiment preregistration shape, and the `failure_chain`
+  conditional shape for recurrent corrections;
+- **control/action consistency** — a non-acting control (`hold`/`escalate`) whose `action`
+  affirmatively asserts execution (deploy/publish/merge/…) is **rejected** (added 2026-07-22 to give
+  C2/C5 real teeth; proven by `fixtures/invalid-hold-but-deploys.json` and
+  `fixtures/invalid-escalate-but-executes.json`); and a `standard`/`high`-stakes trace may not
+  `act` on a load-bearing `unverified` claim.
+
+What it does **not** verify (structural only — a residual judgment surface, not a guarantee):
+
+- whether a claim's declared `kind`/`status` is *true* (a trace can still mislabel an
+  `interpretation` as a `verified observation`); and
+- whether a preregistered prediction was *honestly* recorded before the result was known.
+
+The deterministic conformance fixtures and the behavioral gold/planted-bad traces are
+**author-constructed smoke tests** demonstrating the validator and scorer behave as specified.
+They are **not** evidence that the controls improve real agent behavior; behavioral superiority is
+**unestablished** pending the four-arm ablation. Human PR review is a policy backstop, not a
+mechanically-enforced gate unless branch protection + required status checks are active on the repo.
+
 ## Evidence basis and degradation
 
 The design is informed by research on ACT psychological flexibility, DBT emotion-regulation/skills processes and dialectical strategy, CBT collaborative empiricism and cognitive restructuring, and metacognitive calibration. It does not claim that those literatures uniquely derive these controls or that mechanisms established in human psychotherapy automatically transfer to language models.
