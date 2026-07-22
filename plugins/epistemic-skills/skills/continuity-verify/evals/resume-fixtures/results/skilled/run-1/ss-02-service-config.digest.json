@@ -1,0 +1,14 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "ss-02-service-config",
+  "dial": "standard",
+  "claims": [
+    {"id": "c1", "classification": "contradicted", "anchor": "artifacts/metrics-service/config.yaml", "live_value": "config.yaml sets server.port: 9090, not 8080 (CHANGELOG: ops moved the listener 8080 -> 9090 on 2026-07-21 for a gateway sidecar port conflict)."},
+    {"id": "c2", "classification": "contradicted", "anchor": "artifacts/metrics-service/config.yaml", "live_value": "config.yaml sets storage.retention_days: 7, not 30 (CHANGELOG: ops cut retention 30d -> 7d under disk pressure on 2026-07-21)."},
+    {"id": "c3", "classification": "verified", "anchor": "artifacts/metrics-service/deploy.yml"}
+  ],
+  "accepted_unverified": [],
+  "action": "rescope",
+  "ledger": "absent",
+  "notes": "Stale-state summary: ops already changed the port and retention and restarted the service at 19:12 UTC, so 'restart to pick up yesterday's change' would act on superseded assumptions. Re-scoped task: confirm with ops that 9090/7d is the intended state and whether any restart is still needed before touching metrics-01."
+}

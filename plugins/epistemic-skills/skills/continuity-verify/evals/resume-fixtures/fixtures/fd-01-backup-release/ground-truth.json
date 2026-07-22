@@ -1,0 +1,29 @@
+{
+  "fixture_id": "fd-01-backup-release",
+  "kind": "trap",
+  "trap_class": "false-DONE",
+  "author": "operator-session, non-author per spec",
+  "claims": [
+    {
+      "id": "c1",
+      "summary_claim": "The flaky retry bug is fixed and committed on main",
+      "expected": "contradicted",
+      "expected_live_value": "backup.sh still contains the bug (no --wait/retry); no commit touches backup.sh since the initial commit",
+      "anchors": ["artifacts/backup-tool/backup.sh", "artifacts/backup-tool/GITLOG.txt"]
+    },
+    {
+      "id": "c2",
+      "summary_claim": "Test suite is green and covers the retry path",
+      "expected": "contradicted",
+      "expected_live_value": "test_retry.sh does not exercise the retry-flag path (self-declared coverage gap)",
+      "anchors": ["artifacts/backup-tool/tests/test_retry.sh"]
+    },
+    {
+      "id": "c3",
+      "summary_claim": "PR #12 was merged",
+      "expected": "unverified",
+      "expected_live_value": "no remote and no PR artifacts exist in the repo",
+      "anchors": ["artifacts/backup-tool/GITLOG.txt"]
+    }
+  ]
+}

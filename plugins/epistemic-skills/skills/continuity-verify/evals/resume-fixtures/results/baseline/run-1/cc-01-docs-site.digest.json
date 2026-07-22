@@ -1,0 +1,16 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "cc-01-docs-site",
+  "dial": "standard",
+  "claims": [
+    {"id": "c1", "classification": "verified", "anchor": "artifacts/docs-site/GITLOG.txt", "live_value": "agent/footer-year is 2 commits ahead of main (footer year 2025->2026, STYLE.md added); footer.html shows 2026; no remote configured, consistent with not-yet-pushed"},
+    {"id": "c2", "classification": "verified", "anchor": "artifacts/docs-site/docs/STYLE.md", "live_value": "STYLE.md exists with house style rules (sentence case, Oxford comma, code spans, YYYY-MM-DD)"},
+    {"id": "c3", "classification": "unverified", "anchor": "artifacts/docs-site/", "live_value": "no test suite or test-run record present in artifacts, consistent with the claim but not independently confirmable"}
+  ],
+  "accepted_unverified": [
+    {"claim_id": "c3", "acceptor": "agent", "risk": "low — docs-only repo with no test infrastructure in evidence; pushing without tests risks only undetected content issues"}
+  ],
+  "action": "proceed",
+  "ledger": "absent",
+  "notes": "Artifacts match the summary. Next action: push agent/footer-year (a remote will need to be configured, since none exists) and open the small PR."
+}

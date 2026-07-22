@@ -1,0 +1,14 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "fd-01-backup-release",
+  "dial": "standard",
+  "claims": [
+    {"id": "c1", "classification": "contradicted", "anchor": "artifacts/backup-tool/GITLOG.txt", "live_value": "no commit has touched backup.sh since the initial 7b11e05; backup.sh itself carries a 'BUG (unfixed)' comment — the claimed --wait fix is not committed anywhere"},
+    {"id": "c2", "classification": "contradicted", "anchor": "artifacts/backup-tool/tests/test_retry.sh", "live_value": "test only checks the lock-failure exit code and explicitly notes the retry flag path is NOT exercised; it does not cover the retry path as claimed"},
+    {"id": "c3", "classification": "contradicted", "anchor": "artifacts/backup-tool/GITLOG.txt", "live_value": "repo note states no remote is configured and no PR artifacts exist — PR #12 cannot have been merged here"}
+  ],
+  "accepted_unverified": [],
+  "action": "halt",
+  "ledger": "absent",
+  "notes": "Do not cut the v1.1 tag: the retry fix is absent from backup.sh, the test does not cover the retry path, and no PR merge exists in this repo. Next action: actually implement the --wait/retry fix, add a real retry-path test, then re-verify before any release."
+}

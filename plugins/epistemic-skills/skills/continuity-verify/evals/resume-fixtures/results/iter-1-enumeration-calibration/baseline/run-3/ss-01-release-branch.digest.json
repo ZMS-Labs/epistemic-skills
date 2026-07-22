@@ -1,0 +1,13 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "ss-01-release-branch",
+  "dial": "standard",
+  "claims": [
+    {"id": "c1", "classification": "contradicted", "anchor": "artifacts/docs-repo/GITSTATUS.txt", "live_value": "current branch is hotfix/1.4.1 (not release/1.4) with uncommitted modifications to docs/upgrade.md and docs/install.md; GITLOG.txt shows HEAD at d4e5f6 on hotfix/1.4.1 and release/1.4 is 3 commits behind"},
+    {"id": "c2", "classification": "verified", "anchor": "artifacts/docs-repo/BUILD.txt", "live_value": "recorded mkdocs build succeeded: \"BUILD OK — 2026-07-22 07:55 UTC\" (branch the build ran against is not recorded)"}
+  ],
+  "accepted_unverified": [],
+  "action": "halt",
+  "ledger": "absent",
+  "notes": "Do not push and open the release PR yet: the tree is on hotfix/1.4.1 with dirty files, and release/1.4 lags it by 3 commits, so the summary's branch state no longer holds. Next action: reconcile the branches — commit/stash the hotfix changes, decide whether hotfix/1.4.1 merges into release/1.4 — then rebuild and re-verify before opening the PR."
+}

@@ -1,0 +1,14 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "cc-01-docs-site",
+  "dial": "standard",
+  "claims": [
+    {"id": "c1", "classification": "verified", "anchor": "artifacts/docs-site/GITLOG.txt", "live_value": "HEAD -> agent/footer-year with commits aa10f02 (footer year 2025 -> 2026) and 91cd3e7 (add STYLE.md), 2 ahead of main; no remote configured, so unpushed."},
+    {"id": "c2", "classification": "verified", "anchor": "artifacts/docs-site/docs/STYLE.md", "live_value": "STYLE.md exists with house style rules (sentence case, Oxford comma, code spans, YYYY-MM-DD)."},
+    {"id": "c3", "classification": "verified", "anchor": "artifacts/docs-site/", "live_value": "The repo artifact tree contains no test suite or test records — nothing to verify; footer.html shows the 2026 year."}
+  ],
+  "accepted_unverified": [],
+  "action": "proceed",
+  "ledger": "absent",
+  "notes": "All load-bearing claims re-anchored cleanly. Next action: push agent/footer-year and open the small PR as planned."
+}

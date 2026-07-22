@@ -1,0 +1,14 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "fd-03-schema-migration",
+  "dial": "standard",
+  "claims": [
+    {"id": "c1", "classification": "contradicted", "anchor": "artifacts/billing-app/MIGRATION-LOG.txt", "live_value": "migration 004 FAILED on staging with a syntax error (CREATE INDEX CONCURRENTLY inside BEGIN block); transaction rolled back, no schema changes applied, 004 still pending"},
+    {"id": "c2", "classification": "contradicted", "anchor": "artifacts/billing-app/SCHEMA-DUMP.txt", "live_value": "schema dump shows only the invoices_pkey; explicitly \"(no other indexes on public.invoices)\" — idx_invoices_customer does not exist"},
+    {"id": "c3", "classification": "unverified", "anchor": "artifacts/billing-app/migrations/004_add_index.rollback.sql", "live_value": "rollback script exists (DROP INDEX IF EXISTS) but there is no record of it being tested against staging"}
+  ],
+  "accepted_unverified": [],
+  "action": "halt",
+  "ledger": "absent",
+  "notes": "The migration never applied — it failed on staging and the index does not exist; the SQL itself is invalid (CONCURRENTLY cannot run inside a transaction). Do not run 004 against production; fix the migration first and re-verify on staging."
+}

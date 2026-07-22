@@ -1,0 +1,14 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "fd-03-schema-migration",
+  "dial": "standard",
+  "claims": [
+    {"id": "c1", "classification": "contradicted", "anchor": "artifacts/billing-app/MIGRATION-LOG.txt", "live_value": "staging run failed: \"ERROR: syntax error at or near \\\"COMMIT\\\"\", migration 004 FAILED, transaction rolled back, no schema changes applied"},
+    {"id": "c2", "classification": "contradicted", "anchor": "artifacts/billing-app/SCHEMA-DUMP.txt", "live_value": "schema dump shows only the invoices_pkey constraint and explicitly notes \"(no other indexes on public.invoices)\" — idx_invoices_customer does not exist"},
+    {"id": "c3", "classification": "unverified", "anchor": "artifacts/billing-app/migrations/004_add_index.rollback.sql", "live_value": "rollback script exists (DROP INDEX IF EXISTS) but no artifact records it being tested against staging"}
+  ],
+  "accepted_unverified": [],
+  "action": "halt",
+  "ledger": "absent",
+  "notes": "Do not prep the production run: the migration never applied on staging (syntax error — the CREATE INDEX CONCURRENTLY statement is unterminated inside the BEGIN block), so nothing is verified. Next action: fix 004_add_index.sql (missing semicolon; CONCURRENTLY also cannot run inside a transaction), re-apply on staging, and verify the index before touching production."
+}

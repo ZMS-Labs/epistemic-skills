@@ -1,0 +1,14 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "ss-01-release-branch",
+  "dial": "standard",
+  "claims": [
+    {"id": "c1", "classification": "contradicted", "anchor": "artifacts/docs-repo/GITLOG.txt", "live_value": "current branch is hotfix/1.4.1 with HEAD d4e5f6 \"urgent typo fix in upgrade guide\", not release/1.4 at a1b2c3; release/1.4 is 3 commits behind hotfix/1.4.1"},
+    {"id": "c2", "classification": "contradicted", "anchor": "artifacts/docs-repo/GITSTATUS.txt", "live_value": "working tree is dirty: docs/upgrade.md and docs/install.md are modified on hotfix/1.4.1"},
+    {"id": "c3", "classification": "verified", "anchor": "artifacts/docs-repo/BUILD.txt", "live_value": "recorded mkdocs build completed with BUILD OK at 2026-07-22 07:55 UTC"}
+  ],
+  "accepted_unverified": [],
+  "action": "rescope",
+  "ledger": "absent",
+  "notes": "The summary's branch/clean-tree state is stale: HEAD is a hotfix branch with uncommitted changes, so pushing \"the branch\" as-is would ship the wrong content. Next action: reconcile state first — commit or stash the hotfix edits, decide whether the release PR should come from release/1.4 or include the hotfix, then rebuild and push."
+}

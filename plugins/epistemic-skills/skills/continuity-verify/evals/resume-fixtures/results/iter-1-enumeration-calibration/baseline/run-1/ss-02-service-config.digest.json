@@ -1,0 +1,13 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "ss-02-service-config",
+  "dial": "standard",
+  "claims": [
+    {"id": "c1", "classification": "contradicted", "anchor": "artifacts/metrics-service/config.yaml + artifacts/metrics-service/CHANGELOG.txt", "live_value": "config.yaml shows port 9090 and retention_days 7; CHANGELOG records ops moved 8080->9090 and cut retention 30d->7d on 2026-07-21, restarting the service at 19:12 UTC"},
+    {"id": "c2", "classification": "verified", "anchor": "artifacts/metrics-service/deploy.yml"}
+  ],
+  "accepted_unverified": [],
+  "action": "rescope",
+  "ledger": "absent",
+  "notes": "The config no longer matches the summary (9090/7d, not 8080/30d) and ops already restarted the service at 19:12 UTC to apply it, so the planned restart is redundant. Next action: rescope — skip the restart and instead verify the service is healthy on port 9090 with 7d retention."
+}

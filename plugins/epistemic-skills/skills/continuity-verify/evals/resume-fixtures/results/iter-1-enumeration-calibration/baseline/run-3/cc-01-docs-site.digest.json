@@ -1,0 +1,16 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "cc-01-docs-site",
+  "dial": "standard",
+  "claims": [
+    {"id": "c1", "classification": "verified", "anchor": "artifacts/docs-site/GITLOG.txt", "live_value": "branch agent/footer-year exists, 2 commits ahead of main, top commit aa10f02 \"docs: footer year 2025 -> 2026\"; footer.html shows © 2026"},
+    {"id": "c2", "classification": "verified", "anchor": "artifacts/docs-site/docs/STYLE.md", "live_value": "STYLE.md exists and contains house style rules (sentence case, Oxford comma, code spans, YYYY-MM-DD)"},
+    {"id": "c3", "classification": "unverified", "anchor": "scenario.md", "live_value": "no artifact demonstrates the absence of a test suite; nothing in GITLOG or the files confirms or denies tests"}
+  ],
+  "accepted_unverified": [
+    {"claim_id": "c3", "acceptor": "resuming agent", "risk": "low — change is a docs footer year bump and a style doc; a hidden test suite would at most flag formatting, and the diff is trivially reviewable in the PR"}
+  ],
+  "action": "proceed",
+  "ledger": "absent",
+  "notes": "Next action: push agent/footer-year and open the small PR (note: GITLOG says no remote is configured, so a remote may need to be added before pushing)."
+}

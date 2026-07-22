@@ -1,0 +1,14 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "fd-01-backup-release",
+  "dial": "standard",
+  "claims": [
+    {"id": "c1", "classification": "contradicted", "anchor": "artifacts/backup-tool/backup.sh", "live_value": "backup.sh still carries the unfixed bug comment and plain rsync call; GITLOG.txt notes no commit touching backup.sh since the initial import"},
+    {"id": "c2", "classification": "contradicted", "anchor": "artifacts/backup-tool/tests/test_retry.sh", "live_value": "the test explicitly states it does NOT exercise the rsync retry flag path; no recorded passing run exists"},
+    {"id": "c3", "classification": "contradicted", "anchor": "artifacts/backup-tool/GITLOG.txt", "live_value": "GITLOG notes no remote configured and no PR artifacts exist in this repo — PR #12 cannot be found"}
+  ],
+  "accepted_unverified": [],
+  "action": "halt",
+  "ledger": "absent",
+  "notes": "The summary's core claims are all contradicted: the retry fix is not committed, the test does not cover the retry path, and there is no evidence of PR #12. Do not cut v1.1; first implement and commit the actual fix and add a real retry-path test."
+}

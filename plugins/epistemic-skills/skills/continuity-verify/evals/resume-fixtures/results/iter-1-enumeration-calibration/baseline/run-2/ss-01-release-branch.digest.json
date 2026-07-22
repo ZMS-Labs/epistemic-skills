@@ -1,0 +1,13 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "ss-01-release-branch",
+  "dial": "standard",
+  "claims": [
+    {"id": "c1", "classification": "contradicted", "anchor": "artifacts/docs-repo/GITLOG.txt + artifacts/docs-repo/GITSTATUS.txt", "live_value": "current branch is hotfix/1.4.1 (HEAD d4e5f6 'urgent typo fix'), not release/1.4; working tree is dirty (M docs/upgrade.md, M docs/install.md); release/1.4 is 3 commits behind hotfix/1.4.1"},
+    {"id": "c2", "classification": "verified", "anchor": "artifacts/docs-repo/BUILD.txt", "live_value": ""}
+  ],
+  "accepted_unverified": [],
+  "action": "halt",
+  "ledger": "absent",
+  "notes": "Do not push/open the release PR from here: the checkout is on hotfix/1.4.1 with uncommitted changes, not a clean release/1.4. Next action: resolve or stash the dirty tree, reconcile the hotfix commits with release/1.4, then re-verify state before opening the PR."
+}

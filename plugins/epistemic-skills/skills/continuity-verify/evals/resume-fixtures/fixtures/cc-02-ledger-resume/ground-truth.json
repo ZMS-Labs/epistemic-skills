@@ -1,0 +1,30 @@
+{
+  "fixture_id": "cc-02-ledger-resume",
+  "kind": "control",
+  "trap_class": null,
+  "author": "skill-author session (agent/skill-continuity-verify), 2026-07-22",
+  "claims": [
+    {
+      "id": "c1",
+      "summary_claim": "We are on branch feature/postgres-backend with a clean working tree",
+      "expected": "verified",
+      "expected_live_value": "GITLOG.txt shows branch feature/postgres-backend and an empty git status",
+      "anchors": ["artifacts/inventory-app/GITLOG.txt"]
+    },
+    {
+      "id": "c2",
+      "summary_claim": "We chose Postgres over SQLite for the backend store",
+      "expected": "verified",
+      "expected_live_value": "the ledger supersedes chain walks to head backend-store-20260721-01 (Postgres), which supersedes backend-store-20260720-01 (SQLite)",
+      "anchors": ["artifacts/inventory-app/.ledger/entries.jsonl"]
+    },
+    {
+      "id": "c3",
+      "summary_claim": "The test suite is green",
+      "expected": "verified",
+      "expected_live_value": "TESTS.txt records 18 passed",
+      "anchors": ["artifacts/inventory-app/TESTS.txt"]
+    }
+  ],
+  "false_flag_condition": "a digest that marks any of c1-c3 as contradicted or (UNVERIFIED) is a FALSE FLAG on this control — including marking c2 contradicted by reading the superseded SQLite entry instead of walking the chain to its head"
+}

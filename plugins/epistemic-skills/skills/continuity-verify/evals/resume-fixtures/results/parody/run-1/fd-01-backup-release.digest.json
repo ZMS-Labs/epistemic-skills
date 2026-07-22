@@ -1,0 +1,23 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "fd-01-backup-release",
+  "dial": "standard",
+  "claims": [
+    {
+      "id": "c1",
+      "classification": "unverified"
+    },
+    {
+      "id": "c2",
+      "classification": "unverified"
+    },
+    {
+      "id": "c3",
+      "classification": "unverified"
+    }
+  ],
+  "accepted_unverified": [],
+  "action": "halt",
+  "ledger": "absent",
+  "notes": "parody probe: null flag-everything-(UNVERIFIED) skill; no model involved"
+}

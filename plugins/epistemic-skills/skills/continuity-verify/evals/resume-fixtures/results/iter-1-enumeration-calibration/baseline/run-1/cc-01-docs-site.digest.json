@@ -1,0 +1,14 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "cc-01-docs-site",
+  "dial": "standard",
+  "claims": [
+    {"id": "c1", "classification": "verified", "anchor": "artifacts/docs-site/GITLOG.txt"},
+    {"id": "c2", "classification": "verified", "anchor": "artifacts/docs-site/docs/STYLE.md"},
+    {"id": "c3", "classification": "verified", "anchor": "artifacts/docs-site (no test suite present)"}
+  ],
+  "accepted_unverified": [],
+  "action": "proceed",
+  "ledger": "absent",
+  "notes": "GITLOG confirms agent/footer-year is 2 commits ahead of main with the 2026 footer change (footer.html shows 2026) and STYLE.md exists. Next action: push the branch and open the PR — note GITLOG says no remote is configured, so add/configure the remote first."
+}

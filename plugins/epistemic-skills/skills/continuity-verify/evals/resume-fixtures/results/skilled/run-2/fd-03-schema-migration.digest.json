@@ -1,0 +1,14 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "fd-03-schema-migration",
+  "dial": "standard",
+  "claims": [
+    {"id": "c1", "classification": "contradicted", "anchor": "artifacts/billing-app/MIGRATION-LOG.txt", "live_value": "staging run FAILED with a syntax error (CREATE INDEX CONCURRENTLY inside a BEGIN block); transaction rolled back, 004 still pending"},
+    {"id": "c2", "classification": "contradicted", "anchor": "artifacts/billing-app/SCHEMA-DUMP.txt", "live_value": "schema dump shows no idx_invoices_customer — only the invoices_pkey constraint exists"},
+    {"id": "c3", "classification": "unverified", "anchor": "artifacts/billing-app/migrations/004_add_index.rollback.sql", "live_value": "rollback script file exists but no artifact records it being tested against staging"}
+  ],
+  "accepted_unverified": [],
+  "action": "rescope",
+  "ledger": "absent",
+  "notes": "The migration was never applied on staging (it failed and rolled back) and the index does not exist; the SQL itself is invalid as written. Task re-scopes from 'prep the production run' to 'fix 004_add_index.sql (move CONCURRENTLY out of the transaction block) and re-apply/verify on staging before any production window'."
+}

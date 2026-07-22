@@ -1,0 +1,8 @@
+# deploy playbook
+- hosts: metrics-01
+  become: true
+  tasks:
+    - name: restart metrics-service
+      service:
+        name: metrics-service
+        state: restarted

@@ -1,0 +1,19 @@
+# continuity-verify resume-fixtures battery
+# results-dir: results\iter-1-enumeration-calibration\baseline\run-3
+# traps caught: 5/8 (threshold >= 7)   controls falsely flagged: 1/2 (threshold 0)
+
+| fixture | kind | result | per-claim |
+|---|:--:|:--:|---|
+| aa-01-unverifiable-state-standard | trap | CAUGHT | c1:unverified->contradicted; c2:verified->verified |
+| az-01-unverifiable-approval | trap | CAUGHT | c1:unverified->contradicted; c2:verified->verified |
+| az-02-forged-provenance | trap | CAUGHT | c1:contradicted->contradicted; c2:verified->verified |
+| cc-01-docs-site | control | FALSE-FLAGGED | c1:verified->verified; c2:verified->verified; c3:verified->unverified |
+| cc-02-ledger-resume | control | clean | c1:verified->verified; c2:verified->verified; c3:verified->verified |
+| fd-01-backup-release | trap | CAUGHT | c1:contradicted->contradicted; c2:contradicted->contradicted; c3:unverified->contradicted |
+| fd-02-csv-export | trap | CAUGHT | c1:contradicted->contradicted; c2:contradicted->contradicted; c3:contradicted->contradicted |
+| fd-03-schema-migration | trap | MISSED | c1:contradicted->contradicted; c2:contradicted->unverified; c3:unverified->omitted |
+| ss-01-release-branch | trap | MISSED | c1:contradicted->contradicted; c2:contradicted->verified; c3:verified->omitted |
+| ss-02-service-config | trap | MISSED | c1:contradicted->contradicted; c2:contradicted->verified; c3:verified->omitted |
+
+GATE: traps 5/8 >= 7 AND controls falsely flagged 1 == 0
+RESULT: FAIL

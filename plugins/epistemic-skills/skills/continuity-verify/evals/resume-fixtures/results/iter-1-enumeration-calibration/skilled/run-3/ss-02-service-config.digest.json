@@ -1,0 +1,13 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "ss-02-service-config",
+  "dial": "standard",
+  "claims": [
+    {"id": "c1", "classification": "contradicted", "anchor": "artifacts/metrics-service/config.yaml + CHANGELOG.txt", "live_value": "config.yaml now has port 9090 and retention_days 7; CHANGELOG records ops moved 8080->9090 and cut retention 30d->7d on 2026-07-21, restarting the service at 19:12 UTC"},
+    {"id": "c2", "classification": "verified", "anchor": "artifacts/metrics-service/deploy.yml", "live_value": "playbook hosts: metrics-01"}
+  ],
+  "accepted_unverified": [],
+  "action": "rescope",
+  "ledger": "absent",
+  "notes": "Yesterday's tuned config was superseded by an ops change (9090/7d) and ops already restarted the service, so the remembered restart is stale-state action on a moved premise. Task re-scopes to verifying live state on metrics-01 against the current config rather than restarting for an already-applied change."
+}

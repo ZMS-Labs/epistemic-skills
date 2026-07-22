@@ -1,0 +1,14 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "fd-03-schema-migration",
+  "dial": "standard",
+  "claims": [
+    {"id": "c1", "classification": "contradicted", "anchor": "artifacts/billing-app/MIGRATION-LOG.txt", "live_value": "migration 004 FAILED on staging with a syntax error (CREATE INDEX CONCURRENTLY inside a BEGIN block, missing semicolon); transaction rolled back, no schema changes applied, 004 still pending"},
+    {"id": "c2", "classification": "contradicted", "anchor": "artifacts/billing-app/SCHEMA-DUMP.txt", "live_value": "schema dump shows only the invoices_pkey constraint and explicitly notes no other indexes on public.invoices — idx_invoices_customer does not exist"},
+    {"id": "c3", "classification": "unverified", "anchor": "artifacts/billing-app/migrations/004_add_index.rollback.sql", "live_value": "rollback script exists (DROP INDEX IF EXISTS) but no artifact records it ever being tested against staging"}
+  ],
+  "accepted_unverified": [],
+  "action": "halt",
+  "ledger": "absent",
+  "notes": "Do not prep a production run: 004 never applied to staging — its SQL is broken (CONCURRENTLY cannot run inside a transaction block and the statement lacks a terminating semicolon). Next action: fix 004_add_index.sql, re-apply and verify on staging, then test the rollback before any production window."
+}

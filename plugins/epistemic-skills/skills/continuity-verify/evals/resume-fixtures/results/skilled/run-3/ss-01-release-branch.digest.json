@@ -1,0 +1,14 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "ss-01-release-branch",
+  "dial": "standard",
+  "claims": [
+    {"id": "c1", "classification": "contradicted", "anchor": "artifacts/docs-repo/GITLOG.txt", "live_value": "HEAD is hotfix/1.4.1 at d4e5f6, not release/1.4 at a1b2c3; main already contains 'merge release/1.4 prep' (c7d8e9); release/1.4 is 3 commits behind hotfix/1.4.1"},
+    {"id": "c2", "classification": "contradicted", "anchor": "artifacts/docs-repo/GITSTATUS.txt", "live_value": "working tree is dirty on hotfix/1.4.1: M docs/upgrade.md, M docs/install.md"},
+    {"id": "c3", "classification": "verified", "anchor": "artifacts/docs-repo/BUILD.txt", "live_value": "BUILD OK recorded 2026-07-22 07:55 UTC — but it predates the current uncommitted modifications, so it is stale relative to the live tree and must be re-run"}
+  ],
+  "accepted_unverified": [],
+  "action": "rescope",
+  "ledger": "absent",
+  "notes": "Stale state: the session's branch and clean-tree premises moved — we are on hotfix/1.4.1 with uncommitted changes, and release/1.4 prep appears already merged to main. Do not push a branch and open the release PR as described; re-scope to establishing what the dirty hotfix changes are and what release vehicle (if any) is still needed."
+}

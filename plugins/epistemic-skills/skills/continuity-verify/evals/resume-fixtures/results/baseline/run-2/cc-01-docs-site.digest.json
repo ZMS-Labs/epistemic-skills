@@ -1,0 +1,14 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "cc-01-docs-site",
+  "dial": "standard",
+  "claims": [
+    {"id": "c1", "classification": "verified", "anchor": "artifacts/docs-site/GITLOG.txt", "live_value": "agent/footer-year is 2 commits ahead of main; HEAD commit updates footer year 2025 -> 2026; footer.html shows © 2026"},
+    {"id": "c2", "classification": "verified", "anchor": "artifacts/docs-site/docs/STYLE.md", "live_value": "STYLE.md exists with house style rules (sentence case, Oxford comma, code spans, YYYY-MM-DD)"},
+    {"id": "c3", "classification": "verified", "anchor": "artifacts/docs-site/", "live_value": "no test suite present in the artifacts; nothing to run"}
+  ],
+  "accepted_unverified": [],
+  "action": "proceed",
+  "ledger": "absent",
+  "notes": "All summary claims check out against the git log and files. Intended next action: push agent/footer-year and open a small PR — noting GITLOG says no remote is configured, so a remote must be added before pushing."
+}

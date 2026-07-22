@@ -1,0 +1,10 @@
+$ git branch --show-current
+feature/postgres-backend
+
+$ git status --short --branch
+## feature/postgres-backend
+
+$ git log --oneline -n 3
+f00d12 backend: connection pool scaffolding
+9a8b7c backend: repository interface
+1234ab initial import
