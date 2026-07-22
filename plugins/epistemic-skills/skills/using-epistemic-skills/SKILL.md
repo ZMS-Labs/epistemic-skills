@@ -18,14 +18,20 @@ the skill it points you to.**
 Each skill **ends at a defined boundary and hands off** — none overreaches into another's
 job. That is exactly what lets them compose without stepping on each other:
 
-| Skill | Consumes | Produces (its boundary) | Hands to | Valid until |
-|---|---|---|---|---|
-| **blindspot-pass** | a fuzzy request + the real territory | a **rewritten, de-risked request** (never a change — it ends at *understanding*) | brainstorming / plans, or a gauntlet subject | `subject-revision-unchanged`; void at next-stage-start |
-| **applying-formal-rigor** | a decision with ≥2 options; a complexity question | a **derived verdict** (named construct → derivation → what the winner concedes) | the design you build, or a gauntlet dossier | `subject-revision-unchanged` on the named inputs |
-| **evidence-research** | a claim that rests on "the research says…" | a **claim-evidence matrix + reception + holdings** (never a GO/NO-GO) | a design decision, or the gauntlet Step-0 evidence gate | `session-continuous` — reception `[V]`-grade this run only; snapshot dated |
-| **write-goal** | explicit user intent, de-risked context, and any evidence/design inputs | an **approved, evidence-bound completion contract**; optionally a started persistent goal | the runtime's goal executor, then independent verification | `subject-revision-unchanged` on intent/scope/environment |
-| **gauntlet** | a **frozen** subject (a de-risked request, a derived verdict, or an evidence matrix) | a **computed GO / CONDITIONAL / NO-GO** + Conflict Ledger | the commit / merge decision | `freeze-window-open` |
-| **evidence-locked-uat** | a finished change + its requirements | an **evidence packet + blinded verdict** (PASS / FAIL / INCONCLUSIVE) | the ship / merge decision | `environment-reachable` |
+| Skill | Consumes | Produces (its boundary) | Hands to | Valid until | Artifact shape |
+|---|---|---|---|---|---|
+| **blindspot-pass** | a fuzzy request + the real territory | a **rewritten, de-risked request** (never a change — it ends at *understanding*) | brainstorming / plans, or a gauntlet subject | `subject-revision-unchanged`; void at next-stage-start | 4-field stamp |
+| **applying-formal-rigor** | a decision with ≥2 options; a complexity question | a **derived verdict** (named construct → derivation → what the winner concedes) | the design you build, or a gauntlet dossier | `subject-revision-unchanged` on the named inputs | 4-field stamp |
+| **evidence-research** | a claim that rests on "the research says…" | a **claim-evidence matrix + reception + holdings** (never a GO/NO-GO) | a design decision, or the gauntlet Step-0 evidence gate | `session-continuous` — reception `[V]`-grade this run only; snapshot dated | JSON `handoff-receipt@1` over the matrix |
+| **write-goal** | explicit user intent, de-risked context, and any evidence/design inputs | an **approved, evidence-bound completion contract**; optionally a started persistent goal | the runtime's goal executor, then independent verification | `subject-revision-unchanged` on intent/scope/environment | `handoff-receipt@1` when file-written, else 4-field stamp |
+| **gauntlet** | a **frozen** subject (a de-risked request, a derived verdict, or an evidence matrix) | a **computed GO / CONDITIONAL / NO-GO** + Conflict Ledger | the commit / merge decision | `freeze-window-open` | JSON `handoff-receipt@1` (+ run record) |
+| **evidence-locked-uat** | a finished change + its requirements | an **evidence packet + blinded verdict** (PASS / FAIL / INCONCLUSIVE) | the ship / merge decision | `environment-reachable` | JSON `handoff-receipt@1` over the packet |
+
+*Artifact shape pins the carrier: prose outputs carry a 4-field stamp (`subject.ref`,
+`subject.revision`, `valid_while`, `coverage_limits`; the producer is the emitting skill by
+construction — the router's own routing record included), file outputs a JSON
+`handoff-receipt@1`. Schema, stamp semantics, and the verifier live in
+[contracts/](../../contracts/).*
 
 "blindspot-pass ends at understanding," "evidence-research never renders a verdict,"
 "the UAT actor never certifies its own work" — these boundaries are the interfaces. A skill
@@ -59,8 +65,10 @@ The arc is need-driven, not mandatory: skip any stage whose trigger is absent, a
 skipped it. Running a stage on work that doesn't need it is ceremony.
 
 Make the routing decision auditable, like helix's `helix-check` and gauntlet's skip record:
-emit one line in the form `router: fired=[skill] skipped=[skill(trigger-absent)]` — name
-each considered skill and, for every skip, the absent trigger, not an adjective.
+emit one line in the form `router: fired=[blindspot-pass→<stamp|receipt-ref>]
+skipped=[evidence-research(trigger-absent)]` — each fired skill carries the ref of the
+artifact it emitted (its stamp or receipt), and every skip names the absent trigger, not an
+adjective.
 
 ## Routing — which one fires
 
