@@ -1,0 +1,13 @@
+{
+  "entry": "ledger-entry@1",
+  "synthetic": true,
+  "id": "cli-json-flag-behavior-20260722-002",
+  "at": "2026-07-22",
+  "session": "example-session-0001",
+  "type": "assumption",
+  "statement": "The frobnicate CLI's --json flag emits draft 2020-12 conformant output in the installed v3.2, so the batch script parses it without a compatibility shim.",
+  "because": "observed: `frobnicate --json | python -m json.tool` passed 2026-07-22 in this session; upstream changelog not yet checked; downstream consumer class: this session's batch script",
+  "supersedes": ["cli-json-flag-behavior-20260721-003"],
+  "revisit_when": "frobnicate is upgraded past v3.2, or any parse of its --json output fails.",
+  "durability": "session-only"
+}

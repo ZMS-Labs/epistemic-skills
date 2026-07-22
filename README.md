@@ -8,11 +8,11 @@ Epistemic-discipline skills for agentic coding — how an agent **knows** things
 
 Most skill collections cover the *workflow* layer: test-driven development, systematic debugging, plan writing (see [superpowers](https://github.com/obra/superpowers), which these compose with). This collection covers the layer underneath: the disciplines that keep an agent's claims tethered to evidence and its effort aimed at the real target. The `helix` skill is the pairing map for running the two layers in tandem.
 
-**Start with `using-epistemic-skills`** — the router. It answers *which* of these applies to a given task, in *what order*, and how each one's output feeds the next. The package ships **eight** skills: the router, the **six** disciplines it routes to, and **helix** — the tandem entry point that pairs those disciplines with a workflow-skill layer such as superpowers. Install once; each skill self-triggers only when its own `description` matches.
+**Start with `using-epistemic-skills`** — the router. It answers *which* of these applies to a given task, in *what order*, and how each one's output feeds the next. The package ships **nine** skills: the router, the **seven** disciplines it routes to, and **helix** — the tandem entry point that pairs those disciplines with a workflow-skill layer such as superpowers. Install once; each skill self-triggers only when its own `description` matches.
 
 ## The arc
 
-The six disciplines are one system — *how an agent knows things* before, during, and after work — with each ending at a defined boundary and handing off to the next:
+The seven disciplines are one system — *how an agent knows things* before, during, and after work — with each ending at a defined boundary and handing off to the next:
 
 ```
  recon              decide                  contract          gate             prove
@@ -20,6 +20,9 @@ The six disciplines are one system — *how an agent knows things* before, durin
  (rewrites the      (derives the design;     (binds intent    (computed         (blinded verdict on
   request)           evidence-research        to proof and     GO/NO-GO on        a finished UI change)
                      grounds any premise)     stop rules)      a frozen subject)
+
+persist (cross-cutting): decision-ledger appends a ledger entry at each consequential moment,
+   anywhere in the arc — consumed on resumption, re-anchored, never trusted
 ```
 
 Most tasks fire zero or one. The router's value is the case where more than one applies.
@@ -36,13 +39,14 @@ Most tasks fire zero or one. The router's value is the case where more than one 
 | **write-goal** | Explicit requests to author or start a persistent goal. Converts intent into an approved completion contract with goal-type selection, direct proof plus anti-proxy and provenance guards, scope and blocker policy, interruptibility, and opt-in budgets. Adapted from Kimi Code's built-in `write-goal` and strengthened with a documented research basis. |
 | **evidence-locked-uat** | Claims that UI-facing work is *done*. Actor drives; a **blinded verifier** judges from evidence alone; the judge is deterministic script code. Strict verdict vocabulary: `INCONCLUSIVE` is never rounded up to PASS. |
 | **gauntlet** | High-stakes decision points. Multi-lens adversarial panel on a *frozen* subject: truth-gated dossier, falsifiers, 102-persona registry with deterministic selection, mechanical `[V path:line]` evidence checks, Conflict Ledger, **computed** GO/CONDITIONAL/NO-GO. Ships roster, role-agents, orchestration template, and tested selector. |
+| **decision-ledger** | The arc's **persistence** moment. Append-only `ledger-entry@1` records for consequential decisions, load-bearing assumptions, and operator corrections — provenance as resolvable coordinates plus a `revisit_when` condition. Never a verdict; readers re-anchor via the supersedes chain, never trust. Degrades explicitly to session-only with a named durability-gap record. |
 
 ## Layout
 
 ```
 epistemic-skills/                         # repo root
 ├── plugins/epistemic-skills/
-│   ├── skills/<name>/SKILL.md            # canonical skill cores (eight)
+│   ├── skills/<name>/SKILL.md            # canonical skill cores (nine)
 │   ├── contracts/                        # handoff-receipt contract: schema, stdlib verifier, synthetic examples
 │   ├── agents/                           # gauntlet role-agents (five)
 │   ├── .claude-plugin/plugin.json
@@ -114,7 +118,7 @@ mkdir -p ~/.cursor/plugins/local
 ln -sfn "$(pwd)/plugins/epistemic-skills" ~/.cursor/plugins/local/epistemic-skills
 ```
 
-Then **Developer: Reload Window**. Success check: all eight skills under Customize → Skills, and auto-trigger on matching prompts (for example an irreversible / stress-test ask should surface the router or `gauntlet`).
+Then **Developer: Reload Window**. Success check: all nine skills under Customize → Skills, and auto-trigger on matching prompts (for example an irreversible / stress-test ask should surface the router or `gauntlet`).
 
 Do **not** also install these skills into `~/.cursor/skills/` while the plugin is loaded.
 
