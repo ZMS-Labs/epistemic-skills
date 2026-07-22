@@ -6,6 +6,8 @@
 
 **Draft PR:** [#35 — feat: integrate epistemic flexibility controls](https://github.com/ZMS-Labs/epistemic-skills/pull/35)
 
+**Research synthesis:** [`docs/research/2026-07-22-psychology-epistemic-skills-synthesis.md`](../research/2026-07-22-psychology-epistemic-skills-synthesis.md)
+
 **Base:** `e1f605461bc2665f98069ff049f6ef629bd849c9` (`main`, release 2.8.0)
 
 **Status:** implementation complete and deterministic checks green; behavioral superiority and independent review are not yet established
@@ -36,7 +38,8 @@ and deterministic gates remain authoritative in their existing domains.
   and planted-bad traces.
 - CI workflow for the new batteries, recurrent-correction examples, and relevant existing
   stdlib checks.
-- Design specification, implementation plan, and this handoff.
+- Design specification, implementation plan, complete psychology/repository research synthesis,
+  and this handoff.
 
 ## Environment and completed validation
 
@@ -64,8 +67,11 @@ changed-file conflict-marker check: PASS
 changed-Markdown relative-link check: PASS
 ```
 
-PR CI is the final authoritative rerun for the committed tree. Inspect every check and job log
-before merge; do not infer green CI from this handoff alone.
+The permanent read-only `epistemic-flexibility` PR workflow reran the committed branch and
+completed successfully. Its authoritative GitHub Actions run is
+[`29935464523`](https://github.com/ZMS-Labs/epistemic-skills/actions/runs/29935464523).
+A future agent must still inspect the current PR checks after any additional commit; this recorded
+run does not authorize assuming later branch states are green.
 
 ## Work requiring a different environment or agent
 
@@ -107,10 +113,12 @@ simulate independence in one context.
 
 ### 3. Scholarly reception and durable holdings
 
-Consensus discovery was available in the research session. Scite reception and Zotero
-holdings/deposit were unavailable, so reception, notice, and durable-library fields remain
-`UNVERIFIED`; the research record is session-ephemeral. Re-run `evidence-research` in
-standard mode when authenticated Scite and a durable library substrate are available.
+Consensus discovery and the full hypothesis evaluation are preserved in
+[`docs/research/2026-07-22-psychology-epistemic-skills-synthesis.md`](../research/2026-07-22-psychology-epistemic-skills-synthesis.md).
+Scite reception and Zotero holdings/deposit were unavailable, so reception, notice, and
+durable-library fields remain `UNVERIFIED`; the research record is session-ephemeral until
+those layers are completed. Re-run `evidence-research` in standard mode when authenticated
+Scite and a durable library substrate are available.
 
 ### 4. Release decision
 
