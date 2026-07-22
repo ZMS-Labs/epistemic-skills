@@ -98,6 +98,12 @@ Four modes, each with a reception dial **and** a holdings dial:
 | `deep` | 15-20 (high-stakes synthesis) | All matrix papers, **plus second-order**: for the 2-3 most load-bearing, read the contrasting citers themselves (methodological quibble vs. replication failure) | As `standard`, plus tag the run's collection with the decision/claim id | Matrix rows only (§7 applies uniformly across modes) |
 | `formal-support` | Component of a documented review | All layers' coverage limits recorded explicitly | Same as `standard`, scoped to the review | Matrix rows only, with coverage limits recorded explicitly (§7 + §2) |
 
+**Escalate one mode** when any of: a load-bearing paper is contested (substantive
+contrasting reception); the decision is high-stakes/irreversible; Consensus↔Scite
+cross-validation diverges on the core question; or the synthesis must support a gauntlet
+dossier. *Revisit gate:* the first gauntlet dossier built on an un-escalated run (trigger
+too weak), or the first operator-overridden escalation (trigger too strong).
+
 ## Required flow
 
 ### 1. Frame
@@ -149,6 +155,15 @@ boundary conditions. Broad-to-narrow; filters only when the question (or
 connector rules) warrant. Record every query, filters, counts, IDs. `Top N of
 M` is a plan cap, not scarcity evidence. Prefer new discovery for gaps the
 holdings check did not close.
+
+**Convergence criterion (when the sweep is done):** a run converges when the
+counterevidence and boundary-condition query families surface no new relevant DOIs
+beyond the mode's reception dial. Every run exits with a terminal-state label —
+`saturated` / `capped-by-budget` / `contested-stable` — recorded in the run record.
+`capped-by-budget` is an honest label, not a silent exit. (Labels are the floor — no
+longitudinal reception-stability requirement.) *Revisit gate:* the first run that exits
+`capped-by-budget` twice on the same question family (the reception dial is
+miscalibrated), or the first recorded field incident of premature convergence.
 
 ### 5. Interrogate (Scite leads) — the reception pass
 **Harness note:** the observed Claude Code Scite MCP degrades to filter-level
