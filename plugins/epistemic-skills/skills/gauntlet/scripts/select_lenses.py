@@ -517,7 +517,8 @@ def main():
     res = run(subj)
     out = json.dumps(res, indent=1)
     if args.out:
-        args.out.write_text(out, encoding="utf-8")
+        with open(args.out, "w", encoding="utf-8", newline="\n") as f:
+            f.write(out)
         print(f"wrote {args.out}")
     else:
         print(out)

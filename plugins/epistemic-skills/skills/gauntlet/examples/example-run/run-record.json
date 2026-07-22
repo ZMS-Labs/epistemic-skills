@@ -23,7 +23,7 @@
  },
  "fingerprint": {
   "path": "reports/fingerprint.json",
-  "sha256": "35dce6b5dcb6f414b6251965c498fe47067e6afe14693017a2665d5fa3c80741"
+  "sha256": "b6bf0a4a435812f96de2b9bf852320262f57e0db3726ffcf3262a21c5125713e"
  },
  "generated_by": "scripts/finalize_run.py",
  "independence_mode": "independent",
@@ -43,7 +43,7 @@
   "mode": "materialized-role",
   "ref": {
    "path": "prompts/role-binding.json",
-   "sha256": "fec0a8d6b060851551c4d537953483a8ab20307e194981fcada3a34331f9228a"
+   "sha256": "ca3206998a7f9bf58591ba8a6eb641553c012d79b41de5bb313b1533b1451aa8"
   }
  },
  "ruling_set": {
@@ -87,7 +87,7 @@
   "path": "prompts/selection.json",
   "registry_sha256": "8224ac4ad5483cb68b8f7ee2b1d7ce89674c1e955caed6d6ecb7593426feca93",
   "registry_version": "2.2.0",
-  "replay_sha256": "cc319e1a52eac62cc8b66736fe82fb02ca5116b95d55072b0f197edcb4b89ebb",
+  "replay_sha256": "0e802935ff85bdde66b80ccfb803645e8b1c91f0c0bd6b4935972f38a45bca27",
   "selected_ids": [
    "compliance-litigator@2",
    "century-horizon-architect@2",

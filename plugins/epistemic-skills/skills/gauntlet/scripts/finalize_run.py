@@ -425,7 +425,8 @@ def main() -> int:
         print(f"ERROR: {e}", file=sys.stderr)
         return 1
     out_path = args.run_dir / "run-record.json"
-    out_path.write_text(json.dumps(record, indent=1, sort_keys=True) + "\n", encoding="utf-8")
+    with open(out_path, "w", encoding="utf-8", newline="\n") as f:
+        f.write(json.dumps(record, indent=1, sort_keys=True) + "\n")
     print(f"wrote {out_path}")
     if args.ledger_line or args.example:
         line = build_ledger_line(record, args.run_dir, load_registry_entries(),
