@@ -4,6 +4,9 @@ Derived from `standard.md` §9 (verdicts), §47 (contracts), §59 (evidence layo
 The Workflow script in `workflow-template.mjs` embeds these as JSON Schema constants —
 this file is the human-readable contract; keep the two in sync.
 
+Note: the 7-word verdict vocabulary below deliberately substitutes `NOT_RUN` for the
+standard §9's `NOT_APPLICABLE` / `SKIPPED_POLICY` — a recorded narrowing, not drift.
+
 ## Verdict vocabulary (closed set)
 
 `PASS | FAIL_PRODUCT | INCONCLUSIVE | FAIL_TEST_HARNESS | BLOCKED_ENVIRONMENT | FLAKY | NOT_RUN`

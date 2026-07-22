@@ -34,7 +34,9 @@ URL), STOP and report `BLOCKED_ENVIRONMENT` — do not substitute code reading f
 
 ## Step 2 — Run the Workflow
 
-Orchestrate the roles as concurrent, context-isolated sub-agents behind a barrier — the
+Orchestrate the roles as context-isolated sub-agents in a per-case pipeline — each case
+chains actor → blinded verifier, and cases run concurrently with one another (the verifier
+for case 1 can start while the actor for case 2 runs; blinding is preserved per-case). The
 separation of actor / verifier / judge is the mechanism, so they must not share context.
 `references/workflow-template.mjs` is a Claude Code reference implementation (invoke the
 Workflow tool with its content as `script`); other harnesses meet the same contract with
