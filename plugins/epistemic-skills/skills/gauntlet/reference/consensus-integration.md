@@ -2,7 +2,7 @@
 
 ## Role separation
 
-`consensus-research` establishes and verifies the scholarly record. Gauntlet
+`evidence-research` establishes and verifies the scholarly record. Gauntlet
 adversarially evaluates the decision against the frozen record and alone
 computes GO/CONDITIONAL/NO-GO. Ordinary web search is not a literature review,
 and a Consensus-only scan is not a complete systematic review.
@@ -13,15 +13,12 @@ in that record is `[I]`; an unverified proposition remains `[H]`.
 
 ## Before dossier freeze
 
-Invoke `consensus-research` only when peer-reviewed evidence is material. Add a
-claim-evidence matrix with:
-
-- claim and Gauntlet `[V]`/`[I]`/`[H]` mapping;
-- source ID, title, exact URL/DOI, authors, and year;
-- study design, population/context, and result direction;
-- metadata-level, abstract-level, fetched, or full-text verification level;
-- direct support, indirect support, contradiction, or no information;
-- limitations, correction/retraction status, and cohort/version family.
+Invoke `evidence-research` only when peer-reviewed evidence is material. Add a
+claim-evidence matrix. The matrix schema (standard columns plus the
+durability/reception columns `reception`, `holdings`, `notice_status`,
+`cross_index_confirmed`) is defined in the `evidence-research` SKILL.md §9 —
+that section is the single source of truth; do not duplicate it here. Each row
+must also carry the Gauntlet `[V]`/`[I]`/`[H]` mapping.
 
 Add the Consensus run record with queries, filters, result counts,
 selected/fetched IDs, exclusions, limitations, warnings, timestamps, and

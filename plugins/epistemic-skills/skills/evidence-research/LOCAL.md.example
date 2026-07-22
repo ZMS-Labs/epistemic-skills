@@ -1,0 +1,10 @@
+# LOCAL.md example — rename to LOCAL.md and fill in for your environment.
+# An overlay may add bindings and examples; it never overrides the protocol.
+
+## Zotero / library substrate
+- Host: `https://<your-zotero-host-or-api.zotero.org>` (user/group library id: `<id>`)
+- Access: Web API key in `<secret-store-path>` | operator GUI at `<url>`
+
+## Connector names in this harness
+- Consensus MCP tools: `mcp__<server>__*` (e.g. `mcp__claude_ai_Consensus__search`)
+- Scite MCP tools: `mcp__scite__*`
