@@ -1,0 +1,64 @@
+name: epistemic-flexibility
+
+"on":
+  pull_request:
+    paths:
+      - "plugins/epistemic-skills/skills/**"
+      - "plugins/epistemic-skills/contracts/**"
+      - "docs/**"
+      - ".github/workflows/epistemic-flexibility.yml"
+  push:
+    branches: [main]
+    paths:
+      - "plugins/epistemic-skills/skills/**"
+      - "plugins/epistemic-skills/contracts/**"
+      - "docs/**"
+      - ".github/workflows/epistemic-flexibility.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  stdlib-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Epistemic-flexibility protocol fixtures
+        run: python plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/run_tests.py
+      - name: Behavioral fixture scorer self-test
+        run: python plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/behavioral/run_tests.py
+      - name: Compile new Python
+        run: |
+          python -m py_compile \
+            plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/validate_trace.py \
+            plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/run_tests.py \
+            plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/behavioral/score_behavior.py \
+            plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/behavioral/run_tests.py \
+            plugins/epistemic-skills/skills/decision-ledger/reference/validate_examples.py
+      - name: Parse committed JSON in integration surfaces
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          roots = [
+              Path("plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility"),
+              Path("plugins/epistemic-skills/skills/decision-ledger/reference"),
+          ]
+          files = []
+          for root in roots:
+              files.extend(root.rglob("*.json"))
+          for path in files:
+              json.loads(path.read_text(encoding="utf-8"))
+          print(f"parsed {len(files)} JSON files")
+          PY
+      - name: Decision-ledger recurrent-correction examples
+        run: python plugins/epistemic-skills/skills/decision-ledger/reference/validate_examples.py
+      - name: Existing receipt verifier
+        run: python plugins/epistemic-skills/contracts/verify_receipt.py --self-test
+      - name: Existing UAT judge
+        run: python plugins/epistemic-skills/skills/evidence-locked-uat/scripts/judge.py --self-test
+      - name: Existing gauntlet tests
+        run: python plugins/epistemic-skills/skills/gauntlet/tests/run_tests.py
