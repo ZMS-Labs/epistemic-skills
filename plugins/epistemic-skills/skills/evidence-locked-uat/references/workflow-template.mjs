@@ -1,6 +1,13 @@
 // CLAUDE CODE REFERENCE IMPLEMENTATION of the evidence-locked-UAT role separation
 // (actor / blinded verifier / deterministic judge as concurrent isolated sub-agents).
 // Other harnesses meet the same contract with their own subagent primitive.
+//
+// CANONICAL JUDGE: the deterministic aggregation in the Judge phase below is an
+// embedded copy of scripts/judge.py, which is canonical — any harness runs that
+// stdlib script identically. The copy exists only because the Workflow tool
+// executes this file standalone; it is verified against scripts/judge.py by that
+// script's `--self-test` fixtures (including the INCONCLUSIVE synthesis paths and
+// id-drift single-orphan positional matching). Change judge.py FIRST, then port.
 export const meta = {
   name: 'evidence-locked-uat',
   description: 'Evidence-locked UAT: compile contracts, human-mode actor executes, blinded verifier judges, deterministic gate',
@@ -12,7 +19,7 @@ export const meta = {
   ],
 }
 
-// args: { run_id, tier, target_url, change_summary, requirement_sources: string[],
+// args: { run_id, tier, target_url, commit_sha, change_summary, requirement_sources: string[],
 //         evidence_dir, target_repo_dir }
 // The runtime's `args` global is not reliably visible inside function closures
 // (verified failure wf_6e9fb422-425: closures saw undefined). Bind it once at
@@ -221,6 +228,22 @@ for (const contract of compiled.contracts) {
 }
 log(cases.length + ' cases planned (tier=' + RUN.tier + ', ' + compiled.contracts.length + ' contracts)')
 
+// coverage_omitted: case ids in the full (release-tier) contract x persona matrix
+// that this tier does not run. Computed here by the judge, never added
+// procedurally by the orchestrator (fail-closed honesty — see schemas.md).
+const coverageOmitted = (() => {
+  const plannedIds = new Set(cases.map((c) => c.case_id))
+  const omitted = []
+  for (const contract of compiled.contracts) {
+    for (const persona of TIER_PERSONAS.release) {
+      if (persona === 'novice-mobile' && contract.criticality === 'low') continue
+      const id = contract.id + '--' + persona
+      if (!plannedIds.has(id)) omitted.push(id)
+    }
+  }
+  return omitted
+})()
+
 const results = await pipeline(
   cases,
   (cs) => agent(actorPrompt(cs, RUN), { schema: ACTOR_SCHEMA, label: 'act:' + cs.case_id, phase: 'Execute' })
@@ -232,6 +255,8 @@ const results = await pipeline(
 )
 
 phase('Judge')
+// Embedded copy of scripts/judge.py (canonical). Keep semantics line-for-line
+// identical; equivalence is exercised by judge.py --self-test.
 const SEVERITY = ['FAIL_PRODUCT', 'FAIL_TEST_HARNESS', 'BLOCKED_ENVIRONMENT', 'FLAKY', 'INCONCLUSIVE', 'NOT_RUN']
 const byCase = new Map(results.filter(Boolean).map((r) => [r.cs.case_id, r]))
 const caseVerdicts = cases.map((cs, i) => {
@@ -307,13 +332,26 @@ const caseVerdicts = cases.map((cs, i) => {
 
 const anyCriticalFail = caseVerdicts.some((v) => v.status === 'FAIL_PRODUCT' && (v.criticality === 'critical' || v.criticality === 'high'))
 const allPass = caseVerdicts.length > 0 && caseVerdicts.every((v) => v.status === 'PASS')
+// Level-1 honesty fields, emitted by the judge (constant/computable), never
+// appended procedurally by the orchestrator. Must equal KNOWN_LIMITATIONS in
+// scripts/judge.py.
+const KNOWN_LIMITATIONS = [
+  'Level 1: no pairwise coverage',
+  'verifier same-provider (independence is context/prompt-level only)',
+  'a11y = keyboard-path procedural only',
+  'all oracle channels LLM-adjudicated at Level 1 (no deterministic programmatic oracle)',
+  'feedback visible <~3s is below the harness\'s reliable detection threshold — ephemeral confirmations yield INCONCLUSIVE/predicted usability risk, not PASS',
+]
 const gate = {
   release_decision: anyCriticalFail ? 'FAIL' : allPass ? 'PASS' : 'INCONCLUSIVE',
   run_id: RUN.run_id,
   tier: RUN.tier,
   calibration_status: 'uncalibrated',
   target: RUN.target_url,
+  target_commit_sha: RUN.commit_sha,
   cases: caseVerdicts,
+  coverage_omitted: coverageOmitted,
+  known_limitations: KNOWN_LIMITATIONS,
 }
 log('Gate: ' + gate.release_decision + ' (' + caseVerdicts.filter((v) => v.status === 'PASS').length + '/' + caseVerdicts.length + ' cases PASS)')
 return gate
