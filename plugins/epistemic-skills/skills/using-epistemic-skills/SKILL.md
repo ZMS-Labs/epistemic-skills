@@ -1,11 +1,11 @@
 ---
 name: using-epistemic-skills
-description: Use when a task might need more than one of blindspot-pass, applying-formal-rigor, evidence-research, write-goal, gauntlet, or evidence-locked-uat, when unsure which one applies, or when sequencing them (recon → decide → [evidence] → contract → gate → prove). Do not use as a substitute for reading the skill it routes to. This is the entry point and router for the epistemic-skills collection; when a workflow-skill layer (such as superpowers) is also present, helix is the tandem entry point pairing the two.
+description: Use when a task might need more than one of blindspot-pass, applying-formal-rigor, evidence-research, write-goal, gauntlet, evidence-locked-uat, or decision-ledger, when unsure which one applies, or when sequencing them (recon → decide → [evidence] → contract → gate → prove — with decision-ledger persisting consequential moments anywhere in the arc). Do not use as a substitute for reading the skill it routes to. This is the entry point and router for the epistemic-skills collection; when a workflow-skill layer (such as superpowers) is also present, helix is the tandem entry point pairing the two.
 ---
 
 # Using Epistemic Skills — the router
 
-These six disciplines are one system: **how an agent knows things** before, during, and after
+These seven disciplines are one system: **how an agent knows things** before, during, and after
 work. A **workflow-skill layer** (such as [superpowers](https://github.com/obra/superpowers)) —
 brainstorming, TDD, systematic-debugging, plan-writing, verification-before-completion — covers
 *how you do* the work. This collection is the *epistemics* layer underneath it: the disciplines that keep every claim tethered to
@@ -26,12 +26,16 @@ job. That is exactly what lets them compose without stepping on each other:
 | **write-goal** | explicit user intent, de-risked context, and any evidence/design inputs | an **approved, evidence-bound completion contract**; optionally a started persistent goal | the runtime's goal executor, then independent verification | `subject-revision-unchanged` on intent/scope/environment | `handoff-receipt@1` when file-written, else 4-field stamp |
 | **gauntlet** | a **frozen** subject (a de-risked request, a derived verdict, or an evidence matrix) | a **computed GO / CONDITIONAL / NO-GO** + Conflict Ledger | the commit / merge decision | `freeze-window-open` | JSON `handoff-receipt@1` (+ run record) |
 | **evidence-locked-uat** | a finished change + its requirements | an **evidence packet + blinded verdict** (PASS / FAIL / INCONCLUSIVE) | the ship / merge decision | `environment-reachable` | JSON `handoff-receipt@1` over the packet |
+| **decision-ledger** *(new row shape — retrospective trigger: fires on a moment that already happened)* | a consequential decision / assumption / correction just recorded in an artifact | an **append-only `ledger-entry@1` with provenance + `revisit_when`** (or a stated skip) — never a verdict | continuity-verify (fires **first** on resumption), gauntlet dossiers, write-goal, future sessions | `revisit_when`-governed / consumer re-anchored — no contract predicate claimed | `ledger-entry@1` (JSONL) |
 
 *Artifact shape pins the carrier: prose outputs carry a 4-field stamp (`subject.ref`,
 `subject.revision`, `valid_while`, `coverage_limits`; the producer is the emitting skill by
 construction — the router's own routing record included), file outputs a JSON
 `handoff-receipt@1`. Schema, stamp semantics, and the verifier live in
-[contracts/](../../contracts/).*
+[contracts/](../../contracts/). **decision-ledger is the deliberate exception:** entries are
+unverified, self-attested data and carry no 4-field stamp and no `handoff-receipt@1` — their
+freshness is `revisit_when` plus supersedes-chain re-anchoring, owned by the consumer (see the
+skill's consumption contract).*
 
 "blindspot-pass ends at understanding," "evidence-research never renders a verdict,"
 "the UAT actor never certifies its own work" — these boundaries are the interfaces. A skill
@@ -53,6 +57,9 @@ applies — then they run in a natural order, each feeding the next:
 task ──▶│ blindspot-    │─▶│ formal-rigor +   │─▶│ write-goal │─▶│ workflow│─▶│gauntlet│─▶│ evidence-      │──▶ done
         │ pass          │  │ evidence-research│  │ if explicit│  │ layer   │  │if needed│ │ locked-uat     │
         └───────────────┘  └──────────────────┘  └────────────┘  └─────────┘  └────────┘  └────────────────┘
+
+persist (cross-cutting): decision-ledger appends a ledger-entry@1 at each consequential moment,
+   anywhere in the arc ──▶ on resumption, continuity-verify re-anchors from the ledger first
 ```
 
 - **write-goal** runs after intent is sufficiently de-risked and only on explicit user request;
@@ -60,6 +67,9 @@ task ──▶│ blindspot-    │─▶│ formal-rigor +   │─▶│ write
 - **gauntlet** is a *gate before an irreversible commit* — it reviews a frozen subject that is
   typically a de-risked request, a derived verdict, or an evidence matrix from the earlier steps.
 - **evidence-locked-uat** is *post-work* — the UI-facing case of proving the claim "it's done."
+- **decision-ledger** is *cross-cutting and retrospective* — it fires on a moment that already
+  happened (a consequential decision, assumption, or correction), anywhere in the arc, and
+  persists it; it is never sequenced as a stage.
 
 The arc is need-driven, not mandatory: skip any stage whose trigger is absent, and say you
 skipped it. Running a stage on work that doesn't need it is ceremony.
@@ -82,10 +92,12 @@ Match the trigger you can *observe*, not a vibe:
 | create, refine, or start a persistent goal; define what counts as done | **write-goal** | persistent work needs an approved completion contract that resists proxy success and preserves scope, provenance, and interruptibility |
 | commit something irreversible, one-way-door, or high-blast-radius (infra, security, publish, migration) | **gauntlet** | a multi-lens panel + computed verdict beats one model's confidence on a call you can't take back |
 | claim UI-facing work is done, or merge a user-facing surface | **evidence-locked-uat** | no agent should certify its own work; a blinded verifier + deterministic judge catches the false PASS |
+| **just made** a decision among ≥2 alternatives, took on a load-bearing assumption, or **just received** an operator correction *(retrospective trigger — new row shape: the moment already happened)* | **decision-ledger** | what isn't persisted with provenance decays into unverifiable memory — the ledger is the difference between a decision and a rumor |
 
 If **none** match, none fire — this router does not manufacture work. If **two** match, run
 them in arc order (recon → decide → contract → gate → prove) and pass each output to the next per the
-handoff table.
+handoff table. **decision-ledger is exempt from arc ordering** — its trigger is retrospective, so
+it fires at the moment, alongside whichever stage produced the consequential moment.
 
 If the routed-to skill is absent or uninstalled in your harness, say so and stop — never
 improvise the discipline inline.
@@ -99,7 +111,7 @@ decide-stage re-fire loop between formal-rigor and research.
 gauntlet and evidence-locked-uat can both fire on the same merge (irreversible infra/security +
 user-facing surface) — gauntlet gates first, evidence-locked-uat proves after, per arc order.
 
-## Shared invariants (why these six, and not others)
+## Shared invariants (why these seven, and not others)
 
 A skill belongs in this collection only if it enforces all of these. They are the family
 resemblance:

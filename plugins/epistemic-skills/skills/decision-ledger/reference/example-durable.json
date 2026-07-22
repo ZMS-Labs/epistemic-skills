@@ -1,0 +1,12 @@
+{
+  "entry": "ledger-entry@1",
+  "synthetic": true,
+  "id": "store-substrate-choice-20260722-001",
+  "at": "2026-07-22",
+  "type": "decision",
+  "statement": "Decision-ledger entries persist to repo-local .ledger/entries.jsonl when the decisions belong to the repo, with harness stores bound only via LOCAL.md.",
+  "because": "spec: docs/superpowers/specs/2026-07-22-decision-ledger-design.md (method step 3); gauntlet run phase-c-skill-specs-2026-07-22 verdict CONDITIONAL; downstream consumer class: continuity-verify on resumption",
+  "supersedes": [],
+  "revisit_when": "A harness memory store configured via LOCAL.md demonstrably supersedes file persistence for this repo's decisions.",
+  "durability": "durable"
+}
