@@ -18,3 +18,15 @@ declaration** — require the trace to carry an explicit `action_executes: boole
 and enforce `control in {hold, escalate} => action_executes == false`. This moves the check from an
 impossible parsing problem to a checkable declared field (residual: the agent could mis-declare, a
 smaller and auditable surface). Escalated to the Sovereign for the path decision.
+
+---
+## Round 2 (2026-07-22): structured fix ALSO dissented — category limit accepted
+
+The structured `action_executes` fix (commit edbf12b) was sent for a second cross-family read
+(GX-CONSULT-b57b2d8b26dfc63d). **DISSENT (high confidence), ACCEPTED:** the check only compares two
+*self-authored* fields; an agent acts-while-holding by declaring `action_executes: false` (lint 0/15 →
+~100% adversary bypass). **A static trace validator cannot enforce runtime behavior — it sees only
+declarations.** P1-as-validator-enforcement is UNACHIEVABLE at this layer; real enforcement needs a
+runtime tool-call gate (absent here). The field is retained as discipline/consistency aid + future-gate
+hook, relabelled NOT enforcement. Honest net: the integration is a set of discipline/documentation
+scaffolds for cooperative agents + honest labels — not enforcement/security controls.

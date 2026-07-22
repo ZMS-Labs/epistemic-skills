@@ -103,23 +103,28 @@ Independent gauntlet review (2026-07-22, NO-GO → resolved) established that "f
   disconfirming observation, the experiment preregistration shape, and the `failure_chain`
   conditional shape for recurrent corrections;
 - a `standard`/`high`-stakes trace may not `act` on a load-bearing `unverified` claim;
-- **control/action consistency (structural — paraphrase-proof).** A non-acting control
-  (`hold`/`escalate`) MUST declare `action_executes` (boolean), and a declared `action_executes: true`
-  under such a control is **rejected**. Enforcement rests on the declared field, **not** on reading the
-  action's English — verified paraphrase-proof: the structural rule rejects 15/15 execution paraphrases
-  regardless of wording (`evals/epistemic-flexibility/adversarial_paraphrase_battery.py`).
+- **control/action DECLARATION-CONSISTENCY (not enforcement).** A non-acting control
+  (`hold`/`escalate`) must declare `action_executes` (boolean); a declared `action_executes: true` under
+  such a control is rejected, and a blatant text/declaration mismatch is flagged. This catches an
+  *honest* agent's internal inconsistency; it is paraphrase-insensitive at validating the *declaration*.
 
-**History (2026-07-22):** an earlier version tried to enforce this by *parsing* the action text. A
-cross-family Step-7b review DISSENTED (high confidence) and verification confirmed the keyword matcher
-had a **100% false-negative rate** on paraphrases ("roll this out", "advance it to production", …). The
-fix moved enforcement to the declared boolean above. The keyword matcher survives only as a **secondary
-mis-declaration lint** (flags an `action_executes: false` whose text nonetheless says "merge the
-release") — best-effort, explicitly not exhaustive.
+**This is NOT control/action enforcement — a category limit, established by TWO cross-family reviews
+(2026-07-22).** `validate_trace.py` is a static validator of a self-authored JSON record: it sees only
+what the agent *declares*, never the action's real runtime effect. Round-1 tried to enforce by parsing
+the action text (measured **100% false-negative rate** on paraphrases). Round-2 moved to a declared
+`action_executes` boolean — but the second review correctly noted this only checks two self-authored
+fields against each other. An agent that wants to act-while-holding simply declares `action_executes:
+false`; the text lint catches **0/15** paraphrases, so the informed-adversary bypass rate stays ~100%.
+The loophole is one bit wide instead of a phrase, but it is the same loophole.
 
-**Residual (stated, not eliminated):** the guarantee assumes the agent declares `action_executes`
-honestly. A deliberate mis-declaration (setting it `false` while executing, with non-blatant text) is
-not caught — but that is a single explicit, auditable field, a far smaller surface than free-text
-smuggling, and blatant lies trip the lint.
+**Honest scope.** A document validator *cannot* bind runtime behavior. Real "`hold` means don't
+execute" enforcement must live at the **runtime tool-call boundary** — a gate that intercepts side
+effects — which does **not** exist in this repo (cf. the governance spine's still-incomplete
+runtime/tool-call surface). The `action_executes` field is retained as (a) a discipline aid that forces
+an explicit intent declaration, (b) an internal-consistency + honest-mislabel lint for cooperative
+agents, and (c) a hook a future runtime gate can read — **not** as a security control against an
+adversarial or careless agent. The P1 as "validator-enforced fail-closed" is **unachievable at this
+layer** (#41 relabelled: needs a runtime gate).
 
 What it does **not** verify (structural only — a residual judgment surface, not a guarantee):
 

@@ -19,14 +19,19 @@
 > **UPDATE 1 — 2026-07-22 (cross-family Step-7b DISSENT, verified):** the first P1 "closure" (a keyword
 > matcher) was **premature** — measured 100% false-negative rate on execution paraphrases. P1 REOPENED.
 >
-> **UPDATE 2 — 2026-07-22 (structural fix, verified):** P1 **genuinely resolved**. Enforcement moved off
-> free-text parsing onto a declared `action_executes` boolean: a non-acting control (`hold`/`escalate`)
-> must declare it, and `action_executes: true` under such a control is rejected — **paraphrase-proof**
-> (the structural rule rejects 15/15 paraphrases regardless of wording; battery PASS). The keyword
-> matcher is demoted to a secondary mis-declaration lint. **Stated residual:** a deliberate
-> mis-declaration (false-while-executing, non-blatant text) is not caught — a single auditable field, a
-> far smaller surface than free-text smuggling. protocol 11/11 → **12/12**, behavioral **12/12**.
-> Not claiming a universal guarantee — resolution + stated residual. Re-review optional (operator).
+> **UPDATE 2 — 2026-07-22 (structural fix):** moved enforcement to a declared `action_executes` boolean;
+> paraphrase-proof at validating the *declaration* (battery: 15/15). Framed as "resolved with a small
+> residual". protocol 12/12, behavioral 12/12.
+>
+> **UPDATE 3 — 2026-07-22 (2nd cross-family DISSENT, ACCEPTED — category limit):** Update-2's "resolved"
+> was **wrong**. The structured check only compares two *self-authored* fields (`control` vs
+> `action_executes`); an agent acts-while-holding by simply declaring `action_executes: false` (lint
+> catches 0/15 → ~100% adversary bypass). **A static trace validator cannot enforce runtime behavior — it
+> sees only declarations.** The P1 as "validator-enforced fail-closed" is **UNACHIEVABLE at this layer**;
+> real enforcement needs a runtime tool-call gate (absent in this repo). The `action_executes` field is
+> kept as a discipline/consistency aid + a future-gate hook, **not** enforcement. #41 relabelled
+> accordingly. Net honest state of the whole integration: **discipline/documentation scaffolds for
+> cooperative agents + honest labels — not enforcement/security controls.**
 
 
 - Froze final diff (HEAD `641ff2c`, bundle SHA256 `550bd8d6…`).

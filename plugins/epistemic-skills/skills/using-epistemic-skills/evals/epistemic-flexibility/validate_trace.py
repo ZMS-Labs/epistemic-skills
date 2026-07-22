@@ -20,16 +20,17 @@ KIND_VOCAB = {"observation", "interpretation", "prediction", "value", "authoriza
 STATUS_VOCAB = {"verified", "contradicted", "unverified", "not-applicable"}
 CONTROL_VOCAB = {"act", "hold", "escalate", "reversible-probe"}
 
-# --- Control/action consistency (fail-closed teeth for C2/C5) ---------------
-# PRIMARY enforcement is STRUCTURAL, not text-parsing: the trace must DECLARE
-# `action_executes` (bool). A non-acting control (`hold`/`escalate`) whose action
-# is declared to execute is rejected. This is paraphrase-proof — it does not try to
-# read the action's English (a keyword matcher cannot; a 2026-07-22 cross-family
-# Step-7b review measured a 100% false-negative rate on paraphrases). The text
-# matcher below is retained ONLY as a SECONDARY mis-declaration lint: if the action
-# is declared non-executing yet its text carries a blatant execution imperative, the
-# declaration is likely inaccurate and is flagged. The guarantee rests on the
-# declared boolean; the lint is best-effort and explicitly NOT complete.
+# --- Control/action DECLARATION-CONSISTENCY (NOT runtime enforcement) --------
+# IMPORTANT (two cross-family reviews, 2026-07-22): this is a DISCIPLINE/CONSISTENCY
+# check, not enforcement. A static validator sees only what the agent DECLARES, never
+# the action's real runtime effect. It requires a non-acting control (`hold`/`escalate`)
+# to declare `action_executes` (bool) and rejects a declared `action_executes: true`
+# under such a control — which catches an HONEST agent's internal inconsistency. It does
+# NOT stop an adversarial/careless agent: declaring `action_executes: false` bypasses the
+# check regardless of what the action really does (the text lint below catches ~0% of
+# paraphrases). Real "hold means don't execute" enforcement must live at a RUNTIME
+# tool-call gate (absent in this repo), not here. Keep this as an intent-declaration +
+# consistency lint + a hook a future runtime gate can read — do NOT call it fail-closed.
 NON_ACTING_CONTROLS = {"hold", "escalate"}
 # Blatant execution imperatives — the lint catches obvious mis-declarations, not every
 # paraphrase (see adversarial_paraphrase_battery.py). A hold action that merely mentions
@@ -139,12 +140,12 @@ def validate_trace(trace: Any) -> list[str]:
         if action_executes is None:
             errors.append(
                 f"control {control!r} requires action_executes to be declared (boolean); "
-                "a non-acting control must prove it does not execute (fail-closed)"
+                "a non-acting control must declare non-execution (declaration-consistency; NOT runtime enforcement)"
             )
         elif action_executes is True:
             errors.append(
                 f"control {control!r} is contradicted by action_executes=true; a non-acting "
-                "control must not execute (control/action consistency — fail-closed)"
+                "control must not execute (control/action declaration-consistency; NOT runtime enforcement)"
             )
     # Secondary lint (best-effort, NOT complete): if declared non-executing but the text
     # carries a blatant execution imperative, the declaration is probably inaccurate.
