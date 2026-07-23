@@ -11,7 +11,7 @@ HERE = Path(__file__).resolve()
 SKILL_ROOT = HERE.parents[1]
 PACKAGE_ROOT = HERE.parents[3]
 REPO_ROOT = HERE.parents[5]
-EXPECTED_VERSION = "2.9.0"
+EXPECTED_VERSION = "2.9.1"
 
 
 def require(condition: bool, message: str) -> None:
@@ -35,8 +35,14 @@ def main() -> int:
         "## Relay loop",
         "## Stop conditions",
         "https://github.com/<owner>/<repo>/blob/<commit>/docs/outsource/<work-id>/HANDOFF.md",
+        "canonical outbound prompt template",
+        "{packet_commit}",
     ):
         require(phrase in skill, f"SKILL.md missing contract phrase: {phrase}")
+    require(
+        "Store the exact outbound prompt" not in skill,
+        "publication workflow still requires a commit to contain its own hash",
+    )
 
     template = read(SKILL_ROOT / "reference" / "HANDOFF_TEMPLATE.md")
     for heading in (
@@ -50,6 +56,14 @@ def main() -> int:
         "## Relay response contract",
     ):
         require(heading in template, f"handoff template missing heading: {heading}")
+    require(
+        "Packet commit | `supplied by the immutable prompt URL after publication`" in template,
+        "handoff template does not use the prompt URL as the packet commit coordinate",
+    )
+    require(
+        "Prepared commit | `<40-character Git commit>`" not in template,
+        "handoff template still requires an impossible self-embedded commit",
+    )
 
     router = read(PACKAGE_ROOT / "skills" / "using-epistemic-skills" / "SKILL.md")
     require("These nine disciplines" in router, "router discipline count is stale")

@@ -2,7 +2,7 @@
 
 Epistemic-discipline skills for agentic coding — how an agent **knows** things before, during, and after work.
 
-**Version 2.9.0.** **License: [GPL-3.0-or-later](LICENSE).**
+**Version 2.9.1.** **License: [GPL-3.0-or-later](LICENSE).**
 
 **Harness-agnostic.** The skills are plain [Agent Skills](https://agentskills.io/specification) (`SKILL.md` + supporting files) describing *methods*, not any one tool's mechanics. They run in any harness that can load a skill or a context file — Claude Code, Codex, Cursor, Gemini CLI, Antigravity, Kimi Code, or your own agent loop. Where a step needs a runtime primitive (concurrent sub-agents, a structured-output schema, an MCP tool), the skill states the **contract** and points at a labeled *reference implementation* for one harness; other harnesses meet the same contract with their own primitives. See [Using these in any harness](#using-these-in-any-harness).
 
@@ -96,7 +96,7 @@ Install with **exactly one** mechanism per harness. A second copy of the same sk
 codex plugin marketplace add ZMS-Labs/epistemic-skills --ref main
 codex plugin add epistemic-skills@epistemic-skills
 # Register the five gauntlet roles in Codex's user-agent registry:
-python "$HOME/.codex/plugins/cache/epistemic-skills/epistemic-skills/2.9.0/skills/gauntlet/scripts/render_codex_agents.py" --out "$HOME/.codex/agents"
+python "$HOME/.codex/plugins/cache/epistemic-skills/epistemic-skills/2.9.1/skills/gauntlet/scripts/render_codex_agents.py" --out "$HOME/.codex/agents"
 ```
 
 Start a new Codex task after rendering the roles. Codex plugin manifests do not
@@ -107,7 +107,7 @@ fallback for a task started before registration.
 
 ### Cursor
 
-**Status:** packaging is ready (`.cursor-plugin/` manifests, version 2.9.0). The plugin is **not yet listed** on the public [Cursor Marketplace](https://cursor.com/marketplace); `/add-plugin epistemic-skills` works only after Cursor lists it or you import the repo as a [team marketplace](https://cursor.com/docs/plugins). Publisher application: [cursor.com/marketplace/publish](https://cursor.com/marketplace/publish).
+**Status:** packaging is ready (`.cursor-plugin/` manifests, version 2.9.1). The plugin is **not yet listed** on the public [Cursor Marketplace](https://cursor.com/marketplace); `/add-plugin epistemic-skills` works only after Cursor lists it or you import the repo as a [team marketplace](https://cursor.com/docs/plugins). Publisher application: [cursor.com/marketplace/publish](https://cursor.com/marketplace/publish).
 
 | Path | When to use |
 |---|---|

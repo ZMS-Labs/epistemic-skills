@@ -9,7 +9,8 @@
 | Subject revision | `<request/scope revision>` |
 | Valid while | `subject-revision-unchanged` |
 | Coverage limits | `<explicit gaps or NONE>` |
-| Prepared commit | `<40-character Git commit>` |
+| Baseline parent | `<40-character commit inspected before packet publication>` |
+| Packet commit | `supplied by the immutable prompt URL after publication` |
 | Prepared UTC | `<ISO-8601 timestamp>` |
 | Supersedes | `<prior HANDOFF commit/path or NONE>` |
 | Relay head | `<latest relay file or NONE>` |
@@ -30,10 +31,12 @@ or executed process.
 
 - **Repository:** `https://github.com/<owner>/<repo>`
 - **Canonical remote:** `<remote name and redacted URL>`
-- **Prepared commit:** `<commit>`
+- **Baseline parent:** `<commit inspected before packet publication>`
+- **Packet commit:** Use the 40-character commit embedded in the immutable prompt URL. It is not
+  duplicated inside this file because a Git commit cannot contain its own hash.
 - **Base branch:** `<branch>`
 - **Target access:** `<verified | operator-asserted | blocked>`
-- **Source rule:** Read linked files at the prepared commit. Later branch state is out of scope
+- **Source rule:** Read linked files at the packet commit from the prompt URL. Later branch state is out of scope
   unless a newer committed handoff supersedes this one.
 
 ## Context map
@@ -43,7 +46,7 @@ or executed process.
 | Required | `<path>` | `<fact, contract, or interface this establishes>` | `<whole file or anchors>` |
 | Supporting | `<path>` | `<why it may help>` | `<anchors>` |
 
-Every required path must exist at the prepared commit. Do not rely on local absolute paths,
+Every required path must exist at the packet commit. Do not rely on local absolute paths,
 attachments, or the originating chat.
 
 ## Current state
@@ -153,10 +156,11 @@ recommended_next_action: <one action>
 ## Context-erasure audit
 
 - [ ] No originating-chat knowledge is required.
-- [ ] Repository, exact commit, and target access are explicit.
-- [ ] Every required path exists at the prepared commit.
+- [ ] Repository, immutable packet commit from the prompt URL, and target access are explicit.
+- [ ] Every required path exists at the packet commit.
 - [ ] Outcome, constraints, non-goals, authority, and preserved state are explicit.
 - [ ] Every requirement has direct proof and an anti-proxy guard.
 - [ ] Unknowns have impact, owner, and closure behavior.
 - [ ] Deliverables and relay response shape are unambiguous.
-- [ ] Packet and exact outbound prompt are committed and pushed before state becomes `READY`.
+- [ ] Packet and canonical outbound prompt template are committed and pushed before state becomes `READY`.
+- [ ] The emitted prompt substitutes the receipt's 40-character packet commit for `{packet_commit}`.

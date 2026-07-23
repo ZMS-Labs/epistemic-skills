@@ -33,7 +33,7 @@ Use one predictable location in every repository:
 docs/outsource/<work-id>/
 ├── HANDOFF.md                 # canonical current packet
 └── relay/
-    ├── 0001-origin.md         # exact outbound prompt or message
+    ├── 0001-origin.md         # canonical prompt template + target metadata
     ├── 0002-target.md         # target response, stored verbatim
     └── ...                    # alternating, append-only turns
 ```
@@ -122,9 +122,15 @@ requirement IDs. Include enough explanation for a capable target to act immediat
 
 ### 5. Record, publish, and verify
 
-Store the exact outbound prompt in the next `relay/NNNN-origin.md`. Commit the packet and relay
-record, push them to GitHub when authorized, then resolve the prepared commit and construct the
-immutable blob URL.
+Store the canonical outbound prompt template in the next `relay/NNNN-origin.md`, using the literal
+`{packet_commit}` where the immutable commit will appear, and record the intended target or target
+capabilities. Commit the packet and relay record, push them to GitHub when authorized, resolve the
+packet commit, then substitute that 40-character SHA into the operator-facing prompt.
+
+A Git commit cannot contain its own hash: the hash is derived from the bytes that would have to
+contain it. Therefore the committed relay record carries the canonical template, while the packet
+commit in the readiness receipt deterministically reconstructs the exact outbound prompt. Never
+weaken this into a mutable branch URL or a locally guessed ref.
 
 Verify that every linked path exists at that commit. When network or publication authority is
 missing, stop at `BLOCKED`; a local preview is not a usable outsource prompt.
@@ -141,9 +147,10 @@ When the operator pastes a target response back:
 1. save it verbatim as the next `relay/NNNN-target.md` before interpreting it;
 2. verify its claimed commits, files, commands, tests, and unresolved items against live state;
 3. update `HANDOFF.md` with the verified current state, remaining requirements, and next request;
-4. store the next outbound prompt in `relay/NNNN-origin.md`;
+4. store the next canonical outbound prompt template in `relay/NNNN-origin.md` with the literal
+   `{packet_commit}` token;
 5. commit and push the updated packet; and
-6. emit a new short prompt pointing at the new exact commit.
+6. substitute the resulting commit and emit the new short prompt pointing at that exact commit.
 
 The target must return only this Markdown envelope, with no conversational preamble:
 
