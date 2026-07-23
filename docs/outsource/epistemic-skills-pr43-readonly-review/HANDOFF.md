@@ -3,17 +3,17 @@
 | Field | Value |
 |---|---|
 | Schema | `outsource-handoff@1` |
-| State | `READY` |
+| State | `DRAFT` — terminal; target `PARTIAL` relay verified and no further prompt authorized |
 | Work ID | `epistemic-skills-pr43-readonly-review` |
 | Subject ref | `ZMS-Labs/epistemic-skills#43` |
 | Subject revision | `03c16761d67f047b0ffb8a73b9d0b09b65045127` |
-| Valid while | `pr-head-unchanged` |
+| Valid while | `review-frozen-at-pinned-head` |
 | Coverage limits | Read-only source and GitHub metadata review. No checkout, command execution, repository mutation, live-harness validation, or independent Gauntlet claim is requested or permitted. |
-| Baseline parent | `617bc317743cc68d81f2f57fa175a00ea319d544` |
-| Packet commit | Use the 40-character commit embedded in the immutable GitHub URL supplied by the origin prompt. |
-| Prepared UTC | `2026-07-23T16:17:16Z` |
-| Supersedes | `NONE` — separate capability-matched work item; it does not replace the full execution contract |
-| Relay head | `docs/outsource/epistemic-skills-pr43-readonly-review/relay/0001-origin.md` |
+| Baseline parent | `17392f68c7a413faa777c0c903cd6068f85088f8` |
+| Packet commit | `17392f68c7a413faa777c0c903cd6068f85088f8` — immutable packet consumed by target relay 0002 |
+| Prepared UTC | `2026-07-23T16:42:00Z` |
+| Supersedes | `17392f68c7a413faa777c0c903cd6068f85088f8:docs/outsource/epistemic-skills-pr43-readonly-review/HANDOFF.md` |
+| Relay head | `docs/outsource/epistemic-skills-pr43-readonly-review/relay/0003-origin.md` |
 
 ## Required outcome
 
@@ -80,6 +80,26 @@ needed to verify a claim; do not broaden into a new whole-repository audit.
 
 These are origin observations. Reproduce them from GitHub before citing them.
 
+## Verified relay result
+
+- Target relay `relay/0002-target.md` is stored verbatim. It returned `PARTIAL`, claimed no work
+  product, and explicitly limited itself to read-only source review.
+- The origin independently reproduced the pinned head/base, open draft state, 15 commits, 12
+  changed files, green stdlib and CodeQL checks, and failing DCO check. This closes the target's
+  narrow RO-001 metadata gap for origin consumption; it does not alter the verbatim target status.
+- At the pinned head, `08-changes-and-verification.md`, `09-final-verification.md`, and
+  `decision-ledger.jsonl` are absent while `00-INDEX.md` links them and marks OUT-008 and OUT-010
+  satisfied. The target's P1 unsupported-completion finding is confirmed.
+- The matrix has 99 classified cells and reconciles to 50 `RUN`, 4 `FIXTURE`, 23
+  `SKIP_TRIGGER_ABSENT`, and 22 `SKIP_CONTRAINDICATED`. Its evidence is primarily column-level;
+  the target's P2 row-specific substantiation gap is confirmed.
+- The narrow workflow, README, GEMINI, and outsource-test changes have no source-review blocker.
+  No runtime, historical RED→GREEN, clean-worktree, or independent-Gauntlet proof was produced by
+  this work item.
+- **Disposition:** accepted as a verified partial source review. No further ChatGPT prompt is
+  emitted. Implementation and execution return to the origin/coding harness under the original
+  suite stress-test contract.
+
 ## Requirements
 
 | ID | Requirement | Direct evidence required |
@@ -92,6 +112,11 @@ These are origin observations. Reproduce them from GitHub before citing them.
 | RO-006 | Map the exact remaining work for the coding agent, including missing `08`, `09`, final Gauntlet evidence, clean execution, and DCO remediation. | Ordered completion checklist tied to the original OUT requirements |
 | RO-007 | Return prioritized findings. Each finding includes severity `P0`–`P3`, observation, impact, violated contract or claim, exact citation, smallest recommended fix, and residual uncertainty. Separate verified observation from interpretation. | Complete finding records; explicitly say `no finding` where supported |
 | RO-008 | Return only the relay envelope below and make no execution, mutation, independence, or completion overclaim. | Conforming `outsource-relay@1` response |
+
+Target result: RO-002 through RO-008 satisfied with findings/limitations; RO-001 was left open by
+the target and independently reproduced by the origin. The work item remains `PARTIAL` because a
+target relay is never silently upgraded and this source review cannot complete the original
+execution contract.
 
 ## Completion and anti-proxy contract
 
