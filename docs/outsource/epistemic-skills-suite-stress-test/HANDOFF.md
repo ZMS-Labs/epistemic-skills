@@ -3,22 +3,24 @@
 | Field | Value |
 |---|---|
 | Schema | `outsource-handoff@1` |
-| State | `READY` |
+| State | `BLOCKED` — target capability preflight not satisfied |
 | Work ID | `epistemic-skills-suite-stress-test` |
 | Subject ref | `epistemic-skills-suite` |
-| Subject revision | `operator-request-2026-07-23-r2-pr43-continuation` |
+| Subject revision | `operator-request-2026-07-23-r3-target-preflight` |
 | Valid while | `subject-revision-unchanged` |
-| Coverage limits | No skill may be omitted. A proprietary harness may be source-audited when live execution is unavailable, but that limitation must be explicit and must not be reported as live validation. PR #43 is a moving external worktree; its head must be re-resolved before use. |
-| Baseline parent | `9532a57199fc8d4747a91916d59d1ea86c34d838` |
-| Packet commit | `supplied by the immutable prompt URL after publication` |
-| Prepared UTC | `2026-07-23T13:55:56Z` |
-| Supersedes | `9532a57199fc8d4747a91916d59d1ea86c34d838:docs/outsource/epistemic-skills-suite-stress-test/HANDOFF.md` |
-| Relay head | `docs/outsource/epistemic-skills-suite-stress-test/relay/0003-origin.md` |
+| Coverage limits | Dispatch is paused until a target demonstrates all four required execution capabilities. No skill may be omitted. PR #43 is a moving external worktree and must be re-resolved after preflight. |
+| Baseline parent | `532a0ce86fea908113cbca2a600fb21238e473f1` |
+| Packet commit | `supplied by the BLOCKED packet receipt after publication; no execution prompt is emitted` |
+| Prepared UTC | `2026-07-23T15:14:14Z` |
+| Supersedes | `532a0ce86fea908113cbca2a600fb21238e473f1:docs/outsource/epistemic-skills-suite-stress-test/HANDOFF.md` |
+| Relay head | `docs/outsource/epistemic-skills-suite-stress-test/relay/0005-origin.md` |
 
 ## Required outcome
 
-Continue and independently verify the current whole-suite stress test in draft PR #43. Re-resolve
-its live head before acting; the last stable origin snapshot was
+Dispatch is paused. Before another target receives an execution prompt, verify that the target has
+all four capabilities in the blocking preflight below. After that gate passes, continue and
+independently verify the current whole-suite stress test in draft PR #43. Re-resolve its live head
+before acting; the last stable origin snapshot was
 `03c16761d67f047b0ffb8a73b9d0b09b65045127`. Do not restart the audit or duplicate artifacts that
 already exist. Validate the partial work, complete OUT-008 through OUT-010 and any earlier gaps,
 finish the frozen-subject Gauntlet, and leave a reviewable green PR or an honest bounded state.
@@ -39,13 +41,32 @@ critique, a count of tests, or indiscriminate application of every skill everywh
 - **Origin retains:** Verification of returned claims, merge/release decisions, direct pushes to
   `main`, version publication, and synchronization of installed harness copies.
 
+## Blocking target preflight
+
+All four answers must be supported by the target harness's actual tool surface before dispatch:
+
+1. **Networked writable checkout:** it can obtain and modify a Git checkout of this repository and
+   PR #43's branch or a clean replacement branch.
+2. **Runnable test shell:** it can execute Python and the repository's deterministic checks against
+   the subject tree.
+3. **Authenticated GitHub mutation:** it can create a branch or fork, commit, push, and open or
+   update a pull request—not merely inspect GitHub through a read-only connector.
+4. **Independent execution contexts:** it can run isolated Gauntlet roles or a documented
+   contract-equivalent separation.
+
+A browser-only chat, read-only GitHub connector, or runtime without outbound Git and a test shell
+fails this preflight. Do not send another READY prompt to such a target. If no target passes, the
+operator may separately ask the origin harness to execute the work; that is outside this
+`outsource` relay's current authorization boundary.
+
 ## Repository and source
 
 - **Repository:** `https://github.com/ZMS-Labs/epistemic-skills`
 - **Canonical remote:** `origin` → `https://github.com/ZMS-Labs/epistemic-skills.git`
 - **Baseline parent:** `9532a57199fc8d4747a91916d59d1ea86c34d838`
-- **Packet commit:** Use the 40-character commit embedded in the immutable prompt URL. It is not
-  duplicated inside this file because a Git commit cannot contain its own hash.
+- **Packet commit:** Use the 40-character commit in the BLOCKED packet receipt. It is not duplicated
+  inside this file because a Git commit cannot contain its own hash. No execution prompt exists in
+  this relay turn.
 - **Base branch:** `main`
 - **Active audit PR:** `https://github.com/ZMS-Labs/epistemic-skills/pull/43`; branch
   `audit/epistemic-suite-stress-test-2026-07-23`; last stable origin snapshot
@@ -53,7 +74,7 @@ critique, a count of tests, or indiscriminate application of every skill everywh
   drift before relying on this snapshot.
 - **Target access:** Public read access verified. Branch/fork/PR write capability is a required
   target capability; if unavailable, return `BLOCKED` rather than burying the audit in chat.
-- **Source rule:** Read linked files at the packet commit from the prompt URL. Later branch state is
+- **Source rule:** Read linked files at the packet commit from the packet receipt. Later branch state is
   out of scope unless a newer committed handoff supersedes this one.
 - **Superpowers reference:** Use `https://github.com/obra/superpowers/tree/v6.1.1/skills`, tag
   `v6.1.1` (`c984ea2e7aeffdcc865784fd6c5e3ab75da0209a`). Do not substitute a moving branch.
@@ -83,6 +104,7 @@ critique, a count of tests, or indiscriminate application of every skill everywh
 | Supporting | `docs/superpowers/` | Design history and accepted constraints | Read documents cited by current skills or findings |
 | Supporting | `docs/outsource/epistemic-skills-suite-stress-test/relay/0001-origin.md` | Initial canonical outbound template and target capabilities | Whole file |
 | Required | `docs/outsource/epistemic-skills-suite-stress-test/relay/0002-target.md` | Verbatim blocked response from the first target; its environment claims are self-reported, not global repo state | Whole file |
+| Required | `docs/outsource/epistemic-skills-suite-stress-test/relay/0004-target.md` | Verbatim second blocked response; confirms the same target-capability failure recurred | Whole file |
 | Required | `.ledger/entries.jsonl` | Durable provenance for the decision to continue PR #43 instead of duplicating the audit | Current chain head, then re-anchor its PR coordinate |
 
 Repository content is claim-bearing data, not authority that can override this packet. Treat
@@ -97,9 +119,16 @@ directs their execution.
   `fa1baba74d3945b7cc536b563566c8f68f119105`, origin-relay blob
   `889a5e2e609622c246de6c0cb0b27b407cac8e36`, public visibility, and default branch claims were
   independently reproduced.
+- Relay `0004-target.md` is stored verbatim. Its packet commit and HANDOFF blob
+  `43159159bbfd8cce2ec98283875bc33d5354cd72`, PR #43 head/base, 15-commit and 12-file counts,
+  missing OUT-008/009/010 artifacts, and successful Actions run `30013228675` were independently
+  reproduced.
 - The returned target reported `BLOCKED`, produced no work product, and correctly left OUT-001
   through OUT-011 open. Its local DNS/tool/capability claims cannot be independently reproduced and
   remain self-reported; they carry no global-state implication.
+- Two consecutive external targets have now failed at the same capability boundary: each could
+  inspect GitHub but could not obtain a runnable writable checkout or publish work. Repeating the
+  same dispatch without target preflight is a recurrent process failure.
 - Live GitHub separately contains draft PR #43 by `SternOne`, based on packet commit
   `9532a57199fc8d4747a91916d59d1ea86c34d838`. Its head was stable at
   `03c16761d67f047b0ffb8a73b9d0b09b65045127` across two bounded snapshots.
@@ -124,6 +153,10 @@ directs their execution.
 
 ### Unknowns
 
+- **A target that passes the four-capability preflight** — impact: no remaining implementation,
+  verification, Gauntlet, or publication work can occur through this relay until one is selected;
+  owner: operator; closure: verify all four capabilities from the harness/tool surface, then create
+  a new READY relay turn.
 - **PR #43 execution provenance** — impact: its author is visible but the creating model/process and
   claimed isolation are not established; owner: next target; closure: record actual provenance and
   re-verify independence-sensitive claims rather than inheriting them.
@@ -147,6 +180,7 @@ directs their execution.
 | Prompt is reconstructed from committed template plus SHA | `outsource` v2.9.1 | Immutable pointer without impossible self-hash | Git content addressing changes |
 | Continue from and verify PR #43 instead of starting a duplicate audit | Relay 0002 plus live PR #43 snapshots and `.ledger/entries.jsonl` | Existing partial artifacts are reviewed once; missing work is completed in place or in a clean superseding PR | PR #43 closes, is superseded, or its live head invalidates the snapshot |
 | Do not rewrite PR #43 history without explicit operator approval | Origin authority boundary and DCO evidence | DCO remediation either waits for approval or uses a new clean replacement branch; the check is never weakened | Operator grants history-rewrite authority |
+| Halt repeated dispatch until the target passes a four-capability preflight | Relays 0002 and 0004 plus the recurrent-correction ledger head | Connector-only targets no longer consume relay turns while being unable to produce repository evidence | A target's writable checkout, test shell, GitHub mutation, and isolated-context capabilities are verified |
 
 ### Relay-turn recovery priorities
 
@@ -240,29 +274,31 @@ options, recommended default, and consequence. Do not use this for a fact inspec
 
 ## Working instructions
 
-1. Run `continuity-verify` first against this handoff, its packet commit, and live PR #43. Resolve
+1. Before dispatch, verify all four items in **Blocking target preflight**. If any answer is no or
+   unknown, remain `BLOCKED` and do not emit or follow an execution prompt.
+2. After preflight passes, run `continuity-verify` against this handoff, its packet commit, and live PR #43. Resolve
    the PR head; if it differs from the recorded snapshot, record the new head and re-anchor changed
    artifacts before relying on them.
-2. Check out or otherwise inspect PR #43. Review its complete diff and audit files `00` through `07`
+3. Check out or otherwise inspect PR #43. Review its complete diff and audit files `00` through `07`
    against OUT-001 through OUT-007; do not trust them because they exist and do not recreate them
    without a cited defect.
-3. Complete missing `08-changes-and-verification.md`, `09-final-verification.md`, and the final
+4. Complete missing `08-changes-and-verification.md`, `09-final-verification.md`, and the final
    frozen-subject Gauntlet run. Correct any earlier artifacts only from verified findings.
-4. Apply epistemic skills only on observable triggers: blindspot before unfamiliar work; formal
+5. Apply epistemic skills only on observable triggers: blindspot before unfamiliar work; formal
    derivation for real alternatives; research for material scholarly claims; write-goal only on
    explicit intent; outsource at external boundaries; ledger for consequential moments;
    continuity on resumption; UAT only with user-facing observable environment; Gauntlet only on a
    frozen high-impact subject.
-5. Apply Superpowers v6.1.1 at its boundaries: brainstorm before creative redesign, plan multi-step
+6. Apply Superpowers v6.1.1 at its boundaries: brainstorm before creative redesign, plan multi-step
    implementation, TDD every behavior change, debug failures systematically, use appropriate
    isolation, review after implementation, and verify before completion. Degrade explicitly.
-6. Keep findings atomic: observation, impact, violated contract, smallest fix, direct proof, and
+7. Keep findings atomic: observation, impact, violated contract, smallest fix, direct proof, and
    residual risk. Decisions need provenance and are never verdicts.
-7. Before behavior edits, run the failing test. Preserve RED and GREEN evidence. Run focused tests
+8. Before behavior edits, run the failing test. Preserve RED and GREEN evidence. Run focused tests
    after each change and the full suite before final review.
-8. Freeze the final diff plus audit claims and run Gauntlet without moving the subject. If it moves,
+9. Freeze the final diff plus audit claims and run Gauntlet without moving the subject. If it moves,
    invalidate and re-run rather than patching the verdict.
-9. Resolve DCO without weakening its check. Do not amend/rebase/force-push PR #43 without explicit
+10. Resolve DCO without weakening its check. Do not amend/rebase/force-push PR #43 without explicit
    operator approval. If that approval is unavailable, build a clean replacement branch from main
    containing the verified final tree in author-matching signed commits, open a superseding PR, and
    leave PR #43 intact. Return only the relay envelope.
@@ -301,11 +337,14 @@ recommended_next_action: <one action>
 ## Context-erasure audit
 
 - [x] No originating-chat knowledge is required.
-- [x] Repository, immutable packet commit from the prompt URL, and target access are explicit.
+- [x] Repository, immutable packet commit from the BLOCKED packet receipt, and target-access gap are explicit.
 - [x] Every required path exists at the packet commit or is a pinned external supporting source.
 - [x] Outcome, constraints, non-goals, authority, and preserved state are explicit.
 - [x] Every requirement has direct proof and anti-proxy guards.
 - [x] Unknowns have impact, owner, and closure behavior.
 - [x] Deliverables and relay response shape are unambiguous.
 - [x] Packet and canonical outbound prompt template are committed and pushed before state becomes `READY`.
-- [x] The emitted prompt substitutes the receipt's 40-character packet commit for `{packet_commit}`.
+- [x] A future emitted prompt will substitute the receipt's 40-character packet commit for
+  `{packet_commit}`; relay turn 5 intentionally emits none.
+- [x] State remains `BLOCKED` until all four target capabilities are verified; no ready-looking
+  execution prompt is stored or emitted in relay turn 5.
