@@ -78,6 +78,8 @@ def main() -> int:
     require("**eleven** skills" in readme, "README skill count is stale")
     require("**nine** disciplines" in readme, "README discipline count is stale")
     require("all eleven skills" in readme, "README harness success check is stale")
+    require("canonical skill cores (eleven)" in readme, "README layout inventory count is stale")
+    require("canonical skill cores (ten)" not in readme, "README still advertises ten skill cores")
     require("**outsource**" in readme, "README skill table lacks outsource")
 
     gemini = read(REPO_ROOT / "GEMINI.md")
