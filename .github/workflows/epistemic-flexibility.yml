@@ -32,6 +32,28 @@ jobs:
         run: python plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/behavioral/run_tests.py
       - name: Outsource packet and package integration
         run: python plugins/epistemic-skills/skills/outsource/tests/run_tests.py
+      - name: Continuity resume-fixture committed results
+        run: |
+          score=plugins/epistemic-skills/skills/continuity-verify/evals/resume-fixtures/score.py
+          results=plugins/epistemic-skills/skills/continuity-verify/evals/resume-fixtures/results
+          expect_pass() {
+            python "$score" --results-dir "$1"
+          }
+          expect_fail() {
+            if python "$score" --results-dir "$1"; then
+              echo "expected scorer failure for $1" >&2
+              exit 1
+            fi
+          }
+          expect_pass "$results/skilled/run-1"
+          expect_pass "$results/skilled/run-2"
+          expect_pass "$results/skilled/run-3"
+          expect_fail "$results/baseline/run-1"
+          expect_pass "$results/baseline/run-2"
+          expect_fail "$results/baseline/run-3"
+          expect_fail "$results/parody/run-1"
+      - name: DCO policy unit tests
+        run: python .github/scripts/test_check_dco.py
       - name: Compile new Python
         run: |
           python -m py_compile \
