@@ -1,6 +1,6 @@
 ---
 name: helix
-description: "Use when both a workflow-skill layer (such as superpowers) and the epistemic-skills collection are installed and a task is about to begin; when a workflow skill (brainstorming, writing-plans, executing-plans, test-driven-development, systematic-debugging, verification-before-completion, finishing-a-development-branch) has just fired and its epistemic pair needs checking; or when sequencing the two collections is ambiguous. Not for single-collection routing (that's using-superpowers / using-epistemic-skills) or trivial, fully-held-context work needing no ceremony."
+description: "Use when both a workflow-skill layer (such as superpowers) and the epistemic-skills collection are installed and a task is about to begin; when a workflow stage has fired and its epistemic pair needs checking; when work is crossing to an external model, agent, or process; or when sequencing the two collections is ambiguous. Not for single-collection routing or trivial, fully-held-context work."
 ---
 
 # helix — two strands, one axis
@@ -40,6 +40,7 @@ archaeology, and evidence after the verdict is rationalization.
 | brainstorming approval / writing-plans (irreversible or one-way-door design) | **gauntlet** | *at approval* — after the design doc is written and committed (brainstorming step 6), before writing-plans is invoked; freeze the committed design doc as the gauntlet subject |
 | persistent or long-horizon goal-mode runs (explicit goal-authoring intent only — plan execution alone is not intent) | **write-goal** | *before* persistent execution — bind the outcome to proof and stop rules |
 | subagent-driven-development / dispatching-parallel-agents (first dispatch) | **blindspot-pass** | *before* the first dispatch — recon the territory before a wrong premise multiplies across isolated agents |
+| external delegation / model handoff | **outsource** | *before* sending — commit a context-complete GitHub packet and emit only its short pointer; returned relay claims are re-verified by the origin |
 | test-driven-development / implementation | (none mandatory) | epistemic disciplines fire only on their own triggers; clean implementation needs no ceremony |
 | systematic-debugging (fix rests on a complexity or correctness claim) | **applying-formal-rigor** | *inside* — "this is O(n log n) now" and "this can't race" are derived, not asserted |
 | verification-before-completion (UI-facing surface) | **evidence-locked-uat** | *is* that skill's UI-facing instance — blinded verifier, never self-certification |
@@ -87,6 +88,9 @@ is the record.
 - **subagents are about to be dispatched** → did blindspot-pass run on the
   brief being fanned out, or did its skip gate pass? A wrong premise in the
   dispatch is copied into every isolated context.
+- **work is crossing to an external model, agent, or process** → run `outsource` before the
+  operator sends anything; the packet must pass context erasure and exist at the pinned GitHub
+  commit, and every returned relay re-enters through the repository.
 - **an empirical test is about to run** → record the belief, prediction, and
   disconfirming observation before the result exists; the consuming epistemic skill owns
   that preregistration.
@@ -124,7 +128,7 @@ a context-file include, or pasting the file into the loop.
   which points here whenever a workflow layer is present.
 - **If your workflow layer is not superpowers** (Kimi, agy, a house style,
   or beyond): map the stage names — every layer has a design step, a
-  planning step, an implementation step, a debugging step, and a "done?"
+  planning step, an implementation step, an external-handoff step, a debugging step, and a "done?"
   step; bind them to your layer's equivalents. Example — a plan→build→verify
   harness (Cursor, agy): pair blindspot-pass with plan, gauntlet with any
   irreversible pre-build decision, evidence-locked-uat with verify.
@@ -138,6 +142,7 @@ a context-file include, or pasting the file into the loop.
 | "helix told me which skill; I know roughly what it does" | helix only pairs. Read the paired skill; the discipline lives there. |
 | "This replaces the two routers" | It sits between them. Member-level routing stays in `using-superpowers` and `using-epistemic-skills`. |
 | "Superpowers isn't installed, so none of this applies" | The pairings are stage-shaped. Map them to whatever workflow steps the session actually has. |
+| "A short prompt is enough for an external model" | Only after `outsource` makes the repository packet complete, pushed, and reachable. Shortness belongs in the pointer, not the context. |
 | "I basically already did this informally" | Informal ≠ the discipline. If the trigger matches, run the actual skill; "I already thought about it" is how recon-after-design smuggles itself back in. |
 
 ## Local overlay

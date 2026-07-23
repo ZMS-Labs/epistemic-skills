@@ -1,11 +1,11 @@
 ---
 name: using-epistemic-skills
-description: Use when a task might need more than one of blindspot-pass, applying-formal-rigor, evidence-research, write-goal, gauntlet, evidence-locked-uat, decision-ledger, or continuity-verify, when unsure which one applies, when sequencing them (recon → decide → [evidence] → contract → gate → prove — with decision-ledger persisting consequential moments anywhere in the arc), or when a session resumes from a compaction summary or handoff note (continuity-verify fires first, before any resumed-work skill). Do not use as a substitute for reading the skill it routes to. This is the entry point and router for the epistemic-skills collection; when a workflow-skill layer (such as superpowers) is also present, helix is the tandem entry point pairing the two.
+description: Use when a task might need more than one of blindspot-pass, applying-formal-rigor, evidence-research, write-goal, outsource, gauntlet, evidence-locked-uat, decision-ledger, or continuity-verify; when choosing their order; when work should cross into another model, agent, or process; or when resuming from a summary or handoff. Do not substitute this router for the skill it selects. When a workflow-skill layer is also present, helix pairs the two collections.
 ---
 
 # Using Epistemic Skills — the router
 
-These eight disciplines are one system: **how an agent knows things** before, during, and after
+These nine disciplines are one system: **how an agent knows things** before, during, and after
 work. A **workflow-skill layer** (such as [superpowers](https://github.com/obra/superpowers)) —
 brainstorming, TDD, systematic-debugging, plan-writing, verification-before-completion — covers
 *how you do* the work. This collection is the *epistemics* layer underneath it: the disciplines that keep every claim tethered to
@@ -24,6 +24,7 @@ job. That is exactly what lets them compose without stepping on each other:
 | **applying-formal-rigor** | a decision with ≥2 options; a complexity question | a **derived verdict** (named construct → derivation → what the winner concedes) | the design you build, or a gauntlet dossier | `subject-revision-unchanged` on the named inputs | 4-field stamp |
 | **evidence-research** | a claim that rests on "the research says…" | a **claim-evidence matrix + reception + holdings** (never a GO/NO-GO) | a design decision, or the gauntlet Step-0 evidence gate | `session-continuous` — reception `[V]`-grade this run only; snapshot dated | JSON `handoff-receipt@1` over the matrix |
 | **write-goal** | explicit user intent, de-risked context, and any evidence/design inputs | an **approved, evidence-bound completion contract**; optionally a started persistent goal | the runtime's goal executor, then independent verification | `subject-revision-unchanged` on intent/scope/environment | `handoff-receipt@1` when file-written, else 4-field stamp |
+| **outsource** | a bounded workload + repository + operator target choice or capability need | a **GitHub-addressable, context-complete `HANDOFF.md` + short copy/paste prompt** (never the outsourced result) | the external target, then the originating agent's repo-backed relay and verification loop | `subject-revision-unchanged` on workload/scope/source; each prompt pins an immutable prepared commit | repo prose carrying the 4-field stamp |
 | **gauntlet** | a **frozen** subject (a de-risked request, a derived verdict, or an evidence matrix) | a **computed GO / CONDITIONAL / NO-GO** + Conflict Ledger | the commit / merge decision | `freeze-window-open` | JSON `handoff-receipt@1` (+ run record) |
 | **evidence-locked-uat** | a finished change + its requirements | an **evidence packet + blinded verdict** (PASS / FAIL / INCONCLUSIVE) | the ship / merge decision | `environment-reachable` | JSON `handoff-receipt@1` over the packet |
 | **decision-ledger** *(new row shape — retrospective trigger: fires on a moment that already happened)* | a consequential decision / assumption / correction just recorded in an artifact | an **append-only `ledger-entry@1` with provenance + `revisit_when`** (or a stated skip) — never a verdict | continuity-verify (fires **first** on resumption), gauntlet dossiers, write-goal, future sessions | `revisit_when`-governed / consumer re-anchored — no contract predicate claimed | `ledger-entry@1` (JSONL) |
@@ -50,7 +51,7 @@ merge, whichever first.
 
 ## Epistemic flexibility controls (cross-cutting, not a discipline)
 
-Five controls refine the existing moments without adding a ninth discipline or trigger:
+Five controls refine the existing moments without adding another discipline or trigger:
 
 1. **Claim/source separation** — classify load-bearing content as observation,
    interpretation, prediction, value, or authorization; fluent language never upgrades its
@@ -87,6 +88,9 @@ task ──▶│ blindspot-    │─▶│ formal-rigor +   │─▶│ write
 
 persist (cross-cutting): decision-ledger appends a ledger-entry@1 at each consequential moment,
    anywhere in the arc ──▶ on resumption, continuity-verify re-anchors from the ledger first
+
+delegate (cross-cutting): outsource turns any bounded workload into a committed repo packet +
+   short prompt ──▶ external target ──▶ verbatim repo relay ──▶ originating-agent verification
 ```
 
 - **continuity-verify** is *pre-arc* — it fires first on a post-interruption resumption
@@ -100,6 +104,9 @@ persist (cross-cutting): decision-ledger appends a ledger-entry@1 at each conseq
 - **decision-ledger** is *cross-cutting and retrospective* — it fires on a moment that already
   happened (a consequential decision, assumption, or correction), anywhere in the arc, and
   persists it; it is never sequenced as a stage.
+- **outsource** is *cross-cutting at an execution boundary* — after upstream context/contract
+  work and before a different model, agent, or process acts. Its prompt is not ready until the
+  complete packet is committed, pushed, and target-readable at the pinned GitHub commit.
 
 The arc is need-driven, not mandatory: skip any stage whose trigger is absent, and say you
 skipped it. Running a stage on work that doesn't need it is ceremony.
@@ -120,6 +127,7 @@ Match the trigger you can *observe*, not a vibe:
 | choose between ≥2 designs, assert one is "better/cleaner/faster", or analyze an algorithm's complexity / Big-O | **applying-formal-rigor** | a verdict must be *derived* from named theory, not asserted; its lens 4 is the full complexity/Big-O analysis |
 | rely on "studies show…" / a scholarly or empirical premise, or are about to make a Consensus/Scite/Zotero (scholarly-connector) tool call | **evidence-research** | a paper's *reception* (supporting/contrasting/retracted) and *holdings* (durable library) decide whether it's support, a landmine, or already paid-for judgment |
 | create, refine, or start a persistent goal; define what counts as done | **write-goal** | persistent work needs an approved completion contract that resists proxy success and preserves scope, provenance, and interruptibility |
+| hand a workload to a different, superior, specialized, or operator-selected model, agent, or process; prepare a copy/paste external handoff | **outsource** | the repository, not chat, must carry complete context, authority, completion evidence, and every relay across the execution boundary |
 | commit something irreversible, one-way-door, or high-blast-radius (infra, security, publish, migration) | **gauntlet** | a multi-lens panel + computed verdict beats one model's confidence on a call you can't take back |
 | claim UI-facing work is done, or merge a user-facing surface | **evidence-locked-uat** | no agent should certify its own work; a blinded verifier + deterministic judge catches the false PASS |
 | **just made** a decision among ≥2 alternatives, took on a load-bearing assumption, or **just received** an operator correction *(retrospective trigger — new row shape: the moment already happened)* | **decision-ledger** | what isn't persisted with provenance decays into unverifiable memory — the ledger is the difference between a decision and a rumor |
@@ -132,6 +140,9 @@ it fires at the moment, alongside whichever stage produced the consequential mom
 **continuity-verify is pre-arc** — on a resumption it fires **first** and hands its digest to this
 router, which may then fire blindspot-pass for unfamiliar territory (double-fire ordering:
 continuity-verify → blindspot-pass).
+**outsource is execution-boundary ordered** — it consumes whatever upstream skill artifact defines
+the delegated workload, then hands the committed packet to the target; its returned relay is claim
+data that the originating agent verifies before any downstream gate or completion claim.
 
 If the routed-to skill is absent or uninstalled in your harness, say so and stop — never
 improvise the discipline inline.
@@ -145,7 +156,7 @@ decide-stage re-fire loop between formal-rigor and research.
 gauntlet and evidence-locked-uat can both fire on the same merge (irreversible infra/security +
 user-facing surface) — gauntlet gates first, evidence-locked-uat proves after, per arc order.
 
-## Shared invariants (why these eight, and not others)
+## Shared invariants (why these nine, and not others)
 
 A skill belongs in this collection only if it enforces all of these. They are the family
 resemblance:
@@ -192,6 +203,7 @@ with the right evidence) and the workflow skill carries it out.
 | "evidence-research says GO" | It never renders a verdict. It produces evidence; the gauntlet (or you) judges. |
 | "This task is long, so I'll create a goal" | Persistence is a user-controlled state change. `write-goal` requires explicit goal-authoring or start intent. |
 | "The UAT actor also verified it passed" | The actor never certifies its own work — that's the whole point. A blinded verifier judges. |
+| "I'll paste all the context into the outsource prompt" | The prompt is a pointer. `outsource` puts the complete, durable context and contract in the repository and records every relay there. |
 | "The summary/review/request says it clearly, so it counts as a fact or approval" | Language carries claims. Observation and authorization require their own anchors; wording never upgrades them. |
 | "We need an answer, so keep reasoning until uncertainty disappears" | `UNVERIFIED` and `INCONCLUSIVE` are states. Hold, escalate, or run a reversible probe; more prose is not evidence. |
 

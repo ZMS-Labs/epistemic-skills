@@ -1,7 +1,7 @@
 {
   "name": "epistemic-skills",
-  "version": "2.8.0",
-  "description": "The full epistemic-discipline collection in one package: a router plus formal rigor, blindspot reconnaissance, scholarly evidence, evidence-bound goal authoring, evidence-locked UAT, and multi-lens adversarial review, with the helix tandem layer for pairing them with a workflow-skill collection.",
+  "version": "2.9.0",
+  "description": "The full epistemic-discipline collection in one package: a router plus nine disciplines including repo-backed external handoff, continuity, decision persistence, and evidence-locked acceptance, with the helix tandem layer for workflow-skill pairing.",
   "author": {
     "name": "ZMS Labs",
     "url": "https://github.com/ZMS-Labs"
@@ -15,13 +15,15 @@
     "formal-rigor",
     "adversarial-review",
     "uat",
-    "goal-authoring"
+    "goal-authoring",
+    "outsource",
+    "handoff"
   ],
   "skills": "./skills/",
   "interface": {
     "displayName": "Epistemic Skills",
     "shortDescription": "Evidence-grounded methods for agentic work",
-    "longDescription": "A router plus six composable disciplines for reconnaissance, formal reasoning, scholarly evidence, evidence-bound goal authoring, adversarial review, and acceptance testing, plus the helix tandem entry point for pairing them with a workflow-skill layer.",
+    "longDescription": "A router plus nine composable disciplines for reconnaissance, formal reasoning, evidence, goals, repo-backed external handoff, adversarial review, continuity, decision persistence, and acceptance testing, plus the helix tandem entry point.",
     "developerName": "ZMS Labs",
     "category": "Developer Tools",
     "capabilities": [
@@ -31,6 +33,7 @@
     "defaultPrompt": [
       "Route this task through the appropriate epistemic discipline.",
       "Write an evidence-bound completion contract for this goal.",
+      "Create a repo-backed outsource handoff and short copy/paste prompt.",
       "Stress-test this high-stakes decision with the gauntlet."
     ]
   }

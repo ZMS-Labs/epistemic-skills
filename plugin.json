@@ -1,5 +1,5 @@
 {
   "$schema": "https://antigravity.google/schemas/v1/plugin.json",
   "name": "epistemic-skills",
-  "description": "Epistemic-discipline skills for agentic coding: router, formal rigor, blindspot recon, scholarly evidence, evidence-bound goal authoring, evidence-locked UAT, and multi-lens adversarial review, with the helix tandem layer for pairing them with a workflow-skill collection."
+  "description": "Epistemic-discipline skills for agentic coding: router, formal rigor, blindspot recon, scholarly evidence, goal authoring, outsource repo-backed external handoff, adversarial review, continuity, decision persistence, and evidence-locked acceptance, with the helix tandem layer for workflow-skill pairing."
 }

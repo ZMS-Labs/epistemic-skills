@@ -30,6 +30,8 @@ jobs:
         run: python plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/run_tests.py
       - name: Behavioral fixture scorer self-test
         run: python plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/behavioral/run_tests.py
+      - name: Outsource packet and package integration
+        run: python plugins/epistemic-skills/skills/outsource/tests/run_tests.py
       - name: Compile new Python
         run: |
           python -m py_compile \

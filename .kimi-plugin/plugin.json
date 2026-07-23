@@ -1,7 +1,7 @@
 {
   "name": "epistemic-skills",
-  "version": "2.8.0",
-  "description": "The full epistemic-discipline collection in one package: a router plus formal rigor, blindspot reconnaissance, scholarly evidence, evidence-locked UAT, and multi-lens adversarial review.",
+  "version": "2.9.0",
+  "description": "The full epistemic-discipline collection in one package: a router plus nine disciplines for reconnaissance, formal reasoning, scholarly evidence, goal authoring, repo-backed external handoff, adversarial review, continuity, decision persistence, and evidence-locked acceptance.",
   "author": {
     "name": "ZMS Labs",
     "url": "https://github.com/ZMS-Labs"
@@ -13,14 +13,16 @@
     "epistemics",
     "formal-rigor",
     "adversarial-review",
-    "uat"
+    "uat",
+    "outsource",
+    "handoff"
   ],
   "skills": "./plugins/epistemic-skills/skills/",
   "skillInstructions": "Kimi Code tool mapping for Epistemic Skills:\n\n- When a skill asks the user a question, asks for a choice, or presents multiple-choice options, call Kimi Code's `AskUserQuestion` tool. Provide 1 question with 2-4 concrete options; put the recommended option first and suffix its label with `(Recommended)`. Do not render choices as plain assistant text unless `AskUserQuestion` is unavailable or the session is in auto permission mode.\n- When a skill refers to `TodoWrite` or a todo list, use Kimi Code's `TodoList` tool.\n- When a skill dispatches subagents or role agents — gauntlet Step 5 role panel, evidence-locked-uat actor / blinded verifier / deterministic judge — use Kimi Code's `Agent` tool. Do not pass `general-purpose` as `subagent_type`. Use `coder` for implementation and review roles, `explore` for read-only investigation, and `plan` for read-only design. Paste the full role definition from this plugin's `agents/<role>.md` into the subagent prompt; each role agent is a separate `Agent` call so contexts stay isolated. Keep dependent role calls sequential; use parallel or background `Agent` calls only for roles that are independent by design.\n- When a skill refers to the `Skill` tool, use Kimi Code's native `Skill` tool.\n- Use Kimi Code's `Read`, `Write`, `Edit`, `Bash`, `Grep`, `Glob`, `FetchURL`, and `WebSearch` tools by their actual exposed names. Search file contents with `Grep`; find files by path or pattern with `Glob`.\n- Run the gauntlet helper scripts (`skills/gauntlet/scripts/*.py`, stdlib-only) with `python` via `Bash`.",
   "interface": {
     "displayName": "Epistemic Skills",
     "shortDescription": "Evidence-grounded methods for agentic work",
-    "longDescription": "Six composable disciplines for reconnaissance, formal reasoning, scholarly evidence, adversarial review, and evidence-locked acceptance testing.",
+    "longDescription": "Nine composable disciplines including repo-backed external handoff, continuity, decision persistence, and evidence-locked acceptance.",
     "developerName": "ZMS Labs",
     "websiteURL": "https://github.com/ZMS-Labs/epistemic-skills"
   }
