@@ -3,19 +3,25 @@
 | Field | Value |
 |---|---|
 | Schema | `outsource-handoff@1` |
-| State | `BLOCKED` — target capability preflight not satisfied |
+| State | `DRAFT` — retired from ChatGPT execution dispatch by operator |
 | Work ID | `epistemic-skills-suite-stress-test` |
 | Subject ref | `epistemic-skills-suite` |
-| Subject revision | `operator-request-2026-07-23-r4-preflight-confirmed` |
+| Subject revision | `operator-request-2026-07-23-r5-chatgpt-execution-stopped` |
 | Valid while | `subject-revision-unchanged` |
-| Coverage limits | Dispatch is paused until a target demonstrates all four required execution capabilities. No skill may be omitted. PR #43 is a moving external worktree and must be re-resolved after preflight. |
-| Baseline parent | `04f16380ac3588bba299068184eb7078e478892b` |
-| Packet commit | `supplied by the BLOCKED packet receipt after publication; no execution prompt is emitted` |
-| Prepared UTC | `2026-07-23T16:10:43Z` |
-| Supersedes | `04f16380ac3588bba299068184eb7078e478892b:docs/outsource/epistemic-skills-suite-stress-test/HANDOFF.md` |
-| Relay head | `docs/outsource/epistemic-skills-suite-stress-test/relay/0007-origin.md` |
+| Coverage limits | No further ChatGPT dispatch is authorized for this execution contract. The original requirements and PR remain unchanged; this state change does not waive or satisfy them. |
+| Baseline parent | `617bc317743cc68d81f2f57fa175a00ea319d544` |
+| Packet commit | `not emitted; this retired execution packet has no outbound prompt` |
+| Prepared UTC | `2026-07-23T16:17:16Z` |
+| Supersedes | `617bc317743cc68d81f2f57fa175a00ea319d544:docs/outsource/epistemic-skills-suite-stress-test/HANDOFF.md` |
+| Relay head | `docs/outsource/epistemic-skills-suite-stress-test/relay/0008-operator.md` |
 
 ## Required outcome
+
+**Operator stop:** Do not send this execution packet to ChatGPT again. A separate,
+capability-matched read-only review is defined at
+`docs/outsource/epistemic-skills-pr43-readonly-review/HANDOFF.md`. That review may inform a coding
+agent, but it cannot satisfy the execution, test, mutation, or independent-Gauntlet requirements
+below.
 
 Dispatch is paused. Before another target receives an execution prompt, verify that the target has
 all four capabilities in the blocking preflight below. After that gate passes, continue and
