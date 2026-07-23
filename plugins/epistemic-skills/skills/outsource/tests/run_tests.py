@@ -84,6 +84,16 @@ def main() -> int:
     require("eleven skills" in gemini, "GEMINI context skill count is stale")
     require("nine disciplines" in gemini, "GEMINI context discipline count is stale")
 
+    workflow = read(REPO_ROOT / ".github" / "workflows" / "epistemic-flexibility.yml")
+    require(
+        "continuity-verify/evals/resume-fixtures/score.py" in workflow,
+        "CI omits continuity-verify committed-result scoring",
+    )
+    require(
+        "python .github/scripts/test_check_dco.py" in workflow,
+        "CI omits DCO policy unit tests",
+    )
+
     skill_dirs = [p for p in (PACKAGE_ROOT / "skills").iterdir() if p.is_dir()]
     require(len(skill_dirs) == 11, f"expected 11 skill directories, found {len(skill_dirs)}")
     for directory in skill_dirs:
