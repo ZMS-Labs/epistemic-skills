@@ -80,6 +80,10 @@ def main() -> int:
     require("all eleven skills" in readme, "README harness success check is stale")
     require("**outsource**" in readme, "README skill table lacks outsource")
 
+    gemini = read(REPO_ROOT / "GEMINI.md")
+    require("eleven skills" in gemini, "GEMINI context skill count is stale")
+    require("nine disciplines" in gemini, "GEMINI context discipline count is stale")
+
     skill_dirs = [p for p in (PACKAGE_ROOT / "skills").iterdir() if p.is_dir()]
     require(len(skill_dirs) == 11, f"expected 11 skill directories, found {len(skill_dirs)}")
     for directory in skill_dirs:
