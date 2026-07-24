@@ -60,7 +60,7 @@ Most tasks fire zero or one. The router's value is the case where more than one 
 ```
 epistemic-skills/                         # repo root
 ├── plugins/epistemic-skills/
-│   ├── skills/<name>/SKILL.md            # canonical skill cores (ten)
+│   ├── skills/<name>/SKILL.md            # canonical skill cores (eleven)
 │   ├── contracts/                        # handoff-receipt contract: schema, stdlib verifier, synthetic examples
 │   ├── agents/                           # gauntlet role-agents (five)
 │   ├── .claude-plugin/plugin.json
