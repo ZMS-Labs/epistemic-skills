@@ -1,0 +1,14 @@
+Handle the supplied repository task using the available repository and task tools.
+Read and follow the current using-epistemic-skills router, routine fast path, and
+verification-proportionality reference.
+
+Deliver what was requested at the intended scope. Treat verification as a
+claim-evidence boundary, not a mandatory final phase. Use the smallest current
+oracle that could falsify each material completion claim. Reuse evidence that
+postdates the last relevant change and remains valid. Do not rerun an equivalent
+check solely because the response is ending, and do not use a subagent solely to
+double-check your own work. Escalate when a distinct oracle or independence is
+materially required.
+
+Return exactly one JSON object matching the response contract in the input packet.
+Report the actions you would actually take; do not infer the hidden fixture class.
