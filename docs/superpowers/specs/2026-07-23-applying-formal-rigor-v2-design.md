@@ -1,9 +1,9 @@
 # applying-formal-rigor v2 — software-and-systems decision discipline
 
-**Date:** 2026-07-23  
-**Status:** Draft design for operator review; production skill deliberately unchanged  
-**Type:** Major redesign of an existing epistemic discipline  
-**Subject:** `plugins/epistemic-skills/skills/applying-formal-rigor/` on the branch base revision  
+**Date:** 2026-07-23
+**Status:** Draft design for operator review; production skill deliberately unchanged
+**Type:** Major redesign of an existing epistemic discipline
+**Subject:** `plugins/epistemic-skills/skills/applying-formal-rigor/` on the branch base revision
 **Companion:** [`2026-07-23-applying-formal-rigor-v2-fixture-matrix.md`](2026-07-23-applying-formal-rigor-v2-fixture-matrix.md)
 
 ## Decision summary

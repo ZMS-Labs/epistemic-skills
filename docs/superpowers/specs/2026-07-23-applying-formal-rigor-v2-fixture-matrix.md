@@ -1,8 +1,8 @@
 # applying-formal-rigor v2 — blinded fixture matrix
 
-**Date:** 2026-07-23  
-**Status:** Fixture design; no production skill or scorer implementation in this phase  
-**Design:** [`2026-07-23-applying-formal-rigor-v2-design.md`](2026-07-23-applying-formal-rigor-v2-design.md)  
+**Date:** 2026-07-23
+**Status:** Fixture design; no production skill or scorer implementation in this phase
+**Design:** [`2026-07-23-applying-formal-rigor-v2-design.md`](2026-07-23-applying-formal-rigor-v2-design.md)
 **Future battery root:** `plugins/epistemic-skills/skills/applying-formal-rigor/evals/formal-rigor-v2-fixtures/`
 
 ## Purpose and evidence claim
