@@ -1,9 +1,11 @@
 {
   "subject": "adopt a handoff-receipt schema for a skills repo",
+  "subject_sha256": "cd5203ee71b0605c38f92b5d6f7ccb2ca5f367eb10dc4fd29ed17e76e0f354c5",
   "axis": "fixed",
   "depth": "standard",
   "domains": ["schema", "contracts", "governance"],
   "risk_classes": [],
   "capability_needs": ["maintainability"],
-  "domain_confidence": "high"
+  "domain_confidence": "high",
+  "include_ids": ["compliance-litigator", "integration-weaver"]
 }

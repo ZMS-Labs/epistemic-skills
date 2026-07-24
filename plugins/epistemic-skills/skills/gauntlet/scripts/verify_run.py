@@ -17,9 +17,8 @@ produced by finalize_run.py), re-checks — independently, all legs reported:
      mutated registry makes the re-derivation diverge for legitimate reasons. The
      recorded replay's registry_sha256 is checked FIRST; on divergence the verdict is
      REGISTRY-DRIFT (exit 3) — an explicit named outcome, never a silent pass/fail.
-     The probation exploration seat additionally depends on runs/ledger.jsonl rotation
-     state (example:true lines excluded); a rotation divergence surfaces as
-     SELECTOR-MISMATCH naming the exploration seat.
+     Wildcard seats are deterministic from the frozen subject seed and registry; run
+     telemetry is never an input.
   4. VERDICT GATE — re-derive GO/CONDITIONAL/NO-GO from the ruling-set@1 P1/P2 status
      fields (P1 open => NO-GO; else P2 open => CONDITIONAL; else GO) and compare to
      both the ruling-set's computed_verdict and the record's verdict: VERDICT-MISMATCH.
@@ -155,8 +154,8 @@ def verify_run(run_dir: Path, record_path: Path | None = None) -> tuple[list, bo
             diffs = []
             if rerun["replay"]["selected_ids"] != replay.get("selected_ids"):
                 diffs.append("panel")
-            if rerun["replay"]["exploration_id"] != replay.get("exploration_id"):
-                diffs.append("exploration-seat (ledger rotation state may have moved)")
+            if rerun["replay"]["wildcard_ids"] != replay.get("wildcard_ids"):
+                diffs.append("subject-seeded-wildcards")
             if rerun["replay"]["scores"] != replay.get("scores"):
                 diffs.append("scores")
             if rerun.get("constraint_violations"):

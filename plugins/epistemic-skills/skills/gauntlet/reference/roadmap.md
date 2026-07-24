@@ -15,14 +15,14 @@ of the repo.
 falsifiability contract on every finding (SHIPPED — schema-enforced, structural
 falsifier check) · compiled mechanical checks / judge-token-free refutation
 (SHIPPED — verify_evidence.py, validate_roster.py, selector constraint fixtures)
-· certified arbitrator (planted-flaw seat battery + degraded-control gate —
-**BUILT + RUN 2026-07-17: 10/10 catch, certified at standard rigor** — `evals/arbitrator-certification/`) · replayable spend-accounted log (`meter==log`)
+· arbitrator certification (historical battery **BUILT + RUN 2026-07-17: 10/10**;
+the amended seat-provenance-neutral battery is **NOT_RUN** — `evals/arbitrator-certification/`) · replayable spend-accounted log (`meter==log`)
 (SHIPPED — Workflow journal + selection replay records).
 
 **Bundle A — Generation rigor (better findings):**
 - **Verbalized Sampling** — each lens returns a *distribution* of candidate
   findings with typicality estimates, not one.
-- **Stance rotation (decay) + problem turnover** — forces novelty/diversity
+- **Subject-seeded counter-mode exploration + problem turnover** — forces novelty/diversity
   across passes; turnover was DeepReason's only novelty-*raising* force.
 - **Refuted-relapse gate + orbit/dryness detector** — never re-argue a killed
   finding; detect spinning (measured 4.3× token waste) and stop.
@@ -50,14 +50,15 @@ falsifier check) · compiled mechanical checks / judge-token-free refutation
 
 - **Phase 0 (largely done; two honest gaps):** the `/gauntlet` staple + docket
   modes + depth dial + aliases + registry/selector/validator (2026-07-10).
-  Status: certified arbitrator **BUILT + RUN** (2026-07-17, 10/10 planted-flaw catch,
-  `evals/arbitrator-certification/`); the past-subject behavioral regression battery has a
+  Status: historical arbitrator battery **BUILT + RUN** (2026-07-17, 10/10 planted-flaw
+  catch); amended seat-provenance-neutral battery **NOT_RUN**
+  (`evals/arbitrator-certification/`); the past-subject behavioral regression battery has a
   **smoke subset run** (non-inferiority only; smoke notes are not shipped as a standalone
   file in this public package) with the full 24×4 sweep still unrun — no
   behavioral-superiority claim until it runs.
 - **Phase 0.6 — Registry + selector (DONE 2026-07-10):** machine-readable
-  `roster/registry.json` + lens.schema.json, four workflow roles, lifecycle
-  states, deterministic constrained selector with replay records, generated
+  `roster/registry.json` + lens.schema.json, four workflow roles, two-state lifecycle,
+  deterministic subject-seeded wildcard selector with replay records, generated
   roster views, mechanical validation (schema / collisions / 1000 fixtures /
   regressions).
 - **Phase 1 — Generation rigor (Bundle A)** — measured against the battery.

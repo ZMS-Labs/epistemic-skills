@@ -32,8 +32,8 @@ GROUP_FILES = {
                     "Judges and gates use `bases/base-arbitrator.md`; specialists use the base named on their card."),
     "generative-counterfactual": ("generative-counterfactual.md", "Roster Group E — Generative & Counterfactual (pre-panel option generators + alternative-surfacing evaluators)",
                     "generate_options cards run BEFORE the panel on open questions and emit `option-set@1` (3-5 materially distinct alternatives, always including the null/status-quo option) — generator runs never satisfy evaluator-panel diversity. Cards are base-tagged."),
-    "candidates": ("candidates.md", "Expansion frontier — CANDIDATES (not selectable)",
-                    "Complete fingerprints, status=candidate. Activation requires the paired-blind behavioral admission gate (reference/lens-registry.md) — which has NOT been run for any entry here. The selector never seats a candidate."),
+    "candidates": ("candidates.md", "Expansion frontier — available evaluators",
+                    "Complete fingerprints whose provenance records the former admission lifecycle. They are available to the ordinary subject-seeded selector; provenance never changes claim weight."),
 }
 
 
@@ -45,7 +45,7 @@ def load():
 def render_card(e):
     lines = [f"## {e['id']}"]
     tags = []
-    if e["status"] != "active":
+    if e["status"] != "available":
         tags.append(e["status"].upper())
     if e.get("workflow_role") and e["workflow_role"] != "evaluate":
         tags.append(e["workflow_role"])
@@ -88,11 +88,10 @@ def render_group(entries, group, title, blurb):
 
 def render_index(reg, entries):
     by_status = Counter(e["status"] for e in entries)
-    active = [e for e in entries if e["status"] == "active"]
-    probation = [e for e in entries if e["status"] == "probation"]
-    by_role = Counter(e["workflow_role"] for e in active + probation)
+    available = [e for e in entries if e["status"] == "available"]
+    by_role = Counter(e["workflow_role"] for e in available)
     caps = defaultdict(list)
-    for e in active:
+    for e in available:
         if e["workflow_role"] == "evaluate":
             caps[e["primary_capability"]].append(e["id"])
     out = [HEADER, "# Gauntlet lens registry — INDEX (all counts computed from registry.json)", ""]
@@ -102,11 +101,11 @@ def render_index(reg, entries):
     out.append("")
     out.append("| status | count |")
     out.append("|---|---:|")
-    for s in ("active", "probation", "candidate", "deprecated", "retired"):
+    for s in ("available", "retired"):
         if by_status.get(s):
             out.append(f"| {s} | {by_status[s]} |")
     out.append("")
-    out.append("## Counts by workflow role (active + probation)")
+    out.append("## Counts by workflow role (available)")
     out.append("")
     out.append("| role | count | meaning |")
     out.append("|---|---:|---|")
@@ -124,7 +123,7 @@ def render_index(reg, entries):
         out.append(f"- **{cap}** ({len(caps[cap])}): {', '.join('`%s`' % i for i in sorted(caps[cap]))}")
     out.append("")
     mutex = defaultdict(list)
-    for e in active:
+    for e in available:
         if e.get("mutex_group"):
             mutex[e["mutex_group"]].append(e["id"])
     if mutex:

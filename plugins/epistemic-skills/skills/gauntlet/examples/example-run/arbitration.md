@@ -1,10 +1,9 @@
 # Arbitration — adopt a handoff-receipt schema (SYNTHETIC EXAMPLE — not a real run)
 
 Two lens reports entered arbitration; the other three seated lenses
-(century-horizon-architect, tech-debt-curator, explainability-steward) reported no
-P1–P4 findings. The exploration seat (concurrency-interleaving-auditor) ran as
-SHADOW: its report was withheld from arbitration and its findings are excluded from
-the verdict.
+(century-horizon-architect, tech-debt-curator, dual-use-adversary) reported no
+P1–P4 findings. The subject-seeded wildcard was `dual-use-adversary`; it used the
+same finding contract and arbitration path as every other evaluator.
 
 ## Conflict ledger
 

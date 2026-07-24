@@ -6,18 +6,18 @@ Checks (all must pass; exit 0 clean / 1 violations / 2 invocation error):
   2. Unique ids; aliases/superseded_by resolve; retired entries never deleted-in-place
      (superseded_by target must exist and be non-retired).
   3. Workflow-role coherence: role<->output_contract mapping; final_judge only on adjudicate;
-     retired entries have role null; >=1 active final-judge adjudicate; >=1 active gate;
+     retired entries have role null; >=1 available final-judge adjudicate; >=1 available gate;
      generators are open-axis.
   4. Neighbor refs resolve; mutex groups have >=2 members and symmetric awareness.
-  5. Collision heuristics on ACTIVE evaluators: canonical-question Jaccard >= 0.60,
+  5. Collision heuristics on AVAILABLE evaluators: canonical-question Jaccard >= 0.60,
      or same primary_capability + domain-overlap >= 0.70, or object-of-scrutiny token
      similarity >= 0.84 — every flagged pair must be merged, mutexed, neighbored
      (explicit boundary), or listed in COLLISION_WAIVERS with a reason.
   6. Falsifier structural check: falsifier_template must name a method, a threshold,
      and a timeframe (structurally observable, not merely non-empty).
   7. Generated-view freshness (delegates to render_roster.py --check).
-  8. Candidate hygiene: status=candidate entries carry full fingerprints and an
-     admission-gate provenance note (the gate itself is behavioral and NOT run here).
+  8. Lifecycle is deliberately two-state: available or retired. Historical admission
+     notes remain provenance, not selection authority.
 """
 from __future__ import annotations
 import json, re, subprocess, sys
@@ -30,7 +30,7 @@ REG = ROOT / "roster" / "registry.json"
 
 ROLE_CONTRACT = {"generate_options": "option-set@1", "evaluate": "finding-set@1",
                  "gate": "ruling-set@1", "adjudicate": "ruling-set@1"}
-STATUSES = {"candidate", "probation", "active", "deprecated", "retired"}
+STATUSES = {"available", "retired"}
 STANCES = {"adversarial", "constructive", "metatextual", "arbitral", "generative"}
 BASES = {"base-adversarial", "base-constructive", "base-metatextual", "base-arbitrator", "base-generative"}
 ID_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
@@ -82,7 +82,7 @@ def main():
 
     for e in entries:
         eid = e.get("id", "<missing>")
-        retired = e.get("status") in ("retired", "deprecated")
+        retired = e.get("status") == "retired"
         for k in REQUIRED:
             if k not in e:
                 errors.append(f"{eid}: missing field {k}")
@@ -99,7 +99,7 @@ def main():
         role = e.get("workflow_role")
         if retired:
             if role is not None:
-                errors.append(f"{eid}: retired/deprecated entry must have workflow_role null")
+                errors.append(f"{eid}: retired entry must have workflow_role null")
             if not e.get("superseded_by"):
                 errors.append(f"{eid}: retired entry missing superseded_by")
             else:
@@ -108,7 +108,7 @@ def main():
                     errors.append(f"{eid}: superseded_by {tgt} does not exist")
                 else:
                     t = next(x for x in entries if x["id"] == tgt)
-                    if t.get("status") in ("retired", "deprecated"):
+                    if t.get("status") == "retired":
                         errors.append(f"{eid}: superseded_by {tgt} is itself retired (chain not allowed)")
             if not e.get("card"):
                 errors.append(f"{eid}: retired entry must preserve its card verbatim for replay")
@@ -141,33 +141,28 @@ def main():
             if not n.get("boundary"):
                 errors.append(f"{eid}: neighbor {n.get('id')} missing non-overlap boundary")
         all_aliases += e.get("aliases", [])
-        if e.get("status") == "candidate" and "admission" not in e.get("provenance", "").lower():
-            errors.append(f"{eid}: candidate provenance must record its admission-gate status (not run, or run-and-not-passed)")
-        if e.get("status") == "probation" and "probation" not in e.get("provenance", "").lower():
-            errors.append(f"{eid}: probation entry must record the admission evidence that earned the seat")
-
     alias_dup = [a for a, c in Counter(all_aliases).items() if c > 1 or a in idset]
     if alias_dup:
         errors.append(f"aliases colliding with ids or each other: {alias_dup}")
 
     # role-structure invariants
-    actives = [e for e in entries if e.get("status") == "active"]
-    if not any(e.get("workflow_role") == "adjudicate" and e.get("final_judge") for e in actives):
-        errors.append("no active final-judge adjudicator")
-    if not any(e.get("workflow_role") == "gate" for e in actives):
-        errors.append("no active gate")
+    available = [e for e in entries if e.get("status") == "available"]
+    if not any(e.get("workflow_role") == "adjudicate" and e.get("final_judge") for e in available):
+        errors.append("no available final-judge adjudicator")
+    if not any(e.get("workflow_role") == "gate" for e in available):
+        errors.append("no available gate")
 
     # mutex symmetry
     mutex = {}
-    for e in actives:
+    for e in available:
         if e.get("mutex_group"):
             mutex.setdefault(e["mutex_group"], []).append(e["id"])
     for g, members in mutex.items():
         if len(members) < 2:
             errors.append(f"mutex group {g} has <2 members: {members}")
 
-    # collision heuristics on active evaluators
-    evals = [e for e in actives if e.get("workflow_role") == "evaluate"]
+    # collision heuristics on available evaluators
+    evals = [e for e in available if e.get("workflow_role") == "evaluate"]
     def waived(a, b):
         return (a, b) in COLLISION_WAIVERS or (b, a) in COLLISION_WAIVERS
     def neighbored(ea, eb):

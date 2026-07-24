@@ -22,8 +22,7 @@ Subject feature vector (subject.json):
   "operator_values_in_dossier": false,                  # optional: sovereign-ruler eligibility
   "intentional_contrast": ["leverage-vs-sovereignty"],  # optional: allows a mutex pair, counted as ONE diversity unit
   "exclude_ids": [], "include_ids": [],                 # optional operator overrides (recorded)
-  "allow_probation_seat": true                          # optional; DEFAULT TRUE. Set false to skip the
-                                                        # exploration seat (quick depth never seats one)
+  "subject_sha256": "<64 lowercase hex>"                 # preferred stable seed; canonical fallback if absent
 }
 
 Panel constraints enforced (validated after selection; violation is a hard error):
@@ -35,13 +34,10 @@ Panel constraints enforced (validated after selection; violation is a hard error
   Mutex peers never co-selected unless their group is in intentional_contrast —
     and then the pair counts as ONE unit toward stance/family diversity.
   Generators and judges NEVER count toward evaluator diversity.
-  Probation lenses NEVER hold core seats. Instead, at standard/deep/max, exactly one
-    probation lens is seated in an ADDITIONAL exploration seat (panel size +1, outside
-    all diversity/stance math), chosen rotation-balanced: fewest prior seatings per
-    runs/ledger.jsonl, deterministic id tie-break. Default ON — this is how probation
-    lenses accumulate their activation track record; disable only with
-    allow_probation_seat=false. SHADOW-ONLY: its findings never enter arbitration or
-    the verdict. Candidates are never seated anywhere.
+  Every non-retired evaluator is available to the same finding and arbitration contract.
+  Standard/deep panels include one deterministic subject-seeded wildcard; max includes
+    two. Quick panels use the three stance anchors without a wildcard. Historical run
+    telemetry never governs selection.
 
 Output: selection + full replay record (registry hash, eligibility, scores, exclusions).
 Domain matching (fit Jaccard, specialist seed, specialist constraint) canonicalizes both
@@ -144,6 +140,41 @@ def load_registry():
     return reg, hashlib.sha256(raw).hexdigest()
 
 
+def subject_seed(subj):
+    """Return a stable subject seed and its provenance.
+
+    An explicit dossier/content hash is preferred. The fallback intentionally uses only
+    stable subject fields and canonical ordering, never run history or telemetry.
+    """
+    explicit = subj.get("subject_sha256")
+    if explicit is not None:
+        if not isinstance(explicit, str) or not re.fullmatch(r"[0-9a-f]{64}", explicit):
+            raise ValueError("subject_sha256 must be 64 lowercase hexadecimal characters")
+        return explicit, "subject_sha256"
+    frozen = {
+        "subject": subj.get("subject", ""),
+        "axis": subj.get("axis"),
+        "depth": subj.get("depth"),
+        "domains": sorted(subj.get("domains", [])),
+        "risk_classes": sorted(subj.get("risk_classes", [])),
+        "capability_needs": sorted(subj.get("capability_needs", [])),
+        "stakeholders": sorted(subj.get("stakeholders", [])),
+        "horizon": subj.get("horizon"),
+    }
+    payload = json.dumps(frozen, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest(), "derived-canonical-subject"
+
+
+def wildcard_rank(pool, seed):
+    ranked = []
+    for entry in pool:
+        coordinate = f"{entry['id']}@{entry['version']}"
+        rank = hashlib.sha256(f"{seed}\0{coordinate}".encode("utf-8")).hexdigest()
+        ranked.append((rank, entry["id"], entry))
+    ranked.sort(key=lambda row: (row[0], row[1]))
+    return ranked
+
+
 def fit_score(e, subj):
     dj = jaccard(canon_domains(e["domains"]), canon_domains(subj.get("domains", [])))
     cap = 1.0 if e["primary_capability"] in set(subj.get("capability_needs", [])) else 0.0
@@ -161,8 +192,7 @@ def overlap(e, chosen):
 
 
 def eligible_evaluators(entries, subj):
-    """Core-panel pool: ACTIVE evaluators only. Probation lenses are seated exclusively
-    via the exploration seat (select_exploration_seat) so they never displace the panel."""
+    """Evaluator pool: every available evaluator; retired entries remain replay-only."""
     out, excluded = [], []
     for e in entries:
         why = None
@@ -170,7 +200,7 @@ def eligible_evaluators(entries, subj):
             why = "operator-excluded"
         elif e["workflow_role"] != "evaluate":
             why = f"role:{e['workflow_role']}"
-        elif e["status"] == "active":
+        elif e["status"] == "available":
             pass
         else:
             why = f"status:{e['status']}"
@@ -184,10 +214,14 @@ def select_panel(entries, subj):
     size = DEPTH_SIZE[subj["depth"]]
     contrast = set(subj.get("intentional_contrast", []))
     pool, excluded = eligible_evaluators(entries, subj)
+    seed, seed_source = subject_seed(subj)
+    ranked_wildcards = wildcard_rank(pool, seed)
+    ranking_payload = [f"{rank}:{entry['id']}@{entry['version']}" for rank, _, entry in ranked_wildcards]
+    ranking_sha256 = hashlib.sha256("\n".join(ranking_payload).encode("utf-8")).hexdigest()
     scores = {e["id"]: round(fit_score(e, subj), 4) for e in pool}
     pool = sorted(pool, key=lambda e: (-scores[e["id"]], e["id"]))
 
-    chosen = []
+    chosen, wildcard_ids = [], []
     def stance_count(st):
         return sum(1 for c in chosen if c["stance"] == st)
     def violates(e):
@@ -226,6 +260,16 @@ def select_panel(entries, subj):
             if e["stance"] == st and not violates(e):
                 take(e)
                 break
+
+    # Deterministic exploration is part of the ordinary panel and ordinary finding
+    # contract. It is seeded only by the frozen subject, never historical performance.
+    wildcard_count = {"quick": 0, "standard": 1, "deep": 1, "max": 2}[subj["depth"]]
+    for _, _, entry in ranked_wildcards:
+        if len(wildcard_ids) >= wildcard_count or len(chosen) >= size:
+            break
+        if not violates(entry):
+            take(entry)
+            wildcard_ids.append(entry["id"])
 
     # greedy constrained MMR fill, with capability-family gain
     while len(chosen) < size:
@@ -266,6 +310,12 @@ def select_panel(entries, subj):
                           for c in members if len(fams[c["primary_capability"]]) == max(len(m) for m in fams.values())),
                          key=lambda c: (scores[c["id"]], c["id"]))
         for victim in victims:
+            if victim["id"] in wildcard_ids:
+                continue
+            if (subj.get("domain_confidence") == "high" and sd
+                    and canon_domains(victim["domains"]) & sd
+                    and not any(c is not victim and canon_domains(c["domains"]) & sd for c in chosen)):
+                continue
             stance_safe_needed = (victim["stance"] in ("adversarial", "constructive", "metatextual")
                                   and stc[victim["stance"]] <= 1)
             for e in pool:
@@ -282,75 +332,12 @@ def select_panel(entries, subj):
         chosen.remove(swap[0])
         take(swap[1])
 
-    return chosen, scores, excluded, pool
-
-
-LEDGER_PATH = ROOT / "runs" / "ledger.jsonl"
-
-
-def ledger_seat_counts(ledger_path=None):
-    """Seatings per lens id from runs/ledger.jsonl (rotation input). Missing/bad ledger => {}."""
-    path = Path(ledger_path) if ledger_path else LEDGER_PATH
-    counts = {}
-    if not path.exists():
-        return counts
-    for line in path.read_text(encoding="utf-8").splitlines():
-        line = line.strip()
-        if not line:
-            continue
-        try:
-            rec = json.loads(line)
-        except json.JSONDecodeError:
-            continue
-        if isinstance(rec, dict) and rec.get("example"):
-            continue  # synthetic example lines never feed rotation
-        for lens in rec.get("lenses", []) if isinstance(rec, dict) else []:
-            lid = lens.get("id") if isinstance(lens, dict) else None
-            if lid:
-                counts[lid] = counts.get(lid, 0) + 1
-    return counts
-
-
-def select_exploration_seat(entries, subj, chosen, ledger_path=None):
-    """The probation SHADOW seat: an ADDITIONAL seat at standard/deep/max (default ON).
-
-    SHADOW semantics (2026-07-14): the seated probation lens runs with the panel and is
-    mechanically criticized, and its outcomes are ledger-recorded for lifecycle telemetry —
-    but its findings are EXCLUDED from arbitration and can never touch the verdict. This
-    removes the panel-size confound and keeps unvalidated lenses out of the decision path.
-
-    Rotation-balanced: among probation evaluators eligible for this subject, seat the one
-    with the FEWEST prior seatings in runs/ledger.jsonl (deterministic id tie-break) so
-    every probation lens accumulates its activation track record. Outside all panel
-    diversity/stance math; mutex vs the core panel still enforced. Returns (entry|None, note)."""
-    if subj.get("allow_probation_seat") is False:
-        return None, "disabled by subject (allow_probation_seat=false)"
-    if subj.get("depth") not in ("standard", "deep", "max"):
-        return None, "no exploration seat at quick depth"
-    contrast = set(subj.get("intentional_contrast", []))
-    chosen_ids = {c["id"] for c in chosen}
-    pool = []
-    for e in entries:
-        if e["status"] != "probation" or e["workflow_role"] != "evaluate":
-            continue
-        if e["id"] in set(subj.get("exclude_ids", [])) or e["id"] in chosen_ids:
-            continue
-        if subj.get("axis") not in e["subject_axes"]:
-            continue
-        mg = e.get("mutex_group")
-        if mg and any(c.get("mutex_group") == mg for c in chosen) and mg not in contrast:
-            continue
-        pool.append(e)
-    if not pool:
-        return None, "no eligible probation lens for this subject"
-    counts = ledger_seat_counts(ledger_path)
-    pool.sort(key=lambda e: (counts.get(e["id"], 0), e["id"]))
-    return pool[0], f"rotation: {pool[0]['id']} has {counts.get(pool[0]['id'], 0)} prior seatings"
+    return chosen, scores, excluded, pool, wildcard_ids, seed, seed_source, ranking_sha256
 
 
 def select_adjuncts(entries, subj):
     """Generators (open axis), gates, judge — all outside the evaluator panel."""
-    act = {e["id"]: e for e in entries if e["status"] == "active"}
+    act = {e["id"]: e for e in entries if e["status"] == "available"}
     adj = {"generators": [], "gates": [], "judge": None, "synthesis": None, "judge_note": ""}
     if subj.get("axis") == "open":
         gens = sorted((e for e in act.values() if e["workflow_role"] == "generate_options"),
@@ -404,8 +391,8 @@ def check_constraints(chosen, subj, pool):
     for mg, n in Counter(mutex_groups).items():
         if n > 1 and mg not in contrast:
             errs.append(f"mutex group {mg} co-selected without intentional contrast")
-    if any(c["status"] != "active" for c in chosen):
-        errs.append("non-active lens in core panel (probation belongs in the exploration seat)")
+    if any(c["status"] != "available" for c in chosen):
+        errs.append("non-available lens in evaluator panel")
     if subj.get("domain_confidence") == "high":
         sd = canon_domains(subj.get("domains", []))
         available = any(canon_domains(e["domains"]) & sd for e in pool)
@@ -415,20 +402,18 @@ def check_constraints(chosen, subj, pool):
 
 
 def run(subj, ledger_path=None):
+    # ledger_path remains an ignored compatibility parameter. Historical telemetry is
+    # explicitly non-governing and cannot affect selection.
     reg, reg_hash = load_registry()
     entries = reg["entries"]
-    chosen, scores, excluded, pool = select_panel(entries, subj)
+    chosen, scores, excluded, pool, wildcard_ids, seed, seed_source, ranking_sha256 = select_panel(entries, subj)
     errs = check_constraints(chosen, subj, pool)
     adj = select_adjuncts(entries, subj)
-    exp, exp_note = select_exploration_seat(entries, subj, chosen, ledger_path)
     return {
         "selection": {
             "evaluators": [{"id": c["id"], "version": c["version"], "stance": c["stance"],
                             "capability": c["primary_capability"], "status": c["status"]} for c in chosen],
-            "exploration": ({"id": exp["id"], "version": exp["version"], "stance": exp["stance"],
-                             "capability": exp["primary_capability"], "status": exp["status"],
-                             "seat": "exploration"} if exp else None),
-            "exploration_note": exp_note,
+            "wildcards": wildcard_ids,
             **adj,
         },
         "constraint_violations": errs,
@@ -439,7 +424,10 @@ def run(subj, ledger_path=None):
             "scores": dict(sorted(scores.items())),
             "exclusions": sorted(excluded),
             "selected_ids": [f"{c['id']}@{c['version']}" for c in chosen],
-            "exploration_id": f"{exp['id']}@{exp['version']}" if exp else None,
+            "wildcard_ids": [f"{c['id']}@{c['version']}" for c in chosen if c["id"] in wildcard_ids],
+            "subject_seed_sha256": seed,
+            "seed_source": seed_source,
+            "wildcard_rank_sha256": ranking_sha256,
         },
     }
 
@@ -465,39 +453,24 @@ def self_test():
             "operator_values_in_dossier": rng.random() < 0.3,
             "intentional_contrast": ["leverage-vs-sovereignty"] if rng.random() < 0.1 else [],
         }
-        if rng.random() < 0.2:
-            subj["allow_probation_seat"] = False  # default (absent) = ON
         res = run(subj)
         if res["constraint_violations"]:
             fails += 1
             if fails <= 5:
                 print(f"fixture {i}: {res['constraint_violations']}", file=sys.stderr)
-        # determinism: second run must match (panel AND exploration seat)
+        # determinism: second run must match (panel and subject-seeded wildcards)
         res2 = run(subj)
         if (res2["replay"]["selected_ids"] != res["replay"]["selected_ids"]
-                or res2["replay"]["exploration_id"] != res["replay"]["exploration_id"]):
+                or res2["replay"]["wildcard_ids"] != res["replay"]["wildcard_ids"]):
             fails += 1
             print(f"fixture {i}: NONDETERMINISTIC", file=sys.stderr)
-        # candidates never seated; probation never in core panel
-        if any(s["status"] != "active" for s in res["selection"]["evaluators"]):
+        if any(s["status"] != "available" for s in res["selection"]["evaluators"]):
             fails += 1
-            print(f"fixture {i}: non-active in core panel", file=sys.stderr)
-        exp = res["selection"]["exploration"]
-        if exp is not None:
-            if exp["status"] != "probation":
-                fails += 1
-                print(f"fixture {i}: exploration seat holds {exp['status']}", file=sys.stderr)
-            if subj.get("allow_probation_seat") is False or subj["depth"] == "quick":
-                fails += 1
-                print(f"fixture {i}: exploration seat present when disabled/quick", file=sys.stderr)
-            if exp["id"] in {s["id"] for s in res["selection"]["evaluators"]}:
-                fails += 1
-                print(f"fixture {i}: exploration duplicates a core seat", file=sys.stderr)
-        elif (subj.get("allow_probation_seat") is not False and subj["depth"] != "quick"
-              and "probation" not in res["selection"]["exploration_note"]
-              and "eligible" not in res["selection"]["exploration_note"]):
+            print(f"fixture {i}: non-available evaluator", file=sys.stderr)
+        expected_wildcards = {"quick": 0, "standard": 1, "deep": 1, "max": 2}[subj["depth"]]
+        if len(res["selection"]["wildcards"]) != expected_wildcards:
             fails += 1
-            print(f"fixture {i}: exploration seat unexpectedly empty: {res['selection']['exploration_note']}", file=sys.stderr)
+            print(f"fixture {i}: wrong wildcard count", file=sys.stderr)
     print(f"self-test: {1000 - fails}/1000 fixtures satisfy all panel constraints deterministically")
     return 0 if fails == 0 else 1
 

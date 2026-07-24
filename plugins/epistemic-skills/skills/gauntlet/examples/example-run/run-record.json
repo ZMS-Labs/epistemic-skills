@@ -48,7 +48,7 @@
  },
  "ruling_set": {
   "path": "arbitration.md",
-  "sha256": "5b46c6cf37bbfd6951966c3d8e3678cdfe0bf592f94ca32b70c8b0633073cccd"
+  "sha256": "49e446395c9ad4af395096b147bd27e5b0624ad0c5c6d2277dbb6982fdd90ba6"
  },
  "run_id": "example-run",
  "run_record": "gauntlet-run-record@1",
@@ -67,15 +67,11 @@
   },
   {
    "model_family": "synthetic-family-a",
-   "seat": "evaluator:explainability-steward"
-  },
-  {
-   "model_family": "synthetic-family-a",
    "seat": "evaluator:integration-weaver"
   },
   {
    "model_family": "synthetic-family-a",
-   "seat": "exploration:concurrency-interleaving-auditor"
+   "seat": "evaluator:dual-use-adversary"
   },
   {
    "model_family": "synthetic-family-b",
@@ -83,17 +79,21 @@
   }
  ],
  "selection": {
-  "exploration_id": "concurrency-interleaving-auditor@1",
   "path": "prompts/selection.json",
-  "registry_sha256": "8224ac4ad5483cb68b8f7ee2b1d7ce89674c1e955caed6d6ecb7593426feca93",
-  "registry_version": "2.2.0",
-  "replay_sha256": "0e802935ff85bdde66b80ccfb803645e8b1c91f0c0bd6b4935972f38a45bca27",
+  "registry_sha256": "a71b7f30b937c433dc50c0c2a6b82212026161e2494398230c092fb156befa0d",
+  "registry_version": "3.0.0",
+  "replay_sha256": "105bc3c1d3a98275af7317b40327b760de75bf0cd4d01934c5dd9b8d4d5adca3",
+  "seed_source": "subject_sha256",
   "selected_ids": [
    "compliance-litigator@2",
-   "century-horizon-architect@2",
+   "integration-weaver@2",
    "tech-debt-curator@2",
-   "explainability-steward@2",
-   "integration-weaver@2"
+   "dual-use-adversary@2",
+   "century-horizon-architect@2"
+  ],
+  "subject_seed_sha256": "cd5203ee71b0605c38f92b5d6f7ccb2ca5f367eb10dc4fd29ed17e76e0f354c5",
+  "wildcard_ids": [
+   "dual-use-adversary@2"
   ]
  },
  "subject": {
@@ -102,7 +102,7 @@
  },
  "summary": {
   "path": "GAUNTLET-SUMMARY.md",
-  "sha256": "f45020ec9a0223565d94deddefcd6256e5ffe60a5f3a351b7ec62e85c7d745c8"
+  "sha256": "0389e6e1d0425dc0d6742507faef47d7517e2f2bb7fd7f91997b3b6cf0d807c8"
  },
  "valid_while": {
   "evidence_root_sha256": "f05efa3e24fa0c3465a367d24d4d9d23a15a443b04673205d9f3d4959a16b1c8",

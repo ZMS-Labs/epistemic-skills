@@ -25,6 +25,12 @@ def sh(*args):
 def main():
     failures = []
 
+    try:
+        test_collapsed_lifecycle()
+    except AssertionError as e:
+        print(f"[FAIL] collapsed lifecycle: {e}")
+        failures.append("collapsed-lifecycle")
+
     rc, out = sh(str(ROOT / "scripts" / "validate_roster.py"))
     print(f"[{'PASS' if rc == 0 else 'FAIL'}] validate_roster: {out.splitlines()[-1] if out else ''}")
     if rc != 0:
@@ -102,31 +108,30 @@ def main():
          lambda r: not {e["id"] for e in r["selection"]["evaluators"]} &
                    {"first-principles-engineer", "constraint-relaxer", "constraint-inverter",
                     "meta-epistemic-auditor", "premortem-facilitator"}),
-        ("candidates never seated even on their home domain",
+        ("former candidates are available to the ordinary evaluator pool",
          {"subject": "backup restore drill RPO RTO integrity", "axis": "fixed", "depth": "deep",
           "domains": ["backups", "restore", "dr"], "risk_classes": [], "domain_confidence": "high"},
-         lambda r: all(e["status"] != "candidate" for e in r["selection"]["evaluators"])),
+         lambda r: all(e["status"] == "available" for e in r["selection"]["evaluators"])),
         ("replay record carries registry hash + scores + exclusions",
          {"subject": "x", "axis": "fixed", "depth": "quick", "domains": ["infra"], "risk_classes": []},
          lambda r: len(r["replay"]["registry_sha256"]) == 64 and r["replay"]["scores"] and r["replay"]["exclusions"]),
-        ("exploration seat auto-seats a probation lens at standard depth",
-         {"subject": "payment ledger cutover", "axis": "fixed", "depth": "standard", "domains": ["infra"], "risk_classes": ["irreversible"]},
-         lambda r: r["selection"]["exploration"] is not None
-                   and r["selection"]["exploration"]["status"] == "probation"
-                   and r["selection"]["exploration"]["id"] not in {s["id"] for s in r["selection"]["evaluators"]}
-                   and all(s["status"] == "active" for s in r["selection"]["evaluators"])),
-        ("exploration seat absent at quick depth",
+        ("standard panel records exactly one subject-seeded wildcard",
+         {"subject": "payment ledger cutover", "subject_sha256": "1" * 64,
+          "axis": "fixed", "depth": "standard", "domains": ["infra"], "risk_classes": ["irreversible"]},
+         lambda r: len(r["selection"]["wildcards"]) == 1
+                   and r["selection"]["wildcards"][0] in {s["id"] for s in r["selection"]["evaluators"]}
+                   and "exploration" not in r["selection"]),
+        ("quick panel has no wildcard seat",
          {"subject": "x", "axis": "fixed", "depth": "quick", "domains": ["infra"], "risk_classes": []},
-         lambda r: r["selection"]["exploration"] is None),
-        ("exploration seat honors explicit opt-out",
-         {"subject": "x", "axis": "fixed", "depth": "deep", "domains": ["infra"], "risk_classes": [],
-          "allow_probation_seat": False},
-         lambda r: r["selection"]["exploration"] is None),
+         lambda r: r["selection"]["wildcards"] == []),
+        ("max panel records exactly two subject-seeded wildcards",
+         {"subject": "x", "subject_sha256": "2" * 64,
+          "axis": "fixed", "depth": "max", "domains": ["infra"], "risk_classes": []},
+         lambda r: len(r["selection"]["wildcards"]) == 2),
         ("retired verification-oracle-auditor never seated anywhere",
          {"subject": "mocked test oracle verification adequacy", "axis": "fixed", "depth": "max",
           "domains": ["data-ml", "product"], "risk_classes": []},
-         lambda r: "verification-oracle-auditor" not in {s["id"] for s in r["selection"]["evaluators"]}
-                   and (r["selection"]["exploration"] or {}).get("id") != "verification-oracle-auditor"),
+         lambda r: "verification-oracle-auditor" not in {s["id"] for s in r["selection"]["evaluators"]}),
         # Fit-sensitive alias fixtures (audit 08 Part 2c failure cases): these assert a
         # seating DIRECTION the aliased vocabulary produces — the constraint battery
         # cannot validate fit, so both must fail if DOMAIN_ALIASES is reverted.
@@ -161,6 +166,18 @@ def main():
         failures.append("lens_stats")
 
     try:
+        test_subject_seeded_wildcards(sel)
+    except AssertionError as e:
+        print(f"[FAIL] subject-seeded wildcards: {e}")
+        failures.append("subject-seeded-wildcards")
+
+    try:
+        test_arbitrator_seat_provenance_neutrality()
+    except AssertionError as e:
+        print(f"[FAIL] arbitrator seat-provenance neutrality: {e}")
+        failures.append("arbitrator-seat-provenance")
+
+    try:
         test_consult_packet()
     except AssertionError as e:
         print(f"[FAIL] consult_packet: {e}")
@@ -192,6 +209,18 @@ def main():
 
     print(f"\n{'ALL PASS' if not failures else 'FAILURES: ' + ', '.join(failures)}")
     return 0 if not failures else 1
+
+
+def test_collapsed_lifecycle():
+    registry = json.loads((ROOT / "roster" / "registry.json").read_text(encoding="utf-8"))
+    statuses = {entry["status"] for entry in registry["entries"]}
+    assert statuses <= {"available", "retired"}, statuses
+    assert statuses == {"available", "retired"}, statuses
+    schema = json.loads((ROOT / "roster" / "lens.schema.json").read_text(encoding="utf-8"))
+    assert set(schema["properties"]["status"]["enum"]) == {"available", "retired"}
+    arbitrator = (ROOT / "bases" / "base-arbitrator.md").read_text(encoding="utf-8")
+    assert "Seat provenance and historical telemetry carry zero evidentiary weight" in arbitrator
+    print("[PASS] roster lifecycle is available -> retired")
 
 
 
@@ -268,15 +297,14 @@ def test_consult_packet():
 
 
 def test_lens_stats_aggregation():
-    """lens_stats aggregates the ledger and fires the lifecycle threshold flags."""
+    """lens_stats is non-governing telemetry and emits no lifecycle decision flags."""
     import json as _json, subprocess, sys as _sys, tempfile, os
     recs = []
-    # probation lens seated in 20 eligible runs -> ACTIVATION-REVIEW-DUE
     for i in range(20):
         recs.append({"ts": f"t{i}", "subject": "s", "depth": "deep", "verdict": "NO-GO",
                      "eligible": True, "lenses": [
-            {"id": "prob-lens", "lifecycle": "probation", "upheld_unique": 1, "upheld_dup": 0},
-            {"id": "dup-lens", "lifecycle": "active", "upheld_unique": 0, "upheld_dup": 3,
+            {"id": "wildcard-lens", "lifecycle": "available", "upheld_unique": 1, "upheld_dup": 0},
+            {"id": "dup-lens", "lifecycle": "available", "upheld_unique": 0, "upheld_dup": 3,
              "false_high": 1 if i == 0 else 0},
         ]})
     fd, path = tempfile.mkstemp(suffix=".jsonl"); os.close(fd)
@@ -289,14 +317,40 @@ def test_lens_stats_aggregation():
         assert out.returncode == 0, out.stderr
         data = _json.loads(out.stdout)
         assert data["runs"] == 20
-        assert "ACTIVATION-REVIEW-DUE" in data["lenses"]["prob-lens"]["flags"]
-        assert "DEPRECATE-MERGE-CANDIDATE" in data["lenses"]["dup-lens"]["flags"]
         assert data["lenses"]["dup-lens"]["dup_rate"] == 1.0
-        assert any(fl.startswith("FALSE-HIGH") for fl in data["lenses"]["dup-lens"]["flags"])
-        assert data["lenses"]["prob-lens"]["flags"] == ["ACTIVATION-REVIEW-DUE"]
+        assert "flags" not in data["lenses"]["dup-lens"]
+        assert "flags" not in data["lenses"]["wildcard-lens"]
     finally:
         os.unlink(path)
-    print("[PASS] lens_stats aggregation + lifecycle threshold flags")
+    print("[PASS] lens_stats aggregation is non-governing telemetry")
+
+
+def test_subject_seeded_wildcards(sel):
+    base = {"subject": "same dossier", "axis": "fixed", "depth": "standard",
+            "domains": ["infra"], "risk_classes": []}
+    first = sel.run(dict(base, subject_sha256="a" * 64))
+    repeat = sel.run(dict(base, subject_sha256="a" * 64))
+    changed = sel.run(dict(base, subject_sha256="b" * 64))
+    assert first["replay"]["wildcard_ids"] == repeat["replay"]["wildcard_ids"]
+    assert first["replay"]["subject_seed_sha256"] == "a" * 64
+    assert first["replay"]["seed_source"] == "subject_sha256"
+    assert first["replay"]["wildcard_rank_sha256"] != changed["replay"]["wildcard_rank_sha256"]
+    assert "ledger" not in json.dumps(first["replay"]).lower()
+    print("[PASS] subject-seeded wildcard replay is deterministic and ledger-independent")
+
+
+def test_arbitrator_seat_provenance_neutrality():
+    import importlib.util
+    path = ROOT / "evals" / "arbitrator-certification" / "score.py"
+    spec = importlib.util.spec_from_file_location("arbitrator_score", path)
+    scorer = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(scorer)
+    gt = {"expected_verdict": "NO-GO", "flawed_finding_id": "F-wildcard"}
+    correct = {"verdict": "NO-GO", "dispositions": [{"finding_id": "F-wildcard", "disposition": "upheld"}]}
+    prejudiced = {"verdict": "GO", "dispositions": [{"finding_id": "F-wildcard", "disposition": "excluded"}]}
+    assert scorer.score_case("AC-07-seat-provenance-prejudice", gt, correct)[0]
+    assert not scorer.score_case("AC-07-seat-provenance-prejudice", gt, prejudiced)[0]
+    print("[PASS] arbitrator certification rejects seat-provenance prejudice")
 
 
 def test_verify_evidence_fails_closed_on_binary():
