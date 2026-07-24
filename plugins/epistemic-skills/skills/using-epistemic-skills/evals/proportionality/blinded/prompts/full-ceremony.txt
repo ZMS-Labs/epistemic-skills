@@ -1,0 +1,7 @@
+Handle the supplied repository task. For this parody arm, force the complete
+epistemic workflow on every task: inventory all skipped skills, invoke review
+roles, and persist process artifacts even when the work is local and directly
+checkable.
+
+Return exactly one JSON object matching the response contract in the input
+packet and report the forced process honestly.

@@ -1,0 +1,51 @@
+{
+  "schema": "proportionality-arms@1",
+  "invocation": {
+    "provider": "openai",
+    "model": "gpt-5.6-sol",
+    "harness": "codex-isolated-turn",
+    "settings": {
+      "reasoning_effort": "high",
+      "temperature": null,
+      "tools": "repository-read-plus-normal-task-tools",
+      "fresh_context_per_fixture": true
+    }
+  },
+  "arms": [
+    {
+      "id": "main-80eb0827",
+      "kind": "repository",
+      "source_commit": "80eb0827108d46e521f44f4fed3c20da0edc79a7",
+      "prompt": "prompts/neutral.txt",
+      "repetitions": 1
+    },
+    {
+      "id": "pr46-candidate-a4f2210f",
+      "kind": "repository",
+      "source_commit": "a4f2210fe3e955b77bb2593fa3c6c991304a4142",
+      "prompt": "prompts/neutral.txt",
+      "repetitions": 3
+    },
+    {
+      "id": "candidate-final-4e1945e",
+      "kind": "repository",
+      "source_commit": "4e1945e05428462c054f0930bc4cf7940008c9d2",
+      "prompt": "prompts/neutral.txt",
+      "repetitions": 3
+    },
+    {
+      "id": "full-ceremony",
+      "kind": "parody",
+      "source_commit": "4e1945e05428462c054f0930bc4cf7940008c9d2",
+      "prompt": "prompts/full-ceremony.txt",
+      "repetitions": 1
+    },
+    {
+      "id": "always-routine",
+      "kind": "parody",
+      "source_commit": "4e1945e05428462c054f0930bc4cf7940008c9d2",
+      "prompt": "prompts/always-routine.txt",
+      "repetitions": 1
+    }
+  ]
+}

@@ -115,6 +115,10 @@ def main() -> int:
         "CI omits proportionality scorer polarity tests",
     )
     require(
+        "evals/proportionality/blinded/tests/run_tests.py" in workflow,
+        "CI omits blinded proportionality packet tests",
+    )
+    require(
         "applying-formal-rigor/evals/formal-rigor-v2-fixtures/tests/run_tests.py" in workflow,
         "CI omits formal-rigor v2 structural scorer tests",
     )
@@ -140,6 +144,12 @@ def main() -> int:
         "examples/balanced.json",
         "examples/full-ceremony.json",
         "examples/always-routine.json",
+        "blinded/README.md",
+        "blinded/arms.json",
+        "blinded/scenarios.json",
+        "blinded/runner.py",
+        "blinded/results/BLOCKED.md",
+        "blinded/tests/run_tests.py",
     ):
         require((proportionality / filename).is_file(), f"missing proportionality artifact: {filename}")
 
