@@ -23,7 +23,9 @@ produces exactly two operator-facing outputs:
 
 It does not perform the outsourced workload, choose a target over an operator's explicit choice,
 or certify the target's result. The target executes; the originating agent records the relay and
-verifies the returned evidence under the repository's normal gates.
+verifies each load-bearing completion claim under the repository's normal gates. Verification is
+claim-scoped: inspect reusable evidence first, then rerun only what is stale, missing, or not
+independently inspectable.
 
 ## Standard repository layout
 
@@ -145,7 +147,10 @@ detail; the conversation carries only the pointer and readiness receipt.
 When the operator pastes a target response back:
 
 1. save it verbatim as the next `relay/NNNN-target.md` before interpreting it;
-2. verify its claimed commits, files, commands, tests, and unresolved items against live state;
+2. verify each **load-bearing completion claim** against live or immutable evidence; reuse
+   independently inspectable commit state, current CI results, hash-bound artifacts, and
+   deterministic reports, and rerun only checks that are stale, missing, non-replayable,
+   materially environment-dependent, or high-risk;
 3. update `HANDOFF.md` with the verified current state, remaining requirements, and next request;
 4. store the next canonical outbound prompt template in `relay/NNNN-origin.md` with the literal
    `{packet_commit}` token;
@@ -171,6 +176,23 @@ recommended_next_action: <one action>
 The originating agent may summarize after the verbatim response is safely in the repo, but the
 stored relay remains the provenance record. Never silently edit a target response.
 
+### Verification proportionality at the return boundary
+
+The relay is not self-certifying, but re-verification does not mean blindly repeating every
+reported command. Map evidence to the requirement or completion claim it establishes.
+
+- A current CI result bound to the returned commit may be inspected and reused.
+- A hash-bound machine-readable artifact may be inspected and reused.
+- Repository facts that the origin can read directly should be anchored directly.
+- A prose-only test claim requires replay or an equivalent direct oracle.
+- A moved subject or environment invalidates only the freshness-sensitive check.
+- An irreversible, security-sensitive, or hard-to-observe acceptance claim still escalates to
+  its normal independent or adversarial gate.
+
+Do not launch a verifier subagent solely to repeat a deterministic check the origin can establish
+directly. Preserve any first-run failure; a later green rerun characterizes flakiness rather than
+erasing it.
+
 ## Stop conditions
 
 Return `BLOCKED` rather than a ready prompt when any of these is true:
@@ -191,7 +213,8 @@ Return `BLOCKED` rather than a ready prompt when any of these is true:
 | “The target can browse around and figure it out.” | Browsing is not a context map. Name the paths and the fact each contributes. |
 | “The doc is on my branch, so GitHub has it.” | Only a pushed commit is target-readable GitHub state. |
 | “We can keep the replies in chat.” | Every relay is stored verbatim before it bears load in the next turn. |
-| “The target said the tests pass.” | A relay is a claim. The originating agent re-verifies evidence before closure. |
+| “The target said the tests pass.” | A relay is a claim. Inspect independently inspectable evidence or replay the load-bearing check before closure. |
+| “I should rerun every command the target listed.” | Verify load-bearing claims, not command volume. Reuse current immutable evidence and refresh only stale or missing checks. |
 | “Complete enough.” | Unmet or unverified requirement IDs yield `PARTIAL`, `BLOCKED`, or `QUESTION`, never `COMPLETE`. |
 
 ## Local overlay
