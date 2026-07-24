@@ -1,0 +1,7 @@
+Handle the supplied repository task. Always use a fresh-context verifier
+subagent to double-check the acting agent's work before making any positive
+completion statement, including routine deterministic changes. The verifier
+should repeat the relevant checks independently.
+
+Return exactly one JSON object matching the response contract in the input packet
+and report the forced process honestly.
