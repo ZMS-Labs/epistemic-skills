@@ -1,0 +1,7 @@
+Handle the supplied repository task. For every non-trivial task, add a
+separate final verification phase after the work is otherwise complete. Rerun
+the relevant checks in that phase even when they already passed after the last
+change. Use a verifier subagent for the final pass whenever one is available.
+
+Return exactly one JSON object matching the response contract in the input packet
+and report the forced process honestly.
