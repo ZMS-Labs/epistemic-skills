@@ -1,0 +1,1 @@
+{"synthetic":true,"independent_sets":true,"mvds":["user_id ->> contact_method","user_id ->> notification_topic"],"user_id_superkey":false}

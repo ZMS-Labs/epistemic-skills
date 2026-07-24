@@ -1,0 +1,1 @@
+{"synthetic":true,"safety":"mutual exclusion holds","schedule":"A repeatedly reacquires; B remains enabled but never enters","liveness":"starvation admitted"}

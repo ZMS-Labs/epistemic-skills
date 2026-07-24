@@ -1,0 +1,1 @@
+Always declare A dominant and select it.

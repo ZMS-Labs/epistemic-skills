@@ -29,7 +29,8 @@ model-aware discipline:
 - formal results, empirical closure, and normative synthesis are separate;
 - synthesis may end in `dominance`, `pareto-set`, `conditional`,
   `underdetermined`, `reversal`, or `reversible-probe`;
-- every run emits a revision-bound `formal-rigor-record@2`.
+- standard and high-assurance runs emit a revision-bound
+  `formal-rigor-record@2`; focused runs stay inline and bounded.
 
 “Exhaustive” means **exhaustive relative to the declared subject scope,
 property inventory, loaded modules, input facts, and coverage limits**. It
@@ -260,9 +261,9 @@ This claim never means “no other formal theory exists” or “no defect exist
 It means the declared property inventory has been honestly reconciled against
 the declared subject and the current module library.
 
-## Decision frame — required before synthesis
+## Decision frame — required before standard/high-assurance synthesis
 
-Every run records:
+Every standard or high-assurance run records:
 
 | Field | Requirement |
 |---|---|
@@ -304,11 +305,13 @@ one invariant proof, or a specific correctness challenge.
 
 Floor:
 
-- complete the decision-frame fields relevant to the question;
-- include the null option only when a choice is being made;
-- enumerate the nine property families compactly;
-- load only the modules that fire;
-- emit the full revision-bound record.
+- return inline, with at most six short bullets or 250 visible words;
+- name the subject/question and model, precise construct, minimum preconditions
+  and fact mapping, finite derivation or counterexample, result, and residual
+  limitation plus bounded empirical check when material;
+- do not emit P1-P9 reconciliation, a full decision frame,
+  `formal-rigor-record@2`, receipt/stamp, durable process artifact, or
+  standard/high-assurance source apparatus solely for the focused run.
 
 ### `standard` — default for material forks
 
@@ -625,8 +628,10 @@ which possible result changes which branch of the decision.
 
 ## Revision-bound output: `formal-rigor-record@2`
 
-The normative artifact is JSON, inline or file-written. Human-readable prose
-may accompany it, but downstream consumers rely on the record.
+The normative standard/high-assurance artifact is JSON, inline or file-written.
+Human-readable prose may accompany it, but downstream consumers rely on the
+record. Focused output is the bounded inline form above and never carries this
+container.
 
 ```json
 {
@@ -716,7 +721,7 @@ may accompany it, but downstream consumers rely on the record.
 ### Record invariants
 
 - Standard and high-assurance records contain exactly one coverage entry for
-  every `P1`–`P9`; focused records do the same compactly.
+  every `P1`–`P9`.
 - A decision fork includes exactly one `null-option` alternative.
 - Every fired family names at least one module.
 - Every derivation names a model, at least one precondition, fact mapping, a
@@ -902,8 +907,9 @@ results, not population accuracy claims.
   applicability chain.
 - **AC6 — closure vocabulary:** all six synthesis outcomes are defined and
   forced winner selection is prohibited.
-- **AC7 — artifact:** `formal-rigor-record@2` carries the router's exact subject,
-  revision, validity, and coverage-limit fields.
+- **AC7 — artifact:** standard/high-assurance `formal-rigor-record@2` carries
+  the router's exact subject, revision, validity, and coverage-limit fields;
+  focused runs remain bounded inline output.
 - **AC8 — proportionality:** focused, standard, and high-assurance tiers have
   observable triggers and floors.
 - **AC9 — sources:** canonical primary theory and pinned official product docs

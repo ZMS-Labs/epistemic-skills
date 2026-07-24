@@ -1,0 +1,1 @@
+{"synthetic":true,"product":"PostgreSQL","version":"18","official_url":"https://www.postgresql.org/docs/18/transaction-iso.html","documented":"Repeatable Read prevents phantoms but permits serialization anomalies"}

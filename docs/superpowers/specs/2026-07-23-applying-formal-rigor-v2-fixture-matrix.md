@@ -140,6 +140,7 @@ Each fixture produces one JSON file `<fixture-id>.response.json`:
       "derivation_ids": ["d1"]
     }
   ],
+  "focused_output": null,
   "record": {
     "record": "formal-rigor-record@2"
   }
@@ -149,8 +150,11 @@ Each fixture produces one JSON file `<fixture-id>.response.json`:
 Rules:
 
 - `invocation: skip` requires a concrete negative-trigger reason and
-  `record: null`.
-- Every other invocation contains a complete `formal-rigor-record@2`.
+  `focused_output: null` and `record: null`.
+- `invocation: focused` contains one to six short strings totaling at most 250
+  visible words in `focused_output`, with `record: null`.
+- Standard and high-assurance invocations contain a complete
+  `formal-rigor-record@2` and `focused_output: null`.
 - The response does not expose fixture class, expected state, proof-obligation
   ids, or score.
 - Scenario claims must be present exactly once. Omission is a miss, not a safe
@@ -217,7 +221,7 @@ Each fixture is scored on ten dimensions.
 | `S2` | Decision frame | Required alternatives, null option, constraints, authority, priority rule, assumptions, empirical premises, and tier reason are present. |
 | `S3` | Construct precision | Required module and construct are named; prohibited generic substitutes do not carry the claim. |
 | `S4` | Applicability chain | Every scored derivation has model, preconditions, fact mapping, steps, result, and residual mismatch. |
-| `S5` | Property coverage | Required families fire; every P1–P9 family is accounted for when a record is emitted; legitimate `unmapped` is preserved. |
+| `S5` | Property coverage | Required families fire; every P1–P9 family is accounted for in standard/high-assurance records; focused runs incur no inventory; legitimate `unmapped` is preserved. |
 | `S6` | Claim disposition | Every `cN` state is allowed by ground truth. |
 | `S7` | Layer separation | Formal result, empirical closure, and synthesis do not substitute for each other. |
 | `S8` | Synthesis calibration | Outcome and selected option obey dominance/Pareto/conditional/underdetermined/reversal/probe rules. |
@@ -260,7 +264,7 @@ pass additionally requires the adjudication rule above.
 | ID | Scenario and planted failure | Expected behavior | Hard failure |
 |---|---|---|---|
 | `ot-01-pure-preference-skip` | Choose `items` versus `records` for a local variable; no theorem, measurable behavior, convention, or downstream contract differs. | `skip` with the negative trigger stated. | Emits a formal record, invents a property difference, or runs a lens/module sweep. |
-| `ot-02-focused-not-ceremony` | An explicit Big-O question compares list membership with set membership in a small reversible development script; no persistent architecture decision is requested. | `focused`; P7 fires, P1–P6/P8–P9 are compactly accounted for; result names n, construction cost, operation mix, and constants as residuals; no high-assurance apparatus. | Runs standard/high-assurance theater, omits set-build cost, or claims O(1) without average/worst/model qualification. |
+| `ot-02-focused-not-ceremony` | An explicit Big-O question compares list membership with set membership in a small reversible development script; no persistent architecture decision is requested. | `focused`; at most six short bullets or 250 visible words name n, construction cost, operation mix, average/worst model, result, and residual constants. | Emits P1–P9 reconciliation, a full decision frame, `formal-rigor-record@2`, persistent artifact, source-register apparatus, standard/high-assurance theater, omits set-build cost, or claims O(1) without model qualification. |
 | `tc-01-high-assurance-escalation` | A public authentication-token migration changes downgrade behavior, compatibility, revocation, and rollback across services. | `high-assurance`; P5/P6/P9 fire appropriate modules; official product/protocol versions and subject revision are pinned; threat/fault/version-skew models are explicit; empirical tests preregistered; Gauntlet handoff recommended. | Treats it as focused/standard solely because code diff is small, or claims the formal record is the adversarial gate. |
 
 ### Staleness and re-fire — two fixtures

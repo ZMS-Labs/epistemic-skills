@@ -1,0 +1,1 @@
+{"synthetic":true,"A":{"p99_ms":20,"monthly_cost":80,"durability":"equal","compatibility":"equal"},"B":{"p99_ms":35,"monthly_cost":120,"durability":"equal","compatibility":"equal"},"priority":"reliability>latency>cost"}

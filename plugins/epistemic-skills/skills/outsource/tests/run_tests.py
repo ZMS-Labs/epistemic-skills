@@ -114,6 +114,14 @@ def main() -> int:
         "evals/proportionality/run_tests.py" in workflow,
         "CI omits proportionality scorer polarity tests",
     )
+    require(
+        "applying-formal-rigor/evals/formal-rigor-v2-fixtures/tests/run_tests.py" in workflow,
+        "CI omits formal-rigor v2 structural scorer tests",
+    )
+    require(
+        "applying-formal-rigor/evals/formal-rigor-v2-fixtures/tests/test_focused.py" in workflow,
+        "CI omits formal-rigor focused proportionality tests",
+    )
 
     proportionality = router_root / "evals" / "proportionality"
     for filename in (
@@ -126,6 +134,19 @@ def main() -> int:
         "examples/always-routine.json",
     ):
         require((proportionality / filename).is_file(), f"missing proportionality artifact: {filename}")
+
+    formal_v2 = PACKAGE_ROOT / "skills" / "applying-formal-rigor" / "evals" / "formal-rigor-v2-fixtures"
+    for filename in (
+        "README.md",
+        "formal-rigor-fixture-response.schema.json",
+        "formal-rigor-record.schema.json",
+        "score.py",
+        "semantic-adjudication.md",
+        "tests/run_tests.py",
+        "tests/test_focused.py",
+        "results/BLOCKED.md",
+    ):
+        require((formal_v2 / filename).is_file(), f"missing formal-rigor v2 artifact: {filename}")
 
     skill_dirs = [p for p in (PACKAGE_ROOT / "skills").iterdir() if p.is_dir()]
     require(len(skill_dirs) == 11, f"expected 11 skill directories, found {len(skill_dirs)}")
