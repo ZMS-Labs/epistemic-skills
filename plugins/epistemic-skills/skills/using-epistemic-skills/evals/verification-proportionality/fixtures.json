@@ -1,0 +1,221 @@
+{
+  "schema": "verification-proportionality-fixtures@1",
+  "allowed_modes": [
+    "native",
+    "bounded",
+    "independent",
+    "adversarial",
+    "hold"
+  ],
+  "allowed_claim_statuses": [
+    "claimed",
+    "limited",
+    "inconclusive"
+  ],
+  "allowed_oracles": [
+    "test",
+    "preview",
+    "reproduction",
+    "source",
+    "artifact",
+    "verifier",
+    "gate"
+  ],
+  "allowed_independence": [
+    "actor",
+    "distinct-context",
+    "deterministic"
+  ],
+  "fixtures": [
+    {
+      "id": "v-01-current-evidence-reuse",
+      "category": "routine",
+      "claim": "The local button-copy change is correct.",
+      "expected_modes": [
+        "bounded"
+      ],
+      "expected_claim_status": "claimed",
+      "min_actions": 1,
+      "max_actions": 1,
+      "required_oracles": [
+        "test"
+      ],
+      "require_current_evidence": true,
+      "require_reuse": true,
+      "require_rerun": false,
+      "forbid_rerun": true,
+      "require_independence": false,
+      "forbid_independence": true,
+      "require_escalation": false
+    },
+    {
+      "id": "v-02-new-bounded-check",
+      "category": "routine",
+      "claim": "A documentation typo was corrected without breaking links.",
+      "expected_modes": [
+        "bounded"
+      ],
+      "expected_claim_status": "claimed",
+      "min_actions": 1,
+      "max_actions": 1,
+      "required_oracles": [
+        "test"
+      ],
+      "require_current_evidence": true,
+      "require_reuse": false,
+      "require_rerun": false,
+      "forbid_rerun": true,
+      "require_independence": false,
+      "forbid_independence": true,
+      "require_escalation": false
+    },
+    {
+      "id": "v-03-stale-after-change",
+      "category": "material",
+      "claim": "The formatter remains correct after a second relevant code edit.",
+      "expected_modes": [
+        "bounded"
+      ],
+      "expected_claim_status": "claimed",
+      "min_actions": 1,
+      "max_actions": 1,
+      "required_oracles": [
+        "test"
+      ],
+      "require_current_evidence": true,
+      "require_reuse": false,
+      "require_rerun": true,
+      "forbid_rerun": false,
+      "require_independence": false,
+      "forbid_independence": true,
+      "require_escalation": false
+    },
+    {
+      "id": "v-04-deterministic-backend",
+      "category": "material",
+      "claim": "The deterministic backend regression is fixed.",
+      "expected_modes": [
+        "bounded"
+      ],
+      "expected_claim_status": "claimed",
+      "min_actions": 1,
+      "max_actions": 1,
+      "required_oracles": [
+        "test"
+      ],
+      "require_current_evidence": true,
+      "require_reuse": false,
+      "require_rerun": false,
+      "forbid_rerun": true,
+      "require_independence": false,
+      "forbid_independence": true,
+      "require_escalation": false
+    },
+    {
+      "id": "v-05-external-immutable-ci",
+      "category": "external",
+      "claim": "The external agent's commit passes the pinned CI workflow.",
+      "expected_modes": [
+        "bounded"
+      ],
+      "expected_claim_status": "claimed",
+      "min_actions": 1,
+      "max_actions": 1,
+      "required_oracles": [
+        "artifact"
+      ],
+      "require_current_evidence": true,
+      "require_reuse": true,
+      "require_rerun": false,
+      "forbid_rerun": true,
+      "require_independence": false,
+      "forbid_independence": true,
+      "require_escalation": false
+    },
+    {
+      "id": "v-06-external-prose-only",
+      "category": "external",
+      "claim": "The external agent's claimed regression fix is real.",
+      "expected_modes": [
+        "bounded"
+      ],
+      "expected_claim_status": "claimed",
+      "min_actions": 1,
+      "max_actions": 1,
+      "required_oracles": [
+        "test",
+        "reproduction"
+      ],
+      "require_current_evidence": true,
+      "require_reuse": false,
+      "require_rerun": true,
+      "forbid_rerun": false,
+      "require_independence": false,
+      "forbid_independence": true,
+      "require_escalation": false
+    },
+    {
+      "id": "v-07-stateful-ui",
+      "category": "acceptance",
+      "claim": "The keyboard-only modal workflow satisfies material acceptance criteria.",
+      "expected_modes": [
+        "independent"
+      ],
+      "expected_claim_status": "claimed",
+      "min_actions": 1,
+      "max_actions": 2,
+      "required_oracles": [
+        "verifier"
+      ],
+      "require_current_evidence": true,
+      "require_reuse": false,
+      "require_rerun": false,
+      "forbid_rerun": false,
+      "require_independence": true,
+      "forbid_independence": false,
+      "require_escalation": true
+    },
+    {
+      "id": "v-08-high-risk-security",
+      "category": "high-risk",
+      "claim": "The cross-tenant authorization change is safe to approve.",
+      "expected_modes": [
+        "adversarial"
+      ],
+      "expected_claim_status": "claimed",
+      "min_actions": 1,
+      "max_actions": 3,
+      "required_oracles": [
+        "gate"
+      ],
+      "require_current_evidence": true,
+      "require_reuse": false,
+      "require_rerun": false,
+      "forbid_rerun": false,
+      "require_independence": true,
+      "forbid_independence": false,
+      "require_escalation": true
+    },
+    {
+      "id": "v-09-explicit-independent-audit",
+      "category": "operator-request",
+      "claim": "An independent audit was performed as explicitly requested.",
+      "expected_modes": [
+        "independent"
+      ],
+      "expected_claim_status": "claimed",
+      "min_actions": 1,
+      "max_actions": 2,
+      "required_oracles": [
+        "verifier"
+      ],
+      "require_current_evidence": true,
+      "require_reuse": false,
+      "require_rerun": false,
+      "forbid_rerun": false,
+      "require_independence": true,
+      "forbid_independence": false,
+      "require_escalation": true
+    }
+  ]
+}
