@@ -15,6 +15,8 @@ its required live RED, and live blinded proportionality arms remain NOT_RUN.
   CodeQL/DCO/stdlib checks successful (stdlib run `30061677968`).
 - implementation branch: `codex/v3-rigor-gauntlet`; content head before this
   evidence report: `a2c794c19ce925801e2ec0be1301c094a27d3421`.
+- continuation: draft PR #48,
+  `https://github.com/ZMS-Labs/epistemic-skills/pull/48`.
 - integration merge: `3574687d907d10adf30dd1723a52dfa8ff647656`.
 
 ## Requirement disposition
@@ -35,7 +37,7 @@ its required live RED, and live blinded proportionality arms remain NOT_RUN.
 | OUT-012 | satisfied structurally | Balanced control: routine 10/10, material 4/4, high-risk 4/4, median 25 words; both parodies fail. No live-effect claim. |
 | OUT-013 | satisfied | Four high-risk fixtures retain Gauntlet/formal-rigor escalation and UAT/Gauntlet independence. |
 | OUT-014 | partial | Full local deterministic suite green and CI wired; branch GitHub Actions pending publication. |
-| OUT-015 | partial | 27 local commits DCO-clean; no merge/release/version/settings rewrite; draft PR pending publication. |
+| OUT-015 | satisfied | Draft PR #48; DCO-clean commits; no merge/release/version/settings rewrite. |
 | OUT-016 | satisfied | `relay/0002-target.md`. |
 
 ## Normative reconciliation search
