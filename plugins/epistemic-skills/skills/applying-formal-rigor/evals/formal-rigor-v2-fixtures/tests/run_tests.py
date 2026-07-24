@@ -6,6 +6,7 @@ from __future__ import annotations
 import importlib.util
 from pathlib import Path
 import json
+import tempfile
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -108,6 +109,23 @@ def main() -> int:
               "record": minimal_record(outcome="dominance", selected_option="A")}
     failed = score.score_fixture(inventory["fc-01-pareto-no-priority"], forced)
     require(not failed["structural_pass"] and "S8" in failed["dimensions_failed"], "forced winner was not rejected")
+
+    malformed_nested = json.loads(json.dumps(forced))
+    malformed_nested["record"]["decision_frame"]["alternatives"] = ["A", "B"]
+    failed = score.score_fixture(inventory["fc-01-pareto-no-priority"], malformed_nested)
+    require(
+        not failed["structural_pass"] and "S2" in failed["dimensions_failed"],
+        "malformed nested alternatives must fail closed instead of crashing",
+    )
+
+    with tempfile.TemporaryDirectory() as tmp:
+        invalid_path = Path(tmp) / "invalid.response.json"
+        invalid_path.write_text('{"response":"formal-rigor-fixture-response@1"}}', encoding="utf-8")
+        failed = score.score_response_path(inventory["cc-02-comparison-bound-is-valid"], invalid_path)
+        require(
+            not failed["structural_pass"] and "S1" in failed["dimensions_failed"],
+            "invalid JSON must fail closed instead of crashing the run",
+        )
 
     focused_container = minimal_record()
     focused_container["rigor"]["tier"] = "focused"

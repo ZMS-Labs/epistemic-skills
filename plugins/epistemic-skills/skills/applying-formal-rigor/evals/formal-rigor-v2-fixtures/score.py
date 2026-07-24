@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+from typing import Any
 
 FAMILIES = {f"P{i}" for i in range(1, 10)}
 INVOCATIONS = {"skip", "focused", "standard", "high-assurance"}
@@ -70,6 +71,9 @@ def validate_record(record: object) -> list[dict]:
     if rigor.get("tier") not in {"standard", "high-assurance"} or not rigor.get("trigger") or not rigor.get("tier_reason"):
         fail(failures, "S1", "rigor tier/trigger/reason incomplete")
     frame = record.get("decision_frame", {})
+    if not isinstance(frame, dict):
+        fail(failures, "S2", "decision_frame must be an object")
+        frame = {}
     for field in ("question", "system_boundary", "actors", "alternatives", "hard_constraints", "authorized_objectives", "priority_rule", "assumptions", "empirical_premises", "uncertainty_posture"):
         if field not in frame: fail(failures, "S2", f"decision_frame.{field} missing")
     coverage = record.get("coverage", [])
@@ -106,6 +110,13 @@ def validate_record(record: object) -> list[dict]:
 def score_fixture(truth: dict, response: dict) -> dict:
     failures = []
     fixture_id = truth["fixture_id"]
+    if not isinstance(response, dict):
+        return {
+            "fixture": fixture_id,
+            "structural_pass": False,
+            "dimensions_failed": ["S1"],
+            "failures": [{"dimension": "S1", "reason": "response root must be an object"}],
+        }
     if response.get("response") != "formal-rigor-fixture-response@1" or response.get("fixture") != fixture_id:
         fail(failures, "S1", "response envelope or fixture id mismatch")
     invocation = response.get("invocation")
@@ -143,8 +154,15 @@ def score_fixture(truth: dict, response: dict) -> dict:
     for item in truth.get("coverage", {}).get("forbidden", []):
         if rows.get(item["family"], {}).get("status") == item.get("status"): fail(failures, "S5", f"forbidden coverage state {item['family']}")
     frame = record.get("decision_frame", {})
+    if not isinstance(frame, dict):
+        fail(failures, "S2", "decision_frame must be an object")
+        frame = {}
     if truth.get("decision_frame", {}).get("null_option_required"):
-        if len([a for a in frame.get("alternatives", []) if a.get("kind") == "null-option"]) != 1: fail(failures, "S2", "exactly one null option required")
+        alternatives = frame.get("alternatives", [])
+        if not isinstance(alternatives, list) or any(not isinstance(item, dict) for item in alternatives):
+            fail(failures, "S2", "decision_frame.alternatives must be an array of objects")
+            alternatives = [item for item in alternatives if isinstance(item, dict)] if isinstance(alternatives, list) else []
+        if len([a for a in alternatives if a.get("kind") == "null-option"]) != 1: fail(failures, "S2", "exactly one null option required")
     if truth.get("decision_frame", {}).get("priority_rule_required") and not frame.get("priority_rule", {}).get("authority_ref"):
         fail(failures, "S2", "authorized priority rule required")
     synthesis = record.get("synthesis", {})
@@ -170,6 +188,23 @@ def score_fixture(truth: dict, response: dict) -> dict:
     return {"fixture": fixture_id, "structural_pass": not failures, "dimensions_failed": dimensions, "failures": failures}
 
 
+def score_response_path(truth: dict, path: Path) -> dict:
+    fixture_id = truth["fixture_id"]
+    if not path.is_file():
+        return {"fixture": fixture_id, "structural_pass": False, "dimensions_failed": ["S1"],
+                "failures": [{"dimension": "S1", "reason": "response missing"}]}
+    try:
+        response: Any = load_json(path)
+    except (OSError, json.JSONDecodeError) as exc:
+        return {"fixture": fixture_id, "structural_pass": False, "dimensions_failed": ["S1"],
+                "failures": [{"dimension": "S1", "reason": f"invalid response JSON: {exc}"}]}
+    try:
+        return score_fixture(truth, response)
+    except (AttributeError, KeyError, TypeError, ValueError) as exc:
+        return {"fixture": fixture_id, "structural_pass": False, "dimensions_failed": ["S1"],
+                "failures": [{"dimension": "S1", "reason": f"malformed response structure: {exc}"}]}
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--fixtures-dir", type=Path, default=Path(__file__).parent / "fixtures")
@@ -187,8 +222,7 @@ def main() -> int:
     results = []
     for fixture_id, truth in sorted(inventory.items()):
         path = args.responses_dir / f"{fixture_id}.response.json"
-        results.append(score_fixture(truth, load_json(path)) if path.is_file() else
-                       {"fixture": fixture_id, "structural_pass": False, "dimensions_failed": ["S1"], "failures": [{"dimension": "S1", "reason": "response missing"}]})
+        results.append(score_response_path(truth, path))
     report = {"scorer": "formal-rigor-v2-structural@1", "results": results,
               "passed": sum(r["structural_pass"] for r in results), "total": len(results)}
     text = json.dumps(report, indent=2, sort_keys=True) + "\n"

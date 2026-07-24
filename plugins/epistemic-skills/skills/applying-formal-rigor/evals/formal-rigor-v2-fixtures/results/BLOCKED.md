@@ -1,20 +1,18 @@
-# Live-arm capability block
+# Historical live-arm capability block
 
-Status: `BLOCKED_CAPABILITY` for behavioral execution only.
+Status: `RESOLVED_FOR_BASELINE` on 2026-07-24.
 
-The fixture corpus, prompt arms, schemas, deterministic structural scorer, and semantic
-adjudication protocol are runnable. This implementation context has no invocation primitive
-that can create isolated, pinned model calls while withholding scorer truth, ground truth,
-other-arm output, and thresholds from each run agent.
+The original implementation context did not expose a qualifying invocation
+primitive. On resumption, `codex exec --ephemeral` was verified and used from
+packet-only temporary directories with read-only access and plugin injection
+disabled.
 
-Consequently:
+Consequently, the prior block is closed for the required RED baseline:
 
-- neutral, current-v1, v2-candidate, and all parody arms remain `NOT_RUN`;
-- no hand-authored output is credited as behavioral evidence;
-- the required neutral/current-v1 RED baseline has not been established;
-- production `applying-formal-rigor` files remain unchanged under the RED-before-production-edit
-  gate.
+- neutral and current-v1 are recorded under `2026-07-24-red-baseline/`;
+- no hand-authored or repaired output is credited;
+- structural RED is established at 4/22 and 1/22 respectively;
+- production files may now change under the RED-before-production-edit gate.
 
-Smallest unblock: provide an isolated model/agent invocation primitive that accepts a frozen
-prompt plus the run-agent-visible fixture packet, returns raw output, records exact
-model/provider/harness/settings, and prevents access to this repository's scorer-only files.
+Candidate, parody, and semantic-adjudication arms remain `NOT_RUN`; this file
+does not claim those later gates are complete.
