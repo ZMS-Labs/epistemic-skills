@@ -30,6 +30,8 @@ jobs:
         run: python plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/run_tests.py
       - name: Behavioral fixture scorer self-test
         run: python plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/behavioral/run_tests.py
+      - name: Proportionality scorer polarity tests
+        run: python plugins/epistemic-skills/skills/using-epistemic-skills/evals/proportionality/run_tests.py
       - name: Outsource packet and package integration
         run: python plugins/epistemic-skills/skills/outsource/tests/run_tests.py
       - name: Continuity resume-fixture committed results
@@ -61,6 +63,8 @@ jobs:
             plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/run_tests.py \
             plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/behavioral/score_behavior.py \
             plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/behavioral/run_tests.py \
+            plugins/epistemic-skills/skills/using-epistemic-skills/evals/proportionality/score.py \
+            plugins/epistemic-skills/skills/using-epistemic-skills/evals/proportionality/run_tests.py \
             plugins/epistemic-skills/skills/decision-ledger/reference/validate_examples.py
       - name: Parse committed JSON in integration surfaces
         run: |
@@ -69,6 +73,7 @@ jobs:
           from pathlib import Path
           roots = [
               Path("plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility"),
+              Path("plugins/epistemic-skills/skills/using-epistemic-skills/evals/proportionality"),
               Path("plugins/epistemic-skills/skills/decision-ledger/reference"),
           ]
           files = []
