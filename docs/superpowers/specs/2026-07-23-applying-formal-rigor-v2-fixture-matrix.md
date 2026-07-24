@@ -296,7 +296,7 @@ pass additionally requires the adjudication rule above.
 | Overtrigger / tier calibration | 3 | `ot-01-pure-preference-skip`, `tc-01-high-assurance-escalation` |
 | Stale subject / decision frame | 2 | `ss-01-subject-revision-moved` |
 | Legitimate unmapped | 2 | `um-01-custom-accelerator-memory-model` |
-| **Total traps** | **18** | **10 P0** |
+| **Total traps** | **18** | **11 P0** |
 | Clean controls | **4** | all are mandatory-clean |
 | **Battery total** | **22** | |
 
@@ -308,7 +308,7 @@ threshold derivation in one commit.
 
 A candidate run passes only when all are true:
 
-1. **P0:** all 10 P0 fixtures pass structural and semantic checks;
+1. **P0:** all 11 P0 fixtures pass structural and semantic checks;
 2. **aggregate traps:** at least 17 of 18 traps pass;
 3. **class floor:** every trap class has at least one passing fixture;
 4. **controls:** 0 of 4 clean controls are false-flagged;
