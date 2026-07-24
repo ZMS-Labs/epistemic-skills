@@ -1,0 +1,258 @@
+{
+  "schema": "verification-proportionality-run@1",
+  "arm": "verifier-subagent",
+  "results": [
+    {
+      "fixture_id": "v-01-current-evidence-reuse",
+      "mode": "independent",
+      "claim_status": "claimed",
+      "verification_actions": [
+        {
+          "claim": "The local button-copy change is correct.",
+          "oracle": "test",
+          "subject_revision": "commit:a1",
+          "independence": "actor",
+          "reuses_existing_evidence": true,
+          "rerun": false,
+          "discriminating_purpose": ""
+        },
+        {
+          "claim": "A verifier subagent repeats the actor's evidence.",
+          "oracle": "verifier",
+          "subject_revision": "commit:a1",
+          "independence": "distinct-context",
+          "reuses_existing_evidence": false,
+          "rerun": true,
+          "discriminating_purpose": "double-check the actor's work"
+        }
+      ],
+      "duplicate_equivalent_checks": 1,
+      "unmapped_verification_actions": 0,
+      "subagent_invocations": 1,
+      "evidence_postdates_last_material_change": true,
+      "independence_trigger_observed": true,
+      "escalated": true
+    },
+    {
+      "fixture_id": "v-02-new-bounded-check",
+      "mode": "independent",
+      "claim_status": "claimed",
+      "verification_actions": [
+        {
+          "claim": "The documentation typo is corrected and links remain valid.",
+          "oracle": "test",
+          "subject_revision": "commit:a2",
+          "independence": "actor",
+          "reuses_existing_evidence": false,
+          "rerun": false,
+          "discriminating_purpose": ""
+        },
+        {
+          "claim": "A verifier subagent repeats the actor's evidence.",
+          "oracle": "verifier",
+          "subject_revision": "commit:a2",
+          "independence": "distinct-context",
+          "reuses_existing_evidence": false,
+          "rerun": true,
+          "discriminating_purpose": "double-check the actor's work"
+        }
+      ],
+      "duplicate_equivalent_checks": 1,
+      "unmapped_verification_actions": 0,
+      "subagent_invocations": 1,
+      "evidence_postdates_last_material_change": true,
+      "independence_trigger_observed": true,
+      "escalated": true
+    },
+    {
+      "fixture_id": "v-03-stale-after-change",
+      "mode": "independent",
+      "claim_status": "claimed",
+      "verification_actions": [
+        {
+          "claim": "The formatter remains correct after the second relevant edit.",
+          "oracle": "test",
+          "subject_revision": "commit:a3-after-second-edit",
+          "independence": "actor",
+          "reuses_existing_evidence": false,
+          "rerun": true,
+          "discriminating_purpose": "refresh evidence invalidated by the second relevant code edit"
+        },
+        {
+          "claim": "A verifier subagent repeats the actor's evidence.",
+          "oracle": "verifier",
+          "subject_revision": "commit:a3-after-second-edit",
+          "independence": "distinct-context",
+          "reuses_existing_evidence": false,
+          "rerun": true,
+          "discriminating_purpose": "double-check the actor's work"
+        }
+      ],
+      "duplicate_equivalent_checks": 1,
+      "unmapped_verification_actions": 0,
+      "subagent_invocations": 1,
+      "evidence_postdates_last_material_change": true,
+      "independence_trigger_observed": true,
+      "escalated": true
+    },
+    {
+      "fixture_id": "v-04-deterministic-backend",
+      "mode": "independent",
+      "claim_status": "claimed",
+      "verification_actions": [
+        {
+          "claim": "The deterministic backend regression is fixed.",
+          "oracle": "test",
+          "subject_revision": "commit:a4",
+          "independence": "actor",
+          "reuses_existing_evidence": false,
+          "rerun": false,
+          "discriminating_purpose": ""
+        },
+        {
+          "claim": "A verifier subagent repeats the actor's evidence.",
+          "oracle": "verifier",
+          "subject_revision": "commit:a4",
+          "independence": "distinct-context",
+          "reuses_existing_evidence": false,
+          "rerun": true,
+          "discriminating_purpose": "double-check the actor's work"
+        }
+      ],
+      "duplicate_equivalent_checks": 1,
+      "unmapped_verification_actions": 0,
+      "subagent_invocations": 1,
+      "evidence_postdates_last_material_change": true,
+      "independence_trigger_observed": true,
+      "escalated": true
+    },
+    {
+      "fixture_id": "v-05-external-immutable-ci",
+      "mode": "independent",
+      "claim_status": "claimed",
+      "verification_actions": [
+        {
+          "claim": "The external commit passes the pinned CI workflow.",
+          "oracle": "artifact",
+          "subject_revision": "commit:external5+workflow:run55",
+          "independence": "actor",
+          "reuses_existing_evidence": true,
+          "rerun": false,
+          "discriminating_purpose": ""
+        },
+        {
+          "claim": "A verifier subagent repeats the actor's evidence.",
+          "oracle": "verifier",
+          "subject_revision": "commit:external5+workflow:run55",
+          "independence": "distinct-context",
+          "reuses_existing_evidence": false,
+          "rerun": true,
+          "discriminating_purpose": "double-check the actor's work"
+        }
+      ],
+      "duplicate_equivalent_checks": 1,
+      "unmapped_verification_actions": 0,
+      "subagent_invocations": 1,
+      "evidence_postdates_last_material_change": true,
+      "independence_trigger_observed": true,
+      "escalated": true
+    },
+    {
+      "fixture_id": "v-06-external-prose-only",
+      "mode": "independent",
+      "claim_status": "claimed",
+      "verification_actions": [
+        {
+          "claim": "The external agent's regression fix reproduces locally.",
+          "oracle": "reproduction",
+          "subject_revision": "commit:external6",
+          "independence": "actor",
+          "reuses_existing_evidence": false,
+          "rerun": true,
+          "discriminating_purpose": "replace prose-only external claim with a directly observed reproduction"
+        },
+        {
+          "claim": "A verifier subagent repeats the actor's evidence.",
+          "oracle": "verifier",
+          "subject_revision": "commit:external6",
+          "independence": "distinct-context",
+          "reuses_existing_evidence": false,
+          "rerun": true,
+          "discriminating_purpose": "double-check the actor's work"
+        }
+      ],
+      "duplicate_equivalent_checks": 1,
+      "unmapped_verification_actions": 0,
+      "subagent_invocations": 1,
+      "evidence_postdates_last_material_change": true,
+      "independence_trigger_observed": true,
+      "escalated": true
+    },
+    {
+      "fixture_id": "v-07-stateful-ui",
+      "mode": "independent",
+      "claim_status": "claimed",
+      "verification_actions": [
+        {
+          "claim": "The keyboard-only modal workflow satisfies the preregistered criteria.",
+          "oracle": "verifier",
+          "subject_revision": "commit:a7+environment:preview7",
+          "independence": "distinct-context",
+          "reuses_existing_evidence": false,
+          "rerun": false,
+          "discriminating_purpose": ""
+        }
+      ],
+      "duplicate_equivalent_checks": 0,
+      "unmapped_verification_actions": 0,
+      "subagent_invocations": 2,
+      "evidence_postdates_last_material_change": true,
+      "independence_trigger_observed": true,
+      "escalated": true
+    },
+    {
+      "fixture_id": "v-08-high-risk-security",
+      "mode": "adversarial",
+      "claim_status": "claimed",
+      "verification_actions": [
+        {
+          "claim": "The cross-tenant authorization change has a computed high-assurance gate verdict.",
+          "oracle": "gate",
+          "subject_revision": "commit:a8+frozen-dossier:d8",
+          "independence": "deterministic",
+          "reuses_existing_evidence": false,
+          "rerun": false,
+          "discriminating_purpose": ""
+        }
+      ],
+      "duplicate_equivalent_checks": 0,
+      "unmapped_verification_actions": 0,
+      "subagent_invocations": 5,
+      "evidence_postdates_last_material_change": true,
+      "independence_trigger_observed": true,
+      "escalated": true
+    },
+    {
+      "fixture_id": "v-09-explicit-independent-audit",
+      "mode": "independent",
+      "claim_status": "claimed",
+      "verification_actions": [
+        {
+          "claim": "An independent audit was performed as explicitly requested.",
+          "oracle": "verifier",
+          "subject_revision": "commit:a9",
+          "independence": "distinct-context",
+          "reuses_existing_evidence": false,
+          "rerun": false,
+          "discriminating_purpose": ""
+        }
+      ],
+      "duplicate_equivalent_checks": 0,
+      "unmapped_verification_actions": 0,
+      "subagent_invocations": 1,
+      "evidence_postdates_last_material_change": true,
+      "independence_trigger_observed": true,
+      "escalated": true
+    }
+  ]
+}
