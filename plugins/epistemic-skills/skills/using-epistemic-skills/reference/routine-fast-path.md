@@ -12,7 +12,9 @@ manufacturing a record that says nothing happened.
 
 The full arc exists for uncertainty, consequential decisions, external claims,
 irreversibility, and difficult-to-observe completion. It is not the default
-container for every edit.
+container for every edit. Completion evidence follows
+[`verification-proportionality.md`](verification-proportionality.md): verification is
+a claim-evidence boundary, not a mandatory final phase.
 
 ## Routine gate
 
@@ -64,12 +66,29 @@ Leave the routine path when either read exposes any of:
 On exit, route from the **newly observed trigger**. Do not retroactively create a
 routine-path record.
 
+## Bounded-check freshness
+
+The acting agent may run and interpret the routine check. Independence is not
+required merely because the actor made the change.
+
+A bounded check is current when it **postdates the last material change**
+relevant to the completion claim and its subject and environment have not moved.
+Reuse that result. Freshness is revision-bound, not message-bound.
+
+**Do not rerun an equivalent bounded check solely** because the task is ending,
+the final response is being written, or a workflow layer labels the moment
+"verification before completion." Rerun only when the relevant subject or
+environment changed, evidence is missing or non-replayable, or the repeat has a
+stated discriminating purpose such as characterizing a suspected flake. When a
+change invalidates only one check, refresh that check rather than reconstructing
+a wider verification stack.
+
 ## Routine output contract
 
 Routine work produces only:
 
 - the requested change;
-- the bounded direct check and its observed result; and
+- the current bounded direct check (newly run or validly reused) and its observed result; and
 - any material limitation that affects the completion claim.
 
 It produces **zero process-only durable artifacts**. In particular, routine work
