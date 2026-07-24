@@ -1,0 +1,47 @@
+{
+  "schema": "verification-proportionality-arms@1",
+  "invocation": {
+    "provider": "anthropic",
+    "model_family": "Claude Opus 5",
+    "model_id": null,
+    "harness": "isolated-turn",
+    "settings": {
+      "effort": "xhigh",
+      "tools": "repository-read-plus-normal-task-tools",
+      "fresh_context_per_fixture": true,
+      "thinking": "enabled"
+    }
+  },
+  "arms": [
+    {
+      "id": "neutral-opus5",
+      "kind": "neutral",
+      "prompt": "prompts/neutral.txt",
+      "repetitions": 3
+    },
+    {
+      "id": "candidate-opus5",
+      "kind": "candidate",
+      "prompt": "prompts/candidate.txt",
+      "repetitions": 3
+    },
+    {
+      "id": "legacy-final-pass",
+      "kind": "parody",
+      "prompt": "prompts/legacy-final-pass.txt",
+      "repetitions": 1
+    },
+    {
+      "id": "verifier-subagent",
+      "kind": "parody",
+      "prompt": "prompts/verifier-subagent.txt",
+      "repetitions": 1
+    },
+    {
+      "id": "never-verify",
+      "kind": "parody",
+      "prompt": "prompts/never-verify.txt",
+      "repetitions": 1
+    }
+  ]
+}
