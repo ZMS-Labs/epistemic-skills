@@ -1,5 +1,11 @@
 # epistemic-skills
 
+<!-- ZMS-ESTATE:BEGIN -->
+> **Estate status:** `maintenance` · **Purpose:** `governance_method` · **Portfolio role:** `none`
+> **Canonical for:** epistemic-agent-skill-package
+> Lifecycle authority: `ZMS-Labs/zms-homelab/governance/estate.yaml`.
+<!-- ZMS-ESTATE:END -->
+
 Epistemic-discipline skills for agentic coding — how an agent **knows** things before, during, and after work.
 
 **Version 2.9.1.** **License: [GPL-3.0-or-later](LICENSE).**
