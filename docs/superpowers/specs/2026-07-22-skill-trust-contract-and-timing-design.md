@@ -252,16 +252,21 @@ ships **with** ledger v2 (PR-B6), not after it.
 
 Each is a few lines in the skill plus, where noted, a schema or script.
 
+**Proportionality amendment (2026-07-23):** absent triggers are silent. Router
+and Helix records are required only when a skill fires or an authorized
+positive-trigger override is exercised; routine no-ops do not create skip
+inventories.
+
 | Skill | Emits | Consumes |
 |---|---|---|
-| **router** | routing record line per firing decision (`router: fired=[...] skipped=[skill(trigger-absent)]`) + 4-field stamp | — |
+| **router** | routing record when a skill fires or an authorized positive-trigger override is exercised; absent triggers are silent + 4-field stamp | — |
 | **blindspot-pass** | stamped report header: subject, territory revision, date, `premises-verified` list of (claim, file:line, how-verified) tuples + 4-field stamp | — |
 | **applying-formal-rigor** | structured verdict footer: 7-line lens ledger, `facts:` list with revision/date, verdict line + 4-field stamp | blindspot header as input facts (re-verified only if stale) |
 | **evidence-research** | `matrix.schema.json` pinning the already-mandated §9 columns; JSON receipt over the matrix (file producer); run record gains receipt fields | Zotero/Consensus/Scite capability facts within run |
 | **write-goal** | optional structured header on both templates: goal type, three proof layers present-or-waived, boundaries, stop rule, `approval: {by, at}`; JSON receipt when the contract is file-written, 4-field stamp otherwise; inbound evidence/design inputs **referenced by id/path, never paraphrased** | upstream receipts bound by hash into the contract's provenance layer |
 | **gauntlet** | `gauntlet-run-record@1` (below) + receipt; Step 0 consumes upstream receipts: **provenance/well-formedness accepted when valid, premises re-verified when stale** — freshness semantics preserved, never attested away | all upstream receipts |
 | **evidence-locked-uat** | manifest.json gains normative schema (P1); receipt emitted over the packet | write-goal contracts, requirement sources |
-| **helix** | `helix-check` line upgraded: `fired(<artifact-ref>) | skipped(<reason-class>: <evidence>)`, reason classes `trigger-absent | already-ran(<ref>) | operator-override` | — |
+| **helix** | `helix-check` line when the pair fires (`fired(<artifact-ref>)`) or an authorized positive-trigger override is exercised (`overridden(operator-override: <authority-ref>)`); absent pairs and routine no-ops are silent | — |
 
 ## Timing layer (from the arc timing model)
 

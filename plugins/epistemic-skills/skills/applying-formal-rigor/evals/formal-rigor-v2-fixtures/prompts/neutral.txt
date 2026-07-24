@@ -1,0 +1,2 @@
+Review only the supplied scenario and artifacts. Return exactly one JSON object conforming
+to formal-rigor-fixture-response@1. Do not infer hidden ground truth, thresholds, or class.

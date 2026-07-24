@@ -1,0 +1,1 @@
+{"synthetic":true,"n":"collection size","lookups":100,"list_build":"O(n)","set_build":"expected O(n)","set_lookup":"expected O(1), worst O(n)","persistent_decision":false}

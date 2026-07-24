@@ -1,0 +1,498 @@
+{
+  "passed": 4,
+  "results": [
+    {
+      "dimensions_failed": [],
+      "failures": [],
+      "fixture": "cc-01-true-independent-mvd",
+      "structural_pass": true
+    },
+    {
+      "dimensions_failed": [
+        "S1"
+      ],
+      "failures": [
+        {
+          "dimension": "S1",
+          "reason": "invalid response JSON: Extra data: line 1 column 5428 (char 5427)"
+        }
+      ],
+      "fixture": "cc-02-comparison-bound-is-valid",
+      "structural_pass": false
+    },
+    {
+      "dimensions_failed": [],
+      "failures": [],
+      "fixture": "cc-03-postgresql18-rationale-correct",
+      "structural_pass": true
+    },
+    {
+      "dimensions_failed": [
+        "S1"
+      ],
+      "failures": [
+        {
+          "dimension": "S1",
+          "reason": "malformed response structure: 'str' object has no attribute 'get'"
+        }
+      ],
+      "fixture": "cc-04-authorized-dominance",
+      "structural_pass": false
+    },
+    {
+      "dimensions_failed": [
+        "S1"
+      ],
+      "failures": [
+        {
+          "dimension": "S1",
+          "reason": "malformed response structure: 'NoneType' object has no attribute 'get'"
+        }
+      ],
+      "fixture": "fc-01-pareto-no-priority",
+      "structural_pass": false
+    },
+    {
+      "dimensions_failed": [
+        "S1",
+        "S2",
+        "S3",
+        "S5"
+      ],
+      "failures": [
+        {
+          "dimension": "S1",
+          "reason": "invocation 'focused' not allowed"
+        },
+        {
+          "dimension": "S5",
+          "reason": "P7 expected fired"
+        },
+        {
+          "dimension": "S3",
+          "reason": "P7 missing module"
+        },
+        {
+          "dimension": "S2",
+          "reason": "exactly one null option required"
+        },
+        {
+          "dimension": "S2",
+          "reason": "authorized priority rule required"
+        }
+      ],
+      "fixture": "fc-02-value-of-information-probe",
+      "structural_pass": false
+    },
+    {
+      "dimensions_failed": [
+        "S1",
+        "S2",
+        "S3",
+        "S5"
+      ],
+      "failures": [
+        {
+          "dimension": "S1",
+          "reason": "invocation 'focused' not allowed"
+        },
+        {
+          "dimension": "S5",
+          "reason": "P7 expected fired"
+        },
+        {
+          "dimension": "S3",
+          "reason": "P7 missing module"
+        },
+        {
+          "dimension": "S5",
+          "reason": "P8 expected fired"
+        },
+        {
+          "dimension": "S3",
+          "reason": "P8 missing module"
+        },
+        {
+          "dimension": "S2",
+          "reason": "exactly one null option required"
+        },
+        {
+          "dimension": "S2",
+          "reason": "authorized priority rule required"
+        }
+      ],
+      "fixture": "mt-01-numerical-stability",
+      "structural_pass": false
+    },
+    {
+      "dimensions_failed": [
+        "S1",
+        "S2",
+        "S3",
+        "S5"
+      ],
+      "failures": [
+        {
+          "dimension": "S1",
+          "reason": "invocation 'focused' not allowed"
+        },
+        {
+          "dimension": "S5",
+          "reason": "P7 expected fired"
+        },
+        {
+          "dimension": "S3",
+          "reason": "P7 missing module"
+        },
+        {
+          "dimension": "S2",
+          "reason": "exactly one null option required"
+        },
+        {
+          "dimension": "S2",
+          "reason": "authorized priority rule required"
+        }
+      ],
+      "fixture": "mt-02-queue-instability",
+      "structural_pass": false
+    },
+    {
+      "dimensions_failed": [
+        "S1",
+        "S2",
+        "S3",
+        "S5"
+      ],
+      "failures": [
+        {
+          "dimension": "S1",
+          "reason": "invocation 'focused' not allowed"
+        },
+        {
+          "dimension": "S5",
+          "reason": "P2 expected fired"
+        },
+        {
+          "dimension": "S3",
+          "reason": "P2 missing module"
+        },
+        {
+          "dimension": "S5",
+          "reason": "P6 expected fired"
+        },
+        {
+          "dimension": "S3",
+          "reason": "P6 missing module"
+        },
+        {
+          "dimension": "S2",
+          "reason": "exactly one null option required"
+        },
+        {
+          "dimension": "S2",
+          "reason": "authorized priority rule required"
+        }
+      ],
+      "fixture": "mt-03-authorization-boundary",
+      "structural_pass": false
+    },
+    {
+      "dimensions_failed": [
+        "S1",
+        "S3",
+        "S5"
+      ],
+      "failures": [
+        {
+          "dimension": "S1",
+          "reason": "invocation 'focused' not allowed"
+        },
+        {
+          "dimension": "S5",
+          "reason": "P1 expected fired"
+        },
+        {
+          "dimension": "S3",
+          "reason": "P1 missing module"
+        },
+        {
+          "dimension": "S5",
+          "reason": "P3 expected fired"
+        },
+        {
+          "dimension": "S3",
+          "reason": "P3 missing module"
+        }
+      ],
+      "fixture": "mt-04-safety-without-liveness",
+      "structural_pass": false
+    },
+    {
+      "dimensions_failed": [],
+      "failures": [],
+      "fixture": "ot-01-pure-preference-skip",
+      "structural_pass": true
+    },
+    {
+      "dimensions_failed": [],
+      "failures": [],
+      "fixture": "ot-02-focused-not-ceremony",
+      "structural_pass": true
+    },
+    {
+      "dimensions_failed": [
+        "S1",
+        "S3",
+        "S5"
+      ],
+      "failures": [
+        {
+          "dimension": "S1",
+          "reason": "invocation 'focused' not allowed"
+        },
+        {
+          "dimension": "S5",
+          "reason": "P2 expected fired"
+        },
+        {
+          "dimension": "S3",
+          "reason": "P2 missing module"
+        }
+      ],
+      "fixture": "ss-01-subject-revision-moved",
+      "structural_pass": false
+    },
+    {
+      "dimensions_failed": [
+        "S1",
+        "S2",
+        "S3",
+        "S5",
+        "S6"
+      ],
+      "failures": [
+        {
+          "dimension": "S1",
+          "reason": "invocation 'focused' not allowed"
+        },
+        {
+          "dimension": "S6",
+          "reason": "claim c1 state not allowed"
+        },
+        {
+          "dimension": "S5",
+          "reason": "P9 expected fired"
+        },
+        {
+          "dimension": "S3",
+          "reason": "P9 missing module"
+        },
+        {
+          "dimension": "S2",
+          "reason": "exactly one null option required"
+        },
+        {
+          "dimension": "S2",
+          "reason": "authorized priority rule required"
+        }
+      ],
+      "fixture": "ss-02-priority-rule-moved",
+      "structural_pass": false
+    },
+    {
+      "dimensions_failed": [
+        "S1"
+      ],
+      "failures": [
+        {
+          "dimension": "S1",
+          "reason": "malformed response structure: 'str' object has no attribute 'get'"
+        }
+      ],
+      "fixture": "tc-01-high-assurance-escalation",
+      "structural_pass": false
+    },
+    {
+      "dimensions_failed": [
+        "S1",
+        "S2",
+        "S3",
+        "S5"
+      ],
+      "failures": [
+        {
+          "dimension": "S1",
+          "reason": "invocation 'focused' not allowed"
+        },
+        {
+          "dimension": "S5",
+          "reason": "P2 expected fired"
+        },
+        {
+          "dimension": "S3",
+          "reason": "P2 missing module"
+        },
+        {
+          "dimension": "S2",
+          "reason": "exactly one null option required"
+        },
+        {
+          "dimension": "S2",
+          "reason": "authorized priority rule required"
+        }
+      ],
+      "fixture": "tm-01-false-mvd",
+      "structural_pass": false
+    },
+    {
+      "dimensions_failed": [
+        "S1",
+        "S3",
+        "S5"
+      ],
+      "failures": [
+        {
+          "dimension": "S1",
+          "reason": "invocation 'focused' not allowed"
+        },
+        {
+          "dimension": "S5",
+          "reason": "P3 expected fired"
+        },
+        {
+          "dimension": "S3",
+          "reason": "P3 missing module"
+        }
+      ],
+      "fixture": "tm-02-isolation-name-is-not-semantics",
+      "structural_pass": false
+    },
+    {
+      "dimensions_failed": [
+        "S1",
+        "S3",
+        "S5",
+        "S6"
+      ],
+      "failures": [
+        {
+          "dimension": "S1",
+          "reason": "invocation 'focused' not allowed"
+        },
+        {
+          "dimension": "S6",
+          "reason": "claim c1 state not allowed"
+        },
+        {
+          "dimension": "S5",
+          "reason": "P4 expected fired"
+        },
+        {
+          "dimension": "S3",
+          "reason": "P4 missing module"
+        }
+      ],
+      "fixture": "tm-03-consistency-is-not-one-chain",
+      "structural_pass": false
+    },
+    {
+      "dimensions_failed": [
+        "S3",
+        "S5"
+      ],
+      "failures": [
+        {
+          "dimension": "S5",
+          "reason": "P3 expected fired"
+        },
+        {
+          "dimension": "S3",
+          "reason": "P3 missing module"
+        },
+        {
+          "dimension": "S5",
+          "reason": "P4 expected fired"
+        },
+        {
+          "dimension": "S3",
+          "reason": "P4 missing module"
+        }
+      ],
+      "fixture": "tm-04-lamport-converse",
+      "structural_pass": false
+    },
+    {
+      "dimensions_failed": [
+        "S3",
+        "S5"
+      ],
+      "failures": [
+        {
+          "dimension": "S5",
+          "reason": "P7 expected fired"
+        },
+        {
+          "dimension": "S3",
+          "reason": "P7 missing module"
+        }
+      ],
+      "fixture": "tm-05-model-free-lower-bound",
+      "structural_pass": false
+    },
+    {
+      "dimensions_failed": [
+        "S1"
+      ],
+      "failures": [
+        {
+          "dimension": "S1",
+          "reason": "malformed response structure: 'str' object has no attribute 'get'"
+        }
+      ],
+      "fixture": "um-01-custom-accelerator-memory-model",
+      "structural_pass": false
+    },
+    {
+      "dimensions_failed": [
+        "S1",
+        "S2",
+        "S3",
+        "S5"
+      ],
+      "failures": [
+        {
+          "dimension": "S1",
+          "reason": "invocation 'skip' not allowed"
+        },
+        {
+          "dimension": "S5",
+          "reason": "P6 expected fired"
+        },
+        {
+          "dimension": "S3",
+          "reason": "P6 missing module"
+        },
+        {
+          "dimension": "S5",
+          "reason": "P9 expected fired"
+        },
+        {
+          "dimension": "S3",
+          "reason": "P9 missing module"
+        },
+        {
+          "dimension": "S2",
+          "reason": "exactly one null option required"
+        },
+        {
+          "dimension": "S2",
+          "reason": "authorized priority rule required"
+        }
+      ],
+      "fixture": "um-02-external-regulatory-semantics",
+      "structural_pass": false
+    }
+  ],
+  "scorer": "formal-rigor-v2-structural@1",
+  "total": 22
+}

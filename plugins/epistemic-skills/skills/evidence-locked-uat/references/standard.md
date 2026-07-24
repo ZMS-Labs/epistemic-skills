@@ -18,6 +18,13 @@ This document has two purposes:
 
 The words **MUST**, **MUST NOT**, **REQUIRED**, **SHOULD**, **SHOULD NOT**, and **MAY** are normative. A system that violates a **MUST** or **MUST NOT** rule is not conformant with this standard.
 
+This standard governs material UAT after proportionality triage. A reversible, local,
+directly checkable presentation-only change may be verified by the bounded five-line routine
+check defined in `../SKILL.md`; that check is not UAT and MUST NOT emit a run id, packet,
+manifest, hash chain, role invocation, or verdict. Explicit UAT requests and stateful,
+interaction-, persistence-, or accessibility-sensitive acceptance criteria remain in scope.
+If a required rendered target is unreachable, the result is BLOCKED_ENVIRONMENT.
+
 The central standard is called **evidence-locked multimodal agentic UAT**. The name describes the method; it is not a dependency on a particular product or model.
 
 ---

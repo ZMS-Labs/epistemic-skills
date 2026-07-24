@@ -65,13 +65,21 @@ def main() -> int:
         "handoff template still requires an impossible self-embedded commit",
     )
 
-    router = read(PACKAGE_ROOT / "skills" / "using-epistemic-skills" / "SKILL.md")
+    router_root = PACKAGE_ROOT / "skills" / "using-epistemic-skills"
+    router = read(router_root / "SKILL.md")
     require("These nine disciplines" in router, "router discipline count is stale")
     require("**outsource**" in router, "router does not route outsource")
     require("why these nine" in router, "router family-resemblance count is stale")
+    require("Routine work leaves before the arc" in router, "router lacks routine-work exit")
+    require("Absent triggers are silent" in router, "router still requires absent-trigger records")
+    require(
+        (router_root / "reference" / "routine-fast-path.md").is_file(),
+        "routine fast-path reference is missing",
+    )
 
     helix = read(PACKAGE_ROOT / "skills" / "helix" / "SKILL.md")
     require("external delegation / model handoff" in helix, "helix lacks outsource pairing")
+    require("Do **not** emit a line for an absent trigger" in helix, "helix still records non-events")
 
     readme = read(REPO_ROOT / "README.md")
     require(f"**Version {EXPECTED_VERSION}.**" in readme, "README version is stale")
@@ -81,6 +89,13 @@ def main() -> int:
     require("canonical skill cores (eleven)" in readme, "README layout inventory count is stale")
     require("canonical skill cores (ten)" not in readme, "README still advertises ten skill cores")
     require("**outsource**" in readme, "README skill table lacks outsource")
+    require("## Routine work first" in readme, "README does not present the routine path first")
+
+    contributing = read(REPO_ROOT / "CONTRIBUTING.md")
+    require(
+        "Ordinary contributions do not require the whole arc" in contributing,
+        "contributor guidance does not explain the routine path",
+    )
 
     gemini = read(REPO_ROOT / "GEMINI.md")
     require("eleven skills" in gemini, "GEMINI context skill count is stale")
@@ -95,6 +110,69 @@ def main() -> int:
         "python .github/scripts/test_check_dco.py" in workflow,
         "CI omits DCO policy unit tests",
     )
+    require(
+        "evals/proportionality/run_tests.py" in workflow,
+        "CI omits proportionality scorer polarity tests",
+    )
+    require(
+        "evals/proportionality/blinded/tests/run_tests.py" in workflow,
+        "CI omits blinded proportionality packet tests",
+    )
+    require(
+        "applying-formal-rigor/evals/formal-rigor-v2-fixtures/tests/run_tests.py" in workflow,
+        "CI omits formal-rigor v2 structural scorer tests",
+    )
+    require(
+        "applying-formal-rigor/evals/formal-rigor-v2-fixtures/tests/test_focused.py" in workflow,
+        "CI omits formal-rigor focused proportionality tests",
+    )
+    require(
+        "evidence-locked-uat/evals/triage/tests/run_tests.py" in workflow,
+        "CI omits UAT proportionality triage tests",
+    )
+    require(
+        "decision-ledger/evals/proportionality/tests/run_tests.py" in workflow,
+        "CI omits Decision Ledger proportionality tests",
+    )
+
+    proportionality = router_root / "evals" / "proportionality"
+    for filename in (
+        "README.md",
+        "fixtures.json",
+        "score.py",
+        "run_tests.py",
+        "examples/balanced.json",
+        "examples/full-ceremony.json",
+        "examples/always-routine.json",
+        "blinded/README.md",
+        "blinded/arms.json",
+        "blinded/scenarios.json",
+        "blinded/runner.py",
+        "blinded/results/BLOCKED.md",
+        "blinded/tests/run_tests.py",
+    ):
+        require((proportionality / filename).is_file(), f"missing proportionality artifact: {filename}")
+
+    formal_v2 = PACKAGE_ROOT / "skills" / "applying-formal-rigor" / "evals" / "formal-rigor-v2-fixtures"
+    for filename in (
+        "README.md",
+        "formal-rigor-fixture-response.schema.json",
+        "formal-rigor-record.schema.json",
+        "score.py",
+        "semantic-adjudication.md",
+        "tests/run_tests.py",
+        "tests/test_focused.py",
+        "results/BLOCKED.md",
+    ):
+        require((formal_v2 / filename).is_file(), f"missing formal-rigor v2 artifact: {filename}")
+
+    proportionality_suites = (
+        PACKAGE_ROOT / "skills" / "evidence-locked-uat" / "evals" / "triage",
+        PACKAGE_ROOT / "skills" / "decision-ledger" / "evals" / "proportionality",
+    )
+    for suite in proportionality_suites:
+        for filename in ("README.md", "fixtures.json", "score.py", "tests/run_tests.py"):
+            require((suite / filename).is_file(), f"missing proportionality artifact: {suite.name}/{filename}")
 
     skill_dirs = [p for p in (PACKAGE_ROOT / "skills").iterdir() if p.is_dir()]
     require(len(skill_dirs) == 11, f"expected 11 skill directories, found {len(skill_dirs)}")

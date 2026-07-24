@@ -6,6 +6,11 @@ this file is the human-readable contract; keep the two in sync. The deterministi
 is `../scripts/judge.py` (canonical, stdlib Python, harness-agnostic); the `.mjs` embeds
 a verified copy of its aggregation for the Workflow tool.
 
+These schemas begin only after UAT triage. A five-line routine presentation check is
+ordinary verification and MUST NOT be serialized into any schema below or assigned a UAT
+verdict. An unreachable material rendered target is BLOCKED_ENVIRONMENT, not a substitute
+packet synthesized from source inspection.
+
 Note: the 7-word verdict vocabulary below deliberately substitutes `NOT_RUN` for the
 standard §9's `NOT_APPLICABLE` / `SKIPPED_POLICY` — a recorded narrowing, not drift.
 

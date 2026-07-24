@@ -30,6 +30,20 @@ jobs:
         run: python plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/run_tests.py
       - name: Behavioral fixture scorer self-test
         run: python plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/behavioral/run_tests.py
+      - name: Proportionality scorer polarity tests
+        run: python plugins/epistemic-skills/skills/using-epistemic-skills/evals/proportionality/run_tests.py
+      - name: Blinded proportionality packet tests
+        run: python plugins/epistemic-skills/skills/using-epistemic-skills/evals/proportionality/blinded/tests/run_tests.py
+      - name: Formal-rigor v2 structural scorer self-test
+        run: python plugins/epistemic-skills/skills/applying-formal-rigor/evals/formal-rigor-v2-fixtures/tests/run_tests.py
+      - name: Formal-rigor focused proportionality test
+        run: python plugins/epistemic-skills/skills/applying-formal-rigor/evals/formal-rigor-v2-fixtures/tests/test_focused.py
+      - name: Formal-rigor live-runner isolation tests
+        run: python plugins/epistemic-skills/skills/applying-formal-rigor/evals/formal-rigor-v2-fixtures/tests/test_live_runner.py
+      - name: UAT proportionality triage tests
+        run: python plugins/epistemic-skills/skills/evidence-locked-uat/evals/triage/tests/run_tests.py
+      - name: Decision Ledger proportionality tests
+        run: python plugins/epistemic-skills/skills/decision-ledger/evals/proportionality/tests/run_tests.py
       - name: Outsource packet and package integration
         run: python plugins/epistemic-skills/skills/outsource/tests/run_tests.py
       - name: Continuity resume-fixture committed results
@@ -57,27 +71,28 @@ jobs:
       - name: Compile new Python
         run: |
           python -m py_compile \
+            .github/scripts/check_json_artifacts.py \
             plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/validate_trace.py \
             plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/run_tests.py \
             plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/behavioral/score_behavior.py \
             plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/behavioral/run_tests.py \
+            plugins/epistemic-skills/skills/using-epistemic-skills/evals/proportionality/score.py \
+            plugins/epistemic-skills/skills/using-epistemic-skills/evals/proportionality/run_tests.py \
+            plugins/epistemic-skills/skills/using-epistemic-skills/evals/proportionality/blinded/runner.py \
+            plugins/epistemic-skills/skills/using-epistemic-skills/evals/proportionality/blinded/tests/run_tests.py \
+            plugins/epistemic-skills/skills/applying-formal-rigor/evals/formal-rigor-v2-fixtures/score.py \
+            plugins/epistemic-skills/skills/applying-formal-rigor/evals/formal-rigor-v2-fixtures/tests/run_tests.py \
+            plugins/epistemic-skills/skills/applying-formal-rigor/evals/formal-rigor-v2-fixtures/tests/test_focused.py \
+            plugins/epistemic-skills/skills/applying-formal-rigor/evals/formal-rigor-v2-fixtures/tests/test_live_runner.py \
+            plugins/epistemic-skills/skills/applying-formal-rigor/evals/formal-rigor-v2-fixtures/run_live.py \
+            plugins/epistemic-skills/skills/applying-formal-rigor/validate_record.py \
+            plugins/epistemic-skills/skills/evidence-locked-uat/evals/triage/score.py \
+            plugins/epistemic-skills/skills/evidence-locked-uat/evals/triage/tests/run_tests.py \
+            plugins/epistemic-skills/skills/decision-ledger/evals/proportionality/score.py \
+            plugins/epistemic-skills/skills/decision-ledger/evals/proportionality/tests/run_tests.py \
             plugins/epistemic-skills/skills/decision-ledger/reference/validate_examples.py
       - name: Parse committed JSON in integration surfaces
-        run: |
-          python - <<'PY'
-          import json
-          from pathlib import Path
-          roots = [
-              Path("plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility"),
-              Path("plugins/epistemic-skills/skills/decision-ledger/reference"),
-          ]
-          files = []
-          for root in roots:
-              files.extend(root.rglob("*.json"))
-          for path in files:
-              json.loads(path.read_text(encoding="utf-8"))
-          print(f"parsed {len(files)} JSON files")
-          PY
+        run: python .github/scripts/check_json_artifacts.py
       - name: Decision-ledger recurrent-correction examples
         run: python plugins/epistemic-skills/skills/decision-ledger/reference/validate_examples.py
       - name: Existing receipt verifier

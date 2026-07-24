@@ -1,130 +1,302 @@
 ---
 name: applying-formal-rigor
-description: 'Use when making any non-trivial design, architecture, schema, data-modeling, concurrency, caching, consistency, indexing, or algorithmic decision with two or more viable options, OR when justifying why one option is correct. Symptoms you need this: "both are fine", "it''ll be slow", "this violates normalization", "stale data", "just pick one", "N+1 query", "race condition", "which isolation level", "Big-O of this", "denormalize", "index this". Not for pure preference (no theorem or measurable property distinguishes the options) or single-viable-option implementation.'
+description: 'Use when an operator explicitly requests a formal derivation or complexity proof; when a material software-or-systems decision has multiple viable alternatives with different measurable or theorem-governed properties; when a proposed design needs correctness confirmation or reversal; or when review feedback asserts a theorem, bound, consistency guarantee, isolation property, or safety property. Do not use for pure preference, one-answer mechanical edits, or low-cost reversible choices whose plausible loss is below the analysis cost unless rigor was explicitly requested.'
 ---
 
 # Applying Formal Rigor
 
-## Overview
+## Purpose
 
-Most design decisions get *senior-engineer* reasoning: correct instincts, named informally, one lens deep. This skill sets the floor at **graduate-level formal rigor**: name the *precise* theoretical construct, **derive** the conclusion from the formal apparatus instead of asserting it, and **sweep every relevant lens** instead of stopping at the first salient one.
+Establish software-and-systems properties and synthesize only the decision that
+the evidence and operator-authorized priorities justify. Preserve three
+disciplines:
 
-**Core principle:** A design conclusion is not earned until it is *derived* from named formal theory. "It's better" is an opinion; "it's a 4NF decomposition eliminating the MVD `user_id ↠ method`, so the update anomaly is unrepresentable" is a result.
+1. name the precise model and construct;
+2. prove applicability, then derive instead of asserting;
+3. sweep the material property terrain without pretending a fixed library is
+   exhaustive.
 
-This is a **floor, not a ceiling** — the minimum bar for any non-trivial decision, not the most you may do.
+Formal theory establishes properties inside a model. It does not supply runtime
+facts, operator priorities, or a winner by itself.
 
-## When to Use
+## Trigger and proportionality gate
 
-- Any decision with ≥2 viable options (schema shape, store placement, cache strategy, isolation level, index, algorithm, data structure, API contract, propagation model).
-- Any time you're about to assert one option is "correct/better/cleaner."
-- **Analyzing or justifying the complexity of an algorithm or piece of code** — "what's the Big-O of this", "is this optimal", "can this be faster" — use the complexity lens (4): name the class *and its parameter*, solve the recurrence, prove the Ω lower bound, and report a convergence state rather than an open-ended hunt for speedups.
-- Reviewing someone else's design rationale for rigor — use the Red Flags list below as the review checklist: their write-up must *name constructs and derive*, not assert.
+Fire when any of these is observable:
 
-**When NOT to use:** purely mechanical edits with one correct answer; genuine preference — the falsifiable test is that **no theorem or measurable property distinguishes the options** (e.g. naming a variable). If *any* functional dependency, complexity class, or consistency guarantee differs between the options, it is not preference and this applies.
+- the operator requests a formal derivation, complexity proof, or rigorous
+  comparison;
+- material alternatives differ on measurable or theorem-governed properties;
+- a single proposed design needs correctness confirmation or reversal;
+- a review claim asserts a theorem, lower bound, consistency guarantee,
+  isolation property, safety property, or equivalent formal result.
 
-## The Three Disciplines (the actual rules)
+Do not fire for pure preference, a mechanical edit with one viable answer, or
+a low-cost reversible choice whose maximum plausible loss is below the cost of
+analysis unless the operator explicitly requests rigor.
 
-**Violating the letter of these is violating the spirit.** Surface-level rigor that *sounds* formal but skips the derivation is the failure mode this skill exists to kill.
+Select the tier with this observable vector:
 
-### 1. Name the PRECISE construct, not the first salient one
-Stopping at the nearest concept is the most common undershoot. Push to the exact formal object:
+```text
+cost of error × uncertainty × downstream dependence × irreversibility
+versus
+cost of analysis and cost of a reversible probe
+```
 
-| Undershoot (first salient) | Precise construct (required) |
-|---|---|
-| "violates normalization / repeating group / 1NF" | the **functional/multivalued dependency** at fault, the **candidate keys**, and the **exact normal form** violated (2NF/3NF/BCNF/4NF/5NF) |
-| "it'll be slow" | the **complexity class** (worst *and* amortized), and *in what parameter* (`O(offset)`, not "slow") |
-| "stale data / eventual consistency" | the **consistency guarantee violated** in the lattice (read-your-writes? monotonic reads? linearizability?) |
-| "race condition" | the **non-serializable schedule** / the **isolation anomaly** (dirty / non-repeatable / phantom / write-skew) |
-| "it's coupled / not DRY" | the **anomaly class** (update/insertion/deletion) or the **shared mutable invariant** that can desync |
+A skipped or focused pass is correct when more ceremony would cost more than
+the decision can plausibly lose.
 
-### 2. DERIVE, don't assert
-Show the formal chain. Examples of the required move:
-- Schema: `attributes + dependencies → candidate keys (attribute closure) → normal-form test → anomaly class → verdict`.
-- Concurrency: `schedule → precedence graph → cycle? → (non-)conflict-serializable → anomaly → verdict`.
-- Distributed: `partition/latency assumption → CAP/PACELC branch → required consistency level → mechanism (quorum/clock/CRDT) → verdict`.
-- Algorithmic: `operation profile → cost per op (worst+amortized) → aggregate over workload → verdict`.
+## Rigor tiers
 
-### 3. SWEEP every relevant lens
-Run the decision through the lens index below. For each lens that bears on it, name the construct and derive. Do **not** stop at the first one that fires. A schema decision is usually *also* a complexity decision *and* an integrity-invariant decision. On the first pass, **enumerate all 7 lenses** and mark each **fired** or **not-applicable**, with a one-clause reason for the not-applicable ones — a skipped lens must be auditable, never silent.
+### `focused`
 
-## Lens Index (sweep these; details in theory-battery.md)
+Use for one bounded formal question or a low-blast-radius reversible choice:
+one complexity bound, normal-form test, concrete history, invariant proof, or
+specific correctness challenge.
 
-**Load rule:** `theory-battery.md` §N corresponds to lens N — load the section for **each**
-lens that fires. The lens index names keywords; the battery holds the constructs the
-derivation must cite. Load per fired lens, never the whole file.
+- Return inline in at most six short bullets or 250 visible words.
+- Include subject/question, model, precise construct, minimum preconditions and
+  fact mapping, finite derivation or counterexample, result, and residual
+  limitation. Add a bounded empirical check only when material.
+- Do not emit P1-P9 reconciliation, a full decision frame,
+  `formal-rigor-record@2`, a receipt/stamp, a persistent process artifact, or
+  standard/high-assurance source apparatus solely for the focused run.
 
-1. **Relational & normalization** — FDs, Armstrong's axioms, attribute closure, candidate keys, 1NF→6NF/BCNF/DKNF, **MVD/4NF**, **JD/5NF**, lossless-join & dependency-preserving decomposition, relational algebra, anomaly classes.
-2. **Transaction & concurrency** — ACID, schedules, **conflict/view serializability** (precedence graph), recoverability (recoverable/ACA/strict), **isolation levels & their anomalies** (dirty, non-repeatable, **phantom**, write-skew), 2PL/SS2PL, MVCC, OCC, deadlock.
-3. **Distributed data & consistency** — **CAP, PACELC**, the **consistency lattice** (linearizable > sequential > causal > PRAM > eventual) + **session guarantees** (read-your-writes, monotonic reads/writes, writes-follow-reads), **quorums (R+W>N)**, Lamport/vector clocks, **CRDTs / LWW registers**, consensus (Paxos/Raft), 2PC/saga/outbox.
-4. **Complexity & algorithms** — asymptotic (O/Θ/Ω), **amortized** (aggregate/accounting/potential), worst vs average, space-time tradeoff, **recurrences + Master Theorem / Akra–Bazzi**, **lower-bound (Ω) proof + optimization convergence** (an optimization analysis must reach a fixed point — always finding another gain signals a hallucination, an uncounted trade-off, or a missed bound), named optimization substitutions, complexity classes, data-structure operation profiles, **index theory** (B+-tree seek vs scan, covering, selectivity). *This lens is the full standalone complexity/Big-O analysis, not only the design-fork case.*
-5. **Type theory & formal methods** — **make illegal states unrepresentable**, invariants, pre/postconditions, loop invariants, totality, refinement, algebraic data types, parametricity.
-6. **Information theory** — entropy, encoding/compression bounds, **hashing & collision** (birthday bound), cardinality estimation (HLL).
-7. **Architecture formalisms** — coupling/cohesion, **SSOT / normalization-for-code** (same anomaly theory applied to config/state), idempotency, referential transparency, **blast radius / failure domains**, reversibility.
+### `standard`
 
-## Output Shape
+Default for a material fork or a justification that will bear downstream load.
+Require a complete decision frame, P1-P9 reconciliation, applicability chains,
+formal/empirical/normative separation, explicit concessions, and a
+`formal-rigor-record@2`.
 
-For a fork, produce: per-lens construct + derivation → a comparison keyed by the *named* properties (not vibes) → an explicit verdict → and the **synthesis move** ("take A; recover B's one advantage via the materialized-view pattern"). The dominant option rarely wins on *every* axis; name what it concedes.
+### `high-assurance`
 
-For a single-option justification (no fork, just "is this correct"), produce the same per-lens derivation with no comparison table — the verdict is a **confirmation** (the design is correct, here's why) or a **reversal** (the derivation contradicts the premise).
+Use for an irreversible migration, security/privacy boundary, safety or
+financial exposure, public compatibility contract, cross-service consistency
+mechanism, high blast radius, model-sensitive proof, or explicit operator
+request. Add:
 
-### Empirical closure — preregister the discriminating test
+- primary-theory pins and official product/version documentation for every
+  load-bearing construct;
+- executable calculation, model check, proof, reproduction, or counterexample
+  where feasible;
+- preregistered empirical closure for every material runtime premise;
+- sensitivity analysis over authorized priorities and uncertain parameters;
+- an explicit `gauntlet` handoff recommendation when its independent trigger
+  is present.
 
-Formal derivation closes theoretical premises; it does not manufacture runtime facts. When
-one material premise depends on observed workload, implementation behavior, latency, user
-behavior, or environment state, record **before the test**:
+High assurance never certifies itself.
+
+## Method
+
+### 1. Build the decision frame for standard/high-assurance work
+
+Record:
+
+- exact question;
+- `subject.ref` and `subject.revision`;
+- system boundary, actors, environment, horizon, and exclusions;
+- stable alternatives and exactly one null/status-quo option for a fork;
+- hard constraints;
+- operator-authorized objectives;
+- priority rule and its authority reference;
+- assumptions and empirical premises;
+- uncertainty posture;
+- tier and observable tier reason.
+
+Allowed priority rules are `constraint-satisfaction`, `lexicographic`,
+`weighted-utility`, `minimax`, `minimax-regret`, `pareto-only`, or an exactly
+quoted/referenced `custom` rule. Do not infer priorities from engineering taste.
+
+### 2. Reconcile the universal property inventory
+
+For standard/high-assurance work, record exactly one state per family:
+
+- `fired`: a material property exists and an adequate specialist module is
+  loaded;
+- `not-applicable`: no material property exists inside the declared boundary;
+  state the boundary-tied reason;
+- `unmapped`: a material property exists but no adequate module, model, or
+  input is available; carry it into `coverage_limits`.
+
+| ID | Property family | Question |
+|---|---|---|
+| `P1` | Functional semantics and invariants | Allowed behavior, safety/liveness, transitions, refinement, totality? |
+| `P2` | State, representation, and integrity | Facts, dependencies, representable states, decompositions, enforceability? |
+| `P3` | Time, ordering, and concurrency | Histories, happens-before, isolation, atomicity, scheduling, progress? |
+| `P4` | Distribution, replication, and consistency | Scope, failures, visibility/order, convergence, consensus, merge semantics? |
+| `P5` | Dependability, faults, and recovery | Fault model, reliability, availability, rollback, durability, correlated failure? |
+| `P6` | Security, privacy, and information flow | Adversary, authority, confidentiality, integrity, noninterference, privacy? |
+| `P7` | Algorithms, resources, capacity, and real time | Model, workload, bounds, saturation, deadlines, lower bounds? |
+| `P8` | Uncertainty, measurement, randomization, and numerics | Probability, estimation, calibration, conditioning, rounding, stability? |
+| `P9` | Evolution, interfaces, and operations | Compatibility, version skew, migration, reversibility, observability, lifecycle? |
+
+Coverage is complete only relative to the declared subject, boundary,
+inventory, loaded modules, facts, and limits. It never means that the library
+exhausts software-and-systems theory.
+
+Load only modules for fired families from
+[`reference/modules/index.md`](reference/modules/index.md). If no adequate
+module exists, use `unmapped`; never coerce the property into a nearby module.
+
+### 3. Prove applicability, then derive
+
+Every load-bearing construct follows:
+
+```text
+model → preconditions → fact mapping → derivation → result → residual mismatch
+```
+
+- **Model:** name the formal world and scope.
+- **Preconditions:** enumerate every theorem or product-guarantee condition
+  that bears load.
+- **Fact mapping:** map each precondition to an `observation`,
+  `interpretation`, `assumption`, `value`, or `authorization`. Observations use
+  revision-pinned anchors; values and authorizations require their source.
+- **Derivation:** instantiate a finite chain. A theorem name alone is an
+  assertion.
+- **Result:** use `established`, `refuted`, `conditional`, or `incomplete`.
+  Give a counterexample or witness when it is the shortest refutation.
+- **Residual mismatch:** name what the model omits or idealizes.
+
+If any link breaks, the result is conditional or incomplete. Vocabulary cannot
+repair missing fact mapping.
+
+### 4. Keep three layers separate
+
+#### Formal result
+
+State what follows inside the named model from mapped premises.
+
+#### Empirical closure
+
+Runtime, workload, environment, and human-behavior facts require observation.
+Before a discriminating test, record:
 
 ```yaml
-belief: <the premise bearing load>
-prediction: <what should be observed if it is correct>
-disconfirming_observation: <what would count against it>
+belief: <load-bearing empirical premise>
+prediction: <observation expected if correct>
+disconfirming_observation: <what counts against it>
 test: <bounded action or measurement>
 prediction_recorded_before_result: true
 ```
 
-Then record `result` and `update`. Until then, make the verdict conditional on the empirical
-premise or hand it to the workflow stage as a reversible probe. A result interpreted against
-a prediction written afterward is post-hoc evidence and must be labeled weaker, not silently
-promoted to confirmation.
+Then record `result` and `update`. A prediction written after the result is
+`post-hoc-weaker`. Official documentation establishes documented semantics for
+the pinned version, not the local deployment's runtime state.
 
-## Rationalizations
+#### Normative synthesis
 
-| Rationalization | Why it's wrong |
+Apply hard constraints, authorized objectives, and the priority rule to the
+property results. Never move from “better on metric X” to “choose A” unless X
+is authorized and its relation to other objectives is explicit.
+
+### 5. End in one synthesis outcome
+
+- `dominance`: one feasible option is no worse on every authorized objective
+  and strictly better on at least one; forbidden with load-bearing `unmapped`.
+- `pareto-set`: report the non-dominated set and frontier; select nothing
+  without an authorized tie-break.
+- `conditional`: the result holds only under named premises, scenarios, or
+  priorities; state them in the verdict.
+- `underdetermined`: facts, options, coverage, or authorized priorities do not
+  justify a choice; name what is missing.
+- `reversal`: the proposed option or premise contradicts the derivation or a
+  hard constraint.
+- `reversible-probe`: a bounded preregistered experiment has greater decision
+  value than more argument or irreversible action.
+
+Name concessions and recovery moves. A forced winner is a failure, not a more
+useful answer.
+
+## `formal-rigor-record@2`
+
+Standard and high-assurance work emits JSON conforming to
+[`evals/formal-rigor-v2-fixtures/formal-rigor-record.schema.json`](evals/formal-rigor-v2-fixtures/formal-rigor-record.schema.json).
+Use [`examples/valid-formal-rigor-record.json`](examples/valid-formal-rigor-record.json)
+as the minimal shape and `python validate_record.py <record.json>` for the
+stdlib structural check.
+
+The record contains:
+
+- `subject`, `valid_while`, and `coverage_limits`;
+- `rigor` and the full `decision_frame`;
+- exactly one coverage row for each P1-P9;
+- derivations carrying module/version, construct, sources, model,
+  preconditions, fact mapping, steps, result, and residual mismatch;
+- empirical closure state;
+- one synthesis outcome with basis, conditions, concessions, and recovery
+  moves;
+- `never_attests` boundaries.
+
+Record invariants:
+
+- a fork has exactly one `null-option`;
+- every fired family names at least one loaded module;
+- non-fired families name no modules;
+- every material `unmapped` family appears in `coverage_limits` and forbids
+  unconditional `dominance`;
+- `pareto-set` and `underdetermined` select no option;
+- a null revision cannot claim `subject-revision-unchanged` and must carry a
+  visible freshness limit;
+- the envelope attests structure, provenance, and validity window only—never
+  derivation correctness, an unobserved empirical fact, or Gauntlet
+  independence.
+
+## Required correctness rules
+
+- **MVD/4NF:** an MVD requires the relevant sets to vary independently. Paired
+  `method` and `priority` facts do not establish `user_id ↠ method`. A valid
+  example is independent contact methods and notification topics in
+  `user_delivery(user_id, contact_method, notification_topic)`; see the
+  relational module.
+- **Isolation:** derive from standard minimum → actual product and pinned
+  version → concrete history/dependency graph → admitted or excluded anomaly.
+  Never infer product behavior from an isolation-level name.
+- **Consistency:** compare scoped predicates by implication only where their
+  definitions justify it. Do not use one universal strength chain.
+- **Lamport clocks:** `a → b` implies `C(a) < C(b)`; the converse is false.
+  A tie-break may extend clock order to a total order, but that total order is
+  not the causal relation.
+- **Lower bounds:** fix the problem, computational/resource model,
+  preprocessing, randomization, exactness, posture, and bounded resource.
+  Changing any of these creates a new subject, not a free optimization.
+
+## Source and boundary policy
+
+- Load-bearing definitions and theorems cite a canonical paper, standard, or
+  edition registered by the module. Secondary prose may aid readability but
+  may not be the sole source.
+- Variable implementation behavior cites official documentation pinned to
+  product and version.
+- Local code, schemas, configuration, and measurements use immutable or
+  revision-bound coordinates.
+- Material scholarly or empirical propositions go to `evidence-research`,
+  which returns evidence and limitations but never the design verdict.
+- A consequential high-stakes record may enter `gauntlet`; Gauntlet rechecks
+  freshness and independently attacks the derivation.
+- A durable decision may be reused by `decision-ledger`; persistence never
+  upgrades its truth state.
+
+## Staleness
+
+A material change to subject revision, boundary, option set, constraints,
+authorized objectives, priority rule, formal model, or product version voids
+the record. Re-fire against the new subject; never patch the old verdict.
+
+## Anti-rationalizations
+
+| Thought | Required response |
 |---|---|
-| "It's obviously better, no need to derive it" | Obviousness is not a formal result — this is exactly the undershoot the skill kills. Derive it anyway; if it's truly obvious the derivation is short. |
-| "Only one lens clearly applies here" | Most real decisions fire 3+ lenses. Stopping at the first salient lens is the sweep failure — run the full lens enumeration before concluding only one applies. |
-| "This is just a quick/minor decision" | The floor applies to any decision with ≥2 viable options, not just big ones. Size of the decision is not a formal axis. |
-| "The verdict is intuitively right, so the derivation is a formality" | An undeserved verdict that happens to be correct is still undershooting — the derivation is what makes it a result instead of a guess, and next time the intuition may be wrong. |
-| "There's no time to name the precise construct" | Naming the construct is what distinguishes this skill from senior-engineer instinct; skipping it under time pressure is the exact failure mode, not an exemption from it. |
-| "The other option is clearly worse, no need for a comparison table" | A dominance claim is itself a formal comparison — show what's conceded, don't assert it. |
-| "The test passed; I can now write what it was supposed to prove" | That is post-hoc reinterpretation. Preregister the prediction and disconfirming observation before the result exists. |
-
-## Red Flags — you are undershooting, STOP
-
-- You wrote "normalization" without naming the dependency, key, and normal form.
-- You wrote "slow"/"fast"/"scales" without a complexity class and its parameter.
-- You wrote "stale"/"consistent" without naming the guarantee in the lattice.
-- You wrote "race"/"concurrency issue" without the schedule or the named isolation anomaly.
-- You picked an option after firing **one** lens (no sweep).
-- You asserted a verdict you did not **derive** from a named result.
-- "Both are fine / it depends" with no formal axis identified.
-
-**All of these mean: go back, name the precise construct, derive it, sweep the rest.**
-
-## Worked Example (before → after)
-
-**Decision:** store a user's ranked contact methods as `contact_method_1..3` columns (A) vs `user_contact_preferences(user_id, method, priority)` (B).
-
-**Undershoot (senior-floor):** "A violates 1NF — repeating group across columns; B is the normalized child table. Pick B."  *Correct verdict, but not derived and not swept.*
-
-**Formal floor (this skill):**
-- *Relational lens:* The relation `user → {method}` exhibits a **multivalued dependency** `user_id ↠ method` (methods are independent of any other multivalued attribute). A relation with a nontrivial MVD that isn't a superkey-determined is **not in 4NF**; B is the **4NF decomposition**. The FDs `(user_id, method) → priority` and `(user_id, priority) → method` give two candidate keys; declaring both as `PRIMARY KEY (user_id,method)` + `UNIQUE (user_id,priority)` is *derived from the FDs*, which is precisely why duplicate-method and shared-rank states become **unrepresentable** (illegal states excluded by the keys — the type-theory lens agreeing with the relational one).
-- *Complexity/index lens:* "who prefers SMS?" is `O(disjunction width)` and unindexable under A (predicate spans columns); under B it's a single B+-tree range seek on `(method)`, `O(log N + k)`.
-- *Architecture lens:* A bakes cardinality 3 into DDL → adding a 4th method is an `ALTER` on the hot `users` table (high blast radius); B is `O(1)` rows, zero migration (reversible, low blast radius).
-- *Synthesis:* B dominates on normalization, complexity, blast radius. A's only edge — join-free single-row read — is recoverable under B via a covering index / array aggregation. **Verdict: B**, edge recovered.
+| “I named the theorem.” | Show model, preconditions, fact mapping, derivation, and residual mismatch. |
+| “All nine families are accounted for.” | Claim only relative coverage; expose unknown material terrain as `unmapped`. |
+| “Technically superior means choose it.” | Identify the authorized objective and priority rule or preserve the Pareto set. |
+| “The database calls it Repeatable Read.” | Pin product/version semantics and analyze a concrete history. |
+| “This lower bound is universal.” | Freeze problem, model, preprocessing, randomization, exactness, and resource. |
+| “A winner is more useful.” | Use the six outcomes; usefulness does not authorize fabricated determinacy. |
+| “Formal proof replaces measurement.” | Keep runtime premises conditional until observed against a preregistration. |
+| “The record validates, so the proof is correct.” | Structural validation never attests derivation correctness. |
 
 ## Local overlay
 
-If a `LOCAL.md` exists alongside this SKILL.md, read it after this file — it binds
-the protocol to the local environment (paths, registries, standing incidents,
-sibling-skill integrations). An overlay may add bindings and examples; it never
-overrides the protocol.
+If a `LOCAL.md` exists beside this file, read it after this file. It may bind
+paths, registries, and local authority, but it never overrides this protocol.

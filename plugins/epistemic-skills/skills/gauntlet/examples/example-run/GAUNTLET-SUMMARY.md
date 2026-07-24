@@ -6,7 +6,7 @@
 - **Axis:** fixed-artifact gate
 - **Triage:** passed — contract-shape change with falsifiable structure
 - **DeepReason root:** none (manual docket)
-- **Panel composition:** compliance-litigator, century-horizon-architect, tech-debt-curator, explainability-steward, integration-weaver (+ shadow/exploration: concurrency-interleaving-auditor)
+- **Panel composition:** compliance-litigator, integration-weaver, tech-debt-curator, dual-use-adversary (subject-seeded wildcard), century-horizon-architect
 - **Depth:** standard
 - **Docket mode:** manual-docket
 - **Independence mode:** independent
@@ -34,7 +34,7 @@
 - **Epistemic label:** Survivors and scores reflect **best-argued in this review**, not external truth.
 
 ## GO Coverage Statement (required for every GO / CONDITIONAL)
-- **Capability families actually exercised:** legal-compliance, maintainability, interoperability (+ shadow: reliability-adjacent probation lens, excluded).
+- **Capability families actually exercised:** legal-compliance, maintainability, interoperability, security.
 - **Material assumptions reviewed:** closed vocabulary is intentional; keyed-hash session token is the agreed privacy cut.
 - **Known unknowns / untested behavior:** no consumer implementation exists in this fictional repo; downstream consumption is untested.
 - **Evidence freshness:** all [V] tags verified against the pinned evidence root at run time (see reports/fingerprint.json).

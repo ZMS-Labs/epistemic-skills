@@ -1,0 +1,233 @@
+{
+  "response": "formal-rigor-fixture-response@1",
+  "fixture": "tc-01-high-assurance-escalation",
+  "invocation": "high-assurance",
+  "skip_reason": null,
+  "claim_assessments": [
+    {
+      "id": "c1",
+      "state": "refuted",
+      "derivation_ids": [
+        "d1"
+      ]
+    }
+  ],
+  "focused_output": null,
+  "record": {
+    "record": "formal-rigor-record@2",
+    "subject": {
+      "ref": "scenario.md#authentication-token-migration",
+      "revision": null
+    },
+    "valid_while": [
+      "subject-revision-unchanged"
+    ],
+    "coverage_limits": [
+      "Assessment is limited to scenario.md and artifacts/facts.json.",
+      "No implementation, protocol specification, deployment topology, or test results were supplied.",
+      "No hidden assurance thresholds, ground-truth class, or unstated migration behavior is assumed."
+    ],
+    "rigor": {
+      "tier": "high-assurance",
+      "trigger": "The supplied facts identify a public authentication contract spanning five services and a security boundary, while the scenario changes downgrade, revocation, compatibility, and rollback behavior.",
+      "tier_reason": "The explicitly stated security and cross-service contract consequences determine the required review depth; the twelve-line code-diff size does not bound behavioral impact."
+    },
+    "decision_frame": {
+      "question": "Is a focused review justified solely because the authentication-token migration has a small code diff?",
+      "system_boundary": [
+        "Public authentication-token contract",
+        "Five affected services",
+        "Security-boundary behavior",
+        "Downgrade, revocation, compatibility, and rollback paths"
+      ],
+      "actors": [
+        "Public clients",
+        "The five services",
+        "Operators performing rollout or rollback",
+        "Adversaries attempting downgrade or revoked-token reuse"
+      ],
+      "alternatives": [
+        "Focused review based on diff size",
+        "Standard review",
+        "High-assurance review of the cross-service security contract"
+      ],
+      "hard_constraints": [
+        "The contract is public.",
+        "The migration crosses a security boundary.",
+        "Rollback is version-skew sensitive."
+      ],
+      "authorized_objectives": [
+        "Preserve intended authentication and revocation behavior.",
+        "Prevent unsafe downgrade behavior.",
+        "Maintain explicit compatibility and recovery behavior across services."
+      ],
+      "priority_rule": "Security-boundary and public-contract consequences take priority over code-diff size when selecting review rigor.",
+      "assumptions": [
+        "Only the supplied scenario and synthetic facts are used.",
+        "The listed five services are within the migration boundary."
+      ],
+      "empirical_premises": [
+        "artifacts/facts.json states public_contract=true.",
+        "artifacts/facts.json states services=5.",
+        "artifacts/facts.json states security_boundary=true.",
+        "artifacts/facts.json states rollback is version-skew sensitive.",
+        "artifacts/facts.json states code_diff_lines=12."
+      ],
+      "uncertainty_posture": "Do not infer protocol safety or rollout correctness without specifications and observations; escalate review rigor from the explicit blast radius and security properties alone."
+    },
+    "coverage": [
+      {
+        "family": "P1",
+        "status": "fired",
+        "modules": [
+          "scope"
+        ],
+        "reason": "The change affects a public contract across five services, so the behavioral scope exceeds the local code diff."
+      },
+      {
+        "family": "P2",
+        "status": "fired",
+        "modules": [
+          "security-boundary"
+        ],
+        "reason": "Authentication and explicit security-boundary involvement require security-focused analysis."
+      },
+      {
+        "family": "P3",
+        "status": "fired",
+        "modules": [
+          "downgrade-analysis"
+        ],
+        "reason": "Downgrade behavior is explicitly changed and can affect which token semantics are accepted."
+      },
+      {
+        "family": "P4",
+        "status": "fired",
+        "modules": [
+          "revocation-analysis"
+        ],
+        "reason": "Revocation behavior is explicitly changed and must be checked across participating services."
+      },
+      {
+        "family": "P5",
+        "status": "fired",
+        "modules": [
+          "compatibility-analysis"
+        ],
+        "reason": "Compatibility is an explicit migration dimension for a public multi-service contract."
+      },
+      {
+        "family": "P6",
+        "status": "fired",
+        "modules": [
+          "rollback-analysis",
+          "version-skew"
+        ],
+        "reason": "The supplied facts explicitly characterize rollback as version-skew sensitive."
+      },
+      {
+        "family": "P7",
+        "status": "fired",
+        "modules": [
+          "adversarial-review"
+        ],
+        "reason": "A security-boundary migration warrants examination of downgrade and revoked-token abuse paths."
+      },
+      {
+        "family": "P8",
+        "status": "fired",
+        "modules": [
+          "cross-service-validation"
+        ],
+        "reason": "Five-service behavior cannot be established from the twelve-line diff alone and requires cross-version validation."
+      },
+      {
+        "family": "P9",
+        "status": "fired",
+        "modules": [
+          "assurance-selection"
+        ],
+        "reason": "Review rigor must follow the stated contract, security, and recovery consequences rather than line count."
+      }
+    ],
+    "derivations": [
+      {
+        "id": "d1",
+        "module": "assurance-selection",
+        "construct": "Scope refutation by non-entailment and explicit impact evidence",
+        "sources": {
+          "primary_theory": [],
+          "official_product_docs": []
+        },
+        "model": "A focused review justified solely by code-diff size is valid only if that size adequately bounds the relevant behavioral and operational impact.",
+        "preconditions": [
+          "The supplied scenario and facts accurately describe the migration.",
+          "No unstated threshold or assurance class is used."
+        ],
+        "fact_mapping": [
+          {
+            "source": "artifacts/facts.json",
+            "fact": "code_diff_lines=12",
+            "role": "Supports only that the implementation diff is small."
+          },
+          {
+            "source": "artifacts/facts.json",
+            "fact": "public_contract=true, services=5, security_boundary=true",
+            "role": "Establishes public, distributed, security-relevant impact not bounded by line count."
+          },
+          {
+            "source": "scenario.md and artifacts/facts.json",
+            "fact": "Downgrade, revocation, compatibility, and version-skew-sensitive rollback are affected.",
+            "role": "Establishes multiple consequential behavior and recovery paths."
+          }
+        ],
+        "steps": [
+          "A twelve-line diff establishes implementation size but does not establish a narrow behavioral boundary.",
+          "The supplied facts independently establish a public authentication contract spanning five services and a security boundary.",
+          "The scenario identifies changed downgrade, revocation, compatibility, and rollback behavior, while the artifact states rollback is version-skew sensitive.",
+          "Therefore code-diff size alone cannot justify focused review, and the explicit security and cross-service consequences require high-assurance treatment."
+        ],
+        "result": "Claim c1 is refuted: the small diff is insufficient grounds for focused review.",
+        "residual_mismatch": "The supplied material supports review-tier selection but does not establish whether the migration implementation itself is safe or unsafe."
+      }
+    ],
+    "empirical_closure": {
+      "state": "pending",
+      "tests": [
+        {
+          "id": "t1",
+          "purpose": "Exercise new-to-old and old-to-new service combinations for token acceptance, downgrade, and revocation behavior."
+        },
+        {
+          "id": "t2",
+          "purpose": "Verify revoked tokens remain rejected across all five services during rollout and rollback."
+        },
+        {
+          "id": "t3",
+          "purpose": "Exercise version-skew-sensitive rollback and confirm recovery does not reopen deprecated authentication behavior."
+        }
+      ]
+    },
+    "synthesis": {
+      "outcome": "conditional",
+      "selected_option": "high-assurance review",
+      "basis": "Explicit public-contract, five-service, security-boundary, downgrade, revocation, compatibility, and rollback concerns outweigh diff size as a scoping signal.",
+      "conditions": [
+        "Review the protocol and cross-version behavior, not only the changed lines.",
+        "Keep implementation safety unestablished until the pending cross-service tests are observed."
+      ],
+      "concessions": [
+        "The twelve-line diff may reduce local code-reading effort, but it does not reduce the stated behavioral scope."
+      ],
+      "recovery_moves": [
+        "Require a version-skew-aware rollback procedure.",
+        "Block rollout or rollback states that permit unintended downgrade or revoked-token acceptance."
+      ]
+    },
+    "never_attests": [
+      "derivation-correctness-by-envelope",
+      "unobserved-runtime-behavior",
+      "hidden-ground-truth-or-thresholds"
+    ]
+  }
+}

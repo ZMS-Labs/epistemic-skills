@@ -1,0 +1,283 @@
+{
+  "response": "formal-rigor-fixture-response@1",
+  "fixture": "tm-01-false-mvd",
+  "invocation": "standard",
+  "skip_reason": null,
+  "claim_assessments": [
+    {
+      "id": "c1",
+      "state": "refuted",
+      "derivation_ids": [
+        "D1",
+        "D2",
+        "D3"
+      ]
+    }
+  ],
+  "focused_output": null,
+  "record": {
+    "record": "formal-rigor-record@2",
+    "subject": {
+      "ref": "tm-01-false-mvd/scenario.md#c1",
+      "revision": null
+    },
+    "valid_while": [
+      "subject-revision-unchanged"
+    ],
+    "coverage_limits": [
+      "Assessment is limited to the supplied scenario, theory battery, schemas, and artifacts/facts.json.",
+      "No physical DDL, query workload, concurrency history, or distributed deployment is supplied.",
+      "The conclusion rejects the stated 4NF proof; it does not establish that no independently justified schema change could ever be desirable."
+    ],
+    "rigor": {
+      "tier": "standard",
+      "trigger": "The claim makes a non-trivial relational-schema judgment by asserting an MVD, a 4NF violation, and a mandatory decomposition.",
+      "tier_reason": "The question is fully decidable from the supplied dependencies and independence fact, with no elevated safety or operational stakes requiring high assurance."
+    },
+    "decision_frame": {
+      "question": "Does user_id ↠ method hold as a nontrivial independent MVD, thereby proving a 4NF violation and mandating a child-table decomposition?",
+      "system_boundary": "The relation contact(user_id, method, priority) and only its two supplied FDs and the supplied independent_sets fact.",
+      "actors": [
+        "schema reviewer",
+        "contact relation"
+      ],
+      "alternatives": [
+        "Accept c1 and mandate decomposition on user_id ↠ method.",
+        "Reject c1 because the alleged MVD is not established."
+      ],
+      "hard_constraints": [
+        "(user_id, method) -> priority",
+        "(user_id, priority) -> method",
+        "independent_sets = false"
+      ],
+      "authorized_objectives": [
+        "Assess c1's formal correctness.",
+        "Determine whether its 4NF conclusion follows."
+      ],
+      "priority_rule": "Logical implication and lossless-decomposition requirements override an unsupported normalization intuition.",
+      "assumptions": [],
+      "empirical_premises": [],
+      "uncertainty_posture": "Closed-world assessment over the supplied facts; no unstated dependency is assumed."
+    },
+    "coverage": [
+      {
+        "family": "P1",
+        "status": "fired",
+        "modules": [
+          "functional-dependencies",
+          "attribute-closure",
+          "candidate-keys",
+          "multivalued-dependencies",
+          "BCNF",
+          "4NF",
+          "lossless-join"
+        ],
+        "reason": "The claim turns directly on FD implication, candidate keys, an alleged MVD, 4NF, and decomposition."
+      },
+      {
+        "family": "P2",
+        "status": "not-applicable",
+        "modules": [],
+        "reason": "No transactions, schedules, conflicts, or isolation guarantees are described."
+      },
+      {
+        "family": "P3",
+        "status": "not-applicable",
+        "modules": [],
+        "reason": "No replicas, partitions, caches, or distributed consistency requirements are described."
+      },
+      {
+        "family": "P4",
+        "status": "not-applicable",
+        "modules": [],
+        "reason": "No operation profile, query workload, algorithm, or index alternative is supplied."
+      },
+      {
+        "family": "P5",
+        "status": "fired",
+        "modules": [
+          "representation-invariants",
+          "illegal-states-unrepresentable"
+        ],
+        "reason": "The two candidate keys characterize the uniqueness invariants that schema constraints could enforce without inventing an MVD."
+      },
+      {
+        "family": "P6",
+        "status": "not-applicable",
+        "modules": [],
+        "reason": "No encoding, entropy, hashing, collision, or cardinality-estimation decision is present."
+      },
+      {
+        "family": "P7",
+        "status": "not-applicable",
+        "modules": [],
+        "reason": "No duplicated configuration, derived state, component boundary, or failure-domain fact is supplied."
+      },
+      {
+        "family": "P8",
+        "status": "unmapped",
+        "modules": [],
+        "reason": "The pinned current-v1 skill and theory battery define only seven lenses."
+      },
+      {
+        "family": "P9",
+        "status": "unmapped",
+        "modules": [],
+        "reason": "The pinned current-v1 skill and theory battery define only seven lenses."
+      }
+    ],
+    "derivations": [
+      {
+        "id": "D1",
+        "module": "relational-normalization",
+        "construct": "Attribute closure, candidate keys, and BCNF",
+        "sources": {
+          "primary_theory": [
+            "theory-battery.md §1 Relational & Normalization Theory"
+          ],
+          "official_product_docs": []
+        },
+        "model": {
+          "relation": "R(U,M,P)",
+          "attribute_mapping": {
+            "U": "user_id",
+            "M": "method",
+            "P": "priority"
+          },
+          "fds": [
+            "UM -> P",
+            "UP -> M"
+          ]
+        },
+        "preconditions": [
+          "The supplied FDs are the dependencies available for implication analysis."
+        ],
+        "fact_mapping": {
+          "scenario_fd_1": "UM -> P",
+          "scenario_fd_2": "UP -> M"
+        },
+        "steps": [
+          "By UM -> P, (UM)+ = {U,M,P}; therefore UM is a superkey.",
+          "By UP -> M, (UP)+ = {U,P,M}; therefore UP is a superkey.",
+          "No supplied FD derives U, so every key must contain U; U+ = {U}, while adding either M or P yields all attributes.",
+          "Therefore the candidate keys are UM and UP.",
+          "Each supplied nontrivial FD has a candidate key as its determinant, so each satisfies the BCNF determinant test."
+        ],
+        "result": "Under the supplied FDs, R satisfies BCNF and has candidate keys (user_id, method) and (user_id, priority).",
+        "residual_mismatch": "BCNF does not alone decide 4NF; independently holding nontrivial MVDs must still be tested."
+      },
+      {
+        "id": "D2",
+        "module": "relational-normalization",
+        "construct": "MVD implication and the 4NF test",
+        "sources": {
+          "primary_theory": [
+            "theory-battery.md §1 Relational & Normalization Theory"
+          ],
+          "official_product_docs": []
+        },
+        "model": {
+          "alleged_mvd": "U ↠ M",
+          "counterexample_instance": [
+            [
+              "u",
+              "m1",
+              "p1"
+            ],
+            [
+              "u",
+              "m2",
+              "p2"
+            ]
+          ]
+        },
+        "preconditions": [
+          "An MVD must hold in every legal instance before it can participate in a 4NF violation.",
+          "For U ↠ M, tuples sharing U require the corresponding M/P cross-combinations."
+        ],
+        "fact_mapping": {
+          "independent_sets": false
+        },
+        "steps": [
+          "U ↠ M would be nontrivial because M is not a subset of U and U∪M does not contain P.",
+          "The counterexample instance satisfies UM -> P because each (U,M) pair has one P.",
+          "It also satisfies UP -> M because each (U,P) pair has one M.",
+          "For the two tuples sharing U, U ↠ M requires (u,m1,p2) and (u,m2,p1). Those tuples are absent, so the MVD fails.",
+          "Thus the supplied FDs do not imply U ↠ M; the artifact's independent_sets=false independently agrees that method and priority are paired rather than independent.",
+          "Because U ↠ M is not established as a dependency, it cannot prove a 4NF violation."
+        ],
+        "result": "The alleged nontrivial MVD is false under the supplied facts, so c1's 4NF premise is refuted.",
+        "residual_mismatch": "A different, independently established nontrivial MVD could change the 4NF analysis, but none is supplied."
+      },
+      {
+        "id": "D3",
+        "module": "relational-normalization",
+        "construct": "Lossless-join decomposition and representation invariants",
+        "sources": {
+          "primary_theory": [
+            "theory-battery.md §1 Relational & Normalization Theory",
+            "theory-battery.md §5 Type Theory & Formal Methods"
+          ],
+          "official_product_docs": []
+        },
+        "model": {
+          "putative_4nf_decomposition": [
+            "R1(U,M)",
+            "R2(U,P)"
+          ],
+          "required_invariants": [
+            "UNIQUE(U,M)",
+            "UNIQUE(U,P)"
+          ]
+        },
+        "preconditions": [
+          "The standard decomposition on U ↠ M projects R into UM and UP.",
+          "A mandatory decomposition must preserve the original relation through a lossless join."
+        ],
+        "fact_mapping": {
+          "relation": "contact(user_id, method, priority)",
+          "fds": [
+            "UM -> P",
+            "UP -> M"
+          ]
+        },
+        "steps": [
+          "Projecting the counterexample onto UM yields {(u,m1),(u,m2)}.",
+          "Projecting it onto UP yields {(u,p1),(u,p2)}.",
+          "Joining those projections on U produces four tuples, including the spurious pairs (u,m1,p2) and (u,m2,p1).",
+          "Therefore the decomposition is not lossless for instances satisfying the supplied FDs.",
+          "The actual paired uniqueness invariants are represented by candidate keys UM and UP; if declared as key constraints, they make duplicate method and duplicate priority assignments per user unrepresentable without discarding the method-priority pairing."
+        ],
+        "result": "The alleged MVD cannot mandate the proposed 4NF decomposition; on the supplied model, that split introduces spurious tuples and loses the pairing represented by the original relation.",
+        "residual_mismatch": "The scenario supplies no physical DDL, so actual enforcement of both candidate-key invariants is not attested."
+      }
+    ],
+    "empirical_closure": {
+      "state": "not-required",
+      "tests": []
+    },
+    "synthesis": {
+      "outcome": "reversal",
+      "selected_option": "Reject c1's 4NF mandate.",
+      "basis": [
+        "The supplied FDs yield candidate keys (user_id, method) and (user_id, priority).",
+        "A legal counterexample satisfies both FDs while violating user_id ↠ method.",
+        "The supplied independent_sets=false fact contradicts the claimed independence.",
+        "The putative MVD decomposition is not lossless for the counterexample."
+      ],
+      "conditions": [
+        "This reversal remains valid while no additional dependency establishing user_id ↠ method is introduced."
+      ],
+      "concessions": [
+        "The record does not rule out a child table for some separate requirement absent from the fixture."
+      ],
+      "recovery_moves": []
+    },
+    "never_attests": [
+      "derivation-correctness-by-envelope",
+      "physical-constraint-enforcement-without-DDL",
+      "runtime-performance-without-workload-evidence",
+      "facts-beyond-the-supplied-scenario-and-artifacts"
+    ]
+  }
+}

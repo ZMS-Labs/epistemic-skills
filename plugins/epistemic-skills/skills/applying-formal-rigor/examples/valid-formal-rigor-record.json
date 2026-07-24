@@ -1,0 +1,72 @@
+{
+  "record": "formal-rigor-record@2",
+  "subject": {
+    "ref": "docs/design/example.md",
+    "revision": "0123456789abcdef0123456789abcdef01234567"
+  },
+  "valid_while": ["subject-revision-unchanged"],
+  "coverage_limits": [],
+  "rigor": {
+    "tier": "standard",
+    "trigger": "material alternatives differ on measurable properties",
+    "tier_reason": "the decision is reversible but bears downstream load"
+  },
+  "decision_frame": {
+    "question": "Keep the status quo or adopt option A?",
+    "system_boundary": "The versioned example component and its direct consumers.",
+    "actors": ["operator", "consumer"],
+    "alternatives": [
+      {"id": "null", "kind": "null-option", "description": "Keep the status quo."},
+      {"id": "A", "kind": "option", "description": "Adopt the bounded change."}
+    ],
+    "hard_constraints": ["Preserve the public contract."],
+    "authorized_objectives": ["Reduce recovery time."],
+    "priority_rule": {
+      "kind": "constraint-satisfaction",
+      "authority_ref": "docs/design/example.md#decision-authority"
+    },
+    "assumptions": [],
+    "empirical_premises": [],
+    "uncertainty_posture": "worst-case"
+  },
+  "coverage": [
+    {"family": "P1", "status": "not-applicable", "modules": [], "reason": "No functional behavior changes inside the boundary."},
+    {"family": "P2", "status": "not-applicable", "modules": [], "reason": "No data representation changes inside the boundary."},
+    {"family": "P3", "status": "not-applicable", "modules": [], "reason": "No concurrent history changes inside the boundary."},
+    {"family": "P4", "status": "not-applicable", "modules": [], "reason": "No replicated state exists inside the boundary."},
+    {"family": "P5", "status": "fired", "modules": ["dependability-fault-models@1.0.0"], "reason": "Recovery time is an authorized objective."},
+    {"family": "P6", "status": "not-applicable", "modules": [], "reason": "The trust boundary and authorities do not change."},
+    {"family": "P7", "status": "not-applicable", "modules": [], "reason": "Capacity and resource bounds are outside the question."},
+    {"family": "P8", "status": "not-applicable", "modules": [], "reason": "No probabilistic or numerical claim bears load."},
+    {"family": "P9", "status": "fired", "modules": ["decision-theory-multiobjective@1.0.0"], "reason": "The synthesis applies an operator-authorized constraint rule."}
+  ],
+  "derivations": [
+    {
+      "id": "d1",
+      "module": "dependability-fault-models@1.0.0",
+      "construct": "bounded recovery under the declared single-fault model",
+      "sources": {"primary_theory": ["Avizienis-et-al-2004"], "official_product_docs": []},
+      "model": "One component failure at a time; rollback artifact remains reachable.",
+      "preconditions": [{"id": "p1", "statement": "The rollback artifact is revision-pinned and reachable.", "status": "verified"}],
+      "fact_mapping": [{"precondition_id": "p1", "claim_class": "observation", "anchor": "docs/design/example.md@0123456789abcdef0123456789abcdef01234567"}],
+      "steps": ["The declared failure preserves the rollback artifact.", "Invoking rollback restores the prior contract within the stated horizon."],
+      "result": {"state": "established", "statement": "Option A satisfies the bounded recovery constraint in the declared model."},
+      "counterexample": null,
+      "residual_mismatch": ["Correlated artifact-store failure is outside the model."]
+    }
+  ],
+  "empirical_closure": {"state": "not-required", "tests": []},
+  "synthesis": {
+    "outcome": "conditional",
+    "selected_option": "A",
+    "basis": ["A satisfies the hard contract and the authorized recovery objective in the declared model."],
+    "conditions": ["The rollback artifact remains reachable."],
+    "concessions": ["Correlated artifact-store failure remains outside scope."],
+    "recovery_moves": ["Retain the prior revision until the validity window closes."]
+  },
+  "never_attests": [
+    "derivation-correctness-by-envelope",
+    "empirical-fact-without-observation",
+    "gauntlet-independence"
+  ]
+}
