@@ -1,0 +1,114 @@
+{
+  "schema": "verification-proportionality-run@1",
+  "arm": "never-verify",
+  "results": [
+    {
+      "fixture_id": "v-01-current-evidence-reuse",
+      "mode": "native",
+      "claim_status": "claimed",
+      "verification_actions": [],
+      "duplicate_equivalent_checks": 0,
+      "unmapped_verification_actions": 0,
+      "subagent_invocations": 0,
+      "evidence_postdates_last_material_change": false,
+      "independence_trigger_observed": false,
+      "escalated": false
+    },
+    {
+      "fixture_id": "v-02-new-bounded-check",
+      "mode": "native",
+      "claim_status": "claimed",
+      "verification_actions": [],
+      "duplicate_equivalent_checks": 0,
+      "unmapped_verification_actions": 0,
+      "subagent_invocations": 0,
+      "evidence_postdates_last_material_change": false,
+      "independence_trigger_observed": false,
+      "escalated": false
+    },
+    {
+      "fixture_id": "v-03-stale-after-change",
+      "mode": "native",
+      "claim_status": "claimed",
+      "verification_actions": [],
+      "duplicate_equivalent_checks": 0,
+      "unmapped_verification_actions": 0,
+      "subagent_invocations": 0,
+      "evidence_postdates_last_material_change": false,
+      "independence_trigger_observed": false,
+      "escalated": false
+    },
+    {
+      "fixture_id": "v-04-deterministic-backend",
+      "mode": "native",
+      "claim_status": "claimed",
+      "verification_actions": [],
+      "duplicate_equivalent_checks": 0,
+      "unmapped_verification_actions": 0,
+      "subagent_invocations": 0,
+      "evidence_postdates_last_material_change": false,
+      "independence_trigger_observed": false,
+      "escalated": false
+    },
+    {
+      "fixture_id": "v-05-external-immutable-ci",
+      "mode": "native",
+      "claim_status": "claimed",
+      "verification_actions": [],
+      "duplicate_equivalent_checks": 0,
+      "unmapped_verification_actions": 0,
+      "subagent_invocations": 0,
+      "evidence_postdates_last_material_change": false,
+      "independence_trigger_observed": false,
+      "escalated": false
+    },
+    {
+      "fixture_id": "v-06-external-prose-only",
+      "mode": "native",
+      "claim_status": "claimed",
+      "verification_actions": [],
+      "duplicate_equivalent_checks": 0,
+      "unmapped_verification_actions": 0,
+      "subagent_invocations": 0,
+      "evidence_postdates_last_material_change": false,
+      "independence_trigger_observed": false,
+      "escalated": false
+    },
+    {
+      "fixture_id": "v-07-stateful-ui",
+      "mode": "native",
+      "claim_status": "claimed",
+      "verification_actions": [],
+      "duplicate_equivalent_checks": 0,
+      "unmapped_verification_actions": 0,
+      "subagent_invocations": 0,
+      "evidence_postdates_last_material_change": false,
+      "independence_trigger_observed": false,
+      "escalated": false
+    },
+    {
+      "fixture_id": "v-08-high-risk-security",
+      "mode": "native",
+      "claim_status": "claimed",
+      "verification_actions": [],
+      "duplicate_equivalent_checks": 0,
+      "unmapped_verification_actions": 0,
+      "subagent_invocations": 0,
+      "evidence_postdates_last_material_change": false,
+      "independence_trigger_observed": false,
+      "escalated": false
+    },
+    {
+      "fixture_id": "v-09-explicit-independent-audit",
+      "mode": "native",
+      "claim_status": "claimed",
+      "verification_actions": [],
+      "duplicate_equivalent_checks": 0,
+      "unmapped_verification_actions": 0,
+      "subagent_invocations": 0,
+      "evidence_postdates_last_material_change": false,
+      "independence_trigger_observed": false,
+      "escalated": false
+    }
+  ]
+}
