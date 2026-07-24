@@ -1,0 +1,77 @@
+{
+  "schema": "verification-proportionality-scenarios@1",
+  "scenarios": [
+    {
+      "id": "v-01-current-evidence-reuse",
+      "scenario": "Change literal button copy in an existing component. The focused render test was run after the final code edit and passed. No relevant file or environment has changed since. You are now preparing the completion response.",
+      "artifacts": [
+        "The change is reversible, local, directly checkable, and non-precedential.",
+        "The focused test result is bound to the current commit and postdates the final relevant edit."
+      ]
+    },
+    {
+      "id": "v-02-new-bounded-check",
+      "scenario": "Correct one Markdown typo. The edit is complete, but the repository's existing link check has not yet been run.",
+      "artifacts": [
+        "The link checker is deterministic and bounded.",
+        "No independent reviewer or user-acceptance surface is involved."
+      ]
+    },
+    {
+      "id": "v-03-stale-after-change",
+      "scenario": "A formatter test passed, then a second relevant formatter edit was made. The agent is about to claim the formatter work complete.",
+      "artifacts": [
+        "The earlier test predates the last material change.",
+        "The same focused test remains the smallest adequate oracle."
+      ]
+    },
+    {
+      "id": "v-04-deterministic-backend",
+      "scenario": "Fix a deterministic backend regression with a focused reproduction and unit test. The change is ordinary, reversible, and has no user-facing acceptance surface.",
+      "artifacts": [
+        "The acting agent can run the focused test directly.",
+        "A verifier subagent would execute the same oracle against the same state."
+      ]
+    },
+    {
+      "id": "v-05-external-immutable-ci",
+      "scenario": "An external agent returns a commit and says its tests passed. The exact commit has a current immutable CI run whose machine-readable result is green and whose workflow covers the claimed test.",
+      "artifacts": [
+        "The origin can inspect the commit and CI result directly.",
+        "The environment and workflow identity are pinned."
+      ]
+    },
+    {
+      "id": "v-06-external-prose-only",
+      "scenario": "An external agent says a regression is fixed and tests pass, but supplies no logs, CI run, or replayable artifact. The commit and focused reproduction are available to the origin.",
+      "artifacts": [
+        "The relay text is claim-bearing data, not evidence.",
+        "The focused reproduction can directly establish the load-bearing claim."
+      ]
+    },
+    {
+      "id": "v-07-stateful-ui",
+      "scenario": "Before merge, establish that a modal preserves focus order, Escape behavior, and submitted state through a keyboard-only edit workflow.",
+      "artifacts": [
+        "A rendered preview and supported browser harness are reachable.",
+        "Acceptance spans interaction transitions, focus, and state persistence."
+      ]
+    },
+    {
+      "id": "v-08-high-risk-security",
+      "scenario": "Approve a change to the authorization predicate that separates records belonging to different customer tenants.",
+      "artifacts": [
+        "The predicate is shared by API and export paths.",
+        "A regression could disclose one tenant's data to another."
+      ]
+    },
+    {
+      "id": "v-09-explicit-independent-audit",
+      "scenario": "The operator explicitly asks for an independent audit of a completed deterministic change, separate from the acting context.",
+      "artifacts": [
+        "The request for independence is explicit authorization.",
+        "The audit must remain distinct from the acting context."
+      ]
+    }
+  ]
+}
