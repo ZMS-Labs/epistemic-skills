@@ -36,7 +36,7 @@ its required live RED, and live blinded proportionality arms remain NOT_RUN.
 | OUT-011 | satisfied by precise capability block | Five pinned runnable arms, source/prompt/skill hashes, isolated packets, raw-response retention, scorer, `results/BLOCKED.md`. |
 | OUT-012 | satisfied structurally | Balanced control: routine 10/10, material 4/4, high-risk 4/4, median 25 words; both parodies fail. No live-effect claim. |
 | OUT-013 | satisfied | Four high-risk fixtures retain Gauntlet/formal-rigor escalation and UAT/Gauntlet independence. |
-| OUT-014 | partial | Full local deterministic suite green and CI wired; branch GitHub Actions pending publication. |
+| OUT-014 | satisfied | Full local deterministic suite green; PR #48 stdlib, DCO, and CodeQL checks green. |
 | OUT-015 | satisfied | Draft PR #48; DCO-clean commits; no merge/release/version/settings rewrite. |
 | OUT-016 | satisfied | `relay/0002-target.md`. |
 
@@ -76,12 +76,19 @@ control:
 - branch-wide `git diff --check`, conflict-marker scan, and DCO trailer audit
   (27 pre-report commits) PASS.
 
+GitHub checks on draft PR #48 also passed:
+
+- stdlib workflow run `30068667692`, job `89404604712`;
+- DCO workflow run `30068665696`, job `89404598725`;
+- CodeQL workflow run `30068665105`, jobs `89404599267`, `89404599241`,
+  and `89404599280`, plus final CodeQL gate `89404676431`.
+
 ## Honest limits and authority report
 
 - Formal-rigor live arms and the five proportionality behavioral arms are
   NOT_RUN; no behavioral-superiority or population claim is made.
-- GitHub Actions for this continuation branch are not evidence until the branch
-  is pushed and its draft PR checks complete.
+- GitHub Actions are green for the pushed draft PR; they do not close the
+  separately recorded live-model capability blocks.
 - No package version surface was changed. `RELEASING.md` and
   `docs/release/RELEASE-3.0.0.md` define a held first-release contract only.
 - No existing PR was closed/rewritten, no main merge occurred, and no tag,
