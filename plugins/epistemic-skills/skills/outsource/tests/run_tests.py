@@ -122,6 +122,14 @@ def main() -> int:
         "applying-formal-rigor/evals/formal-rigor-v2-fixtures/tests/test_focused.py" in workflow,
         "CI omits formal-rigor focused proportionality tests",
     )
+    require(
+        "evidence-locked-uat/evals/triage/tests/run_tests.py" in workflow,
+        "CI omits UAT proportionality triage tests",
+    )
+    require(
+        "decision-ledger/evals/proportionality/tests/run_tests.py" in workflow,
+        "CI omits Decision Ledger proportionality tests",
+    )
 
     proportionality = router_root / "evals" / "proportionality"
     for filename in (
@@ -147,6 +155,14 @@ def main() -> int:
         "results/BLOCKED.md",
     ):
         require((formal_v2 / filename).is_file(), f"missing formal-rigor v2 artifact: {filename}")
+
+    proportionality_suites = (
+        PACKAGE_ROOT / "skills" / "evidence-locked-uat" / "evals" / "triage",
+        PACKAGE_ROOT / "skills" / "decision-ledger" / "evals" / "proportionality",
+    )
+    for suite in proportionality_suites:
+        for filename in ("README.md", "fixtures.json", "score.py", "tests/run_tests.py"):
+            require((suite / filename).is_file(), f"missing proportionality artifact: {suite.name}/{filename}")
 
     skill_dirs = [p for p in (PACKAGE_ROOT / "skills").iterdir() if p.is_dir()]
     require(len(skill_dirs) == 11, f"expected 11 skill directories, found {len(skill_dirs)}")

@@ -1,0 +1,6 @@
+[
+  {"id":"routine-no-op","action":"no-op","existing_ref":null,"new_entries":[],"visible_process":[]},
+  {"id":"adequate-adr-reuse","action":"no-op","existing_ref":null,"new_entries":[],"visible_process":[]},
+  {"id":"uncovered-consequential-decision","action":"no-op","existing_ref":null,"new_entries":[],"visible_process":[]},
+  {"id":"recurrent-correction","action":"no-op","existing_ref":null,"new_entries":[],"visible_process":[]}
+]

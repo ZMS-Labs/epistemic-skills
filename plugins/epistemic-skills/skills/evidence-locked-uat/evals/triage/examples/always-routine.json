@@ -1,0 +1,6 @@
+[
+  {"id":"routine-presentation","route":"routine-check","routine_check":["scope","target","actions","observed","result"],"packet_required":false,"pipeline":[],"artifacts":[],"verdict":null},
+  {"id":"stateful-keyboard","route":"routine-check","routine_check":["scope","target","actions","observed","result"],"packet_required":false,"pipeline":[],"artifacts":[],"verdict":null},
+  {"id":"explicit-uat-request","route":"routine-check","routine_check":["scope","target","actions","observed","result"],"packet_required":false,"pipeline":[],"artifacts":[],"verdict":null},
+  {"id":"unreachable-material-target","route":"routine-check","routine_check":["scope","target","actions","observed","result"],"packet_required":false,"pipeline":[],"artifacts":[],"verdict":null}
+]

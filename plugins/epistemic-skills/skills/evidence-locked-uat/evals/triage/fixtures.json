@@ -1,0 +1,34 @@
+[
+  {
+    "id": "routine-presentation",
+    "scenario": "Change literal helper copy and verify it in the local rendered preview.",
+    "material": false,
+    "explicit_uat_request": false,
+    "target_reachable": true,
+    "expected_route": "routine-check"
+  },
+  {
+    "id": "stateful-keyboard",
+    "scenario": "Change a keyboard-operated dialog with focus trapping, escape, and restoration behavior.",
+    "material": true,
+    "explicit_uat_request": false,
+    "target_reachable": true,
+    "expected_route": "uat"
+  },
+  {
+    "id": "explicit-uat-request",
+    "scenario": "Operator explicitly requests UAT for an otherwise small visual change.",
+    "material": false,
+    "explicit_uat_request": true,
+    "target_reachable": true,
+    "expected_route": "uat"
+  },
+  {
+    "id": "unreachable-material-target",
+    "scenario": "A material acceptance workflow has no reachable rendered target or launchable application.",
+    "material": true,
+    "explicit_uat_request": false,
+    "target_reachable": false,
+    "expected_route": "blocked-environment"
+  }
+]

@@ -1,0 +1,6 @@
+[
+  {"id":"routine-no-op","scenario":"Choose a local loop variable name in a reversible edit.","consequential":false,"adequate_existing":false,"recurrent_correction":false,"expected_action":"no-op"},
+  {"id":"adequate-adr-reuse","scenario":"A migration strategy is already recorded in an ADR with subject revision, consumer, rationale, and revisit trigger.","consequential":true,"adequate_existing":true,"recurrent_correction":false,"expected_action":"reuse"},
+  {"id":"uncovered-consequential-decision","scenario":"Select the compatibility policy for a public contract; no durable artifact records the choice.","consequential":true,"adequate_existing":false,"recurrent_correction":false,"expected_action":"create"},
+  {"id":"recurrent-correction","scenario":"The operator repeats a correction after the same causal failure chain recurs.","consequential":true,"adequate_existing":false,"recurrent_correction":true,"expected_action":"create"}
+]

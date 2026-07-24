@@ -1,0 +1,6 @@
+[
+  {"id":"routine-no-op","action":"no-op","existing_ref":null,"new_entries":[],"visible_process":[]},
+  {"id":"adequate-adr-reuse","action":"reuse","existing_ref":{"coordinate":"docs/adr/004-contract-migration.md","subject_revision":"rev-7","future_consumer":"contract implementer","revisit_condition":"requirement changes"},"new_entries":[{"entry_type":"decision","subject_revision":"rev-7","future_consumer":"contract implementer","because":"copy ADR rationale","valid_while":"ADR current","revisit_when":"requirement changes"}],"visible_process":["duplicated ADR into ledger"]},
+  {"id":"uncovered-consequential-decision","action":"create","existing_ref":null,"new_entries":[{"entry_type":"decision","subject_revision":"contract-v3","future_consumer":"implementer","because":"compatibility","valid_while":"v3 current","revisit_when":"window closes"}],"visible_process":[]},
+  {"id":"recurrent-correction","action":"create","existing_ref":null,"new_entries":[{"entry_type":"correction","subject_revision":"correction-2","future_consumer":"sessions","because":"recurrence","valid_while":"policy current","revisit_when":"policy changes","failure_chain":{"prompting_event":"x","vulnerabilities":["x"],"links":["x"],"target_failure":"x","consequences":["x"],"earliest_interruptible_link":"x","replacement_behavior":"x","rehearsal_fixture":"x"}}],"visible_process":[]}
+]
