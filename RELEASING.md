@@ -48,8 +48,21 @@ Before creating the tag:
 6. Create annotated tag `v<version>` on that exact commit and push the tag.
 7. Create a non-draft, non-prerelease GitHub Release from the committed release
    notes.
-8. Verify through the GitHub API that the tag target, release target, and local
-   `main` commit are identical. Verify the tagged package integration test.
+8. Verify through the GitHub API that `tag_name` is the intended tag, `draft` is `false`, `prerelease` is `false`, the peeled tag target, release target, and
+   local `main` commit are identical, and the normalized body equals the committed
+   release-note file. Verify the tagged package integration test.
+
+## Partial-publication recovery
+
+Never improvise around an immutable remote tag. Inspect the remote state first,
+then use the matching recovery:
+
+| Observed state | Recovery |
+|---|---|
+| No remote tag | Fix forward, rerun the complete gate on final `main`, then restart publication. |
+| Correct remote tag; no GitHub Release | Create the Release from the committed notes on that tag, then run every API assertion in step 8. |
+| Correct remote tag; incomplete or malformed GitHub Release | Repair or recreate the Release object against the same correct tag, then run every API assertion in step 8. |
+| Wrong remote tag | Stop publication. Do not move or reuse it; correct the cause and issue a new semantic version. |
 
 Never move or reuse a published version tag. Corrections ship under a new
 semantic version.

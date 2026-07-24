@@ -83,7 +83,23 @@ One tree of method files; harness-specific manifests only. Do not fork the skill
 
 Install with **exactly one** mechanism per harness. A second copy of the same skills (for example `npx skills add` on top of a plugin install) produces duplicate triggers.
 
+**Stable channel:** use an immutable `v2.9.2` ref. Codex supports that ref
+directly. For any harness without a documented ref-aware installer, use this
+tagged checkout and then its local install/link command:
+
+```bash
+git clone --branch v2.9.2 --depth 1 https://github.com/ZMS-Labs/epistemic-skills.git epistemic-skills-2.9.2
+cd epistemic-skills-2.9.2
+```
+
+**Rolling channel:** use `main` or an unqualified repository URL when you want
+the newest repository state rather than a reproducible release. Bare repository URLs in the harness-specific commands below are rolling unless the command
+explicitly names `v2.9.2`.
+
 ### Claude Code
+
+The marketplace commands below use the rolling channel. For a stable install,
+use the tagged checkout above with Claude Code's local plugin workflow.
 
 ```
 /plugin marketplace add ZMS-Labs/epistemic-skills
@@ -121,6 +137,9 @@ fallback for a task started before registration.
 
 **Local install:**
 
+Use the tagged checkout above for the stable channel, or a `main` checkout for
+the rolling channel, before creating the local link.
+
 ```powershell
 # Windows — from a clone of this repo
 New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.cursor\plugins\local" | Out-Null
@@ -142,6 +161,9 @@ Do **not** also install these skills into `~/.cursor/skills/` while the plugin i
 
 ### Gemini CLI
 
+The repository URL below is rolling. For a stable install, pass the tagged
+checkout above to `gemini extensions link`.
+
 ```bash
 gemini extensions install https://github.com/ZMS-Labs/epistemic-skills --consent
 # local dev:
@@ -154,6 +176,9 @@ Restart the Gemini session after install/link. Entrypoints: `gemini-extension.js
 
 Native plugin marker is root [`plugin.json`](plugin.json) (Antigravity schema: `name` + `description`). Same `skills/` / `agents/` tree:
 
+The repository URL below is rolling. For a stable install, pass the tagged
+checkout above to the local-path command.
+
 ```bash
 agy plugin install https://github.com/ZMS-Labs/epistemic-skills
 # or:
@@ -164,6 +189,9 @@ agy plugin validate /path/to/epistemic-skills
 Prefer **one** of: native `agy plugin install`, Gemini extension link, or `agy plugin import gemini` — not several copies.
 
 ### Kimi Code
+
+The repository URL below is rolling. For a stable install, pass the tagged
+checkout above to the local-path command.
 
 ```text
 /plugins install https://github.com/ZMS-Labs/epistemic-skills
@@ -184,8 +212,13 @@ Get-ChildItem .\plugins\epistemic-skills\skills -Directory | ForEach-Object {
 The skills follow the [Agent Skills spec](https://agentskills.io/specification). Point your agent at `plugins/epistemic-skills/skills/` (or the root `skills/` symlink) or a single `SKILL.md`:
 
 ```bash
+# Rolling channel:
 npx skills add https://github.com/ZMS-Labs/epistemic-skills/tree/main/plugins/epistemic-skills/skills
 ```
+
+For the stable channel, point the harness at
+`epistemic-skills-2.9.2/plugins/epistemic-skills/skills/` in the tagged checkout
+above.
 
 Use this **only** when the harness has no native plugin/extension install.
 

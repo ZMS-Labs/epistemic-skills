@@ -16,12 +16,15 @@ from mutable `main` only.
   disciplines.
 - Expands canonical CI to score the committed continuity fixture results and
   run the DCO policy unit tests.
-- Aligns every live package manifest and installation example on 2.9.2.
+- Aligns every live version-bearing package manifest on 2.9.2 and distinguishes
+  tagged stable installs from rolling repository installs.
 
 ## Compatibility
 
-This is a backward-compatible patch over the already advertised 2.9 line. No
-skill name, contract schema version, or installation entrypoint is removed.
+This is the first formal immutable baseline for the already-advertised 2.9 lineage;
+it does not claim an evidence-backed comparison with an earlier immutable
+release. Relative to the immediately preceding `main` state, no skill name,
+contract schema version, or installation entrypoint is removed.
 
 ## Verification contract
 
@@ -30,6 +33,22 @@ stdlib suite, DCO, CodeQL, manifest parity, JSON parsing, receipt verification,
 the UAT judge self-test, and the Gauntlet deterministic tests. Publication also
 requires a redacted full-history secret scan and a final tag-to-commit identity
 check.
+
+## Harness verification matrix
+
+"Source-verified" means manifests, inventories, paths, and deterministic package
+contracts were checked. It does not mean that native install, discovery,
+auto-trigger, or isolation was exercised in that harness.
+
+| Harness | Documented channel for 2.9.2 | Verification tier |
+|---|---|---|
+| Claude Code | Tagged checkout for stable; bare marketplace repo is rolling | Source-verified |
+| Codex | Direct immutable `--ref v2.9.2`; `--ref main` is rolling | Source-verified plus deterministic package tests |
+| Cursor | Tagged checkout for stable; `main` checkout is rolling; public marketplace not listed | Source-verified |
+| Gemini CLI | Tagged checkout plus local link for stable; bare repo URL is rolling | Source-verified |
+| Antigravity | Tagged checkout plus local install for stable; bare repo URL is rolling | Source-verified |
+| Kimi Code | Tagged checkout plus local install for stable; bare repo URL is rolling | Source-verified |
+| Generic Agent Skills harness | Tagged checkout for stable; `tree/main` URL is rolling | Source-verified |
 
 ## Known limitations
 

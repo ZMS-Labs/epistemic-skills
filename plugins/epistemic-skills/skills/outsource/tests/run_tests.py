@@ -79,6 +79,13 @@ def main() -> int:
         f"codex plugin marketplace add ZMS-Labs/epistemic-skills --ref v{EXPECTED_VERSION}" in readme,
         "README stable Codex install is not pinned to the release tag",
     )
+    for phrase in (
+        "**Stable channel:**",
+        "**Rolling channel:**",
+        f"git clone --branch v{EXPECTED_VERSION} --depth 1 https://github.com/ZMS-Labs/epistemic-skills.git",
+        "Bare repository URLs in the harness-specific commands below are rolling",
+    ):
+        require(phrase in readme, f"README lacks release-channel guidance: {phrase}")
     require("**eleven** skills" in readme, "README skill count is stale")
     require("**nine** disciplines" in readme, "README discipline count is stale")
     require("all eleven skills" in readme, "README harness success check is stale")
@@ -127,6 +134,26 @@ def main() -> int:
         "outsource" in json.loads(read(REPO_ROOT / "plugin.json"))["description"].lower(),
         "Antigravity manifest does not advertise outsource",
     )
+
+    releasing = read(REPO_ROOT / "RELEASING.md")
+    for phrase in (
+        "## Partial-publication recovery",
+        "Correct remote tag; no GitHub Release",
+        "Wrong remote tag",
+        "`draft` is `false`",
+        "`prerelease` is `false`",
+        "normalized body equals",
+    ):
+        require(phrase in releasing, f"release contract lacks recovery/assertion: {phrase}")
+
+    notes = read(REPO_ROOT / "docs" / "release" / f"RELEASE-{EXPECTED_VERSION}.md")
+    require(
+        "first formal immutable baseline for the already-advertised 2.9 lineage" in notes,
+        "release notes imply an immutable predecessor baseline",
+    )
+    require("## Harness verification matrix" in notes, "release notes lack harness matrix")
+    for harness in ("Claude Code", "Codex", "Cursor", "Gemini CLI", "Antigravity", "Kimi Code", "Generic"):
+        require(harness in notes, f"release notes harness matrix omits {harness}")
 
     print("outsource integration: PASS")
     return 0
