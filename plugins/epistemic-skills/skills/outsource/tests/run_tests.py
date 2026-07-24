@@ -11,7 +11,7 @@ HERE = Path(__file__).resolve()
 SKILL_ROOT = HERE.parents[1]
 PACKAGE_ROOT = HERE.parents[3]
 REPO_ROOT = HERE.parents[5]
-EXPECTED_VERSION = "2.9.1"
+EXPECTED_VERSION = "2.9.2"
 
 
 def require(condition: bool, message: str) -> None:
@@ -75,6 +75,10 @@ def main() -> int:
 
     readme = read(REPO_ROOT / "README.md")
     require(f"**Version {EXPECTED_VERSION}.**" in readme, "README version is stale")
+    require(
+        f"codex plugin marketplace add ZMS-Labs/epistemic-skills --ref v{EXPECTED_VERSION}" in readme,
+        "README stable Codex install is not pinned to the release tag",
+    )
     require("**eleven** skills" in readme, "README skill count is stale")
     require("**nine** disciplines" in readme, "README discipline count is stale")
     require("all eleven skills" in readme, "README harness success check is stale")

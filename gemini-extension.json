@@ -1,6 +1,6 @@
 {
   "name": "epistemic-skills",
   "description": "The full epistemic-discipline collection in one package: a router plus nine disciplines for reconnaissance, formal reasoning, scholarly evidence, goal authoring, outsource repo-backed external handoff, adversarial review, continuity, decision persistence, and evidence-locked acceptance, with the helix tandem layer for workflow-skill pairing.",
-  "version": "2.9.1",
+  "version": "2.9.2",
   "contextFileName": "GEMINI.md"
 }

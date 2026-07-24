@@ -5,7 +5,7 @@
   },
   "metadata": {
     "description": "Epistemic-discipline skills for agentic coding — how an agent knows things before, during, and after work. One package, eleven self-triggering skills. Composes with workflow layers via the helix tandem entry point.",
-    "version": "2.9.1"
+    "version": "2.9.2"
   },
   "plugins": [
     {
