@@ -69,6 +69,7 @@ jobs:
       - name: Compile new Python
         run: |
           python -m py_compile \
+            .github/scripts/check_json_artifacts.py \
             plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/validate_trace.py \
             plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/run_tests.py \
             plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/behavioral/score_behavior.py \
@@ -80,31 +81,14 @@ jobs:
             plugins/epistemic-skills/skills/applying-formal-rigor/evals/formal-rigor-v2-fixtures/score.py \
             plugins/epistemic-skills/skills/applying-formal-rigor/evals/formal-rigor-v2-fixtures/tests/run_tests.py \
             plugins/epistemic-skills/skills/applying-formal-rigor/evals/formal-rigor-v2-fixtures/tests/test_focused.py \
+            plugins/epistemic-skills/skills/applying-formal-rigor/validate_record.py \
             plugins/epistemic-skills/skills/evidence-locked-uat/evals/triage/score.py \
             plugins/epistemic-skills/skills/evidence-locked-uat/evals/triage/tests/run_tests.py \
             plugins/epistemic-skills/skills/decision-ledger/evals/proportionality/score.py \
             plugins/epistemic-skills/skills/decision-ledger/evals/proportionality/tests/run_tests.py \
             plugins/epistemic-skills/skills/decision-ledger/reference/validate_examples.py
       - name: Parse committed JSON in integration surfaces
-        run: |
-          python - <<'PY'
-          import json
-          from pathlib import Path
-          roots = [
-              Path("plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility"),
-              Path("plugins/epistemic-skills/skills/using-epistemic-skills/evals/proportionality"),
-              Path("plugins/epistemic-skills/skills/applying-formal-rigor/evals/formal-rigor-v2-fixtures"),
-              Path("plugins/epistemic-skills/skills/evidence-locked-uat/evals/triage"),
-              Path("plugins/epistemic-skills/skills/decision-ledger/evals/proportionality"),
-              Path("plugins/epistemic-skills/skills/decision-ledger/reference"),
-          ]
-          files = []
-          for root in roots:
-              files.extend(root.rglob("*.json"))
-          for path in files:
-              json.loads(path.read_text(encoding="utf-8"))
-          print(f"parsed {len(files)} JSON files")
-          PY
+        run: python .github/scripts/check_json_artifacts.py
       - name: Decision-ledger recurrent-correction examples
         run: python plugins/epistemic-skills/skills/decision-ledger/reference/validate_examples.py
       - name: Existing receipt verifier

@@ -33,7 +33,7 @@ job. That is exactly what lets them compose without stepping on each other:
 | Skill | Consumes | Produces (its boundary) | Hands to | Valid until | Artifact shape |
 |---|---|---|---|---|---|
 | **blindspot-pass** | a materially fuzzy request + the real territory, after routine micro-recon cannot close the uncertainty | a **rewritten, de-risked request** (never a change — it ends at *understanding*) | brainstorming / plans, or a gauntlet subject | `subject-revision-unchanged`; void at next-stage-start | 4-field stamp |
-| **applying-formal-rigor** | a decision with ≥2 options; a complexity question | a **derived verdict** (named construct → derivation → what the winner concedes) | the design you build, or a gauntlet dossier | `subject-revision-unchanged` on the named inputs | 4-field stamp |
+| **applying-formal-rigor** | a bounded formal question, or material alternatives that differ on measurable/theorem-governed properties | a bounded **focused inline derivation**, or a standard/high-assurance **`formal-rigor-record@2`** with relative P1-P9 coverage and an authority-bound synthesis outcome | the design you build, or a gauntlet dossier | focused: inline subject/model scope; record: `subject-revision-unchanged` on the named inputs | focused: no process artifact; standard/high: `formal-rigor-record@2` |
 | **evidence-research** | a claim that rests on "the research says…" | a **claim-evidence matrix + reception + holdings** (never a GO/NO-GO) | a design decision, or the gauntlet Step-0 evidence gate | `session-continuous` — reception `[V]`-grade this run only; snapshot dated | JSON `handoff-receipt@1` over the matrix |
 | **write-goal** | explicit user intent, de-risked context, and any evidence/design inputs | an **approved, evidence-bound completion contract**; optionally a started persistent goal | the runtime's goal executor, then independent verification | `subject-revision-unchanged` on intent/scope/environment | `handoff-receipt@1` when file-written, else 4-field stamp |
 | **outsource** | a bounded workload + repository + operator target choice or capability need | a **GitHub-addressable, context-complete `HANDOFF.md` + short copy/paste prompt** (never the outsourced result) | the external target, then the originating agent's repo-backed relay and verification loop | `subject-revision-unchanged` on workload/scope/source; each prompt pins an immutable prepared commit | repo prose carrying the 4-field stamp |
@@ -140,7 +140,7 @@ Match the trigger you can *observe*, not a vibe:
 | You are about to… | Fire | Because |
 |---|---|---|
 | after two-read micro-recon, commit material effort into territory where the request conflicts with the repo, hidden coupling appears, the brief remains fuzzy, or fan-out would multiply a wrong premise | **blindspot-pass** | the map (request) may not match the territory; full recon is justified by an observed mismatch or multiplication risk, not unfamiliarity alone |
-| choose between ≥2 material designs, assert one is "better/cleaner/faster", or analyze an algorithm's complexity / Big-O | **applying-formal-rigor** | a verdict must be *derived* from named theory, not asserted; its lens 4 is the full complexity/Big-O analysis |
+| choose between ≥2 material designs, assert one is "better/cleaner/faster", or analyze an algorithm's complexity / Big-O | **applying-formal-rigor** | a property claim must be derived through model → preconditions → fact mapping → derivation; focused work stays inline, while material forks reconcile P1-P9 in `formal-rigor-record@2` |
 | rely on "studies show…" / a scholarly or empirical premise, or are about to make a Consensus/Scite/Zotero (scholarly-connector) tool call | **evidence-research** | a paper's *reception* (supporting/contrasting/retracted) and *holdings* (durable library) decide whether it's support, a landmine, or already paid-for judgment |
 | create, refine, or start a persistent goal; define what counts as done | **write-goal** | persistent work needs an approved completion contract that resists proxy success and preserves scope, provenance, and interruptibility |
 | hand a workload to a different, superior, specialized, or operator-selected model, agent, or process; prepare a copy/paste external handoff | **outsource** | the repository, not chat, must carry complete context, authority, completion evidence, and every relay across the execution boundary |
@@ -167,8 +167,8 @@ If a routed-to skill is absent, distinguish the boundary:
   bounded direct check and name any material coverage limit. Missing optional ceremony is not a
   reason to block observable low-risk work.
 
-Within `decide`, run formal-rigor's lens sweep first to name the precise constructs and expose
-which premises are empirical; research exactly those premises; then complete the derivation
+Within `decide`, run formal-rigor's property inventory and specialist-module applicability chain
+first to name the precise constructs and expose which premises are empirical; research exactly those premises; then complete the derivation
 with the verified matrix. If the empirical premise is the decision's whole basis, research may
 lead — but the derivation still closes the stage. *Revisit gate:* the first recorded
 decide-stage re-fire loop between formal-rigor and research.

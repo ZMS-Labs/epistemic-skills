@@ -1,7 +1,7 @@
 # applying-formal-rigor v2 — software-and-systems decision discipline
 
 **Date:** 2026-07-23
-**Status:** Draft design for operator review; production skill deliberately unchanged
+**Status:** Approved implementation design; production v2 implemented on the integration branch, candidate behavioral gate still pending
 **Type:** Major redesign of an existing epistemic discipline
 **Subject:** `plugins/epistemic-skills/skills/applying-formal-rigor/` on the branch base revision
 **Companion:** [`2026-07-23-applying-formal-rigor-v2-fixture-matrix.md`](2026-07-23-applying-formal-rigor-v2-fixture-matrix.md)

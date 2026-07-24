@@ -1,133 +1,26 @@
-# Theory Battery — the formal apparatus per lens
+# Theory battery compatibility index
 
-Load the section for whichever lens fired. Each gives: the constructs you must be able to **name**, the **derivation template**, the **canonical decision questions**, and the **undershoot** to avoid. The goal is always: name the precise construct → derive → state the result.
+This filename remains as a compatibility surface for links created before
+`applying-formal-rigor` v2. It is not a normative all-lenses checklist and must
+not be loaded as one monolithic battery.
 
----
+The v2 registry is [`reference/modules/index.md`](reference/modules/index.md).
+Reconcile P1-P9 in `SKILL.md`, then load only the bounded specialist modules for
+families marked `fired`. Mark material terrain `unmapped` when the registry has
+no adequate module; do not approximate it with a neighboring topic.
 
-## 1. Relational & Normalization Theory
+Legacy mapping:
 
-**Constructs to name:** relation/attribute/tuple/domain; **functional dependency** (X→Y); **multivalued dependency** (X↠Y); **join dependency** (JD); **Armstrong's axioms** (reflexivity, augmentation, transitivity; + union, decomposition, pseudotransitivity); **attribute closure** X⁺; **candidate key / superkey / prime attribute**; **minimal (canonical) cover**; normal forms **1NF, 2NF, 3NF, BCNF, 4NF, 5NF/PJNF, 6NF, DKNF**; **lossless-join decomposition** (the chase / the common-attribute superkey test); **dependency preservation**; **anomaly classes** (insertion, update, deletion); **relational algebra** (σ select, π project, ⋈ join {theta/equi/natural/semi/anti/outer}, ÷ division, set ops) and its equivalence to safe relational calculus (**Codd's theorem**).
+| Former lens | v2 destination |
+|---|---|
+| Relational and normalization | `relational-dependencies` |
+| Transactions and concurrency | `transaction-histories` |
+| Distributed data and consistency | `distributed-consistency` |
+| Complexity and algorithms | `algorithms-data-structures` and, when capacity matters, `queueing-capacity-parallelism` |
+| Type theory and formal methods | P1/P2; currently `unmapped` unless a listed first-release module is adequate |
+| Information theory | P6/P8; currently `unmapped` unless a listed first-release module is adequate |
+| Architecture formalisms | P5/P7/P9; use a precise listed module or mark `unmapped`; architecture slogans are not theorems |
 
-**Normal-form ladder (what each removes):**
-- **1NF** — atomic attributes, no repeating groups (no `col_1,col_2,col_3` smearing of a set).
-- **2NF** — no partial dependency of a non-prime attribute on part of a candidate key.
-- **3NF** — no transitive dependency (non-prime → non-prime). 3NF is always achievable losslessly *and* dependency-preservingly (synthesis algorithm).
-- **BCNF** — every nontrivial FD's left side is a superkey. May sacrifice dependency preservation; BCNF decomposition is lossless but not always dependency-preserving (the 3NF-vs-BCNF tradeoff is a *named* decision).
-- **4NF** — no nontrivial **MVD** whose left side isn't a superkey. This is the one most often missed: a set-valued / independent-multivalued attribute (user→{phone}, user→{skill}) is a 4NF concern, not merely 1NF.
-- **5NF/PJNF** — no nontrivial **join dependency** not implied by candidate keys (relevant when a relation reconstructs only via 3+ way join).
-- **DKNF** — every constraint is a logical consequence of domain + key constraints (the ideal; rarely fully attainable).
-
-**Derivation template (schema decision):**
-1. List attributes + the real-world FDs and MVDs.
-2. Compute attribute closures → candidate keys.
-3. Test each FD/MVD against the NF definitions → identify the highest NF violated and *why*.
-4. Map the violation to its **anomaly class** (insertion/update/deletion) — this is the concrete cost.
-5. Propose the decomposition; **prove it lossless** (common attribute is a key of one side) and check **dependency preservation**.
-6. Cross-check the type-theory lens: do the keys make illegal states unrepresentable?
-
-**Canonical questions:** What are the FDs/MVDs? The candidate keys? Highest NF satisfied? Which anomaly does the un-decomposed form admit? Is the decomposition lossless and dependency-preserving? Is denormalization being chosen *deliberately* (named: a materialized/derived redundancy with a stated refresh/coherence mechanism) or accidentally (an anomaly waiting to happen)?
-
-**Undershoot:** "violates normalization / 1NF" with no dependency, key, NF, or anomaly class named.
-
----
-
-## 2. Transaction & Concurrency Theory
-
-**Constructs to name:** **ACID**; **schedule/history**; conflicting operations (R-W, W-R, W-W on same item); **conflict-serializability** (acyclic **precedence/serialization graph**); **view-serializability** (superset, NP-hard to test); **recoverability** levels (recoverable ⊂ avoids-cascading-aborts ⊂ strict); concurrency control: **2PL / strict 2PL (SS2PL)**, **timestamp ordering**, **MVCC** (snapshot isolation), **OCC** (validation); **deadlock** (wait-for graph) vs **livelock**; **lock granularity / intention locks**.
-
-**Isolation levels & the anomalies they permit (ANSI + the real ones):**
-- READ UNCOMMITTED → **dirty read**.
-- READ COMMITTED → **non-repeatable read**.
-- REPEATABLE READ → **phantom read** (the row *set* of a predicate changes). *Pagination duplicate/skip under concurrent insert/delete IS the phantom phenomenon.*
-- SERIALIZABLE → none of the above.
-- **Snapshot isolation (MVCC)** is *not* serializable: admits **write-skew** and read-only-anomaly. Name it; don't assume "MVCC = serializable."
-
-**Derivation template (concurrency decision):**
-1. Write the schedule of the contending operations.
-2. Identify conflicts; build the precedence graph.
-3. Cycle ⇒ not conflict-serializable ⇒ name the resulting anomaly.
-4. Choose the mechanism (2PL/MVCC/OCC) and the *minimum* isolation level that excludes the named anomaly — over-isolating is a (named) throughput cost.
-
-**Canonical questions:** What schedule produces the bug? Which named anomaly is it? What is the *minimum* isolation level / mechanism that excludes it? Does the chosen store's "SERIALIZABLE" actually mean serializable or snapshot? Recoverability guarantees on abort?
-
-**Undershoot:** "race condition" / "add a lock" with no schedule, no precedence-graph reasoning, no named isolation anomaly.
-
----
-
-## 3. Distributed Data & Consistency Theory
-
-**Constructs to name:** **CAP** (under partition, choose C or A); **PACELC** (Else: Latency vs Consistency — the *non-partition* tradeoff most systems actually live in); the **consistency lattice**: **linearizable (atomic) > sequential > causal > PRAM/FIFO > eventual**; **session guarantees**: **read-your-writes**, **monotonic reads**, **monotonic writes**, **writes-follow-reads**; **quorum** systems (**R + W > N** for read-your-writes on a single object; **W > N/2** for write conflict-avoidance); **Lamport clocks** (total order, no causality capture) vs **vector clocks** (causality / concurrent-detection); **CRDTs** (CvRDT/CmRDT, join-semilattice merge) and the **LWW register** (last-writer-wins = a clock-guarded set); **consensus** (Paxos/Raft) for linearizable replicated state; **2PC** (blocking) vs **saga/outbox/CDC** (eventual, compensating).
-
-**Cache-in-front-of-DB is a replication problem.** A read cache is an async replica; the question is which consistency guarantee you owe. "Old profile after my own write" = **read-your-writes violation**. Fixes mapped to theory: invalidate-on-write (delete-after-commit) restores RYW on the writer's path; a **version/CAS guard** on cache writes is an **LWW register** preventing stale repopulation; TTL alone only bounds the **eventual-consistency** window (doesn't give RYW).
-
-**Derivation template:** state partition/latency assumptions → CAP/PACELC branch → the *required* guarantee (which session guarantee or lattice level the use case demands) → the mechanism that provides exactly it (quorum / clock / CRDT / consensus / invalidation) → residual windows (name them).
-
-**Canonical questions:** Which lattice level / session guarantee does the UX actually require (often just RYW + monotonic reads, not linearizability)? Is this PACELC-C or PACELC-A? Does the fix *guarantee* the level or merely shrink the window? What repopulation/merge races remain, and what clock/version closes them?
-
-**Undershoot:** "eventual consistency / stale / just lower the TTL" without naming the required guarantee or recognizing it as replication.
-
----
-
-## 4. Complexity & Algorithmic Analysis
-
-**Constructs to name:** asymptotic **O/Θ/Ω**; **worst vs average vs amortized**; **amortized methods** (aggregate, accounting, **potential**); **space-time tradeoff**; complexity classes (P/NP/PSPACE) when relevant; **data-structure operation profiles** (the cost vector that should drive the choice); **index theory** — B+-tree **seek O(log N)** vs **scan/discard O(n)**, covering index (no heap fetch), composite-key **lexicographic range**, **selectivity / cardinality estimation**, sort-avoidance via index order.
-
-**Name the parameter, always.** `LIMIT k OFFSET n` is **O(n+k)** (produce-and-discard n rows) → a full traversal is **O(N²/k)**; keyset/cursor is **O(log N + k)** per page, **O(N)** for the traversal. "Slow" is not an analysis; "O(offset), quadratic over a full crawl" is.
-
-**Recurrences — solve, don't eyeball.** A recursive procedure's cost is a recurrence `T(n) = a·T(n/b) + f(n)` (a subproblems each of size n/b, f(n) to split/combine); solve it by the **Master Theorem** against the watershed `n^(log_b a)`:
-- f(n) = O(n^c), c < log_b a → **Θ(n^(log_b a))** (leaves dominate).
-- f(n) = Θ(n^(log_b a)) → **Θ(n^(log_b a) · log n)** (balanced — merge sort's `2T(n/2)+O(n) = Θ(n log n)`).
-- f(n) = Ω(n^c), c > log_b a (+ regularity) → **Θ(f(n))** (root dominates).
-Subtract-and-conquer recurrences aren't Master-shaped — name them directly: `T(n)=T(n-1)+O(1)→O(n)`, `T(n)=T(n-1)+O(n)→O(n²)`, `T(n)=2T(n-1)+O(1)→O(2ⁿ)` (the naive-Fibonacci exponential-branching trap). Akra–Bazzi generalizes to unequal subproblem sizes.
-
-**Prove the lower bound, then stop.** An analysis isn't done at "it's O(n log n)"; it's done when you've stated the problem's **lower bound Ω(·)** and whether you're at it. Comparison sort is Ω(n log n) (merge sort is optimal — no gain to chase); search in an unsorted array is Ω(n); anything that must read all input is Ω(n). Naming the lower bound converts "could be faster" into "provably cannot be faster."
-
-**Optimization must CONVERGE.** Re-deriving the same code must reach a fixed point: `O(n²)→O(n log n)→at-bound→stable`. An analysis that *always* finds another improvement is one of three failures — a **hallucinated** optimization, a **trade-off** miscounted as a strict win (O(n)→O(log n) time bought with O(1)→O(n) space is a trade-off, not an improvement), or a **missed lower bound**. Label the terminal state: `improvable` (concrete gain named) / `trade-off` (dimension moved at a cost) / `converged` (at the proven bound) / `optimal-for-constraints` (better exists but a stated constraint forbids it). Genuine gains come from named substitutions: linear→binary search O(n)→O(log n) on sorted data; list-membership→hash-set O(n)→O(1); recompute→prefix-array O(n)→O(1); repeated subproblems→memoization/DP.
-
-**Hidden costs the source hides.** Asymptotics live under syntax: string concatenation in a loop is often O(n²); slice/spread makes implicit O(n) copies; a regex compiled or JSON parsed *inside* a loop multiplies the body; one network/disk op dwarfs any in-memory constant. Count the work the language performs, not the lines you wrote.
-
-**Derivation template:** define the operation/workload mix → cost per op (worst + amortized) → recurrence if recursive (solve via Master/Akra–Bazzi) → aggregate over the realistic N and access pattern → compare named complexities → state the Ω lower bound and convergence state → name constant-factor / cache / IO effects only after the asymptotics.
-
-**Canonical questions:** Cost in which parameter, worst and amortized? What recurrence, and its Master-Theorem case? What is the problem's Ω lower bound, and are we at it? Is the proposed speedup a strict win or a space/time trade-off? What's the workload's read/write/scan mix? Does an index turn a scan into a seek? Is a sort implied, and does index order remove it?
-
-**Undershoot:** "fast/slow/scales/won't scale" with no complexity class and no parameter; "we can optimize it" with no named lower bound to say whether you already have.
-
----
-
-## 5. Type Theory & Formal Methods
-
-**Constructs to name:** **make illegal states unrepresentable** (the type/schema excludes bad values by construction); **invariants** (representation invariant, system invariant); **pre/postconditions** & **Hoare triples**; **loop invariants**; **totality** (total vs partial functions; exhaustiveness); **algebraic data types** (sum/product; encode "exactly one of"); **refinement** (spec → implementation preserving behavior); **parametricity / referential transparency**; **idempotency** as a typed property.
-
-**The bridge to the relational lens:** a `PRIMARY KEY`/`UNIQUE`/`CHECK`/`NOT NULL`/FK is the *type-level* exclusion of an illegal state; "the constraint enforces it" and "the type makes it unrepresentable" are the same result reached from two lenses — cite both.
-
-**Canonical questions:** Can the bad state be *written at all*, or is it excluded by construction? What invariant must hold, and where is it established/preserved? Is the operation total? Idempotent? Is this enforced by the type/schema or merely by convention (the latter is a future anomaly)?
-
-**Undershoot:** "we'll validate it in code" where a key/type/ADT could make it unrepresentable.
-
----
-
-## 6. Information Theory
-
-**Constructs to name:** **entropy** (bits of real information; drives encoding/compression bounds — you cannot losslessly compress below entropy); **hashing**: uniformity, **collision / birthday bound** (~√(space) before a collision is likely — sizes IDs, dedup keys, sharding); **cardinality estimation** (**HyperLogLog**) for count-distinct at scale; **error-detection/correction** coding when integrity over a channel matters.
-
-**Canonical questions:** How many bits of entropy does this identifier/token actually carry (collision risk, guessability)? Is a hash space large enough given the birthday bound at expected N? Is an approximate-distinct (HLL) acceptable vs an exact, expensive `COUNT(DISTINCT)`?
-
-**Undershoot:** choosing ID/hash widths or "unique enough" tokens without a birthday-bound calculation.
-
----
-
-## 7. Architecture Formalisms (theory applied to code/config/state)
-
-**Constructs to name:** **coupling** (afferent/efferent) & **cohesion**; **SSOT / normalization-for-code** — the *same* insertion/update/deletion anomaly theory applies to duplicated config, denormalized state, copied constants (a value stored twice is an update anomaly); **derived vs base data** & the **materialized-view pattern** (keep normalized source + a checked-in/generated derived artifact — recovers "pointability" without duplication); **idempotency** & **referential transparency**; **blast radius / failure domains** (what breaks if this changes/fails; how reversible); **essential vs accidental complexity**.
-
-**The recurring synthesis move:** when option A is normalized (no anomaly) but option B is "one nice pointable artifact," you usually don't choose — you take A's normalized source **plus** a generated materialized view (A's correctness, B's ergonomics). Name it as the materialized-view / base-table pattern.
-
-**Canonical questions:** Is any fact stored in >1 place (update anomaly)? Is the duplicate a *deliberate derived view* with a refresh/coherence mechanism, or accidental? What's the blast radius and reversibility of this change? Is added complexity essential or accidental? Does this preserve the system's stated invariants (SSOT, single-source registry conventions)?
-
-**Undershoot:** "it's cleaner / DRY-er / more cohesive" without naming the anomaly avoided or the invariant preserved.
-
----
-
-## Cross-lens discipline
-
-Most real decisions fire **3+ lenses**. A schema choice is relational *and* complexity *and* type-theory *and* architecture. A caching choice is consistency *and* concurrency *and* complexity. **Sweep them all**, derive each, then synthesize — the verdict names what the winner concedes and how to recover it.
+The invalid ranked-contact 4NF example has been retired. The corrected MVD
+example and caveats live in
+[`reference/modules/relational-dependencies.md`](reference/modules/relational-dependencies.md).

@@ -12,5 +12,6 @@ smoke check, not a population measurement or truth oracle.
 Run `python tests/run_tests.py` and `python score.py --inventory-only`.
 
 Absent or non-isolated model execution is `NOT_RUN`, never a RED result credited to an
-arm. Production skill edits remain blocked until neutral and current-v1 RED runs are
-durably recorded under the blinded protocol.
+arm. Neutral and current-v1 RED runs were durably recorded before production edits under
+`results/2026-07-24-red-baseline/`; candidate, parody, and semantic arms remain separately
+gated and `NOT_RUN` until executed.
