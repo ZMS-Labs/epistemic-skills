@@ -41,6 +41,12 @@ design is archaeology, and evidence after the verdict is rationalization.
 This rule does not require proving the absence of every other pair. Non-events
 are silent.
 
+Verification timing follows
+[`using-epistemic-skills/reference/verification-proportionality.md`](../using-epistemic-skills/reference/verification-proportionality.md).
+A workflow completion stage consumes current evidence bound to the latest
+relevant subject revision. **Do not add a second verification pass** merely
+because the stage occurs after the check that already established the claim.
+
 ## The pairing map
 
 | Workflow stage | Epistemic pair | Position |
@@ -54,7 +60,7 @@ are silent.
 | external delegation / model handoff | **outsource** | *before* sending — commit a context-complete GitHub packet and emit only its short pointer; returned relay claims are re-verified by the origin |
 | test-driven-development / implementation | (none mandatory) | epistemic disciplines fire only on their own positive triggers; clean implementation needs no ceremony |
 | systematic-debugging (fix rests on a complexity or correctness claim) | **applying-formal-rigor** | *inside* — "this is O(n log n) now" and "this can't race" are derived, not asserted |
-| verification-before-completion (material UI-facing acceptance surface) | **evidence-locked-uat** | *is* that skill's UI-facing instance — blinded verifier, never self-certification; routine directly checkable presentation changes use the bounded check instead of a full packet |
+| verification-before-completion | **evidence-locked-uat** only for a material UI-facing acceptance surface | *is* that skill's hard-to-observe UI instance — blinded verifier, never material self-certification; ordinary deterministic work consumes its current bounded evidence with no epistemic pair or second pass |
 | finishing-a-development-branch (per gauntlet's own positive trigger list) | **gauntlet** | *pre-merge* — after the user selects merge or push+PR, before the merge/push executes |
 | receiving-code-review (feedback asserts a material design claim or proposes an alternative) | **applying-formal-rigor** | *inside* — derive the claim from named theory before implementing it or pushing back on it |
 | any workflow stage not listed above | *(none mandatory)* | disciplines still fire on their own standalone positive triggers — the member skill, not helix, remains authoritative |
@@ -110,6 +116,9 @@ relationship matters.
 - **an empirical test is about to run** → record the belief, prediction, and
   disconfirming observation before the result exists; the consuming epistemic
   skill owns that preregistration.
+- **a completion stage arrives after an adequate check already ran** → confirm that
+  the evidence postdates the last relevant material change and remains valid,
+  then consume it. Do not rerun it solely to make the check "final."
 - **a material UI acceptance claim is about to be made** → the stage is
   evidence-locked-uat. A routine directly checkable presentation edit records
   its bounded preview/test result without constructing the full UAT container.
@@ -160,6 +169,7 @@ a context-file include, or pasting the file into the loop.
 | "Superpowers isn't installed, so none of this applies" | The pairings are stage-shaped. Map them to whatever workflow steps the session actually has. |
 | "A short prompt is enough for an external model" | Only after `outsource` makes the repository packet complete, pushed, and reachable. Shortness belongs in the pointer, not the context. |
 | "I basically already did the triggered discipline informally" | Informal is not the discipline when its positive trigger is present. This does not turn routine non-events into formal invocations. |
+| "Verification-before-completion means rerunning the test in the final turn" | Evidence freshness is revision-bound, not message-bound. Reuse a current adequate result; refresh only what moved or was never established. |
 
 ## Local overlay
 
