@@ -187,6 +187,8 @@ exhausts software-and-systems theory.
 Load only modules for fired families from
 [`reference/modules/index.md`](reference/modules/index.md). If no adequate
 module exists, use `unmapped`; never coerce the property into a nearby module.
+Coverage `modules` entries use the registry's exact unversioned `module_id`;
+carry module versions in derivation/source provenance, not by changing the id.
 
 ### 3. Prove applicability, then derive
 

@@ -145,36 +145,36 @@ def score_fixture(truth: dict, response: dict) -> dict:
         actual = by_id.get(claim["id"])
         if actual is None: fail(failures, "S6", f"claim {claim['id']} omitted")
         elif actual.get("state") not in claim.get("allowed_states", []): fail(failures, "S6", f"claim {claim['id']} state not allowed")
-    record = response.get("record") if isinstance(response.get("record"), dict) else {}
-    rows = {c.get("family"): c for c in record.get("coverage", []) if isinstance(c, dict)}
-    for req in truth.get("coverage", {}).get("required", []):
-        row = rows.get(req["family"], {})
-        if row.get("status") != req["status"]: fail(failures, "S5", f"{req['family']} expected {req['status']}")
-        if not set(req.get("modules", [])) <= set(row.get("modules", [])): fail(failures, "S3", f"{req['family']} missing module")
-    for item in truth.get("coverage", {}).get("forbidden", []):
-        if rows.get(item["family"], {}).get("status") == item.get("status"): fail(failures, "S5", f"forbidden coverage state {item['family']}")
-    frame = record.get("decision_frame", {})
-    if not isinstance(frame, dict):
-        fail(failures, "S2", "decision_frame must be an object")
-        frame = {}
-    if truth.get("decision_frame", {}).get("null_option_required"):
-        alternatives = frame.get("alternatives", [])
-        if not isinstance(alternatives, list) or any(not isinstance(item, dict) for item in alternatives):
-            fail(failures, "S2", "decision_frame.alternatives must be an array of objects")
-            alternatives = [item for item in alternatives if isinstance(item, dict)] if isinstance(alternatives, list) else []
-        if len([a for a in alternatives if a.get("kind") == "null-option"]) != 1: fail(failures, "S2", "exactly one null option required")
-    if truth.get("decision_frame", {}).get("priority_rule_required") and not frame.get("priority_rule", {}).get("authority_ref"):
-        fail(failures, "S2", "authorized priority rule required")
-    synthesis = record.get("synthesis", {})
-    allowed = truth.get("synthesis", {}).get("allowed_outcomes", [])
-    if invocation in {"standard", "high-assurance"} and allowed and synthesis.get("outcome") not in allowed: fail(failures, "S8", f"outcome {synthesis.get('outcome')} not allowed")
-    expected_selected = truth.get("synthesis", {}).get("selected_option", "__unspecified__")
-    if invocation in {"standard", "high-assurance"} and expected_selected != "__unspecified__" and synthesis.get("selected_option") != expected_selected:
-        fail(failures, "S8", "selected option does not match obligation")
-    freshness = truth.get("freshness", {})
-    if freshness.get("must_re_fire") and record.get("subject", {}).get("revision") == freshness.get("stale_revision"):
-        fail(failures, "S9", "stale revision reused")
     if invocation in {"standard", "high-assurance"}:
+        record = response.get("record") if isinstance(response.get("record"), dict) else {}
+        rows = {c.get("family"): c for c in record.get("coverage", []) if isinstance(c, dict)}
+        for req in truth.get("coverage", {}).get("required", []):
+            row = rows.get(req["family"], {})
+            if row.get("status") != req["status"]: fail(failures, "S5", f"{req['family']} expected {req['status']}")
+            if not set(req.get("modules", [])) <= set(row.get("modules", [])): fail(failures, "S3", f"{req['family']} missing module")
+        for item in truth.get("coverage", {}).get("forbidden", []):
+            if rows.get(item["family"], {}).get("status") == item.get("status"): fail(failures, "S5", f"forbidden coverage state {item['family']}")
+        frame = record.get("decision_frame", {})
+        if not isinstance(frame, dict):
+            fail(failures, "S2", "decision_frame must be an object")
+            frame = {}
+        if truth.get("decision_frame", {}).get("null_option_required"):
+            alternatives = frame.get("alternatives", [])
+            if not isinstance(alternatives, list) or any(not isinstance(item, dict) for item in alternatives):
+                fail(failures, "S2", "decision_frame.alternatives must be an array of objects")
+                alternatives = [item for item in alternatives if isinstance(item, dict)] if isinstance(alternatives, list) else []
+            if len([a for a in alternatives if a.get("kind") == "null-option"]) != 1: fail(failures, "S2", "exactly one null option required")
+        if truth.get("decision_frame", {}).get("priority_rule_required") and not frame.get("priority_rule", {}).get("authority_ref"):
+            fail(failures, "S2", "authorized priority rule required")
+        synthesis = record.get("synthesis", {})
+        allowed = truth.get("synthesis", {}).get("allowed_outcomes", [])
+        if allowed and synthesis.get("outcome") not in allowed: fail(failures, "S8", f"outcome {synthesis.get('outcome')} not allowed")
+        expected_selected = truth.get("synthesis", {}).get("selected_option", "__unspecified__")
+        if expected_selected != "__unspecified__" and synthesis.get("selected_option") != expected_selected:
+            fail(failures, "S8", "selected option does not match obligation")
+        freshness = truth.get("freshness", {})
+        if freshness.get("must_re_fire") and record.get("subject", {}).get("revision") == freshness.get("stale_revision"):
+            fail(failures, "S9", "stale revision reused")
         pinned_sources = {
             source_id
             for derivation in record.get("derivations", []) if isinstance(derivation, dict)

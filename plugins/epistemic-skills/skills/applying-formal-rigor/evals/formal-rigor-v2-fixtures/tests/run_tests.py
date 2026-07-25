@@ -118,6 +118,7 @@ def assert_v2_production_contract() -> None:
         "A `reversal` rejects a premise or proposal; it does not by itself select a replacement",
         "Product/version semantics require an exact official source pin at every tier that emits a record",
         "Cross-check these observable cues before marking a family",
+        "Coverage `modules` entries use the registry's exact unversioned `module_id`",
     ):
         require(marker in skill_text, f"production SKILL.md missing v2 contract marker: {marker}")
     require("enumerate all 7 lenses" not in skill_text, "v1 closed seven-lens sweep remains normative")
@@ -193,6 +194,16 @@ def main() -> int:
         require(source["product"] == "PostgreSQL" and source["version"] == "18", "product source is not version pinned")
         require(source["canonical_url"] == "https://www.postgresql.org/docs/18/transaction-iso.html", "product source URL is not canonical")
         require(source["retrieved"] == "2026-07-23", "source snapshot date is not pinned")
+
+    dominance_facts = json.loads(
+        (ROOT / "fixtures" / "cc-04-authorized-dominance" / "artifacts" / "facts.json")
+        .read_text(encoding="utf-8")
+    )
+    require(
+        dominance_facts["A"].get("reliability") == "equal"
+        and dominance_facts["B"].get("reliability") == "equal",
+        "authorized-dominance control prioritizes reliability without supplying a reliability tie",
+    )
 
     skip = {"response": "formal-rigor-fixture-response@1", "fixture": "ot-01-pure-preference-skip",
             "invocation": "skip", "skip_reason": "No theorem, measurable property, convention, or contract distinguishes the names.",

@@ -39,6 +39,17 @@ compact = {
 result = score.score_fixture(truth, compact)
 assert result["structural_pass"], result
 
+routed_truth = dict(truth, coverage={
+    "required": [{
+        "family": "P7", "status": "fired", "modules": ["algorithms-data-structures"],
+    }],
+})
+result = score.score_fixture(routed_truth, compact)
+assert result["structural_pass"], (
+    "focused mode forbids a record, so scorer-only route metadata cannot require P1-P9 rows",
+    result,
+)
+
 container_tax = dict(compact, focused_output=None, record={"record": "formal-rigor-record@2"})
 result = score.score_fixture(truth, container_tax)
 assert not result["structural_pass"] and "S1" in result["dimensions_failed"], result
