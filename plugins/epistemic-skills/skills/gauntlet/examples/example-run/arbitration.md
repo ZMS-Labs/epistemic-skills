@@ -11,7 +11,9 @@ same finding contract and arbitration path as every other evaluator.
   mechanism and a mechanically runnable falsifier; the draft's evidence supports it.
   Ruled UPHELD, open → blocking P2.
 - **F2** — compliance-litigator's session-identity concern is answered by the draft
-  itself (keyed-hash token). Ruled OVERRULED on the cited evidence, resolved.
+  itself (keyed-hash token). Ruled OVERRULED on the cited evidence, resolved. Its
+  valid kernel is preserved: session identity is load-bearing and must be bound
+  cryptographically rather than trusted from prose.
 - **F3** — retention rule for stale receipts: real but minor, and partially covered
   by the validity-window semantics. Ruled UPHELD-WITH-QUALIFICATIONS, resolved.
 
@@ -49,6 +51,7 @@ and the ledger line derive from it (finalize_run.py), they never restate it.
       "basin": "session-identity",
       "ruling": "OVERRULED",
       "status": "resolved",
+      "validation_kernel": "Session identity is load-bearing and must be cryptographically bound rather than trusted from prose.",
       "acceptance_criteria": []
     },
     {
