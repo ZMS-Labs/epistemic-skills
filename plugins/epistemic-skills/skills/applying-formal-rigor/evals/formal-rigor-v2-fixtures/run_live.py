@@ -459,9 +459,28 @@ def parse_fleet_bridge_stream(events: str) -> tuple[str, int | None, str]:
 
 def normalize_fleet_bridge_response(response: str) -> tuple[str, str | None]:
     decoder = json.JSONDecoder()
+
+    def envelope_identity(value: object) -> tuple[str, str] | None:
+        if not isinstance(value, dict) or not isinstance(value.get("fixture"), str):
+            return None
+        response_marker = value.get("response")
+        adjudication_marker = value.get("adjudication")
+        if (
+            response_marker == "formal-rigor-fixture-response@1"
+            and adjudication_marker is None
+        ):
+            return response_marker, value["fixture"]
+        if (
+            adjudication_marker == "formal-rigor-semantic-adjudication@1"
+            and response_marker is None
+        ):
+            return adjudication_marker, value["fixture"]
+        return None
+
     values: list[object] = []
     spans: list[tuple[int, int]] = []
     offset = 0
+    decode_failed = False
     while offset < len(response):
         while offset < len(response) and response[offset].isspace():
             offset += 1
@@ -471,28 +490,92 @@ def normalize_fleet_bridge_response(response: str) -> tuple[str, str | None]:
         try:
             value, offset = decoder.raw_decode(response, offset)
         except json.JSONDecodeError:
-            return response, None
+            decode_failed = True
+            break
         values.append(value)
         spans.append((start, offset))
-    if len(values) > 1 and all(value == values[0] for value in values[1:]):
+    if not decode_failed and len(values) > 1 and all(value == values[0] for value in values[1:]):
         start, end = spans[0]
         return response[start:end], "deduplicated-identical-complete-json-values"
-    recognized = {
-        "formal-rigor-fixture-response@1",
-        "formal-rigor-semantic-adjudication@1",
-    }
     envelopes: list[tuple[object, object]] = []
-    for value in values:
-        if not isinstance(value, dict):
-            return response, None
-        marker = value.get("response") or value.get("adjudication")
-        if marker not in recognized:
-            return response, None
-        envelopes.append((marker, value.get("fixture")))
-    if len(values) > 1 and all(envelope == envelopes[0] for envelope in envelopes[1:]):
-        start, end = spans[-1]
-        return response[start:end], "selected-final-complete-json-snapshot"
-    return response, None
+    if not decode_failed:
+        for value in values:
+            identity = envelope_identity(value)
+            if identity is None:
+                return response, None
+            envelopes.append(identity)
+        if len(values) > 1 and all(envelope == envelopes[0] for envelope in envelopes[1:]):
+            start, end = spans[-1]
+            return response[start:end], "selected-final-complete-json-snapshot"
+        return response, None
+
+    # Cursor's Fleet stream can contain an interrupted draft snapshot followed
+    # by one complete final snapshot. Recover only the strict, observable form:
+    # JSON-like snapshots begin at the stream boundary, every snapshot header
+    # names the same recognized envelope and fixture, and the sole decodable
+    # recognized object is the terminal value. Raw NDJSON remains in events.jsonl.
+    candidates: list[tuple[int, int, dict[str, object]]] = []
+    search_from = 0
+    while True:
+        start = response.find("{", search_from)
+        if start < 0:
+            break
+        try:
+            value, end = decoder.raw_decode(response, start)
+        except json.JSONDecodeError:
+            search_from = start + 1
+            continue
+        if isinstance(value, dict) and envelope_identity(value) is not None:
+            candidates.append((start, end, value))
+        search_from = start + 1
+
+    if len(candidates) != 1:
+        return response, None
+    final_start, final_end, final_value = candidates[0]
+    if response[final_end:].strip():
+        return response, None
+    final_identity = envelope_identity(final_value)
+    if final_identity is None:
+        return response, None
+    final_marker, final_fixture = final_identity
+    if not response[:final_start].rstrip().endswith("}"):
+        return response, None
+
+    header_pattern = re.compile(
+        r'\{\s*"(?P<field>response|adjudication)"\s*:\s*'
+        r'"(?P<marker>formal-rigor-(?:fixture-response|semantic-adjudication)@1)"\s*,'
+        r'\s*"fixture"\s*:\s*"(?P<fixture>[^"\\]+)"'
+    )
+    headers = list(header_pattern.finditer(response))
+    if len(headers) != 2 or headers[-1].start() != final_start:
+        return response, None
+    if response[:headers[0].start()].strip():
+        return response, None
+    if any(
+        (
+            header.group("field") == "response"
+            and header.group("marker") != "formal-rigor-fixture-response@1"
+        )
+        or (
+            header.group("field") == "adjudication"
+            and header.group("marker") != "formal-rigor-semantic-adjudication@1"
+        )
+        or header.group("marker") != final_marker
+        or header.group("fixture") != final_fixture
+        for header in headers
+    ):
+        return response, None
+    marker_count = len(re.findall(
+        r'"(?:response|adjudication)"\s*:\s*'
+        r'"formal-rigor-(?:fixture-response|semantic-adjudication)@1"',
+        response,
+    ))
+    if marker_count != len(headers):
+        return response, None
+    return (
+        response[final_start:final_end],
+        "selected-final-complete-json-snapshot-after-malformed-prefix",
+    )
 
 
 def normalize_plain_text_response(response: str) -> tuple[str, str | None]:

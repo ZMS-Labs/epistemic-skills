@@ -318,6 +318,63 @@ def main() -> int:
             '{"response":"formal-rigor-fixture-response@1","fixture":"a","value":"final"}' and
             snapshot_normalization == "selected-final-complete-json-snapshot",
             "Fleet bridge did not select the final snapshot for one recognized response envelope")
+    malformed_then_final = (
+        '{"response":"formal-rigor-fixture-response@1","fixture":"a","value":}'
+        '{"response":"formal-rigor-fixture-response@1","fixture":"a","value":"final"}'
+    )
+    recovered_snapshot, recovery_normalization = runner.normalize_fleet_bridge_response(
+        malformed_then_final
+    )
+    require(recovered_snapshot ==
+            '{"response":"formal-rigor-fixture-response@1","fixture":"a","value":"final"}' and
+            recovery_normalization == "selected-final-complete-json-snapshot-after-malformed-prefix",
+            "Fleet bridge did not select the sole final snapshot after a malformed same-envelope prefix")
+    ambiguous_malformed_prefix = (
+        '{"response":"formal-rigor-fixture-response@1","fixture":"b","value":}'
+        '{"response":"formal-rigor-fixture-response@1","fixture":"a","value":"final"}'
+    )
+    unchanged, no_normalization = runner.normalize_fleet_bridge_response(
+        ambiguous_malformed_prefix
+    )
+    require(unchanged == ambiguous_malformed_prefix and no_normalization is None,
+            "Fleet bridge normalization must reject a malformed prefix for another fixture")
+    two_malformed_prefixes = (
+        '{"response":"formal-rigor-fixture-response@1","fixture":"a","value":}'
+        '{"response":"formal-rigor-fixture-response@1","fixture":"a","value":}'
+        '{"response":"formal-rigor-fixture-response@1","fixture":"a","value":"final"}'
+    )
+    unchanged, no_normalization = runner.normalize_fleet_bridge_response(two_malformed_prefixes)
+    require(unchanged == two_malformed_prefixes and no_normalization is None,
+            "Fleet bridge normalization must reject multiple malformed snapshots")
+    trailing_junk = malformed_then_final + "\nnot-a-snapshot"
+    unchanged, no_normalization = runner.normalize_fleet_bridge_response(trailing_junk)
+    require(unchanged == trailing_junk and no_normalization is None,
+            "Fleet bridge normalization must reject content after the final envelope")
+    nested_as_value = (
+        '{"response":"formal-rigor-fixture-response@1","fixture":"a","value":'
+        '{"response":"formal-rigor-fixture-response@1","fixture":"a","value":"final"}'
+    )
+    unchanged, no_normalization = runner.normalize_fleet_bridge_response(nested_as_value)
+    require(unchanged == nested_as_value and no_normalization is None,
+            "Fleet bridge normalization must reject a final object nested as an unfinished value")
+    adjudication_final = (
+        '{"adjudication":"formal-rigor-semantic-adjudication@1",'
+        '"fixture":"a","value":"final"}'
+    )
+    adjudication_malformed = adjudication_final.replace('"value":"final"', '"value":', 1)
+    recovered_snapshot, recovery_normalization = runner.normalize_fleet_bridge_response(
+        adjudication_malformed + adjudication_final
+    )
+    require(recovered_snapshot == adjudication_final and
+            recovery_normalization == "selected-final-complete-json-snapshot-after-malformed-prefix",
+            "Fleet bridge malformed-prefix recovery did not cover adjudication envelopes")
+    crossed_markers = (
+        '{"response":"formal-rigor-semantic-adjudication@1","fixture":"a","value":"draft"}'
+        '{"response":"formal-rigor-semantic-adjudication@1","fixture":"a","value":"final"}'
+    )
+    unchanged, no_normalization = runner.normalize_fleet_bridge_response(crossed_markers)
+    require(unchanged == crossed_markers and no_normalization is None,
+            "Fleet bridge normalization must reject a semantic marker under the response key")
     distinct = (
         '{"response":"formal-rigor-fixture-response@1","fixture":"a"}'
         '{"response":"formal-rigor-fixture-response@1","fixture":"b"}'

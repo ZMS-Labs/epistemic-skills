@@ -62,3 +62,12 @@ The subsequent runner change permits only deterministic extraction of exactly
 one recognized top-level envelope while retaining raw stdout and rejecting
 zero, repeated, nested, ambiguous, or truncated envelopes. That change requires
 a new source commit and fresh campaign; it does not upgrade this failed epoch.
+
+## 2026-07-25 Fleet/Cursor transport diagnostic
+
+The campaign at source `8a3bfdf` stopped at 36/198 arms, with 35 parseable.
+The Fleet/Cursor response for `cc-04` / `parody-jargon-only` contained an
+earlier malformed snapshot followed by a later valid snapshot. No call was
+retried or repaired. The root `C:\tmp\formal-rigor-final-8a3bfdf` is excluded
+from scoring and content-pinned as
+`49588e690c991d63abecb2fcd3ae9eef20271464fc4daa8c56f90c55c90a9d45`.
