@@ -4,10 +4,13 @@
 from __future__ import annotations
 
 import argparse
+import concurrent.futures
 import hashlib
 import json
 import subprocess
 import sys
+import threading
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -17,6 +20,7 @@ ARMS = HERE / "arms.json"
 SCENARIOS = HERE / "scenarios.json"
 FIXTURES = PARENT / "fixtures.json"
 SCORER = PARENT / "score.py"
+RESPONSE_SCHEMA = HERE / "proportionality-fixture-response.schema.json"
 REPO_ROOT = HERE.parents[6]
 SKILL_PATHS = [
     "plugins/epistemic-skills/skills/using-epistemic-skills/SKILL.md",
@@ -43,6 +47,7 @@ RESPONSE_FIELDS = {
     "required_signal_observed": "boolean",
     "escalated": "boolean",
 }
+PRINT_LOCK = threading.Lock()
 
 
 def load(path: Path) -> Any:
@@ -61,9 +66,78 @@ def digest_file(path: Path) -> str:
     return digest_bytes(path.read_bytes())
 
 
+def source_skill_hashes(source_root: Path) -> dict[str, str | None]:
+    """Hash each pinned skill artifact, preserving historical absence explicitly."""
+    return {
+        path: digest_file(source_root / path) if (source_root / path).is_file() else None
+        for path in SKILL_PATHS
+    }
+
+
 def write_json(path: Path, data: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(canonical(data))
+
+
+def utc_now() -> str:
+    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def codex_live_prompt(packet_path: Path) -> str:
+    """Build the scorer-free adapter prompt for a pinned source checkout."""
+    packet = packet_path.read_text(encoding="utf-8")
+    return (
+        "The current working directory is the pinned source checkout for this arm. "
+        "Activate its epistemic router by reading "
+        "plugins/epistemic-skills/skills/using-epistemic-skills/SKILL.md. "
+        "Follow that router and read only member skill files whose positive triggers apply. "
+        "Do not inspect evaluation directories, scorer code, ground truth, other fixtures, "
+        "other arms, or repository history. Treat the JSON below as the complete task packet. "
+        "Follow its instruction and task, then return exactly one JSON object matching its "
+        "response_contract and the enforced output schema. Report only skills actually fired; "
+        "do not add process for the evaluation. Do not wrap the JSON in Markdown.\n\n"
+        "BEGIN INPUT PACKET\n"
+        f"{packet.rstrip()}\n"
+        "END INPUT PACKET\n"
+    )
+
+
+def codex_live_command(
+    codex: Path, source_root: Path, response_path: Path, model: str
+) -> list[str]:
+    """Return a command whose sealed task payload is supplied separately on stdin."""
+    return [
+        str(codex),
+        "exec",
+        "--ephemeral",
+        "--ignore-user-config",
+        "--ignore-rules",
+        "--disable",
+        "plugins",
+        "--disable",
+        "apps",
+        "--disable",
+        "remote_plugin",
+        "--disable",
+        "plugin_sharing",
+        "--sandbox",
+        "read-only",
+        "--skip-git-repo-check",
+        "--color",
+        "never",
+        "--json",
+        "-c",
+        'model_reasoning_effort="high"',
+        "--model",
+        model,
+        "--cd",
+        str(source_root),
+        "--output-last-message",
+        str(response_path),
+        "--output-schema",
+        str(RESPONSE_SCHEMA),
+        "-",
+    ]
 
 
 def indexed(items: list[dict[str, Any]], label: str) -> dict[str, dict[str, Any]]:
@@ -120,9 +194,6 @@ def prepare(
         raise SystemExit(
             f"source checkout is {observed_commit}, expected {arm['source_commit']} for {arm_id}"
         )
-    missing_skill_paths = [path for path in SKILL_PATHS if not (source_root / path).is_file()]
-    if missing_skill_paths:
-        raise SystemExit(f"source checkout lacks skill files: {missing_skill_paths}")
     dirty = subprocess.run(
         ["git", "-C", str(source_root), "diff", "--quiet", "HEAD", "--", *SKILL_PATHS]
     ).returncode
@@ -174,8 +245,10 @@ def prepare(
             "scenarios.json": digest_file(SCENARIOS),
             "fixtures.json": digest_file(FIXTURES),
             "score.py": digest_file(SCORER),
+            "runner.py": digest_file(HERE / "runner.py"),
+            "proportionality-fixture-response.schema.json": digest_file(RESPONSE_SCHEMA),
             arm["prompt"]: digest_file(prompt_path),
-            **{path: digest_file(source_root / path) for path in SKILL_PATHS},
+            **source_skill_hashes(source_root),
         },
         "packet_hashes": packet_hashes,
     }
@@ -196,6 +269,154 @@ def validate_response(data: Any, fixture_id: str) -> dict[str, Any]:
     if missing or unknown:
         raise ValueError(f"field mismatch: missing={missing}, unknown={unknown}")
     return {"fixture_id": fixture_id, **{key: data[key] for key in RESPONSE_FIELDS}}
+
+
+def run_live(
+    packet_dir: Path,
+    source_root: Path,
+    codex: Path,
+    workers: int,
+    timeout_seconds: int,
+    fixtures: list[str] | None = None,
+) -> int:
+    """Execute one prepared arm against its pinned source in isolated Codex turns."""
+    manifest_path = packet_dir / "manifest.json"
+    manifest = load(manifest_path)
+    if manifest.get("schema") != "proportionality-packet-manifest@1":
+        raise SystemExit("invalid or missing packet manifest")
+    if workers < 1:
+        raise SystemExit("workers must be positive")
+    source_root = source_root.resolve()
+    observed_commit = git_output(source_root, "rev-parse", "HEAD")
+    expected_commit = manifest["arm"]["source_commit"]
+    if observed_commit != expected_commit:
+        raise SystemExit(
+            f"source checkout is {observed_commit}, expected {expected_commit} for live arm"
+        )
+    expected_skill_hashes = {
+        path: manifest["source_hashes"].get(path) for path in SKILL_PATHS
+    }
+    observed_skill_hashes = source_skill_hashes(source_root)
+    if observed_skill_hashes != expected_skill_hashes:
+        raise SystemExit("source skill hashes no longer match the prepared manifest")
+    model = manifest["invocation"]["model"]
+
+    def execute(fixture_id: str) -> dict[str, Any]:
+        packet_path = packet_dir / "packets" / fixture_id / "input.json"
+        expected_packet_hash = manifest["packet_hashes"][fixture_id]
+        if not packet_path.is_file() or digest_file(packet_path) != expected_packet_hash:
+            raise RuntimeError(f"{fixture_id}: input packet is missing or changed")
+        call_path = packet_dir / "calls" / f"{fixture_id}.json"
+        if call_path.is_file():
+            return load(call_path)
+        response_path = packet_dir / "responses" / f"{fixture_id}.json"
+        if response_path.exists():
+            raise RuntimeError(
+                f"{fixture_id}: response exists without terminal call record; refusing retry"
+            )
+        events_path = packet_dir / "events" / f"{fixture_id}.jsonl"
+        stderr_path = packet_dir / "stderr" / f"{fixture_id}.txt"
+        events_path.parent.mkdir(parents=True, exist_ok=True)
+        stderr_path.parent.mkdir(parents=True, exist_ok=True)
+        prompt = codex_live_prompt(packet_path)
+        command = codex_live_command(codex, source_root, response_path, model)
+        started = utc_now()
+        transport = "failed"
+        exit_code: int | None = None
+        stdout = ""
+        stderr = ""
+        try:
+            completed = subprocess.run(
+                command,
+                cwd=source_root,
+                input=prompt,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                capture_output=True,
+                timeout=timeout_seconds,
+                check=False,
+            )
+            exit_code = completed.returncode
+            stdout = completed.stdout
+            stderr = completed.stderr
+            transport = "completed" if exit_code == 0 else "failed"
+        except subprocess.TimeoutExpired as exc:
+            stdout = (
+                exc.stdout.decode("utf-8", errors="replace")
+                if isinstance(exc.stdout, bytes)
+                else (exc.stdout or "")
+            )
+            stderr = (
+                exc.stderr.decode("utf-8", errors="replace")
+                if isinstance(exc.stderr, bytes)
+                else (exc.stderr or "")
+            )
+            transport = "timeout"
+        events_path.write_text(stdout, encoding="utf-8")
+        stderr_path.write_text(stderr, encoding="utf-8")
+        parseable = False
+        fixture_match = False
+        response_hash: str | None = None
+        if response_path.is_file():
+            response_hash = digest_file(response_path)
+            try:
+                response = load(response_path)
+                validate_response(response, fixture_id)
+                parseable = True
+                fixture_match = response.get("fixture_id") == fixture_id
+            except (json.JSONDecodeError, ValueError):
+                pass
+        record = {
+            "schema": "proportionality-live-call@2",
+            "fixture_id": fixture_id,
+            "provider": manifest["invocation"]["provider"],
+            "model": model,
+            "harness": manifest["invocation"]["harness"],
+            "reasoning_effort": manifest["invocation"]["settings"]["reasoning_effort"],
+            "source_commit": observed_commit,
+            "started_at": started,
+            "completed_at": utc_now(),
+            "transport": transport,
+            "exit_code": exit_code,
+            "json_parseable": parseable,
+            "fixture_id_matches": fixture_match,
+            "response_sha256": response_hash,
+            "input_sha256": expected_packet_hash,
+            "adapter_prompt_sha256": digest_bytes(prompt.encode("utf-8")),
+            "retry_policy": "no-retry; call record presence is terminal",
+        }
+        write_json(call_path, record)
+        with PRINT_LOCK:
+            print(
+                f"{fixture_id}: {transport} parseable={parseable} "
+                f"fixture_match={fixture_match}",
+                flush=True,
+            )
+        return record
+
+    fixture_ids = sorted(fixtures or manifest["packet_hashes"])
+    unknown_fixtures = sorted(set(fixture_ids) - set(manifest["packet_hashes"]))
+    if unknown_fixtures:
+        raise SystemExit(f"unknown fixtures for packet: {unknown_fixtures}")
+    with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
+        records = list(pool.map(execute, fixture_ids))
+    terminal = sum(record.get("transport") == "completed" for record in records)
+    parseable = sum(record.get("json_parseable") is True for record in records)
+    matched = sum(record.get("fixture_id_matches") is True for record in records)
+    summary = {
+        "schema": "proportionality-live-call-summary@2",
+        "planned": len(records),
+        "completed": terminal,
+        "parseable": parseable,
+        "fixture_id_matches": matched,
+        "source_commit": observed_commit,
+        "model": model,
+        "workers": workers,
+    }
+    write_json(packet_dir / "call-summary.json", summary)
+    print(json.dumps(summary, sort_keys=True))
+    return 0 if terminal == parseable == matched == len(records) else 1
 
 
 def score_packets(packet_dir: Path) -> int:
@@ -255,6 +476,13 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     prep.add_argument("--repetition", type=int, default=1)
     prep.add_argument("--out", required=True, type=Path)
     prep.add_argument("--source-root", type=Path, default=REPO_ROOT)
+    live = commands.add_parser("run-live")
+    live.add_argument("--packet-dir", required=True, type=Path)
+    live.add_argument("--source-root", required=True, type=Path)
+    live.add_argument("--codex", required=True, type=Path)
+    live.add_argument("--workers", type=int, default=1)
+    live.add_argument("--timeout-seconds", type=int, default=600)
+    live.add_argument("--fixture", action="append", dest="fixtures")
     scoring = commands.add_parser("score")
     scoring.add_argument("--packet-dir", required=True, type=Path)
     return parser.parse_args(argv)
@@ -264,6 +492,15 @@ def main(argv: list[str] | None = None) -> int:
     args = parse_args(sys.argv[1:] if argv is None else argv)
     if args.command == "prepare":
         return prepare(args.arm, args.repetition, args.out, args.source_root)
+    if args.command == "run-live":
+        return run_live(
+            args.packet_dir,
+            args.source_root,
+            args.codex,
+            args.workers,
+            args.timeout_seconds,
+            args.fixtures,
+        )
     return score_packets(args.packet_dir)
 
 

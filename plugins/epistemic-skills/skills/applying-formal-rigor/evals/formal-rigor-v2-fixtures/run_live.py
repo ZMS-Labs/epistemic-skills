@@ -205,6 +205,7 @@ def build_arm_packet(
     copy_file(fixture_dir / "scenario.md", destination / "scenario.md")
     shutil.copytree(fixture_dir / "artifacts", destination / "artifacts")
     copy_file(ROOT / "formal-rigor-fixture-response.schema.json", destination / "formal-rigor-fixture-response.schema.json")
+    copy_file(ROOT / "formal-rigor-fixture-transport.schema.json", destination / "formal-rigor-fixture-transport.schema.json")
     copy_file(ROOT / "formal-rigor-record.schema.json", destination / "formal-rigor-record.schema.json")
     copy_file(PROMPTS_ROOT / ARM_PROMPTS[arm], destination / "ARM_PROMPT.txt")
 
@@ -279,6 +280,11 @@ def codex_command(
     return command
 
 
+def codex_prompt_transport(prompt: str) -> tuple[str, str]:
+    """Keep the sealed prompt off argv and below Windows command-length limits."""
+    return "-", prompt
+
+
 def agy_command(
     *, agy: str, model: str, packet_dir: Path, response_path: Path, prompt: str,
 ) -> list[str]:
@@ -343,6 +349,39 @@ or prior results.
 SEALED_PACKET_JSON
 {json.dumps(files, ensure_ascii=False, sort_keys=True)}
 END_SEALED_PACKET_JSON
+"""
+
+
+def codex_arm_packet_prompt(packet_dir: Path, prompt: str) -> str:
+    """Embed mandatory arm inputs while leaving material module bodies demand-loaded."""
+    paths = [packet_dir / "ARM_PROMPT.txt", packet_dir / "scenario.md"]
+    paths.extend(sorted((packet_dir / "artifacts").rglob("*")))
+    paths.extend(sorted((packet_dir / "v1").rglob("*")) if (packet_dir / "v1").is_dir() else [])
+    for relative in (
+        "candidate/SKILL.md",
+        "candidate/theory-battery.md",
+        "candidate/reference/modules/index.md",
+    ):
+        path = packet_dir / relative
+        if path.is_file():
+            paths.append(path)
+    files = {
+        path.relative_to(packet_dir).as_posix(): path.read_text(encoding="utf-8")
+        for path in paths
+        if path.is_file()
+    }
+    return f"""{prompt.rstrip()}
+
+The mandatory packet inputs are embedded below as exact UTF-8 file contents.
+You must answer from these mandatory inputs now; a readiness acknowledgment or claim that no task
+was supplied is invalid.
+If the candidate module index routes to a material module, read only that module file from the
+read-only packet directory before answering. Do not seek scorer, ground truth, thresholds, other
+fixtures, other arms, or prior results.
+
+MANDATORY_PACKET_JSON
+{json.dumps(files, ensure_ascii=False, sort_keys=True)}
+END_MANDATORY_PACKET_JSON
 """
 
 
@@ -521,6 +560,11 @@ def execute_call(
     packet_builder(packet_dir)
     response_path = result_dir / "response.json"
     bridge = executable.startswith("fleet-bridge://")
+    effective_prompt = (
+        codex_arm_packet_prompt(packet_dir, prompt)
+        if harness == "codex" and identity.get("kind") == "arm"
+        else prompt
+    )
     invocation_metadata: dict = {}
     stdin_text: str | None = None
     if bridge:
@@ -532,9 +576,12 @@ def execute_call(
         stdin_text = invocation["stdin"]
         invocation_metadata = invocation["metadata"]
     else:
+        command_prompt = effective_prompt
+        if harness == "codex":
+            command_prompt, stdin_text = codex_prompt_transport(effective_prompt)
         command = harness_command(
             harness=harness, executable=executable, model=model, packet_dir=packet_dir,
-            response_path=response_path, prompt=prompt,
+            response_path=response_path, prompt=command_prompt,
             output_schema=(packet_dir / output_schema_name) if output_schema_name and harness == "codex" else None,
         )
     started = utc_now()
@@ -656,6 +703,7 @@ def run_arm_task(
         identity={"kind": "arm", "arm": task.arm, "repetition": task.repetition, "fixture": task.fixture},
         source_commit=source_commit,
         timeout_seconds=timeout_seconds,
+        output_schema_name="formal-rigor-fixture-transport.schema.json",
     )
     response = call_dir / "response.json"
     materialized = run_dir / f"{task.fixture}.response.json"

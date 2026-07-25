@@ -12,6 +12,9 @@ thresholds, scorer code, other fixtures, and other arms.
 file per packet, preserves those files, assembles `proportionality-run@1`, and
 invokes the deterministic parent scorer. Its manifest pins the source commit,
 prompt, fixture inputs, provider/model/harness/settings, and every packet hash.
+Source-skill hashes are recorded when the file exists and as JSON `null` when
+a pinned historical commit predates that skill; historical absence is evidence,
+not a packet-preparation failure.
 
 Prepare an arm:
 
@@ -24,8 +27,18 @@ invocation profile. Save the model's JSON object as
 `responses/<fixture-id>.json`, without repairing it by hand. Then score:
 
 ```bash
+python blinded/runner.py run-live --packet-dir /tmp/prop-final --source-root <pinned-checkout> --codex <codex-path> --workers 4
 python blinded/runner.py score --packet-dir /tmp/prop-final
 ```
+
+`run-live` verifies the checkout commit and every pinned skill hash, then runs
+each fixture in a fresh read-only Codex context rooted at that checkout. Its
+scorer-free adapter activates the checkout's `using-epistemic-skills` router
+and permits only positively triggered member skill reads. The sealed packet is
+sent on stdin and model output is constrained by the committed response schema;
+terminal call records are never retried or overwritten. Running from the packet
+directory without exposing and activating the pinned source is not a valid
+repository-arm measurement.
 
 Candidate arms require three repetitions. Use a separate output directory for
 each repetition and retain failures and dissent. See `results/BLOCKED.md` for

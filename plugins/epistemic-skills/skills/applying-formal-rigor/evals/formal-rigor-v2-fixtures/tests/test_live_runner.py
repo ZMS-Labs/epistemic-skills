@@ -92,9 +92,22 @@ def main() -> int:
         require((candidate_packet / "candidate" / "SKILL.md").is_file(), "candidate packet omits v2 skill")
         require((candidate_packet / "candidate" / "reference" / "modules" / "index.md").is_file(),
                 "candidate packet omits module registry")
+        require((candidate_packet / "formal-rigor-fixture-transport.schema.json").is_file(),
+                "candidate packet omits the API-compatible arm output schema")
         forbidden_names = {"ground-truth.json", "score.py", "semantic-adjudication.md", "RESULTS.md"}
         require(not any(path.name in forbidden_names for path in candidate_packet.rglob("*")),
                 "candidate packet leaked scorer-only or prior-result material")
+
+        embedded_arm = runner.codex_arm_packet_prompt(candidate_packet, arm_instruction)
+        require("Ranked-contact review" in embedded_arm,
+                "Codex arm prompt omitted the mandatory scenario content")
+        require('"candidate/SKILL.md"' in embedded_arm and
+                '"candidate/reference/modules/index.md"' in embedded_arm,
+                "Codex arm prompt omitted the candidate contract or module index")
+        require('"candidate/reference/modules/relational-dependencies.md"' not in embedded_arm,
+                "Codex arm prompt eagerly loaded unselected module bodies")
+        require("You must answer from these mandatory inputs now" in embedded_arm,
+                "Codex arm prompt does not reject readiness-only handshakes after input injection")
 
         sealed = runner.sealed_packet_prompt(candidate_packet, "Return exactly one JSON object.")
         require("Return exactly one JSON object." in sealed,
@@ -188,6 +201,27 @@ def main() -> int:
         (result_dir / "call.json").write_text('{"transport":"completed"}', encoding="utf-8")
         require(not runner.call_needed(result_dir), "completed call must not be retried")
 
+        captured: dict[str, object] = {}
+        original_execute_call = runner.execute_call
+        try:
+            runner.execute_call = lambda **kwargs: captured.update(kwargs) or {}
+            runner.run_arm_task(
+                runner.ArmTask("v2-candidate", 1, "tm-01-false-mvd"),
+                output_root=tmp_root / "arm-output",
+                packet_root=tmp_root / "arm-packets",
+                executables={"codex": "codex", "agy": "agy", "cursor": "cursor-agent"},
+                models={"codex": "gpt-5.6-sol", "agy": "gemini-3.1-pro-high", "cursor": "auto"},
+                source_commit="a" * 40,
+                v1_source_dir=tmp_root / "v1",
+                timeout_seconds=60,
+            )
+        finally:
+            runner.execute_call = original_execute_call
+        require(
+            captured.get("output_schema_name") == "formal-rigor-fixture-transport.schema.json",
+            "Codex arm calls must enforce the API-compatible fixture transport schema",
+        )
+
     command = runner.codex_command(
         codex="codex", model="gpt-5.6-sol", packet_dir=Path("packet"),
         response_path=Path("response.json"), prompt="return JSON",
@@ -201,6 +235,9 @@ def main() -> int:
         "--output-schema packet/formal-rigor-semantic-adjudication.schema.json",
     ):
         require(marker in joined, f"codex command missing isolation marker: {marker}")
+    argv_prompt, stdin_prompt = runner.codex_prompt_transport("sealed fixture payload")
+    require(argv_prompt == "-" and stdin_prompt == "sealed fixture payload",
+            "Codex sealed prompts must travel over stdin rather than process argv")
 
     agy = runner.agy_command(
         agy="agy", model="gemini-3.1-pro-high", packet_dir=Path("packet"),

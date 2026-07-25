@@ -13,7 +13,17 @@ BLINDED = HERE.parent
 PARENT = BLINDED.parent
 sys.path.insert(0, str(BLINDED))
 
-from runner import REPO_ROOT, load, prepare, score_packets  # noqa: E402
+from runner import (  # noqa: E402
+    REPO_ROOT,
+    RESPONSE_SCHEMA,
+    SKILL_PATHS,
+    codex_live_command,
+    codex_live_prompt,
+    load,
+    prepare,
+    score_packets,
+    source_skill_hashes,
+)
 
 
 def require(condition: bool, message: str) -> None:
@@ -49,6 +59,19 @@ def main() -> int:
     require(len(scenarios) == 18, "expected 18 self-contained scenarios")
     require({x["id"] for x in scenarios} == {x["id"] for x in fixtures}, "inventory drift")
 
+    with tempfile.TemporaryDirectory() as historical_raw:
+        historical = Path(historical_raw)
+        present = historical / SKILL_PATHS[0]
+        present.parent.mkdir(parents=True, exist_ok=True)
+        present.write_text("historical skill\n", encoding="utf-8")
+        hashes = source_skill_hashes(historical)
+        require(isinstance(hashes[SKILL_PATHS[0]], str), "present historical skill must be hashed")
+        require(
+            hashes["plugins/epistemic-skills/skills/using-epistemic-skills/reference/routine-fast-path.md"]
+            is None,
+            "a file absent at a pinned historical commit must be recorded as absent",
+        )
+
     balanced = load(PARENT / "examples" / "balanced.json")
     with tempfile.TemporaryDirectory() as first_raw, tempfile.TemporaryDirectory() as second_raw:
         first = Path(first_raw)
@@ -65,6 +88,20 @@ def main() -> int:
             serialized = json.dumps(data)
             for hidden in ("expected_paths", "required_skills", "require_escalation", "category"):
                 require(hidden not in serialized, f"packet leaks scorer-only field {hidden}")
+        sample_packet = first / "packets" / "m-01-data-structure-choice" / "input.json"
+        live_prompt = codex_live_prompt(sample_packet)
+        require(
+            "plugins/epistemic-skills/skills/using-epistemic-skills/SKILL.md" in live_prompt,
+            "live adapter must activate the pinned repository router",
+        )
+        require("Choose between a list" in live_prompt, "live adapter must embed the packet")
+        require("required_skills" not in live_prompt, "live adapter leaked scorer ground truth")
+        command = codex_live_command(
+            Path("codex.cmd"), REPO_ROOT, Path("response.json"), "gpt-5.6-sol"
+        )
+        require(command[-1] == "-", "sealed live prompt must travel on stdin")
+        require(str(REPO_ROOT) in command, "live adapter must expose the pinned source checkout")
+        require(str(RESPONSE_SCHEMA) in command, "live adapter must enforce the response schema")
         for result in balanced["results"]:
             out = first / "responses" / f"{result['fixture_id']}.json"
             out.write_text(json.dumps(response_from_result(result)), encoding="utf-8")

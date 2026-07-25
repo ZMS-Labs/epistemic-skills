@@ -5,7 +5,9 @@ smoke check, not a population measurement or truth oracle.
 
 - `fixtures/<id>/scenario.md` and `artifacts/` are run-agent visible.
 - `ground-truth.json`, `score.py`, thresholds, and other results are scorer-only.
-- the two schemas close the public response and v2 record vocabularies;
+- the public response and v2 record schemas close their persisted vocabularies;
+- `formal-rigor-fixture-transport.schema.json` is the strict, inlined,
+  OpenAI-compatible projection used to fail closed at model-output time;
 - `semantic-adjudication.md` owns independent derivation judgment;
 - `results/` records immutable identities, hashes, dissent, and coverage limits.
 
@@ -44,6 +46,13 @@ Codex and agy calls still use the requested worker concurrency.
 Use of this adapter is therefore a disclosed transport/model-plan variance,
 not evidence for the pinned Cursor model below.
 
+Local Codex arm calls receive the complete sealed packet on stdin rather than
+the Windows command line. The prompt embeds the scenario, minimal artifacts,
+applicable pinned-v1 files, candidate skill, theory battery, and module index;
+material module bodies remain available in the sealed packet for selective
+reading. The transport schema rejects readiness acknowledgements and other
+non-response text before it can be mistaken for a scored answer.
+
 The plan contains 286 arm calls (the two missing repetitions for each baseline,
 three candidate repetitions, and all six 22-fixture parodies) plus 132 isolated
 semantic-seat calls. Calls are fresh and terminal: once a `call.json` exists,
@@ -55,8 +64,12 @@ The provider allocation is frozen rather than additive: candidate repetitions
 Cursor CLI `gpt-5.6-sol`, respectively. Missing baseline repetitions follow the
 same mapping, two parody arms are assigned to each harness, and semantic seats
 rotate across the two harnesses other than the candidate response's harness.
-The 418-call ceiling is unchanged. Including the 44 already-recorded OpenAI RED
-baseline calls, each harness contributes 154 arm-plus-adjudication calls.
+The preregistered 418-call plan remains the identity of the original epoch;
+it is a plan size, not a continuing authorization ceiling. Any correction run
+uses a new immutable output root and is reported as a separate epoch rather
+than overwriting or retrying a recorded call. Including the 44 already-recorded
+OpenAI RED baseline calls, each harness contributes 154 arm-plus-adjudication
+calls in the original plan.
 
 Absent or non-isolated model execution is `NOT_RUN`, never a RED result credited to an
 arm. Neutral and current-v1 RED runs were durably recorded before production edits under

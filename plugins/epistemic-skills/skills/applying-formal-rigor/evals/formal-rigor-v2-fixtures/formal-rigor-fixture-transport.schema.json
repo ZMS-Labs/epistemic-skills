@@ -1,0 +1,202 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "formal-rigor-fixture-transport.schema.json",
+  "title": "formal-rigor-fixture-response@1 strict transport projection",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["response", "fixture", "invocation", "skip_reason", "claim_assessments", "focused_output", "record"],
+  "properties": {
+    "response": {"type": "string", "const": "formal-rigor-fixture-response@1"},
+    "fixture": {"type": "string"},
+    "invocation": {"type": "string", "enum": ["skip", "focused", "standard", "high-assurance"]},
+    "skip_reason": {"anyOf": [{"type": "string"}, {"type": "null"}]},
+    "claim_assessments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "state", "derivation_ids"],
+        "properties": {
+          "id": {"type": "string"},
+          "state": {"type": "string", "enum": ["established", "refuted", "conditional", "incomplete"]},
+          "derivation_ids": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    },
+    "focused_output": {
+      "anyOf": [
+        {"type": "null"},
+        {"type": "array", "items": {"type": "string"}}
+      ]
+    },
+    "record": {
+      "anyOf": [
+        {"type": "null"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["record", "subject", "valid_while", "coverage_limits", "rigor", "decision_frame", "coverage", "derivations", "empirical_closure", "synthesis", "never_attests"],
+          "properties": {
+            "record": {"type": "string", "const": "formal-rigor-record@2"},
+            "subject": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["ref", "revision"],
+              "properties": {
+                "ref": {"type": "string"},
+                "revision": {"anyOf": [{"type": "string"}, {"type": "null"}]}
+              }
+            },
+            "valid_while": {"type": "array", "items": {"type": "string", "enum": ["subject-revision-unchanged"]}},
+            "coverage_limits": {"type": "array", "items": {"type": "string"}},
+            "rigor": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["tier", "trigger", "tier_reason"],
+              "properties": {
+                "tier": {"type": "string", "enum": ["standard", "high-assurance"]},
+                "trigger": {"type": "string"},
+                "tier_reason": {"type": "string"}
+              }
+            },
+            "decision_frame": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["question", "system_boundary", "actors", "alternatives", "hard_constraints", "authorized_objectives", "priority_rule", "assumptions", "empirical_premises", "uncertainty_posture"],
+              "properties": {
+                "question": {"type": "string"},
+                "system_boundary": {"type": "string"},
+                "actors": {"type": "array", "items": {"type": "string"}},
+                "alternatives": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["id", "kind", "description"],
+                    "properties": {
+                      "id": {"type": "string"},
+                      "kind": {"type": "string", "enum": ["null-option", "option"]},
+                      "description": {"type": "string"}
+                    }
+                  }
+                },
+                "hard_constraints": {"type": "array", "items": {"type": "string"}},
+                "authorized_objectives": {"type": "array", "items": {"type": "string"}},
+                "priority_rule": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["kind", "authority_ref"],
+                  "properties": {
+                    "kind": {"type": "string", "enum": ["constraint-satisfaction", "lexicographic", "weighted-utility", "minimax", "minimax-regret", "pareto-only", "custom"]},
+                    "authority_ref": {"type": "string"}
+                  }
+                },
+                "assumptions": {"type": "array", "items": {"type": "string"}},
+                "empirical_premises": {"type": "array", "items": {"type": "string"}},
+                "uncertainty_posture": {"type": "string"}
+              }
+            },
+            "coverage": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["family", "status", "modules", "reason"],
+                "properties": {
+                  "family": {"type": "string", "enum": ["P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8", "P9"]},
+                  "status": {"type": "string", "enum": ["fired", "not-applicable", "unmapped"]},
+                  "modules": {"type": "array", "items": {"type": "string"}},
+                  "reason": {"type": "string"}
+                }
+              }
+            },
+            "derivations": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["id", "module", "construct", "sources", "model", "preconditions", "fact_mapping", "steps", "result", "counterexample", "residual_mismatch"],
+                "properties": {
+                  "id": {"type": "string"},
+                  "module": {"type": "string"},
+                  "construct": {"type": "string"},
+                  "sources": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["primary_theory", "official_product_docs"],
+                    "properties": {
+                      "primary_theory": {"type": "array", "items": {"type": "string"}},
+                      "official_product_docs": {"type": "array", "items": {"type": "string"}}
+                    }
+                  },
+                  "model": {"type": "string"},
+                  "preconditions": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["id", "statement", "status"],
+                      "properties": {
+                        "id": {"type": "string"},
+                        "statement": {"type": "string"},
+                        "status": {"type": "string", "enum": ["verified", "assumed", "pending"]}
+                      }
+                    }
+                  },
+                  "fact_mapping": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["precondition_id", "claim_class", "anchor"],
+                      "properties": {
+                        "precondition_id": {"type": "string"},
+                        "claim_class": {"type": "string", "enum": ["observation", "interpretation", "assumption", "value", "authorization"]},
+                        "anchor": {"type": "string"}
+                      }
+                    }
+                  },
+                  "steps": {"type": "array", "items": {"type": "string"}},
+                  "result": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["state", "statement"],
+                    "properties": {
+                      "state": {"type": "string", "enum": ["established", "refuted", "conditional", "incomplete"]},
+                      "statement": {"type": "string"}
+                    }
+                  },
+                  "counterexample": {"anyOf": [{"type": "string"}, {"type": "null"}]},
+                  "residual_mismatch": {"type": "array", "items": {"type": "string"}}
+                }
+              }
+            },
+            "empirical_closure": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["state", "tests"],
+              "properties": {
+                "state": {"type": "string", "enum": ["not-required", "pending", "observed", "post-hoc-weaker", "blocked"]},
+                "tests": {"type": "array", "items": {"type": "string"}}
+              }
+            },
+            "synthesis": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["outcome", "selected_option", "basis", "conditions", "concessions", "recovery_moves"],
+              "properties": {
+                "outcome": {"type": "string", "enum": ["dominance", "pareto-set", "conditional", "underdetermined", "reversal", "reversible-probe"]},
+                "selected_option": {"anyOf": [{"type": "string"}, {"type": "null"}]},
+                "basis": {"type": "array", "items": {"type": "string"}},
+                "conditions": {"type": "array", "items": {"type": "string"}},
+                "concessions": {"type": "array", "items": {"type": "string"}},
+                "recovery_moves": {"type": "array", "items": {"type": "string"}}
+              }
+            },
+            "never_attests": {"type": "array", "items": {"type": "string"}}
+          }
+        }
+      ]
+    }
+  }
+}

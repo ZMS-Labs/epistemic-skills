@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://zms-labs.example/schemas/proportionality-fixture-response.schema.json",
+  "title": "Proportionality fixture response",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "fixture_id",
+    "path",
+    "fired_skills",
+    "process_artifacts",
+    "visible_process_words",
+    "role_invocations",
+    "emitted_skip_inventory",
+    "direct_check",
+    "required_signal_observed",
+    "escalated"
+  ],
+  "properties": {
+    "schema": {
+      "type": "string",
+      "const": "proportionality-fixture-response@1"
+    },
+    "fixture_id": {
+      "type": "string"
+    },
+    "path": {
+      "type": "string",
+      "enum": ["routine", "micro-recon", "routed"]
+    },
+    "fired_skills": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "process_artifacts": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "visible_process_words": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "role_invocations": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "emitted_skip_inventory": {
+      "type": "boolean"
+    },
+    "direct_check": {
+      "type": "string"
+    },
+    "required_signal_observed": {
+      "type": "boolean"
+    },
+    "escalated": {
+      "type": "boolean"
+    }
+  }
+}
