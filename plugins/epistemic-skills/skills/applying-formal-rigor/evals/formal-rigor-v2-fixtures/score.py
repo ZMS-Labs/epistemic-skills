@@ -88,6 +88,14 @@ def validate_inventory(inventory: dict[str, dict]) -> list[str]:
             if not any(row.get("status") == "unmapped" for row in required_rows):
                 errors.append(f"{fixture_id}: unmapped class has no unmapped coverage")
         for row in truth.get("coverage", {}).get("required", []):
+            if row.get("status") and row.get("allowed_statuses"):
+                errors.append(f"{fixture_id}: coverage row mixes status and allowed_statuses")
+            if "allowed_statuses" in row and not (
+                isinstance(row.get("allowed_statuses"), list)
+                and row.get("allowed_statuses")
+                and set(row["allowed_statuses"]) <= {"fired", "not-applicable", "unmapped"}
+            ):
+                errors.append(f"{fixture_id}: invalid allowed_statuses coverage alternatives")
             if row.get("modules") and row.get("any_modules"):
                 errors.append(f"{fixture_id}: coverage row mixes modules and any_modules")
             if "any_modules" in row and not (
@@ -212,7 +220,9 @@ def score_fixture(truth: dict, response: dict) -> dict:
         rows = {c.get("family"): c for c in record.get("coverage", []) if isinstance(c, dict)}
         for req in truth.get("coverage", {}).get("required", []):
             row = rows.get(req["family"], {})
-            if row.get("status") != req["status"]: fail(failures, "S5", f"{req['family']} expected {req['status']}")
+            allowed_statuses = set(req.get("allowed_statuses", [req.get("status")]))
+            if row.get("status") not in allowed_statuses:
+                fail(failures, "S5", f"{req['family']} expected one of {sorted(allowed_statuses)}")
             if not set(req.get("modules", [])) <= set(row.get("modules", [])): fail(failures, "S3", f"{req['family']} missing module")
             if req.get("any_modules") and not set(req["any_modules"]) & set(row.get("modules", [])):
                 fail(failures, "S3", f"{req['family']} missing any adequate module")

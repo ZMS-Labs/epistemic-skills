@@ -244,7 +244,7 @@ def main() -> int:
     cache_rows = {
         row["family"]: row for row in inventory["fc-02-value-of-information-probe"]["coverage"]["required"]
     }
-    require(cache_rows.get("P7", {}).get("status") == "not-applicable"
+    require(set(cache_rows.get("P7", {}).get("allowed_statuses", [])) == {"not-applicable", "unmapped"}
             and cache_rows.get("P8", {}).get("status") == "unmapped"
             and cache_rows.get("P9", {}).get("status") == "fired",
             "cache replay fixture does not separate capacity, uncertainty, and decision coverage")
@@ -330,6 +330,33 @@ def main() -> int:
     failed = score.score_fixture(alternative_module_truth, no_adequate_module)
     require(not failed["structural_pass"] and "S3" in failed["dimensions_failed"],
             "scorer accepted a module outside the allowed alternatives")
+
+    alternative_status_truth = {
+        "fixture_id": "alternative-status-synthetic", "expected_invocation": ["standard"],
+        "claims": [{"id": "c1", "allowed_states": ["established"]}],
+        "coverage": {"required": [{"family": "P7", "allowed_statuses": ["not-applicable", "unmapped"]}]},
+        "decision_frame": {}, "synthesis": {}, "freshness": {},
+    }
+    alternative_status_response = {
+        "response": "formal-rigor-fixture-response@1", "fixture": "alternative-status-synthetic",
+        "invocation": "standard", "skip_reason": None,
+        "claim_assessments": [{"id": "c1", "state": "established", "derivation_ids": []}],
+        "record": minimal_record(),
+    }
+    alternative_status_response["record"]["coverage"][6]["status"] = "unmapped"
+    alternative_status_response["record"]["coverage_limits"].append(
+        "P7 lacks a supplied resource model."
+    )
+    passed = score.score_fixture(alternative_status_truth, alternative_status_response)
+    require(passed["structural_pass"], f"allowed alternative status failed: {passed['failures']}")
+    forbidden_status = copy.deepcopy(alternative_status_response)
+    forbidden_status["record"]["coverage"][6] = {
+        "family": "P7", "status": "fired", "modules": ["algorithms-data-structures"],
+        "reason": "fabricated model",
+    }
+    failed = score.score_fixture(alternative_status_truth, forbidden_status)
+    require(not failed["structural_pass"] and "S5" in failed["dimensions_failed"],
+            "scorer accepted a coverage status outside allowed_statuses")
 
     malformed_nested = json.loads(json.dumps(forced))
     malformed_nested["record"]["decision_frame"]["alternatives"] = ["A", "B"]
