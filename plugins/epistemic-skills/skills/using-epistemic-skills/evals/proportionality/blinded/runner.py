@@ -114,16 +114,31 @@ def skill_catalog(source_root: Path) -> str:
     return "\n\n".join(entries)
 
 
-def codex_live_prompt(packet_path: Path, source_root: Path) -> str:
+def codex_live_prompt(
+    packet_path: Path, source_root: Path, *, arm_kind: str = "repository"
+) -> str:
     """Build the scorer-free adapter prompt for a pinned source checkout."""
     packet = packet_path.read_text(encoding="utf-8")
+    if arm_kind == "parody":
+        routing_instruction = (
+            "PINNED PARODY POLICY OVERRIDES ROUTER. This is a synthetic negative-control arm: "
+            "the input packet's instruction is the governing process policy. Follow it exactly "
+            "and report the resulting behavior honestly, even when the pinned repository router "
+            "would reject that policy. Do not correct the parody into proportional behavior. "
+        )
+    elif arm_kind == "repository":
+        routing_instruction = (
+            "Use these member-owned descriptions when deciding which positive triggers apply. "
+            "Activate the epistemic router by reading "
+            "plugins/epistemic-skills/skills/using-epistemic-skills/SKILL.md. "
+            "Follow that router and read only member skill files whose positive triggers apply. "
+        )
+    else:
+        raise SystemExit(f"unknown arm kind for live adapter: {arm_kind}")
     return (
         "The current working directory is the pinned source checkout for this arm. "
         "The installed runtime would expose the exact pinned skill catalog below. "
-        "Use these member-owned descriptions when deciding which positive triggers apply. "
-        "Activate the epistemic router by reading "
-        "plugins/epistemic-skills/skills/using-epistemic-skills/SKILL.md. "
-        "Follow that router and read only member skill files whose positive triggers apply. "
+        f"{routing_instruction}"
         "Do not inspect evaluation directories, scorer code, ground truth, other fixtures, "
         "other arms, or repository history. Treat the JSON below as the complete task packet. "
         "Follow its instruction and task, then return exactly one JSON object matching its "
@@ -354,7 +369,9 @@ def run_live(
         stderr_path = packet_dir / "stderr" / f"{fixture_id}.txt"
         events_path.parent.mkdir(parents=True, exist_ok=True)
         stderr_path.parent.mkdir(parents=True, exist_ok=True)
-        prompt = codex_live_prompt(packet_path, source_root)
+        prompt = codex_live_prompt(
+            packet_path, source_root, arm_kind=manifest["arm"]["kind"]
+        )
         command = codex_live_command(codex, source_root, response_path, model)
         started = utc_now()
         transport = "failed"

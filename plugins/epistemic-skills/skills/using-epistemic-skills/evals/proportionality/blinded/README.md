@@ -42,6 +42,12 @@ terminal call records are never retried or overwritten. Running from the packet
 directory without exposing and activating the pinned source is not a valid
 repository-arm measurement.
 
+Repository arms use the pinned catalog and router. Synthetic `parody` arms are
+the deliberate exception: their pinned packet instruction is the governing
+process policy, so the adapter does not silently correct a negative control back
+into proportional behavior. Arm kind comes from the hashed manifest; scorer
+rules and expected outcomes remain hidden.
+
 Candidate arms require three repetitions. Use a separate output directory for
 each repetition and retain failures and dissent. See `results/BLOCKED.md` for
 the present execution status.

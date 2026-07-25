@@ -135,6 +135,15 @@ def main() -> int:
             "live adapter must activate the pinned repository router",
         )
         require("name: blindspot-pass" in live_prompt, "live adapter must expose member triggers")
+        parody_prompt = codex_live_prompt(sample_packet, REPO_ROOT, arm_kind="parody")
+        require(
+            "PINNED PARODY POLICY OVERRIDES ROUTER" in parody_prompt,
+            "parody adapter must not let repository routing neutralize the negative control",
+        )
+        require(
+            "PINNED PARODY POLICY OVERRIDES ROUTER" not in live_prompt,
+            "repository arms must never receive the parody override",
+        )
         require("Choose between a list" in live_prompt, "live adapter must embed the packet")
         require("required_skills" not in live_prompt, "live adapter leaked scorer ground truth")
         command = codex_live_command(
