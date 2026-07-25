@@ -179,6 +179,10 @@ Cross-check these observable cues before marking a family:
 These cues are a discovery cross-check, not a closed taxonomy. Multiple rows
 often fire; each fired row must name an adequate loaded module from the
 registry, and missing theory or inputs must be recorded as `unmapped`.
+For mixed-domain claims, reconcile each material slice independently.
+Do not let an unmapped external-semantic slice erase an adequately modeled engineering slice.
+Fire the adequate engineering module, and separately mark the external semantic
+or regulatory interface `unmapped` in its applicable family.
 
 Coverage is complete only relative to the declared subject, boundary,
 inventory, loaded modules, facts, and limits. It never means that the library
@@ -212,6 +216,11 @@ model → preconditions → fact mapping → derivation → result → residual 
 
 If any link breaks, the result is conditional or incomplete. Vocabulary cannot
 repair missing fact mapping.
+In particular, when a selection depends on an absent or unauthorized external
+semantic premise, assess the dependent selection claim as `incomplete` and use
+an `underdetermined` synthesis. Refute only a premise or proposal contradicted
+by supplied evidence or a hard constraint.
+An invalid justification does not establish the opposite external meaning.
 
 ### 4. Keep three layers separate
 

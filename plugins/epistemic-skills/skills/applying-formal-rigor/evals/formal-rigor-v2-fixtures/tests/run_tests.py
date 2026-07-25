@@ -119,6 +119,8 @@ def assert_v2_production_contract() -> None:
         "Product/version semantics require an exact official source pin at every tier that emits a record",
         "Cross-check these observable cues before marking a family",
         "Coverage `modules` entries use the registry's exact unversioned `module_id`",
+        "Do not let an unmapped external-semantic slice erase an adequately modeled engineering slice",
+        "An invalid justification does not establish the opposite external meaning",
     ):
         require(marker in skill_text, f"production SKILL.md missing v2 contract marker: {marker}")
     require("enumerate all 7 lenses" not in skill_text, "v1 closed seven-lens sweep remains normative")
