@@ -61,8 +61,16 @@ local test, or mutable `main` checkout is not a substitute.
   `mt-03` remained unparseable. The retained root is
   `C:\tmp\formal-rigor-final-fb6c914`, content pin
   `6395c596b66a545d604af2457e17a551664f485636880ed267a5926d5cf07cce`.
-  This gate is `BLOCKED_EXTERNAL`; repaired output, provider substitution, or a
-  partial epoch cannot be credited as candidate GREEN.
+  This gate is `BLOCKED_EXTERNAL`. The operator-authorized prospective
+  `noncursor-degraded-v1` protocol may change the Cursor item from release
+  blocker to known limitation only after one complete, content-pinned new epoch
+  passes every unchanged gate. It uses 286 fresh terminal arms and 132 fresh
+  terminal isolated semantic seats, with no Cursor or Fleet Cursor call; a
+  partial, repaired, resumed-after-terminal-failure, mixed-protocol,
+  substituted, or historical root cannot qualify. Until that epoch exists, the
+  formal gate remains blocking and this release stays HOLD. Its exact evidence
+  claim boundary is two-provider blinded conformance only: it does not claim
+  three-provider robustness or Cursor reliability.
 - The pinned isolated proportionality protocol has completed. Final candidate
   `b73b04af46255bddf103a3f7e80e69b442ebddab` passed all three repetitions:
   routine `10/10`, material `4/4`, high-risk `4/4`, with routine narration

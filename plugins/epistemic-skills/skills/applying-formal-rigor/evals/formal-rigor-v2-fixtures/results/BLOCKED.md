@@ -40,3 +40,22 @@ either an enforceable structured-output capability for the Cursor arm or an
 explicitly approved replacement protocol followed by a new preregistered
 epoch. More calls through the same unconstrained contract, partial epochs,
 post-hoc repair, or provider substitution do not close this block.
+
+## Operator-authorized prospective amendment: `noncursor-degraded-v1`
+
+This amendment is prospective only. The frozen three-provider evidence above,
+including every Cursor failure, root, and content pin, remains immutable
+historical evidence. Cursor remains `BLOCKED_EXTERNAL`.
+
+The operator authorizes one new protocol identity, `noncursor-degraded-v1`.
+Cursor ceases to block publication only if one complete, content-pinned epoch
+under that identity passes every unchanged gate. The epoch must use a new empty
+root with the matching campaign plan, and must contain neither a Cursor nor a
+Fleet Cursor call. Partial roots, repaired output, resumed-after-terminal-
+failure roots, mixed-protocol roots, substituted roots, and historical roots do
+not qualify.
+
+A qualifying result supports only two-provider blinded conformance, not
+three-provider robustness or Cursor reliability. Revisit the Cursor block when
+Cursor exposes schema-constrained generation, or when a separately approved
+targeted third-provider protocol exists.

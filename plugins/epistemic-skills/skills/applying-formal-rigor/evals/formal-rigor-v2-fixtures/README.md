@@ -93,6 +93,39 @@ than overwriting or retrying a recorded call. Including the 44 already-recorded
 OpenAI RED baseline calls, each harness contributes 154 arm-plus-adjudication
 calls in the original plan.
 
+### Prospective `noncursor-degraded-v1` protocol
+
+The preceding allocation paragraph is immutable historical evidence for the
+`frozen-three-provider` identity. It does not authorize the following
+prospective protocol.
+
+`noncursor-degraded-v1` is the operator-authorized degraded evaluation protocol.
+It uses a new empty output root and a matching `campaign-plan.json`; it is never
+a continuation of, repair to, or substitution within a historical root. Invoke
+each stage with the explicit plan identity:
+
+```text
+python run_live.py plan --provider-plan noncursor-degraded-v1
+python run_live.py run-arms --output-root <new-empty-durable-root> --provider-plan noncursor-degraded-v1 --workers 4
+python run_live.py run-semantic --output-root <new-empty-durable-root> --provider-plan noncursor-degraded-v1 --workers 4
+python run_live.py summarize-semantic --output-root <new-empty-durable-root> --provider-plan noncursor-degraded-v1
+```
+
+Its candidate/missing-baseline repetitions map to Codex, agy/Gemini, and Codex.
+Codex runs the `always-cautious`, `closed-taxonomy`, and `formal-only` parodies;
+agy/Gemini runs `always-decide`, `full-ceremony`, and `jargon-only`. The plan has
+exactly 286 arm calls `{codex: 154, agy: 132, cursor: 0}` and 132 semantic seats
+`{codex: 44, agy: 88, cursor: 0}`. Each candidate response receives both
+semantic seats as separate, context-isolated calls on the non-candidate
+provider. This preserves producer/reviewer separation but loses between-seat
+provider diversity.
+
+Every call is fresh and terminal: no retry is allowed after `call.json` exists.
+The root must contain no Cursor or Fleet Cursor call. Structural, P0, control,
+and semantic gates are unchanged. A passing epoch supports only two-provider
+blinded conformance; it does not establish three-provider robustness or Cursor
+reliability.
+
 Absent or non-isolated model execution is `NOT_RUN`, never a RED result credited to an
 arm. Neutral and current-v1 RED runs were durably recorded before production edits under
 `results/2026-07-24-red-baseline/`; candidate, parody, and semantic arms remain separately

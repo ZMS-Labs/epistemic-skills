@@ -29,8 +29,12 @@ Before creating the first tag:
 1. `main` is clean, synchronized with `origin/main`, and contains the intended
    release changes.
 2. Formal-rigor v2 has a genuine neutral/current-v1 RED result captured before
-   its production edit, then passes its candidate fixture contract. A blocked
-   scaffold is not a production implementation.
+   its production edit, then a clean pushed source runs the explicit
+   `noncursor-degraded-v1` plan as 418 complete terminal calls: candidate 22/22
+   in all three repetitions, preregistered baseline/parody polarity, two
+   `VALID` isolated semantic seats per candidate response under the unchanged
+   P0/disagreement rules, and a committed content pin. A blocked scaffold is
+   not a production implementation.
 3. The five blinded proportionality arms are run through the pinned isolated
    harness: `main` once, PR #46 three times, the final candidate three times,
    and each parody once. Terminal failures and dissent are retained; a
@@ -44,7 +48,8 @@ Before creating the first tag:
 6. A redacted full-history secret scan passes, and public-content/provenance
    review covers the release diff.
 7. Supported harness surfaces are exercised live or assigned an honest
-   verification tier in the release notes; known limitations are recorded.
+   verification tier in the release notes; known limitations are recorded, and
+   the notes disclose that no qualifying Cursor result exists.
 8. Helix routing is recorded and an independent Gauntlet publication review
    reaches GO. An unresolved high-severity or release-blocking finding stops
    publication.
