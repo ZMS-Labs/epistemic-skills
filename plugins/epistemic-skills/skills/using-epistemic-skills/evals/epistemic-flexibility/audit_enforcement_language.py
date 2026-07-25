@@ -2,7 +2,7 @@
 """Audit enforcement language in every SKILL.md amended by PR #35.
 
 The audit is intentionally exhaustive over a frozen path inventory: every use of
-``enforce*`` or ``fail[- ]closed`` is emitted with a semantic category.  A use
+``enforce*`` or ``fail[- ]closed`` is emitted with a semantic category. A use
 that cannot be classified from its local context fails the gate rather than
 silently inheriting the strongest interpretation.
 
@@ -105,6 +105,15 @@ POLICY_MARKERS = (
     "operator",
     "rule",
     "guardrail",
+    # Shared-invariant language is a normative fallback contract unless the
+    # same local context names a validator/schema/workflow. Mechanical markers
+    # are evaluated first, so these phrases never upgrade a named mechanism to
+    # policy or downgrade a mechanical claim.
+    "missing evidence",
+    "no durable home",
+    "malformed chains",
+    "family resemblance",
+    "belongs in this collection",
 )
 
 
@@ -121,9 +130,52 @@ def classify(context: str) -> str | None:
     return None
 
 
+def classification_self_test() -> list[str]:
+    """Pin category precedence and the four previously ambiguous policy forms."""
+
+    probes = {
+        "mechanical": (
+            "The schema validator rejects malformed entries and fails closed.",
+            "mechanical",
+        ),
+        "policy-missing-evidence": (
+            "Fail closed; degrade explicitly. Missing evidence means the claim is unverified.",
+            "policy",
+        ),
+        "policy-durable-home": (
+            "Fail closed. No durable home means session-only; malformed chains fail closed.",
+            "policy",
+        ),
+        "policy-family-membership": (
+            "A skill belongs in this collection only if it enforces all of these family resemblance invariants.",
+            "policy",
+        ),
+        "external": (
+            "An org-enforced branch protection external gate remains separate.",
+            "external",
+        ),
+        "limitation": (
+            "This is human-enforced policy and not enforcement by the harness.",
+            "limitation",
+        ),
+        "ambiguous": (
+            "The component enforces quality.",
+            None,
+        ),
+    }
+    errors: list[str] = []
+    for name, (context, expected) in probes.items():
+        actual = classify(context)
+        if actual != expected:
+            errors.append(
+                f"classification probe {name}: expected {expected!r}, got {actual!r}"
+            )
+    return errors
+
+
 def audit() -> tuple[list[dict[str, object]], list[str]]:
     records: list[dict[str, object]] = []
-    errors: list[str] = []
+    errors: list[str] = classification_self_test()
 
     if not REFERENCE.is_file() or "## Enforcement status" not in REFERENCE.read_text(
         encoding="utf-8"
