@@ -53,6 +53,10 @@ Use for one bounded formal question or a low-blast-radius reversible choice:
 one complexity bound, normal-form test, concrete history, invariant proof, or
 specific correctness challenge.
 
+Focused answers the bounded property only. If that result is being used to select,
+mandate, or reverse a persistent schema, architecture, protocol, or operational decision,
+use `standard` even when the proof itself is bounded.
+
 - Return inline in at most six short bullets or 250 visible words.
 - Include subject/question, model, precise construct, minimum preconditions and
   fact mapping, finite derivation or counterexample, result, and residual

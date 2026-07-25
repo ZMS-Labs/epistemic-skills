@@ -118,6 +118,9 @@ def assert_v2_production_contract() -> None:
             "invalid ranked-contact 4NF derivation remains in production skill")
     require("formal-rigor-record@2" in router_text and "focused" in router_text,
             "router handoff does not distinguish focused inline output from v2 records")
+    require("persistent schema, architecture, protocol, or operational decision" in skill_text
+            and "use `standard`" in skill_text,
+            "bounded theorem rule does not escalate a downstream decision mandate")
     require("compatibility" in theory_text.lower() and "reference/modules/index.md" in theory_text,
             "theory-battery.md is not an explicit compatibility index")
 

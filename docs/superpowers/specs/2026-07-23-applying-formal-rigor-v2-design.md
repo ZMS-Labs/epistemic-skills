@@ -303,6 +303,10 @@ Use for a bounded formal question or low-blast-radius, reversible choice:
 Big-O under a named model, one normal-form test, one history/anomaly analysis,
 one invariant proof, or a specific correctness challenge.
 
+Focused answers the bounded property only. If that result is being used to select,
+mandate, or reverse a persistent schema, architecture, protocol, or operational decision,
+use `standard` even when the proof itself is bounded.
+
 Floor:
 
 - return inline, with at most six short bullets or 250 visible words;
