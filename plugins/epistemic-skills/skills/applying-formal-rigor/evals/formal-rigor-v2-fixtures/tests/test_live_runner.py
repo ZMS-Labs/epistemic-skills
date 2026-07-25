@@ -31,6 +31,15 @@ def load_runner():
 
 def main() -> int:
     runner = load_runner()
+    require(
+        "api-key-prefix" not in runner.sensitive_markers("durable-loss-risk-adjusted"),
+        "ordinary words ending in risk- must not trip the API-key screen",
+    )
+    synthetic_key = "s" + "k-" + ("x" * 24)
+    require(
+        "api-key-prefix" in runner.sensitive_markers(f"credential {synthetic_key}"),
+        "standalone API-key-shaped values must still fail closed",
+    )
     require(runner.default_codex_executable() == ("codex.cmd" if os.name == "nt" else "codex"),
             "default Codex executable must use the runnable Windows command shim")
     tasks = runner.full_arm_plan()

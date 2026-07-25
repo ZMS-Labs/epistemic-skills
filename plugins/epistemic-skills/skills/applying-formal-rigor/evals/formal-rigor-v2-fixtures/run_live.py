@@ -11,6 +11,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
@@ -530,12 +531,15 @@ Include exactly one row for every rubric obligation and forbidden proposition.
 
 
 def sensitive_markers(text: str) -> list[str]:
-    checks = {
-        "user-profile-path": "C:\\Users\\",
-        "api-key-prefix": "sk-",
-        "bearer-token": "Bearer ",
-    }
-    return [name for name, marker in checks.items() if marker.lower() in text.lower()]
+    lowered = text.lower()
+    markers = []
+    if "c:\\users\\" in lowered:
+        markers.append("user-profile-path")
+    if re.search(r"(?i)(?<![A-Za-z0-9_])sk-[A-Za-z0-9_-]{8,}", text):
+        markers.append("api-key-prefix")
+    if "bearer " in lowered:
+        markers.append("bearer-token")
+    return markers
 
 
 def execute_call(
