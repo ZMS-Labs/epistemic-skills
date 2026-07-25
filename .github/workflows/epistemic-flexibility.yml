@@ -51,7 +51,23 @@ jobs:
       - name: Decision Ledger proportionality tests
         run: python plugins/epistemic-skills/skills/decision-ledger/evals/proportionality/tests/run_tests.py
       - name: Enforcement-language precision audit
-        run: python plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/audit_enforcement_language.py
+        id: enforcement_language_audit
+        continue-on-error: true
+        run: |
+          python plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/audit_enforcement_language.py > enforcement-language-report.ndjson 2>&1
+      - name: Upload failed enforcement-language audit
+        if: steps.enforcement_language_audit.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: enforcement-language-report
+          path: enforcement-language-report.ndjson
+          if-no-files-found: error
+          retention-days: 7
+      - name: Enforce language audit result
+        if: steps.enforcement_language_audit.outcome == 'failure'
+        run: |
+          cat enforcement-language-report.ndjson
+          exit 1
       - name: Gauntlet validation-kernel gate
         run: python plugins/epistemic-skills/skills/gauntlet/scripts/validate_ruling_set.py --self-test
       - name: Outsource packet and package integration
