@@ -12,6 +12,25 @@ FAMILIES = {f"P{i}" for i in range(1, 10)}
 INVOCATIONS = {"skip", "focused", "standard", "high-assurance"}
 SYNTHESIS = {"dominance", "pareto-set", "conditional", "underdetermined", "reversal", "reversible-probe"}
 TRAP_CLASSES = {"theorem-misuse", "missed-terrain", "forced-closure", "overtrigger-tier", "staleness", "unmapped"}
+SKILL_ROOT = Path(__file__).resolve().parents[2]
+
+
+def load_module_families() -> dict[str, set[str]]:
+    registry: dict[str, set[str]] = {}
+    for path in sorted((SKILL_ROOT / "reference" / "modules").glob("*.md")):
+        fields = {}
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if line.startswith("module_id:"):
+                fields["module_id"] = line.split(":", 1)[1].strip()
+            elif line.startswith("property_families:"):
+                raw = line.split(":", 1)[1].strip().removeprefix("[").removesuffix("]")
+                fields["property_families"] = {item.strip() for item in raw.split(",") if item.strip()}
+        if fields.get("module_id"):
+            registry[fields["module_id"]] = fields.get("property_families", set())
+    return registry
+
+
+MODULE_FAMILIES = load_module_families()
 
 
 def load_json(path: Path) -> dict:
@@ -77,6 +96,9 @@ def validate_inventory(inventory: dict[str, dict]) -> list[str]:
                 and all(isinstance(module, str) and module for module in row["any_modules"])
             ):
                 errors.append(f"{fixture_id}: invalid any_modules coverage alternatives")
+            for module in [*row.get("modules", []), *row.get("any_modules", [])]:
+                if row.get("family") not in MODULE_FAMILIES.get(module, set()):
+                    errors.append(f"{fixture_id}: {module} does not declare {row.get('family')}")
         freshness = truth.get("freshness", {})
         if freshness.get("must_re_fire") and not (
             freshness.get("stale_revision") or freshness.get("current_authority_ref")
@@ -123,6 +145,9 @@ def validate_record(record: object) -> list[dict]:
             fail(failures, "S5", f"invalid coverage row {row.get('family')}")
         if status == "fired" and not modules: fail(failures, "S5", f"fired {row.get('family')} names no module")
         if status != "fired" and modules: fail(failures, "S5", f"non-fired {row.get('family')} names modules")
+        for module in modules:
+            if row.get("family") not in MODULE_FAMILIES.get(module, set()):
+                fail(failures, "S3", f"module {module} does not declare {row.get('family')}")
     for derivation in record.get("derivations", []):
         if not isinstance(derivation, dict): fail(failures, "S4", "derivation is not an object"); continue
         for field in ("id", "module", "construct", "sources", "model", "preconditions", "fact_mapping", "steps", "result", "residual_mismatch"):

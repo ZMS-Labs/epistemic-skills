@@ -127,6 +127,9 @@ def assert_v2_production_contract() -> None:
         "A rejected current premise can use `reversal` even when replacement selection remains unresolved",
         "asymptotic resource behavior with numerical stability crosses `P7` and `P8`",
         "`reversible-probe` keeps `selected_option` null",
+        "Do not infer a property family from an implementation label alone",
+        "A module may appear only in families declared by its `property_families`",
+        "value-of-information question with unmodeled measurement uncertainty marks `P8` as `unmapped` and `P9` as `fired`",
     ):
         require(marker in skill_text, f"production SKILL.md missing v2 contract marker: {marker}")
     require("enumerate all 7 lenses" not in skill_text, "v1 closed seven-lens sweep remains normative")
@@ -349,6 +352,15 @@ def main() -> int:
     focused_container["rigor"]["tier"] = "focused"
     failed = score.validate_record(focused_container)
     require(any(item["dimension"] == "S1" for item in failed), "focused formal record container was not rejected")
+
+    wrong_family_module = minimal_record()
+    wrong_family_module["coverage"][7] = {
+        "family": "P8", "status": "fired", "modules": ["decision-theory-multiobjective"],
+        "reason": "invalid cross-family module assignment",
+    }
+    failed = score.validate_record(wrong_family_module)
+    require(any(item["dimension"] == "S3" for item in failed),
+            "module assigned outside declared property_families was not rejected")
 
     high_outer = {
         "response": "formal-rigor-fixture-response@1", "fixture": "high-tier-synthetic",
