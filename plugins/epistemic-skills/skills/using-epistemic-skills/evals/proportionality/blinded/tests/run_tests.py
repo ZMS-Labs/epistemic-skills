@@ -54,6 +54,13 @@ def main() -> int:
         "the five required arms must remain pinned",
     )
     require(arms["invocation"]["settings"]["fresh_context_per_fixture"] is True, "isolation lost")
+    by_id = {arm["id"]: arm for arm in arms["arms"]}
+    final_source = by_id["candidate-final-b73b04a"]["source_commit"]
+    require(
+        by_id["full-ceremony"]["source_commit"] == final_source
+        and by_id["always-routine"]["source_commit"] == final_source,
+        "parody prompts must vary against the same final source checkout",
+    )
 
     router = (REPO_ROOT / "plugins/epistemic-skills/skills/using-epistemic-skills/SKILL.md").read_text(
         encoding="utf-8"

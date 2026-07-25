@@ -36,14 +36,14 @@
     {
       "id": "full-ceremony",
       "kind": "parody",
-      "source_commit": "4e1945e05428462c054f0930bc4cf7940008c9d2",
+      "source_commit": "b73b04af46255bddf103a3f7e80e69b442ebddab",
       "prompt": "prompts/full-ceremony.txt",
       "repetitions": 1
     },
     {
       "id": "always-routine",
       "kind": "parody",
-      "source_commit": "4e1945e05428462c054f0930bc4cf7940008c9d2",
+      "source_commit": "b73b04af46255bddf103a3f7e80e69b442ebddab",
       "prompt": "prompts/always-routine.txt",
       "repetitions": 1
     }
