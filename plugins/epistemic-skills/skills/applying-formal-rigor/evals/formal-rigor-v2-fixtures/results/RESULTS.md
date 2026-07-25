@@ -109,3 +109,14 @@ comma before `empirical_closure`. The epoch was not retried, resumed, or
 repaired. The root `C:\tmp\formal-rigor-final-c235d98` is excluded from scoring
 and content-pinned as
 `add00f8b271e33487a5a61df225e44536f9f30e14fedc5d370d817f4dce6be1e`.
+
+## 2026-07-25 `fc-02` transport diagnostic
+
+At source `2a61eef`, the fragile `mt-03`, `fc-01`, and `cc-04` probes all
+passed. The campaign recorded 63 calls: 62 parseable and one unparseable Cursor
+`parody-closed-taxonomy` response at `fc-02`. Its two snapshots share the same
+internal structural/syntax error: a derivation object is placed where an object
+member name is required. The epoch was not retried, resumed, or repaired. The
+root `C:\tmp\formal-rigor-final-2a61eef` is excluded from scoring and
+content-pinned as
+`1708148471a8827a0dcd7e18fd07f0c4ad49bfba574554e56c7637b6d9e03786`.

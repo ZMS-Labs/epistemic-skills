@@ -212,6 +212,18 @@ def main() -> int:
         runner.build_arm_packet(neutral_packet, "neutral", fixture_dir)
         require(not (neutral_packet / "candidate").exists(), "neutral packet leaked candidate skill")
 
+        closed_taxonomy_packet = tmp_root / "closed-taxonomy"
+        runner.build_arm_packet(
+            closed_taxonomy_packet, "parody-closed-taxonomy", fixture_dir
+        )
+        closed_taxonomy_prompt = (
+            closed_taxonomy_packet / "ARM_PROMPT.txt"
+        ).read_text(encoding="utf-8")
+        require("Never emit unmapped" in closed_taxonomy_prompt,
+                "closed-taxonomy parody lost its registered semantic defect")
+        require("smallest schema-valid record" in closed_taxonomy_prompt,
+                "closed-taxonomy parody does not bound its record complexity")
+
         candidate_response = tmp_root / "response.json"
         candidate_response.write_text(json.dumps({
             "response": "formal-rigor-fixture-response@1",
