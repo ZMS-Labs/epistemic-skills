@@ -66,6 +66,10 @@ def main() -> int:
         "historical convention" in router,
         "router must identify unresolved repository conventions as blindspot evidence",
     )
+    require(
+        "Micro-recon is not a third path for non-routine work" in router,
+        "router must not use routine micro-recon to close a precedential fork",
+    )
 
     scenarios = load(BLINDED / "scenarios.json")["scenarios"]
     fixtures = load(PARENT / "fixtures.json")["fixtures"]

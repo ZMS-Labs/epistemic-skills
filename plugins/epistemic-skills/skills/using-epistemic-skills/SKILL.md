@@ -25,6 +25,12 @@ If the gate holds, proceed with the change and bounded check. **No discipline fi
 inventory is emitted, and no process-only artifact is created.** If either read exposes a
 positive trigger, leave the routine path and route from the newly observed fact.
 
+**Micro-recon is not a third path for non-routine work.** If the task already fails any
+routine condition—especially a precedential schema, protocol, security, or public-contract
+fork—do not use two reads to close it as `micro-recon`. Route from the positive facts already
+present. When the non-routine brief still depends on an unresolved repository convention,
+Blindspot Pass establishes the territory before formal rigor decides the fork.
+
 ## The one idea that makes them a system
 
 Each skill **ends at a defined boundary and hands off** — none overreaches into another's
