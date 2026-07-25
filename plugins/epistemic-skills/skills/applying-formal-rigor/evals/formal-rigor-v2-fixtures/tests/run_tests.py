@@ -205,6 +205,30 @@ def main() -> int:
         "authorized-dominance control prioritizes reliability without supplying a reliability tie",
     )
 
+    for fixture_id in ("cc-03-postgresql18-rationale-correct", "tm-02-isolation-name-is-not-semantics"):
+        facts = json.loads(
+            (ROOT / "fixtures" / fixture_id / "artifacts" / "facts.json").read_text(encoding="utf-8")
+        )
+        history = facts.get("history")
+        require(
+            isinstance(history, dict) and len(history.get("transactions", [])) >= 2,
+            f"{fixture_id}: concrete history obligation has no staged operations",
+        )
+    require(
+        inventory["cc-03-postgresql18-rationale-correct"]["expected_invocation"] == ["standard"],
+        "version-pinned PostgreSQL semantics incorrectly permit focused mode",
+    )
+    stale_priority = inventory["ss-02-priority-rule-moved"]
+    require(stale_priority["freshness"].get("must_re_fire") is True,
+            "changed authorized priority does not require re-fire")
+    require(stale_priority["synthesis"].get("allowed_outcomes") == ["reversal"],
+            "changed-priority trap permits unsupported synthesis")
+    regulatory_rows = {
+        row["family"]: row for row in inventory["um-02-external-regulatory-semantics"]["coverage"]["required"]
+    }
+    require(regulatory_rows.get("P9", {}).get("status") == "unmapped",
+            "unmapped regulatory terrain is not represented as unmapped coverage")
+
     skip = {"response": "formal-rigor-fixture-response@1", "fixture": "ot-01-pure-preference-skip",
             "invocation": "skip", "skip_reason": "No theorem, measurable property, convention, or contract distinguishes the names.",
             "claim_assessments": [{"id": "c1", "state": "established", "derivation_ids": []}], "record": None}
@@ -243,6 +267,36 @@ def main() -> int:
     focused_container["rigor"]["tier"] = "focused"
     failed = score.validate_record(focused_container)
     require(any(item["dimension"] == "S1" for item in failed), "focused formal record container was not rejected")
+
+    high_outer = {
+        "response": "formal-rigor-fixture-response@1", "fixture": "high-tier-synthetic",
+        "invocation": "high-assurance", "skip_reason": None,
+        "claim_assessments": [{"id": "c1", "state": "established", "derivation_ids": []}],
+        "focused_output": None, "record": minimal_record(),
+    }
+    high_truth = {
+        "fixture_id": "high-tier-synthetic", "expected_invocation": ["high-assurance"],
+        "claims": [{"id": "c1", "allowed_states": ["established"]}],
+        "coverage": {}, "decision_frame": {}, "synthesis": {}, "freshness": {},
+    }
+    failed = score.score_fixture(high_truth, high_outer)
+    require(not failed["structural_pass"] and "S1" in failed["dimensions_failed"],
+            "high-assurance invocation accepted a standard-tier record")
+
+    invalid_inventory = copy.deepcopy(inventory)
+    invalid_inventory["ot-02-focused-not-ceremony"]["coverage"] = {
+        "required": [{"family": "P7", "status": "fired", "modules": ["algorithms-data-structures"]}],
+    }
+    require(any("exclusive focused fixture carries record-only expectations" in error
+                for error in score.validate_inventory(invalid_inventory)),
+            "inventory validator accepted record-only obligations on an exclusive focused fixture")
+    invalid_inventory = copy.deepcopy(inventory)
+    invalid_inventory["um-02-external-regulatory-semantics"]["coverage"]["required"] = [
+        {"family": "P9", "status": "fired", "modules": ["interface-protocol-evolution"]},
+    ]
+    require(any("unmapped class has no unmapped coverage" in error
+                for error in score.validate_inventory(invalid_inventory)),
+            "inventory validator accepted an unmapped trap with no unmapped coverage")
 
     require(score.validate_inventory(inventory) == [], "approved fixture inventory failed reconciliation")
     print("formal-rigor v2 structural scorer self-test: PASS")

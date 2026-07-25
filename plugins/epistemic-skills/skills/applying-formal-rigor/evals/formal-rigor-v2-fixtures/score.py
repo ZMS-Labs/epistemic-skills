@@ -47,6 +47,27 @@ def validate_inventory(inventory: dict[str, dict]) -> list[str]:
         if truth.get("priority") not in {"P0", "P1"}: errors.append(f"{fixture_id}: invalid priority")
         if not truth.get("claims"): errors.append(f"{fixture_id}: claims missing")
         if not truth.get("author", {}).get("relationship"): errors.append(f"{fixture_id}: provenance missing")
+        expected = set(truth.get("expected_invocation", []))
+        if not expected or not expected <= INVOCATIONS:
+            errors.append(f"{fixture_id}: invalid expected invocation")
+        if expected == {"focused"}:
+            has_record_only = (
+                bool(truth.get("coverage", {}).get("required"))
+                or bool(truth.get("decision_frame", {}).get("null_option_required"))
+                or bool(truth.get("decision_frame", {}).get("priority_rule_required"))
+                or bool(truth.get("synthesis", {}).get("allowed_outcomes"))
+                or truth.get("synthesis", {}).get("selected_option") is not None
+                or bool(truth.get("freshness", {}).get("must_re_fire"))
+                or bool(truth.get("source_requirements"))
+            )
+            if has_record_only:
+                errors.append(f"{fixture_id}: exclusive focused fixture carries record-only expectations")
+        if "focused" in expected and truth.get("source_requirements"):
+            errors.append(f"{fixture_id}: focused invocation bypasses required source pins")
+        if "unmapped" in truth.get("classes", []):
+            required_rows = truth.get("coverage", {}).get("required", [])
+            if not any(row.get("status") == "unmapped" for row in required_rows):
+                errors.append(f"{fixture_id}: unmapped class has no unmapped coverage")
     return errors
 
 
@@ -147,6 +168,8 @@ def score_fixture(truth: dict, response: dict) -> dict:
         elif actual.get("state") not in claim.get("allowed_states", []): fail(failures, "S6", f"claim {claim['id']} state not allowed")
     if invocation in {"standard", "high-assurance"}:
         record = response.get("record") if isinstance(response.get("record"), dict) else {}
+        if record.get("rigor", {}).get("tier") != invocation:
+            fail(failures, "S1", "response invocation and record rigor tier differ")
         rows = {c.get("family"): c for c in record.get("coverage", []) if isinstance(c, dict)}
         for req in truth.get("coverage", {}).get("required", []):
             row = rows.get(req["family"], {})
