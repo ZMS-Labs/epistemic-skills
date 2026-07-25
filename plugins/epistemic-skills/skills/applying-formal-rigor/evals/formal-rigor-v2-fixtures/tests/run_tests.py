@@ -125,6 +125,8 @@ def assert_v2_production_contract() -> None:
         "If more than one property family bears load, use `standard`",
         "Before emitting, rerun the tier gate and cue cross-check",
         "A rejected current premise can use `reversal` even when replacement selection remains unresolved",
+        "asymptotic resource behavior with numerical stability crosses `P7` and `P8`",
+        "`reversible-probe` keeps `selected_option` null",
     ):
         require(marker in skill_text, f"production SKILL.md missing v2 contract marker: {marker}")
     require("enumerate all 7 lenses" not in skill_text, "v1 closed seven-lens sweep remains normative")
@@ -239,8 +241,8 @@ def main() -> int:
     cache_rows = {
         row["family"]: row for row in inventory["fc-02-value-of-information-probe"]["coverage"]["required"]
     }
-    require(cache_rows.get("P7", {}).get("status") == "fired"
-            and cache_rows.get("P8", {}).get("status") == "fired"
+    require(cache_rows.get("P7", {}).get("status") == "not-applicable"
+            and cache_rows.get("P8", {}).get("status") == "unmapped"
             and cache_rows.get("P9", {}).get("status") == "fired",
             "cache replay fixture does not separate capacity, uncertainty, and decision coverage")
     token_rows = {
@@ -253,6 +255,13 @@ def main() -> int:
     }, "token migration fixture does not allow either adequate rollback module")
     require(inventory["um-01-custom-accelerator-memory-model"]["expected_invocation"] == ["high-assurance"],
             "model-sensitive accelerator proof incorrectly permits standard tier")
+    chain_truth = inventory["tm-03-consistency-is-not-one-chain"]
+    chain_rows = {row["family"]: row for row in chain_truth["coverage"]["required"]}
+    require(chain_rows.get("P3", {}).get("status") == "fired"
+            and chain_rows.get("P4", {}).get("status") == "fired",
+            "universal consistency-chain fixture omits ordering or distribution coverage")
+    require(set(chain_truth["synthesis"].get("allowed_outcomes", [])) == {"underdetermined", "reversal"},
+            "universal consistency-chain fixture cannot distinguish premise reversal from unresolved replacement")
 
     skip = {"response": "formal-rigor-fixture-response@1", "fixture": "ot-01-pure-preference-skip",
             "invocation": "skip", "skip_reason": "No theorem, measurable property, convention, or contract distinguishes the names.",

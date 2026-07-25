@@ -76,6 +76,9 @@ reconciliation is not a focused answer. A system-level scalability, capacity,
 or whole-protocol certificate is also `standard` even when one local operation
 or invariant is simple. If a supposedly focused question lacks a closed,
 supplied model or scope, that focused condition failed.
+In particular, comparing asymptotic resource behavior with numerical stability crosses `P7` and `P8`
+and therefore uses `standard`, even when one finite counterexample is enough to
+refute the equivalence claim.
 
 Focused answers the bounded property only. If that result is being used to select,
 mandate, or reverse a persistent schema, architecture, protocol, or operational decision,
@@ -285,6 +288,8 @@ A `reversal` rejects a premise or proposal; it does not by itself select a repla
 Keep `selected_option` null unless a separate authorized synthesis establishes
 one of the stable alternative ids. `pareto-set` and `underdetermined` always
 keep it null; `dominance` names the exact dominant alternative id.
+`reversible-probe` keeps `selected_option` null because it authorizes bounded
+evidence gathering, not a persistent design alternative.
 A rejected current premise can use `reversal` even when replacement selection remains unresolved.
 Put the unresolved replacement in residual mismatch and recovery moves rather
 than changing the current-premise verdict to `underdetermined`.
