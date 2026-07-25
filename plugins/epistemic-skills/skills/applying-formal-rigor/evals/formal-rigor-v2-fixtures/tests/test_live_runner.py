@@ -318,6 +318,24 @@ def main() -> int:
             '{"response":"formal-rigor-fixture-response@1","fixture":"a","value":"final"}' and
             snapshot_normalization == "selected-final-complete-json-snapshot",
             "Fleet bridge did not select the final snapshot for one recognized response envelope")
+    snapshots_with_unmatched_closers = (
+        '{"response":"formal-rigor-fixture-response@1","fixture":"a","value":"draft"}\n}'
+        '{"response":"formal-rigor-fixture-response@1","fixture":"a","value":"final"}\n}'
+    )
+    unchanged, no_normalization = runner.normalize_fleet_bridge_response(
+        snapshots_with_unmatched_closers
+    )
+    require(unchanged == snapshots_with_unmatched_closers and no_normalization is None,
+            "Fleet bridge normalization must not repair unmatched model-output closers")
+    ambiguous_closer_snapshots = (
+        '{"response":"formal-rigor-fixture-response@1","fixture":"a","value":"draft"}\n}'
+        '{"response":"formal-rigor-fixture-response@1","fixture":"b","value":"final"}\n}'
+    )
+    unchanged, no_normalization = runner.normalize_fleet_bridge_response(
+        ambiguous_closer_snapshots
+    )
+    require(unchanged == ambiguous_closer_snapshots and no_normalization is None,
+            "Fleet bridge normalization must reject unmatched-closer snapshots for different fixtures")
     malformed_then_final = (
         '{"response":"formal-rigor-fixture-response@1","fixture":"a","value":}'
         '{"response":"formal-rigor-fixture-response@1","fixture":"a","value":"final"}'

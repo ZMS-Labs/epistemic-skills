@@ -71,3 +71,12 @@ earlier malformed snapshot followed by a later valid snapshot. No call was
 retried or repaired. The root `C:\tmp\formal-rigor-final-8a3bfdf` is excluded
 from scoring and content-pinned as
 `49588e690c991d63abecb2fcd3ae9eef20271464fc4daa8c56f90c55c90a9d45`.
+
+## 2026-07-25 Cursor closed-taxonomy diagnostic
+
+The campaign at source `14a9543` completed fixtures 1-4 and stopped on fixture
+5, `fc-01`. It contains 45 call records: 44 parseable and one unparseable
+Cursor `parody-closed-taxonomy` response. The epoch was not retried, resumed,
+or repaired. The root `C:\tmp\formal-rigor-final-14a9543` is excluded from
+scoring and content-pinned as
+`4ad19cac6812eb0b2cb7c25931dd1b85bd14025b9ee477bd0c7020326e34c3d8`.
