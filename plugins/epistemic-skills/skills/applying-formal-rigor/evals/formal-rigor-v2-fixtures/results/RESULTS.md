@@ -80,3 +80,11 @@ Cursor `parody-closed-taxonomy` response. The epoch was not retried, resumed,
 or repaired. The root `C:\tmp\formal-rigor-final-14a9543` is excluded from
 scoring and content-pinned as
 `4ad19cac6812eb0b2cb7c25931dd1b85bd14025b9ee477bd0c7020326e34c3d8`.
+
+## 2026-07-25 prioritized `fc-01` diagnostic
+
+The campaign at source `2c1c38f` prioritized `fc-01` first and recorded nine
+calls: eight parseable and the same Cursor `parody-closed-taxonomy` response
+unparseable again. The epoch was not retried, resumed, or repaired. The root
+`C:\tmp\formal-rigor-final-2c1c38f` is excluded from scoring and content-pinned
+as `2febab93d1d6a1a40e0a3e0853b155ad5a481dbb882fe1830fdd9ff0921614ea`.

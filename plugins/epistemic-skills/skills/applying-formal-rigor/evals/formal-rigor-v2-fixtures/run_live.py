@@ -28,6 +28,11 @@ FIXTURES_ROOT = ROOT / "fixtures"
 PROMPTS_ROOT = ROOT / "prompts"
 RED_BASELINE_ROOT = ROOT / "results" / "2026-07-24-red-baseline"
 FLEET_BRIDGE_LOCK = threading.Lock()
+EXACT_JSON_BOUNDARY = (
+    "The first non-whitespace character must be `{`, and its matching top-level `}` "
+    "must be the last non-whitespace character. Emit no draft object, repeated snapshot, "
+    "second object, commentary, Markdown fence, or extra delimiter."
+)
 
 PARODY_ARMS = (
     "parody-always-cautious",
@@ -350,6 +355,8 @@ or prior results.
 SEALED_PACKET_JSON
 {json.dumps(files, ensure_ascii=False, sort_keys=True)}
 END_SEALED_PACKET_JSON
+
+{EXACT_JSON_BOUNDARY}
 """
 
 
@@ -635,6 +642,7 @@ the module files you determine are material; do not treat module presence as pro
 Return exactly one formal-rigor-fixture-response@1 JSON object for fixture {fixture}. Emit no
 Markdown fence, preamble, commentary, score, hidden class guess, or claims about files outside this
 packet. Do not read or infer ground truth, thresholds, other fixtures, other arms, or prior results.
+{EXACT_JSON_BOUNDARY}
 """
 
 
@@ -656,6 +664,7 @@ Return exactly one JSON object with this shape and no prose outside it:
   "coverage_limits": []
 }}
 Include exactly one row for every rubric obligation and forbidden proposition.
+{EXACT_JSON_BOUNDARY}
 """
 
 

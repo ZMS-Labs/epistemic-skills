@@ -85,11 +85,20 @@ def main() -> int:
             "one-shot arm prompt does not reject readiness-only responses")
     require("Do not use a Markdown fence" in arm_instruction,
             "one-shot arm prompt does not reject fenced JSON")
+    json_boundary = (
+        "The first non-whitespace character must be `{`, and its matching top-level `}` "
+        "must be the last non-whitespace character. Emit no draft object, repeated snapshot, "
+        "second object, commentary, Markdown fence, or extra delimiter."
+    )
+    require(json_boundary in arm_instruction,
+            "arm prompt does not enforce one complete top-level JSON object")
     semantic_instruction = runner.semantic_prompt("tm-01-false-mvd")
     require("Perform the task now; do not acknowledge readiness" in semantic_instruction,
             "semantic prompt does not reject readiness-only responses")
     require("Do not use a Markdown fence" in semantic_instruction,
             "semantic prompt does not reject fenced JSON")
+    require(json_boundary in semantic_instruction,
+            "semantic prompt does not enforce one complete top-level JSON object")
 
     fixture_dir = ROOT / "fixtures" / "tm-01-false-mvd"
     truth = json.loads((fixture_dir / "ground-truth.json").read_text(encoding="utf-8"))
@@ -128,6 +137,8 @@ def main() -> int:
                 "sealed bridge prompt leaked scorer-only or prior-result material")
         require("Do not use tools, execute commands, or write files" in sealed,
                 "sealed bridge prompt omitted its no-tool isolation instruction")
+        require(sealed.rstrip().endswith(json_boundary),
+                "sealed bridge prompt does not repeat the JSON boundary after packet contents")
         bridge_invocation = runner.fleet_bridge_invocation(
             executable="fleet-bridge://default/fleet-orchestrator/surface-bridge-v2-0",
             harness="cursor", model="auto", packet_dir=candidate_packet,
