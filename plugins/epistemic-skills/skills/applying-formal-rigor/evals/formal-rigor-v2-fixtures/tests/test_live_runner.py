@@ -174,6 +174,8 @@ def main() -> int:
         require(set(rubric["claims"][0]) == {"id", "proof_obligations", "forbidden_propositions"},
                 "adjudication claim rubric leaked class, priority, thresholds, or expected state")
         require(not (adjudication_packet / "ground-truth.json").exists(), "adjudication packet leaked ground truth file")
+        require((adjudication_packet / "formal-rigor-semantic-adjudication.schema.json").is_file(),
+                "adjudication packet omitted the enforceable output schema")
 
         result_dir = tmp_root / "result"
         require(runner.call_needed(result_dir), "fresh call should be needed")
@@ -184,12 +186,14 @@ def main() -> int:
     command = runner.codex_command(
         codex="codex", model="gpt-5.6-sol", packet_dir=Path("packet"),
         response_path=Path("response.json"), prompt="return JSON",
+        output_schema=Path("packet/formal-rigor-semantic-adjudication.schema.json"),
     )
     joined = " ".join(str(item) for item in command)
     for marker in (
         "exec", "--ephemeral", "--ignore-user-config", "--sandbox read-only",
         "--skip-git-repo-check", "--disable plugins", "--disable apps",
         "--disable remote_plugin", "--disable plugin_sharing",
+        "--output-schema packet/formal-rigor-semantic-adjudication.schema.json",
     ):
         require(marker in joined, f"codex command missing isolation marker: {marker}")
 

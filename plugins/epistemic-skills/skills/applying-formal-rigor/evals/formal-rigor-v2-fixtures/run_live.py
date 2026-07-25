@@ -247,6 +247,10 @@ def build_adjudication_packet(
     shutil.copytree(fixture_dir / "artifacts", destination / "artifacts")
     copy_file(candidate_response, destination / "candidate-response.json")
     write_json(destination / "rubric.json", adjudication_rubric(truth))
+    copy_file(
+        ROOT / "formal-rigor-semantic-adjudication.schema.json",
+        destination / "formal-rigor-semantic-adjudication.schema.json",
+    )
 
 
 def packet_manifest(packet_dir: Path) -> dict[str, str]:
@@ -259,15 +263,20 @@ def packet_manifest(packet_dir: Path) -> dict[str, str]:
 
 def codex_command(
     *, codex: str, model: str, packet_dir: Path, response_path: Path, prompt: str,
+    output_schema: Path | None = None,
 ) -> list[str]:
-    return [
+    command = [
         codex, "exec", "--ephemeral", "--ignore-user-config", "--ignore-rules",
         "--disable", "plugins", "--disable", "apps", "--disable", "remote_plugin",
         "--disable", "plugin_sharing", "--sandbox", "read-only",
         "--skip-git-repo-check", "--color", "never", "--json",
         "-c", 'model_reasoning_effort="high"', "--model", model,
-        "--cd", str(packet_dir), "--output-last-message", str(response_path), prompt,
+        "--cd", str(packet_dir), "--output-last-message", str(response_path),
     ]
+    if output_schema is not None:
+        command.extend(["--output-schema", output_schema.as_posix()])
+    command.append(prompt)
+    return command
 
 
 def agy_command(
@@ -293,12 +302,12 @@ def cursor_command(
 
 def harness_command(
     *, harness: str, executable: str, model: str, packet_dir: Path,
-    response_path: Path, prompt: str,
+    response_path: Path, prompt: str, output_schema: Path | None = None,
 ) -> list[str]:
     if harness == "codex":
         return codex_command(
             codex=executable, model=model, packet_dir=packet_dir,
-            response_path=response_path, prompt=prompt,
+            response_path=response_path, prompt=prompt, output_schema=output_schema,
         )
     if harness == "agy":
         return agy_command(
@@ -502,6 +511,7 @@ def execute_call(
     identity: dict,
     source_commit: str,
     timeout_seconds: int,
+    output_schema_name: str | None = None,
 ) -> dict:
     if not call_needed(result_dir):
         return json.loads((result_dir / "call.json").read_text(encoding="utf-8"))
@@ -525,6 +535,7 @@ def execute_call(
         command = harness_command(
             harness=harness, executable=executable, model=model, packet_dir=packet_dir,
             response_path=response_path, prompt=prompt,
+            output_schema=(packet_dir / output_schema_name) if output_schema_name and harness == "codex" else None,
         )
     started = utc_now()
     exit_code: int | None = None
@@ -733,6 +744,7 @@ def run_semantic_task(
         identity={"kind": "semantic", "repetition": task.repetition, "fixture": task.fixture, "seat": task.seat},
         source_commit=source_commit,
         timeout_seconds=timeout_seconds,
+        output_schema_name="formal-rigor-semantic-adjudication.schema.json",
     )
     response = call_dir / "response.json"
     errors: list[str] = []
