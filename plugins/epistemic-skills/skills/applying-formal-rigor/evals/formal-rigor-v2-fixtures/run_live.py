@@ -37,6 +37,11 @@ CONCISE_JSON = (
     "Keep the JSON concise: use short but sufficient strings and minimal arrays, with no "
     "repeated rationale, evidence, or restatement of packet contents."
 )
+JSON_SYNTAX_CHECK = (
+    "Before returning, verify that the complete response parses as JSON: every object member "
+    "and array element is comma-separated, every string is closed and escaped, and braces "
+    "and brackets are balanced."
+)
 
 PARODY_ARMS = (
     "parody-always-cautious",
@@ -361,6 +366,7 @@ SEALED_PACKET_JSON
 END_SEALED_PACKET_JSON
 
 {CONCISE_JSON}
+{JSON_SYNTAX_CHECK}
 {EXACT_JSON_BOUNDARY}
 """
 
@@ -648,6 +654,7 @@ Return exactly one formal-rigor-fixture-response@1 JSON object for fixture {fixt
 Markdown fence, preamble, commentary, score, hidden class guess, or claims about files outside this
 packet. Do not read or infer ground truth, thresholds, other fixtures, other arms, or prior results.
 {CONCISE_JSON}
+{JSON_SYNTAX_CHECK}
 {EXACT_JSON_BOUNDARY}
 """
 
@@ -671,6 +678,7 @@ Return exactly one JSON object with this shape and no prose outside it:
 }}
 Include exactly one row for every rubric obligation and forbidden proposition.
 {CONCISE_JSON}
+{JSON_SYNTAX_CHECK}
 {EXACT_JSON_BOUNDARY}
 """
 

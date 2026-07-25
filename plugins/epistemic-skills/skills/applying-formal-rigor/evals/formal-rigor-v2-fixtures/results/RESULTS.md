@@ -98,3 +98,14 @@ unmatched closer, followed by one terminal complete valid same-identity
 snapshot. The epoch was not retried, resumed, or repaired. The root
 `C:\tmp\formal-rigor-final-c24e39b` is excluded from scoring and content-pinned
 as `9c1789b1c9507b486cc841f32d9e018cc519cc9ebab2ce6acd129af18e0893b2`.
+
+## 2026-07-25 extended fragile-probe diagnostic
+
+At source `c235d98`, `fc-01` and `cc-04` produced 18/18 valid fragile-probe
+calls. The campaign continued through `mt-03`, then stopped with 81 total call
+records: 79 parseable and two unparseable Cursor outputs (`candidate` run 3
+and `parody-closed-taxonomy`). In both outputs, both snapshots omit an internal
+comma before `empirical_closure`. The epoch was not retried, resumed, or
+repaired. The root `C:\tmp\formal-rigor-final-c235d98` is excluded from scoring
+and content-pinned as
+`add00f8b271e33487a5a61df225e44536f9f30e14fedc5d370d817f4dce6be1e`.

@@ -94,10 +94,17 @@ def main() -> int:
         "Keep the JSON concise: use short but sufficient strings and minimal arrays, with no "
         "repeated rationale, evidence, or restatement of packet contents."
     )
+    syntax_check = (
+        "Before returning, verify that the complete response parses as JSON: every object member "
+        "and array element is comma-separated, every string is closed and escaped, and braces "
+        "and brackets are balanced."
+    )
     require(json_boundary in arm_instruction,
             "arm prompt does not enforce one complete top-level JSON object")
     require(concise_json in arm_instruction,
             "arm prompt does not bound free-text JSON expansion")
+    require(syntax_check in arm_instruction,
+            "arm prompt does not require a complete JSON syntax check")
     semantic_instruction = runner.semantic_prompt("tm-01-false-mvd")
     require("Perform the task now; do not acknowledge readiness" in semantic_instruction,
             "semantic prompt does not reject readiness-only responses")
@@ -107,6 +114,8 @@ def main() -> int:
             "semantic prompt does not enforce one complete top-level JSON object")
     require(concise_json in semantic_instruction,
             "semantic prompt does not bound free-text JSON expansion")
+    require(syntax_check in semantic_instruction,
+            "semantic prompt does not require a complete JSON syntax check")
 
     fixture_dir = ROOT / "fixtures" / "tm-01-false-mvd"
     truth = json.loads((fixture_dir / "ground-truth.json").read_text(encoding="utf-8"))
@@ -149,6 +158,8 @@ def main() -> int:
                 "sealed bridge prompt does not repeat the JSON boundary after packet contents")
         require(sealed.rfind(concise_json) > sealed.find("END_SEALED_PACKET_JSON"),
                 "sealed bridge prompt does not repeat the concision rule after packet contents")
+        require(sealed.rfind(syntax_check) > sealed.find("END_SEALED_PACKET_JSON"),
+                "sealed bridge prompt does not repeat the syntax check after packet contents")
         bridge_invocation = runner.fleet_bridge_invocation(
             executable="fleet-bridge://default/fleet-orchestrator/surface-bridge-v2-0",
             harness="cursor", model="auto", packet_dir=candidate_packet,
