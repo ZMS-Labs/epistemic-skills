@@ -53,6 +53,16 @@ local test, or mutable `main` checkout is not a substitute.
   pinned campaign, not relabeling or repairing this epoch; all candidate
   repetitions, six parody arms, and independent semantic gates remain
   release-blocking.
+- Repeated fresh formal-rigor epochs established a provider-contract blocker
+  for the frozen Cursor arm. The live CLI offers transport formats but no
+  schema-constrained response mode. Terminal-boundary, concision, syntax-check,
+  and bounded-control prompt changes closed individual failures, but at source
+  `fb6c914` the `fc-02` control passed 9/9 before Cursor `candidate` run 3 for
+  `mt-03` remained unparseable. The retained root is
+  `C:\tmp\formal-rigor-final-fb6c914`, content pin
+  `6395c596b66a545d604af2457e17a551664f485636880ed267a5926d5cf07cce`.
+  This gate is `BLOCKED_EXTERNAL`; repaired output, provider substitution, or a
+  partial epoch cannot be credited as candidate GREEN.
 - The pinned isolated proportionality protocol has completed. Final candidate
   `b73b04af46255bddf103a3f7e80e69b442ebddab` passed all three repetitions:
   routine `10/10`, material `4/4`, high-risk `4/4`, with routine narration

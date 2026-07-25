@@ -93,9 +93,10 @@ as `2febab93d1d6a1a40e0a3e0853b155ad5a481dbb882fe1830fdd9ff0921614ea`.
 
 At source `c24e39b`, `fc-01` produced 9/9 valid live-prompt regression calls.
 The campaign then stopped at `cc-04` with 18 total calls, 17 parseable. The
-Cursor candidate response was shaped as a complete draft, followed by one
-unmatched closer, followed by one terminal complete valid same-identity
-snapshot. The epoch was not retried, resumed, or repaired. The root
+Cursor candidate response contained two same-identity snapshots, each ending
+with an extra unmatched closer. The terminal snapshot was itself invalid and
+therefore was not normalized. The epoch was not retried, resumed, or repaired.
+The root
 `C:\tmp\formal-rigor-final-c24e39b` is excluded from scoring and content-pinned
 as `9c1789b1c9507b486cc841f32d9e018cc519cc9ebab2ce6acd129af18e0893b2`.
 
@@ -120,3 +121,16 @@ member name is required. The epoch was not retried, resumed, or repaired. The
 root `C:\tmp\formal-rigor-final-2a61eef` is excluded from scoring and
 content-pinned as
 `1708148471a8827a0dcd7e18fd07f0c4ad49bfba574554e56c7637b6d9e03786`.
+
+## 2026-07-25 frozen Cursor provider-contract blocker
+
+At source `fb6c914`, the `fc-02` control regression produced 9/9 valid calls.
+The subsequent `mt-03` probe recorded nine calls, eight parseable; Cursor
+`candidate` run 3 remained unparseable despite terminal-boundary, concision,
+and explicit full-JSON syntax-check prompts. The epoch therefore contains 18
+calls, 17 parseable. It was not retried, resumed, or repaired. The root
+`C:\tmp\formal-rigor-final-fb6c914` is excluded from scoring and content-pinned
+as `6395c596b66a545d604af2457e17a551664f485636880ed267a5926d5cf07cce`.
+
+These repeated failures, together with the live Cursor CLI providing no schema
+flag, establish a provider-contract blocker for the frozen Cursor arm.
