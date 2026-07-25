@@ -68,6 +68,15 @@ def validate_inventory(inventory: dict[str, dict]) -> list[str]:
             required_rows = truth.get("coverage", {}).get("required", [])
             if not any(row.get("status") == "unmapped" for row in required_rows):
                 errors.append(f"{fixture_id}: unmapped class has no unmapped coverage")
+        for row in truth.get("coverage", {}).get("required", []):
+            if row.get("modules") and row.get("any_modules"):
+                errors.append(f"{fixture_id}: coverage row mixes modules and any_modules")
+            if "any_modules" in row and not (
+                isinstance(row.get("any_modules"), list)
+                and row.get("any_modules")
+                and all(isinstance(module, str) and module for module in row["any_modules"])
+            ):
+                errors.append(f"{fixture_id}: invalid any_modules coverage alternatives")
         freshness = truth.get("freshness", {})
         if freshness.get("must_re_fire") and not (
             freshness.get("stale_revision") or freshness.get("current_authority_ref")
@@ -180,6 +189,8 @@ def score_fixture(truth: dict, response: dict) -> dict:
             row = rows.get(req["family"], {})
             if row.get("status") != req["status"]: fail(failures, "S5", f"{req['family']} expected {req['status']}")
             if not set(req.get("modules", [])) <= set(row.get("modules", [])): fail(failures, "S3", f"{req['family']} missing module")
+            if req.get("any_modules") and not set(req["any_modules"]) & set(row.get("modules", [])):
+                fail(failures, "S3", f"{req['family']} missing any adequate module")
         for item in truth.get("coverage", {}).get("forbidden", []):
             if rows.get(item["family"], {}).get("status") == item.get("status"): fail(failures, "S5", f"forbidden coverage state {item['family']}")
         frame = record.get("decision_frame", {})

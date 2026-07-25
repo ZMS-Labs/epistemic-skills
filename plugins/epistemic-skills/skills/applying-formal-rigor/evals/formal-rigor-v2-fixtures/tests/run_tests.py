@@ -121,6 +121,10 @@ def assert_v2_production_contract() -> None:
         "Coverage `modules` entries use the registry's exact unversioned `module_id`",
         "Do not let an unmapped external-semantic slice erase an adequately modeled engineering slice",
         "An invalid justification does not establish the opposite external meaning",
+        "A pending empirical premise does not make an applicable formal module `unmapped`",
+        "If more than one property family bears load, use `standard`",
+        "Before emitting, rerun the tier gate and cue cross-check",
+        "A rejected current premise can use `reversal` even when replacement selection remains unresolved",
     ):
         require(marker in skill_text, f"production SKILL.md missing v2 contract marker: {marker}")
     require("enumerate all 7 lenses" not in skill_text, "v1 closed seven-lens sweep remains normative")
@@ -232,6 +236,23 @@ def main() -> int:
     }
     require(regulatory_rows.get("P9", {}).get("status") == "unmapped",
             "unmapped regulatory terrain is not represented as unmapped coverage")
+    cache_rows = {
+        row["family"]: row for row in inventory["fc-02-value-of-information-probe"]["coverage"]["required"]
+    }
+    require(cache_rows.get("P7", {}).get("status") == "fired"
+            and cache_rows.get("P8", {}).get("status") == "fired"
+            and cache_rows.get("P9", {}).get("status") == "fired",
+            "cache replay fixture does not separate capacity, uncertainty, and decision coverage")
+    token_rows = {
+        row["family"]: row for row in inventory["tc-01-high-assurance-escalation"]["coverage"]["required"]
+    }
+    require(token_rows.get("P1", {}).get("status") == "fired",
+            "token migration fixture omits protocol-semantics coverage")
+    require(set(token_rows.get("P5", {}).get("any_modules", [])) == {
+        "dependability-fault-models", "interface-protocol-evolution",
+    }, "token migration fixture does not allow either adequate rollback module")
+    require(inventory["um-01-custom-accelerator-memory-model"]["expected_invocation"] == ["high-assurance"],
+            "model-sensitive accelerator proof incorrectly permits standard tier")
 
     skip = {"response": "formal-rigor-fixture-response@1", "fixture": "ot-01-pure-preference-skip",
             "invocation": "skip", "skip_reason": "No theorem, measurable property, convention, or contract distinguishes the names.",
@@ -271,6 +292,32 @@ def main() -> int:
     failed = score.score_fixture(stale_priority, stale_authority)
     require(not failed["structural_pass"] and "S9" in failed["dimensions_failed"],
             "stale decision authority was not rejected")
+
+    alternative_module_truth = {
+        "fixture_id": "alternative-module-synthetic", "expected_invocation": ["standard"],
+        "claims": [{"id": "c1", "allowed_states": ["established"]}],
+        "coverage": {"required": [{"family": "P5", "status": "fired", "any_modules": [
+            "dependability-fault-models", "interface-protocol-evolution",
+        ]}]},
+        "decision_frame": {}, "synthesis": {}, "freshness": {},
+    }
+    alternative_module_response = {
+        "response": "formal-rigor-fixture-response@1", "fixture": "alternative-module-synthetic",
+        "invocation": "standard", "skip_reason": None,
+        "claim_assessments": [{"id": "c1", "state": "established", "derivation_ids": []}],
+        "record": minimal_record(),
+    }
+    alternative_module_response["record"]["coverage"][4] = {
+        "family": "P5", "status": "fired", "modules": ["interface-protocol-evolution"],
+        "reason": "version-skew-sensitive rollback",
+    }
+    passed = score.score_fixture(alternative_module_truth, alternative_module_response)
+    require(passed["structural_pass"], f"adequate alternative module failed: {passed['failures']}")
+    no_adequate_module = copy.deepcopy(alternative_module_response)
+    no_adequate_module["record"]["coverage"][4]["modules"] = ["temporal-specification-model-checking"]
+    failed = score.score_fixture(alternative_module_truth, no_adequate_module)
+    require(not failed["structural_pass"] and "S3" in failed["dimensions_failed"],
+            "scorer accepted a module outside the allowed alternatives")
 
     malformed_nested = json.loads(json.dumps(forced))
     malformed_nested["record"]["decision_frame"]["alternatives"] = ["A", "B"]

@@ -71,6 +71,12 @@ fires). A short proof does not make a downstream decision lightweight. A
 counterexample may remain focused only when it rejects the bounded proposition
 without selecting or mandating what replaces it.
 
+If more than one property family bears load, use `standard`; cross-family
+reconciliation is not a focused answer. A system-level scalability, capacity,
+or whole-protocol certificate is also `standard` even when one local operation
+or invariant is simple. If a supposedly focused question lacks a closed,
+supplied model or scope, that focused condition failed.
+
 Focused answers the bounded property only. If that result is being used to select,
 mandate, or reverse a persistent schema, architecture, protocol, or operational decision,
 use `standard` even when the proof itself is bounded.
@@ -141,6 +147,12 @@ For standard/high-assurance work, record exactly one state per family:
   state the boundary-tied reason;
 - `unmapped`: a material property exists but no adequate module, model, or
   input is available; carry it into `coverage_limits`.
+
+A pending empirical premise does not make an applicable formal module `unmapped`.
+When an adequate module and model exist but an observation is pending, mark the
+family `fired`, keep the result `incomplete` or `conditional`, and close it
+through `empirical_closure`. Reserve `unmapped` for missing formal apparatus,
+semantics, or a model that cannot yet be instantiated even conditionally.
 
 | ID | Property family | Question |
 |---|---|---|
@@ -273,6 +285,9 @@ A `reversal` rejects a premise or proposal; it does not by itself select a repla
 Keep `selected_option` null unless a separate authorized synthesis establishes
 one of the stable alternative ids. `pareto-set` and `underdetermined` always
 keep it null; `dominance` names the exact dominant alternative id.
+A rejected current premise can use `reversal` even when replacement selection remains unresolved.
+Put the unresolved replacement in residual mismatch and recovery moves rather
+than changing the current-premise verdict to `underdetermined`.
 
 ## `formal-rigor-record@2`
 
@@ -311,6 +326,12 @@ Record invariants:
   `derivation-correctness-by-envelope`, `empirical-fact-without-observation`,
   and `gauntlet-independence`; additional subject-specific boundaries may be
   added.
+
+Before emitting, rerun the tier gate and cue cross-check. Confirm that every
+focused condition is explicitly true; that each material cue, objective,
+constraint, uncertainty, authority, and lifecycle input has the correct family
+status and adequate module; and that claim state and synthesis outcome answer
+the current proposition without inventing a replacement.
 
 ## Required correctness rules
 
