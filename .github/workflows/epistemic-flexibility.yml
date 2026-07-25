@@ -6,6 +6,8 @@ name: epistemic-flexibility
       - "plugins/epistemic-skills/skills/**"
       - "plugins/epistemic-skills/contracts/**"
       - "docs/**"
+      - ".ledger/**"
+      - ".github/scripts/**"
       - ".github/workflows/epistemic-flexibility.yml"
   push:
     branches: [main]
@@ -13,6 +15,8 @@ name: epistemic-flexibility
       - "plugins/epistemic-skills/skills/**"
       - "plugins/epistemic-skills/contracts/**"
       - "docs/**"
+      - ".ledger/**"
+      - ".github/scripts/**"
       - ".github/workflows/epistemic-flexibility.yml"
 
 permissions:
@@ -46,6 +50,10 @@ jobs:
         run: python plugins/epistemic-skills/skills/evidence-locked-uat/evals/triage/tests/run_tests.py
       - name: Decision Ledger proportionality tests
         run: python plugins/epistemic-skills/skills/decision-ledger/evals/proportionality/tests/run_tests.py
+      - name: Enforcement-language precision audit
+        run: python plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/audit_enforcement_language.py
+      - name: Gauntlet validation-kernel gate
+        run: python plugins/epistemic-skills/skills/gauntlet/scripts/validate_ruling_set.py --self-test
       - name: Outsource packet and package integration
         run: python plugins/epistemic-skills/skills/outsource/tests/run_tests.py
       - name: Continuity resume-fixture committed results
@@ -76,6 +84,7 @@ jobs:
             .github/scripts/check_json_artifacts.py \
             plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/validate_trace.py \
             plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/run_tests.py \
+            plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/audit_enforcement_language.py \
             plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/behavioral/score_behavior.py \
             plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/behavioral/run_tests.py \
             plugins/epistemic-skills/skills/using-epistemic-skills/evals/proportionality/score.py \
@@ -95,10 +104,11 @@ jobs:
             plugins/epistemic-skills/skills/evidence-locked-uat/evals/triage/tests/run_tests.py \
             plugins/epistemic-skills/skills/decision-ledger/evals/proportionality/score.py \
             plugins/epistemic-skills/skills/decision-ledger/evals/proportionality/tests/run_tests.py \
-            plugins/epistemic-skills/skills/decision-ledger/reference/validate_examples.py
+            plugins/epistemic-skills/skills/decision-ledger/reference/validate_examples.py \
+            plugins/epistemic-skills/skills/gauntlet/scripts/validate_ruling_set.py
       - name: Parse committed JSON in integration surfaces
         run: python .github/scripts/check_json_artifacts.py
-      - name: Decision-ledger recurrent-correction examples
+      - name: Decision-ledger examples and durable store
         run: python plugins/epistemic-skills/skills/decision-ledger/reference/validate_examples.py
       - name: Existing receipt verifier
         run: python plugins/epistemic-skills/contracts/verify_receipt.py --self-test
