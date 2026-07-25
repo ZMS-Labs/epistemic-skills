@@ -405,6 +405,29 @@ def parse_fleet_bridge_stream(events: str) -> tuple[str, int | None, str]:
     return "".join(response_parts), exit_code, "\n".join(stderr_parts)
 
 
+def normalize_fleet_bridge_response(response: str) -> tuple[str, str | None]:
+    decoder = json.JSONDecoder()
+    values: list[object] = []
+    spans: list[tuple[int, int]] = []
+    offset = 0
+    while offset < len(response):
+        while offset < len(response) and response[offset].isspace():
+            offset += 1
+        if offset >= len(response):
+            break
+        start = offset
+        try:
+            value, offset = decoder.raw_decode(response, offset)
+        except json.JSONDecodeError:
+            return response, None
+        values.append(value)
+        spans.append((start, offset))
+    if len(values) > 1 and all(value == values[0] for value in values[1:]):
+        start, end = spans[0]
+        return response[start:end], "deduplicated-identical-complete-json-values"
+    return response, None
+
+
 def arm_prompt(fixture: str) -> str:
     return f"""You are a context-isolated run agent for fixture {fixture}.
 Read only files inside the current packet directory. Follow ARM_PROMPT.txt. The scenario is
@@ -499,6 +522,9 @@ def execute_call(
         if bridge and completed.returncode == 0:
             try:
                 bridge_response, bridge_code, bridge_stderr = parse_fleet_bridge_stream(stdout)
+                bridge_response, response_normalization = normalize_fleet_bridge_response(bridge_response)
+                if response_normalization:
+                    invocation_metadata["response_normalization"] = response_normalization
                 if bridge_response:
                     response_path.write_text(bridge_response, encoding="utf-8", newline="\n")
                 if bridge_stderr:

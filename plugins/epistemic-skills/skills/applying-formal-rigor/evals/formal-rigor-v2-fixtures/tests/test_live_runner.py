@@ -221,6 +221,15 @@ def main() -> int:
     )
     require(failed_response == "" and failed_code == 124 and failed_stderr == "idle timeout",
             "Fleet bridge failure frame was not preserved")
+    duplicated = '{"fixture":"tm-01-false-mvd"}{"fixture":"tm-01-false-mvd"}'
+    normalized, normalization = runner.normalize_fleet_bridge_response(duplicated)
+    require(normalized == '{"fixture":"tm-01-false-mvd"}' and
+            normalization == "deduplicated-identical-complete-json-values",
+            "Fleet bridge did not normalize its exact duplicate final JSON frame")
+    distinct = '{"fixture":"a"}{"fixture":"b"}'
+    unchanged, no_normalization = runner.normalize_fleet_bridge_response(distinct)
+    require(unchanged == distinct and no_normalization is None,
+            "Fleet bridge normalization must fail closed on distinct concatenated values")
 
     valid_adjudication = {
         "adjudication": "formal-rigor-semantic-adjudication@1",
