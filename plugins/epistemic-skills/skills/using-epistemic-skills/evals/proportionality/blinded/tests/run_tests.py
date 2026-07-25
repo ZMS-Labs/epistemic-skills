@@ -55,6 +55,18 @@ def main() -> int:
     )
     require(arms["invocation"]["settings"]["fresh_context_per_fixture"] is True, "isolation lost")
 
+    router = (REPO_ROOT / "plugins/epistemic-skills/skills/using-epistemic-skills/SKILL.md").read_text(
+        encoding="utf-8"
+    )
+    require(
+        "proposed design needs correctness confirmation or reversal" in router,
+        "router must preserve the member-owned single-design formal-rigor trigger",
+    )
+    require(
+        "historical convention" in router,
+        "router must identify unresolved repository conventions as blindspot evidence",
+    )
+
     scenarios = load(BLINDED / "scenarios.json")["scenarios"]
     fixtures = load(PARENT / "fixtures.json")["fixtures"]
     require(len(scenarios) == 18, "expected 18 self-contained scenarios")
