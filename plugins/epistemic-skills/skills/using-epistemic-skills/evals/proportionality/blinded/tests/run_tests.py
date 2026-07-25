@@ -22,6 +22,7 @@ from runner import (  # noqa: E402
     load,
     prepare,
     score_packets,
+    skill_catalog,
     source_skill_hashes,
 )
 
@@ -89,11 +90,19 @@ def main() -> int:
             for hidden in ("expected_paths", "required_skills", "require_escalation", "category"):
                 require(hidden not in serialized, f"packet leaks scorer-only field {hidden}")
         sample_packet = first / "packets" / "m-01-data-structure-choice" / "input.json"
-        live_prompt = codex_live_prompt(sample_packet)
+        catalog = skill_catalog(REPO_ROOT)
+        require("name: applying-formal-rigor" in catalog, "member trigger catalog missing")
+        require(
+            "when a proposed design needs correctness confirmation or reversal" in catalog,
+            "member-owned formal-rigor trigger missing from catalog",
+        )
+        require("# Applying Formal Rigor" not in catalog, "catalog must not preload skill bodies")
+        live_prompt = codex_live_prompt(sample_packet, REPO_ROOT)
         require(
             "plugins/epistemic-skills/skills/using-epistemic-skills/SKILL.md" in live_prompt,
             "live adapter must activate the pinned repository router",
         )
+        require("name: blindspot-pass" in live_prompt, "live adapter must expose member triggers")
         require("Choose between a list" in live_prompt, "live adapter must embed the packet")
         require("required_skills" not in live_prompt, "live adapter leaked scorer ground truth")
         command = codex_live_command(

@@ -22,16 +22,24 @@ FIXTURES = PARENT / "fixtures.json"
 SCORER = PARENT / "score.py"
 RESPONSE_SCHEMA = HERE / "proportionality-fixture-response.schema.json"
 REPO_ROOT = HERE.parents[6]
-SKILL_PATHS = [
-    "plugins/epistemic-skills/skills/using-epistemic-skills/SKILL.md",
+ROUTER_PATH = "plugins/epistemic-skills/skills/using-epistemic-skills/SKILL.md"
+ROUTINE_REFERENCE_PATH = (
+    "plugins/epistemic-skills/skills/using-epistemic-skills/reference/routine-fast-path.md"
+)
+CATALOG_SKILL_PATHS = [
     "plugins/epistemic-skills/skills/using-epistemic-skills/reference/routine-fast-path.md",
     "plugins/epistemic-skills/skills/blindspot-pass/SKILL.md",
     "plugins/epistemic-skills/skills/applying-formal-rigor/SKILL.md",
+    "plugins/epistemic-skills/skills/evidence-research/SKILL.md",
+    "plugins/epistemic-skills/skills/write-goal/SKILL.md",
+    "plugins/epistemic-skills/skills/outsource/SKILL.md",
     "plugins/epistemic-skills/skills/gauntlet/SKILL.md",
     "plugins/epistemic-skills/skills/helix/SKILL.md",
     "plugins/epistemic-skills/skills/evidence-locked-uat/SKILL.md",
     "plugins/epistemic-skills/skills/decision-ledger/SKILL.md",
+    "plugins/epistemic-skills/skills/continuity-verify/SKILL.md",
 ]
+SKILL_PATHS = [ROUTER_PATH, ROUTINE_REFERENCE_PATH, *CATALOG_SKILL_PATHS[1:]]
 
 sys.path.insert(0, str(PARENT))
 from score import format_report, score_run  # noqa: E402
@@ -83,12 +91,37 @@ def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
-def codex_live_prompt(packet_path: Path) -> str:
+def skill_catalog(source_root: Path) -> str:
+    """Project the exact installed-style name/description frontmatter catalog."""
+    entries: list[str] = []
+    for relative_path in CATALOG_SKILL_PATHS:
+        if not relative_path.endswith("/SKILL.md"):
+            continue
+        path = source_root / relative_path
+        if not path.is_file():
+            continue
+        lines = path.read_text(encoding="utf-8").splitlines()
+        if not lines or lines[0].strip() != "---":
+            raise SystemExit(f"skill lacks YAML frontmatter: {relative_path}")
+        try:
+            end = next(index for index in range(1, len(lines)) if lines[index].strip() == "---")
+        except StopIteration as exc:
+            raise SystemExit(f"skill frontmatter is not closed: {relative_path}") from exc
+        frontmatter = "\n".join(lines[: end + 1])
+        if "\nname:" not in frontmatter or "\ndescription:" not in frontmatter:
+            raise SystemExit(f"skill frontmatter lacks name/description: {relative_path}")
+        entries.append(f"PATH: {relative_path}\n{frontmatter}")
+    return "\n\n".join(entries)
+
+
+def codex_live_prompt(packet_path: Path, source_root: Path) -> str:
     """Build the scorer-free adapter prompt for a pinned source checkout."""
     packet = packet_path.read_text(encoding="utf-8")
     return (
         "The current working directory is the pinned source checkout for this arm. "
-        "Activate its epistemic router by reading "
+        "The installed runtime would expose the exact pinned skill catalog below. "
+        "Use these member-owned descriptions when deciding which positive triggers apply. "
+        "Activate the epistemic router by reading "
         "plugins/epistemic-skills/skills/using-epistemic-skills/SKILL.md. "
         "Follow that router and read only member skill files whose positive triggers apply. "
         "Do not inspect evaluation directories, scorer code, ground truth, other fixtures, "
@@ -96,6 +129,9 @@ def codex_live_prompt(packet_path: Path) -> str:
         "Follow its instruction and task, then return exactly one JSON object matching its "
         "response_contract and the enforced output schema. Report only skills actually fired; "
         "do not add process for the evaluation. Do not wrap the JSON in Markdown.\n\n"
+        "BEGIN PINNED SKILL CATALOG\n"
+        f"{skill_catalog(source_root)}\n"
+        "END PINNED SKILL CATALOG\n\n"
         "BEGIN INPUT PACKET\n"
         f"{packet.rstrip()}\n"
         "END INPUT PACKET\n"
@@ -318,7 +354,7 @@ def run_live(
         stderr_path = packet_dir / "stderr" / f"{fixture_id}.txt"
         events_path.parent.mkdir(parents=True, exist_ok=True)
         stderr_path.parent.mkdir(parents=True, exist_ok=True)
-        prompt = codex_live_prompt(packet_path)
+        prompt = codex_live_prompt(packet_path, source_root)
         command = codex_live_command(codex, source_root, response_path, model)
         started = utc_now()
         transport = "failed"

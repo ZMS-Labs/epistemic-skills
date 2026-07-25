@@ -33,9 +33,11 @@ python blinded/runner.py score --packet-dir /tmp/prop-final
 
 `run-live` verifies the checkout commit and every pinned skill hash, then runs
 each fixture in a fresh read-only Codex context rooted at that checkout. Its
-scorer-free adapter activates the checkout's `using-epistemic-skills` router
-and permits only positively triggered member skill reads. The sealed packet is
-sent on stdin and model output is constrained by the committed response schema;
+scorer-free adapter projects the checkout's exact member-skill name/description
+frontmatter catalog (matching normal installed skill discovery), activates the
+checkout's `using-epistemic-skills` router, and permits full reads only for
+positively triggered member skills. The sealed packet is sent on stdin and
+model output is constrained by the committed response schema;
 terminal call records are never retried or overwritten. Running from the packet
 directory without exposing and activating the pinned source is not a valid
 repository-arm measurement.
