@@ -171,12 +171,16 @@ def main() -> int:
         response_path=Path("response.json"), prompt="return JSON",
     )
     agy_joined = " ".join(str(item) for item in agy)
-    for marker in ("agy", "--print", "--sandbox", "--model gemini-3.1-pro-high"):
+    for marker in (
+        "agy", "--print", "--sandbox", "--dangerously-skip-permissions",
+        "--mode plan", "--add-dir packet", "--model gemini-3.1-pro-high",
+    ):
         require(marker in agy_joined, f"agy command missing isolation marker: {marker}")
     require(agy == [
-        "agy", "--sandbox", "--model", "gemini-3.1-pro-high",
+        "agy", "--sandbox", "--dangerously-skip-permissions", "--mode", "plan",
+        "--add-dir", "packet", "--model", "gemini-3.1-pro-high",
         "--print", "return JSON",
-    ], "agy must receive the task as --print's value, never the preceding sandbox flag")
+    ], "agy must grant headless read tools only inside the sandboxed packet directory")
 
     cursor = runner.cursor_command(
         cursor="cursor-agent", model="gpt-5.6-sol", packet_dir=Path("packet"),

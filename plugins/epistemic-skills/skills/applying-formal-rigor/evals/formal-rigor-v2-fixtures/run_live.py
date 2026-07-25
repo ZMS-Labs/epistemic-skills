@@ -270,8 +270,11 @@ def codex_command(
 def agy_command(
     *, agy: str, model: str, packet_dir: Path, response_path: Path, prompt: str,
 ) -> list[str]:
-    del packet_dir, response_path
-    return [agy, "--sandbox", "--model", model, "--print", prompt]
+    del response_path
+    return [
+        agy, "--sandbox", "--dangerously-skip-permissions", "--mode", "plan",
+        "--add-dir", str(packet_dir), "--model", model, "--print", prompt,
+    ]
 
 
 def cursor_command(
