@@ -19,7 +19,7 @@ not a packet-preparation failure.
 Prepare an arm:
 
 ```bash
-python blinded/runner.py prepare --arm candidate-final-4e1945e --out /tmp/prop-final
+python blinded/runner.py prepare --arm candidate-final-de6821f --out /tmp/prop-final
 ```
 
 Run each `packets/<fixture-id>/input.json` in a fresh context using the pinned

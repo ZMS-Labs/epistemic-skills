@@ -47,7 +47,7 @@ def main() -> int:
         == [
             "main-80eb0827",
             "pr46-candidate-a4f2210f",
-            "candidate-final-4e1945e",
+            "candidate-final-de6821f",
             "full-ceremony",
             "always-routine",
         ],
@@ -92,8 +92,8 @@ def main() -> int:
         # Unit-test the pure packet projection after the source-verification
         # boundary. The CLI never exposes this bypass and always verifies the
         # checkout against the arm commit.
-        prepare("candidate-final-4e1945e", 1, first, REPO_ROOT, _source_already_verified=True)
-        prepare("candidate-final-4e1945e", 1, second, REPO_ROOT, _source_already_verified=True)
+        prepare("candidate-final-de6821f", 1, first, REPO_ROOT, _source_already_verified=True)
+        prepare("candidate-final-de6821f", 1, second, REPO_ROOT, _source_already_verified=True)
         require(load(first / "manifest.json") == load(second / "manifest.json"), "manifest not deterministic")
 
         for packet in (first / "packets").glob("*/input.json"):
