@@ -106,11 +106,18 @@ def assert_v2_production_contract() -> None:
     for marker in (
         "cost of error × uncertainty × downstream dependence × irreversibility",
         "at most six short bullets or 250 visible words",
+        "Focused is permitted only when all of these are true",
         "Do not emit P1-P9 reconciliation",
         "model → preconditions → fact mapping → derivation → result → residual mismatch",
         "fired", "not-applicable", "unmapped",
         "formal-rigor-record@2",
         "dominance", "pareto-set", "conditional", "underdetermined", "reversal", "reversible-probe",
+        "derivation-correctness-by-envelope",
+        "empirical-fact-without-observation",
+        "gauntlet-independence",
+        "A `reversal` rejects a premise or proposal; it does not by itself select a replacement",
+        "Product/version semantics require an exact official source pin at every tier that emits a record",
+        "Cross-check these observable cues before marking a family",
     ):
         require(marker in skill_text, f"production SKILL.md missing v2 contract marker: {marker}")
     require("enumerate all 7 lenses" not in skill_text, "v1 closed seven-lens sweep remains normative")

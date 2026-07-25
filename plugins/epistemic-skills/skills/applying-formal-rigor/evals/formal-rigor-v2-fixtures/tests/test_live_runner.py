@@ -69,6 +69,16 @@ def main() -> int:
     )
     require(semantic_smoke == [runner.SemanticTask(1, "tm-01-false-mvd", "a")],
             "semantic filters must select exactly one isolated smoke seat")
+    arm_instruction = runner.arm_prompt("tm-01-false-mvd")
+    require("Perform the task now; do not acknowledge readiness" in arm_instruction,
+            "one-shot arm prompt does not reject readiness-only responses")
+    require("Do not use a Markdown fence" in arm_instruction,
+            "one-shot arm prompt does not reject fenced JSON")
+    semantic_instruction = runner.semantic_prompt("tm-01-false-mvd")
+    require("Perform the task now; do not acknowledge readiness" in semantic_instruction,
+            "semantic prompt does not reject readiness-only responses")
+    require("Do not use a Markdown fence" in semantic_instruction,
+            "semantic prompt does not reject fenced JSON")
 
     fixture_dir = ROOT / "fixtures" / "tm-01-false-mvd"
     truth = json.loads((fixture_dir / "ground-truth.json").read_text(encoding="utf-8"))

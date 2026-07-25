@@ -445,6 +445,7 @@ def normalize_fleet_bridge_response(response: str) -> tuple[str, str | None]:
 
 def arm_prompt(fixture: str) -> str:
     return f"""You are a context-isolated run agent for fixture {fixture}.
+Perform the task now; do not acknowledge readiness or wait for another turn. Do not use a Markdown fence.
 Read only files inside the current packet directory. Follow ARM_PROMPT.txt. The scenario is
 scenario.md and its allowed evidence is under artifacts/. Public response contracts are the two
 schema files. If candidate/ exists, read candidate/SKILL.md and the module registry, then load only
@@ -458,6 +459,7 @@ packet. Do not read or infer ground truth, thresholds, other fixtures, other arm
 
 def semantic_prompt(fixture: str) -> str:
     return f"""You are one isolated, arm-blinded semantic adjudicator for fixture {fixture}.
+Perform the task now; do not acknowledge readiness or wait for another turn. Do not use a Markdown fence.
 Read only scenario.md, artifacts/, candidate-response.json, and rubric.json in this packet. Do not
 infer arm identity, model identity, thresholds, prior results, or another adjudicator's report.
 Judge whether the response actually satisfies every proof obligation and avoids every forbidden

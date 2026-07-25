@@ -53,11 +53,31 @@ Use for one bounded formal question or a low-blast-radius reversible choice:
 one complexity bound, normal-form test, concrete history, invariant proof, or
 specific correctness challenge.
 
+Focused is permitted only when all of these are true:
+
+- the output resolves one bounded property inside a closed, supplied model;
+- the conclusion is only that property's status, counterexample, or residual
+  limit—not selection, mandate, or reversal of a persistent design, protocol,
+  schema, architecture, or operational choice;
+- the claim is not a whole-system or whole-protocol correctness certificate;
+- no material premise depends on product/version semantics, runtime
+  observation, an authority source, or stale/moved subject state; and
+- no security/privacy boundary, safety exposure, compatibility contract,
+  migration, high-blast-radius change, or material `unmapped` terrain bears
+  load.
+
+If any condition fails, use `standard` (or `high-assurance` when its trigger
+fires). A short proof does not make a downstream decision lightweight. A
+counterexample may remain focused only when it rejects the bounded proposition
+without selecting or mandating what replaces it.
+
 Focused answers the bounded property only. If that result is being used to select,
 mandate, or reverse a persistent schema, architecture, protocol, or operational decision,
 use `standard` even when the proof itself is bounded.
 
 - Return inline in at most six short bullets or 250 visible words.
+- Before emitting, count the bullets and visible words; compress to the focused
+  contract rather than adding a record solely because the draft is verbose.
 - Include subject/question, model, precise construct, minimum preconditions and
   fact mapping, finite derivation or counterexample, result, and residual
   limitation. Add a bounded empirical check only when material.
@@ -133,6 +153,32 @@ For standard/high-assurance work, record exactly one state per family:
 | `P7` | Algorithms, resources, capacity, and real time | Model, workload, bounds, saturation, deadlines, lower bounds? |
 | `P8` | Uncertainty, measurement, randomization, and numerics | Probability, estimation, calibration, conditioning, rounding, stability? |
 | `P9` | Evolution, interfaces, and operations | Compatibility, version skew, migration, reversibility, observability, lifecycle? |
+
+Cross-check these observable cues before marking a family:
+
+- whole-protocol correctness, safety, liveness, transitions, or starvation
+  fires `P1`; scheduling, histories, isolation, or happens-before also fires
+  `P3`;
+- facts, dependencies, schemas, keys, representation, or enforceability fires
+  `P2`;
+- distributed visibility, replication, session guarantees, convergence, or
+  consensus fires `P4`; a distributed ordering claim may fire both `P3` and
+  `P4`;
+- reliability, durability, rollback, fault containment, or recovery fires
+  `P5`;
+- authentication, authorization, authority, confidentiality, privacy, or
+  information flow fires `P6`;
+- algorithms, complexity, capacity, latency budgets, queue stability, resource
+  bounds, or lower bounds fires `P7`; an unknown accelerator or hardware
+  resource model is `P7: unmapped`, not `not-applicable`;
+- probability, measurement uncertainty, value of information, rounding,
+  conditioning, or numerical stability fires `P8`; and
+- product versions, external contracts, regulatory interfaces, migration,
+  subject revision, staleness, compatibility, or lifecycle fires `P9`.
+
+These cues are a discovery cross-check, not a closed taxonomy. Multiple rows
+often fire; each fired row must name an adequate loaded module from the
+registry, and missing theory or inputs must be recorded as `unmapped`.
 
 Coverage is complete only relative to the declared subject, boundary,
 inventory, loaded modules, facts, and limits. It never means that the library
@@ -212,6 +258,11 @@ is authorized and its relation to other objectives is explicit.
 Name concessions and recovery moves. A forced winner is a failure, not a more
 useful answer.
 
+A `reversal` rejects a premise or proposal; it does not by itself select a replacement.
+Keep `selected_option` null unless a separate authorized synthesis establishes
+one of the stable alternative ids. `pareto-set` and `underdetermined` always
+keep it null; `dominance` names the exact dominant alternative id.
+
 ## `formal-rigor-record@2`
 
 Standard and high-assurance work emits JSON conforming to
@@ -245,6 +296,10 @@ Record invariants:
 - the envelope attests structure, provenance, and validity window only—never
   derivation correctness, an unobserved empirical fact, or Gauntlet
   independence.
+- `never_attests` must contain at least the exact machine-readable boundaries
+  `derivation-correctness-by-envelope`, `empirical-fact-without-observation`,
+  and `gauntlet-independence`; additional subject-specific boundaries may be
+  added.
 
 ## Required correctness rules
 
@@ -267,6 +322,9 @@ Record invariants:
 
 ## Source and boundary policy
 
+- Product/version semantics require an exact official source pin at every tier that emits a record.
+  When a source register is supplied, copy its exact source id into the
+  load-bearing derivation instead of paraphrasing the citation.
 - Load-bearing definitions and theorems cite a canonical paper, standard, or
   edition registered by the module. Secondary prose may aid readability but
   may not be the sole source.
