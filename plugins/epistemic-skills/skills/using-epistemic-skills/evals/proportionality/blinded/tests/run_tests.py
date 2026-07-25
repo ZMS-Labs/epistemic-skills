@@ -82,6 +82,11 @@ def main() -> int:
     fixtures = load(PARENT / "fixtures.json")["fixtures"]
     require(len(scenarios) == 18, "expected 18 self-contained scenarios")
     require({x["id"] for x in scenarios} == {x["id"] for x in fixtures}, "inventory drift")
+    scenario_by_id = {scenario["id"]: scenario for scenario in scenarios}
+    require(
+        "principal.authorized_tenant_ids" in scenario_by_id["h-02-tenant-isolation"]["scenario"],
+        "tenant-isolation fixture must supply the proposed predicate that formal rigor must verify",
+    )
 
     with tempfile.TemporaryDirectory() as historical_raw:
         historical = Path(historical_raw)
