@@ -1114,6 +1114,14 @@ def run_parallel(tasks: list, worker: Callable[[object], dict], workers: int) ->
 
 
 def summarize_semantic(output_root: Path, provider_plan: str) -> dict:
+    manifest_path = output_root / "campaign-plan.json"
+    if not manifest_path.is_file():
+        raise ValueError("semantic summary requires campaign-plan.json")
+    campaign = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if campaign.get("schema") != "formal-rigor-live-campaign-plan@1":
+        raise ValueError("semantic summary requires a valid campaign manifest")
+    if campaign.get("provider_plan") != provider_plan:
+        raise ValueError("semantic summary provider plan does not match campaign manifest")
     results = []
     for repetition in (1, 2, 3):
         for fixture in fixture_ids():
@@ -1171,6 +1179,43 @@ def verify_source_state(source_commit: str, *, require_clean: bool = True) -> No
     head = default_source_commit()
     if source_commit != head:
         raise ValueError(f"source commit {source_commit} is not checked-out HEAD {head}")
+    branch = subprocess.run(
+        ["git", "-C", str(REPO_ROOT), "branch", "--show-current"],
+        text=True, encoding="utf-8", capture_output=True, check=True,
+    ).stdout.strip()
+    if not branch:
+        raise ValueError("live run requires a checked-out branch")
+    remote = subprocess.run(
+        ["git", "-C", str(REPO_ROOT), "config", "--get", f"branch.{branch}.remote"],
+        text=True, encoding="utf-8", capture_output=True, check=True,
+    ).stdout.strip()
+    merge_ref = subprocess.run(
+        ["git", "-C", str(REPO_ROOT), "config", "--get", f"branch.{branch}.merge"],
+        text=True, encoding="utf-8", capture_output=True, check=True,
+    ).stdout.strip()
+    if not remote or remote == "." or not merge_ref.startswith("refs/heads/"):
+        raise ValueError("live run requires a branch with a named remote head")
+    remote_result = subprocess.run(
+        ["git", "-C", str(REPO_ROOT), "ls-remote", "--exit-code", "--heads", remote, merge_ref],
+        text=True, encoding="utf-8", capture_output=True, check=True,
+    ).stdout.splitlines()
+    remote_heads = [
+        line.split("\t", 1)[0]
+        for line in remote_result
+        if line.endswith(f"\t{merge_ref}")
+    ]
+    if len(remote_heads) != 1 or remote_heads[0] != source_commit:
+        raise ValueError("live run source commit is not the fresh remote branch head")
+    dco_trailers = subprocess.run(
+        [
+            "git", "-C", str(REPO_ROOT), "log", "-1",
+            "--format=%(trailers:key=Signed-off-by,valueonly)", source_commit,
+        ],
+        text=True, encoding="utf-8", capture_output=True, check=True,
+    ).stdout.splitlines()
+    if not any(re.fullmatch(r"[^<>\r\n]+ <[^<>\s@]+@[^<>\s@]+>", trailer.strip())
+               for trailer in dco_trailers):
+        raise ValueError("live run source commit requires a valid DCO Signed-off-by trailer")
     if require_clean:
         status = subprocess.run(
             ["git", "-C", str(REPO_ROOT), "status", "--porcelain"],

@@ -170,6 +170,72 @@ def main() -> int:
     )
     require(phase_status["provider_plan"] == "noncursor-degraded-v1",
             "phase-status records must retain the provider-plan identity")
+    source_commit = "a" * 40
+    branch_name = "codex/v3-rigor-gauntlet"
+
+    def source_state_run(remote_head: str, dco_trailers: str):
+        def fake_run(command, *args, **kwargs):
+            if command[-2:] == ["branch", "--show-current"]:
+                return SimpleNamespace(stdout=f"{branch_name}\n")
+            if command[-3:] == ["config", "--get", f"branch.{branch_name}.remote"]:
+                return SimpleNamespace(stdout="origin\n")
+            if command[-3:] == ["config", "--get", f"branch.{branch_name}.merge"]:
+                return SimpleNamespace(stdout=f"refs/heads/{branch_name}\n")
+            if "ls-remote" in command:
+                return SimpleNamespace(stdout=f"{remote_head}\trefs/heads/{branch_name}\n")
+            if "log" in command:
+                return SimpleNamespace(stdout=dco_trailers)
+            raise AssertionError(f"unexpected source-state command: {command}")
+        return fake_run
+
+    original_default_source_commit = runner.default_source_commit
+    original_subprocess_run = runner.subprocess.run
+    try:
+        runner.default_source_commit = lambda: source_commit
+        runner.subprocess.run = source_state_run(
+            "b" * 40, "Signer <signer@example.com>\n",
+        )
+        rejected_remote = False
+        try:
+            runner.verify_source_state(source_commit, require_clean=False)
+        except ValueError:
+            rejected_remote = True
+        require(rejected_remote,
+                "live execution must reject a source commit that is not the fresh remote branch head")
+
+        runner.subprocess.run = source_state_run(source_commit, "")
+        rejected_unsigned = False
+        try:
+            runner.verify_source_state(source_commit, require_clean=False)
+        except ValueError:
+            rejected_unsigned = True
+        require(rejected_unsigned,
+                "live execution must reject a source commit without a valid DCO sign-off trailer")
+
+        runner.subprocess.run = source_state_run(
+            source_commit, "Signer <signer@example.com>\n",
+        )
+        runner.verify_source_state(source_commit, require_clean=False)
+    finally:
+        runner.default_source_commit = original_default_source_commit
+        runner.subprocess.run = original_subprocess_run
+
+    with tempfile.TemporaryDirectory() as summary_tmp:
+        summary_root = Path(summary_tmp)
+        runner.ensure_campaign_plan(
+            summary_root, provider_plan="noncursor-degraded-v1", source_commit="a" * 40,
+            v1_commit="b" * 40, models=campaign_models,
+        )
+        rejected = False
+        try:
+            runner.summarize_semantic(summary_root, "frozen-three-provider")
+        except ValueError:
+            rejected = True
+        require(rejected,
+                "semantic summary must reject a CLI provider plan that disagrees with campaign-plan.json")
+        matching_summary = runner.summarize_semantic(summary_root, "noncursor-degraded-v1")
+        require(matching_summary["provider_plan"] == "noncursor-degraded-v1",
+                "semantic summary must retain the matching campaign provider plan")
     smoke_tasks = runner.filter_arm_tasks(
         tasks, arms={"v2-candidate"}, fixtures={"tm-01-false-mvd"}, repetitions={1},
     )
@@ -404,11 +470,14 @@ def main() -> int:
                 "noncursor-degraded-v1",
                 "semantic call records must retain the provider-plan identity")
 
-        semantic_summary = runner.summarize_semantic(
-            tmp_root / "summary-output", "noncursor-degraded-v1",
+        summary_output = tmp_root / "summary-output"
+        runner.ensure_campaign_plan(
+            summary_output, provider_plan="noncursor-degraded-v1", source_commit="a" * 40,
+            v1_commit="b" * 40, models=campaign_models,
         )
+        semantic_summary = runner.summarize_semantic(summary_output, "noncursor-degraded-v1")
         require(semantic_summary["provider_plan"] == "noncursor-degraded-v1" and
-                json.loads((tmp_root / "summary-output" / "semantic-summary.json").read_text(
+                json.loads((summary_output / "semantic-summary.json").read_text(
                     encoding="utf-8"
                 ))["provider_plan"] == "noncursor-degraded-v1",
                 "semantic summaries must retain the provider-plan identity")
