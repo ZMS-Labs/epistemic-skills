@@ -14,5 +14,7 @@ Consequently, the prior block is closed for the required RED baseline:
 - structural RED is established at 4/22 and 1/22 respectively;
 - production files may now change under the RED-before-production-edit gate.
 
-Candidate, parody, and semantic-adjudication arms remain `NOT_RUN`; this file
-does not claim those later gates are complete.
+The first candidate diagnostic subsequently ran and failed structurally; see
+[`RESULTS.md`](RESULTS.md) for its immutable root and content pin. Parody and
+semantic-adjudication gates remain incomplete. This historical file does not
+claim candidate GREEN or any later gate is complete.

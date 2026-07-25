@@ -130,6 +130,14 @@ def assert_v2_production_contract() -> None:
         "Do not infer a property family from an implementation label alone",
         "A module may appear only in families declared by its `property_families`",
         "value-of-information question with unmodeled measurement uncertainty marks `P8` as `unmapped` and `P9` as `fired`",
+        "Module adequacy is construct-specific, not merely family-compatible",
+        "asymptotic complexity and numerical stability need both `algorithms-data-structures` and `numerical-analysis-floating-point`",
+        "distributed ordering/history and replica convergence crosses `P3` and `P4`",
+        "undocumented proprietary hardware execution or memory model",
+        "ordering slice `P3: unmapped` and the missing hardware resource/model apparatus `P7: unmapped`",
+        "Concrete engineering privacy or information-flow mechanisms fire `P6` with `security-information-flow-privacy`",
+        "missing authoritative external regulatory semantics remain `P9: unmapped`",
+        "Pinned product/version semantics alone require `standard`, not `high-assurance`",
     ):
         require(marker in skill_text, f"production SKILL.md missing v2 contract marker: {marker}")
     require("enumerate all 7 lenses" not in skill_text, "v1 closed seven-lens sweep remains normative")

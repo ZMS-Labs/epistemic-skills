@@ -32,7 +32,10 @@ Before creating the first tag:
    its production edit, then passes its candidate fixture contract. A blocked
    scaffold is not a production implementation.
 3. The five blinded proportionality arms are run through the pinned isolated
-   harness and retained without repairing or discarding failures.
+   harness: `main` once, PR #46 three times, the final candidate three times,
+   and each parody once. Terminal failures and dissent are retained; a
+   corrected epoch may supersede but never overwrite an invalid diagnostic
+   epoch, and only named content-pinned roots count as release evidence.
 4. Every version-bearing live manifest, README version statement, install
    example, and package-integration expected version agrees on 3.0.0. This
    alignment happens in the release PR, not during held preparation.
@@ -51,7 +54,8 @@ Before creating the first tag:
 1. Prepare `agent/release-3.0.0` from the final intended `main`.
 2. Align the live version surfaces and finalize
    `docs/release/RELEASE-3.0.0.md`. Historical evidence retains the versions it
-   actually evaluated.
+   actually evaluated. The final notes include concrete migration instructions
+   from the last rolling pre-release state.
 3. Run the full local gate, open a release PR, and require GitHub checks.
 4. Merge the release PR and re-run the gate against the resulting `main`
    commit.

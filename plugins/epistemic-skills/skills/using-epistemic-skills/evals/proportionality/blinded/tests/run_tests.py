@@ -161,8 +161,20 @@ def main() -> int:
         require(len(evidence["response_hashes"]) == 18, "all raw responses must be hashed")
 
     blocked = (BLINDED / "results" / "BLOCKED.md").read_text(encoding="utf-8")
-    require(blocked.count("`NOT_RUN`") == 5, "all live arms must be explicitly NOT_RUN")
-    require("No live result is claimed" in blocked, "block record must reject fabricated evidence")
+    require("RESOLVED_FOR_ALL_FIVE_ARMS" in blocked,
+            "historical block must point to the resolved live-arm status")
+    require("preserves the 2026-07-23 `NOT_RUN` state" in blocked,
+            "resolved block must retain the historical NOT_RUN provenance")
+    results = (BLINDED / "results" / "RESULTS.md").read_text(encoding="utf-8")
+    for marker in (
+        "Candidate: 3/3 PASS",
+        "Full-ceremony: FAIL",
+        "Always-routine: FAIL",
+        "11168ef457764778be19c5ace54f3f263621f260377e4bbf9c87eb281b8d2e59",
+        "cb5a8d7f64d7ec78321005a938bbf040d99af62e316a932522b8c37180c97d4c",
+        "not population effect estimates",
+    ):
+        require(marker in results, f"live result record missing marker: {marker}")
 
     print("blinded proportionality packets: PASS")
     return 0

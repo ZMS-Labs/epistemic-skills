@@ -38,23 +38,65 @@ local test, or mutable `main` checkout is not a substitute.
 
 ## Publication blockers
 
-- Applying-formal-rigor v2 production changes remain gated on a real isolated
-  neutral/current-v1 RED result; the deterministic Phase B scaffold alone does
-  not satisfy that requirement.
-- The pinned blinded proportionality arms have not run in a qualifying isolated
-  harness.
-- The candidate is not merged to `main`, version surfaces are not aligned to
-  3.0.0, and the final release-commit CI/security/publication gates have not
-  run.
+- The required pre-production applying-formal-rigor RED is established under
+  `plugins/epistemic-skills/skills/applying-formal-rigor/evals/formal-rigor-v2-fixtures/results/2026-07-24-red-baseline/`:
+  neutral passed 4/22 structurally and current-v1 passed 1/22 structurally.
+  A later candidate diagnostic at source
+  `0e3b0e203acbe3829032e702c047b35903d1c021` completed 22/22 parseable calls
+  but failed structurally at 18/22. Its evidence root is
+  `C:\tmp\formal-rigor-canonical2-0e3b0e2`, content pin
+  `d787ff560e5908c72839842484878ed179ff4f6e09f56cee8d588c49ca6d94cd`.
+  The retained misses were an over-escalated `cc-03` tier, a missing adequate
+  P7 module for `mt-01`, a contract-disputed P7 classification for `um-01`,
+  and missing P6 engineering coverage for `um-02`. Semantic adjudication was
+  not run after structural failure. Candidate GREEN requires a qualifying new
+  pinned campaign, not relabeling or repairing this epoch; all candidate
+  repetitions, six parody arms, and independent semantic gates remain
+  release-blocking.
+- The pinned isolated proportionality protocol has completed. Final candidate
+  `b73b04af46255bddf103a3f7e80e69b442ebddab` passed all three repetitions:
+  routine `10/10`, material `4/4`, high-risk `4/4`, with routine narration
+  medians `7`, `6.5`, and `6` words. The canonical evidence root is
+  `C:\tmp\proportionality-final-7cdf6fc`, content pin
+  `11168ef457764778be19c5ace54f3f263621f260377e4bbf9c87eb281b8d2e59`.
+- The corrected parody epoch is
+  `C:\tmp\proportionality-parody-correction-15cce7e`, content pin
+  `cb5a8d7f64d7ec78321005a938bbf040d99af62e316a932522b8c37180c97d4c`;
+  both `full-ceremony` and `always-routine` fail as required. Retained `main`
+  and PR #46 failures remain comparative evidence. The uncorrected parody
+  output and all canary, partial, source-exposed, or other diagnostic roots are
+  excluded from release evidence.
+- The release subject is not merged to `main`; live package/version surfaces
+  still report `2.9.1`; and the complete deterministic, DCO, CodeQL,
+  manifest-parity, committed-JSON, full-history secret-scan, and publication
+  checks have not passed on the exact release commit.
+- The final independent Helix/Gauntlet publication review remains incomplete.
+  Release status therefore remains **HOLD**.
 - No `v3.0.0` tag or GitHub Release may be created while this status is HOLD.
 
 ## Compatibility position
 
 3.0.0 is intentionally the first formal support point, not a claim of proven
 compatibility with an earlier immutable release. The major version is justified
-by material trigger, output-contract, registry, and evaluation changes. The
-final notes must identify any installation or contract migration required from
-the last rolling pre-release state.
+by material trigger, output-contract, registry, and evaluation changes.
+
+### Migration from the rolling pre-release
+
+- Replace existing plugin or skill copies; do not layer a second installation
+  mechanism over an existing one. Reload the harness or start a fresh task
+  after upgrading.
+- Codex users must rerun the Gauntlet role renderer after upgrading, using the
+  `3.0.0` cache path.
+- Routine work and absent triggers are now silent: integrations must not
+  require router records, Helix skip inventories, role calls, or process-only
+  artifacts for the routine path.
+- Applying-formal-rigor output is tiered. Focused work is inline, limited to six
+  bullets or 250 visible words, and emits no persistent record; standard and
+  high-assurance work use `formal-rigor-record@2`. Consumers of the prior
+  seven-lens or unstructured output must update.
+- `theory-battery.md` remains as a compatibility index for existing links. No
+  repository data migration is required; the breaking changes are installation,
+  trigger, output-contract, and evaluation-contract changes.
 
 ## Evidence required to remove HOLD
 

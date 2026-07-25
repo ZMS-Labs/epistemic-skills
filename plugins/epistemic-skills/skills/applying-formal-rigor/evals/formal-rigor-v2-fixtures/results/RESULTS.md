@@ -6,7 +6,7 @@
 |---|---|---|---|
 | neutral/run-1 | RED: 4/22 pass | NOT_RUN | RED ESTABLISHED |
 | v1-current/run-1 | RED: 1/22 pass | NOT_RUN | RED ESTABLISHED |
-| v2-candidate | NOT_RUN | NOT_RUN | FAIL-CLOSED |
+| v2-candidate diagnostic | FAIL: 18/22 pass | NOT_RUN | FAIL |
 | six parody arms | NOT_RUN | NOT_RUN | FAIL-CLOSED |
 
 The neutral and current-v1 runs are retained under
@@ -18,3 +18,31 @@ JSON, not repaired.
 
 This establishes the required pre-production RED. It does not establish
 semantic-adjudication results or candidate GREEN.
+
+## 2026-07-25 candidate diagnostic
+
+This diagnostic used root `C:\tmp\formal-rigor-canonical2-0e3b0e2` at source
+commit `0e3b0e203acbe3829032e702c047b35903d1c021`. All 22/22 Codex
+`gpt-5.6-sol` calls completed and were parseable. No calls were retried or
+repaired. The content pin was
+`d787ff560e5908c72839842484878ed179ff4f6e09f56cee8d588c49ca6d94cd`.
+
+Structural scoring was **18/22**. The four misses were:
+
+- `cc-03`: high-assurance invocation not allowed.
+- `mt-01`: P7 missing an adequate module.
+- `um-01`: P7 expected unmapped. This fixture contract is disputed because
+  its expectation conflicts with P7 resource semantics and the label-only
+  rule.
+- `um-02`: P6 fired, but the module was missing.
+
+Semantic adjudication was intentionally not run because the structural gate
+failed. This diagnostic therefore does **not** establish candidate GREEN.
+
+The interrupted root `C:\tmp\formal-rigor-canonical-0e3b0e2` is excluded. It
+contains four valid terminal records, one all-zero `call.json`, and 17 absent
+records; it was never overwritten.
+
+**Candidate gate: FAIL.** A new source/campaign is required. Three pinned
+passing repetitions, all parody arms, and all semantic gates remain required
+before candidate GREEN can be claimed.

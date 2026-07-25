@@ -1,4 +1,10 @@
-# Live proportionality arms: BLOCKED
+# Historical live proportionality capability block
+
+Status: `RESOLVED_FOR_ALL_FIVE_ARMS` on 2026-07-25. Current results and
+content-pin provenance are recorded in [`RESULTS.md`](RESULTS.md).
+
+The remainder of this file preserves the 2026-07-23 `NOT_RUN` state and the
+closure condition that was current at that time.
 
 Status recorded: 2026-07-23
 
@@ -14,7 +20,7 @@ No live result is claimed.
 | `full-ceremony` | `NOT_RUN` | 1 |
 | `always-routine` | `NOT_RUN` | 1 |
 
-## Missing capability
+## Historical missing capability
 
 This execution context does not expose a primitive that can launch the pinned
 model/provider/harness combination in a fresh, isolated repository-aware
@@ -24,7 +30,7 @@ context and does not prove the required isolation; it is therefore not a valid
 substitute. Repository tests can validate packet construction and scorer
 polarity, but cannot manufacture model behavior.
 
-## Closure
+## Historical closure condition
 
 Run `runner.py prepare` from the final protocol checkout with `--source-root`
 pointing at each exact arm commit, invoke every packet through the pinned

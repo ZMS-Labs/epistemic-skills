@@ -1,7 +1,8 @@
 # Blinded proportionality protocol
 
 This directory upgrades the structural examples into runnable, isolated fixture
-packets. It does not claim that any live arm has run.
+packets. Completed live-arm results and content-pin provenance are recorded in
+[`results/RESULTS.md`](results/RESULTS.md).
 
 `runner.py prepare` creates one agent-visible packet per fixture. The packet
 contains only the common response contract, the scenario, and its minimal
@@ -49,5 +50,7 @@ into proportional behavior. Arm kind comes from the hashed manifest; scorer
 rules and expected outcomes remain hidden.
 
 Candidate arms require three repetitions. Use a separate output directory for
-each repetition and retain failures and dissent. See `results/BLOCKED.md` for
-the present execution status.
+each repetition and retain failures and dissent. The three candidate
+repetitions and the corrected parody controls are complete; see
+`results/RESULTS.md`. `results/BLOCKED.md` preserves the historical capability
+block that preceded execution.

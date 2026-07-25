@@ -40,6 +40,10 @@ Normative details and examples:
 [`routine-fast-path.md`](plugins/epistemic-skills/skills/using-epistemic-skills/reference/routine-fast-path.md).
 The structural proportionality battery lives at
 [`evals/proportionality/`](plugins/epistemic-skills/skills/using-epistemic-skills/evals/proportionality/).
+Live blinded proportionality results and content-pin provenance are in
+[`blinded/results/RESULTS.md`](plugins/epistemic-skills/skills/using-epistemic-skills/evals/proportionality/blinded/results/RESULTS.md).
+Applying-formal-rigor RED and current fail-closed status are in
+[`formal-rigor-v2-fixtures/results/RESULTS.md`](plugins/epistemic-skills/skills/applying-formal-rigor/evals/formal-rigor-v2-fixtures/results/RESULTS.md).
 
 ## The arc
 
@@ -109,6 +113,17 @@ One tree of method files; harness-specific manifests only. Do not fork the skill
 ## Install
 
 Install with **exactly one** mechanism per harness. A second copy of the same skills (for example `npx skills add` on top of a plugin install) produces duplicate triggers.
+
+### Planned 3.0.0 migration (not yet published)
+
+When 3.0.0 is published, replace the existing plugin or skill copy rather than
+layering a second installation mechanism over it, then reload the harness or
+start a fresh task. Codex users must rerun the Gauntlet role renderer from the
+3.0.0 cache path. Integrations must also accept silent routine/absent-trigger
+paths and the tiered applying-formal-rigor contract: focused work is inline and
+record-free, while standard and high-assurance work emit
+`formal-rigor-record@2`. Full migration details are maintained in
+[`docs/release/RELEASE-3.0.0.md`](docs/release/RELEASE-3.0.0.md).
 
 ### Claude Code
 

@@ -2,6 +2,12 @@
 
 Date: 2026-07-23
 
+> Historical snapshot: the formal-rigor RED capability block was resolved on
+> 2026-07-24, and the proportionality execution block was resolved on
+> 2026-07-25. Current evidence is indexed from the formal-rigor and
+> proportionality `results/` directories; the state below remains the
+> unmodified 2026-07-23 record.
+
 Status: **PARTIAL**. Deterministic implementation and release preparation are
 green. Production applying-formal-rigor v2 remains correctly blocked before
 its required live RED, and live blinded proportionality arms remain NOT_RUN.

@@ -79,6 +79,8 @@ supplied model or scope, that focused condition failed.
 In particular, comparing asymptotic resource behavior with numerical stability crosses `P7` and `P8`
 and therefore uses `standard`, even when one finite counterexample is enough to
 refute the equivalence claim.
+A comparison spanning distributed ordering/history and replica convergence crosses `P3` and `P4`
+and therefore uses `standard`, even when a short counterexample refutes it.
 
 Focused answers the bounded property only. If that result is being used to select,
 mandate, or reverse a persistent schema, architecture, protocol, or operational decision,
@@ -102,6 +104,10 @@ formal/empirical/normative separation, explicit concessions, and a
 `formal-rigor-record@2`.
 
 ### `high-assurance`
+
+Pinned product/version semantics alone require `standard`, not `high-assurance`.
+Escalate only when a separate high-assurance trigger such as safety, security,
+or irreversibility bears load.
 
 Use for an irreversible migration, security/privacy boundary, safety or
 financial exposure, public compatibility contract, cross-service consistency
@@ -198,6 +204,13 @@ Do not infer a property family from an implementation label alone; names such
 as cache, database, accelerator, or protocol do not substitute for a material
 property inside the declared boundary.
 A module may appear only in families declared by its `property_families`.
+Module adequacy is construct-specific, not merely family-compatible.
+Independently load-bearing slices require each adequate specialist module; for
+example, asymptotic complexity and numerical stability need both `algorithms-data-structures` and `numerical-analysis-floating-point`.
+When correctness depends on an undocumented proprietary hardware execution or memory model,
+mark the ordering slice `P3: unmapped` and the missing hardware resource/model apparatus `P7: unmapped`
+until adequate semantics exist; the accelerator label alone still fires no
+family.
 For example, a value-of-information question with unmodeled measurement uncertainty marks `P8` as `unmapped` and `P9` as `fired`
 with `decision-theory-multiobjective`; that P9 synthesis module does not become
 a P8 statistics module.
@@ -205,6 +218,9 @@ For mixed-domain claims, reconcile each material slice independently.
 Do not let an unmapped external-semantic slice erase an adequately modeled engineering slice.
 Fire the adequate engineering module, and separately mark the external semantic
 or regulatory interface `unmapped` in its applicable family.
+Concrete engineering privacy or information-flow mechanisms fire `P6` with `security-information-flow-privacy`;
+missing authoritative external regulatory semantics remain `P9: unmapped`.
+Do not swap those statuses or modules.
 
 Coverage is complete only relative to the declared subject, boundary,
 inventory, loaded modules, facts, and limits. It never means that the library
