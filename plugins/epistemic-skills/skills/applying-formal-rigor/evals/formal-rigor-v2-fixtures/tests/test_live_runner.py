@@ -176,6 +176,11 @@ def main() -> int:
         require(not (adjudication_packet / "ground-truth.json").exists(), "adjudication packet leaked ground truth file")
         require((adjudication_packet / "formal-rigor-semantic-adjudication.schema.json").is_file(),
                 "adjudication packet omitted the enforceable output schema")
+        semantic_schema = json.loads(
+            (adjudication_packet / "formal-rigor-semantic-adjudication.schema.json").read_text(encoding="utf-8")
+        )
+        require(semantic_schema["properties"]["adjudication"].get("type") == "string",
+                "Codex strict output schema requires an explicit type alongside const")
 
         result_dir = tmp_root / "result"
         require(runner.call_needed(result_dir), "fresh call should be needed")
