@@ -10,7 +10,7 @@ No live result is claimed.
 |---|---|---:|
 | `main-80eb0827` | `NOT_RUN` | 1 |
 | `pr46-candidate-a4f2210f` | `NOT_RUN` | 3 |
-| `candidate-final-de6821f` | `NOT_RUN` | 3 |
+| `candidate-final-b73b04a` | `NOT_RUN` | 3 |
 | `full-ceremony` | `NOT_RUN` | 1 |
 | `always-routine` | `NOT_RUN` | 1 |
 

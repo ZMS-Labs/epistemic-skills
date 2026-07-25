@@ -27,9 +27,9 @@
       "repetitions": 3
     },
     {
-      "id": "candidate-final-de6821f",
+      "id": "candidate-final-b73b04a",
       "kind": "repository",
-      "source_commit": "de6821fe447f13118a02dc5b1c051e2a3edac9d3",
+      "source_commit": "b73b04af46255bddf103a3f7e80e69b442ebddab",
       "prompt": "prompts/neutral.txt",
       "repetitions": 3
     },
