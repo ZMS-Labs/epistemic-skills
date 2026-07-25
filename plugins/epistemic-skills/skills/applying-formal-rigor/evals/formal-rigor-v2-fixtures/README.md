@@ -16,7 +16,7 @@ pushed candidate commit:
 
 ```text
 python run_live.py plan
-python run_live.py run-arms --output-root <durable-temp-root> --arm v2-candidate --repetition 1 --fixture tm-01-false-mvd --workers 1
+python run_live.py run-arms --output-root <durable-temp-root> --arm v2-candidate --repetition 1 --fixture tm-01-false-mvd --workers 1 --cursor <cursor-agent-path>
 python run_live.py run-arms --output-root <durable-temp-root> --workers 4
 python run_live.py run-semantic --output-root <durable-temp-root> --workers 4
 python run_live.py summarize-semantic --output-root <durable-temp-root>
@@ -27,6 +27,14 @@ three candidate repetitions, and all six 22-fixture parodies) plus 132 isolated
 semantic-seat calls. Calls are fresh and terminal: once a `call.json` exists,
 the runner never retries it. Transport, parse, secret-screen, packet hashes,
 raw response, events, and stderr are retained for adjudication and export.
+
+The provider allocation is frozen rather than additive: candidate repetitions
+1/2/3 use Codex OpenAI `gpt-5.6-sol`, agy Gemini `gemini-3.1-pro-high`, and
+Cursor CLI `gpt-5.6-sol`, respectively. Missing baseline repetitions follow the
+same mapping, two parody arms are assigned to each harness, and semantic seats
+rotate across the two harnesses other than the candidate response's harness.
+The 418-call ceiling is unchanged. Including the 44 already-recorded OpenAI RED
+baseline calls, each harness contributes 154 arm-plus-adjudication calls.
 
 Absent or non-isolated model execution is `NOT_RUN`, never a RED result credited to an
 arm. Neutral and current-v1 RED runs were durably recorded before production edits under

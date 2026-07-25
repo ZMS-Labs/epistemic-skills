@@ -39,8 +39,22 @@ def main() -> int:
     require(counts["v2-candidate"] == 66, "candidate plan must contain three 22-fixture runs")
     require(sum(counts[arm] for arm in runner.PARODY_ARMS) == 132,
             "all six parody arms must contain 22 calls")
+    provider_counts: dict[str, int] = {}
+    for task in tasks:
+        provider = runner.arm_harness(task)
+        provider_counts[provider] = provider_counts.get(provider, 0) + 1
+    require(provider_counts == {"codex": 66, "agy": 110, "cursor": 110},
+            f"arm harness allocation drifted: {provider_counts}")
     require(len(runner.full_semantic_plan()) == 132,
             "semantic plan must contain two isolated seats for each of 66 candidate responses")
+    semantic_provider_counts: dict[str, int] = {}
+    for task in runner.full_semantic_plan():
+        provider = runner.semantic_harness(task)
+        semantic_provider_counts[provider] = semantic_provider_counts.get(provider, 0) + 1
+        require(provider != runner.candidate_harness(task.repetition),
+                "semantic seat must not use its candidate response's harness")
+    require(semantic_provider_counts == {"codex": 44, "agy": 44, "cursor": 44},
+            f"semantic harness allocation drifted: {semantic_provider_counts}")
     smoke_tasks = runner.filter_arm_tasks(
         tasks, arms={"v2-candidate"}, fixtures={"tm-01-false-mvd"}, repetitions={1},
     )
@@ -107,6 +121,25 @@ def main() -> int:
         "--disable remote_plugin", "--disable plugin_sharing",
     ):
         require(marker in joined, f"codex command missing isolation marker: {marker}")
+
+    agy = runner.agy_command(
+        agy="agy", model="gemini-3.1-pro-high", packet_dir=Path("packet"),
+        response_path=Path("response.json"), prompt="return JSON",
+    )
+    agy_joined = " ".join(str(item) for item in agy)
+    for marker in ("agy", "--print", "--sandbox", "--model gemini-3.1-pro-high"):
+        require(marker in agy_joined, f"agy command missing isolation marker: {marker}")
+
+    cursor = runner.cursor_command(
+        cursor="cursor-agent", model="gpt-5.6-sol", packet_dir=Path("packet"),
+        response_path=Path("response.json"), prompt="return JSON",
+    )
+    cursor_joined = " ".join(str(item) for item in cursor)
+    for marker in (
+        "cursor-agent", "--print", "--output-format text", "--mode ask",
+        "--sandbox enabled", "--workspace packet", "--model gpt-5.6-sol",
+    ):
+        require(marker in cursor_joined, f"Cursor command missing isolation marker: {marker}")
 
     valid_adjudication = {
         "adjudication": "formal-rigor-semantic-adjudication@1",
