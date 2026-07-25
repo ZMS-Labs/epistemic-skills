@@ -88,3 +88,13 @@ calls: eight parseable and the same Cursor `parody-closed-taxonomy` response
 unparseable again. The epoch was not retried, resumed, or repaired. The root
 `C:\tmp\formal-rigor-final-2c1c38f` is excluded from scoring and content-pinned
 as `2febab93d1d6a1a40e0a3e0853b155ad5a481dbb882fe1830fdd9ff0921614ea`.
+
+## 2026-07-25 live-prompt regression diagnostic
+
+At source `c24e39b`, `fc-01` produced 9/9 valid live-prompt regression calls.
+The campaign then stopped at `cc-04` with 18 total calls, 17 parseable. The
+Cursor candidate response was shaped as a complete draft, followed by one
+unmatched closer, followed by one terminal complete valid same-identity
+snapshot. The epoch was not retried, resumed, or repaired. The root
+`C:\tmp\formal-rigor-final-c24e39b` is excluded from scoring and content-pinned
+as `9c1789b1c9507b486cc841f32d9e018cc519cc9ebab2ce6acd129af18e0893b2`.
