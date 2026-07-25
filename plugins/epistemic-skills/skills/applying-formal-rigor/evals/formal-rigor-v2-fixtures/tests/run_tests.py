@@ -221,6 +221,8 @@ def main() -> int:
     stale_priority = inventory["ss-02-priority-rule-moved"]
     require(stale_priority["freshness"].get("must_re_fire") is True,
             "changed authorized priority does not require re-fire")
+    require(stale_priority["freshness"].get("current_authority_ref") == "operator-change-2",
+            "changed authorized priority is incorrectly modeled as a code-revision change")
     require(stale_priority["synthesis"].get("allowed_outcomes") == ["reversal"],
             "changed-priority trap permits unsupported synthesis")
     regulatory_rows = {
@@ -245,6 +247,28 @@ def main() -> int:
               "record": minimal_record(outcome="dominance", selected_option="A")}
     failed = score.score_fixture(inventory["fc-01-pareto-no-priority"], forced)
     require(not failed["structural_pass"] and "S8" in failed["dimensions_failed"], "forced winner was not rejected")
+
+    refreshed_priority = {
+        "response": "formal-rigor-fixture-response@1",
+        "fixture": "ss-02-priority-rule-moved",
+        "invocation": "standard",
+        "skip_reason": None,
+        "claim_assessments": [{"id": "c1", "state": "refuted", "derivation_ids": []}],
+        "record": minimal_record(outcome="reversal"),
+    }
+    refreshed_priority["record"]["subject"]["revision"] = "same-code"
+    refreshed_priority["record"]["decision_frame"]["priority_rule"]["authority_ref"] = "operator-change-2"
+    refreshed_priority["record"]["coverage"][8] = {
+        "family": "P9", "status": "fired", "modules": ["decision-theory-multiobjective"],
+        "reason": "the current authority changes normative synthesis",
+    }
+    passed = score.score_fixture(stale_priority, refreshed_priority)
+    require(passed["structural_pass"], f"current-authority re-fire failed: {passed['failures']}")
+    stale_authority = copy.deepcopy(refreshed_priority)
+    stale_authority["record"]["decision_frame"]["priority_rule"]["authority_ref"] = "old-authority"
+    failed = score.score_fixture(stale_priority, stale_authority)
+    require(not failed["structural_pass"] and "S9" in failed["dimensions_failed"],
+            "stale decision authority was not rejected")
 
     malformed_nested = json.loads(json.dumps(forced))
     malformed_nested["record"]["decision_frame"]["alternatives"] = ["A", "B"]

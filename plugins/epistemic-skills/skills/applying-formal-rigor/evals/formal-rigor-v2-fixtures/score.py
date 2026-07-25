@@ -68,6 +68,11 @@ def validate_inventory(inventory: dict[str, dict]) -> list[str]:
             required_rows = truth.get("coverage", {}).get("required", [])
             if not any(row.get("status") == "unmapped" for row in required_rows):
                 errors.append(f"{fixture_id}: unmapped class has no unmapped coverage")
+        freshness = truth.get("freshness", {})
+        if freshness.get("must_re_fire") and not (
+            freshness.get("stale_revision") or freshness.get("current_authority_ref")
+        ):
+            errors.append(f"{fixture_id}: re-fire has no stale revision or current authority")
     return errors
 
 
@@ -196,8 +201,18 @@ def score_fixture(truth: dict, response: dict) -> dict:
         if expected_selected != "__unspecified__" and synthesis.get("selected_option") != expected_selected:
             fail(failures, "S8", "selected option does not match obligation")
         freshness = truth.get("freshness", {})
-        if freshness.get("must_re_fire") and record.get("subject", {}).get("revision") == freshness.get("stale_revision"):
+        if (
+            freshness.get("must_re_fire")
+            and freshness.get("stale_revision") is not None
+            and record.get("subject", {}).get("revision") == freshness.get("stale_revision")
+        ):
             fail(failures, "S9", "stale revision reused")
+        if (
+            freshness.get("must_re_fire")
+            and freshness.get("current_authority_ref") is not None
+            and frame.get("priority_rule", {}).get("authority_ref") != freshness.get("current_authority_ref")
+        ):
+            fail(failures, "S9", "current decision authority not used")
         pinned_sources = {
             source_id
             for derivation in record.get("derivations", []) if isinstance(derivation, dict)
