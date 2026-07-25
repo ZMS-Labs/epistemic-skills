@@ -85,6 +85,47 @@ def main() -> int:
         require(not any(path.name in forbidden_names for path in candidate_packet.rglob("*")),
                 "candidate packet leaked scorer-only or prior-result material")
 
+        sealed = runner.sealed_packet_prompt(candidate_packet, "Return exactly one JSON object.")
+        require("Return exactly one JSON object." in sealed,
+                "sealed bridge prompt omitted the task instruction")
+        require('"scenario.md"' in sealed and '"candidate/SKILL.md"' in sealed,
+                "sealed bridge prompt omitted packet-relative source files")
+        require(not any(name in sealed for name in forbidden_names),
+                "sealed bridge prompt leaked scorer-only or prior-result material")
+        require("Do not use tools, execute commands, or write files" in sealed,
+                "sealed bridge prompt omitted its no-tool isolation instruction")
+        bridge_invocation = runner.fleet_bridge_invocation(
+            executable="fleet-bridge://default/fleet-orchestrator/surface-bridge-v2-0",
+            harness="cursor", model="auto", packet_dir=candidate_packet,
+            prompt="fixture-secret-payload",
+            identity={"kind": "arm", "fixture": "tm-01-false-mvd"},
+        )
+        require("fixture-secret-payload" not in " ".join(bridge_invocation["command"]),
+                "sealed evaluation payload leaked into the local process argv")
+        bridge_payload = json.loads(bridge_invocation["stdin"])
+        require(bridge_payload["kind"] == "cursor_agent" and bridge_payload["model"] == "auto",
+                "Fleet bridge invocation did not preserve surface/model provenance")
+        require("fixture-secret-payload" in bridge_payload["prompt"] and
+                '"candidate/SKILL.md"' in bridge_payload["prompt"],
+                "Fleet bridge invocation did not send the task and sealed packet over stdin")
+        require(bridge_invocation["metadata"] == {
+            "adapter": "fleet-orchestrator-surface-bridge-stream",
+            "context": "default", "namespace": "fleet-orchestrator",
+            "pod": "surface-bridge-v2-0", "surface_kind": "cursor_agent",
+            "model_selection": "surface-default-auto",
+        }, "Fleet bridge provenance metadata drifted")
+        rejected_bridge_model = False
+        try:
+            runner.fleet_bridge_invocation(
+                executable="fleet-bridge://default/fleet-orchestrator/surface-bridge-v2-0",
+                harness="cursor", model="gpt-5.6-sol-high", packet_dir=candidate_packet,
+                prompt="return JSON", identity={"kind": "arm"},
+            )
+        except ValueError:
+            rejected_bridge_model = True
+        require(rejected_bridge_model,
+                "Fleet bridge accepted a falsely pinned model that its stream endpoint ignores")
+
         neutral_packet = tmp_root / "neutral"
         runner.build_arm_packet(neutral_packet, "neutral", fixture_dir)
         require(not (neutral_packet / "candidate").exists(), "neutral packet leaked candidate skill")
@@ -143,6 +184,35 @@ def main() -> int:
         "--sandbox enabled", "--workspace packet", "--model gpt-5.6-sol",
     ):
         require(marker in cursor_joined, f"Cursor command missing isolation marker: {marker}")
+
+    bridge_command = runner.fleet_bridge_command(
+        kubectl="kubectl", context="default", namespace="fleet-orchestrator",
+        pod="surface-bridge-v2-0",
+    )
+    bridge_joined = " ".join(bridge_command)
+    for marker in (
+        "kubectl --context default -n fleet-orchestrator exec -i surface-bridge-v2-0",
+        "node -e",
+    ):
+        require(marker in bridge_joined, f"Fleet bridge command missing marker: {marker}")
+    require("fixture-secret-payload" not in bridge_joined,
+            "Fleet bridge command must receive the sealed prompt over stdin, not argv")
+
+    bridge_events = "\n".join((
+        json.dumps({"delta": "{\"fixture\":"}),
+        json.dumps({"delta": "\"tm-01-false-mvd\"}"}),
+        json.dumps({"done": True, "code": 0}),
+    )) + "\n"
+    bridge_response, bridge_code, bridge_stderr = runner.parse_fleet_bridge_stream(bridge_events)
+    require(bridge_response == '{"fixture":"tm-01-false-mvd"}',
+            "Fleet bridge deltas were not reconstructed losslessly")
+    require(bridge_code == 0 and bridge_stderr == "",
+            "Fleet bridge completion frame was not parsed")
+    failed_response, failed_code, failed_stderr = runner.parse_fleet_bridge_stream(
+        json.dumps({"done": True, "code": 124, "stderr": "idle timeout"}) + "\n"
+    )
+    require(failed_response == "" and failed_code == 124 and failed_stderr == "idle timeout",
+            "Fleet bridge failure frame was not preserved")
 
     valid_adjudication = {
         "adjudication": "formal-rigor-semantic-adjudication@1",

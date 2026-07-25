@@ -50,6 +50,37 @@ PARODY_HARNESSES = {
 HARNESS_PROVIDERS = {"codex": "OpenAI", "agy": "Google", "cursor": "Cursor"}
 SEMANTIC_VERDICTS = {"VALID", "INVALID", "INCONCLUSIVE"}
 OBLIGATION_STATES = {"SATISFIED", "VIOLATED", "INCONCLUSIVE"}
+FLEET_BRIDGE_NODE_PROGRAM = r"""
+const chunks = [];
+process.stdin.setEncoding("utf8");
+process.stdin.on("data", chunk => chunks.push(chunk));
+process.stdin.on("end", async () => {
+  try {
+    const payload = JSON.parse(chunks.join(""));
+    const allowed = new Set(["codex", "cursor_agent", "gemini"]);
+    if (!allowed.has(payload.kind)) throw new Error(`unsupported surface kind: ${payload.kind}`);
+    const response = await fetch(`http://127.0.0.1:8181/surfaces/${payload.kind}/stream`, {
+      method: "POST",
+      headers: {"content-type": "application/json"},
+      body: JSON.stringify({
+        prompt: payload.prompt,
+        model: payload.model,
+        task_id: payload.task_id,
+        run_id: payload.run_id,
+      }),
+    });
+    if (!response.ok) {
+      process.stderr.write(`surface bridge HTTP ${response.status}: ${await response.text()}\n`);
+      process.exitCode = 2;
+      return;
+    }
+    for await (const chunk of response.body) process.stdout.write(chunk);
+  } catch (error) {
+    process.stderr.write(`${error && error.stack ? error.stack : error}\n`);
+    process.exitCode = 2;
+  }
+});
+""".strip()
 
 
 class ArmTask(NamedTuple):
@@ -280,6 +311,97 @@ def call_needed(result_dir: Path) -> bool:
     return not (result_dir / "call.json").is_file()
 
 
+def sealed_packet_prompt(packet_dir: Path, prompt: str) -> str:
+    files = {
+        path.relative_to(packet_dir).as_posix(): path.read_text(encoding="utf-8")
+        for path in sorted(packet_dir.rglob("*"))
+        if path.is_file()
+    }
+    return f"""{prompt.rstrip()}
+
+The isolated packet is delivered below as a JSON map from packet-relative paths to exact UTF-8
+file contents. Treat those entries exactly as if they were read-only files in the current packet
+directory. Do not use tools, execute commands, or write files. Do not seek any information outside
+this sealed packet. The packet contains no ground truth, scorer, thresholds, other-arm responses,
+or prior results.
+
+SEALED_PACKET_JSON
+{json.dumps(files, ensure_ascii=False, sort_keys=True)}
+END_SEALED_PACKET_JSON
+"""
+
+
+def fleet_bridge_command(
+    *, kubectl: str, context: str, namespace: str, pod: str,
+) -> list[str]:
+    return [
+        kubectl, "--context", context, "-n", namespace, "exec", "-i", pod,
+        "--", "node", "-e", FLEET_BRIDGE_NODE_PROGRAM,
+    ]
+
+
+def fleet_bridge_invocation(
+    *, executable: str, harness: str, model: str, packet_dir: Path,
+    prompt: str, identity: dict,
+) -> dict:
+    prefix = "fleet-bridge://"
+    if not executable.startswith(prefix):
+        raise ValueError("Fleet bridge executable must use fleet-bridge://context/namespace/pod")
+    coordinates = executable[len(prefix):].split("/")
+    if len(coordinates) != 3 or not all(coordinates):
+        raise ValueError("Fleet bridge executable must identify context, namespace, and pod")
+    if model != "auto":
+        raise ValueError(
+            "Fleet bridge stream does not forward model selection; use model 'auto' and record it honestly"
+        )
+    surface_kind = {"codex": "codex", "agy": "gemini", "cursor": "cursor_agent"}.get(harness)
+    if surface_kind is None:
+        raise ValueError(f"unknown harness: {harness}")
+    context, namespace, pod = coordinates
+    payload = {
+        "kind": surface_kind,
+        "model": model,
+        "prompt": sealed_packet_prompt(packet_dir, prompt),
+        "task_id": str(identity.get("fixture", "")),
+        "run_id": "-".join(
+            str(identity[key]) for key in ("kind", "arm", "repetition", "seat")
+            if identity.get(key) not in (None, "")
+        ),
+    }
+    return {
+        "command": fleet_bridge_command(
+            kubectl="kubectl", context=context, namespace=namespace, pod=pod,
+        ),
+        "stdin": json.dumps(payload, ensure_ascii=False),
+        "metadata": {
+            "adapter": "fleet-orchestrator-surface-bridge-stream",
+            "context": context,
+            "namespace": namespace,
+            "pod": pod,
+            "surface_kind": surface_kind,
+            "model_selection": "surface-default-auto",
+        },
+    }
+
+
+def parse_fleet_bridge_stream(events: str) -> tuple[str, int | None, str]:
+    response_parts: list[str] = []
+    exit_code: int | None = None
+    stderr_parts: list[str] = []
+    for raw_line in events.splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        event = json.loads(line)
+        if isinstance(event.get("delta"), str):
+            response_parts.append(event["delta"])
+        if event.get("done") is True:
+            exit_code = event.get("code") if isinstance(event.get("code"), int) else 0
+            if isinstance(event.get("stderr"), str) and event["stderr"]:
+                stderr_parts.append(event["stderr"])
+    return "".join(response_parts), exit_code, "\n".join(stderr_parts)
+
+
 def arm_prompt(fixture: str) -> str:
     return f"""You are a context-isolated run agent for fixture {fixture}.
 Read only files inside the current packet directory. Follow ARM_PROMPT.txt. The scenario is
@@ -342,10 +464,22 @@ def execute_call(
     packet_dir = packet_root / f"packet-{uuid.uuid4().hex}"
     packet_builder(packet_dir)
     response_path = result_dir / "response.json"
-    command = harness_command(
-        harness=harness, executable=executable, model=model, packet_dir=packet_dir,
-        response_path=response_path, prompt=prompt,
-    )
+    bridge = executable.startswith("fleet-bridge://")
+    invocation_metadata: dict = {}
+    stdin_text: str | None = None
+    if bridge:
+        invocation = fleet_bridge_invocation(
+            executable=executable, harness=harness, model=model,
+            packet_dir=packet_dir, prompt=prompt, identity=identity,
+        )
+        command = invocation["command"]
+        stdin_text = invocation["stdin"]
+        invocation_metadata = invocation["metadata"]
+    else:
+        command = harness_command(
+            harness=harness, executable=executable, model=model, packet_dir=packet_dir,
+            response_path=response_path, prompt=prompt,
+        )
     started = utc_now()
     exit_code: int | None = None
     stdout = ""
@@ -354,12 +488,25 @@ def execute_call(
     try:
         completed = subprocess.run(
             command, cwd=packet_dir, text=True, encoding="utf-8", errors="replace",
-            capture_output=True, timeout=timeout_seconds, check=False,
+            input=stdin_text, capture_output=True, timeout=timeout_seconds, check=False,
         )
         exit_code = completed.returncode
         stdout = completed.stdout
         stderr = completed.stderr
-        transport = "completed" if completed.returncode == 0 else "failed"
+        if bridge and completed.returncode == 0:
+            try:
+                bridge_response, bridge_code, bridge_stderr = parse_fleet_bridge_stream(stdout)
+                if bridge_response:
+                    response_path.write_text(bridge_response, encoding="utf-8", newline="\n")
+                if bridge_stderr:
+                    stderr = f"{stderr.rstrip()}\n{bridge_stderr}".lstrip()
+                exit_code = bridge_code
+                transport = "completed" if bridge_code == 0 else "failed"
+            except (json.JSONDecodeError, TypeError, ValueError) as exc:
+                stderr = f"{stderr.rstrip()}\ninvalid Fleet bridge stream: {exc}".lstrip()
+                transport = "failed"
+        else:
+            transport = "completed" if completed.returncode == 0 else "failed"
     except subprocess.TimeoutExpired as exc:
         stdout = exc.stdout or ""
         stderr = exc.stderr or ""
@@ -373,7 +520,7 @@ def execute_call(
         raise
     (result_dir / "events.jsonl").write_text(stdout, encoding="utf-8", newline="\n")
     (result_dir / "stderr.txt").write_text(stderr, encoding="utf-8", newline="\n")
-    if harness != "codex" and stdout and not response_path.is_file():
+    if not bridge and harness != "codex" and stdout and not response_path.is_file():
         response_path.write_text(stdout, encoding="utf-8", newline="\n")
     parseable = False
     response_hash = None
@@ -394,6 +541,7 @@ def execute_call(
         "reasoning_effort": "high" if harness in ("codex", "agy") else "provider-model-default",
         "harness": harness,
         "harness_executable": executable,
+        **({"transport_adapter": invocation_metadata} if invocation_metadata else {}),
         "started_at": started,
         "completed_at": utc_now(),
         "transport": transport,

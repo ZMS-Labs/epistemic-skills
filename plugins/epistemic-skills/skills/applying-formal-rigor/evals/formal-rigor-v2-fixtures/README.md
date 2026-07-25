@@ -22,6 +22,22 @@ python run_live.py run-semantic --output-root <durable-temp-root> --workers 4
 python run_live.py summarize-semantic --output-root <durable-temp-root>
 ```
 
+An authenticated Fleet Orchestrator surface bridge may be used explicitly when
+the local harness is unavailable:
+
+```text
+python run_live.py run-arms --output-root <durable-temp-root> --cursor fleet-bridge://default/fleet-orchestrator/surface-bridge-v2-0 --cursor-model auto
+```
+
+This adapter sends a sealed, scorer-free virtual packet over `kubectl exec`
+stdin to the bridge's full-output `/stream` endpoint. It never clones the
+repository into the agent workspace, and the local command line contains no
+fixture payload. The bridge currently does not forward a requested model to
+its Cursor or Gemini streaming helpers, so the adapter rejects every model id
+except the honest `auto` label and records `surface-default-auto` in each call.
+Use of this adapter is therefore a disclosed transport/model-plan variance,
+not evidence for the pinned Cursor model below.
+
 The plan contains 286 arm calls (the two missing repetitions for each baseline,
 three candidate repetitions, and all six 22-fixture parodies) plus 132 isolated
 semantic-seat calls. Calls are fresh and terminal: once a `call.json` exists,
