@@ -33,6 +33,10 @@ EXACT_JSON_BOUNDARY = (
     "must be the last non-whitespace character. Emit no draft object, repeated snapshot, "
     "second object, commentary, Markdown fence, or extra delimiter."
 )
+CONCISE_JSON = (
+    "Keep the JSON concise: use short but sufficient strings and minimal arrays, with no "
+    "repeated rationale, evidence, or restatement of packet contents."
+)
 
 PARODY_ARMS = (
     "parody-always-cautious",
@@ -356,6 +360,7 @@ SEALED_PACKET_JSON
 {json.dumps(files, ensure_ascii=False, sort_keys=True)}
 END_SEALED_PACKET_JSON
 
+{CONCISE_JSON}
 {EXACT_JSON_BOUNDARY}
 """
 
@@ -642,6 +647,7 @@ the module files you determine are material; do not treat module presence as pro
 Return exactly one formal-rigor-fixture-response@1 JSON object for fixture {fixture}. Emit no
 Markdown fence, preamble, commentary, score, hidden class guess, or claims about files outside this
 packet. Do not read or infer ground truth, thresholds, other fixtures, other arms, or prior results.
+{CONCISE_JSON}
 {EXACT_JSON_BOUNDARY}
 """
 
@@ -664,6 +670,7 @@ Return exactly one JSON object with this shape and no prose outside it:
   "coverage_limits": []
 }}
 Include exactly one row for every rubric obligation and forbidden proposition.
+{CONCISE_JSON}
 {EXACT_JSON_BOUNDARY}
 """
 

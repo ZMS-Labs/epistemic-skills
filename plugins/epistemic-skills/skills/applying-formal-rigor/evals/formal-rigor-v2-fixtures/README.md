@@ -36,7 +36,8 @@ stdin to the bridge's full-output `/stream` endpoint. It never clones the
 repository into the agent workspace, and the local command line contains no
 fixture payload. The one-object JSON boundary is repeated after the sealed
 packet so the final instruction forbids draft snapshots, wrapper delimiters,
-and extra closing braces. The bridge currently does not forward a requested
+and extra closing braces, while also requiring concise, non-repetitive
+schema content. The bridge currently does not forward a requested
 model to its Cursor or Gemini streaming helpers, so the adapter rejects every
 model id except the honest `auto` label and records `surface-default-auto` in
 each call.
