@@ -8,6 +8,7 @@ import json
 import os
 from pathlib import Path
 import tempfile
+import threading
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -135,6 +136,22 @@ def main() -> int:
             rejected_bridge_model = True
         require(rejected_bridge_model,
                 "Fleet bridge accepted a falsely pinned model that its stream endpoint ignores")
+
+        bridge_entered = threading.Event()
+        runner.FLEET_BRIDGE_LOCK.acquire()
+        waiter = threading.Thread(target=lambda: (
+            runner.FLEET_BRIDGE_LOCK.acquire(), bridge_entered.set(), runner.FLEET_BRIDGE_LOCK.release()
+        ))
+        waiter.start()
+        require(not bridge_entered.wait(0.05),
+                "Fleet bridge lock did not serialize concurrent surface calls")
+        runner.FLEET_BRIDGE_LOCK.release()
+        require(bridge_entered.wait(1),
+                "Fleet bridge lock did not release the next surface call")
+        waiter.join(timeout=1)
+        require("with (FLEET_BRIDGE_LOCK if bridge else nullcontext()):" in
+                RUNNER_PATH.read_text(encoding="utf-8"),
+                "live execution path does not use the Fleet bridge serialization lock")
 
         neutral_packet = tmp_root / "neutral"
         runner.build_arm_packet(neutral_packet, "neutral", fixture_dir)

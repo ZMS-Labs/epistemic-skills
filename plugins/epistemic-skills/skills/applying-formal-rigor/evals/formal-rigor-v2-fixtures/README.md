@@ -38,7 +38,9 @@ except the honest `auto` label and records `surface-default-auto` in each call.
 Raw bridge NDJSON is always retained. If Cursor emits multiple complete
 snapshots for the same recognized response envelope and fixture, only the
 final snapshot is materialized and that normalization is recorded; distinct
-envelopes fail closed.
+envelopes fail closed. Calls through one runner process are serialized because
+the shared bridge pod can be terminated under concurrent Cursor streams; local
+Codex and agy calls still use the requested worker concurrency.
 Use of this adapter is therefore a disclosed transport/model-plan variance,
 not evidence for the pinned Cursor model below.
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from contextlib import nullcontext
 from datetime import datetime, timezone
 import hashlib
 import json
@@ -14,6 +15,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import threading
 from typing import Callable, NamedTuple
 import uuid
 
@@ -24,6 +26,7 @@ REPO_ROOT = ROOT.parents[5]
 FIXTURES_ROOT = ROOT / "fixtures"
 PROMPTS_ROOT = ROOT / "prompts"
 RED_BASELINE_ROOT = ROOT / "results" / "2026-07-24-red-baseline"
+FLEET_BRIDGE_LOCK = threading.Lock()
 
 PARODY_ARMS = (
     "parody-always-cautious",
@@ -529,10 +532,11 @@ def execute_call(
     stderr = ""
     transport = "failed"
     try:
-        completed = subprocess.run(
-            command, cwd=packet_dir, text=True, encoding="utf-8", errors="replace",
-            input=stdin_text, capture_output=True, timeout=timeout_seconds, check=False,
-        )
+        with (FLEET_BRIDGE_LOCK if bridge else nullcontext()):
+            completed = subprocess.run(
+                command, cwd=packet_dir, text=True, encoding="utf-8", errors="replace",
+                input=stdin_text, capture_output=True, timeout=timeout_seconds, check=False,
+            )
         exit_code = completed.returncode
         stdout = completed.stdout
         stderr = completed.stderr
