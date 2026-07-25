@@ -87,6 +87,10 @@ def main() -> int:
         "principal.authorized_tenant_ids" in scenario_by_id["h-02-tenant-isolation"]["scenario"],
         "tenant-isolation fixture must supply the proposed predicate that formal rigor must verify",
     )
+    require(
+        "must never downgrade" in scenario_by_id["h-01-token-migration"]["scenario"],
+        "token-migration fixture must supply the proposed safety rule that formal rigor must verify",
+    )
 
     with tempfile.TemporaryDirectory() as historical_raw:
         historical = Path(historical_raw)
