@@ -43,6 +43,21 @@ def main() -> int:
     )
     require(runner.default_codex_executable() == ("codex.cmd" if os.name == "nt" else "codex"),
             "default Codex executable must use the runnable Windows command shim")
+    require(runner.DEFAULT_PROVIDER_PLAN == "frozen-three-provider",
+            "the historical three-provider allocation must remain the named default plan")
+    require(set(runner.PROVIDER_PLANS) == {"frozen-three-provider", "noncursor-degraded-v1"},
+            "the runner must expose exactly the frozen and degraded provider plans")
+    require(runner.candidate_harness(1, "noncursor-degraded-v1") == "codex" and
+            runner.candidate_harness(2, "noncursor-degraded-v1") == "agy" and
+            runner.candidate_harness(3, "noncursor-degraded-v1") == "codex",
+            "degraded candidate allocation must use the declared non-Cursor rotation")
+    require(runner.arm_harness(
+        runner.ArmTask("parody-closed-taxonomy", 1, "tm-01-false-mvd"),
+        "noncursor-degraded-v1",
+    ) == "codex", "degraded parody allocation must use its named provider plan")
+    require(runner.semantic_harness(
+        runner.SemanticTask(1, "tm-01-false-mvd", "a"), "noncursor-degraded-v1",
+    ) == "agy", "degraded semantic allocation must use its named provider plan")
     tasks = runner.full_arm_plan()
     counts: dict[str, int] = {}
     for task in tasks:
@@ -69,6 +84,92 @@ def main() -> int:
                 "semantic seat must not use its candidate response's harness")
     require(semantic_provider_counts == {"codex": 44, "agy": 44, "cursor": 44},
             f"semantic harness allocation drifted: {semantic_provider_counts}")
+    degraded_arm_counts = {
+        harness: sum(runner.arm_harness(task, "noncursor-degraded-v1") == harness for task in tasks)
+        for harness in runner.HARNESS_PROVIDERS
+    }
+    require(degraded_arm_counts == {"codex": 154, "agy": 132, "cursor": 0},
+            f"degraded arm allocation drifted: {degraded_arm_counts}")
+    degraded_semantic_counts = {
+        harness: sum(
+            runner.semantic_harness(task, "noncursor-degraded-v1") == harness
+            for task in runner.full_semantic_plan()
+        )
+        for harness in runner.HARNESS_PROVIDERS
+    }
+    require(degraded_semantic_counts == {"codex": 44, "agy": 88, "cursor": 0},
+            f"degraded semantic allocation drifted: {degraded_semantic_counts}")
+    for task in runner.full_semantic_plan():
+        require(
+            runner.semantic_harness(task, "noncursor-degraded-v1") !=
+            runner.candidate_harness(task.repetition, "noncursor-degraded-v1"),
+            "every degraded semantic seat must use the provider opposite its candidate response",
+        )
+    campaign_models = {
+        "codex": "gpt-5.6-sol", "agy": "gemini-3.1-pro-high", "cursor": "gpt-5.6-sol",
+    }
+    with tempfile.TemporaryDirectory() as campaign_tmp:
+        campaign_root = Path(campaign_tmp)
+        campaign = runner.ensure_campaign_plan(
+            campaign_root, provider_plan="noncursor-degraded-v1", source_commit="a" * 40,
+            v1_commit="b" * 40, models=campaign_models,
+        )
+        require(campaign["schema"] == "formal-rigor-live-campaign-plan@1",
+                "campaign manifest must carry its stable schema marker")
+        require(campaign["provider_plan"] == "noncursor-degraded-v1",
+                "campaign manifest must record the selected provider plan")
+        require(campaign["selected_models"] == {
+            "codex": "gpt-5.6-sol", "agy": "gemini-3.1-pro-high",
+        }, "campaign manifest must retain models only for active plan harnesses")
+        require(campaign["arm_calls"] == 286 and campaign["semantic_calls"] == 132 and
+                len(campaign["arm_tasks"]) == 286 and len(campaign["semantic_tasks"]) == 132,
+                "campaign manifest must retain the exact full task allocation")
+        require(campaign["arm_calls_by_harness"] == degraded_arm_counts and
+                campaign["semantic_calls_by_harness"] == degraded_semantic_counts,
+                "campaign manifest must retain the declared degraded provider counts")
+        require(runner.ensure_campaign_plan(
+            campaign_root, provider_plan="noncursor-degraded-v1", source_commit="a" * 40,
+            v1_commit="b" * 40, models=campaign_models,
+        ) == campaign, "an identical campaign identity must be resumable")
+        for changed_kwargs in (
+            {"provider_plan": "frozen-three-provider"},
+            {"source_commit": "c" * 40},
+            {"v1_commit": "d" * 40},
+            {"models": {**campaign_models, "codex": "gpt-5.7-sol"}},
+        ):
+            rejected = False
+            try:
+                runner.ensure_campaign_plan(
+                    campaign_root,
+                    provider_plan=changed_kwargs.get("provider_plan", "noncursor-degraded-v1"),
+                    source_commit=changed_kwargs.get("source_commit", "a" * 40),
+                    v1_commit=changed_kwargs.get("v1_commit", "b" * 40),
+                    models=changed_kwargs.get("models", campaign_models),
+                )
+            except ValueError:
+                rejected = True
+            require(rejected, "campaign manifest must reject any identity mismatch before a call")
+    with tempfile.TemporaryDirectory() as orphan_tmp:
+        orphan_root = Path(orphan_tmp)
+        orphan_call = orphan_root / "arms" / "v2-candidate" / "run-1" / "calls" / "fixture" / "call.json"
+        orphan_call.parent.mkdir(parents=True)
+        orphan_call.write_text("{}", encoding="utf-8")
+        rejected = False
+        try:
+            runner.ensure_campaign_plan(
+                orphan_root, provider_plan="noncursor-degraded-v1", source_commit="a" * 40,
+                v1_commit="b" * 40, models=campaign_models,
+            )
+        except ValueError:
+            rejected = True
+        require(rejected, "an output root with terminal calls and no campaign manifest must fail closed")
+    phase_status = runner.phase_status(
+        phase="arms", tasks=[runner.ArmTask("v2-candidate", 1, "tm-01-false-mvd")],
+        provider_plan="noncursor-degraded-v1", source_commit="a" * 40,
+        models=campaign_models, completed=1, failed=0,
+    )
+    require(phase_status["provider_plan"] == "noncursor-degraded-v1",
+            "phase-status records must retain the provider-plan identity")
     smoke_tasks = runner.filter_arm_tasks(
         tasks, arms={"v2-candidate"}, fixtures={"tm-01-false-mvd"}, repetitions={1},
     )
@@ -265,6 +366,7 @@ def main() -> int:
                 packet_root=tmp_root / "arm-packets",
                 executables={"codex": "codex", "agy": "agy", "cursor": "cursor-agent"},
                 models={"codex": "gpt-5.6-sol", "agy": "gemini-3.1-pro-high", "cursor": "auto"},
+                provider_plan="noncursor-degraded-v1",
                 source_commit="a" * 40,
                 v1_source_dir=tmp_root / "v1",
                 timeout_seconds=60,
@@ -275,6 +377,41 @@ def main() -> int:
             captured.get("output_schema_name") == "formal-rigor-fixture-transport.schema.json",
             "Codex arm calls must enforce the API-compatible fixture transport schema",
         )
+        require(captured.get("identity", {}).get("provider_plan") == "noncursor-degraded-v1",
+                "arm call records must retain the provider-plan identity")
+
+        semantic_output = tmp_root / "semantic-output"
+        semantic_candidate = (
+            semantic_output / "arms" / "v2-candidate" / "run-1" /
+            "tm-01-false-mvd.response.json"
+        )
+        semantic_candidate.parent.mkdir(parents=True)
+        semantic_candidate.write_text(candidate_response.read_text(encoding="utf-8"), encoding="utf-8")
+        semantic_captured: dict[str, object] = {}
+        try:
+            runner.execute_call = lambda **kwargs: semantic_captured.update(kwargs) or {}
+            runner.run_semantic_task(
+                runner.SemanticTask(1, "tm-01-false-mvd", "a"),
+                output_root=semantic_output, packet_root=tmp_root / "semantic-packets",
+                executables={"codex": "codex", "agy": "agy", "cursor": "cursor-agent"},
+                models={"codex": "gpt-5.6-sol", "agy": "gemini-3.1-pro-high", "cursor": "auto"},
+                provider_plan="noncursor-degraded-v1", source_commit="a" * 40,
+                timeout_seconds=60,
+            )
+        finally:
+            runner.execute_call = original_execute_call
+        require(semantic_captured.get("identity", {}).get("provider_plan") ==
+                "noncursor-degraded-v1",
+                "semantic call records must retain the provider-plan identity")
+
+        semantic_summary = runner.summarize_semantic(
+            tmp_root / "summary-output", "noncursor-degraded-v1",
+        )
+        require(semantic_summary["provider_plan"] == "noncursor-degraded-v1" and
+                json.loads((tmp_root / "summary-output" / "semantic-summary.json").read_text(
+                    encoding="utf-8"
+                ))["provider_plan"] == "noncursor-degraded-v1",
+                "semantic summaries must retain the provider-plan identity")
 
     command = runner.codex_command(
         codex="codex", model="gpt-5.6-sol", packet_dir=Path("packet"),
@@ -539,7 +676,10 @@ def main() -> int:
                 harness="agy",
                 executable="agy",
                 model="gemini-3.1-pro-high",
-                identity={"kind": "arm", "fixture": "cc-03-postgresql18-rationale-correct"},
+                identity={
+                    "kind": "arm", "provider_plan": "noncursor-degraded-v1",
+                    "fixture": "cc-03-postgresql18-rationale-correct",
+                },
                 source_commit="a" * 40,
                 timeout_seconds=60,
             )
@@ -554,6 +694,8 @@ def main() -> int:
         require(record.get("response_normalization") ==
                 "extracted-single-recognized-json-envelope",
                 "agy call record omitted explicit response_normalization metadata")
+        require(record.get("provider_plan") == "noncursor-degraded-v1",
+                "every terminal call record must retain the provider-plan identity")
 
     valid_adjudication = {
         "adjudication": "formal-rigor-semantic-adjudication@1",

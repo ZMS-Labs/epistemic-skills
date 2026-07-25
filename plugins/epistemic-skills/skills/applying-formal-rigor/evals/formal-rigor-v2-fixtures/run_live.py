@@ -65,6 +65,34 @@ PARODY_HARNESSES = {
     "parody-full-ceremony": "agy",
     "parody-jargon-only": "cursor",
 }
+DEFAULT_PROVIDER_PLAN = "frozen-three-provider"
+PROVIDER_PLANS = {
+    "frozen-three-provider": {
+        "candidate": {1: "codex", 2: "agy", 3: "cursor"},
+        "parodies": PARODY_HARNESSES,
+        "semantic": {
+            1: {"a": "agy", "b": "cursor"},
+            2: {"a": "cursor", "b": "codex"},
+            3: {"a": "codex", "b": "agy"},
+        },
+    },
+    "noncursor-degraded-v1": {
+        "candidate": {1: "codex", 2: "agy", 3: "codex"},
+        "parodies": {
+            "parody-always-cautious": "codex",
+            "parody-always-decide": "agy",
+            "parody-closed-taxonomy": "codex",
+            "parody-formal-only": "codex",
+            "parody-full-ceremony": "agy",
+            "parody-jargon-only": "agy",
+        },
+        "semantic": {
+            1: {"a": "agy", "b": "agy"},
+            2: {"a": "codex", "b": "codex"},
+            3: {"a": "agy", "b": "agy"},
+        },
+    },
+}
 HARNESS_PROVIDERS = {"codex": "OpenAI", "agy": "Google", "cursor": "Cursor"}
 SEMANTIC_VERDICTS = {"VALID", "INVALID", "INCONCLUSIVE"}
 OBLIGATION_STATES = {"SATISFIED", "VIOLATED", "INCONCLUSIVE"}
@@ -159,23 +187,115 @@ def full_semantic_plan() -> list[SemanticTask]:
     ]
 
 
-def candidate_harness(repetition: int) -> str:
-    return {1: "codex", 2: "agy", 3: "cursor"}[repetition]
+def provider_plan_config(provider_plan: str) -> dict:
+    try:
+        return PROVIDER_PLANS[provider_plan]
+    except KeyError as exc:
+        raise ValueError(f"unknown provider plan: {provider_plan}") from exc
 
 
-def arm_harness(task: ArmTask) -> str:
+def candidate_harness(repetition: int, provider_plan: str = DEFAULT_PROVIDER_PLAN) -> str:
+    return provider_plan_config(provider_plan)["candidate"][repetition]
+
+
+def arm_harness(task: ArmTask, provider_plan: str = DEFAULT_PROVIDER_PLAN) -> str:
     if task.arm in ("neutral", "v1-current", "v2-candidate"):
-        return candidate_harness(task.repetition)
-    return PARODY_HARNESSES[task.arm]
+        return candidate_harness(task.repetition, provider_plan)
+    return provider_plan_config(provider_plan)["parodies"][task.arm]
 
 
-def semantic_harness(task: SemanticTask) -> str:
-    rotation = {
-        1: {"a": "agy", "b": "cursor"},
-        2: {"a": "cursor", "b": "codex"},
-        3: {"a": "codex", "b": "agy"},
+def semantic_harness(task: SemanticTask, provider_plan: str = DEFAULT_PROVIDER_PLAN) -> str:
+    return provider_plan_config(provider_plan)["semantic"][task.repetition][task.seat]
+
+
+def campaign_plan(
+    *, provider_plan: str, source_commit: str, v1_commit: str, models: dict[str, str],
+) -> dict:
+    provider_plan_config(provider_plan)
+    arm_tasks = [
+        {
+            "arm": task.arm,
+            "repetition": task.repetition,
+            "fixture": task.fixture,
+            "harness": arm_harness(task, provider_plan),
+        }
+        for task in full_arm_plan()
+    ]
+    semantic_tasks = [
+        {
+            "repetition": task.repetition,
+            "fixture": task.fixture,
+            "seat": task.seat,
+            "harness": semantic_harness(task, provider_plan),
+        }
+        for task in full_semantic_plan()
+    ]
+    active_harnesses = [
+        harness for harness in HARNESS_PROVIDERS
+        if any(task["harness"] == harness for task in arm_tasks + semantic_tasks)
+    ]
+    if set(active_harnesses) - set(models):
+        raise ValueError("campaign models must name every active harness")
+    return {
+        "schema": "formal-rigor-live-campaign-plan@1",
+        "provider_plan": provider_plan,
+        "source_commit": source_commit,
+        "v1_commit": v1_commit,
+        "selected_models": {harness: models[harness] for harness in active_harnesses},
+        "arm_calls": len(arm_tasks),
+        "arm_calls_by_harness": {
+            harness: sum(task["harness"] == harness for task in arm_tasks)
+            for harness in HARNESS_PROVIDERS
+        },
+        "semantic_calls": len(semantic_tasks),
+        "semantic_calls_by_harness": {
+            harness: sum(task["harness"] == harness for task in semantic_tasks)
+            for harness in HARNESS_PROVIDERS
+        },
+        "arm_tasks": arm_tasks,
+        "semantic_tasks": semantic_tasks,
     }
-    return rotation[task.repetition][task.seat]
+
+
+def ensure_campaign_plan(
+    output_root: Path, *, provider_plan: str, source_commit: str, v1_commit: str,
+    models: dict[str, str],
+) -> dict:
+    expected = campaign_plan(
+        provider_plan=provider_plan, source_commit=source_commit, v1_commit=v1_commit,
+        models=models,
+    )
+    manifest_path = output_root / "campaign-plan.json"
+    if manifest_path.is_file():
+        actual = json.loads(manifest_path.read_text(encoding="utf-8"))
+        if actual != expected:
+            raise ValueError("existing campaign manifest identity does not match requested campaign")
+        return actual
+    if output_root.exists() and any(output_root.rglob("call.json")):
+        raise ValueError("output root contains terminal calls but no campaign manifest")
+    write_json(manifest_path, expected)
+    return expected
+
+
+def phase_status(
+    *, phase: str, tasks: list, provider_plan: str, source_commit: str,
+    models: dict[str, str], completed: int, failed: int,
+) -> dict:
+    harness_for = arm_harness if phase == "arms" else semantic_harness
+    return {
+        "schema": "formal-rigor-live-phase-status@1",
+        "phase": phase,
+        "provider_plan": provider_plan,
+        "source_commit": source_commit,
+        "models": models,
+        "planned_by_harness": {
+            harness: sum(harness_for(task, provider_plan) == harness for task in tasks)
+            for harness in HARNESS_PROVIDERS
+        },
+        "planned": len(tasks),
+        "completed": completed,
+        "failed": failed,
+    }
 
 
 def filter_arm_tasks(
@@ -843,12 +963,12 @@ def prepare_v1_snapshot(destination: Path, commit: str) -> Path:
 def run_arm_task(
     task: ArmTask, *, output_root: Path, packet_root: Path,
     executables: dict[str, str], models: dict[str, str],
-    source_commit: str, v1_source_dir: Path, timeout_seconds: int,
+    provider_plan: str, source_commit: str, v1_source_dir: Path, timeout_seconds: int,
 ) -> dict:
     run_dir = output_root / "arms" / task.arm / f"run-{task.repetition}"
     call_dir = run_dir / "calls" / task.fixture
     fixture_dir = FIXTURES_ROOT / task.fixture
-    harness = arm_harness(task)
+    harness = arm_harness(task, provider_plan)
     record = execute_call(
         result_dir=call_dir,
         packet_root=packet_root,
@@ -860,7 +980,10 @@ def run_arm_task(
         harness=harness,
         executable=executables[harness],
         model=models[harness],
-        identity={"kind": "arm", "arm": task.arm, "repetition": task.repetition, "fixture": task.fixture},
+        identity={
+            "kind": "arm", "provider_plan": provider_plan, "arm": task.arm,
+            "repetition": task.repetition, "fixture": task.fixture,
+        },
         source_commit=source_commit,
         timeout_seconds=timeout_seconds,
         output_schema_name="formal-rigor-fixture-transport.schema.json",
@@ -932,7 +1055,7 @@ def validate_adjudication(value: object, truth: dict) -> list[str]:
 def run_semantic_task(
     task: SemanticTask, *, output_root: Path, packet_root: Path,
     executables: dict[str, str], models: dict[str, str], source_commit: str,
-    timeout_seconds: int,
+    provider_plan: str, timeout_seconds: int,
 ) -> dict:
     fixture_dir = FIXTURES_ROOT / task.fixture
     truth = json.loads((fixture_dir / "ground-truth.json").read_text(encoding="utf-8"))
@@ -940,7 +1063,7 @@ def run_semantic_task(
     call_dir = output_root / "semantic" / f"run-{task.repetition}" / task.fixture / f"seat-{task.seat}"
     if not candidate_response.is_file():
         raise FileNotFoundError(f"candidate response missing: {candidate_response}")
-    harness = semantic_harness(task)
+    harness = semantic_harness(task, provider_plan)
     record = execute_call(
         result_dir=call_dir,
         packet_root=packet_root,
@@ -949,7 +1072,10 @@ def run_semantic_task(
         harness=harness,
         executable=executables[harness],
         model=models[harness],
-        identity={"kind": "semantic", "repetition": task.repetition, "fixture": task.fixture, "seat": task.seat},
+        identity={
+            "kind": "semantic", "provider_plan": provider_plan,
+            "repetition": task.repetition, "fixture": task.fixture, "seat": task.seat,
+        },
         source_commit=source_commit,
         timeout_seconds=timeout_seconds,
         output_schema_name="formal-rigor-semantic-adjudication.schema.json",
@@ -987,7 +1113,7 @@ def run_parallel(tasks: list, worker: Callable[[object], dict], workers: int) ->
     return completed, failed
 
 
-def summarize_semantic(output_root: Path) -> dict:
+def summarize_semantic(output_root: Path, provider_plan: str) -> dict:
     results = []
     for repetition in (1, 2, 3):
         for fixture in fixture_ids():
@@ -1024,6 +1150,7 @@ def summarize_semantic(output_root: Path) -> dict:
             })
     report = {
         "schema": "formal-rigor-semantic-summary@1",
+        "provider_plan": provider_plan,
         "results": results,
         "pass": sum(row["status"] == "PASS" for row in results),
         "fail": sum(row["status"] == "FAIL" for row in results),
@@ -1072,7 +1199,8 @@ def harness_configuration(args: argparse.Namespace) -> tuple[dict[str, str], dic
 def main() -> int:
     parser = argparse.ArgumentParser()
     sub = parser.add_subparsers(dest="command", required=True)
-    sub.add_parser("plan")
+    plan = sub.add_parser("plan")
+    plan.add_argument("--provider-plan", choices=tuple(PROVIDER_PLANS), default=DEFAULT_PROVIDER_PLAN)
 
     arms = sub.add_parser("run-arms")
     arms.add_argument("--output-root", type=Path, required=True)
@@ -1082,6 +1210,7 @@ def main() -> int:
     arms.add_argument("--timeout-seconds", type=int, default=600)
     arms.add_argument("--source-commit", default=None)
     arms.add_argument("--v1-commit", default=None)
+    arms.add_argument("--provider-plan", choices=tuple(PROVIDER_PLANS), required=True)
     arms.add_argument("--arm", action="append", choices=tuple(ARM_PROMPTS))
     arms.add_argument("--fixture", action="append", choices=fixture_ids())
     arms.add_argument("--repetition", action="append", type=int, choices=(1, 2, 3))
@@ -1093,24 +1222,28 @@ def main() -> int:
     semantic.add_argument("--workers", type=int, default=4)
     semantic.add_argument("--timeout-seconds", type=int, default=600)
     semantic.add_argument("--source-commit", default=None)
+    semantic.add_argument("--v1-commit", default=None)
+    semantic.add_argument("--provider-plan", choices=tuple(PROVIDER_PLANS), required=True)
     semantic.add_argument("--fixture", action="append", choices=fixture_ids())
     semantic.add_argument("--repetition", action="append", type=int, choices=(1, 2, 3))
     semantic.add_argument("--seat", action="append", choices=("a", "b"))
 
     summary = sub.add_parser("summarize-semantic")
     summary.add_argument("--output-root", type=Path, required=True)
+    summary.add_argument("--provider-plan", choices=tuple(PROVIDER_PLANS), required=True)
     args = parser.parse_args()
 
     if args.command == "plan":
         arm_counts = {
-            harness: sum(arm_harness(task) == harness for task in full_arm_plan())
+            harness: sum(arm_harness(task, args.provider_plan) == harness for task in full_arm_plan())
             for harness in HARNESS_PROVIDERS
         }
         semantic_counts = {
-            harness: sum(semantic_harness(task) == harness for task in full_semantic_plan())
+            harness: sum(semantic_harness(task, args.provider_plan) == harness for task in full_semantic_plan())
             for harness in HARNESS_PROVIDERS
         }
         print(json.dumps({
+            "provider_plan": args.provider_plan,
             "arm_calls": len(full_arm_plan()), "arm_calls_by_harness": arm_counts,
             "semantic_calls": len(full_semantic_plan()),
             "semantic_calls_by_harness": semantic_counts,
@@ -1118,16 +1251,20 @@ def main() -> int:
         }, indent=2))
         return 0
     if args.command == "summarize-semantic":
-        report = summarize_semantic(args.output_root)
+        report = summarize_semantic(args.output_root, args.provider_plan)
         print(json.dumps({key: report[key] for key in ("pass", "fail", "arbitration_required")}, indent=2))
         return 0
 
     source_commit = args.source_commit or default_source_commit()
     verify_source_state(source_commit)
     executables, models = harness_configuration(args)
+    baseline_manifest = json.loads((RED_BASELINE_ROOT / "manifest.json").read_text(encoding="utf-8"))
+    v1_commit = args.v1_commit or baseline_manifest["repository_head"]
+    ensure_campaign_plan(
+        args.output_root, provider_plan=args.provider_plan, source_commit=source_commit,
+        v1_commit=v1_commit, models=models,
+    )
     if args.command == "run-arms":
-        baseline_manifest = json.loads((RED_BASELINE_ROOT / "manifest.json").read_text(encoding="utf-8"))
-        v1_commit = args.v1_commit or baseline_manifest["repository_head"]
         v1_source = prepare_v1_snapshot(args.output_root / "metadata" / "v1-source", v1_commit)
         tasks = filter_arm_tasks(
             full_arm_plan(),
@@ -1140,19 +1277,15 @@ def main() -> int:
             lambda task: run_arm_task(
                 task, output_root=args.output_root, packet_root=args.packet_root,
                 executables=executables, models=models, source_commit=source_commit,
-                v1_source_dir=v1_source, timeout_seconds=args.timeout_seconds,
+                provider_plan=args.provider_plan, v1_source_dir=v1_source,
+                timeout_seconds=args.timeout_seconds,
             ),
             args.workers,
         )
-        write_json(args.output_root / "arm-run-status.json", {
-            "schema": "formal-rigor-live-phase-status@1", "phase": "arms",
-            "source_commit": source_commit, "models": models,
-            "planned_by_harness": {
-                harness: sum(arm_harness(task) == harness for task in tasks)
-                for harness in HARNESS_PROVIDERS
-            },
-            "planned": len(tasks), "completed": completed, "failed": failed,
-        })
+        write_json(args.output_root / "arm-run-status.json", phase_status(
+            phase="arms", tasks=tasks, provider_plan=args.provider_plan,
+            source_commit=source_commit, models=models, completed=completed, failed=failed,
+        ))
         print(f"arms: planned={len(tasks)} completed={completed} failed={failed}")
         return 0 if failed == 0 else 1
     if args.command == "run-semantic":
@@ -1167,19 +1300,14 @@ def main() -> int:
             lambda task: run_semantic_task(
                 task, output_root=args.output_root, packet_root=args.packet_root,
                 executables=executables, models=models, source_commit=source_commit,
-                timeout_seconds=args.timeout_seconds,
+                provider_plan=args.provider_plan, timeout_seconds=args.timeout_seconds,
             ),
             args.workers,
         )
-        write_json(args.output_root / "semantic-run-status.json", {
-            "schema": "formal-rigor-live-phase-status@1", "phase": "semantic",
-            "source_commit": source_commit, "models": models,
-            "planned_by_harness": {
-                harness: sum(semantic_harness(task) == harness for task in tasks)
-                for harness in HARNESS_PROVIDERS
-            },
-            "planned": len(tasks), "completed": completed, "failed": failed,
-        })
+        write_json(args.output_root / "semantic-run-status.json", phase_status(
+            phase="semantic", tasks=tasks, provider_plan=args.provider_plan,
+            source_commit=source_commit, models=models, completed=completed, failed=failed,
+        ))
         print(f"semantic: planned={len(tasks)} completed={completed} failed={failed}")
         return 0 if failed == 0 else 1
     raise AssertionError(args.command)
