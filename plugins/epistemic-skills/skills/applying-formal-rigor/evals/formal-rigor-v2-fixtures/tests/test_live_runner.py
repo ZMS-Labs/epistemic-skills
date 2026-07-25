@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
 from pathlib import Path
 import tempfile
 
@@ -29,6 +30,8 @@ def load_runner():
 
 def main() -> int:
     runner = load_runner()
+    require(runner.default_codex_executable() == ("codex.cmd" if os.name == "nt" else "codex"),
+            "default Codex executable must use the runnable Windows command shim")
     tasks = runner.full_arm_plan()
     counts: dict[str, int] = {}
     for task in tasks:

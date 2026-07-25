@@ -68,6 +68,10 @@ def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
+def default_codex_executable() -> str:
+    return "codex.cmd" if os.name == "nt" else "codex"
+
+
 def sha256_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
@@ -364,6 +368,9 @@ def execute_call(
         if isinstance(stderr, bytes):
             stderr = stderr.decode("utf-8", errors="replace")
         transport = "timeout"
+    except OSError:
+        shutil.rmtree(packet_dir, ignore_errors=True)
+        raise
     (result_dir / "events.jsonl").write_text(stdout, encoding="utf-8", newline="\n")
     (result_dir / "stderr.txt").write_text(stderr, encoding="utf-8", newline="\n")
     if harness != "codex" and stdout and not response_path.is_file():
@@ -629,7 +636,7 @@ def verify_source_state(source_commit: str, *, require_clean: bool = True) -> No
 
 
 def add_harness_arguments(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--codex", default="codex")
+    parser.add_argument("--codex", default=default_codex_executable())
     parser.add_argument("--codex-model", default="gpt-5.6-sol")
     parser.add_argument("--agy", default="agy")
     parser.add_argument("--agy-model", default="gemini-3.1-pro-high")
