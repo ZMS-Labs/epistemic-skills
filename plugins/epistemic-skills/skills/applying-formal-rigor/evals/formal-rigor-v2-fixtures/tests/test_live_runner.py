@@ -226,10 +226,22 @@ def main() -> int:
     require(normalized == '{"fixture":"tm-01-false-mvd"}' and
             normalization == "deduplicated-identical-complete-json-values",
             "Fleet bridge did not normalize its exact duplicate final JSON frame")
-    distinct = '{"fixture":"a"}{"fixture":"b"}'
+    snapshots = (
+        '{"response":"formal-rigor-fixture-response@1","fixture":"a","value":"draft"}'
+        '{"response":"formal-rigor-fixture-response@1","fixture":"a","value":"final"}'
+    )
+    final_snapshot, snapshot_normalization = runner.normalize_fleet_bridge_response(snapshots)
+    require(final_snapshot ==
+            '{"response":"formal-rigor-fixture-response@1","fixture":"a","value":"final"}' and
+            snapshot_normalization == "selected-final-complete-json-snapshot",
+            "Fleet bridge did not select the final snapshot for one recognized response envelope")
+    distinct = (
+        '{"response":"formal-rigor-fixture-response@1","fixture":"a"}'
+        '{"response":"formal-rigor-fixture-response@1","fixture":"b"}'
+    )
     unchanged, no_normalization = runner.normalize_fleet_bridge_response(distinct)
     require(unchanged == distinct and no_normalization is None,
-            "Fleet bridge normalization must fail closed on distinct concatenated values")
+            "Fleet bridge normalization must fail closed across distinct fixture envelopes")
 
     valid_adjudication = {
         "adjudication": "formal-rigor-semantic-adjudication@1",

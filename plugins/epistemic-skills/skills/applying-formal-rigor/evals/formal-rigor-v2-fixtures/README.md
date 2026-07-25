@@ -35,6 +35,10 @@ repository into the agent workspace, and the local command line contains no
 fixture payload. The bridge currently does not forward a requested model to
 its Cursor or Gemini streaming helpers, so the adapter rejects every model id
 except the honest `auto` label and records `surface-default-auto` in each call.
+Raw bridge NDJSON is always retained. If Cursor emits multiple complete
+snapshots for the same recognized response envelope and fixture, only the
+final snapshot is materialized and that normalization is recorded; distinct
+envelopes fail closed.
 Use of this adapter is therefore a disclosed transport/model-plan variance,
 not evidence for the pinned Cursor model below.
 

@@ -425,6 +425,21 @@ def normalize_fleet_bridge_response(response: str) -> tuple[str, str | None]:
     if len(values) > 1 and all(value == values[0] for value in values[1:]):
         start, end = spans[0]
         return response[start:end], "deduplicated-identical-complete-json-values"
+    recognized = {
+        "formal-rigor-fixture-response@1",
+        "formal-rigor-semantic-adjudication@1",
+    }
+    envelopes: list[tuple[object, object]] = []
+    for value in values:
+        if not isinstance(value, dict):
+            return response, None
+        marker = value.get("response") or value.get("adjudication")
+        if marker not in recognized:
+            return response, None
+        envelopes.append((marker, value.get("fixture")))
+    if len(values) > 1 and all(envelope == envelopes[0] for envelope in envelopes[1:]):
+        start, end = spans[-1]
+        return response[start:end], "selected-final-complete-json-snapshot"
     return response, None
 
 
