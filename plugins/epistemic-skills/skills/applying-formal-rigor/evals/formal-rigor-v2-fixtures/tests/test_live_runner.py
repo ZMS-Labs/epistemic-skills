@@ -9,6 +9,7 @@ import os
 from pathlib import Path
 import tempfile
 import threading
+from types import SimpleNamespace
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -324,6 +325,116 @@ def main() -> int:
     unchanged, no_normalization = runner.normalize_fleet_bridge_response(distinct)
     require(unchanged == distinct and no_normalization is None,
             "Fleet bridge normalization must fail closed across distinct fixture envelopes")
+
+    fixture_envelope = (
+        '{"response":"formal-rigor-fixture-response@1",'
+        '"fixture":"cc-03-postgresql18-rationale-correct","focused_output":[]}'
+    )
+    agy_stdout = (
+        "I evaluated the scenario and will return the requested envelope.\n\n"
+        f"```json\n{fixture_envelope}\n```\n"
+        "This is the complete response.\n"
+    )
+    normalized, normalization = runner.normalize_plain_text_response(agy_stdout)
+    require(normalized == fixture_envelope and
+            normalization == "extracted-single-recognized-json-envelope",
+            "plain-text harness normalization did not extract one fenced fixture envelope")
+
+    adjudication_envelope = (
+        '{"adjudication":"formal-rigor-semantic-adjudication@1",'
+        '"fixture":"cc-03-postgresql18-rationale-correct","verdict":"INCONCLUSIVE"}'
+    )
+    normalized, normalization = runner.normalize_plain_text_response(
+        f"Adjudication follows:\n{adjudication_envelope}\nEnd."
+    )
+    require(normalized == adjudication_envelope and
+            normalization == "extracted-single-recognized-json-envelope",
+            "plain-text harness normalization did not recognize an adjudication envelope")
+
+    unrecognized = 'Analysis only, plus metadata {"fixture":"cc-03-postgresql18-rationale-correct"}.'
+    unchanged, no_normalization = runner.normalize_plain_text_response(unrecognized)
+    require(unchanged == unrecognized and no_normalization is None,
+            "plain-text normalization must fail closed when no recognized envelope exists")
+
+    multiple_distinct = (
+        fixture_envelope + "\n" + fixture_envelope.replace(
+            '"fixture":"cc-03-postgresql18-rationale-correct"',
+            '"fixture":"cc-02-comparison-bound-is-valid"',
+        )
+    )
+    unchanged, no_normalization = runner.normalize_plain_text_response(multiple_distinct)
+    require(unchanged == multiple_distinct and no_normalization is None,
+            "plain-text normalization must fail closed across distinct recognized envelopes")
+
+    repeated_identical = fixture_envelope + "\n" + fixture_envelope
+    unchanged, no_normalization = runner.normalize_plain_text_response(repeated_identical)
+    require(unchanged == repeated_identical and no_normalization is None,
+            "plain-text normalization must fail closed across repeated identical envelopes")
+
+    truncated_ambiguous = (
+        fixture_envelope + '\n{"response":"formal-rigor-fixture-response@1","fixture":"unfinished"'
+    )
+    unchanged, no_normalization = runner.normalize_plain_text_response(truncated_ambiguous)
+    require(unchanged == truncated_ambiguous and no_normalization is None,
+            "plain-text normalization must fail closed when another recognized envelope is truncated")
+
+    nested_envelope = f"[{fixture_envelope}]"
+    unchanged, no_normalization = runner.normalize_plain_text_response(nested_envelope)
+    require(unchanged == nested_envelope and no_normalization is None,
+            "plain-text normalization must not extract a recognized object nested in another JSON value")
+
+    nested_schema_echo = json.dumps({
+        "schema": {
+            "type": "object",
+            "properties": {
+                "response": {"const": "formal-rigor-fixture-response@1"},
+            },
+        },
+    })
+    unchanged, no_normalization = runner.normalize_plain_text_response(nested_schema_echo)
+    require(unchanged == nested_schema_echo and no_normalization is None,
+            "plain-text normalization must not mistake a nested schema/prompt echo for an envelope")
+
+    reordered_truncated = (
+        fixture_envelope +
+        '\n{"fixture":"unfinished","details":{},'
+        '"response":"formal-rigor-fixture-response@1"'
+    )
+    unchanged, no_normalization = runner.normalize_plain_text_response(reordered_truncated)
+    require(unchanged == reordered_truncated and no_normalization is None,
+            "plain-text normalization must detect truncated recognized envelopes regardless of field order")
+
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_root = Path(tmp)
+        result_dir = tmp_root / "agy-call"
+        original_run = runner.subprocess.run
+        runner.subprocess.run = lambda *args, **kwargs: SimpleNamespace(
+            returncode=0, stdout=agy_stdout, stderr="",
+        )
+        try:
+            record = runner.execute_call(
+                result_dir=result_dir,
+                packet_root=tmp_root / "packets",
+                packet_builder=lambda packet: packet.mkdir(),
+                prompt="return JSON",
+                harness="agy",
+                executable="agy",
+                model="gemini-3.1-pro-high",
+                identity={"kind": "arm", "fixture": "cc-03-postgresql18-rationale-correct"},
+                source_commit="a" * 40,
+                timeout_seconds=60,
+            )
+        finally:
+            runner.subprocess.run = original_run
+        require((result_dir / "events.jsonl").read_text(encoding="utf-8") == agy_stdout,
+                "agy raw stdout must remain losslessly retained in events.jsonl")
+        require((result_dir / "response.json").read_text(encoding="utf-8") == fixture_envelope,
+                "agy response.json did not materialize the single recognized envelope")
+        require(record.get("json_parseable") is True,
+                "normalized agy response was not recorded as JSON-parseable")
+        require(record.get("response_normalization") ==
+                "extracted-single-recognized-json-envelope",
+                "agy call record omitted explicit response_normalization metadata")
 
     valid_adjudication = {
         "adjudication": "formal-rigor-semantic-adjudication@1",

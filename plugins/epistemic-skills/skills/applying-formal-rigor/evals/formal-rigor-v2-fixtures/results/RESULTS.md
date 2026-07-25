@@ -46,3 +46,19 @@ records; it was never overwritten.
 **Candidate gate: FAIL.** A new source/campaign is required. Three pinned
 passing repetitions, all parody arms, and all semantic gates remain required
 before candidate GREEN can be claimed.
+
+## 2026-07-25 agy transport diagnostic
+
+The first full-campaign attempt at source
+`2ff58cdc9883e120c7b70241ec81df02aaab0aea` stopped at the first terminal
+fixture failure, with 27/198 arm calls recorded. Twenty-four were parseable;
+three agy calls completed with exit code zero and clean secret screens but
+wrapped one JSON envelope in prose or a Markdown fence. The root
+`C:\tmp\formal-rigor-final-2ff58cd` is diagnostic-only and content-pinned as
+`69f8500aeb95fa7838f10927f7ccaaa99bbfa10114ecd3d570e2c4b198a21329`.
+It was not resumed, repaired, or semantically adjudicated.
+
+The subsequent runner change permits only deterministic extraction of exactly
+one recognized top-level envelope while retaining raw stdout and rejecting
+zero, repeated, nested, ambiguous, or truncated envelopes. That change requires
+a new source commit and fresh campaign; it does not upgrade this failed epoch.

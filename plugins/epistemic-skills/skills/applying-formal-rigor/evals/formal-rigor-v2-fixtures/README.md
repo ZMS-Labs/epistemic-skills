@@ -53,6 +53,19 @@ material module bodies remain available in the sealed packet for selective
 reading. The transport schema rejects readiness acknowledgements and other
 non-response text before it can be mistaken for a scored answer.
 
+Local plain-text harness stdout is retained unchanged in `events.jsonl`. When
+that stdout contains prose or a Markdown fence around exactly one complete,
+top-level `formal-rigor-fixture-response@1` or
+`formal-rigor-semantic-adjudication@1` JSON envelope, the runner may extract
+that envelope into `response.json` and records
+`response_normalization: extracted-single-recognized-json-envelope` in
+`call.json`. This is transport normalization only: it does not repair fields,
+consult scorer truth, or imply schema or semantic validity. Zero recognized
+envelopes, repeated or distinct envelopes, nested schema/prompt echoes, and
+ambiguous or truncated recognized JSON remain unnormalized and fail closed at
+the existing JSON-parseability gate. Fleet bridge snapshot normalization keeps
+its separate, stricter provenance and distinct-envelope protections.
+
 The plan contains 286 arm calls (the two missing repetitions for each baseline,
 three candidate repetitions, and all six 22-fixture parodies) plus 132 isolated
 semantic-seat calls. Calls are fresh and terminal: once a `call.json` exists,

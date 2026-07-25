@@ -495,6 +495,52 @@ def normalize_fleet_bridge_response(response: str) -> tuple[str, str | None]:
     return response, None
 
 
+def normalize_plain_text_response(response: str) -> tuple[str, str | None]:
+    """Extract one recognized formal-rigor envelope from plain-text stdout."""
+    decoder = json.JSONDecoder()
+    recognized: list[tuple[int, int, object]] = []
+    ambiguous = False
+    offset = 0
+    marker_patterns = (
+        re.compile(r'"response"\s*:\s*"formal-rigor-fixture-response@1"'),
+        re.compile(r'"adjudication"\s*:\s*"formal-rigor-semantic-adjudication@1"'),
+    )
+    while True:
+        openings = [position for position in (
+            response.find("{", offset), response.find("[", offset),
+        ) if position >= 0]
+        if not openings:
+            break
+        start = min(openings)
+        try:
+            value, end = decoder.raw_decode(response, start)
+        except json.JSONDecodeError:
+            offset = start + 1
+            continue
+        if isinstance(value, dict) and (
+            value.get("response") == "formal-rigor-fixture-response@1"
+            or value.get("adjudication") == "formal-rigor-semantic-adjudication@1"
+        ):
+            recognized.append((start, end, value))
+        offset = end
+
+    marker_count = sum(len(pattern.findall(response)) for pattern in marker_patterns)
+    if marker_count != len(recognized):
+        ambiguous = True
+
+    distinct = {
+        json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        for _, _, value in recognized
+    }
+    if ambiguous or len(recognized) != 1 or len(distinct) != 1:
+        return response, None
+    start, end, _ = recognized[-1]
+    extracted = response[start:end]
+    if response.strip() == extracted:
+        return response, None
+    return extracted, "extracted-single-recognized-json-envelope"
+
+
 def arm_prompt(fixture: str) -> str:
     return f"""You are a context-isolated run agent for fixture {fixture}.
 Perform the task now; do not acknowledge readiness or wait for another turn. Do not use a Markdown fence.
@@ -632,8 +678,10 @@ def execute_call(
         raise
     (result_dir / "events.jsonl").write_text(stdout, encoding="utf-8", newline="\n")
     (result_dir / "stderr.txt").write_text(stderr, encoding="utf-8", newline="\n")
+    response_normalization: str | None = None
     if not bridge and harness != "codex" and stdout and not response_path.is_file():
-        response_path.write_text(stdout, encoding="utf-8", newline="\n")
+        response_text, response_normalization = normalize_plain_text_response(stdout)
+        response_path.write_text(response_text, encoding="utf-8", newline="\n")
     parseable = False
     response_hash = None
     if response_path.is_file():
@@ -654,6 +702,7 @@ def execute_call(
         "harness": harness,
         "harness_executable": executable,
         **({"transport_adapter": invocation_metadata} if invocation_metadata else {}),
+        **({"response_normalization": response_normalization} if response_normalization else {}),
         "started_at": started,
         "completed_at": utc_now(),
         "transport": transport,
