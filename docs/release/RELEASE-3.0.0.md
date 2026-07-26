@@ -71,6 +71,17 @@ local test, or mutable `main` checkout is not a substitute.
   formal gate remains blocking and this release stays HOLD. Its exact evidence
   claim boundary is two-provider blinded conformance only: it does not claim
   three-provider robustness or Cursor reliability.
+- The first fresh `noncursor-degraded-v1` epoch at source
+  `fb19e9e9d2ee97b23d8408f54652fe2d86eb6a02` is excluded. Its canonical root
+  `C:\tmp\formal-rigor-noncursor-fb19e9e` is content-pinned as
+  `2b28b75b18adcab2e41faa2b375641b8e0fee2737de52ed3c0a14adabdff9c13` using
+  the repository's sorted path/file-SHA-256 manifest algorithm. It recorded
+  286 terminal calls: 285 parseable, 281 transport-schema-valid, four
+  parseable-but-schema-invalid (`empirical_closure.tests` objects where strings
+  are required), and one nonparseable self-talk/multiple-envelope response.
+  It has no scoring, semantic, or release credit and must not be retried,
+  repaired, resumed, or reused. The frozen Cursor blocker and prospective
+  protocol remain unchanged.
 - The pinned isolated proportionality protocol has completed. Final candidate
   `b73b04af46255bddf103a3f7e80e69b442ebddab` passed all three repetitions:
   routine `10/10`, material `4/4`, high-risk `4/4`, with routine narration

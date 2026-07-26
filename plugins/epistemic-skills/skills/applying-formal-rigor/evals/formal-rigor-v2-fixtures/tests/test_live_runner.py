@@ -170,6 +170,28 @@ def main() -> int:
     )
     require(phase_status["provider_plan"] == "noncursor-degraded-v1",
             "phase-status records must retain the provider-plan identity")
+    with tempfile.TemporaryDirectory() as phase_tmp:
+        phase_root = Path(phase_tmp)
+        complete_status = {
+            "schema": "formal-rigor-live-phase-status@1",
+            "phase": "arms",
+            "provider_plan": campaign["provider_plan"],
+            "source_commit": campaign["source_commit"],
+            "planned_by_harness": campaign["arm_calls_by_harness"],
+            "planned": campaign["arm_calls"],
+            "completed": campaign["arm_calls"],
+            "failed": 0,
+        }
+        runner.write_json(phase_root / "arm-run-status.json", complete_status)
+        runner.verify_arm_phase_complete(phase_root, campaign)
+        runner.write_json(phase_root / "arm-run-status.json", {**complete_status, "failed": 1})
+        rejected_incomplete = False
+        try:
+            runner.verify_arm_phase_complete(phase_root, campaign)
+        except ValueError:
+            rejected_incomplete = True
+        require(rejected_incomplete,
+                "semantic phase gate accepted an arm status with terminal failures")
     source_commit = "a" * 40
     branch_name = "codex/v3-rigor-gauntlet"
 
@@ -266,12 +288,31 @@ def main() -> int:
         "and array element is comma-separated, every string is closed and escaped, and braces "
         "and brackets are balanced."
     )
+    silent_boundary = (
+        "Do all analysis silently. Never emit analysis, planning, self-talk, a schema example, "
+        "or a draft."
+    )
+    arm_marker_boundary = (
+        "The response marker `formal-rigor-fixture-response@1` must appear exactly once in the "
+        "entire output."
+    )
+    semantic_marker_boundary = (
+        "The adjudication marker `formal-rigor-semantic-adjudication@1` must appear exactly once "
+        "in the entire output."
+    )
+    empirical_tests_boundary = (
+        "Every entry in `record.empirical_closure.tests` must be a JSON string, never an object."
+    )
     require(json_boundary in arm_instruction,
             "arm prompt does not enforce one complete top-level JSON object")
     require(concise_json in arm_instruction,
             "arm prompt does not bound free-text JSON expansion")
     require(syntax_check in arm_instruction,
             "arm prompt does not require a complete JSON syntax check")
+    require(silent_boundary in arm_instruction and arm_marker_boundary in arm_instruction,
+            "arm prompt does not suppress intermediate output and require exactly one marker")
+    require(empirical_tests_boundary in arm_instruction,
+            "arm prompt does not require empirical_closure.tests entries to be strings")
     semantic_instruction = runner.semantic_prompt("tm-01-false-mvd")
     require("Perform the task now; do not acknowledge readiness" in semantic_instruction,
             "semantic prompt does not reject readiness-only responses")
@@ -283,6 +324,52 @@ def main() -> int:
             "semantic prompt does not bound free-text JSON expansion")
     require(syntax_check in semantic_instruction,
             "semantic prompt does not require a complete JSON syntax check")
+    require(silent_boundary in semantic_instruction and
+            semantic_marker_boundary in semantic_instruction,
+            "semantic prompt does not suppress intermediate output and require exactly one marker")
+
+    schema_probe = {
+        "type": "object",
+        "additionalProperties": False,
+        "required": ["tests"],
+        "properties": {
+            "tests": {"type": "array", "items": {"type": "string"}},
+        },
+    }
+    require(not runner.validate_json_schema({"tests": ["probe"]}, schema_probe),
+            "stdlib schema validator rejected a valid string test entry")
+    schema_errors = runner.validate_json_schema({"tests": [{"test": "probe"}]}, schema_probe)
+    require(any("$.tests[0]" in error and "string" in error for error in schema_errors),
+            "stdlib schema validator accepted an object where the frozen schema requires a string")
+
+    completed, failed = runner.run_parallel(
+        ["schema-invalid"],
+        lambda _task: {
+            "transport": "completed", "json_parseable": True, "schema_valid": False,
+            "secret_screen": {"passed": True},
+        },
+        1,
+    )
+    require((completed, failed) == (0, 1),
+            "run_parallel must fail a parseable response that violates its output schema")
+    completed, failed = runner.run_parallel(
+        ["schema-unknown"],
+        lambda _task: {
+            "transport": "completed", "json_parseable": True,
+            "secret_screen": {"passed": True},
+        },
+        1,
+    )
+    require((completed, failed) == (0, 1),
+            "run_parallel must fail closed when schema-validation evidence is absent")
+    require(runner.call_qualifies({
+        "transport": "completed", "json_parseable": True, "schema_valid": True,
+        "secret_screen": {"passed": True},
+    }), "qualifying-call predicate rejected complete schema-valid evidence")
+    require(not runner.call_qualifies({
+        "transport": "completed", "json_parseable": True,
+        "secret_screen": {"passed": True},
+    }), "qualifying-call predicate accepted missing schema evidence")
 
     fixture_dir = ROOT / "fixtures" / "tm-01-false-mvd"
     truth = json.loads((fixture_dir / "ground-truth.json").read_text(encoding="utf-8"))
@@ -319,6 +406,10 @@ def main() -> int:
                 "sealed bridge prompt omitted packet-relative source files")
         require(not any(name in sealed for name in forbidden_names),
                 "sealed bridge prompt leaked scorer-only or prior-result material")
+        sealed_tail = sealed[sealed.index("END_SEALED_PACKET_JSON"):]
+        require(silent_boundary in sealed_tail and empirical_tests_boundary in sealed_tail and
+                "marker must appear exactly once" in sealed_tail,
+                "sealed prompt does not repeat the output constraints after packet contents")
         require("Do not use tools, execute commands, or write files" in sealed,
                 "sealed bridge prompt omitted its no-tool isolation instruction")
         require(sealed.rstrip().endswith(json_boundary),
@@ -453,6 +544,31 @@ def main() -> int:
         )
         semantic_candidate.parent.mkdir(parents=True)
         semantic_candidate.write_text(candidate_response.read_text(encoding="utf-8"), encoding="utf-8")
+        candidate_bytes = semantic_candidate.read_bytes()
+        candidate_call_dir = (
+            semantic_output / "arms" / "v2-candidate" / "run-1" / "calls" /
+            "tm-01-false-mvd"
+        )
+        candidate_call_dir.mkdir(parents=True)
+        (candidate_call_dir / "response.json").write_bytes(candidate_bytes)
+        runner.write_json(candidate_call_dir / "call.json", {
+            "schema": "formal-rigor-live-call@1", "kind": "arm",
+            "provider_plan": "noncursor-degraded-v1", "source_commit": "a" * 40,
+            "arm": "v2-candidate", "repetition": 1, "fixture": "tm-01-false-mvd",
+            "transport": "completed", "json_parseable": True, "schema_valid": True,
+            "schema_errors": [], "response_sha256": runner.sha256_bytes(candidate_bytes),
+            "secret_screen": {"passed": True},
+        })
+        require(runner.candidate_response_qualifies(
+            semantic_output, runner.SemanticTask(1, "tm-01-false-mvd", "a"),
+            provider_plan="noncursor-degraded-v1", source_commit="a" * 40,
+        ), "semantic candidate integrity check rejected matching arm evidence")
+        semantic_candidate.write_text('{"tampered":true}', encoding="utf-8")
+        require(not runner.candidate_response_qualifies(
+            semantic_output, runner.SemanticTask(1, "tm-01-false-mvd", "a"),
+            provider_plan="noncursor-degraded-v1", source_commit="a" * 40,
+        ), "semantic candidate integrity check accepted a between-phase mutation")
+        semantic_candidate.write_bytes(candidate_bytes)
         semantic_captured: dict[str, object] = {}
         try:
             runner.execute_call = lambda **kwargs: semantic_captured.update(kwargs) or {}
@@ -511,9 +627,12 @@ def main() -> int:
         require(marker in agy_joined, f"agy command missing isolation marker: {marker}")
     require(agy == [
         "agy", "--sandbox", "--dangerously-skip-permissions", "--mode", "plan",
-        "--add-dir", "packet", "--model", "gemini-3.1-pro-high",
+        "--add-dir", "packet", "--model", "gemini-3.1-pro-high", "--effort", "high",
         "--print", "return JSON",
     ], "agy must grant headless read tools only inside the sandboxed packet directory")
+    require(runner.reasoning_effort_label("agy", bridge=False) == "high" and
+            runner.reasoning_effort_label("agy", bridge=True) == "provider-model-default",
+            "reasoning-effort provenance must distinguish direct agy from Fleet bridge routing")
 
     cursor = runner.cursor_command(
         cursor="cursor-agent", model="gpt-5.6-sol", packet_dir=Path("packet"),
@@ -732,6 +851,17 @@ def main() -> int:
     with tempfile.TemporaryDirectory() as tmp:
         tmp_root = Path(tmp)
         result_dir = tmp_root / "agy-call"
+        def build_schema_packet(packet: Path) -> None:
+            packet.mkdir()
+            runner.write_json(packet / "output.schema.json", {
+                "type": "object",
+                "required": ["response", "fixture", "focused_output"],
+                "properties": {
+                    "response": {"const": "formal-rigor-fixture-response@1"},
+                    "fixture": {"type": "string"},
+                    "focused_output": {"type": "array"},
+                },
+            })
         original_run = runner.subprocess.run
         runner.subprocess.run = lambda *args, **kwargs: SimpleNamespace(
             returncode=0, stdout=agy_stdout, stderr="",
@@ -740,7 +870,7 @@ def main() -> int:
             record = runner.execute_call(
                 result_dir=result_dir,
                 packet_root=tmp_root / "packets",
-                packet_builder=lambda packet: packet.mkdir(),
+                packet_builder=build_schema_packet,
                 prompt="return JSON",
                 harness="agy",
                 executable="agy",
@@ -751,6 +881,7 @@ def main() -> int:
                 },
                 source_commit="a" * 40,
                 timeout_seconds=60,
+                output_schema_name="output.schema.json",
             )
         finally:
             runner.subprocess.run = original_run
@@ -760,6 +891,8 @@ def main() -> int:
                 "agy response.json did not materialize the single recognized envelope")
         require(record.get("json_parseable") is True,
                 "normalized agy response was not recorded as JSON-parseable")
+        require(record.get("schema_valid") is True and record.get("schema_errors") == [],
+                "execute_call did not validate the normalized response against its packet schema")
         require(record.get("response_normalization") ==
                 "extracted-single-recognized-json-envelope",
                 "agy call record omitted explicit response_normalization metadata")
@@ -780,6 +913,54 @@ def main() -> int:
         }],
         "coverage_limits": [],
     }
+    with tempfile.TemporaryDirectory() as evidence_tmp:
+        evidence_dir = Path(evidence_tmp)
+        response_bytes = json.dumps(valid_adjudication).encode("utf-8")
+        (evidence_dir / "response.json").write_bytes(response_bytes)
+        runner.write_json(evidence_dir / "call.json", {
+            "schema": "formal-rigor-live-call@1", "kind": "semantic",
+            "provider_plan": "noncursor-degraded-v1", "source_commit": "a" * 40,
+            "repetition": 1, "fixture": "tm-01-false-mvd", "seat": "a",
+            "transport": "completed", "json_parseable": True, "schema_valid": False,
+            "schema_errors": ["forced regression"],
+            "response_sha256": runner.sha256_bytes(response_bytes),
+            "secret_screen": {"passed": True},
+        })
+        evidence_errors = runner.response_evidence_errors(
+            evidence_dir, ROOT / "formal-rigor-semantic-adjudication.schema.json",
+        )
+        require(any("schema-valid" in error for error in evidence_errors),
+                "semantic evidence accepted a call whose strict schema check failed")
+        runner.write_json(evidence_dir / "call.json", {
+            "schema": "formal-rigor-live-call@1", "kind": "semantic",
+            "provider_plan": "noncursor-degraded-v1", "source_commit": "a" * 40,
+            "repetition": 1, "fixture": "tm-01-false-mvd", "seat": "a",
+            "transport": "completed", "json_parseable": True, "schema_valid": True,
+            "schema_errors": [], "response_sha256": runner.sha256_bytes(response_bytes),
+            "secret_screen": {"passed": True},
+        })
+        copied_seat_errors = runner.response_evidence_errors(
+            evidence_dir, ROOT / "formal-rigor-semantic-adjudication.schema.json",
+            expected_identity={
+                "kind": "semantic", "provider_plan": "noncursor-degraded-v1",
+                "source_commit": "a" * 40, "repetition": 1,
+                "fixture": "tm-01-false-mvd", "seat": "b",
+            },
+        )
+        require(any("seat" in error for error in copied_seat_errors),
+                "semantic evidence from one seat can masquerade as the other seat")
+        materialized = evidence_dir / "materialized.response.json"
+        runner.write_json(evidence_dir / "call.json", {
+            **json.loads((evidence_dir / "call.json").read_text(encoding="utf-8")),
+            "response_sha256": "0" * 64,
+        })
+        copied = runner.materialize_qualified_response(
+            evidence_dir, materialized,
+            ROOT / "formal-rigor-semantic-adjudication.schema.json",
+            expected_identity={"kind": "semantic", "seat": "a"},
+        )
+        require(copied is False and not materialized.exists(),
+                "materialization accepted a response that no longer matches terminal evidence")
     require(runner.validate_adjudication(valid_adjudication, truth) == [],
             "valid semantic adjudication failed validation")
     invalid_adjudication = dict(valid_adjudication, verdict="PASS")

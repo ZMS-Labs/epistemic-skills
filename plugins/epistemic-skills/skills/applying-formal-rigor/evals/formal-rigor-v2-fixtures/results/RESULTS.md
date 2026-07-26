@@ -134,3 +134,20 @@ as `6395c596b66a545d604af2457e17a551664f485636880ed267a5926d5cf07cce`.
 
 These repeated failures, together with the live Cursor CLI providing no schema
 flag, establish a provider-contract blocker for the frozen Cursor arm.
+
+## 2026-07-25 noncursor-degraded failed epoch
+
+The fresh `noncursor-degraded-v1` epoch at source
+`fb19e9e9d2ee97b23d8408f54652fe2d86eb6a02` recorded all 286 terminal arm
+calls (154 Codex and 132 agy/Gemini; no Cursor calls). Of those, 285 responses
+were JSON-parseable and 281 were valid under the frozen transport schema. Four
+parseable responses were transport-schema-invalid because
+`empirical_closure.tests` contained objects where the schema requires strings;
+one agy response was nonparseable after emitting self-talk/multiple envelopes.
+
+The canonical evidence-root content pin is
+`2b28b75b18adcab2e41faa2b375641b8e0fee2737de52ed3c0a14adabdff9c13`,
+computed with the repository's established sorted relative-path plus
+file-SHA-256 manifest algorithm. This epoch is excluded: it receives no
+structural score, semantic-adjudication result, or release credit. Its terminal
+records will not be retried, repaired, resumed, or reused.

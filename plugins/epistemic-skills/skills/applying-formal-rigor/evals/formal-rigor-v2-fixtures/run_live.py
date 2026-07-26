@@ -42,6 +42,13 @@ JSON_SYNTAX_CHECK = (
     "and array element is comma-separated, every string is closed and escaped, and braces "
     "and brackets are balanced."
 )
+SILENT_OUTPUT_BOUNDARY = (
+    "Do all analysis silently. Never emit analysis, planning, self-talk, a schema example, "
+    "or a draft."
+)
+EMPIRICAL_TESTS_BOUNDARY = (
+    "Every entry in `record.empirical_closure.tests` must be a JSON string, never an object."
+)
 
 PARODY_ARMS = (
     "parody-always-cautious",
@@ -160,6 +167,140 @@ def sha256_file(path: Path) -> str:
 def write_json(path: Path, value: object) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
+
+
+def validate_json_schema(value: object, schema: dict, path: str = "$") -> list[str]:
+    """Validate the JSON Schema subset used by the frozen evaluation envelopes."""
+    errors: list[str] = []
+
+    for keyword in ("anyOf", "oneOf"):
+        if keyword in schema:
+            branch_errors = [validate_json_schema(value, branch, path) for branch in schema[keyword]]
+            matched = sum(not branch for branch in branch_errors)
+            if (keyword == "anyOf" and matched == 0) or (keyword == "oneOf" and matched != 1):
+                detail = "; ".join(", ".join(branch) for branch in branch_errors if branch)
+                return [f"{path}: does not satisfy {keyword}" + (f" ({detail})" if detail else "")]
+            return []
+
+    expected_type = schema.get("type")
+    type_checks = {
+        "object": lambda item: isinstance(item, dict),
+        "array": lambda item: isinstance(item, list),
+        "string": lambda item: isinstance(item, str),
+        "null": lambda item: item is None,
+        "boolean": lambda item: isinstance(item, bool),
+        "integer": lambda item: isinstance(item, int) and not isinstance(item, bool),
+        "number": lambda item: isinstance(item, (int, float)) and not isinstance(item, bool),
+    }
+    if expected_type and not type_checks[expected_type](value):
+        return [f"{path}: expected {expected_type}"]
+    if "const" in schema and value != schema["const"]:
+        errors.append(f"{path}: expected constant {schema['const']!r}")
+    if "enum" in schema and value not in schema["enum"]:
+        errors.append(f"{path}: value is not in the allowed enum")
+
+    if isinstance(value, str):
+        if len(value) < schema.get("minLength", 0):
+            errors.append(f"{path}: string is shorter than minLength")
+        if schema.get("pattern") and re.search(schema["pattern"], value) is None:
+            errors.append(f"{path}: string does not match required pattern")
+    elif isinstance(value, list):
+        if len(value) < schema.get("minItems", 0):
+            errors.append(f"{path}: array is shorter than minItems")
+        if "maxItems" in schema and len(value) > schema["maxItems"]:
+            errors.append(f"{path}: array is longer than maxItems")
+        if schema.get("uniqueItems"):
+            serialized = [json.dumps(item, sort_keys=True, separators=(",", ":")) for item in value]
+            if len(serialized) != len(set(serialized)):
+                errors.append(f"{path}: array items are not unique")
+        item_schema = schema.get("items")
+        if item_schema:
+            for index, item in enumerate(value):
+                errors.extend(validate_json_schema(item, item_schema, f"{path}[{index}]"))
+    elif isinstance(value, dict):
+        properties = schema.get("properties", {})
+        missing = set(schema.get("required", [])) - set(value)
+        for name in sorted(missing):
+            errors.append(f"{path}: missing required property {name!r}")
+        if schema.get("additionalProperties") is False:
+            for name in sorted(set(value) - set(properties)):
+                errors.append(f"{path}: unexpected property {name!r}")
+        for name, child_schema in properties.items():
+            if name in value:
+                errors.extend(validate_json_schema(value[name], child_schema, f"{path}.{name}"))
+    return errors
+
+
+def call_qualifies(record: dict) -> bool:
+    return (
+        record.get("transport") == "completed"
+        and record.get("json_parseable") is True
+        and record.get("schema_valid") is True
+        and record.get("secret_screen", {}).get("passed") is True
+    )
+
+
+def reasoning_effort_label(harness: str, *, bridge: bool) -> str:
+    return "high" if not bridge and harness in ("codex", "agy") else "provider-model-default"
+
+
+def response_evidence_errors(
+    call_dir: Path, schema_path: Path, *, expected_identity: dict | None = None,
+) -> list[str]:
+    call_path = call_dir / "call.json"
+    response_path = call_dir / "response.json"
+    if not call_path.is_file():
+        return ["qualifying call evidence is missing"]
+    try:
+        call = json.loads(call_path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError) as exc:
+        return [f"call evidence is unreadable: {exc}"]
+    errors = [] if call_qualifies(call) else ["call evidence is not completed and schema-valid"]
+    if call.get("schema") != "formal-rigor-live-call@1":
+        errors.append("call evidence has an invalid record schema")
+    for key, expected in (expected_identity or {}).items():
+        if call.get(key) != expected:
+            errors.append(f"call identity {key!r} does not match expected value")
+    if not response_path.is_file():
+        return errors + ["response artifact is missing"]
+    if call.get("response_sha256") != sha256_file(response_path):
+        errors.append("response artifact does not match its terminal call hash")
+    try:
+        response = json.loads(response_path.read_text(encoding="utf-8"))
+        schema = json.loads(schema_path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError) as exc:
+        return errors + [f"response or schema is unreadable: {exc}"]
+    errors.extend(validate_json_schema(response, schema))
+    return errors
+
+
+def materialize_qualified_response(
+    call_dir: Path, destination: Path, schema_path: Path, *, expected_identity: dict,
+) -> bool:
+    if response_evidence_errors(
+        call_dir, schema_path, expected_identity=expected_identity,
+    ):
+        return False
+    response_path = call_dir / "response.json"
+    if destination.is_file():
+        return sha256_file(destination) == sha256_file(response_path)
+    copy_file(response_path, destination)
+    return True
+
+
+def candidate_response_qualifies(
+    output_root: Path, task: SemanticTask, *, provider_plan: str, source_commit: str,
+) -> bool:
+    run_dir = output_root / "arms" / "v2-candidate" / f"run-{task.repetition}"
+    call_dir = run_dir / "calls" / task.fixture
+    destination = run_dir / f"{task.fixture}.response.json"
+    return materialize_qualified_response(
+        call_dir, destination, ROOT / "formal-rigor-fixture-transport.schema.json",
+        expected_identity={
+            "kind": "arm", "provider_plan": provider_plan, "source_commit": source_commit,
+            "arm": "v2-candidate", "repetition": task.repetition, "fixture": task.fixture,
+        },
+    )
 
 
 def fixture_ids() -> list[str]:
@@ -426,7 +567,8 @@ def agy_command(
     del response_path
     return [
         agy, "--sandbox", "--dangerously-skip-permissions", "--mode", "plan",
-        "--add-dir", str(packet_dir), "--model", model, "--print", prompt,
+        "--add-dir", str(packet_dir), "--model", model, "--effort", "high",
+        "--print", prompt,
     ]
 
 
@@ -487,6 +629,9 @@ END_SEALED_PACKET_JSON
 
 {CONCISE_JSON}
 {JSON_SYNTAX_CHECK}
+{SILENT_OUTPUT_BOUNDARY}
+The applicable top-level response or adjudication marker must appear exactly once in the entire output.
+{EMPIRICAL_TESTS_BOUNDARY}
 {EXACT_JSON_BOUNDARY}
 """
 
@@ -775,6 +920,9 @@ Markdown fence, preamble, commentary, score, hidden class guess, or claims about
 packet. Do not read or infer ground truth, thresholds, other fixtures, other arms, or prior results.
 {CONCISE_JSON}
 {JSON_SYNTAX_CHECK}
+{SILENT_OUTPUT_BOUNDARY}
+The response marker `formal-rigor-fixture-response@1` must appear exactly once in the entire output.
+{EMPIRICAL_TESTS_BOUNDARY}
 {EXACT_JSON_BOUNDARY}
 """
 
@@ -799,6 +947,8 @@ Return exactly one JSON object with this shape and no prose outside it:
 Include exactly one row for every rubric obligation and forbidden proposition.
 {CONCISE_JSON}
 {JSON_SYNTAX_CHECK}
+{SILENT_OUTPUT_BOUNDARY}
+The adjudication marker `formal-rigor-semantic-adjudication@1` must appear exactly once in the entire output.
 {EXACT_JSON_BOUNDARY}
 """
 
@@ -910,14 +1060,25 @@ def execute_call(
         response_text, response_normalization = normalize_plain_text_response(stdout)
         response_path.write_text(response_text, encoding="utf-8", newline="\n")
     parseable = False
+    response_value: object = None
     response_hash = None
     if response_path.is_file():
         response_hash = sha256_file(response_path)
         try:
-            json.loads(response_path.read_text(encoding="utf-8"))
+            response_value = json.loads(response_path.read_text(encoding="utf-8"))
             parseable = True
         except json.JSONDecodeError:
             pass
+    schema_valid: bool | None = None
+    schema_errors: list[str] = []
+    if output_schema_name:
+        if parseable:
+            output_schema = json.loads((packet_dir / output_schema_name).read_text(encoding="utf-8"))
+            schema_errors = validate_json_schema(response_value, output_schema)
+            schema_valid = not schema_errors
+        else:
+            schema_errors = ["$: response is not parseable JSON"]
+            schema_valid = False
     markers = sensitive_markers(stdout + "\n" + stderr + "\n" + (response_path.read_text(encoding="utf-8", errors="replace") if response_path.is_file() else ""))
     record = {
         "schema": "formal-rigor-live-call@1",
@@ -925,7 +1086,7 @@ def execute_call(
         "source_commit": source_commit,
         "provider": HARNESS_PROVIDERS[harness],
         "model": model,
-        "reasoning_effort": "high" if harness in ("codex", "agy") else "provider-model-default",
+        "reasoning_effort": reasoning_effort_label(harness, bridge=bridge),
         "harness": harness,
         "harness_executable": executable,
         **({"transport_adapter": invocation_metadata} if invocation_metadata else {}),
@@ -935,6 +1096,8 @@ def execute_call(
         "transport": transport,
         "exit_code": exit_code,
         "json_parseable": parseable,
+        **({"schema_valid": schema_valid, "schema_errors": schema_errors}
+           if output_schema_name else {}),
         "response_sha256": response_hash,
         "packet_sha256": packet_manifest(packet_dir),
         "secret_screen": {"passed": not markers, "markers": markers},
@@ -990,8 +1153,15 @@ def run_arm_task(
     )
     response = call_dir / "response.json"
     materialized = run_dir / f"{task.fixture}.response.json"
-    if response.is_file() and not materialized.is_file():
-        copy_file(response, materialized)
+    expected_identity = {
+        "kind": "arm", "provider_plan": provider_plan, "source_commit": source_commit,
+        "arm": task.arm, "repetition": task.repetition, "fixture": task.fixture,
+    }
+    if call_qualifies(record) and not materialize_qualified_response(
+        call_dir, materialized, ROOT / "formal-rigor-fixture-transport.schema.json",
+        expected_identity=expected_identity,
+    ):
+        raise ValueError(f"qualifying arm call has invalid materialized evidence: {task}")
     return record
 
 
@@ -1061,8 +1231,10 @@ def run_semantic_task(
     truth = json.loads((fixture_dir / "ground-truth.json").read_text(encoding="utf-8"))
     candidate_response = output_root / "arms" / "v2-candidate" / f"run-{task.repetition}" / f"{task.fixture}.response.json"
     call_dir = output_root / "semantic" / f"run-{task.repetition}" / task.fixture / f"seat-{task.seat}"
-    if not candidate_response.is_file():
-        raise FileNotFoundError(f"candidate response missing: {candidate_response}")
+    if not candidate_response_qualifies(
+        output_root, task, provider_plan=provider_plan, source_commit=source_commit,
+    ):
+        raise ValueError(f"candidate response does not match qualifying arm evidence: {candidate_response}")
     harness = semantic_harness(task, provider_plan)
     record = execute_call(
         result_dir=call_dir,
@@ -1081,14 +1253,19 @@ def run_semantic_task(
         output_schema_name="formal-rigor-semantic-adjudication.schema.json",
     )
     response = call_dir / "response.json"
-    errors: list[str] = []
-    if response.is_file():
+    expected_identity = {
+        "kind": "semantic", "provider_plan": provider_plan, "source_commit": source_commit,
+        "repetition": task.repetition, "fixture": task.fixture, "seat": task.seat,
+    }
+    errors = response_evidence_errors(
+        call_dir, ROOT / "formal-rigor-semantic-adjudication.schema.json",
+        expected_identity=expected_identity,
+    )
+    if not errors and response.is_file():
         try:
             errors = validate_adjudication(json.loads(response.read_text(encoding="utf-8")), truth)
         except json.JSONDecodeError as exc:
             errors = [f"invalid JSON: {exc}"]
-    else:
-        errors = ["response missing"]
     write_json(call_dir / "validation.json", {"valid": not errors, "errors": errors})
     return record
 
@@ -1102,11 +1279,14 @@ def run_parallel(tasks: list, worker: Callable[[object], dict], workers: int) ->
             task = futures[future]
             try:
                 record = future.result()
-                if record.get("transport") == "completed" and record.get("json_parseable") and record.get("secret_screen", {}).get("passed"):
+                if call_qualifies(record):
                     completed += 1
                 else:
                     failed += 1
-                print(f"{task}: {record.get('transport')} parseable={record.get('json_parseable')}", flush=True)
+                print(
+                    f"{task}: {record.get('transport')} parseable={record.get('json_parseable')} "
+                    f"schema_valid={record.get('schema_valid')}", flush=True,
+                )
             except Exception as exc:  # fail-closed while allowing other independent calls to finish
                 failed += 1
                 print(f"{task}: ERROR {exc}", file=sys.stderr, flush=True)
@@ -1131,9 +1311,17 @@ def summarize_semantic(output_root: Path, provider_plan: str) -> dict:
             for seat in ("a", "b"):
                 seat_dir = output_root / "semantic" / f"run-{repetition}" / fixture / f"seat-{seat}"
                 response_path = seat_dir / "response.json"
-                if not response_path.is_file():
+                evidence_errors = response_evidence_errors(
+                    seat_dir, ROOT / "formal-rigor-semantic-adjudication.schema.json",
+                    expected_identity={
+                        "kind": "semantic", "provider_plan": provider_plan,
+                        "source_commit": campaign.get("source_commit"),
+                        "repetition": repetition, "fixture": fixture, "seat": seat,
+                    },
+                )
+                if evidence_errors:
                     seat_values.append(None)
-                    seat_errors.append(["response missing"])
+                    seat_errors.append(evidence_errors)
                     continue
                 try:
                     value = json.loads(response_path.read_text(encoding="utf-8"))
@@ -1166,6 +1354,25 @@ def summarize_semantic(output_root: Path, provider_plan: str) -> dict:
     }
     write_json(output_root / "semantic-summary.json", report)
     return report
+
+
+def verify_arm_phase_complete(output_root: Path, campaign: dict) -> None:
+    status_path = output_root / "arm-run-status.json"
+    if not status_path.is_file():
+        raise ValueError("semantic phase requires a complete arm-run-status.json")
+    status = json.loads(status_path.read_text(encoding="utf-8"))
+    expected = campaign["arm_calls"]
+    if (
+        status.get("schema") != "formal-rigor-live-phase-status@1"
+        or status.get("phase") != "arms"
+        or status.get("provider_plan") != campaign.get("provider_plan")
+        or status.get("source_commit") != campaign.get("source_commit")
+        or status.get("planned") != expected
+        or status.get("completed") != expected
+        or status.get("failed") != 0
+        or status.get("planned_by_harness") != campaign.get("arm_calls_by_harness")
+    ):
+        raise ValueError("semantic phase requires one complete qualifying arm epoch")
 
 
 def default_source_commit() -> str:
@@ -1334,6 +1541,8 @@ def main() -> int:
         print(f"arms: planned={len(tasks)} completed={completed} failed={failed}")
         return 0 if failed == 0 else 1
     if args.command == "run-semantic":
+        campaign = json.loads((args.output_root / "campaign-plan.json").read_text(encoding="utf-8"))
+        verify_arm_phase_complete(args.output_root, campaign)
         tasks = filter_semantic_tasks(
             full_semantic_plan(),
             fixtures=set(args.fixture) if args.fixture else None,
