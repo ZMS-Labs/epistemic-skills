@@ -127,6 +127,10 @@ def main() -> int:
         "CI omits formal-rigor focused proportionality tests",
     )
     require(
+        "applying-formal-rigor/evals/formal-rigor-v2-fixtures/tests/test_posthoc_diagnostic.py" in workflow,
+        "CI omits formal-rigor V3 post-hoc diagnostic tests",
+    )
+    require(
         "evidence-locked-uat/evals/triage/tests/run_tests.py" in workflow,
         "CI omits UAT proportionality triage tests",
     )
@@ -160,8 +164,10 @@ def main() -> int:
         "formal-rigor-record.schema.json",
         "score.py",
         "semantic-adjudication.md",
+        "posthoc_diagnostic.py",
         "tests/run_tests.py",
         "tests/test_focused.py",
+        "tests/test_posthoc_diagnostic.py",
         "results/BLOCKED.md",
     ):
         require((formal_v2 / filename).is_file(), f"missing formal-rigor v2 artifact: {filename}")

@@ -199,3 +199,31 @@ passing pilot may justify a fresh V4/full root. The Fleet Gemini bridge ignores
 selected model/effort and likely shares
 quota, so is unsuitable; Ollama `qwen2.5` 7B is exploratory only and cannot
 replace release evidence.
+
+### V3 post-hoc diagnostic (non-release)
+
+`posthoc_diagnostic.py` creates a fail-closed, diagnostic-only structural view
+of the excluded V3 source. Its only source is the excluded V3 root
+`C:\tmp\formal-rigor-noncursor-v3-693c0fb` at commit
+`693c0fb26fa4e0c4f54e63b52497783c4ce60131`, with content pin
+`87e7a615927b4e4148ae5d79677d78166c2aeb8ded294d79ff4dfaf204af29b1`.
+Choose a new, empty output root outside that source root; the prepare command
+rejects a non-empty root and any output nested under the source.
+
+```text
+python posthoc_diagnostic.py prepare-structural --source-root C:\tmp\formal-rigor-noncursor-v3-693c0fb --output-root <new-empty-diagnostic-root> --expected-pin 87e7a615927b4e4148ae5d79677d78166c2aeb8ded294d79ff4dfaf204af29b1 --source-commit 693c0fb26fa4e0c4f54e63b52497783c4ce60131
+```
+
+After structural preparation, run provider-filtered semantic diagnostics only
+for the selected harnesses. `--implementation-commit` is the clean checked-out
+implementation commit used by the semantic runner.
+
+```text
+python posthoc_diagnostic.py run-semantic --output-root <new-empty-diagnostic-root> --harness codex --implementation-commit <40-character-implementation-commit>
+python posthoc_diagnostic.py run-semantic --output-root <new-empty-diagnostic-root> --harness agy --implementation-commit <40-character-implementation-commit>
+python posthoc_diagnostic.py summarize --output-root <new-empty-diagnostic-root>
+```
+
+The outputs are post-hoc confidence evidence only. They can never make V3 or
+3.0.0 pass, repair/retry/reuse a V3 call, award structural or semantic release
+credit, or change the release HOLD boundary.
