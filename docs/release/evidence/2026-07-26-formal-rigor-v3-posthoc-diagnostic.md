@@ -203,3 +203,11 @@ the canonical-versus-literal semantic-plan hash distinction, and normalized
 semantic sensitivity. Those corrections are incorporated above. No reviewer
 dissent remains unresolved; the provider confounding, missing AGY judgments,
 correlated seats, and missing parody arms remain substantive limitations.
+
+A subsequent independent re-review covered the focused fix range
+`c38bdc7ec3891fc6436993a01ede174218f9e741..31442e140a06cb43085833d40c9c438a38307baf`.
+It re-probed all four original Important findings and found each resolved. The
+final verdict for the diagnostic change set was `0 Critical, 0 Important, 0
+Minor` with `Ready to merge: Yes`. This verdict applies only to the diagnostic
+change set; 3.0.0 remains **HOLD**, the diagnostic receives no release credit,
+and all substantive limitations above remain.

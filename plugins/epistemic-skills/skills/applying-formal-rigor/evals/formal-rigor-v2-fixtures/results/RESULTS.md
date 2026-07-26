@@ -269,3 +269,11 @@ Independent read-only review found no Critical issue and conditionally approved
 the corrected interpretation with these caveats retained.
 The exact tables, provider breakdowns, pins, and limitations are recorded in
 `docs/release/evidence/2026-07-26-formal-rigor-v3-posthoc-diagnostic.md`.
+
+A subsequent independent re-review covered the focused fix range
+`c38bdc7ec3891fc6436993a01ede174218f9e741..31442e140a06cb43085833d40c9c438a38307baf`.
+It re-probed all four original Important findings and found each resolved. The
+final verdict for the diagnostic change set was `0 Critical, 0 Important, 0
+Minor` with `Ready to merge: Yes`. This verdict applies only to the diagnostic
+change set; 3.0.0 remains **HOLD**, the diagnostic receives no release credit,
+and all substantive limitations above remain.
