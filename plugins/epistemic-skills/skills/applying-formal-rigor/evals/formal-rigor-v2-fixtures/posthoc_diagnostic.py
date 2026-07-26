@@ -215,7 +215,6 @@ def inventory_source_calls(source_root: Path, expected_pin: str) -> list[dict]:
             row.update(classification="missing_no_content", exclusion_reason="terminal call retained no model content")
             rows.append(row)
             continue
-        _ensure_qualifying_call(call)
         raw = raw_path.read_bytes()
         row["raw_sha256"] = sha256_bytes(raw)
         if call.get("response_sha256") != row["raw_sha256"]:
@@ -225,6 +224,7 @@ def inventory_source_calls(source_root: Path, expected_pin: str) -> list[dict]:
         except (UnicodeDecodeError, json.JSONDecodeError):
             response = None
         if response is not None:
+            _ensure_qualifying_call(call)
             errors = run_live.validate_json_schema(response, schema)
             if errors or not isinstance(response, dict) or response.get("response") != "formal-rigor-fixture-response@1" or response.get("fixture") != fixture:
                 raise ValueError(f"original response is not a valid matching transport frame: {raw_path}")
@@ -283,7 +283,11 @@ def _structural_report(rows: list[dict], source_pin: str, source_commit: str) ->
     candidate = [row for row in enriched if row["arm"] == "v2-candidate"]
     candidate_available = [row for row in candidate if row["classification"] != "missing_no_content"]
     candidate_without_normalized = [row for row in candidate_available if row["classification"] == "original_qualifying"]
-    parody_rows = [row for row in enriched if str(row["arm"]).startswith("parody-")]
+    parody_rows = [
+        row for row in enriched
+        if str(row["arm"]).startswith("parody-")
+        and row["classification"] != "missing_no_content"
+    ]
     observed_parodies = {}
     for arm in sorted({row["arm"] for row in parody_rows}):
         arm_rows = [row for row in parody_rows if row["arm"] == arm]

@@ -162,6 +162,45 @@ def main() -> int:
         require(report["inventory"][0]["classification"] == "original_qualifying",
                 "qualifying source classification drifted")
 
+        repeated_source = root / "repeated-source"
+        repeated_source.mkdir()
+        write_source(
+            repeated_source, canonical_frame + b"\n" + canonical_frame,
+            mutate_call=lambda call: call.update(
+                json_parseable=False, schema_valid=False,
+                schema_errors=["$: response is not parseable JSON"],
+            ),
+        )
+        repeated_report = diagnostic.prepare_structural(
+            repeated_source, root / "repeated-output",
+            diagnostic.tree_sha256(repeated_source), "a" * 40,
+        )
+        repeated_view = root / "repeated-output" / "views" / "neutral" / "run-1" / "tm-01-false-mvd.response.json"
+        require(repeated_view.read_bytes() == canonical_frame,
+                "repeated-frame source did not materialize a single preserved frame")
+        require(repeated_report["inventory"][0]["classification"] == "normalized_identical_repeated_frames",
+                "repeated-frame source did not receive the normalized classification")
+
+        parody_report = diagnostic._structural_report([
+            {
+                "arm": "parody-always-cautious", "repetition": 1,
+                "fixture": "tm-01-false-mvd", "origin_provider": "codex",
+                "classification": "original_qualifying",
+                "structural_score": {"structural_pass": False, "dimensions_failed": ["S1"]},
+            },
+            *[
+                {
+                    "arm": arm, "repetition": 1, "fixture": "tm-01-false-mvd",
+                    "origin_provider": None, "classification": "missing_no_content",
+                }
+                for arm in diagnostic.UNAVAILABLE_PARODY_ARMS
+            ],
+        ], "d" * 64, "a" * 40)
+        require(set(parody_report["observed_parody_failure_evidence"]) == {"parody-always-cautious"},
+                "unavailable parody arms were reported as observed")
+        require(parody_report["unavailable_parody_arms"] == list(diagnostic.UNAVAILABLE_PARODY_ARMS),
+                "unavailable parody accounting drifted")
+
     print("formal-rigor post-hoc diagnostic: PASS")
     return 0
 
