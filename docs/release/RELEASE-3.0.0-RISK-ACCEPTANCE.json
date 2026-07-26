@@ -13,8 +13,8 @@
     "feature_merge_sha": "320d73d446332444b8301603f0199142619304be",
     "release_branch_base_sha": "320d73d446332444b8301603f0199142619304be",
     "release_branch": "codex/release-3.0.0",
-    "release_commit_sha": "resolved from final main after release-PR merge",
-    "tag_target": "must equal final main and the GitHub Release target"
+    "tag_target": "must equal final main and the non-draft GitHub Release target",
+    "release_commit_binding": "the final release commit is identified externally as the peeled target of annotated tag v3.0.0 after release-PR merge; embedding a commit's own SHA in that commit is impossible"
   },
   "support_promise": "3.0.0 is an immutable, documented support point for the packaged contracts and deterministic repository checks. It is not proof of universal behavioral superiority, cross-provider generality, or current Cursor compatibility.",
   "accepted_risks": [
