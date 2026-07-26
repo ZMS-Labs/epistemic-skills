@@ -267,6 +267,7 @@ def _semantic_plan(
     manifest_path = output_root / "diagnostic-manifest.json"
     inventory_path = output_root / "arm-inventory.json"
     manifest = _read_json(manifest_path, "diagnostic manifest")
+    _validate_semantic_upstream(output_root, manifest, tasks, preflight_receipt)
     schema_path = ROOT / "formal-rigor-semantic-adjudication.schema.json"
     schema_text = schema_path.read_text(encoding="utf-8")
     schema_hash = sha256_bytes(schema_path.read_bytes())
@@ -315,6 +316,80 @@ def _semantic_plan(
     }
 
 
+def _validate_semantic_upstream(
+    output_root: Path, manifest: dict, tasks: list[dict], preflight_receipt: dict,
+) -> None:
+    if manifest.get("schema") != "formal-rigor-posthoc-diagnostic-manifest@1":
+        raise ValueError("diagnostic manifest schema drifted")
+    for field, value in NON_RELEASE_FIELDS.items():
+        if manifest.get(field) != value:
+            raise ValueError(f"diagnostic manifest non-release field {field!r} drifted")
+    source_coordinate = manifest.get("source_coordinate")
+    source_pin = manifest.get("source_tree_sha256")
+    if not isinstance(source_coordinate, str) or not isinstance(source_pin, str):
+        raise ValueError("diagnostic manifest source binding is incomplete")
+    source_root = Path(source_coordinate)
+    if not source_root.is_dir() or tree_sha256(source_root) != source_pin:
+        raise ValueError("diagnostic manifest source binding no longer matches current bytes")
+    if (
+        set(preflight_receipt) != {"codex", "agy"}
+        or preflight_receipt.get("codex") != {"version": "codex-cli 0.144.6"}
+    ):
+        raise ValueError("semantic preflight receipt has the wrong Codex identity")
+    agy_receipt = preflight_receipt.get("agy")
+    if (
+        not isinstance(agy_receipt, dict)
+        or set(agy_receipt) != {"version", "catalog_sha256", "selected_model"}
+        or agy_receipt.get("version") != "1.1.7"
+        or agy_receipt.get("selected_model") != SEMANTIC_MODELS["agy"]
+        or not isinstance(agy_receipt.get("catalog_sha256"), str)
+        or len(agy_receipt["catalog_sha256"]) != 64
+        or any(character not in "0123456789abcdef" for character in agy_receipt["catalog_sha256"])
+    ):
+        raise ValueError("semantic preflight receipt has the wrong AGY identity")
+    output_resolved = output_root.resolve()
+    views: dict[str, str] = {}
+    for task in tasks:
+        source_view, view_sha = task.get("source_view"), task.get("view_sha256")
+        if not isinstance(source_view, str) or not isinstance(view_sha, str):
+            raise ValueError("semantic task source-view binding is incomplete")
+        if source_view in views and views[source_view] != view_sha:
+            raise ValueError("semantic task source-view hashes contradict each other")
+        views[source_view] = view_sha
+    for source_view, view_sha in views.items():
+        view_path = (output_root / source_view).resolve()
+        if not view_path.is_relative_to(output_resolved):
+            raise ValueError("semantic source view escapes the diagnostic output root")
+        if not view_path.is_file() or sha256_bytes(view_path.read_bytes()) != view_sha:
+            raise ValueError("semantic source view no longer matches the frozen task hash")
+
+
+def _validated_semantic_tasks(inventory: dict) -> list[dict]:
+    if inventory.get("schema") != "formal-rigor-posthoc-arm-inventory@1":
+        raise ValueError("view manifest schema drifted")
+    for field, value in NON_RELEASE_FIELDS.items():
+        if inventory.get(field) != value:
+            raise ValueError(f"view manifest non-release field {field!r} drifted")
+    return semantic_tasks(inventory)
+
+
+def _reconstruct_semantic_plan(output_root: Path, plan: dict) -> dict:
+    inventory = _read_json(output_root / "arm-inventory.json", "view manifest")
+    implementation_commit = plan.get("implementation_commit")
+    preflight_receipt = plan.get("cli_preflight")
+    if not isinstance(implementation_commit, str) or not isinstance(preflight_receipt, dict):
+        raise ValueError("semantic plan cannot reconstruct its implementation/preflight binding")
+    expected = _semantic_plan(
+        output_root=output_root,
+        tasks=_validated_semantic_tasks(inventory),
+        implementation_commit=implementation_commit,
+        preflight_receipt=preflight_receipt,
+    )
+    if plan != expected:
+        raise ValueError("semantic plan does not match current frozen upstream artifacts")
+    return expected
+
+
 def _task_call_path(output_root: Path, task: dict) -> Path:
     return (
         output_root / "semantic-diagnostic" / f"run-{task['repetition']}"
@@ -322,19 +397,28 @@ def _task_call_path(output_root: Path, task: dict) -> Path:
     )
 
 
-def _validate_packet_root(packet_root: Path, source_coordinate: object) -> None:
+def _validate_packet_root(
+    packet_root: Path, source_coordinate: object, output_root: Path,
+) -> None:
     if not isinstance(source_coordinate, str) or not source_coordinate:
         raise ValueError("diagnostic manifest source coordinate is missing")
     source_root = Path(source_coordinate).resolve()
     if not source_root.is_dir():
         raise ValueError("diagnostic source coordinate is not an existing directory")
-    packets = Path(packet_root).resolve(strict=False)
-    if (
-        packets == source_root
-        or packets.is_relative_to(source_root)
-        or source_root.is_relative_to(packets)
-    ):
-        raise ValueError("packet root must not equal, contain, or be contained by the source root")
+    roots = {
+        "packet": Path(packet_root).resolve(strict=False),
+        "source": source_root,
+        "output": Path(output_root).resolve(strict=False),
+    }
+    labels = tuple(roots)
+    for index, left_label in enumerate(labels):
+        for right_label in labels[index + 1:]:
+            left, right = roots[left_label], roots[right_label]
+            if left == right or left.is_relative_to(right) or right.is_relative_to(left):
+                raise ValueError(
+                    f"{left_label}, {right_label}, and remaining diagnostic roots "
+                    "must be pairwise disjoint"
+                )
 
 
 def _verify_call_layout(
@@ -371,6 +455,7 @@ def _verify_call_layout(
             for artifact_name, hash_field in (
                 ("stdout.bin", "stdout_sha256"),
                 ("stderr.bin", "stderr_sha256"),
+                ("prompt.bin", "prompt_sha256"),
             ):
                 artifact_path = call_path.parent / artifact_name
                 if not artifact_path.is_file():
@@ -488,6 +573,8 @@ def _execute_semantic_task_in_packet(
     )
     if sha256_bytes(prompt.encode("utf-8")) != task["prompt_sha256"]:
         raise ValueError("semantic prompt does not match frozen task hash")
+    prompt_bytes = prompt.encode("utf-8")
+    (call_dir / "prompt.bin").write_bytes(prompt_bytes)
     pending_response = call_dir / "codex-output.tmp"
     stdin = b""
     if task["judge_harness"] == "codex":
@@ -527,22 +614,28 @@ def _execute_semantic_task_in_packet(
     (call_dir / "stdout.bin").write_bytes(stdout)
     (call_dir / "stderr.bin").write_bytes(stderr)
     response_bytes: bytes | None = None
+    codex_output_bytes: bytes | None = None
     extraction: dict | None = None
     parse_error: str | None = None
     schema_errors: list[str] = []
     adjudication_errors: list[str] = []
+    if task["judge_harness"] == "codex" and pending_response.is_file():
+        codex_output_bytes = pending_response.read_bytes()
     if transport == "completed":
         try:
             if task["judge_harness"] == "agy":
                 response_bytes, extraction = extract_agy_adjudication(stdout, task["fixture"])
-            elif pending_response.is_file():
-                response_bytes = pending_response.read_bytes()
+            elif codex_output_bytes is not None:
+                response_bytes = codex_output_bytes
             else:
                 parse_error = "Codex did not write --output-last-message"
         except ValueError as exc:
             parse_error = str(exc)
             schema_errors = list(getattr(exc, "schema_errors", []))
             adjudication_errors = list(getattr(exc, "adjudication_errors", []))
+    elif codex_output_bytes is not None:
+        response_bytes = codex_output_bytes
+        parse_error = "Codex output-last-message is ineligible because transport did not complete"
     if pending_response.exists():
         pending_response.unlink()
     value: object | None = None
@@ -612,12 +705,14 @@ def run_semantic(
     if harness not in ("codex", "agy"):
         raise ValueError("diagnostic semantic harness must be codex or agy")
     inventory = _read_json(output_root / "arm-inventory.json", "view manifest")
-    tasks = semantic_tasks(inventory)
+    tasks = _validated_semantic_tasks(inventory)
     diagnostic_manifest = _read_json(
         output_root / "diagnostic-manifest.json", "diagnostic manifest",
     )
     packets = packet_root or output_root.parent / f"{output_root.name}-packets" / "semantic-diagnostic"
-    _validate_packet_root(packets, diagnostic_manifest.get("source_coordinate"))
+    _validate_packet_root(
+        packets, diagnostic_manifest.get("source_coordinate"), output_root,
+    )
     expected_plan = _semantic_plan(
         output_root=output_root, tasks=tasks,
         implementation_commit=implementation_commit,
@@ -667,7 +762,10 @@ def _semantic_outcome(verdicts: list[str], priority: str) -> str:
 def summarize_semantic_diagnostic(output_root: Path) -> dict:
     """Aggregate terminal diagnostic seats without inventing arbitration outcomes."""
     output_root = Path(output_root)
-    plan = _read_json(output_root / "semantic-plan.json", "semantic plan")
+    plan = _reconstruct_semantic_plan(
+        output_root,
+        _read_json(output_root / "semantic-plan.json", "semantic plan"),
+    )
     tasks = plan.get("tasks")
     if not isinstance(tasks, list):
         raise ValueError("semantic plan tasks are missing")
@@ -870,6 +968,9 @@ def _canonical_json_bytes(value: object) -> bytes:
 
 
 def _ensure_expected_identity(call: dict, task: dict, campaign: dict) -> None:
+    harness = task.get("harness")
+    if harness not in run_live.HARNESS_PROVIDERS:
+        raise ValueError("campaign task has unknown origin harness")
     expected = {
         "schema": "formal-rigor-live-call@1",
         "kind": "arm",
@@ -878,6 +979,8 @@ def _ensure_expected_identity(call: dict, task: dict, campaign: dict) -> None:
         "arm": task["arm"],
         "repetition": task["repetition"],
         "fixture": task["fixture"],
+        "harness": harness,
+        "provider": run_live.HARNESS_PROVIDERS[harness],
         "phase": "arms",
         "model": task.get("model"),
         "reasoning_effort": task.get("effort"),
@@ -918,6 +1021,8 @@ def inventory_source_calls(source_root: Path, expected_pin: str) -> list[dict]:
     campaign = _read_json(source_root / "campaign-plan.json", "campaign plan")
     if campaign.get("schema") != "formal-rigor-live-campaign-plan@2":
         raise ValueError("diagnostic requires a V3 campaign plan")
+    if campaign.get("provider_plan") != DIAGNOSTIC_PROVIDER_PLAN:
+        raise ValueError("diagnostic requires the exact noncursor-degraded-v3 provider plan")
     tasks = campaign.get("arm_tasks")
     if not isinstance(tasks, list) or not tasks:
         raise ValueError("campaign arm_tasks is missing or empty")
@@ -1091,8 +1196,12 @@ def prepare_structural(source_root: Path, output_root: Path, expected_pin: str, 
     if not source_root.is_dir():
         raise ValueError("source root is missing")
     source_resolved, output_resolved = source_root.resolve(), output_root.resolve()
-    if output_resolved == source_resolved or output_resolved.is_relative_to(source_resolved):
-        raise ValueError("diagnostic output must not be nested inside the source root")
+    if (
+        output_resolved == source_resolved
+        or output_resolved.is_relative_to(source_resolved)
+        or source_resolved.is_relative_to(output_resolved)
+    ):
+        raise ValueError("diagnostic output and source roots must be disjoint")
     if output_root.exists() and any(output_root.iterdir()):
         raise ValueError("diagnostic output root must be new or empty")
     rows = inventory_source_calls(source_root, expected_pin)

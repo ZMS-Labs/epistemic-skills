@@ -28,6 +28,14 @@ preparation checked the source pin, and the source pin was independently
 recomputed after all provider work. The diagnostic tree pin was computed only
 after both harnesses and the summarizer had exited and the root was quiescent.
 
+The sealed execution retained each prompt SHA-256 in `semantic-plan.json` and
+the corresponding call identity, but it retained zero raw prompt files. A
+read-only, no-provider reconstruction regenerated all 130 exact prompts from
+the frozen views, rubric, schema, provider plan, and harness identity; all 130
+matched the retained hashes. The sealed root was not changed or repinned. This
+is an evidence-retention limitation, not a basis to repair the run or award
+release credit.
+
 ## Population and structural results
 
 | Population | Planned | Content-bearing | Normalized | Missing | Scorable | Passing |
@@ -170,6 +178,9 @@ failure is normalized, so normalization does not remove the two P0 failures.
   demonstrate incomplete structural polarity.
 - The local diagnostic root is external to Git; its tree pin identifies the
   retained root but does not turn it into committed release evidence.
+- The sealed root retains prompt hashes rather than raw prompt files. Although
+  all 130 prompts reconstruct to those hashes, the missing raw files remain a
+  disclosed limitation of the already completed run.
 
 These results neither close the formal-rigor behavioral gate nor justify a
 numeric posterior or an all-286 merit rate. V3 remains excluded, and 3.0.0

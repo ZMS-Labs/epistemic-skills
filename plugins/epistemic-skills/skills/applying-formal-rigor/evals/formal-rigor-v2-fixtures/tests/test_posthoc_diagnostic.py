@@ -71,6 +71,7 @@ def write_source(source: Path, raw: bytes, *, mutate_call=None) -> dict:
         "schema": "formal-rigor-live-call@1", "kind": "arm",
         "provider_plan": campaign["provider_plan"], "source_commit": campaign["source_commit"],
         "arm": arm, "repetition": repetition, "fixture": fixture,
+        "harness": "codex", "provider": diagnostic.run_live.HARNESS_PROVIDERS["codex"],
         "phase": "arms", "model": "gpt-5.6-sol", "reasoning_effort": "medium",
         "preflight_sha256": campaign["preflight_sha256"],
         "campaign_plan_sha256": sha256(json.dumps(
@@ -305,7 +306,7 @@ def write_semantic_output_root(
         "schema": "formal-rigor-posthoc-diagnostic-manifest@1",
         **diagnostic.NON_RELEASE_FIELDS,
         "source_coordinate": source_coordinate,
-        "source_tree_sha256": "1" * 64,
+        "source_tree_sha256": diagnostic.tree_sha256(Path(source_coordinate)),
         "source_commit": "2" * 40,
         "planned_arm_calls": 286,
     })
@@ -380,6 +381,27 @@ class MalformedOnceCodexRunner(FakeSemanticRunner):
             response_path.write_bytes(b"{malformed-codex-json")
             self.malformed_written = True
             return SimpleNamespace(returncode=0, stdout=b'{"event":"complete"}\n', stderr=b"")
+        return super().__call__(argv, **kwargs)
+
+
+class NonzeroOnceCodexRunner(FakeSemanticRunner):
+    def __init__(self) -> None:
+        super().__init__()
+        self.nonzero_written = False
+
+    def __call__(self, argv: list[str], **kwargs):
+        if argv[0] == "codex.cmd" and not self.nonzero_written:
+            self.calls.append((argv, kwargs))
+            packet = Path(kwargs["cwd"])
+            require(packet.is_dir(), "nonzero Codex fake did not receive packet cwd")
+            response_path = Path(argv[argv.index("--output-last-message") + 1])
+            response_path.write_bytes(json.dumps(
+                semantic_value_for_packet(packet), separators=(",", ":"),
+            ).encode("utf-8"))
+            self.nonzero_written = True
+            return SimpleNamespace(
+                returncode=9, stdout=b'{"event":"failed"}\n', stderr=b"terminal failure",
+            )
         return super().__call__(argv, **kwargs)
 
 
@@ -778,6 +800,221 @@ def test_malformed_codex_terminal_is_retained_and_summarized() -> None:
         raw_path.write_bytes(original_raw)
 
 
+def test_nonzero_codex_output_and_prompt_bytes_are_hash_bound() -> None:
+    receipt = {
+        "codex": {"version": "codex-cli 0.144.6"},
+        "agy": {
+            "version": "1.1.7", "catalog_sha256": "3" * 64,
+            "selected_model": "gemini-3.1-pro-high",
+        },
+    }
+    with tempfile.TemporaryDirectory() as temporary:
+        output = Path(temporary) / "diagnostic"
+        output.mkdir()
+        write_semantic_output_root(output)
+        runner = NonzeroOnceCodexRunner()
+        common = {
+            "output_root": output,
+            "executables": {"codex": "codex.cmd", "agy": "agy"},
+            "implementation_commit": "4" * 40,
+            "preflight_receipt": receipt,
+            "source_verifier": lambda commit, **kwargs: None,
+        }
+        result = diagnostic.run_semantic(harness="codex", runner=runner, **common)
+        require(result["executed"] == 42, "nonzero Codex epoch did not terminally execute")
+        calls = [
+            (path, json.loads(path.read_text(encoding="utf-8")))
+            for path in (output / "semantic-diagnostic").rglob("call.json")
+        ]
+        nonzero = [(path, call) for path, call in calls if call.get("exit_code") == 9]
+        require(len(nonzero) == 1, "nonzero Codex call was not retained exactly once")
+        call_path, call = nonzero[0]
+        raw_path = call_path.parent / "raw-response.bin"
+        require(raw_path.is_file(), "nonzero Codex output-last-message bytes were discarded")
+        require(call.get("raw_response_sha256") == sha256(raw_path.read_bytes()),
+                "nonzero Codex output-last-message hash was not sealed")
+        require(not (call_path.parent / "response.json").exists(),
+                "nonzero Codex output was promoted to response.json")
+        for sealed_path, sealed_call in calls:
+            prompt_path = sealed_path.parent / "prompt.bin"
+            require(prompt_path.is_file(),
+                    f"semantic call did not retain raw prompt bytes: {sealed_path.parent}")
+            require(sha256(prompt_path.read_bytes()) == sealed_call["prompt_sha256"],
+                    f"semantic prompt bytes do not match the frozen hash: {sealed_path.parent}")
+
+        original_prompt = call_path.parent.joinpath("prompt.bin").read_bytes()
+        call_path.parent.joinpath("prompt.bin").write_bytes(original_prompt + b"tampered")
+        require_raises(
+            ValueError, diagnostic.run_semantic,
+            harness="codex", runner=FakeSemanticRunner(), **common,
+        )
+        require_raises(ValueError, diagnostic.summarize_semantic_diagnostic, output)
+
+
+def test_summary_and_replay_rederive_current_upstream_bindings() -> None:
+    receipt = {
+        "codex": {"version": "codex-cli 0.144.6"},
+        "agy": {
+            "version": "1.1.7", "catalog_sha256": "3" * 64,
+            "selected_model": "gemini-3.1-pro-high",
+        },
+    }
+    with tempfile.TemporaryDirectory() as temporary:
+        output = Path(temporary) / "diagnostic"
+        output.mkdir()
+        write_semantic_output_root(output)
+        common = {
+            "output_root": output,
+            "executables": {"codex": "codex.cmd", "agy": "agy"},
+            "implementation_commit": "4" * 40,
+            "preflight_receipt": receipt,
+            "source_verifier": lambda commit, **kwargs: None,
+        }
+        diagnostic.run_semantic(harness="codex", runner=FakeSemanticRunner(), **common)
+        diagnostic.run_semantic(harness="agy", runner=FakeSemanticRunner(), **common)
+        trusted_tampering = []
+        tamper_cases = {
+            "arm-inventory": output / "arm-inventory.json",
+            "diagnostic-manifest": output / "diagnostic-manifest.json",
+            "source-view": next((output / "views").rglob("*.response.json")),
+        }
+        for label, path in tamper_cases.items():
+            original = path.read_bytes()
+            if path.suffix == ".json" and path.name in {
+                "arm-inventory.json", "diagnostic-manifest.json",
+            }:
+                changed = json.loads(original)
+                changed["tampered_after_seal"] = True
+                diagnostic._write_json(path, changed)
+            else:
+                path.write_bytes(original + b"\n")
+            try:
+                diagnostic.summarize_semantic_diagnostic(output)
+            except ValueError:
+                pass
+            else:
+                trusted_tampering.append(f"summary:{label}")
+            try:
+                diagnostic.run_semantic(
+                    harness="codex", runner=FakeSemanticRunner(), **common,
+                )
+            except ValueError:
+                pass
+            else:
+                trusted_tampering.append(f"replay:{label}")
+            path.write_bytes(original)
+        require(not trusted_tampering,
+                f"summary/replay trusted tampered upstream bindings: {trusted_tampering}")
+
+
+def test_inventory_rejects_provider_plan_and_origin_identity_contradictions() -> None:
+    with tempfile.TemporaryDirectory() as temporary:
+        root = Path(temporary)
+        accepted = []
+        for label in ("provider-plan", "task-call-harness", "harness-provider"):
+            source = root / f"source-{label}"
+            source.mkdir()
+            write_source(source, transport_frame("tm-01-false-mvd"))
+            campaign_path = source / "campaign-plan.json"
+            campaign = json.loads(campaign_path.read_text(encoding="utf-8"))
+            call_path = next((source / "arms").rglob("call.json"))
+            call = json.loads(call_path.read_text(encoding="utf-8"))
+            if label == "provider-plan":
+                campaign["provider_plan"] = "noncursor-degraded-v2"
+                call["provider_plan"] = campaign["provider_plan"]
+            elif label == "task-call-harness":
+                call["harness"] = "agy"
+                call["provider"] = diagnostic.run_live.HARNESS_PROVIDERS["agy"]
+            else:
+                call["provider"] = diagnostic.run_live.HARNESS_PROVIDERS["agy"]
+            campaign_path.write_text(json.dumps(campaign), encoding="utf-8")
+            call["campaign_plan_sha256"] = sha256(json.dumps(
+                campaign, ensure_ascii=False, sort_keys=True, separators=(",", ":"),
+            ).encode("utf-8"))
+            call_path.write_text(json.dumps(call), encoding="utf-8")
+            try:
+                diagnostic.prepare_structural(
+                    source, root / f"output-{label}",
+                    diagnostic.tree_sha256(source), "a" * 40,
+                )
+            except ValueError:
+                pass
+            else:
+                accepted.append(label)
+        require(not accepted,
+                f"inventory accepted contradictory provider identity: {accepted}")
+
+
+def test_packet_source_and_output_roots_are_pairwise_disjoint_before_reservation() -> None:
+    receipt = {
+        "codex": {"version": "codex-cli 0.144.6"},
+        "agy": {
+            "version": "1.1.7", "catalog_sha256": "3" * 64,
+            "selected_model": "gemini-3.1-pro-high",
+        },
+    }
+    with tempfile.TemporaryDirectory() as temporary:
+        root = Path(temporary)
+        accepted = []
+        reserved = []
+        cases = []
+        for label in ("packet-output", "packet-output-child", "packet-output-ancestor"):
+            output = root / label / "diagnostic" if label.endswith("ancestor") else root / label
+            output.mkdir(parents=True)
+            if label.endswith("ancestor"):
+                external_source = root / "external-frozen-source"
+                external_source.mkdir()
+                write_semantic_output_root(
+                    output, source_coordinate=str(external_source.resolve()),
+                )
+            else:
+                write_semantic_output_root(output)
+            packet_root = (
+                output if label == "packet-output"
+                else output / "packets" if label == "packet-output-child"
+                else output.parent
+            )
+            cases.append((label, output, packet_root))
+
+        output_child_source = root / "source-output-child"
+        output_child_source.mkdir()
+        source_child = output_child_source / "frozen-source"
+        source_child.mkdir()
+        write_semantic_output_root(
+            output_child_source, source_coordinate=str(source_child.resolve()),
+        )
+        cases.append(("source-output-child", output_child_source, root / "packets-child"))
+
+        source_ancestor = root / "source-output-ancestor"
+        source_ancestor.mkdir()
+        output_in_source = source_ancestor / "diagnostic"
+        output_in_source.mkdir()
+        write_semantic_output_root(
+            output_in_source, source_coordinate=str(source_ancestor.resolve()),
+        )
+        cases.append(("source-output-ancestor", output_in_source, root / "packets-ancestor"))
+
+        for label, output, packet_root in cases:
+            fake = FakeSemanticRunner()
+            try:
+                diagnostic.run_semantic(
+                    output, harness="codex",
+                    executables={"codex": "codex.cmd", "agy": "agy"},
+                    implementation_commit="4" * 40,
+                    preflight_receipt=receipt, runner=fake,
+                    source_verifier=lambda commit, **kwargs: None,
+                    packet_root=packet_root,
+                )
+            except ValueError:
+                pass
+            else:
+                accepted.append(label)
+            if list((output / "semantic-diagnostic").rglob("attempt.json")):
+                reserved.append(label)
+        require(not accepted and not reserved,
+                f"overlapping roots accepted={accepted}; reserved={reserved}")
+
+
 def main() -> int:
     test_semantic_seat_map_and_transport_contracts()
     test_agy_aggregate_extraction_is_unambiguous_and_fail_closed()
@@ -789,6 +1026,10 @@ def main() -> int:
     test_packet_root_rejects_every_source_overlap_before_writes()
     test_semantic_packet_cleanup_survives_provider_exception()
     test_malformed_codex_terminal_is_retained_and_summarized()
+    test_nonzero_codex_output_and_prompt_bytes_are_hash_bound()
+    test_summary_and_replay_rederive_current_upstream_bindings()
+    test_inventory_rejects_provider_plan_and_origin_identity_contradictions()
+    test_packet_source_and_output_roots_are_pairwise_disjoint_before_reservation()
     transport_schema = json.loads((ROOT / "formal-rigor-fixture-transport.schema.json").read_text(encoding="utf-8"))
     canonical_frame = transport_frame("tm-01-false-mvd")
     semantically_equal_different_bytes = json.dumps(

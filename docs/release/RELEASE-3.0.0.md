@@ -205,6 +205,10 @@ excluded V3 root without modifying or promoting it. The source pin remained
 `87e7a615927b4e4148ae5d79677d78166c2aeb8ded294d79ff4dfaf204af29b1`;
 the final diagnostic-root pin is
 `35283d05bc288271a7c963fecada9854f03336ff2985eed47cfb00f4c717f252`.
+The sealed root retained semantic prompt hashes, not raw prompt files. A
+no-provider reconstruction reproduced all 130 prompts and matched every
+retained hash. The root is neither modified nor repinned, and this disclosed
+retention limitation grants no release credit.
 
 The diagnostic structurally scored 215/286 planned responses, including 11
 byte-identical repeated-frame views, and found 100/215 structural passes.

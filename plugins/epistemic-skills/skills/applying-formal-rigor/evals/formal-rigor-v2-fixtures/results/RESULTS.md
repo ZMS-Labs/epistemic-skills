@@ -221,6 +221,11 @@ recomputed after the run as
 `87e7a615927b4e4148ae5d79677d78166c2aeb8ded294d79ff4dfaf204af29b1`;
 the final diagnostic-root pin is
 `35283d05bc288271a7c963fecada9854f03336ff2985eed47cfb00f4c717f252`.
+The already sealed root retained each semantic prompt SHA-256 in its frozen
+plan/call identity but retained no raw prompt files. A no-provider
+reconstruction reproduced all 130 prompts and matched all 130 retained hashes.
+This disclosed evidence gap is not repaired retroactively: the root remains
+sealed at the same pin, receives no release credit, and is not rerun.
 
 Of 286 planned arms, 204 were originally qualifying, 11 had recoverable
 byte-identical repeated frames, 71 had no model content, and 215 were
