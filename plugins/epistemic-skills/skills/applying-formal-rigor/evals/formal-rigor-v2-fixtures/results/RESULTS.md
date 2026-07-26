@@ -211,3 +211,56 @@ one-final-object criteria. Only a passing pilot may justify a fresh V4/full
 root; it cannot repair V3. The Gemini Fleet bridge ignores the
 selected model/effort and likely shares quota, making it unsuitable. Ollama
 `qwen2.5` 7B is exploratory only, not substitute release evidence.
+
+## 2026-07-26 V3 post-hoc diagnostic (non-release)
+
+The preregistered diagnostic read the excluded V3 root without changing it and
+created a separate evidence root at
+`C:\tmp\formal-rigor-v3-posthoc-diagnostic-a7c7293`. The frozen V3 source pin
+recomputed after the run as
+`87e7a615927b4e4148ae5d79677d78166c2aeb8ded294d79ff4dfaf204af29b1`;
+the final diagnostic-root pin is
+`35283d05bc288271a7c963fecada9854f03336ff2985eed47cfb00f4c717f252`.
+
+Of 286 planned arms, 204 were originally qualifying, 11 had recoverable
+byte-identical repeated frames, 71 had no model content, and 215 were
+structurally scorable. Structural passing was 100/215 conditional on content
+(46.51%) and 100/286 intent-to-test (34.97%). The candidate passed 49/65
+available responses (75.38%) or 49/66 planned responses (74.24%). Excluding its
+three normalized views produced 47/62 (75.81%), so normalization did not drive
+the aggregate.
+
+The structural controls do not establish broad polarity: candidate 49/65 was
+above neutral 5/43, current-v1 8/41, and always-cautious parody 1/22, but below
+closed-taxonomy 18/22 and formal-only 19/22. The three AGY parody arms were
+entirely absent and are not imputed.
+
+All 130 preregistered semantic seats have exactly one attempt and one terminal
+seal. Codex produced 42/42 valid adjudications for the 21 Google-origin
+candidates: 38 `VALID` and four `INVALID`, yielding 19 candidate `PASS` and two
+genuine semantic `FAIL` results (`tm-02` and `tm-03`, repetition 2, both
+`INVALID/INVALID`). AGY produced 88/88 terminal quota/transport failures with
+zero tokens and no valid adjudication for the 44 OpenAI-origin candidates.
+Those 44 are semantically inconclusive: 22 P1 cases are
+`ARBITRATION_REQUIRED`; 22 P0 cases are mechanically `FAIL` under the frozen
+fail-closed rule. The latter are availability outcomes, not semantic
+invalidity. Thus the aggregate `19 PASS / 24 FAIL / 22 ARBITRATION_REQUIRED`
+decomposes into two merit failures and 22 availability-driven P0 failures.
+The report's `verdicts` map counts only the 42 valid parsed adjudications, not
+the 88 sentinel `INCONCLUSIVE` seats; its 24 `p0_findings` is likewise not a
+semantic-invalid count. Excluding the three normalized candidates changes the
+genuinely judged subset from 19/21 to 16/18 passing, and neither genuine failure
+is normalized.
+
+This is post-hoc, non-random, diagnostic-only confidence evidence. The two
+seats per candidate are isolated but correlated same-provider observations;
+no semantic control/parody seats ran; the three AGY parody arms are missing;
+and provider-linked structural divergence is substantial. It awards no
+release credit, does not repair or promote V3, and leaves 3.0.0 on **HOLD**.
+Provider, repetition, and judge availability are perfectly confounded:
+repetitions 1 and 3 are OpenAI-origin and AGY-judged, while repetition 2 is
+Google-origin and Codex-judged. No provider or repetition effect is identified.
+Independent read-only review found no Critical issue and conditionally approved
+the corrected interpretation with these caveats retained.
+The exact tables, provider breakdowns, pins, and limitations are recorded in
+`docs/release/evidence/2026-07-26-formal-rigor-v3-posthoc-diagnostic.md`.

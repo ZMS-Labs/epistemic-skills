@@ -196,3 +196,36 @@ repair V3. Fleet bridge audit does not
 provide a substitute: the Gemini bridge ignores selected model/effort and
 likely shares quota, while Ollama `qwen2.5` 7B is exploratory only, not release
 evidence.
+
+## V3 post-hoc diagnostic remains non-release evidence
+
+The separately preregistered diagnostic at implementation commit
+`a7c72933d2dc60979a1607a47cfe7e5747c84cbe` examined retained content from the
+excluded V3 root without modifying or promoting it. The source pin remained
+`87e7a615927b4e4148ae5d79677d78166c2aeb8ded294d79ff4dfaf204af29b1`;
+the final diagnostic-root pin is
+`35283d05bc288271a7c963fecada9854f03336ff2985eed47cfb00f4c717f252`.
+
+The diagnostic structurally scored 215/286 planned responses, including 11
+byte-identical repeated-frame views, and found 100/215 structural passes.
+Candidate structural passing was 49/65 available responses. Of 130 semantic
+seats, 42 Codex seats were valid and 88 AGY seats terminated on quota before
+model output. The 21 Google-origin candidates judged by Codex yielded 19
+semantic passes and two genuine P0 failures. The 44 OpenAI-origin candidates
+had no valid AGY judgment: 22 P1 cases remain arbitration-required and 22 P0
+cases are availability-driven fail-closed outcomes, not semantic invalidity.
+The aggregate report's verdict map counts only the 42 valid parsed
+adjudications, and its 24 P0 findings combine two merit failures with 22 quota
+outcomes; neither field establishes 24 semantic invalidities.
+
+Observed structural controls do not establish broad polarity, three AGY parody
+arms are absent, semantic controls were not judged, and the two seats per
+candidate are correlated same-provider observations. These results are
+diagnostic-only, award `release_credit: none`, do not qualify or repair V3, and
+do not satisfy any 3.0.0 gate. Release status remains **HOLD**. The full
+accounting also records the perfect confounding: repetitions 1 and 3 are
+OpenAI-origin and AGY-judged, while repetition 2 is Google-origin and
+Codex-judged. Independent review found no Critical issue and conditionally
+approved the corrected,
+non-promotional interpretation with these limitations retained. It is in
+`docs/release/evidence/2026-07-26-formal-rigor-v3-posthoc-diagnostic.md`.
