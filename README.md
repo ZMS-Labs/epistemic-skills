@@ -135,8 +135,15 @@ record-free, while standard and high-assurance work emit
 
 ### Claude Code
 
+Prepare a dedicated checkout of the immutable tag, then add that local
+marketplace:
+
+```bash
+git clone --depth 1 --branch v3.0.0 https://github.com/ZMS-Labs/epistemic-skills.git /path/to/epistemic-skills-v3.0.0
 ```
-/plugin marketplace add ZMS-Labs/epistemic-skills@v3.0.0
+
+```text
+/plugin marketplace add /absolute/path/to/epistemic-skills-v3.0.0
 /plugin install epistemic-skills@epistemic-skills
 ```
 
@@ -169,7 +176,10 @@ fallback for a task started before registration.
 branch checkout only for development.
 
 ```powershell
-# Windows — from a checkout of tag v3.0.0
+# Windows — create and verify a dedicated stable checkout
+git clone --depth 1 --branch v3.0.0 https://github.com/ZMS-Labs/epistemic-skills.git .\epistemic-skills-v3.0.0
+Set-Location .\epistemic-skills-v3.0.0
+if ((git describe --tags --exact-match) -ne 'v3.0.0') { throw 'expected v3.0.0' }
 New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.cursor\plugins\local" | Out-Null
 $src  = (Resolve-Path .\plugins\epistemic-skills).Path
 $dest = Join-Path $env:USERPROFILE '.cursor\plugins\local\epistemic-skills'
@@ -178,7 +188,10 @@ cmd /c mklink /J "$dest" "$src"
 ```
 
 ```bash
-# macOS / Linux
+# macOS / Linux — create and verify a dedicated stable checkout
+git clone --depth 1 --branch v3.0.0 https://github.com/ZMS-Labs/epistemic-skills.git ./epistemic-skills-v3.0.0
+cd ./epistemic-skills-v3.0.0
+test "$(git describe --tags --exact-match)" = v3.0.0
 mkdir -p ~/.cursor/plugins/local
 ln -sfn "$(pwd)/plugins/epistemic-skills" ~/.cursor/plugins/local/epistemic-skills
 ```
@@ -202,10 +215,9 @@ Restart the Gemini session after install/link. Entrypoints: `gemini-extension.js
 Native plugin marker is root [`plugin.json`](plugin.json) (Antigravity schema: `name` + `description`). Same `skills/` / `agents/` tree:
 
 ```bash
-agy plugin install https://github.com/ZMS-Labs/epistemic-skills/tree/v3.0.0
-# or:
-agy plugin install /path/to/epistemic-skills
-agy plugin validate /path/to/epistemic-skills
+git clone --depth 1 --branch v3.0.0 https://github.com/ZMS-Labs/epistemic-skills.git /path/to/epistemic-skills-v3.0.0
+agy plugin install /path/to/epistemic-skills-v3.0.0
+agy plugin validate /path/to/epistemic-skills-v3.0.0
 ```
 
 Prefer **one** of: native `agy plugin install`, Gemini extension link, or `agy plugin import gemini` — not several copies.
