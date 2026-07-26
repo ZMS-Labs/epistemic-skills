@@ -1,0 +1,96 @@
+{
+  "schema": "release-risk-acceptance@1",
+  "release": "3.0.0",
+  "accepted_at": "2026-07-26",
+  "authority": {
+    "source": "operator direction in the release task",
+    "decision": "publish version 3.0.0 as the first stable support snapshot despite the documented behavioral evidence gaps",
+    "scope": "behavioral and cross-provider confidence only",
+    "wildcard_waiver": false
+  },
+  "identity": {
+    "feature_head_sha": "9dc8afb2cdf00b460a243f14b7a85840b03f4d80",
+    "feature_merge_sha": "320d73d446332444b8301603f0199142619304be",
+    "release_branch_base_sha": "320d73d446332444b8301603f0199142619304be",
+    "release_branch": "codex/release-3.0.0",
+    "release_commit_sha": "resolved from final main after release-PR merge",
+    "tag_target": "must equal final main and the GitHub Release target"
+  },
+  "support_promise": "3.0.0 is an immutable, documented support point for the packaged contracts and deterministic repository checks. It is not proof of universal behavioral superiority, cross-provider generality, or current Cursor compatibility.",
+  "accepted_risks": [
+    {
+      "id": "FR3-R1",
+      "description": "The post-hoc Codex semantic review found two genuine P0 failures, tm-02 and tm-03.",
+      "evidence": "docs/release/evidence/2026-07-26-formal-rigor-v3-posthoc-diagnostic.md",
+      "owner": "ZMS-Labs epistemic-skills maintainers",
+      "scope": "formal-rigor behavioral confidence",
+      "revisit_trigger": "before the next stable release, or on a report matching either failed scenario",
+      "exit_criterion": "a fresh preregistered campaign passes both scenarios under independent valid adjudication"
+    },
+    {
+      "id": "FR3-R2",
+      "description": "Forty-four OpenAI-origin candidates received no valid semantic judgment because all 88 AGY adjudication attempts terminated as zero-token quota failures.",
+      "evidence": "docs/release/evidence/2026-07-26-formal-rigor-v3-posthoc-diagnostic.md",
+      "owner": "ZMS-Labs epistemic-skills maintainers",
+      "scope": "cross-provider semantic coverage",
+      "revisit_trigger": "when independent non-Codex adjudication capacity is available, or before the next stable release",
+      "exit_criterion": "complete independent semantic judgments exist for every planned provider arm"
+    },
+    {
+      "id": "FR3-R3",
+      "description": "Provider, repetition, and judge assignment are confounded; same-provider paired seats are correlated.",
+      "evidence": "docs/release/evidence/2026-07-26-formal-rigor-v3-posthoc-diagnostic.md",
+      "owner": "ZMS-Labs epistemic-skills maintainers",
+      "scope": "causal interpretation of comparative results",
+      "revisit_trigger": "when designing the next behavioral campaign",
+      "exit_criterion": "a preregistered balanced design separates provider, repetition, and judge family"
+    },
+    {
+      "id": "FR3-R4",
+      "description": "The earlier Cursor epoch is BLOCKED_EXTERNAL because Fleet stream-json produced invalid terminal JSON and exposed no constrained-response schema; no Cursor result is promoted or substituted.",
+      "evidence": "docs/release/RELEASE-3.0.0.md",
+      "owner": "ZMS-Labs epistemic-skills maintainers",
+      "scope": "Cursor runtime compatibility and behavioral evidence",
+      "revisit_trigger": "when Cursor exposes a verifiable structured-output path or a targeted Cursor compatibility test is commissioned",
+      "exit_criterion": "a retained, schema-valid Cursor campaign completes without transport normalization"
+    },
+    {
+      "id": "FR3-R5",
+      "description": "Broad structural polarity is not established: closed-taxonomy and formal-only parody arms outperformed the candidate, and three AGY parody arms are absent.",
+      "evidence": "docs/release/evidence/2026-07-26-formal-rigor-v3-posthoc-diagnostic.md",
+      "owner": "ZMS-Labs epistemic-skills maintainers",
+      "scope": "structural scorer discrimination and superiority claims",
+      "revisit_trigger": "before changing scorer weights or claiming behavioral superiority",
+      "exit_criterion": "a complete balanced polarity battery rejects every over- and under-escalation parody while the candidate passes"
+    },
+    {
+      "id": "FR3-R6",
+      "description": "The V3 post-hoc diagnostic remains release_credit:none and cannot be cited as satisfying the historical release gate.",
+      "evidence": "docs/release/evidence/2026-07-26-formal-rigor-v3-posthoc-diagnostic.md",
+      "owner": "ZMS-Labs epistemic-skills maintainers",
+      "scope": "release evidence interpretation",
+      "revisit_trigger": "only if a fresh qualifying campaign supersedes it",
+      "exit_criterion": "a new campaign meets the then-current preregistered release contract; the diagnostic itself remains no-credit"
+    },
+    {
+      "id": "G3-R1",
+      "description": "The Gauntlet arbitrator battery's historical 10/10 result predates the amended AC-07 contract; the amended battery is NOT_RUN and no current certification is claimed.",
+      "evidence": "plugins/epistemic-skills/skills/gauntlet/SKILL.md",
+      "owner": "ZMS-Labs epistemic-skills maintainers",
+      "scope": "current arbitrator certification claims",
+      "revisit_trigger": "before claiming the current arbitrator is certified",
+      "exit_criterion": "the amended certification battery runs and its committed result meets the declared threshold"
+    }
+  ],
+  "non_waivable_gates": [
+    "version parity across README, nine package manifests, immutable install refs, and EXPECTED_VERSION",
+    "complete deterministic repository suite",
+    "DCO validation for every release-PR commit",
+    "CodeQL success on the exact release-PR head",
+    "full-history secret scan plus a positive-control proof that the scanner can fail",
+    "public-content and provenance review",
+    "independent publication review and final Gauntlet",
+    "annotated v3.0.0 tag targeting final main",
+    "stable GitHub Release whose target and body agree with the tag and committed release notes"
+  ]
+}
