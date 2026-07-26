@@ -10,7 +10,7 @@
 
 Epistemic-discipline skills for agentic coding — how an agent **knows** things before, during, and after work.
 
-**Version 2.9.1.** **License: [GPL-3.0-or-later](LICENSE).**
+**Version 3.0.0.** **License: [GPL-3.0-or-later](LICENSE).**
 
 **Harness-agnostic.** The skills are plain [Agent Skills](https://agentskills.io/specification) (`SKILL.md` + supporting files) describing *methods*, not any one tool's mechanics. They run in any harness that can load a skill or a context file — Claude Code, Codex, Cursor, Gemini CLI, Antigravity, Kimi Code, or your own agent loop. Where a step needs a runtime primitive (concurrent sub-agents, a structured-output schema, an MCP tool), the skill states the **contract** and points at a labeled *reference implementation* for one harness; other harnesses meet the same contract with their own primitives. See [Using these in any harness](#using-these-in-any-harness).
 
@@ -122,11 +122,11 @@ One tree of method files; harness-specific manifests only. Do not fork the skill
 
 Install with **exactly one** mechanism per harness. A second copy of the same skills (for example `npx skills add` on top of a plugin install) produces duplicate triggers.
 
-### Planned 3.0.0 migration (not yet published)
+### 3.0.0 migration
 
-When 3.0.0 is published, replace the existing plugin or skill copy rather than
-layering a second installation mechanism over it, then reload the harness or
-start a fresh task. Codex users must rerun the Gauntlet role renderer from the
+For 3.0.0, replace the existing plugin or skill copy rather than layering a
+second installation mechanism over it, then reload the harness or start a fresh
+task. Codex users must rerun the Gauntlet role renderer from the
 3.0.0 cache path. Integrations must also accept silent routine/absent-trigger
 paths and the tiered applying-formal-rigor contract: focused work is inline and
 record-free, while standard and high-assurance work emit
@@ -136,17 +136,17 @@ record-free, while standard and high-assurance work emit
 ### Claude Code
 
 ```
-/plugin marketplace add ZMS-Labs/epistemic-skills
+/plugin marketplace add ZMS-Labs/epistemic-skills@v3.0.0
 /plugin install epistemic-skills@epistemic-skills
 ```
 
 ### Codex
 
 ```powershell
-codex plugin marketplace add ZMS-Labs/epistemic-skills --ref main
+codex plugin marketplace add ZMS-Labs/epistemic-skills --ref v3.0.0
 codex plugin add epistemic-skills@epistemic-skills
 # Register the five gauntlet roles in Codex's user-agent registry:
-python "$HOME/.codex/plugins/cache/epistemic-skills/epistemic-skills/2.9.1/skills/gauntlet/scripts/render_codex_agents.py" --out "$HOME/.codex/agents"
+python "$HOME/.codex/plugins/cache/epistemic-skills/epistemic-skills/3.0.0/skills/gauntlet/scripts/render_codex_agents.py" --out "$HOME/.codex/agents"
 ```
 
 Start a new Codex task after rendering the roles. Codex plugin manifests do not
@@ -157,7 +157,7 @@ fallback for a task started before registration.
 
 ### Cursor
 
-**Status:** packaging is ready (`.cursor-plugin/` manifests, version 2.9.1). The plugin is **not yet listed** on the public [Cursor Marketplace](https://cursor.com/marketplace); `/add-plugin epistemic-skills` works only after Cursor lists it or you import the repo as a [team marketplace](https://cursor.com/docs/plugins). Publisher application: [cursor.com/marketplace/publish](https://cursor.com/marketplace/publish).
+**Status:** packaging is ready (`.cursor-plugin/` manifests, version 3.0.0). The plugin is **not yet listed** on the public [Cursor Marketplace](https://cursor.com/marketplace); `/add-plugin epistemic-skills` works only after Cursor lists it or you import the repo as a [team marketplace](https://cursor.com/docs/plugins). Publisher application: [cursor.com/marketplace/publish](https://cursor.com/marketplace/publish).
 
 | Path | When to use |
 |---|---|
@@ -165,10 +165,11 @@ fallback for a task started before registration.
 | Team marketplace import of this GitHub repo | Cursor Teams/Enterprise private distribution |
 | Public marketplace `/add-plugin` | After Cursor accepts the publisher listing |
 
-**Local install:**
+**Local install:** Use a checkout of tag `v3.0.0` for a stable install; use a
+branch checkout only for development.
 
 ```powershell
-# Windows — from a clone of this repo
+# Windows — from a checkout of tag v3.0.0
 New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.cursor\plugins\local" | Out-Null
 $src  = (Resolve-Path .\plugins\epistemic-skills).Path
 $dest = Join-Path $env:USERPROFILE '.cursor\plugins\local\epistemic-skills'
@@ -189,7 +190,7 @@ Do **not** also install these skills into `~/.cursor/skills/` while the plugin i
 ### Gemini CLI
 
 ```bash
-gemini extensions install https://github.com/ZMS-Labs/epistemic-skills --consent
+gemini extensions install https://github.com/ZMS-Labs/epistemic-skills --ref v3.0.0 --consent
 # local dev:
 gemini extensions link /path/to/epistemic-skills
 ```
@@ -201,7 +202,7 @@ Restart the Gemini session after install/link. Entrypoints: `gemini-extension.js
 Native plugin marker is root [`plugin.json`](plugin.json) (Antigravity schema: `name` + `description`). Same `skills/` / `agents/` tree:
 
 ```bash
-agy plugin install https://github.com/ZMS-Labs/epistemic-skills
+agy plugin install https://github.com/ZMS-Labs/epistemic-skills/tree/v3.0.0
 # or:
 agy plugin install /path/to/epistemic-skills
 agy plugin validate /path/to/epistemic-skills
@@ -212,7 +213,7 @@ Prefer **one** of: native `agy plugin install`, Gemini extension link, or `agy p
 ### Kimi Code
 
 ```text
-/plugins install https://github.com/ZMS-Labs/epistemic-skills
+/plugins install https://github.com/ZMS-Labs/epistemic-skills/tree/v3.0.0
 # local dev, from a clone:
 /plugins install /path/to/epistemic-skills
 ```
@@ -230,7 +231,7 @@ Get-ChildItem .\plugins\epistemic-skills\skills -Directory | ForEach-Object {
 The skills follow the [Agent Skills spec](https://agentskills.io/specification). Point your agent at `plugins/epistemic-skills/skills/` (or the root `skills/` symlink) or a single `SKILL.md`:
 
 ```bash
-npx skills add https://github.com/ZMS-Labs/epistemic-skills/tree/main/plugins/epistemic-skills/skills
+npx skills add https://github.com/ZMS-Labs/epistemic-skills/tree/v3.0.0/plugins/epistemic-skills/skills
 ```
 
 Use this **only** when the harness has no native plugin/extension install.
@@ -262,7 +263,7 @@ Gauntlet scripts (`skills/gauntlet/scripts/*.py`) are stdlib-only Python.
 
 Full map: [`skills/gauntlet/reference/roadmap.md`](plugins/epistemic-skills/skills/gauntlet/reference/roadmap.md).
 
-**Shipped and validated:** staple, falsifiability contract, mechanical evidence checks, deterministic selector, and — as of 2026-07-17 — the **certified-arbitrator battery** (arbitrator blind against 10 planted defect classes; **10/10 catch, certified at standard rigor**). Battery, scorer, and results: [`evals/arbitrator-certification/`](plugins/epistemic-skills/skills/gauntlet/evals/arbitrator-certification/).
+**Shipped and validated:** staple, falsifiability contract, mechanical evidence checks, and deterministic selector. The historical pre-AC-07 arbitrator battery caught 10/10 planted defect classes, but the amended battery is `NOT_RUN`; 3.0.0 therefore makes no current arbitrator-certification claim. Battery, scorer, and history: [`evals/arbitrator-certification/`](plugins/epistemic-skills/skills/gauntlet/evals/arbitrator-certification/).
 
 **Still partial:** behavioral regression battery has only a smoke-subset run (non-inferiority, not superiority); the full 24×4 sweep and later measurement bundles remain designs — stated as such, never claimed done. (Smoke-run notes are not published as a standalone file in this repo.)
 
