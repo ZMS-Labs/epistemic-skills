@@ -4,9 +4,9 @@ A release is an immutable support point: one semantic version maps to one Git
 commit, one annotated Git tag, and one non-draft GitHub Release. `main` remains
 the rolling channel; a version tag is the reproducible channel.
 
-The repository has not yet published its first formal release. The intended
-first release is **3.0.0**. See `docs/release/RELEASE-3.0.0.md`; it is a held
-draft, not evidence that 3.0.0 exists.
+The repository's first formal release is **3.0.0**. Its committed release notes
+are `docs/release/RELEASE-3.0.0.md`; the tag and GitHub Release are the public
+proof that the version exists.
 
 ## When to release
 
@@ -28,18 +28,18 @@ Before creating the first tag:
 
 1. `main` is clean, synchronized with `origin/main`, and contains the intended
    release changes.
-2. Formal-rigor v2 has a genuine neutral/current-v1 RED result captured before
-   its production edit, then a clean pushed source runs the explicit
-   `noncursor-degraded-v1` plan as 418 complete terminal calls: candidate 22/22
-   in all three repetitions, preregistered baseline/parody polarity, two
-   `VALID` isolated semantic seats per candidate response under the unchanged
-   P0/disagreement rules, and a committed content pin. A blocked scaffold is
-   not a production implementation.
-3. The five blinded proportionality arms are run through the pinned isolated
-   harness: `main` once, PR #46 three times, the final candidate three times,
-   and each parody once. Terminal failures and dissent are retained; a
-   corrected epoch may supersede but never overwrite an invalid diagnostic
-   epoch, and only named content-pinned roots count as release evidence.
+2. For 3.0.0 only, the operator's scoped behavioral-risk decision is recorded
+   in `docs/release/RELEASE-3.0.0-RISK-ACCEPTANCE.json`. Every accepted gap has
+   an owner, scope, revisit trigger, and exit criterion. The record contains no
+   wildcard waiver and explicitly preserves the deterministic, DCO, CodeQL,
+   security, provenance, review, and publication-identity gates. The V3
+   post-hoc diagnostic remains `release_credit: none`; acceptance is not a
+   retroactive pass.
+3. The blinded proportionality campaign and both over- and under-escalation
+   parody controls are retained at immutable coordinates. Terminal failures and
+   dissent remain visible; a corrected epoch may supersede but never overwrite
+   an invalid diagnostic epoch, and only named content-pinned roots count as
+   evidence.
 4. Every version-bearing live manifest, README version statement, install
    example, and package-integration expected version agrees on 3.0.0. This
    alignment happens in the release PR, not during held preparation.
@@ -56,7 +56,7 @@ Before creating the first tag:
 
 ## Procedure
 
-1. Prepare `agent/release-3.0.0` from the final intended `main`.
+1. Prepare `codex/release-3.0.0` from the final intended `main`.
 2. Align the live version surfaces and finalize
    `docs/release/RELEASE-3.0.0.md`. Historical evidence retains the versions it
    actually evaluated. The final notes include concrete migration instructions
