@@ -491,11 +491,15 @@ def main() -> int:
             semantic_marker_boundary in semantic_instruction,
             "semantic prompt does not suppress intermediate output and require exactly one marker")
 
-    output_root_probe = Path("C:/tmp/campaigns/formal-rigor-run")
+    output_root_probe = Path.cwd() / "campaigns" / "formal-rigor-run"
+    expected_arm_packet_root = (
+        output_root_probe.parent / f"{output_root_probe.name}-packets" / "arms"
+    )
+    expected_semantic_packet_root = expected_arm_packet_root.parent / "semantic"
     require(runner.default_packet_root(output_root_probe, "arms") ==
-            Path("C:/tmp/campaigns/formal-rigor-run-packets/arms") and
+            expected_arm_packet_root and
             runner.default_packet_root(output_root_probe, "semantic") ==
-            Path("C:/tmp/campaigns/formal-rigor-run-packets/semantic"),
+            expected_semantic_packet_root,
             "default packet roots must be output-adjacent and phase-specific")
     for packet_root, packet_cwd in (
         (Path("C:/Users/example/formal-rigor-packets"), Path("C:/tmp")),
@@ -509,11 +513,12 @@ def main() -> int:
         require(rejected_sensitive_packet_root,
                 f"runner accepted a profile-bound packet-root alias: {packet_root}")
     neutral_packet_root = runner.canonical_packet_root(
-        runner.default_packet_root(output_root_probe, "arms"), cwd=Path("C:/tmp"),
+        runner.default_packet_root(output_root_probe, "arms"), cwd=output_root_probe.parent,
     )
-    require(neutral_packet_root == Path("C:/tmp/campaigns/formal-rigor-run-packets/arms").resolve(),
+    require(neutral_packet_root == expected_arm_packet_root.resolve(),
             "neutral output-adjacent packet root was not accepted and canonicalized")
-    with tempfile.TemporaryDirectory(dir="C:\\tmp") as guard_tmp:
+    neutral_tmp_root = Path("C:/tmp") if os.name == "nt" else Path(tempfile.gettempdir())
+    with tempfile.TemporaryDirectory(dir=neutral_tmp_root) as guard_tmp:
         guard_root = Path(guard_tmp)
         original_run = runner.subprocess.run
         runner.subprocess.run = lambda *args, **kwargs: SimpleNamespace(
@@ -1190,7 +1195,7 @@ def main() -> int:
     require(unchanged == reordered_truncated and no_normalization is None,
             "plain-text normalization must detect truncated recognized envelopes regardless of field order")
 
-    with tempfile.TemporaryDirectory(dir="C:\\tmp") as tmp:
+    with tempfile.TemporaryDirectory(dir=neutral_tmp_root) as tmp:
         tmp_root = Path(tmp)
         result_dir = tmp_root / "agy-call"
         def build_schema_packet(packet: Path) -> None:
