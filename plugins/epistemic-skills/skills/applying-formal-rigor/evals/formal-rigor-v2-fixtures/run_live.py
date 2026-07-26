@@ -15,7 +15,6 @@ import re
 import shutil
 import subprocess
 import sys
-import tempfile
 import threading
 from typing import Callable, NamedTuple
 import uuid
@@ -97,6 +96,58 @@ PROVIDER_PLANS = {
             1: {"a": "agy", "b": "agy"},
             2: {"a": "codex", "b": "codex"},
             3: {"a": "agy", "b": "agy"},
+        },
+    },
+    "noncursor-degraded-v2": {
+        "candidate": {1: "codex", 2: "agy", 3: "codex"},
+        "parodies": {
+            "parody-always-cautious": "codex",
+            "parody-always-decide": "agy",
+            "parody-closed-taxonomy": "codex",
+            "parody-formal-only": "codex",
+            "parody-full-ceremony": "agy",
+            "parody-jargon-only": "agy",
+        },
+        "semantic": {
+            1: {"a": "agy", "b": "agy"},
+            2: {"a": "codex", "b": "codex"},
+            3: {"a": "agy", "b": "agy"},
+        },
+    },
+}
+BASE_EXECUTION_POLICY = {
+    "effort_by_phase": {
+        "arms": {"codex": "high", "agy": "high", "cursor": "provider-model-default"},
+        "semantic": {"codex": "high", "agy": "high", "cursor": "provider-model-default"},
+    },
+    "packet_root_policy": "output-adjacent-phase-specific;reject-sensitive-user-profile-path",
+    "output_schema_delivery": {
+        "arms": {
+            "codex": "native-cli-output-schema", "agy": "packet-file",
+            "cursor": "packet-file",
+        },
+        "semantic": {
+            "codex": "native-cli-output-schema", "agy": "packet-file",
+            "cursor": "packet-file",
+        },
+    },
+}
+V2_EXECUTION_POLICY = {
+    **BASE_EXECUTION_POLICY,
+    "effort_by_phase": {
+        "arms": {"codex": "high", "agy": "medium", "cursor": "provider-model-default"},
+        "semantic": {"codex": "high", "agy": "high", "cursor": "provider-model-default"},
+    },
+    "output_schema_delivery": {
+        "arms": {
+            "codex": "native-cli-output-schema",
+            "agy": "exact-schema-in-immediate-prompt",
+            "cursor": "exact-schema-in-immediate-prompt",
+        },
+        "semantic": {
+            "codex": "native-cli-output-schema",
+            "agy": "exact-schema-in-immediate-prompt",
+            "cursor": "exact-schema-in-immediate-prompt",
         },
     },
 }
@@ -335,6 +386,49 @@ def provider_plan_config(provider_plan: str) -> dict:
         raise ValueError(f"unknown provider plan: {provider_plan}") from exc
 
 
+def validate_live_provider_plan(provider_plan: str) -> None:
+    provider_plan_config(provider_plan)
+    if provider_plan != "noncursor-degraded-v2":
+        raise ValueError(
+            f"provider plan {provider_plan!r} is historical inspection-only; "
+            "live execution requires 'noncursor-degraded-v2'"
+        )
+
+
+def validate_live_harness_executable(provider_plan: str, harness: str, executable: str) -> None:
+    validate_live_provider_plan(provider_plan)
+    if executable.startswith("fleet-bridge://"):
+        raise ValueError(
+            f"provider plan {provider_plan!r} requires direct {harness} execution; "
+            "Fleet bridge routing requires a distinct preregistered protocol identity"
+        )
+
+
+def validate_live_harness_configuration(
+    provider_plan: str, executables: dict[str, str],
+) -> None:
+    active_harnesses = {
+        arm_harness(task, provider_plan) for task in full_arm_plan()
+    } | {
+        semantic_harness(task, provider_plan) for task in full_semantic_plan()
+    }
+    for harness in active_harnesses:
+        validate_live_harness_executable(provider_plan, harness, executables[harness])
+
+
+def execution_policy(provider_plan: str) -> dict:
+    provider_plan_config(provider_plan)
+    return V2_EXECUTION_POLICY if provider_plan == "noncursor-degraded-v2" else BASE_EXECUTION_POLICY
+
+
+def call_effort(
+    provider_plan: str, *, phase: str, harness: str, bridge: bool,
+) -> str:
+    if bridge:
+        return "provider-model-default"
+    return execution_policy(provider_plan)["effort_by_phase"][phase][harness]
+
+
 def candidate_harness(repetition: int, provider_plan: str = DEFAULT_PROVIDER_PLAN) -> str:
     return provider_plan_config(provider_plan)["candidate"][repetition]
 
@@ -383,6 +477,7 @@ def campaign_plan(
         "source_commit": source_commit,
         "v1_commit": v1_commit,
         "selected_models": {harness: models[harness] for harness in active_harnesses},
+        "execution_policy": execution_policy(provider_plan),
         "arm_calls": len(arm_tasks),
         "arm_calls_by_harness": {
             harness: sum(task["harness"] == harness for task in arm_tasks)
@@ -540,14 +635,14 @@ def packet_manifest(packet_dir: Path) -> dict[str, str]:
 
 def codex_command(
     *, codex: str, model: str, packet_dir: Path, response_path: Path, prompt: str,
-    output_schema: Path | None = None,
+    output_schema: Path | None = None, effort: str = "high",
 ) -> list[str]:
     command = [
         codex, "exec", "--ephemeral", "--ignore-user-config", "--ignore-rules",
         "--disable", "plugins", "--disable", "apps", "--disable", "remote_plugin",
         "--disable", "plugin_sharing", "--sandbox", "read-only",
         "--skip-git-repo-check", "--color", "never", "--json",
-        "-c", 'model_reasoning_effort="high"', "--model", model,
+        "-c", f'model_reasoning_effort="{effort}"', "--model", model,
         "--cd", str(packet_dir), "--output-last-message", str(response_path),
     ]
     if output_schema is not None:
@@ -563,11 +658,12 @@ def codex_prompt_transport(prompt: str) -> tuple[str, str]:
 
 def agy_command(
     *, agy: str, model: str, packet_dir: Path, response_path: Path, prompt: str,
+    effort: str,
 ) -> list[str]:
-    del response_path
+    del packet_dir, response_path
     return [
         agy, "--sandbox", "--dangerously-skip-permissions", "--mode", "plan",
-        "--add-dir", str(packet_dir), "--model", model, "--effort", "high",
+        "--add-dir", ".", "--model", model, "--effort", effort,
         "--print", prompt,
     ]
 
@@ -585,17 +681,18 @@ def cursor_command(
 
 def harness_command(
     *, harness: str, executable: str, model: str, packet_dir: Path,
-    response_path: Path, prompt: str, output_schema: Path | None = None,
+    response_path: Path, prompt: str, effort: str, output_schema: Path | None = None,
 ) -> list[str]:
     if harness == "codex":
         return codex_command(
             codex=executable, model=model, packet_dir=packet_dir,
             response_path=response_path, prompt=prompt, output_schema=output_schema,
+            effort=effort,
         )
     if harness == "agy":
         return agy_command(
             agy=executable, model=model, packet_dir=packet_dir,
-            response_path=response_path, prompt=prompt,
+            response_path=response_path, prompt=prompt, effort=effort,
         )
     if harness == "cursor":
         return cursor_command(
@@ -953,6 +1050,30 @@ The adjudication marker `formal-rigor-semantic-adjudication@1` must appear exact
 """
 
 
+def execution_prompt(
+    prompt: str, *, provider_plan: str, phase: str, harness: str,
+    output_schema_text: str,
+) -> str:
+    delivery = execution_policy(provider_plan)["output_schema_delivery"][phase][harness]
+    if delivery != "exact-schema-in-immediate-prompt":
+        return prompt
+    marker_boundary = (
+        "The response marker `formal-rigor-fixture-response@1` must appear exactly once in the entire output."
+        if phase == "arms"
+        else "The adjudication marker `formal-rigor-semantic-adjudication@1` must appear exactly once in the entire output."
+    )
+    return (
+        f"{prompt.rstrip()}\n\n"
+        "The exact frozen output schema for this call follows. Return an instance of it.\n"
+        "BEGIN_EXACT_OUTPUT_SCHEMA\n"
+        f"{output_schema_text}"
+        "END_EXACT_OUTPUT_SCHEMA\n\n"
+        f"{SILENT_OUTPUT_BOUNDARY}\n"
+        f"{marker_boundary}\n"
+        f"{EXACT_JSON_BOUNDARY}"
+    )
+
+
 def sensitive_markers(text: str) -> list[str]:
     lowered = text.lower()
     markers = []
@@ -963,6 +1084,22 @@ def sensitive_markers(text: str) -> list[str]:
     if "bearer " in lowered:
         markers.append("bearer-token")
     return markers
+
+
+def default_packet_root(output_root: Path, phase: str) -> Path:
+    if phase not in ("arms", "semantic"):
+        raise ValueError(f"unknown packet phase: {phase}")
+    return output_root.parent / f"{output_root.name}-packets" / phase
+
+
+def canonical_packet_root(packet_root: Path, *, cwd: Path | None = None) -> Path:
+    base = (cwd or Path.cwd()).resolve()
+    candidate = packet_root if packet_root.is_absolute() else base / packet_root
+    canonical = candidate.resolve(strict=False)
+    normalized = str(canonical).replace("/", "\\")
+    if "user-profile-path" in sensitive_markers(normalized):
+        raise ValueError("packet root must not be under a sensitive user-profile path")
+    return canonical
 
 
 def execute_call(
@@ -979,6 +1116,10 @@ def execute_call(
     timeout_seconds: int,
     output_schema_name: str | None = None,
 ) -> dict:
+    provider_plan = str(identity.get("provider_plan"))
+    validate_live_provider_plan(provider_plan)
+    validate_live_harness_executable(provider_plan, harness, executable)
+    packet_root = canonical_packet_root(packet_root)
     if not call_needed(result_dir):
         return json.loads((result_dir / "call.json").read_text(encoding="utf-8"))
     result_dir.mkdir(parents=True, exist_ok=True)
@@ -987,17 +1128,27 @@ def execute_call(
     packet_builder(packet_dir)
     response_path = result_dir / "response.json"
     bridge = executable.startswith("fleet-bridge://")
+    phase = "arms" if identity.get("kind") == "arm" else "semantic"
+    actual_effort = call_effort(
+        provider_plan, phase=phase, harness=harness, bridge=bridge,
+    )
+    delivered_prompt = prompt
+    if output_schema_name:
+        delivered_prompt = execution_prompt(
+            prompt, provider_plan=provider_plan, phase=phase, harness=harness,
+            output_schema_text=(packet_dir / output_schema_name).read_text(encoding="utf-8"),
+        )
     effective_prompt = (
-        codex_arm_packet_prompt(packet_dir, prompt)
+        codex_arm_packet_prompt(packet_dir, delivered_prompt)
         if harness == "codex" and identity.get("kind") == "arm"
-        else prompt
+        else delivered_prompt
     )
     invocation_metadata: dict = {}
     stdin_text: str | None = None
     if bridge:
         invocation = fleet_bridge_invocation(
             executable=executable, harness=harness, model=model,
-            packet_dir=packet_dir, prompt=prompt, identity=identity,
+            packet_dir=packet_dir, prompt=effective_prompt, identity=identity,
         )
         command = invocation["command"]
         stdin_text = invocation["stdin"]
@@ -1009,6 +1160,7 @@ def execute_call(
         command = harness_command(
             harness=harness, executable=executable, model=model, packet_dir=packet_dir,
             response_path=response_path, prompt=command_prompt,
+            effort=actual_effort,
             output_schema=(packet_dir / output_schema_name) if output_schema_name and harness == "codex" else None,
         )
     started = utc_now()
@@ -1086,7 +1238,9 @@ def execute_call(
         "source_commit": source_commit,
         "provider": HARNESS_PROVIDERS[harness],
         "model": model,
-        "reasoning_effort": reasoning_effort_label(harness, bridge=bridge),
+        "reasoning_effort": actual_effort,
+        "execution_policy": execution_policy(provider_plan),
+        "packet_root": str(packet_root),
         "harness": harness,
         "harness_executable": executable,
         **({"transport_adapter": invocation_metadata} if invocation_metadata else {}),
@@ -1456,7 +1610,7 @@ def main() -> int:
 
     arms = sub.add_parser("run-arms")
     arms.add_argument("--output-root", type=Path, required=True)
-    arms.add_argument("--packet-root", type=Path, default=Path(tempfile.gettempdir()) / "formal-rigor-live-packets")
+    arms.add_argument("--packet-root", type=Path, default=None)
     add_harness_arguments(arms)
     arms.add_argument("--workers", type=int, default=4)
     arms.add_argument("--timeout-seconds", type=int, default=600)
@@ -1469,7 +1623,7 @@ def main() -> int:
 
     semantic = sub.add_parser("run-semantic")
     semantic.add_argument("--output-root", type=Path, required=True)
-    semantic.add_argument("--packet-root", type=Path, default=Path(tempfile.gettempdir()) / "formal-rigor-semantic-packets")
+    semantic.add_argument("--packet-root", type=Path, default=None)
     add_harness_arguments(semantic)
     semantic.add_argument("--workers", type=int, default=4)
     semantic.add_argument("--timeout-seconds", type=int, default=600)
@@ -1507,9 +1661,15 @@ def main() -> int:
         print(json.dumps({key: report[key] for key in ("pass", "fail", "arbitration_required")}, indent=2))
         return 0
 
+    validate_live_provider_plan(args.provider_plan)
+    phase = "arms" if args.command == "run-arms" else "semantic"
+    packet_root = canonical_packet_root(
+        args.packet_root or default_packet_root(args.output_root, phase), cwd=Path.cwd(),
+    )
     source_commit = args.source_commit or default_source_commit()
     verify_source_state(source_commit)
     executables, models = harness_configuration(args)
+    validate_live_harness_configuration(args.provider_plan, executables)
     baseline_manifest = json.loads((RED_BASELINE_ROOT / "manifest.json").read_text(encoding="utf-8"))
     v1_commit = args.v1_commit or baseline_manifest["repository_head"]
     ensure_campaign_plan(
@@ -1527,7 +1687,7 @@ def main() -> int:
         completed, failed = run_parallel(
             tasks,
             lambda task: run_arm_task(
-                task, output_root=args.output_root, packet_root=args.packet_root,
+                task, output_root=args.output_root, packet_root=packet_root,
                 executables=executables, models=models, source_commit=source_commit,
                 provider_plan=args.provider_plan, v1_source_dir=v1_source,
                 timeout_seconds=args.timeout_seconds,
@@ -1552,7 +1712,7 @@ def main() -> int:
         completed, failed = run_parallel(
             tasks,
             lambda task: run_semantic_task(
-                task, output_root=args.output_root, packet_root=args.packet_root,
+                task, output_root=args.output_root, packet_root=packet_root,
                 executables=executables, models=models, source_commit=source_commit,
                 provider_plan=args.provider_plan, timeout_seconds=args.timeout_seconds,
             ),

@@ -45,8 +45,18 @@ def main() -> int:
             "default Codex executable must use the runnable Windows command shim")
     require(runner.DEFAULT_PROVIDER_PLAN == "frozen-three-provider",
             "the historical three-provider allocation must remain the named default plan")
-    require(set(runner.PROVIDER_PLANS) == {"frozen-three-provider", "noncursor-degraded-v1"},
-            "the runner must expose exactly the frozen and degraded provider plans")
+    require(set(runner.PROVIDER_PLANS) == {
+        "frozen-three-provider", "noncursor-degraded-v1", "noncursor-degraded-v2",
+    }, "the runner must expose the frozen plan and both degraded protocol identities")
+    for historical_plan in ("frozen-three-provider", "noncursor-degraded-v1"):
+        rejected_historical_live_plan = False
+        try:
+            runner.validate_live_provider_plan(historical_plan)
+        except ValueError:
+            rejected_historical_live_plan = True
+        require(rejected_historical_live_plan,
+                f"historical provider plan remained runnable: {historical_plan}")
+    runner.validate_live_provider_plan("noncursor-degraded-v2")
     require(runner.candidate_harness(1, "noncursor-degraded-v1") == "codex" and
             runner.candidate_harness(2, "noncursor-degraded-v1") == "agy" and
             runner.candidate_harness(3, "noncursor-degraded-v1") == "codex",
@@ -99,6 +109,22 @@ def main() -> int:
     }
     require(degraded_semantic_counts == {"codex": 44, "agy": 88, "cursor": 0},
             f"degraded semantic allocation drifted: {degraded_semantic_counts}")
+    for provider_plan in ("noncursor-degraded-v1", "noncursor-degraded-v2"):
+        arm_counts = {
+            harness: sum(runner.arm_harness(task, provider_plan) == harness for task in tasks)
+            for harness in runner.HARNESS_PROVIDERS
+        }
+        semantic_counts = {
+            harness: sum(
+                runner.semantic_harness(task, provider_plan) == harness
+                for task in runner.full_semantic_plan()
+            )
+            for harness in runner.HARNESS_PROVIDERS
+        }
+        require(arm_counts == {"codex": 154, "agy": 132, "cursor": 0},
+                f"{provider_plan} arm allocation drifted: {arm_counts}")
+        require(semantic_counts == {"codex": 44, "agy": 88, "cursor": 0},
+                f"{provider_plan} semantic allocation drifted: {semantic_counts}")
     for task in runner.full_semantic_plan():
         require(
             runner.semantic_harness(task, "noncursor-degraded-v1") !=
@@ -108,6 +134,36 @@ def main() -> int:
     campaign_models = {
         "codex": "gpt-5.6-sol", "agy": "gemini-3.1-pro-high", "cursor": "gpt-5.6-sol",
     }
+    v2_campaign = runner.campaign_plan(
+        provider_plan="noncursor-degraded-v2", source_commit="a" * 40,
+        v1_commit="b" * 40, models=campaign_models,
+    )
+    require(v2_campaign["arm_calls"] == 286 and v2_campaign["semantic_calls"] == 132,
+            "v2 campaign identity must retain the exact 286/132 phase counts")
+    require(v2_campaign["arm_calls_by_harness"] == {"codex": 154, "agy": 132, "cursor": 0}
+            and v2_campaign["semantic_calls_by_harness"] == {
+                "codex": 44, "agy": 88, "cursor": 0,
+            }, "v2 campaign identity must retain its zero-Cursor allocation")
+    execution_policy = v2_campaign["execution_policy"]
+    require(execution_policy["effort_by_phase"]["arms"] == {
+        "codex": "high", "agy": "medium", "cursor": "provider-model-default",
+    }, "v2 campaign identity must pin arm effort by harness")
+    require(execution_policy["effort_by_phase"]["semantic"] == {
+        "codex": "high", "agy": "high", "cursor": "provider-model-default",
+    }, "v2 campaign identity must pin semantic effort by harness")
+    require(execution_policy["packet_root_policy"] ==
+            "output-adjacent-phase-specific;reject-sensitive-user-profile-path",
+            "campaign identity must pin packet-root delivery policy")
+    require(execution_policy["output_schema_delivery"]["arms"] == {
+        "codex": "native-cli-output-schema",
+        "agy": "exact-schema-in-immediate-prompt",
+        "cursor": "exact-schema-in-immediate-prompt",
+    }, "v2 campaign identity must pin arm output-schema delivery by harness")
+    require(execution_policy["output_schema_delivery"]["semantic"] == {
+        "codex": "native-cli-output-schema",
+        "agy": "exact-schema-in-immediate-prompt",
+        "cursor": "exact-schema-in-immediate-prompt",
+    }, "v2 campaign identity must pin semantic output-schema delivery by harness")
     with tempfile.TemporaryDirectory() as campaign_tmp:
         campaign_root = Path(campaign_tmp)
         campaign = runner.ensure_campaign_plan(
@@ -327,6 +383,99 @@ def main() -> int:
     require(silent_boundary in semantic_instruction and
             semantic_marker_boundary in semantic_instruction,
             "semantic prompt does not suppress intermediate output and require exactly one marker")
+
+    output_root_probe = Path("C:/tmp/campaigns/formal-rigor-run")
+    require(runner.default_packet_root(output_root_probe, "arms") ==
+            Path("C:/tmp/campaigns/formal-rigor-run-packets/arms") and
+            runner.default_packet_root(output_root_probe, "semantic") ==
+            Path("C:/tmp/campaigns/formal-rigor-run-packets/semantic"),
+            "default packet roots must be output-adjacent and phase-specific")
+    for packet_root, packet_cwd in (
+        (Path("C:/Users/example/formal-rigor-packets"), Path("C:/tmp")),
+        (Path("../formal-rigor-packets"), Path("C:/Users/example/project")),
+    ):
+        rejected_sensitive_packet_root = False
+        try:
+            runner.canonical_packet_root(packet_root, cwd=packet_cwd)
+        except ValueError:
+            rejected_sensitive_packet_root = True
+        require(rejected_sensitive_packet_root,
+                f"runner accepted a profile-bound packet-root alias: {packet_root}")
+    neutral_packet_root = runner.canonical_packet_root(
+        runner.default_packet_root(output_root_probe, "arms"), cwd=Path("C:/tmp"),
+    )
+    require(neutral_packet_root == Path("C:/tmp/campaigns/formal-rigor-run-packets/arms").resolve(),
+            "neutral output-adjacent packet root was not accepted and canonicalized")
+    with tempfile.TemporaryDirectory(dir="C:\\tmp") as guard_tmp:
+        guard_root = Path(guard_tmp)
+        original_run = runner.subprocess.run
+        runner.subprocess.run = lambda *args, **kwargs: SimpleNamespace(
+            returncode=0, stdout="", stderr="",
+        )
+        try:
+            for historical_plan in ("frozen-three-provider", "noncursor-degraded-v1"):
+                packet_built = False
+                def guarded_packet_builder(packet: Path) -> None:
+                    nonlocal packet_built
+                    packet_built = True
+                    packet.mkdir()
+                rejected_before_call = False
+                try:
+                    runner.execute_call(
+                        result_dir=guard_root / historical_plan,
+                        packet_root=guard_root / "packets",
+                        packet_builder=guarded_packet_builder,
+                        prompt="return JSON", harness="agy", executable="agy",
+                        model="gemini-3.1-pro-high",
+                        identity={
+                            "kind": "arm", "provider_plan": historical_plan,
+                            "fixture": "guard-probe",
+                        },
+                        source_commit="a" * 40, timeout_seconds=60,
+                    )
+                except ValueError:
+                    rejected_before_call = True
+                require(rejected_before_call and not packet_built,
+                        f"historical plan reached packet/call setup: {historical_plan}")
+        finally:
+            runner.subprocess.run = original_run
+
+    frozen_transport_schema = (
+        ROOT / "formal-rigor-fixture-transport.schema.json"
+    ).read_text(encoding="utf-8")
+    v2_agy_prompt = runner.execution_prompt(
+        arm_instruction, provider_plan="noncursor-degraded-v2", phase="arms", harness="agy",
+        output_schema_text=frozen_transport_schema,
+    )
+    terminal_boundary = (
+        f"{silent_boundary}\n{arm_marker_boundary}\n{json_boundary}"
+    )
+    require(frozen_transport_schema in v2_agy_prompt,
+            "v2 non-native arm prompt omitted the exact frozen output schema")
+    require(v2_agy_prompt.endswith(terminal_boundary),
+            "v2 non-native arm prompt does not repeat silent/marker/JSON boundaries terminally")
+    require(runner.execution_prompt(
+        arm_instruction, provider_plan="noncursor-degraded-v1", phase="arms", harness="agy",
+        output_schema_text=frozen_transport_schema,
+    ) == arm_instruction, "v1 arm prompt delivery must remain unchanged")
+    require(runner.execution_prompt(
+        arm_instruction, provider_plan="noncursor-degraded-v2", phase="arms", harness="codex",
+        output_schema_text=frozen_transport_schema,
+    ) == arm_instruction, "native Codex output-schema prompt behavior must remain unchanged")
+    frozen_semantic_schema = (
+        ROOT / "formal-rigor-semantic-adjudication.schema.json"
+    ).read_text(encoding="utf-8")
+    v2_semantic_agy_prompt = runner.execution_prompt(
+        semantic_instruction, provider_plan="noncursor-degraded-v2", phase="semantic",
+        harness="agy", output_schema_text=frozen_semantic_schema,
+    )
+    semantic_terminal_boundary = (
+        f"{silent_boundary}\n{semantic_marker_boundary}\n{json_boundary}"
+    )
+    require(frozen_semantic_schema in v2_semantic_agy_prompt,
+            "v2 non-native semantic prompt omitted the exact frozen schema")
+    require(v2_semantic_agy_prompt.endswith(semantic_terminal_boundary),
+            "v2 semantic prompt does not repeat silent/marker/JSON boundaries terminally")
 
     schema_probe = {
         "type": "object",
@@ -617,22 +766,49 @@ def main() -> int:
 
     agy = runner.agy_command(
         agy="agy", model="gemini-3.1-pro-high", packet_dir=Path("packet"),
-        response_path=Path("response.json"), prompt="return JSON",
+        response_path=Path("response.json"), prompt="return JSON", effort="medium",
     )
     agy_joined = " ".join(str(item) for item in agy)
     for marker in (
         "agy", "--print", "--sandbox", "--dangerously-skip-permissions",
-        "--mode plan", "--add-dir packet", "--model gemini-3.1-pro-high",
+        "--mode plan", "--add-dir .", "--model gemini-3.1-pro-high", "--effort medium",
     ):
         require(marker in agy_joined, f"agy command missing isolation marker: {marker}")
     require(agy == [
         "agy", "--sandbox", "--dangerously-skip-permissions", "--mode", "plan",
-        "--add-dir", "packet", "--model", "gemini-3.1-pro-high", "--effort", "high",
+        "--add-dir", ".", "--model", "gemini-3.1-pro-high", "--effort", "medium",
         "--print", "return JSON",
-    ], "agy must grant headless read tools only inside the sandboxed packet directory")
-    require(runner.reasoning_effort_label("agy", bridge=False) == "high" and
-            runner.reasoning_effort_label("agy", bridge=True) == "provider-model-default",
-            "reasoning-effort provenance must distinguish direct agy from Fleet bridge routing")
+    ], "v2 arm AGY argv must use packet cwd and explicit medium effort")
+    semantic_agy = runner.agy_command(
+        agy="agy", model="gemini-3.1-pro-high", packet_dir=Path("packet"),
+        response_path=Path("response.json"), prompt="return JSON", effort="high",
+    )
+    require(semantic_agy[-4:] == ["--effort", "high", "--print", "return JSON"],
+            "semantic AGY argv must carry explicit high effort")
+    require(runner.call_effort(
+        "noncursor-degraded-v2", phase="arms", harness="agy", bridge=False,
+    ) == "medium" and runner.call_effort(
+        "noncursor-degraded-v2", phase="semantic", harness="agy", bridge=False,
+    ) == "high" and runner.call_effort(
+        "noncursor-degraded-v1", phase="arms", harness="agy", bridge=False,
+    ) == "high" and runner.call_effort(
+        "noncursor-degraded-v2", phase="arms", harness="agy", bridge=True,
+    ) == "provider-model-default",
+            "reasoning-effort policy must distinguish v1, v2 phase, and bridge routing")
+    rejected_bridge_identity = False
+    try:
+        runner.validate_live_harness_configuration(
+            "noncursor-degraded-v2",
+            {
+                "codex": "codex.cmd",
+                "agy": "fleet-bridge://default/fleet-orchestrator/surface-bridge-v2-0",
+                "cursor": "cursor-agent",
+            },
+        )
+    except ValueError:
+        rejected_bridge_identity = True
+    require(rejected_bridge_identity,
+            "v2 direct-harness identity must reject Fleet bridge executable overrides")
 
     cursor = runner.cursor_command(
         cursor="cursor-agent", model="gpt-5.6-sol", packet_dir=Path("packet"),
@@ -848,7 +1024,7 @@ def main() -> int:
     require(unchanged == reordered_truncated and no_normalization is None,
             "plain-text normalization must detect truncated recognized envelopes regardless of field order")
 
-    with tempfile.TemporaryDirectory() as tmp:
+    with tempfile.TemporaryDirectory(dir="C:\\tmp") as tmp:
         tmp_root = Path(tmp)
         result_dir = tmp_root / "agy-call"
         def build_schema_packet(packet: Path) -> None:
@@ -863,9 +1039,11 @@ def main() -> int:
                 },
             })
         original_run = runner.subprocess.run
-        runner.subprocess.run = lambda *args, **kwargs: SimpleNamespace(
-            returncode=0, stdout=agy_stdout, stderr="",
-        )
+        executed_command: list[str] = []
+        def fake_agy_run(command, *args, **kwargs):
+            executed_command.extend(command)
+            return SimpleNamespace(returncode=0, stdout=agy_stdout, stderr="")
+        runner.subprocess.run = fake_agy_run
         try:
             record = runner.execute_call(
                 result_dir=result_dir,
@@ -876,7 +1054,7 @@ def main() -> int:
                 executable="agy",
                 model="gemini-3.1-pro-high",
                 identity={
-                    "kind": "arm", "provider_plan": "noncursor-degraded-v1",
+                    "kind": "arm", "provider_plan": "noncursor-degraded-v2",
                     "fixture": "cc-03-postgresql18-rationale-correct",
                 },
                 source_commit="a" * 40,
@@ -893,10 +1071,22 @@ def main() -> int:
                 "normalized agy response was not recorded as JSON-parseable")
         require(record.get("schema_valid") is True and record.get("schema_errors") == [],
                 "execute_call did not validate the normalized response against its packet schema")
+        require(record.get("reasoning_effort") == "medium" and
+                "--effort" in executed_command and
+                executed_command[executed_command.index("--effort") + 1] == "medium",
+                "v2 arm call did not record and invoke the same actual AGY effort")
+        require(record.get("execution_policy") ==
+                runner.execution_policy("noncursor-degraded-v2"),
+                "terminal call omitted its pinned execution policy")
+        require(record.get("packet_root") == str((tmp_root / "packets").resolve()),
+                "terminal call omitted its canonical packet root")
+        require('"required": [' in executed_command[-1] and
+                executed_command[-1].rstrip().endswith(runner.EXACT_JSON_BOUNDARY),
+                "v2 AGY arm call did not receive the exact schema and terminal boundary")
         require(record.get("response_normalization") ==
                 "extracted-single-recognized-json-envelope",
                 "agy call record omitted explicit response_normalization metadata")
-        require(record.get("provider_plan") == "noncursor-degraded-v1",
+        require(record.get("provider_plan") == "noncursor-degraded-v2",
                 "every terminal call record must retain the provider-plan identity")
 
     valid_adjudication = {

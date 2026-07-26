@@ -82,6 +82,21 @@ local test, or mutable `main` checkout is not a substitute.
   It has no scoring, semantic, or release credit and must not be retried,
   repaired, resumed, or reused. The frozen Cursor blocker and prospective
   protocol remain unchanged.
+- The completed `noncursor-degraded-v1` epoch at source
+  `a18e8ba41085c7d45b126e342b3222a19e497bc6` is also excluded. Its canonical
+  root pin is
+  `11eecc3d589a88ccb19dc5117a2a0cfdd5019252f4bc5c528a98581c61efbe5a`.
+  Of 286 terminal calls, 281 qualify and five fail unchanged gates: two raw
+  telemetry user-profile-path leaks (one agy and one Codex; final response
+  objects were clean), two agy strict-schema violations (v1-style record shape
+  and object `uncertainty_posture` where a string is required), and one agy
+  self-talk/fenced multi-draft response with two identical schema-valid
+  envelopes. It has no scoring, semantic, or release credit and may not be
+  retried, repaired, resumed, or reused. `noncursor-degraded-v2` is a distinct
+  prospective protocol; release remains HOLD until a complete v2 epoch passes
+  every unchanged gate. Its campaign and call provenance must retain canonical
+  packet root and execution policy; frozen and v1 identities are inspectable
+  but non-runnable under current source and require pinned historical commits.
 - The pinned isolated proportionality protocol has completed. Final candidate
   `b73b04af46255bddf103a3f7e80e69b442ebddab` passed all three repetitions:
   routine `10/10`, material `4/4`, high-risk `4/4`, with routine narration

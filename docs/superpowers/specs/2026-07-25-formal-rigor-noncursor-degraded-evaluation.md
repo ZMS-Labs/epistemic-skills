@@ -120,3 +120,32 @@ RED-first runner tests must prove:
 
 After GREEN, run the complete deterministic suite before creating the fresh
 live epoch.
+
+## Completed v1 exclusion and prospective v2 identity
+
+The completed `noncursor-degraded-v1` epoch at source
+`a18e8ba41085c7d45b126e342b3222a19e497bc6`, canonical root pin
+`11eecc3d589a88ccb19dc5117a2a0cfdd5019252f4bc5c528a98581c61efbe5a`, is
+excluded. It recorded 286 terminal calls, of which 281 qualify and five fail:
+two raw telemetry user-profile-path leaks (one agy and one Codex; final
+responses clean), two agy strict-schema violations (v1-style record shape and
+object `uncertainty_posture` rather than the required string), and one agy
+self-talk/fenced two-identical-draft response. It has no scoring, semantic, or
+release credit and cannot be retried, repaired, resumed, or reused.
+
+The new `noncursor-degraded-v2` identity is prospective and distinct from v1.
+It keeps the same two-provider map, 286 arm/132 semantic counts, unchanged
+thresholds, terminal/no-retry behavior, and two-provider-only claim boundary.
+Before execution, an output-adjacent neutral packet root is rejected if it is
+profile-bound. Direct agy calls use `agy --add-dir .`; agy arms use medium
+effort, agy semantic calls high effort, and Codex calls high effort. The exact
+frozen transport schema is embedded in every non-native-schema arm prompt;
+every non-native-schema semantic prompt embeds only the exact semantic
+transport schema, never truth or scorer material. The campaign plan and every
+call record the v2 identity, canonical packet root, and execution
+policy/settings. Frozen and v1 identities remain inspectable but non-runnable
+under current source; historical execution requires their pinned commits. A
+complete v2 epoch uses active Codex and agy harnesses that reject Fleet-bridge
+overrides; any bridge-backed evaluation requires its own preregistered protocol
+identity. A complete v2 epoch passing every unchanged gate is required before
+release can move beyond HOLD; historical Cursor blocking evidence remains intact.

@@ -151,3 +151,20 @@ computed with the repository's established sorted relative-path plus
 file-SHA-256 manifest algorithm. This epoch is excluded: it receives no
 structural score, semantic-adjudication result, or release credit. Its terminal
 records will not be retried, repaired, resumed, or reused.
+
+## 2026-07-25 completed `noncursor-degraded-v1` excluded epoch
+
+The completed `noncursor-degraded-v1` epoch at source
+`a18e8ba41085c7d45b126e342b3222a19e497bc6` recorded 286 terminal calls. Its
+canonical root pin is
+`11eecc3d589a88ccb19dc5117a2a0cfdd5019252f4bc5c528a98581c61efbe5a`.
+
+Only 281 calls qualify; five terminal calls fail the unchanged gates. Raw
+telemetry in two calls leaked a user profile path (one agy and one Codex), even
+though their final response objects were clean. Two agy calls violated the
+strict transport schema by emitting a v1-style record shape and an object for
+`uncertainty_posture`, where the frozen schema requires a string. One agy call
+was nonparseable after self-talk and a fence around two identical otherwise
+schema-valid draft envelopes. This root is excluded: it receives no structural
+score, semantic adjudication, or release credit, and none of its calls may be
+retried, repaired, resumed, or reused.

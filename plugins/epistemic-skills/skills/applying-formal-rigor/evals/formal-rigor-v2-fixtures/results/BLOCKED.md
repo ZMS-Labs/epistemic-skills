@@ -59,3 +59,31 @@ A qualifying result supports only two-provider blinded conformance, not
 three-provider robustness or Cursor reliability. Revisit the Cursor block when
 Cursor exposes schema-constrained generation, or when a separately approved
 targeted third-provider protocol exists.
+
+## Completed excluded `noncursor-degraded-v1` epochs and v2 amendment
+
+The completed v1 epoch at source `a18e8ba41085c7d45b126e342b3222a19e497bc6`
+is excluded with canonical root pin
+`11eecc3d589a88ccb19dc5117a2a0cfdd5019252f4bc5c528a98581c61efbe5a`: of 286
+terminal calls, 281 qualify and five fail. The failures are two raw telemetry
+user-profile-path leaks (one agy and one Codex, with clean final response
+objects), two agy strict-schema violations (v1-style record shape and object
+`uncertainty_posture`), and one agy self-talk/fenced multi-draft response with
+two identical schema-valid envelopes. It receives no scoring, semantic, or
+release credit and is never retried, repaired, resumed, or reused.
+
+The operator authorizes a new, distinct prospective identity,
+`noncursor-degraded-v2`; it does not relabel or repair v1. It keeps v1's
+two-provider allocation and counts, unchanged gates, no-retry rule, and
+two-provider-only claim boundary. Before calling models, v2 rejects an
+output-adjacent neutral packet root if profile-bound; it uses direct
+`agy --add-dir .`, medium-effort agy arms, high-effort agy semantics and Codex
+calls, and the exact frozen transport schema embedded in every non-native-schema
+arm prompt. Every non-native-schema semantic prompt receives only the exact
+semantic transport schema, never truth or scorer material. Campaign and call
+records must retain the canonical packet root and execution policy/settings.
+Frozen and v1 identities remain inspectable but non-runnable under current
+source and require their pinned historical commits. Active v2 Codex and agy
+harnesses reject Fleet-bridge overrides; a bridge-backed evaluation requires a
+separately preregistered protocol identity. Cursor remains `BLOCKED_EXTERNAL`,
+and release remains HOLD until a complete v2 epoch passes.

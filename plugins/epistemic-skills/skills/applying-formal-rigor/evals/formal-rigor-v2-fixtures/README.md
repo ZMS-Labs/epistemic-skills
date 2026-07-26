@@ -130,3 +130,26 @@ Absent or non-isolated model execution is `NOT_RUN`, never a RED result credited
 arm. Neutral and current-v1 RED runs were durably recorded before production edits under
 `results/2026-07-24-red-baseline/`; candidate, parody, and semantic arms remain separately
 gated and `NOT_RUN` until executed.
+
+### Prospective `noncursor-degraded-v2` protocol
+
+`noncursor-degraded-v2` is distinct from and does not rewrite the completed,
+excluded v1 epochs. It retains the same two-provider allocation and exact
+counts: 286 arms `{codex: 154, agy: 132, cursor: 0}` and 132 isolated semantic
+seats `{codex: 44, agy: 88, cursor: 0}`. All structural, P0, control, semantic,
+no-retry, fail-closed, and two-provider-only claim-boundary rules are unchanged.
+
+Before any v2 call, its new empty root must reject an output-adjacent neutral
+packet root when that root is profile-bound. agy arm calls use direct
+`agy --add-dir .` execution at medium effort; agy semantic calls use high
+effort; Codex calls use high effort. Because agy has no native schema-enforced
+mode, every non-native-schema arm prompt embeds the exact frozen transport
+schema, and every non-native-schema semantic prompt embeds only the exact
+semantic transport schema, never truth or scorer material. The campaign plan
+and every call record the protocol identity, canonical packet root, and
+execution policy/settings. Historical frozen and v1 identities remain
+inspectable but non-runnable under current source; historical execution must
+use their pinned commits. The active v2 Codex and agy harnesses reject
+Fleet-bridge overrides; any bridge-backed evaluation requires its own
+preregistered protocol identity. A passing v2 epoch supports only two-provider
+blinded conformance; release remains HOLD until every unchanged gate passes.

@@ -187,3 +187,30 @@ Hash a canonical sorted manifest of every retained file, append exact counts, fa
 - [ ] **Step 6: Run the complete release-preparation verification**
 
 Run every `stdlib-checks` command, DCO tests, committed JSON validation, manifest/version inspection, and GitHub checks at the exact evidence commit. The final independent Helix/Gauntlet publication gate remains a separate pre-release action; no tag or GitHub Release is created by this task.
+
+## Recorded v1 exclusion and v2 follow-on (documentation preregistration)
+
+The completed v1 epoch at source `a18e8ba41085c7d45b126e342b3222a19e497bc6`
+with root pin `11eecc3d589a88ccb19dc5117a2a0cfdd5019252f4bc5c528a98581c61efbe5a`
+is excluded: 286 terminal calls, 281 qualifying, and five failures. Two raw
+telemetry user-profile-path leaks (one agy and one Codex) occurred despite clean
+final responses; two agy records violated the frozen schema (v1-style shape and
+object `uncertainty_posture`); one agy response contained self-talk/fence plus
+two identical schema-valid envelopes. No scoring, semantics, release credit,
+retry, repair, resume, or reuse is authorized for this root.
+
+The next fresh campaign is `noncursor-degraded-v2`, not a v1 rewrite. Retain
+the same two-provider allocation and 286 arm/132 semantic counts, all existing
+thresholds, no-retry behavior, and two-provider-only release claim. Before
+execution, reject an output-adjacent neutral packet root if profile-bound. Use
+direct `agy --add-dir .`; configure agy arms at medium effort, agy semantics at
+high effort, and Codex at high effort. Embed the exact frozen transport schema
+in every non-native-schema arm prompt; every non-native-schema semantic prompt
+receives only the exact semantic transport schema, never truth or scorer
+material. Record the protocol identity, canonical packet root, and execution
+policy/settings in the campaign plan and every call. Frozen and v1 identities
+are inspectable but non-runnable under current source and require their pinned
+historical commits. Active v2 Codex and agy harnesses reject Fleet-bridge
+overrides; a bridge-backed evaluation needs its own preregistered protocol
+identity. A full v2 epoch passing unchanged gates is required; release remains
+HOLD and the Cursor blocker remains historical.
