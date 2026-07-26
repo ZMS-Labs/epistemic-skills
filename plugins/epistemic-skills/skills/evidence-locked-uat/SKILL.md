@@ -1,6 +1,6 @@
 ---
 name: evidence-locked-uat
-description: Use when running or gating user-acceptance testing on UI-facing work — on explicit request ("run UAT on X", "/uat", "acceptance-test this") or before claiming UI-facing work complete / merging a branch with a user-facing surface (auto-fire, triage-gated). Do NOT use for backend-only changes, docs, or pure test refactors with no runtime surface.
+description: Use when running or gating user-acceptance testing on a material UI-facing change — on explicit request ("run UAT on X", "/uat", "acceptance-test this") or before claiming a stateful, interaction-sensitive, accessibility-sensitive, persistent, or otherwise hard-to-observe user-facing surface complete. Do NOT fire for backend-only changes, docs, pure test refactors, or routine reversible/local/directly-checkable presentation changes whose bounded preview/test establishes the criterion without an acceptance packet.
 ---
 
 # Evidence-Locked UAT
@@ -8,15 +8,42 @@ description: Use when running or gating user-acceptance testing on UI-facing wor
 Operationalizes the Autonomous Evidence-Locked UAT Standard (vendored in `references/`).
 The governing rule: **no acceptance claim is stronger than its weakest required evidence
 channel, and no acting agent may be its own acceptance authority.** The actor never
-certifies its own work; a blinded verifier judges from evidence alone; the judge is
-deterministic script code.
+certifies its own material acceptance work; a blinded verifier judges from evidence
+alone; the judge is deterministic script code.
+
+## Routine presentation check — not a UAT run
+
+A UI-facing change does not automatically require the UAT container. Before Step 0,
+apply the routine-work gate from `using-epistemic-skills/reference/routine-fast-path.md`.
+The change must be reversible, local, directly checkable, and non-precedential.
+
+For an unfamiliar routine-looking presentation change, inspect the component and its
+nearest rendered test/example. If they agree with the request, record only:
+
+```text
+target: <surface checked>
+criterion: <observable intended result>
+check: <bounded preview/test>
+result: <observed result>
+limitation: <material limit, or none>
+```
+
+This path creates no `run_id`, contracts file, role calls, evidence directory, manifest,
+hash chain, committed packet, or UAT verdict. It is ordinary verification, not a weaker
+PASS vocabulary.
+
+Leave the routine path and run UAT when any material acceptance criterion depends on
+interaction transitions, state persistence, keyboard/focus behavior, responsive layout
+across personas, asynchronous feedback, identity/tenant/business state, destructive or
+billable action, or another channel the bounded direct check cannot establish. Explicit
+operator requests for UAT also enter Step 0.
 
 ## Step 0 — Triage the tier
 
 | Tier | When | Cases |
 |---|---|---|
-| `smoke` | small, low-risk UI change | critical/high contracts × 1 persona (returning-desktop) |
-| `standard` | default pre-merge for user-facing work | all contracts × returning-desktop + keyboard-only |
+| `smoke` | small, low-risk change whose acceptance still requires an independent interaction check after the routine gate fails | critical/high contracts × 1 persona (returning-desktop) |
+| `standard` | default pre-merge for material user-facing work | all contracts × returning-desktop + keyboard-only |
 | `release` | release candidates or explicit request | all contracts × 3 personas incl. novice-mobile |
 
 Announce the tier and why. The tier is recorded in the manifest and NEVER silently
@@ -101,6 +128,7 @@ trusting either result.
 
 | Rationalization | Why unsafe | Required correction |
 |---|---|---|
+| "It touches pixels, so it needs a UAT packet." | Artifact volume is not acceptance evidence; a routine presentation criterion may be directly observable. | Apply the routine gate. Use the five-line bounded check when it establishes the whole claim. |
 | "The page loaded, so it passes." | Load does not establish content, state, operability, or outcome. | Verify every acceptance criterion and relevant invariant. |
 | "The API returned success." | Backend success may not be rendered or may target the wrong entity. | Require synchronized rendered and state evidence. |
 | "The text exists in the DOM." | Text may be hidden, clipped, stale, covered, or off-screen. | Verify visibility, context, geometry, and screenshot. |
@@ -119,9 +147,10 @@ Full 26-row table: `references/standard.md` §61.
 - **Upstream gates:** where your workflow defines an operator-facing end-to-end
   acceptance criterion, compile it as a `critical` contract.
 - **Downstream recorders:** hand any evidence-consuming step the evidence packet
-  path, not ad-hoc screenshots.
+  path, not ad-hoc screenshots. Routine presentation checks are not evidence
+  packets and must not be presented as blinded UAT.
 - Sibling skills: `verification-before-completion` covers claims about work in
-  general; this skill is the UI-facing acceptance case.
+  general; this skill is the material UI-facing acceptance case.
 
 ## References
 
@@ -142,4 +171,4 @@ Full 26-row table: `references/standard.md` §61.
 If a `LOCAL.md` exists alongside this SKILL.md, read it after this file — it binds
 the protocol to the local environment (paths, registries, standing incidents,
 sibling-skill integrations). An overlay may add bindings and examples; it never
-overrides the protocol.
+overrides the protocol or convert routine presentation checks into UAT verdicts.

@@ -61,41 +61,24 @@ enforced by the validator on cards and by the workflow schema on findings.
 
 ## Lifecycle
 
-`candidate -> probation -> active -> deprecated -> retired`
+`available -> retired`
 
-- **candidate**: complete fingerprint, never selectable. Promotion requires the behavioral
-  admission gate (below).
-- **probation**: seated automatically in the dedicated SHADOW seat (one per run,
-  additional to the panel, standard/deep/max, default ON, rotation-balanced by prior
-  seatings in runs/ledger.jsonl — fewest-seated first, id tie-break). Never holds a core
-  seat, and its findings are EXCLUDED from arbitration/verdict (shadow semantics —
-  unvalidated lenses never touch decisions; telemetry unconfounded by panel-size).
-  Track unique upheld yield, duplication, unsupported evidence, false-high strikes,
-  falsifier quality, operator overrides, tokens — via the run ledger (SKILL.md Step 9).
-  **Thresholds below are REVIEW TRIGGERS, never automatic actions** (external-review
-  adjudication 2026-07-14): the review weighs sample-size uncertainty, case mix, domain
-  opportunity counts, false-high rate, and corroboration value — a lens is not promoted
-  for crossing an administratively convenient integer. Flag review after 20 eligible
-  runs or quarterly (`scripts/lens_stats.py`).
-- **deprecate/merge** review-trigger when duplicate rate > 70% and unique upheld yield
-  < 0.1/run, unless rare-critical coverage is explicitly documented. **Duplication is
-  not uniformly waste**: distinguish (a) correlated waste — same evidence, same fix,
-  same reasoning; (b) independent corroboration — same conclusion via a different
-  evidence chain (VALUABLE on P1/P2, do not penalize); (c) apparent duplication hiding
-  mechanism disagreement (surface it, don't merge it). Only (a) counts against a lens.
-- **retired**: ID and card preserved forever (historical runs replay by id+version);
-  `superseded_by` mandatory. Never delete an ID.
+- **available**: any non-retired card with a complete fingerprint and an evaluator role
+  may be selected. Historical candidate/probation/admission notes remain in `provenance`
+  for auditability, but never withhold a seat or discount a claim.
+- **retired**: ID, version, aliases, card, provenance, and `superseded_by` are preserved
+  forever so historical runs remain interpretable. Retired ids are never selected and
+  never deleted in place.
 
-## Admission gate for candidates (behavioral — NOT YET RUN for any candidate)
-
-Static fingerprint completeness is necessary, not sufficient. Activation requires paired
-blind evaluation vs the nearest neighbor on >= 8 eligible dossiers with: >= 1 unique upheld
-P1/P2 absent from the neighbor on >= 2 dossiers; >= 15% unique upheld findings overall;
-abstention on hard negatives; not a rephrase of the same risk basin. See `evals/README.md`.
+Registry inclusion is a maintainer decision based on a materially distinct diagnostic
+mechanism and complete falsifier contract. The old multi-stage admission lifecycle is
+retired. Behavioral measurements remain useful observability, but thresholds and historical
+yield never govern availability, selection, or arbitration weight. Retirement or merging is
+an explicit reviewed registry edit that preserves the old coordinate.
 
 ## Collision policy
 
-`scripts/validate_roster.py` flags active-evaluator pairs on: canonical-question
+`scripts/validate_roster.py` flags available-evaluator pairs on: canonical-question
 Jaccard >= 0.60; same primary capability + domain overlap >= 0.70; object-of-scrutiny
 token similarity >= 0.84. Every flagged pair must be merged, mutexed, given an explicit
 neighbor boundary, or waived in `COLLISION_WAIVERS` with a reason.
@@ -128,9 +111,9 @@ Removed nonexistent pseudo-slugs from SKILL.md: `blast-radius`, `ethnographer`,
 
 ## Expansion frontier bookkeeping
 
-**Core candidates** are in the registry with complete fingerprints (status=candidate,
-provenance marks the admission gate unrun); the current count lives only in
-`roster/INDEX.md` (generated). See `roster/candidates.md` (generated).
+The former candidate group remains a provenance-oriented generated view. Its complete
+fingerprints are `available`, and its current count lives only in `roster/INDEX.md`.
+See `roster/candidates.md` (generated).
 
 **Audited-candidate QUEUE (named, neighbor-mapped, NOT yet fingerprinted — do not select,
 do not treat as registry entries):**
@@ -160,11 +143,13 @@ environmental-justice-auditor, real-options-stager.
 ## Selector
 
 `scripts/select_lenses.py` — deterministic constrained selection with replay record
-(registry version + sha256, subject vector, eligibility, scores, exclusions, selected
-ids@versions). Panel constraints are in the script docstring and enforced post-selection
+(registry version + sha256, subject vector and seed provenance, eligibility, scores,
+exclusions, selected ids@versions, wildcard ids, and wildcard-ranking digest). Panel
+constraints are in the script docstring and enforced post-selection
 as hard errors; `--self-test` runs 1000 seeded fixtures (all must satisfy every
 constraint, deterministically). Fit scoring is **lexical** (domain/capability/signal
 matching) — a documented v1 limitation; a lens is gated by role/status/axis first, so a
-keyword match can mis-rank but never seat a candidate, a retired ID, or a wrong-role card.
+keyword match can mis-rank but never seat a retired ID or a wrong-role card. Standard/deep
+use one subject-seeded wildcard and max uses two; the run ledger is never a selector input.
 Runtime loads full card text only for selected ids: panel prompt tokens scale with panel
 size, not registry size.

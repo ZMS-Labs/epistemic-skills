@@ -1,0 +1,1 @@
+{"response":"formal-rigor-fixture-response@1","fixture":"ot-01-pure-preference-skip","invocation":"skip","skip_reason":"The choice is pure preference: the supplied artifact shows no behavior or contract difference and the local variable name is reversible.","claim_assessments":[{"id":"c1","state":"established","derivation_ids":[]}],"focused_output":null,"record":null}

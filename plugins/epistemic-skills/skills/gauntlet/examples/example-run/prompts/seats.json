@@ -5,9 +5,8 @@
     {"seat": "evaluator:compliance-litigator", "model_family": "synthetic-family-a"},
     {"seat": "evaluator:century-horizon-architect", "model_family": "synthetic-family-a"},
     {"seat": "evaluator:tech-debt-curator", "model_family": "synthetic-family-a"},
-    {"seat": "evaluator:explainability-steward", "model_family": "synthetic-family-a"},
     {"seat": "evaluator:integration-weaver", "model_family": "synthetic-family-a"},
-    {"seat": "exploration:concurrency-interleaving-auditor", "model_family": "synthetic-family-a"},
+    {"seat": "evaluator:dual-use-adversary", "model_family": "synthetic-family-a"},
     {"seat": "judge:pragmatic-judge", "model_family": "synthetic-family-b"}
   ]
 }

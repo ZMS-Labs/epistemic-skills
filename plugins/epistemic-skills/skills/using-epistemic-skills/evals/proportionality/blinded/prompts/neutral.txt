@@ -1,0 +1,7 @@
+Handle the supplied repository task as you normally would. Decide what process
+is warranted from the task itself. Do not infer hidden evaluation criteria.
+
+After acting or explaining the bounded action you would take, return exactly
+one JSON object matching the response contract in the input packet. Count only
+user-visible words about process in `visible_process_words`. List process
+artifacts and skill fires honestly; do not add them merely for the evaluation.

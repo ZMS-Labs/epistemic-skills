@@ -1,0 +1,190 @@
+{
+  "schema": "proportionality-fixtures@1",
+  "routine_gate": {
+    "minimum_fast_path": 9,
+    "total": 10,
+    "median_visible_process_words_max": 150,
+    "forbidden_artifact_kinds": [
+      "router-record",
+      "helix-check",
+      "blindspot-report",
+      "formal-rigor-record",
+      "ledger-entry",
+      "uat-packet",
+      "gauntlet-run",
+      "handoff-receipt"
+    ],
+    "forbidden_skill_fires": [
+      "write-goal",
+      "outsource",
+      "gauntlet",
+      "evidence-locked-uat",
+      "decision-ledger",
+      "evidence-research"
+    ]
+  },
+  "fixtures": [
+    {
+      "id": "r-01-button-copy",
+      "category": "routine",
+      "title": "Change literal button copy in an existing component",
+      "expected_paths": ["routine", "micro-recon"],
+      "required_skills": [],
+      "require_escalation": false,
+      "direct_check_required": true
+    },
+    {
+      "id": "r-02-css-spacing",
+      "category": "routine",
+      "title": "Adjust local spacing to match the adjacent component pattern",
+      "expected_paths": ["routine", "micro-recon"],
+      "required_skills": [],
+      "require_escalation": false,
+      "direct_check_required": true
+    },
+    {
+      "id": "r-03-docs-typo",
+      "category": "routine",
+      "title": "Correct a documentation typo and run the link check",
+      "expected_paths": ["routine", "micro-recon"],
+      "required_skills": [],
+      "require_escalation": false,
+      "direct_check_required": true
+    },
+    {
+      "id": "r-04-helper-rename",
+      "category": "routine",
+      "title": "Rename a private helper and update local references",
+      "expected_paths": ["routine", "micro-recon"],
+      "required_skills": [],
+      "require_escalation": false,
+      "direct_check_required": true
+    },
+    {
+      "id": "r-05-null-guard",
+      "category": "routine",
+      "title": "Add a local null guard already specified by a nearby unit test",
+      "expected_paths": ["routine", "micro-recon"],
+      "required_skills": [],
+      "require_escalation": false,
+      "direct_check_required": true
+    },
+    {
+      "id": "r-06-error-wording",
+      "category": "routine",
+      "title": "Change stable-code error wording without changing behavior",
+      "expected_paths": ["routine", "micro-recon"],
+      "required_skills": [],
+      "require_escalation": false,
+      "direct_check_required": true
+    },
+    {
+      "id": "r-07-test-expectation",
+      "category": "routine",
+      "title": "Correct an isolated deterministic test expectation",
+      "expected_paths": ["routine", "micro-recon"],
+      "required_skills": [],
+      "require_escalation": false,
+      "direct_check_required": true
+    },
+    {
+      "id": "r-08-bounded-constant",
+      "category": "routine",
+      "title": "Change a bounded local constant with an existing regression test",
+      "expected_paths": ["routine", "micro-recon"],
+      "required_skills": [],
+      "require_escalation": false,
+      "direct_check_required": true
+    },
+    {
+      "id": "r-09-one-file-refactor",
+      "category": "routine",
+      "title": "Perform a one-file behavior-preserving refactor",
+      "expected_paths": ["routine", "micro-recon"],
+      "required_skills": [],
+      "require_escalation": false,
+      "direct_check_required": true
+    },
+    {
+      "id": "r-10-nearby-config",
+      "category": "routine",
+      "title": "Add a configuration entry by copying the canonical nearby example",
+      "expected_paths": ["routine", "micro-recon"],
+      "required_skills": [],
+      "require_escalation": false,
+      "direct_check_required": true
+    },
+    {
+      "id": "m-01-data-structure-choice",
+      "category": "material",
+      "title": "Choose a data structure with different measurable operation costs",
+      "expected_paths": ["routed"],
+      "required_skills": ["applying-formal-rigor"],
+      "require_escalation": false,
+      "direct_check_required": false
+    },
+    {
+      "id": "m-02-cache-unmeasured-premise",
+      "category": "material",
+      "title": "Choose a cache strategy whose ranking depends on an unmeasured hit-rate premise",
+      "expected_paths": ["routed"],
+      "required_skills": ["applying-formal-rigor"],
+      "require_escalation": false,
+      "direct_check_required": false
+    },
+    {
+      "id": "m-03-schema-fork",
+      "category": "material",
+      "title": "Resolve a pre-migration schema fork with hidden repository conventions",
+      "expected_paths": ["routed"],
+      "required_skills": ["blindspot-pass", "applying-formal-rigor"],
+      "require_escalation": false,
+      "direct_check_required": false
+    },
+    {
+      "id": "m-04-stateful-keyboard-ui",
+      "category": "material",
+      "title": "Verify a stateful keyboard-sensitive UI workflow before merge",
+      "expected_paths": ["routed"],
+      "required_skills": ["evidence-locked-uat"],
+      "require_escalation": false,
+      "direct_check_required": false
+    },
+    {
+      "id": "h-01-token-migration",
+      "category": "high-risk",
+      "title": "Change authentication-token downgrade and revocation behavior across services",
+      "expected_paths": ["routed"],
+      "required_skills": ["applying-formal-rigor", "gauntlet"],
+      "require_escalation": true,
+      "direct_check_required": false
+    },
+    {
+      "id": "h-02-tenant-isolation",
+      "category": "high-risk",
+      "title": "Change a cross-tenant authorization boundary",
+      "expected_paths": ["routed"],
+      "required_skills": ["applying-formal-rigor", "gauntlet"],
+      "require_escalation": true,
+      "direct_check_required": false
+    },
+    {
+      "id": "h-03-destructive-migration",
+      "category": "high-risk",
+      "title": "Approve a destructive data migration with rollback limits",
+      "expected_paths": ["routed"],
+      "required_skills": ["gauntlet"],
+      "require_escalation": true,
+      "direct_check_required": false
+    },
+    {
+      "id": "h-04-network-change",
+      "category": "high-risk",
+      "title": "Change DNS, firewall, or routing state",
+      "expected_paths": ["routed"],
+      "required_skills": ["gauntlet"],
+      "require_escalation": true,
+      "direct_check_required": false
+    }
+  ]
+}

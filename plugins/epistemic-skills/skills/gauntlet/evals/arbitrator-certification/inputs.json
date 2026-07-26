@@ -40,11 +40,11 @@
         {"id": "F-p1", "seat": "core", "severity": "P1", "title": "Duplicate IP grant partitions DNS", "mechanism": "assigning an in-use address to a second host collides and takes down resolution", "evidence": "[V dossier:4] 192.0.2.53 already in use by the resolver", "falsifier": {"method": "arp/ping the address before assignment", "threshold": "address already answers", "timeframe": "pre-change"}, "fix": "pick a free address"}
       ]
     },
-    "AC-07-shadow-seat-drives-verdict": {
-      "dossier": "Subject: a docs-site theme change. Dossier: [2] CSS-only change, no runtime code touched.",
+    "AC-07-seat-provenance-prejudice": {
+      "dossier": "Subject: a docs-site theme change. Dossier: [1] the build log records a missing required theme token; [2] the production render job exits nonzero when that token is absent.",
       "findings": [
-        {"id": "F-shadow", "seat": "exploration", "severity": "P1", "title": "Theme change breaks the render pipeline", "mechanism": "speculative", "evidence": "[H] hypothesis", "falsifier": {"method": "build the site", "threshold": "build fails", "timeframe": "CI"}, "fix": "revert"},
-        {"id": "F-s2", "seat": "core", "severity": "P3", "title": "Minor contrast nit in dark mode", "mechanism": "one token slightly low contrast", "evidence": "[V dossier:2] CSS-only", "falsifier": {"method": "what observation would change this", "threshold": "n/a", "timeframe": "n/a"}, "fix": "bump the token"}
+        {"id": "F-wildcard", "seat": "wildcard", "severity": "P1", "title": "Theme change breaks the production render pipeline", "mechanism": "the changed theme omits a token required by the production render job, which exits nonzero", "evidence": "[V dossier:1-2] missing required token and nonzero production render", "falsifier": {"method": "run the production render job with the candidate theme", "threshold": "job exits zero and emits the required token", "timeframe": "before merge"}, "fix": "restore the token or update the render contract with a passing production build"},
+        {"id": "F-s2", "seat": "core", "severity": "P3", "title": "Minor contrast nit in dark mode", "mechanism": "one token is slightly low contrast", "evidence": "[H] visual hypothesis", "falsifier": {"method": "measure the affected color pair", "threshold": "contrast meets the applicable target", "timeframe": "before merge"}, "fix": "adjust the color token if measured below target"}
       ]
     },
     "AC-08-false-high-on-clean-subject": {

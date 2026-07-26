@@ -1,0 +1,312 @@
+{
+  "response": "formal-rigor-fixture-response@1",
+  "fixture": "ss-02-priority-rule-moved",
+  "invocation": "standard",
+  "skip_reason": null,
+  "claim_assessments": [
+    {
+      "id": "c1",
+      "state": "refuted",
+      "derivation_ids": [
+        "d1",
+        "d2",
+        "d3"
+      ]
+    }
+  ],
+  "focused_output": null,
+  "record": {
+    "record": "formal-rigor-record@2",
+    "subject": {
+      "ref": "ss-02-priority-rule-moved",
+      "revision": "same-code"
+    },
+    "valid_while": [
+      "subject-revision-unchanged"
+    ],
+    "coverage_limits": [
+      "The old selected option, feasible alternatives, and their latency and durability properties were not supplied.",
+      "Subject-revision stability is necessary but insufficient: the conclusion also depends on operator-change-2 remaining authoritative.",
+      "The record determines whether the old selection is presently settled, not which option a fresh durability-first synthesis would select."
+    ],
+    "rigor": {
+      "tier": "standard",
+      "trigger": "A previously selected option is being justified across two viable priority rules.",
+      "tier_reason": "Selection depends on an authoritative objective ordering, and that ordering changed even though the code and formal option properties did not."
+    },
+    "decision_frame": {
+      "question": "May the latency-first selected option be treated as settled after authority changes the priority rule to durability-first?",
+      "system_boundary": "Only the supplied scenario and artifacts/facts.json.",
+      "actors": [
+        {
+          "actor": "operator",
+          "authority_ref": "operator-change-2"
+        }
+      ],
+      "alternatives": [
+        {
+          "ref": "old-selected-option",
+          "details": "Not supplied"
+        },
+        {
+          "ref": "other-feasible-options",
+          "details": "Not supplied"
+        }
+      ],
+      "hard_constraints": [
+        "Use only supplied scenario and artifacts.",
+        "Preserve the supplied fact that the subject revision and formal properties are unchanged.",
+        "Treat operator-change-2 as the current authority."
+      ],
+      "authorized_objectives": [
+        {
+          "objective": "durability",
+          "priority": 1
+        },
+        {
+          "objective": "latency",
+          "priority": 2
+        }
+      ],
+      "priority_rule": {
+        "old": "latency-first",
+        "current": "durability-first",
+        "authority_ref": "operator-change-2"
+      },
+      "assumptions": [
+        "A selected option is derived from both option properties and the authorized priority rule.",
+        "No dominance proof showing that the old option wins under every admissible priority rule was supplied."
+      ],
+      "empirical_premises": [],
+      "uncertainty_posture": "Reject the old settled status, but do not infer either a reversal or a new winner without the missing alternatives and property matrix."
+    },
+    "coverage": [
+      {
+        "family": "P1",
+        "status": "not-applicable",
+        "modules": [
+          "Relational and normalization theory"
+        ],
+        "reason": "No relation, dependency, key, decomposition, or persistence schema is supplied."
+      },
+      {
+        "family": "P2",
+        "status": "not-applicable",
+        "modules": [
+          "Transaction and concurrency theory"
+        ],
+        "reason": "No concurrent schedule, transaction history, isolation level, or anomaly is involved."
+      },
+      {
+        "family": "P3",
+        "status": "not-applicable",
+        "modules": [
+          "Distributed data and consistency theory"
+        ],
+        "reason": "Latency and durability are objective labels here; no partition model, replication protocol, or consistency guarantee is supplied."
+      },
+      {
+        "family": "P4",
+        "status": "not-applicable",
+        "modules": [
+          "Complexity and algorithmic analysis"
+        ],
+        "reason": "No algorithm, workload parameter, operation profile, recurrence, or index choice is supplied."
+      },
+      {
+        "family": "P5",
+        "status": "fired",
+        "modules": [
+          "Preconditions and postconditions",
+          "Refinement"
+        ],
+        "reason": "The old synthesis postcondition was established, if at all, under a latency-first precondition; the changed priority creates a different proof obligation."
+      },
+      {
+        "family": "P6",
+        "status": "not-applicable",
+        "modules": [
+          "Information theory"
+        ],
+        "reason": "No entropy, encoding, hashing, collision, or cardinality-estimation question is present."
+      },
+      {
+        "family": "P7",
+        "status": "fired",
+        "modules": [
+          "SSOT and normalization-for-code",
+          "Derived versus base data",
+          "Materialized-view coherence"
+        ],
+        "reason": "A selected option is derived decision state; changing its authoritative priority input requires regenerating the synthesis rather than serving the stale result."
+      },
+      {
+        "family": "P8",
+        "status": "unmapped",
+        "modules": [],
+        "reason": "The pinned theory battery defines seven lenses and supplies no eighth family."
+      },
+      {
+        "family": "P9",
+        "status": "unmapped",
+        "modules": [],
+        "reason": "The pinned theory battery defines seven lenses and supplies no ninth family."
+      }
+    ],
+    "derivations": [
+      {
+        "id": "d1",
+        "module": "Type theory and formal methods",
+        "construct": "Precondition-sensitive postcondition",
+        "sources": {
+          "primary_theory": [
+            "current-v1-SKILL.md: derive, do not assert",
+            "theory-battery.md §5: preconditions, postconditions, and refinement"
+          ],
+          "official_product_docs": []
+        },
+        "model": {
+          "old_obligation": "{priority = latency-first and properties = P} synthesize {selected = old-option}",
+          "current_obligation": "{priority = durability-first and properties = P} synthesize {selected = current-option}"
+        },
+        "preconditions": [
+          "The subject revision and formal property set P are unchanged.",
+          "The authoritative priority precondition changed."
+        ],
+        "fact_mapping": [
+          {
+            "fact": "subject_revision",
+            "value": "same-code"
+          },
+          {
+            "fact": "old_priority",
+            "value": "latency-first"
+          },
+          {
+            "fact": "current_priority",
+            "value": "durability-first"
+          }
+        ],
+        "steps": [
+          "The old postcondition is scoped to the latency-first precondition.",
+          "Durability-first is not the same precondition.",
+          "A postcondition cannot be transported to the changed precondition without a refinement or invariance proof.",
+          "No such proof or fresh synthesis record is supplied."
+        ],
+        "result": "The proposition that the old option is settled under the current authority is not established and is therefore refuted as stated.",
+        "residual_mismatch": "This does not prove that the old option loses; it may remain selected after a valid new synthesis."
+      },
+      {
+        "id": "d2",
+        "module": "Architecture formalisms",
+        "construct": "Derived-data coherence and SSOT update anomaly",
+        "sources": {
+          "primary_theory": [
+            "theory-battery.md §7: SSOT, derived versus base data, and materialized-view pattern"
+          ],
+          "official_product_docs": []
+        },
+        "model": {
+          "base_inputs": [
+            "formal option properties",
+            "authorized objectives",
+            "priority rule"
+          ],
+          "derived_value": "selected option"
+        },
+        "preconditions": [
+          "The priority rule is a base input to synthesis.",
+          "The old selection was derived under latency-first authority."
+        ],
+        "fact_mapping": [
+          {
+            "fact": "authority_ref",
+            "value": "operator-change-2"
+          },
+          {
+            "fact": "current_priority",
+            "value": "durability-first"
+          }
+        ],
+        "steps": [
+          "The selected option is derived from the decision-frame inputs.",
+          "operator-change-2 changes one authoritative base input.",
+          "Retaining the old derived selection without refresh creates the decision-record analogue of an update anomaly.",
+          "Coherence requires a new synthesis record tied to the current authority."
+        ],
+        "result": "Serving the old selection as settled is stale-derived-state behavior.",
+        "residual_mismatch": "The supplied material does not identify the old selection or provide enough option data to regenerate the winner."
+      },
+      {
+        "id": "d3",
+        "module": "Cross-lens synthesis",
+        "construct": "Priority-sensitive selection function",
+        "sources": {
+          "primary_theory": [
+            "current-v1-SKILL.md: explicit synthesis and concessions",
+            "theory-battery.md: cross-lens discipline"
+          ],
+          "official_product_docs": []
+        },
+        "model": {
+          "selection_function": "S(P,r) = the option preferred from property matrix P under priority rule r",
+          "known": "P is unchanged and r changes from latency-first to durability-first"
+        },
+        "preconditions": [
+          "At least two viable options may trade latency against durability.",
+          "No priority-invariant dominance result is supplied."
+        ],
+        "fact_mapping": [
+          {
+            "fact": "synthetic",
+            "value": true
+          },
+          {
+            "fact": "formal_properties",
+            "value": "unchanged per scenario"
+          }
+        ],
+        "steps": [
+          "P remaining fixed does not imply S(P, latency-first) equals S(P, durability-first).",
+          "Equality would require a new evaluation or a proof that the old option dominates on durability as well as latency.",
+          "Neither is present.",
+          "Because the alternative set and property matrix are absent, inequality cannot be proved either."
+        ],
+        "result": "The settled-status claim is refuted, while the fresh decision outcome remains underdetermined.",
+        "residual_mismatch": "A reversal cannot be claimed from a priority change alone."
+      }
+    ],
+    "empirical_closure": {
+      "state": "not-required",
+      "tests": []
+    },
+    "synthesis": {
+      "outcome": "underdetermined",
+      "selected_option": null,
+      "basis": [
+        "The authoritative priority rule changed.",
+        "The old synthesis, if any, discharged a different decision-frame obligation.",
+        "No current synthesis, dominance proof, alternative set, or property matrix is supplied."
+      ],
+      "conditions": [
+        "A settled selection requires resynthesis under durability-first authority.",
+        "operator-change-2 must remain the authoritative priority source.",
+        "The alternatives and their durability and latency properties must be supplied."
+      ],
+      "concessions": [
+        "The old option may still be selected if it is durability-optimal or priority-invariantly dominant.",
+        "Unchanged formal properties avoid recomputing those properties but do not avoid recomputing their priority-sensitive synthesis."
+      ],
+      "recovery_moves": [
+        "Recover the option-property matrix and the prior decision record.",
+        "Apply durability-first ordering under operator-change-2.",
+        "Issue a new synthesis record even if the selected option remains unchanged."
+      ]
+    },
+    "never_attests": [
+      "derivation-correctness-by-envelope",
+      "runtime-behavior-without-observation",
+      "priority-invariance-without-proof"
+    ]
+  }
+}

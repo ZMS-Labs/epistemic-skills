@@ -1,0 +1,1 @@
+{"synthetic":true,"relation":["user_id","method","priority"],"fds":["user_id,method -> priority","user_id,priority -> method"],"independent_sets":false}

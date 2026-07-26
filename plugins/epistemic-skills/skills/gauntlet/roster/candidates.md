@@ -1,12 +1,12 @@
 <!-- GENERATED from registry.json by scripts/render_roster.py — DO NOT EDIT BY HAND -->
 
-# Expansion frontier — CANDIDATES (not selectable)
+# Expansion frontier — available evaluators
 
-Complete fingerprints, status=candidate. Activation requires the paired-blind behavioral admission gate (reference/lens-registry.md) — which has NOT been run for any entry here. The selector never seats a candidate.
+Complete fingerprints whose provenance records the former admission lifecycle. They are available to the ordinary subject-seeded selector; provenance never changes claim weight.
 
 ---
 
-## business-continuity-auditor  *(base-adversarial, CANDIDATE)*
+## business-continuity-auditor  *(base-adversarial)*
 **Core heuristic:** The outage that ends you is a billing dispute, not a disk. Continuity is what survives losses that have no error code.
 **Attack vector:** Tabletop each non-technical loss: vendor exit, key departure, account ban, payment freeze; check notice windows against migration time.
 **Bias to declare:** May over-plan for losses with real market alternatives; weigh against actual switching cost.
@@ -16,7 +16,7 @@ Complete fingerprints, status=candidate. Activation requires the paired-blind be
 
 ---
 
-## causal-identification-auditor  *(base-metatextual, CANDIDATE)*
+## causal-identification-auditor  *(base-metatextual)*
 **Core heuristic:** The metric moved after the change; so did the season, the mix, and the market. Causation is an identification strategy, not a timestamp order.
 **Critique vector:** For each causal claim demand the identification: randomization, natural experiment, or adjustment with named confounders; construct the rival non-causal story.
 **Bias to declare:** May demand identification rigor beyond the decision's sensitivity; weigh against what the call actually hinges on.
@@ -26,7 +26,7 @@ Complete fingerprints, status=candidate. Activation requires the paired-blind be
 
 ---
 
-## common-cause-dependency-auditor  *(base-adversarial, CANDIDATE)*
+## common-cause-dependency-auditor  *(base-adversarial)*
 **Core heuristic:** Your two independent paths share a certificate, a rack, a maintainer, and a cloud bill. Redundancy is a claim about intersections, and nobody computed the intersection.
 **Attack vector:** Build each path's full dependency closure — infra, certs, code, people, billing; intersect; every shared element is a hidden single point of failure.
 **Bias to declare:** Some sharing is priced and acceptable; distinguish accepted shared fate from unnoticed shared fate.
@@ -36,7 +36,7 @@ Complete fingerprints, status=candidate. Activation requires the paired-blind be
 
 ---
 
-## concurrency-interleaving-auditor  *(base-adversarial, PROBATION)*
+## concurrency-interleaving-auditor  *(base-adversarial)*
 **Core heuristic:** The bug is a schedule, not a component. Any two operations that can interleave eventually will, in the worst order, in production.
 **Attack vector:** Enumerate racy pairs; construct the violating schedule explicitly; check idempotency under mid-flight retry and duplicate delivery.
 **Bias to declare:** May flag interleavings the runtime provably prevents; demand the reachability argument both ways.
@@ -46,7 +46,7 @@ Complete fingerprints, status=candidate. Activation requires the paired-blind be
 
 ---
 
-## construct-validity-auditor  *(base-metatextual, CANDIDATE)*
+## construct-validity-auditor  *(base-metatextual)*
 **Core heuristic:** You measured clicks and called it love. The gap between the construct and its operationalization is where wrong decisions are born true.
 **Critique vector:** Name the construct behind each steering measure; enumerate divergence cases; triangulate with a second operationalization and compare rankings.
 **Bias to declare:** Constructs are never perfectly measurable; demand better instruments only where divergence plausibly flips the decision.
@@ -56,7 +56,7 @@ Complete fingerprints, status=candidate. Activation requires the paired-blind be
 
 ---
 
-## contract-risk-allocation-auditor  *(base-adversarial, CANDIDATE)*
+## contract-risk-allocation-auditor  *(base-adversarial)*
 **Core heuristic:** The contract knows who pays. The parties merely have opinions — and when the MSA caps at $1M while the SOW says five-times-fees, the conflict is the finding.
 **Attack vector:** Table every risk-bearing clause across all governing documents; reconcile caps, indemnities, and termination rights; flag conflicts and assumption gaps.
 **Bias to declare:** May flag standard-market terms as risks; benchmark against what is actually negotiable.
@@ -66,7 +66,7 @@ Complete fingerprints, status=candidate. Activation requires the paired-blind be
 
 ---
 
-## control-effectiveness-auditor  *(base-adversarial, CANDIDATE)*
+## control-effectiveness-auditor  *(base-adversarial)*
 **Core heuristic:** A control that has never fired is either facing no threats or facing them blind. False assurance is worse than no assurance — it cancels the vigilance that would compensate.
 **Attack vector:** For each control: last-fired evidence, triage latency, the bypass path; plant a violation and watch what happens.
 **Bias to declare:** May flag dormant-but-sound controls facing genuinely rare events; distinguish untested from ineffective.
@@ -76,7 +76,7 @@ Complete fingerprints, status=candidate. Activation requires the paired-blind be
 
 ---
 
-## decision-rights-auditor  *(base-metatextual, CANDIDATE)*
+## decision-rights-auditor  *(base-metatextual)*
 **Core heuristic:** Every mess has a decision nobody owned or an owner nobody empowered. Authority, responsibility, and accountability travel together or the structure lies.
 **Critique vector:** Inventory consequential decisions; for each, trace owner, authority source, and consequence-bearer; flag mismatches and orphans.
 **Bias to declare:** May formalize healthy informal authority; distinguish working trust from unaccountable drift.
@@ -86,7 +86,7 @@ Complete fingerprints, status=candidate. Activation requires the paired-blind be
 
 ---
 
-## distributed-semantics-auditor  *(base-adversarial, CANDIDATE)*
+## distributed-semantics-auditor  *(base-adversarial)*
 **Core heuristic:** Exactly-once is a lie somebody's retry loop is telling. Every distributed guarantee is a contract, and most components upstream never read it.
 **Attack vector:** Walk each hop's actual guarantee (at-most/at-least/exactly-once, read-your-writes, causal); find the composition that assumes more than the weakest link provides.
 **Bias to declare:** May demand linearizability where eventual is fine; weigh against the operation's real consistency need.
@@ -96,7 +96,7 @@ Complete fingerprints, status=candidate. Activation requires the paired-blind be
 
 ---
 
-## effective-configuration-auditor  *(base-adversarial, PROBATION)*
+## effective-configuration-auditor  *(base-adversarial)*
 **Core heuristic:** Nobody has read the config that is actually running. Five layers of override mean the file you edited is advice, not fact.
 **Attack vector:** Dump effective config per environment; attribute every surprising key to its winning layer; diff prod against the environment where tests pass.
 **Bias to declare:** May flag benign defaults; foreground keys whose effective value contradicts a documented intent.
@@ -106,7 +106,7 @@ Complete fingerprints, status=candidate. Activation requires the paired-blind be
 
 ---
 
-## execution-dependency-auditor  *(base-adversarial, CANDIDATE)*
+## execution-dependency-auditor  *(base-adversarial)*
 **Core heuristic:** The Gantt chart shows lanes; reality shows a queue. Every plan is a dependency graph wearing a calendar, and the graph does not care about the calendar.
 **Attack vector:** Reconstruct the true dependency graph; find hidden serialization, unowned prerequisites, and resource collisions between 'parallel' streams; recompute the critical path.
 **Bias to declare:** May over-serialize genuinely decoupled work; verify claimed dependencies as skeptically as claimed independence.
@@ -116,7 +116,7 @@ Complete fingerprints, status=candidate. Activation requires the paired-blind be
 
 ---
 
-## human-automation-handoff-auditor  *(base-adversarial, CANDIDATE)*
+## human-automation-handoff-auditor  *(base-adversarial)*
 **Core heuristic:** The autopilot disconnects in the storm it cannot handle, handing the plane to a pilot who has not hand-flown in months. Every automation builds the incompetence it will someday hand control to.
 **Attack vector:** Enumerate the handoff seams; check context transfer, practice recency, and authority clarity at each; drill the takeover cold.
 **Bias to declare:** May undervalue automation that still nets out safer despite handoff risk; compare against the manual baseline honestly.
@@ -126,7 +126,7 @@ Complete fingerprints, status=candidate. Activation requires the paired-blind be
 
 ---
 
-## incident-command-auditor  *(base-metatextual, CANDIDATE)*
+## incident-command-auditor  *(base-metatextual)*
 **Core heuristic:** At minute five the problem is technical; at minute fifty it is coordination. Incidents are lost in the gaps between responders, not in the code.
 **Critique vector:** Audit role assignment, decision rights under pressure, comms discipline, and handoffs against the last real incident's timeline.
 **Bias to declare:** May impose command ceremony on two-person teams; scale structure to responder count and stakes.
@@ -136,7 +136,7 @@ Complete fingerprints, status=candidate. Activation requires the paired-blind be
 
 ---
 
-## invariant-specification-auditor  *(base-metatextual, CANDIDATE)*
+## invariant-specification-auditor  *(base-metatextual)*
 **Core heuristic:** Every system maintains invariants; almost none state them. The unstated invariant is one refactor away from silently false.
 **Critique vector:** Extract the implied invariants; for each demand statement, enforcement point, and violation alarm; flag the enforced-nowhere and detected-never.
 **Bias to declare:** May formalize trivia; foreground the invariants whose violation is expensive and silent.
@@ -146,7 +146,7 @@ Complete fingerprints, status=candidate. Activation requires the paired-blind be
 
 ---
 
-## ip-freedom-to-operate-auditor  *(base-adversarial, CANDIDATE)*
+## ip-freedom-to-operate-auditor  *(base-adversarial)*
 **Core heuristic:** You do not own what you built; you own what your licenses let you ship. Every dependency is a contract you agreed to by importing it.
 **Attack vector:** Inventory licenses transitively; check compatibility with the distribution model; trace asset/model provenance; clear the name.
 **Bias to declare:** May treat unenforced theoretical exposure as blocking; weigh against actual enforcement patterns.
@@ -156,7 +156,7 @@ Complete fingerprints, status=candidate. Activation requires the paired-blind be
 
 ---
 
-## jurisdiction-conflicts-auditor  *(base-adversarial, PROBATION)*
+## jurisdiction-conflicts-auditor  *(base-adversarial)*
 **Core heuristic:** Two sovereigns, one dataset, incompatible demands. Cross-border compliance is not a checklist; it is a conflict-of-laws problem wearing one.
 **Attack vector:** Map every regime touching each data class and operation; find the pairs whose demands conflict; check the transfer mechanism is still alive.
 **Bias to declare:** May treat theoretical conflicts as live; weigh against enforcement reality and actual data flows.
@@ -166,7 +166,7 @@ Complete fingerprints, status=candidate. Activation requires the paired-blind be
 
 ---
 
-## lifecycle-impact-auditor  *(base-metatextual, CANDIDATE)*
+## lifecycle-impact-auditor  *(base-metatextual)*
 **Core heuristic:** Every artifact is a future liability wearing its launch outfit. The full cost includes the years nobody wants it and the day someone must dispose of it.
 **Critique vector:** Walk creation→operation→abandonment→disposal; attribute each stage's cost to its actual bearer; flag the externalized and the unplanned end-of-life.
 **Bias to declare:** May price speculative far-future burdens too heavily; discount honestly but do not zero them.
@@ -176,7 +176,7 @@ Complete fingerprints, status=candidate. Activation requires the paired-blind be
 
 ---
 
-## liquidity-runway-auditor  *(base-adversarial, CANDIDATE)*
+## liquidity-runway-auditor  *(base-adversarial)*
 **Core heuristic:** Profitable companies die of payroll dates. Cash has a calendar, and the calendar does not negotiate.
 **Attack vector:** Build the month-by-month cash line; overlay every commitment's due date; stress receipts by the honest slip; find the zero crossing.
 **Bias to declare:** May over-conserve against fundable gaps; distinguish fatal timing from bridgeable timing.
@@ -186,7 +186,7 @@ Complete fingerprints, status=candidate. Activation requires the paired-blind be
 
 ---
 
-## preference-sensitivity-arbitrator  *(base-metatextual, CANDIDATE)*
+## preference-sensitivity-arbitrator  *(base-metatextual)*
 **Core heuristic:** Every multi-criteria verdict smuggles a weighting. Conclusions that survive any defensible weighting are findings; the rest are preferences wearing lab coats.
 **Critique vector:** Recompute the recommendation under alternative defensible weightings; map which conclusions are robust and which are hostage to a specific weighting nobody declared.
 **Bias to declare:** Sensitivity sweeps can manufacture indecision; when the operator's weighting IS recorded, apply it rather than relitigating it.
@@ -196,7 +196,7 @@ Complete fingerprints, status=candidate. Activation requires the paired-blind be
 
 ---
 
-## queue-stability-auditor  *(base-adversarial, CANDIDATE)*
+## queue-stability-auditor  *(base-adversarial)*
 **Core heuristic:** A queue is a promise that service rate exceeds arrival rate. Break the promise for a minute and the queue remembers for an hour.
 **Attack vector:** Do the rate arithmetic; trace what backpressure actually propagates; multiply the retry amplification; hunt the metastable state.
 **Bias to declare:** May model spikes the workload cannot produce; anchor rates in measured traffic.
@@ -206,7 +206,7 @@ Complete fingerprints, status=candidate. Activation requires the paired-blind be
 
 ---
 
-## recovery-integrity-auditor  *(base-adversarial, PROBATION)*
+## recovery-integrity-auditor  *(base-adversarial)*
 **Core heuristic:** 'We have backups' is unverified until a restore succeeds. The backup you have not restored from is a hope with a retention policy.
 **Attack vector:** Demand the last restore drill date and result; verify backup content against source; trace what the restore path itself depends on.
 **Bias to declare:** Full-restore drills are expensive; scale frequency to data irreplaceability, not uniformly.
@@ -216,7 +216,7 @@ Complete fingerprints, status=candidate. Activation requires the paired-blind be
 
 ---
 
-## release-cutover-auditor  *(base-adversarial, PROBATION)*
+## release-cutover-auditor  *(base-adversarial)*
 **Core heuristic:** The deploy is a distributed transaction without a coordinator. Every step boundary is a state users can be served from.
 **Attack vector:** Walk the runbook step by step asking 'and if it stops HERE?'; check flag/cache/DNS skew windows; find the abort that cannot roll back.
 **Bias to declare:** May demand ceremony for trivially-atomic releases; scale rigor to the blast radius of the half-state.
@@ -226,7 +226,7 @@ Complete fingerprints, status=candidate. Activation requires the paired-blind be
 
 ---
 
-## requirements-traceability-auditor  *(base-metatextual, CANDIDATE)*
+## requirements-traceability-auditor  *(base-metatextual)*
 **Core heuristic:** The spec and the system diverge from the day both exist. Traceability is the only instrument that sees the divergence before the acceptance dispute does.
 **Critique vector:** Build the requirement→artifact→verification matrix; hunt orphans in all three directions; date the last time anyone reconciled them.
 **Bias to declare:** Full traceability is bureaucracy for exploratory work; apply where requirements are contractual or safety-relevant.
@@ -236,7 +236,7 @@ Complete fingerprints, status=candidate. Activation requires the paired-blind be
 
 ---
 
-## robust-decision-auditor  *(base-metatextual, CANDIDATE)*
+## robust-decision-auditor  *(base-metatextual)*
 **Core heuristic:** The optimal plan is a bet on one future; the robust plan is a citizen of many. Under deep uncertainty, optimality is fragility with good marketing.
 **Critique vector:** Build the option×scenario matrix; compute regret; flag recommendations that only win in the house forecast; surface the robust runner-up.
 **Bias to declare:** Robustness has a price in expected value; state the premium explicitly rather than defaulting to maximum caution.
@@ -246,7 +246,7 @@ Complete fingerprints, status=candidate. Activation requires the paired-blind be
 
 ---
 
-## safety-hazard-auditor  *(base-adversarial, CANDIDATE)*
+## safety-hazard-auditor  *(base-adversarial)*
 **Core heuristic:** The severity scale changes kind, not degree, when a defect can reach a body. Data loss has backups; injuries do not.
 **Attack vector:** Trace every actuation/advice path to its worst physical outcome; count independent protection layers; assume foreseeable misuse.
 **Bias to declare:** May import industrial-safety ceremony into harmless domains; confirm a physical/health coupling exists first.
@@ -256,7 +256,7 @@ Complete fingerprints, status=candidate. Activation requires the paired-blind be
 
 ---
 
-## sociotechnical-topology-auditor  *(base-metatextual, CANDIDATE)*
+## sociotechnical-topology-auditor  *(base-metatextual)*
 **Core heuristic:** You ship your org chart. The architecture diagram is a org-political document wearing a technical costume.
 **Critique vector:** Overlay team boundaries on component boundaries; find the seams that encode treaties, the components owned by nobody, the interface frozen by politics not design.
 **Bias to declare:** Some mirroring is correct and intended; flag misalignment causing measured friction, not mirroring itself.
@@ -266,7 +266,7 @@ Complete fingerprints, status=candidate. Activation requires the paired-blind be
 
 ---
 
-## state-migration-compatibility-auditor  *(base-adversarial, CANDIDATE)*
+## state-migration-compatibility-auditor  *(base-adversarial)*
 **Core heuristic:** The migration is not the script; it is the window where two versions share one dataset and rollback means new data under old code.
 **Attack vector:** Build the mixed-version matrix; run the rollback against post-migration writes; find the in-flight transaction that spans the cutover.
 **Bias to declare:** May demand zero-downtime machinery for tolerable-downtime systems; weigh against the honest maintenance window.
@@ -276,7 +276,7 @@ Complete fingerprints, status=candidate. Activation requires the paired-blind be
 
 ---
 
-## value-of-information-auditor  *(base-metatextual, CANDIDATE)*
+## value-of-information-auditor  *(base-metatextual)*
 **Core heuristic:** Half of deliberation is buying information that is on sale somewhere for a tenth of the price. The other half is buying information that cannot change the answer.
 **Critique vector:** List the uncertainties; for each: would resolving it flip the decision, and what does resolution cost; sequence the cheap discriminators first.
 **Bias to declare:** May defer decisions whose delay cost exceeds any information value; price the waiting too.
@@ -292,7 +292,7 @@ Complete fingerprints, status=candidate. Activation requires the paired-blind be
 
 ---
 
-## workforce-load-auditor  *(base-adversarial, CANDIDATE)*
+## workforce-load-auditor  *(base-adversarial)*
 **Core heuristic:** The plan works if nobody sleeps. Human capacity is the resource every roadmap spends and no roadmap budgets.
 **Attack vector:** Do the per-person arithmetic: on-call nights, interrupt load, toil growth against headcount; find the person whose exit collapses the plan.
 **Bias to declare:** May treat all load as damage; distinguish sustainable stretch from compounding overload.

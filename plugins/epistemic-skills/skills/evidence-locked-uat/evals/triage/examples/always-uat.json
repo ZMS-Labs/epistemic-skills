@@ -1,0 +1,6 @@
+[
+  {"id":"routine-presentation","route":"uat","routine_check":[],"packet_required":true,"pipeline":["contract-writer","actor","verifier","judge"],"artifacts":["run_id","contracts","evidence_dir","manifest"],"verdict":null},
+  {"id":"stateful-keyboard","route":"uat","routine_check":[],"packet_required":true,"pipeline":["contract-writer","actor","verifier","judge"],"artifacts":["run_id","contracts","evidence_dir","manifest"],"verdict":null},
+  {"id":"explicit-uat-request","route":"uat","routine_check":[],"packet_required":true,"pipeline":["contract-writer","actor","verifier","judge"],"artifacts":["run_id","contracts","evidence_dir","manifest"],"verdict":null},
+  {"id":"unreachable-material-target","route":"uat","routine_check":[],"packet_required":true,"pipeline":["contract-writer","actor","verifier","judge"],"artifacts":["run_id","contracts","evidence_dir","manifest"],"verdict":null}
+]

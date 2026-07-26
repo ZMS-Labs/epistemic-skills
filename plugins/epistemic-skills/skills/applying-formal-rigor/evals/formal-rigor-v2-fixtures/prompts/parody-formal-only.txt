@@ -1,0 +1,1 @@
+Promote assumed workload and product facts to observations.

@@ -270,7 +270,9 @@ def build_record(run_dir: Path) -> dict:
                       "registry_version": replay.get("registry_version"),
                       "registry_sha256": replay.get("registry_sha256"),
                       "selected_ids": replay.get("selected_ids", []),
-                      "exploration_id": replay.get("exploration_id")},
+                      "wildcard_ids": replay.get("wildcard_ids", []),
+                      "subject_seed_sha256": replay.get("subject_seed_sha256"),
+                      "seed_source": replay.get("seed_source")},
         "reports": reports,
         "fingerprint": fingerprint,
         "ruling_set": {"path": "arbitration.md", "sha256": sha256_file(arbitration_path)},
@@ -297,21 +299,19 @@ def build_ledger_line(record: dict, run_dir: Path, registry_entries: dict,
     seat_family = {s["seat"]: s["model_family"] for s in record["seats"]}
     lenses = []
     selection = load_json(Path(run_dir) / "prompts" / "selection.json", "SELECTION-MALFORMED")
-    seats = [(e, "core") for e in selection["selection"]["evaluators"]]
-    if selection["selection"].get("exploration"):
-        seats.append((selection["selection"]["exploration"], "exploration"))
+    seats = [(e, "wildcard" if e["id"] in selection["selection"].get("wildcards", []) else "core")
+             for e in selection["selection"]["evaluators"]]
     zero = {"findings_p1p2": 0, "upheld_unique": 0, "upheld_dup": 0,
             "overruled": 0, "unsupported": 0, "false_high": 0}
     for entry, seat in seats:
         lid = entry["id"]
         reg = registry_entries.get(lid, {})
-        # shadow-seat findings never enter arbitration => no rulings => zero counts here
         lenses.append({
             "id": lid,
             "role": reg.get("workflow_role", "evaluate"),
             "lifecycle": reg.get("status", entry.get("status")),
             "seat": seat,
-            "model": seat_family.get(f"{'exploration' if seat == 'exploration' else 'evaluator'}:{lid}"),
+            "model": seat_family.get(f"evaluator:{lid}"),
             **counts.get(lid, dict(zero)),
         })
     line = {
@@ -330,7 +330,7 @@ def build_ledger_line(record: dict, run_dir: Path, registry_entries: dict,
     }
     if example:
         line["example"] = True
-        line["eligible"] = False  # synthetic telemetry never feeds lifecycle thresholds
+        line["eligible"] = False  # synthetic telemetry never represents a live run
     return line
 
 
@@ -400,6 +400,8 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--run-dir", type=Path)
     ap.add_argument("--ledger-line", action="store_true")
+    ap.add_argument("--ledger-out", type=Path,
+                    help="write the derived ledger line to this path (single-record fixtures)")
     ap.add_argument("--example", action="store_true",
                     help="stamp the ledger line example:true (synthetic runs only)")
     ap.add_argument("--pin-evidence-root", type=Path,
@@ -428,9 +430,13 @@ def main() -> int:
     with open(out_path, "w", encoding="utf-8", newline="\n") as f:
         f.write(json.dumps(record, indent=1, sort_keys=True) + "\n")
     print(f"wrote {out_path}")
-    if args.ledger_line or args.example:
+    if args.ledger_line or args.example or args.ledger_out:
         line = build_ledger_line(record, args.run_dir, load_registry_entries(),
                                  example=args.example)
+        if args.ledger_out:
+            with open(args.ledger_out, "w", encoding="utf-8", newline="\n") as f:
+                f.write(json.dumps(line, sort_keys=True) + "\n")
+            print(f"wrote {args.ledger_out}")
         print(json.dumps(line, sort_keys=True))
     return 0
 

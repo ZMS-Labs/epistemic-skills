@@ -1,0 +1,229 @@
+# applying-formal-rigor v2 blinded fixtures
+
+This directory implements Phase B of the approved v2 design. It is a blinded conformance
+smoke check, not a population measurement or truth oracle.
+
+- `fixtures/<id>/scenario.md` and `artifacts/` are run-agent visible.
+- `ground-truth.json`, `score.py`, thresholds, and other results are scorer-only.
+- the public response and v2 record schemas close their persisted vocabularies;
+- `formal-rigor-fixture-transport.schema.json` is the strict, inlined,
+  OpenAI-compatible projection used to fail closed at model-output time;
+- `semantic-adjudication.md` owns independent derivation judgment;
+- `results/` records immutable identities, hashes, dissent, and coverage limits.
+
+Run `python tests/run_tests.py` and `python score.py --inventory-only`.
+
+The authorized full live battery is executed by `run_live.py` from a clean,
+pushed candidate commit:
+
+```text
+python run_live.py plan
+python run_live.py run-arms --output-root <durable-temp-root> --arm v2-candidate --repetition 1 --fixture tm-01-false-mvd --workers 1 --cursor <cursor-agent-path>
+python run_live.py run-arms --output-root <durable-temp-root> --workers 4
+python run_live.py run-semantic --output-root <durable-temp-root> --workers 4
+python run_live.py summarize-semantic --output-root <durable-temp-root>
+```
+
+An authenticated Fleet Orchestrator surface bridge may be used explicitly when
+the local harness is unavailable:
+
+```text
+python run_live.py run-arms --output-root <durable-temp-root> --cursor fleet-bridge://default/fleet-orchestrator/surface-bridge-v2-0 --cursor-model auto
+```
+
+This adapter sends a sealed, scorer-free virtual packet over `kubectl exec`
+stdin to the bridge's full-output `/stream` endpoint. It never clones the
+repository into the agent workspace, and the local command line contains no
+fixture payload. The one-object JSON boundary is repeated after the sealed
+packet so the final instruction forbids draft snapshots, wrapper delimiters,
+and extra closing braces, while also requiring concise, non-repetitive
+schema content plus a full comma, string, and delimiter syntax check. The
+bridge currently does not forward a requested
+model to its Cursor or Gemini streaming helpers, so the adapter rejects every
+model id except the honest `auto` label and records `surface-default-auto` in
+each call.
+Raw bridge NDJSON is always retained. If Cursor emits multiple complete
+snapshots for the same recognized response envelope and fixture, only the
+final snapshot is materialized and that normalization is recorded; distinct
+envelopes fail closed. If one malformed snapshot is immediately followed by
+one terminal complete snapshot, recovery is limited to matching recognized
+envelope and fixture headers with no other marker or trailing content; every
+ambiguous form remains unnormalized. Calls through one runner process are
+serialized because the shared bridge pod can be terminated under concurrent
+Cursor streams; local Codex and agy calls still use the requested worker
+concurrency.
+Use of this adapter is therefore a disclosed transport/model-plan variance,
+not evidence for the pinned Cursor model below.
+
+Local Codex arm calls receive the complete sealed packet on stdin rather than
+the Windows command line. The prompt embeds the scenario, minimal artifacts,
+applicable pinned-v1 files, candidate skill, theory battery, and module index;
+material module bodies remain available in the sealed packet for selective
+reading. The transport schema rejects readiness acknowledgements and other
+non-response text before it can be mistaken for a scored answer.
+
+Local plain-text harness stdout is retained unchanged in `events.jsonl`. When
+that stdout contains prose or a Markdown fence around exactly one complete,
+top-level `formal-rigor-fixture-response@1` or
+`formal-rigor-semantic-adjudication@1` JSON envelope, the runner may extract
+that envelope into `response.json` and records
+`response_normalization: extracted-single-recognized-json-envelope` in
+`call.json`. This is transport normalization only: it does not repair fields,
+consult scorer truth, or imply schema or semantic validity. Zero recognized
+envelopes, repeated or distinct envelopes, nested schema/prompt echoes, and
+ambiguous or truncated recognized JSON remain unnormalized and fail closed at
+the existing JSON-parseability gate. Fleet bridge snapshot normalization keeps
+its separate, stricter provenance and distinct-envelope protections.
+
+The plan contains 286 arm calls (the two missing repetitions for each baseline,
+three candidate repetitions, and all six 22-fixture parodies) plus 132 isolated
+semantic-seat calls. Calls are fresh and terminal: once a `call.json` exists,
+the runner never retries it. Transport, parse, secret-screen, packet hashes,
+raw response, events, and stderr are retained for adjudication and export.
+
+The provider allocation is frozen rather than additive: candidate repetitions
+1/2/3 use Codex OpenAI `gpt-5.6-sol`, agy Gemini `gemini-3.1-pro-high`, and
+Cursor CLI `gpt-5.6-sol`, respectively. Missing baseline repetitions follow the
+same mapping, two parody arms are assigned to each harness, and semantic seats
+rotate across the two harnesses other than the candidate response's harness.
+The preregistered 418-call plan remains the identity of the original epoch;
+it is a plan size, not a continuing authorization ceiling. Any correction run
+uses a new immutable output root and is reported as a separate epoch rather
+than overwriting or retrying a recorded call. Including the 44 already-recorded
+OpenAI RED baseline calls, each harness contributes 154 arm-plus-adjudication
+calls in the original plan.
+
+### Prospective `noncursor-degraded-v1` protocol
+
+The preceding allocation paragraph is immutable historical evidence for the
+`frozen-three-provider` identity. It does not authorize the following
+prospective protocol.
+
+`noncursor-degraded-v1` is the operator-authorized degraded evaluation protocol.
+It uses a new empty output root and a matching `campaign-plan.json`; it is never
+a continuation of, repair to, or substitution within a historical root. Invoke
+each stage with the explicit plan identity:
+
+```text
+python run_live.py plan --provider-plan noncursor-degraded-v1
+python run_live.py run-arms --output-root <new-empty-durable-root> --provider-plan noncursor-degraded-v1 --workers 4
+python run_live.py run-semantic --output-root <new-empty-durable-root> --provider-plan noncursor-degraded-v1 --workers 4
+python run_live.py summarize-semantic --output-root <new-empty-durable-root> --provider-plan noncursor-degraded-v1
+```
+
+Its candidate/missing-baseline repetitions map to Codex, agy/Gemini, and Codex.
+Codex runs the `always-cautious`, `closed-taxonomy`, and `formal-only` parodies;
+agy/Gemini runs `always-decide`, `full-ceremony`, and `jargon-only`. The plan has
+exactly 286 arm calls `{codex: 154, agy: 132, cursor: 0}` and 132 semantic seats
+`{codex: 44, agy: 88, cursor: 0}`. Each candidate response receives both
+semantic seats as separate, context-isolated calls on the non-candidate
+provider. This preserves producer/reviewer separation but loses between-seat
+provider diversity.
+
+Every call is fresh and terminal: no retry is allowed after `call.json` exists.
+The root must contain no Cursor or Fleet Cursor call. Structural, P0, control,
+and semantic gates are unchanged. A passing epoch supports only two-provider
+blinded conformance; it does not establish three-provider robustness or Cursor
+reliability.
+
+Absent or non-isolated model execution is `NOT_RUN`, never a RED result credited to an
+arm. Neutral and current-v1 RED runs were durably recorded before production edits under
+`results/2026-07-24-red-baseline/`; candidate, parody, and semantic arms remain separately
+gated and `NOT_RUN` until executed.
+
+### Prospective `noncursor-degraded-v2` protocol
+
+`noncursor-degraded-v2` is distinct from and does not rewrite the completed,
+excluded v1 epochs. It retains the same two-provider allocation and exact
+counts: 286 arms `{codex: 154, agy: 132, cursor: 0}` and 132 isolated semantic
+seats `{codex: 44, agy: 88, cursor: 0}`. All structural, P0, control, semantic,
+no-retry, fail-closed, and two-provider-only claim-boundary rules are unchanged.
+
+Before any v2 call, its new empty root must reject an output-adjacent neutral
+packet root when that root is profile-bound. agy arm calls use direct
+`agy --add-dir .` execution at medium effort; agy semantic calls use high
+effort; Codex calls use high effort. Because agy has no native schema-enforced
+mode, every non-native-schema arm prompt embeds the exact frozen transport
+schema, and every non-native-schema semantic prompt embeds only the exact
+semantic transport schema, never truth or scorer material. The campaign plan
+and every call record the protocol identity, canonical packet root, and
+execution policy/settings. Historical frozen and v1 identities remain
+inspectable but non-runnable under current source; historical execution must
+use their pinned commits. The active v2 Codex and agy harnesses reject
+Fleet-bridge overrides; any bridge-backed evaluation requires its own
+preregistered protocol identity. A passing v2 epoch supports only two-provider
+blinded conformance; release remains HOLD until every unchanged gate passes.
+
+### Prospective `noncursor-degraded-v3` protocol
+
+`noncursor-degraded-v3` is distinct from and does not repair, relabel, or reuse
+v2. It retains the same two-provider allocation/counts, unchanged
+structural/P0/control/semantic gates, terminal no-retry rule, and two-provider
+claim boundary. Its exact matrix is arms: Codex `gpt-5.6-sol`/high and agy
+`gemini-3.6-flash-medium`/medium; semantic: Codex `gpt-5.6-sol`/high and agy
+`gemini-3.1-pro-high`/high; Cursor is zero/unavailable.
+
+Before fixture calls in a fresh v3 source/root, the AGY 1.1.7
+version/catalog/suffix capability preflight and receipt must prove its exact
+AGY pairings are accepted. This is not a catalog preflight for Codex: its narrow
+invocation-compatibility basis is V2's 154/154 qualifying calls under the same
+`gpt-5.6-sol`/high binding, while V2 remains wholly excluded. The new v3
+manifest and every call record the identity, phase-specific matrix, canonical
+packet root, execution policy, schema-delivery mode, and AGY receipt. V3
+receives no release credit unless a full fresh epoch passes every unchanged
+gate; release remains HOLD until then.
+
+### Completed excluded `noncursor-degraded-v3` epoch
+
+V3 at source `693c0fb26fa4e0c4f54e63b52497783c4ce60131`, root
+`C:\tmp\formal-rigor-noncursor-v3-693c0fb`, and canonical pin
+`87e7a615927b4e4148ae5d79677d78166c2aeb8ded294d79ff4dfaf204af29b1` is
+excluded. It has 286 terminal arms and 204 qualifying calls: Codex 154/154 and
+AGY 50/132. AGY's 82 invalid calls are eleven completed nonparseable raw
+outputs, four AGY-internal roughly-302-second timeouts, and 67 quota failures.
+The eleven raw outputs are repeated valid JSON frames, never one final object:
+eight have two byte-identical frames, two have three, and one has five; none
+has divergent frames. Frozen fail-closed transport therefore rejects them.
+
+V3 receives no structural score, semantic adjudication, or release credit; no
+call may be retried, repaired, resumed, or reused. Release remains HOLD and
+Cursor remains zero/unavailable.
+
+After quota reset, a separately preregistered bounded AGY transport pilot may
+use AGY 1.1.7, the exact phase models, `--output-format json`,
+`--print-timeout 10m`, and runner `--timeout-seconds 720`. This explicit
+720-second outer timeout exceeds the 600-second internal wait, avoiding an
+outer-kill race and preserving terminal evidence. The pilot retains
+byte-preserving raw evidence and fail-closed one-final-object criteria. Only a
+passing pilot may justify a fresh V4/full root. The Fleet Gemini bridge ignores
+selected model/effort and likely shares
+quota, so is unsuitable; Ollama `qwen2.5` 7B is exploratory only and cannot
+replace release evidence.
+
+### V3 post-hoc diagnostic (non-release)
+
+`posthoc_diagnostic.py` creates a fail-closed, diagnostic-only structural view
+of the excluded V3 source. Its only source is the excluded V3 root
+`C:\tmp\formal-rigor-noncursor-v3-693c0fb` at commit
+`693c0fb26fa4e0c4f54e63b52497783c4ce60131`, with content pin
+`87e7a615927b4e4148ae5d79677d78166c2aeb8ded294d79ff4dfaf204af29b1`.
+Choose a new, empty output root outside that source root; the prepare command
+rejects a non-empty root and any output nested under the source.
+
+```text
+python posthoc_diagnostic.py prepare-structural --source-root C:\tmp\formal-rigor-noncursor-v3-693c0fb --output-root <new-empty-diagnostic-root> --expected-pin 87e7a615927b4e4148ae5d79677d78166c2aeb8ded294d79ff4dfaf204af29b1 --source-commit 693c0fb26fa4e0c4f54e63b52497783c4ce60131
+```
+
+After structural preparation, run provider-filtered semantic diagnostics only
+for the selected harnesses. `--implementation-commit` is the clean checked-out
+implementation commit used by the semantic runner.
+
+```text
+python posthoc_diagnostic.py run-semantic --output-root <new-empty-diagnostic-root> --harness codex --implementation-commit <40-character-implementation-commit>
+python posthoc_diagnostic.py run-semantic --output-root <new-empty-diagnostic-root> --harness agy --implementation-commit <40-character-implementation-commit>
+python posthoc_diagnostic.py summarize --output-root <new-empty-diagnostic-root>
+```
+
+The outputs are post-hoc confidence evidence only. They can never make V3 or
+3.0.0 pass, repair/retry/reuse a V3 call, award structural or semantic release
+credit, or change the release HOLD boundary.

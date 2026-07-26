@@ -208,20 +208,17 @@ confidence is high · no stance holds more than half the seats · mutex/counter-
 peers (e.g. `cloud-native-purist`/`local-first-survivalist`) never co-selected
 without a recorded intentional contrast, and then count as ONE diversity unit
 (see COLLISION_WAIVERS, `reference/lens-registry.md`) ·
-generators and judges never count toward evaluator diversity · candidates are
+generators and judges never count toward evaluator diversity · retired ids are
 never seated.
 
-**Shadow seat (probation telemetry — default ON):** at standard/deep/max the
-selector seats exactly ONE probation lens in an ADDITIONAL seat (panel +1,
-outside all diversity/stance math), rotation-balanced by prior seatings in
-`runs/ledger.jsonl`. This is how probation lenses earn their activation track
-record — do not disable it (`allow_probation_seat: false`) without recording why.
-**SHADOW semantics (external-review adjudication, 2026-07-14):** the shadow lens
-runs with the panel and passes mechanical criticism, and its outcomes are
-ledger-recorded (`"seat": "exploration"`) — but its findings are **EXCLUDED from
-arbitration and the verdict**. An unvalidated lens never touches a decision, and
-its telemetry is not confounded by having changed the panel it is measured against.
-Unique-basin credit is scored against what the core panel found.
+**Subject-seeded wildcards:** quick uses the three stance anchors; standard/deep
+include one deterministic wildcard from the available evaluator pool; max includes
+two, followed by a final coverage/counter-mode fill. Prefer the frozen dossier's
+`subject_sha256`; otherwise the selector hashes canonical stable subject fields and
+records that fallback. Wildcard ranking is a stable hash of subject seed + lens
+id/version. Historical run telemetry never governs selection. A wildcard uses the
+same `finding-set@1`, mechanical criticism, arbitration, and verdict path as every
+other evaluator; claim evidence, not seat provenance, determines weight.
 
 **Adjunct seats (also selected, outside the panel):** open questions get 1-2
 `generate_options` cards (null option mandatory) BEFORE the panel; `deep`/`max`
@@ -249,9 +246,9 @@ by explicit instruction otherwise. Every material finding also carries a
 addresses and that a fix must preserve. An empty "nothing valid here" kernel is allowed only
 with `[V]` evidence that the subject is wholly premised on a false state. This prevents an
 adversarial lens from winning by deleting the problem the subject was trying to solve. Keep
-an append-only record of the run and a token/step meter. Also dispatch the **shadow-seat lens** in the same fan-out (same contract, same
-barrier; skipping it starves the probation lifecycle) — its report is withheld from the
-arbitrator (shadow semantics, Step 4).
+an append-only record of the run and a token/step meter. Dispatch every selected
+evaluator, including subject-seeded wildcards, in the same fan-out, with the same
+contract and barrier. Do not reveal seat provenance to the arbitrator as a weight.
 
 **Reference implementation (one harness).** In Claude Code this is a dynamic Workflow
 (`assets/gauntlet-workflow.template.js`, `reference/execution-model.md`): `parallel()`
@@ -412,10 +409,10 @@ plus depth, verdict, registry sha, modes, per-lens model family, and `eligible`
 (true for completed standard/deep/max runs). `verify_run.py` is the post-run
 re-check: selector replay (registry drift reported explicitly), verdict
 re-derived from the ruling-set's P1/P2 fields, and the dossier→reports→
-arbitration→summary hash chain. This ledger is the ONLY data source for
-probation activation and deprecation thresholds (`reference/lens-registry.md`) —
-an unrecorded run gives probation lenses no track record. Commit the ledger line
-with the run; the run directory itself stays local-only (data axis:
+arbitration→summary hash chain. The ledger is non-governing observability: it may
+show per-lens yield, duplication, or false-high patterns, but it never activates,
+withholds, retires, weights, or selects a lens. Commit the ledger line with the run;
+the run directory itself stays local-only (data axis:
 `runs/README.md`). A fully worked synthetic exemplar ships at
 `examples/example-run/`. Review anytime with `python scripts/lens_stats.py`.
 
@@ -438,13 +435,14 @@ Shipped today: the staple, falsifiability contract, mechanical evidence checks,
 replayable Workflow log, the machine-readable registry + deterministic selector
 (mechanically validated: registry schema, 1000 selector constraint fixtures,
 targeted regressions — `tests/run_tests.py`). **Certified arbitrator: BUILT and RUN**
-(2026-07-17) — the planted-flaw seat battery (`evals/arbitrator-certification/`) runs the
+(2026-07-17) — the historical planted-flaw seat battery (`evals/arbitrator-certification/`) ran the
 arbitrator blind against 10 defect classes it must catch (fabricated citation, binary-file
 `[V]`, correlated-as-independent, malformed falsifier, inadequate oracle, unresolved-P1
-rounding, shadow-seat leakage, false-high, prompt-injection, polish-over-evidence);
-result **10/10 catch, CERTIFIED at standard rigor** (verdict-match 8/10, the two
-divergences being defensible more-conservative calls, not misses — see the battery's
-`results-2026-07-17.md`). **Still partial/unbuilt:** the behavioral battery has only a
+rounding, seat-provenance prejudice, false-high, prompt-injection, polish-over-evidence);
+result **10/10 catch at standard rigor** (verdict-match 8/10). That result is now
+historical: AC-07 changed from shadow exclusion to seat-provenance neutrality, and the
+amended battery is `NOT_RUN`; do not claim current certification from the old result.
+**Still partial/unbuilt:** the behavioral battery has only a
 **smoke subset run** (non-inferiority, not
 superiority; the full 24×4 sweep is unrun; smoke notes are not shipped as a standalone
 file in this public package), and Phases 1-3 (generation rigor, adjudication

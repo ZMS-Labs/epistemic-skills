@@ -1,0 +1,3 @@
+Apply the pinned current-v1 SKILL.md and theory-battery.md to only the supplied scenario
+and artifacts. Return exactly one formal-rigor-fixture-response@1 JSON object. Do not read
+ground truth, scorer, thresholds, other fixtures, or another arm's output.

@@ -1,0 +1,1 @@
+{"synthetic":true,"clock_condition":"a -> b implies C(a) < C(b)","converse":false,"total_order_extension":"timestamp plus process-id tie-break"}

@@ -1,0 +1,292 @@
+{
+  "response": "formal-rigor-fixture-response@1",
+  "fixture": "fc-02-value-of-information-probe",
+  "invocation": "standard",
+  "skip_reason": null,
+  "claim_assessments": [
+    {
+      "id": "c1",
+      "state": "refuted",
+      "derivation_ids": [
+        "D1",
+        "D2",
+        "D3"
+      ]
+    }
+  ],
+  "focused_output": [
+    "c1 is refuted: hit_rate is null, so the material workload premise is unobserved and cannot support selecting strategy A.",
+    "Let H be the workload hit-rate random variable and C_A(H), C_B(H) the strategies' ranking costs. Without observations or a distribution for H, the sign of E[C_A(H)-C_B(H)] is undetermined.",
+    "Preregister the ranking metric, threshold, prediction, and disconfirming result, then run the available eight-minute replay against both strategies on the same representative trace.",
+    "The current outcome is a reversible probe, not a selection of A or B; replay representativeness remains a residual empirical risk."
+  ],
+  "record": {
+    "record": "formal-rigor-record@2",
+    "subject": {
+      "ref": "fc-02-value-of-information-probe",
+      "revision": null
+    },
+    "valid_while": [
+      "subject-revision-unchanged"
+    ],
+    "coverage_limits": [
+      "Analysis is limited to scenario.md and artifacts/facts.json under the supplied pinned protocol.",
+      "Strategies A and B are not operationally defined.",
+      "The authorized ranking metric, direction, and material-difference threshold are unspecified.",
+      "No hit-rate observation, hit-rate distribution, or replay result is supplied.",
+      "Replay-trace representativeness and workload stationarity are not established.",
+      "No cache-coherence, concurrency, partition, or isolation behavior is specified."
+    ],
+    "rigor": {
+      "tier": "standard",
+      "trigger": "A cache-strategy decision has at least two viable alternatives and its ranking depends on an unmeasured workload premise.",
+      "tier_reason": "The decision is consequential enough to require derivation and empirical closure, but the supplied blast radius is local and no high-assurance safety trigger is present."
+    },
+    "decision_frame": {
+      "question": "Does the supplied evidence justify selecting cache strategy A, or must the unresolved hit-rate premise be tested first?",
+      "system_boundary": "The cache-strategy review, the supplied synthetic workload facts, and the available bounded replay.",
+      "actors": [
+        "reviewer",
+        "cache workload",
+        "replay harness"
+      ],
+      "alternatives": [
+        "select strategy A now",
+        "select strategy B now",
+        "defer selection and run a preregistered replay"
+      ],
+      "hard_constraints": [
+        "Use only the supplied scenario and artifacts.",
+        "Do not promote an assumed hit rate to an observed fact.",
+        "Do not claim a replay result that is absent."
+      ],
+      "authorized_objectives": [
+        "Produce an evidence-supported cache-strategy ranking.",
+        "Avoid an unconditional selection while a ranking-critical empirical premise is unresolved."
+      ],
+      "priority_rule": "Preserve evidential validity first; select A or B only after the material hit-rate premise is observed and evaluated against a prediction recorded before the result.",
+      "assumptions": [
+        "The scenario's statement that strategy ranking depends on the hit-rate distribution is accepted as part of the supplied decision frame.",
+        "The stated eight-minute replay is available as a bounded probe."
+      ],
+      "empirical_premises": [
+        {
+          "premise": "The relevant workload hit-rate distribution favors strategy A under the authorized ranking metric.",
+          "state": "unobserved",
+          "evidence": "artifacts/facts.json reports hit_rate as null."
+        },
+        {
+          "premise": "The replay trace represents the deployment workload sufficiently to discriminate between A and B.",
+          "state": "unobserved",
+          "evidence": "No representativeness evidence is supplied."
+        }
+      ],
+      "uncertainty_posture": "Keep the option ranking unresolved and use a preregistered, reversible probe; do not substitute an assumed hit rate for measurement."
+    },
+    "coverage": [
+      {
+        "family": "P1",
+        "status": "not-applicable",
+        "modules": [],
+        "reason": "No relation, functional dependency, multivalued dependency, key, or decomposition is specified."
+      },
+      {
+        "family": "P2",
+        "status": "not-applicable",
+        "modules": [],
+        "reason": "No concurrent schedule, conflicting operation, isolation level, or transaction anomaly is supplied."
+      },
+      {
+        "family": "P3",
+        "status": "not-applicable",
+        "modules": [],
+        "reason": "Although caches can be replicas, the scenario supplies no required consistency guarantee, partition assumption, or coherence mechanism to compare."
+      },
+      {
+        "family": "P4",
+        "status": "fired",
+        "modules": [
+          "operation-profile cost model",
+          "workload aggregation"
+        ],
+        "reason": "The ranking explicitly depends on the unmeasured hit-rate distribution, which is part of the workload operation profile."
+      },
+      {
+        "family": "P5",
+        "status": "fired",
+        "modules": [
+          "preconditions",
+          "representation invariant"
+        ],
+        "reason": "An evidence-valid unconditional selection requires distinguishing an observed premise from an assumed one."
+      },
+      {
+        "family": "P6",
+        "status": "not-applicable",
+        "modules": [],
+        "reason": "No encoding bound, identifier collision, hashing, compression, or cardinality-estimation question is present."
+      },
+      {
+        "family": "P7",
+        "status": "fired",
+        "modules": [
+          "reversibility",
+          "blast radius"
+        ],
+        "reason": "The supplied replay is bounded at eight minutes and the stated blast radius is local, making a reversible probe relevant."
+      },
+      {
+        "family": "P8",
+        "status": "unmapped",
+        "modules": [],
+        "reason": "The supplied pinned theory battery defines only seven lens families and provides no P8 apparatus."
+      },
+      {
+        "family": "P9",
+        "status": "unmapped",
+        "modules": [],
+        "reason": "The supplied pinned theory battery defines only seven lens families and provides no P9 apparatus."
+      }
+    ],
+    "derivations": [
+      {
+        "id": "D1",
+        "module": "P4 operation-profile cost model",
+        "construct": "Workload-parameterized expected cost",
+        "sources": {
+          "primary_theory": [
+            "theory-battery.md §4 Complexity & Algorithmic Analysis",
+            "current-v1-SKILL.md §Empirical closure"
+          ],
+          "official_product_docs": []
+        },
+        "model": "Let H be the workload hit-rate random variable. Let C_A(h) and C_B(h) be the authorized ranking costs of strategies A and B at hit rate h. With lower cost preferred, A is justified only if E[C_A(H)-C_B(H)] is negative by the preregistered materiality threshold.",
+        "preconditions": [
+          "The ranking depends materially on H.",
+          "The distribution or representative observations of H are available.",
+          "The ranking metric and materiality threshold are fixed before inspecting the result."
+        ],
+        "fact_mapping": [
+          "scenario.md states that ranking depends on an unmeasured hit-rate distribution.",
+          "artifacts/facts.json reports hit_rate as null.",
+          "No ranking metric, threshold, or hit-rate distribution is supplied."
+        ],
+        "steps": [
+          "The sign of E[C_A(H)-C_B(H)] determines the ranking under the model.",
+          "Computing or estimating that expectation requires observations or a distribution for H and defined strategy cost functions.",
+          "Those inputs are absent, so the sign is not derivable.",
+          "Therefore neither A nor B is established as the current winner, and selecting A by treating an assumption as observation is invalid."
+        ],
+        "result": "The A-over-B ranking is underdetermined; c1 is refuted.",
+        "residual_mismatch": "Even after measuring hit rate, the ranking remains unresolved unless the strategies, ranking metric, and materiality threshold are defined."
+      },
+      {
+        "id": "D2",
+        "module": "P5 preconditions and representation invariant",
+        "construct": "Evidence-state invariant and Hoare-style selection precondition",
+        "sources": {
+          "primary_theory": [
+            "theory-battery.md §5 Type Theory & Formal Methods",
+            "current-v1-SKILL.md §Empirical closure"
+          ],
+          "official_product_docs": []
+        },
+        "model": "Invariant I: an unconditional strategy selection may cite a ranking-critical runtime premise only when that premise is marked observed and evaluated against a prediction recorded before the result. Hoare triple: {H observed and preregistered comparison supports A} select(A) {selection preserves I}.",
+        "preconditions": [
+          "The hit-rate premise has state observed.",
+          "The prediction and disconfirming observation were recorded before the result.",
+          "The observation supports A under the preregistered rule."
+        ],
+        "fact_mapping": [
+          "hit_rate is null.",
+          "prediction_recorded is false.",
+          "No replay result is supplied."
+        ],
+        "steps": [
+          "The observed-hit-rate precondition is false.",
+          "The supplied prior-prediction flag is also false.",
+          "Executing select(A) from this state cannot establish the invariant's evidence requirement.",
+          "The legal current state is unresolved pending a newly preregistered test."
+        ],
+        "result": "Treating the assumed hit rate as observed and selecting A violates the evidence-state invariant; c1 is refuted.",
+        "residual_mismatch": "The record describes the invariant but the supplied materials do not identify an implementation that enforces evidence states by construction."
+      },
+      {
+        "id": "D3",
+        "module": "P7 reversibility and blast radius",
+        "construct": "Reversible probe under a bounded local failure domain",
+        "sources": {
+          "primary_theory": [
+            "theory-battery.md §7 Architecture Formalisms",
+            "current-v1-SKILL.md §Empirical closure"
+          ],
+          "official_product_docs": []
+        },
+        "model": "Compare an unsupported irreversible commitment with a bounded information-gathering stage. The probe defers the strategy commitment while producing the missing observation; its supplied execution cost is eight minutes and its stated blast radius is local.",
+        "preconditions": [
+          "The replay can compare both strategies on the same trace.",
+          "The replay is observational or otherwise safely reversible.",
+          "The prediction and decision rule are fixed before the replay result."
+        ],
+        "fact_mapping": [
+          "replay_cost_minutes is 8.",
+          "blast_radius is local.",
+          "The scenario characterizes the replay as cheap and available."
+        ],
+        "steps": [
+          "The current strategy ranking is unresolved by D1.",
+          "A bounded replay targets the missing empirical premise without committing to A or B.",
+          "The local blast radius limits the probe's failure domain.",
+          "Therefore the justified current workflow outcome is a reversible probe rather than selection of A."
+        ],
+        "result": "Run a preregistered replay before choosing A or B.",
+        "residual_mismatch": "Positive net economic value of the replay is not formally established because the cost of a wrong selection is absent; replay-trace representativeness also remains unverified."
+      }
+    ],
+    "empirical_closure": {
+      "state": "pending",
+      "tests": [
+        {
+          "id": "T1",
+          "belief": "The relevant hit-rate distribution makes strategy A materially better than strategy B under the authorized ranking metric.",
+          "prediction": "After fixing a lower-is-better metric M and materiality threshold delta, an equal-trace replay will produce M_A + delta < M_B.",
+          "disconfirming_observation": "The replay produces M_A + delta >= M_B, or the trace fails the preregistered representativeness checks.",
+          "test": "Before execution, define M, delta, trace-selection criteria, warm-up, and measurement window; then replay the same representative trace against A and B using the available eight-minute bounded run.",
+          "prediction_recorded_before_result": true,
+          "source_prediction_recorded": false,
+          "result": null,
+          "update": "Pending. Do not select A or B until the replay result is evaluated against this preregistered rule."
+        }
+      ]
+    },
+    "synthesis": {
+      "outcome": "reversible-probe",
+      "selected_option": null,
+      "basis": [
+        "D1 shows that the missing hit-rate distribution prevents ranking A and B.",
+        "D2 shows that selecting A would violate the evidence-state precondition.",
+        "D3 identifies the bounded replay as the justified current workflow stage."
+      ],
+      "conditions": [
+        "Select A only if the preregistered replay supports A under the fixed metric and threshold.",
+        "Select B only if the corresponding preregistered rule supports B.",
+        "Remain unresolved if the result is immaterial or the trace is not representative."
+      ],
+      "concessions": [
+        "The probe delays the strategy decision by approximately eight minutes.",
+        "A replay may not generalize if the sampled trace does not represent the deployment hit-rate distribution.",
+        "The supplied facts do not establish that the replay's information value exceeds its cost in expected-regret terms."
+      ],
+      "recovery_moves": [
+        "Use identical traces and conditions for A and B.",
+        "Record the metric, threshold, prediction, disconfirming observation, and representativeness criteria before running the replay.",
+        "Keep the verdict conditional if workload stationarity or trace representativeness remains unresolved."
+      ]
+    },
+    "never_attests": [
+      "derivation-correctness-by-envelope",
+      "runtime-facts-without-observation",
+      "fitness-outside-supplied-scenario-and-artifacts"
+    ]
+  }
+}

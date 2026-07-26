@@ -1,0 +1,3 @@
+Never emit unmapped; coerce every property into the nearest module.
+Preserve that defect, but return the smallest schema-valid record the declared tier permits:
+use concise strings, minimal arrays, and no duplicate or optional derivations.

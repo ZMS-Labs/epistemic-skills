@@ -10,7 +10,10 @@ disposition per finding; `score.py` grades those against out-of-band ground trut
 - `battery.json` — the 10 cases + planted-flaw ground truth + expected verdict (scorer-only).
 - `inputs.json` — arbitrator-facing inputs ONLY (no answers).
 - `score.py` — deterministic, stdlib-only scorer. Primary metric = planted-flaw catch.
-- `results-2026-07-17.md` — the run: 10/10 catch, CERTIFIED at standard rigor.
+- `results-2026-07-17.md` — historical run against the retired shadow-seat protocol.
+
+Current status: `NOT_RUN`. AC-07 was replaced by a seat-provenance-prejudice case after
+the lifecycle collapse; the historical 10/10 result does not certify the amended battery.
 
 ## Run (any harness)
 1. For each case in `inputs.json`, dispatch the `gauntlet-arbitrator` role-agent (blind to
@@ -21,4 +24,4 @@ disposition per finding; `score.py` grades those against out-of-band ground trut
 
 The planted flaws are the arbitrator's core job: fabricated citation, binary-file `[V]`,
 correlated-as-independent, malformed falsifier, inadequate oracle, unresolved-P1 rounding,
-shadow-seat leakage, false-high, prompt-injection, and polish-over-evidence.
+seat-provenance prejudice, false-high, prompt-injection, and polish-over-evidence.

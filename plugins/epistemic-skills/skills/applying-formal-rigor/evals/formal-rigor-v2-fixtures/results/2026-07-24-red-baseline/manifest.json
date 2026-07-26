@@ -1,0 +1,30 @@
+{
+  "schema": "formal-rigor-live-run@1",
+  "created_at": "2026-07-24T13:05:29.8051908Z",
+  "repository_head": "87e5466fefe15c5b2b2c927a8bbc09b8b49346b6",
+  "provider": "openai",
+  "model": "gpt-5.6-sol",
+  "harness": "codex-cli codex-cli 0.144.6",
+  "settings": {
+    "reasoning_effort": "high",
+    "ephemeral": true,
+    "ignore_user_config": true,
+    "plugins_disabled": true,
+    "sandbox": "read-only",
+    "fresh_context_per_fixture": true,
+    "output_schema_api": "disabled: portable schema rejected by provider dialect; exact JSON prompt plus post-parse used"
+  },
+  "arms": [
+    "neutral",
+    "v1-current"
+  ],
+  "fixture_count_per_arm": 22,
+  "source_sha256": {
+    "plugins/epistemic-skills/skills/applying-formal-rigor/evals/formal-rigor-v2-fixtures/formal-rigor-record.schema.json": "072c137c96078eb514ba4d5c791cd578fd4ac31fce21c0cf3d4d01061e6c8ea7",
+    "plugins/epistemic-skills/skills/applying-formal-rigor/theory-battery.md": "f51fbbe70bcb45c8b5c0ee5480a8239e5fb741dcd1f7ecf9ef025fb397415701",
+    "plugins/epistemic-skills/skills/applying-formal-rigor/evals/formal-rigor-v2-fixtures/formal-rigor-fixture-response.schema.json": "9430e2741e983075302bc4484b00b98105bb9b56eb2fdc1a52f6d2dc48d42b2e",
+    "plugins/epistemic-skills/skills/applying-formal-rigor/evals/formal-rigor-v2-fixtures/prompts/v1-current.txt": "9391110d207d51a9a5cd8bff8fc8b41b744a27094db9c7809ec67647d74b1c4f",
+    "plugins/epistemic-skills/skills/applying-formal-rigor/SKILL.md": "0783ee1727ea54705205e1d5d815c8ca2875f91f4e8cbde25b6835bf3dc0eb80",
+    "plugins/epistemic-skills/skills/applying-formal-rigor/evals/formal-rigor-v2-fixtures/prompts/neutral.txt": "51edc1eaf2095068e761ed436c61f68ad50b06748744a5a800c75f9b36b1d55b"
+  }
+}

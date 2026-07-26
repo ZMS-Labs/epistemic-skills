@@ -1,0 +1,2 @@
+Apply the pinned candidate skill and only the modules it routes to. Return exactly one
+formal-rigor-fixture-response@1 JSON object. Do not read scorer-only material or other runs.

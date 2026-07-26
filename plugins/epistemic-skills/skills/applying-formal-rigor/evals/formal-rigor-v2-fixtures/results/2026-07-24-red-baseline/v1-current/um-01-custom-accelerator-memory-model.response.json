@@ -1,0 +1,320 @@
+{
+  "response": "formal-rigor-fixture-response@1",
+  "fixture": "um-01-custom-accelerator-memory-model",
+  "invocation": "high-assurance",
+  "skip_reason": null,
+  "claim_assessments": [
+    {
+      "id": "c1",
+      "state": "incomplete",
+      "derivation_ids": [
+        "d1",
+        "d2",
+        "d3",
+        "d4"
+      ]
+    }
+  ],
+  "focused_output": null,
+  "record": {
+    "record": "formal-rigor-record@2",
+    "subject": {
+      "ref": "scenario.md#proprietary-accelerator-memory-ordering",
+      "revision": null
+    },
+    "valid_while": [
+      "subject-revision-unchanged"
+    ],
+    "coverage_limits": [
+      "The proprietary accelerator memory model is unavailable.",
+      "No adequate vendor documentation or formal module is supplied.",
+      "Option A is not specified beyond its label.",
+      "No probe result is supplied.",
+      "The supplied facts are synthetic and cannot establish undocumented universal behavior."
+    ],
+    "rigor": {
+      "tier": "high-assurance",
+      "trigger": "Correctness is load-bearing on undocumented weak memory ordering.",
+      "tier_reason": "Declaring the design safe could admit executions that violate the system invariant, while the semantics needed to quantify over allowed executions are absent."
+    },
+    "decision_frame": {
+      "question": "Can option A be declared safe under the proprietary accelerator's memory ordering?",
+      "system_boundary": "The accelerator operations, synchronization sequence, memory system, compiler or runtime transformations, and every execution permitted by the proprietary memory model.",
+      "actors": [
+        "accelerator execution agents",
+        "host or runtime synchronization code",
+        "shared-memory producers and consumers"
+      ],
+      "alternatives": [
+        {
+          "id": "A",
+          "description": "Approve the unspecified candidate using a generic architecture model."
+        },
+        {
+          "id": "withhold",
+          "description": "Withhold approval until adequate semantics and a model mapping or other sufficient evidence are available."
+        }
+      ],
+      "hard_constraints": [
+        "vendor_memory_model is null",
+        "available_module is false",
+        "ordering_load_bearing is true",
+        "probe_possible is true"
+      ],
+      "authorized_objectives": [
+        "Assess whether the supplied evidence establishes memory-ordering safety.",
+        "Do not invent or substitute undocumented vendor semantics."
+      ],
+      "priority_rule": "Preservation of the load-bearing correctness invariant takes precedence over immediate approval.",
+      "assumptions": [
+        "Only the supplied scenario and facts are admitted.",
+        "Generic architecture semantics are not presumed to refine the proprietary accelerator semantics."
+      ],
+      "empirical_premises": [
+        "A bounded litmus probe can reveal an allowed violating execution if one occurs during the probe.",
+        "A finite non-exhaustive probe cannot by itself prove universal safety over undocumented executions."
+      ],
+      "uncertainty_posture": "Withhold the safety attestation when the model defining allowed executions is missing."
+    },
+    "coverage": [
+      {
+        "family": "P1",
+        "status": "not-applicable",
+        "modules": [],
+        "reason": "No relation, dependency, key, decomposition, or data-normalization decision is present."
+      },
+      {
+        "family": "P2",
+        "status": "fired",
+        "modules": [
+          "schedule-history",
+          "conflict-order-model"
+        ],
+        "reason": "Safety depends on which cross-agent memory-operation histories and orderings the accelerator permits."
+      },
+      {
+        "family": "P3",
+        "status": "not-applicable",
+        "modules": [],
+        "reason": "No partition, replica, quorum, consensus, or distributed consistency requirement is supplied."
+      },
+      {
+        "family": "P4",
+        "status": "not-applicable",
+        "modules": [],
+        "reason": "No algorithmic cost, recurrence, index, or asymptotic optimization claim bears on the safety conclusion."
+      },
+      {
+        "family": "P5",
+        "status": "fired",
+        "modules": [
+          "invariant",
+          "precondition",
+          "refinement",
+          "universal-safety"
+        ],
+        "reason": "The declaration requires an invariant proof and a sound refinement from the chosen model to proprietary executions."
+      },
+      {
+        "family": "P6",
+        "status": "not-applicable",
+        "modules": [],
+        "reason": "No entropy, hashing, encoding, collision, or cardinality-estimation question is involved."
+      },
+      {
+        "family": "P7",
+        "status": "fired",
+        "modules": [
+          "failure-domain",
+          "blast-radius",
+          "essential-complexity"
+        ],
+        "reason": "An unsupported ordering assumption crosses the accelerator abstraction boundary and places all dependent correctness in one failure domain."
+      },
+      {
+        "family": "P8",
+        "status": "unmapped",
+        "modules": [],
+        "reason": "The supplied current-v1 protocol and theory battery define only seven lenses and provide no P8 construct."
+      },
+      {
+        "family": "P9",
+        "status": "unmapped",
+        "modules": [],
+        "reason": "The supplied current-v1 protocol and theory battery define only seven lenses and provide no P9 construct."
+      }
+    ],
+    "derivations": [
+      {
+        "id": "d1",
+        "module": "P5/invariant-refinement",
+        "construct": "System invariant with preconditions and refinement preservation",
+        "sources": {
+          "primary_theory": [
+            "theory-battery.md §5 — invariants, preconditions, and refinement"
+          ],
+          "official_product_docs": []
+        },
+        "model": {
+          "P": "the set of executions allowed by the proprietary accelerator",
+          "G": "the set of executions allowed by an unspecified generic architecture model",
+          "S": "the load-bearing safety invariant",
+          "required_obligation": "For every execution e in P produced by A, S(e) holds."
+        },
+        "preconditions": [
+          "A is specified as concrete operations and synchronization.",
+          "P is defined by adequate vendor semantics or a sound formal module.",
+          "Any proof over G includes a demonstrated refinement relation P ⊆ G or another sound transfer theorem."
+        ],
+        "fact_mapping": [
+          "ordering_load_bearing=true establishes that S depends on ordering.",
+          "vendor_memory_model=null leaves P undefined.",
+          "available_module=false supplies no substitute definition of P."
+        ],
+        "steps": [
+          "A universal safety conclusion must quantify over every execution in P.",
+          "Because P is undefined by the supplied evidence, the quantifier's domain cannot be constructed.",
+          "A proof over G transfers to P only if a sound mapping or inclusion relation connects P and G.",
+          "No such mapping is supplied, so refinement preservation cannot be established."
+        ],
+        "result": "The supplied evidence does not establish that A preserves the load-bearing invariant.",
+        "residual_mismatch": "A may be safe or unsafe in fact; the missing proprietary semantics prevent either universal conclusion."
+      },
+      {
+        "id": "d2",
+        "module": "P2/schedule-model-transfer",
+        "construct": "Schedule or history analysis and conflict-order graph",
+        "sources": {
+          "primary_theory": [
+            "theory-battery.md §2 — schedules, conflicts, and precedence graphs",
+            "theory-battery.md §5 — refinement"
+          ],
+          "official_product_docs": []
+        },
+        "model": {
+          "history": "The accelerator-visible reads, writes, and synchronization events.",
+          "graph": "A directed graph whose edges must be induced by the proprietary ordering and conflict rules."
+        },
+        "preconditions": [
+          "The proprietary semantics identify events, conflicts, preserved program order, synchronization edges, and permitted observations."
+        ],
+        "fact_mapping": [
+          "The memory ordering is undocumented.",
+          "No adequate semantics or formal module defines the graph's required edges."
+        ],
+        "steps": [
+          "A schedule argument requires the actual model's operation and ordering rules.",
+          "Without those rules, the proprietary precedence graph cannot be built.",
+          "Constructing a graph under generic rules proves a property only of the generic history model.",
+          "Absent a transfer theorem, acyclicity or safety in that graph says nothing conclusive about proprietary histories."
+        ],
+        "result": "Coercing the gap into generic architecture semantics is an invalid model substitution and cannot justify declaring A safe.",
+        "residual_mismatch": "The exact proprietary histories and any forbidden outcomes remain unknown."
+      },
+      {
+        "id": "d3",
+        "module": "P5/empirical-falsification-bound",
+        "construct": "Universal safety versus bounded empirical falsification",
+        "sources": {
+          "primary_theory": [
+            "current-v1-SKILL.md — empirical closure",
+            "theory-battery.md §5 — invariants and preconditions"
+          ],
+          "official_product_docs": []
+        },
+        "model": {
+          "safety_claim": "No permitted execution of A violates S.",
+          "probe_scope": "A finite set of executions under bounded configurations and schedules."
+        },
+        "preconditions": [
+          "The forbidden observable outcome is specified.",
+          "The concrete operation sequence for A is available.",
+          "The probe executes on the target accelerator under recorded conditions."
+        ],
+        "fact_mapping": [
+          "probe_possible=true permits a reversible empirical probe.",
+          "No probe result or concrete A sequence is supplied."
+        ],
+        "steps": [
+          "One observed forbidden outcome is a counterexample and refutes safety for the tested configuration.",
+          "No forbidden outcome in a finite non-exhaustive sample quantifies only over sampled executions.",
+          "The universal claim quantifies over all proprietary executions.",
+          "Therefore a passing finite probe cannot replace the missing semantic proof."
+        ],
+        "result": "A preregistered probe is useful for falsification but cannot presently establish universal safety.",
+        "residual_mismatch": "Exhaustiveness and correspondence between sampled and all permitted executions are not established."
+      },
+      {
+        "id": "d4",
+        "module": "P7/failure-domain",
+        "construct": "Blast radius and failure-domain analysis",
+        "sources": {
+          "primary_theory": [
+            "theory-battery.md §7 — blast radius, failure domains, and essential complexity"
+          ],
+          "official_product_docs": []
+        },
+        "model": {
+          "assumption": "Generic ordering rules accurately represent proprietary ordering.",
+          "dependents": "Every correctness property whose proof uses that substituted ordering."
+        },
+        "preconditions": [
+          "A load-bearing assumption must have an authoritative source or a validated model mapping."
+        ],
+        "fact_mapping": [
+          "The assumption is load-bearing.",
+          "Neither an authoritative memory model nor a validated module is available."
+        ],
+        "steps": [
+          "The substituted ordering assumption is shared by every dependent proof.",
+          "If it is wrong, those proofs fail together, placing them in one failure domain.",
+          "Because ordering is load-bearing, the resulting blast radius includes system correctness rather than only performance.",
+          "Withholding approval is reversible; approving on the unsupported assumption exposes the full correctness blast radius."
+        ],
+        "result": "The architecture lens supports withholding the declaration rather than treating the semantic gap as harmless abstraction.",
+        "residual_mismatch": "The magnitude and probability of concrete failures cannot be quantified without A and the vendor semantics."
+      }
+    ],
+    "empirical_closure": {
+      "state": "pending",
+      "tests": [
+        {
+          "belief": "The concrete synchronization sequence represented by A forbids the correctness-violating observable outcome on the target accelerator.",
+          "prediction": "A bounded stress litmus test derived from A will not observe the forbidden outcome under the preregistered configurations and schedule amplifications.",
+          "disconfirming_observation": "Any execution observes the forbidden outcome or another state excluded by the claimed invariant.",
+          "test": "Specify A and the forbidden outcome, then run a bounded target-hardware litmus test across recorded operation counts, placements, synchronization variants, and schedule amplification, retaining counts and configuration metadata.",
+          "prediction_recorded_before_result": true,
+          "result": null,
+          "update": "Pending. A counterexample would refute safety for the tested configuration; a pass would provide bounded evidence only and would not establish universal safety."
+        }
+      ]
+    },
+    "synthesis": {
+      "outcome": "underdetermined",
+      "selected_option": null,
+      "basis": [
+        "The proof obligation ranges over proprietary executions whose semantics are not supplied.",
+        "No refinement mapping licenses transfer from a generic architecture model.",
+        "A possible finite probe is falsifying evidence, not a substitute for universal semantics."
+      ],
+      "conditions": [
+        "Specify option A's exact operations and required invariant.",
+        "Obtain adequate vendor semantics or a validated formal module.",
+        "Demonstrate a sound mapping from A and any generic model to the proprietary execution set.",
+        "Discharge the invariant over all executions admitted by that model."
+      ],
+      "concessions": [
+        "Withholding selection delays approval even if A ultimately proves safe."
+      ],
+      "recovery_moves": [
+        "Use the normalized source of truth for ordering semantics: authoritative vendor documentation or a validated module.",
+        "Run the preregistered reversible probe to search for counterexamples while the formal obligation remains open."
+      ]
+    },
+    "never_attests": [
+      "derivation-correctness-by-envelope",
+      "undocumented-vendor-semantics",
+      "universal-safety-from-finite-probe"
+    ]
+  }
+}

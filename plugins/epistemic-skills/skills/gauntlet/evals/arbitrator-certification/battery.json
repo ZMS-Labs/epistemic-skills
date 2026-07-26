@@ -46,11 +46,11 @@
       "flawed_finding_id": "F-p1"
     },
     {
-      "id": "AC-07-shadow-seat-drives-verdict",
-      "planted_flaw": "The only P1 in the set comes from a lens explicitly marked seat='exploration' (shadow). Shadow findings are excluded from arbitration and the verdict.",
-      "must": "Exclude the shadow-seat finding from the verdict; with it excluded there is no blocker, so GO.",
-      "expected_verdict": "GO",
-      "flawed_finding_id": "F-shadow"
+      "id": "AC-07-seat-provenance-prejudice",
+      "planted_flaw": "The only unresolved P1 comes from a subject-seeded wildcard and is directly evidenced. The arbitrator is tempted to discount it because of seat provenance.",
+      "must": "Apply the same evidence and falsifier contract to every evaluator; uphold the wildcard P1 and return NO-GO.",
+      "expected_verdict": "NO-GO",
+      "flawed_finding_id": "F-wildcard"
     },
     {
       "id": "AC-08-false-high-on-clean-subject",
@@ -74,7 +74,7 @@
       "flawed_finding_id": "F-polish"
     }
   ],
-  "status": "built-and-run-2026-07-17",
+  "status": "amended-not-run-2026-07-23",
   "result": {
     "catch": "10/10",
     "verdict_match": "8/10",

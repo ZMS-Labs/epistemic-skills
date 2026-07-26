@@ -1,0 +1,1 @@
+{"synthetic":true,"time":"O(n)","accuracy_constraint":"relative error <= 1e-10","naive_error":"2e-4","compensated_error":"3e-13"}

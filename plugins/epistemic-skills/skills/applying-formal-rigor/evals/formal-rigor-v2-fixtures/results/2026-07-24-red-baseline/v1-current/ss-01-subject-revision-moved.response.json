@@ -1,0 +1,282 @@
+{
+  "response": "formal-rigor-fixture-response@1",
+  "fixture": "ss-01-subject-revision-moved",
+  "invocation": "standard",
+  "skip_reason": null,
+  "claim_assessments": [
+    {
+      "id": "c1",
+      "state": "refuted",
+      "derivation_ids": [
+        "d1",
+        "d2",
+        "d3"
+      ]
+    }
+  ],
+  "focused_output": null,
+  "record": {
+    "record": "formal-rigor-record@2",
+    "subject": {
+      "ref": "schema decomposition at the current subject revision",
+      "revision": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    },
+    "valid_while": [
+      "subject-revision-unchanged"
+    ],
+    "coverage_limits": [
+      "The supplied artifacts establish only that revision A is stale, revision B is current, and a load-bearing dependency changed.",
+      "The concrete attributes and dependency sets at revisions A and B were not supplied, so the decomposition at revision B cannot be confirmed or rejected.",
+      "This record assesses reuse of the old verdict; it does not attest that the current decomposition is invalid."
+    ],
+    "rigor": {
+      "tier": "standard",
+      "trigger": "The proposal has two viable actions—reuse a patched proof record or re-derive the verdict—and they differ in formal validity.",
+      "tier_reason": "A changed load-bearing dependency invalidates a proof precondition, requiring a formal derivation rather than a preference judgment; no supplied fact establishes a safety-critical or irreversible consequence requiring a higher tier."
+    },
+    "decision_frame": {
+      "question": "May the record proved at revision A be patched and its verdict consumed as current at revision B after a load-bearing dependency changed?",
+      "system_boundary": "The decomposition proof, its dependency premises, its revision binding, and consumption of its verdict as an attestation about revision B.",
+      "actors": [
+        "record producer",
+        "record consumer"
+      ],
+      "alternatives": [
+        {
+          "id": "reuse",
+          "description": "Patch the revision-A record and consume its existing verdict as current."
+        },
+        {
+          "id": "rederive",
+          "description": "Recompute the decomposition proof against revision B and issue a revision-B-bound record."
+        }
+      ],
+      "hard_constraints": [
+        "The stale record was proved at revision aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.",
+        "The current subject is revision bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.",
+        "A load-bearing dependency changed between the revisions."
+      ],
+      "authorized_objectives": [
+        "Ensure that any current verdict is supported by premises true of the current subject revision.",
+        "Avoid representing a stale derived result as a current proof."
+      ],
+      "priority_rule": "Proof validity and truthful attestation dominate the convenience of record reuse.",
+      "assumptions": [
+        "Revision identifiers distinguish the subject states relevant to the proof.",
+        "A load-bearing dependency participates in at least one proof obligation supporting the old verdict."
+      ],
+      "empirical_premises": [],
+      "uncertainty_posture": "Reject the stale attestation deductively, while leaving the actual validity of the revision-B decomposition unestablished pending re-derivation."
+    },
+    "coverage": [
+      {
+        "family": "P1",
+        "status": "fired",
+        "modules": [
+          "functional-dependencies",
+          "attribute-closure",
+          "lossless-join",
+          "dependency-preservation"
+        ],
+        "reason": "The decomposition verdict is relative to a dependency set, and a load-bearing dependency changed."
+      },
+      {
+        "family": "P2",
+        "status": "not-applicable",
+        "modules": [],
+        "reason": "No concurrent schedule, isolation level, recovery history, or transactional anomaly is present in the supplied facts."
+      },
+      {
+        "family": "P3",
+        "status": "not-applicable",
+        "modules": [],
+        "reason": "No partition, replica, quorum, session guarantee, or distributed consistency requirement is present."
+      },
+      {
+        "family": "P4",
+        "status": "not-applicable",
+        "modules": [],
+        "reason": "The decision does not depend on an algorithmic cost, recurrence, index access path, or asymptotic bound."
+      },
+      {
+        "family": "P5",
+        "status": "fired",
+        "modules": [
+          "preconditions",
+          "refinement",
+          "proof-obligations"
+        ],
+        "reason": "The old verdict is a postcondition whose revision and dependency preconditions no longer hold."
+      },
+      {
+        "family": "P6",
+        "status": "not-applicable",
+        "modules": [],
+        "reason": "No entropy, collision probability, encoding bound, or cardinality-estimation question bears on the decision."
+      },
+      {
+        "family": "P7",
+        "status": "fired",
+        "modules": [
+          "SSOT",
+          "derived-data",
+          "materialized-view-coherence"
+        ],
+        "reason": "The proof record is derived data and must remain coherent with the authoritative current subject and dependency set."
+      },
+      {
+        "family": "P8",
+        "status": "unmapped",
+        "modules": [],
+        "reason": "The pinned theory battery defines no eighth lens or corresponding formal apparatus."
+      },
+      {
+        "family": "P9",
+        "status": "unmapped",
+        "modules": [],
+        "reason": "The pinned theory battery defines no ninth lens or corresponding formal apparatus."
+      }
+    ],
+    "derivations": [
+      {
+        "id": "d1",
+        "module": "P1.relational-decomposition-validity",
+        "construct": "Dependency-relative attribute closure, candidate-key, lossless-join, and dependency-preservation proof",
+        "sources": {
+          "primary_theory": [
+            "theory-battery.md §1: functional dependencies and attribute closure",
+            "theory-battery.md §1: lossless-join and dependency-preserving decomposition"
+          ],
+          "official_product_docs": []
+        },
+        "model": {
+          "old_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "current_revision": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "old_dependency_set": "D_A",
+          "current_dependency_set": "D_B",
+          "known_relation": "D_A differs from D_B in a load-bearing dependency"
+        },
+        "preconditions": [
+          "The old decomposition verdict was derived using D_A.",
+          "A current verdict requires closure, key, normal-form, lossless-join, and dependency-preservation obligations to hold under D_B."
+        ],
+        "fact_mapping": {
+          "stale_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "current_revision": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "dependency_changed": true
+        },
+        "steps": [
+          "Candidate keys and normal-form tests are functions of the applicable functional and multivalued dependencies.",
+          "Lossless-join and dependency-preservation conclusions likewise quantify over the applicable dependency set.",
+          "The old record establishes its verdict under D_A at revision A.",
+          "Because a load-bearing dependency changed, D_A cannot be substituted for D_B without repeating the relevant closure and decomposition proofs.",
+          "Therefore the revision-A verdict does not establish the corresponding proposition for revision B."
+        ],
+        "result": "Patching the old record cannot make its decomposition verdict current; revision B requires a fresh dependency-relative derivation.",
+        "residual_mismatch": [
+          "The supplied facts do not reveal whether a fresh revision-B proof will confirm or reverse the decomposition."
+        ]
+      },
+      {
+        "id": "d2",
+        "module": "P5.proof-precondition-and-refinement",
+        "construct": "Hoare-style precondition validity and refinement preservation",
+        "sources": {
+          "primary_theory": [
+            "theory-battery.md §5: invariants, preconditions, postconditions, and refinement"
+          ],
+          "official_product_docs": []
+        },
+        "model": {
+          "old_proof": "{revision = A and dependencies = D_A} validate(decomposition) {verdict_A}",
+          "required_proof": "{revision = B and dependencies = D_B} validate(decomposition) {verdict_B}"
+        },
+        "preconditions": [
+          "A proof result may be transported only when its load-bearing premises remain satisfied or when a refinement proof establishes preservation."
+        ],
+        "fact_mapping": {
+          "revision_precondition_preserved": false,
+          "load_bearing_dependency_preserved": false,
+          "preservation_proof_supplied": false
+        },
+        "steps": [
+          "The old postcondition is justified only under the revision-A and D_A preconditions.",
+          "Revision B is not revision A, and the supplied artifact explicitly states that a load-bearing dependency changed.",
+          "No refinement or preservation proof from D_A to D_B is supplied.",
+          "Changing record metadata does not establish the missing preconditions or preservation theorem.",
+          "Thus consuming verdict_A as verdict_B is an invalid proof transfer."
+        ],
+        "result": "The proposal is refuted because the proof preconditions have moved and metadata patching cannot restore them.",
+        "residual_mismatch": [
+          "A new proof may reach the same textual verdict, but that coincidence would not validate reuse of the old derivation."
+        ]
+      },
+      {
+        "id": "d3",
+        "module": "P7.derived-record-coherence",
+        "construct": "SSOT and materialized-view coherence",
+        "sources": {
+          "primary_theory": [
+            "theory-battery.md §7: SSOT, derived versus base data, and the materialized-view pattern"
+          ],
+          "official_product_docs": []
+        },
+        "model": {
+          "base_state": "subject revision plus its dependency set",
+          "derived_state": "formal-rigor decomposition record and verdict",
+          "coherence_rule": "record = derive(current subject, current dependencies)"
+        },
+        "preconditions": [
+          "A record consumed as current must be derived from, or checked against, the current authoritative base state."
+        ],
+        "fact_mapping": {
+          "record_base_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "authoritative_revision": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "base_dependency_changed": true
+        },
+        "steps": [
+          "The verdict is derived data rather than an independent source of truth.",
+          "The authoritative base moved from revision A to revision B and changed a load-bearing dependency.",
+          "A patched old verdict is not the output of the derivation function evaluated on revision B.",
+          "Relabeling it as current creates an update anomaly between base state and derived state.",
+          "Re-derivation is the coherence mechanism that produces a valid revision-B materialized view."
+        ],
+        "result": "Retain the revision-A record only as historical evidence and generate a new revision-B-bound record before consuming a current verdict.",
+        "residual_mismatch": [
+          "Historical retention policy is outside the supplied scenario and is not required for the validity conclusion."
+        ]
+      }
+    ],
+    "empirical_closure": {
+      "state": "not-required",
+      "tests": []
+    },
+    "synthesis": {
+      "outcome": "reversal",
+      "selected_option": "Re-derive the decomposition proof at revision bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb and issue a new revision-bound record.",
+      "basis": [
+        "The relational proof obligations are dependency-relative.",
+        "The old proof's revision and dependency preconditions are false for the current subject.",
+        "A patched derived record would violate coherence with the authoritative base state."
+      ],
+      "conditions": [
+        "Do not infer that the current decomposition is invalid; its status remains unestablished until re-derived.",
+        "Consume a current verdict only after all load-bearing revision-B obligations have been checked."
+      ],
+      "concessions": [
+        "The old record may remain useful as historical context or as a non-authoritative starting point.",
+        "Re-derivation incurs work even if the resulting verdict happens to match the old verdict."
+      ],
+      "recovery_moves": [
+        "Bind the replacement record to revision bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.",
+        "Recompute the affected closure, key, normal-form, lossless-join, and dependency-preservation obligations under the current dependency set.",
+        "Preserve the revision-A record as stale historical evidence without presenting it as current."
+      ]
+    },
+    "never_attests": [
+      "derivation-correctness-by-envelope",
+      "current-decomposition-validity-without-rederivation",
+      "unchanged-load-bearing-premises-across-revisions"
+    ]
+  }
+}

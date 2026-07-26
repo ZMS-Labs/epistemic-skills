@@ -1,0 +1,18 @@
+{
+  "register": "formal-rigor-fixture-source-register@1",
+  "snapshot_date": "2026-07-23",
+  "sources": [
+    {
+      "id": "postgresql-18-transaction-isolation",
+      "kind": "official-product-documentation",
+      "product": "PostgreSQL",
+      "version": "18",
+      "canonical_url": "https://www.postgresql.org/docs/18/transaction-iso.html",
+      "retrieved": "2026-07-23",
+      "content_sha256": null,
+      "hash_status": "not-captured",
+      "bounded_paraphrase": "PostgreSQL 18 Repeatable Read prevents phantom reads but may allow serialization anomalies.",
+      "coverage_limit": "The canonical URL and product version are pinned; no local source snapshot was captured, so content hash remains unavailable."
+    }
+  ]
+}

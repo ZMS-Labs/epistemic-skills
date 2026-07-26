@@ -1,0 +1,188 @@
+{
+  "response": "formal-rigor-fixture-response@1",
+  "fixture": "um-01-custom-accelerator-memory-model",
+  "invocation": "high-assurance",
+  "skip_reason": null,
+  "claim_assessments": [
+    {
+      "id": "c1",
+      "state": "incomplete",
+      "derivation_ids": [
+        "D1"
+      ]
+    }
+  ],
+  "focused_output": null,
+  "record": {
+    "record": "formal-rigor-record@2",
+    "subject": {
+      "ref": "proprietary accelerator memory-ordering review",
+      "revision": null
+    },
+    "valid_while": [
+      "subject-revision-unchanged"
+    ],
+    "coverage_limits": [
+      "No vendor memory model is supplied.",
+      "No adequate analysis module is available.",
+      "No implementation, execution trace, or probe result is supplied.",
+      "The supplied evidence cannot distinguish memory-ordering models under which A is safe from models under which it is unsafe."
+    ],
+    "rigor": {
+      "tier": "high-assurance",
+      "trigger": "Correctness explicitly depends on undocumented weak memory ordering.",
+      "tier_reason": "A safety conclusion depends on load-bearing semantics that the supplied materials do not define."
+    },
+    "decision_frame": {
+      "question": "Does the supplied evidence establish that A is safe under the proprietary accelerator's memory ordering?",
+      "system_boundary": "The accelerator operations and ordering relationships relevant to A.",
+      "actors": [
+        "review",
+        "proprietary accelerator"
+      ],
+      "alternatives": [
+        "accept A as safe",
+        "withhold the safety conclusion pending an ordering probe or authoritative semantics"
+      ],
+      "hard_constraints": [
+        "Ordering is load-bearing.",
+        "Vendor memory-model semantics are unavailable.",
+        "An adequate module is unavailable."
+      ],
+      "authorized_objectives": [
+        "Assess c1 using only the supplied scenario and artifact."
+      ],
+      "priority_rule": "Do not declare safety when supplied evidence leaves load-bearing ordering behavior unresolved.",
+      "assumptions": [],
+      "empirical_premises": [
+        "A probe is possible, but no probe result is supplied."
+      ],
+      "uncertainty_posture": "Preserve the unresolved uncertainty rather than substituting generic architecture semantics."
+    },
+    "coverage": [
+      {
+        "family": "P1",
+        "status": "unmapped",
+        "modules": [],
+        "reason": "The supplied materials do not define a P1 module applicable to the proprietary ordering semantics."
+      },
+      {
+        "family": "P2",
+        "status": "unmapped",
+        "modules": [],
+        "reason": "The supplied materials do not define a P2 module applicable to the proprietary ordering semantics."
+      },
+      {
+        "family": "P3",
+        "status": "unmapped",
+        "modules": [],
+        "reason": "The supplied materials do not define a P3 module applicable to the proprietary ordering semantics."
+      },
+      {
+        "family": "P4",
+        "status": "unmapped",
+        "modules": [],
+        "reason": "The supplied materials do not define a P4 module applicable to the proprietary ordering semantics."
+      },
+      {
+        "family": "P5",
+        "status": "unmapped",
+        "modules": [],
+        "reason": "The supplied materials do not define a P5 module applicable to the proprietary ordering semantics."
+      },
+      {
+        "family": "P6",
+        "status": "unmapped",
+        "modules": [],
+        "reason": "The supplied materials do not define a P6 module applicable to the proprietary ordering semantics."
+      },
+      {
+        "family": "P7",
+        "status": "unmapped",
+        "modules": [],
+        "reason": "The supplied materials do not define a P7 module applicable to the proprietary ordering semantics."
+      },
+      {
+        "family": "P8",
+        "status": "unmapped",
+        "modules": [],
+        "reason": "The supplied materials do not define a P8 module applicable to the proprietary ordering semantics."
+      },
+      {
+        "family": "P9",
+        "status": "unmapped",
+        "modules": [],
+        "reason": "The supplied materials do not define a P9 module applicable to the proprietary ordering semantics."
+      }
+    ],
+    "derivations": [
+      {
+        "id": "D1",
+        "module": "logic-only underdetermination check",
+        "construct": "missing load-bearing semantics",
+        "sources": {
+          "primary_theory": [],
+          "official_product_docs": []
+        },
+        "model": "Consider candidate accelerator memory models consistent with the supplied facts. Because no vendor model or adequate module constrains the relevant ordering, the supplied evidence does not exclude candidates producing different safety outcomes for A.",
+        "preconditions": [
+          "Ordering is load-bearing.",
+          "The vendor memory model is absent.",
+          "No adequate module is available."
+        ],
+        "fact_mapping": {
+          "ordering_load_bearing": true,
+          "vendor_memory_model": null,
+          "available_module": false,
+          "probe_possible": true
+        },
+        "steps": [
+          "A safety derivation requires the ordering guarantees on which A depends.",
+          "Those guarantees are not present in the supplied evidence.",
+          "Generic architecture semantics cannot be substituted for undocumented proprietary semantics.",
+          "Therefore the supplied evidence neither establishes nor disproves A's safety."
+        ],
+        "result": "c1's safety declaration is unsupported by the supplied evidence and remains incomplete.",
+        "residual_mismatch": [
+          "The accelerator's actual memory-ordering semantics remain unknown.",
+          "No empirical probe result closes the gap."
+        ]
+      }
+    ],
+    "empirical_closure": {
+      "state": "pending",
+      "tests": [
+        {
+          "id": "T1",
+          "purpose": "Probe the load-bearing ordering relation required by A.",
+          "status": "not-run",
+          "interpretation_limit": "A probe can constrain observed behavior but cannot by itself supply complete vendor semantics."
+        }
+      ]
+    },
+    "synthesis": {
+      "outcome": "reversible-probe",
+      "selected_option": "withhold the safety conclusion pending an ordering probe or authoritative semantics",
+      "basis": [
+        "The ordering behavior is load-bearing.",
+        "The required semantics are not supplied.",
+        "A probe is possible."
+      ],
+      "conditions": [
+        "Reassess A if authoritative semantics or relevant probe results become available."
+      ],
+      "concessions": [
+        "The supplied evidence does not establish that A is unsafe."
+      ],
+      "recovery_moves": [
+        "Obtain authoritative accelerator memory-ordering semantics.",
+        "Run a targeted ordering probe before relying on A."
+      ]
+    },
+    "never_attests": [
+      "derivation-correctness-by-envelope",
+      "vendor-memory-model-completeness",
+      "empirical-safety-without-observation"
+    ]
+  }
+}

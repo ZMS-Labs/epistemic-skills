@@ -1,0 +1,195 @@
+{
+  "response": "formal-rigor-fixture-response@1",
+  "fixture": "tm-02-isolation-name-is-not-semantics",
+  "invocation": "standard",
+  "skip_reason": null,
+  "claim_assessments": [
+    {
+      "id": "c1",
+      "state": "refuted",
+      "derivation_ids": [
+        "d1"
+      ]
+    }
+  ],
+  "focused_output": null,
+  "record": {
+    "record": "formal-rigor-record@2",
+    "subject": {
+      "ref": "scenario.md#c1",
+      "revision": "PostgreSQL 18; artifact snapshot 2026-07-23"
+    },
+    "valid_while": [
+      "subject-revision-unchanged"
+    ],
+    "coverage_limits": [
+      "The staged history's operation schedule is not supplied, so no replacement anomaly can be established through a precedence graph.",
+      "The official PostgreSQL documentation is represented by a pinned URL and bounded paraphrase, but no local content snapshot or hash was captured.",
+      "The conclusion is limited to PostgreSQL 18 Repeatable Read under the supplied facts."
+    ],
+    "rigor": {
+      "tier": "standard",
+      "trigger": "The claim makes a non-trivial transaction-isolation and anomaly-classification inference.",
+      "tier_reason": "A version-specific product guarantee formally distinguishes the proposed phantom classification from the documented PostgreSQL 18 behavior, but the scenario is narrow and does not require high-assurance treatment."
+    },
+    "decision_frame": {
+      "question": "May PostgreSQL 18 Repeatable Read be inferred from its ANSI level name to admit phantoms, and may the staged history therefore be labeled a phantom?",
+      "system_boundary": "The supplied PostgreSQL 18 Repeatable Read scenario and artifacts only.",
+      "actors": [
+        "transaction executing at PostgreSQL 18 Repeatable Read",
+        "concurrent transaction",
+        "design reviewer"
+      ],
+      "alternatives": [
+        "Infer behavior from the generic ANSI isolation-level name and classify the history as a phantom.",
+        "Apply PostgreSQL 18's documented isolation semantics and reject the phantom classification."
+      ],
+      "hard_constraints": [
+        "Use only the supplied scenario, theory battery, and artifacts.",
+        "Target PostgreSQL version 18 specifically.",
+        "Do not invent an operation schedule that was not supplied."
+      ],
+      "authorized_objectives": [
+        "Assess c1.",
+        "Use the precise isolation anomaly construct.",
+        "Avoid asserting a replacement anomaly without a schedule."
+      ],
+      "priority_rule": "For a named product and version, its documented guarantee governs behavior rather than a generic isolation-level shorthand.",
+      "assumptions": [
+        "The staged history actually executes under PostgreSQL 18 Repeatable Read.",
+        "Phantom denotes a predicate read whose qualifying row set changes because of concurrent activity."
+      ],
+      "empirical_premises": [],
+      "uncertainty_posture": "Reject the contradicted phantom label while leaving the exact replacement anomaly unclassified because no schedule is supplied."
+    },
+    "coverage": [
+      {
+        "family": "P1",
+        "status": "not-applicable",
+        "modules": [],
+        "reason": "No relation design, dependency, key, decomposition, or normalization claim is at issue."
+      },
+      {
+        "family": "P2",
+        "status": "fired",
+        "modules": [
+          "theory-battery.md §2: isolation levels and anomalies"
+        ],
+        "reason": "The claim concerns PostgreSQL Repeatable Read and the precise classification of a phantom versus another serialization anomaly."
+      },
+      {
+        "family": "P3",
+        "status": "not-applicable",
+        "modules": [],
+        "reason": "No partition, replication, quorum, or distributed consistency guarantee is involved."
+      },
+      {
+        "family": "P4",
+        "status": "not-applicable",
+        "modules": [],
+        "reason": "No algorithm, index, recurrence, workload cost, or asymptotic comparison is asserted."
+      },
+      {
+        "family": "P5",
+        "status": "not-applicable",
+        "modules": [],
+        "reason": "No type, program invariant, totality, or representability question bears on the claim."
+      },
+      {
+        "family": "P6",
+        "status": "not-applicable",
+        "modules": [],
+        "reason": "No entropy, hashing, collision, encoding, or cardinality-estimation question is present."
+      },
+      {
+        "family": "P7",
+        "status": "not-applicable",
+        "modules": [],
+        "reason": "No coupling, duplicated state, materialized view, failure domain, or reversibility decision is present."
+      },
+      {
+        "family": "P8",
+        "status": "unmapped",
+        "modules": [],
+        "reason": "The pinned current-v1 skill defines only seven lens families."
+      },
+      {
+        "family": "P9",
+        "status": "unmapped",
+        "modules": [],
+        "reason": "The pinned current-v1 skill defines only seven lens families."
+      }
+    ],
+    "derivations": [
+      {
+        "id": "d1",
+        "module": "P2/transaction-and-concurrency/isolation-levels-and-anomalies",
+        "construct": "Product-specific isolation guarantee and phantom-read anomaly",
+        "sources": {
+          "primary_theory": [
+            "theory-battery.md §2"
+          ],
+          "official_product_docs": [
+            "postgresql-18-transaction-isolation"
+          ]
+        },
+        "model": {
+          "generic_level": "ANSI Repeatable Read",
+          "target_implementation": "PostgreSQL 18 Repeatable Read",
+          "claimed_anomaly": "phantom read",
+          "phantom_condition": "A transaction repeats a predicate read and observes a changed qualifying row set due to concurrent activity."
+        },
+        "preconditions": [
+          "The transaction uses PostgreSQL 18 Repeatable Read.",
+          "The artifact's documented product guarantee applies.",
+          "The term phantom is used in its transaction-isolation sense."
+        ],
+        "fact_mapping": {
+          "generic_theory": "The theory battery's generic ANSI table identifies phantom reads as the anomaly associated with Repeatable Read.",
+          "product_fact": "The supplied PostgreSQL 18 artifact states that Repeatable Read prevents phantoms but permits serialization anomalies.",
+          "source_status": "The product and canonical documentation URL are version-pinned, but the source content hash was not captured."
+        },
+        "steps": [
+          "A phantom classification requires the phantom condition: a repeated predicate read observes a concurrent change in the qualifying row set.",
+          "The target is not an unspecified ANSI implementation; it is PostgreSQL 18.",
+          "The supplied version-specific product fact states that PostgreSQL 18 Repeatable Read prevents phantom reads.",
+          "Therefore the generic level name does not establish that this implementation admits phantoms.",
+          "Because the product guarantee excludes phantoms, labeling the staged history a phantom contradicts the supplied PostgreSQL 18 semantics.",
+          "PostgreSQL 18 Repeatable Read may still permit serialization anomalies, but the absent schedule prevents deriving a precedence-graph cycle or naming a specific replacement anomaly."
+        ],
+        "result": "c1 is refuted: the ANSI level name is not sufficient semantics for PostgreSQL 18, whose Repeatable Read implementation prevents phantoms; the staged history cannot be established as a phantom from the supplied material.",
+        "residual_mismatch": "The exact anomaly, if any, remains undetermined because the staged operation schedule is absent."
+      }
+    ],
+    "empirical_closure": {
+      "state": "not-required",
+      "tests": []
+    },
+    "synthesis": {
+      "outcome": "reversal",
+      "selected_option": "Apply PostgreSQL 18's documented semantics and reject the phantom classification.",
+      "basis": [
+        "A phantom requires a changed predicate result caused by concurrent activity.",
+        "The supplied PostgreSQL 18 documentation fact says Repeatable Read prevents phantoms.",
+        "A generic ANSI level label cannot override the target implementation's stronger documented guarantee."
+      ],
+      "conditions": [
+        "The transaction actually runs under PostgreSQL 18 Repeatable Read.",
+        "The supplied documentation paraphrase accurately represents the pinned official source."
+      ],
+      "concessions": [
+        "Rejecting the phantom label does not prove the history is serializable.",
+        "No precise replacement anomaly can be named without the operation schedule."
+      ],
+      "recovery_moves": [
+        "Obtain the staged read/write schedule and construct its precedence graph before classifying any permitted serialization anomaly."
+      ]
+    },
+    "never_attests": [
+      "derivation-correctness-by-envelope",
+      "completeness-beyond-supplied-artifacts",
+      "runtime-observation-without-test",
+      "content-integrity-of-unhashed-source"
+    ]
+  }
+}

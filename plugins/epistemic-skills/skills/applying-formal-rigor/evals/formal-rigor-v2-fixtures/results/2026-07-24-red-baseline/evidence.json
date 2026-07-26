@@ -1,0 +1,313 @@
+{
+  "schema": "formal-rigor-response-evidence@1",
+  "responses": [
+    {
+      "arm": "neutral",
+      "fixture": "cc-01-true-independent-mvd",
+      "sha256": "748e97d56cb1a5c031104e0adc0c402bfb5284311ce5097992f701d3c60c36d5",
+      "json_parseable": true,
+      "path": "neutral/cc-01-true-independent-mvd.response.json"
+    },
+    {
+      "arm": "neutral",
+      "fixture": "cc-02-comparison-bound-is-valid",
+      "sha256": "5fc793be95c3c9e5877b6b6bedeea33224197b408d50661fe3d0c1421ef78819",
+      "json_parseable": false,
+      "path": "neutral/cc-02-comparison-bound-is-valid.response.json"
+    },
+    {
+      "arm": "neutral",
+      "fixture": "cc-03-postgresql18-rationale-correct",
+      "sha256": "0db5ba4eb46592a8f7d360aae17021cab48961565c5886ef5318b49e6fc000e3",
+      "json_parseable": true,
+      "path": "neutral/cc-03-postgresql18-rationale-correct.response.json"
+    },
+    {
+      "arm": "neutral",
+      "fixture": "cc-04-authorized-dominance",
+      "sha256": "682050b741797d4e1ec754d53a1a901801a32727dbc6442103a43ab27d1d0c2b",
+      "json_parseable": true,
+      "path": "neutral/cc-04-authorized-dominance.response.json"
+    },
+    {
+      "arm": "neutral",
+      "fixture": "fc-01-pareto-no-priority",
+      "sha256": "174c73ab78cdedc24cf92046f5d067615d3b7d6ebeccf00f5540c37e8b2fc194",
+      "json_parseable": true,
+      "path": "neutral/fc-01-pareto-no-priority.response.json"
+    },
+    {
+      "arm": "neutral",
+      "fixture": "fc-02-value-of-information-probe",
+      "sha256": "53edc9799700477218f30a23e7908707779781c2d34498d7ee286393bfbedc86",
+      "json_parseable": true,
+      "path": "neutral/fc-02-value-of-information-probe.response.json"
+    },
+    {
+      "arm": "neutral",
+      "fixture": "mt-01-numerical-stability",
+      "sha256": "ada5ac06de0fd9a6a5eef20ea704907051b7381d0f1212446415c5125fb9ccf5",
+      "json_parseable": true,
+      "path": "neutral/mt-01-numerical-stability.response.json"
+    },
+    {
+      "arm": "neutral",
+      "fixture": "mt-02-queue-instability",
+      "sha256": "a2de4049980197d8aafeefa206a07ad9debd290695d83625f233727ce56548b2",
+      "json_parseable": true,
+      "path": "neutral/mt-02-queue-instability.response.json"
+    },
+    {
+      "arm": "neutral",
+      "fixture": "mt-03-authorization-boundary",
+      "sha256": "10be631dc5372772ac94a7e7b5084a797d87a36017d508adc84d4025258b1c91",
+      "json_parseable": true,
+      "path": "neutral/mt-03-authorization-boundary.response.json"
+    },
+    {
+      "arm": "neutral",
+      "fixture": "mt-04-safety-without-liveness",
+      "sha256": "e724b98675501069def97ea5c2f35da06f3850f2ae34698f28fcab47261daf5d",
+      "json_parseable": true,
+      "path": "neutral/mt-04-safety-without-liveness.response.json"
+    },
+    {
+      "arm": "neutral",
+      "fixture": "ot-01-pure-preference-skip",
+      "sha256": "edef94fc512ded168139f06dafc15f8799864258f817a42c1477e363c09573a3",
+      "json_parseable": true,
+      "path": "neutral/ot-01-pure-preference-skip.response.json"
+    },
+    {
+      "arm": "neutral",
+      "fixture": "ot-02-focused-not-ceremony",
+      "sha256": "672e138010d3755a83379fae3f9b7e7da5329770805ff6fa8f83c72b86e3953d",
+      "json_parseable": true,
+      "path": "neutral/ot-02-focused-not-ceremony.response.json"
+    },
+    {
+      "arm": "neutral",
+      "fixture": "ss-01-subject-revision-moved",
+      "sha256": "ffcd51e8891b2982a51008996dc77fd43c2d063512e0f8428190f64ca1bdff2b",
+      "json_parseable": true,
+      "path": "neutral/ss-01-subject-revision-moved.response.json"
+    },
+    {
+      "arm": "neutral",
+      "fixture": "ss-02-priority-rule-moved",
+      "sha256": "198783101e771ec67d885b7a4b071b166f68e21d98fa74527242b3d1f6eaf69d",
+      "json_parseable": true,
+      "path": "neutral/ss-02-priority-rule-moved.response.json"
+    },
+    {
+      "arm": "neutral",
+      "fixture": "tc-01-high-assurance-escalation",
+      "sha256": "676e16851affbfcd7a81a227fa87ebb5b7ea1d7d89ba1cbcd7128acebf74b0b7",
+      "json_parseable": true,
+      "path": "neutral/tc-01-high-assurance-escalation.response.json"
+    },
+    {
+      "arm": "neutral",
+      "fixture": "tm-01-false-mvd",
+      "sha256": "861431fd7b74e961df354376c4ecc6838dc44ccf52d91effde07fa2f0fe91802",
+      "json_parseable": true,
+      "path": "neutral/tm-01-false-mvd.response.json"
+    },
+    {
+      "arm": "neutral",
+      "fixture": "tm-02-isolation-name-is-not-semantics",
+      "sha256": "565b6d8cc3d5fde9da798bd57ea376d8bde35da0fcdd2a65c2fd2b5445bacd7d",
+      "json_parseable": true,
+      "path": "neutral/tm-02-isolation-name-is-not-semantics.response.json"
+    },
+    {
+      "arm": "neutral",
+      "fixture": "tm-03-consistency-is-not-one-chain",
+      "sha256": "0171e31d1f7b8106336385a0132facc1d43158fc24f94aa1876e37fede0c1c1c",
+      "json_parseable": true,
+      "path": "neutral/tm-03-consistency-is-not-one-chain.response.json"
+    },
+    {
+      "arm": "neutral",
+      "fixture": "tm-04-lamport-converse",
+      "sha256": "caa57ac2949aecfe21582f561659fe6e22f235240813209ffe6ebb68faddc0d4",
+      "json_parseable": true,
+      "path": "neutral/tm-04-lamport-converse.response.json"
+    },
+    {
+      "arm": "neutral",
+      "fixture": "tm-05-model-free-lower-bound",
+      "sha256": "26d03357f772e76291c04e3656e76d9de00db469d394e9e62c4541538287da12",
+      "json_parseable": true,
+      "path": "neutral/tm-05-model-free-lower-bound.response.json"
+    },
+    {
+      "arm": "neutral",
+      "fixture": "um-01-custom-accelerator-memory-model",
+      "sha256": "6b4831997016c3386c438a8ec862d2a7760effa1dc360c8dbd322468c7e6bf39",
+      "json_parseable": true,
+      "path": "neutral/um-01-custom-accelerator-memory-model.response.json"
+    },
+    {
+      "arm": "neutral",
+      "fixture": "um-02-external-regulatory-semantics",
+      "sha256": "db1920bb48ef71ecae24b3bda288aba68faa33f3ec1546ebd56f52fc29ff0437",
+      "json_parseable": true,
+      "path": "neutral/um-02-external-regulatory-semantics.response.json"
+    },
+    {
+      "arm": "v1-current",
+      "fixture": "cc-01-true-independent-mvd",
+      "sha256": "788d7fa33589f2ba500cb8b8514226feafb58e3b689aada5456b2e6715a95c2c",
+      "json_parseable": true,
+      "path": "v1-current/cc-01-true-independent-mvd.response.json"
+    },
+    {
+      "arm": "v1-current",
+      "fixture": "cc-02-comparison-bound-is-valid",
+      "sha256": "0f3d11faf3d1cd84d340cebd79de995c4f44e9eab31b44800902c3f11b4c692c",
+      "json_parseable": true,
+      "path": "v1-current/cc-02-comparison-bound-is-valid.response.json"
+    },
+    {
+      "arm": "v1-current",
+      "fixture": "cc-03-postgresql18-rationale-correct",
+      "sha256": "8c05732c177baa767b63a6bbd149dd9ebc1fca26ec151b86a2a045b94a37b7ac",
+      "json_parseable": true,
+      "path": "v1-current/cc-03-postgresql18-rationale-correct.response.json"
+    },
+    {
+      "arm": "v1-current",
+      "fixture": "cc-04-authorized-dominance",
+      "sha256": "cc0f075ccbab11454c59cfffe669f9e331ae7eb22aaa843e8f0484a133dba6d8",
+      "json_parseable": true,
+      "path": "v1-current/cc-04-authorized-dominance.response.json"
+    },
+    {
+      "arm": "v1-current",
+      "fixture": "fc-01-pareto-no-priority",
+      "sha256": "41c8773cd6a5bf40d0f518d616226e0ef1da7039a09612a8d73b7af41c34f5f5",
+      "json_parseable": true,
+      "path": "v1-current/fc-01-pareto-no-priority.response.json"
+    },
+    {
+      "arm": "v1-current",
+      "fixture": "fc-02-value-of-information-probe",
+      "sha256": "bd752c7640031cb76c520e57065d461dcb1b96b507183bfb88aa3f96682b0c8c",
+      "json_parseable": true,
+      "path": "v1-current/fc-02-value-of-information-probe.response.json"
+    },
+    {
+      "arm": "v1-current",
+      "fixture": "mt-01-numerical-stability",
+      "sha256": "abc22c99b34f785713887558d2b1bd1b94d0f55dc8ea4e8f6629a40f20b1c47e",
+      "json_parseable": true,
+      "path": "v1-current/mt-01-numerical-stability.response.json"
+    },
+    {
+      "arm": "v1-current",
+      "fixture": "mt-02-queue-instability",
+      "sha256": "2b565a626c51ca121935bdb9b885a0153d4ebd4b40def95e5a6cfde83a275c41",
+      "json_parseable": true,
+      "path": "v1-current/mt-02-queue-instability.response.json"
+    },
+    {
+      "arm": "v1-current",
+      "fixture": "mt-03-authorization-boundary",
+      "sha256": "208d6ba2f28822eef98753c99f99f971b00e0190033f1727cb1514043b07a1f4",
+      "json_parseable": true,
+      "path": "v1-current/mt-03-authorization-boundary.response.json"
+    },
+    {
+      "arm": "v1-current",
+      "fixture": "mt-04-safety-without-liveness",
+      "sha256": "541f9334ee4b7b0937c559f3a5034a131bdbe7a55708faa10ba244672d365c15",
+      "json_parseable": true,
+      "path": "v1-current/mt-04-safety-without-liveness.response.json"
+    },
+    {
+      "arm": "v1-current",
+      "fixture": "ot-01-pure-preference-skip",
+      "sha256": "38cc4edf060f7ae2983ad2592972a2298134203166e6fa40d1749d5b36bd2236",
+      "json_parseable": true,
+      "path": "v1-current/ot-01-pure-preference-skip.response.json"
+    },
+    {
+      "arm": "v1-current",
+      "fixture": "ot-02-focused-not-ceremony",
+      "sha256": "d7bd96cf64b58e0eb56f1233864763223e2917ee63dc002669cae15c5642b3a5",
+      "json_parseable": true,
+      "path": "v1-current/ot-02-focused-not-ceremony.response.json"
+    },
+    {
+      "arm": "v1-current",
+      "fixture": "ss-01-subject-revision-moved",
+      "sha256": "d2deb19f7549bc5cb306e8b40302fd4608335fa717ae145d1f0de1212ecf6a18",
+      "json_parseable": true,
+      "path": "v1-current/ss-01-subject-revision-moved.response.json"
+    },
+    {
+      "arm": "v1-current",
+      "fixture": "ss-02-priority-rule-moved",
+      "sha256": "9398dc3af31094b8db9f23e15ad5467373b38a647b7efe6f7688394a88cb763d",
+      "json_parseable": true,
+      "path": "v1-current/ss-02-priority-rule-moved.response.json"
+    },
+    {
+      "arm": "v1-current",
+      "fixture": "tc-01-high-assurance-escalation",
+      "sha256": "7e1502dfb80e4d69da5223a7e492dfdd8272de24276f4814edd16182343f4432",
+      "json_parseable": true,
+      "path": "v1-current/tc-01-high-assurance-escalation.response.json"
+    },
+    {
+      "arm": "v1-current",
+      "fixture": "tm-01-false-mvd",
+      "sha256": "aaa67644ac5c50d47e97a80bd13d930eb781ffeb7cabcc7fbcdcbcb37952c5a4",
+      "json_parseable": true,
+      "path": "v1-current/tm-01-false-mvd.response.json"
+    },
+    {
+      "arm": "v1-current",
+      "fixture": "tm-02-isolation-name-is-not-semantics",
+      "sha256": "9165f4fc63abaa815fa1e7cd3ef43d5f0ad6b029a12066ea0649593a6b1319bb",
+      "json_parseable": true,
+      "path": "v1-current/tm-02-isolation-name-is-not-semantics.response.json"
+    },
+    {
+      "arm": "v1-current",
+      "fixture": "tm-03-consistency-is-not-one-chain",
+      "sha256": "c82b89038fac3b893cebbd385545be69790bcc4caca0f6172904d630a55f3a85",
+      "json_parseable": true,
+      "path": "v1-current/tm-03-consistency-is-not-one-chain.response.json"
+    },
+    {
+      "arm": "v1-current",
+      "fixture": "tm-04-lamport-converse",
+      "sha256": "f6c5e8cfaaa09ce161cb924fc8b517c15174c8817fa0bb87738f04f796f24d66",
+      "json_parseable": true,
+      "path": "v1-current/tm-04-lamport-converse.response.json"
+    },
+    {
+      "arm": "v1-current",
+      "fixture": "tm-05-model-free-lower-bound",
+      "sha256": "28864026a90339d4c50db0798b8c02f64ddb4dfa64b266727833f7334fa00fc8",
+      "json_parseable": true,
+      "path": "v1-current/tm-05-model-free-lower-bound.response.json"
+    },
+    {
+      "arm": "v1-current",
+      "fixture": "um-01-custom-accelerator-memory-model",
+      "sha256": "c1e684701558d76e5352a398c783469b13393ae4297325460b1ac92ac3e19c59",
+      "json_parseable": true,
+      "path": "v1-current/um-01-custom-accelerator-memory-model.response.json"
+    },
+    {
+      "arm": "v1-current",
+      "fixture": "um-02-external-regulatory-semantics",
+      "sha256": "44486a7b6877a05b48012e68bdac198dcbc5379f619ac582c2931a18af5d61e7",
+      "json_parseable": true,
+      "path": "v1-current/um-02-external-regulatory-semantics.response.json"
+    }
+  ]
+}
