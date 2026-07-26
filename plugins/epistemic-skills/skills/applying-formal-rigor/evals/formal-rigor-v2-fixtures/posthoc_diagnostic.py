@@ -322,7 +322,24 @@ def _task_call_path(output_root: Path, task: dict) -> Path:
     )
 
 
-def _verify_call_layout(output_root: Path, tasks: list[dict], plan_sha256: str) -> None:
+def _validate_packet_root(packet_root: Path, source_coordinate: object) -> None:
+    if not isinstance(source_coordinate, str) or not source_coordinate:
+        raise ValueError("diagnostic manifest source coordinate is missing")
+    source_root = Path(source_coordinate).resolve()
+    if not source_root.is_dir():
+        raise ValueError("diagnostic source coordinate is not an existing directory")
+    packets = Path(packet_root).resolve(strict=False)
+    if (
+        packets == source_root
+        or packets.is_relative_to(source_root)
+        or source_root.is_relative_to(packets)
+    ):
+        raise ValueError("packet root must not equal, contain, or be contained by the source root")
+
+
+def _verify_call_layout(
+    output_root: Path, tasks: list[dict], plan_sha256: str, plan: dict,
+) -> None:
     expected = {_task_call_path(output_root, task).resolve(): task for task in tasks}
     semantic_root = output_root / "semantic-diagnostic"
     if semantic_root.exists():
@@ -340,11 +357,45 @@ def _verify_call_layout(output_root: Path, tasks: list[dict], plan_sha256: str) 
                     raise ValueError(f"semantic call identity {field!r} does not match plan")
             if call.get("semantic_plan_sha256") != plan_sha256:
                 raise ValueError("semantic call plan hash does not match frozen plan")
+            for field in (
+                "implementation_commit", "source_coordinate", "source_commit",
+                "source_tree_sha256",
+            ):
+                if call.get(field) != plan.get(field):
+                    raise ValueError(f"semantic call binding {field!r} does not match plan")
             if call.get("retry_policy") != "at-most-once":
                 raise ValueError("semantic call retry policy does not match frozen plan")
             for field, value in NON_RELEASE_FIELDS.items():
                 if call.get(field) != value:
                     raise ValueError(f"semantic call non-release field {field!r} drifted")
+            for artifact_name, hash_field in (
+                ("stdout.bin", "stdout_sha256"),
+                ("stderr.bin", "stderr_sha256"),
+            ):
+                artifact_path = call_path.parent / artifact_name
+                if not artifact_path.is_file():
+                    raise ValueError(f"semantic call retained artifact is missing: {artifact_name}")
+                if sha256_bytes(artifact_path.read_bytes()) != call.get(hash_field):
+                    raise ValueError(f"semantic call retained artifact hash mismatch: {artifact_name}")
+            response_path = call_path.parent / "response.json"
+            if call.get("response_sha256") is not None:
+                if not response_path.is_file():
+                    raise ValueError("semantic call retained response is missing")
+                if sha256_bytes(response_path.read_bytes()) != call.get("response_sha256"):
+                    raise ValueError("semantic call retained response hash mismatch")
+            if call.get("packet_manifest_sha256") != sha256_bytes(
+                _canonical_json_bytes(call.get("packet_manifest"))
+            ):
+                raise ValueError("semantic call packet manifest hash mismatch")
+            attempt = _read_json(call_path.parent / "attempt.json", "semantic attempt reservation")
+            if attempt.get("identity") != {
+                field: task[field] for field in (
+                    "repetition", "fixture", "seat", "origin_harness", "origin_provider",
+                    "judge_harness", "judge_provider", "model", "effort", "source_view",
+                    "view_sha256", "prompt_sha256",
+                )
+            } or attempt.get("semantic_plan_sha256") != plan_sha256:
+                raise ValueError("semantic attempt reservation does not match task and plan")
         for attempt_path in semantic_root.rglob("attempt.json"):
             if not (attempt_path.parent / "call.json").is_file():
                 raise ValueError(f"incomplete at-most-once semantic attempt: {attempt_path}")
@@ -358,6 +409,14 @@ def _as_bytes(value: object) -> bytes:
     return str(value).encode("utf-8", errors="replace")
 
 
+def _exclusive_write_json(path: Path, value: object) -> None:
+    """Atomically reserve an at-most-once identity without replacing evidence."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("x", encoding="utf-8", newline="\n") as stream:
+        json.dump(value, stream, ensure_ascii=False, indent=2, sort_keys=True)
+        stream.write("\n")
+
+
 def _execute_semantic_task(
     *, output_root: Path, task: dict, plan: dict, plan_sha256: str,
     executables: dict[str, str], runner: Callable[..., object], packet_root: Path,
@@ -369,15 +428,45 @@ def _execute_semantic_task(
     if call_dir.exists() and any(call_dir.iterdir()):
         raise ValueError(f"semantic call directory is incomplete and cannot be retried: {call_dir}")
     call_dir.mkdir(parents=True, exist_ok=True)
+    identity = {
+        key: task[key] for key in (
+            "repetition", "fixture", "seat", "origin_harness", "origin_provider",
+            "judge_harness", "judge_provider", "model", "effort", "source_view",
+            "view_sha256", "prompt_sha256",
+        )
+    }
+    try:
+        _exclusive_write_json(call_dir / "attempt.json", {
+            "schema": "formal-rigor-posthoc-semantic-attempt@1",
+            **NON_RELEASE_FIELDS, "identity": identity,
+            "semantic_plan_sha256": plan_sha256, "retry_policy": "at-most-once",
+        })
+    except FileExistsError as exc:
+        raise ValueError("semantic call identity is already reserved") from exc
     packet_root.mkdir(parents=True, exist_ok=True)
     packet = Path(tempfile.mkdtemp(
         prefix=f"r{task['repetition']}-{task['fixture']}-{task['seat']}-",
         dir=packet_root,
     ))
     packet.rmdir()
+    try:
+        return _execute_semantic_task_in_packet(
+            output_root=output_root, task=task, plan=plan,
+            plan_sha256=plan_sha256, executables=executables, runner=runner,
+            packet=packet, call_path=call_path, identity=identity,
+        )
+    finally:
+        shutil.rmtree(packet, ignore_errors=True)
+
+
+def _execute_semantic_task_in_packet(
+    *, output_root: Path, task: dict, plan: dict, plan_sha256: str,
+    executables: dict[str, str], runner: Callable[..., object], packet: Path,
+    call_path: Path, identity: dict,
+) -> dict:
+    call_dir = call_path.parent
     candidate = output_root / str(task["source_view"])
     if not candidate.is_file() or sha256_bytes(candidate.read_bytes()) != task["view_sha256"]:
-        shutil.rmtree(packet, ignore_errors=True)
         raise ValueError("candidate semantic view does not match frozen task hash")
     truth = _read_json(FIXTURES_ROOT / task["fixture"] / "ground-truth.json", "fixture truth")
     run_live.build_adjudication_packet(
@@ -392,20 +481,7 @@ def _execute_semantic_task(
         harness=task["judge_harness"], output_schema_text=schema_text,
     )
     if sha256_bytes(prompt.encode("utf-8")) != task["prompt_sha256"]:
-        shutil.rmtree(packet, ignore_errors=True)
         raise ValueError("semantic prompt does not match frozen task hash")
-    identity = {
-        key: task[key] for key in (
-            "repetition", "fixture", "seat", "origin_harness", "origin_provider",
-            "judge_harness", "judge_provider", "model", "effort", "source_view",
-            "view_sha256", "prompt_sha256",
-        )
-    }
-    _write_json(call_dir / "attempt.json", {
-        "schema": "formal-rigor-posthoc-semantic-attempt@1",
-        **NON_RELEASE_FIELDS, "identity": identity,
-        "semantic_plan_sha256": plan_sha256, "retry_policy": "at-most-once",
-    })
     pending_response = call_dir / "codex-output.tmp"
     stdin = b""
     if task["judge_harness"] == "codex":
@@ -484,6 +560,7 @@ def _execute_semantic_task(
         **NON_RELEASE_FIELDS,
         **identity,
         "implementation_commit": plan["implementation_commit"],
+        "source_coordinate": plan["source_coordinate"],
         "source_commit": plan["source_commit"],
         "source_tree_sha256": plan["source_tree_sha256"],
         "semantic_plan_sha256": plan_sha256,
@@ -510,7 +587,6 @@ def _execute_semantic_task(
         "command_sha256": sha256_bytes(_canonical_json_bytes(command)),
         "prompt_transport": "stdin" if task["judge_harness"] == "codex" else "argv",
     }
-    shutil.rmtree(packet, ignore_errors=True)
     _write_json(call_path, record)
     return record
 
@@ -528,6 +604,11 @@ def run_semantic(
         raise ValueError("diagnostic semantic harness must be codex or agy")
     inventory = _read_json(output_root / "arm-inventory.json", "view manifest")
     tasks = semantic_tasks(inventory)
+    diagnostic_manifest = _read_json(
+        output_root / "diagnostic-manifest.json", "diagnostic manifest",
+    )
+    packets = packet_root or output_root.parent / f"{output_root.name}-packets" / "semantic-diagnostic"
+    _validate_packet_root(packets, diagnostic_manifest.get("source_coordinate"))
     expected_plan = _semantic_plan(
         output_root=output_root, tasks=tasks,
         implementation_commit=implementation_commit,
@@ -540,12 +621,11 @@ def run_semantic(
     else:
         _write_json(plan_path, expected_plan)
     plan_sha = sha256_bytes(_canonical_json_bytes(expected_plan))
-    _verify_call_layout(output_root, expected_plan["tasks"], plan_sha)
+    _verify_call_layout(output_root, expected_plan["tasks"], plan_sha, expected_plan)
     selected = [task for task in expected_plan["tasks"] if task["judge_harness"] == harness]
     pending = [task for task in selected if not _task_call_path(output_root, task).is_file()]
     if pending:
         source_verifier(implementation_commit, require_clean=True)
-    packets = packet_root or output_root.parent / f"{output_root.name}-packets" / "semantic-diagnostic"
     executed = 0
     for task in selected:
         if _task_call_path(output_root, task).is_file():
@@ -583,7 +663,7 @@ def summarize_semantic_diagnostic(output_root: Path) -> dict:
     if not isinstance(tasks, list):
         raise ValueError("semantic plan tasks are missing")
     plan_sha = sha256_bytes(_canonical_json_bytes(plan))
-    _verify_call_layout(output_root, tasks, plan_sha)
+    _verify_call_layout(output_root, tasks, plan_sha, plan)
     truth = score.load_inventory(FIXTURES_ROOT)
     grouped: dict[tuple[int, str], list[dict]] = defaultdict(list)
     terminal_seats = valid_seats = 0

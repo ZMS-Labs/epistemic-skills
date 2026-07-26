@@ -8,7 +8,9 @@ import importlib.util
 import json
 import tempfile
 from collections import Counter
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from threading import Barrier
 from types import SimpleNamespace
 
 
@@ -273,7 +275,13 @@ def test_agy_aggregate_extraction_is_unambiguous_and_fail_closed() -> None:
         )
 
 
-def write_semantic_output_root(output: Path) -> None:
+def write_semantic_output_root(
+    output: Path, *, source_coordinate: str | None = None,
+) -> None:
+    if source_coordinate is None:
+        source = output.parent / "excluded-v3-source"
+        source.mkdir(exist_ok=True)
+        source_coordinate = str(source.resolve())
     fixture_ids = sorted(diagnostic.score.load_inventory(diagnostic.FIXTURES_ROOT))
     rows = []
     for repetition in (1, 2, 3):
@@ -296,7 +304,7 @@ def write_semantic_output_root(output: Path) -> None:
     diagnostic._write_json(output / "diagnostic-manifest.json", {
         "schema": "formal-rigor-posthoc-diagnostic-manifest@1",
         **diagnostic.NON_RELEASE_FIELDS,
-        "source_coordinate": "C:/tmp/excluded-v3-source",
+        "source_coordinate": source_coordinate,
         "source_tree_sha256": "1" * 64,
         "source_commit": "2" * 40,
         "planned_arm_calls": 286,
@@ -453,7 +461,7 @@ def test_semantic_plan_execution_and_summary_are_frozen_and_at_most_once() -> No
         }, "semantic timeout policy drifted")
         require(plan["implementation_commit"] == "4" * 40,
                 "semantic plan lost implementation commit")
-        require(plan["source_coordinate"] == "C:/tmp/excluded-v3-source",
+        require(plan["source_coordinate"] == str((output.parent / "excluded-v3-source").resolve()),
                 "semantic plan lost source coordinate")
         require(plan["view_manifest_sha256"] == sha256((output / "arm-inventory.json").read_bytes()),
                 "semantic plan lost view-manifest hash")
@@ -495,16 +503,37 @@ def test_semantic_plan_execution_and_summary_are_frozen_and_at_most_once() -> No
         require(report["dissent"] == [], "unanimous fake verdicts created dissent")
         require(report["p0_findings"] == [], "unanimous fake verdicts created P0 findings")
 
+        sealed_call_path = call_paths[0]
+        sealed_call = json.loads(sealed_call_path.read_text(encoding="utf-8"))
+        for artifact_name in ("stdout.bin", "stderr.bin"):
+            artifact_path = sealed_call_path.parent / artifact_name
+            original_artifact = artifact_path.read_bytes()
+            artifact_path.write_bytes(original_artifact + b"tampered")
+            require_raises(ValueError, diagnostic.run_semantic, **{
+                **common, "harness": sealed_call["judge_harness"],
+                "runner": FakeSemanticRunner(),
+            })
+            require_raises(ValueError, diagnostic.summarize_semantic_diagnostic, output)
+            artifact_path.write_bytes(original_artifact)
+
+        for field in ("implementation_commit", "source_commit", "source_tree_sha256"):
+            original_binding = sealed_call[field]
+            sealed_call[field] = "f" * len(str(original_binding))
+            diagnostic._write_json(sealed_call_path, sealed_call)
+            require_raises(ValueError, diagnostic.run_semantic, **{
+                **common, "harness": sealed_call["judge_harness"],
+                "runner": FakeSemanticRunner(),
+            })
+            require_raises(ValueError, diagnostic.summarize_semantic_diagnostic, output)
+            sealed_call[field] = original_binding
+            diagnostic._write_json(sealed_call_path, sealed_call)
+
         tampered_response = call_paths[0].parent / "response.json"
         original_response = tampered_response.read_bytes()
         changed_response = json.loads(original_response)
         changed_response["coverage_limits"] = ["tampered after terminal seal"]
         diagnostic._write_json(tampered_response, changed_response)
-        tampered_report = diagnostic.summarize_semantic_diagnostic(output)
-        require(any(
-            error.get("error") == "response hash mismatch"
-            for error in tampered_report["validation_errors"]
-        ), "summary trusted a response changed after terminal sealing")
+        require_raises(ValueError, diagnostic.summarize_semantic_diagnostic, output)
         tampered_response.write_bytes(original_response)
 
         forged_path = call_paths[0]
@@ -525,6 +554,151 @@ def test_semantic_plan_execution_and_summary_are_frozen_and_at_most_once() -> No
         })
 
 
+def test_concurrent_semantic_contenders_have_one_exclusive_winner() -> None:
+    receipt = {
+        "codex": {"version": "codex-cli 0.144.6"},
+        "agy": {
+            "version": "1.1.7", "catalog_sha256": "3" * 64,
+            "selected_model": "gemini-3.1-pro-high",
+        },
+    }
+    with tempfile.TemporaryDirectory() as temporary:
+        output = Path(temporary) / "diagnostic"
+        output.mkdir()
+        write_semantic_output_root(output)
+        tasks = diagnostic.semantic_tasks(json.loads(
+            (output / "arm-inventory.json").read_text(encoding="utf-8")
+        ))
+        plan = diagnostic._semantic_plan(
+            output_root=output, tasks=tasks,
+            implementation_commit="4" * 40, preflight_receipt=receipt,
+        )
+        task = next(row for row in plan["tasks"] if row["judge_harness"] == "codex")
+        plan_sha = sha256(json.dumps(
+            plan, ensure_ascii=False, sort_keys=True, separators=(",", ":"),
+        ).encode("utf-8"))
+        fake = FakeSemanticRunner()
+        barrier = Barrier(2)
+        original_exclusive_write = diagnostic._exclusive_write_json
+
+        def synchronized_exclusive_write(path: Path, value: object) -> None:
+            barrier.wait(timeout=5)
+            original_exclusive_write(path, value)
+
+        diagnostic._exclusive_write_json = synchronized_exclusive_write
+        try:
+            def contend():
+                return diagnostic._execute_semantic_task(
+                    output_root=output, task=task, plan=plan,
+                    plan_sha256=plan_sha,
+                    executables={"codex": "codex.cmd", "agy": "agy"},
+                    runner=fake,
+                    packet_root=Path(temporary) / "packets",
+                )
+
+            with ThreadPoolExecutor(max_workers=2) as pool:
+                futures = [pool.submit(contend) for _ in range(2)]
+                failures = []
+                successes = []
+                for future in futures:
+                    try:
+                        successes.append(future.result(timeout=10))
+                    except Exception as exc:  # the losing reservation must fail closed
+                        failures.append(exc)
+        finally:
+            diagnostic._exclusive_write_json = original_exclusive_write
+        require(len(fake.calls) == 1, f"concurrent contenders invoked provider {len(fake.calls)} times")
+        require(len(successes) == 1 and len(failures) == 1,
+                f"concurrent reservation result drifted: successes={len(successes)} failures={failures}")
+        call_path = diagnostic._task_call_path(output, task)
+        require(call_path.is_file(), "winning contender did not seal call evidence")
+        require((call_path.parent / "attempt.json").is_file(),
+                "winning contender lost its exclusive reservation evidence")
+
+
+def test_packet_root_rejects_every_source_overlap_before_writes() -> None:
+    receipt = {
+        "codex": {"version": "codex-cli 0.144.6"},
+        "agy": {
+            "version": "1.1.7", "catalog_sha256": "3" * 64,
+            "selected_model": "gemini-3.1-pro-high",
+        },
+    }
+    with tempfile.TemporaryDirectory() as temporary:
+        root = Path(temporary)
+        source = root / "excluded-source"
+        source.mkdir()
+        sentinel = source / "sentinel.bin"
+        sentinel.write_bytes(b"immutable-source")
+        source_before = diagnostic.tree_sha256(source)
+        source_entries = sorted(path.relative_to(source).as_posix() for path in source.rglob("*"))
+        overlapping_roots = (source, source / "packet-child", source.parent)
+        for index, packet_root in enumerate(overlapping_roots):
+            output = root / f"diagnostic-{index}"
+            output.mkdir()
+            write_semantic_output_root(output, source_coordinate=str(source.resolve()))
+            fake = FakeSemanticRunner()
+            require_raises(
+                ValueError, diagnostic.run_semantic, output,
+                harness="codex",
+                executables={"codex": "codex.cmd", "agy": "agy"},
+                implementation_commit="4" * 40,
+                preflight_receipt=receipt,
+                runner=fake,
+                source_verifier=lambda commit, **kwargs: None,
+                packet_root=packet_root,
+            )
+            require(not fake.calls, f"overlapping packet root reached provider: {packet_root}")
+            require(diagnostic.tree_sha256(source) == source_before,
+                    f"overlapping packet root changed source bytes: {packet_root}")
+            require(sorted(path.relative_to(source).as_posix() for path in source.rglob("*"))
+                    == source_entries, f"overlapping packet root changed source tree: {packet_root}")
+
+
+def test_semantic_packet_cleanup_survives_provider_exception() -> None:
+    receipt = {
+        "codex": {"version": "codex-cli 0.144.6"},
+        "agy": {
+            "version": "1.1.7", "catalog_sha256": "3" * 64,
+            "selected_model": "gemini-3.1-pro-high",
+        },
+    }
+    with tempfile.TemporaryDirectory() as temporary:
+        output = Path(temporary) / "diagnostic"
+        output.mkdir()
+        write_semantic_output_root(output)
+        tasks = diagnostic.semantic_tasks(json.loads(
+            (output / "arm-inventory.json").read_text(encoding="utf-8")
+        ))
+        plan = diagnostic._semantic_plan(
+            output_root=output, tasks=tasks,
+            implementation_commit="4" * 40, preflight_receipt=receipt,
+        )
+        task = next(row for row in plan["tasks"] if row["judge_harness"] == "codex")
+        plan_sha = sha256(json.dumps(
+            plan, ensure_ascii=False, sort_keys=True, separators=(",", ":"),
+        ).encode("utf-8"))
+        packet_root = Path(temporary) / "exception-packets"
+        observed_packets = []
+
+        def failing_provider(argv: list[str], **kwargs):
+            packet = Path(kwargs["cwd"])
+            require(packet.is_dir(), "provider exception did not occur at real packet boundary")
+            observed_packets.append(packet)
+            raise RuntimeError("deterministic provider boundary failure")
+
+        require_raises(
+            RuntimeError, diagnostic._execute_semantic_task,
+            output_root=output, task=task, plan=plan, plan_sha256=plan_sha,
+            executables={"codex": "codex.cmd", "agy": "agy"},
+            runner=failing_provider, packet_root=packet_root,
+        )
+        require(len(observed_packets) == 1, "failing provider boundary was not exercised")
+        require(not observed_packets[0].exists(), "provider exception retained temporary packet")
+        require(not packet_root.exists() or not any(packet_root.iterdir()),
+                "provider exception left packet-root contents")
+
+
 def main() -> int:
     test_semantic_seat_map_and_transport_contracts()
     test_agy_aggregate_extraction_is_unambiguous_and_fail_closed()
@@ -532,6 +706,9 @@ def main() -> int:
     test_frozen_candidate_outcome_rule()
     test_diagnostic_cli_exposes_three_bounded_commands()
     test_semantic_plan_execution_and_summary_are_frozen_and_at_most_once()
+    test_concurrent_semantic_contenders_have_one_exclusive_winner()
+    test_packet_root_rejects_every_source_overlap_before_writes()
+    test_semantic_packet_cleanup_survives_provider_exception()
     transport_schema = json.loads((ROOT / "formal-rigor-fixture-transport.schema.json").read_text(encoding="utf-8"))
     canonical_frame = transport_frame("tm-01-false-mvd")
     semantically_equal_different_bytes = json.dumps(
