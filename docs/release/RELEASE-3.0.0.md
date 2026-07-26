@@ -1,10 +1,10 @@
 # epistemic-skills 3.0.0
 
-**Release date:** 2026-07-26  
-**Channel:** stable  
-**Status:** first formal public release
+**Prepared:** 2026-07-26  
+**Intended channel:** stable  
+**Status:** prepared release record; publication is pending the exact-commit gates, annotated tag, and non-draft GitHub Release
 
-Version 3.0.0 is the first immutable support point for this repository. It
+Version 3.0.0 is intended to be the first immutable support point for this repository. It
 packages the proportional routine-work path, applying-formal-rigor v2, the
 consolidated Gauntlet, and the cross-harness plugin surfaces as one tagged
 contract.
@@ -75,7 +75,20 @@ gates, not part of the operator's risk acceptance.
 The proportionality campaign completed 162/162 terminal, schema-valid matched
 calls. The candidate passed all three repetitions at routine 10/10, material
 4/4, and high-risk 4/4; the corrected full-ceremony and always-routine parody
-controls failed as required.
+controls failed as required. Its immutable coordinates are:
+
+- protocol commit: `7cdf6fc`;
+- main subject: `80eb0827108d46e521f44f4fed3c20da0edc79a7`;
+- PR #46 subject: `a4f2210fe3e955b77bb2593fa3c6c991304a4142`;
+- final product subject: `b73b04af46255bddf103a3f7e80e69b442ebddab`;
+- canonical campaign content pin:
+  `11168ef457764778be19c5ace54f3f263621f260377e4bbf9c87eb281b8d2e59`;
+- corrected parody adapter commit: `15cce7e`;
+- corrected parody content pin:
+  `cb5a8d7f64d7ec78321005a938bbf040d99af62e316a932522b8c37180c97d4c`.
+
+The committed evidence is
+[`RESULTS.md`](../../plugins/epistemic-skills/skills/using-epistemic-skills/evals/proportionality/blinded/results/RESULTS.md).
 
 ## Accepted behavioral risk
 
