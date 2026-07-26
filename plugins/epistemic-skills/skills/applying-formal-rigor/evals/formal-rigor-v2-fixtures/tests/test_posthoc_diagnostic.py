@@ -181,6 +181,17 @@ def main() -> int:
         require(repeated_report["inventory"][0]["classification"] == "normalized_identical_repeated_frames",
                 "repeated-frame source did not receive the normalized classification")
 
+        failed_repeated_source = root / "failed-repeated-source"
+        failed_repeated_source.mkdir()
+        write_source(
+            failed_repeated_source, canonical_frame + b"\n" + canonical_frame,
+            mutate_call=lambda call: call.update(
+                transport="failed", json_parseable=False, schema_valid=False,
+                schema_errors=["$: response is not parseable JSON"],
+            ),
+        )
+        assert_prepare_rejects(failed_repeated_source, root / "failed-repeated-output")
+
         parody_report = diagnostic._structural_report([
             {
                 "arm": "parody-always-cautious", "repetition": 1,

@@ -144,8 +144,13 @@ def _ensure_expected_identity(call: dict, task: dict, campaign: dict) -> None:
 
 
 def _ensure_qualifying_call(call: dict) -> None:
-    if call.get("transport") != "completed" or call.get("json_parseable") is not True or call.get("schema_valid") is not True:
-        raise ValueError("content-bearing call is not completed and schema-valid")
+    if call.get("json_parseable") is not True or call.get("schema_valid") is not True:
+        raise ValueError("single-frame call is not parseable and schema-valid")
+
+
+def _ensure_completed_transport(call: dict) -> None:
+    if call.get("transport") != "completed":
+        raise ValueError("content-bearing call transport did not complete")
 
 
 def _relative(source_root: Path, path: Path) -> str:
@@ -215,6 +220,7 @@ def inventory_source_calls(source_root: Path, expected_pin: str) -> list[dict]:
             row.update(classification="missing_no_content", exclusion_reason="terminal call retained no model content")
             rows.append(row)
             continue
+        _ensure_completed_transport(call)
         raw = raw_path.read_bytes()
         row["raw_sha256"] = sha256_bytes(raw)
         if call.get("response_sha256") != row["raw_sha256"]:
