@@ -239,3 +239,31 @@ and every call must retain the phase-specific matrix, canonical packet root,
 execution policy, schema-delivery mode, and AGY receipt. Do not claim v3
 success or release credit unless a full fresh epoch passes every unchanged gate;
 release remains HOLD.
+
+## Completed v3 exclusion and bounded future transport pilot
+
+V3 is now final evidence, not a prospective success claim. Source
+`693c0fb26fa4e0c4f54e63b52497783c4ce60131`, root
+`C:\tmp\formal-rigor-noncursor-v3-693c0fb`, and canonical pin
+`87e7a615927b4e4148ae5d79677d78166c2aeb8ded294d79ff4dfaf204af29b1` recorded
+286 terminal arms, with 204 qualifying calls: Codex 154/154 and AGY 50/132.
+AGY has 82 invalid calls: eleven completed nonparseable raw outputs, four
+AGY-internal roughly-302-second timeouts, and 67 quota failures. Each of the
+eleven raw outputs contains only duplicate valid JSON frames rather than one
+final object: eight have two byte-identical frames, two have three, and one has
+five; none diverges. They fail the frozen fail-closed transport rule.
+
+The entire root is excluded: do not score it structurally, run semantic
+adjudication, or grant release credit; do not retry, repair, resume, or reuse
+any terminal call. Release remains HOLD, and Cursor remains zero/unavailable.
+
+After quota reset, a new separately preregistered bounded AGY transport pilot
+may test AGY 1.1.7 with the exact phase models, `--output-format json`,
+`--print-timeout 10m`, and runner `--timeout-seconds 720`. The explicit
+720-second outer timeout exceeds the 600-second internal wait to avoid an
+outer-kill race and preserve terminal evidence. The pilot retains
+byte-preserving raw evidence and fail-closed one-final-object criteria. Only a
+passing pilot may justify a fresh V4/full root; it cannot rehabilitate V3. The
+Fleet Gemini bridge is unsuitable because
+it ignores selected model/effort and likely shares quota; Ollama `qwen2.5` 7B
+is exploratory only and cannot substitute for release evidence.

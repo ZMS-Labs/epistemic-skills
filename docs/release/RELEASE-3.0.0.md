@@ -166,3 +166,33 @@ Use the gate in `RELEASING.md`. Replace this draft's blockers with immutable
 commit, workflow, behavioral-run, independent-review, and secret-scan
 coordinates. Do not turn NOT_RUN or BLOCKED scaffolds into release evidence by
 renaming them.
+
+## Completed excluded `noncursor-degraded-v3` epoch
+
+The `noncursor-degraded-v3` root at source
+`693c0fb26fa4e0c4f54e63b52497783c4ce60131` is
+`C:\tmp\formal-rigor-noncursor-v3-693c0fb`, with canonical evidence-root pin
+`87e7a615927b4e4148ae5d79677d78166c2aeb8ded294d79ff4dfaf204af29b1`.
+It has 286 terminal arms and only 204 qualifying calls: Codex is 154/154
+qualifying and AGY is 50/132 qualifying. The 82 invalid AGY calls are eleven
+completed nonparseable outputs, four AGY-internal timeouts at about 302 seconds,
+and 67 quota failures. The eleven retained raw outputs are duplicate valid JSON
+frames, not one final object: eight have two byte-identical frames, two have
+three, and one has five; none has divergent frames. The frozen fail-closed
+transport rule therefore rejects them.
+
+This whole root is excluded: no structural score, semantic adjudication, or
+release credit; no retry, repair, resume, or reuse. Release remains **HOLD**.
+Cursor remains zero/unavailable and provides no qualifying result.
+
+After quota reset, the only contemplated next step is a separately
+preregistered, bounded AGY transport pilot using AGY 1.1.7, the exact v3 phase
+models, `--output-format json`, `--print-timeout 10m`, and runner
+`--timeout-seconds 720`. The 720-second outer timeout exceeds the 600-second
+internal wait, avoiding an outer-kill race and preserving terminal evidence.
+The pilot retains byte-preserving raw evidence and fail-closed one-final-object
+criteria. Only a passing pilot may justify a fresh V4/full root; it does not
+repair V3. Fleet bridge audit does not
+provide a substitute: the Gemini bridge ignores selected model/effort and
+likely shares quota, while Ollama `qwen2.5` 7B is exploratory only, not release
+evidence.

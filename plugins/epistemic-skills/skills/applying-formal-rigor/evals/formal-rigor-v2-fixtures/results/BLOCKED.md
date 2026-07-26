@@ -110,3 +110,31 @@ preflight is AGY-only; Codex has no catalog preflight and relies narrowly on
 V2's 154/154 qualifying `gpt-5.6-sol`/high calls, while V2 remains excluded.
 Cursor remains `BLOCKED_EXTERNAL`; release remains HOLD until a complete v3
 epoch passes every unchanged gate.
+
+## Completed excluded `noncursor-degraded-v3` epoch
+
+V3 at source `693c0fb26fa4e0c4f54e63b52497783c4ce60131`, root
+`C:\tmp\formal-rigor-noncursor-v3-693c0fb`, and canonical pin
+`87e7a615927b4e4148ae5d79677d78166c2aeb8ded294d79ff4dfaf204af29b1` is
+excluded. It has 286 terminal arms and 204 qualifying calls: all 154 Codex
+calls qualify, while only 50 of 132 AGY calls qualify. AGY's 82 invalid calls
+are eleven completed nonparseable outputs, four AGY-internal roughly-302-second
+timeouts, and 67 quota failures. The eleven retained raw outputs contain only
+repeated valid JSON frames: eight have two byte-identical frames, two have
+three, and one has five; none differs. They are invalid under the frozen
+fail-closed one-final-object rule.
+
+No structural score, semantic adjudication, or release credit is authorized;
+no retry, repair, resume, or reuse is authorized. Release remains HOLD and
+Cursor remains zero/unavailable.
+
+After quota reset, a separately preregistered bounded AGY transport pilot may
+use AGY 1.1.7, the exact phase models, `--output-format json`,
+`--print-timeout 10m`, and runner `--timeout-seconds 720`. The explicit
+720-second outer timeout exceeds the 600-second internal wait to avoid an
+outer-kill race and preserve terminal evidence. The pilot retains
+byte-preserving raw evidence and fail-closed one-final-object criteria. Only a
+passing pilot may justify a fresh V4/full root, never repair V3. The Gemini
+Fleet bridge ignores selected model/effort
+and likely shares quota, so is unsuitable. Ollama `qwen2.5` 7B is exploratory
+only and cannot substitute release evidence.
