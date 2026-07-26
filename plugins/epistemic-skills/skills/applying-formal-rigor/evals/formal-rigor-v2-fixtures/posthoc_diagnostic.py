@@ -378,6 +378,12 @@ def _verify_call_layout(
                 if sha256_bytes(artifact_path.read_bytes()) != call.get(hash_field):
                     raise ValueError(f"semantic call retained artifact hash mismatch: {artifact_name}")
             response_path = call_path.parent / "response.json"
+            raw_response_path = call_path.parent / "raw-response.bin"
+            if call.get("raw_response_sha256") is not None:
+                if not raw_response_path.is_file():
+                    raise ValueError("semantic call retained raw response is missing")
+                if sha256_bytes(raw_response_path.read_bytes()) != call.get("raw_response_sha256"):
+                    raise ValueError("semantic call retained raw response hash mismatch")
             if call.get("response_sha256") is not None:
                 if not response_path.is_file():
                     raise ValueError("semantic call retained response is missing")
@@ -530,7 +536,7 @@ def _execute_semantic_task_in_packet(
             if task["judge_harness"] == "agy":
                 response_bytes, extraction = extract_agy_adjudication(stdout, task["fixture"])
             elif pending_response.is_file():
-                response_bytes = pending_response.read_bytes().strip()
+                response_bytes = pending_response.read_bytes()
             else:
                 parse_error = "Codex did not write --output-last-message"
         except ValueError as exc:
@@ -553,6 +559,8 @@ def _execute_semantic_task_in_packet(
         transport == "completed" and parse_error is None and not schema_errors
         and not adjudication_errors and not markers and isinstance(value, dict)
     )
+    if response_bytes is not None:
+        (call_dir / "raw-response.bin").write_bytes(response_bytes)
     if valid and response_bytes is not None:
         (call_dir / "response.json").write_bytes(response_bytes)
     record = {
@@ -573,7 +581,8 @@ def _execute_semantic_task_in_packet(
         "exit_code": exit_code,
         "stdout_sha256": sha256_bytes(stdout),
         "stderr_sha256": sha256_bytes(stderr),
-        "response_sha256": sha256_bytes(response_bytes) if response_bytes is not None else None,
+        "raw_response_sha256": sha256_bytes(response_bytes) if response_bytes is not None else None,
+        "response_sha256": sha256_bytes(response_bytes) if valid and response_bytes is not None else None,
         "json_parseable": value is not None,
         "schema_valid": value is not None and not schema_errors,
         "adjudication_valid": valid,

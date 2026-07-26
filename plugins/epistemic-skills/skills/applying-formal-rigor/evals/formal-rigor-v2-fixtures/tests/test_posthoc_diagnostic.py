@@ -366,6 +366,23 @@ class FakeSemanticRunner:
         )
 
 
+class MalformedOnceCodexRunner(FakeSemanticRunner):
+    def __init__(self) -> None:
+        super().__init__()
+        self.malformed_written = False
+
+    def __call__(self, argv: list[str], **kwargs):
+        if argv[0] == "codex.cmd" and not self.malformed_written:
+            self.calls.append((argv, kwargs))
+            packet = Path(kwargs["cwd"])
+            require(packet.is_dir(), "malformed Codex fake did not receive packet cwd")
+            response_path = Path(argv[argv.index("--output-last-message") + 1])
+            response_path.write_bytes(b"{malformed-codex-json")
+            self.malformed_written = True
+            return SimpleNamespace(returncode=0, stdout=b'{"event":"complete"}\n', stderr=b"")
+        return super().__call__(argv, **kwargs)
+
+
 def test_semantic_preflight_freezes_exact_cli_versions_and_catalog() -> None:
     catalog = b"gemini-3.6-flash-medium\ngemini-3.1-pro-high\n"
 
@@ -699,6 +716,68 @@ def test_semantic_packet_cleanup_survives_provider_exception() -> None:
                 "provider exception left packet-root contents")
 
 
+def test_malformed_codex_terminal_is_retained_and_summarized() -> None:
+    receipt = {
+        "codex": {"version": "codex-cli 0.144.6"},
+        "agy": {
+            "version": "1.1.7", "catalog_sha256": "3" * 64,
+            "selected_model": "gemini-3.1-pro-high",
+        },
+    }
+    with tempfile.TemporaryDirectory() as temporary:
+        output = Path(temporary) / "diagnostic"
+        output.mkdir()
+        write_semantic_output_root(output)
+        runner = MalformedOnceCodexRunner()
+        common = {
+            "output_root": output,
+            "executables": {"codex": "codex.cmd", "agy": "agy"},
+            "implementation_commit": "4" * 40,
+            "preflight_receipt": receipt,
+            "source_verifier": lambda commit, **kwargs: None,
+        }
+        first = diagnostic.run_semantic(harness="codex", runner=runner, **common)
+        require(first["executed"] == 42, "malformed Codex epoch did not terminally execute")
+        call_paths = list((output / "semantic-diagnostic").rglob("call.json"))
+        malformed_calls = [
+            (path, json.loads(path.read_text(encoding="utf-8")))
+            for path in call_paths
+            if json.loads(path.read_text(encoding="utf-8")).get("parse_error")
+        ]
+        require(len(malformed_calls) == 1, "malformed Codex call was not retained exactly once")
+        malformed_path, malformed_call = malformed_calls[0]
+        require(malformed_call["transport"] == "completed",
+                "malformed Codex terminal lost completed transport")
+        require(malformed_call["json_parseable"] is False,
+                "malformed Codex terminal was marked parseable")
+
+        no_retry = FakeSemanticRunner()
+        replay = diagnostic.run_semantic(harness="codex", runner=no_retry, **common)
+        require(replay["executed"] == 0 and replay["terminal"] == 42,
+                "malformed terminal call was not retained for at-most-once replay")
+        require(not no_retry.calls, "malformed terminal call was retried")
+        report = diagnostic.summarize_semantic_diagnostic(output)
+        require(any(
+            error["fixture"] == malformed_call["fixture"]
+            and error["seat"] == malformed_call["seat"]
+            and error["parse_error"]
+            for error in report["validation_errors"]
+        ), "summary did not classify malformed terminal validation errors")
+
+        raw_path = malformed_path.parent / "raw-response.bin"
+        require(raw_path.is_file(), "malformed Codex raw response was not retained")
+        require(not (malformed_path.parent / "response.json").exists(),
+                "malformed Codex response was promoted to parsed-valid response.json")
+        original_raw = raw_path.read_bytes()
+        raw_path.write_bytes(original_raw + b"tampered")
+        require_raises(
+            ValueError, diagnostic.run_semantic,
+            harness="codex", runner=FakeSemanticRunner(), **common,
+        )
+        require_raises(ValueError, diagnostic.summarize_semantic_diagnostic, output)
+        raw_path.write_bytes(original_raw)
+
+
 def main() -> int:
     test_semantic_seat_map_and_transport_contracts()
     test_agy_aggregate_extraction_is_unambiguous_and_fail_closed()
@@ -709,6 +788,7 @@ def main() -> int:
     test_concurrent_semantic_contenders_have_one_exclusive_winner()
     test_packet_root_rejects_every_source_overlap_before_writes()
     test_semantic_packet_cleanup_survives_provider_exception()
+    test_malformed_codex_terminal_is_retained_and_summarized()
     transport_schema = json.loads((ROOT / "formal-rigor-fixture-transport.schema.json").read_text(encoding="utf-8"))
     canonical_frame = transport_frame("tm-01-false-mvd")
     semantically_equal_different_bytes = json.dumps(
