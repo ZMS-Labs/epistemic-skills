@@ -4,9 +4,10 @@ A release is an immutable support point: one semantic version maps to one Git
 commit, one annotated Git tag, and one non-draft GitHub Release. `main` remains
 the rolling channel; a version tag is the reproducible channel.
 
-The repository's first formal release is **3.0.0**. Its committed release notes
-are `docs/release/RELEASE-3.0.0.md`; the tag and GitHub Release are the public
-proof that the version exists.
+The repository's first formal release is prepared as **3.0.0**. Its committed
+release notes are `docs/release/RELEASE-3.0.0.md`; the version exists publicly
+only after the annotated tag and non-draft GitHub Release pass the identity
+checks below.
 
 ## When to release
 
