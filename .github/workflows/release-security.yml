@@ -15,6 +15,21 @@ name: release-security
       - "plugins/epistemic-skills/.cursor-plugin/**"
       - "plugins/epistemic-skills/.kimi-plugin/**"
       - ".github/workflows/release-security.yml"
+  push:
+    branches: [main]
+    paths:
+      - "README.md"
+      - "RELEASING.md"
+      - "docs/release/**"
+      - ".claude-plugin/**"
+      - ".cursor-plugin/**"
+      - ".kimi-plugin/**"
+      - "gemini-extension.json"
+      - "plugins/epistemic-skills/.claude-plugin/**"
+      - "plugins/epistemic-skills/.codex-plugin/**"
+      - "plugins/epistemic-skills/.cursor-plugin/**"
+      - "plugins/epistemic-skills/.kimi-plugin/**"
+      - ".github/workflows/release-security.yml"
 
 permissions:
   contents: read
