@@ -153,3 +153,22 @@ use their pinned commits. The active v2 Codex and agy harnesses reject
 Fleet-bridge overrides; any bridge-backed evaluation requires its own
 preregistered protocol identity. A passing v2 epoch supports only two-provider
 blinded conformance; release remains HOLD until every unchanged gate passes.
+
+### Prospective `noncursor-degraded-v3` protocol
+
+`noncursor-degraded-v3` is distinct from and does not repair, relabel, or reuse
+v2. It retains the same two-provider allocation/counts, unchanged
+structural/P0/control/semantic gates, terminal no-retry rule, and two-provider
+claim boundary. Its exact matrix is arms: Codex `gpt-5.6-sol`/high and agy
+`gemini-3.6-flash-medium`/medium; semantic: Codex `gpt-5.6-sol`/high and agy
+`gemini-3.1-pro-high`/high; Cursor is zero/unavailable.
+
+Before fixture calls in a fresh v3 source/root, the AGY 1.1.7
+version/catalog/suffix capability preflight and receipt must prove its exact
+AGY pairings are accepted. This is not a catalog preflight for Codex: its narrow
+invocation-compatibility basis is V2's 154/154 qualifying calls under the same
+`gpt-5.6-sol`/high binding, while V2 remains wholly excluded. The new v3
+manifest and every call record the identity, phase-specific matrix, canonical
+packet root, execution policy, schema-delivery mode, and AGY receipt. V3
+receives no release credit unless a full fresh epoch passes every unchanged
+gate; release remains HOLD until then.

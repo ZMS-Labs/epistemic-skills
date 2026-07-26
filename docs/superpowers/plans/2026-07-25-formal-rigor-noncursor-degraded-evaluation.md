@@ -214,3 +214,28 @@ historical commits. Active v2 Codex and agy harnesses reject Fleet-bridge
 overrides; a bridge-backed evaluation needs its own preregistered protocol
 identity. A full v2 epoch passing unchanged gates is required; release remains
 HOLD and the Cursor blocker remains historical.
+
+## Completed v2 exclusion and v3 follow-on
+
+The completed v2 epoch at source `54d3bae4fe51a69cd9cab7658d703d695073006b`,
+root `C:\tmp\formal-rigor-noncursor-v2-54d3bae`, and canonical pin
+`ce8c7253c8bc2a18f93a2591a4566295b9d69468a4bc7911760bc182309397b0` is
+excluded: 286 terminal arms, 154 qualifying Codex calls, and 132 failed agy
+calls. The AGY failure is systemic and pre-execution:
+`--model gemini-3.1-pro-high conflicts with --effort=medium`. No scoring,
+semantic work, release credit, retry, repair, resume, or reuse is authorized.
+
+The next distinct protocol is `noncursor-degraded-v3`, not a v2 repair. Keep
+the same allocation/counts, gates/thresholds, no-retry behavior, and
+two-provider-only claim. The exact matrix is arms: Codex `gpt-5.6-sol`/high and
+agy `gemini-3.6-flash-medium`/medium; semantic: Codex `gpt-5.6-sol`/high and
+agy `gemini-3.1-pro-high`/high; Cursor is zero/unavailable. Before fixture
+calls, record an AGY 1.1.7 version/catalog/suffix capability preflight and
+receipt for those exact AGY pairings—not for every provider. Codex has no
+catalog preflight; its narrow invocation-compatibility basis is V2's 154/154
+qualifying calls under the same `gpt-5.6-sol`/high binding, while V2 remains
+excluded. Require a fresh source/root and v3 campaign manifest; the manifest
+and every call must retain the phase-specific matrix, canonical packet root,
+execution policy, schema-delivery mode, and AGY receipt. Do not claim v3
+success or release credit unless a full fresh epoch passes every unchanged gate;
+release remains HOLD.

@@ -168,3 +168,18 @@ was nonparseable after self-talk and a fence around two identical otherwise
 schema-valid draft envelopes. This root is excluded: it receives no structural
 score, semantic adjudication, or release credit, and none of its calls may be
 retried, repaired, resumed, or reused.
+
+## 2026-07-25 completed `noncursor-degraded-v2` excluded epoch
+
+The completed `noncursor-degraded-v2` epoch at source
+`54d3bae4fe51a69cd9cab7658d703d695073006b` recorded 286 terminal arms at
+`C:\tmp\formal-rigor-noncursor-v2-54d3bae`. Its canonical evidence-root pin is
+`ce8c7253c8bc2a18f93a2591a4566295b9d69468a4bc7911760bc182309397b0`.
+All 154 Codex arms qualify; all 132 agy arms failed before model execution.
+Each failure records `--model gemini-3.1-pro-high conflicts with
+--effort=medium`: a systemic AGY model/effort incompatibility, not response or
+scorer evidence. V2 receives no structural score, semantic adjudication, or
+release credit; no terminal call may be retried, repaired, resumed, or reused.
+The narrow Codex invocation-compatibility basis for v3 is V2's 154/154
+qualifying calls under the same `gpt-5.6-sol`/high binding; V2 as a whole
+remains excluded and grants no scoring, semantic, or release credit.

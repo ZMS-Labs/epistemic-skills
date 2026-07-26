@@ -114,6 +114,22 @@ PROVIDER_PLANS = {
             3: {"a": "agy", "b": "agy"},
         },
     },
+    "noncursor-degraded-v3": {
+        "candidate": {1: "codex", 2: "agy", 3: "codex"},
+        "parodies": {
+            "parody-always-cautious": "codex",
+            "parody-always-decide": "agy",
+            "parody-closed-taxonomy": "codex",
+            "parody-formal-only": "codex",
+            "parody-full-ceremony": "agy",
+            "parody-jargon-only": "agy",
+        },
+        "semantic": {
+            1: {"a": "agy", "b": "agy"},
+            2: {"a": "codex", "b": "codex"},
+            3: {"a": "agy", "b": "agy"},
+        },
+    },
 }
 BASE_EXECUTION_POLICY = {
     "effort_by_phase": {
@@ -149,6 +165,16 @@ V2_EXECUTION_POLICY = {
             "agy": "exact-schema-in-immediate-prompt",
             "cursor": "exact-schema-in-immediate-prompt",
         },
+    },
+}
+V3_MODELS_BY_PHASE = {
+    "arms": {
+        "codex": "gpt-5.6-sol", "agy": "gemini-3.6-flash-medium",
+        "cursor": "gpt-5.6-sol",
+    },
+    "semantic": {
+        "codex": "gpt-5.6-sol", "agy": "gemini-3.1-pro-high",
+        "cursor": "gpt-5.6-sol",
     },
 }
 HARNESS_PROVIDERS = {"codex": "OpenAI", "agy": "Google", "cursor": "Cursor"}
@@ -213,6 +239,12 @@ def sha256_bytes(data: bytes) -> str:
 
 def sha256_file(path: Path) -> str:
     return sha256_bytes(path.read_bytes())
+
+
+def canonical_json_bytes(value: object) -> bytes:
+    return json.dumps(
+        value, ensure_ascii=False, sort_keys=True, separators=(",", ":"),
+    ).encode("utf-8")
 
 
 def write_json(path: Path, value: object) -> None:
@@ -283,12 +315,25 @@ def validate_json_schema(value: object, schema: dict, path: str = "$") -> list[s
 
 
 def call_qualifies(record: dict) -> bool:
-    return (
+    base = (
         record.get("transport") == "completed"
         and record.get("json_parseable") is True
         and record.get("schema_valid") is True
         and record.get("secret_screen", {}).get("passed") is True
     )
+    if not base:
+        return False
+    if record.get("provider_plan") == "noncursor-degraded-v3":
+        return (
+            record.get("phase") in ("arms", "semantic")
+            and isinstance(record.get("model"), str) and bool(record.get("model"))
+            and record.get("reasoning_effort") in ("medium", "high")
+            and isinstance(record.get("preflight_sha256"), str)
+            and len(record["preflight_sha256"]) == 64
+            and isinstance(record.get("campaign_plan_sha256"), str)
+            and len(record["campaign_plan_sha256"]) == 64
+        )
+    return True
 
 
 def reasoning_effort_label(harness: str, *, bridge: bool) -> str:
@@ -341,16 +386,31 @@ def materialize_qualified_response(
 
 def candidate_response_qualifies(
     output_root: Path, task: SemanticTask, *, provider_plan: str, source_commit: str,
+    models_by_phase: dict[str, dict[str, str]] | None = None,
+    preflight_sha256: str | None = None, campaign_plan_sha256: str | None = None,
 ) -> bool:
     run_dir = output_root / "arms" / "v2-candidate" / f"run-{task.repetition}"
     call_dir = run_dir / "calls" / task.fixture
     destination = run_dir / f"{task.fixture}.response.json"
+    expected_identity = {
+        "kind": "arm", "provider_plan": provider_plan, "source_commit": source_commit,
+        "arm": "v2-candidate", "repetition": task.repetition, "fixture": task.fixture,
+    }
+    if provider_plan == "noncursor-degraded-v3":
+        if models_by_phase is None or not preflight_sha256 or not campaign_plan_sha256:
+            return False
+        harness = candidate_harness(task.repetition, provider_plan)
+        expected_identity.update({
+            "phase": "arms", "model": models_by_phase["arms"][harness],
+            "reasoning_effort": call_effort(
+                provider_plan, phase="arms", harness=harness, bridge=False,
+            ),
+            "preflight_sha256": preflight_sha256,
+            "campaign_plan_sha256": campaign_plan_sha256,
+        })
     return materialize_qualified_response(
         call_dir, destination, ROOT / "formal-rigor-fixture-transport.schema.json",
-        expected_identity={
-            "kind": "arm", "provider_plan": provider_plan, "source_commit": source_commit,
-            "arm": "v2-candidate", "repetition": task.repetition, "fixture": task.fixture,
-        },
+        expected_identity=expected_identity,
     )
 
 
@@ -388,10 +448,10 @@ def provider_plan_config(provider_plan: str) -> dict:
 
 def validate_live_provider_plan(provider_plan: str) -> None:
     provider_plan_config(provider_plan)
-    if provider_plan != "noncursor-degraded-v2":
+    if provider_plan != "noncursor-degraded-v3":
         raise ValueError(
             f"provider plan {provider_plan!r} is historical inspection-only; "
-            "live execution requires 'noncursor-degraded-v2'"
+            "live execution requires 'noncursor-degraded-v3'"
         )
 
 
@@ -418,7 +478,11 @@ def validate_live_harness_configuration(
 
 def execution_policy(provider_plan: str) -> dict:
     provider_plan_config(provider_plan)
-    return V2_EXECUTION_POLICY if provider_plan == "noncursor-degraded-v2" else BASE_EXECUTION_POLICY
+    return (
+        V2_EXECUTION_POLICY
+        if provider_plan in ("noncursor-degraded-v2", "noncursor-degraded-v3")
+        else BASE_EXECUTION_POLICY
+    )
 
 
 def call_effort(
@@ -427,6 +491,48 @@ def call_effort(
     if bridge:
         return "provider-model-default"
     return execution_policy(provider_plan)["effort_by_phase"][phase][harness]
+
+
+def agy_preflight(
+    agy: str, models_by_phase: dict[str, dict[str, str]], policy: dict,
+) -> dict:
+    version_call = subprocess.run(
+        [agy, "--version"], text=True, encoding="utf-8", errors="replace",
+        capture_output=True, check=False,
+    )
+    if version_call.returncode != 0 or version_call.stdout.strip() != "1.1.7":
+        raise ValueError("V3 requires agy CLI version 1.1.7")
+    models_call = subprocess.run(
+        [agy, "models"], text=True, encoding="utf-8", errors="replace",
+        capture_output=True, check=False,
+    )
+    if models_call.returncode != 0:
+        raise ValueError("agy model catalog preflight failed")
+    catalog = [line.strip() for line in models_call.stdout.splitlines() if line.strip()]
+    if len(catalog) != len(set(catalog)):
+        raise ValueError("agy model catalog contains duplicate identifiers")
+    selected = {
+        phase: models_by_phase[phase]["agy"] for phase in ("arms", "semantic")
+    }
+    expected_selected = {
+        phase: V3_MODELS_BY_PHASE[phase]["agy"] for phase in ("arms", "semantic")
+    }
+    if selected != expected_selected:
+        raise ValueError("AGY phase models do not match the registered V3 protocol")
+    for phase, model in selected.items():
+        effort = policy["effort_by_phase"][phase]["agy"]
+        if model not in catalog:
+            raise ValueError(f"agy model {model!r} is unavailable for {phase}")
+        if not model.endswith(f"-{effort}"):
+            raise ValueError(
+                f"agy model {model!r} does not match configured {phase} effort {effort!r}"
+            )
+    return {
+        "schema": "formal-rigor-agy-preflight@1",
+        "agy_version": "1.1.7",
+        "catalog_sha256": sha256_bytes(models_call.stdout.encode("utf-8")),
+        "selected_models_by_phase": selected,
+    }
 
 
 def candidate_harness(repetition: int, provider_plan: str = DEFAULT_PROVIDER_PLAN) -> str:
@@ -444,7 +550,10 @@ def semantic_harness(task: SemanticTask, provider_plan: str = DEFAULT_PROVIDER_P
 
 
 def campaign_plan(
-    *, provider_plan: str, source_commit: str, v1_commit: str, models: dict[str, str],
+    *, provider_plan: str, source_commit: str, v1_commit: str,
+    models: dict[str, str] | None = None,
+    models_by_phase: dict[str, dict[str, str]] | None = None,
+    preflight_receipt: dict | None = None,
 ) -> dict:
     provider_plan_config(provider_plan)
     arm_tasks = [
@@ -469,14 +578,49 @@ def campaign_plan(
         harness for harness in HARNESS_PROVIDERS
         if any(task["harness"] == harness for task in arm_tasks + semantic_tasks)
     ]
-    if set(active_harnesses) - set(models):
-        raise ValueError("campaign models must name every active harness")
+    if provider_plan == "noncursor-degraded-v3":
+        if models_by_phase is None or preflight_receipt is None:
+            raise ValueError("V3 campaign requires phase models and an AGY preflight receipt")
+        if models_by_phase != V3_MODELS_BY_PHASE:
+            raise ValueError("V3 campaign model matrix does not match the registered protocol")
+        selected_models_by_phase = {
+            phase: {
+                harness: models_by_phase[phase][harness]
+                for harness in HARNESS_PROVIDERS
+                if any(task["harness"] == harness for task in tasks)
+            }
+            for phase, tasks in (("arms", arm_tasks), ("semantic", semantic_tasks))
+        }
+        for task in arm_tasks:
+            task["model"] = selected_models_by_phase["arms"][task["harness"]]
+            task["effort"] = call_effort(
+                provider_plan, phase="arms", harness=task["harness"], bridge=False,
+            )
+        for task in semantic_tasks:
+            task["model"] = selected_models_by_phase["semantic"][task["harness"]]
+            task["effort"] = call_effort(
+                provider_plan, phase="semantic", harness=task["harness"], bridge=False,
+            )
+        identity_fields = {
+            "schema": "formal-rigor-live-campaign-plan@2",
+            "selected_models_by_phase": selected_models_by_phase,
+            "preflight_receipt": preflight_receipt,
+            "preflight_sha256": sha256_bytes(canonical_json_bytes(preflight_receipt)),
+        }
+    else:
+        if models is None:
+            raise ValueError("historical campaign inspection requires harness models")
+        if set(active_harnesses) - set(models):
+            raise ValueError("campaign models must name every active harness")
+        identity_fields = {
+            "schema": "formal-rigor-live-campaign-plan@1",
+            "selected_models": {harness: models[harness] for harness in active_harnesses},
+        }
     return {
-        "schema": "formal-rigor-live-campaign-plan@1",
+        **identity_fields,
         "provider_plan": provider_plan,
         "source_commit": source_commit,
         "v1_commit": v1_commit,
-        "selected_models": {harness: models[harness] for harness in active_harnesses},
         "execution_policy": execution_policy(provider_plan),
         "arm_calls": len(arm_tasks),
         "arm_calls_by_harness": {
@@ -495,11 +639,14 @@ def campaign_plan(
 
 def ensure_campaign_plan(
     output_root: Path, *, provider_plan: str, source_commit: str, v1_commit: str,
-    models: dict[str, str],
+    models: dict[str, str] | None = None,
+    models_by_phase: dict[str, dict[str, str]] | None = None,
+    preflight_receipt: dict | None = None,
 ) -> dict:
     expected = campaign_plan(
         provider_plan=provider_plan, source_commit=source_commit, v1_commit=v1_commit,
-        models=models,
+        models=models, models_by_phase=models_by_phase,
+        preflight_receipt=preflight_receipt,
     )
     manifest_path = output_root / "campaign-plan.json"
     if manifest_path.is_file():
@@ -515,15 +662,20 @@ def ensure_campaign_plan(
 
 def phase_status(
     *, phase: str, tasks: list, provider_plan: str, source_commit: str,
-    models: dict[str, str], completed: int, failed: int,
+    completed: int, failed: int, models: dict[str, str] | None = None,
+    models_by_phase: dict[str, dict[str, str]] | None = None,
+    preflight_sha256: str | None = None, campaign_plan_sha256: str | None = None,
 ) -> dict:
     harness_for = arm_harness if phase == "arms" else semantic_harness
-    return {
-        "schema": "formal-rigor-live-phase-status@1",
+    status = {
+        "schema": (
+            "formal-rigor-live-phase-status@2"
+            if provider_plan == "noncursor-degraded-v3"
+            else "formal-rigor-live-phase-status@1"
+        ),
         "phase": phase,
         "provider_plan": provider_plan,
         "source_commit": source_commit,
-        "models": models,
         "planned_by_harness": {
             harness: sum(harness_for(task, provider_plan) == harness for task in tasks)
             for harness in HARNESS_PROVIDERS
@@ -532,6 +684,27 @@ def phase_status(
         "completed": completed,
         "failed": failed,
     }
+    if provider_plan == "noncursor-degraded-v3":
+        if models_by_phase is None or not preflight_sha256 or not campaign_plan_sha256:
+            raise ValueError("V3 phase status requires model and identity bindings")
+        active_harnesses = {
+            harness_for(task, provider_plan) for task in tasks
+        }
+        status.update({
+            "selected_models_by_harness": {
+                harness: models_by_phase[phase][harness]
+                for harness in HARNESS_PROVIDERS if harness in active_harnesses
+            },
+            "effort_by_harness": {
+                harness: execution_policy(provider_plan)["effort_by_phase"][phase][harness]
+                for harness in HARNESS_PROVIDERS if harness in active_harnesses
+            },
+            "preflight_sha256": preflight_sha256,
+            "campaign_plan_sha256": campaign_plan_sha256,
+        })
+    else:
+        status["models"] = models
+    return status
 
 
 def filter_arm_tasks(
@@ -1120,6 +1293,22 @@ def execute_call(
     validate_live_provider_plan(provider_plan)
     validate_live_harness_executable(provider_plan, harness, executable)
     packet_root = canonical_packet_root(packet_root)
+    bridge = executable.startswith("fleet-bridge://")
+    phase = "arms" if identity.get("kind") == "arm" else "semantic"
+    actual_effort = call_effort(
+        provider_plan, phase=phase, harness=harness, bridge=bridge,
+    )
+    if (
+        model != V3_MODELS_BY_PHASE[phase][harness]
+        or
+        identity.get("phase") != phase
+        or identity.get("reasoning_effort") != actual_effort
+        or not isinstance(identity.get("preflight_sha256"), str)
+        or len(identity["preflight_sha256"]) != 64
+        or not isinstance(identity.get("campaign_plan_sha256"), str)
+        or len(identity["campaign_plan_sha256"]) != 64
+    ):
+        raise ValueError("V3 call identity is missing phase/effort/preflight/campaign binding")
     if not call_needed(result_dir):
         return json.loads((result_dir / "call.json").read_text(encoding="utf-8"))
     result_dir.mkdir(parents=True, exist_ok=True)
@@ -1127,11 +1316,6 @@ def execute_call(
     packet_dir = packet_root / f"packet-{uuid.uuid4().hex}"
     packet_builder(packet_dir)
     response_path = result_dir / "response.json"
-    bridge = executable.startswith("fleet-bridge://")
-    phase = "arms" if identity.get("kind") == "arm" else "semantic"
-    actual_effort = call_effort(
-        provider_plan, phase=phase, harness=harness, bridge=bridge,
-    )
     delivered_prompt = prompt
     if output_schema_name:
         delivered_prompt = execution_prompt(
@@ -1279,13 +1463,35 @@ def prepare_v1_snapshot(destination: Path, commit: str) -> Path:
 
 def run_arm_task(
     task: ArmTask, *, output_root: Path, packet_root: Path,
-    executables: dict[str, str], models: dict[str, str],
+    executables: dict[str, str], models: dict[str, str] | None = None,
+    models_by_phase: dict[str, dict[str, str]] | None = None,
     provider_plan: str, source_commit: str, v1_source_dir: Path, timeout_seconds: int,
+    preflight_sha256: str | None = None, campaign_plan_sha256: str | None = None,
 ) -> dict:
     run_dir = output_root / "arms" / task.arm / f"run-{task.repetition}"
     call_dir = run_dir / "calls" / task.fixture
     fixture_dir = FIXTURES_ROOT / task.fixture
     harness = arm_harness(task, provider_plan)
+    model = (
+        models_by_phase["arms"][harness]
+        if models_by_phase is not None
+        else models[harness]  # type: ignore[index]
+    )
+    identity = {
+        "kind": "arm", "provider_plan": provider_plan, "arm": task.arm,
+        "repetition": task.repetition, "fixture": task.fixture,
+    }
+    if provider_plan == "noncursor-degraded-v3":
+        if not preflight_sha256 or not campaign_plan_sha256:
+            raise ValueError("V3 arm call requires preflight and campaign identity hashes")
+        identity.update({
+            "phase": "arms",
+            "reasoning_effort": call_effort(
+                provider_plan, phase="arms", harness=harness, bridge=False,
+            ),
+            "preflight_sha256": preflight_sha256,
+            "campaign_plan_sha256": campaign_plan_sha256,
+        })
     record = execute_call(
         result_dir=call_dir,
         packet_root=packet_root,
@@ -1296,11 +1502,8 @@ def run_arm_task(
         prompt=arm_prompt(task.fixture),
         harness=harness,
         executable=executables[harness],
-        model=models[harness],
-        identity={
-            "kind": "arm", "provider_plan": provider_plan, "arm": task.arm,
-            "repetition": task.repetition, "fixture": task.fixture,
-        },
+        model=model,
+        identity=identity,
         source_commit=source_commit,
         timeout_seconds=timeout_seconds,
         output_schema_name="formal-rigor-fixture-transport.schema.json",
@@ -1311,6 +1514,13 @@ def run_arm_task(
         "kind": "arm", "provider_plan": provider_plan, "source_commit": source_commit,
         "arm": task.arm, "repetition": task.repetition, "fixture": task.fixture,
     }
+    if provider_plan == "noncursor-degraded-v3":
+        expected_identity.update({
+            "phase": "arms", "model": model,
+            "reasoning_effort": identity["reasoning_effort"],
+            "preflight_sha256": preflight_sha256,
+            "campaign_plan_sha256": campaign_plan_sha256,
+        })
     if call_qualifies(record) and not materialize_qualified_response(
         call_dir, materialized, ROOT / "formal-rigor-fixture-transport.schema.json",
         expected_identity=expected_identity,
@@ -1378,8 +1588,10 @@ def validate_adjudication(value: object, truth: dict) -> list[str]:
 
 def run_semantic_task(
     task: SemanticTask, *, output_root: Path, packet_root: Path,
-    executables: dict[str, str], models: dict[str, str], source_commit: str,
-    provider_plan: str, timeout_seconds: int,
+    executables: dict[str, str], models: dict[str, str] | None = None,
+    models_by_phase: dict[str, dict[str, str]] | None = None,
+    source_commit: str, provider_plan: str, timeout_seconds: int,
+    preflight_sha256: str | None = None, campaign_plan_sha256: str | None = None,
 ) -> dict:
     fixture_dir = FIXTURES_ROOT / task.fixture
     truth = json.loads((fixture_dir / "ground-truth.json").read_text(encoding="utf-8"))
@@ -1387,9 +1599,31 @@ def run_semantic_task(
     call_dir = output_root / "semantic" / f"run-{task.repetition}" / task.fixture / f"seat-{task.seat}"
     if not candidate_response_qualifies(
         output_root, task, provider_plan=provider_plan, source_commit=source_commit,
+        models_by_phase=models_by_phase, preflight_sha256=preflight_sha256,
+        campaign_plan_sha256=campaign_plan_sha256,
     ):
         raise ValueError(f"candidate response does not match qualifying arm evidence: {candidate_response}")
     harness = semantic_harness(task, provider_plan)
+    model = (
+        models_by_phase["semantic"][harness]
+        if models_by_phase is not None
+        else models[harness]  # type: ignore[index]
+    )
+    identity = {
+        "kind": "semantic", "provider_plan": provider_plan,
+        "repetition": task.repetition, "fixture": task.fixture, "seat": task.seat,
+    }
+    if provider_plan == "noncursor-degraded-v3":
+        if not preflight_sha256 or not campaign_plan_sha256:
+            raise ValueError("V3 semantic call requires preflight and campaign identity hashes")
+        identity.update({
+            "phase": "semantic",
+            "reasoning_effort": call_effort(
+                provider_plan, phase="semantic", harness=harness, bridge=False,
+            ),
+            "preflight_sha256": preflight_sha256,
+            "campaign_plan_sha256": campaign_plan_sha256,
+        })
     record = execute_call(
         result_dir=call_dir,
         packet_root=packet_root,
@@ -1397,11 +1631,8 @@ def run_semantic_task(
         prompt=semantic_prompt(task.fixture),
         harness=harness,
         executable=executables[harness],
-        model=models[harness],
-        identity={
-            "kind": "semantic", "provider_plan": provider_plan,
-            "repetition": task.repetition, "fixture": task.fixture, "seat": task.seat,
-        },
+        model=model,
+        identity=identity,
         source_commit=source_commit,
         timeout_seconds=timeout_seconds,
         output_schema_name="formal-rigor-semantic-adjudication.schema.json",
@@ -1411,6 +1642,13 @@ def run_semantic_task(
         "kind": "semantic", "provider_plan": provider_plan, "source_commit": source_commit,
         "repetition": task.repetition, "fixture": task.fixture, "seat": task.seat,
     }
+    if provider_plan == "noncursor-degraded-v3":
+        expected_identity.update({
+            "phase": "semantic", "model": model,
+            "reasoning_effort": identity["reasoning_effort"],
+            "preflight_sha256": preflight_sha256,
+            "campaign_plan_sha256": campaign_plan_sha256,
+        })
     errors = response_evidence_errors(
         call_dir, ROOT / "formal-rigor-semantic-adjudication.schema.json",
         expected_identity=expected_identity,
@@ -1452,7 +1690,10 @@ def summarize_semantic(output_root: Path, provider_plan: str) -> dict:
     if not manifest_path.is_file():
         raise ValueError("semantic summary requires campaign-plan.json")
     campaign = json.loads(manifest_path.read_text(encoding="utf-8"))
-    if campaign.get("schema") != "formal-rigor-live-campaign-plan@1":
+    if campaign.get("schema") not in (
+        "formal-rigor-live-campaign-plan@1",
+        "formal-rigor-live-campaign-plan@2",
+    ):
         raise ValueError("semantic summary requires a valid campaign manifest")
     if campaign.get("provider_plan") != provider_plan:
         raise ValueError("semantic summary provider plan does not match campaign manifest")
@@ -1465,13 +1706,27 @@ def summarize_semantic(output_root: Path, provider_plan: str) -> dict:
             for seat in ("a", "b"):
                 seat_dir = output_root / "semantic" / f"run-{repetition}" / fixture / f"seat-{seat}"
                 response_path = seat_dir / "response.json"
+                expected_identity = {
+                    "kind": "semantic", "provider_plan": provider_plan,
+                    "source_commit": campaign.get("source_commit"),
+                    "repetition": repetition, "fixture": fixture, "seat": seat,
+                }
+                if campaign.get("schema") == "formal-rigor-live-campaign-plan@2":
+                    harness = semantic_harness(
+                        SemanticTask(repetition, fixture, seat), provider_plan,
+                    )
+                    expected_identity.update({
+                        "phase": "semantic",
+                        "model": campaign["selected_models_by_phase"]["semantic"][harness],
+                        "reasoning_effort": execution_policy(provider_plan)[
+                            "effort_by_phase"
+                        ]["semantic"][harness],
+                        "preflight_sha256": campaign["preflight_sha256"],
+                        "campaign_plan_sha256": sha256_bytes(canonical_json_bytes(campaign)),
+                    })
                 evidence_errors = response_evidence_errors(
                     seat_dir, ROOT / "formal-rigor-semantic-adjudication.schema.json",
-                    expected_identity={
-                        "kind": "semantic", "provider_plan": provider_plan,
-                        "source_commit": campaign.get("source_commit"),
-                        "repetition": repetition, "fixture": fixture, "seat": seat,
-                    },
+                    expected_identity=expected_identity,
                 )
                 if evidence_errors:
                     seat_values.append(None)
@@ -1516,8 +1771,13 @@ def verify_arm_phase_complete(output_root: Path, campaign: dict) -> None:
         raise ValueError("semantic phase requires a complete arm-run-status.json")
     status = json.loads(status_path.read_text(encoding="utf-8"))
     expected = campaign["arm_calls"]
+    campaign_sha256 = sha256_bytes(canonical_json_bytes(campaign))
     if (
-        status.get("schema") != "formal-rigor-live-phase-status@1"
+        status.get("schema") != (
+            "formal-rigor-live-phase-status@2"
+            if campaign.get("schema") == "formal-rigor-live-campaign-plan@2"
+            else "formal-rigor-live-phase-status@1"
+        )
         or status.get("phase") != "arms"
         or status.get("provider_plan") != campaign.get("provider_plan")
         or status.get("source_commit") != campaign.get("source_commit")
@@ -1525,6 +1785,15 @@ def verify_arm_phase_complete(output_root: Path, campaign: dict) -> None:
         or status.get("completed") != expected
         or status.get("failed") != 0
         or status.get("planned_by_harness") != campaign.get("arm_calls_by_harness")
+        or (
+            campaign.get("schema") == "formal-rigor-live-campaign-plan@2"
+            and (
+                status.get("selected_models_by_harness")
+                != campaign.get("selected_models_by_phase", {}).get("arms")
+                or status.get("preflight_sha256") != campaign.get("preflight_sha256")
+                or status.get("campaign_plan_sha256") != campaign_sha256
+            )
+        )
     ):
         raise ValueError("semantic phase requires one complete qualifying arm epoch")
 
@@ -1588,17 +1857,31 @@ def verify_source_state(source_commit: str, *, require_clean: bool = True) -> No
 
 def add_harness_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--codex", default=default_codex_executable())
-    parser.add_argument("--codex-model", default="gpt-5.6-sol")
+    parser.add_argument("--codex-arm-model", default="gpt-5.6-sol")
+    parser.add_argument("--codex-semantic-model", default="gpt-5.6-sol")
     parser.add_argument("--agy", default="agy")
-    parser.add_argument("--agy-model", default="gemini-3.1-pro-high")
+    parser.add_argument("--agy-arm-model", default="gemini-3.6-flash-medium")
+    parser.add_argument("--agy-semantic-model", default="gemini-3.1-pro-high")
     parser.add_argument("--cursor", default="cursor-agent")
-    parser.add_argument("--cursor-model", default="gpt-5.6-sol")
+    parser.add_argument("--cursor-arm-model", default="gpt-5.6-sol")
+    parser.add_argument("--cursor-semantic-model", default="gpt-5.6-sol")
 
 
-def harness_configuration(args: argparse.Namespace) -> tuple[dict[str, str], dict[str, str]]:
+def harness_configuration(
+    args: argparse.Namespace,
+) -> tuple[dict[str, str], dict[str, dict[str, str]]]:
     return (
         {"codex": args.codex, "agy": args.agy, "cursor": args.cursor},
-        {"codex": args.codex_model, "agy": args.agy_model, "cursor": args.cursor_model},
+        {
+            "arms": {
+                "codex": args.codex_arm_model, "agy": args.agy_arm_model,
+                "cursor": args.cursor_arm_model,
+            },
+            "semantic": {
+                "codex": args.codex_semantic_model, "agy": args.agy_semantic_model,
+                "cursor": args.cursor_semantic_model,
+            },
+        },
     )
 
 
@@ -1668,14 +1951,26 @@ def main() -> int:
     )
     source_commit = args.source_commit or default_source_commit()
     verify_source_state(source_commit)
-    executables, models = harness_configuration(args)
+    executables, models_by_phase = harness_configuration(args)
     validate_live_harness_configuration(args.provider_plan, executables)
+    preflight_receipt = agy_preflight(
+        executables["agy"], models_by_phase, execution_policy(args.provider_plan),
+    )
     baseline_manifest = json.loads((RED_BASELINE_ROOT / "manifest.json").read_text(encoding="utf-8"))
     v1_commit = args.v1_commit or baseline_manifest["repository_head"]
-    ensure_campaign_plan(
+    campaign = ensure_campaign_plan(
         args.output_root, provider_plan=args.provider_plan, source_commit=source_commit,
-        v1_commit=v1_commit, models=models,
+        v1_commit=v1_commit, models_by_phase=models_by_phase,
+        preflight_receipt=preflight_receipt,
     )
+    preflight_sha256 = campaign["preflight_sha256"]
+    campaign_plan_sha256 = sha256_bytes(canonical_json_bytes(campaign))
+    preflight_path = args.output_root / "metadata" / "agy-preflight.json"
+    if preflight_path.is_file():
+        if json.loads(preflight_path.read_text(encoding="utf-8")) != preflight_receipt:
+            raise ValueError("existing AGY preflight receipt does not match campaign identity")
+    else:
+        write_json(preflight_path, preflight_receipt)
     if args.command == "run-arms":
         v1_source = prepare_v1_snapshot(args.output_root / "metadata" / "v1-source", v1_commit)
         tasks = filter_arm_tasks(
@@ -1688,20 +1983,24 @@ def main() -> int:
             tasks,
             lambda task: run_arm_task(
                 task, output_root=args.output_root, packet_root=packet_root,
-                executables=executables, models=models, source_commit=source_commit,
+                executables=executables, models_by_phase=models_by_phase,
+                source_commit=source_commit,
                 provider_plan=args.provider_plan, v1_source_dir=v1_source,
                 timeout_seconds=args.timeout_seconds,
+                preflight_sha256=preflight_sha256,
+                campaign_plan_sha256=campaign_plan_sha256,
             ),
             args.workers,
         )
         write_json(args.output_root / "arm-run-status.json", phase_status(
             phase="arms", tasks=tasks, provider_plan=args.provider_plan,
-            source_commit=source_commit, models=models, completed=completed, failed=failed,
+            source_commit=source_commit, models_by_phase=models_by_phase,
+            completed=completed, failed=failed, preflight_sha256=preflight_sha256,
+            campaign_plan_sha256=campaign_plan_sha256,
         ))
         print(f"arms: planned={len(tasks)} completed={completed} failed={failed}")
         return 0 if failed == 0 else 1
     if args.command == "run-semantic":
-        campaign = json.loads((args.output_root / "campaign-plan.json").read_text(encoding="utf-8"))
         verify_arm_phase_complete(args.output_root, campaign)
         tasks = filter_semantic_tasks(
             full_semantic_plan(),
@@ -1713,14 +2012,19 @@ def main() -> int:
             tasks,
             lambda task: run_semantic_task(
                 task, output_root=args.output_root, packet_root=packet_root,
-                executables=executables, models=models, source_commit=source_commit,
+                executables=executables, models_by_phase=models_by_phase,
+                source_commit=source_commit,
                 provider_plan=args.provider_plan, timeout_seconds=args.timeout_seconds,
+                preflight_sha256=preflight_sha256,
+                campaign_plan_sha256=campaign_plan_sha256,
             ),
             args.workers,
         )
         write_json(args.output_root / "semantic-run-status.json", phase_status(
             phase="semantic", tasks=tasks, provider_plan=args.provider_plan,
-            source_commit=source_commit, models=models, completed=completed, failed=failed,
+            source_commit=source_commit, models_by_phase=models_by_phase,
+            completed=completed, failed=failed, preflight_sha256=preflight_sha256,
+            campaign_plan_sha256=campaign_plan_sha256,
         ))
         print(f"semantic: planned={len(tasks)} completed={completed} failed={failed}")
         return 0 if failed == 0 else 1

@@ -117,6 +117,24 @@ local test, or mutable `main` checkout is not a substitute.
 - The final independent Helix/Gauntlet publication review remains incomplete.
   Release status therefore remains **HOLD**.
 - No `v3.0.0` tag or GitHub Release may be created while this status is HOLD.
+- The completed `noncursor-degraded-v2` epoch at source
+  `54d3bae4fe51a69cd9cab7658d703d695073006b` is excluded. Its root
+  `C:\tmp\formal-rigor-noncursor-v2-54d3bae` has canonical pin
+  `ce8c7253c8bc2a18f93a2591a4566295b9d69468a4bc7911760bc182309397b0`.
+  It recorded 286 terminal arms: 154 qualifying Codex calls and 132 failed agy
+  calls. Every agy failure records `--model gemini-3.1-pro-high conflicts with
+  --effort=medium`, a systemic provider configuration incompatibility before
+  model execution. V2 has no structural score, semantic, or release credit and
+  may not be retried, repaired, resumed, or reused.
+  `noncursor-degraded-v3` is distinct and prospective: a fresh source/root plus
+  AGY 1.1.7 version/catalog/suffix capability preflight and receipt are
+  required before it runs. Its exact matrix is arms: Codex
+  `gpt-5.6-sol`/high and agy `gemini-3.6-flash-medium`/medium; semantic: Codex
+  `gpt-5.6-sol`/high and agy `gemini-3.1-pro-high`/high; Cursor is
+  zero/unavailable. The AGY preflight is not a Codex catalog claim: Codex has
+  the narrow V2 basis of 154/154 qualifying calls under the same
+  `gpt-5.6-sol`/high binding, while V2 remains excluded. Release remains HOLD
+  unless a complete v3 epoch passes every unchanged gate.
 
 ## Compatibility position
 

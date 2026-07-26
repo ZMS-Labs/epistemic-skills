@@ -87,3 +87,26 @@ source and require their pinned historical commits. Active v2 Codex and agy
 harnesses reject Fleet-bridge overrides; a bridge-backed evaluation requires a
 separately preregistered protocol identity. Cursor remains `BLOCKED_EXTERNAL`,
 and release remains HOLD until a complete v2 epoch passes.
+
+## Completed excluded `noncursor-degraded-v2` epoch and v3 amendment
+
+V2 at source `54d3bae4fe51a69cd9cab7658d703d695073006b`, root
+`C:\tmp\formal-rigor-noncursor-v2-54d3bae`, and canonical pin
+`ce8c7253c8bc2a18f93a2591a4566295b9d69468a4bc7911760bc182309397b0` is
+excluded. It recorded 286 terminal arms: 154 qualifying Codex calls and 132
+failed agy calls. Each agy call failed before execution because
+`--model gemini-3.1-pro-high conflicts with --effort=medium`. It earns no
+structural score, semantic adjudication, or release credit and cannot be
+retried, repaired, resumed, or reused.
+
+`noncursor-degraded-v3` is a separate prospective identity, not a v2 repair.
+It keeps the same counts, gates, no-retry behavior, and two-provider claim
+boundary. Its exact matrix is arms: Codex `gpt-5.6-sol`/high and agy
+`gemini-3.6-flash-medium`/medium; semantic: Codex `gpt-5.6-sol`/high and agy
+`gemini-3.1-pro-high`/high; Cursor is zero/unavailable. A fresh source/root,
+v3 manifest and per-call provenance, and an AGY 1.1.7 version/catalog/suffix
+capability preflight plus receipt are mandatory before fixture calls. That
+preflight is AGY-only; Codex has no catalog preflight and relies narrowly on
+V2's 154/154 qualifying `gpt-5.6-sol`/high calls, while V2 remains excluded.
+Cursor remains `BLOCKED_EXTERNAL`; release remains HOLD until a complete v3
+epoch passes every unchanged gate.

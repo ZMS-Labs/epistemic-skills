@@ -47,8 +47,11 @@ def main() -> int:
             "the historical three-provider allocation must remain the named default plan")
     require(set(runner.PROVIDER_PLANS) == {
         "frozen-three-provider", "noncursor-degraded-v1", "noncursor-degraded-v2",
-    }, "the runner must expose the frozen plan and both degraded protocol identities")
-    for historical_plan in ("frozen-three-provider", "noncursor-degraded-v1"):
+        "noncursor-degraded-v3",
+    }, "the runner must expose the frozen plan and all degraded protocol identities")
+    for historical_plan in (
+        "frozen-three-provider", "noncursor-degraded-v1", "noncursor-degraded-v2",
+    ):
         rejected_historical_live_plan = False
         try:
             runner.validate_live_provider_plan(historical_plan)
@@ -56,7 +59,7 @@ def main() -> int:
             rejected_historical_live_plan = True
         require(rejected_historical_live_plan,
                 f"historical provider plan remained runnable: {historical_plan}")
-    runner.validate_live_provider_plan("noncursor-degraded-v2")
+    runner.validate_live_provider_plan("noncursor-degraded-v3")
     require(runner.candidate_harness(1, "noncursor-degraded-v1") == "codex" and
             runner.candidate_harness(2, "noncursor-degraded-v1") == "agy" and
             runner.candidate_harness(3, "noncursor-degraded-v1") == "codex",
@@ -109,7 +112,9 @@ def main() -> int:
     }
     require(degraded_semantic_counts == {"codex": 44, "agy": 88, "cursor": 0},
             f"degraded semantic allocation drifted: {degraded_semantic_counts}")
-    for provider_plan in ("noncursor-degraded-v1", "noncursor-degraded-v2"):
+    for provider_plan in (
+        "noncursor-degraded-v1", "noncursor-degraded-v2", "noncursor-degraded-v3",
+    ):
         arm_counts = {
             harness: sum(runner.arm_harness(task, provider_plan) == harness for task in tasks)
             for harness in runner.HARNESS_PROVIDERS
@@ -132,19 +137,121 @@ def main() -> int:
             "every degraded semantic seat must use the provider opposite its candidate response",
         )
     campaign_models = {
-        "codex": "gpt-5.6-sol", "agy": "gemini-3.1-pro-high", "cursor": "gpt-5.6-sol",
+        "arms": {
+            "codex": "gpt-5.6-sol", "agy": "gemini-3.6-flash-medium",
+            "cursor": "gpt-5.6-sol",
+        },
+        "semantic": {
+            "codex": "gpt-5.6-sol", "agy": "gemini-3.1-pro-high",
+            "cursor": "gpt-5.6-sol",
+        },
     }
-    v2_campaign = runner.campaign_plan(
-        provider_plan="noncursor-degraded-v2", source_commit="a" * 40,
-        v1_commit="b" * 40, models=campaign_models,
+    historical_campaign_models = {
+        "codex": "gpt-5.6-sol", "agy": "gemini-3.1-pro-high",
+        "cursor": "gpt-5.6-sol",
+    }
+    preflight_receipt = {
+        "schema": "formal-rigor-agy-preflight@1", "agy_version": "1.1.7",
+        "catalog_sha256": "c" * 64,
+        "selected_models_by_phase": {
+            "arms": "gemini-3.6-flash-medium", "semantic": "gemini-3.1-pro-high",
+        },
+    }
+    preflight_sha256 = runner.sha256_bytes(runner.canonical_json_bytes(preflight_receipt))
+    v3_campaign = runner.campaign_plan(
+        provider_plan="noncursor-degraded-v3", source_commit="a" * 40,
+        v1_commit="b" * 40, models_by_phase=campaign_models,
+        preflight_receipt=preflight_receipt,
     )
-    require(v2_campaign["arm_calls"] == 286 and v2_campaign["semantic_calls"] == 132,
-            "v2 campaign identity must retain the exact 286/132 phase counts")
-    require(v2_campaign["arm_calls_by_harness"] == {"codex": 154, "agy": 132, "cursor": 0}
-            and v2_campaign["semantic_calls_by_harness"] == {
+    require(v3_campaign["schema"] == "formal-rigor-live-campaign-plan@2",
+            "V3 must use the phase-model campaign schema")
+    require(v3_campaign["arm_calls"] == 286 and v3_campaign["semantic_calls"] == 132,
+            "v3 campaign identity must retain the exact 286/132 phase counts")
+    require(v3_campaign["arm_calls_by_harness"] == {"codex": 154, "agy": 132, "cursor": 0}
+            and v3_campaign["semantic_calls_by_harness"] == {
                 "codex": 44, "agy": 88, "cursor": 0,
-            }, "v2 campaign identity must retain its zero-Cursor allocation")
-    execution_policy = v2_campaign["execution_policy"]
+            }, "v3 campaign identity must retain its zero-Cursor allocation")
+    require(v3_campaign["selected_models_by_phase"] == {
+        "arms": {"codex": "gpt-5.6-sol", "agy": "gemini-3.6-flash-medium"},
+        "semantic": {"codex": "gpt-5.6-sol", "agy": "gemini-3.1-pro-high"},
+    }, "V3 campaign must pin exact models independently by phase")
+    require(v3_campaign["preflight_sha256"] == preflight_sha256,
+            "campaign identity must bind the AGY capability receipt")
+    campaign_sha256 = runner.sha256_bytes(runner.canonical_json_bytes(v3_campaign))
+    require(all("model" in task and "effort" in task for task in
+                v3_campaign["arm_tasks"] + v3_campaign["semantic_tasks"]),
+            "every planned task must pin model and effort")
+    require(any(
+        task["harness"] == "agy" and task["model"] == "gemini-3.6-flash-medium"
+        and task["effort"] == "medium" for task in v3_campaign["arm_tasks"]
+    ) and any(
+        task["harness"] == "agy" and task["model"] == "gemini-3.1-pro-high"
+        and task["effort"] == "high" for task in v3_campaign["semantic_tasks"]
+    ), "planned AGY tasks do not retain the phase-specific model/effort matrix")
+    rejected_v3_model_substitution = False
+    substituted_models = json.loads(json.dumps(campaign_models))
+    substituted_models["arms"]["agy"] = "gemini-3.5-flash-medium"
+    try:
+        runner.campaign_plan(
+            provider_plan="noncursor-degraded-v3", source_commit="a" * 40,
+            v1_commit="b" * 40, models_by_phase=substituted_models,
+            preflight_receipt=preflight_receipt,
+        )
+    except ValueError:
+        rejected_v3_model_substitution = True
+    require(rejected_v3_model_substitution,
+            "V3 campaign accepted a catalog-valid but unregistered model substitution")
+    original_run = runner.subprocess.run
+    def preflight_run(command, *args, **kwargs):
+        if command == ["agy", "--version"]:
+            return SimpleNamespace(returncode=0, stdout="1.1.7\n", stderr="")
+        if command == ["agy", "models"]:
+            return SimpleNamespace(
+                returncode=0,
+                stdout="gemini-3.6-flash-medium\ngemini-3.1-pro-high\n",
+                stderr="",
+            )
+        raise AssertionError(f"unexpected preflight command: {command}")
+    try:
+        runner.subprocess.run = preflight_run
+        observed_preflight = runner.agy_preflight(
+            "agy", campaign_models, runner.execution_policy("noncursor-degraded-v3"),
+        )
+        require(observed_preflight["agy_version"] == "1.1.7" and
+                observed_preflight["selected_models_by_phase"] == {
+                    "arms": "gemini-3.6-flash-medium",
+                    "semantic": "gemini-3.1-pro-high",
+                }, "AGY preflight did not bind exact phase models")
+        rejected_missing_catalog_model = False
+        runner.subprocess.run = lambda command, *args, **kwargs: SimpleNamespace(
+            returncode=0, stdout=("1.1.7\n" if command[-1] == "--version"
+                                  else "gemini-3.1-pro-high\n"), stderr="",
+        )
+        try:
+            runner.agy_preflight(
+                "agy", campaign_models, runner.execution_policy("noncursor-degraded-v3"),
+            )
+        except ValueError:
+            rejected_missing_catalog_model = True
+        require(rejected_missing_catalog_model,
+                "AGY preflight accepted a missing arm model")
+        rejected_wrong_agy_version = False
+        runner.subprocess.run = lambda command, *args, **kwargs: SimpleNamespace(
+            returncode=0, stdout=("1.1.8\n" if command[-1] == "--version"
+                                  else "gemini-3.6-flash-medium\ngemini-3.1-pro-high\n"),
+            stderr="",
+        )
+        try:
+            runner.agy_preflight(
+                "agy", campaign_models, runner.execution_policy("noncursor-degraded-v3"),
+            )
+        except ValueError:
+            rejected_wrong_agy_version = True
+        require(rejected_wrong_agy_version,
+                "AGY preflight accepted a CLI version outside the V3 protocol")
+    finally:
+        runner.subprocess.run = original_run
+    execution_policy = v3_campaign["execution_policy"]
     require(execution_policy["effort_by_phase"]["arms"] == {
         "codex": "high", "agy": "medium", "cursor": "provider-model-default",
     }, "v2 campaign identity must pin arm effort by harness")
@@ -168,7 +275,7 @@ def main() -> int:
         campaign_root = Path(campaign_tmp)
         campaign = runner.ensure_campaign_plan(
             campaign_root, provider_plan="noncursor-degraded-v1", source_commit="a" * 40,
-            v1_commit="b" * 40, models=campaign_models,
+            v1_commit="b" * 40, models=historical_campaign_models,
         )
         require(campaign["schema"] == "formal-rigor-live-campaign-plan@1",
                 "campaign manifest must carry its stable schema marker")
@@ -185,13 +292,13 @@ def main() -> int:
                 "campaign manifest must retain the declared degraded provider counts")
         require(runner.ensure_campaign_plan(
             campaign_root, provider_plan="noncursor-degraded-v1", source_commit="a" * 40,
-            v1_commit="b" * 40, models=campaign_models,
+            v1_commit="b" * 40, models=historical_campaign_models,
         ) == campaign, "an identical campaign identity must be resumable")
         for changed_kwargs in (
             {"provider_plan": "frozen-three-provider"},
             {"source_commit": "c" * 40},
             {"v1_commit": "d" * 40},
-            {"models": {**campaign_models, "codex": "gpt-5.7-sol"}},
+            {"models": {**historical_campaign_models, "codex": "gpt-5.7-sol"}},
         ):
             rejected = False
             try:
@@ -200,7 +307,7 @@ def main() -> int:
                     provider_plan=changed_kwargs.get("provider_plan", "noncursor-degraded-v1"),
                     source_commit=changed_kwargs.get("source_commit", "a" * 40),
                     v1_commit=changed_kwargs.get("v1_commit", "b" * 40),
-                    models=changed_kwargs.get("models", campaign_models),
+                    models=changed_kwargs.get("models", historical_campaign_models),
                 )
             except ValueError:
                 rejected = True
@@ -214,7 +321,7 @@ def main() -> int:
         try:
             runner.ensure_campaign_plan(
                 orphan_root, provider_plan="noncursor-degraded-v1", source_commit="a" * 40,
-                v1_commit="b" * 40, models=campaign_models,
+                v1_commit="b" * 40, models=historical_campaign_models,
             )
         except ValueError:
             rejected = True
@@ -222,7 +329,7 @@ def main() -> int:
     phase_status = runner.phase_status(
         phase="arms", tasks=[runner.ArmTask("v2-candidate", 1, "tm-01-false-mvd")],
         provider_plan="noncursor-degraded-v1", source_commit="a" * 40,
-        models=campaign_models, completed=1, failed=0,
+        models=historical_campaign_models, completed=1, failed=0,
     )
     require(phase_status["provider_plan"] == "noncursor-degraded-v1",
             "phase-status records must retain the provider-plan identity")
@@ -302,7 +409,7 @@ def main() -> int:
         summary_root = Path(summary_tmp)
         runner.ensure_campaign_plan(
             summary_root, provider_plan="noncursor-degraded-v1", source_commit="a" * 40,
-            v1_commit="b" * 40, models=campaign_models,
+            v1_commit="b" * 40, models=historical_campaign_models,
         )
         rejected = False
         try:
@@ -444,7 +551,7 @@ def main() -> int:
         ROOT / "formal-rigor-fixture-transport.schema.json"
     ).read_text(encoding="utf-8")
     v2_agy_prompt = runner.execution_prompt(
-        arm_instruction, provider_plan="noncursor-degraded-v2", phase="arms", harness="agy",
+        arm_instruction, provider_plan="noncursor-degraded-v3", phase="arms", harness="agy",
         output_schema_text=frozen_transport_schema,
     )
     terminal_boundary = (
@@ -459,14 +566,14 @@ def main() -> int:
         output_schema_text=frozen_transport_schema,
     ) == arm_instruction, "v1 arm prompt delivery must remain unchanged")
     require(runner.execution_prompt(
-        arm_instruction, provider_plan="noncursor-degraded-v2", phase="arms", harness="codex",
+        arm_instruction, provider_plan="noncursor-degraded-v3", phase="arms", harness="codex",
         output_schema_text=frozen_transport_schema,
     ) == arm_instruction, "native Codex output-schema prompt behavior must remain unchanged")
     frozen_semantic_schema = (
         ROOT / "formal-rigor-semantic-adjudication.schema.json"
     ).read_text(encoding="utf-8")
     v2_semantic_agy_prompt = runner.execution_prompt(
-        semantic_instruction, provider_plan="noncursor-degraded-v2", phase="semantic",
+        semantic_instruction, provider_plan="noncursor-degraded-v3", phase="semantic",
         harness="agy", output_schema_text=frozen_semantic_schema,
     )
     semantic_terminal_boundary = (
@@ -519,6 +626,30 @@ def main() -> int:
         "transport": "completed", "json_parseable": True,
         "secret_screen": {"passed": True},
     }), "qualifying-call predicate accepted missing schema evidence")
+    v3_qualifying_record = {
+        "provider_plan": "noncursor-degraded-v3", "phase": "arms",
+        "model": "gemini-3.6-flash-medium", "reasoning_effort": "medium",
+        "preflight_sha256": preflight_sha256,
+        "campaign_plan_sha256": campaign_sha256,
+        "transport": "completed", "json_parseable": True, "schema_valid": True,
+        "secret_screen": {"passed": True},
+    }
+    require(runner.call_qualifies(v3_qualifying_record),
+            "V3 qualifying-call predicate rejected complete phase/model provenance")
+    require(not runner.call_qualifies({**v3_qualifying_record, "preflight_sha256": None}),
+            "V3 qualifying-call predicate accepted missing preflight binding")
+    v3_phase_status = runner.phase_status(
+        phase="arms", tasks=[runner.ArmTask("v2-candidate", 2, "tm-01-false-mvd")],
+        provider_plan="noncursor-degraded-v3", source_commit="a" * 40,
+        models_by_phase=campaign_models, completed=1, failed=0,
+        preflight_sha256=preflight_sha256, campaign_plan_sha256=campaign_sha256,
+    )
+    require(v3_phase_status["schema"] == "formal-rigor-live-phase-status@2" and
+            v3_phase_status["selected_models_by_harness"] == {
+                "agy": "gemini-3.6-flash-medium",
+            } and v3_phase_status["preflight_sha256"] == preflight_sha256 and
+            v3_phase_status["campaign_plan_sha256"] == campaign_sha256,
+            "V3 phase status omitted phase model and receipt/campaign bindings")
 
     fixture_dir = ROOT / "fixtures" / "tm-01-false-mvd"
     truth = json.loads((fixture_dir / "ground-truth.json").read_text(encoding="utf-8"))
@@ -685,6 +816,29 @@ def main() -> int:
         )
         require(captured.get("identity", {}).get("provider_plan") == "noncursor-degraded-v1",
                 "arm call records must retain the provider-plan identity")
+        v3_captured: dict[str, object] = {}
+        try:
+            runner.execute_call = lambda **kwargs: v3_captured.update(kwargs) or {}
+            runner.run_arm_task(
+                runner.ArmTask("v2-candidate", 2, "tm-01-false-mvd"),
+                output_root=tmp_root / "v3-arm-output",
+                packet_root=tmp_root / "v3-arm-packets",
+                executables={"codex": "codex", "agy": "agy", "cursor": "cursor-agent"},
+                models_by_phase=campaign_models,
+                provider_plan="noncursor-degraded-v3", source_commit="a" * 40,
+                v1_source_dir=tmp_root / "v1", timeout_seconds=60,
+                preflight_sha256=preflight_sha256,
+                campaign_plan_sha256=campaign_sha256,
+            )
+        finally:
+            runner.execute_call = original_execute_call
+        require(v3_captured.get("model") == "gemini-3.6-flash-medium",
+                "V3 arm dispatch did not select the arm-phase AGY model")
+        require(v3_captured.get("identity", {}).get("phase") == "arms" and
+                v3_captured.get("identity", {}).get("reasoning_effort") == "medium" and
+                v3_captured.get("identity", {}).get("preflight_sha256") == preflight_sha256 and
+                v3_captured.get("identity", {}).get("campaign_plan_sha256") == campaign_sha256,
+                "V3 arm dispatch omitted phase/effort/preflight/campaign identity")
 
         semantic_output = tmp_root / "semantic-output"
         semantic_candidate = (
@@ -738,7 +892,7 @@ def main() -> int:
         summary_output = tmp_root / "summary-output"
         runner.ensure_campaign_plan(
             summary_output, provider_plan="noncursor-degraded-v1", source_commit="a" * 40,
-            v1_commit="b" * 40, models=campaign_models,
+            v1_commit="b" * 40, models=historical_campaign_models,
         )
         semantic_summary = runner.summarize_semantic(summary_output, "noncursor-degraded-v1")
         require(semantic_summary["provider_plan"] == "noncursor-degraded-v1" and
@@ -746,6 +900,18 @@ def main() -> int:
                     encoding="utf-8"
                 ))["provider_plan"] == "noncursor-degraded-v1",
                 "semantic summaries must retain the provider-plan identity")
+
+        v3_summary_output = tmp_root / "v3-summary-output"
+        runner.ensure_campaign_plan(
+            v3_summary_output, provider_plan="noncursor-degraded-v3",
+            source_commit="a" * 40, v1_commit="b" * 40,
+            models_by_phase=campaign_models, preflight_receipt=preflight_receipt,
+        )
+        v3_semantic_summary = runner.summarize_semantic(
+            v3_summary_output, "noncursor-degraded-v3"
+        )
+        require(v3_semantic_summary["provider_plan"] == "noncursor-degraded-v3",
+                "semantic summary must accept and retain the V3 campaign identity")
 
     command = runner.codex_command(
         codex="codex", model="gpt-5.6-sol", packet_dir=Path("packet"),
@@ -765,18 +931,18 @@ def main() -> int:
             "Codex sealed prompts must travel over stdin rather than process argv")
 
     agy = runner.agy_command(
-        agy="agy", model="gemini-3.1-pro-high", packet_dir=Path("packet"),
+        agy="agy", model="gemini-3.6-flash-medium", packet_dir=Path("packet"),
         response_path=Path("response.json"), prompt="return JSON", effort="medium",
     )
     agy_joined = " ".join(str(item) for item in agy)
     for marker in (
         "agy", "--print", "--sandbox", "--dangerously-skip-permissions",
-        "--mode plan", "--add-dir .", "--model gemini-3.1-pro-high", "--effort medium",
+        "--mode plan", "--add-dir .", "--model gemini-3.6-flash-medium", "--effort medium",
     ):
         require(marker in agy_joined, f"agy command missing isolation marker: {marker}")
     require(agy == [
         "agy", "--sandbox", "--dangerously-skip-permissions", "--mode", "plan",
-        "--add-dir", ".", "--model", "gemini-3.1-pro-high", "--effort", "medium",
+        "--add-dir", ".", "--model", "gemini-3.6-flash-medium", "--effort", "medium",
         "--print", "return JSON",
     ], "v2 arm AGY argv must use packet cwd and explicit medium effort")
     semantic_agy = runner.agy_command(
@@ -786,19 +952,19 @@ def main() -> int:
     require(semantic_agy[-4:] == ["--effort", "high", "--print", "return JSON"],
             "semantic AGY argv must carry explicit high effort")
     require(runner.call_effort(
-        "noncursor-degraded-v2", phase="arms", harness="agy", bridge=False,
+        "noncursor-degraded-v3", phase="arms", harness="agy", bridge=False,
     ) == "medium" and runner.call_effort(
-        "noncursor-degraded-v2", phase="semantic", harness="agy", bridge=False,
+        "noncursor-degraded-v3", phase="semantic", harness="agy", bridge=False,
     ) == "high" and runner.call_effort(
         "noncursor-degraded-v1", phase="arms", harness="agy", bridge=False,
     ) == "high" and runner.call_effort(
-        "noncursor-degraded-v2", phase="arms", harness="agy", bridge=True,
+        "noncursor-degraded-v3", phase="arms", harness="agy", bridge=True,
     ) == "provider-model-default",
             "reasoning-effort policy must distinguish v1, v2 phase, and bridge routing")
     rejected_bridge_identity = False
     try:
         runner.validate_live_harness_configuration(
-            "noncursor-degraded-v2",
+            "noncursor-degraded-v3",
             {
                 "codex": "codex.cmd",
                 "agy": "fleet-bridge://default/fleet-orchestrator/surface-bridge-v2-0",
@@ -1052,10 +1218,13 @@ def main() -> int:
                 prompt="return JSON",
                 harness="agy",
                 executable="agy",
-                model="gemini-3.1-pro-high",
+                model="gemini-3.6-flash-medium",
                 identity={
-                    "kind": "arm", "provider_plan": "noncursor-degraded-v2",
+                    "kind": "arm", "provider_plan": "noncursor-degraded-v3",
                     "fixture": "cc-03-postgresql18-rationale-correct",
+                    "phase": "arms", "reasoning_effort": "medium",
+                    "preflight_sha256": preflight_sha256,
+                    "campaign_plan_sha256": campaign_sha256,
                 },
                 source_commit="a" * 40,
                 timeout_seconds=60,
@@ -1076,8 +1245,13 @@ def main() -> int:
                 executed_command[executed_command.index("--effort") + 1] == "medium",
                 "v2 arm call did not record and invoke the same actual AGY effort")
         require(record.get("execution_policy") ==
-                runner.execution_policy("noncursor-degraded-v2"),
+                runner.execution_policy("noncursor-degraded-v3"),
                 "terminal call omitted its pinned execution policy")
+        require(record.get("phase") == "arms" and
+                record.get("model") == "gemini-3.6-flash-medium" and
+                record.get("preflight_sha256") == preflight_sha256 and
+                record.get("campaign_plan_sha256") == campaign_sha256,
+                "terminal call omitted its exact phase/model/preflight/campaign binding")
         require(record.get("packet_root") == str((tmp_root / "packets").resolve()),
                 "terminal call omitted its canonical packet root")
         require('"required": [' in executed_command[-1] and
@@ -1086,7 +1260,7 @@ def main() -> int:
         require(record.get("response_normalization") ==
                 "extracted-single-recognized-json-envelope",
                 "agy call record omitted explicit response_normalization metadata")
-        require(record.get("provider_plan") == "noncursor-degraded-v2",
+        require(record.get("provider_plan") == "noncursor-degraded-v3",
                 "every terminal call record must retain the provider-plan identity")
 
     valid_adjudication = {
