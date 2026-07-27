@@ -1,7 +1,7 @@
 # epistemic-skills 3.0.0
 
-**Prepared:** 2026-07-26  
-**Intended channel:** stable  
+**Prepared:** 2026-07-26
+**Intended channel:** stable
 **Status:** prepared release record; publication is pending the exact-commit gates, annotated tag, and non-draft GitHub Release
 
 Version 3.0.0 is intended to be the first immutable support point for this repository. It
