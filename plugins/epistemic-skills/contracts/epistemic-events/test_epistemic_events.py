@@ -2,6 +2,7 @@
 
 import importlib.util
 import json
+import re
 import tempfile
 import unittest
 from pathlib import Path
@@ -62,8 +63,13 @@ def load_outcome_schema() -> dict:
         return json.load(handle)
 
 
+def load_skill_event_map_schema() -> dict:
+    with (ROOT / "skill-event-map.schema.json").open(encoding="utf-8") as handle:
+        return json.load(handle)
+
+
 def schema_matches(instance: object, schema: dict) -> bool:
-    """Evaluate the JSON Schema keywords exercised by the outcome contract."""
+    """Evaluate the JSON Schema keywords exercised by public contracts."""
     if "const" in schema and instance != schema["const"]:
         return False
     if "enum" in schema and instance not in schema["enum"]:
@@ -84,14 +90,34 @@ def schema_matches(instance: object, schema: dict) -> bool:
     if "required" in schema:
         if not isinstance(instance, dict) or not set(schema["required"]) <= set(instance):
             return False
+    if schema.get("additionalProperties") is False and isinstance(instance, dict):
+        if set(instance) - set(schema.get("properties", {})):
+            return False
     if "properties" in schema and isinstance(instance, dict):
         for key, property_schema in schema["properties"].items():
             if key in instance and not schema_matches(instance[key], property_schema):
                 return False
+    if isinstance(instance, list):
+        if len(instance) < schema.get("minItems", 0):
+            return False
+        if "maxItems" in schema and len(instance) > schema["maxItems"]:
+            return False
+        if "items" in schema and any(not schema_matches(item, schema["items"]) for item in instance):
+            return False
+    if "pattern" in schema and isinstance(instance, str) and not re.search(schema["pattern"], instance):
+        return False
     if "not" in schema and schema_matches(instance, schema["not"]):
         return False
     for branch in schema.get("allOf", []):
         if not schema_matches(instance, branch):
+            return False
+    if "oneOf" in schema and sum(schema_matches(instance, branch) for branch in schema["oneOf"]) != 1:
+        return False
+    if "contains" in schema and isinstance(instance, list):
+        matches = sum(schema_matches(item, schema["contains"]) for item in instance)
+        if matches < schema.get("minContains", 1):
+            return False
+        if "maxContains" in schema and matches > schema["maxContains"]:
             return False
     if "if" in schema and schema_matches(instance, schema["if"]):
         if "then" in schema and not schema_matches(instance, schema["then"]):
@@ -112,6 +138,27 @@ class EpistemicEventContractTests(unittest.TestCase):
         for item in mapping["skills"]:
             self.assertNotEqual(item["eligible_when"], "every invocation")
             self.assertTrue(item["sentinel_fixture"])
+
+    def test_schema_and_verifier_reject_duplicate_skill_map_rows(self):
+        mapping = load_skill_event_map(MAP_PATH)
+        broken = json.loads(json.dumps(mapping))
+        broken["skills"][1]["skill"] = "using-epistemic-skills"
+        self.assertFalse(schema_matches(broken, load_skill_event_map_schema()))
+        with self.assertRaisesRegex(EventError, "SCHEMA_VIOLATION"):
+            verify_skill_event_map(broken)
+
+    def test_schema_and_verifier_reject_valid_field_wrong_cross_pairing(self):
+        mapping = load_skill_event_map(MAP_PATH)
+        broken = json.loads(json.dumps(mapping))
+        broken["skills"][0]["event_kinds"] = ["pairing-decision"]
+        self.assertFalse(schema_matches(broken, load_skill_event_map_schema()))
+        with self.assertRaisesRegex(EventError, "SCHEMA_VIOLATION"):
+            verify_skill_event_map(broken)
+
+    def test_schema_and_verifier_accept_the_closed_skill_event_map(self):
+        mapping = load_skill_event_map(MAP_PATH)
+        self.assertTrue(schema_matches(mapping, load_skill_event_map_schema()))
+        verify_skill_event_map(mapping)
 
     def test_canonical_and_packaged_collection_references_match(self):
         self.assertEqual(
