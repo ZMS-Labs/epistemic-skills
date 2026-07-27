@@ -157,7 +157,7 @@ Expected: one GitHub-created initial page commit. Do not amend or rewrite it.
 Use the approved design sections `Helix as the central passage`, `Homepage design`, and `Source and version policy`. Each content page begins:
 
 ```markdown
-> **Applies to:** epistemic-skills v3.0.0  
+> **Applies to:** epistemic-skills v3.0.0
 > **Canonical source:** [released source](https://github.com/ZMS-Labs/epistemic-skills/tree/v3.0.0/plugins/epistemic-skills/skills)
 ```
 
