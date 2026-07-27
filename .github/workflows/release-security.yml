@@ -52,8 +52,9 @@ jobs:
         run: |
           fixture="$(mktemp -d)"
           {
-            printf 'aws_access_key_id = AKIA%s\n' '1111111111111111'
-            printf 'aws_secret_access_key = %s%s\n' 'wJalrXUtnFEMI/K7MDENG/' 'bPxRfiCYEXAMPLEKEY'
+            printf '%s%s\n' '-----BEGIN RSA ' 'PRIVATE KEY-----'
+            printf '%s\n' 'MIIEpAIBAAKCAQEAu4M7h2X9pQ6sV3nK8cD1fG5jL0wZrY2bT7mN9xE4'
+            printf '%s%s\n' '-----END RSA ' 'PRIVATE KEY-----'
           } > "$fixture/positive-control.txt"
           if "$RUNNER_TEMP/bin/gitleaks" dir --no-banner --redact "$fixture"; then
             echo "gitleaks positive control was not detected" >&2
