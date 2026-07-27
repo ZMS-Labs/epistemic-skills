@@ -242,8 +242,8 @@ GitHub Wiki content lives in GitHub's separate
 `ZMS-Labs/epistemic-skills.wiki.git` repository. Because GitHub has not created
 that repository yet, the first page is bootstrapped through the authenticated
 GitHub Wiki interface. The wiki repository is then cloned under
-`Y:\dev\epistemic-skills.wiki`, populated as one coherent commit, pushed, and
-verified from the remote.
+`Y:\dev\epistemic-skills.wiki`, populated as one coherent, reviewed commit
+series, pushed once, and verified from the remote.
 
 Wiki commits use the same authorship and DCO discipline as the main repository,
 even though GitHub Wiki does not provide the same pull-request workflow.
