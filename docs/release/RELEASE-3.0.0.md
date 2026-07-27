@@ -1,10 +1,10 @@
 # epistemic-skills 3.0.0
 
-**Prepared:** 2026-07-26
+**Release record date:** 2026-07-26
 **Intended channel:** stable
-**Status:** prepared release record; publication is pending the exact-commit gates, annotated tag, and non-draft GitHub Release
+**Validity contract:** this record is authoritative only when the exact-commit gates pass and the annotated tag plus non-draft GitHub Release satisfy [Publication identity](#publication-identity)
 
-Version 3.0.0 is intended to be the first immutable support point for this repository. It
+Version 3.0.0 defines the first immutable support point for this repository. It
 packages the proportional routine-work path, applying-formal-rigor v2, the
 consolidated Gauntlet, and the cross-harness plugin surfaces as one tagged
 contract.
@@ -92,8 +92,10 @@ The committed evidence is
 
 ## Accepted behavioral risk
 
-The operator chose to publish an honest better-but-imperfect first support
-snapshot. The exhaustive, machine-readable scope is
+The operator accepted the specified behavioral gaps for an honest
+better-but-imperfect first support snapshot, contingent on every non-waivable
+release gate passing. This risk decision does not independently authorize
+publication. The exhaustive, machine-readable scope is
 [`RELEASE-3.0.0-RISK-ACCEPTANCE.json`](RELEASE-3.0.0-RISK-ACCEPTANCE.json).
 It gives each accepted gap an owner, scope, revisit trigger, and exit criterion,
 and explicitly denies any wildcard waiver.

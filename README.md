@@ -183,7 +183,9 @@ if ((git describe --tags --exact-match) -ne 'v3.0.0') { throw 'expected v3.0.0' 
 New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.cursor\plugins\local" | Out-Null
 $src  = (Resolve-Path .\plugins\epistemic-skills).Path
 $dest = Join-Path $env:USERPROFILE '.cursor\plugins\local\epistemic-skills'
-if (Test-Path $dest) { Remove-Item $dest -Force -Recurse }
+if (Test-Path -LiteralPath $dest) {
+  throw "Cursor plugin destination already exists; move or remove it manually after verifying its contents: $dest"
+}
 cmd /c mklink /J "$dest" "$src"
 ```
 

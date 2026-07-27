@@ -4,9 +4,10 @@
   "accepted_at": "2026-07-26",
   "authority": {
     "source": "operator direction in the release task",
-    "decision": "publish version 3.0.0 as the first stable support snapshot despite the documented behavioral evidence gaps",
+    "decision": "accept the documented behavioral evidence gaps if version 3.0.0 is otherwise authorized for publication as the first stable support snapshot",
     "scope": "behavioral and cross-provider confidence only",
-    "wildcard_waiver": false
+    "wildcard_waiver": false,
+    "publication_authority": "none; this record does not waive or satisfy any non-waivable release gate"
   },
   "identity": {
     "feature_head_sha": "9dc8afb2cdf00b460a243f14b7a85840b03f4d80",

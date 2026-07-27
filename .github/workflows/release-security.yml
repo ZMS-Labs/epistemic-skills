@@ -56,9 +56,17 @@ jobs:
             printf '%s\n' 'MIIEpAIBAAKCAQEAu4M7h2X9pQ6sV3nK8cD1fG5jL0wZrY2bT7mN9xE4'
             printf '%s%s\n' '-----END RSA ' 'PRIVATE KEY-----'
           } > "$fixture/positive-control.txt"
-          if "$RUNNER_TEMP/bin/gitleaks" dir --no-banner --redact "$fixture"; then
+          set +e
+          "$RUNNER_TEMP/bin/gitleaks" dir --no-banner --redact "$fixture"
+          status=$?
+          set -e
+          if [ "$status" -eq 0 ]; then
             echo "gitleaks positive control was not detected" >&2
             exit 1
+          fi
+          if [ "$status" -ne 1 ]; then
+            echo "gitleaks positive control failed with unexpected status $status" >&2
+            exit "$status"
           fi
       - name: Scan the complete repository history
         run: |
