@@ -27,6 +27,48 @@ def load(relative_path: str) -> dict:
         return json.load(handle)
 
 
+def load_outcome_schema() -> dict:
+    with (ROOT / "epistemic-outcome.schema.json").open(encoding="utf-8") as handle:
+        return json.load(handle)
+
+
+def schema_matches(instance: object, schema: dict) -> bool:
+    """Evaluate the JSON Schema keywords exercised by the outcome contract."""
+    if "const" in schema and instance != schema["const"]:
+        return False
+    if "enum" in schema and instance not in schema["enum"]:
+        return False
+    if "type" in schema:
+        allowed_types = schema["type"]
+        if not isinstance(allowed_types, list):
+            allowed_types = [allowed_types]
+        type_matches = {
+            "object": isinstance(instance, dict),
+            "array": isinstance(instance, list),
+            "string": isinstance(instance, str),
+            "number": isinstance(instance, (int, float)) and not isinstance(instance, bool),
+            "null": instance is None,
+        }
+        if not any(type_matches.get(name, False) for name in allowed_types):
+            return False
+    if "required" in schema:
+        if not isinstance(instance, dict) or not set(schema["required"]) <= set(instance):
+            return False
+    if "properties" in schema and isinstance(instance, dict):
+        for key, property_schema in schema["properties"].items():
+            if key in instance and not schema_matches(instance[key], property_schema):
+                return False
+    if "not" in schema and schema_matches(instance, schema["not"]):
+        return False
+    for branch in schema.get("allOf", []):
+        if not schema_matches(instance, branch):
+            return False
+    if "if" in schema and schema_matches(instance, schema["if"]):
+        if "then" in schema and not schema_matches(instance, schema["then"]):
+            return False
+    return True
+
+
 class EpistemicEventContractTests(unittest.TestCase):
     def test_calibratable_event_requires_probability_and_resolution_rule(self):
         record = load("valid/calibratable-event.json")
@@ -69,6 +111,38 @@ class EpistemicEventContractTests(unittest.TestCase):
             output = Path(temporary_directory) / "records" / "events.jsonl"
             append_validated_record(record, output)
             self.assertEqual(output.read_bytes(), canonical_record_bytes(record))
+
+    def test_schema_and_verifier_reject_resolved_outcomes_without_independent_evidence(self):
+        record = load("valid/outcome.json")
+        for broken in (
+            {**record, "evidence_ref": None},
+            {**record, "independence_class": "self-reported"},
+        ):
+            self.assertFalse(schema_matches(broken, load_outcome_schema()))
+            with self.assertRaisesRegex(EventError, "SCHEMA_VIOLATION"):
+                verify_outcome(broken)
+
+    def test_schema_and_verifier_require_a_predecessor_for_superseded_outcomes(self):
+        record = {**load("valid/outcome.json"), "resolution_status": "superseded", "supersedes": None}
+        self.assertFalse(schema_matches(record, load_outcome_schema()))
+        with self.assertRaisesRegex(EventError, "SCHEMA_VIOLATION"):
+            verify_outcome(record)
+
+    def test_verifier_rejects_a_self_superseding_outcome(self):
+        record = load("valid/outcome.json")
+        broken = {
+            **record,
+            "resolution_status": "superseded",
+            "supersedes": record["observation_id"],
+        }
+        with self.assertRaisesRegex(EventError, "SCHEMA_VIOLATION"):
+            verify_outcome(broken)
+
+    def test_append_invalid_scalar_raises_a_controlled_event_error(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            output = Path(temporary_directory) / "events.jsonl"
+            with self.assertRaisesRegex(EventError, "UNKNOWN_RECORD"):
+                append_validated_record([], output)
 
 
 if __name__ == "__main__":

@@ -241,6 +241,10 @@ def verify_outcome(record: dict) -> None:
         _schema_error("outcome producer must be non-empty")
     if outcome["supersedes"] is not None and not _is_hex(outcome["supersedes"]):
         _schema_error("supersedes must be a lowercase sha256 value or null")
+    if outcome["resolution_status"] == "superseded" and outcome["supersedes"] is None:
+        _schema_error("superseded outcomes require a predecessor")
+    if outcome["supersedes"] is not None and outcome["supersedes"] == outcome["observation_id"]:
+        _schema_error("an outcome cannot supersede itself")
     if outcome["resolution_status"] == "resolved" and (
         outcome["evidence_ref"] is None or outcome["independence_class"] == "self-reported"
     ):
@@ -256,6 +260,8 @@ def canonical_record_bytes(record: dict) -> bytes:
 
 def append_validated_record(record: dict, output: Path) -> None:
     """Validate and append one canonical record to an explicitly named file."""
+    if not isinstance(record, dict):
+        raise EventError("UNKNOWN_RECORD", "record must be an object")
     if record.get("record") == EVENT_RECORD:
         verify_event(record)
     elif record.get("record") == OUTCOME_RECORD:
