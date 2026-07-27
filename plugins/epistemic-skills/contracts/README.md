@@ -12,6 +12,15 @@ self-reported fields**. **"Trust" in this contract means exactly that envelope
 and nothing more.** No field and no rule raises a consumer's confidence in a
 judgment it did not make or re-verify.
 
+## Epistemic event collection
+
+`epistemic-events/` contains a separate, minimized event/outcome contract and
+the closed eleven-surface eligibility map. It is collection machinery, not a
+twelfth discipline: skill results are produced first, absent eligibility is
+silent, and a missing or failed collector cannot change the primary result.
+These records never include raw skill output. Like receipts, collection
+receipts prove envelope facts only and do not upgrade outcome truth.
+
 ## What a receipt never attests
 
 Every receipt carries a non-empty `never_attests` array. The standard entries:

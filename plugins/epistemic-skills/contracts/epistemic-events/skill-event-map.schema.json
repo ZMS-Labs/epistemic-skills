@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://zms-labs.github.io/epistemic-skills/contracts/skill-event-map.schema.json",
+  "title": "Epistemic Skill Event Eligibility Map",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["skills"],
+  "properties": {
+    "skills": {
+      "type": "array",
+      "minItems": 11,
+      "maxItems": 11,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "skill",
+          "event_kinds",
+          "eligible_when",
+          "outcome_sources",
+          "collection_mode",
+          "sentinel_fixture"
+        ],
+        "properties": {
+          "skill": {
+            "enum": [
+              "using-epistemic-skills", "helix", "blindspot-pass",
+              "applying-formal-rigor", "evidence-research", "write-goal",
+              "outsource", "gauntlet", "evidence-locked-uat",
+              "decision-ledger", "continuity-verify"
+            ]
+          },
+          "event_kinds": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "enum": [
+                "routing-decision", "pairing-decision", "landmine-prediction",
+                "formal-prediction", "evidence-claim", "goal-proof",
+                "handoff-verification", "review-forecast", "uat-verdict",
+                "ledger-revisit", "continuity-reanchor"
+              ]
+            }
+          },
+          "eligible_when": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "enum": [
+                "evaluation-case", "sampled-field-incident", "preregistered-prediction",
+                "independently-resolvable-verdict", "correction-or-supersession",
+                "revisit-trigger-fired"
+              ]
+            }
+          },
+          "outcome_sources": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "enum": [
+                "deterministic-fixture", "independent-adjudication",
+                "field-observation", "supersession-chain"
+              ]
+            }
+          },
+          "collection_mode": {
+            "enum": ["calibratable", "observational", "conditional"]
+          },
+          "sentinel_fixture": {
+            "type": "string",
+            "pattern": "^[a-z0-9-]+\\.json$"
+          }
+        }
+      }
+    }
+  }
+}

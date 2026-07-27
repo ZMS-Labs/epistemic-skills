@@ -20,6 +20,36 @@ append_validated_record = MODULE.append_validated_record
 canonical_record_bytes = MODULE.canonical_record_bytes
 verify_event = MODULE.verify_event
 verify_outcome = MODULE.verify_outcome
+load_skill_event_map = MODULE.load_skill_event_map
+verify_skill_event_map = MODULE.verify_skill_event_map
+
+MAP_PATH = ROOT / "skill-event-map.json"
+
+
+def root_skills_reference() -> Path:
+    """Resolve the tracked root skills alias on symlink-capable and Windows checkouts."""
+    skills_alias = ROOT.parents[3] / "skills"
+    if skills_alias.is_dir():
+        skills_root = skills_alias
+    else:
+        skills_root = skills_alias.parent / skills_alias.read_text(encoding="utf-8").strip()
+    return skills_root / "using-epistemic-skills" / "reference" / "epistemic-data-collection.md"
+
+
+ROOT_REFERENCE = root_skills_reference()
+PACKAGE_REFERENCE = (
+    ROOT.parents[1]
+    / "skills"
+    / "using-epistemic-skills"
+    / "reference"
+    / "epistemic-data-collection.md"
+)
+EXPECTED_SKILLS = {
+    "using-epistemic-skills", "helix", "blindspot-pass",
+    "applying-formal-rigor", "evidence-research", "write-goal",
+    "outsource", "gauntlet", "evidence-locked-uat",
+    "decision-ledger", "continuity-verify",
+}
 
 
 def load(relative_path: str) -> dict:
@@ -70,6 +100,25 @@ def schema_matches(instance: object, schema: dict) -> bool:
 
 
 class EpistemicEventContractTests(unittest.TestCase):
+    def test_map_covers_every_packaged_skill_once(self):
+        mapping = load_skill_event_map(MAP_PATH)
+        verify_skill_event_map(mapping)
+        names = [item["skill"] for item in mapping["skills"]]
+        self.assertEqual(set(names), EXPECTED_SKILLS)
+        self.assertEqual(len(names), len(set(names)))
+
+    def test_every_skill_has_a_non_routine_eligibility_rule(self):
+        mapping = load_skill_event_map(MAP_PATH)
+        for item in mapping["skills"]:
+            self.assertNotEqual(item["eligible_when"], "every invocation")
+            self.assertTrue(item["sentinel_fixture"])
+
+    def test_canonical_and_packaged_collection_references_match(self):
+        self.assertEqual(
+            ROOT_REFERENCE.read_bytes(),
+            PACKAGE_REFERENCE.read_bytes(),
+        )
+
     def test_calibratable_event_requires_probability_and_resolution_rule(self):
         record = load("valid/calibratable-event.json")
         verify_event(record)

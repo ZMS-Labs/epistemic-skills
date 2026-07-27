@@ -128,6 +128,10 @@ relationship matters.
 Fire-nothing is a valid outcome. A routine task pairs zero disciplines with
 zero ceremony and emits no proof that it did so.
 
+Collection is downstream of the paired stage, never a prerequisite for it. Eligible paired-stage
+events use the shared epistemic data collection map; adapter absence or failure cannot change
+either strand's result.
+
 ## Any harness, any layer
 
 This file is plain markdown and assumes no harness. "Read/load the skill"

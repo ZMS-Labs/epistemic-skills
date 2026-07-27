@@ -134,6 +134,12 @@ delegate (cross-cutting): outsource turns any bounded workload into a committed 
 The arc is need-driven, not mandatory. Absent triggers are silent; do not manufacture an audit
 artifact to say that nothing happened.
 
+After a discipline produces its normal result, consult
+[`reference/epistemic-data-collection.md`](reference/epistemic-data-collection.md).
+Collection fires only when the shared eligibility map matches an outcome-bearing or sampled
+evaluation moment. It is non-blocking machinery, never another discipline, and absent
+eligibility remains silent.
+
 Emit a routing record only when **two or more disciplines actually fire**, or when a positive
 trigger is explicitly overridden by an authorized operator. Format:
 `router: fired=[blindspot-pass→<stamp|receipt-ref>] overridden=[gauntlet→<authority-ref>]`.

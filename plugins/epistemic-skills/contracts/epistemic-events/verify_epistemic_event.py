@@ -50,6 +50,91 @@ VERIFICATION_METHODS = {
 INDEPENDENCE_CLASSES = {
     "deterministic", "different-family", "same-family", "self-reported",
 }
+ELIGIBILITY_PREDICATES = {
+    "evaluation-case", "sampled-field-incident", "preregistered-prediction",
+    "independently-resolvable-verdict", "correction-or-supersession",
+    "revisit-trigger-fired",
+}
+COLLECTION_MODES = {"calibratable", "observational", "conditional"}
+SKILL_EVENT_MAP = {
+    "using-epistemic-skills": {
+        "event_kinds": ("routing-decision",),
+        "eligible_when": ("evaluation-case", "sampled-field-incident"),
+        "outcome_sources": ("independent-adjudication",),
+        "collection_mode": "observational",
+        "sentinel_fixture": "router-over-under.json",
+    },
+    "helix": {
+        "event_kinds": ("pairing-decision",),
+        "eligible_when": ("evaluation-case", "correction-or-supersession"),
+        "outcome_sources": ("independent-adjudication",),
+        "collection_mode": "observational",
+        "sentinel_fixture": "helix-missed-pair.json",
+    },
+    "blindspot-pass": {
+        "event_kinds": ("landmine-prediction",),
+        "eligible_when": ("preregistered-prediction",),
+        "outcome_sources": ("field-observation",),
+        "collection_mode": "calibratable",
+        "sentinel_fixture": "blindspot-landmine.json",
+    },
+    "applying-formal-rigor": {
+        "event_kinds": ("formal-prediction",),
+        "eligible_when": ("preregistered-prediction",),
+        "outcome_sources": ("deterministic-fixture", "field-observation"),
+        "collection_mode": "calibratable",
+        "sentinel_fixture": "formal-prediction.json",
+    },
+    "evidence-research": {
+        "event_kinds": ("evidence-claim",),
+        "eligible_when": ("independently-resolvable-verdict",),
+        "outcome_sources": ("independent-adjudication", "field-observation"),
+        "collection_mode": "conditional",
+        "sentinel_fixture": "evidence-correction.json",
+    },
+    "write-goal": {
+        "event_kinds": ("goal-proof",),
+        "eligible_when": ("independently-resolvable-verdict",),
+        "outcome_sources": ("field-observation", "supersession-chain"),
+        "collection_mode": "conditional",
+        "sentinel_fixture": "goal-regression.json",
+    },
+    "outsource": {
+        "event_kinds": ("handoff-verification",),
+        "eligible_when": ("evaluation-case", "sampled-field-incident"),
+        "outcome_sources": ("deterministic-fixture", "independent-adjudication"),
+        "collection_mode": "observational",
+        "sentinel_fixture": "outsource-relay.json",
+    },
+    "gauntlet": {
+        "event_kinds": ("review-forecast",),
+        "eligible_when": ("preregistered-prediction", "correction-or-supersession"),
+        "outcome_sources": ("field-observation", "supersession-chain"),
+        "collection_mode": "conditional",
+        "sentinel_fixture": "gauntlet-dissent.json",
+    },
+    "evidence-locked-uat": {
+        "event_kinds": ("uat-verdict",),
+        "eligible_when": ("independently-resolvable-verdict",),
+        "outcome_sources": ("deterministic-fixture", "field-observation"),
+        "collection_mode": "calibratable",
+        "sentinel_fixture": "uat-seeded-defect.json",
+    },
+    "decision-ledger": {
+        "event_kinds": ("ledger-revisit",),
+        "eligible_when": ("revisit-trigger-fired",),
+        "outcome_sources": ("supersession-chain",),
+        "collection_mode": "observational",
+        "sentinel_fixture": "ledger-revisit.json",
+    },
+    "continuity-verify": {
+        "event_kinds": ("continuity-reanchor",),
+        "eligible_when": ("evaluation-case", "sampled-field-incident"),
+        "outcome_sources": ("deterministic-fixture", "field-observation"),
+        "collection_mode": "observational",
+        "sentinel_fixture": "continuity-contradiction.json",
+    },
+}
 
 
 class EventError(ValueError):
@@ -114,6 +199,58 @@ def _verify_evidence_ref(value: Any, label: str, allow_none: bool = False) -> No
     evidence_ref = _require_mapping(value, {"kind", "sha256"}, {"kind", "sha256"}, label)
     if evidence_ref["kind"] not in EVIDENCE_REF_KINDS or not _is_hex(evidence_ref["sha256"]):
         _schema_error(f"{label} is invalid")
+
+
+def load_skill_event_map(path: Path) -> dict:
+    """Load and fail closed on the public skill-event eligibility map."""
+    with path.open(encoding="utf-8") as handle:
+        mapping = json.load(handle)
+    verify_skill_event_map(mapping)
+    return mapping
+
+
+def verify_skill_event_map(mapping: dict) -> None:
+    """Validate the closed eleven-surface collection eligibility map."""
+    if not isinstance(mapping, dict) or set(mapping) != {"skills"}:
+        _schema_error("skill event map must contain only skills")
+    skills = mapping["skills"]
+    if not isinstance(skills, list) or len(skills) != len(SKILL_EVENT_MAP):
+        _schema_error("skill event map must contain every closed skill exactly once")
+    seen_skills: set[str] = set()
+    required_keys = {
+        "skill", "event_kinds", "eligible_when", "outcome_sources",
+        "collection_mode", "sentinel_fixture",
+    }
+    for entry in skills:
+        if not isinstance(entry, dict) or set(entry) != required_keys:
+            _schema_error("skill event map entry has unsupported keys")
+        skill = entry["skill"]
+        if skill not in SKILL_EVENT_MAP or skill in seen_skills:
+            _schema_error("skill event map skill is not closed or is duplicated")
+        seen_skills.add(skill)
+        for field, vocabulary in (
+            ("event_kinds", EVENT_KINDS),
+            ("eligible_when", ELIGIBILITY_PREDICATES),
+            ("outcome_sources", RESOLUTION_RULES),
+        ):
+            value = entry[field]
+            if not isinstance(value, list) or not value or any(item not in vocabulary for item in value):
+                _schema_error(f"skill event map {field} is invalid")
+        if entry["collection_mode"] not in COLLECTION_MODES:
+            _schema_error("skill event map collection mode is invalid")
+        if not isinstance(entry["sentinel_fixture"], str) or not entry["sentinel_fixture"].endswith(".json"):
+            _schema_error("skill event map sentinel fixture is invalid")
+        expected = SKILL_EVENT_MAP[skill]
+        if (
+            tuple(entry["event_kinds"]) != expected["event_kinds"]
+            or tuple(entry["eligible_when"]) != expected["eligible_when"]
+            or tuple(entry["outcome_sources"]) != expected["outcome_sources"]
+            or entry["collection_mode"] != expected["collection_mode"]
+            or entry["sentinel_fixture"] != expected["sentinel_fixture"]
+        ):
+            _schema_error("skill event map entry does not match the closed eligibility contract")
+    if seen_skills != set(SKILL_EVENT_MAP):
+        _schema_error("skill event map does not cover every closed skill")
 
 
 def _verify_event_producer(value: Any) -> None:
