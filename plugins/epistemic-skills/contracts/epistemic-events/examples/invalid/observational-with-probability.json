@@ -1,0 +1,17 @@
+{
+  "record": "epistemic-event@1",
+  "variant": "observational",
+  "event_id": "1111111111111111111111111111111111111111111111111111111111111111",
+  "idempotency_key": "2222222222222222222222222222222222222222222222222222222222222222",
+  "producer": {"skill": "continuity-verify", "skill_version": "2.9.2", "producer_sha256": "3333333333333333333333333333333333333333333333333333333333333333"},
+  "event_kind": "continuity-reanchor",
+  "subject_ref": "4444444444444444444444444444444444444444444444444444444444444444",
+  "correlation_ref": "5555555555555555555555555555555555555555555555555555555555555555",
+  "occurred_on": "2026-07-27",
+  "model_family": null,
+  "harness_class": null,
+  "provenance_mode": "contemporaneous",
+  "privacy_class": "portable-minimized",
+  "evidence_refs": [],
+  "observation": {"class": "verified", "probability": 0.5}
+}

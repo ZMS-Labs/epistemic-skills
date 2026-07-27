@@ -1,0 +1,13 @@
+{
+  "record": "epistemic-outcome@1",
+  "observation_id": "7777777777777777777777777777777777777777777777777777777777777777",
+  "event_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "outcome_class": "correct",
+  "resolution_status": "resolved",
+  "verification_method": "deterministic-oracle",
+  "independence_class": "deterministic",
+  "evidence_ref": {"kind": "oracle-hash", "sha256": "8888888888888888888888888888888888888888888888888888888888888888"},
+  "observed_on": "2026-07-27",
+  "producer": "public-verifier",
+  "supersedes": null
+}
