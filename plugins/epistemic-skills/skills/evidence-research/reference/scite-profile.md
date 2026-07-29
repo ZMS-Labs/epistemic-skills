@@ -127,6 +127,31 @@ NumPy DOI + `has_retraction:true` → 0 results; Wakefield
   this MCP — record `reception: filter-level (no contexts)` in the matrix;
   context-level interrogation needs the scite.ai web UI (operator).
 
+## DRIFT EVENT (observed 2026-07-29, Kimi Code harness, `mcp__scite__*`)
+
+Re-check before trusting any "slim-only" assumption above:
+
+1. **Anonymous tier now returns RICH records.** `search_literature` by DOI
+   (no auth; collections canary FAILED with the sign-in error in the same
+   session) returned `tally` {supporting/contrasting/mentioning/
+   citingPublications}, `editorialNotices`, classified citation `snippets`
+   (with type + section), abstracts, and `access` links — contradicting the
+   2026-07-17 "slim {title,url,doi} only" observation. The 24-tool inventory
+   and the canary semantics (collections tools hard-fail anonymous) are
+   unchanged.
+2. **Hard quota is the binding constraint, not field-slimness.** The server
+   counts down ("You have N free scite searches left") and then hard-stops.
+   A full reception pass must be **batched**: one `search_literature` call
+   accepts a `dois[]` array — 12 DOIs in one call returned 12 rich records.
+   Budget calls accordingly; batch DOIs rather than paging.
+3. **Citation contexts ARE retrievable anonymously now** (snippets ride on
+   the DOI-fetch response) — the "no contexts" note above is stale for this
+   surface, though a systematic context pull is still quota-impractical.
+4. Retraction signaling unchanged and verified: Wakefield 1998 carries the
+   `RETRACTED:` title prefix and a full `editorialNotices` list anonymously.
+5. Auth state was NOT re-established this session; whether OAuth restores an
+   even richer surface (or just lifts quota) remains UNVERIFIED.
+
 ## Remaining unobserved
 
 - Rate-limit / 429 behavior.
