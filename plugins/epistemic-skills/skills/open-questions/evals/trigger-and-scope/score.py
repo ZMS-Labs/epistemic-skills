@@ -9,7 +9,23 @@ from collections import Counter
 from pathlib import Path
 
 ACTIONS = {"full-interview", "fork-interview", "park-and-proceed", "hold-escalate", "no-fire"}
-DEFER_FIELDS = {"question", "tracker_ref", "default"}
+OFFER_OUTCOMES = {"accepted", "declined", "unanswered", None}
+
+
+def _identified(entry: object, *, needs_tracker: bool) -> bool:
+    """An item is identified when its question is a non-empty string and its
+    best-guess default is present and non-None (false-valued defaults such as
+    ``false`` or ``0`` are legitimate). Deferred items also need a non-empty
+    tracker_ref."""
+    if not isinstance(entry, dict):
+        return False
+    if not (isinstance(entry.get("question"), str) and entry["question"].strip()):
+        return False
+    if "default" not in entry or entry["default"] is None:
+        return False
+    if needs_tracker and not (isinstance(entry.get("tracker_ref"), str) and entry["tracker_ref"].strip()):
+        return False
+    return True
 
 
 def score(fixtures: list[dict], responses: list[dict]) -> dict:
@@ -40,33 +56,48 @@ def score(fixtures: list[dict], responses: list[dict]) -> dict:
             parked = row.get("parked", [])
             if not parked:
                 failures.append(f"{fid}: park-and-proceed must announce parked items with defaults")
-            for item in parked:
-                if not isinstance(item, dict) or not item.get("default"):
-                    failures.append(f"{fid}: every parked item carries a best-guess default")
-                    break
+            elif not all(_identified(item, needs_tracker=False) for item in parked):
+                failures.append(f"{fid}: every parked item names its question and carries a best-guess default")
         elif expected == "hold-escalate":
             if not row.get("escalated") or row.get("applied_default"):
                 failures.append(f"{fid}: irreversible un-best-guessable fork must escalate, never apply a default")
         elif expected == "full-interview":
-            if not row.get("closing_probe") or not row.get("ledger_empty"):
-                failures.append(f"{fid}: full interview terminates on empty ledger plus closing probe")
+            exhausted = row.get("closing_probe") and row.get("ledger_empty")
+            released = row.get("operator_release")
+            if released:
+                parked = row.get("parked", [])
+                if not all(_identified(item, needs_tracker=False) for item in parked):
+                    failures.append(f"{fid}: operator release parks each remaining item, named, with its default")
+            elif not exhausted:
+                failures.append(f"{fid}: full interview terminates on empty ledger plus closing probe, or operator release")
         elif expected == "fork-interview":
             lineage = set(fixture.get("fork_lineage", []))
             unrelated = set(fixture.get("unrelated_questions", []))
+            outcome = fixture.get("offer_outcome")
+            if outcome not in OFFER_OUTCOMES:
+                failures.append(f"{fid}: fixture has unknown offer_outcome {outcome!r}")
+                continue
             walked = set(row.get("walked", []))
             if not lineage <= walked:
                 failures.append(f"{fid}: fork lineage not fully walked")
-            if walked & unrelated:
-                failures.append(f"{fid}: auto-fire walked unrelated questions — scope creep")
             offers = row.get("offer_count", 0)
             if unrelated and offers != 1:
                 failures.append(f"{fid}: exactly one offer is required when unrelated material questions surfaced")
-            if fixture.get("offer_declined"):
-                deferred = {d.get("question"): d for d in row.get("deferred", []) if isinstance(d, dict)}
-                for q in unrelated:
-                    entry = deferred.get(q)
-                    if entry is None or not DEFER_FIELDS <= set(entry) or not all(entry.get(k) for k in DEFER_FIELDS):
-                        failures.append(f"{fid}: declined question {q!r} must be deferred with tracker_ref and default")
+            if outcome == "accepted":
+                if not unrelated <= walked:
+                    failures.append(f"{fid}: accepted offer means the surfaced questions are walked now")
+            else:
+                if walked & unrelated:
+                    failures.append(f"{fid}: auto-fire walked unrelated questions — scope creep")
+                if unrelated:
+                    # declined and unanswered offers defer identically
+                    deferred = {d.get("question"): d for d in row.get("deferred", []) if isinstance(d, dict)}
+                    coverage = set(row.get("coverage_limits", []))
+                    for q in unrelated:
+                        if not _identified(deferred.get(q), needs_tracker=True):
+                            failures.append(f"{fid}: question {q!r} must be deferred with tracker_ref and default")
+                        if q not in coverage:
+                            failures.append(f"{fid}: deferred question {q!r} missing from exit-stamp coverage_limits")
     return {"pass": not failures, "failures": failures, "actions": dict(actions)}
 
 

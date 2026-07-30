@@ -26,11 +26,12 @@ def main() -> int:
         "explicit-phrase-full", "explicit-mid-execution-full", "fuzzy-brief-no-fire",
         "design-dialogue-defers", "reversible-fork-absent-park", "irreversible-fork-absent-hold",
         "irreversible-fork-present-fork-scoped", "fork-offer-declined-deferred",
+        "fork-offer-accepted-walked", "explicit-release-parks",
     ], "Open Questions fixture inventory drifted")
 
     balanced = scorer.score(fixtures, json.loads((ROOT / "examples" / "balanced.json").read_text(encoding="utf-8")))
     require(balanced["pass"], balanced["failures"])
-    require(balanced["actions"] == {"full-interview": 2, "no-fire": 2, "park-and-proceed": 1, "hold-escalate": 1, "fork-interview": 2}, balanced["actions"])
+    require(balanced["actions"] == {"full-interview": 3, "no-fire": 2, "park-and-proceed": 1, "hold-escalate": 1, "fork-interview": 3}, balanced["actions"])
 
     for name in ("overfiring", "scope-creep", "lost-deferral"):
         report = scorer.score(fixtures, json.loads((ROOT / "examples" / f"{name}.json").read_text(encoding="utf-8")))
@@ -38,7 +39,7 @@ def main() -> int:
     creep = scorer.score(fixtures, json.loads((ROOT / "examples" / "scope-creep.json").read_text(encoding="utf-8")))
     require(any("scope creep" in failure for failure in creep["failures"]), creep["failures"])
     lost = scorer.score(fixtures, json.loads((ROOT / "examples" / "lost-deferral.json").read_text(encoding="utf-8")))
-    require(any("deferred with tracker_ref" in failure for failure in lost["failures"]), lost["failures"])
+    require(any("deferred with tracker_ref" in failure or "coverage_limits" in failure for failure in lost["failures"]), lost["failures"])
 
     print("Open Questions trigger-and-scope: PASS")
     return 0

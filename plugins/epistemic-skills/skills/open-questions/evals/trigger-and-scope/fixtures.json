@@ -43,12 +43,19 @@
   },
   {
     "id": "irreversible-fork-present-fork-scoped",
-    "scenario": "Operator is present; an irreversible schema migration has an un-best-guessable fork. Unrelated open questions also exist elsewhere in the task.",
+    "scenario": "Operator is present; an irreversible schema migration has an un-best-guessable fork. Unrelated open questions also exist elsewhere in the task. The operator does not answer the single closing offer.",
     "trigger": "auto",
     "operator_present": true,
     "expected_action": "fork-interview",
-    "fork_lineage": ["fork-root", "fork-child-1"],
-    "unrelated_questions": ["ui-theme", "log-verbosity"]
+    "fork_lineage": [
+      "fork-root",
+      "fork-child-1"
+    ],
+    "unrelated_questions": [
+      "ui-theme",
+      "log-verbosity"
+    ],
+    "offer_outcome": "unanswered"
   },
   {
     "id": "fork-offer-declined-deferred",
@@ -56,8 +63,36 @@
     "trigger": "auto",
     "operator_present": true,
     "expected_action": "fork-interview",
-    "fork_lineage": ["fork-root"],
-    "unrelated_questions": ["retention-window", "backup-cadence"],
-    "offer_declined": true
+    "fork_lineage": [
+      "fork-root"
+    ],
+    "unrelated_questions": [
+      "retention-window",
+      "backup-cadence"
+    ],
+    "offer_outcome": "declined"
+  },
+  {
+    "id": "fork-offer-accepted-walked",
+    "scenario": "Auto-fire on an irreversible fork; after the lineage resolves, the operator accepts the single offer to walk the two other surfaced questions now.",
+    "trigger": "auto",
+    "operator_present": true,
+    "expected_action": "fork-interview",
+    "fork_lineage": [
+      "fork-root"
+    ],
+    "unrelated_questions": [
+      "cache-ttl",
+      "eviction-policy"
+    ],
+    "offer_outcome": "accepted"
+  },
+  {
+    "id": "explicit-release-parks",
+    "scenario": "Explicit full interview; three questions in, the operator says proceed. Two items remain on the ledger.",
+    "trigger": "explicit",
+    "operator_present": true,
+    "expected_action": "full-interview",
+    "operator_release": true
   }
 ]

@@ -1,10 +1,91 @@
 [
-  {"id": "explicit-phrase-full", "action": "full-interview", "closing_probe": true, "ledger_empty": true},
-  {"id": "explicit-mid-execution-full", "action": "full-interview", "closing_probe": true, "ledger_empty": true},
-  {"id": "fuzzy-brief-no-fire", "action": "full-interview", "closing_probe": true, "ledger_empty": true},
-  {"id": "design-dialogue-defers", "action": "full-interview", "closing_probe": true, "ledger_empty": true},
-  {"id": "reversible-fork-absent-park", "action": "hold-escalate", "escalated": true},
-  {"id": "irreversible-fork-absent-hold", "action": "hold-escalate", "escalated": true},
-  {"id": "irreversible-fork-present-fork-scoped", "action": "full-interview", "closing_probe": true, "ledger_empty": true},
-  {"id": "fork-offer-declined-deferred", "action": "fork-interview", "walked": ["fork-root"], "offer_count": 1, "deferred": [{"question": "retention-window", "tracker_ref": "ledger-entry:retention-window", "default": "90 days"}, {"question": "backup-cadence", "tracker_ref": "ledger-entry:backup-cadence", "default": "nightly"}]}
+ {
+  "id": "explicit-phrase-full",
+  "action": "full-interview",
+  "closing_probe": true,
+  "ledger_empty": true
+ },
+ {
+  "id": "explicit-mid-execution-full",
+  "action": "full-interview",
+  "closing_probe": true,
+  "ledger_empty": true
+ },
+ {
+  "id": "fuzzy-brief-no-fire",
+  "action": "full-interview",
+  "closing_probe": true,
+  "ledger_empty": true
+ },
+ {
+  "id": "design-dialogue-defers",
+  "action": "full-interview",
+  "closing_probe": true,
+  "ledger_empty": true
+ },
+ {
+  "id": "reversible-fork-absent-park",
+  "action": "hold-escalate",
+  "escalated": true
+ },
+ {
+  "id": "irreversible-fork-absent-hold",
+  "action": "hold-escalate",
+  "escalated": true
+ },
+ {
+  "id": "irreversible-fork-present-fork-scoped",
+  "action": "full-interview",
+  "closing_probe": true,
+  "ledger_empty": true
+ },
+ {
+  "id": "fork-offer-declined-deferred",
+  "action": "fork-interview",
+  "walked": [
+   "fork-root"
+  ],
+  "offer_count": 1,
+  "deferred": [
+   {
+    "question": "retention-window",
+    "tracker_ref": "ledger-entry:retention-window",
+    "default": "90 days"
+   },
+   {
+    "question": "backup-cadence",
+    "tracker_ref": "ledger-entry:backup-cadence",
+    "default": "nightly"
+   }
+  ],
+  "coverage_limits": [
+   "retention-window",
+   "backup-cadence"
+  ]
+ },
+ {
+  "id": "fork-offer-accepted-walked",
+  "action": "fork-interview",
+  "walked": [
+   "fork-root",
+   "cache-ttl",
+   "eviction-policy"
+  ],
+  "offer_count": 1
+ },
+ {
+  "id": "explicit-release-parks",
+  "action": "full-interview",
+  "operator_release": true,
+  "parked": [
+   {
+    "question": "retry-budget",
+    "default": 0
+   },
+   {
+    "question": "telemetry-optin",
+    "default": false
+   }
+  ]
+ }
 ]
