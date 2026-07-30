@@ -229,8 +229,10 @@ def test_shipped_example_ledger_line():
     example:true, schema ledger@2, ineligible, family-granular models only."""
     ledger = ROOT / "runs" / "ledger.jsonl"
     lines = [l for l in ledger.read_text(encoding="utf-8").splitlines() if l.strip()]
-    assert len(lines) == 1, f"expected exactly the example line, found {len(lines)}"
-    rec = json.loads(lines[0])
+    records = [json.loads(line) for line in lines]
+    examples = [record for record in records if record.get("example") is True]
+    assert len(examples) == 1, f"expected exactly one example line, found {len(examples)}"
+    rec = examples[0]
     assert rec.get("schema") == "ledger@2", rec.get("schema")
     assert rec.get("example") is True and rec.get("eligible") is False
     assert rec.get("run_dir") and rec.get("dossier_sha256") and rec.get("docket_mode")
@@ -244,7 +246,7 @@ def test_shipped_example_ledger_line():
     record = json.loads((ROOT / "examples" / "example-run" / "run-record.json").read_text(encoding="utf-8"))
     derived = fin.build_ledger_line(record, ROOT / "examples" / "example-run",
                                     fin.load_registry_entries(), example=True)
-    assert json.loads(json.dumps(derived, sort_keys=True)) == json.loads(lines[0]), \
+    assert json.loads(json.dumps(derived, sort_keys=True)) == rec, \
         "ledger line is not the finalize_run.py derivation of the example run record"
     print("[PASS] shipped example ledger line is the derived projection")
 

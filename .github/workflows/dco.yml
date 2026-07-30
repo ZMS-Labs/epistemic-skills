@@ -11,7 +11,8 @@ permissions:
 jobs:
   dco:
     name: DCO
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
     steps:
       - name: Check out trusted base revision
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
