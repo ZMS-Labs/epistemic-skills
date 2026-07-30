@@ -81,7 +81,8 @@ must not create:
 - a formal-rigor record;
 - a decision-ledger entry or stated ledger skip;
 - a UAT packet, manifest, or hash chain;
-- a gauntlet run; or
+- a gauntlet run;
+- an open-questions ledger or 4-field exit stamp; or
 - a handoff receipt whose only content is that no skill fired.
 
 An existing product artifact may naturally record the work: the code change,

@@ -1,7 +1,7 @@
 {
   "name": "epistemic-skills",
   "version": "3.0.0",
-  "description": "The full epistemic-discipline collection in one package: a router plus nine disciplines for reconnaissance, formal reasoning, scholarly evidence, goal authoring, repo-backed external handoff, adversarial review, continuity, decision persistence, and evidence-locked acceptance.",
+  "description": "The full epistemic-discipline collection in one package: a router plus ten disciplines for reconnaissance, formal reasoning, scholarly evidence, goal authoring, repo-backed external handoff, adversarial review, continuity, decision persistence, evidence-locked acceptance, and open-questions clarification.",
   "author": {
     "name": "ZMS Labs",
     "url": "https://github.com/ZMS-Labs"
@@ -22,7 +22,7 @@
   "interface": {
     "displayName": "Epistemic Skills",
     "shortDescription": "Evidence-grounded methods for agentic work",
-    "longDescription": "Nine composable disciplines including repo-backed external handoff, continuity, decision persistence, and evidence-locked acceptance.",
+    "longDescription": "Ten composable disciplines including repo-backed external handoff, continuity, decision persistence, evidence-locked acceptance, and open-questions clarification.",
     "developerName": "ZMS Labs",
     "websiteURL": "https://github.com/ZMS-Labs/epistemic-skills"
   }
