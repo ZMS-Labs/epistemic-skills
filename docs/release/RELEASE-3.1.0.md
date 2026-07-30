@@ -41,7 +41,10 @@ or schema changes beyond the integrations listed below.
   twelve skills / ten disciplines.
 - `runs/ledger.jsonl` restored to the shipped example line only (a real run
   record and a stray private path had been appended on the rolling channel;
-  removed in PR #56 — the never-publish-runs policy holds).
+  removed from the released tree in PR #56). The introducing commit remains
+  reachable in public git history — the operator's standing decision is no
+  history rewrite for topology-only content — so the never-publish-runs
+  policy is remediated at the tree level, not erased from history.
 
 ## Migration from 3.0.0
 
