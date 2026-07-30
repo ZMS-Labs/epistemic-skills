@@ -93,6 +93,10 @@
     "trigger": "explicit",
     "operator_present": true,
     "expected_action": "full-interview",
-    "operator_release": true
+    "operator_release": true,
+    "remaining_items": [
+      "retry-budget",
+      "telemetry-optin"
+    ]
   }
 ]
