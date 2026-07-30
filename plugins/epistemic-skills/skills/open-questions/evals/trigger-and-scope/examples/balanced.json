@@ -1,0 +1,10 @@
+[
+  {"id": "explicit-phrase-full", "action": "full-interview", "closing_probe": true, "ledger_empty": true},
+  {"id": "explicit-mid-execution-full", "action": "full-interview", "closing_probe": true, "ledger_empty": true},
+  {"id": "fuzzy-brief-no-fire", "action": "no-fire"},
+  {"id": "design-dialogue-defers", "action": "no-fire"},
+  {"id": "reversible-fork-absent-park", "action": "park-and-proceed", "parked": [{"question": "naming-scheme", "default": "kebab-case, matching sibling modules"}]},
+  {"id": "irreversible-fork-absent-hold", "action": "hold-escalate", "escalated": true},
+  {"id": "irreversible-fork-present-fork-scoped", "action": "fork-interview", "walked": ["fork-root", "fork-child-1"], "offer_count": 1, "deferred": [{"question": "ui-theme", "tracker_ref": "issue#12", "default": "system theme"}, {"question": "log-verbosity", "tracker_ref": "issue#13", "default": "info"}]},
+  {"id": "fork-offer-declined-deferred", "action": "fork-interview", "walked": ["fork-root"], "offer_count": 1, "deferred": [{"question": "retention-window", "tracker_ref": "ledger-entry:retention-window", "default": "90 days"}, {"question": "backup-cadence", "tracker_ref": "ledger-entry:backup-cadence", "default": "nightly"}]}
+]

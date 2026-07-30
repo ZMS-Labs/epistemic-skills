@@ -27,6 +27,7 @@ def main() -> int:
         REPO_ROOT / "plugins/epistemic-skills/skills/evidence-locked-uat/evals/triage",
         REPO_ROOT / "plugins/epistemic-skills/skills/decision-ledger/evals/proportionality",
         REPO_ROOT / "plugins/epistemic-skills/skills/decision-ledger/reference",
+        REPO_ROOT / "plugins/epistemic-skills/skills/open-questions/evals/trigger-and-scope",
     ]
     files = [path for root in roots for path in root.rglob("*.json")]
     observed_invalid: set[Path] = set()
