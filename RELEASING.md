@@ -44,6 +44,12 @@ Before creating the first tag:
 4. Every version-bearing live manifest, README version statement, install
    example, and package-integration expected version agrees on 3.0.0. This
    alignment happens in the release PR, not during held preparation.
+   **Link-existence check:** every repository path referenced by a
+   version-pinned URL rewritten in the bump (`blob/vX.Y.Z/<path>`,
+   `tree/vX.Y.Z/<path>`) must exist in the tree that the tag will point at —
+   a blind version bump can mint links to files that will never exist at that
+   coordinate (caught as a P1 in the v3.2.0 publication review; the same
+   defect shipped undetected in v3.1.0).
 5. The complete deterministic suite, DCO, CodeQL, manifest parity, and
    committed-JSON checks pass on the exact release commit.
 6. A redacted full-history secret scan passes, and public-content/provenance
