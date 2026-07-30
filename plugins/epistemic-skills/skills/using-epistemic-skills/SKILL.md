@@ -1,11 +1,11 @@
 ---
 name: using-epistemic-skills
-description: Use when a task does not clear the routine-work fast path and might need more than one of blindspot-pass, applying-formal-rigor, evidence-research, write-goal, outsource, gauntlet, evidence-locked-uat, decision-ledger, or continuity-verify; when choosing their order; when work should cross into another model, agent, or process; or when resuming from a summary or handoff. Do not substitute this router for the skill it selects. When a workflow-skill layer is also present, helix pairs the two collections.
+description: Use when a task does not clear the routine-work fast path and might need more than one of blindspot-pass, applying-formal-rigor, evidence-research, write-goal, outsource, gauntlet, evidence-locked-uat, decision-ledger, continuity-verify, or open-questions; when choosing their order; when work should cross into another model, agent, or process; or when resuming from a summary or handoff. Do not substitute this router for the skill it selects. When a workflow-skill layer is also present, helix pairs the two collections.
 ---
 
 # Using Epistemic Skills — the router
 
-These nine disciplines are one system: **how an agent knows things** before, during, and after
+These ten disciplines are one system: **how an agent knows things** before, during, and after
 work. A **workflow-skill layer** (such as [superpowers](https://github.com/obra/superpowers)) —
 brainstorming, TDD, systematic-debugging, plan-writing, verification-before-completion — covers
 *how you do* the work. This collection is the *epistemics* layer underneath it: the disciplines that keep every claim tethered to
@@ -47,6 +47,7 @@ job. That is exactly what lets them compose without stepping on each other:
 | **evidence-locked-uat** | a finished change + its requirements | an **evidence packet + blinded verdict** (PASS / FAIL / INCONCLUSIVE) | the ship / merge decision | `environment-reachable` | JSON `handoff-receipt@1` over the packet |
 | **decision-ledger** *(retrospective trigger: fires on a moment that already happened)* | a consequential decision / assumption / correction not already durably and adequately recorded for its future consumer | an **append-only `ledger-entry@1` with provenance + `revisit_when`** — never a verdict; or no new artifact when an existing durable artifact already satisfies the persistence contract | continuity-verify (fires **first** on resumption), gauntlet dossiers, write-goal, future sessions | `revisit_when`-governed / consumer re-anchored — no contract predicate claimed | `ledger-entry@1` (JSONL) or an existing durable decision artifact |
 | **continuity-verify** *(pre-arc resumption trigger: fires before the arc, and before any resumed-work skill)* | a compaction summary / handoff note + the live territory (files, git state, ledger entries, receipts) | a **state digest** — verified claims (anchored), contradicted claims (live value), `(UNVERIFIED)` stamps, first-class `accepted_unverified` records (acceptor + risk) — or a re-scoped task | this router (double-fire: continuity-verify **first**, then blindspot-pass for unfamiliar territory); resumed work proceeds only on verified or accepted-unverified state | void the moment the underlying state moves — re-fires at the next resumption trigger (`subject-revision-unchanged` on the re-anchored state) | state digest (prose, 4-field stamp) |
+| **open-questions** | blindspot-pass Questions section (when present); operator-named open decisions | an **emptied-or-parked question ledger** (its boundary) | the stage the interview gated | session-continuous | 4-field stamp |
 
 *Artifact shape pins the carrier: prose outputs carry a 4-field stamp (`subject.ref`,
 `subject.revision`, `valid_while`, `coverage_limits`; the producer is the emitting skill by
@@ -115,6 +116,9 @@ persist (cross-cutting): decision-ledger records each consequential moment not a
 
 delegate (cross-cutting): outsource turns any bounded workload into a committed repo packet +
    short prompt ──▶ external target ──▶ verbatim repo relay ──▶ originating-agent verification
+
+clarify (cross-cutting): open-questions walks an emptied-or-parked question ledger with the
+   operator at any stage boundary where its trigger fires ──▶ the gated stage then proceeds
 ```
 
 - **continuity-verify** is *pre-arc* — it fires first on a post-interruption resumption
@@ -130,6 +134,9 @@ delegate (cross-cutting): outsource turns any bounded workload into a committed 
 - **outsource** is *cross-cutting at an execution boundary* — after upstream context/contract
   work and before a different model, agent, or process acts. Its prompt is not ready until the
   complete packet is committed, pushed, and target-readable at the pinned GitHub commit.
+- **open-questions** is *cross-cutting* — callable at any stage boundary when its trigger fires
+  (explicit operator phrase, or an un-best-guessable irreversible fork with the operator
+  present); it is never sequenced as a fixed stage.
 
 The arc is need-driven, not mandatory. Absent triggers are silent; do not manufacture an audit
 artifact to say that nothing happened.
@@ -154,6 +161,7 @@ Match the trigger you can *observe*, not a vibe:
 | claim UI-facing work is done, or merge a user-facing surface whose acceptance cannot be established by the routine bounded check | **evidence-locked-uat** | no agent should certify its own material UI work; a blinded verifier + deterministic judge catches the false PASS |
 | **just made** a consequential decision, took on a load-bearing assumption, or **just received** a recurrent/operator correction, and no existing durable artifact already satisfies the future consumer's persistence needs | **decision-ledger** | what is neither durably recorded nor re-anchorable decays into unverifiable memory |
 | resume from a compaction summary, a handoff note, or a prior-session task whose next action depends on remembered state *(pre-arc trigger — fires before any resumed-work skill)* | **continuity-verify** | the summary is a claim, not a state — re-anchor every load-bearing claim to an artifact or stamp it `(UNVERIFIED)` before acting; an unverifiable approval escalates, never authorizes |
+| ask the operator to decide the open questions before work continues | **open-questions** | exhaustion is the termination contract; brainstorming ends at sufficiency, blindspot-pass ends at understanding |
 
 If **none** match, none fire — this router does not manufacture work. If **two** match, run
 them in arc order (recon → decide → contract → gate → prove) and pass each output to the next per the
@@ -182,7 +190,7 @@ decide-stage re-fire loop between formal-rigor and research.
 gauntlet and evidence-locked-uat can both fire on the same merge (irreversible infra/security +
 user-facing surface) — gauntlet gates first, evidence-locked-uat proves after, per arc order.
 
-## Shared invariants (why these nine, and not others)
+## Shared invariants (why these ten, and not others)
 
 A skill belongs in this collection only if it enforces all of these. They are the family
 resemblance:
@@ -236,6 +244,7 @@ with the right evidence) and the workflow skill carries it out.
 | "I'll paste all the context into the outsource prompt" | The prompt is a pointer. `outsource` puts the complete, durable context and contract in the repository and records every relay there. |
 | "The summary/review/request says it clearly, so it counts as a fact or approval" | Language carries claims. Observation and authorization require their own anchors; wording never upgrades them. |
 | "We need an answer, so keep reasoning until uncertainty disappears" | `UNVERIFIED` and `INCONCLUSIVE` are states. Hold, escalate, or run a reversible probe; more prose is not evidence. |
+| "The operator is present, so I should interview them about everything" | open-questions fires on its explicit phrase or an un-best-guessable irreversible fork — not on presence. Best-guess-and-proceed stays the default. |
 
 ## Local overlay
 
