@@ -1,6 +1,6 @@
 {
   "name": "epistemic-skills",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "description": "The full epistemic-discipline collection in one package: a router plus ten disciplines including repo-backed external handoff, continuity, decision persistence, evidence-locked acceptance, and open-questions clarification.",
   "author": {
     "name": "ZMS Labs",
