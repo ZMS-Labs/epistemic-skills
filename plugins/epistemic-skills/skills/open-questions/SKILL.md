@@ -1,6 +1,6 @@
 ---
 name: open-questions
-description: 'Use when the operator asks to be interviewed about open questions or decisions — "ask me open questions one by one until none remain", "walk me through the open decisions", "interview me until nothing is left" — or when a load-bearing fork is irreversible or high-blast-radius, cannot be safely best-guessed, and the operator is interactively present. Do NOT fire for design-stage dialogue while a workflow design skill is running (that skill owns its own questioning), for producing the initial question list on a fuzzy brief (blindspot-pass owns recon; this skill consumes its Questions output), for goal-shaping (write-goal owns that), or when the operator is absent — park on best-guess defaults and proceed instead.'
+description: 'Use when the operator asks to be interviewed about open questions or decisions — "ask me open questions one by one until none remain", "walk me through the open decisions", "interview me until nothing is left" — or when a load-bearing fork is irreversible or high-blast-radius, cannot be safely best-guessed, and the operator is interactively present. Do NOT fire for design-stage dialogue while a workflow design skill is running (that skill owns its own questioning), for producing the initial question list on a fuzzy brief (blindspot-pass owns recon; this skill consumes its Questions output), for goal-shaping (write-goal owns that), or when the operator is absent — park reversible forks on best-guess defaults and proceed, and HOLD (escalate, never default through) any irreversible fork that cannot be safely best-guessed.'
 ---
 
 # open-questions — walk the ledger to empty
@@ -73,8 +73,18 @@ Work resumes when any ONE of these holds:
    point. Park every remaining item: apply its best-guess default, list the
    parked items in the exit stamp. Parked is announced, never silent.
 
-Exit emits a 4-field stamp: `mode(s) used · asked/answered count · parked
-items (with applied defaults) · the stage this interview gated`.
+A struck docket item is an operator decision, not an escape hatch: record it
+as struck alongside the parked items. If the operator goes absent
+mid-interview, park the reversible remainder on defaults and proceed — but an
+irreversible item that cannot be safely best-guessed is **held and
+escalated**; this skill never authorizes proceeding through such a fork on a
+default.
+
+Exit emits the collection's canonical 4-field stamp — `subject.ref` (the
+stage this interview gated + its ledger), `subject.revision` (the ledger's
+final state), `valid_while` (`session-continuous`), `coverage_limits` (parked
+and struck items, each with its applied default or strike rationale) — plus a
+one-line interview summary: mode(s) used and asked/answered count.
 
 ## Anti-patterns
 
@@ -86,6 +96,7 @@ items (with applied defaults) · the stage this interview gated`.
 | "The operator seems busy, I'll just decide" | Release is the operator's word, not your inference. Park with defaults and announce. |
 | "Every fuzzy task needs this interview" | No. Explicit invocation or the narrow auto-trigger only. Best-guess-and-proceed remains the default posture. |
 | "My follow-up doesn't need to enter the ledger" | Silent growth breaks the exhaustion contract. Append and announce. |
+| "Operator's gone; I'll default through the irreversible fork too" | Defaults cover reversible parks only. An un-best-guessable irreversible fork holds and escalates. |
 
 ## Provenance
 

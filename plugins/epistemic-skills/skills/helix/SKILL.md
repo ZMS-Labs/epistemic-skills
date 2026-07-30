@@ -57,7 +57,7 @@ are silent.
 | verification-before-completion (material UI-facing acceptance surface) | **evidence-locked-uat** | *is* that skill's UI-facing instance — blinded verifier, never self-certification; routine directly checkable presentation changes use the bounded check instead of a full packet |
 | finishing-a-development-branch (per gauntlet's own positive trigger list) | **gauntlet** | *pre-merge* — after the user selects merge or push+PR, before the merge/push executes |
 | receiving-code-review (feedback asserts a material design claim or proposes an alternative) | **applying-formal-rigor** | *inside* — derive the claim from named theory before implementing it or pushing back on it |
-| any gated stage (operator explicitly asks to be interviewed until no open questions remain) | **open-questions** | *before* the gated stage — the ledger empties (or parks on operator release), then the stage proceeds |
+| any gated stage outside active design dialogue (operator explicitly asks to be interviewed until no open questions remain; while a design skill is running, that skill owns its own questioning) | **open-questions** | *before* the gated stage — the ledger empties (or parks on operator release), then the stage proceeds |
 | any workflow stage not listed above | *(none mandatory)* | disciplines still fire on their own standalone positive triggers — the member skill, not helix, remains authoritative |
 
 Positions mean exactly what they say: *before* = the epistemic output is an
@@ -125,7 +125,8 @@ relationship matters.
 - **the operator asks to answer the open questions one by one** → open-questions
   conducts the interview before the gated stage resumes; blindspot-pass's
   Questions section, when present, seeds the ledger. Presence alone never
-  fires it.
+  fires it, and while a design skill's own dialogue is active, open-questions
+  defers to that skill's questioning.
 - **An epistemic discipline fired standalone.** Ask which workflow stage
   consumes its output. An epistemic output no workflow stage consumes is a
   report no one reads.
