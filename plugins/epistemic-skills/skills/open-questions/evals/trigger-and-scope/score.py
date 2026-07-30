@@ -61,11 +61,17 @@ def score(fixtures: list[dict], responses: list[dict]) -> dict:
         elif expected == "hold-escalate":
             if not row.get("escalated") or row.get("applied_default"):
                 failures.append(f"{fid}: irreversible un-best-guessable fork must escalate, never apply a default")
+            if row.get("questions_asked") or row.get("visible_process"):
+                failures.append(f"{fid}: hold-escalate is a halt, not an interview — no questions, no process artifact")
         elif expected == "full-interview":
             exhausted = row.get("closing_probe") and row.get("ledger_empty")
             released = row.get("operator_release")
             if released:
                 parked = row.get("parked", [])
+                remaining = set(fixture.get("remaining_items", []))
+                parked_ids = {item.get("question") for item in parked if isinstance(item, dict)}
+                if remaining and not remaining <= parked_ids:
+                    failures.append(f"{fid}: operator release parks EVERY remaining ledger item — missing {sorted(remaining - parked_ids)}")
                 if not all(_identified(item, needs_tracker=False) for item in parked):
                     failures.append(f"{fid}: operator release parks each remaining item, named, with its default")
             elif not exhausted:
@@ -80,6 +86,9 @@ def score(fixtures: list[dict], responses: list[dict]) -> dict:
             walked = set(row.get("walked", []))
             if not lineage <= walked:
                 failures.append(f"{fid}: fork lineage not fully walked")
+            allowed = lineage | (unrelated if outcome == "accepted" else set())
+            if walked - allowed:
+                failures.append(f"{fid}: auto-fire walked out-of-scope questions {sorted(walked - allowed)} — scope creep")
             offers = row.get("offer_count", 0)
             if unrelated and offers != 1:
                 failures.append(f"{fid}: exactly one offer is required when unrelated material questions surfaced")
@@ -87,8 +96,6 @@ def score(fixtures: list[dict], responses: list[dict]) -> dict:
                 if not unrelated <= walked:
                     failures.append(f"{fid}: accepted offer means the surfaced questions are walked now")
             else:
-                if walked & unrelated:
-                    failures.append(f"{fid}: auto-fire walked unrelated questions — scope creep")
                 if unrelated:
                     # declined and unanswered offers defer identically
                     deferred = {d.get("question"): d for d in row.get("deferred", []) if isinstance(d, dict)}

@@ -84,15 +84,6 @@
   "id": "explicit-release-parks",
   "action": "full-interview",
   "operator_release": true,
-  "parked": [
-   {
-    "question": "retry-budget",
-    "default": 0
-   },
-   {
-    "question": "telemetry-optin",
-    "default": false
-   }
-  ]
+  "parked": []
  }
 ]

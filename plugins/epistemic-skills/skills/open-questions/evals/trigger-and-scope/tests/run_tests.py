@@ -40,6 +40,7 @@ def main() -> int:
     require(any("scope creep" in failure for failure in creep["failures"]), creep["failures"])
     lost = scorer.score(fixtures, json.loads((ROOT / "examples" / "lost-deferral.json").read_text(encoding="utf-8")))
     require(any("deferred with tracker_ref" in failure or "coverage_limits" in failure for failure in lost["failures"]), lost["failures"])
+    require(any("parks EVERY remaining ledger item" in failure for failure in lost["failures"]), lost["failures"])
 
     print("Open Questions trigger-and-scope: PASS")
     return 0
