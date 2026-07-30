@@ -12,7 +12,7 @@ Running a workflow-skill layer (such as superpowers) alongside this collection?
 Read the `helix` skill only when a positive pairing trigger remains after the
 routine gate; it pairs the workflow stage with the required epistemic discipline.
 
-Skills live under `skills/<name>/SKILL.md` (eleven skills: router + nine disciplines
+Skills live under `skills/<name>/SKILL.md` (twelve skills: router + ten disciplines
 + the helix tandem entry point). Role-agents for the gauntlet live under `agents/`.
 Prefer loading a skill by its frontmatter `description` trigger rather than
 pasting this file into every turn.

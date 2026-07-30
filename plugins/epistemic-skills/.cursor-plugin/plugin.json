@@ -1,7 +1,7 @@
 {
   "name": "epistemic-skills",
   "displayName": "Epistemic Skills",
-  "description": "The full epistemic-discipline collection in one package: a router plus nine disciplines including repo-backed external handoff, continuity, decision persistence, and evidence-locked acceptance, with the helix tandem layer for workflow-skill pairing.",
+  "description": "The full epistemic-discipline collection in one package: a router plus ten disciplines including repo-backed external handoff, continuity, decision persistence, evidence-locked acceptance, and open-questions clarification, with the helix tandem layer for workflow-skill pairing.",
   "version": "3.0.0",
   "author": {
     "name": "ZMS Labs"
