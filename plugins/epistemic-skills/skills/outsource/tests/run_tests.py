@@ -138,6 +138,10 @@ def main() -> int:
         "decision-ledger/evals/proportionality/tests/run_tests.py" in workflow,
         "CI omits Decision Ledger proportionality tests",
     )
+    require(
+        "open-questions/evals/trigger-and-scope/tests/run_tests.py" in workflow,
+        "CI omits Open Questions trigger-and-scope tests",
+    )
 
     proportionality = router_root / "evals" / "proportionality"
     for filename in (

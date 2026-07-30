@@ -80,6 +80,25 @@ irreversible item that cannot be safely best-guessed is **held and
 escalated**; this skill never authorizes proceeding through such a fork on a
 default.
 
+## Auto-fire scope — fork-scoped, one offer, tracked deferral
+
+The full walk-everything-to-empty contract belongs to **explicit invocation
+only**. When this skill fires on the narrow auto-trigger instead, the
+exhaustion contract is scoped to the fork:
+
+1. **Fork-scoped walk.** The ledger opens with the triggering fork and admits
+   only questions its answers directly open (cascade bounded to that
+   lineage). Unrelated open questions observed along the way are noted, not
+   walked.
+2. **One closing offer.** If material questions outside the lineage surfaced,
+   make exactly one offer to walk them now. Never repeat the offer.
+3. **Deferral without loss.** A declined or unanswered offer defers the noted
+   questions: each is recorded in the exit stamp's coverage limits AND
+   captured in the environment's durable tracker with its best-guess default
+   (decision-ledger's sinks qualify; the local overlay names the concrete
+   sink). A deferred question is a tracked pending decision — never a
+   memory-only note.
+
 Exit emits the collection's canonical 4-field stamp — `subject.ref` (the
 stage this interview gated + its ledger), `subject.revision` (the ledger's
 final state), `valid_while` (`session-continuous`), `coverage_limits` (parked
@@ -97,6 +116,8 @@ one-line interview summary: mode(s) used and asked/answered count.
 | "Every fuzzy task needs this interview" | No. Explicit invocation or the narrow auto-trigger only. Best-guess-and-proceed remains the default posture. |
 | "My follow-up doesn't need to enter the ledger" | Silent growth breaks the exhaustion contract. Append and announce. |
 | "Operator's gone; I'll default through the irreversible fork too" | Defaults cover reversible parks only. An un-best-guessable irreversible fork holds and escalates. |
+| "The auto-fire is my chance to interview everything" | Auto-fire walks the fork's lineage only: one offer for the rest, deferred items tracked. Full exhaustion is explicit-invocation-only. |
+| "They declined the offer, so those questions are gone" | Declined means deferred, not dropped. Each goes to the durable tracker with its default. |
 
 ## Provenance
 
