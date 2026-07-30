@@ -1,49 +1,30 @@
 name: release-security
 
 "on":
+  # Secrets can be introduced anywhere in the tree. Do not narrow either trigger
+  # with path filters: doing so creates an unscanned path to main.
   pull_request:
-    paths:
-      - "README.md"
-      - "RELEASING.md"
-      - "docs/release/**"
-      - ".claude-plugin/**"
-      - ".cursor-plugin/**"
-      - ".kimi-plugin/**"
-      - "gemini-extension.json"
-      - "plugins/epistemic-skills/.claude-plugin/**"
-      - "plugins/epistemic-skills/.codex-plugin/**"
-      - "plugins/epistemic-skills/.cursor-plugin/**"
-      - "plugins/epistemic-skills/.kimi-plugin/**"
-      - ".github/workflows/release-security.yml"
   push:
     branches: [main]
-    paths:
-      - "README.md"
-      - "RELEASING.md"
-      - "docs/release/**"
-      - ".claude-plugin/**"
-      - ".cursor-plugin/**"
-      - ".kimi-plugin/**"
-      - "gemini-extension.json"
-      - "plugins/epistemic-skills/.claude-plugin/**"
-      - "plugins/epistemic-skills/.codex-plugin/**"
-      - "plugins/epistemic-skills/.cursor-plugin/**"
-      - "plugins/epistemic-skills/.kimi-plugin/**"
-      - ".github/workflows/release-security.yml"
 
 permissions:
   contents: read
 
 jobs:
   full-history-secret-scan:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out the complete history without stored credentials
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           fetch-depth: 0
-      - uses: actions/setup-go@v5
+          persist-credentials: false
+      - name: Set up the pinned Go toolchain
+        uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
         with:
-          go-version: stable
+          go-version: "1.25.1"
+          check-latest: false
       - name: Install pinned gitleaks
         run: |
           mkdir -p "$RUNNER_TEMP/bin"
