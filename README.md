@@ -10,7 +10,7 @@
 
 Epistemic disciplines for agentic work: use the least process that can still expose an error capable of changing the action or the completion claim.
 
-**Version 3.0.0.** This is the project's [first immutable support point](https://github.com/ZMS-Labs/epistemic-skills/releases/tag/v3.0.0). The package is harness-agnostic, follows the [Agent Skills specification](https://agentskills.io/specification), and is licensed under [GPL-3.0-or-later](LICENSE).
+**Version 3.1.0.** This is the project's current [immutable support point](https://github.com/ZMS-Labs/epistemic-skills/releases/tag/v3.1.0). The package is harness-agnostic, follows the [Agent Skills specification](https://agentskills.io/specification), and is licensed under [GPL-3.0-or-later](LICENSE).
 
 [![Release](https://img.shields.io/github/v/release/ZMS-Labs/epistemic-skills?display_name=tag)](https://github.com/ZMS-Labs/epistemic-skills/releases/latest)
 [![epistemic-flexibility](https://github.com/ZMS-Labs/epistemic-skills/actions/workflows/epistemic-flexibility.yml/badge.svg)](https://github.com/ZMS-Labs/epistemic-skills/actions/workflows/epistemic-flexibility.yml)
@@ -65,7 +65,7 @@ Users and maintainers are equal first-class audiences:
 | [Installation and Harness Compatibility](https://github.com/ZMS-Labs/epistemic-skills/wiki/Installation-and-Harness-Compatibility) | [Release Process and Versioning](https://github.com/ZMS-Labs/epistemic-skills/wiki/Release-Process-and-Versioning) |
 | [Skill Catalog](https://github.com/ZMS-Labs/epistemic-skills/wiki/Skill-Catalog) | [Security, Provenance, and DCO](https://github.com/ZMS-Labs/epistemic-skills/wiki/Security-Provenance-and-DCO) |
 
-The Wiki is unversioned navigation over versioned sources. If a handbook summary and a released contract differ, the immutable `v3.0.0` source controls.
+The Wiki is unversioned navigation over versioned sources. If a handbook summary and a released contract differ, the immutable `v3.1.0` source controls.
 
 ## Five-minute start
 
@@ -78,7 +78,7 @@ The Wiki is unversioned navigation over versioned sources. If a handbook summary
 For a harness without a native package surface, the complete generic install is:
 
 ```bash
-npx skills add https://github.com/ZMS-Labs/epistemic-skills/tree/v3.0.0/plugins/epistemic-skills/skills
+npx skills add https://github.com/ZMS-Labs/epistemic-skills/tree/v3.1.0/plugins/epistemic-skills/skills
 ```
 
 Do not run that command on top of a native plugin install. The [installation handbook](https://github.com/ZMS-Labs/epistemic-skills/wiki/Installation-and-Harness-Compatibility) includes verification and recovery details for every packaged harness.
@@ -96,7 +96,7 @@ For unfamiliar but routine-looking work, perform **two-read micro-recon**: inspe
 
 Routine work produces no router record, Helix skip inventory, blindspot report, formal record, ledger entry, UAT packet, or proof that other triggers were absent. Escalate only when the reads expose an observed mismatch, hidden coupling, unresolved scope, material fan-out risk, or another positive trigger.
 
-See the [routine-work guide](https://github.com/ZMS-Labs/epistemic-skills/wiki/Routine-Work-and-Proportionality) and the [released normative reference](https://github.com/ZMS-Labs/epistemic-skills/blob/v3.0.0/plugins/epistemic-skills/skills/using-epistemic-skills/reference/routine-fast-path.md).
+See the [routine-work guide](https://github.com/ZMS-Labs/epistemic-skills/wiki/Routine-Work-and-Proportionality) and the [released normative reference](https://github.com/ZMS-Labs/epistemic-skills/blob/v3.1.0/plugins/epistemic-skills/skills/using-epistemic-skills/reference/routine-fast-path.md).
 
 ## Helix: the central passage
 
@@ -187,9 +187,9 @@ The package contains exactly one router, Helix, and ten disciplines. Each name a
 
 ### One copy, one version, one canonical tree
 
-Install with **exactly one mechanism per harness**. Native plugin **or** generic skill install—never both. For 3.0.0, replace an older untagged copy, reload, and verify both the skill count and source path. Duplicate copies create duplicate triggers and can silently mix contract versions.
+Install with **exactly one mechanism per harness**. Native plugin **or** generic skill install—never both. For 3.1.0, replace an older untagged copy, reload, and verify both the skill count and source path. Duplicate copies create duplicate triggers and can silently mix contract versions.
 
-| Harness | v3.0.0 surface | Required follow-through | Honest support boundary |
+| Harness | v3.1.0 surface | Required follow-through | Honest support boundary |
 |---|---|---|---|
 | Claude Code | Local marketplace from tagged checkout | Start a fresh task | Package discovery from one immutable checkout |
 | Codex | Tagged plugin marketplace | Render five Gauntlet roles; start a new task | Manifest does not itself register custom collaboration-agent types |
@@ -204,11 +204,11 @@ Full installation, migration, runtime-degradation, and troubleshooting guidance 
 ### Claude Code
 
 ```bash
-git clone --depth 1 --branch v3.0.0 https://github.com/ZMS-Labs/epistemic-skills.git /path/to/epistemic-skills-v3.0.0
+git clone --depth 1 --branch v3.1.0 https://github.com/ZMS-Labs/epistemic-skills.git /path/to/epistemic-skills-v3.1.0
 ```
 
 ```text
-/plugin marketplace add /absolute/path/to/epistemic-skills-v3.0.0
+/plugin marketplace add /absolute/path/to/epistemic-skills-v3.1.0
 /plugin install epistemic-skills@epistemic-skills
 ```
 
@@ -217,23 +217,23 @@ Use the dedicated tagged checkout as the single marketplace source, then start a
 ### Codex
 
 ```powershell
-codex plugin marketplace add ZMS-Labs/epistemic-skills --ref v3.0.0
+codex plugin marketplace add ZMS-Labs/epistemic-skills --ref v3.1.0
 codex plugin add epistemic-skills@epistemic-skills
-python "$HOME/.codex/plugins/cache/epistemic-skills/epistemic-skills/3.0.0/skills/gauntlet/scripts/render_codex_agents.py" --out "$HOME/.codex/agents"
+python "$HOME/.codex/plugins/cache/epistemic-skills/epistemic-skills/3.1.0/skills/gauntlet/scripts/render_codex_agents.py" --out "$HOME/.codex/agents"
 ```
 
 Start a new Codex task after rendering. The renderer converts the five canonical packaged Markdown roles into Codex's user-agent registry. The Gauntlet retains a hashed exact-role materialization fallback for tasks that started before registration.
 
 ### Cursor
 
-Cursor packaging is present in v3.0.0, but the plugin is **not publicly listed**. `/add-plugin epistemic-skills` is not a valid public-install claim until Cursor accepts the listing. Use a tagged local checkout or a Cursor Teams/Enterprise team-marketplace import.
+Cursor packaging is present in v3.1.0, but the plugin is **not publicly listed**. `/add-plugin epistemic-skills` is not a valid public-install claim until Cursor accepts the listing. Use a tagged local checkout or a Cursor Teams/Enterprise team-marketplace import.
 
 Windows local install:
 
 ```powershell
-git clone --depth 1 --branch v3.0.0 https://github.com/ZMS-Labs/epistemic-skills.git .\epistemic-skills-v3.0.0
-Set-Location .\epistemic-skills-v3.0.0
-if ((git describe --tags --exact-match) -ne 'v3.0.0') { throw 'expected v3.0.0' }
+git clone --depth 1 --branch v3.1.0 https://github.com/ZMS-Labs/epistemic-skills.git .\epistemic-skills-v3.1.0
+Set-Location .\epistemic-skills-v3.1.0
+if ((git describe --tags --exact-match) -ne 'v3.1.0') { throw 'expected v3.1.0' }
 New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.cursor\plugins\local" | Out-Null
 $src = (Resolve-Path .\plugins\epistemic-skills).Path
 $dest = Join-Path $env:USERPROFILE '.cursor\plugins\local\epistemic-skills'
@@ -244,9 +244,9 @@ cmd /c mklink /J "$dest" "$src"
 macOS/Linux local install:
 
 ```bash
-git clone --depth 1 --branch v3.0.0 https://github.com/ZMS-Labs/epistemic-skills.git ./epistemic-skills-v3.0.0
-cd ./epistemic-skills-v3.0.0
-test "$(git describe --tags --exact-match)" = v3.0.0
+git clone --depth 1 --branch v3.1.0 https://github.com/ZMS-Labs/epistemic-skills.git ./epistemic-skills-v3.1.0
+cd ./epistemic-skills-v3.1.0
+test "$(git describe --tags --exact-match)" = v3.1.0
 mkdir -p ~/.cursor/plugins/local
 ln -sfn "$(pwd)/plugins/epistemic-skills" ~/.cursor/plugins/local/epistemic-skills
 ```
@@ -256,7 +256,7 @@ Run **Developer: Reload Window**, verify all twelve skills under Customize → S
 ### Gemini CLI
 
 ```bash
-gemini extensions install https://github.com/ZMS-Labs/epistemic-skills --ref v3.0.0 --consent
+gemini extensions install https://github.com/ZMS-Labs/epistemic-skills --ref v3.1.0 --consent
 # Local development only:
 gemini extensions link /path/to/epistemic-skills
 ```
@@ -266,9 +266,9 @@ Restart the session and run `gemini extensions validate` when validating a check
 ### Antigravity (`agy`)
 
 ```bash
-git clone --depth 1 --branch v3.0.0 https://github.com/ZMS-Labs/epistemic-skills.git /path/to/epistemic-skills-v3.0.0
-agy plugin install /path/to/epistemic-skills-v3.0.0
-agy plugin validate /path/to/epistemic-skills-v3.0.0
+git clone --depth 1 --branch v3.1.0 https://github.com/ZMS-Labs/epistemic-skills.git /path/to/epistemic-skills-v3.1.0
+agy plugin install /path/to/epistemic-skills-v3.1.0
+agy plugin validate /path/to/epistemic-skills-v3.1.0
 ```
 
 Use one of native `agy plugin install`, Gemini extension link, or `agy plugin import gemini`; do not combine them.
@@ -276,7 +276,7 @@ Use one of native `agy plugin install`, Gemini extension link, or `agy plugin im
 ### Kimi Code
 
 ```text
-/plugins install https://github.com/ZMS-Labs/epistemic-skills/tree/v3.0.0
+/plugins install https://github.com/ZMS-Labs/epistemic-skills/tree/v3.1.0
 # Local development only, from a clone:
 /plugins install /path/to/epistemic-skills
 ```
@@ -286,7 +286,7 @@ Run `/reload` or start a new session. `.kimi-plugin/plugin.json` points to the c
 ### Generic harness
 
 ```bash
-npx skills add https://github.com/ZMS-Labs/epistemic-skills/tree/v3.0.0/plugins/epistemic-skills/skills
+npx skills add https://github.com/ZMS-Labs/epistemic-skills/tree/v3.1.0/plugins/epistemic-skills/skills
 ```
 
 Use this only when the host has no native plugin or extension. Frontmatter `description` is the trigger; the body is the method. Compatibility means the host preserves the selected skill's capability, ordering, isolation, persistence, and fail-closed contracts—not merely that it can display Markdown.
@@ -337,7 +337,7 @@ For a stable behavior claim, use this order:
 
 ## Trust, evidence, and known limits
 
-Version 3.0.0 is a real release with aligned package surfaces, deterministic checks, a tagged source snapshot, and committed evidence. It is also deliberately honest about what those facts do not prove.
+Version 3.1.0 is a real release with aligned package surfaces, deterministic checks, a tagged source snapshot, and committed evidence. It is also deliberately honest about what those facts do not prove.
 
 ### What the evidence supports
 
@@ -347,19 +347,19 @@ Version 3.0.0 is a real release with aligned package surfaces, deterministic che
 
 ### Required limitations
 
-| Boundary | Honest v3.0.0 status |
+| Boundary | Honest v3.1.0 status |
 |---|---|
 | Behavioral correctness | The post-hoc semantic review found **two genuine P0 failures**, `tm-02` and `tm-03`. Do not claim all observed candidates were correct. |
 | AGY adjudication | Forty-four OpenAI-origin candidates received no valid semantic judgment because all **88 AGY attempts** ended as zero-token quota failures. These are availability failures—not merit judgments, passes, or proof the responses would fail. |
 | Generality | Provider, repetition, and judge assignment are confounded; paired seats are correlated. The release does not establish universal superiority or cross-provider generality. |
-| Cursor | v3.0.0 packaging exists, but public marketplace listing is unavailable and the retained behavioral epoch is **`BLOCKED_EXTERNAL`**. Packaging readiness is not runtime behavioral proof. |
+| Cursor | v3.1.0 packaging exists, but public marketplace listing is unavailable and the retained behavioral epoch is **`BLOCKED_EXTERNAL`**. Packaging readiness is not runtime behavioral proof. |
 | Structural polarity | Closed-taxonomy and formal-only parodies outperformed the candidate on available structural scoring, and three AGY parody arms are absent. Structural conformance is not semantic correctness. |
 | Gauntlet certification | The historical pre-AC-07 result caught 10/10 planted defect classes, but the amended arbitrator-certification battery is **`NOT_RUN`**. No current arbitrator-certification claim is made. |
 | Post-hoc diagnostic | The V3 diagnostic remains exactly **`release_credit: none`**. It informed bounded risk acceptance but did not repair, qualify, or retroactively pass the excluded campaign. |
 
-Operator risk acceptance covered only the named behavioral-confidence gaps. It did **not** waive or satisfy deterministic, DCO, CodeQL, secret-scanning, provenance, independent-review, or publication-identity gates. The machine-readable [v3.0.0 risk record](https://github.com/ZMS-Labs/epistemic-skills/blob/v3.0.0/docs/release/RELEASE-3.0.0-RISK-ACCEPTANCE.json) controls the precise scope.
+Operator risk acceptance covered only the named behavioral-confidence gaps. It did **not** waive or satisfy deterministic, DCO, CodeQL, secret-scanning, provenance, independent-review, or publication-identity gates. The machine-readable [v3.1.0 risk record](https://github.com/ZMS-Labs/epistemic-skills/blob/v3.1.0/docs/release/RELEASE-3.1.0-RISK-ACCEPTANCE.json) controls the precise scope.
 
-Read [Evidence, Status, and Known Limitations](https://github.com/ZMS-Labs/epistemic-skills/wiki/Evidence-Status-and-Known-Limitations), the [release record](https://github.com/ZMS-Labs/epistemic-skills/blob/v3.0.0/docs/release/RELEASE-3.0.0.md), and the [no-credit diagnostic](https://github.com/ZMS-Labs/epistemic-skills/blob/v3.0.0/docs/release/evidence/2026-07-26-formal-rigor-v3-posthoc-diagnostic.md) before making broad behavioral claims.
+Read [Evidence, Status, and Known Limitations](https://github.com/ZMS-Labs/epistemic-skills/wiki/Evidence-Status-and-Known-Limitations), the [release record](https://github.com/ZMS-Labs/epistemic-skills/blob/v3.1.0/docs/release/RELEASE-3.1.0.md), and the [no-credit diagnostic](https://github.com/ZMS-Labs/epistemic-skills/blob/v3.1.0/docs/release/evidence/2026-07-26-formal-rigor-v3-posthoc-diagnostic.md) before making broad behavioral claims.
 
 ## Developing and contributing
 
