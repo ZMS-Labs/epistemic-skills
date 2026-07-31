@@ -1,0 +1,86 @@
+[
+ {
+  "id": "explicit-spike-fires",
+  "action": "run-prototype",
+  "question": "Can the streaming parser sustain the 50MB fixture without falling behind?",
+  "throwaway_location": "spike/parser-throughput worktree"
+ },
+ {
+  "id": "option-set-try-it-fires",
+  "action": "run-prototype",
+  "question": "Which backpressure model holds tail latency under burst load?",
+  "throwaway_location": "scratch/queue-spike",
+  "variants": [
+   "bounded-buffer",
+   "credit-based"
+  ]
+ },
+ {
+  "id": "debate-cost-exceeds-build-fires",
+  "action": "run-prototype",
+  "question": "Can the cache invalidation ordering race under concurrent writers?",
+  "throwaway_location": "scratch/invalidation-probe"
+ },
+ {
+  "id": "thin-build-discriminator-fires",
+  "action": "run-prototype",
+  "question": "Does the export module reach the archival endpoint through the auth proxy?",
+  "throwaway_location": "spike/export-seam branch"
+ },
+ {
+  "id": "answerable-by-reading-no-fire",
+  "action": "run-prototype",
+  "question": "Does the retry helper honor a timeout parameter?",
+  "throwaway_location": "scratch/retry-probe"
+ },
+ {
+  "id": "answerable-by-derivation-no-fire",
+  "action": "run-prototype",
+  "question": "Is the merge routine O(n log n)?",
+  "throwaway_location": "scratch/merge-benchmark"
+ },
+ {
+  "id": "answerable-by-literature-no-fire",
+  "action": "run-prototype",
+  "question": "Which consensus family tolerates the failure model?",
+  "throwaway_location": "scratch/consensus-toy"
+ },
+ {
+  "id": "early-implementation-no-fire",
+  "action": "run-prototype",
+  "question": "How should the feature look once built?",
+  "throwaway_location": "feature branch"
+ },
+ {
+  "id": "spike-against-live-infra-refused",
+  "action": "run-prototype",
+  "question": "Does the experiment behave on staging data?",
+  "throwaway_location": "shared staging database",
+  "built": true
+ },
+ {
+  "id": "try-both-answerable-by-reading-no-fire",
+  "action": "run-prototype",
+  "question": "Does the second serializer support streaming output?",
+  "throwaway_location": "scratch/serializer-bake-off"
+ },
+ {
+  "id": "promotion-attempt-refused",
+  "action": "refuse-promotion",
+  "promoted": true,
+  "answer_recorded": true,
+  "rebuild_planned": false
+ },
+ {
+  "id": "answered-prototype-disposed",
+  "action": "record-and-dispose",
+  "answer": {
+   "question": "Which backpressure model holds tail latency under burst load?",
+   "observation": "credit-based held p99 under load",
+   "decision": "adopt the credit-based queue"
+  },
+  "record_ref": "decision-ledger:queue-backpressure",
+  "disposed": false,
+  "kept_mergeable": true
+ }
+]

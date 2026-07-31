@@ -1,0 +1,110 @@
+[
+ {
+  "id": "semantic-overlap-trace",
+  "action": "mechanical-resolve",
+  "mechanical": [
+   "auth-retry"
+  ]
+ },
+ {
+  "id": "ambiguous-textual-trace",
+  "action": "mechanical-resolve",
+  "mechanical": [
+   "helper-rename"
+  ]
+ },
+ {
+  "id": "mixed-hunks-classify",
+  "action": "trace-and-resolve",
+  "traced": {},
+  "mechanical": [
+   "indentation-only",
+   "import-order",
+   "cache-invalidation"
+  ],
+  "checks_run": [
+   "invalidation-refactor-suite"
+  ],
+  "recorded": false
+ },
+ {
+  "id": "dropped-intent-recorded",
+  "action": "trace-and-resolve",
+  "traced": {
+   "upstream-workaround": {
+    "origin_a": "commit 7788dd — bump dependency to 2.4",
+    "origin_b": "",
+    "ruling": "both-preserved"
+   }
+  },
+  "mechanical": [],
+  "checks_run": [
+   "dependency-bump-suite"
+  ],
+  "recorded": false
+ },
+ {
+  "id": "divergent-decisions-escalate",
+  "action": "trace-and-resolve",
+  "traced": {
+   "pagination": {
+    "origin_a": "commit 9090 — cursor pagination",
+    "origin_b": "commit 8080 — offset pagination",
+    "ruling": "side-b-dropped",
+    "reason": "cursor pagination looked newer",
+    "ledger_ref": "ledger:pagination"
+   }
+  },
+  "mechanical": [],
+  "checks_run": [],
+  "recorded": true
+ },
+ {
+  "id": "undocumented-merge-review",
+  "action": "no-fire"
+ },
+ {
+  "id": "uncertain-tree-abort",
+  "action": "abort-restart",
+  "aborted": false,
+  "traces_kept": true,
+  "restarted": false,
+  "forced_continue": true
+ },
+ {
+  "id": "formatting-only-mechanical",
+  "action": "mechanical-resolve",
+  "mechanical": [
+   "reformat-only"
+  ]
+ },
+ {
+  "id": "lockfile-regenerate",
+  "action": "regenerate",
+  "regenerated": true,
+  "hand_resolved": false
+ },
+ {
+  "id": "generated-file-regenerate",
+  "action": "regenerate",
+  "regenerated": true,
+  "hand_resolved": false
+ },
+ {
+  "id": "huge-lockfile-looks-semantic",
+  "action": "regenerate",
+  "regenerated": true,
+  "hand_resolved": false
+ },
+ {
+  "id": "adjacent-disjoint-mechanical",
+  "action": "mechanical-resolve",
+  "mechanical": [
+   "import-append"
+  ]
+ },
+ {
+  "id": "documented-merge-review-no-fire",
+  "action": "no-fire"
+ }
+]

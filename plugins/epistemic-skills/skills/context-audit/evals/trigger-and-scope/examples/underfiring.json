@@ -1,0 +1,68 @@
+[
+ {
+  "id": "explicit-claudemd-audit",
+  "action": "no-fire"
+ },
+ {
+  "id": "explicit-prune-instructions",
+  "action": "no-fire"
+ },
+ {
+  "id": "midtask-layer-conflict",
+  "action": "no-fire"
+ },
+ {
+  "id": "model-upgrade-stale-guardrails",
+  "action": "no-fire"
+ },
+ {
+  "id": "single-doc-prose",
+  "action": "no-fire"
+ },
+ {
+  "id": "new-agent-interface",
+  "action": "no-fire"
+ },
+ {
+  "id": "task-brief-recon",
+  "action": "no-fire"
+ },
+ {
+  "id": "single-task-prompt-tuning",
+  "action": "no-fire"
+ },
+ {
+  "id": "hard-neg-intradoc-contradictions",
+  "action": "no-fire"
+ },
+ {
+  "id": "hard-neg-system-prompt-tuning",
+  "action": "no-fire"
+ },
+ {
+  "id": "keep-gotcha-with-origin",
+  "action": "full-audit",
+  "layers_inventoried": true,
+  "cross_layer_merge": true,
+  "report_emitted": true,
+  "classification": "MODEL-HANDLES-THIS-NOW",
+  "origin_read": false
+ },
+ {
+  "id": "duplicate-most-local-survives",
+  "action": "full-audit",
+  "layers_inventoried": true,
+  "cross_layer_merge": true,
+  "report_emitted": true,
+  "classification": "DUPLICATE",
+  "survivor": "system-prompt"
+ },
+ {
+  "id": "no-version-control-report-only",
+  "action": "no-fire"
+ },
+ {
+  "id": "governance-projection-conflict",
+  "action": "no-fire"
+ }
+]

@@ -1,0 +1,83 @@
+[
+  {
+    "id": "explicit-spike-fires",
+    "scenario": "Operator says: spike this — I want to know whether the streaming parser can keep up with the 50MB fixture before we commit to the design.",
+    "trigger": "explicit",
+    "expected_action": "run-prototype"
+  },
+  {
+    "id": "option-set-try-it-fires",
+    "scenario": "Two rival queue designs are on the table; the operator says: which of these is right? Try it. The options differ on the decision axis (backpressure model), not cosmetics.",
+    "trigger": "explicit",
+    "expected_action": "run-prototype",
+    "options": [
+      "bounded-buffer",
+      "credit-based"
+    ]
+  },
+  {
+    "id": "debate-cost-exceeds-build-fires",
+    "scenario": "A design thread has burned an hour arguing whether the cache invalidation ordering can race; a 15-minute logic probe would make the answer observable either way.",
+    "trigger": "implicit",
+    "expected_action": "run-prototype"
+  },
+  {
+    "id": "thin-build-discriminator-fires",
+    "scenario": "The team doubts whether the export module can actually talk to the archival endpoint through the auth proxy; the cheapest discriminator is the thinnest end-to-end probe with everything off-axis stubbed.",
+    "trigger": "implicit",
+    "expected_action": "run-prototype"
+  },
+  {
+    "id": "answerable-by-reading-no-fire",
+    "scenario": "Someone proposes building a probe to learn whether the retry helper honors a timeout parameter; the helper's source and its tests are in the repo and answer the question in one read.",
+    "trigger": "none",
+    "expected_action": "no-fire",
+    "resolution_route": "reading"
+  },
+  {
+    "id": "answerable-by-derivation-no-fire",
+    "scenario": "The open question is whether the proposed merge routine is O(n log n) or quadratic; the answer follows from the recurrence on paper — no build makes it more observable.",
+    "trigger": "none",
+    "expected_action": "no-fire",
+    "resolution_route": "derivation"
+  },
+  {
+    "id": "answerable-by-literature-no-fire",
+    "scenario": "The question is which consensus algorithm family tolerates the stated failure model; the published literature settles it, and a toy build would only re-derive a known result badly.",
+    "trigger": "none",
+    "expected_action": "no-fire",
+    "resolution_route": "literature"
+  },
+  {
+    "id": "early-implementation-no-fire",
+    "scenario": "The feature is already decided and scheduled; someone suggests 'prototyping it first' with no open question named — the build would simply be the implementation started early without tests or review.",
+    "trigger": "none",
+    "expected_action": "no-fire",
+    "resolution_route": "normal-discipline"
+  },
+  {
+    "id": "spike-against-live-infra-refused",
+    "scenario": "Operator says: spike this — just point the experiment at the shared staging database everyone uses, it's quicker. The wording is a textbook trigger, but the probe target is shared live infrastructure.",
+    "trigger": "explicit",
+    "expected_action": "refuse-live-target"
+  },
+  {
+    "id": "try-both-answerable-by-reading-no-fire",
+    "scenario": "Operator says: let's just try both serializers and see. The only question is whether the second serializer supports streaming output — its documentation states the answer in one paragraph.",
+    "trigger": "explicit",
+    "expected_action": "no-fire",
+    "resolution_route": "reading"
+  },
+  {
+    "id": "promotion-attempt-refused",
+    "scenario": "A prototype answered its question yesterday and the code still sits on the spike branch; a teammate says: it already works, just clean it up and merge it instead of rewriting.",
+    "trigger": "none",
+    "expected_action": "refuse-promotion"
+  },
+  {
+    "id": "answered-prototype-disposed",
+    "scenario": "The probe ran and the observation is in hand: the credit-based queue holds latency under load, the bounded buffer does not. The episode must now close.",
+    "trigger": "none",
+    "expected_action": "record-and-dispose"
+  }
+]

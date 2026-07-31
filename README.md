@@ -166,7 +166,7 @@ Evidence Research, Decision Ledger, Outsource, and Open Questions are cross-cutt
 
 ## Seventeen-skill catalog
 
-The package contains exactly one router, Helix, and fifteen disciplines. Each name appears once in this catalog; the linked guide and immutable source define the full contract.
+The package contains exactly one router, Helix, and fifteen disciplines. Each name appears once in this catalog; the immutable tagged source defines the full contract, and the linked guide is unversioned navigation over it (per the precedence rule above — where they differ, the tagged source controls).
 
 | Skill | Positive trigger | Purpose | Output |
 |---|---|---|---|

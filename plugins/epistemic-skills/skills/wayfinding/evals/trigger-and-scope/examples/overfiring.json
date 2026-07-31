@@ -1,0 +1,112 @@
+[
+ {
+  "id": "explicit-chart-initiative",
+  "action": "chart-map",
+  "map_artifact": "tracker-issue:ingestion-rebuild-map",
+  "nodes": [
+   {"decision": "storage-engine", "resolve_by": "prototype"},
+   {"decision": "schema-shape", "resolve_by": "derive"},
+   {"decision": "api-surface", "resolve_by": "ask"}
+  ],
+  "frontier": ["storage-engine"]
+ },
+ {
+  "id": "explicit-break-down-foggy",
+  "action": "chart-map",
+  "map_artifact": "tracker-issue:sync-service-map",
+  "nodes": [
+   {"decision": "architecture-style", "resolve_by": "research"},
+   {"decision": "sync-protocol", "resolve_by": "derive"}
+  ],
+  "frontier": ["architecture-style"]
+ },
+ {
+  "id": "foggy-brief-architectures-live",
+  "action": "chart-map",
+  "map_artifact": "tracker-issue:runtime-brief-map",
+  "nodes": [
+   {"decision": "runtime-target", "resolve_by": "research"},
+   {"decision": "packaging", "resolve_by": "derive"},
+   {"decision": "telemetry-format", "resolve_by": "ask"}
+  ],
+  "frontier": ["runtime-target", "telemetry-format"]
+ },
+ {
+  "id": "backlog-guess-tickets",
+  "action": "chart-map",
+  "map_artifact": "tracker-issue:auth-decision-map",
+  "nodes": [
+   {"decision": "auth-model", "resolve_by": "ask"}
+  ],
+  "frontier": ["auth-model"],
+  "pulled_tickets": ["T-4", "T-9"]
+ },
+ {
+  "id": "resolved-effort-planning",
+  "action": "chart-map",
+  "map_artifact": "tracker-issue:already-resolved-map",
+  "nodes": [],
+  "frontier": []
+ },
+ {
+  "id": "single-open-decision",
+  "action": "chart-map",
+  "map_artifact": "tracker-issue:queue-library-map",
+  "nodes": [
+   {"decision": "queue-library", "resolve_by": "ask"}
+  ],
+  "frontier": ["queue-library"]
+ },
+ {
+  "id": "one-task-recon",
+  "action": "chart-map",
+  "map_artifact": "tracker-issue:recon-map",
+  "nodes": [],
+  "frontier": []
+ },
+ {
+  "id": "goal-shaping-request",
+  "action": "chart-map",
+  "map_artifact": "tracker-issue:goal-map",
+  "nodes": [],
+  "frontier": []
+ },
+ {
+  "id": "hard-neg-break-down-resolved",
+  "action": "chart-map",
+  "map_artifact": "tracker-issue:resolved-breakdown-map",
+  "nodes": [],
+  "frontier": []
+ },
+ {
+  "id": "hard-neg-stale-backlog",
+  "action": "chart-map",
+  "map_artifact": "tracker-issue:stale-backlog-map",
+  "nodes": [],
+  "frontier": []
+ },
+ {
+  "id": "frontier-recompute-after-resolution",
+  "action": "work-frontier",
+  "frontier": ["schema-shape", "backup-policy"],
+  "worked": ["schema-shape"],
+  "resolutions": [
+   {"decision": "schema-shape", "provenance": "derived from storage-engine resolution; recorded on map node"}
+  ]
+ },
+ {
+  "id": "fog-minted-ticket-pull",
+  "action": "pull-ticket",
+  "pulled_tickets": ["T-12"],
+  "unresolved_ancestor": "schema-shape"
+ },
+ {
+  "id": "fog-free-region-mint",
+  "action": "mint-ticket",
+  "ticket": {
+   "depends_on": ["storage-engine", "schema-shape"],
+   "observable_behavior": "one record ingested at the API lands queryable in the chosen store, end-to-end",
+   "invalidating_decision": "none"
+  }
+ }
+]

@@ -98,6 +98,16 @@ jobs:
             plugins/epistemic-skills/skills/decision-ledger/evals/proportionality/tests/run_tests.py \
             plugins/epistemic-skills/skills/open-questions/evals/trigger-and-scope/score.py \
             plugins/epistemic-skills/skills/open-questions/evals/trigger-and-scope/tests/run_tests.py \
+            plugins/epistemic-skills/skills/context-audit/evals/trigger-and-scope/score.py \
+            plugins/epistemic-skills/skills/context-audit/evals/trigger-and-scope/tests/run_tests.py \
+            plugins/epistemic-skills/skills/agent-interface-design/evals/trigger-and-scope/score.py \
+            plugins/epistemic-skills/skills/agent-interface-design/evals/trigger-and-scope/tests/run_tests.py \
+            plugins/epistemic-skills/skills/wayfinding/evals/trigger-and-scope/score.py \
+            plugins/epistemic-skills/skills/wayfinding/evals/trigger-and-scope/tests/run_tests.py \
+            plugins/epistemic-skills/skills/throwaway-prototyping/evals/trigger-and-scope/score.py \
+            plugins/epistemic-skills/skills/throwaway-prototyping/evals/trigger-and-scope/tests/run_tests.py \
+            plugins/epistemic-skills/skills/intent-traced-merge/evals/trigger-and-scope/score.py \
+            plugins/epistemic-skills/skills/intent-traced-merge/evals/trigger-and-scope/tests/run_tests.py \
             plugins/epistemic-skills/skills/decision-ledger/reference/validate_examples.py
       - name: Parse committed JSON in integration surfaces
         run: python .github/scripts/check_json_artifacts.py

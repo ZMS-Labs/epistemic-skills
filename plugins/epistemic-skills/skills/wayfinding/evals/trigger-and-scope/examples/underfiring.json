@@ -1,0 +1,64 @@
+[
+ {
+  "id": "explicit-chart-initiative",
+  "action": "no-fire"
+ },
+ {
+  "id": "explicit-break-down-foggy",
+  "action": "no-fire"
+ },
+ {
+  "id": "foggy-brief-architectures-live",
+  "action": "no-fire"
+ },
+ {
+  "id": "backlog-guess-tickets",
+  "action": "no-fire"
+ },
+ {
+  "id": "resolved-effort-planning",
+  "action": "no-fire"
+ },
+ {
+  "id": "single-open-decision",
+  "action": "no-fire"
+ },
+ {
+  "id": "one-task-recon",
+  "action": "no-fire"
+ },
+ {
+  "id": "goal-shaping-request",
+  "action": "no-fire"
+ },
+ {
+  "id": "hard-neg-break-down-resolved",
+  "action": "no-fire"
+ },
+ {
+  "id": "hard-neg-stale-backlog",
+  "action": "no-fire"
+ },
+ {
+  "id": "frontier-recompute-after-resolution",
+  "action": "work-frontier",
+  "frontier": ["schema-shape", "backup-policy"],
+  "worked": ["schema-shape"],
+  "resolutions": [
+   {"decision": "schema-shape", "provenance": "derived from storage-engine resolution; recorded on map node"}
+  ]
+ },
+ {
+  "id": "fog-minted-ticket-pull",
+  "action": "no-fire"
+ },
+ {
+  "id": "fog-free-region-mint",
+  "action": "mint-ticket",
+  "ticket": {
+   "depends_on": ["storage-engine", "schema-shape"],
+   "observable_behavior": "one record ingested at the API lands queryable in the chosen store, end-to-end",
+   "invalidating_decision": "none"
+  }
+ }
+]

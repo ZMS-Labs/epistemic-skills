@@ -66,6 +66,16 @@ Update the install coordinate to `v3.4.0` and reload the harness. No existing
 trigger, contract, schema, or output shape changed; amendments are additive
 clauses inside existing sections.
 
+## Erratum (2026-07-31, post-tag)
+
+The migration section's "No existing trigger, contract, schema, or output
+shape changed" overstates: the evidence-locked-uat oracle-honesty rows
+TIGHTEN the acceptance gate — a non-empty console/error set relevant to the
+exercised surface is now an explicit hard FAIL where the prior text left it
+unstated. Consumers whose UAT runs previously passed with unread error
+channels may now fail; that is the intended behavior change. Provenance
+coordinates for this release's external attributions: PROVENANCE-3.4.0.md.
+
 ## Harness verification tiers
 
 Unchanged from 3.3.0: Claude Code primary (deterministic suite on the release

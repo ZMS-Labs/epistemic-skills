@@ -1,0 +1,99 @@
+[
+  {
+    "id": "explicit-claudemd-audit",
+    "scenario": "Operator says: audit my CLAUDE.md and system prompt — cut what a strong model no longer needs. The estate is under version control.",
+    "trigger": "explicit",
+    "expected_action": "full-audit",
+    "applies": true
+  },
+  {
+    "id": "explicit-prune-instructions",
+    "scenario": "Operator says: prune my instructions, they have accreted for two years.",
+    "trigger": "explicit",
+    "expected_action": "full-audit"
+  },
+  {
+    "id": "midtask-layer-conflict",
+    "scenario": "Mid-task, the project instruction file directs always-squash-merge while a loaded command definition directs never-squash — two active layers direct incompatible behavior.",
+    "trigger": "auto",
+    "expected_action": "full-audit"
+  },
+  {
+    "id": "model-upgrade-stale-guardrails",
+    "scenario": "The harness just moved to a new model generation; the instruction estate is dense with guardrails written for the prior, weaker generation.",
+    "trigger": "auto",
+    "expected_action": "full-audit"
+  },
+  {
+    "id": "single-doc-prose",
+    "scenario": "Operator asks: tighten the prose of this README — it rambles. No instruction layers involved.",
+    "trigger": "none",
+    "expected_action": "no-fire"
+  },
+  {
+    "id": "new-agent-interface",
+    "scenario": "Operator asks for a well-shaped tool description for a NEW MCP server this agent is authoring for other agents to consume.",
+    "trigger": "none",
+    "expected_action": "no-fire"
+  },
+  {
+    "id": "task-brief-recon",
+    "scenario": "A fuzzy task brief just arrived; the agent wants to survey the territory's unknowns before planning.",
+    "trigger": "none",
+    "expected_action": "no-fire"
+  },
+  {
+    "id": "single-task-prompt-tuning",
+    "scenario": "Operator asks: make the extraction prompt produce better JSON for this one pipeline task.",
+    "trigger": "none",
+    "expected_action": "no-fire"
+  },
+  {
+    "id": "hard-neg-intradoc-contradictions",
+    "scenario": "Operator says: this design doc contradicts itself in sections 2 and 5 — fix the contradictions. The doc is not an instruction layer any harness loads; it is one document being edited.",
+    "trigger": "none",
+    "expected_action": "no-fire"
+  },
+  {
+    "id": "hard-neg-system-prompt-tuning",
+    "scenario": "Operator says: rewrite the summarizer agent's system prompt so its weekly-digest summaries come out punchier. One task's output is the target, not the assembled context's hygiene.",
+    "trigger": "none",
+    "expected_action": "no-fire"
+  },
+  {
+    "id": "keep-gotcha-with-origin",
+    "scenario": "During an explicit audit, a line reads like a stale guardrail, but it cites an incident record documenting the failure it guards. Classification requires reading that record, not remembering it.",
+    "trigger": "explicit",
+    "expected_action": "full-audit",
+    "instruction_under_test": {
+      "text": "Never run the importer twice in one session (see incident record INC-0042)",
+      "has_incident_record": true
+    },
+    "expected_class": "KEEP:GOTCHA"
+  },
+  {
+    "id": "duplicate-most-local-survives",
+    "scenario": "During an explicit audit, the same directive appears verbatim in the always-loaded system prompt and in a load-on-demand tool description. Exactly one authoritative copy survives.",
+    "trigger": "explicit",
+    "expected_action": "full-audit",
+    "duplicate_locations": [
+      "system-prompt",
+      "tool-description"
+    ],
+    "expected_class": "DUPLICATE",
+    "expected_survivor": "tool-description"
+  },
+  {
+    "id": "no-version-control-report-only",
+    "scenario": "Operator asks for a context audit, but the instruction estate lives outside any version control — there is no rollback path for cuts.",
+    "trigger": "explicit",
+    "expected_action": "report-only-audit"
+  },
+  {
+    "id": "governance-projection-conflict",
+    "scenario": "An explicit audit finds a conflict inside a generated governance projection (compiled safety policy). The projection is report-only: the finding routes upstream to its source of truth.",
+    "trigger": "explicit",
+    "expected_action": "full-audit",
+    "governance_conflict": true
+  }
+]

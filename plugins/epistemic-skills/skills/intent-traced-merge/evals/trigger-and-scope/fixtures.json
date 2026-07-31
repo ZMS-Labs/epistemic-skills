@@ -1,0 +1,98 @@
+[
+  {
+    "id": "semantic-overlap-trace",
+    "scenario": "Merging feature into main; both branches changed the retry logic in the same auth client function. The conflict is semantic: one side is a bugfix capping retries, the other a refactor extracting the backoff policy.",
+    "trigger": "positive",
+    "expected_action": "trace-and-resolve",
+    "nontrivial_hunks": ["auth-retry"],
+    "trivial_hunks": [],
+    "origin_checks": ["retry-cap-regression-test", "backoff-refactor-suite"]
+  },
+  {
+    "id": "ambiguous-textual-trace",
+    "scenario": "A rebase conflict where the textual resolution is ambiguous: both sides renamed the same helper differently and callers on each side use their own name. Either literal pick compiles.",
+    "trigger": "positive",
+    "expected_action": "trace-and-resolve",
+    "nontrivial_hunks": ["helper-rename"],
+    "trivial_hunks": [],
+    "origin_checks": ["rename-a-callers-test", "rename-b-callers-test"]
+  },
+  {
+    "id": "mixed-hunks-classify",
+    "scenario": "One merge with three conflicting hunks: an indentation-only hunk, a re-sorted import block, and a hunk where both sides changed the cache invalidation condition.",
+    "trigger": "positive",
+    "expected_action": "trace-and-resolve",
+    "nontrivial_hunks": ["cache-invalidation"],
+    "trivial_hunks": ["indentation-only", "import-order"],
+    "origin_checks": ["stale-cache-fix-test", "invalidation-refactor-suite"]
+  },
+  {
+    "id": "dropped-intent-recorded",
+    "scenario": "Tracing shows side A is a temporary workaround for an upstream bug that side B's dependency bump already fixes properly. The workaround should be dropped, with the drop recorded.",
+    "trigger": "positive",
+    "expected_action": "trace-and-resolve",
+    "nontrivial_hunks": ["upstream-workaround"],
+    "trivial_hunks": [],
+    "origin_checks": ["workaround-motivating-test", "dependency-bump-suite"],
+    "expected_rulings": {
+      "upstream-workaround": "side-a-dropped"
+    }
+  },
+  {
+    "id": "divergent-decisions-escalate",
+    "scenario": "Both branches implemented pagination for the same endpoint: one cursor-based, one offset-based. Neither is a bugfix of the other; the conflict embodies a genuinely open API design decision.",
+    "trigger": "positive",
+    "expected_action": "escalate-decision",
+    "intents": ["cursor-pagination", "offset-pagination"]
+  },
+  {
+    "id": "undocumented-merge-review",
+    "scenario": "Reviewing a merge commit that resolved several semantic conflicts, but neither the commit message nor the PR description records how any hunk was ruled or what each side's origin was.",
+    "trigger": "positive",
+    "expected_action": "review-provenance"
+  },
+  {
+    "id": "uncertain-tree-abort",
+    "scenario": "Mid-resolution, after several manual edits, the working tree state is uncertain: staged and unstaged hunks are interleaved and it is no longer clear which conflicts were resolved deliberately. Traces for both sides are already written down.",
+    "trigger": "positive",
+    "expected_action": "abort-restart"
+  },
+  {
+    "id": "formatting-only-mechanical",
+    "scenario": "A merge conflict caused entirely by one branch running the auto-formatter: whitespace and line-wrapping differences, identical token stream on both sides.",
+    "trigger": "none",
+    "expected_action": "mechanical-resolve",
+    "trivial_hunks": ["reformat-only"]
+  },
+  {
+    "id": "lockfile-regenerate",
+    "scenario": "package-lock.json conflicts after both branches added different dependencies. The package manager can regenerate the lockfile from the merged manifest.",
+    "trigger": "none",
+    "expected_action": "regenerate"
+  },
+  {
+    "id": "generated-file-regenerate",
+    "scenario": "A generated API client file conflicts because both branches touched the schema it is generated from. The generator is available and the schema itself merged cleanly.",
+    "trigger": "none",
+    "expected_action": "regenerate"
+  },
+  {
+    "id": "huge-lockfile-looks-semantic",
+    "scenario": "A 400-line lockfile conflict full of version pins and integrity hashes that superficially looks like a serious semantic collision worth tracing commit-by-commit. It is still a lockfile the package manager can regenerate.",
+    "trigger": "none",
+    "expected_action": "regenerate"
+  },
+  {
+    "id": "adjacent-disjoint-mechanical",
+    "scenario": "Both branches appended a different import to the same import block, producing a textual conflict. The additions are semantically disjoint: keep both lines. Superficially trigger-shaped (same region, both sides changed it), but no intents collide.",
+    "trigger": "none",
+    "expected_action": "mechanical-resolve",
+    "trivial_hunks": ["import-append"]
+  },
+  {
+    "id": "documented-merge-review-no-fire",
+    "scenario": "Reviewing a merge commit whose PR description already lists every non-trivial hunk's ruling with both origin references, and whose CI ran both sides' motivating checks green. Superficially trigger-shaped (it is a merge commit under review), but provenance is documented.",
+    "trigger": "none",
+    "expected_action": "no-fire"
+  }
+]

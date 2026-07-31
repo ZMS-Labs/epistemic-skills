@@ -1,0 +1,95 @@
+[
+  {
+    "id": "tool-schema-new-engage",
+    "scenario": "Authoring a new function-call tool schema (name, parameters, error shape) that a coding agent will invoke to manage deployments.",
+    "trigger": "positive",
+    "expected_action": "engage"
+  },
+  {
+    "id": "mcp-surface-new-engage",
+    "scenario": "Designing the surface of a new MCP server: which operations to expose, their parameter types, and their structured error responses.",
+    "trigger": "positive",
+    "expected_action": "engage"
+  },
+  {
+    "id": "structured-output-contract-engage",
+    "scenario": "Defining the structured-output JSON contract a summarization agent must emit for a downstream pipeline to parse.",
+    "trigger": "positive",
+    "expected_action": "engage"
+  },
+  {
+    "id": "subagent-dispatch-contract-engage",
+    "scenario": "Writing the typed dispatch payload (task type enum, scope fields, result schema) that a controller sends to worker subagents.",
+    "trigger": "positive",
+    "expected_action": "engage"
+  },
+  {
+    "id": "agent-caller-cli-engage",
+    "scenario": "Building a CLI whose only intended caller is an automation agent that parses its machine-readable output and exit codes.",
+    "trigger": "positive",
+    "expected_action": "engage"
+  },
+  {
+    "id": "review-adds-tool-engage",
+    "scenario": "Reviewing a pull request that adds a new tool definition to an agent's toolbox: new parameters, a status enum, and a usage example block.",
+    "trigger": "positive",
+    "expected_action": "engage"
+  },
+  {
+    "id": "human-ui-no-fire",
+    "scenario": "Designing a settings page and onboarding flow for a web dashboard used by people.",
+    "trigger": "none",
+    "expected_action": "no-fire"
+  },
+  {
+    "id": "human-docs-no-fire",
+    "scenario": "Writing a getting-started guide and README aimed at human developers evaluating the project.",
+    "trigger": "none",
+    "expected_action": "no-fire"
+  },
+  {
+    "id": "throwaway-script-no-fire",
+    "scenario": "A one-off data-munging script with a single known caller, run once and deleted; its argument handling is ad hoc by design.",
+    "trigger": "none",
+    "expected_action": "no-fire"
+  },
+  {
+    "id": "prose-dispatch-brief-no-fire",
+    "scenario": "Drafting the prose brief for a research subagent: goals, constraints, and success criteria written as natural-language instructions, no machine contract involved.",
+    "trigger": "none",
+    "expected_action": "no-fire",
+    "expected_route": "write-goal/outsource"
+  },
+  {
+    "id": "inbound-context-audit-no-fire",
+    "scenario": "Auditing and pruning the system prompt and injected instruction context an agent receives, hunting duplicates and stale directives.",
+    "trigger": "none",
+    "expected_action": "no-fire",
+    "expected_route": "context-audit"
+  },
+  {
+    "id": "human-caller-cli-no-fire",
+    "scenario": "Polishing the flags, colors, and help text of a CLI whose callers are human developers at an interactive terminal; no agent consumes it.",
+    "trigger": "none",
+    "expected_action": "no-fire"
+  },
+  {
+    "id": "cold-consumer-gate-fail",
+    "scenario": "The cold-consumer test on a shipped tool schema fails: given only the schema and one-line descriptions, the consumer misfills the 'mode' parameter on its first call.",
+    "trigger": "gate",
+    "expected_action": "consumer-gate",
+    "gate_outcome": "fail",
+    "failing_parameter": "mode"
+  },
+  {
+    "id": "example-lint-three-examples",
+    "scenario": "A tool description carries three usage examples; the example-lint requires each to name the weaker-consumer audience it serves or be converted into a structural fix and deleted.",
+    "trigger": "lint",
+    "expected_action": "example-lint",
+    "examples": [
+      "ex-batch-call",
+      "ex-retry-flow",
+      "ex-dry-run"
+    ]
+  }
+]
