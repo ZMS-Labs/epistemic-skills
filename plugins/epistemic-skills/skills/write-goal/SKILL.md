@@ -96,6 +96,14 @@ Examples:
 If no available proof can distinguish real completion from the likely failure modes,
 the contract is not ready.
 
+**Prefer executable references over prose criteria.** Where a rich reference exists or
+is cheap to create — a currently-failing test that must pass, a rubric with scored
+levels, a working exemplar to match, a schema the output must validate against — name
+it as the primary proof instead of describing the desired behavior in prose. Prose
+criteria drift and get argued; an executable reference is its own oracle. A goal whose
+proof bundle is all prose should say in one line why no executable reference was
+available.
+
 ### Boundaries
 
 State what is in scope, out of scope, and protected. Include canonical source-of-truth

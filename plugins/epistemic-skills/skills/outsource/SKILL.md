@@ -120,6 +120,13 @@ completion contract must name direct proof, reject plausible proxies, and define
 Keep the packet comprehensive but not repetitive: one canonical statement per fact, then links and
 requirement IDs. Include enough explanation for a capable target to act immediately.
 
+**Ship rich references, not descriptions of them.** When the requirement can be carried by an
+executable or inspectable artifact — a failing test the target must make pass, a rubric, a
+reference implementation, a schema, a recorded transcript of the desired behavior — commit that
+artifact into the packet and point to it, rather than paraphrasing it in prose. The target's
+first act should be running or reading the reference, not reconstructing your intent from a
+paragraph. A packet that describes a test it could have contained is under-specified.
+
 ### 5. Record, publish, and verify
 
 Store the canonical outbound prompt template in the next `relay/NNNN-origin.md`, using the literal

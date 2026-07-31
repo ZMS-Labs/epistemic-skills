@@ -1,11 +1,11 @@
 ---
 name: using-epistemic-skills
-description: Use when a task does not clear the routine-work fast path and might need more than one of blindspot-pass, applying-formal-rigor, evidence-research, write-goal, outsource, gauntlet, evidence-locked-uat, decision-ledger, continuity-verify, or open-questions; when choosing their order; when work should cross into another model, agent, or process; or when resuming from a summary or handoff. Do not substitute this router for the skill it selects. When a workflow-skill layer is also present, helix pairs the two collections.
+description: Use when a task does not clear the routine-work fast path and might need more than one of blindspot-pass, applying-formal-rigor, evidence-research, write-goal, outsource, gauntlet, evidence-locked-uat, decision-ledger, continuity-verify, open-questions, context-audit, or agent-interface-design; when choosing their order; when work should cross into another model, agent, or process; or when resuming from a summary or handoff. Do not substitute this router for the skill it selects. When a workflow-skill layer is also present, helix pairs the two collections.
 ---
 
 # Using Epistemic Skills — the router
 
-These ten disciplines are one system: **how an agent knows things** before, during, and after
+These twelve disciplines are one system: **how an agent knows things** before, during, and after
 work. A **workflow-skill layer** (such as [superpowers](https://github.com/obra/superpowers)) —
 brainstorming, TDD, systematic-debugging, plan-writing, verification-before-completion — covers
 *how you do* the work. This collection is the *epistemics* layer underneath it: the disciplines that keep every claim tethered to
@@ -48,6 +48,8 @@ job. That is exactly what lets them compose without stepping on each other:
 | **decision-ledger** *(retrospective trigger: fires on a moment that already happened)* | a consequential decision / assumption / correction not already durably and adequately recorded for its future consumer | an **append-only `ledger-entry@1` with provenance + `revisit_when`** — never a verdict; or no new artifact when an existing durable artifact already satisfies the persistence contract | continuity-verify (fires **first** on resumption), gauntlet dossiers, write-goal, future sessions | `revisit_when`-governed / consumer re-anchored — no contract predicate claimed | `ledger-entry@1` (JSONL) or an existing durable decision artifact |
 | **continuity-verify** *(pre-arc resumption trigger: fires before the arc, and before any resumed-work skill)* | a compaction summary / handoff note + the live territory (files, git state, ledger entries, receipts) | a **state digest** — verified claims (anchored), contradicted claims (live value), `(UNVERIFIED)` stamps, first-class `accepted_unverified` records (acceptor + risk) — or a re-scoped task | this router (double-fire: continuity-verify **first**, then blindspot-pass for unfamiliar territory); resumed work proceeds only on verified or accepted-unverified state | void the moment the underlying state moves — re-fires at the next resumption trigger (`subject-revision-unchanged` on the re-anchored state) | state digest (prose, 4-field stamp) |
 | **open-questions** | blindspot-pass Questions section (when present); operator-named open decisions | an **emptied-or-parked question ledger** (its boundary) | the stage the interview gated | session-continuous | 4-field stamp |
+| **context-audit** *(maintenance trigger: explicit request, detected cross-layer conflict, or model-generation upgrade)* | the assembled instruction context — every layer the harness loads, as one set | a **classified cut list as diff + conflict ledger + re-baseline watch note** (report-only until operator-gated, class-by-class apply) | the operator apply decision; decision-ledger for applied cuts; upstream sources of truth for generated-layer findings | `subject-revision-unchanged` on the audited layer hashes | report file carrying the 4-field stamp |
+| **agent-interface-design** | an interface another agent will consume (tool/function schema, MCP surface, structured-output or dispatch contract) being authored or modified | a **shipped interface + cold-consumer test evidence** — constraints carried by structure; examples only as labeled compatibility concessions | the consuming agent; evidence-locked-uat when the surface is operator-facing; gauntlet when it is high-blast-radius | `subject-revision-unchanged` on the schema | consumer-test transcript + 4-field stamp |
 
 *Artifact shape pins the carrier: prose outputs carry a 4-field stamp (`subject.ref`,
 `subject.revision`, `valid_while`, `coverage_limits`; the producer is the emitting skill by
@@ -137,6 +139,12 @@ clarify (cross-cutting): open-questions walks an emptied-or-parked question ledg
 - **open-questions** is *cross-cutting* — callable at any stage boundary when its trigger fires
   (explicit operator phrase, or an un-best-guessable irreversible fork with the operator
   present); it is never sequenced as a fixed stage.
+- **context-audit** is *maintenance-triggered, outside the arc* — it audits the instruction
+  assembly the agent carries into every task, on explicit request, a detected cross-layer
+  conflict, or a model-generation upgrade; it never fires as a per-task stage.
+- **agent-interface-design** is *build-stage* — it fires inside the build whenever the artifact
+  under construction is an interface another agent will consume, and hands its consumer-test
+  evidence to the gate/prove stages like any other build output.
 
 The arc is need-driven, not mandatory. Absent triggers are silent; do not manufacture an audit
 artifact to say that nothing happened.
@@ -163,6 +171,8 @@ Match the trigger you can *observe*, not a vibe:
 | resume from a compaction summary, a handoff note, or a prior-session task whose next action depends on remembered state *(pre-arc trigger — fires before any resumed-work skill)* | **continuity-verify** | the summary is a claim, not a state — re-anchor every load-bearing claim to an artifact or stamp it `(UNVERIFIED)` before acting; an unverifiable approval escalates, never authorizes |
 | ask the operator to decide the open questions before work continues | **open-questions** | exhaustion is the termination contract; brainstorming ends at sufficiency, blindspot-pass ends at understanding |
 | act through an irreversible, high-blast-radius fork you cannot safely best-guess, with the operator interactively present | **open-questions** | the narrow auto-trigger, fork-scoped — the interview covers the fork's lineage, one offer for other surfaced questions, declined items deferred to a durable tracker; if the operator is absent, hold and escalate instead of interviewing or defaulting through |
+| audit the instruction context this agent receives — explicit request, a detected conflict between two active instruction layers, or a model-generation upgrade | **context-audit** | conflicts, duplicates, and dead weight live BETWEEN layers; only an assembly-wide classify-and-watch pass finds them, and version control makes every cut a reversible experiment |
+| author or modify a tool/function schema, MCP surface, structured-output contract, or dispatch contract that another agent will consume | **agent-interface-design** | the interface is the instruction channel — structure (types, enums, defaults, error shapes) teaches the consumer; usage examples narrow it to shown paths |
 
 If **none** match, none fire — this router does not manufacture work. If **two** match, run
 them in arc order (recon → decide → contract → gate → prove) and pass each output to the next per the
@@ -191,7 +201,7 @@ decide-stage re-fire loop between formal-rigor and research.
 gauntlet and evidence-locked-uat can both fire on the same merge (irreversible infra/security +
 user-facing surface) — gauntlet gates first, evidence-locked-uat proves after, per arc order.
 
-## Shared invariants (why these ten, and not others)
+## Shared invariants (why these twelve, and not others)
 
 A skill belongs in this collection only if it enforces all of these. They are the family
 resemblance:
