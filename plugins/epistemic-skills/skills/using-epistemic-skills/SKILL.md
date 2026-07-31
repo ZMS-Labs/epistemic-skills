@@ -1,11 +1,11 @@
 ---
 name: using-epistemic-skills
-description: Use when a task does not clear the routine-work fast path and might need more than one of blindspot-pass, applying-formal-rigor, evidence-research, write-goal, outsource, gauntlet, evidence-locked-uat, decision-ledger, continuity-verify, open-questions, context-audit, or agent-interface-design; when choosing their order; when work should cross into another model, agent, or process; or when resuming from a summary or handoff. Do not substitute this router for the skill it selects. When a workflow-skill layer is also present, helix pairs the two collections.
+description: Use when a task does not clear the routine-work fast path and might need more than one of blindspot-pass, applying-formal-rigor, evidence-research, write-goal, outsource, gauntlet, evidence-locked-uat, decision-ledger, continuity-verify, open-questions, context-audit, agent-interface-design, wayfinding, throwaway-prototyping, or intent-traced-merge; when choosing their order; when work should cross into another model, agent, or process; or when resuming from a summary or handoff. Do not substitute this router for the skill it selects. When a workflow-skill layer is also present, helix pairs the two collections.
 ---
 
 # Using Epistemic Skills — the router
 
-These twelve disciplines are one system: **how an agent knows things** before, during, and after
+These fifteen disciplines are one system: **how an agent knows things** before, during, and after
 work. A **workflow-skill layer** (such as [superpowers](https://github.com/obra/superpowers)) —
 brainstorming, TDD, systematic-debugging, plan-writing, verification-before-completion — covers
 *how you do* the work. This collection is the *epistemics* layer underneath it: the disciplines that keep every claim tethered to
@@ -50,6 +50,9 @@ job. That is exactly what lets them compose without stepping on each other:
 | **open-questions** | blindspot-pass Questions section (when present); operator-named open decisions | an **emptied-or-parked question ledger** (its boundary) | the stage the interview gated | session-continuous | 4-field stamp |
 | **context-audit** *(maintenance trigger: explicit request, detected cross-layer conflict, or model-generation upgrade)* | the assembled instruction context — every layer the harness loads, as one set | a **classified cut list as diff + conflict ledger + re-baseline watch note** (report-only until operator-gated, class-by-class apply) | the operator apply decision; decision-ledger for applied cuts; upstream sources of truth for generated-layer findings | `subject-revision-unchanged` on the audited layer hashes | report file carrying the 4-field stamp |
 | **agent-interface-design** | an interface another agent will consume (tool/function schema, MCP surface, structured-output or dispatch contract) being authored or modified | a **shipped interface + cold-consumer test evidence** — constraints carried by structure; examples only as labeled compatibility concessions | the consuming agent; evidence-locked-uat when the surface is operator-facing; gauntlet when it is high-blast-radius | `subject-revision-unchanged` on the schema | consumer-test transcript + 4-field stamp |
+| **wayfinding** | a large foggy effort whose path holds unresolved decisions; a backlog whose tickets encode unmade decisions | a **decision-dependency map + fog-free build tickets** with the three-fact handoff (never a build, never a decision) | frontier decisions to open-questions / formal-rigor / throwaway-prototyping; fog-free tickets to the workflow layer's planning skills | map current while no upstream decision reopens | tracker map artifact + 4-field stamp |
+| **throwaway-prototyping** | a live decision cheaper to resolve by building a disposable probe than by argument, derivation, or literature | a **recorded answer (question + observation + decision) with the build disposed** — never promoted code | decision-ledger holds the finding; gauntlet option-sets and wayfinding nodes consume the answer; the workflow layer rebuilds for real | answer durable; build gone | ledger/tracker entry + 4-field stamp |
+| **intent-traced-merge** | a merge/rebase conflict with non-trivial hunks, or a merge commit lacking resolution provenance | a **merged result whose non-trivial hunks carry rulings (both origins cited) and whose both-origin checks pass** | ordinary review; decision-ledger for deliberately-dropped intents; the decision process for collisions that are open designs | until either parent's motivating check regresses | merge-commit/PR ruling record |
 
 *Artifact shape pins the carrier: prose outputs carry a 4-field stamp (`subject.ref`,
 `subject.revision`, `valid_while`, `coverage_limits`; the producer is the emitting skill by
@@ -145,6 +148,14 @@ clarify (cross-cutting): open-questions walks an emptied-or-parked question ledg
 - **agent-interface-design** is *build-stage* — it fires inside the build whenever the artifact
   under construction is an interface another agent will consume, and hands its consumer-test
   evidence to the gate/prove stages like any other build output.
+- **wayfinding** is *pre-arc at initiative scale* — it sequences the decisions a large effort
+  must resolve and releases fog-free tickets into the arc; individual tickets then run the arc
+  normally.
+- **throwaway-prototyping** is a *decide-stage instrument* — it fires when the cheapest
+  adequate resolution of a live decision is a disposable build; its recorded answer feeds the
+  decide/contract stages, its code feeds nothing.
+- **intent-traced-merge** is *integration-stage* — it fires at merge/rebase time on non-trivial
+  conflicts, before review and any completion claim.
 
 The arc is need-driven, not mandatory. Absent triggers are silent; do not manufacture an audit
 artifact to say that nothing happened.
@@ -173,6 +184,9 @@ Match the trigger you can *observe*, not a vibe:
 | act through an irreversible, high-blast-radius fork you cannot safely best-guess, with the operator interactively present | **open-questions** | the narrow auto-trigger, fork-scoped — the interview covers the fork's lineage, one offer for other surfaced questions, declined items deferred to a durable tracker; if the operator is absent, hold and escalate instead of interviewing or defaulting through |
 | audit the instruction context this agent receives — explicit request, a detected conflict between two active instruction layers, or a model-generation upgrade | **context-audit** | conflicts, duplicates, and dead weight live BETWEEN layers; only an assembly-wide classify-and-watch pass finds them, and version control makes every cut a reversible experiment |
 | author or modify a tool/function schema, MCP surface, structured-output contract, or dispatch contract that another agent will consume | **agent-interface-design** | the interface is the instruction channel — structure (types, enums, defaults, error shapes) teaches the consumer; usage examples narrow it to shown paths |
+| decompose a large effort whose path holds unresolved decisions, or mint build tickets from a partly-foggy backlog | **wayfinding** | tickets sliced from fog encode silent guesses; decompose by decisions, work only the frontier, mint tickets only from fog-free regions |
+| resolve a live design question where a disposable build is cheaper than more argument, derivation, or reading | **throwaway-prototyping** | a built probe is evidence; the contract (pre-registered question, disposal at birth, capture-then-delete, never promote) keeps it an instrument instead of unplanned work |
+| resolve a merge/rebase conflict containing any non-trivial hunk | **intent-traced-merge** | textual pattern-matching silently destroys one side's intent; trace both sides to their origins, preserve both or record the drop, verify against both origins |
 
 If **none** match, none fire — this router does not manufacture work. If **two** match, run
 them in arc order (recon → decide → contract → gate → prove) and pass each output to the next per the
@@ -201,7 +215,7 @@ decide-stage re-fire loop between formal-rigor and research.
 gauntlet and evidence-locked-uat can both fire on the same merge (irreversible infra/security +
 user-facing surface) — gauntlet gates first, evidence-locked-uat proves after, per arc order.
 
-## Shared invariants (why these twelve, and not others)
+## Shared invariants (why these fifteen, and not others)
 
 A skill belongs in this collection only if it enforces all of these. They are the family
 resemblance:

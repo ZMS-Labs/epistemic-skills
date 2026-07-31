@@ -40,6 +40,15 @@ wholesale. Walk the remainder serially, highest-impact first — response
 quality measurably degrades late in long question batteries, so the questions
 that gate the most work go first.
 
+**Frontier discipline (when items depend on each other):** if docket items
+have prerequisite structure — question 7's best answer depends on how question
+2 resolves — ask only the *frontier*: items whose prerequisites are all
+answered. Present the frontier as the current batch, recompute it after each
+round of answers, and announce which parked items just became askable. Asking
+a non-frontier question wastes the answer: it gets re-litigated when its
+prerequisites land. (For initiative-scale decision trees, wayfinding owns the
+map; this discipline is the interview-scale form of its frontier rule.)
+
 **Cascade mode** — answers beget questions. A serial laddering interview: one
 question per message; each answer may append follow-ups to the ledger.
 Announce every append ("your answer opened two new questions — added as #7,

@@ -312,6 +312,16 @@ artifact; enumerate binary blobs and use a binary-aware check. `verify_evidence.
 enforces (b) for `[V path:line]` tags by design. Prove a scan can fail (plant a
 positive, watch it fire) before believing it passed.
 
+**Revision-loop discipline (subject revised after a verdict):** a revised
+subject is **new attack surface**, not a settled one — but re-review is scoped
+to the *delta* plus whatever the delta's blast radius touches; rulings on
+unchanged content stand without re-litigation. Hard cap: **three panels per
+subject lineage** (initial + two revision reviews). A subject still churning
+after three panels has an upstream problem — an unresolved design decision or
+an unstable brief — and routes back to its decision process, not to a fourth
+panel. (A scoped-fix condition inside a CONDITIONAL verdict already works this
+way: a fix diff that stays inside the named scope does not re-trigger a panel.)
+
 ### Step 7 — Arbitrate + bounded reinstatement
 
 Dispatch the arbitrator with verified reports + the Fingerprint table (lenses

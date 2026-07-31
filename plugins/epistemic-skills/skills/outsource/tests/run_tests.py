@@ -11,7 +11,7 @@ HERE = Path(__file__).resolve()
 SKILL_ROOT = HERE.parents[1]
 PACKAGE_ROOT = HERE.parents[3]
 REPO_ROOT = HERE.parents[5]
-EXPECTED_VERSION = "3.3.0"
+EXPECTED_VERSION = "3.4.0"
 
 
 def require(condition: bool, message: str) -> None:
@@ -67,9 +67,9 @@ def main() -> int:
 
     router_root = PACKAGE_ROOT / "skills" / "using-epistemic-skills"
     router = read(router_root / "SKILL.md")
-    require("These twelve disciplines" in router, "router discipline count is stale")
+    require("These fifteen disciplines" in router, "router discipline count is stale")
     require("**outsource**" in router, "router does not route outsource")
-    require("why these twelve" in router, "router family-resemblance count is stale")
+    require("why these fifteen" in router, "router family-resemblance count is stale")
     require("Routine work leaves before the arc" in router, "router lacks routine-work exit")
     require("Absent triggers are silent" in router, "router still requires absent-trigger records")
     require(
@@ -83,11 +83,11 @@ def main() -> int:
 
     readme = read(REPO_ROOT / "README.md")
     require(f"**Version {EXPECTED_VERSION}.**" in readme, "README version is stale")
-    require("**fourteen** skills" in readme, "README skill count is stale")
-    require("**twelve** disciplines" in readme, "README discipline count is stale")
-    require("all fourteen skills" in readme, "README harness success check is stale")
-    require("canonical skill cores (fourteen)" in readme, "README layout inventory count is stale")
-    require("canonical skill cores (twelve)" not in readme, "README still advertises twelve skill cores")
+    require("**seventeen** skills" in readme, "README skill count is stale")
+    require("**fifteen** disciplines" in readme, "README discipline count is stale")
+    require("all seventeen skills" in readme, "README harness success check is stale")
+    require("canonical skill cores (seventeen)" in readme, "README layout inventory count is stale")
+    require("canonical skill cores (fourteen)" not in readme, "README still advertises twelve skill cores")
     require("**outsource**" in readme, "README skill table lacks outsource")
     require("## Routine work first" in readme, "README does not present the routine path first")
 
@@ -98,8 +98,8 @@ def main() -> int:
     )
 
     gemini = read(REPO_ROOT / "GEMINI.md")
-    require("fourteen skills" in gemini, "GEMINI context skill count is stale")
-    require("twelve disciplines" in gemini, "GEMINI context discipline count is stale")
+    require("seventeen skills" in gemini, "GEMINI context skill count is stale")
+    require("fifteen disciplines" in gemini, "GEMINI context discipline count is stale")
 
     workflow = read(REPO_ROOT / ".github" / "workflows" / "epistemic-flexibility.yml")
     require(
@@ -185,7 +185,7 @@ def main() -> int:
             require((suite / filename).is_file(), f"missing proportionality artifact: {suite.name}/{filename}")
 
     skill_dirs = [p for p in (PACKAGE_ROOT / "skills").iterdir() if p.is_dir()]
-    require(len(skill_dirs) == 14, f"expected 14 skill directories, found {len(skill_dirs)}")
+    require(len(skill_dirs) == 17, f"expected 17 skill directories, found {len(skill_dirs)}")
     for directory in skill_dirs:
         require((directory / "SKILL.md").is_file(), f"missing SKILL.md: {directory.name}")
 

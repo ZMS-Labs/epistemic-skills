@@ -69,7 +69,11 @@ reception-checked, no contrasting citations or notices on anchors):
    fields, not prose. If a value set is closed, close it — every enum value is
    a promise, and an honest unbounded string beats a leaky enum.
 2. **Let names carry semantics.** A parameter whose meaning needs a paragraph
-   is misnamed or doing two jobs; split it.
+   is misnamed or doing two jobs; split it. Name in the project's established
+   domain vocabulary — the glossary, schema, or ubiquitous language its
+   consumers already hold — and never mint a synonym for a concept the
+   project already names: a second name for one concept is a conflict the
+   consumer must reconcile on every call.
 3. **Required/optional/defaults encode policy.** A default is the behavior you
    endorse; an optional field with no default is a question you are forcing
    every consumer to answer.

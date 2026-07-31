@@ -1,7 +1,7 @@
 {
   "name": "epistemic-skills",
-  "version": "3.3.0",
-  "description": "The full epistemic-discipline collection in one package: a router plus twelve disciplines including repo-backed external handoff, continuity, decision persistence, evidence-locked acceptance, open-questions clarification, context-audit instruction hygiene, and agent-interface-design typed contracts.",
+  "version": "3.4.0",
+  "description": "The full epistemic-discipline collection in one package: a router plus fifteen disciplines including repo-backed external handoff, continuity, decision persistence, evidence-locked acceptance, open-questions clarification, context-audit instruction hygiene, agent-interface-design typed contracts, wayfinding decision-mapping, throwaway-prototyping disposable probes, and intent-traced-merge conflict provenance.",
   "author": {
     "name": "ZMS Labs",
     "url": "https://github.com/ZMS-Labs"
@@ -22,7 +22,7 @@
   "interface": {
     "displayName": "Epistemic Skills",
     "shortDescription": "Evidence-grounded methods for agentic work",
-    "longDescription": "Twelve composable disciplines including repo-backed external handoff, continuity, decision persistence, evidence-locked acceptance, open-questions clarification, context-audit instruction hygiene, and agent-interface-design typed contracts.",
+    "longDescription": "Fifteen composable disciplines including repo-backed external handoff, continuity, decision persistence, evidence-locked acceptance, open-questions clarification, context-audit instruction hygiene, agent-interface-design typed contracts, wayfinding decision-mapping, throwaway-prototyping disposable probes, and intent-traced-merge conflict provenance.",
     "developerName": "ZMS Labs",
     "websiteURL": "https://github.com/ZMS-Labs/epistemic-skills"
   }
