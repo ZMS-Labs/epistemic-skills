@@ -117,6 +117,14 @@ a passing observation may not retroactively narrow the criterion it was supposed
    gate decision + summary link.
 5. Report the verdict to the operator using ONLY the verdict vocabulary. INCONCLUSIVE is
    reported as INCONCLUSIVE — never rounded up to PASS, never papered over with prose.
+6. **Acceptor comprehension gate (anti-rubber-stamp).** Acceptance verifies the mind
+   accepting, not only the work: whoever signs acceptance (operator or delegated
+   acceptor) states in their own words, in the packet, (a) what changed and (b) what
+   observable behavior breaks first if the change is wrong. A signature without that
+   statement is recorded as `ACCEPTED-UNREVIEWED` — a distinct, honest state that is
+   never silently upgraded to accepted. Verifying the artifact is the actor/verifier's
+   job; this gate exists because a change no acceptor can explain has not actually
+   been accepted, only waved through.
 
 ## Retry / flake rule (Level 1)
 
