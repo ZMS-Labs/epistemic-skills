@@ -1,0 +1,116 @@
+[
+ {
+  "id": "explicit-claudemd-audit",
+  "action": "full-audit",
+  "layers_inventoried": true,
+  "cross_layer_merge": true,
+  "report_emitted": true,
+  "version_control": true,
+  "applied": true,
+  "apply_order": [
+   "CONFLICT",
+   "DUPLICATE",
+   "OVER-VERIFY",
+   "OBVIOUS",
+   "MODEL-HANDLES-THIS-NOW"
+  ]
+ },
+ {
+  "id": "explicit-prune-instructions",
+  "action": "full-audit",
+  "layers_inventoried": true,
+  "cross_layer_merge": true,
+  "report_emitted": true
+ },
+ {
+  "id": "midtask-layer-conflict",
+  "action": "full-audit",
+  "layers_inventoried": true,
+  "cross_layer_merge": true,
+  "report_emitted": true
+ },
+ {
+  "id": "model-upgrade-stale-guardrails",
+  "action": "full-audit",
+  "layers_inventoried": true,
+  "cross_layer_merge": true,
+  "report_emitted": true
+ },
+ {
+  "id": "single-doc-prose",
+  "action": "full-audit",
+  "layers_inventoried": true,
+  "cross_layer_merge": true,
+  "report_emitted": true
+ },
+ {
+  "id": "new-agent-interface",
+  "action": "full-audit",
+  "layers_inventoried": true,
+  "cross_layer_merge": true,
+  "report_emitted": true
+ },
+ {
+  "id": "task-brief-recon",
+  "action": "full-audit",
+  "layers_inventoried": true,
+  "cross_layer_merge": true,
+  "report_emitted": true
+ },
+ {
+  "id": "single-task-prompt-tuning",
+  "action": "full-audit",
+  "layers_inventoried": true,
+  "cross_layer_merge": true,
+  "report_emitted": true
+ },
+ {
+  "id": "hard-neg-intradoc-contradictions",
+  "action": "full-audit",
+  "layers_inventoried": true,
+  "cross_layer_merge": true,
+  "report_emitted": true
+ },
+ {
+  "id": "hard-neg-system-prompt-tuning",
+  "action": "full-audit",
+  "layers_inventoried": true,
+  "cross_layer_merge": true,
+  "report_emitted": true
+ },
+ {
+  "id": "keep-gotcha-with-origin",
+  "action": "full-audit",
+  "layers_inventoried": true,
+  "cross_layer_merge": true,
+  "report_emitted": true,
+  "classification": "KEEP:GOTCHA",
+  "origin_read": true
+ },
+ {
+  "id": "duplicate-most-local-survives",
+  "action": "full-audit",
+  "layers_inventoried": true,
+  "cross_layer_merge": true,
+  "report_emitted": true,
+  "classification": "DUPLICATE",
+  "survivor": "tool-description"
+ },
+ {
+  "id": "no-version-control-report-only",
+  "action": "report-only-audit",
+  "layers_inventoried": true,
+  "cross_layer_merge": true,
+  "report_emitted": true,
+  "applied": false
+ },
+ {
+  "id": "governance-projection-conflict",
+  "action": "full-audit",
+  "layers_inventoried": true,
+  "cross_layer_merge": true,
+  "report_emitted": true,
+  "routed_upstream": true,
+  "projection_edited": false
+ }
+]

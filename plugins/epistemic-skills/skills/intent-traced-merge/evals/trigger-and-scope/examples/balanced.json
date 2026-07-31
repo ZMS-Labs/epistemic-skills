@@ -1,0 +1,138 @@
+[
+ {
+  "id": "semantic-overlap-trace",
+  "action": "trace-and-resolve",
+  "traced": {
+   "auth-retry": {
+    "origin_a": "commit a1b2c3 — cap retries at 5 (fixes stale-session storm)",
+    "origin_b": "commit d4e5f6 — extract backoff policy object",
+    "ruling": "both-preserved"
+   }
+  },
+  "mechanical": [],
+  "checks_run": [
+   "retry-cap-regression-test",
+   "backoff-refactor-suite"
+  ],
+  "recorded": true
+ },
+ {
+  "id": "ambiguous-textual-trace",
+  "action": "trace-and-resolve",
+  "traced": {
+   "helper-rename": {
+    "origin_a": "commit 1122aa — rename to parseConfig per style guide",
+    "origin_b": "commit 3344bb — rename to loadSettings for the settings module split",
+    "ruling": "side-a-dropped",
+    "reason": "settings-module split supersedes the style-guide rename; callers updated on side B",
+    "ledger_ref": "ledger:helper-rename-drop"
+   }
+  },
+  "mechanical": [],
+  "checks_run": [
+   "rename-a-callers-test",
+   "rename-b-callers-test"
+  ],
+  "recorded": true
+ },
+ {
+  "id": "mixed-hunks-classify",
+  "action": "trace-and-resolve",
+  "traced": {
+   "cache-invalidation": {
+    "origin_a": "commit 9f8e7d — invalidate on TTL expiry (stale-cache bug)",
+    "origin_b": "commit 6c5b4a — invalidate on write-through refactor",
+    "ruling": "both-preserved"
+   }
+  },
+  "mechanical": [
+   "indentation-only",
+   "import-order"
+  ],
+  "checks_run": [
+   "stale-cache-fix-test",
+   "invalidation-refactor-suite"
+  ],
+  "recorded": true
+ },
+ {
+  "id": "dropped-intent-recorded",
+  "action": "trace-and-resolve",
+  "traced": {
+   "upstream-workaround": {
+    "origin_a": "commit 5566cc — workaround for upstream parser bug",
+    "origin_b": "commit 7788dd — bump dependency to 2.4 (upstream fix released)",
+    "ruling": "side-a-dropped",
+    "reason": "dependency 2.4 fixes the upstream bug the workaround papered over",
+    "ledger_ref": "ledger:upstream-workaround-drop"
+   }
+  },
+  "mechanical": [],
+  "checks_run": [
+   "workaround-motivating-test",
+   "dependency-bump-suite"
+  ],
+  "recorded": true
+ },
+ {
+  "id": "divergent-decisions-escalate",
+  "action": "escalate-decision",
+  "escalated": true,
+  "resolved": false,
+  "intents": [
+   "cursor-pagination",
+   "offset-pagination"
+  ],
+  "routed_to": "api-design owner"
+ },
+ {
+  "id": "undocumented-merge-review",
+  "action": "review-provenance",
+  "requested_rulings": true,
+  "approved_without_provenance": false
+ },
+ {
+  "id": "uncertain-tree-abort",
+  "action": "abort-restart",
+  "aborted": true,
+  "traces_kept": true,
+  "restarted": true,
+  "forced_continue": false
+ },
+ {
+  "id": "formatting-only-mechanical",
+  "action": "mechanical-resolve",
+  "mechanical": [
+   "reformat-only"
+  ]
+ },
+ {
+  "id": "lockfile-regenerate",
+  "action": "regenerate",
+  "regenerated": true,
+  "hand_resolved": false
+ },
+ {
+  "id": "generated-file-regenerate",
+  "action": "regenerate",
+  "regenerated": true,
+  "hand_resolved": false
+ },
+ {
+  "id": "huge-lockfile-looks-semantic",
+  "action": "regenerate",
+  "regenerated": true,
+  "hand_resolved": false
+ },
+ {
+  "id": "adjacent-disjoint-mechanical",
+  "action": "mechanical-resolve",
+  "mechanical": [
+   "import-append"
+  ]
+ },
+ {
+  "id": "documented-merge-review-no-fire",
+  "action": "no-fire"
+ }
+]

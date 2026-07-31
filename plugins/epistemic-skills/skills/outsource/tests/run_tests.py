@@ -24,6 +24,64 @@ def read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
+WORDS = {11: "eleven", 12: "twelve", 13: "thirteen", 14: "fourteen", 15: "fifteen",
+         16: "sixteen", 17: "seventeen", 18: "eighteen", 19: "nineteen", 20: "twenty"}
+
+
+def check_live_surface_counts(skill_count: int) -> None:
+    """Issue #72 lint: every spelled count adjacent to skill/discipline wording on a
+    LIVE surface must match the derived counts. Live surfaces = all JSON manifests
+    (every string field, nested included), the README mermaid node, and GEMINI.md.
+    README prose is excluded here (it legitimately carries per-tag historical counts)
+    and is covered by the targeted assertions in main()."""
+    import re
+    disciplines = skill_count - 2  # router + helix are not disciplines
+    ok_words = {WORDS[skill_count], WORDS[disciplines]}
+    count_re = re.compile(
+        r"\b(" + "|".join(WORDS.values()) + r")\b(?=[^.;]{0,60}(?:skill|discipline))",
+        re.IGNORECASE)
+
+    def strings_of(obj):
+        if isinstance(obj, str):
+            yield obj
+        elif isinstance(obj, dict):
+            for v in obj.values():
+                yield from strings_of(v)
+        elif isinstance(obj, list):
+            for v in obj:
+                yield from strings_of(v)
+
+    manifests = [
+        REPO_ROOT / ".claude-plugin" / "marketplace.json",
+        REPO_ROOT / ".cursor-plugin" / "marketplace.json",
+        REPO_ROOT / ".cursor-plugin" / "plugin.json",
+        REPO_ROOT / ".kimi-plugin" / "marketplace.json",
+        REPO_ROOT / ".kimi-plugin" / "plugin.json",
+        REPO_ROOT / "gemini-extension.json",
+        REPO_ROOT / "plugin.json",
+        PACKAGE_ROOT / ".claude-plugin" / "plugin.json",
+        PACKAGE_ROOT / ".codex-plugin" / "plugin.json",
+        PACKAGE_ROOT / ".cursor-plugin" / "plugin.json",
+        PACKAGE_ROOT / ".kimi-plugin" / "plugin.json",
+    ]
+    for mp in manifests:
+        data = json.loads(read(mp))
+        for s in strings_of(data):
+            for m in count_re.finditer(s):
+                require(m.group(1).lower() in ok_words,
+                        f"stale count word {m.group(1)!r} on live surface {mp.name}: ...{s[max(0,m.start()-30):m.end()+40]}...")
+    readme = read(REPO_ROOT / "README.md")
+    mermaid = [ln for ln in readme.splitlines() if "router and" in ln and "disciplines" in ln]
+    for ln in mermaid:
+        found = [w for w in WORDS.values() if w in ln.lower()]
+        for w in found:
+            require(w in ok_words, f"README mermaid node count stale: {ln.strip()}")
+    gemini = read(REPO_ROOT / "GEMINI.md")
+    for m in count_re.finditer(gemini):
+        require(m.group(1).lower() in ok_words,
+                f"stale count word {m.group(1)!r} in GEMINI.md")
+
+
 def main() -> int:
     skill = read(SKILL_ROOT / "SKILL.md")
     require(skill.startswith("---\nname: outsource\n"), "invalid skill frontmatter/name")
@@ -142,6 +200,22 @@ def main() -> int:
         "open-questions/evals/trigger-and-scope/tests/run_tests.py" in workflow,
         "CI omits Open Questions trigger-and-scope tests",
     )
+    for battery_skill in (
+        "context-audit",
+        "agent-interface-design",
+        "wayfinding",
+        "throwaway-prototyping",
+        "intent-traced-merge",
+    ):
+        require(
+            f"{battery_skill}/evals/trigger-and-scope/tests/run_tests.py" in workflow,
+            f"CI omits {battery_skill} trigger-and-scope tests",
+        )
+        require(
+            (PACKAGE_ROOT / "skills" / battery_skill / "evals" / "trigger-and-scope"
+             / "tests" / "run_tests.py").is_file(),
+            f"{battery_skill} trigger-and-scope battery is missing",
+        )
 
     proportionality = router_root / "evals" / "proportionality"
     for filename in (
@@ -186,6 +260,7 @@ def main() -> int:
 
     skill_dirs = [p for p in (PACKAGE_ROOT / "skills").iterdir() if p.is_dir()]
     require(len(skill_dirs) == 17, f"expected 17 skill directories, found {len(skill_dirs)}")
+    check_live_surface_counts(len(skill_dirs))
     for directory in skill_dirs:
         require((directory / "SKILL.md").is_file(), f"missing SKILL.md: {directory.name}")
 

@@ -1,0 +1,79 @@
+[
+ {
+  "id": "explicit-spike-fires",
+  "action": "run-prototype",
+  "question": "Can the streaming parser sustain the 50MB fixture without falling behind?",
+  "throwaway_location": "spike/parser-throughput worktree"
+ },
+ {
+  "id": "option-set-try-it-fires",
+  "action": "run-prototype",
+  "question": "Which backpressure model holds tail latency under burst load?",
+  "throwaway_location": "scratch/queue-spike",
+  "variants": [
+   "bounded-buffer",
+   "credit-based"
+  ]
+ },
+ {
+  "id": "debate-cost-exceeds-build-fires",
+  "action": "run-prototype",
+  "question": "Can the cache invalidation ordering race under concurrent writers?",
+  "throwaway_location": "scratch/invalidation-probe"
+ },
+ {
+  "id": "thin-build-discriminator-fires",
+  "action": "run-prototype",
+  "question": "Does the export module reach the archival endpoint through the auth proxy?",
+  "throwaway_location": "spike/export-seam branch"
+ },
+ {
+  "id": "answerable-by-reading-no-fire",
+  "action": "no-fire",
+  "resolved_by": "reading"
+ },
+ {
+  "id": "answerable-by-derivation-no-fire",
+  "action": "no-fire",
+  "resolved_by": "derivation"
+ },
+ {
+  "id": "answerable-by-literature-no-fire",
+  "action": "no-fire",
+  "resolved_by": "literature"
+ },
+ {
+  "id": "early-implementation-no-fire",
+  "action": "no-fire",
+  "resolved_by": "normal-discipline"
+ },
+ {
+  "id": "spike-against-live-infra-refused",
+  "action": "refuse-live-target",
+  "refused": true,
+  "isolated_alternative": "disposable local database seeded from a fixture"
+ },
+ {
+  "id": "try-both-answerable-by-reading-no-fire",
+  "action": "no-fire",
+  "resolved_by": "reading"
+ },
+ {
+  "id": "promotion-attempt-refused",
+  "action": "refuse-promotion",
+  "promoted": false,
+  "answer_recorded": true,
+  "rebuild_planned": true
+ },
+ {
+  "id": "answered-prototype-disposed",
+  "action": "record-and-dispose",
+  "answer": {
+   "question": "Which backpressure model holds tail latency under burst load?",
+   "observation": "credit-based held p99 under load; bounded buffer collapsed at 2x burst",
+   "decision": "adopt the credit-based queue for the real implementation"
+  },
+  "record_ref": "decision-ledger:queue-backpressure",
+  "disposed": true
+ }
+]

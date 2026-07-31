@@ -1,0 +1,107 @@
+[
+  {
+    "id": "explicit-chart-initiative",
+    "scenario": "Operator says: chart this initiative — we are rebuilding the ingestion layer and half the architecture is undecided.",
+    "trigger": "explicit",
+    "expected_action": "chart-map",
+    "decision_graph": {
+      "storage-engine": {"deps": [], "resolved": false},
+      "schema-shape": {"deps": ["storage-engine"], "resolved": false},
+      "api-surface": {"deps": ["schema-shape"], "resolved": false}
+    }
+  },
+  {
+    "id": "explicit-break-down-foggy",
+    "scenario": "Operator says: break this down. Two materially different architectures (event-sourced vs CRUD) are still live and nothing records a choice.",
+    "trigger": "explicit",
+    "expected_action": "chart-map",
+    "decision_graph": {
+      "architecture-style": {"deps": [], "resolved": false},
+      "sync-protocol": {"deps": ["architecture-style"], "resolved": false}
+    }
+  },
+  {
+    "id": "foggy-brief-architectures-live",
+    "scenario": "A brief for a large effort arrives with no explicit phrase; materially different runtime targets are still live and would produce incompatible work.",
+    "trigger": "auto",
+    "expected_action": "chart-map",
+    "decision_graph": {
+      "runtime-target": {"deps": [], "resolved": false},
+      "packaging": {"deps": ["runtime-target"], "resolved": false},
+      "telemetry-format": {"deps": [], "resolved": false}
+    }
+  },
+  {
+    "id": "backlog-guess-tickets",
+    "scenario": "Reviewing a backlog: tickets T-4 and T-9 both silently assume a session-token auth model, but the auth-model decision has never been made or recorded.",
+    "trigger": "auto",
+    "expected_action": "chart-map",
+    "decision_graph": {
+      "auth-model": {"deps": [], "resolved": false}
+    },
+    "fog_tickets": ["T-4", "T-9"]
+  },
+  {
+    "id": "resolved-effort-planning",
+    "scenario": "A large effort where every material decision is already resolved in recorded ADRs; the operator asks for an implementation plan.",
+    "trigger": "none",
+    "expected_action": "no-fire"
+  },
+  {
+    "id": "single-open-decision",
+    "scenario": "Exactly one decision is open (which queue library to adopt); everything else about the effort is settled.",
+    "trigger": "none",
+    "expected_action": "no-fire"
+  },
+  {
+    "id": "one-task-recon",
+    "scenario": "Pre-work recon is needed on a single task in unfamiliar territory before starting it.",
+    "trigger": "none",
+    "expected_action": "no-fire"
+  },
+  {
+    "id": "goal-shaping-request",
+    "scenario": "Operator asks: help me define what done means for this initiative — a finish line, proof, and stop rule.",
+    "trigger": "none",
+    "expected_action": "no-fire"
+  },
+  {
+    "id": "hard-neg-break-down-resolved",
+    "scenario": "Operator says: break this down into tickets. The design document resolves every material decision with provenance; no architectures remain live.",
+    "trigger": "none",
+    "expected_action": "no-fire"
+  },
+  {
+    "id": "hard-neg-stale-backlog",
+    "scenario": "Reviewing a backlog whose tickets are stale — outdated estimates, two duplicates — but every ticket traces to a resolved, linked decision; nothing encodes a guess.",
+    "trigger": "none",
+    "expected_action": "no-fire"
+  },
+  {
+    "id": "frontier-recompute-after-resolution",
+    "scenario": "A maintained map exists; the storage-engine decision just resolved. Recompute the frontier and work only decisions on it, recording provenance.",
+    "trigger": "state",
+    "expected_action": "work-frontier",
+    "decision_graph": {
+      "storage-engine": {"deps": [], "resolved": true},
+      "schema-shape": {"deps": ["storage-engine"], "resolved": false},
+      "api-surface": {"deps": ["schema-shape"], "resolved": false},
+      "backup-policy": {"deps": ["storage-engine"], "resolved": false}
+    }
+  },
+  {
+    "id": "fog-minted-ticket-pull",
+    "scenario": "Falsifiable-gate walk: open build ticket T-12 has an upstream ancestor, schema-shape, that is unresolved. The ticket was minted from fog.",
+    "trigger": "state",
+    "expected_action": "pull-ticket",
+    "ticket": "T-12",
+    "unresolved_ancestor": "schema-shape"
+  },
+  {
+    "id": "fog-free-region-mint",
+    "scenario": "A region is fog-free: storage-engine and schema-shape are both resolved and linked, and no unresolved decision upstream could invalidate a slice. Mint the build ticket.",
+    "trigger": "state",
+    "expected_action": "mint-ticket",
+    "resolved_lineage": ["storage-engine", "schema-shape"]
+  }
+]

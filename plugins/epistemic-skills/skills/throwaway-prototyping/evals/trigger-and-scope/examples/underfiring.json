@@ -1,0 +1,64 @@
+[
+ {
+  "id": "explicit-spike-fires",
+  "action": "no-fire",
+  "resolved_by": "reading"
+ },
+ {
+  "id": "option-set-try-it-fires",
+  "action": "no-fire",
+  "resolved_by": "derivation"
+ },
+ {
+  "id": "debate-cost-exceeds-build-fires",
+  "action": "no-fire",
+  "resolved_by": "derivation"
+ },
+ {
+  "id": "thin-build-discriminator-fires",
+  "action": "no-fire",
+  "resolved_by": "reading"
+ },
+ {
+  "id": "answerable-by-reading-no-fire",
+  "action": "no-fire",
+  "resolved_by": "reading"
+ },
+ {
+  "id": "answerable-by-derivation-no-fire",
+  "action": "no-fire",
+  "resolved_by": "derivation"
+ },
+ {
+  "id": "answerable-by-literature-no-fire",
+  "action": "no-fire",
+  "resolved_by": "literature"
+ },
+ {
+  "id": "early-implementation-no-fire",
+  "action": "no-fire",
+  "resolved_by": "normal-discipline"
+ },
+ {
+  "id": "spike-against-live-infra-refused",
+  "action": "refuse-live-target",
+  "refused": true
+ },
+ {
+  "id": "try-both-answerable-by-reading-no-fire",
+  "action": "no-fire",
+  "resolved_by": "reading"
+ },
+ {
+  "id": "promotion-attempt-refused",
+  "action": "refuse-promotion",
+  "promoted": false,
+  "answer_recorded": true,
+  "rebuild_planned": true
+ },
+ {
+  "id": "answered-prototype-disposed",
+  "action": "record-and-dispose",
+  "disposed": true
+ }
+]
