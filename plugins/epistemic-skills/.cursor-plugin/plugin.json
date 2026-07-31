@@ -1,8 +1,8 @@
 {
   "name": "epistemic-skills",
   "displayName": "Epistemic Skills",
-  "description": "The full epistemic-discipline collection in one package: a router plus twelve disciplines including repo-backed external handoff, continuity, decision persistence, evidence-locked acceptance, open-questions clarification, context-audit instruction hygiene, and agent-interface-design typed contracts, with the helix tandem layer for workflow-skill pairing.",
-  "version": "3.3.0",
+  "description": "The full epistemic-discipline collection in one package: a router plus fifteen disciplines including repo-backed external handoff, continuity, decision persistence, evidence-locked acceptance, open-questions clarification, context-audit instruction hygiene, agent-interface-design typed contracts, wayfinding decision-mapping, throwaway-prototyping disposable probes, and intent-traced-merge conflict provenance, with the helix tandem layer for workflow-skill pairing.",
+  "version": "3.4.0",
   "author": {
     "name": "ZMS Labs"
   },

@@ -141,6 +141,8 @@ trusting either result.
 | "The API returned success." | Backend success may not be rendered or may target the wrong entity. | Require synchronized rendered and state evidence. |
 | "The text exists in the DOM." | Text may be hidden, clipped, stale, covered, or off-screen. | Verify visibility, context, geometry, and screenshot. |
 | "The screenshot looks fine." | Pixels omit semantics, focus, persistence, and backend truth. | Triangulate visual, structural, and business evidence. |
+| "The screenshot file exists, so the UI rendered." | Artifact existence proves the capture ran, not that the surface rendered — a blank page screenshots successfully. | Inspect the artifact's content against the expected observation; existence is never evidence. |
+| "No one saw console errors, so there were none." | An unread error channel is an unexercised oracle; silence unobserved is not silence. | Capture the console/error channel on every actor run; a non-empty error set relevant to the exercised surface is a hard FAIL, not a footnote. |
 | Actor and judge are the same context. | Errors and assumptions are correlated; the model self-certifies. | Withhold actor verdict and use an independent verifier. |
 | Only final success is checked. | Accidental success, wrong actions, duplicates, and drift remain hidden. | Verify meaningful transitions and subgoals. |
 | Retry until green. | First-run failures disappear and false confidence rises. | Preserve first result; classify fail-then-pass as FLAKY. |

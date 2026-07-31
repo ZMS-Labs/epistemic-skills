@@ -177,6 +177,23 @@ optional lint for verdict vocabulary (`GO`, `NO-GO`, `must`, `approved`) in
 machine-checked ledger freshness, the contract is extended then, per its own
 extension procedure.
 
+## Outcome reviews — the anti-hindsight boundary
+
+When a ledgered decision's outcome later becomes observable, the review
+records **the original prediction and the observed result as separate,
+untouched facts** — never a retrofitted narrative of what "we really
+expected." Hindsight rewrites are the failure mode: they convert a
+calibration datum into a flattering story and destroy the only signal that
+makes the ledger self-correcting.
+
+Two-stage rule: the *outcome record* is appended freely (it is data), but a
+*generalized lesson* ("we should always/never X") becomes durable guidance
+only after explicit operator approval — an agent may propose the lesson in
+the outcome record, never promote it to standing guidance on its own. This
+also covers throwaway-prototyping's capture step: the prototype's question,
+observation, and answer land here as an outcome-shaped entry before the
+build is disposed.
+
 ## Close-out rule
 
 At the end of a work batch that produced consequential decisions, inspect the
