@@ -48,6 +48,16 @@ jobs:
         run: python plugins/epistemic-skills/skills/decision-ledger/evals/proportionality/tests/run_tests.py
       - name: Open Questions trigger-and-scope tests
         run: python plugins/epistemic-skills/skills/open-questions/evals/trigger-and-scope/tests/run_tests.py
+      - name: Context Audit trigger-and-scope tests
+        run: python plugins/epistemic-skills/skills/context-audit/evals/trigger-and-scope/tests/run_tests.py
+      - name: Agent Interface Design trigger-and-scope tests
+        run: python plugins/epistemic-skills/skills/agent-interface-design/evals/trigger-and-scope/tests/run_tests.py
+      - name: Wayfinding trigger-and-scope tests
+        run: python plugins/epistemic-skills/skills/wayfinding/evals/trigger-and-scope/tests/run_tests.py
+      - name: Throwaway Prototyping trigger-and-scope tests
+        run: python plugins/epistemic-skills/skills/throwaway-prototyping/evals/trigger-and-scope/tests/run_tests.py
+      - name: Intent-traced Merge trigger-and-scope tests
+        run: python plugins/epistemic-skills/skills/intent-traced-merge/evals/trigger-and-scope/tests/run_tests.py
       - name: Outsource packet and package integration
         run: python plugins/epistemic-skills/skills/outsource/tests/run_tests.py
       - name: Continuity resume-fixture committed results

@@ -29,6 +29,16 @@ def main() -> int:
         REPO_ROOT / "plugins/epistemic-skills/skills/decision-ledger/reference",
         REPO_ROOT / "plugins/epistemic-skills/skills/open-questions/evals/trigger-and-scope",
     ]
+    roots.extend(
+        REPO_ROOT / f"plugins/epistemic-skills/skills/{skill}/evals/trigger-and-scope"
+        for skill in (
+            "context-audit",
+            "agent-interface-design",
+            "wayfinding",
+            "throwaway-prototyping",
+            "intent-traced-merge",
+        )
+    )
     files = [path for root in roots for path in root.rglob("*.json")]
     observed_invalid: set[Path] = set()
     for path in files:

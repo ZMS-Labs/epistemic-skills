@@ -207,9 +207,10 @@ def main() -> int:
         "throwaway-prototyping",
         "intent-traced-merge",
     ):
+        test_path = f"plugins/epistemic-skills/skills/{battery_skill}/evals/trigger-and-scope/tests/run_tests.py"
         require(
-            f"{battery_skill}/evals/trigger-and-scope/tests/run_tests.py" in workflow,
-            f"CI omits {battery_skill} trigger-and-scope tests",
+            f"run: python {test_path}" in workflow,
+            f"CI does not execute {battery_skill} trigger-and-scope tests",
         )
         require(
             (PACKAGE_ROOT / "skills" / battery_skill / "evals" / "trigger-and-scope"
