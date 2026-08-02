@@ -135,9 +135,29 @@ def main() -> int:
         "routine fast-path reference is missing",
     )
 
-    helix = read(PACKAGE_ROOT / "skills" / "helix" / "SKILL.md")
+    helix_root = PACKAGE_ROOT / "skills" / "helix"
+    helix = read(helix_root / "SKILL.md")
     require("external delegation / model handoff" in helix, "helix lacks outsource pairing")
     require("Do **not** emit a line for an absent trigger" in helix, "helix still records non-events")
+    require("continuity-verify → blindspot-pass" in helix, "helix lacks pre-arc resumption ordering")
+    require("zero, one, or ordered set" in helix, "helix still implies single-pair selection")
+    helix_contract = json.loads(read(helix_root / "reference" / "composition-contract.json"))
+    require(
+        helix_contract.get("schema") == "helix-composition-contract@1",
+        "helix composition contract schema is missing or stale",
+    )
+    require(
+        len(helix_contract.get("members", {})) == 15,
+        "helix composition contract does not classify all fifteen disciplines",
+    )
+    helix_eval = helix_root / "evals" / "composition"
+    for filename in (
+        "README.md",
+        "verify.py",
+        "tests/run_tests.py",
+        "results/BLOCKED.md",
+    ):
+        require((helix_eval / filename).is_file(), f"missing Helix composition artifact: {filename}")
 
     readme = read(REPO_ROOT / "README.md")
     require(f"**Version {EXPECTED_VERSION}.**" in readme, "README version is stale")
@@ -163,6 +183,10 @@ def main() -> int:
     require(
         "continuity-verify/evals/resume-fixtures/score.py" in workflow,
         "CI omits continuity-verify committed-result scoring",
+    )
+    require(
+        "helix/evals/composition/tests/run_tests.py" in workflow,
+        "CI omits Helix composition contract tests",
     )
     require(
         "python .github/scripts/test_check_dco.py" in workflow,
