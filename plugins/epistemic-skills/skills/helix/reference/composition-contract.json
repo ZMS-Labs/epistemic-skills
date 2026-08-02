@@ -1,0 +1,171 @@
+{
+  "schema": "helix-composition-contract@1",
+  "trigger_authority": "member",
+  "selection_owner": "using-epistemic-skills",
+  "position_owner": "helix",
+  "routine_policy": {
+    "fresh_routine_path": "silent",
+    "resumption_precedes_routine_classification": true
+  },
+  "required_order_rules": [
+    {
+      "id": "resumption-before-recon",
+      "when": "same-resumption-lineage",
+      "before": "continuity-verify",
+      "after": "blindspot-pass"
+    },
+    {
+      "id": "task-start-recon-before-design-derivation",
+      "when": "same-design-lineage-after-micro-recon-mismatch",
+      "before": "blindspot-pass",
+      "after": "applying-formal-rigor"
+    },
+    {
+      "id": "conflict-resolution-before-pre-merge-gate",
+      "when": "same-branch-pre-merge-lineage",
+      "before": "intent-traced-merge",
+      "after": "gauntlet"
+    },
+    {
+      "id": "gate-before-ui-proof",
+      "when": "same-change-needs-gate-and-material-ui-proof",
+      "before": "gauntlet",
+      "after": "evidence-locked-uat"
+    }
+  ],
+  "interlocks": [
+    {
+      "members": [
+        "applying-formal-rigor",
+        "evidence-research"
+      ],
+      "rule": "formal-names-empirical-premise-research-qualifies-formal-closes"
+    }
+  ],
+  "members": {
+    "blindspot-pass": {
+      "composition_class": "stage-bound",
+      "moments": [
+        "task-start-after-micro-recon",
+        "first-material-agent-dispatch"
+      ],
+      "position": "before"
+    },
+    "applying-formal-rigor": {
+      "composition_class": "decision-point",
+      "moments": [
+        "material-design-choice",
+        "correctness-or-complexity-claim",
+        "material-design-claim-in-review"
+      ],
+      "position": "inside"
+    },
+    "evidence-research": {
+      "composition_class": "cross-cutting",
+      "moments": [
+        "qualifying-scholarly-premise"
+      ],
+      "position": "at-premise"
+    },
+    "write-goal": {
+      "composition_class": "pre-execution",
+      "moments": [
+        "explicit-goal-authoring"
+      ],
+      "position": "before"
+    },
+    "continuity-verify": {
+      "composition_class": "pre-arc",
+      "moments": [
+        "resumption"
+      ],
+      "position": "before",
+      "precedes_boundaries": [
+        "routine-classification",
+        "workflow-stage"
+      ]
+    },
+    "decision-ledger": {
+      "composition_class": "retrospective-cross-cutting",
+      "moments": [
+        "consequential-decision",
+        "load-bearing-assumption",
+        "recurrent-or-operator-correction"
+      ],
+      "position": "after",
+      "persistence_modes": [
+        "reuse-existing-durable-artifact",
+        "append-gap-only"
+      ]
+    },
+    "outsource": {
+      "composition_class": "execution-boundary",
+      "moments": [
+        "external-handoff"
+      ],
+      "position": "before"
+    },
+    "gauntlet": {
+      "composition_class": "gate",
+      "moments": [
+        "design-approval",
+        "pre-merge"
+      ],
+      "position": "at-approval-or-pre-merge"
+    },
+    "evidence-locked-uat": {
+      "composition_class": "prove",
+      "moments": [
+        "material-ui-acceptance",
+        "acceptor-comprehension"
+      ],
+      "position": "at-acceptance"
+    },
+    "open-questions": {
+      "composition_class": "gated-cross-cutting",
+      "moments": [
+        "gated-stage"
+      ],
+      "position": "before",
+      "modes": [
+        "explicit-full-exhaustion",
+        "automatic-fork-scoped"
+      ]
+    },
+    "context-audit": {
+      "composition_class": "maintenance-outside-arc",
+      "moments": [
+        "instruction-assembly-maintenance"
+      ],
+      "position": "outside"
+    },
+    "agent-interface-design": {
+      "composition_class": "build-stage",
+      "moments": [
+        "agent-consumed-interface-build"
+      ],
+      "position": "inside"
+    },
+    "wayfinding": {
+      "composition_class": "initiative-pre-arc",
+      "moments": [
+        "large-foggy-effort"
+      ],
+      "position": "before"
+    },
+    "throwaway-prototyping": {
+      "composition_class": "decide-instrument",
+      "moments": [
+        "build-cheaper-than-debate"
+      ],
+      "position": "inside"
+    },
+    "intent-traced-merge": {
+      "composition_class": "integration-stage",
+      "moments": [
+        "non-trivial-merge-conflict"
+      ],
+      "position": "at-integration"
+    }
+  }
+}
