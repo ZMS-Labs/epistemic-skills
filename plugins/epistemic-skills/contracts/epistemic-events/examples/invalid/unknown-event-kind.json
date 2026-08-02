@@ -1,0 +1,17 @@
+{
+  "record": "epistemic-event@1",
+  "variant": "calibratable",
+  "event_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "idempotency_key": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "producer": {"skill": "evidence-locked-uat", "skill_version": "2.9.2", "producer_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"},
+  "event_kind": "unbounded-kind",
+  "subject_ref": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+  "correlation_ref": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+  "occurred_on": "2026-07-27",
+  "model_family": null,
+  "harness_class": null,
+  "provenance_mode": "preregistered",
+  "privacy_class": "portable-minimized",
+  "evidence_refs": [],
+  "forecast": {"outcome_class": "correct", "probability": 0.75, "resolution_rule": "deterministic-fixture"}
+}

@@ -1,0 +1,19 @@
+{
+  "record": "epistemic-collection-hook-eval@1",
+  "scenario_sha256": "5ac5dd1426b8b68447a49fa85e9498163a55a91106911edc7fc771209bdfce0c",
+  "model_family": "same-session-subagent",
+  "runs_per_variant": 5,
+  "assertions": [
+    "normal_result_preserved",
+    "no_raw_content",
+    "adapter_failure_non_blocking",
+    "eligibility_map_semantics_consulted",
+    "no_skip_inventory_or_ceremony"
+  ],
+  "old_snapshot_pass_counts": [5, 5, 3, 0, 5],
+  "candidate_pass_counts": [5, 5, 5, 5, 5],
+  "old_snapshot_overall_passes": 0,
+  "candidate_overall_passes": 5,
+  "candidate_converged": true,
+  "old_snapshot_mixed_assertions": ["adapter_failure_non_blocking"]
+}

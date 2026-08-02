@@ -8,3 +8,6 @@ __pycache__/
 # plugins/epistemic-skills/contracts/README.md).
 outputs/
 artifacts/uat/**/screenshots/
+.epistemic-events/
+outputs/epistemic-events/
+pilot/runs/

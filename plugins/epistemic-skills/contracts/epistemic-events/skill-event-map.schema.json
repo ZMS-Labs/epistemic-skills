@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://zms-labs.github.io/epistemic-skills/contracts/skill-event-map.schema.json",
+  "title": "Epistemic Skill Event Eligibility Map",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["skills"],
+  "properties": {
+    "skills": {
+      "type": "array",
+      "minItems": 11,
+      "maxItems": 11,
+      "items": {
+        "oneOf": [
+          {"type":"object","additionalProperties":false,"required":["skill","event_kinds","eligible_when","outcome_sources","collection_mode","sentinel_fixture"],"properties":{"skill":{"const":"using-epistemic-skills"},"event_kinds":{"const":["routing-decision"]},"eligible_when":{"const":["evaluation-case","sampled-field-incident"]},"outcome_sources":{"const":["independent-adjudication"]},"collection_mode":{"const":"observational"},"sentinel_fixture":{"const":"router-over-under.json"}}},
+          {"type":"object","additionalProperties":false,"required":["skill","event_kinds","eligible_when","outcome_sources","collection_mode","sentinel_fixture"],"properties":{"skill":{"const":"helix"},"event_kinds":{"const":["pairing-decision"]},"eligible_when":{"const":["evaluation-case","correction-or-supersession"]},"outcome_sources":{"const":["independent-adjudication"]},"collection_mode":{"const":"observational"},"sentinel_fixture":{"const":"helix-missed-pair.json"}}},
+          {"type":"object","additionalProperties":false,"required":["skill","event_kinds","eligible_when","outcome_sources","collection_mode","sentinel_fixture"],"properties":{"skill":{"const":"blindspot-pass"},"event_kinds":{"const":["landmine-prediction"]},"eligible_when":{"const":["preregistered-prediction"]},"outcome_sources":{"const":["field-observation"]},"collection_mode":{"const":"calibratable"},"sentinel_fixture":{"const":"blindspot-landmine.json"}}},
+          {"type":"object","additionalProperties":false,"required":["skill","event_kinds","eligible_when","outcome_sources","collection_mode","sentinel_fixture"],"properties":{"skill":{"const":"applying-formal-rigor"},"event_kinds":{"const":["formal-prediction"]},"eligible_when":{"const":["preregistered-prediction"]},"outcome_sources":{"const":["deterministic-fixture","field-observation"]},"collection_mode":{"const":"calibratable"},"sentinel_fixture":{"const":"formal-prediction.json"}}},
+          {"type":"object","additionalProperties":false,"required":["skill","event_kinds","eligible_when","outcome_sources","collection_mode","sentinel_fixture"],"properties":{"skill":{"const":"evidence-research"},"event_kinds":{"const":["evidence-claim"]},"eligible_when":{"const":["independently-resolvable-verdict"]},"outcome_sources":{"const":["independent-adjudication","field-observation"]},"collection_mode":{"const":"conditional"},"sentinel_fixture":{"const":"evidence-correction.json"}}},
+          {"type":"object","additionalProperties":false,"required":["skill","event_kinds","eligible_when","outcome_sources","collection_mode","sentinel_fixture"],"properties":{"skill":{"const":"write-goal"},"event_kinds":{"const":["goal-proof"]},"eligible_when":{"const":["independently-resolvable-verdict"]},"outcome_sources":{"const":["field-observation","supersession-chain"]},"collection_mode":{"const":"conditional"},"sentinel_fixture":{"const":"goal-regression.json"}}},
+          {"type":"object","additionalProperties":false,"required":["skill","event_kinds","eligible_when","outcome_sources","collection_mode","sentinel_fixture"],"properties":{"skill":{"const":"outsource"},"event_kinds":{"const":["handoff-verification"]},"eligible_when":{"const":["evaluation-case","sampled-field-incident"]},"outcome_sources":{"const":["deterministic-fixture","independent-adjudication"]},"collection_mode":{"const":"observational"},"sentinel_fixture":{"const":"outsource-relay.json"}}},
+          {"type":"object","additionalProperties":false,"required":["skill","event_kinds","eligible_when","outcome_sources","collection_mode","sentinel_fixture"],"properties":{"skill":{"const":"gauntlet"},"event_kinds":{"const":["review-forecast"]},"eligible_when":{"const":["preregistered-prediction","correction-or-supersession"]},"outcome_sources":{"const":["field-observation","supersession-chain"]},"collection_mode":{"const":"conditional"},"sentinel_fixture":{"const":"gauntlet-dissent.json"}}},
+          {"type":"object","additionalProperties":false,"required":["skill","event_kinds","eligible_when","outcome_sources","collection_mode","sentinel_fixture"],"properties":{"skill":{"const":"evidence-locked-uat"},"event_kinds":{"const":["uat-verdict"]},"eligible_when":{"const":["independently-resolvable-verdict"]},"outcome_sources":{"const":["deterministic-fixture","field-observation"]},"collection_mode":{"const":"calibratable"},"sentinel_fixture":{"const":"uat-seeded-defect.json"}}},
+          {"type":"object","additionalProperties":false,"required":["skill","event_kinds","eligible_when","outcome_sources","collection_mode","sentinel_fixture"],"properties":{"skill":{"const":"decision-ledger"},"event_kinds":{"const":["ledger-revisit"]},"eligible_when":{"const":["revisit-trigger-fired"]},"outcome_sources":{"const":["supersession-chain"]},"collection_mode":{"const":"observational"},"sentinel_fixture":{"const":"ledger-revisit.json"}}},
+          {"type":"object","additionalProperties":false,"required":["skill","event_kinds","eligible_when","outcome_sources","collection_mode","sentinel_fixture"],"properties":{"skill":{"const":"continuity-verify"},"event_kinds":{"const":["continuity-reanchor"]},"eligible_when":{"const":["evaluation-case","sampled-field-incident"]},"outcome_sources":{"const":["deterministic-fixture","field-observation"]},"collection_mode":{"const":"observational"},"sentinel_fixture":{"const":"continuity-contradiction.json"}}}
+        ]
+      },
+      "allOf": [
+        {"contains":{"type":"object","required":["skill"],"properties":{"skill":{"const":"using-epistemic-skills"}}},"minContains":1,"maxContains":1},
+        {"contains":{"type":"object","required":["skill"],"properties":{"skill":{"const":"helix"}}},"minContains":1,"maxContains":1},
+        {"contains":{"type":"object","required":["skill"],"properties":{"skill":{"const":"blindspot-pass"}}},"minContains":1,"maxContains":1},
+        {"contains":{"type":"object","required":["skill"],"properties":{"skill":{"const":"applying-formal-rigor"}}},"minContains":1,"maxContains":1},
+        {"contains":{"type":"object","required":["skill"],"properties":{"skill":{"const":"evidence-research"}}},"minContains":1,"maxContains":1},
+        {"contains":{"type":"object","required":["skill"],"properties":{"skill":{"const":"write-goal"}}},"minContains":1,"maxContains":1},
+        {"contains":{"type":"object","required":["skill"],"properties":{"skill":{"const":"outsource"}}},"minContains":1,"maxContains":1},
+        {"contains":{"type":"object","required":["skill"],"properties":{"skill":{"const":"gauntlet"}}},"minContains":1,"maxContains":1},
+        {"contains":{"type":"object","required":["skill"],"properties":{"skill":{"const":"evidence-locked-uat"}}},"minContains":1,"maxContains":1},
+        {"contains":{"type":"object","required":["skill"],"properties":{"skill":{"const":"decision-ledger"}}},"minContains":1,"maxContains":1},
+        {"contains":{"type":"object","required":["skill"],"properties":{"skill":{"const":"continuity-verify"}}},"minContains":1,"maxContains":1}
+      ]
+    }
+  }
+}

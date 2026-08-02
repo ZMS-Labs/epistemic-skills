@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Epistemic Outcome v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["record", "observation_id", "event_id", "outcome_class", "resolution_status", "verification_method", "independence_class", "evidence_ref", "observed_on", "producer", "supersedes"],
+  "properties": {
+    "record": {"const": "epistemic-outcome@1"},
+    "observation_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "event_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "outcome_class": {"enum": ["correct", "incorrect", "partial", "unresolved", "over-escalated", "under-escalated", "regressed"]},
+    "resolution_status": {"enum": ["resolved", "partial", "unresolved", "superseded"]},
+    "verification_method": {"enum": ["deterministic-oracle", "independent-human", "independent-model", "field-observation"]},
+    "independence_class": {"enum": ["deterministic", "different-family", "same-family", "self-reported"]},
+    "evidence_ref": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["kind", "sha256"],
+      "properties": {
+        "kind": {"enum": ["artifact-hash", "receipt-hash", "oracle-hash", "ledger-entry-hash", "run-record-hash"]},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "observed_on": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"},
+    "producer": {"type": "string", "minLength": 1},
+    "supersedes": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"resolution_status": {"const": "resolved"}}, "required": ["resolution_status"]},
+      "then": {
+        "properties": {
+          "evidence_ref": {"type": "object"},
+          "independence_class": {"not": {"const": "self-reported"}}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"resolution_status": {"const": "superseded"}}, "required": ["resolution_status"]},
+      "then": {"properties": {"supersedes": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}}
+    }
+  ]
+}

@@ -26,6 +26,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Epistemic event contract tests
+        run: python plugins/epistemic-skills/contracts/epistemic-events/test_epistemic_events.py
+      - name: Compile epistemic event verifier
+        run: python -m py_compile plugins/epistemic-skills/contracts/epistemic-events/verify_epistemic_event.py
       - name: Epistemic-flexibility protocol fixtures
         run: python plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/run_tests.py
       - name: Behavioral fixture scorer self-test
