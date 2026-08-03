@@ -350,7 +350,8 @@ estimates.** They exchange revision-bound records rather than sharing mutable
 source or creating an installation dependency.
 
 The [coordination charter](docs/coordination/epistemic-calibration.md) records
-the current 3.0.0 status, product boundary, proposed
+the coordination status as frozen at its 2d66a27 (v3.0.0-era)
+baseline, the product boundary, the proposed
 `epistemic-product-calibration@1` exchange unit, adoption questions, and phased
 pilot plan. Calibration-side state remains unverified until that repository
 returns an immutable reference; the charter does not turn a proposed bilateral

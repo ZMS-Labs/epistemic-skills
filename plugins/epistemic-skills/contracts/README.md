@@ -1,14 +1,17 @@
 # Cross-skill and cross-product contracts
 
-This directory contains two deliberately narrow envelopes:
+This directory contains three deliberately narrow contract surfaces:
 
 - [`handoff-receipt@1`](handoff-receipt.schema.json) binds artifacts passed
   between skills in one workflow.
+- [`epistemic-events/`](epistemic-events/) defines the fire-and-forget
+  epistemic event and outcome records the collection layer emits (see the
+  [Epistemic event collection](#epistemic-event-collection) section below).
 - [`epistemic-product-calibration@1`](epistemic-product-calibration.schema.json)
   binds a calibration result to immutable producer, subject, corpus, runner,
   preregistration, and result revisions across the two product repositories.
 
-Neither envelope attests that a behavioral judgment is correct.
+None of these surfaces attests that a behavioral judgment is correct.
 
 ## Handoff receipts — `handoff-receipt@1`
 

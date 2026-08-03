@@ -131,7 +131,8 @@ jobs:
             plugins/epistemic-skills/skills/throwaway-prototyping/evals/trigger-and-scope/tests/run_tests.py \
             plugins/epistemic-skills/skills/intent-traced-merge/evals/trigger-and-scope/score.py \
             plugins/epistemic-skills/skills/intent-traced-merge/evals/trigger-and-scope/tests/run_tests.py \
-            plugins/epistemic-skills/skills/decision-ledger/reference/validate_examples.py
+            plugins/epistemic-skills/skills/decision-ledger/reference/validate_examples.py \
+            plugins/epistemic-skills/contracts/verify_calibration.py
       - name: Parse committed JSON in integration surfaces
         run: python .github/scripts/check_json_artifacts.py
       - name: Decision-ledger recurrent-correction examples

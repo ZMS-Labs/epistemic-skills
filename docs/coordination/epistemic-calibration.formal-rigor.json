@@ -2,7 +2,7 @@
   "record": "formal-rigor-record@2",
   "subject": {
     "ref": "docs/coordination/epistemic-calibration.md",
-    "revision": "2d66a276e27b80996a9d0a1851c97cfe77127690"
+    "revision": "da3e0130112f5f14a209f7e7a77ae25478043ebc"
   },
   "valid_while": ["subject-revision-unchanged", "skills-3.0-contract-unchanged", "calibration-side-contract-not-yet-adopted"],
   "coverage_limits": [
