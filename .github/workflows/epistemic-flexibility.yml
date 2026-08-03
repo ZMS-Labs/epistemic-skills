@@ -73,6 +73,13 @@ jobs:
         run: python plugins/epistemic-skills/skills/throwaway-prototyping/evals/trigger-and-scope/tests/run_tests.py
       - name: Intent-traced Merge trigger-and-scope tests
         run: python plugins/epistemic-skills/skills/intent-traced-merge/evals/trigger-and-scope/tests/run_tests.py
+      - name: Enforcement-language precision audit
+        run: |
+          set +e
+          python plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/audit_enforcement_language.py > enforcement-language-report.ndjson
+          status=$?
+          cat enforcement-language-report.ndjson
+          exit "$status"
       - name: Gauntlet validation-kernel gate
         run: python plugins/epistemic-skills/skills/gauntlet/scripts/validate_ruling_set.py --self-test
       - name: Outsource packet and package integration
@@ -105,6 +112,7 @@ jobs:
             .github/scripts/check_json_artifacts.py \
             plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/validate_trace.py \
             plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/run_tests.py \
+            plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/audit_enforcement_language.py \
             plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/behavioral/score_behavior.py \
             plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/behavioral/run_tests.py \
             plugins/epistemic-skills/skills/using-epistemic-skills/evals/proportionality/score.py \
