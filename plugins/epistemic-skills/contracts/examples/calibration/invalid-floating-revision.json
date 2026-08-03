@@ -1,0 +1,62 @@
+{
+  "protocol": "epistemic-product-calibration@1",
+  "synthetic": true,
+  "producer": {
+    "repo": "ZMS-Labs/epistemic-calibration",
+    "revision": "main"
+  },
+  "subject": {
+    "repo": "ZMS-Labs/epistemic-skills",
+    "revision": "3333333333333333333333333333333333333333",
+    "version": "3.0.0",
+    "skill_or_surface": "evidence-locked-uat"
+  },
+  "contract_revision": "uat-seeded-defect@1",
+  "corpus": {
+    "ref": "corpora/uat-seeded-defects",
+    "revision": "4444444444444444444444444444444444444444",
+    "sha256": "5555555555555555555555555555555555555555555555555555555555555555"
+  },
+  "runner": {
+    "ref": "runners/uat-calibration",
+    "revision": "6666666666666666666666666666666666666666",
+    "sha256": "7777777777777777777777777777777777777777777777777777777777777777"
+  },
+  "execution": {
+    "models": [
+      "synthetic-model@1"
+    ],
+    "harnesses": [
+      "synthetic-harness@1"
+    ],
+    "started_at": "2026-07-29T00:00:00Z",
+    "completed_at": "2026-07-29T00:05:00Z"
+  },
+  "sampling_frame": {
+    "population": "Synthetic planted-defect and clean-control cases.",
+    "planned": 4,
+    "observed": 3,
+    "excluded": 0,
+    "missing": 1
+  },
+  "preregistration": {
+    "ref": "plans/uat-pilot.json",
+    "revision": "8888888888888888888888888888888888888888",
+    "sha256": "9999999999999999999999999999999999999999999999999999999999999999"
+  },
+  "result": {
+    "ref": "results/uat-pilot.json",
+    "revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  },
+  "status": "observed",
+  "supersedes": null,
+  "limitations": [
+    "Synthetic fixture only; does not establish real-user or cross-provider behavior."
+  ],
+  "never_attests": [
+    "behavioral-merit-by-envelope",
+    "statistical-validity-by-envelope",
+    "release-readiness-by-envelope"
+  ]
+}

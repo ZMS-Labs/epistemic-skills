@@ -21,6 +21,7 @@ def main() -> int:
         if not row["json_parseable"]
     }
     roots = [
+        REPO_ROOT / "plugins/epistemic-skills/contracts",
         REPO_ROOT / "plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility",
         REPO_ROOT / "plugins/epistemic-skills/skills/using-epistemic-skills/evals/proportionality",
         FORMAL_ROOT,
