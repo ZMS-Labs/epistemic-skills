@@ -1,0 +1,18 @@
+{
+  "scorer": "plugins/epistemic-skills/skills/write-goal/evals/trigger-and-scope/score.py",
+  "exit_code": 0,
+  "report": [
+    "{",
+    "  \"pass\": true,",
+    "  \"failures\": [],",
+    "  \"actions\": {",
+    "    \"author-contract\": 4,",
+    "    \"start-goal\": 3,",
+    "    \"honor-interrupt\": 1,",
+    "    \"ask-blocking-question\": 1,",
+    "    \"no-fire\": 5",
+    "  }",
+    "}"
+  ],
+  "extraction_problems": []
+}

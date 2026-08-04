@@ -69,4 +69,5 @@ discipline behavior):
   and `proceeded` all false/absent.
 - List fields carry bare ids without annotations.
 
-No live behavioral epoch has been run against this battery; see `results/BLOCKED.md`.
+First live behavioral epoch: 2026-08-04, PASS 14/14 — see
+`results/2026-08-04/RESULTS.md` (register: issue #77).
