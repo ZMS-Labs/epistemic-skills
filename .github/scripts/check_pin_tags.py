@@ -23,6 +23,10 @@ import sys
 PINS = {
     # tag name -> peeled commit that must stay reachable at that name
     "pin/ecs-contract-2026-07-27": "8d9b2f85bd8e081a547e33f4bb9b5eb880a4c2b0",
+    # v4.0.0 is the counterpart's v4 re-pin coordinate (issue #84): the
+    # release tag itself is the reachability guarantee for the v4 event
+    # contract, so it is guarded like a pin tag.
+    "v4.0.0": "53ad6d523107d8c0d84f50945e22d6b744199446",
 }
 
 
