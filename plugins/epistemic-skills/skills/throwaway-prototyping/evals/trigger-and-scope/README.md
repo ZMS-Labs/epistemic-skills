@@ -17,5 +17,22 @@ a live agent follows the discipline.
 
 Run `python tests/run_tests.py`.
 
-No live behavioral epoch has been run against this battery; see
-`results/BLOCKED.md`.
+## Live-epoch response contract
+
+Pinned before the first live epoch: `action` names the discipline mode that
+fired — `run-prototype`, `no-fire`, `refuse-live-target`,
+`refuse-promotion`, or `record-and-dispose`. `run-prototype` reports the
+pre-registered `question`, the named `throwaway_location` (declared at
+birth, not mergeable — `mergeable` stays false/absent), and for
+comparative probes `variants` listing every rival option id bare. A
+`no-fire` builds nothing (no `built`, no `throwaway_location`) and names
+`resolved_by` as one of `reading` | `derivation` | `literature` |
+`normal-discipline`. `refuse-live-target` reports `refused: true` and
+builds nothing. `refuse-promotion` reports `promoted` false/absent,
+`answer_recorded: true`, `rebuild_planned: true`. `record-and-dispose`
+reports the durable `answer` object (`question`, `observation`,
+`decision`), its `record_ref`, `disposed: true`, and `kept_mergeable`
+false/absent. List fields carry bare ids without annotations.
+
+First live behavioral epoch: 2026-08-04, PASS 12/12 — see
+`results/2026-08-04/RESULTS.md` (register: issue #77).
