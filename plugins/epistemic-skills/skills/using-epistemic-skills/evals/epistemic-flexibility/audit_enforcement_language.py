@@ -46,86 +46,93 @@ TERM_RE = re.compile(
     re.IGNORECASE,
 )
 
-LIMITATION_MARKERS = (
-    "not enforcement",
-    "not enforce",
-    "does not enforce",
-    "doesn't enforce",
-    "cannot enforce",
-    "can't enforce",
-    "not mechanically",
-    "unachievable",
-    "structural only",
-    "human review",
-    "policy backstop",
-    "advisory",
-    "no runtime",
-    "not a security control",
-    "never claimed",
-    "does not satisfy",
-    "not guaranteed",
-    "category limit",
+# All markers are word-boundary regexes over the whitespace-normalized lowered
+# context. Unbounded substrings proved too coarse: bare "check"/"test"/"ci"
+# upgraded normative prose to mechanical, and "rule" matched inside
+# "overruled". A mechanical classification now requires a CONCRETE executable
+# mechanism (a named tool file, validator, schema, workflow, selector, parser,
+# machine-readable artifact, or exit/status semantics) — generic
+# verification vocabulary is not a mechanism.
+def _markers(*patterns: str) -> tuple[re.Pattern[str], ...]:
+    return tuple(re.compile(p) for p in patterns)
+
+
+LIMITATION_MARKERS = _markers(
+    r"\bnot enforcement\b",
+    r"\b(?:does not|doesn't|cannot|can't|never|not) enforce",
+    r"\bnot mechanically\b",
+    r"\bunachievable\b",
+    r"\bstructural only\b",
+    r"\bstructural[- ]only\b",
+    r"\bhuman[- ](?:review|enforced)\b",
+    r"\bpolicy backstop\b",
+    r"\badvisory\b",
+    r"\bno runtime\b",
+    r"\bnot a security control\b",
+    r"\bnever claimed\b",
+    r"\bdoes not satisfy\b",
+    r"\bnot guaranteed\b",
+    r"\bcategory limit\b",
 )
-EXTERNAL_MARKERS = (
-    "org-enforced",
-    "externally enforced",
-    "external gate",
-    "outside this skill",
-    "branch protection",
-    "runtime tool-call",
-    "tool-call boundary",
-    "if your environment",
-    "environment enforces",
+EXTERNAL_MARKERS = _markers(
+    r"\borg-enforced\b",
+    r"\bexternally enforced\b",
+    r"\bexternal (?:gate|review)\b",
+    r"\boutside this skill\b",
+    r"\bbranch protection\b",
+    r"\bruntime tool-call\b",
+    r"\btool-call boundary\b",
+    r"\bif your environment\b",
+    r"\benvironment enforces\b",
 )
-MECHANICAL_MARKERS = (
-    "mechanically",
-    "validator",
-    "schema",
-    "workflow",
-    "script",
-    "selector",
-    "parser",
-    "test",
-    "reject",
-    "check",
-    "executable",
-    "machine-readable",
-    "required status",
-    "ci ",
-    "ci-",
-    " ci",
+MECHANICAL_MARKERS = _markers(
+    r"\bmechanically\b",
+    r"\bvalidators?\b",
+    r"\bschemas?\b",
+    r"\bworkflows?\b",
+    r"\bscripts?\b",
+    r"\bselector\b",
+    r"\bparser\b",
+    r"\bexecutable\b",
+    r"\bmachine-readable\b",
+    r"\brequired status\b",
+    r"\b[a-z0-9_]+\.py\b",
+    r"\bexit codes?\b",
+    r"\bhard errors?\b",
+    r"\bci\b",
 )
-POLICY_MARKERS = (
-    "non-negotiable",
-    "must ",
-    " must",
-    "required",
-    "discipline",
-    "policy",
-    "operator",
-    "rule",
-    "guardrail",
+POLICY_MARKERS = _markers(
+    r"\bnon-negotiable\b",
+    r"\bmust\b",
+    r"\brequired?\b",
+    r"\bdisciplines?\b",
+    r"\bpolicy\b",
+    r"\boperator\b",
+    r"\brules?\b",
+    r"\bguardrails?\b",
     # Shared-invariant language is a normative fallback contract unless the
     # same local context names a validator/schema/workflow. Mechanical markers
     # are evaluated first, so these phrases never upgrade a named mechanism to
     # policy or downgrade a mechanical claim.
-    "missing evidence",
-    "no durable home",
-    "malformed chains",
-    "family resemblance",
-    "belongs in this collection",
+    r"\bmissing evidence\b",
+    r"\bno durable home\b",
+    r"\bmalformed chains\b",
+    r"\bfamily resemblance\b",
+    r"\bbelongs in this collection\b",
+    r"\bfloors?, not ceilings?\b",
+    r"\bnever a silent pass\b",
 )
 
 
 def classify(context: str) -> str | None:
     lowered = " ".join(context.lower().split())
-    if any(marker in lowered for marker in LIMITATION_MARKERS):
+    if any(marker.search(lowered) for marker in LIMITATION_MARKERS):
         return "limitation"
-    if any(marker in lowered for marker in EXTERNAL_MARKERS):
+    if any(marker.search(lowered) for marker in EXTERNAL_MARKERS):
         return "external"
-    if any(marker in lowered for marker in MECHANICAL_MARKERS):
+    if any(marker.search(lowered) for marker in MECHANICAL_MARKERS):
         return "mechanical"
-    if any(marker in lowered for marker in POLICY_MARKERS):
+    if any(marker.search(lowered) for marker in POLICY_MARKERS):
         return "policy"
     return None
 
@@ -160,6 +167,17 @@ def classification_self_test() -> list[str]:
         ),
         "ambiguous": (
             "The component enforces quality.",
+            None,
+        ),
+        # decoys: generic verification vocabulary is not a mechanism — these
+        # pin that bare "check"/"test" no longer upgrade prose to mechanical
+        # and that "overruled" no longer smuggles in the "rule" policy marker
+        "decoy-generic-check": (
+            "Each change enforces a bounded check before completion.",
+            None,
+        ),
+        "decoy-overruled": (
+            "Every overruled criticism is enforced to preserve its kernel.",
             None,
         ),
     }
@@ -207,6 +225,23 @@ def audit() -> tuple[list[dict[str, object]], list[str]]:
             if category is None:
                 errors.append(
                     f"AMBIGUOUS-ENFORCEMENT-LANGUAGE:{relative}:{index + 1}: {line.strip()}"
+                )
+
+    # Out-of-inventory tripwire: the frozen inventory is a deliberate v1 scope,
+    # but silent decay is not — enforcement language appearing in any
+    # non-inventoried SKILL.md fails the gate until SKILL_PATHS is extended
+    # deliberately (curated lists create unscanned paths otherwise).
+    skills_root = REPO_ROOT / "plugins" / "epistemic-skills" / "skills"
+    inventoried = {(REPO_ROOT / relative).resolve() for relative in SKILL_PATHS}
+    for path in sorted(skills_root.glob("*/SKILL.md")):
+        if path.resolve() in inventoried:
+            continue
+        for index, line in enumerate(path.read_text(encoding="utf-8").splitlines()):
+            if TERM_RE.search(line):
+                relative = path.resolve().relative_to(REPO_ROOT).as_posix()
+                errors.append(
+                    f"OUT-OF-INVENTORY-ENFORCEMENT-LANGUAGE:{relative}:{index + 1}: "
+                    f"{line.strip()} — add the file to SKILL_PATHS deliberately"
                 )
 
     if not records:
