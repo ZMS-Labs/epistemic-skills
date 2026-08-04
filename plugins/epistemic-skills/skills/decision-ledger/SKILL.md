@@ -137,6 +137,18 @@ that repository's substrate.
 ## Store discipline
 
 - The store is **single-writer-or-locked append**.
+- **Concurrent appenders merge by union, then re-validate.** Two branches
+  that each appended entries produce a textual conflict at the store's
+  tail; the only sanctioned resolution is the append-only union — every
+  side's entries kept verbatim, none rewritten — followed by a mandatory
+  pre-merge run of the store validator
+  (`reference/validate_examples.py`) over the unioned file, so a
+  two-head supersession chain or duplicate id created by merge ordering
+  is caught before the merge completes, not after it lands. If
+  concurrent ledger-appending branches become frequent, escalate to a
+  repository-settings guard (require-branches-up-to-date or a merge
+  queue scoped to `.ledger/**`) rather than relying on per-merge
+  discipline.
 - `revisit_when` doubles as the GC horizon, with periodic compaction of fully
   superseded chains.
 - Session-only names the recovery gap: entries held only in session state die
