@@ -135,6 +135,14 @@
       "outcome_sources": ["deterministic-fixture", "field-observation"],
       "collection_mode": "observational",
       "sentinel_fixture": "merge-dropped-intent.json"
+    },
+    {
+      "skill": "harvest-before-adopt",
+      "event_kinds": ["harvest-decision"],
+      "eligible_when": ["independently-resolvable-verdict"],
+      "outcome_sources": ["field-observation", "supersession-chain"],
+      "collection_mode": "observational",
+      "sentinel_fixture": "harvest-drop-suppressed-read.json"
     }
   ]
 }

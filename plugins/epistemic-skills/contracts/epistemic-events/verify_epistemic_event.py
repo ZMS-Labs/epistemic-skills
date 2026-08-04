@@ -15,7 +15,7 @@ EVENT_KINDS = {
     "handoff-verification", "review-forecast", "uat-verdict",
     "ledger-revisit", "continuity-reanchor", "interview-scope-decision",
     "audit-cut-decision", "consumer-gate-outcome", "frontier-decision",
-    "probe-episode", "merge-ruling",
+    "probe-episode", "merge-ruling", "harvest-decision",
 }
 OUTCOME_CLASSES = {
     "correct", "incorrect", "partial", "unresolved",
@@ -39,7 +39,7 @@ SKILL_NAMES = {
     "outsource", "gauntlet", "evidence-locked-uat", "decision-ledger",
     "continuity-verify", "open-questions", "context-audit",
     "agent-interface-design", "wayfinding", "throwaway-prototyping",
-    "intent-traced-merge",
+    "intent-traced-merge", "harvest-before-adopt",
 }
 PROHIBITED_CONTENT_KEYS = {
     "prompt", "transcript", "user_prose", "raw_content", "secret",
@@ -179,6 +179,13 @@ SKILL_EVENT_MAP = {
         "outcome_sources": ("deterministic-fixture", "field-observation"),
         "collection_mode": "observational",
         "sentinel_fixture": "merge-dropped-intent.json",
+    },
+    "harvest-before-adopt": {
+        "event_kinds": ("harvest-decision",),
+        "eligible_when": ("independently-resolvable-verdict",),
+        "outcome_sources": ("field-observation", "supersession-chain"),
+        "collection_mode": "observational",
+        "sentinel_fixture": "harvest-drop-suppressed-read.json",
     },
 }
 

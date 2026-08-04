@@ -8,8 +8,8 @@
   "properties": {
     "skills": {
       "type": "array",
-      "minItems": 17,
-      "maxItems": 17,
+      "minItems": 18,
+      "maxItems": 18,
       "items": {
         "oneOf": [
           {"type":"object","additionalProperties":false,"required":["skill","event_kinds","eligible_when","outcome_sources","collection_mode","sentinel_fixture"],"properties":{"skill":{"const":"using-epistemic-skills"},"event_kinds":{"const":["routing-decision"]},"eligible_when":{"const":["evaluation-case","sampled-field-incident"]},"outcome_sources":{"const":["independent-adjudication"]},"collection_mode":{"const":"observational"},"sentinel_fixture":{"const":"router-over-under.json"}}},
@@ -28,7 +28,8 @@
           {"type":"object","additionalProperties":false,"required":["skill","event_kinds","eligible_when","outcome_sources","collection_mode","sentinel_fixture"],"properties":{"skill":{"const":"agent-interface-design"},"event_kinds":{"const":["consumer-gate-outcome"]},"eligible_when":{"const":["independently-resolvable-verdict"]},"outcome_sources":{"const":["independent-adjudication","field-observation"]},"collection_mode":{"const":"observational"},"sentinel_fixture":{"const":"interface-consumer-miss.json"}}},
           {"type":"object","additionalProperties":false,"required":["skill","event_kinds","eligible_when","outcome_sources","collection_mode","sentinel_fixture"],"properties":{"skill":{"const":"wayfinding"},"event_kinds":{"const":["frontier-decision"]},"eligible_when":{"const":["evaluation-case","correction-or-supersession"]},"outcome_sources":{"const":["field-observation","supersession-chain"]},"collection_mode":{"const":"observational"},"sentinel_fixture":{"const":"wayfinding-fog-ticket.json"}}},
           {"type":"object","additionalProperties":false,"required":["skill","event_kinds","eligible_when","outcome_sources","collection_mode","sentinel_fixture"],"properties":{"skill":{"const":"throwaway-prototyping"},"event_kinds":{"const":["probe-episode"]},"eligible_when":{"const":["independently-resolvable-verdict"]},"outcome_sources":{"const":["deterministic-fixture","field-observation"]},"collection_mode":{"const":"observational"},"sentinel_fixture":{"const":"prototype-promotion.json"}}},
-          {"type":"object","additionalProperties":false,"required":["skill","event_kinds","eligible_when","outcome_sources","collection_mode","sentinel_fixture"],"properties":{"skill":{"const":"intent-traced-merge"},"event_kinds":{"const":["merge-ruling"]},"eligible_when":{"const":["independently-resolvable-verdict"]},"outcome_sources":{"const":["deterministic-fixture","field-observation"]},"collection_mode":{"const":"observational"},"sentinel_fixture":{"const":"merge-dropped-intent.json"}}}
+          {"type":"object","additionalProperties":false,"required":["skill","event_kinds","eligible_when","outcome_sources","collection_mode","sentinel_fixture"],"properties":{"skill":{"const":"intent-traced-merge"},"event_kinds":{"const":["merge-ruling"]},"eligible_when":{"const":["independently-resolvable-verdict"]},"outcome_sources":{"const":["deterministic-fixture","field-observation"]},"collection_mode":{"const":"observational"},"sentinel_fixture":{"const":"merge-dropped-intent.json"}}},
+          {"type":"object","additionalProperties":false,"required":["skill","event_kinds","eligible_when","outcome_sources","collection_mode","sentinel_fixture"],"properties":{"skill":{"const":"harvest-before-adopt"},"event_kinds":{"const":["harvest-decision"]},"eligible_when":{"const":["independently-resolvable-verdict"]},"outcome_sources":{"const":["field-observation","supersession-chain"]},"collection_mode":{"const":"observational"},"sentinel_fixture":{"const":"harvest-drop-suppressed-read.json"}}}
         ]
       },
       "allOf": [
@@ -48,7 +49,8 @@
         {"contains":{"type":"object","required":["skill"],"properties":{"skill":{"const":"agent-interface-design"}}},"minContains":1,"maxContains":1},
         {"contains":{"type":"object","required":["skill"],"properties":{"skill":{"const":"wayfinding"}}},"minContains":1,"maxContains":1},
         {"contains":{"type":"object","required":["skill"],"properties":{"skill":{"const":"throwaway-prototyping"}}},"minContains":1,"maxContains":1},
-        {"contains":{"type":"object","required":["skill"],"properties":{"skill":{"const":"intent-traced-merge"}}},"minContains":1,"maxContains":1}
+        {"contains":{"type":"object","required":["skill"],"properties":{"skill":{"const":"intent-traced-merge"}}},"minContains":1,"maxContains":1},
+        {"contains":{"type":"object","required":["skill"],"properties":{"skill":{"const":"harvest-before-adopt"}}},"minContains":1,"maxContains":1}
       ]
     }
   }

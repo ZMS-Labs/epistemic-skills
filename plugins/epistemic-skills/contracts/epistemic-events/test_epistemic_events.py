@@ -51,7 +51,7 @@ EXPECTED_SKILLS = {
     "outsource", "gauntlet", "evidence-locked-uat",
     "decision-ledger", "continuity-verify", "open-questions",
     "context-audit", "agent-interface-design", "wayfinding",
-    "throwaway-prototyping", "intent-traced-merge",
+    "throwaway-prototyping", "intent-traced-merge", "harvest-before-adopt",
 }
 
 

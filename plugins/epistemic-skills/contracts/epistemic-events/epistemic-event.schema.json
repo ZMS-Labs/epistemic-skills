@@ -14,12 +14,12 @@
       "additionalProperties": false,
       "required": ["skill", "skill_version", "producer_sha256"],
       "properties": {
-        "skill": {"enum": ["using-epistemic-skills", "helix", "blindspot-pass", "applying-formal-rigor", "evidence-research", "write-goal", "outsource", "gauntlet", "evidence-locked-uat", "decision-ledger", "continuity-verify", "open-questions", "context-audit", "agent-interface-design", "wayfinding", "throwaway-prototyping", "intent-traced-merge"]},
+        "skill": {"enum": ["using-epistemic-skills", "helix", "blindspot-pass", "applying-formal-rigor", "evidence-research", "write-goal", "outsource", "gauntlet", "evidence-locked-uat", "decision-ledger", "continuity-verify", "open-questions", "context-audit", "agent-interface-design", "wayfinding", "throwaway-prototyping", "intent-traced-merge", "harvest-before-adopt"]},
         "skill_version": {"type": "string", "minLength": 1},
         "producer_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
       }
     },
-    "event_kind": {"enum": ["routing-decision", "pairing-decision", "landmine-prediction", "formal-prediction", "evidence-claim", "goal-proof", "handoff-verification", "review-forecast", "uat-verdict", "ledger-revisit", "continuity-reanchor", "interview-scope-decision", "audit-cut-decision", "consumer-gate-outcome", "frontier-decision", "probe-episode", "merge-ruling"]},
+    "event_kind": {"enum": ["routing-decision", "pairing-decision", "landmine-prediction", "formal-prediction", "evidence-claim", "goal-proof", "handoff-verification", "review-forecast", "uat-verdict", "ledger-revisit", "continuity-reanchor", "interview-scope-decision", "audit-cut-decision", "consumer-gate-outcome", "frontier-decision", "probe-episode", "merge-ruling", "harvest-decision"]},
     "subject_ref": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
     "correlation_ref": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
     "occurred_on": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"},

@@ -166,6 +166,13 @@
         "non-trivial-merge-conflict"
       ],
       "position": "at-integration"
+    },
+    "harvest-before-adopt": {
+      "composition_class": "stage-bound",
+      "moments": [
+        "external-overlap-adopt-question"
+      ],
+      "position": "before"
     }
   }
 }

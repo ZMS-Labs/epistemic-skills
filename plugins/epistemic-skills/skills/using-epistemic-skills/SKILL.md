@@ -1,11 +1,11 @@
 ---
 name: using-epistemic-skills
-description: Use when a task does not clear the routine-work fast path and might need more than one of blindspot-pass, applying-formal-rigor, evidence-research, write-goal, outsource, gauntlet, evidence-locked-uat, decision-ledger, continuity-verify, open-questions, context-audit, agent-interface-design, wayfinding, throwaway-prototyping, or intent-traced-merge; when choosing their order; when work should cross into another model, agent, or process; or when resuming from a summary or handoff. Do not substitute this router for the skill it selects. When a workflow-skill layer is also present, helix pairs the two collections.
+description: Use when a task does not clear the routine-work fast path and might need more than one of blindspot-pass, applying-formal-rigor, evidence-research, write-goal, outsource, gauntlet, evidence-locked-uat, decision-ledger, continuity-verify, open-questions, context-audit, agent-interface-design, wayfinding, throwaway-prototyping, intent-traced-merge, or harvest-before-adopt; when choosing their order; when work should cross into another model, agent, or process; or when resuming from a summary or handoff. Do not substitute this router for the skill it selects. When a workflow-skill layer is also present, helix pairs the two collections.
 ---
 
 # Using Epistemic Skills — the router
 
-These fifteen disciplines are one system: **how an agent knows things** before, during, and after
+These sixteen disciplines are one system: **how an agent knows things** before, during, and after
 work. A **workflow-skill layer** (such as [superpowers](https://github.com/obra/superpowers)) —
 brainstorming, TDD, systematic-debugging, plan-writing, verification-before-completion — covers
 *how you do* the work. This collection is the *epistemics* layer underneath it: the disciplines that keep every claim tethered to
@@ -53,6 +53,7 @@ job. That is exactly what lets them compose without stepping on each other:
 | **wayfinding** | a large foggy effort whose path holds unresolved decisions; a backlog whose tickets encode unmade decisions | a **decision-dependency map + fog-free build tickets** with the three-fact handoff (never a build, never a decision) | frontier decisions to open-questions / formal-rigor / throwaway-prototyping; fog-free tickets to the workflow layer's planning skills | map current while no upstream decision reopens | tracker map artifact + 4-field stamp |
 | **throwaway-prototyping** | a live decision cheaper to resolve by building a disposable probe than by argument, derivation, or literature | a **recorded answer (question + observation + decision) with the build disposed** — never promoted code | decision-ledger holds the finding; gauntlet option-sets and wayfinding nodes consume the answer; the workflow layer rebuilds for real | answer durable; build gone | ledger/tracker entry + 4-field stamp |
 | **intent-traced-merge** | a merge/rebase conflict with non-trivial hunks, or a merge commit lacking resolution provenance | a **merged result whose non-trivial hunks carry rulings (both origins cited) and whose both-origin checks pass** | ordinary review; decision-ledger for deliberately-dropped intents; the decision process for collisions that are open designs | until either parent's motivating check regresses | merge-commit/PR ruling record |
+| **harvest-before-adopt** | an external project overlaps something you already built or plan to build, and the question is adopt / replace / ignore | a **harvest record (level, item, pinned source, taken-deferred-rejected) + a per-level spend decision**; a capability partition only when the harvest could not answer it | throwaway-prototyping when the residue is a cheap reversible probe; gauntlet before any one-way door; decision-ledger for the spend decision | rows valid while both the candidate revision and the compared incumbent revision hold | harvest record + 4-field stamp |
 
 *Artifact shape pins the carrier: prose outputs carry a 4-field stamp (`subject.ref`,
 `subject.revision`, `valid_while`, `coverage_limits`; the producer is the emitting skill by
@@ -194,6 +195,7 @@ Match the trigger you can *observe*, not a vibe:
 | decompose a large effort whose path holds unresolved decisions, or mint build tickets from a partly-foggy backlog | **wayfinding** | tickets sliced from fog encode silent guesses; decompose by decisions, work only the frontier, mint tickets only from fog-free regions |
 | resolve a live design question where a disposable build is cheaper than more argument, derivation, or reading | **throwaway-prototyping** | a built probe is evidence; the contract (pre-registered question, disposal at birth, capture-then-delete, never promote) keeps it an instrument instead of unplanned work |
 | resolve a merge/rebase conflict containing any non-trivial hunk | **intent-traced-merge** | textual pattern-matching silently destroys one side's intent; trace both sides to their origins, preserve both or record the drop, verify against both origins |
+| decide whether to adopt, replace with, or ignore an external project that overlaps something you already have | **harvest-before-adopt** | the extractable unit is not the system — take the vocabulary, principles, constants and interface shapes first (free, reversible, no install), and only escalate to the expensive adopt question with what is left |
 
 If **none** match, none fire — this router does not manufacture work. If **two** match, run
 them in arc order (recon → decide → contract → gate → prove) and pass each output to the next per the
@@ -222,7 +224,7 @@ decide-stage re-fire loop between formal-rigor and research.
 gauntlet and evidence-locked-uat can both fire on the same merge (irreversible infra/security +
 user-facing surface) — gauntlet gates first, evidence-locked-uat proves after, per arc order.
 
-## Shared invariants (why these fifteen, and not others)
+## Shared invariants (why these sixteen, and not others)
 
 A skill belongs in this collection only if it enforces all of these. They are the family
 resemblance:
