@@ -142,7 +142,7 @@ deliverable is a *rewritten request*, not a change.
 The essay's *after* half: an optional comprehension check + quiz before merging a
 non-trivial change, weighted toward edge cases and blast radius over trivia, with a
 fixed two-round bar (simplify the change rather than re-quiz the explanation). See
-[`reference/blast-radius-quiz.md`](reference/blast-radius-quiz.md) for the full
+[`blast-radius-quiz.md`](blast-radius-quiz.md) for the full
 mechanic.
 
 ## Anti-patterns (you are rationalizing if you think these)

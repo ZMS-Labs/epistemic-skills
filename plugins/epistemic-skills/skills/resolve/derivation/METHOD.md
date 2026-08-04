@@ -1,7 +1,5 @@
----
-name: applying-formal-rigor
-description: 'Use when an operator explicitly requests a formal derivation or complexity proof; when a material software-or-systems decision has multiple viable alternatives with different measurable or theorem-governed properties; when a proposed design needs correctness confirmation or reversal; or when review feedback asserts a theorem, bound, consistency guarantee, isolation property, or safety property. Do not use for pure preference, one-answer mechanical edits, or low-cost reversible choices whose plausible loss is below the analysis cost unless rigor was explicitly requested.'
----
+<!-- resolve instrument: derivation (applying-formal-rigor) — consolidated into resolve (v4.0.0, 2026-08-04); this file is the instrument's full method, formerly its standalone SKILL.md -->
+
 
 # Applying Formal Rigor
 

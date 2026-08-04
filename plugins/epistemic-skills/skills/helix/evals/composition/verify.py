@@ -20,7 +20,7 @@ REQUIRED_ORDER_RULES = {
     "task-start-recon-before-design-derivation": {
         "when": "same-design-lineage-after-micro-recon-mismatch",
         "before": "recon",
-        "after": "applying-formal-rigor",
+        "after": "resolve",
     },
     "conflict-resolution-before-pre-merge-gate": {
         "when": "same-branch-pre-merge-lineage",
@@ -34,8 +34,8 @@ REQUIRED_ORDER_RULES = {
     },
 }
 REQUIRED_INTERLOCK = (
-    frozenset({"applying-formal-rigor", "evidence-research"}),
-    "formal-names-empirical-premise-research-qualifies-formal-closes",
+    frozenset({"resolve"}),
+    "instrument-sequencing-internal",
 )
 REQUIRED_TEXT_MARKERS = {
     "registry pointer": "reference/composition-contract.json",
@@ -188,15 +188,15 @@ def validate(contract: object, discovered_members: set[str], skill_text: str) ->
             members_pair = row.get("members")
             if (
                 isinstance(members_pair, list)
-                and len(members_pair) == 2
+                and len(members_pair) in (1, 2)
                 and all(isinstance(item, str) for item in members_pair)
             ):
-                candidate = (frozenset(members_pair), row.get("rule"))
+                candidate = (frozenset(members_pair), row.get("rule") or row.get("id"))
                 if candidate == REQUIRED_INTERLOCK:
                     found_interlock = True
                     break
     if not found_interlock:
-        failures.append("formal-rigor/evidence-research decide-stage interlock is missing")
+        failures.append("resolve instrument-sequencing interlock is missing")
 
     lowered = " ".join(skill_text.lower().split())
     for label, marker in REQUIRED_TEXT_MARKERS.items():

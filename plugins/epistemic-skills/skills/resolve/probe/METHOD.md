@@ -1,7 +1,5 @@
----
-name: throwaway-prototyping
-description: 'Use when a live design or feasibility decision can be resolved cheaper by BUILDING a disposable probe than by arguing, deriving, or researching it — "spike this", "which of these is right, try it", a decision whose debate cost exceeds a 20-minute build, or an option set whose discriminator test is "build the thin version and observe". Do NOT fire when the question is answerable by reading (blindspot-pass), derivation (applying-formal-rigor), or literature (evidence-research); when the build would touch shared/live infrastructure (that is not a throwaway); or as a way to start implementation early under a different name.'
----
+<!-- resolve instrument: probe (throwaway-prototyping) — consolidated into resolve (v4.0.0, 2026-08-04); this file is the instrument's full method, formerly its standalone SKILL.md -->
+
 
 # throwaway-prototyping — build to answer, then throw it away
 

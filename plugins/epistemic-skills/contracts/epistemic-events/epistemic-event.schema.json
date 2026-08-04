@@ -14,7 +14,7 @@
       "additionalProperties": false,
       "required": ["skill", "skill_version", "producer_sha256"],
       "properties": {
-        "skill": {"enum": ["using-epistemic-skills", "helix", "applying-formal-rigor", "evidence-research", "write-goal", "outsource", "gauntlet", "evidence-locked-uat", "decision-ledger", "continuity-verify", "open-questions", "context-audit", "agent-interface-design", "throwaway-prototyping", "intent-traced-merge", "recon"]},
+        "skill": {"enum": ["using-epistemic-skills", "helix", "write-goal", "outsource", "gauntlet", "evidence-locked-uat", "decision-ledger", "continuity-verify", "open-questions", "context-audit", "agent-interface-design", "intent-traced-merge", "recon", "resolve"]},
         "skill_version": {"type": "string", "minLength": 1},
         "producer_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
       }

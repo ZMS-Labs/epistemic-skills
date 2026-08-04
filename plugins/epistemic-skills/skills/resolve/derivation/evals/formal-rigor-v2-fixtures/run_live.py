@@ -22,7 +22,7 @@ import uuid
 
 ROOT = Path(__file__).resolve().parent
 SKILL_ROOT = ROOT.parents[1]
-REPO_ROOT = ROOT.parents[5]
+REPO_ROOT = ROOT.parents[6]
 FIXTURES_ROOT = ROOT / "fixtures"
 PROMPTS_ROOT = ROOT / "prompts"
 RED_BASELINE_ROOT = ROOT / "results" / "2026-07-24-red-baseline"
@@ -759,7 +759,7 @@ def build_arm_packet(
         copy_file(v1_source_dir / "SKILL.md", destination / "v1" / "SKILL.md")
         copy_file(v1_source_dir / "theory-battery.md", destination / "v1" / "theory-battery.md")
     elif arm == "v2-candidate" or arm in PARODY_ARMS:
-        copy_file(SKILL_ROOT / "SKILL.md", destination / "candidate" / "SKILL.md")
+        copy_file(SKILL_ROOT / "METHOD.md", destination / "candidate" / "SKILL.md")
         copy_file(SKILL_ROOT / "theory-battery.md", destination / "candidate" / "theory-battery.md")
         shutil.copytree(
             SKILL_ROOT / "reference" / "modules",
@@ -1448,7 +1448,7 @@ def execute_call(
 
 def prepare_v1_snapshot(destination: Path, commit: str) -> Path:
     destination.mkdir(parents=True, exist_ok=True)
-    for filename in ("SKILL.md", "theory-battery.md"):
+    for filename in ("METHOD.md", "theory-battery.md"):
         target = destination / filename
         if target.is_file():
             continue

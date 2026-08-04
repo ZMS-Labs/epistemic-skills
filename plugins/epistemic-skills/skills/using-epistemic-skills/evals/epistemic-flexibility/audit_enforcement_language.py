@@ -30,12 +30,12 @@ REFERENCE = (
     / "epistemic-flexibility.md"
 )
 SKILL_PATHS = [
-    "plugins/epistemic-skills/skills/applying-formal-rigor/SKILL.md",
+    "plugins/epistemic-skills/skills/resolve/derivation/METHOD.md",
     "plugins/epistemic-skills/skills/recon/SKILL.md",
     "plugins/epistemic-skills/skills/continuity-verify/SKILL.md",
     "plugins/epistemic-skills/skills/decision-ledger/SKILL.md",
     "plugins/epistemic-skills/skills/evidence-locked-uat/SKILL.md",
-    "plugins/epistemic-skills/skills/evidence-research/SKILL.md",
+    "plugins/epistemic-skills/skills/resolve/literature/METHOD.md",
     "plugins/epistemic-skills/skills/gauntlet/SKILL.md",
     "plugins/epistemic-skills/skills/helix/SKILL.md",
     "plugins/epistemic-skills/skills/using-epistemic-skills/SKILL.md",

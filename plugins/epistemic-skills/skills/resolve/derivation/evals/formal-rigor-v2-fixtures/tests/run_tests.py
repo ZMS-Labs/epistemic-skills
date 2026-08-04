@@ -13,7 +13,7 @@ import tempfile
 ROOT = Path(__file__).resolve().parents[1]
 SCORE_PATH = ROOT / "score.py"
 SKILL_ROOT = ROOT.parents[1]
-PACKAGE_ROOT = SKILL_ROOT.parents[1]
+PACKAGE_ROOT = SKILL_ROOT.parents[2]
 
 FIRST_RELEASE_MODULES = {
     "algorithms-data-structures",
@@ -100,7 +100,7 @@ def minimal_record(outcome: str = "underdetermined", selected_option=None) -> di
 
 
 def assert_v2_production_contract() -> None:
-    skill_text = (SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
+    skill_text = (SKILL_ROOT / "METHOD.md").read_text(encoding="utf-8")
     theory_text = (SKILL_ROOT / "theory-battery.md").read_text(encoding="utf-8")
     router_text = (PACKAGE_ROOT / "skills" / "using-epistemic-skills" / "SKILL.md").read_text(encoding="utf-8")
 

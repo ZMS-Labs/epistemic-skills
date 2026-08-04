@@ -1,11 +1,11 @@
 ---
 name: using-epistemic-skills
-description: Use when a task does not clear the routine-work fast path and might need more than one of recon, applying-formal-rigor, evidence-research, write-goal, outsource, gauntlet, evidence-locked-uat, decision-ledger, continuity-verify, open-questions, context-audit, agent-interface-design, throwaway-prototyping, or intent-traced-merge; when choosing their order; when work should cross into another model, agent, or process; or when resuming from a summary or handoff. Do not substitute this router for the skill it selects. When a workflow-skill layer is also present, helix pairs the two collections.
+description: Use when a task does not clear the routine-work fast path and might need more than one of recon, resolve, write-goal, outsource, gauntlet, evidence-locked-uat, decision-ledger, continuity-verify, open-questions, context-audit, agent-interface-design, or intent-traced-merge; when choosing their order; when work should cross into another model, agent, or process; or when resuming from a summary or handoff. Do not substitute this router for the skill it selects. When a workflow-skill layer is also present, helix pairs the two collections.
 ---
 
 # Using Epistemic Skills — the router
 
-These fourteen disciplines are one system: **how an agent knows things** before, during, and after
+These twelve disciplines are one system: **how an agent knows things** before, during, and after
 work. A **workflow-skill layer** (such as [superpowers](https://github.com/obra/superpowers)) —
 brainstorming, TDD, systematic-debugging, plan-writing, verification-before-completion — covers
 *how you do* the work. This collection is the *epistemics* layer underneath it: the disciplines that keep every claim tethered to
@@ -39,8 +39,7 @@ job. That is exactly what lets them compose without stepping on each other:
 | Skill | Consumes | Produces (its boundary) | Hands to | Valid until | Artifact shape |
 |---|---|---|---|---|---|
 | **recon** *(three modes: brief = the blindspot pass; initiative = wayfinding; candidate = harvest-before-adopt)* | a materially fuzzy or contradicted request after micro-recon; a large foggy effort; or an external project overlapping something you already built | mode brief: a **rewritten, de-risked request**; mode initiative: a **decision-dependency map + fog-free tickets**; mode candidate: a **harvest record with per-level spend decisions** — recon ends at understanding, never a change | brainstorming / plans / gauntlet subjects (brief); open-questions / resolve instruments / planning skills (initiative); throwaway probes, decision-ledger, gauntlet one-way doors (candidate) | `subject-revision-unchanged`; candidate rows valid while both compared revisions hold | 4-field stamp; initiative also a tracker map; candidate also a harvest record |
-| **applying-formal-rigor** | a bounded formal question, a proposed design needing correctness confirmation or reversal, or material alternatives that differ on measurable/theorem-governed properties | a bounded **focused inline derivation**, or a standard/high-assurance **`formal-rigor-record@2`** with relative P1-P9 coverage and an authority-bound synthesis outcome | the design you build, or a gauntlet dossier | focused: inline subject/model scope; record: `subject-revision-unchanged` on the named inputs | focused: no process artifact; standard/high: `formal-rigor-record@2` |
-| **evidence-research** | a claim that rests on "the research says…" | a **claim-evidence matrix + reception + holdings** (never a GO/NO-GO) | a design decision, or the gauntlet Step-0 evidence gate | `session-continuous` — reception `[V]`-grade this run only; snapshot dated | JSON `handoff-receipt@1` over the matrix |
+| **resolve** *(three instruments: derivation = applying-formal-rigor; literature = evidence-research; probe = throwaway-prototyping)* | a live question or material decision that an instrument, not an opinion, must settle | instrument derivation: a **focused inline derivation or `formal-rigor-record@2`**; instrument literature: a **claim-evidence matrix + reception** (never a GO/NO-GO); instrument probe: a **recorded answer with the build disposed** | the design or decision that consumes the evidence; gauntlet dossiers and Step-0 evidence gates; decision-ledger for probe findings | per instrument: record `subject-revision-unchanged`; matrix `session-continuous`; probe answer durable, build gone | per instrument: `formal-rigor-record@2` / `handoff-receipt@1` over the matrix / ledger entry + 4-field stamp |
 | **write-goal** | explicit user intent, de-risked context, and any evidence/design inputs | an **approved, evidence-bound completion contract**; optionally a started persistent goal | the runtime's goal executor, then independent verification | `subject-revision-unchanged` on intent/scope/environment | `handoff-receipt@1` when file-written, else 4-field stamp |
 | **outsource** | a bounded workload + repository + operator target choice or capability need | a **GitHub-addressable, context-complete `HANDOFF.md` + short copy/paste prompt** (never the outsourced result) | the external target, then the originating agent's repo-backed relay and verification loop | `subject-revision-unchanged` on workload/scope/source; each prompt pins an immutable prepared commit | repo prose carrying the 4-field stamp |
 | **gauntlet** | a **frozen** subject (a de-risked request, a derived verdict, or an evidence matrix) | a **computed GO / CONDITIONAL / NO-GO** + Conflict Ledger | the commit / merge decision | `freeze-window-open` | JSON `handoff-receipt@1` (+ run record) |
@@ -50,7 +49,6 @@ job. That is exactly what lets them compose without stepping on each other:
 | **open-questions** | recon (brief mode) Questions section (when present); operator-named open decisions | an **emptied-or-parked question ledger** (its boundary) | the stage the interview gated | session-continuous | 4-field stamp |
 | **context-audit** *(maintenance trigger: explicit request, detected cross-layer conflict, or model-generation upgrade)* | the assembled instruction context — every layer the harness loads, as one set | a **classified cut list as diff + conflict ledger + re-baseline watch note** (report-only until operator-gated, class-by-class apply) | the operator apply decision; decision-ledger for applied cuts; upstream sources of truth for generated-layer findings | `subject-revision-unchanged` on the audited layer hashes | report file carrying the 4-field stamp |
 | **agent-interface-design** | an interface another agent will consume (tool/function schema, MCP surface, structured-output or dispatch contract) being authored or modified | a **shipped interface + cold-consumer test evidence** — constraints carried by structure; examples only as labeled compatibility concessions | the consuming agent; evidence-locked-uat when the surface is operator-facing; gauntlet when it is high-blast-radius | `subject-revision-unchanged` on the schema | consumer-test transcript + 4-field stamp |
-| **throwaway-prototyping** | a live decision cheaper to resolve by building a disposable probe than by argument, derivation, or literature | a **recorded answer (question + observation + decision) with the build disposed** — never promoted code | decision-ledger holds the finding; gauntlet option-sets and recon initiative nodes consume the answer; the workflow layer rebuilds for real | answer durable; build gone | ledger/tracker entry + 4-field stamp |
 | **intent-traced-merge** | a merge/rebase conflict with non-trivial hunks, or a merge commit lacking resolution provenance | a **merged result whose non-trivial hunks carry rulings (both origins cited) and whose both-origin checks pass** | ordinary review; decision-ledger for deliberately-dropped intents; the decision process for collisions that are open designs | until either parent's motivating check regresses | merge-commit/PR ruling record |
 
 *Artifact shape pins the carrier: prose outputs carry a 4-field stamp (`subject.ref`,
@@ -64,7 +62,7 @@ skill's consumption contract). An existing durable plan, ADR, issue, PR descript
 contract, or derivation may satisfy persistence without duplicating it into JSONL when it has
 resolvable provenance and a revisit condition.*
 
-"recon ends at understanding," "evidence-research never renders a verdict,"
+"recon ends at understanding," "resolve's literature instrument never renders a verdict,"
 "the UAT actor never certifies its own work" — these boundaries are the interfaces. A skill
 that respected no boundary could not be handed off from or to.
 
@@ -112,7 +110,7 @@ resume (pre-arc): a compaction summary / handoff note ──▶ continuity-verif
 
         ┌─ recon ───────┐  ┌─ decide ─────────┐  ┌─ contract ─┐  ┌─ build ─┐  ┌─ gate ─┐  ┌─ prove ───────┐
 task ──▶│ recon         │─▶│ formal-rigor +   │─▶│ write-goal │─▶│ workflow│─▶│gauntlet│─▶│ evidence-      │──▶ done
-        │ pass          │  │ evidence-research│  │ if explicit│  │ layer   │  │if needed│ │ locked-uat     │
+        │ (brief mode)  │  │ resolve          │  │ if explicit│  │ layer   │  │if needed│ │ locked-uat     │
         └───────────────┘  └──────────────────┘  └────────────┘  └─────────┘  └────────┘  └────────────────┘
 
 persist (cross-cutting): decision-ledger records each consequential moment not already
@@ -150,7 +148,7 @@ clarify (cross-cutting): open-questions walks an emptied-or-parked question ledg
 - **recon (initiative mode)** is *pre-arc at initiative scale* — it sequences the decisions a large effort
   must resolve and releases fog-free tickets into the arc; individual tickets then run the arc
   normally.
-- **throwaway-prototyping** is a *decide-stage instrument* — it fires when the cheapest
+- **resolve's probe instrument** is *decide-stage* — it fires when the cheapest
   adequate resolution of a live decision is a disposable build; its recorded answer feeds the
   decide/contract stages, its code feeds nothing.
 - **intent-traced-merge** is *integration-stage* — it fires at merge/rebase time on non-trivial
@@ -177,8 +175,8 @@ Match the trigger you can *observe*, not a vibe:
 | You are about to… | Fire | Because |
 |---|---|---|
 | after two-read micro-recon, commit material effort into territory where the request conflicts with the repo, hidden coupling or an unresolved historical convention appears, the brief remains fuzzy, or fan-out would multiply a wrong premise | **recon** (brief mode) | the map (request) may not match the territory; full recon is justified by an observed mismatch or multiplication risk, not unfamiliarity alone |
-| choose between ≥2 material designs, decide whether a proposed design needs correctness confirmation or reversal, assert one is "better/cleaner/faster", or analyze an algorithm's complexity / Big-O | **applying-formal-rigor** | a property claim must be derived through model → preconditions → fact mapping → derivation; focused work stays inline, while material forks reconcile P1-P9 in `formal-rigor-record@2` |
-| rely on "studies show…" / a scholarly or empirical premise, or are about to make a Consensus/Scite/Zotero (scholarly-connector) tool call | **evidence-research** | a paper's *reception* (supporting/contrasting/retracted) and *holdings* (durable library) decide whether it's support, a landmine, or already paid-for judgment |
+| choose between ≥2 material designs, decide whether a proposed design needs correctness confirmation or reversal, assert one is "better/cleaner/faster", or analyze an algorithm's complexity / Big-O | **resolve** (derivation instrument) | a property claim must be derived through model → preconditions → fact mapping → derivation; focused work stays inline, while material forks reconcile P1-P9 in `formal-rigor-record@2` |
+| rely on "studies show…" / a scholarly or empirical premise, or are about to make a Consensus/Scite/Zotero (scholarly-connector) tool call | **resolve** (literature instrument) | a paper's *reception* (supporting/contrasting/retracted) and *holdings* (durable library) decide whether it's support, a landmine, or already paid-for judgment |
 | create, refine, or start a persistent goal; define what counts as done | **write-goal** | persistent work needs an approved completion contract that resists proxy success and preserves scope, provenance, and interruptibility |
 | hand a workload to a different, superior, specialized, or operator-selected model, agent, or process; prepare a copy/paste external handoff | **outsource** | the repository, not chat, must carry complete context, authority, completion evidence, and every relay across the execution boundary |
 | commit something irreversible, one-way-door, or high-blast-radius (infra, security, publish, migration) | **gauntlet** | a multi-lens panel + computed verdict beats one model's confidence on a call you can't take back |
@@ -191,7 +189,7 @@ Match the trigger you can *observe*, not a vibe:
 | audit the instruction context this agent receives — explicit request, a detected conflict between two active instruction layers, or a model-generation upgrade | **context-audit** | conflicts, duplicates, and dead weight live BETWEEN layers; only an assembly-wide classify-and-watch pass finds them, and version control makes every cut a reversible experiment |
 | author or modify a tool/function schema, MCP surface, structured-output contract, or dispatch contract that another agent will consume | **agent-interface-design** | the interface is the instruction channel — structure (types, enums, defaults, error shapes) teaches the consumer; usage examples narrow it to shown paths |
 | decompose a large effort whose path holds unresolved decisions, or mint build tickets from a partly-foggy backlog | **recon** (initiative mode) | tickets sliced from fog encode silent guesses; decompose by decisions, work only the frontier, mint tickets only from fog-free regions |
-| resolve a live design question where a disposable build is cheaper than more argument, derivation, or reading | **throwaway-prototyping** | a built probe is evidence; the contract (pre-registered question, disposal at birth, capture-then-delete, never promote) keeps it an instrument instead of unplanned work |
+| resolve a live design question where a disposable build is cheaper than more argument, derivation, or reading | **resolve** (probe instrument) | a built probe is evidence; the contract (pre-registered question, disposal at birth, capture-then-delete, never promote) keeps it an instrument instead of unplanned work |
 | resolve a merge/rebase conflict containing any non-trivial hunk | **intent-traced-merge** | textual pattern-matching silently destroys one side's intent; trace both sides to their origins, preserve both or record the drop, verify against both origins |
 | decide whether to adopt, replace with, or ignore an external project that overlaps something you already have | **recon** (candidate mode) | the extractable unit is not the system — take the vocabulary, principles, constants and interface shapes first (free, reversible, no install), and only escalate to the expensive adopt question with what is left |
 
@@ -222,7 +220,7 @@ decide-stage re-fire loop between formal-rigor and research.
 gauntlet and evidence-locked-uat can both fire on the same merge (irreversible infra/security +
 user-facing surface) — gauntlet gates first, evidence-locked-uat proves after, per arc order.
 
-## Shared invariants (why these fourteen, and not others)
+## Shared invariants (why these twelve, and not others)
 
 A skill belongs in this collection only if it enforces all of these. They are the family
 resemblance:
@@ -232,7 +230,7 @@ resemblance:
    existing; it must expose an error capable of changing action or the completion claim.
 2. **Derive / verify, don't assert.** A conclusion is earned by a chain — from named theory
    (formal-rigor), read evidence (recon, gauntlet `[V]` tags), the literature's
-   reception (evidence-research), or an evidence packet (UAT). "It's better" / "looks done" is
+   reception (resolve's literature instrument), or an evidence packet (UAT). "It's better" / "looks done" is
    not a result.
 3. **Know where you stop.** Each ends at its boundary and hands off (see the table). Overreach
    is the anti-pattern.
@@ -270,7 +268,7 @@ with the right evidence) and the workflow skill carries it out.
 | "I should list every skill I skipped so the process is auditable" | Ordinary absence is silent. Record fired skills and authorized overrides, not non-events. |
 | "The repo is unfamiliar, so a full recon report is mandatory" | Start with the target artifact plus its nearest test/example. Escalate only when those reads reveal a positive trigger. |
 | "recon found a fix, let me apply it" | It ends at understanding. Capture the fix; don't act inside it. |
-| "evidence-research says GO" | It never renders a verdict. It produces evidence; the gauntlet (or you) judges. |
+| "the literature instrument says GO" | It never renders a verdict. It produces evidence; the gauntlet (or you) judges. |
 | "This task is long, so I'll create a goal" | Persistence is a user-controlled state change. `write-goal` requires explicit goal-authoring or start intent. |
 | "The UAT actor also verified it passed" | The actor never certifies its own material acceptance work — that's the whole point. A blinded verifier judges. |
 | "I'll paste all the context into the outsource prompt" | The prompt is a pointer. `outsource` puts the complete, durable context and contract in the repository and records every relay there. |

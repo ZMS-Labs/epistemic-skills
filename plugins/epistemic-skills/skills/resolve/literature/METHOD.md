@@ -1,7 +1,5 @@
----
-name: evidence-research
-description: Use when establishing verifiable scholarly evidence for a claim or decision, or immediately before ANY Consensus, Scite, or Zotero/library-substrate tool call (mandatory prerequisite). Triggers include literature review, citation verification, "what does the research say", evidence synthesis, and systematic-review components. Do NOT use for claims about completed engineering work (verification-before-completion's job), general web search, or a single already-trusted internal document lookup.
----
+<!-- resolve instrument: literature (evidence-research) — consolidated into resolve (v4.0.0, 2026-08-04); this file is the instrument's full method, formerly its standalone SKILL.md -->
+
 
 # Evidence Research — discover, interrogate, persist
 

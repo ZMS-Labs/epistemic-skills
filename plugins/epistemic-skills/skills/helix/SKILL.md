@@ -57,8 +57,8 @@ are silent.
 |---|---|---|
 | session start/resumption whose next action depends on summary, handoff, or remembered state | **continuity-verify** | *pre-arc* — before routine-path classification and every resumed workflow stage; its digest feeds the epistemic router |
 | task start after routine micro-recon reveals a material map/territory mismatch, unresolved hidden coupling, or costly fan-out risk | **recon** (brief mode) | *before* brainstorming — full recon the territory, then design |
-| brainstorming (a material ≥2-option design choice) | **applying-formal-rigor** | *inside* — the choice is derived from named theory, not asserted |
-| any stage (a premise leans on "research says…", or any scholarly-tool call) | **evidence-research** | *cross-cutting* — reception-check the literature before the premise bears load |
+| brainstorming (a material ≥2-option design choice) | **resolve** (derivation instrument) | *inside* — the choice is derived from named theory, not asserted |
+| any stage (a premise leans on "research says…", or any scholarly-tool call) | **resolve** (literature instrument) | *cross-cutting* — reception-check the literature before the premise bears load |
 | brainstorming approval / writing-plans (per gauntlet's own positive trigger list) | **gauntlet** | *at approval* — after the design doc is written and committed, before writing-plans is invoked; freeze the committed design doc as the gauntlet subject |
 | persistent or long-horizon goal-mode runs (explicit goal-authoring intent only — plan execution alone is not intent) | **write-goal** | *before* persistent execution — bind the outcome to proof and stop rules |
 | subagent-driven-development / dispatching-parallel-agents (first material dispatch) | **recon** (brief mode) | *before* the first dispatch — recon when a wrong premise could multiply across isolated agents |
@@ -67,15 +67,15 @@ are silent.
 | implementation of an interface another agent will consume (tool/function schema, MCP surface, structured-output or dispatch contract) | **agent-interface-design** | *inside* the build — constraints move into structure, examples pass the example-lint, and the cold-consumer test gates the interface before it ships |
 | writing-skills / instruction-layer maintenance (explicit audit request, a detected cross-layer instruction conflict, or a model-generation upgrade) | **context-audit** | *outside the per-task arc* — audit the assembled instruction context as one set; report before apply, one version-controlled commit per cut class |
 | writing-plans (the effort is large and material decisions are still unresolved) | **recon** (initiative mode) | *before* planning — decompose by decisions, resolve the frontier, and plan only fog-free regions; tickets minted from fog are the failure the pairing prevents |
-| brainstorming (a live option is cheaper to build thin than to keep debating) | **throwaway-prototyping** | *inside* — instantiate the option as a disposable probe under the four-clause contract; the answer returns to the design dialogue, the code does not |
+| brainstorming (a live option is cheaper to build thin than to keep debating) | **resolve** (probe instrument) | *inside* — instantiate the option as a disposable probe under the four-clause contract; the answer returns to the design dialogue, the code does not |
 | any stage, immediately after a consequential decision, load-bearing assumption, or recurrent/operator correction — or when a ledgered decision's outcome becomes observable at a completion/verification stage (per decision-ledger's own positive and no-op gates) | **decision-ledger** | *retrospective cross-cutting* — reuse an adequate durable artifact or append only the uncovered persistence gap; on outcome arrival, prediction and result as separate untouched facts; never log before the moment exists |
 | finishing-a-development-branch / any merge or rebase with non-trivial conflicts | **intent-traced-merge** | *at integration* — resolve hunks by tracing both origins, verify against both sides' motivating checks, record rulings in the merge commit |
 | brainstorming / writing-plans (a proposal is "use X instead of ours", or an external project overlaps the thing being designed) | **recon** (candidate mode) | *before* the design commits — harvest the transferable ideas at zero risk and re-triage; the design dialogue receives the ideas, not an adoption |
 | receiving-code-review (acceptance about to be signed on a change the acceptor has not restated) | **evidence-locked-uat** acceptor comprehension gate | *at acceptance* — the acceptor states what changed and what breaks first if it's wrong, or the state is recorded `ACCEPTED-UNREVIEWED`, never silently upgraded |
-| systematic-debugging (fix rests on a complexity or correctness claim) | **applying-formal-rigor** | *inside* — "this is O(n log n) now" and "this can't race" are derived, not asserted |
+| systematic-debugging (fix rests on a complexity or correctness claim) | **resolve** (derivation instrument) | *inside* — "this is O(n log n) now" and "this can't race" are derived, not asserted |
 | verification-before-completion (material UI-facing acceptance surface) | **evidence-locked-uat** | *is* that skill's UI-facing instance — blinded verifier, never self-certification; routine directly checkable presentation changes use the bounded check instead of a full packet |
 | finishing-a-development-branch (per gauntlet's own positive trigger list) | **gauntlet** | *pre-merge* — after the user selects merge or push+PR, before the merge/push executes |
-| receiving-code-review (feedback asserts a material design claim or proposes an alternative) | **applying-formal-rigor** | *inside* — derive the claim from named theory before implementing it or pushing back on it |
+| receiving-code-review (feedback asserts a material design claim or proposes an alternative) | **resolve** (derivation instrument) | *inside* — derive the claim from named theory before implementing it or pushing back on it |
 | any gated stage outside active design dialogue (per open-questions' member-authoritative trigger) | **open-questions** | *before* the gated stage — explicit invocation uses full-exhaustion mode; the narrow automatic trigger uses fork-scoped mode; while a design skill is running, that skill owns its own questioning |
 | any workflow stage not listed above | *(none mandatory)* | disciplines still fire on their own standalone positive triggers — the member skill, not helix, remains authoritative |
 
@@ -149,13 +149,13 @@ relationship matters.
   router for the complete ordered set; do not select a single favorite pair.
 - **brainstorming is starting after routine micro-recon exposed a mismatch** →
   run recon (brief mode) before design.
-- **a material design choice is being argued** → applying-formal-rigor owns the
+- **a material design choice is being argued** → resolve (derivation instrument) owns the
   derivation.
 - **a plan is about to be approved** → use gauntlet's own trigger list; do not
   narrow it to one adjective.
 - **a persistent goal is being created** → only explicit goal-authoring intent
   fires write-goal; task length alone is not intent.
-- **a fix rests on a complexity or correctness claim** → applying-formal-rigor
+- **a fix rests on a complexity or correctness claim** → resolve (derivation)
   fires inside systematic-debugging.
 - **subagents are about to receive a material fuzzy brief** → recon (brief mode)
   runs before fan-out. A local bounded dispatch whose target and check are

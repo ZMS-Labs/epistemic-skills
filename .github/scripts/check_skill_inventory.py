@@ -169,10 +169,14 @@ def check_inventory(
 
     for audit_path in audit_paths:
         parts = audit_path.split("/")
+        # A valid audited surface is the skill core (skills/<name>/SKILL.md) or a
+        # consolidated mode/instrument method (skills/<name>/<subtree>/METHOD.md,
+        # v4.0.0) — always inside a packaged skill directory.
+        valid_core = len(parts) == 5 and parts[4] == "SKILL.md"
+        valid_method = len(parts) == 6 and parts[5] == "METHOD.md"
         if (
             not audit_path.startswith(AUDIT_PATH_PREFIX)
-            or len(parts) != 5
-            or parts[4] != "SKILL.md"
+            or not (valid_core or valid_method)
             or parts[3] not in packaged
         ):
             violations.append(

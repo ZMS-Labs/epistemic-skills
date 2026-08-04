@@ -34,12 +34,10 @@ EVIDENCE_REF_KINDS = {
     "ledger-entry-hash", "run-record-hash",
 }
 SKILL_NAMES = {
-    "using-epistemic-skills", "helix", "recon",
-    "applying-formal-rigor", "evidence-research", "write-goal",
-    "outsource", "gauntlet", "evidence-locked-uat", "decision-ledger",
-    "continuity-verify", "open-questions", "context-audit",
-    "agent-interface-design", "throwaway-prototyping",
-    "intent-traced-merge",
+    "using-epistemic-skills", "helix", "recon", "resolve",
+    "write-goal", "outsource", "gauntlet", "evidence-locked-uat",
+    "decision-ledger", "continuity-verify", "open-questions",
+    "context-audit", "agent-interface-design", "intent-traced-merge",
 }
 PROHIBITED_CONTENT_KEYS = {
     "prompt", "transcript", "user_prose", "raw_content", "secret",
@@ -74,20 +72,6 @@ SKILL_EVENT_MAP = {
         "outcome_sources": ("independent-adjudication",),
         "collection_mode": "observational",
         "sentinel_fixture": "helix-missed-pair.json",
-    },
-    "applying-formal-rigor": {
-        "event_kinds": ("formal-prediction",),
-        "eligible_when": ("preregistered-prediction",),
-        "outcome_sources": ("deterministic-fixture", "field-observation"),
-        "collection_mode": "calibratable",
-        "sentinel_fixture": "formal-prediction.json",
-    },
-    "evidence-research": {
-        "event_kinds": ("evidence-claim",),
-        "eligible_when": ("independently-resolvable-verdict",),
-        "outcome_sources": ("independent-adjudication", "field-observation"),
-        "collection_mode": "conditional",
-        "sentinel_fixture": "evidence-correction.json",
     },
     "write-goal": {
         "event_kinds": ("goal-proof",),
@@ -152,19 +136,19 @@ SKILL_EVENT_MAP = {
         "collection_mode": "observational",
         "sentinel_fixture": "interface-consumer-miss.json",
     },
-    "throwaway-prototyping": {
-        "event_kinds": ("probe-episode",),
-        "eligible_when": ("independently-resolvable-verdict",),
-        "outcome_sources": ("deterministic-fixture", "field-observation"),
-        "collection_mode": "observational",
-        "sentinel_fixture": "prototype-promotion.json",
-    },
     "intent-traced-merge": {
         "event_kinds": ("merge-ruling",),
         "eligible_when": ("independently-resolvable-verdict",),
         "outcome_sources": ("deterministic-fixture", "field-observation"),
         "collection_mode": "observational",
         "sentinel_fixture": "merge-dropped-intent.json",
+    },
+    "resolve": {
+        "event_kinds": ("evidence-claim", "formal-prediction", "probe-episode"),
+        "eligible_when": ("independently-resolvable-verdict", "preregistered-prediction"),
+        "outcome_sources": ("deterministic-fixture", "field-observation", "independent-adjudication"),
+        "collection_mode": "conditional",
+        "sentinel_fixture": "resolve-instrument-misfire.json",
     },
     "recon": {
         "event_kinds": ("frontier-decision", "harvest-decision", "landmine-prediction"),

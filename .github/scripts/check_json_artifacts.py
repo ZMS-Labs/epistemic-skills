@@ -9,7 +9,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-FORMAL_ROOT = REPO_ROOT / "plugins/epistemic-skills/skills/applying-formal-rigor"
+FORMAL_ROOT = REPO_ROOT / "plugins/epistemic-skills/skills/resolve/derivation"
 RED_ROOT = FORMAL_ROOT / "evals/formal-rigor-v2-fixtures/results/2026-07-24-red-baseline"
 
 
@@ -31,14 +31,14 @@ def main() -> int:
         REPO_ROOT / "plugins/epistemic-skills/skills/open-questions/evals/trigger-and-scope",
     ]
     roots.append(REPO_ROOT / "plugins/epistemic-skills/skills/recon/evals")
+    roots.append(REPO_ROOT / "plugins/epistemic-skills/skills/resolve/literature/evals")
+    roots.append(REPO_ROOT / "plugins/epistemic-skills/skills/resolve/probe/evals")
     roots.extend(
         REPO_ROOT / f"plugins/epistemic-skills/skills/{skill}/evals/trigger-and-scope"
         for skill in (
             "context-audit",
             "agent-interface-design",
-            "throwaway-prototyping",
             "intent-traced-merge",
-            "evidence-research",
             "write-goal",
             "outsource",
         )

@@ -18,7 +18,7 @@
       "id": "task-start-recon-before-design-derivation",
       "when": "same-design-lineage-after-micro-recon-mismatch",
       "before": "recon",
-      "after": "applying-formal-rigor"
+      "after": "resolve"
     },
     {
       "id": "conflict-resolution-before-pre-merge-gate",
@@ -36,29 +36,13 @@
   "interlocks": [
     {
       "members": [
-        "applying-formal-rigor",
-        "evidence-research"
+        "resolve"
       ],
-      "rule": "formal-names-empirical-premise-research-qualifies-formal-closes"
+      "id": "instrument-sequencing-internal",
+      "note": "the former formal-rigor/evidence-research interlock (formal names an empirical premise; research qualifies it; formal closes) is instrument sequencing inside resolve as of v4.0.0"
     }
   ],
   "members": {
-    "applying-formal-rigor": {
-      "composition_class": "decision-point",
-      "moments": [
-        "material-design-choice",
-        "correctness-or-complexity-claim",
-        "material-design-claim-in-review"
-      ],
-      "position": "inside"
-    },
-    "evidence-research": {
-      "composition_class": "cross-cutting",
-      "moments": [
-        "qualifying-scholarly-premise"
-      ],
-      "position": "at-premise"
-    },
     "write-goal": {
       "composition_class": "pre-execution",
       "moments": [
@@ -138,13 +122,6 @@
       ],
       "position": "inside"
     },
-    "throwaway-prototyping": {
-      "composition_class": "decide-instrument",
-      "moments": [
-        "build-cheaper-than-debate"
-      ],
-      "position": "inside"
-    },
     "intent-traced-merge": {
       "composition_class": "integration-stage",
       "moments": [
@@ -161,6 +138,16 @@
         "external-overlap-adopt-question"
       ],
       "position": "before"
+    },
+    "resolve": {
+      "composition_class": "decide-instrument",
+      "moments": [
+        "material-design-choice",
+        "qualifying-scholarly-premise",
+        "build-cheaper-than-debate",
+        "fix-rests-on-formal-claim"
+      ],
+      "position": "inside"
     }
   }
 }

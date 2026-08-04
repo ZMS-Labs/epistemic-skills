@@ -49,14 +49,14 @@ jobs:
         run: python plugins/epistemic-skills/skills/using-epistemic-skills/evals/proportionality/blinded/tests/run_tests.py
       - name: Helix composition contract tests
         run: python plugins/epistemic-skills/skills/helix/evals/composition/tests/run_tests.py
-      - name: Formal-rigor v2 structural scorer self-test
-        run: python plugins/epistemic-skills/skills/applying-formal-rigor/evals/formal-rigor-v2-fixtures/tests/run_tests.py
-      - name: Formal-rigor focused proportionality test
-        run: python plugins/epistemic-skills/skills/applying-formal-rigor/evals/formal-rigor-v2-fixtures/tests/test_focused.py
-      - name: Formal-rigor live-runner isolation tests
-        run: python plugins/epistemic-skills/skills/applying-formal-rigor/evals/formal-rigor-v2-fixtures/tests/test_live_runner.py
-      - name: Formal-rigor V3 post-hoc diagnostic tests
-        run: python plugins/epistemic-skills/skills/applying-formal-rigor/evals/formal-rigor-v2-fixtures/tests/test_posthoc_diagnostic.py
+      - name: Resolve derivation formal-rigor v2 structural scorer self-test
+        run: python plugins/epistemic-skills/skills/resolve/derivation/evals/formal-rigor-v2-fixtures/tests/run_tests.py
+      - name: Resolve derivation formal-rigor focused proportionality test
+        run: python plugins/epistemic-skills/skills/resolve/derivation/evals/formal-rigor-v2-fixtures/tests/test_focused.py
+      - name: Resolve derivation formal-rigor live-runner isolation tests
+        run: python plugins/epistemic-skills/skills/resolve/derivation/evals/formal-rigor-v2-fixtures/tests/test_live_runner.py
+      - name: Resolve derivation formal-rigor V3 post-hoc diagnostic tests
+        run: python plugins/epistemic-skills/skills/resolve/derivation/evals/formal-rigor-v2-fixtures/tests/test_posthoc_diagnostic.py
       - name: UAT proportionality triage tests
         run: python plugins/epistemic-skills/skills/evidence-locked-uat/evals/triage/tests/run_tests.py
       - name: Decision Ledger proportionality tests
@@ -69,14 +69,14 @@ jobs:
         run: python plugins/epistemic-skills/skills/agent-interface-design/evals/trigger-and-scope/tests/run_tests.py
       - name: Recon initiative-mode trigger-and-scope tests
         run: python plugins/epistemic-skills/skills/recon/evals/initiative-trigger-and-scope/tests/run_tests.py
-      - name: Throwaway Prototyping trigger-and-scope tests
-        run: python plugins/epistemic-skills/skills/throwaway-prototyping/evals/trigger-and-scope/tests/run_tests.py
+      - name: Resolve probe trigger-and-scope tests
+        run: python plugins/epistemic-skills/skills/resolve/probe/evals/trigger-and-scope/tests/run_tests.py
       - name: Intent-traced Merge trigger-and-scope tests
         run: python plugins/epistemic-skills/skills/intent-traced-merge/evals/trigger-and-scope/tests/run_tests.py
       - name: Recon brief-mode trigger-and-scope tests
         run: python plugins/epistemic-skills/skills/recon/evals/brief-trigger-and-scope/tests/run_tests.py
-      - name: Evidence Research trigger-and-scope tests
-        run: python plugins/epistemic-skills/skills/evidence-research/evals/trigger-and-scope/tests/run_tests.py
+      - name: Resolve literature trigger-and-scope tests
+        run: python plugins/epistemic-skills/skills/resolve/literature/evals/trigger-and-scope/tests/run_tests.py
       - name: Write Goal trigger-and-scope tests
         run: python plugins/epistemic-skills/skills/write-goal/evals/trigger-and-scope/tests/run_tests.py
       - name: Outsource trigger-and-scope tests
@@ -138,14 +138,14 @@ jobs:
             plugins/epistemic-skills/skills/using-epistemic-skills/evals/proportionality/blinded/tests/run_tests.py \
             plugins/epistemic-skills/skills/helix/evals/composition/verify.py \
             plugins/epistemic-skills/skills/helix/evals/composition/tests/run_tests.py \
-            plugins/epistemic-skills/skills/applying-formal-rigor/evals/formal-rigor-v2-fixtures/score.py \
-            plugins/epistemic-skills/skills/applying-formal-rigor/evals/formal-rigor-v2-fixtures/tests/run_tests.py \
-            plugins/epistemic-skills/skills/applying-formal-rigor/evals/formal-rigor-v2-fixtures/tests/test_focused.py \
-            plugins/epistemic-skills/skills/applying-formal-rigor/evals/formal-rigor-v2-fixtures/tests/test_live_runner.py \
-            plugins/epistemic-skills/skills/applying-formal-rigor/evals/formal-rigor-v2-fixtures/posthoc_diagnostic.py \
-            plugins/epistemic-skills/skills/applying-formal-rigor/evals/formal-rigor-v2-fixtures/tests/test_posthoc_diagnostic.py \
-            plugins/epistemic-skills/skills/applying-formal-rigor/evals/formal-rigor-v2-fixtures/run_live.py \
-            plugins/epistemic-skills/skills/applying-formal-rigor/validate_record.py \
+            plugins/epistemic-skills/skills/resolve/derivation/evals/formal-rigor-v2-fixtures/score.py \
+            plugins/epistemic-skills/skills/resolve/derivation/evals/formal-rigor-v2-fixtures/tests/run_tests.py \
+            plugins/epistemic-skills/skills/resolve/derivation/evals/formal-rigor-v2-fixtures/tests/test_focused.py \
+            plugins/epistemic-skills/skills/resolve/derivation/evals/formal-rigor-v2-fixtures/tests/test_live_runner.py \
+            plugins/epistemic-skills/skills/resolve/derivation/evals/formal-rigor-v2-fixtures/posthoc_diagnostic.py \
+            plugins/epistemic-skills/skills/resolve/derivation/evals/formal-rigor-v2-fixtures/tests/test_posthoc_diagnostic.py \
+            plugins/epistemic-skills/skills/resolve/derivation/evals/formal-rigor-v2-fixtures/run_live.py \
+            plugins/epistemic-skills/skills/resolve/derivation/validate_record.py \
             plugins/epistemic-skills/skills/evidence-locked-uat/evals/triage/score.py \
             plugins/epistemic-skills/skills/evidence-locked-uat/evals/triage/tests/run_tests.py \
             plugins/epistemic-skills/skills/decision-ledger/evals/proportionality/score.py \
@@ -158,14 +158,14 @@ jobs:
             plugins/epistemic-skills/skills/agent-interface-design/evals/trigger-and-scope/tests/run_tests.py \
             plugins/epistemic-skills/skills/recon/evals/initiative-trigger-and-scope/score.py \
             plugins/epistemic-skills/skills/recon/evals/initiative-trigger-and-scope/tests/run_tests.py \
-            plugins/epistemic-skills/skills/throwaway-prototyping/evals/trigger-and-scope/score.py \
-            plugins/epistemic-skills/skills/throwaway-prototyping/evals/trigger-and-scope/tests/run_tests.py \
+            plugins/epistemic-skills/skills/resolve/probe/evals/trigger-and-scope/score.py \
+            plugins/epistemic-skills/skills/resolve/probe/evals/trigger-and-scope/tests/run_tests.py \
             plugins/epistemic-skills/skills/intent-traced-merge/evals/trigger-and-scope/score.py \
             plugins/epistemic-skills/skills/intent-traced-merge/evals/trigger-and-scope/tests/run_tests.py \
             plugins/epistemic-skills/skills/recon/evals/brief-trigger-and-scope/score.py \
             plugins/epistemic-skills/skills/recon/evals/brief-trigger-and-scope/tests/run_tests.py \
-            plugins/epistemic-skills/skills/evidence-research/evals/trigger-and-scope/score.py \
-            plugins/epistemic-skills/skills/evidence-research/evals/trigger-and-scope/tests/run_tests.py \
+            plugins/epistemic-skills/skills/resolve/literature/evals/trigger-and-scope/score.py \
+            plugins/epistemic-skills/skills/resolve/literature/evals/trigger-and-scope/tests/run_tests.py \
             plugins/epistemic-skills/skills/write-goal/evals/trigger-and-scope/score.py \
             plugins/epistemic-skills/skills/write-goal/evals/trigger-and-scope/tests/run_tests.py \
             plugins/epistemic-skills/skills/outsource/evals/trigger-and-scope/score.py \
