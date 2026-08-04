@@ -81,7 +81,9 @@ jobs:
           cat enforcement-language-report.ndjson
           exit "$status"
       - name: Gauntlet validation-kernel gate
-        run: python plugins/epistemic-skills/skills/gauntlet/scripts/validate_ruling_set.py --self-test
+        run: |
+          python plugins/epistemic-skills/skills/gauntlet/scripts/validate_ruling_set.py --self-test
+          python plugins/epistemic-skills/skills/gauntlet/scripts/validate_ruling_set.py --scan docs/gauntlet-runs
       - name: Outsource packet and package integration
         run: python plugins/epistemic-skills/skills/outsource/tests/run_tests.py
       - name: Continuity resume-fixture committed results
@@ -110,6 +112,7 @@ jobs:
         run: |
           python -m py_compile \
             .github/scripts/check_json_artifacts.py \
+            .github/scripts/check_ledger_append_only.py \
             plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/validate_trace.py \
             plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/run_tests.py \
             plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/audit_enforcement_language.py \
@@ -152,6 +155,22 @@ jobs:
         run: python .github/scripts/check_json_artifacts.py
       - name: Decision-ledger examples and durable store
         run: python plugins/epistemic-skills/skills/decision-ledger/reference/validate_examples.py
+      - name: Durable ledger append-only against merge base
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          python .github/scripts/check_ledger_append_only.py --self-test
+          git fetch --quiet --depth=1 origin "$BASE_SHA" || {
+            echo "cannot fetch merge base $BASE_SHA — failing closed" >&2
+            exit 1
+          }
+          if git cat-file -e "$BASE_SHA:.ledger/entries.jsonl" 2>/dev/null; then
+            git show "$BASE_SHA:.ledger/entries.jsonl" > "$RUNNER_TEMP/base-ledger.jsonl"
+          else
+            : > "$RUNNER_TEMP/base-ledger.jsonl"
+          fi
+          python .github/scripts/check_ledger_append_only.py             --base "$RUNNER_TEMP/base-ledger.jsonl" --current .ledger/entries.jsonl
       - name: Existing receipt verifier
         run: python plugins/epistemic-skills/contracts/verify_receipt.py --self-test
       - name: Cross-product calibration contract
