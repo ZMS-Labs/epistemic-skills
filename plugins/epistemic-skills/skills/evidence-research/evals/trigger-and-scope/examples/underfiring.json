@@ -1,0 +1,83 @@
+[
+ {
+  "id": "research-says-premise-fires",
+  "action": "no-fire"
+ },
+ {
+  "id": "imminent-connector-call-fires",
+  "action": "no-fire"
+ },
+ {
+  "id": "explicit-lit-review-fires",
+  "action": "no-fire"
+ },
+ {
+  "id": "citation-verification-fires",
+  "action": "no-fire"
+ },
+ {
+  "id": "design-choice-no-scholarly-premise-no-fire",
+  "action": "no-fire"
+ },
+ {
+  "id": "own-code-claim-no-fire",
+  "action": "no-fire"
+ },
+ {
+  "id": "casual-paper-mention-no-fire",
+  "action": "no-fire"
+ },
+ {
+  "id": "news-web-search-no-fire",
+  "action": "no-fire"
+ },
+ {
+  "id": "trusted-internal-doc-no-fire",
+  "action": "no-fire"
+ },
+ {
+  "id": "fuzzy-recon-no-fire",
+  "action": "no-fire"
+ },
+ {
+  "id": "verdict-requested-matrix-declined",
+  "action": "evidence-gate"
+ },
+ {
+  "id": "retracted-paper-excluded",
+  "action": "run-evidence",
+  "mode": "standard",
+  "matrix_produced": true,
+  "reception_checked_live": false,
+  "terminal_state": "saturated",
+  "support": [
+   "10.5555/vigil.2018.112",
+   "10.5555/vigil.2021.407"
+  ],
+  "excluded_from_support": [
+   "10.5555/vigil.2014.881"
+  ]
+ },
+ {
+  "id": "contrasting-heavy-disputed",
+  "action": "run-evidence",
+  "mode": "deep",
+  "matrix_produced": true,
+  "reception_checked_live": true,
+  "terminal_state": "contested-stable",
+  "support": [],
+  "disputed": []
+ },
+ {
+  "id": "reception-live-not-memory",
+  "action": "run-evidence",
+  "mode": "quick",
+  "matrix_produced": true,
+  "reception_checked_live": false,
+  "terminal_state": "saturated",
+  "support": [
+   "10.5555/focus.2017.099"
+  ],
+  "reused_remembered_tallies": true
+ }
+]

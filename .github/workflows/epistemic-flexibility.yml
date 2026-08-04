@@ -73,6 +73,14 @@ jobs:
         run: python plugins/epistemic-skills/skills/throwaway-prototyping/evals/trigger-and-scope/tests/run_tests.py
       - name: Intent-traced Merge trigger-and-scope tests
         run: python plugins/epistemic-skills/skills/intent-traced-merge/evals/trigger-and-scope/tests/run_tests.py
+      - name: Blindspot Pass trigger-and-scope tests
+        run: python plugins/epistemic-skills/skills/blindspot-pass/evals/trigger-and-scope/tests/run_tests.py
+      - name: Evidence Research trigger-and-scope tests
+        run: python plugins/epistemic-skills/skills/evidence-research/evals/trigger-and-scope/tests/run_tests.py
+      - name: Write Goal trigger-and-scope tests
+        run: python plugins/epistemic-skills/skills/write-goal/evals/trigger-and-scope/tests/run_tests.py
+      - name: Outsource trigger-and-scope tests
+        run: python plugins/epistemic-skills/skills/outsource/evals/trigger-and-scope/tests/run_tests.py
       - name: Enforcement-language precision audit
         run: |
           set +e
@@ -151,6 +159,14 @@ jobs:
             plugins/epistemic-skills/skills/throwaway-prototyping/evals/trigger-and-scope/tests/run_tests.py \
             plugins/epistemic-skills/skills/intent-traced-merge/evals/trigger-and-scope/score.py \
             plugins/epistemic-skills/skills/intent-traced-merge/evals/trigger-and-scope/tests/run_tests.py \
+            plugins/epistemic-skills/skills/blindspot-pass/evals/trigger-and-scope/score.py \
+            plugins/epistemic-skills/skills/blindspot-pass/evals/trigger-and-scope/tests/run_tests.py \
+            plugins/epistemic-skills/skills/evidence-research/evals/trigger-and-scope/score.py \
+            plugins/epistemic-skills/skills/evidence-research/evals/trigger-and-scope/tests/run_tests.py \
+            plugins/epistemic-skills/skills/write-goal/evals/trigger-and-scope/score.py \
+            plugins/epistemic-skills/skills/write-goal/evals/trigger-and-scope/tests/run_tests.py \
+            plugins/epistemic-skills/skills/outsource/evals/trigger-and-scope/score.py \
+            plugins/epistemic-skills/skills/outsource/evals/trigger-and-scope/tests/run_tests.py \
             plugins/epistemic-skills/skills/decision-ledger/reference/validate_examples.py \
             plugins/epistemic-skills/contracts/verify_calibration.py \
             plugins/epistemic-skills/skills/gauntlet/scripts/validate_ruling_set.py

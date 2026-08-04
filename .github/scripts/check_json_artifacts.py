@@ -38,6 +38,10 @@ def main() -> int:
             "wayfinding",
             "throwaway-prototyping",
             "intent-traced-merge",
+            "blindspot-pass",
+            "evidence-research",
+            "write-goal",
+            "outsource",
         )
     )
     files = [path for root in roots for path in root.rglob("*.json")]
