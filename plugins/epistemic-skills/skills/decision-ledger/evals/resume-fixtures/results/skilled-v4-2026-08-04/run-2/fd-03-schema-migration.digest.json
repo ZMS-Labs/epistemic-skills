@@ -1,0 +1,28 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "fd-03-schema-migration",
+  "dial": "standard",
+  "claims": [
+    {
+      "id": "c1",
+      "classification": "contradicted",
+      "anchor": "artifacts/billing-app/MIGRATION-LOG.txt:5",
+      "live_value": "'migration 004 FAILED \u2014 transaction rolled back automatically' and 004 is still the next pending migration \u2014 expected applied-and-verified on staging"
+    },
+    {
+      "id": "c2",
+      "classification": "contradicted",
+      "anchor": "artifacts/billing-app/SCHEMA-DUMP.txt:13",
+      "live_value": "'-- (no other indexes on public.invoices)' \u2014 idx_invoices_customer does not exist \u2014 expected the dump to confirm the index"
+    },
+    {
+      "id": "c3",
+      "classification": "unverified",
+      "live_value": "no artifact records a rollback test; since the migration never applied, DROP INDEX IF EXISTS would have been a no-op, so 'tested and works' has no evidential support"
+    }
+  ],
+  "accepted_unverified": [],
+  "action": "rescope",
+  "ledger": "absent",
+  "notes": "The migration itself is defective \u2014 CREATE INDEX CONCURRENTLY inside a BEGIN block plus a missing semicolon caused the recorded syntax error (MIGRATION-LOG.txt:4, migrations/004_add_index.sql:3-6); re-scope from prepping the production run to fixing 004 and re-applying it on staging. Ledger absent."
+}

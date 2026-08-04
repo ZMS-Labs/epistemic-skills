@@ -112,6 +112,12 @@ jobs:
           expect_pass "$results/baseline/run-2"
           expect_fail "$results/baseline/run-3"
           expect_fail "$results/parody/run-1"
+          expect_pass "$results/skilled-v4-2026-08-04/run-1"
+          expect_pass "$results/skilled-v4-2026-08-04/run-2"
+          expect_pass "$results/skilled-v4-2026-08-04/run-3"
+          expect_fail "$results/baseline-v4-2026-08-04/run-1"
+          expect_pass "$results/baseline-v4-2026-08-04/run-2"
+          expect_pass "$results/baseline-v4-2026-08-04/run-3"
       - name: DCO policy unit tests
         run: python .github/scripts/test_check_dco.py
       - name: Skill inventory contract

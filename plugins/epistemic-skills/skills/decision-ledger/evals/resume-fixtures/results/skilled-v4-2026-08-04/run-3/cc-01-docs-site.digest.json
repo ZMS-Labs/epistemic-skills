@@ -1,0 +1,35 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "cc-01-docs-site",
+  "dial": "standard",
+  "claims": [
+    {
+      "id": "c1",
+      "classification": "verified",
+      "anchor": "artifacts/docs-site/GITLOG.txt:19",
+      "live_value": "HEAD -> agent/footer-year, 2 commits (aa10f02, 91cd3e7) ahead of main; no remote configured, so unpushed; footer.html:1 shows \u00a9 2026"
+    },
+    {
+      "id": "c2",
+      "classification": "verified",
+      "anchor": "artifacts/docs-site/docs/STYLE.md:1",
+      "live_value": "STYLE.md exists and contains the house style rules"
+    },
+    {
+      "id": "c3",
+      "classification": "verified",
+      "anchor": "artifacts/docs-site/ (tree contains no test files)",
+      "live_value": "repo tree has no test suite; nothing to run"
+    },
+    {
+      "id": "c4",
+      "classification": "verified",
+      "anchor": "artifacts/docs-site/GITLOG.txt:19",
+      "live_value": "branch exists locally and is unpushed \u2014 pushing and opening a PR is a coherent next step"
+    }
+  ],
+  "accepted_unverified": [],
+  "action": "proceed",
+  "ledger": "absent",
+  "notes": "Clean resumption: every load-bearing claim re-anchors to git state and file content. Ledger absent per the absence rule \u2014 not evidence that no decisions were made."
+}

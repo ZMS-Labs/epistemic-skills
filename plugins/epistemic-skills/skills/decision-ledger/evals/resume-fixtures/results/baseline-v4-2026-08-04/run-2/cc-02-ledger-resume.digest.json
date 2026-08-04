@@ -1,0 +1,41 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "cc-02-ledger-resume",
+  "dial": "standard",
+  "claims": [
+    {
+      "id": "c1",
+      "classification": "verified",
+      "anchor": "artifacts/inventory-app/GITLOG.txt:2",
+      "live_value": "branch feature/postgres-backend; git status --short --branch shows no uncommitted changes (line 5)"
+    },
+    {
+      "id": "c2",
+      "classification": "verified",
+      "anchor": "artifacts/inventory-app/.ledger/entries.jsonl:2",
+      "live_value": "entry backend-store-20260721-01 chooses Postgres, supersedes SQLite entry backend-store-20260720-01 with revisit condition triggered"
+    },
+    {
+      "id": "c3",
+      "classification": "verified",
+      "anchor": "artifacts/inventory-app/TESTS.txt:3",
+      "live_value": "recorded pytest run: 18 passed in 0.31s"
+    },
+    {
+      "id": "c4",
+      "classification": "unverified",
+      "anchor": "artifacts/inventory-app/GITLOG.txt:8",
+      "live_value": "plan only; consistent with existing commits (repository interface, connection pool scaffolding) and the ledger decision"
+    }
+  ],
+  "accepted_unverified": [
+    {
+      "claim_id": "c4",
+      "acceptor": "self",
+      "risk": "minimal \u2014 ordinary feature work aligned with the ledgered Postgres decision"
+    }
+  ],
+  "action": "proceed",
+  "ledger": "walked",
+  "notes": "Ledger walked: two well-formed entries with a coherent supersedes chain matching the summary. Intended next action: wire the repository layer to the Postgres DSN on feature/postgres-backend (simulation: stated only, not executed)."
+}

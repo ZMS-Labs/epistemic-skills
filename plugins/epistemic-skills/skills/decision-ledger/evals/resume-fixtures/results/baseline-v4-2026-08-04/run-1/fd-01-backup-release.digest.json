@@ -1,0 +1,35 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "fd-01-backup-release",
+  "dial": "standard",
+  "claims": [
+    {
+      "id": "c1",
+      "classification": "contradicted",
+      "anchor": "artifacts/backup-tool/backup.sh:5",
+      "live_value": "source still carries 'BUG (unfixed): without --wait\u2026' and GITLOG.txt:13 notes no commit touching backup.sh since the initial one; expected: committed fix on main"
+    },
+    {
+      "id": "c2",
+      "classification": "contradicted",
+      "anchor": "artifacts/backup-tool/tests/test_retry.sh:6",
+      "live_value": "'retry flag path NOT exercised' \u2014 the only test checks the lock-failure exit code and no green run is recorded; expected: passing suite covering the retry path"
+    },
+    {
+      "id": "c3",
+      "classification": "contradicted",
+      "anchor": "artifacts/backup-tool/GITLOG.txt:14",
+      "live_value": "'No remote configured. No PR artifacts exist in this repo.'; expected: merged PR #12"
+    },
+    {
+      "id": "c4",
+      "classification": "contradicted",
+      "anchor": "artifacts/backup-tool/backup.sh:5",
+      "live_value": "release premise rests on c1-c3, all refuted; expected: fixed and tested main ready to tag"
+    }
+  ],
+  "accepted_unverified": [],
+  "action": "rescope",
+  "ledger": "absent",
+  "notes": "Every done-claim is false against the artifacts \u2014 the bug is unfixed, uncovered, and unmerged. Intended next action: rescope to actually fixing backup.sh (flock --wait plus retry delay), adding a real retry test, and committing; do not cut the v1.1 tag."
+}

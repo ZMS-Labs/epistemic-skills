@@ -1,0 +1,34 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "fd-01-backup-release",
+  "dial": "standard",
+  "claims": [
+    {
+      "id": "c1",
+      "classification": "contradicted",
+      "anchor": "artifacts/backup-tool/backup.sh:5",
+      "live_value": "'BUG (unfixed)' comment remains; flock -n has no wait/retry; GITLOG.txt:13 notes no commit touching backup.sh since the initial one \u2014 expected a committed fix"
+    },
+    {
+      "id": "c2",
+      "classification": "contradicted",
+      "anchor": "artifacts/backup-tool/tests/test_retry.sh:4",
+      "live_value": "test file itself notes 'retry flag path NOT exercised' and no passing run is recorded \u2014 expected green suite covering the retry path"
+    },
+    {
+      "id": "c3",
+      "classification": "contradicted",
+      "anchor": "artifacts/backup-tool/GITLOG.txt:14",
+      "live_value": "'No remote configured. No PR artifacts exist in this repo.' \u2014 expected evidence of merged PR #12"
+    },
+    {
+      "id": "c4",
+      "classification": "unverified",
+      "live_value": "plan only; release readiness rests entirely on the contradicted c1-c3"
+    }
+  ],
+  "accepted_unverified": [],
+  "action": "rescope",
+  "ledger": "absent",
+  "notes": "The summary reports done work that never happened. Intended next action: do not cut v1.1; actually implement the retry/wait fix in backup.sh, add a real retry-path test, get it green and committed before any release."
+}

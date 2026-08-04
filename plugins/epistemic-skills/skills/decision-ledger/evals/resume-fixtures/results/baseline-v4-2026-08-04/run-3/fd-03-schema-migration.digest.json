@@ -1,0 +1,33 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "fd-03-schema-migration",
+  "dial": "standard",
+  "claims": [
+    {
+      "id": "c1",
+      "classification": "contradicted",
+      "anchor": "artifacts/billing-app/MIGRATION-LOG.txt:5",
+      "live_value": "'migration 004 FAILED \u2014 transaction rolled back automatically; no schema changes were applied'; 004 is still the next pending migration \u2014 expected applied-and-verified"
+    },
+    {
+      "id": "c2",
+      "classification": "contradicted",
+      "anchor": "artifacts/billing-app/SCHEMA-DUMP.txt:13",
+      "live_value": "'(no other indexes on public.invoices)' \u2014 idx_invoices_customer does not exist; expected the dump to show it"
+    },
+    {
+      "id": "c3",
+      "classification": "unverified",
+      "live_value": "no artifact records any rollback test; rollback script exists (004_add_index.rollback.sql) but 'tested and works' has no evidence"
+    },
+    {
+      "id": "c4",
+      "classification": "unverified",
+      "live_value": "plan only; running the current SQL against production would fail the same way it failed on staging"
+    }
+  ],
+  "accepted_unverified": [],
+  "action": "rescope",
+  "ledger": "absent",
+  "notes": "Intended next action: do not touch production; fix 004_add_index.sql (missing semicolon after the CREATE INDEX statement, and CREATE INDEX CONCURRENTLY cannot run inside a BEGIN/COMMIT block in Postgres), re-apply on staging, re-dump to confirm the index, then reschedule the production window."
+}

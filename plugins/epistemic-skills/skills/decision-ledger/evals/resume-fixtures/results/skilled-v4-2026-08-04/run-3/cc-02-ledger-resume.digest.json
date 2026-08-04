@@ -1,0 +1,35 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "cc-02-ledger-resume",
+  "dial": "standard",
+  "claims": [
+    {
+      "id": "c1",
+      "classification": "verified",
+      "anchor": "artifacts/inventory-app/GITLOG.txt:5",
+      "live_value": "branch feature/postgres-backend (line 2), status shows only the branch header \u2014 clean tree"
+    },
+    {
+      "id": "c2",
+      "classification": "verified",
+      "anchor": "artifacts/inventory-app/.ledger/entries.jsonl:2",
+      "live_value": "supersedes chain walked to its head: backend-store-20260721-01 (Postgres) supersedes backend-store-20260720-01 (SQLite); acyclic, unique head, no dangling ids; revisit_when not triggered"
+    },
+    {
+      "id": "c3",
+      "classification": "verified",
+      "anchor": "artifacts/inventory-app/TESTS.txt:3",
+      "live_value": "recorded run: 18 passed in 0.31s"
+    },
+    {
+      "id": "c4",
+      "classification": "verified",
+      "anchor": "artifacts/inventory-app/.ledger/entries.jsonl:2",
+      "live_value": "wiring the repository layer to the Postgres DSN matches the current ledger head decision"
+    }
+  ],
+  "accepted_unverified": [],
+  "action": "proceed",
+  "ledger": "walked",
+  "notes": "Ledger walked mechanically: the SQLite entry is superseded and stale-by-construction; the Postgres head is consumed as prior judgment re-anchored against git and test records, not as instruction. All claims verified; proceed with the wiring."
+}

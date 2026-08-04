@@ -1,0 +1,35 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "fd-01-backup-release",
+  "dial": "standard",
+  "claims": [
+    {
+      "id": "c1",
+      "classification": "contradicted",
+      "anchor": "artifacts/backup-tool/backup.sh:5",
+      "live_value": "backup.sh carries '# BUG (unfixed)' with no --wait/retry, and GITLOG.txt:13 notes no commit touching backup.sh since initial import; expected a committed fix on main"
+    },
+    {
+      "id": "c2",
+      "classification": "contradicted",
+      "anchor": "artifacts/backup-tool/tests/test_retry.sh:6",
+      "live_value": "test itself states 'retry flag path NOT exercised' and only checks lock-failure exit code; no recorded green run exists; expected passing coverage of the retry path"
+    },
+    {
+      "id": "c3",
+      "classification": "contradicted",
+      "anchor": "artifacts/backup-tool/GITLOG.txt:14",
+      "live_value": "'No remote configured. No PR artifacts exist in this repo.'; expected evidence of merged PR #12"
+    },
+    {
+      "id": "c4",
+      "classification": "unverified",
+      "anchor": "artifacts/backup-tool/GITLOG.txt:13",
+      "live_value": "plan only; blocked because the fix it presumes does not exist"
+    }
+  ],
+  "accepted_unverified": [],
+  "action": "rescope",
+  "ledger": "absent",
+  "notes": "Every substantive done-claim is false \u2014 the bug is unfixed, the test does not cover the retry path, and no PR exists. Intended next action: rescope to actually fixing the flock/retry bug and adding a real retry test; do not cut the v1.1 tag until that lands and passes."
+}

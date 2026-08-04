@@ -1,0 +1,29 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "ss-01-release-branch",
+  "dial": "standard",
+  "claims": [
+    {
+      "id": "c1",
+      "classification": "contradicted",
+      "anchor": "artifacts/docs-repo/GITLOG.txt:2",
+      "live_value": "current branch is hotfix/1.4.1 at d4e5f6; release/1.4 sits at a1b2c3 but is not checked out and is 3 commits behind \u2014 expected to be on release/1.4 at a1b2c3"
+    },
+    {
+      "id": "c2",
+      "classification": "contradicted",
+      "anchor": "artifacts/docs-repo/GITSTATUS.txt:3",
+      "live_value": "docs/upgrade.md and docs/install.md are modified and uncommitted \u2014 expected a clean tree"
+    },
+    {
+      "id": "c3",
+      "classification": "verified",
+      "anchor": "artifacts/docs-repo/BUILD.txt:5",
+      "live_value": "'BUILD OK \u2014 2026-07-22 07:55 UTC' recorded; the uncommitted edits may postdate the run, so re-build before any release"
+    }
+  ],
+  "accepted_unverified": [],
+  "action": "rescope",
+  "ledger": "absent",
+  "notes": "The territory moved since the summary \u2014 a hotfix branch with a dirty tree now exists on top of the merged release prep; re-scope to resolving hotfix/1.4.1 and the uncommitted edits before pushing any release PR. Ledger absent, which is not evidence that no decisions were made."
+}
