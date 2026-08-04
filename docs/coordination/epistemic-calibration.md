@@ -2,6 +2,17 @@
 
 > **Frozen baseline:** this charter's body describes the repository as of
 > `2d66a27` (v3.0.0-era); update owner: ZMS-Labs epistemic-skills maintainers.
+>
+> **Amendment 2026-08-04 (operator-authorized):** Phase 2's pilot subjects
+> are the **current reality** — the latest immutable release tag (today
+> `v4.0.0`) and current development HEAD — not the v3.0.0-era pair the
+> frozen body names. Standing rule going forward: **calibration always
+> tests the current release + HEAD; past immutable subjects enter a design
+> only when a specific claim (regression, transfer, longitudinal) requires
+> them.** Phase 0 completed 2026-08-04
+> (`2026-08-04-phase0-counterpart-reconnaissance.md`); Phase 1 map:
+> `2026-08-04-phase1-inventory-and-map.md`. The body below is otherwise
+> retained as written.
 
 **Established:** 2026-07-29  
 **Skills subject:** `ZMS-Labs/epistemic-skills` at `2d66a27`  
@@ -236,8 +247,10 @@ every high-priority product gap has an owner or explicit hold.
 
 ### Phase 2 — one end-to-end pilot
 
-- Pilot evidence-locked UAT seeded defects against immutable 3.0.0 and current
-  development HEAD as separate subjects.
+- Pilot evidence-locked UAT seeded defects against the latest immutable
+  release tag and current development HEAD as separate subjects
+  *(amended 2026-08-04 from "immutable 3.0.0": test current reality — see
+  the amendment banner)*.
 - Preregister expected planted-defect catches, clean-control false holds,
   thresholds, exclusions, and what would *not* authorize `calibrated`.
 - Return an exchange-unit record and independently verify it here.

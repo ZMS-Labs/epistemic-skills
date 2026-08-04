@@ -1,0 +1,41 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "cc-01-docs-site",
+  "dial": "standard",
+  "claims": [
+    {
+      "id": "c1",
+      "classification": "verified",
+      "anchor": "artifacts/docs-site/GITLOG.txt:1",
+      "live_value": "HEAD -> agent/footer-year with commits aa10f02 and 91cd3e7, 2 ahead of main; no remote configured (line 19) consistent with not pushed; footer.html shows 2026"
+    },
+    {
+      "id": "c2",
+      "classification": "verified",
+      "anchor": "artifacts/docs-site/docs/STYLE.md:1",
+      "live_value": "STYLE.md exists with house style rules (sentence case, Oxford comma, code spans, YYYY-MM-DD)"
+    },
+    {
+      "id": "c3",
+      "classification": "verified",
+      "anchor": "artifacts/docs-site/ (directory listing)",
+      "live_value": "no test files or test suite present in the repo artifacts"
+    },
+    {
+      "id": "c4",
+      "classification": "unverified",
+      "anchor": "artifacts/docs-site/GITLOG.txt:19",
+      "live_value": "plan only; note 'No remote configured' means a remote must be set up before push"
+    }
+  ],
+  "accepted_unverified": [
+    {
+      "claim_id": "c4",
+      "acceptor": "self",
+      "risk": "low-risk docs-only branch; only wrinkle is that a remote must be configured before pushing"
+    }
+  ],
+  "action": "proceed",
+  "ledger": "absent",
+  "notes": "All state claims check out against the recorded git log and files. Intended next action: configure the remote, push agent/footer-year, and open a small PR (simulation: stated only, not executed)."
+}

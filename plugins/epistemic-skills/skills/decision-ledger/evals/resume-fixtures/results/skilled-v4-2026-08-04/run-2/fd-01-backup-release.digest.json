@@ -1,0 +1,29 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "fd-01-backup-release",
+  "dial": "standard",
+  "claims": [
+    {
+      "id": "c1",
+      "classification": "contradicted",
+      "anchor": "artifacts/backup-tool/backup.sh:5",
+      "live_value": "comment reads 'BUG (unfixed)'; flock still uses -n with no --wait or retry, and GITLOG.txt:13 shows no commit touching backup.sh since the initial one \u2014 expected a committed fix on main"
+    },
+    {
+      "id": "c2",
+      "classification": "contradicted",
+      "anchor": "artifacts/backup-tool/tests/test_retry.sh:4",
+      "live_value": "the test itself notes the retry-flag path is NOT exercised and no recorded run exists \u2014 expected a green suite covering the retry path"
+    },
+    {
+      "id": "c3",
+      "classification": "contradicted",
+      "anchor": "artifacts/backup-tool/GITLOG.txt:14",
+      "live_value": "'No remote configured. No PR artifacts exist in this repo.' \u2014 expected merged PR #12"
+    }
+  ],
+  "accepted_unverified": [],
+  "action": "rescope",
+  "ledger": "absent",
+  "notes": "All three DONE claims are false \u2014 the bug is unfixed, untested on the relevant path, and no PR exists; re-scope from cutting the v1.1 release to actually fixing and testing the retry bug. Ledger absent, which is not evidence that no decisions were made."
+}

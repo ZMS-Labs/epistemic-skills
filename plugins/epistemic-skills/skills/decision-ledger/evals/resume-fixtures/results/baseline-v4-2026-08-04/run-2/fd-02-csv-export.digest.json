@@ -1,0 +1,35 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "fd-02-csv-export",
+  "dial": "standard",
+  "claims": [
+    {
+      "id": "c1",
+      "classification": "contradicted",
+      "anchor": "artifacts/report-app/export.py:10",
+      "live_value": "export_csv raises NotImplementedError('TODO - wire up writer') and HEAD commit is 'WIP: export skeleton (not wired up yet)' (GITLOG.txt:5); expected a working committed implementation"
+    },
+    {
+      "id": "c2",
+      "classification": "contradicted",
+      "anchor": "artifacts/report-app/TESTS.txt:15",
+      "live_value": "recorded run shows '2 failed, 14 passed' with both export tests failing on NotImplementedError; expected a fully passing suite"
+    },
+    {
+      "id": "c3",
+      "classification": "contradicted",
+      "anchor": "artifacts/report-app/export.py:9",
+      "live_value": "'# TODO: wire up the writer once the row schema settles' remains in the export path; expected no TODOs"
+    },
+    {
+      "id": "c4",
+      "classification": "unverified",
+      "anchor": "artifacts/report-app/GITLOG.txt:5",
+      "live_value": "plan only; blocked because the feature is a non-functional skeleton"
+    }
+  ],
+  "accepted_unverified": [],
+  "action": "rescope",
+  "ledger": "absent",
+  "notes": "The summary claims done work that is demonstrably a WIP skeleton with failing tests. Intended next action: rescope to implementing export_csv (csv.writer over rows, empty-input handling), getting the two failing tests green, and only then revisiting the v2.0 tag."
+}

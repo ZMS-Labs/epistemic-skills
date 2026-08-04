@@ -1,0 +1,29 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "cc-02-ledger-resume",
+  "dial": "standard",
+  "claims": [
+    {
+      "id": "c1",
+      "classification": "verified",
+      "anchor": "artifacts/inventory-app/GITLOG.txt:2",
+      "live_value": "branch feature/postgres-backend; status --short --branch (line 5) shows no dirty entries \u2014 clean tree"
+    },
+    {
+      "id": "c2",
+      "classification": "verified",
+      "anchor": "artifacts/inventory-app/.ledger/entries.jsonl:2",
+      "live_value": "head entry backend-store-20260721-01 (Postgres) supersedes backend-store-20260720-01 (SQLite); chain acyclic, unique head, no dangling ids, revisit_when intact"
+    },
+    {
+      "id": "c3",
+      "classification": "verified",
+      "anchor": "artifacts/inventory-app/TESTS.txt:3",
+      "live_value": "recorded run: 18 passed in 0.31s"
+    }
+  ],
+  "accepted_unverified": [],
+  "action": "proceed",
+  "ledger": "walked",
+  "notes": "Supersedes chain walked to its head \u2014 the Postgres decision is current prior judgment, re-anchored not trusted; all claims verify, so the DSN wiring proceeds."
+}

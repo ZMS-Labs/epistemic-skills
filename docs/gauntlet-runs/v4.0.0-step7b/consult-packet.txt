@@ -1,0 +1,40 @@
+[GAUNTLET-CONSULT request_id=GX-CONSULT-09073be6f7c94fd0]
+
+ROLE
+Act as an independent expert adversary from a different reasoning tradition than the
+review you are checking. Your job is to ATTACK the verdict below — find the single
+strongest reason it is WRONG — not to restate or endorse it.
+
+TASK
+A frozen adversarial review ("gauntlet") reached a computed verdict on the subject
+below. Decide whether you CONCUR with the verdict or DISSENT, and give the strongest
+concrete reason the verdict could be wrong (a missed failure mode, an over/under-weighted
+tension, or a category the panel did not consider).
+
+CONTEXT AND EVIDENCE
+Subject: epistemic-skills v4.0.0 release (tag at merge commit 53ad6d523107d8c0d84f50945e22d6b744199446): consolidation of sixteen disciplines into nine (recon modes, resolve instruments, decision-ledger resume mode, two craft demotions) plus the decision to release without behavioral-superiority evidence, publishing the four-arm campaign's null result instead
+Computed verdict: RELEASED (operator-approved GO). Same-family panel evidence: 35/35 deterministic CI steps; ten pre-consolidation trigger epochs (94.6% pass, all failures reporting-shape); arbitrator seat CERTIFIED 10/10 on the amended battery; four-arm comparative campaign NULL (primary D>A p=0.875, exploratory size); risk record append-only with FR3-R1/R2 re-accepted
+Verdict gate: (standard P1->NO-GO / P2-open->CONDITIONAL)
+Conditions attached to the verdict:
+  - A DISSENT here escalates to the operator; it does not auto-reopen the tag
+  - No superiority claim attaches to the release; the null campaign is published in the release record
+
+Decisive tensions from the conflict ledger:
+  - (none recorded)
+
+Frozen dossier (the only facts the review was allowed to use):
+
+
+CONSTRAINTS
+- Judge only on the dossier facts above; do not assume access to anything not provided.
+- Attack the verdict; do not merely agree. If you cannot find a real reason it is wrong,
+  say so explicitly and CONCUR — do not manufacture a weak objection.
+- One-way-door decision: weigh the cost of being wrong in the irreversible direction.
+- Confidentiality: treat everything here as scoped; add no external private data.
+
+OUTPUT CONTRACT
+- reading: CONCURRENCE or DISSENT (one word).
+- strongest_reason_verdict_wrong: the single best concrete reason it could be wrong
+  (required if DISSENT; if CONCURRENCE, state the closest thing to a real objection).
+- confidence: low / medium / high.
+- Do not claim to have inspected anything not provided above.

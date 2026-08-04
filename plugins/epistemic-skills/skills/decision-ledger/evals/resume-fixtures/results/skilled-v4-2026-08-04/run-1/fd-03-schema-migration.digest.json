@@ -1,0 +1,29 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "fd-03-schema-migration",
+  "dial": "standard",
+  "claims": [
+    {
+      "id": "c1",
+      "classification": "contradicted",
+      "anchor": "artifacts/billing-app/MIGRATION-LOG.txt:5",
+      "live_value": "'migration 004 FAILED \u2014 transaction rolled back automatically ... no schema changes were applied'; 004 is still the next pending migration \u2014 expected a successful, verified apply"
+    },
+    {
+      "id": "c2",
+      "classification": "contradicted",
+      "anchor": "artifacts/billing-app/SCHEMA-DUMP.txt:13",
+      "live_value": "dump shows only invoices_pkey and '(no other indexes on public.invoices)' \u2014 idx_invoices_customer does not exist"
+    },
+    {
+      "id": "c3",
+      "classification": "unverified",
+      "anchor": "artifacts/billing-app/migrations/004_add_index.rollback.sql:1",
+      "live_value": "rollback script exists but no test-run record exists anywhere, and nothing was ever applied to roll back"
+    }
+  ],
+  "accepted_unverified": [],
+  "action": "rescope",
+  "ledger": "absent",
+  "notes": "The migration failed on staging (missing semicolon before COMMIT at migrations/004_add_index.sql:5-6, and CREATE INDEX CONCURRENTLY cannot run inside a BEGIN block), so a production run tomorrow would fail identically. Re-scope to fixing the migration and re-applying on staging before any production plan."
+}

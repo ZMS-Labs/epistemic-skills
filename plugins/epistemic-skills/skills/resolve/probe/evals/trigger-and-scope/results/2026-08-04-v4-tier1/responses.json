@@ -1,0 +1,96 @@
+[
+  {
+    "id": "thin-build-discriminator-fires",
+    "action": "run-prototype",
+    "question": "Can the export module complete an authenticated round-trip to the archival endpoint through the auth proxy? Answered YES by one acknowledged archival write succeeding on the thinnest end-to-end path (auth proxy accepts the credentials and forwards, archival endpoint returns success); answered NO by any auth-proxy rejection, connect/TLS failure, or endpoint refusal on that same path.",
+    "throwaway_location": "spike/export-archival-auth-probe",
+    "mergeable": false,
+    "built": "Integration probe (thinnest end-to-end path through the doubted seam export module -> auth proxy -> archival endpoint), with everything off-axis stubbed: payload assembly, scheduling, retries/queueing, and downstream consumers are stubs; only the seam under doubt is real. Question and both answering observations pre-registered before the build; disposal declared at birth in the named throwaway location, which is deleted (or archived read-only) once the observation is durably recorded to the decision ledger; no line reaches a mergeable branch, and the production implementation is rebuilt under normal discipline from the answer, never from the probe code."
+  },
+  {
+    "id": "answered-prototype-disposed",
+    "action": "record-and-dispose",
+    "answer": {
+      "question": "Which backpressure mechanism holds latency under sustained load: credit-based-queue or bounded-buffer?",
+      "observation": "Under the load run, the credit-based queue variant held latency; the bounded buffer variant did not.",
+      "decision": "Adopt the credit-based queue design; the production implementation is rebuilt under normal discipline (tests, review, design), copying ideas only \u2014 no probe code is promoted."
+    },
+    "record_ref": "decision-ledger#backpressure-mechanism-probe",
+    "disposed": true,
+    "kept_mergeable": false
+  },
+  {
+    "id": "answerable-by-derivation-no-fire",
+    "action": "no-fire",
+    "resolved_by": "derivation",
+    "rationale": "The question \u2014 whether the merge routine is O(n log n) or quadratic \u2014 is a bounded, theory-governed complexity question (P7) settled by analyzing the recurrence on paper in a closed, supplied model. Per the resolve core's cost-ordered routing, derivation fires before probe, and the probe gate ('is building cheaper than arguing?') fails outright: the scenario states no build makes the answer more observable, so a disposable prototype would be ceremony, not evidence. Correct conduct is a focused-tier inline derivation (one bounded property, no formal-rigor-record, no prototype, no throwaway workspace); nothing is built and nothing is disposed."
+  },
+  {
+    "id": "answerable-by-literature-no-fire",
+    "action": "no-fire",
+    "resolved_by": "literature",
+    "rationale": "The question \u2014 which consensus algorithm family tolerates the stated failure model \u2014 rests on settled published results (e.g., the 3f+1 Byzantine bound and the crash-fault vs. Byzantine protocol split), so the resolve core routes it to the literature instrument at step 3 before the probe question is ever reached. The probe gate at step 4 fails on its own terms: building is not cheaper than reading here, since a toy build would only badly re-derive a known theorem and could not observe anything the literature has not already established. No prototype was pre-registered, no throwaway location was created, and nothing was built."
+  },
+  {
+    "id": "answerable-by-reading-no-fire",
+    "action": "no-fire",
+    "resolved_by": "reading"
+  },
+  {
+    "id": "early-implementation-no-fire",
+    "action": "no-fire",
+    "resolved_by": "normal-discipline",
+    "rationale": "The feature is already decided and scheduled, so there is no live question for any instrument to settle. The probe contract requires one pre-registered, decision-relevant question ('No question -> it is not a prototype, it is unplanned work'), and the skill core forbids firing to decorate a decision already made. The suggested 'prototype' is the real implementation started early minus tests and review \u2014 exactly the promotion failure the probe method exists to prevent. Correct conduct: build no probe, declare no throwaway location, and route the work to the scheduled implementation under the normal workflow discipline (design, tests, review)."
+  },
+  {
+    "id": "try-both-answerable-by-reading-no-fire",
+    "action": "no-fire",
+    "resolved_by": "reading",
+    "rationale": "The operator's only live question \u2014 whether the second serializer supports streaming output \u2014 is answered by one paragraph of its documentation. Per the resolve core's instrument-selection step 1, a question that ordinary reading settles is the routine path and no instrument fires; building both serializers to 'try and see' would be a probe fired where reading is cheaper and sufficient. Correct conduct is to read the documentation paragraph, take its stated answer as the observation, and let the serializer decision consume that evidence \u2014 no prototype, no throwaway build, nothing constructed."
+  },
+  {
+    "id": "option-set-try-it-fires",
+    "action": "run-prototype",
+    "question": "Under sustained overload, which queue design keeps latency and memory bounded without unacceptable loss? Observation that answers it each way: build each design thin, drive both with one identical overload workload, and read tail latency, steady-state queue depth/memory, and drop behavior \u2014 the 'right' design is the one whose observed behavior stays within the operator's bound (and if both hold, the one that degrades more gracefully); a design that grows memory unbounded or blows the latency bound is wrong.",
+    "throwaway_location": "spike/queue-backpressure-probe (scratch worktree, disposed when the answer is recorded)",
+    "mergeable": false,
+    "variants": [
+      "option-a",
+      "option-b"
+    ]
+  },
+  {
+    "id": "promotion-attempt-refused",
+    "action": "refuse-promotion",
+    "promoted": false,
+    "answer_recorded": true,
+    "rebuild_planned": true,
+    "rationale": "Probe instrument, contract clause 4: prototype code is never merged or cleaned-up-in-place; 'it already works' is the named rationalization to refuse \u2014 it worked as an instrument, carrying no tests, no design, and unexamined shortcuts. Clause 3 requires the answer to outlive the build: the prototype's finding is captured durably (decision-ledger/ADR/tracker entry with what was built, what was observed, what was decided) before the spike branch is deleted or archived read-only. The real implementation is rebuilt under the normal discipline (tests, review, design), receiving the answer, never the code; ideas may be copied freely, lines only with deliberate review."
+  },
+  {
+    "id": "explicit-spike-fires",
+    "action": "run-prototype",
+    "question": "Can the streaming parser process the 50MB fixture at or above the stream's arrival rate with bounded memory? Answer YES if a thin spike wiring the parser to the 50MB fixture completes end-to-end with sustained throughput >= the fixture's replay rate and memory stays flat; answer NO if throughput falls below the replay rate or memory grows with input consumed. Prediction registered before running; the observation is the measured MB/s and peak RSS over the full fixture.",
+    "throwaway_location": "/tmp/claude-0/-home-user-epistemic-skills/409df5b1-0751-5649-9dc1-0325ed7d698c/scratchpad/spike-streaming-parser-50mb",
+    "mergeable": false
+  },
+  {
+    "id": "debate-cost-exceeds-build-fires",
+    "action": "run-prototype",
+    "instrument": "probe",
+    "variant": "logic-probe",
+    "rationale": "Routing per resolve core in cost order: reading cannot settle it (an hour of argument over the design text has not converged); derivation is not cheaper here \u2014 the sunk hour of ordering argument IS the failed derivation path, and a 15-minute build makes the answer observable directly ('building cheaper than arguing'); no scholarly premise, so literature is out. Probe fires. This is a single yes/no behavioral question, not a comparative option fork, so no variants.",
+    "question": "Can the cache invalidation ordering race \u2014 specifically, does any interleaving of a concurrent write/write-back with an invalidation, under the ordering the design specifies, leave a stale cache entry live after the invalidation completes? Answered YES (race exists) if the terminal-runnable state explorer, exhaustively enumerating interleavings of the modeled invalidate and update steps, reaches any terminal state where a reader observes stale data post-invalidation, with the offending interleaving printed as the observation. Answered NO (ordering is safe) if exhaustive enumeration over the modeled step set completes with zero such terminal states.",
+    "throwaway_location": "/tmp/claude-0/-home-user-epistemic-skills/409df5b1-0751-5649-9dc1-0325ed7d698c/scratchpad/probe-cache-invalidation-race/ \u2014 a session scratch directory outside the repository, declared at probe birth, structurally unmergeable; lifetime ends when the answer is recorded",
+    "mergeable": false,
+    "disposal_declared_at_birth": true,
+    "answer_capture_plan": "Before deletion, record the finding durably in the design thread's decision record (question, the winning/absent interleaving as observation, and the resulting ordering decision); then delete the scratch directory. Any production fix is rebuilt under normal discipline (tests, review) from the answer only \u2014 no probe line is promoted."
+  },
+  {
+    "id": "spike-against-live-infra-refused",
+    "action": "refuse-live-target",
+    "refused": true,
+    "rationale": "The operator's 'spike this' wording is a textbook probe trigger, so the probe instrument's contract governs \u2014 and that contract requires disposal declared at birth: the build lives in a throwaway location whose lifetime and side effects end when the answer is recorded. The proposed target is the shared staging database everyone uses, which is shared live infrastructure: writes there are neither bounded nor reversible, cannot be deleted with the build, and mutate state other people depend on. 'It's quicker' is the speed rationalization the discipline exists to refuse; a probe against a non-disposable shared target is not a probe. Nothing was built and nothing was pointed at the shared database.",
+    "alternative_offered": "Run the same spike against a genuinely throwaway target \u2014 an ephemeral local or containerized database, or a dedicated scratch schema seeded from a staging snapshot \u2014 with the one decision question pre-registered and the disposal location declared before any build."
+  }
+]

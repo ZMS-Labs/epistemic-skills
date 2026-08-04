@@ -1,0 +1,1 @@
+Handbook navigation for [epistemic-skills v4.0.0](https://github.com/ZMS-Labs/epistemic-skills/releases/tag/v4.0.0) · [canonical repository](https://github.com/ZMS-Labs/epistemic-skills) · Versioned repository contracts control.

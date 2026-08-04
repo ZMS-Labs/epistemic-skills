@@ -252,9 +252,20 @@ def validate_trace(trace: Any) -> list[str]:
                 elif not nonempty_string(value):
                     errors.append(f"failure_chain.{field} must be a non-empty string")
 
+    # A single declared uncertainty may arrive as a bare string; the 2026-08-04
+    # four-arm campaign found live subjects split between the two shapes, so the
+    # single structural authority accepts both (string == one-element array).
     residual = trace.get("residual_uncertainty", [])
+    if isinstance(residual, str):
+        residual = [residual]
     if not isinstance(residual, list) or not all(nonempty_string(v) for v in residual):
-        errors.append("residual_uncertainty must be an array of non-empty strings")
+        errors.append(
+            "residual_uncertainty must be a non-empty string or an array of non-empty strings"
+        )
+
+    scenario = trace.get("scenario")
+    if scenario is not None and not nonempty_string(scenario):
+        errors.append("scenario must be a non-empty string when present")
 
     return errors
 

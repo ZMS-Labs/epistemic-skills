@@ -49,7 +49,7 @@ def claim_matches(claim: Any, rule: dict[str, Any]) -> bool:
     return True
 
 
-def score(fixture: Any, trace: Any) -> list[str]:
+def score(fixture: Any, trace: Any, bound: bool = False) -> list[str]:
     errors = validate_trace(trace)
     if not isinstance(fixture, dict):
         return ["fixture root must be an object"] + errors
@@ -57,7 +57,17 @@ def score(fixture: Any, trace: Any) -> list[str]:
     fixture_id = fixture.get("id")
     if not nonempty(fixture_id):
         errors.append("fixture.id must be non-empty")
-    if trace.get("scenario") != fixture_id:
+    scenario = trace.get("scenario")
+    if scenario is None:
+        # Blinded harnesses withhold the fixture id from subjects and bind
+        # trace to fixture themselves (the 2026-08-04 campaign's adapter had
+        # to inject it post-hoc); `bound` asserts that external binding.
+        if not bound:
+            errors.append(
+                f"trace.scenario must equal {fixture_id!r} "
+                "(absent; pass --bound only when the harness binds trace to fixture)"
+            )
+    elif scenario != fixture_id:
         errors.append(f"trace.scenario must equal {fixture_id!r}")
 
     expected = fixture.get("expected")
@@ -113,6 +123,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("fixture", type=Path)
     parser.add_argument("trace", type=Path)
     parser.add_argument("--json", action="store_true", dest="as_json")
+    parser.add_argument(
+        "--bound",
+        action="store_true",
+        help="the harness itself binds trace to fixture (blinded run); "
+        "tolerate an absent trace.scenario — a present one must still match",
+    )
     args = parser.parse_args(argv)
     try:
         fixture = json.loads(args.fixture.read_text(encoding="utf-8"))
@@ -120,7 +136,7 @@ def main(argv: list[str] | None = None) -> int:
     except (OSError, json.JSONDecodeError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 2
-    errors = score(fixture, trace)
+    errors = score(fixture, trace, bound=args.bound)
     payload = {
         "fixture": str(args.fixture),
         "trace": str(args.trace),

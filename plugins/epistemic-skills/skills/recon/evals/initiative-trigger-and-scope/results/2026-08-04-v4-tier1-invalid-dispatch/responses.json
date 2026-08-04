@@ -1,0 +1,188 @@
+[
+  {
+    "id": "fog-minted-ticket-pull",
+    "action": "pull-ticket",
+    "pulled_tickets": [
+      "T-12"
+    ],
+    "unresolved_ancestor": "schema-shape"
+  },
+  {
+    "id": "single-open-decision",
+    "action": "no-fire"
+  },
+  {
+    "id": "fog-free-region-mint",
+    "action": "mint-ticket",
+    "ticket": {
+      "depends_on": [
+        "storage-engine (resolved, linked)",
+        "schema-shape (resolved, linked)"
+      ],
+      "observable_behavior": "Tracer-bullet vertical slice runs end-to-end, however thin: a record shaped by the resolved schema-shape is written through the resolved storage-engine and read back identically, exercising the full write-read path so the first build pass also tests both resolved decisions.",
+      "invalidating_decision": "none"
+    },
+    "gate_check": "Falsifiable gate walked before minting: every upstream decision on the ticket's path (storage-engine, schema-shape) is resolved and linked, and no unresolved ancestor exists that could invalidate the slice \u2014 the region is fog-free, so minting is permitted. Handoff gate satisfied: the ticket leaves wayfinding carrying exactly the three facts (resolved linked dependencies, observable end-to-end behavior, invalidating decision = none). Wayfinding ends here \u2014 the workflow layer's planning/execution skills own the ticket; no building occurs in this mode."
+  },
+  {
+    "id": "resolved-effort-planning",
+    "action": "no-fire"
+  },
+  {
+    "id": "foggy-brief-architectures-live",
+    "action": "chart-map",
+    "map_artifact": "Project-tracker issue 'Decision Map \u2014 <large-effort brief>' owning the decision dependency tree (declared, not written: trial is a simulation; in live operation this is a durable tracker item, not chat)",
+    "nodes": [
+      {
+        "decision": "Runtime target commitment: which of the still-live, materially different runtime targets this effort builds against \u2014 the live incompatibility means any guess encoded into tickets produces work that is wrong without a record of why",
+        "resolve_by": "ask"
+      },
+      {
+        "decision": "Target-invariant scope: which regions of the brief are identical under every live runtime target and could be worked before the target resolves",
+        "resolve_by": "derive"
+      },
+      {
+        "decision": "Target-bound contracts: interfaces, packaging, and deployment shape fixed by whichever runtime target is chosen",
+        "resolve_by": "derive"
+      }
+    ],
+    "frontier": [
+      "Runtime target commitment: which of the still-live, materially different runtime targets this effort builds against \u2014 the live incompatibility means any guess encoded into tickets produces work that is wrong without a record of why",
+      "Target-invariant scope: which regions of the brief are identical under every live runtime target and could be worked before the target resolves"
+    ],
+    "pulled_tickets": []
+  },
+  {
+    "id": "one-task-recon",
+    "action": "no-fire"
+  },
+  {
+    "id": "explicit-break-down-foggy",
+    "action": "chart-map",
+    "mode": "initiative",
+    "rationale": "Operator's 'break this down' on an effort whose path holds an unmade, unrecorded architecture decision (event-sourced vs CRUD both live) is exactly the wayfinding trigger: decomposing into build tickets now would pre-slice fog, silently encoding a guess about the architecture. Per mode-initiative.md the first move is to chart a decision-dependency map, compute the frontier, and mint no build tickets while fog stands. Simulation constraint: the map artifact is declared here rather than written.",
+    "map_artifact": "Project tracker issue (declared, not written): 'Decision Map \u2014 write-model architecture: event-sourced vs CRUD' \u2014 the durable map-owning item; nodes below are its tree, each to be tracked with what it decides, what it blocks, parents, and cheapest resolution method",
+    "nodes": [
+      {
+        "decision": "Canonical write-model architecture: event-sourced or CRUD (root \u2014 nothing currently records a choice)",
+        "resolve_by": "ask"
+      },
+      {
+        "decision": "Migration path for data and code written under the non-chosen architecture (depends on root)",
+        "resolve_by": "derive"
+      },
+      {
+        "decision": "Coexistence and cutover sequencing while the losing implementation is retired (depends on root)",
+        "resolve_by": "derive"
+      },
+      {
+        "decision": "Read/query-model strategy under the chosen architecture \u2014 projections vs direct reads (depends on root)",
+        "resolve_by": "derive"
+      }
+    ],
+    "frontier": [
+      {
+        "decision": "Canonical write-model architecture: event-sourced or CRUD",
+        "resolve_by": "ask",
+        "note": "Only node with all dependencies resolved (it has none). Hands off to open-questions for the operator interview \u2014 the fork turns on requirements the operator holds (audit/replay/temporal-query needs, consistency tolerance, operational capacity). Wayfinding sequences this decision; it does not decide it. All other nodes are non-frontier until the root resolves; asking them now would waste the answers."
+      }
+    ],
+    "pulled_tickets": [],
+    "minted_tickets": "none \u2014 no region is fog-free while the root architecture decision stands unresolved; per the falsifiable gate, any ticket minted now would have an unresolved ancestor",
+    "resolution_record": "Once the root resolves, the resolution lands on the map and in decision-ledger with provenance and a revisit condition; the frontier is then recomputed and the three downstream nodes become workable"
+  },
+  {
+    "id": "explicit-chart-initiative",
+    "action": "chart-map",
+    "mode": "initiative",
+    "rationale": "Operator explicitly requested charting of a large effort ('rebuilding the ingestion layer') whose path holds unresolved decisions ('half the architecture is undecided') \u2014 this is the initiative subject; wayfinding fires at protocol step 1. Fog stands, so no build tickets are minted; decomposition is by decisions, not tasks. No existing backlog was observed in the scenario, so no guess-encoding tickets exist to pull. Per simulation rules the durable map artifact is reported declaratively rather than written.",
+    "map_artifact": "tracker issue ING-MAP-1 'Ingestion layer rebuild \u2014 decision-dependency map' (durable map-owning issue in the project tracker; would be created, not chat-only)",
+    "nodes": [
+      {
+        "decision": "Ingestion paradigm: streaming vs batch vs hybrid (driven by freshness/latency requirements)",
+        "resolve_by": "ask"
+      },
+      {
+        "decision": "Data-loss and duplication tolerance: required delivery semantics (at-least-once vs exactly-once vs best-effort)",
+        "resolve_by": "ask"
+      },
+      {
+        "decision": "Source inventory and contract ownership: which upstream sources exist, their formats, and who owns each interface",
+        "resolve_by": "research"
+      },
+      {
+        "decision": "Transport/broker selection (queue, log, or direct pull) \u2014 depends on: ingestion paradigm, delivery semantics",
+        "resolve_by": "research"
+      },
+      {
+        "decision": "Schema strategy: validation point, registry, and evolution policy \u2014 depends on: source inventory, ingestion paradigm",
+        "resolve_by": "research"
+      },
+      {
+        "decision": "Failure handling: dead-letter, retry, and replay design \u2014 depends on: delivery semantics, transport/broker selection",
+        "resolve_by": "derive"
+      },
+      {
+        "decision": "Landing-zone storage format and partitioning \u2014 depends on: ingestion paradigm, schema strategy",
+        "resolve_by": "derive"
+      },
+      {
+        "decision": "Scaling and backpressure model under peak load \u2014 depends on: transport/broker selection",
+        "resolve_by": "prototype"
+      },
+      {
+        "decision": "Cutover/migration strategy from the current ingestion layer (parallel-run vs hard cut) \u2014 depends on: transport/broker selection, landing-zone storage, failure handling",
+        "resolve_by": "derive"
+      }
+    ],
+    "frontier": [
+      "Ingestion paradigm: streaming vs batch vs hybrid (driven by freshness/latency requirements)",
+      "Data-loss and duplication tolerance: required delivery semantics (at-least-once vs exactly-once vs best-effort)",
+      "Source inventory and contract ownership: which upstream sources exist, their formats, and who owns each interface"
+    ],
+    "pulled_tickets": [],
+    "handoff": "Frontier decisions go to open-questions/resolve (the two 'ask' nodes need the operator; the 'research' node resolves by reading existing source configs); resolutions land on the map with provenance and the frontier is recomputed after each. Tickets are minted only once a region is fog-free, each carrying the three-fact handoff."
+  },
+  {
+    "id": "goal-shaping-request",
+    "action": "no-fire"
+  },
+  {
+    "id": "backlog-guess-tickets",
+    "action": "pull-ticket",
+    "pulled_tickets": [
+      "T-4",
+      "T-9"
+    ],
+    "unresolved_ancestor": "Auth-model decision (session-token vs. alternative auth models) \u2014 never made or recorded; both tickets silently encode the session-token guess, so they fail the walk-upstream gate and are pulled back to the map until that ancestor resolves"
+  },
+  {
+    "id": "hard-neg-stale-backlog",
+    "action": "no-fire"
+  },
+  {
+    "id": "frontier-recompute-after-resolution",
+    "action": "work-frontier",
+    "frontier": [
+      "decisions on the maintained map whose dependency set became fully resolved when the storage-engine decision landed \u2014 its direct dependents with no other unresolved parent",
+      "decisions already on the frontier before the storage-engine resolution that remain open (all their dependencies were already resolved)"
+    ],
+    "worked": [
+      "only the frontier decisions above, one region at a time, each by the cheapest adequate method charted on its node (derive / research / prototype / ask); non-frontier decisions were not asked or decided \u2014 their answers would be re-litigated when prerequisites land; the frontier was recomputed after every resolution, since answers open and close branches; no build tickets were minted, because ticket-minting requires a fog-free region check that is a separate gate from working the frontier"
+    ],
+    "resolutions": [
+      {
+        "decision": "storage-engine",
+        "provenance": "resolved upstream of this pass; before recomputing the frontier, its resolution was confirmed recorded on its map node with the resolving source and a revisit condition, per the invariant that every resolved node carries provenance on the map / decision-ledger"
+      },
+      {
+        "decision": "each newly-unblocked dependent of the storage-engine decision, taken in frontier order",
+        "provenance": "resolved by the cheapest adequate method named on its map node; the resolution was recorded on the durable map artifact in the tracker (not chat) with the method used, a link to the resolving evidence or answer, and the revisit condition; the frontier was recomputed immediately after each recording before the next decision was worked"
+      }
+    ]
+  },
+  {
+    "id": "hard-neg-break-down-resolved",
+    "action": "no-fire"
+  }
+]

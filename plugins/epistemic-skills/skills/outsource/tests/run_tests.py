@@ -237,7 +237,11 @@ def main() -> int:
              / "tests" / "run_tests.py").is_file(),
             f"{battery_skill} trigger-and-scope battery is missing",
         )
-    for recon_battery in ("brief-trigger-and-scope", "initiative-trigger-and-scope"):
+    for recon_battery in (
+        "brief-trigger-and-scope",
+        "initiative-trigger-and-scope",
+        "candidate-trigger-and-scope",
+    ):
         test_path = f"plugins/epistemic-skills/skills/recon/evals/{recon_battery}/tests/run_tests.py"
         require(
             f"run: python {test_path}" in workflow,

@@ -1,0 +1,35 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "ss-01-release-branch",
+  "dial": "standard",
+  "claims": [
+    {
+      "id": "c1",
+      "classification": "contradicted",
+      "anchor": "artifacts/docs-repo/GITLOG.txt:2",
+      "live_value": "current branch is hotfix/1.4.1 with HEAD d4e5f6; release/1.4 still points at a1b2c3 but is 3 commits behind and is not checked out; expected release/1.4 at a1b2c3"
+    },
+    {
+      "id": "c2",
+      "classification": "contradicted",
+      "anchor": "artifacts/docs-repo/GITSTATUS.txt:3",
+      "live_value": "working tree is dirty \u2014 docs/upgrade.md and docs/install.md are modified; expected clean"
+    },
+    {
+      "id": "c3",
+      "classification": "verified",
+      "anchor": "artifacts/docs-repo/BUILD.txt:5",
+      "live_value": "'BUILD OK \u2014 2026-07-22 07:55 UTC' recorded; caveat: the uncommitted modifications may postdate this record, so re-run before release"
+    },
+    {
+      "id": "c4",
+      "classification": "contradicted",
+      "anchor": "artifacts/docs-repo/GITLOG.txt:2",
+      "live_value": "'push the branch and open the release PR' presumes being on a clean release/1.4 \u2014 the repo is on a different branch with uncommitted work"
+    }
+  ],
+  "accepted_unverified": [],
+  "action": "rescope",
+  "ledger": "absent",
+  "notes": "State moved since the summary: a hotfix branch and uncommitted edits now exist. Rescope to reconciling hotfix/1.4.1 and the dirty tree with the release/1.4 plan rather than pushing on stale premises."
+}

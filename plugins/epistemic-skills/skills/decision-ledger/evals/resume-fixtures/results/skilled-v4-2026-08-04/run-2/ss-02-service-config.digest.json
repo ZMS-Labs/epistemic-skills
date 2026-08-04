@@ -1,0 +1,29 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "ss-02-service-config",
+  "dial": "standard",
+  "claims": [
+    {
+      "id": "c1",
+      "classification": "contradicted",
+      "anchor": "artifacts/metrics-service/config.yaml:4",
+      "live_value": "port: 9090 \u2014 ops moved the listener 8080 -> 9090 on 2026-07-21 for a port conflict (CHANGELOG.txt:3) \u2014 expected 8080"
+    },
+    {
+      "id": "c2",
+      "classification": "contradicted",
+      "anchor": "artifacts/metrics-service/config.yaml:6",
+      "live_value": "retention_days: 7 \u2014 ops cut retention 30d -> 7d under disk pressure (CHANGELOG.txt:4) \u2014 expected 30d"
+    },
+    {
+      "id": "c3",
+      "classification": "verified",
+      "anchor": "artifacts/metrics-service/deploy.yml:2",
+      "live_value": "hosts: metrics-01"
+    }
+  ],
+  "accepted_unverified": [],
+  "action": "rescope",
+  "ledger": "absent",
+  "notes": "Ops changed the config after the session and already restarted the service at 19:12 UTC (CHANGELOG.txt:5), so the planned restart rests on a void premise; re-scope and confirm with the operator/ops before touching the live config. Ledger absent, which is not evidence that no decisions were made."
+}

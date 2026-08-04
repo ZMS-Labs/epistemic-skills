@@ -1,0 +1,35 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "ss-02-service-config",
+  "dial": "standard",
+  "claims": [
+    {
+      "id": "c1",
+      "classification": "contradicted",
+      "anchor": "artifacts/metrics-service/config.yaml:4",
+      "live_value": "port: 9090 \u2014 ops moved the listener 8080 -> 9090 on 2026-07-21 for a port conflict (CHANGELOG.txt:3); expected 8080"
+    },
+    {
+      "id": "c2",
+      "classification": "contradicted",
+      "anchor": "artifacts/metrics-service/config.yaml:6",
+      "live_value": "retention_days: 7 \u2014 ops cut 30d -> 7d under disk pressure on metrics-01 (CHANGELOG.txt:4); expected 30"
+    },
+    {
+      "id": "c3",
+      "classification": "verified",
+      "anchor": "artifacts/metrics-service/deploy.yml:2",
+      "live_value": "playbook hosts: metrics-01 with a restart task"
+    },
+    {
+      "id": "c4",
+      "classification": "contradicted",
+      "anchor": "artifacts/metrics-service/CHANGELOG.txt:5",
+      "live_value": "'Service restarted by ops at 19:12 UTC' after their own change \u2014 there is no pending change of ours to pick up; a restart now would just cycle the ops-deployed config"
+    }
+  ],
+  "accepted_unverified": [],
+  "action": "rescope",
+  "ledger": "absent",
+  "notes": "Ops deliberately superseded yesterday's tuning and already restarted. Intended next action: skip the restart; raise the conflict with the user/ops and decide whether 8080/30d should be reinstated (and the gateway-sidecar and disk constraints addressed) before touching the service."
+}

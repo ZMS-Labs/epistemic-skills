@@ -23,6 +23,20 @@ def main() -> int:
             ok = actual_pass == expected_pass
             failures += 0 if ok else 1
             rows.append((directory.name, filename, expected_pass, actual_pass, errors))
+        # Blinded-binding contract: with scenario withheld by the harness,
+        # gold must pass only under bound=True, and a wrong scenario must
+        # fail even under bound=True.
+        gold = json.loads((directory / "gold.json").read_text(encoding="utf-8"))
+        blinded = {k: v for k, v in gold.items() if k != "scenario"}
+        checks = (
+            ("gold-noscenario+bound", not score(fixture, blinded, bound=True)),
+            ("gold-noscenario-unbound", bool(score(fixture, blinded))),
+            ("gold-wrong-scenario+bound",
+             bool(score(fixture, {**gold, "scenario": "not-this-fixture"}, bound=True))),
+        )
+        for label, ok in checks:
+            failures += 0 if ok else 1
+            rows.append((directory.name, label, True, ok, [] if ok else ["binding contract violated"]))
 
     print("# epistemic-flexibility behavioral fixture self-test")
     print("| fixture | trace | expected | actual | result | details |")

@@ -1,0 +1,35 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "fd-01-backup-release",
+  "dial": "standard",
+  "claims": [
+    {
+      "id": "c1",
+      "classification": "contradicted",
+      "anchor": "artifacts/backup-tool/backup.sh:5",
+      "live_value": "backup.sh still carries 'BUG (unfixed)' \u2014 flock -n has no --wait and no retry delay; GITLOG.txt:13 confirms no commit has touched backup.sh since the initial 7b11e05; expected a committed fix"
+    },
+    {
+      "id": "c2",
+      "classification": "contradicted",
+      "anchor": "artifacts/backup-tool/tests/test_retry.sh:4",
+      "live_value": "the test only checks the lock-failure exit code \u2014 'retry flag path NOT exercised' (line 6); no recorded green run exists; expected coverage of the retry path"
+    },
+    {
+      "id": "c3",
+      "classification": "contradicted",
+      "anchor": "artifacts/backup-tool/GITLOG.txt:14",
+      "live_value": "no remote configured and no PR artifacts exist in this repo; expected evidence of merged PR #12"
+    },
+    {
+      "id": "c4",
+      "classification": "contradicted",
+      "anchor": "artifacts/backup-tool/backup.sh:5",
+      "live_value": "cutting v1.1 is premised on a fix and green tests that do not exist"
+    }
+  ],
+  "accepted_unverified": [],
+  "action": "rescope",
+  "ledger": "absent",
+  "notes": "Classic false-DONE: the bug is unfixed in the live artifact, the test does not cover the claimed path, and the merged-PR claim is impossible in a repo with no remote. Rescope from releasing to actually fixing and testing the retry bug."
+}

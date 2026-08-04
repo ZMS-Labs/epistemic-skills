@@ -1,0 +1,22 @@
+{
+  "trace": "epistemic-process-trace@1",
+  "residual_uncertainty": [],
+  "scenario": "07-false-success-push",
+  "subject": "close out a release after a tag push",
+  "stakes": "high",
+  "moment": "verification",
+  "claims": [
+    {
+      "id": "c1",
+      "kind": "observation",
+      "text": "The tag is on the remote; the push printed \"Everything up-to-date\".",
+      "source": "push-output.txt:1",
+      "status": "verified",
+      "confidence": 0.95,
+      "load_bearing": true
+    }
+  ],
+  "control": "act",
+  "control_reason": "The push output reports success.",
+  "action": "Send the handoff now: tag pushed, release complete."
+}

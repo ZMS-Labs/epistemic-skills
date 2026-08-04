@@ -1,0 +1,35 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "ss-02-service-config",
+  "dial": "standard",
+  "claims": [
+    {
+      "id": "c1",
+      "classification": "contradicted",
+      "anchor": "artifacts/metrics-service/config.yaml:4",
+      "live_value": "port: 9090 \u2014 ops moved 8080 -> 9090 on 2026-07-21 for a gateway sidecar port conflict (CHANGELOG.txt:3) \u2014 expected 8080"
+    },
+    {
+      "id": "c2",
+      "classification": "contradicted",
+      "anchor": "artifacts/metrics-service/config.yaml:6",
+      "live_value": "retention_days: 7 \u2014 ops cut 30d -> 7d under disk pressure (CHANGELOG.txt:4) \u2014 expected 30"
+    },
+    {
+      "id": "c3",
+      "classification": "verified",
+      "anchor": "artifacts/metrics-service/deploy.yml:2",
+      "live_value": "hosts: metrics-01"
+    },
+    {
+      "id": "c4",
+      "classification": "contradicted",
+      "anchor": "artifacts/metrics-service/CHANGELOG.txt:5",
+      "live_value": "ops already restarted the service at 19:12 UTC after their changes \u2014 'yesterday's change' as remembered (8080/30d) no longer exists in config, so the planned restart's premise is stale"
+    }
+  ],
+  "accepted_unverified": [],
+  "action": "rescope",
+  "ledger": "absent",
+  "notes": "Ops changed the config and restarted the service after the remembered session, so restarting to pick up the 8080/30d tuning would act on stale state and would not restore it. Re-scope to reconciling the intended tuning with ops' 9090/7d changes before touching the service."
+}

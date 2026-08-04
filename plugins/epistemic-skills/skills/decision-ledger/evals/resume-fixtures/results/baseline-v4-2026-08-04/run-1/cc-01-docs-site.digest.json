@@ -1,0 +1,44 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "cc-01-docs-site",
+  "dial": "standard",
+  "claims": [
+    {
+      "id": "c1",
+      "classification": "verified",
+      "anchor": "artifacts/docs-site/GITLOG.txt:1",
+      "live_value": "agent/footer-year at aa10f02, 2 commits ahead of main, unpushed (one commit is the year bump, the sibling adds STYLE.md); footer.html shows 2026"
+    },
+    {
+      "id": "c2",
+      "classification": "verified",
+      "anchor": "artifacts/docs-site/docs/STYLE.md:1",
+      "live_value": "STYLE.md present with the four house style rules"
+    },
+    {
+      "id": "c3",
+      "classification": "unverified",
+      "live_value": "no test artifacts appear anywhere; absence of a suite is consistent but not provable from these files"
+    },
+    {
+      "id": "c4",
+      "classification": "unverified",
+      "live_value": "plan is plausible, but GITLOG.txt:19 notes no remote configured \u2014 push requires remote setup first"
+    }
+  ],
+  "accepted_unverified": [
+    {
+      "claim_id": "c3",
+      "acceptor": "self",
+      "risk": "if a hidden test suite exists it goes unrun; docs-only footer/style change, low blast radius"
+    },
+    {
+      "claim_id": "c4",
+      "acceptor": "self",
+      "risk": "prior-session plan may be stale and push needs a remote configured first; opening a small PR is reversible"
+    }
+  ],
+  "action": "proceed",
+  "ledger": "absent",
+  "notes": "Summary matches the artifacts. Intended next action: configure the remote, push agent/footer-year, and open the small footer-year PR."
+}

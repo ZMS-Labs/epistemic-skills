@@ -1,0 +1,29 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "cc-01-docs-site",
+  "dial": "standard",
+  "claims": [
+    {
+      "id": "c1",
+      "classification": "verified",
+      "anchor": "artifacts/docs-site/GITLOG.txt:19",
+      "live_value": "agent/footer-year at HEAD, 2 commits ahead of main, no remote configured (unpushed); footer.html shows 2026"
+    },
+    {
+      "id": "c2",
+      "classification": "verified",
+      "anchor": "artifacts/docs-site/docs/STYLE.md:1",
+      "live_value": "STYLE.md exists and contains the house style rules"
+    },
+    {
+      "id": "c3",
+      "classification": "verified",
+      "anchor": "artifacts/docs-site/ (repo tree \u2014 no test files present)",
+      "live_value": "repository contains no test suite, consistent with 'nothing to verify'"
+    }
+  ],
+  "accepted_unverified": [],
+  "action": "proceed",
+  "ledger": "absent",
+  "notes": "All load-bearing claims re-anchor cleanly; proceed to push and open the PR, noting GITLOG.txt:19 records no remote configured so one must be set up as part of the push. Ledger absent, which is not evidence that no decisions were made."
+}

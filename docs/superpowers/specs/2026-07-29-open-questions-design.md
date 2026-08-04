@@ -41,8 +41,10 @@ duplicates the ledger/termination machinery and doubles integration cost).
 The design is grounded in an evidence-research run (2026-07-29; Consensus
 discovery + Scite reception, filter-level; all load-bearing papers
 DOI-confirmed, zero retraction/editorial notices; holdings UNVERIFIED — no
-library substrate reachable that session; record is session-ephemeral until
-deposited):
+library substrate reachable that session; **deposited 2026-08-04**: the four
+load-bearing DOIs live in the operator's Scite collection
+`open-questions-design-2026-07-29-3KGVW` (id 379400; issue #63), making the
+record durable rather than session-ephemeral):
 
 1. **Interviews are the most effective elicitation technique, structured
    preferentially.** Davis et al. 2006, systematic review

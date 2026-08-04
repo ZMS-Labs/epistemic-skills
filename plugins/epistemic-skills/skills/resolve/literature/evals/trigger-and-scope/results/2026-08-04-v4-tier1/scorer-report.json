@@ -1,0 +1,20 @@
+{
+  "scorer": "plugins/epistemic-skills/skills/resolve/literature/evals/trigger-and-scope/score.py",
+  "exit_code": 0,
+  "report": [
+    "{",
+    "  \"pass\": true,",
+    "  \"failures\": [],",
+    "  \"actions\": {",
+    "    \"run-evidence\": 6,",
+    "    \"precall-gate\": 1,",
+    "    \"no-fire\": 6,",
+    "    \"evidence-gate\": 1",
+    "  }",
+    "}"
+  ],
+  "extraction_anomalies": [
+    "492a1728b220: surrounding prose around the JSON object (extracted per contract rule 3)",
+    "8fd7f23e9def: surrounding prose around the JSON object (extracted per contract rule 3)"
+  ]
+}

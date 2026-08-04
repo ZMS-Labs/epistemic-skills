@@ -1,0 +1,35 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "fd-03-schema-migration",
+  "dial": "standard",
+  "claims": [
+    {
+      "id": "c1",
+      "classification": "contradicted",
+      "anchor": "artifacts/billing-app/MIGRATION-LOG.txt:5",
+      "live_value": "'migration 004 FAILED \u2014 transaction rolled back automatically; no schema changes were applied'; expected a successful verified apply"
+    },
+    {
+      "id": "c2",
+      "classification": "contradicted",
+      "anchor": "artifacts/billing-app/SCHEMA-DUMP.txt:13",
+      "live_value": "dump shows only invoices_pkey and '-- (no other indexes on public.invoices)'; expected idx_invoices_customer to exist"
+    },
+    {
+      "id": "c3",
+      "classification": "unverified",
+      "anchor": "artifacts/billing-app/migrations/004_add_index.rollback.sql:2",
+      "live_value": "rollback script exists but no record of it being tested against staging appears in any artifact"
+    },
+    {
+      "id": "c4",
+      "classification": "contradicted",
+      "anchor": "artifacts/billing-app/MIGRATION-LOG.txt:4",
+      "live_value": "the SQL fails with a syntax error (missing semicolon before COMMIT) and wraps CREATE INDEX CONCURRENTLY in a transaction, which Postgres forbids; expected a production-ready migration"
+    }
+  ],
+  "accepted_unverified": [],
+  "action": "rescope",
+  "ledger": "absent",
+  "notes": "Staging apply failed and the index does not exist, so the production run must not happen as planned. Intended next action: rescope to fixing 004_add_index.sql (drop BEGIN/COMMIT around CREATE INDEX CONCURRENTLY, add the missing semicolon), re-applying to staging, verifying via schema dump, and testing rollback before any production window."
+}

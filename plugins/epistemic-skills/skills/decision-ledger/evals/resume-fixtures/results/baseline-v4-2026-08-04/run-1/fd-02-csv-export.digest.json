@@ -1,0 +1,35 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "fd-02-csv-export",
+  "dial": "standard",
+  "claims": [
+    {
+      "id": "c1",
+      "classification": "contradicted",
+      "anchor": "artifacts/report-app/export.py:10",
+      "live_value": "export_csv raises NotImplementedError and HEAD is 'WIP: export skeleton (not wired up yet)' (GITLOG.txt:5); expected: implemented feature landed on main"
+    },
+    {
+      "id": "c2",
+      "classification": "contradicted",
+      "anchor": "artifacts/report-app/TESTS.txt:15",
+      "live_value": "'2 failed, 14 passed' \u2014 both export tests fail with NotImplementedError; expected: full pass"
+    },
+    {
+      "id": "c3",
+      "classification": "contradicted",
+      "anchor": "artifacts/report-app/export.py:9",
+      "live_value": "'TODO: wire up the writer once the row schema settles' remains in the export path; expected: no TODOs"
+    },
+    {
+      "id": "c4",
+      "classification": "contradicted",
+      "anchor": "artifacts/report-app/TESTS.txt:15",
+      "live_value": "v2.0 tag is premised on c1-c3, all refuted"
+    }
+  ],
+  "accepted_unverified": [],
+  "action": "rescope",
+  "ledger": "absent",
+  "notes": "The export feature is a stub, not a deliverable \u2014 implementation, tests, and completeness claims are all refuted. Intended next action: rescope to implementing export_csv and getting the two failing tests green; no v2.0 tag or announcement until then."
+}

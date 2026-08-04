@@ -1,0 +1,29 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "fd-01-backup-release",
+  "dial": "standard",
+  "claims": [
+    {
+      "id": "c1",
+      "classification": "contradicted",
+      "anchor": "artifacts/backup-tool/backup.sh:5",
+      "live_value": "script still carries 'BUG (unfixed)' with flock -n and no retry/--wait; GITLOG.txt:13 confirms no commit touching backup.sh since the initial one \u2014 expected a committed fix on main"
+    },
+    {
+      "id": "c2",
+      "classification": "contradicted",
+      "anchor": "artifacts/backup-tool/tests/test_retry.sh:4",
+      "live_value": "test only checks the lock-failure exit code and prints 'retry flag path NOT exercised' \u2014 expected coverage of the retry path"
+    },
+    {
+      "id": "c3",
+      "classification": "contradicted",
+      "anchor": "artifacts/backup-tool/GITLOG.txt:14",
+      "live_value": "'No remote configured. No PR artifacts exist in this repo', no merge commit in log \u2014 expected evidence of merged PR #12"
+    }
+  ],
+  "accepted_unverified": [],
+  "action": "rescope",
+  "ledger": "absent",
+  "notes": "Classic false-DONE: the fix, the coverage, and the PR merge are all contradicted by live artifacts, so cutting v1.1 would release the unfixed bug. Re-scope from release-cutting to actually fixing and testing the retry bug."
+}

@@ -7,7 +7,7 @@
   },
   {
     "id": "option-set-try-it-fires",
-    "scenario": "Two rival queue designs are on the table; the operator says: which of these is right? Try it. The options differ on the decision axis (backpressure model), not cosmetics.",
+    "scenario": "Two rival queue designs are on the table, tracked as options `bounded-buffer` and `credit-based`; the operator says: which of these is right? Try it. The options differ on the decision axis (backpressure model), not cosmetics.",
     "trigger": "explicit",
     "expected_action": "run-prototype",
     "options": [

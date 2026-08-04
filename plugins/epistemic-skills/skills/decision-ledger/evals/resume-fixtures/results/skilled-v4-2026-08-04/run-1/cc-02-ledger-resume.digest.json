@@ -1,0 +1,29 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "cc-02-ledger-resume",
+  "dial": "standard",
+  "claims": [
+    {
+      "id": "c1",
+      "classification": "verified",
+      "anchor": "artifacts/inventory-app/GITLOG.txt:2",
+      "live_value": "branch feature/postgres-backend checked out; git status --short --branch shows no changes (clean tree)"
+    },
+    {
+      "id": "c2",
+      "classification": "verified",
+      "anchor": "artifacts/inventory-app/.ledger/entries.jsonl:2",
+      "live_value": "backend-store-20260721-01 (Postgres) supersedes backend-store-20260720-01 (SQLite); chain walked to its unique head, acyclic, no dangling ids \u2014 Postgres is the current decision"
+    },
+    {
+      "id": "c3",
+      "classification": "verified",
+      "anchor": "artifacts/inventory-app/TESTS.txt:3",
+      "live_value": "recorded run: 18 passed in 0.31s"
+    }
+  ],
+  "accepted_unverified": [],
+  "action": "proceed",
+  "ledger": "walked",
+  "notes": "Clean resumption with a well-formed ledger; the supersedes chain confirms Postgres as the head decision (consumed as re-anchored prior judgment, not authorization). Proceed with wiring the repository layer."
+}

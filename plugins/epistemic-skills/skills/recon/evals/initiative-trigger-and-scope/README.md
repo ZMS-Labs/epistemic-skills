@@ -41,3 +41,11 @@ lineage), `observable_behavior`, `invalidating_decision` (or "none").
 First live behavioral epoch: 2026-08-04, FAIL 11/13 — see
 `results/2026-08-04/RESULTS.md`; both failures are reporting-layer
 divergences over correct conduct (register: issue #77).
+
+Second valid epoch (first against the consolidated recon subject):
+2026-08-04 v4 Tier-1 corrected dispatch, FAIL 11/13 — one persistent
+mode-vs-outcome label divergence and one genuine hard-negative over-fire
+(the epoch program's first); see `results/2026-08-04-v4-tier1/RESULTS.md`.
+The uncorrected first attempt is quarantined in
+`results/2026-08-04-v4-tier1-invalid-dispatch/` as a dispatch-defect
+record.

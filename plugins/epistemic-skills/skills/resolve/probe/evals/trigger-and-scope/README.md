@@ -36,3 +36,10 @@ false/absent. List fields carry bare ids without annotations.
 
 First live behavioral epoch: 2026-08-04, PASS 12/12 — see
 `results/2026-08-04/RESULTS.md` (register: issue #77).
+
+Second epoch (first against the consolidated resolve subject): 2026-08-04
+v4 Tier-1, FAIL 11/12 — the single failure is a dispatch/fixture
+under-specification on `option-set-try-it-fires` (canonical option ids
+absent from the scenario text; since fixed for future epochs), with zero
+instrument-selection failures; see
+`results/2026-08-04-v4-tier1/RESULTS.md`.

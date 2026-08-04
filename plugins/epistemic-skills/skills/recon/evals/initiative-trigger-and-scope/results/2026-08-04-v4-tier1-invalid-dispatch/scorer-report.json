@@ -1,0 +1,31 @@
+{
+  "scorer": "plugins/epistemic-skills/skills/recon/evals/initiative-trigger-and-scope/score.py",
+  "exit_code": 1,
+  "report": [
+    "{",
+    "  \"pass\": false,",
+    "  \"failures\": [",
+    "    \"explicit-chart-initiative: map nodes must be exactly the decisions \\u2014 expected ['api-surface', 'schema-shape', 'storage-engine'], got ['Cutover/migration strategy from the current ingestion layer (parallel-run vs hard cut) \\u2014 depends on: transport/broker selection, landing-zone storage, failure handling', 'Data-loss and duplication tolerance: required delivery semantics (at-least-once vs exactly-once vs best-effort)', 'Failure handling: dead-letter, retry, and replay design \\u2014 depends on: delivery semantics, transport/broker selection', 'Ingestion paradigm: streaming vs batch vs hybrid (driven by freshness/latency requirements)', 'Landing-zone storage format and partitioning \\u2014 depends on: ingestion paradigm, schema strategy', 'Scaling and backpressure model under peak load \\u2014 depends on: transport/broker selection', 'Schema strategy: validation point, registry, and evolution policy \\u2014 depends on: source inventory, ingestion paradigm', 'Source inventory and contract ownership: which upstream sources exist, their formats, and who owns each interface', 'Transport/broker selection (queue, log, or direct pull) \\u2014 depends on: ingestion paradigm, delivery semantics']\",",
+    "    \"explicit-chart-initiative: frontier wrong \\u2014 expected ['storage-engine'], got ['Data-loss and duplication tolerance: required delivery semantics (at-least-once vs exactly-once vs best-effort)', 'Ingestion paradigm: streaming vs batch vs hybrid (driven by freshness/latency requirements)', 'Source inventory and contract ownership: which upstream sources exist, their formats, and who owns each interface']\",",
+    "    \"explicit-break-down-foggy: map nodes must be exactly the decisions \\u2014 expected ['architecture-style', 'sync-protocol'], got ['Canonical write-model architecture: event-sourced or CRUD (root \\u2014 nothing currently records a choice)', 'Coexistence and cutover sequencing while the losing implementation is retired (depends on root)', 'Migration path for data and code written under the non-chosen architecture (depends on root)', 'Read/query-model strategy under the chosen architecture \\u2014 projections vs direct reads (depends on root)']\",",
+    "    \"explicit-break-down-foggy: frontier must be an array of bare decision strings\",",
+    "    \"explicit-break-down-foggy: tickets minted from fog \\u2014 unresolved decisions remain upstream\",",
+    "    \"foggy-brief-architectures-live: map nodes must be exactly the decisions \\u2014 expected ['packaging', 'runtime-target', 'telemetry-format'], got ['Runtime target commitment: which of the still-live, materially different runtime targets this effort builds against \\u2014 the live incompatibility means any guess encoded into tickets produces work that is wrong without a record of why', 'Target-bound contracts: interfaces, packaging, and deployment shape fixed by whichever runtime target is chosen', 'Target-invariant scope: which regions of the brief are identical under every live runtime target and could be worked before the target resolves']\",",
+    "    \"foggy-brief-architectures-live: frontier wrong \\u2014 expected ['runtime-target', 'telemetry-format'], got ['Runtime target commitment: which of the still-live, materially different runtime targets this effort builds against \\u2014 the live incompatibility means any guess encoded into tickets produces work that is wrong without a record of why', 'Target-invariant scope: which regions of the brief are identical under every live runtime target and could be worked before the target resolves']\",",
+    "    \"backlog-guess-tickets: expected chart-map, got pull-ticket\",",
+    "    \"frontier-recompute-after-resolution: recomputed frontier wrong \\u2014 expected ['backup-policy', 'schema-shape'], got ['decisions already on the frontier before the storage-engine resolution that remain open (all their dependencies were already resolved)', 'decisions on the maintained map whose dependency set became fully resolved when the storage-engine decision landed \\u2014 its direct dependents with no other unresolved parent']\",",
+    "    \"frontier-recompute-after-resolution: non-frontier decision worked ['only the frontier decisions above, one region at a time, each by the cheapest adequate method charted on its node (derive / research / prototype / ask); non-frontier decisions were not asked or decided \\u2014 their answers would be re-litigated when prerequisites land; the frontier was recomputed after every resolution, since answers open and close branches; no build tickets were minted, because ticket-minting requires a fog-free region check that is a separate gate from working the frontier'] \\u2014 its answer will be re-litigated\",",
+    "    \"frontier-recompute-after-resolution: resolution of 'only the frontier decisions above, one region at a time, each by the cheapest adequate method charted on its node (derive / research / prototype / ask); non-frontier decisions were not asked or decided \\u2014 their answers would be re-litigated when prerequisites land; the frontier was recomputed after every resolution, since answers open and close branches; no build tickets were minted, because ticket-minting requires a fog-free region check that is a separate gate from working the frontier' must be recorded on the map with provenance\",",
+    "    \"fog-free-region-mint: ticket must link exactly its resolved decision lineage ['schema-shape', 'storage-engine']\"",
+    "  ],",
+    "  \"actions\": {",
+    "    \"chart-map\": 3,",
+    "    \"pull-ticket\": 2,",
+    "    \"no-fire\": 6,",
+    "    \"work-frontier\": 1,",
+    "    \"mint-ticket\": 1",
+    "  }",
+    "}"
+  ],
+  "extraction_anomalies": []
+}

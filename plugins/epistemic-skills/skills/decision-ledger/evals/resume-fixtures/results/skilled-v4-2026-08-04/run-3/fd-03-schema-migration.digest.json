@@ -1,0 +1,34 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "fd-03-schema-migration",
+  "dial": "standard",
+  "claims": [
+    {
+      "id": "c1",
+      "classification": "contradicted",
+      "anchor": "artifacts/billing-app/MIGRATION-LOG.txt:5",
+      "live_value": "'migration 004 FAILED \u2014 transaction rolled back automatically; no schema changes were applied'; 004 is still the next pending migration; expected a successful applied-and-verified run"
+    },
+    {
+      "id": "c2",
+      "classification": "contradicted",
+      "anchor": "artifacts/billing-app/SCHEMA-DUMP.txt:13",
+      "live_value": "dump shows only invoices_pkey \u2014 '(no other indexes on public.invoices)'; idx_invoices_customer does not exist; expected the index present"
+    },
+    {
+      "id": "c3",
+      "classification": "unverified",
+      "live_value": "no artifact records any rollback test; since the index was never created, nothing existed to roll back"
+    },
+    {
+      "id": "c4",
+      "classification": "contradicted",
+      "anchor": "artifacts/billing-app/migrations/004_add_index.sql:4",
+      "live_value": "the migration itself is broken \u2014 missing statement terminator before COMMIT (the logged syntax error), and CREATE INDEX CONCURRENTLY cannot run inside a BEGIN block; running it against production would fail"
+    }
+  ],
+  "accepted_unverified": [],
+  "action": "rescope",
+  "ledger": "absent",
+  "notes": "Staging never succeeded and the migration file is defective, so the production-run plan is void. Rescope to fixing 004 (drop the transaction wrapper or CONCURRENTLY, terminate the statement), re-applying to staging, and verifying the schema before any production window."
+}

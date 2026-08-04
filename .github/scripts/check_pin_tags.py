@@ -1,0 +1,83 @@
+#!/usr/bin/env python3
+"""Verify that every registered pin tag is reachable on origin at its pinned commit.
+
+The counterpart repository (ZMS-Labs/epistemic-calibration) fetches this
+repository BY SHA in its CI and relies on these tags only to keep those
+SHAs reachable (its verify.yml says so explicitly). Deleting or moving a
+pin tag would break the counterpart silently — this guard makes that a
+red build here instead (charter obligation: bilateral reachability,
+docs/coordination/2026-08-04-phase0-counterpart-reconnaissance.md).
+
+Register every future pin tag in PINS with its PEELED commit hash (the
+commit the tag must keep reachable — for an annotated tag, the target of
+the tag object, shown by `git ls-remote` as the `^{}` line).
+
+Stdlib only. Exit 0 = every pin present and correct; 1 = violation;
+2 = origin unreachable (infrastructure, not a policy verdict).
+"""
+from __future__ import annotations
+
+import subprocess
+import sys
+
+PINS = {
+    # tag name -> peeled commit that must stay reachable at that name
+    "pin/ecs-contract-2026-07-27": "8d9b2f85bd8e081a547e33f4bb9b5eb880a4c2b0",
+}
+
+
+def remote_tag_commit(tag: str) -> str | None:
+    """Peeled commit for `tag` on origin, or None if the tag is absent."""
+    ref = f"refs/tags/{tag}"
+    proc = subprocess.run(
+        ["git", "ls-remote", "origin", ref, ref + "^{}"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    if proc.returncode != 0:
+        raise RuntimeError(f"git ls-remote failed: {proc.stderr.strip()}")
+    direct = peeled = None
+    for line in proc.stdout.splitlines():
+        parts = line.split("\t")
+        if len(parts) != 2:
+            continue
+        sha, name = parts
+        if name == ref + "^{}":
+            peeled = sha
+        elif name == ref:
+            direct = sha
+    # Annotated tags peel via the ^{} line; lightweight tags point straight
+    # at the commit.
+    return peeled or direct
+
+
+def main() -> int:
+    failures = []
+    for tag, expected in PINS.items():
+        try:
+            actual = remote_tag_commit(tag)
+        except (RuntimeError, subprocess.TimeoutExpired) as exc:
+            print(f"ERROR: cannot query origin for {tag}: {exc}", file=sys.stderr)
+            return 2
+        if actual is None:
+            failures.append(f"{tag}: ABSENT on origin (pinned {expected})")
+        elif actual != expected:
+            failures.append(f"{tag}: points at {actual}, pinned {expected}")
+        else:
+            print(f"ok pin tag {tag} -> {expected}")
+    if failures:
+        print("PIN TAG REACHABILITY VIOLATION:", file=sys.stderr)
+        for failure in failures:
+            print(f" - {failure}", file=sys.stderr)
+        print(
+            "Pin tags are the counterpart's reachability guarantee and are "
+            "never deleted or moved; see the module docstring.",
+            file=sys.stderr,
+        )
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

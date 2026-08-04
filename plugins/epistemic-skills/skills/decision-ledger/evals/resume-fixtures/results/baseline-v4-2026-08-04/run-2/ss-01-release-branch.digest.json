@@ -1,0 +1,35 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "ss-01-release-branch",
+  "dial": "standard",
+  "claims": [
+    {
+      "id": "c1",
+      "classification": "contradicted",
+      "anchor": "artifacts/docs-repo/GITLOG.txt:2",
+      "live_value": "current branch is hotfix/1.4.1 at d4e5f6 'urgent typo fix in upgrade guide'; expected release/1.4 at a1b2c3 (which is now 3 commits behind)"
+    },
+    {
+      "id": "c2",
+      "classification": "contradicted",
+      "anchor": "artifacts/docs-repo/GITSTATUS.txt:3",
+      "live_value": "working tree is dirty \u2014 modified docs/upgrade.md and docs/install.md; expected nothing uncommitted"
+    },
+    {
+      "id": "c3",
+      "classification": "verified",
+      "anchor": "artifacts/docs-repo/BUILD.txt:5",
+      "live_value": "'BUILD OK \u2014 2026-07-22 07:55 UTC' \u2014 though the run postdates the summary and reflects the newer hotfix state"
+    },
+    {
+      "id": "c4",
+      "classification": "unverified",
+      "anchor": "artifacts/docs-repo/GITLOG.txt:11",
+      "live_value": "plan only; ambiguous now that HEAD is a different branch with in-flight uncommitted hotfix work"
+    }
+  ],
+  "accepted_unverified": [],
+  "action": "halt",
+  "ledger": "absent",
+  "notes": "The repo has moved since the summary: an urgent hotfix branch is checked out with uncommitted edits that are not part of the release prep. Intended next action: halt and confirm with the user how to handle the in-flight hotfix work before pushing anything or opening the release PR, to avoid clobbering or mixing changes."
+}

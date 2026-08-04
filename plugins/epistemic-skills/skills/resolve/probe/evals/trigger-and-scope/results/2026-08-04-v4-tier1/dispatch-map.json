@@ -1,0 +1,14 @@
+{
+  "18b2656e653e": "thin-build-discriminator-fires",
+  "37f4da26c9ad": "answered-prototype-disposed",
+  "46c058dcfff4": "answerable-by-derivation-no-fire",
+  "53fc2a662889": "answerable-by-literature-no-fire",
+  "5b99f5beb02a": "answerable-by-reading-no-fire",
+  "66f5272fcae5": "early-implementation-no-fire",
+  "6735968a34fd": "try-both-answerable-by-reading-no-fire",
+  "845456f86ca3": "option-set-try-it-fires",
+  "b6f84a7f4a17": "promotion-attempt-refused",
+  "e3648747ab56": "explicit-spike-fires",
+  "ef6c4087ba4f": "debate-cost-exceeds-build-fires",
+  "fcd6c7358a8e": "spike-against-live-infra-refused"
+}

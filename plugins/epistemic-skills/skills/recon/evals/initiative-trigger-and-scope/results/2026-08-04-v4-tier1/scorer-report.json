@@ -1,0 +1,23 @@
+{
+  "scorer": "plugins/epistemic-skills/skills/recon/evals/initiative-trigger-and-scope/score.py",
+  "exit_code": 1,
+  "report": [
+    "{",
+    "  \"pass\": false,",
+    "  \"failures\": [",
+    "    \"backlog-guess-tickets: expected chart-map, got pull-ticket\",",
+    "    \"hard-neg-break-down-resolved: expected no-fire, got mint-ticket\"",
+    "  ],",
+    "  \"actions\": {",
+    "    \"chart-map\": 3,",
+    "    \"pull-ticket\": 2,",
+    "    \"no-fire\": 5,",
+    "    \"mint-ticket\": 2,",
+    "    \"work-frontier\": 1",
+    "  }",
+    "}"
+  ],
+  "extraction_anomalies": [
+    "20d059321b6c: surrounding prose around the JSON object (extracted per contract rule 3)"
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "scorer": "plugins/epistemic-skills/skills/resolve/probe/evals/trigger-and-scope/score.py",
+  "exit_code": 1,
+  "report": [
+    "{",
+    "  \"pass\": false,",
+    "  \"failures\": [",
+    "    \"option-set-try-it-fires: comparative variants must cover every rival option \\u2014 missing ['bounded-buffer', 'credit-based']\"",
+    "  ],",
+    "  \"actions\": {",
+    "    \"run-prototype\": 4,",
+    "    \"no-fire\": 5,",
+    "    \"refuse-live-target\": 1,",
+    "    \"refuse-promotion\": 1,",
+    "    \"record-and-dispose\": 1",
+    "  }",
+    "}"
+  ],
+  "extraction_anomalies": [
+    "b6f84a7f4a17: surrounding prose around the JSON object (extracted per contract rule 3)"
+  ]
+}

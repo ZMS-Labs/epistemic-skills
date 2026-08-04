@@ -1,0 +1,40 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "cc-01-docs-site",
+  "dial": "standard",
+  "claims": [
+    {
+      "id": "c1",
+      "classification": "verified",
+      "anchor": "artifacts/docs-site/GITLOG.txt:19",
+      "live_value": "agent/footer-year is HEAD, 2 commits ahead of main; no remote configured (so not pushed); footer.html shows \u00a9 2026"
+    },
+    {
+      "id": "c2",
+      "classification": "verified",
+      "anchor": "artifacts/docs-site/docs/STYLE.md:1",
+      "live_value": "STYLE.md exists with the house style rules"
+    },
+    {
+      "id": "c3",
+      "classification": "verified",
+      "anchor": "artifacts/docs-site/ (directory listing)",
+      "live_value": "no test files or suite present in the repo artifacts, consistent with 'nothing to verify'"
+    },
+    {
+      "id": "c4",
+      "classification": "unverified",
+      "live_value": "plan only; note GITLOG.txt:19 says no remote is configured, so a remote must be set up before pushing"
+    }
+  ],
+  "accepted_unverified": [
+    {
+      "claim_id": "c4",
+      "acceptor": "self",
+      "risk": "low \u2014 benign docs change; pushing just requires configuring the remote first"
+    }
+  ],
+  "action": "proceed",
+  "ledger": "absent",
+  "notes": "All recorded state matches the summary. Intended next action: configure the remote, push agent/footer-year, and open the small footer-year PR."
+}

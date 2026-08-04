@@ -1,0 +1,34 @@
+{
+  "digest": "resume-digest@1",
+  "fixture": "fd-03-schema-migration",
+  "dial": "standard",
+  "claims": [
+    {
+      "id": "c1",
+      "classification": "contradicted",
+      "anchor": "artifacts/billing-app/MIGRATION-LOG.txt:5",
+      "live_value": "'migration 004 FAILED \u2014 transaction rolled back automatically' with a syntax error; 004 is still the next pending migration; expected: applied and verified on staging"
+    },
+    {
+      "id": "c2",
+      "classification": "contradicted",
+      "anchor": "artifacts/billing-app/SCHEMA-DUMP.txt:13",
+      "live_value": "'(no other indexes on public.invoices)' \u2014 idx_invoices_customer does not exist; expected: dump showing the index"
+    },
+    {
+      "id": "c3",
+      "classification": "unverified",
+      "live_value": "no test record exists for the rollback, and since the index was never created a staging rollback test could not have meaningfully exercised the drop"
+    },
+    {
+      "id": "c4",
+      "classification": "contradicted",
+      "anchor": "artifacts/billing-app/migrations/004_add_index.sql:3",
+      "live_value": "the SQL is invalid as written \u2014 CREATE INDEX CONCURRENTLY inside BEGIN/COMMIT (disallowed in Postgres) plus a missing semicolon before COMMIT \u2014 and the staging run failed; expected: staging-proven migration safe for production"
+    }
+  ],
+  "accepted_unverified": [],
+  "action": "rescope",
+  "ledger": "absent",
+  "notes": "Staging never succeeded and the migration file itself is broken, so tomorrow's production run must be cancelled. Intended next action: fix 004_add_index.sql (drop the transaction wrapper for CONCURRENTLY, add the semicolon), re-apply and verify on staging, and only then re-plan production."
+}
