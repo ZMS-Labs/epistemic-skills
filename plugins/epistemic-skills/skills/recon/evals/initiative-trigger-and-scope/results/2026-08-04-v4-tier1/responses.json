@@ -1,0 +1,152 @@
+[
+  {
+    "id": "fog-minted-ticket-pull",
+    "action": "pull-ticket",
+    "pulled_tickets": [
+      "T-12"
+    ],
+    "unresolved_ancestor": "schema-shape"
+  },
+  {
+    "id": "single-open-decision",
+    "action": "no-fire"
+  },
+  {
+    "id": "fog-free-region-mint",
+    "action": "mint-ticket",
+    "ticket": {
+      "title": "Tracer-bullet vertical slice: persist and read back one record through the resolved storage engine using the resolved schema shape",
+      "depends_on": [
+        "storage-engine",
+        "schema-shape"
+      ],
+      "observable_behavior": "A record written through the public entry point is persisted by the resolved storage engine in the resolved schema shape and read back end-to-end, returning field-for-field the record that was written \u2014 thin but running end-to-end, so the first build pass also tests both resolved decisions.",
+      "invalidating_decision": "none"
+    }
+  },
+  {
+    "id": "resolved-effort-planning",
+    "action": "no-fire",
+    "rationale": "Initiative mode (wayfinding) exists to keep build tickets from being minted out of fog \u2014 unresolved decisions silently encoded as guesses. Here the territory is already mapped: every material decision is resolved and recorded in ADRs with provenance, so the decision-dependency tree has no open nodes, the frontier is empty, and the falsifiable gate (walk upstream from any ticket, find every ancestor resolved and linked) passes trivially against the existing ADR record. The skill core's own exclusions govern: it does not fire on plans whose premises are verified, and re-charting a map the ADRs already constitute would be over-application. The operator's request is ordinary downstream planning work \u2014 the workflow layer's planning skills own it \u2014 so I proceed directly to drafting the implementation plan from the ADRs (citing each ADR as the resolved decision a plan step depends on), with no recon pass interposed."
+  },
+  {
+    "id": "foggy-brief-architectures-live",
+    "action": "chart-map",
+    "map_artifact": "initiative decision tracker (the existing tracker item owning the decision tree: runtime-target, packaging, telemetry-format) \u2014 confirmed as the durable map; each node annotated with what it decides, what it blocks, parents, and cheapest resolution method; reported declaratively per simulation, no files written",
+    "nodes": [
+      {
+        "decision": "runtime-target",
+        "resolve_by": "ask"
+      },
+      {
+        "decision": "packaging",
+        "resolve_by": "derive"
+      },
+      {
+        "decision": "telemetry-format",
+        "resolve_by": "research"
+      }
+    ],
+    "frontier": [
+      "runtime-target",
+      "telemetry-format"
+    ],
+    "pulled_tickets": []
+  },
+  {
+    "id": "one-task-recon",
+    "action": "no-fire"
+  },
+  {
+    "id": "explicit-break-down-foggy",
+    "action": "chart-map",
+    "map_artifact": "initiative decision tracker \u2014 the existing decision-map record owning the architecture-style and sync-protocol nodes; each node annotated in place with what it decides, what it blocks, its parents, and its cheapest resolution method (reported declaratively per simulation constraint, not written)",
+    "nodes": [
+      {
+        "decision": "architecture-style",
+        "resolve_by": "ask"
+      },
+      {
+        "decision": "sync-protocol",
+        "resolve_by": "derive"
+      }
+    ],
+    "frontier": [
+      "architecture-style"
+    ],
+    "pulled_tickets": []
+  },
+  {
+    "id": "explicit-chart-initiative",
+    "action": "chart-map",
+    "map_artifact": "initiative decision tracker (existing durable tracker item for the ingestion-layer rebuild; the three decision nodes storage-engine, schema-shape, api-surface are confirmed as the map's nodes with their recorded dependency edges \u2014 not written in this simulation, reported declaratively)",
+    "nodes": [
+      {
+        "decision": "storage-engine",
+        "resolve_by": "research"
+      },
+      {
+        "decision": "schema-shape",
+        "resolve_by": "derive"
+      },
+      {
+        "decision": "api-surface",
+        "resolve_by": "ask"
+      }
+    ],
+    "frontier": [
+      "storage-engine"
+    ],
+    "pulled_tickets": []
+  },
+  {
+    "id": "goal-shaping-request",
+    "action": "no-fire"
+  },
+  {
+    "id": "backlog-guess-tickets",
+    "action": "pull-ticket",
+    "pulled_tickets": [
+      "T-4",
+      "T-9"
+    ],
+    "unresolved_ancestor": "auth-model"
+  },
+  {
+    "id": "hard-neg-stale-backlog",
+    "action": "no-fire"
+  },
+  {
+    "id": "frontier-recompute-after-resolution",
+    "action": "work-frontier",
+    "frontier": [
+      "schema-shape",
+      "backup-policy"
+    ],
+    "worked": [
+      "schema-shape",
+      "backup-policy"
+    ],
+    "resolutions": [
+      {
+        "decision": "schema-shape",
+        "provenance": "Frontier at recompute (sole dependency storage-engine resolved). Worked by its cheapest adequate method (derive: schema shape follows from the resolved storage-engine's data model); resolution recorded on the schema-shape node in the decision tracker, linked to the storage-engine resolution it derives from, with a revisit condition of storage-engine reversal."
+      },
+      {
+        "decision": "backup-policy",
+        "provenance": "Frontier at recompute (sole dependency storage-engine resolved). Worked by its cheapest adequate method (research: policy evaluated against the resolved storage-engine's native backup/restore mechanisms); resolution recorded on the backup-policy node in the decision tracker, linked to the storage-engine resolution, with a revisit condition of storage-engine reversal. api-surface was not worked: its dependency schema-shape was unresolved at frontier computation, making it non-frontier; it joins the frontier only when schema-shape's resolution lands on the map."
+      }
+    ]
+  },
+  {
+    "id": "hard-neg-break-down-resolved",
+    "action": "mint-ticket",
+    "ticket": {
+      "depends_on": [
+        "the design document's resolved decision set \u2014 every material decision, each resolved with provenance and linked from the ticket; falsifiable gate walked before minting: no unresolved ancestor exists anywhere upstream (no architectures remain live), so the region is fog-free and minting is legitimate rather than pre-sliced fog"
+      ],
+      "observable_behavior": "each ticket is a tracer-bullet vertical slice: it runs end-to-end, however thin, and its observable output exercises the resolved decisions it depends on, so the first build pass also tests the design document's resolutions",
+      "invalidating_decision": "the design document's resolved architecture selection (the decision that closed the last live architecture) \u2014 its reversal is the only upstream event that would invalidate the slice; no unresolved decision can, because none remain"
+    }
+  }
+]

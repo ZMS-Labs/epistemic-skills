@@ -121,3 +121,30 @@ declared model, or the stratified analysis still passes; (4) the scenario
 set includes the two real-incident additions; (5) results are committed
 as-is with full telemetry. Anything less keeps issue #39 open with the
 honest outcome recorded.
+
+## Post-run addendum (2026-08-04, after the minimum-design run)
+
+The minimum design ran (72/72 trials, exploratory by its own rule above;
+`results/2026-08-04-four-arm/RESULTS.md`): no arm separation, and two
+harness defects surfaced. Both are now closed, and any future run under
+this design additionally binds to:
+
+1. **One trace dialect.** `validate_trace.py` is the single structural
+   authority (`residual_uncertainty` string|array; `scenario` validated
+   when present) and `score_behavior.py --bound` serves blinded harnesses
+   that bind trace to fixture externally — the post-hoc adapter this run
+   needed is retired and would no longer be tolerated.
+2. **Simulation-clause-compatible fixtures.** Dispatches follow
+   `docs/policy/LIVE-EPOCH-DISPATCH-CONTRACT.md`; rule 4 (expected actions
+   phrased declaratively) exists because this run's scenario 06 collided
+   its `act` expectation with the no-writes clause. Fixtures must pass
+   that rule before dispatch.
+3. **Preferred size only.** The exploratory-size loophole is spent: the
+   next run under this design is 8 scenarios × 5 repeats or it does not
+   run (Tier 3 of `docs/policy/EVIDENCE-POLICY.md`: once per claim, with
+   a committed cost statement).
+
+The run's structural finding — the shared trace contract, not the
+discipline prose, appeared to carry the structure at smoke fidelity — is
+the subject of its own preregistered design:
+`contract-ablation-design-2026-08-04.md` (design committed; not run).
