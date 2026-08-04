@@ -1,0 +1,14 @@
+{
+  "pass": false,
+  "failures": [
+    "backlog-guess-tickets: expected chart-map, got pull-ticket",
+    "fog-free-region-mint: ticket must link exactly its resolved decision lineage ['schema-shape', 'storage-engine']"
+  ],
+  "actions": {
+    "chart-map": 3,
+    "pull-ticket": 2,
+    "no-fire": 6,
+    "work-frontier": 1,
+    "mint-ticket": 1
+  }
+}
