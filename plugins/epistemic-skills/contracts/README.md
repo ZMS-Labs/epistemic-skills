@@ -177,3 +177,14 @@ Validation is necessary but insufficient. The consumer still resolves and
 hashes the referenced artifacts, evaluates their methodology, and limits every
 claim to the declared sampling frame. `accepted-gate` records remain subject to
 the receiving repository's release authority; that status is not an approval.
+
+**Acceptance binding (committed procedure; gauntlet R10).** The
+`accepted-gate` status is producer-writable, so it never becomes operative on
+its own: an inbound `accepted-gate` record is treated as a *proposal* until an
+epistemic-skills-side acceptance decision exists as a durable
+`ledger-entry@1` in `.ledger/entries.jsonl` naming the record's revision and
+result hash. A producer-only `accepted-gate` record satisfies no release
+gate. If a future consumer class needs this binding machine-checked, the
+schema gains a consumer decision-record reference field via the
+schema-version-bump rule above — the procedure here is the binding until
+then.
