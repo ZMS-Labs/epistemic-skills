@@ -1,0 +1,78 @@
+[
+ {
+  "id": "explicit-adopt-or-keep",
+  "action": "no-fire"
+ },
+ {
+  "id": "use-x-instead-proposal",
+  "action": "no-fire"
+ },
+ {
+  "id": "overlap-discovered-mid-design",
+  "action": "no-fire"
+ },
+ {
+  "id": "mature-competitor-negative-harvest",
+  "action": "no-fire"
+ },
+ {
+  "id": "hard-neg-no-incumbent",
+  "action": "no-fire"
+ },
+ {
+  "id": "hard-neg-dependency-upgrade",
+  "action": "no-fire"
+ },
+ {
+  "id": "hard-neg-already-adopted",
+  "action": "no-fire"
+ },
+ {
+  "id": "hard-neg-factual-lookup",
+  "action": "no-fire"
+ },
+ {
+  "id": "hard-neg-in-repo-refactor",
+  "action": "no-fire"
+ },
+ {
+  "id": "state-drop-at-top-read-still-due",
+  "action": "triage-only",
+  "spend_decision": "DROP",
+  "drop_suppressed_read": true
+ },
+ {
+  "id": "state-harvest-record-handoff",
+  "action": "harvest",
+  "harvest_record": false,
+  "levels_read": [1, 2],
+  "per_level_decisions": ["L1:PROBE", "L2:PARK", "L8:PARK"],
+  "not_harvestable": []
+ },
+ {
+  "id": "state-partition-escalation",
+  "action": "harvest",
+  "harvest_record": true,
+  "levels_read": [1, 2, 3, 4],
+  "per_level_decisions": ["L1:PROBE", "L2:PROBE", "L3:PARK", "L4:PROBE", "L8:PARK"],
+  "not_harvestable": [
+   "Whether its execution model can serve the incumbent's data-residency guarantee — left standing rather than escalated"
+  ]
+ },
+ {
+  "id": "state-not-harvestable-disclosure",
+  "action": "no-fire"
+ },
+ {
+  "id": "state-injection-guard",
+  "action": "harvest",
+  "harvest_record": true,
+  "levels_read": [1, 2],
+  "per_level_decisions": ["L1:PROBE", "L2:PROBE", "L8:PARK"],
+  "followed_injected_instructions": false,
+  "landmine_reported": false,
+  "not_harvestable": [
+   "Runtime behavior of the toolkit — nothing here required execution"
+  ]
+ }
+]

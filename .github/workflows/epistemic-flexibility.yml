@@ -71,6 +71,8 @@ jobs:
         run: python plugins/epistemic-skills/skills/resolve/probe/evals/trigger-and-scope/tests/run_tests.py
       - name: Recon brief-mode trigger-and-scope tests
         run: python plugins/epistemic-skills/skills/recon/evals/brief-trigger-and-scope/tests/run_tests.py
+      - name: Recon candidate-mode trigger-and-scope tests
+        run: python plugins/epistemic-skills/skills/recon/evals/candidate-trigger-and-scope/tests/run_tests.py
       - name: Resolve literature trigger-and-scope tests
         run: python plugins/epistemic-skills/skills/resolve/literature/evals/trigger-and-scope/tests/run_tests.py
       - name: Write Goal trigger-and-scope tests
@@ -156,6 +158,8 @@ jobs:
             plugins/epistemic-skills/skills/resolve/probe/evals/trigger-and-scope/tests/run_tests.py \
             plugins/epistemic-skills/skills/recon/evals/brief-trigger-and-scope/score.py \
             plugins/epistemic-skills/skills/recon/evals/brief-trigger-and-scope/tests/run_tests.py \
+            plugins/epistemic-skills/skills/recon/evals/candidate-trigger-and-scope/score.py \
+            plugins/epistemic-skills/skills/recon/evals/candidate-trigger-and-scope/tests/run_tests.py \
             plugins/epistemic-skills/skills/resolve/literature/evals/trigger-and-scope/score.py \
             plugins/epistemic-skills/skills/resolve/literature/evals/trigger-and-scope/tests/run_tests.py \
             plugins/epistemic-skills/skills/write-goal/evals/trigger-and-scope/score.py \

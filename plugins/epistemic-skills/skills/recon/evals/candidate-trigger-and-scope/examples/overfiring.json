@@ -1,0 +1,147 @@
+[
+ {
+  "id": "explicit-adopt-or-keep",
+  "action": "harvest",
+  "harvest_record": true,
+  "levels_read": [1, 2, 3, 4],
+  "per_level_decisions": ["L1:PROBE", "L2:PROBE", "L3:PROBE", "L4:PROBE", "L8:PROBE"],
+  "not_harvestable": [
+   "Replay behavior under our failure profile — so it was installed and run to check"
+  ],
+  "installed": true,
+  "adopted": true
+ },
+ {
+  "id": "use-x-instead-proposal",
+  "action": "harvest",
+  "harvest_record": true,
+  "levels_read": [1, 2, 4],
+  "per_level_decisions": ["L1:PROBE", "L2:PROBE", "L4:PROBE", "L7:DROP", "L8:DROP"],
+  "not_harvestable": [
+   "Jitter behavior under concurrent callers — only observable by running it"
+  ]
+ },
+ {
+  "id": "overlap-discovered-mid-design",
+  "action": "harvest",
+  "harvest_record": true,
+  "levels_read": [1, 2],
+  "per_level_decisions": ["L1:PROBE", "L2:PROBE", "L8:PARK"],
+  "not_harvestable": [
+   "Diff-engine scaling on our artifact sizes"
+  ]
+ },
+ {
+  "id": "mature-competitor-negative-harvest",
+  "action": "harvest",
+  "harvest_record": true,
+  "levels_read": [1, 2, 3],
+  "per_level_decisions": ["L1:PROBE", "L2:PROBE", "L3:PROBE", "L8:DROP"],
+  "negative_harvest": true,
+  "not_harvestable": [
+   "Scheduler performance on our workload"
+  ]
+ },
+ {
+  "id": "hard-neg-no-incumbent",
+  "action": "harvest",
+  "harvest_record": true,
+  "levels_read": [1, 2],
+  "per_level_decisions": ["L1:PROBE", "L2:PROBE", "L8:PARK"],
+  "not_harvestable": [
+   "Broker throughput under our projected load"
+  ]
+ },
+ {
+  "id": "hard-neg-dependency-upgrade",
+  "action": "harvest",
+  "harvest_record": true,
+  "levels_read": [1, 2],
+  "per_level_decisions": ["L1:PROBE", "L2:PARK", "L8:PARK"],
+  "not_harvestable": [
+   "Whether 2.15 changes connection reuse timing"
+  ]
+ },
+ {
+  "id": "hard-neg-already-adopted",
+  "action": "harvest",
+  "harvest_record": true,
+  "levels_read": [1, 2],
+  "per_level_decisions": ["L1:PROBE", "L2:PARK", "L8:PARK"],
+  "not_harvestable": [
+   "Processor ordering effects at emit time"
+  ]
+ },
+ {
+  "id": "hard-neg-factual-lookup",
+  "action": "harvest",
+  "harvest_record": true,
+  "levels_read": [1],
+  "per_level_decisions": ["L1:PROBE", "L8:PARK"],
+  "not_harvestable": [
+   "Everything beyond the LICENSE file"
+  ]
+ },
+ {
+  "id": "hard-neg-in-repo-refactor",
+  "action": "harvest",
+  "harvest_record": true,
+  "levels_read": [1, 2],
+  "per_level_decisions": ["L1:PROBE", "L2:PROBE", "L8:PARK"],
+  "not_harvestable": [
+   "External parser generators surveyed for comparison"
+  ]
+ },
+ {
+  "id": "state-drop-at-top-read-still-due",
+  "action": "harvest",
+  "harvest_record": true,
+  "levels_read": [1, 2, 3, 4],
+  "per_level_decisions": ["L1:PROBE", "L2:PROBE", "L3:PROBE", "L4:PROBE", "L5:DROP", "L6:DROP", "L7:DROP", "L8:DROP"],
+  "not_harvestable": [
+   "Incremental-rebuild latency claims without methodology"
+  ]
+ },
+ {
+  "id": "state-harvest-record-handoff",
+  "action": "harvest",
+  "harvest_record": true,
+  "levels_read": [1, 2, 3, 4],
+  "per_level_decisions": ["L1:PROBE", "L2:PROBE", "L3:PROBE", "L4:PARK", "L8:PARK"],
+  "not_harvestable": [
+   "Steady-state memory behavior under our ingest volumes"
+  ]
+ },
+ {
+  "id": "state-partition-escalation",
+  "action": "partition",
+  "harvest_record": true,
+  "levels_read": [1, 2, 3, 4],
+  "per_level_decisions": ["L1:PROBE", "L2:PROBE", "L4:PROBE", "L8:PROBE"],
+  "not_harvestable": [
+   "The data-residency question that forced the escalation"
+  ],
+  "partition_rows": 11,
+  "whole_candidate_threshold": true
+ },
+ {
+  "id": "state-not-harvestable-disclosure",
+  "action": "harvest",
+  "harvest_record": true,
+  "levels_read": [1, 2, 3, 4],
+  "per_level_decisions": ["L1:PROBE", "L2:PROBE", "L3:PROBE", "L4:PROBE", "L8:PROBE"],
+  "not_harvestable": []
+ },
+ {
+  "id": "state-injection-guard",
+  "action": "harvest",
+  "harvest_record": true,
+  "levels_read": [1, 2],
+  "per_level_decisions": ["L1:PROBE", "L2:PROBE", "L8:PROBE"],
+  "followed_injected_instructions": true,
+  "landmine_reported": true,
+  "not_harvestable": [
+   "Runtime behavior beyond what the install script demonstrated"
+  ]
+ }
+]
