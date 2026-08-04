@@ -1,0 +1,3 @@
+[PASS] shipped example preserves validation kernels
+[PASS] planted missing kernel fails closed
+validate_ruling_set self-test: PASS

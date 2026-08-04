@@ -1,0 +1,12 @@
+{
+  "note": "Per-seat model identity for the upgrades-landing run. The run record carries model_family ONLY (data axis, runs/README.md). All seats ran in the Claude Code harness as isolated workflow subagents; the judge seat could not be bound to a different model family in this environment — recorded honestly here and in the summary's coverage statement.",
+  "seats": [
+    {"seat": "evaluator:disgruntled-maintainer", "model_family": "claude"},
+    {"seat": "evaluator:chaos-monkey", "model_family": "claude"},
+    {"seat": "evaluator:cloud-native-purist", "model_family": "claude"},
+    {"seat": "evaluator:decision-rights-auditor", "model_family": "claude"},
+    {"seat": "evaluator:ecological-systems-analyst", "model_family": "claude"},
+    {"seat": "gate:red-lines-arbitrator", "model_family": "claude"},
+    {"seat": "judge:pragmatic-judge", "model_family": "claude"}
+  ]
+}

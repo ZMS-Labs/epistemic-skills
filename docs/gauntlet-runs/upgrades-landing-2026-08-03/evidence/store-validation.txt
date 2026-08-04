@@ -1,0 +1,10 @@
+[PASS] example-correction-with-chain.json: valid
+[PASS] example-durable.json: valid
+[PASS] example-session-only.json: valid
+[PASS] planted recurrent correction without chain: recurrent correction requires failure_chain
+[PASS] planted chain on decision: recurrence_risk is correction-only; failure_chain is correction-only
+[PASS] planted unknown property: additional properties are forbidden: verdict
+[PASS] planted bad id: id must match <slug>-<YYYYMMDD>-<seq>
+[PASS] durable ledger /home/user/epistemic-skills/.ledger/entries.jsonl: 8 valid entries
+
+RESULT: PASS

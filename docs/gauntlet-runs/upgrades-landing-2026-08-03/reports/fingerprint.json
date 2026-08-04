@@ -1,0 +1,1210 @@
+[
+ {
+  "report_path": "docs/gauntlet-runs/upgrades-landing-2026-08-03/reports/chaos-monkey.md",
+  "total": 26,
+  "verified": 26,
+  "hallucinated": 0,
+  "accuracy_pct": 100.0,
+  "i_tags": 4,
+  "h_tags": 0,
+  "malformed_v": 0,
+  "tag_results": [
+   {
+    "raw": "[V ci-battery.txt:6]",
+    "path": "ci-battery.txt",
+    "line": 6,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:60]",
+    "path": "diff.patch",
+    "line": 60,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:64]",
+    "path": "diff.patch",
+    "line": 64,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:169]",
+    "path": "diff.patch",
+    "line": 169,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:116]",
+    "path": "diff.patch",
+    "line": 116,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V ci-battery.txt:6]",
+    "path": "ci-battery.txt",
+    "line": 6,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:64]",
+    "path": "diff.patch",
+    "line": 64,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:169]",
+    "path": "diff.patch",
+    "line": 169,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:116]",
+    "path": "diff.patch",
+    "line": 116,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:185]",
+    "path": "diff.patch",
+    "line": 185,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V store-validation.txt:8]",
+    "path": "store-validation.txt",
+    "line": 8,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:185]",
+    "path": "diff.patch",
+    "line": 185,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V store-validation.txt:8]",
+    "path": "store-validation.txt",
+    "line": 8,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:35]",
+    "path": "diff.patch",
+    "line": 35,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V audit-report.ndjson:18]",
+    "path": "audit-report.ndjson",
+    "line": 18,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V audit-report.ndjson:18]",
+    "path": "audit-report.ndjson",
+    "line": 18,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:191]",
+    "path": "diff.patch",
+    "line": 191,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:220]",
+    "path": "diff.patch",
+    "line": 220,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V audit-report.ndjson:18]",
+    "path": "audit-report.ndjson",
+    "line": 18,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:191]",
+    "path": "diff.patch",
+    "line": 191,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:220]",
+    "path": "diff.patch",
+    "line": 220,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V audit-report.ndjson:18]",
+    "path": "audit-report.ndjson",
+    "line": 18,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V ci-battery.txt:6]",
+    "path": "ci-battery.txt",
+    "line": 6,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V audit-report.ndjson:18]",
+    "path": "audit-report.ndjson",
+    "line": 18,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:111]",
+    "path": "diff.patch",
+    "line": 111,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V store-validation.txt:8]",
+    "path": "store-validation.txt",
+    "line": 8,
+    "status": "V",
+    "reason": ""
+   }
+  ]
+ },
+ {
+  "report_path": "docs/gauntlet-runs/upgrades-landing-2026-08-03/reports/cloud-native-purist.md",
+  "total": 57,
+  "verified": 57,
+  "hallucinated": 0,
+  "accuracy_pct": 100.0,
+  "i_tags": 3,
+  "h_tags": 0,
+  "malformed_v": 0,
+  "tag_results": [
+   {
+    "raw": "[V diff.patch:64]",
+    "path": "diff.patch",
+    "line": 64,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:169]",
+    "path": "diff.patch",
+    "line": 169,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:169]",
+    "path": "diff.patch",
+    "line": 169,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:120]",
+    "path": "diff.patch",
+    "line": 120,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V ci-battery.txt:3]",
+    "path": "ci-battery.txt",
+    "line": 3,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V ci-battery.txt:6]",
+    "path": "ci-battery.txt",
+    "line": 6,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:1835]",
+    "path": "diff.patch",
+    "line": 1835,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:231]",
+    "path": "diff.patch",
+    "line": 231,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V ci-battery.txt:6]",
+    "path": "ci-battery.txt",
+    "line": 6,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V continuity-digest.md:6]",
+    "path": "continuity-digest.md",
+    "line": 6,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V ci-battery.txt:6]",
+    "path": "ci-battery.txt",
+    "line": 6,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V continuity-digest.md:6]",
+    "path": "continuity-digest.md",
+    "line": 6,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:64]",
+    "path": "diff.patch",
+    "line": 64,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:169]",
+    "path": "diff.patch",
+    "line": 169,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:1835]",
+    "path": "diff.patch",
+    "line": 1835,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:1807]",
+    "path": "diff.patch",
+    "line": 1807,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:1991]",
+    "path": "diff.patch",
+    "line": 1991,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:1835]",
+    "path": "diff.patch",
+    "line": 1835,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:1807]",
+    "path": "diff.patch",
+    "line": 1807,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:1991]",
+    "path": "diff.patch",
+    "line": 1991,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V audit-report.ndjson:18]",
+    "path": "audit-report.ndjson",
+    "line": 18,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:2012]",
+    "path": "diff.patch",
+    "line": 2012,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V audit-report.ndjson:18]",
+    "path": "audit-report.ndjson",
+    "line": 18,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:231]",
+    "path": "diff.patch",
+    "line": 231,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V continuity-digest.md:4]",
+    "path": "continuity-digest.md",
+    "line": 4,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:233]",
+    "path": "diff.patch",
+    "line": 233,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:231]",
+    "path": "diff.patch",
+    "line": 231,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:233]",
+    "path": "diff.patch",
+    "line": 233,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V continuity-digest.md:4]",
+    "path": "continuity-digest.md",
+    "line": 4,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:211]",
+    "path": "diff.patch",
+    "line": 211,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:211]",
+    "path": "diff.patch",
+    "line": 211,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:379]",
+    "path": "diff.patch",
+    "line": 379,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:220]",
+    "path": "diff.patch",
+    "line": 220,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:211]",
+    "path": "diff.patch",
+    "line": 211,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:379]",
+    "path": "diff.patch",
+    "line": 379,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:220]",
+    "path": "diff.patch",
+    "line": 220,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:211]",
+    "path": "diff.patch",
+    "line": 211,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:373]",
+    "path": "diff.patch",
+    "line": 373,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:1348]",
+    "path": "diff.patch",
+    "line": 1348,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:1348]",
+    "path": "diff.patch",
+    "line": 1348,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:1825]",
+    "path": "diff.patch",
+    "line": 1825,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V store-validation.txt:8]",
+    "path": "store-validation.txt",
+    "line": 8,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V store-validation.txt:8]",
+    "path": "store-validation.txt",
+    "line": 8,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:1835]",
+    "path": "diff.patch",
+    "line": 1835,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:231]",
+    "path": "diff.patch",
+    "line": 231,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:379]",
+    "path": "diff.patch",
+    "line": 379,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:211]",
+    "path": "diff.patch",
+    "line": 211,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V continuity-digest.md:6]",
+    "path": "continuity-digest.md",
+    "line": 6,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:103]",
+    "path": "diff.patch",
+    "line": 103,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:120]",
+    "path": "diff.patch",
+    "line": 120,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V continuity-digest.md:25]",
+    "path": "continuity-digest.md",
+    "line": 25,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V dco-check.txt:4]",
+    "path": "dco-check.txt",
+    "line": 4,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V commits.txt:3]",
+    "path": "commits.txt",
+    "line": 3,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V store-validation.txt:8]",
+    "path": "store-validation.txt",
+    "line": 8,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:1807]",
+    "path": "diff.patch",
+    "line": 1807,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V audit-report.ndjson:18]",
+    "path": "audit-report.ndjson",
+    "line": 18,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V ci-battery.txt:3]",
+    "path": "ci-battery.txt",
+    "line": 3,
+    "status": "V",
+    "reason": ""
+   }
+  ]
+ },
+ {
+  "report_path": "docs/gauntlet-runs/upgrades-landing-2026-08-03/reports/decision-rights-auditor.md",
+  "total": 26,
+  "verified": 26,
+  "hallucinated": 0,
+  "accuracy_pct": 100.0,
+  "i_tags": 4,
+  "h_tags": 1,
+  "malformed_v": 0,
+  "tag_results": [
+   {
+    "raw": "[V commits.txt:2]",
+    "path": "commits.txt",
+    "line": 2,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V dco-check.txt:5]",
+    "path": "dco-check.txt",
+    "line": 5,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V dco-check.txt:6]",
+    "path": "dco-check.txt",
+    "line": 6,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V dco-check.txt:5]",
+    "path": "dco-check.txt",
+    "line": 5,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V continuity-digest.md:22]",
+    "path": "continuity-digest.md",
+    "line": 22,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V continuity-digest.md:26]",
+    "path": "continuity-digest.md",
+    "line": 26,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V continuity-digest.md:32]",
+    "path": "continuity-digest.md",
+    "line": 32,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:798]",
+    "path": "diff.patch",
+    "line": 798,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:735]",
+    "path": "diff.patch",
+    "line": 735,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:520]",
+    "path": "diff.patch",
+    "line": 520,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:375]",
+    "path": "diff.patch",
+    "line": 375,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:379]",
+    "path": "diff.patch",
+    "line": 379,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:211]",
+    "path": "diff.patch",
+    "line": 211,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:520]",
+    "path": "diff.patch",
+    "line": 520,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:681]",
+    "path": "diff.patch",
+    "line": 681,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:1835]",
+    "path": "diff.patch",
+    "line": 1835,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:72]",
+    "path": "diff.patch",
+    "line": 72,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V audit-report.ndjson:18]",
+    "path": "audit-report.ndjson",
+    "line": 18,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:231]",
+    "path": "diff.patch",
+    "line": 231,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:233]",
+    "path": "diff.patch",
+    "line": 233,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V commits.txt:18]",
+    "path": "commits.txt",
+    "line": 18,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V commits.txt:1]",
+    "path": "commits.txt",
+    "line": 1,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V commits.txt:2]",
+    "path": "commits.txt",
+    "line": 2,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V audit-report.ndjson:18]",
+    "path": "audit-report.ndjson",
+    "line": 18,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:1835]",
+    "path": "diff.patch",
+    "line": 1835,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V ci-battery.txt:3]",
+    "path": "ci-battery.txt",
+    "line": 3,
+    "status": "V",
+    "reason": ""
+   }
+  ]
+ },
+ {
+  "report_path": "docs/gauntlet-runs/upgrades-landing-2026-08-03/reports/disgruntled-maintainer.md",
+  "total": 21,
+  "verified": 21,
+  "hallucinated": 0,
+  "accuracy_pct": 100.0,
+  "i_tags": 5,
+  "h_tags": 0,
+  "malformed_v": 0,
+  "tag_results": [
+   {
+    "raw": "[V diff.patch:64]",
+    "path": "diff.patch",
+    "line": 64,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:169]",
+    "path": "diff.patch",
+    "line": 169,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V continuity-digest.md:6]",
+    "path": "continuity-digest.md",
+    "line": 6,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V commits.txt:2]",
+    "path": "commits.txt",
+    "line": 2,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V commits.txt:4]",
+    "path": "commits.txt",
+    "line": 4,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V dco-check.txt:4]",
+    "path": "dco-check.txt",
+    "line": 4,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V dco-check.txt:5]",
+    "path": "dco-check.txt",
+    "line": 5,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V ci-battery.txt:3]",
+    "path": "ci-battery.txt",
+    "line": 3,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V continuity-digest.md:6]",
+    "path": "continuity-digest.md",
+    "line": 6,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:80]",
+    "path": "diff.patch",
+    "line": 80,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:1758]",
+    "path": "diff.patch",
+    "line": 1758,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V kernel-gate.txt:3]",
+    "path": "kernel-gate.txt",
+    "line": 3,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V commits.txt:8]",
+    "path": "commits.txt",
+    "line": 8,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:185]",
+    "path": "diff.patch",
+    "line": 185,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:184]",
+    "path": "diff.patch",
+    "line": 184,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:1335]",
+    "path": "diff.patch",
+    "line": 1335,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V store-validation.txt:8]",
+    "path": "store-validation.txt",
+    "line": 8,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:1835]",
+    "path": "diff.patch",
+    "line": 1835,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:1925]",
+    "path": "diff.patch",
+    "line": 1925,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:1998]",
+    "path": "diff.patch",
+    "line": 1998,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V audit-report.ndjson:18]",
+    "path": "audit-report.ndjson",
+    "line": 18,
+    "status": "V",
+    "reason": ""
+   }
+  ]
+ },
+ {
+  "report_path": "docs/gauntlet-runs/upgrades-landing-2026-08-03/reports/ecological-systems-analyst.md",
+  "total": 34,
+  "verified": 34,
+  "hallucinated": 0,
+  "accuracy_pct": 100.0,
+  "i_tags": 3,
+  "h_tags": 0,
+  "malformed_v": 0,
+  "tag_results": [
+   {
+    "raw": "[V diff.patch:64]",
+    "path": "diff.patch",
+    "line": 64,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:169]",
+    "path": "diff.patch",
+    "line": 169,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V continuity-digest.md:6]",
+    "path": "continuity-digest.md",
+    "line": 6,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:22]",
+    "path": "diff.patch",
+    "line": 22,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:54]",
+    "path": "diff.patch",
+    "line": 54,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:158]",
+    "path": "diff.patch",
+    "line": 158,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:172]",
+    "path": "diff.patch",
+    "line": 172,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:173]",
+    "path": "diff.patch",
+    "line": 173,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V ci-battery.txt:1]",
+    "path": "ci-battery.txt",
+    "line": 1,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V ci-battery.txt:6]",
+    "path": "ci-battery.txt",
+    "line": 6,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V continuity-digest.md:6]",
+    "path": "continuity-digest.md",
+    "line": 6,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:1807]",
+    "path": "diff.patch",
+    "line": 1807,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:1835]",
+    "path": "diff.patch",
+    "line": 1835,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:1998]",
+    "path": "diff.patch",
+    "line": 1998,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:2012]",
+    "path": "diff.patch",
+    "line": 2012,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V audit-report.ndjson:18]",
+    "path": "audit-report.ndjson",
+    "line": 18,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:814]",
+    "path": "diff.patch",
+    "line": 814,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:745]",
+    "path": "diff.patch",
+    "line": 745,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:235]",
+    "path": "diff.patch",
+    "line": 235,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:453]",
+    "path": "diff.patch",
+    "line": 453,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:375]",
+    "path": "diff.patch",
+    "line": 375,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:718]",
+    "path": "diff.patch",
+    "line": 718,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V dco-check.txt:4]",
+    "path": "dco-check.txt",
+    "line": 4,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V dco-check.txt:5]",
+    "path": "dco-check.txt",
+    "line": 5,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V commits.txt:2]",
+    "path": "commits.txt",
+    "line": 2,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V continuity-digest.md:6]",
+    "path": "continuity-digest.md",
+    "line": 6,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V audit-report.ndjson:18]",
+    "path": "audit-report.ndjson",
+    "line": 18,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:1835]",
+    "path": "diff.patch",
+    "line": 1835,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:1998]",
+    "path": "diff.patch",
+    "line": 1998,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V store-validation.txt:8]",
+    "path": "store-validation.txt",
+    "line": 8,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:185]",
+    "path": "diff.patch",
+    "line": 185,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V continuity-digest.md:15]",
+    "path": "continuity-digest.md",
+    "line": 15,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:212]",
+    "path": "diff.patch",
+    "line": 212,
+    "status": "V",
+    "reason": ""
+   },
+   {
+    "raw": "[V diff.patch:220]",
+    "path": "diff.patch",
+    "line": 220,
+    "status": "V",
+    "reason": ""
+   }
+  ]
+ }
+]

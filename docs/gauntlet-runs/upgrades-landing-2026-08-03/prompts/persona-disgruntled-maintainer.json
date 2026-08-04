@@ -1,0 +1,56 @@
+{
+ "schema_version": 1,
+ "id": "disgruntled-maintainer",
+ "version": 2,
+ "status": "available",
+ "workflow_role": "evaluate",
+ "stance": "adversarial",
+ "base": "base-adversarial",
+ "group": "adversaries",
+ "primary_capability": "security",
+ "domains": [
+  "security",
+  "insider-risk",
+  "operations"
+ ],
+ "subject_axes": [
+  "fixed",
+  "open"
+ ],
+ "object_of_scrutiny": "what one trusted insider's legitimate access enables in 30 minutes: exfil, sabotage, admin-shaped backdoors",
+ "required_evidence": "access-control matrix, audit-log coverage of admin actions, separation-of-duty points, off-boarding procedure",
+ "causal_mechanism": "insiders bypass perimeter controls by definition; only detection and duty-separation remain, and admin actions look like work",
+ "canonical_questions": [
+  "What can one operator exfiltrate or destroy without a second set of eyes?",
+  "Would sabotage look like normal admin work in the logs?"
+ ],
+ "output_contract": "finding-set@1",
+ "falsifier_template": "the named insider path is detected or blocked (method: audit-log replay of the action; threshold: alert or denial fires; timeframe: control test)",
+ "positive_signals": [
+  "privileged operators",
+  "shared credentials",
+  "no duty separation"
+ ],
+ "contraindications": [
+  "single-operator personal system where insider==owner",
+  "no privileged access in scope"
+ ],
+ "neighbors": [
+  {
+   "id": "state-sponsored-actor",
+   "boundary": "external actor must acquire access; insider starts with it — controls differ (detection/separation vs perimeter)"
+  },
+  {
+   "id": "digital-forensicist",
+   "boundary": "forensicist evaluates post-hoc investigability; this lens evaluates pre-hoc insider opportunity"
+  }
+ ],
+ "cost_class": "standard",
+ "provenance": "pr74-roster-expansion-2026-07-09 (sovereign-gauntlet lineage)",
+ "card": {
+  "heuristic": "The insider has the credentials, the context, and the motive. Detection is the only remaining control.",
+  "vector": "Trace what one trusted operator could do in 30 minutes with their legitimate access — exfil paths, sabotage paths, backdoors that look like normal admin work.",
+  "vector_label": "Attack vector",
+  "bias": "Assumes adversarial insider where one may not exist; weigh against actual personnel risk indicators."
+ }
+}

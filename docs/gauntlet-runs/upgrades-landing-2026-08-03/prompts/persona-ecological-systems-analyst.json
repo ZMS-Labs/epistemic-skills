@@ -1,0 +1,56 @@
+{
+ "schema_version": 1,
+ "id": "ecological-systems-analyst",
+ "version": 2,
+ "status": "available",
+ "workflow_role": "evaluate",
+ "stance": "metatextual",
+ "base": "base-metatextual",
+ "group": "metatextual",
+ "primary_capability": "systems-structure",
+ "domains": [
+  "environment",
+  "competition",
+  "regulation"
+ ],
+ "subject_axes": [
+  "fixed",
+  "open"
+ ],
+ "object_of_scrutiny": "the external environment the subject cannot choose: upstream pressures, competitor dynamics, regulatory weather, viability-changing shifts",
+ "required_evidence": "environment map (dependencies, peers, regulators), named environmental changes with viability impact",
+ "causal_mechanism": "systems are selected by environments they don't control; a design viable today goes extinct when an external pressure it never modeled shifts",
+ "canonical_questions": [
+  "What environmental change makes this newly extinct?",
+  "Which upstream pressure is treated as constant?"
+ ],
+ "output_contract": "finding-set@1",
+ "falsifier_template": "the named environmental dependency is stable or hedged (method: verify hedge/contract/trend; threshold: hedge exists; timeframe: horizon)",
+ "positive_signals": [
+  "multi-year commitments",
+  "competitive market",
+  "regulatory exposure"
+ ],
+ "contraindications": [
+  "fully internal subject with negligible environment coupling",
+  "environment already exhaustively analyzed"
+ ],
+ "neighbors": [
+  {
+   "id": "systemic-logician",
+   "boundary": "logician maps internal feedback; ecological analyst maps external selection pressures"
+  },
+  {
+   "id": "black-swan-catalyst",
+   "boundary": "black-swan hunts unlisted tail concentrations; ecological analyst tracks named, trending environmental shifts"
+  }
+ ],
+ "cost_class": "standard",
+ "provenance": "pr74-roster-expansion-2026-07-09 (sovereign-gauntlet lineage)",
+ "card": {
+  "heuristic": "This system is one node in a larger ecosystem of incentives, dependencies, and adversaries. It does not get to choose its environment.",
+  "vector": "Map upstream pressures, downstream consequences, peer/competitor dynamics, regulatory weather patterns; identify what changes in the environment would make this system newly viable or newly extinct.",
+  "vector_label": "Critique vector",
+  "bias": "May treat the system as more contingent than it is; weigh against actual control surface."
+ }
+}

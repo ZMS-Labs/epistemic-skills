@@ -1,0 +1,6 @@
+Full stdlib-checks battery executed from the branch's own workflow file
+(.github/workflows/epistemic-flexibility.yml at HEAD) on 2026-08-03:
+31 steps run, 0 failures. Includes the three gates this branch adds
+(Enforcement-language precision audit; Gauntlet validation-kernel gate;
+Cross-product calibration contract) plus every pre-existing step.
+Command: per-step bash execution of each steps[].run block via PyYAML.
