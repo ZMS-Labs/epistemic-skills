@@ -1,0 +1,164 @@
+{
+ "conditions": [
+  {
+   "condition": "All three workflows (epistemic-flexibility, dco, release-security) run green on GitHub-hosted runners against exactly tree 4e49ba5f, with run URLs attached to the run evidence or PR body, closing the dossier's second UNVERIFIED label.",
+   "falsifier": {
+    "method": "Open a draft PR (or push) from branch head 4e49ba5f and observe GitHub check-run conclusions for all three workflow files.",
+    "threshold": "3/3 workflows green with zero action-resolution, runner-label, or timeout failures; any red confirms the finding and blocks merge.",
+    "timeframe": "First CI cycle (~30 minutes), before merge."
+   },
+   "owner": "operator"
+  },
+  {
+   "condition": "Original-head authorship (a51c77b \u2014 SternOne; da3e013) and the human certifying party for the six agent-signed commits are recorded in at least one durable location: Co-authored-by trailers, the PR body, or a ledger entry \u2014 outside the integrator-only evidence file.",
+   "falsifier": {
+    "method": "Inspect commit trailers on origin/main..HEAD, the PR body, and .ledger/entries.jsonl for the original heads and a human-traceable certifier.",
+    "threshold": "Both original heads and a named human certifying party present in >=1 durable location.",
+    "timeframe": "Before merge."
+   },
+   "owner": "operator"
+  },
+  {
+   "condition": "The merge is taken as an explicit operator decision: an operator-opened or operator-approved PR whose body names the re-scoped shape (workflows-only #65, #54, ported #50), surfaces the C9 override and the C13 scope interpretation, includes the R1 pin-verification record, and cites this gauntlet ruling; plus a durable ledger decision entry naming the operator as decider. Merge on harness authority alone fails this criterion.",
+   "falsifier": {
+    "method": "Check GitHub PR events for the operator-authored approval artifact and .ledger/entries.jsonl for the decision entry.",
+    "threshold": "Artifact exists, explicitly acknowledges C9 and C13, names the operator as decider.",
+    "timeframe": "At merge time; before the branch reaches main."
+   },
+   "owner": "operator (non-delegable)"
+  },
+  {
+   "condition": "Either (a) CI validates real arbitration/ruling-set artifacts (glob docs/gauntlet-runs/**) so a kernel-less OVERRULED ruling in a real artifact fails the battery, or (b) a committed scope statement narrows the #37 enforcement claim to fixture-only coverage in writing. The chosen path is named in the R4 merge-decision record.",
+   "falsifier": {
+    "method": "Path (a): commit a real arbitration file containing an OVERRULED ruling without validation_kernel on a scratch branch and execute the full per-step battery. Path (b): locate the committed scope statement in README/docs.",
+    "threshold": "(a) any battery step exits non-zero naming the file, or (b) the scope statement exists.",
+    "timeframe": "Before merge, or in the first follow-up PR if so recorded in the merge decision."
+   },
+   "owner": "operator / first follow-up PR"
+  },
+  {
+   "condition": "Either (a) a CI append-only/byte-identity check compares committed ledger lines against merge-base (existing lines byte-identical, new lines append-only), or (b) the tamper-evidence gap and the backdated 2026-07-22 entry's legitimacy as a port of the PR #35-era decision are explicitly accepted in a durable ledger entry.",
+   "falsifier": {
+    "method": "Path (a): mutate one existing line of .ledger/entries.jsonl (schema-valid) on a scratch branch and run the full battery. Path (b): locate the residual-risk acceptance entry.",
+    "threshold": "(a) any battery step fails on the mutated store, or (b) the acceptance entry exists naming both the gap and the backdated entry.",
+    "timeframe": "With merge or in the first follow-up PR."
+   },
+   "owner": "operator / first follow-up PR"
+  }
+ ],
+ "depth": "standard",
+ "docket_mode": "manual-docket",
+ "dossier": {
+  "frozen_at": "2026-08-03T23:45:00Z",
+  "path": "dossier.md",
+  "sha256": "c8b1141a75905e12b39ec0f26141c8610a894244c65a7816b90a81af3d3dda79"
+ },
+ "evidence_root": {
+  "content_sha256": "4dd15d61736d832ec7c41f2eabb9a94727495f8fdfdf0be4cc85f080a997ce48",
+  "path": "evidence"
+ },
+ "fingerprint": {
+  "path": "reports/fingerprint.json",
+  "sha256": "e74db37fc3ded0a835a108dbfab475dd841c3d80d521aa5e58ddc569022d329d"
+ },
+ "generated_by": "scripts/finalize_run.py",
+ "independence_mode": "concurrent isolated role-agents",
+ "reports": [
+  {
+   "lens": "chaos-monkey",
+   "path": "reports/chaos-monkey.md",
+   "sha256": "4bf49a453434fa45b15a334ea958e73e8cdfa9c56042ed3b9c9d3a985b5cf3f6"
+  },
+  {
+   "lens": "cloud-native-purist",
+   "path": "reports/cloud-native-purist.md",
+   "sha256": "ffee3501ffeb55cdf4473984f782b36cd6d67a2db9380219958ab5a93664a7f6"
+  },
+  {
+   "lens": "decision-rights-auditor",
+   "path": "reports/decision-rights-auditor.md",
+   "sha256": "e5e400885977a3dbe394a420f9b93597336c172d25dac87d959d1f87cf2820d4"
+  },
+  {
+   "lens": "disgruntled-maintainer",
+   "path": "reports/disgruntled-maintainer.md",
+   "sha256": "620b2ce4433ddefdec54d35e5cefd7ee7e2d2278e82fe6befd1d15f7d0e2d197"
+  },
+  {
+   "lens": "ecological-systems-analyst",
+   "path": "reports/ecological-systems-analyst.md",
+   "sha256": "dcefefe11e279aaceb922e7ca107ad75f403138a4d25b1ff0acae53eaa416919"
+  }
+ ],
+ "role_binding": {
+  "mode": "materialized-role",
+  "ref": null
+ },
+ "ruling_set": {
+  "path": "arbitration.md",
+  "sha256": "7122588feadb9ac54c5054ef3d9ce160d8f0022628b129e88b870f9bd3d8f641"
+ },
+ "run_id": "upgrades-landing-2026-08-03",
+ "run_record": "gauntlet-run-record@1",
+ "seats": [
+  {
+   "model_family": "claude",
+   "seat": "evaluator:disgruntled-maintainer"
+  },
+  {
+   "model_family": "claude",
+   "seat": "evaluator:chaos-monkey"
+  },
+  {
+   "model_family": "claude",
+   "seat": "evaluator:cloud-native-purist"
+  },
+  {
+   "model_family": "claude",
+   "seat": "evaluator:decision-rights-auditor"
+  },
+  {
+   "model_family": "claude",
+   "seat": "evaluator:ecological-systems-analyst"
+  },
+  {
+   "model_family": "claude",
+   "seat": "gate:red-lines-arbitrator"
+  },
+  {
+   "model_family": "claude",
+   "seat": "judge:pragmatic-judge"
+  }
+ ],
+ "selection": {
+  "path": "prompts/selection.json",
+  "registry_sha256": "a71b7f30b937c433dc50c0c2a6b82212026161e2494398230c092fb156befa0d",
+  "registry_version": "3.0.0",
+  "replay_sha256": "6abe7d99b13fcebdb5ad568205e54b56409b3fbfe08ac0fd2457a9ab0925f2b1",
+  "seed_source": "subject_sha256",
+  "selected_ids": [
+   "disgruntled-maintainer@2",
+   "cloud-native-purist@2",
+   "decision-rights-auditor@1",
+   "ecological-systems-analyst@2",
+   "chaos-monkey@2"
+  ],
+  "subject_seed_sha256": "c8b1141a75905e12b39ec0f26141c8610a894244c65a7816b90a81af3d3dda79",
+  "wildcard_ids": [
+   "ecological-systems-analyst@2"
+  ]
+ },
+ "subject": {
+  "path": "evidence/diff.patch",
+  "revision": "4e49ba5f5b30a5f0da60a942d6e0e20e147b8bbd"
+ },
+ "summary": {
+  "path": "GAUNTLET-SUMMARY.md",
+  "sha256": "98cd61fd377ff161dbc23f5847b0dc209f93101934e9cdf162803ecca2560b88"
+ },
+ "valid_while": {
+  "evidence_root_sha256": "4dd15d61736d832ec7c41f2eabb9a94727495f8fdfdf0be4cc85f080a997ce48",
+  "subject_revision": "4e49ba5f5b30a5f0da60a942d6e0e20e147b8bbd"
+ },
+ "verdict": "CONDITIONAL"
+}

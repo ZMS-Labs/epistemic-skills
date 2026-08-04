@@ -48,7 +48,7 @@
  },
  "ruling_set": {
   "path": "arbitration.md",
-  "sha256": "49e446395c9ad4af395096b147bd27e5b0624ad0c5c6d2277dbb6982fdd90ba6"
+  "sha256": "8c0cbfc5a180146b9a48193ffbb882cd20427c648c5b9444d01ddb1983977375"
  },
  "run_id": "example-run",
  "run_record": "gauntlet-run-record@1",

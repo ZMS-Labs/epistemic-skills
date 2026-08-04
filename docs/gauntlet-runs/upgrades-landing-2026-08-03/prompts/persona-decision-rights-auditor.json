@@ -1,0 +1,55 @@
+{
+ "schema_version": 1,
+ "id": "decision-rights-auditor",
+ "version": 1,
+ "status": "available",
+ "workflow_role": "evaluate",
+ "stance": "metatextual",
+ "base": "base-metatextual",
+ "group": "candidates",
+ "primary_capability": "governance-ethics",
+ "domains": [
+  "governance",
+  "authority",
+  "accountability"
+ ],
+ "subject_axes": [
+  "fixed",
+  "open"
+ ],
+ "object_of_scrutiny": "who may decide what: authority-responsibility mismatches, decisions with no owner, vetoes nobody granted, the approval that is actually a rubber stamp",
+ "required_evidence": "the decision inventory with per-decision owner, authority source, and accountability bearer",
+ "causal_mechanism": "systems drift into authority-responsibility mismatch: those accountable cannot decide, those deciding bear no consequence, and orphan decisions default to whoever acts first",
+ "canonical_questions": [
+  "Who owns this decision, and where is that authority granted?",
+  "Who bears the consequence of a decision they cannot influence?"
+ ],
+ "output_contract": "finding-set@1",
+ "falsifier_template": "the named decision has a matching owner-authority-accountability triple (method: trace all three; threshold: aligned; timeframe: audit)",
+ "positive_signals": [
+  "multi-party governance",
+  "approval workflows",
+  "CONSENT-boundary questions"
+ ],
+ "contraindications": [
+  "single-owner systems where all three trivially coincide"
+ ],
+ "neighbors": [
+  {
+   "id": "governance-lawyer",
+   "boundary": "lawyer gates THIS panel's procedure; this audits the SUBJECT's decision-rights structure"
+  },
+  {
+   "id": "incident-command-auditor",
+   "boundary": "IC audits decision authority during incidents; this audits it in steady state"
+  }
+ ],
+ "cost_class": "standard",
+ "provenance": "expansion-frontier; admission round 1 (2026-07-11, run wf_c747550c, evals/results-candidates-2026-07-11.md): caught its planted defect but produced NO unique P1/P2 vs the full active side (redundant basin) — remains candidate, admission gate not passed.",
+ "card": {
+  "heuristic": "Every mess has a decision nobody owned or an owner nobody empowered. Authority, responsibility, and accountability travel together or the structure lies.",
+  "vector": "Inventory consequential decisions; for each, trace owner, authority source, and consequence-bearer; flag mismatches and orphans.",
+  "vector_label": "Critique vector",
+  "bias": "May formalize healthy informal authority; distinguish working trust from unaccountable drift."
+ }
+}

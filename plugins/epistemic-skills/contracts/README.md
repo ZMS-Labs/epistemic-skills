@@ -1,4 +1,19 @@
-# Handoff receipts — `handoff-receipt@1`
+# Cross-skill and cross-product contracts
+
+This directory contains three deliberately narrow contract surfaces:
+
+- [`handoff-receipt@1`](handoff-receipt.schema.json) binds artifacts passed
+  between skills in one workflow.
+- [`epistemic-events/`](epistemic-events/) defines the fire-and-forget
+  epistemic event and outcome records the collection layer emits (see the
+  [Epistemic event collection](#epistemic-event-collection) section below).
+- [`epistemic-product-calibration@1`](epistemic-product-calibration.schema.json)
+  binds a calibration result to immutable producer, subject, corpus, runner,
+  preregistration, and result revisions across the two product repositories.
+
+None of these surfaces attests that a behavioral judgment is correct.
+
+## Handoff receipts — `handoff-receipt@1`
 
 A **handoff receipt** is a small JSON document a skill emits alongside its
 output so a downstream skill can mechanically verify it received a well-formed
@@ -131,3 +146,29 @@ evaluates judgment content.
 A new predicate, trigger-class, or artifact kind is added only by
 **schema-version bump + verifier update in the same PR** — unknown values fail
 closed by design, so a misfit blocks loudly and is never silently absorbed.
+
+## Product calibration — `epistemic-product-calibration@1`
+
+The calibration envelope is the executable boundary between
+`ZMS-Labs/epistemic-calibration` (measurement producer) and
+`ZMS-Labs/epistemic-skills` (immutable intervention subject). It requires:
+
+- full repository revisions rather than branches or mutable `latest` refs;
+- content hashes for corpus, runner, preregistration, and result artifacts;
+- explicit model, harness, time-window, and sampling-frame identity;
+- exact accounting: `observed + excluded + missing = planned`;
+- a closed lifecycle status and explicit supersession pointer; and
+- non-attestations separating envelope validity from behavioral merit,
+  statistical validity, release readiness, and declared independence.
+
+Validate an inbound record before interpreting its result:
+
+```bash
+python verify_calibration.py RECORD.json
+python verify_calibration.py --self-test
+```
+
+Validation is necessary but insufficient. The consumer still resolves and
+hashes the referenced artifacts, evaluates their methodology, and limits every
+claim to the declared sampling frame. `accepted-gate` records remain subject to
+the receiving repository's release authority; that status is not an approval.

@@ -32,6 +32,7 @@ The README is the fast path into the project. The [GitHub Wiki](https://github.c
 - [Seventeen-skill catalog](#seventeen-skill-catalog)
 - [Installation and compatibility](#installation-and-compatibility)
 - [Architecture and source policy](#architecture-and-source-policy)
+- [Coordination with epistemic-calibration](#coordination-with-epistemic-calibration)
 - [Trust, evidence, and known limits](#trust-evidence-and-known-limits)
 - [Developing and contributing](#developing-and-contributing)
 
@@ -339,6 +340,22 @@ For a stable behavior claim, use this order:
 3. README and Wiki explanations.
 
 `main` is current development and may move. The Wiki is a curated, unversioned handbook and must label current-development links. Historical audits and evaluations retain the status and scope they had at their frozen revision. Stable installation commands always use an immutable tag.
+
+## Coordination with epistemic-calibration
+
+The runtime product and its behavioral measurement counterpart remain separate,
+independently versioned repositories. **epistemic-skills owns intervention
+contracts; epistemic-calibration owns corpora, trial execution, and calibrated
+estimates.** They exchange revision-bound records rather than sharing mutable
+source or creating an installation dependency.
+
+The [coordination charter](docs/coordination/epistemic-calibration.md) records
+the coordination status as frozen at its 2d66a27 (v3.0.0-era)
+baseline, the product boundary, the proposed
+`epistemic-product-calibration@1` exchange unit, adoption questions, and phased
+pilot plan. Calibration-side state remains unverified until that repository
+returns an immutable reference; the charter does not turn a proposed bilateral
+contract into an accepted one.
 
 ## Trust, evidence, and known limits
 

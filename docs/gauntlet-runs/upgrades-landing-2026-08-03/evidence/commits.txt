@@ -1,0 +1,30 @@
+d4961b7aebb58cb07b542cab54d6acb882ace5cd
+  author: Claude <noreply@anthropic.com>
+  feat(epistemics): audit enforcement language + record the design decision (#38)
+Signed-off-by: Claude <noreply@anthropic.com>
+
+3079b0b298294e69e470a6332382f7f610da1169
+  author: Claude <noreply@anthropic.com>
+  feat(gauntlet): require validation kernels for overruled findings (#37)
+Signed-off-by: Claude <noreply@anthropic.com>
+
+31179a9f95c4e3497c14fa23adecde2cb7cef4ac
+  author: Claude <noreply@anthropic.com>
+  feat(ledger): validate the real durable JSONL store (#36)
+Signed-off-by: Claude <noreply@anthropic.com>
+
+01f1ffbd90c40dcfc6d8a96581e942d533f9dd2a
+  author: Claude <noreply@anthropic.com>
+  docs(calibration): revision-honest prose for the landed charter surface
+Signed-off-by: Claude <noreply@anthropic.com>
+
+0d8aecc58131d80d75587103f7480cf1c86a7bd5
+  author: Claude <noreply@anthropic.com>
+  feat(contracts): land PR #54 epistemic-product-calibration contract
+Signed-off-by: Claude <noreply@anthropic.com>
+
+ff2da3c62a708ad8341043ba6bc4ba45bcbb8bdb
+  author: Claude <noreply@anthropic.com>
+  feat(ci): land PR #65 supply-chain hardening (workflows only)
+Signed-off-by: Claude <noreply@anthropic.com>
+

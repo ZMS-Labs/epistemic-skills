@@ -1,0 +1,24 @@
+{
+ "subject": "Land stranded upgrade PRs 65/54/50 onto main: CI supply-chain hardening of security workflows, cross-product calibration contract, mechanical ledger/arbitration/language enforcement gates",
+ "axis": "fixed",
+ "depth": "standard",
+ "domains": [
+  "security",
+  "infra",
+  "process",
+  "governance"
+ ],
+ "risk_classes": [
+  "security",
+  "irreversible"
+ ],
+ "stakeholders": [
+  "operator",
+  "skill consumers"
+ ],
+ "capability_needs": [],
+ "domain_confidence": "high",
+ "defensible_priors": false,
+ "operator_values_in_dossier": false,
+ "subject_sha256": "c8b1141a75905e12b39ec0f26141c8610a894244c65a7816b90a81af3d3dda79"
+}

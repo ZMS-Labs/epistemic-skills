@@ -1,0 +1,295 @@
+{
+  "record": "formal-rigor-record@2",
+  "subject": {
+    "ref": "docs/coordination/epistemic-calibration.md",
+    "revision": "git-blob:b8d678c5cf9446cde8effa7806eca9ab85c9037b"
+  },
+  "valid_while": [
+    "subject-revision-unchanged",
+    "skills-3.0-contract-unchanged",
+    "calibration-side-contract-not-yet-adopted"
+  ],
+  "coverage_limits": [
+    "The epistemic-calibration repository was not reachable from this environment.",
+    "The result establishes a unilateral proposal, not bilateral adoption or calibration-side compatibility.",
+    "P8 measurement uncertainty remains unmapped until calibration-side populations and statistical methods are inspected."
+  ],
+  "rigor": {
+    "tier": "standard",
+    "trigger": "A persistent cross-repository product boundary has multiple viable coupling alternatives.",
+    "tier_reason": "The interface bears downstream versioning and evidence load, but this proposal creates no security, safety, public runtime, or irreversible migration boundary."
+  },
+  "decision_frame": {
+    "question": "How should epistemic-skills and epistemic-calibration coordinate without compromising runtime independence or measurement validity?",
+    "system_boundary": "Repository ownership, immutable exchange records, change custody, and release/calibration compatibility; runtime skill behavior and calibration methodology remain owned by their respective repositories.",
+    "actors": [
+      "epistemic-skills maintainers",
+      "epistemic-calibration maintainers",
+      "skill consumers",
+      "calibration result consumers"
+    ],
+    "alternatives": [
+      {
+        "id": "null",
+        "kind": "null-option",
+        "description": "Continue with no explicit cross-product coordination."
+      },
+      {
+        "id": "merged",
+        "kind": "option",
+        "description": "Merge calibration machinery and skill runtime contracts into one repository."
+      },
+      {
+        "id": "submodule",
+        "kind": "option",
+        "description": "Couple repositories through a submodule or runtime/install dependency."
+      },
+      {
+        "id": "informal",
+        "kind": "option",
+        "description": "Use prose links without a versioned exchange contract."
+      },
+      {
+        "id": "protocol",
+        "kind": "option",
+        "description": "Keep independent repositories and exchange immutable, validated compatibility records."
+      }
+    ],
+    "hard_constraints": [
+      "Version 3.0.0 remains immutable.",
+      "The runtime package has no calibration repository installation dependency.",
+      "Evidence remains subject-, corpus-, runner-, and result-revision-bound.",
+      "Each repository retains independent release authority."
+    ],
+    "authorized_objectives": [
+      "Coordinate the two products as counterparts.",
+      "Make cross-product claims traceable and correctable.",
+      "Avoid conflating intervention contracts with behavioral measurement."
+    ],
+    "priority_rule": {
+      "kind": "constraint-satisfaction",
+      "authority_ref": "user request 2026-07-29 and docs/coordination/epistemic-calibration.md#executive-position"
+    },
+    "assumptions": [
+      "The named epistemic-calibration repository is intended to be the measurement counterpart."
+    ],
+    "empirical_premises": [],
+    "uncertainty_posture": "Fail closed on calibration-side facts until an immutable repository revision is observed."
+  },
+  "coverage": [
+    {
+      "family": "P1",
+      "status": "fired",
+      "modules": [
+        "interface-protocol-evolution"
+      ],
+      "reason": "The exchange unit requires stable identity and validity invariants."
+    },
+    {
+      "family": "P2",
+      "status": "not-applicable",
+      "modules": [],
+      "reason": "The proposal does not define a shared mutable datastore or relational decomposition."
+    },
+    {
+      "family": "P3",
+      "status": "not-applicable",
+      "modules": [],
+      "reason": "Repositories land independently; no concurrent shared-write correctness claim is made."
+    },
+    {
+      "family": "P4",
+      "status": "not-applicable",
+      "modules": [],
+      "reason": "The proposal does not replicate state or define distributed consistency."
+    },
+    {
+      "family": "P5",
+      "status": "fired",
+      "modules": [
+        "dependability-fault-models",
+        "interface-protocol-evolution"
+      ],
+      "reason": "Missing counterparts, stale subjects, and superseded evidence require fail-closed recovery rules."
+    },
+    {
+      "family": "P6",
+      "status": "not-applicable",
+      "modules": [],
+      "reason": "Only public metadata is proposed; authentication and private evidence transport are outside the boundary."
+    },
+    {
+      "family": "P7",
+      "status": "not-applicable",
+      "modules": [],
+      "reason": "No capacity, complexity, or real-time bound bears on the selection."
+    },
+    {
+      "family": "P8",
+      "status": "unmapped",
+      "modules": [],
+      "reason": "Measurement uncertainty is material, but calibration-side populations and statistical methods are unavailable."
+    },
+    {
+      "family": "P9",
+      "status": "fired",
+      "modules": [
+        "interface-protocol-evolution",
+        "decision-theory-multiobjective"
+      ],
+      "reason": "Independent versioning, compatibility, lifecycle, and authorized synthesis determine the product boundary."
+    }
+  ],
+  "derivations": [
+    {
+      "id": "d1",
+      "module": "interface-protocol-evolution",
+      "construct": "versioned protocol compatibility with fail-closed unknown peers",
+      "sources": {
+        "primary_theory": [
+          "plugins/epistemic-skills/skills/applying-formal-rigor/reference/modules/interface-protocol-evolution.md"
+        ],
+        "official_product_docs": [
+          "README.md",
+          "docs/release/RELEASE-3.0.0.md"
+        ]
+      },
+      "model": "Two independently versioned repositories exchange immutable records; neither reads the other's mutable working tree at runtime.",
+      "preconditions": [
+        {
+          "id": "p1",
+          "statement": "epistemic-skills 3.0.0 is an immutable support point.",
+          "status": "verified"
+        },
+        {
+          "id": "p2",
+          "statement": "Calibration-side adoption is not verified.",
+          "status": "verified"
+        },
+        {
+          "id": "p3",
+          "statement": "Unknown or incompatible records fail closed rather than being treated as current evidence.",
+          "status": "assumed"
+        }
+      ],
+      "fact_mapping": [
+        {
+          "precondition_id": "p1",
+          "claim_class": "observation",
+          "anchor": "README.md:13 and docs/release/RELEASE-3.0.0.md:7"
+        },
+        {
+          "precondition_id": "p2",
+          "claim_class": "observation",
+          "anchor": "network verification failure recorded during 2026-07-29 reconnaissance"
+        },
+        {
+          "precondition_id": "p3",
+          "claim_class": "value",
+          "anchor": "docs/coordination/epistemic-calibration.md#change-protocol"
+        }
+      ],
+      "steps": [
+        "A merge or submodule makes product availability and revision selection depend on the counterpart and violates runtime independence.",
+        "An informal link or status quo cannot bind a result to subject, corpus, runner, and protocol revisions, so compatibility and correction custody remain ambiguous.",
+        "An immutable exchange record names both revisions and can be rejected when unknown, stale, or incompatible.",
+        "Independent landing lets each owner validate inbound claims and release without an unmerged cross-repository branch."
+      ],
+      "result": {
+        "state": "conditional",
+        "statement": "The independent protocol alternative satisfies the declared compatibility and ownership constraints if the counterpart adopts a compatible record."
+      },
+      "counterexample": null,
+      "residual_mismatch": [
+        "No conclusion is established about the calibration repository's current design or willingness to adopt the protocol."
+      ]
+    },
+    {
+      "id": "d2",
+      "module": "dependability-fault-models",
+      "construct": "fault containment through immutable evidence pointers and append-only supersession",
+      "sources": {
+        "primary_theory": [
+          "plugins/epistemic-skills/skills/applying-formal-rigor/reference/modules/dependability-fault-models.md"
+        ],
+        "official_product_docs": [
+          "docs/release/RELEASE-3.0.0-RISK-ACCEPTANCE.json"
+        ]
+      },
+      "model": "Counterpart unavailable, result stale, evidence corrected, or measurement scope narrower than a requested product claim.",
+      "preconditions": [
+        {
+          "id": "p4",
+          "statement": "The receiving repository independently verifies identity and claim scope.",
+          "status": "assumed"
+        },
+        {
+          "id": "p5",
+          "statement": "Corrections supersede rather than rewrite historical evidence.",
+          "status": "assumed"
+        }
+      ],
+      "fact_mapping": [
+        {
+          "precondition_id": "p4",
+          "claim_class": "value",
+          "anchor": "docs/coordination/epistemic-calibration.md#change-protocol"
+        },
+        {
+          "precondition_id": "p5",
+          "claim_class": "value",
+          "anchor": "docs/coordination/epistemic-calibration.md#immutable-exchange-unit"
+        }
+      ],
+      "steps": [
+        "Immutable subject and evidence identities localize a stale or corrected result to records that cite it.",
+        "Independent verification prevents producer declaration alone from becoming a product claim.",
+        "Append-only supersession preserves the audit history while allowing consumers to select the current compatible record.",
+        "An unavailable counterpart leaves status unknown and does not block the runtime package."
+      ],
+      "result": {
+        "state": "conditional",
+        "statement": "The protocol contains counterpart, staleness, and correction faults without coupling runtime availability, provided consumers enforce verification and supersession."
+      },
+      "counterexample": null,
+      "residual_mismatch": [
+        "A future private-data transport would require a separate security analysis."
+      ]
+    }
+  ],
+  "empirical_closure": {
+    "state": "not-required",
+    "tests": []
+  },
+  "synthesis": {
+    "outcome": "conditional",
+    "selected_option": "protocol",
+    "basis": [
+      "Only the protocol option satisfies runtime independence while binding subject, corpus, runner, and result identities.",
+      "Independent validation and supersession contain unavailable, stale, or corrected evidence.",
+      "The selection cannot become bilateral until calibration-side adoption is observed."
+    ],
+    "conditions": [
+      "The calibration repository verifies its canonical coordinate and revision.",
+      "Both repositories adopt compatible exchange semantics.",
+      "Consumers reject unknown or stale records."
+    ],
+    "concessions": [
+      "The protocol adds coordination and duplicated validation overhead.",
+      "P8 remains unmapped until calibration-side methods are inspected."
+    ],
+    "recovery_moves": [
+      "Counter-propose the protocol after calibration-side reconnaissance.",
+      "Introduce a shared schema package only after real duplication demonstrates the need."
+    ]
+  },
+  "never_attests": [
+    "derivation-correctness-by-envelope",
+    "empirical-fact-without-observation",
+    "gauntlet-independence",
+    "calibration-repository-existence-or-state",
+    "bilateral-protocol-adoption",
+    "behavioral-effectiveness",
+    "statistical-validity-without-population-and-method"
+  ]
+}

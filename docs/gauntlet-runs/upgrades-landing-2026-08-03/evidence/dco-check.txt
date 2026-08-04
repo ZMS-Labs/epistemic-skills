@@ -1,0 +1,8 @@
+DCO author-matching sign-off check over origin/main..HEAD (6 commits),
+policy per .github/scripts/check_dco.py (every PR commit must carry a
+Signed-off-by whose name+email equal the commit author, case-folded):
+all 6 commits OK (author Claude <noreply@anthropic.com>, matching
+sign-off). The original PR heads a51c77b (sign-off Codex vs author
+SternOne) and da3e013 (no sign-off) fail this policy, which is why the
+branch integrates their trees as squash-style commits instead of
+merge-parenting them.

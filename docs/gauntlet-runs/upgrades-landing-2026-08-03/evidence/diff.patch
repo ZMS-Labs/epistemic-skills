@@ -1,0 +1,2039 @@
+diff --git a/.github/scripts/check_json_artifacts.py b/.github/scripts/check_json_artifacts.py
+index 977c88c..64a8de6 100644
+--- a/.github/scripts/check_json_artifacts.py
++++ b/.github/scripts/check_json_artifacts.py
+@@ -21,6 +21,7 @@ def main() -> int:
+         if not row["json_parseable"]
+     }
+     roots = [
++        REPO_ROOT / "plugins/epistemic-skills/contracts",
+         REPO_ROOT / "plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility",
+         REPO_ROOT / "plugins/epistemic-skills/skills/using-epistemic-skills/evals/proportionality",
+         FORMAL_ROOT,
+diff --git a/.github/workflows/dco.yml b/.github/workflows/dco.yml
+index 3a6cb86..e2f99c8 100644
+--- a/.github/workflows/dco.yml
++++ b/.github/workflows/dco.yml
+@@ -11,7 +11,8 @@ permissions:
+ jobs:
+   dco:
+     name: DCO
+-    runs-on: ubuntu-latest
++    runs-on: ubuntu-24.04
++    timeout-minutes: 5
+     steps:
+       - name: Check out trusted base revision
+         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+diff --git a/.github/workflows/epistemic-flexibility.yml b/.github/workflows/epistemic-flexibility.yml
+index 503f33d..d397358 100644
+--- a/.github/workflows/epistemic-flexibility.yml
++++ b/.github/workflows/epistemic-flexibility.yml
+@@ -6,6 +6,8 @@ name: epistemic-flexibility
+       - "plugins/epistemic-skills/skills/**"
+       - "plugins/epistemic-skills/contracts/**"
+       - "docs/**"
++      - ".ledger/**"
++      - ".github/scripts/**"
+       - ".github/workflows/epistemic-flexibility.yml"
+   push:
+     branches: [main]
+@@ -13,6 +15,8 @@ name: epistemic-flexibility
+       - "plugins/epistemic-skills/skills/**"
+       - "plugins/epistemic-skills/contracts/**"
+       - "docs/**"
++      - ".ledger/**"
++      - ".github/scripts/**"
+       - ".github/workflows/epistemic-flexibility.yml"
+ 
+ permissions:
+@@ -20,10 +24,15 @@ permissions:
+ 
+ jobs:
+   stdlib-checks:
+-    runs-on: ubuntu-latest
++    runs-on: ubuntu-24.04
++    timeout-minutes: 30
+     steps:
+-      - uses: actions/checkout@v4
+-      - uses: actions/setup-python@v5
++      - name: Check out the tested revision without stored credentials
++        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
++        with:
++          persist-credentials: false
++      - name: Set up Python
++        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+         with:
+           python-version: "3.12"
+       - name: Epistemic event contract tests
+@@ -64,6 +73,15 @@ jobs:
+         run: python plugins/epistemic-skills/skills/throwaway-prototyping/evals/trigger-and-scope/tests/run_tests.py
+       - name: Intent-traced Merge trigger-and-scope tests
+         run: python plugins/epistemic-skills/skills/intent-traced-merge/evals/trigger-and-scope/tests/run_tests.py
++      - name: Enforcement-language precision audit
++        run: |
++          set +e
++          python plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/audit_enforcement_language.py > enforcement-language-report.ndjson
++          status=$?
++          cat enforcement-language-report.ndjson
++          exit "$status"
++      - name: Gauntlet validation-kernel gate
++        run: python plugins/epistemic-skills/skills/gauntlet/scripts/validate_ruling_set.py --self-test
+       - name: Outsource packet and package integration
+         run: python plugins/epistemic-skills/skills/outsource/tests/run_tests.py
+       - name: Continuity resume-fixture committed results
+@@ -94,6 +112,7 @@ jobs:
+             .github/scripts/check_json_artifacts.py \
+             plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/validate_trace.py \
+             plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/run_tests.py \
++            plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/audit_enforcement_language.py \
+             plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/behavioral/score_behavior.py \
+             plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/behavioral/run_tests.py \
+             plugins/epistemic-skills/skills/using-epistemic-skills/evals/proportionality/score.py \
+@@ -126,13 +145,17 @@ jobs:
+             plugins/epistemic-skills/skills/throwaway-prototyping/evals/trigger-and-scope/tests/run_tests.py \
+             plugins/epistemic-skills/skills/intent-traced-merge/evals/trigger-and-scope/score.py \
+             plugins/epistemic-skills/skills/intent-traced-merge/evals/trigger-and-scope/tests/run_tests.py \
+-            plugins/epistemic-skills/skills/decision-ledger/reference/validate_examples.py
++            plugins/epistemic-skills/skills/decision-ledger/reference/validate_examples.py \
++            plugins/epistemic-skills/contracts/verify_calibration.py \
++            plugins/epistemic-skills/skills/gauntlet/scripts/validate_ruling_set.py
+       - name: Parse committed JSON in integration surfaces
+         run: python .github/scripts/check_json_artifacts.py
+-      - name: Decision-ledger recurrent-correction examples
++      - name: Decision-ledger examples and durable store
+         run: python plugins/epistemic-skills/skills/decision-ledger/reference/validate_examples.py
+       - name: Existing receipt verifier
+         run: python plugins/epistemic-skills/contracts/verify_receipt.py --self-test
++      - name: Cross-product calibration contract
++        run: python plugins/epistemic-skills/contracts/verify_calibration.py --self-test
+       - name: Existing UAT judge
+         run: python plugins/epistemic-skills/skills/evidence-locked-uat/scripts/judge.py --self-test
+       - name: Existing gauntlet tests
+diff --git a/.github/workflows/release-security.yml b/.github/workflows/release-security.yml
+index 91ba9ff..e25fa3c 100644
+--- a/.github/workflows/release-security.yml
++++ b/.github/workflows/release-security.yml
+@@ -1,49 +1,30 @@
+ name: release-security
+ 
+ "on":
++  # Secrets can be introduced anywhere in the tree. Do not narrow either trigger
++  # with path filters: doing so creates an unscanned path to main.
+   pull_request:
+-    paths:
+-      - "README.md"
+-      - "RELEASING.md"
+-      - "docs/release/**"
+-      - ".claude-plugin/**"
+-      - ".cursor-plugin/**"
+-      - ".kimi-plugin/**"
+-      - "gemini-extension.json"
+-      - "plugins/epistemic-skills/.claude-plugin/**"
+-      - "plugins/epistemic-skills/.codex-plugin/**"
+-      - "plugins/epistemic-skills/.cursor-plugin/**"
+-      - "plugins/epistemic-skills/.kimi-plugin/**"
+-      - ".github/workflows/release-security.yml"
+   push:
+     branches: [main]
+-    paths:
+-      - "README.md"
+-      - "RELEASING.md"
+-      - "docs/release/**"
+-      - ".claude-plugin/**"
+-      - ".cursor-plugin/**"
+-      - ".kimi-plugin/**"
+-      - "gemini-extension.json"
+-      - "plugins/epistemic-skills/.claude-plugin/**"
+-      - "plugins/epistemic-skills/.codex-plugin/**"
+-      - "plugins/epistemic-skills/.cursor-plugin/**"
+-      - "plugins/epistemic-skills/.kimi-plugin/**"
+-      - ".github/workflows/release-security.yml"
+ 
+ permissions:
+   contents: read
+ 
+ jobs:
+   full-history-secret-scan:
+-    runs-on: ubuntu-latest
++    runs-on: ubuntu-24.04
++    timeout-minutes: 15
+     steps:
+-      - uses: actions/checkout@v4
++      - name: Check out the complete history without stored credentials
++        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+         with:
+           fetch-depth: 0
+-      - uses: actions/setup-go@v5
++          persist-credentials: false
++      - name: Set up the pinned Go toolchain
++        uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
+         with:
+-          go-version: stable
++          go-version: "1.25.1"
++          check-latest: false
+       - name: Install pinned gitleaks
+         run: |
+           mkdir -p "$RUNNER_TEMP/bin"
+diff --git a/.ledger/entries.jsonl b/.ledger/entries.jsonl
+index 5d61154..e2155ac 100644
+--- a/.ledger/entries.jsonl
++++ b/.ledger/entries.jsonl
+@@ -5,3 +5,4 @@
+ {"entry":"ledger-entry@1","id":"v3-posthoc-diagnostic-nonrelease-20260726-5","at":"2026-07-26","type":"decision","statement":"The excluded V3 epoch will be analyzed only through a separate immutable post-hoc diagnostic that cannot supply release credit.","because":"docs/superpowers/specs/2026-07-26-formal-rigor-v3-posthoc-diagnostic-design.md:1; docs/superpowers/specs/2026-07-25-formal-rigor-noncursor-degraded-evaluation.md:179; V3 root pin 87e7a615927b4e4148ae5d79677d78166c2aeb8ded294d79ff4dfaf204af29b1","supersedes":[],"revisit_when":"The diagnostic is content-pinned and reviewed, the frozen V3 root pin changes, or a fresh complete campaign supersedes the confidence question.","durability":"durable"}
+ {"entry":"ledger-entry@1","id":"first-formal-release-3-0-0-accepted-risk-20260726-6","at":"2026-07-26","type":"decision","statement":"Version 3.0.0 was selected as the repository's first public stable support snapshot despite the documented non-release diagnostic limitations, with those limitations retained as scoped accepted risk rather than promoted to passes.","because":"docs/release/RELEASE-3.0.0-RISK-ACCEPTANCE.json; docs/release/RELEASE-3.0.0.md; https://github.com/ZMS-Labs/epistemic-skills/pull/48; operator release direction on 2026-07-26","supersedes":["first-formal-release-3-0-0-hold-20260723-4"],"revisit_when":"Before the next stable release; when independent cross-provider adjudication or a valid Cursor structured-output path becomes available; if a new P0, security, provenance, or compatibility finding appears; or if the support promise proves broader than the recorded scope.","durability":"durable"}
+ {"entry":"ledger-entry@1","id":"v3-behavioral-risk-accepted-publication-hold-retained-20260726-7","at":"2026-07-26","type":"correction","statement":"The 3.0.0 behavioral and cross-provider evidence gaps are accepted within the scoped risk record, but the overall publication HOLD remains until every non-waivable deterministic, DCO, CodeQL, security, provenance, review, Gauntlet, and tag-identity gate passes.","because":"docs/release/RELEASE-3.0.0-RISK-ACCEPTANCE.json; RELEASING.md; independent review of release PR #51","supersedes":["first-formal-release-3-0-0-accepted-risk-20260726-6"],"revisit_when":"The exact release-PR head and resulting main commit satisfy every non-waivable gate and the annotated tag plus non-draft GitHub Release pass the identity checks, or publication is abandoned.","durability":"durable","recurrence_risk":true,"failure_chain":{"prompting_event":"The first accepted-risk ledger entry superseded the broad HOLD even though its authority covered only behavioral and cross-provider gaps.","vulnerabilities":["A scoped waiver was represented through a broad supersedes edge.","Behavioral acceptance and publication readiness were collapsed into one decision."],"links":["The historical entry put all release blockers under one HOLD.","The operator accepted only behavioral imperfection.","The first successor superseded the whole HOLD.","Mandatory publication gates still had no passing receipts."],"target_failure":"Readers could infer that publication was authorized before the retained hard gates passed.","consequences":"A release controller or future maintainer could mistake scoped risk acceptance for release GO.","earliest_interruptible_link":"Preserve separate writable homes for behavioral acceptance and publication readiness.","replacement_behavior":"Keep publication HOLD active until exact-commit hard gates and tag/release identity are verified.","rehearsal_fixture":"Given accepted behavioral gaps and a missing secret-scan receipt, the ledger reports behavioral risk accepted and publication HOLD."}}
++{"entry":"ledger-entry@1","id":"epistemic-flexibility-five-controls-20260722-5","at":"2026-07-22","type":"decision","statement":"Epistemic flexibility is implemented as five cross-cutting controls owned by existing skills, with recurrent corrections represented by the conditional failure_chain contract and structural conformance bound into the repository workflow.","because":"plugins/epistemic-skills/skills/using-epistemic-skills/reference/epistemic-flexibility.md; plugins/epistemic-skills/skills/decision-ledger/reference/ledger-entry.schema.json; .github/workflows/epistemic-flexibility.yml; merged PR #35 at c4d2c7418fa20f097c073f232bb402bda09f91e7","supersedes":[],"revisit_when":"The control inventory, skill ownership, failure_chain schema, or workflow binding changes materially.","durability":"durable"}
+diff --git a/README.md b/README.md
+index 7b8c61b..8b40a00 100644
+--- a/README.md
++++ b/README.md
+@@ -32,6 +32,7 @@ The README is the fast path into the project. The [GitHub Wiki](https://github.c
+ - [Seventeen-skill catalog](#seventeen-skill-catalog)
+ - [Installation and compatibility](#installation-and-compatibility)
+ - [Architecture and source policy](#architecture-and-source-policy)
++- [Coordination with epistemic-calibration](#coordination-with-epistemic-calibration)
+ - [Trust, evidence, and known limits](#trust-evidence-and-known-limits)
+ - [Developing and contributing](#developing-and-contributing)
+ 
+@@ -340,6 +341,22 @@ For a stable behavior claim, use this order:
+ 
+ `main` is current development and may move. The Wiki is a curated, unversioned handbook and must label current-development links. Historical audits and evaluations retain the status and scope they had at their frozen revision. Stable installation commands always use an immutable tag.
+ 
++## Coordination with epistemic-calibration
++
++The runtime product and its behavioral measurement counterpart remain separate,
++independently versioned repositories. **epistemic-skills owns intervention
++contracts; epistemic-calibration owns corpora, trial execution, and calibrated
++estimates.** They exchange revision-bound records rather than sharing mutable
++source or creating an installation dependency.
++
++The [coordination charter](docs/coordination/epistemic-calibration.md) records
++the coordination status as frozen at its 2d66a27 (v3.0.0-era)
++baseline, the product boundary, the proposed
++`epistemic-product-calibration@1` exchange unit, adoption questions, and phased
++pilot plan. Calibration-side state remains unverified until that repository
++returns an immutable reference; the charter does not turn a proposed bilateral
++contract into an accepted one.
++
+ ## Trust, evidence, and known limits
+ 
+ Version 3.2.0 is a real release with aligned package surfaces, deterministic checks, a tagged source snapshot, and committed evidence. It is also deliberately honest about what those facts do not prove. Version 3.3.0 added two disciplines (`context-audit`, `agent-interface-design`) and four targeted amendments; version 3.4.0 adds three more (`wayfinding`, `throwaway-prototyping`, `intent-traced-merge`) plus five amendment sets, on the same basis: the new skills ship with graded doctrine and named provenance (Shihipar essay; ConnorGriffin/skills, MIT; community synthesis — re-derived, not copied) but **no behavioral-battery evidence of their own yet** (tracked: issue #70, extended to the 3.4.0 additions) — the evaluation posture below describes the 3.2.0 campaign and is inherited, not extended, by 3.3.0 or 3.4.0.
+diff --git a/docs/coordination/epistemic-calibration.formal-rigor.json b/docs/coordination/epistemic-calibration.formal-rigor.json
+new file mode 100644
+index 0000000..a5e9f5a
+--- /dev/null
++++ b/docs/coordination/epistemic-calibration.formal-rigor.json
+@@ -0,0 +1,137 @@
++{
++  "record": "formal-rigor-record@2",
++  "subject": {
++    "ref": "docs/coordination/epistemic-calibration.md",
++    "revision": "da3e0130112f5f14a209f7e7a77ae25478043ebc"
++  },
++  "valid_while": ["subject-revision-unchanged", "skills-3.0-contract-unchanged", "calibration-side-contract-not-yet-adopted"],
++  "coverage_limits": [
++    "The epistemic-calibration repository was not reachable from this environment.",
++    "The result establishes a unilateral proposal, not bilateral adoption or calibration-side compatibility.",
++    "P8 measurement uncertainty remains unmapped until calibration-side populations and statistical methods are inspected."
++  ],
++  "rigor": {
++    "tier": "standard",
++    "trigger": "A persistent cross-repository product boundary has multiple viable coupling alternatives.",
++    "tier_reason": "The interface bears downstream versioning and evidence load, but this proposal creates no security, safety, public runtime, or irreversible migration boundary."
++  },
++  "decision_frame": {
++    "question": "How should epistemic-skills and epistemic-calibration coordinate without compromising runtime independence or measurement validity?",
++    "system_boundary": "Repository ownership, immutable exchange records, change custody, and release/calibration compatibility; runtime skill behavior and calibration methodology remain owned by their respective repositories.",
++    "actors": ["epistemic-skills maintainers", "epistemic-calibration maintainers", "skill consumers", "calibration result consumers"],
++    "alternatives": [
++      {"id": "null", "kind": "null-option", "description": "Continue with no explicit cross-product coordination."},
++      {"id": "merged", "kind": "option", "description": "Merge calibration machinery and skill runtime contracts into one repository."},
++      {"id": "submodule", "kind": "option", "description": "Couple repositories through a submodule or runtime/install dependency."},
++      {"id": "informal", "kind": "option", "description": "Use prose links without a versioned exchange contract."},
++      {"id": "protocol", "kind": "option", "description": "Keep independent repositories and exchange immutable, validated compatibility records."}
++    ],
++    "hard_constraints": [
++      "Version 3.0.0 remains immutable.",
++      "The runtime package has no calibration repository installation dependency.",
++      "Evidence remains subject-, corpus-, runner-, and result-revision-bound.",
++      "Each repository retains independent release authority."
++    ],
++    "authorized_objectives": [
++      "Coordinate the two products as counterparts.",
++      "Make cross-product claims traceable and correctable.",
++      "Avoid conflating intervention contracts with behavioral measurement."
++    ],
++    "priority_rule": {
++      "kind": "constraint-satisfaction",
++      "authority_ref": "user request 2026-07-29 and docs/coordination/epistemic-calibration.md#executive-position"
++    },
++    "assumptions": ["The named epistemic-calibration repository is intended to be the measurement counterpart."],
++    "empirical_premises": [],
++    "uncertainty_posture": "Fail closed on calibration-side facts until an immutable repository revision is observed."
++  },
++  "coverage": [
++    {"family": "P1", "status": "fired", "modules": ["interface-protocol-evolution"], "reason": "The exchange unit requires stable identity and validity invariants."},
++    {"family": "P2", "status": "not-applicable", "modules": [], "reason": "The proposal does not define a shared mutable datastore or relational decomposition."},
++    {"family": "P3", "status": "not-applicable", "modules": [], "reason": "Repositories land independently; no concurrent shared-write correctness claim is made."},
++    {"family": "P4", "status": "not-applicable", "modules": [], "reason": "The proposal does not replicate state or define distributed consistency."},
++    {"family": "P5", "status": "fired", "modules": ["dependability-fault-models", "interface-protocol-evolution"], "reason": "Missing counterparts, stale subjects, and superseded evidence require fail-closed recovery rules."},
++    {"family": "P6", "status": "not-applicable", "modules": [], "reason": "Only public metadata is proposed; authentication and private evidence transport are outside the boundary."},
++    {"family": "P7", "status": "not-applicable", "modules": [], "reason": "No capacity, complexity, or real-time bound bears on the selection."},
++    {"family": "P8", "status": "unmapped", "modules": [], "reason": "Measurement uncertainty is material, but calibration-side populations and statistical methods are unavailable."},
++    {"family": "P9", "status": "fired", "modules": ["interface-protocol-evolution", "decision-theory-multiobjective"], "reason": "Independent versioning, compatibility, lifecycle, and authorized synthesis determine the product boundary."}
++  ],
++  "derivations": [
++    {
++      "id": "d1",
++      "module": "interface-protocol-evolution",
++      "construct": "versioned protocol compatibility with fail-closed unknown peers",
++      "sources": {"primary_theory": ["plugins/epistemic-skills/skills/applying-formal-rigor/reference/modules/interface-protocol-evolution.md"], "official_product_docs": ["README.md", "docs/release/RELEASE-3.0.0.md"]},
++      "model": "Two independently versioned repositories exchange immutable records; neither reads the other's mutable working tree at runtime.",
++      "preconditions": [
++        {"id": "p1", "statement": "epistemic-skills 3.0.0 is an immutable support point.", "status": "verified"},
++        {"id": "p2", "statement": "Calibration-side adoption is not verified.", "status": "verified"},
++        {"id": "p3", "statement": "Unknown or incompatible records fail closed rather than being treated as current evidence.", "status": "assumed"}
++      ],
++      "fact_mapping": [
++        {"precondition_id": "p1", "claim_class": "observation", "anchor": "README.md:13 and docs/release/RELEASE-3.0.0.md:7"},
++        {"precondition_id": "p2", "claim_class": "observation", "anchor": "network verification failure recorded during 2026-07-29 reconnaissance"},
++        {"precondition_id": "p3", "claim_class": "value", "anchor": "docs/coordination/epistemic-calibration.md#change-protocol"}
++      ],
++      "steps": [
++        "A merge or submodule makes product availability and revision selection depend on the counterpart and violates runtime independence.",
++        "An informal link or status quo cannot bind a result to subject, corpus, runner, and protocol revisions, so compatibility and correction custody remain ambiguous.",
++        "An immutable exchange record names both revisions and can be rejected when unknown, stale, or incompatible.",
++        "Independent landing lets each owner validate inbound claims and release without an unmerged cross-repository branch."
++      ],
++      "result": {"state": "conditional", "statement": "The independent protocol alternative satisfies the declared compatibility and ownership constraints if the counterpart adopts a compatible record."},
++      "counterexample": null,
++      "residual_mismatch": ["No conclusion is established about the calibration repository's current design or willingness to adopt the protocol."]
++    },
++    {
++      "id": "d2",
++      "module": "dependability-fault-models",
++      "construct": "fault containment through immutable evidence pointers and append-only supersession",
++      "sources": {"primary_theory": ["plugins/epistemic-skills/skills/applying-formal-rigor/reference/modules/dependability-fault-models.md"], "official_product_docs": ["docs/release/RELEASE-3.0.0-RISK-ACCEPTANCE.json"]},
++      "model": "Counterpart unavailable, result stale, evidence corrected, or measurement scope narrower than a requested product claim.",
++      "preconditions": [
++        {"id": "p4", "statement": "The receiving repository independently verifies identity and claim scope.", "status": "assumed"},
++        {"id": "p5", "statement": "Corrections supersede rather than rewrite historical evidence.", "status": "assumed"}
++      ],
++      "fact_mapping": [
++        {"precondition_id": "p4", "claim_class": "value", "anchor": "docs/coordination/epistemic-calibration.md#change-protocol"},
++        {"precondition_id": "p5", "claim_class": "value", "anchor": "docs/coordination/epistemic-calibration.md#immutable-exchange-unit"}
++      ],
++      "steps": [
++        "Immutable subject and evidence identities localize a stale or corrected result to records that cite it.",
++        "Independent verification prevents producer declaration alone from becoming a product claim.",
++        "Append-only supersession preserves the audit history while allowing consumers to select the current compatible record.",
++        "An unavailable counterpart leaves status unknown and does not block the runtime package."
++      ],
++      "result": {"state": "conditional", "statement": "The protocol contains counterpart, staleness, and correction faults without coupling runtime availability, provided consumers enforce verification and supersession."},
++      "counterexample": null,
++      "residual_mismatch": ["A future private-data transport would require a separate security analysis."]
++    }
++  ],
++  "empirical_closure": {"state": "not-required", "tests": []},
++  "synthesis": {
++    "outcome": "conditional",
++    "selected_option": "protocol",
++    "basis": [
++      "Only the protocol option satisfies runtime independence while binding subject, corpus, runner, and result identities.",
++      "Independent validation and supersession contain unavailable, stale, or corrected evidence.",
++      "The selection cannot become bilateral until calibration-side adoption is observed."
++    ],
++    "conditions": [
++      "The calibration repository verifies its canonical coordinate and revision.",
++      "Both repositories adopt compatible exchange semantics.",
++      "Consumers reject unknown or stale records."
++    ],
++    "concessions": ["The protocol adds coordination and duplicated validation overhead.", "P8 remains unmapped until calibration-side methods are inspected."],
++    "recovery_moves": ["Counter-propose the protocol after calibration-side reconnaissance.", "Introduce a shared schema package only after real duplication demonstrates the need."]
++  },
++  "never_attests": [
++    "derivation-correctness-by-envelope",
++    "empirical-fact-without-observation",
++    "gauntlet-independence",
++    "calibration-repository-existence-or-state",
++    "bilateral-protocol-adoption",
++    "behavioral-effectiveness",
++    "statistical-validity-without-population-and-method"
++  ]
++}
+diff --git a/docs/coordination/epistemic-calibration.md b/docs/coordination/epistemic-calibration.md
+new file mode 100644
+index 0000000..b8d678c
+--- /dev/null
++++ b/docs/coordination/epistemic-calibration.md
+@@ -0,0 +1,312 @@
++# Epistemic Skills × Epistemic Calibration coordination charter
++
++**Established:** 2026-07-29  
++**Skills subject:** `ZMS-Labs/epistemic-skills` at `2d66a27`  
++**Calibration coordinate:** `https://github.com/ZMS-Labs/epistemic-calibration.git`  
++**Status:** executable consumer-side contract; calibration-side adoption is not yet verified
++
++## Executive position
++
++`epistemic-skills` is at **3.0.0**, its first immutable support point. The
++current branch is post-release documentation/evidence work, not a 3.1 product
++line: the package manifests and public installation contract remain 3.0.0.
++
++The products should be coordinated as a producer/consumer pair without merging
++their responsibilities:
++
++- **epistemic-skills owns the intervention contract**: triggers, procedures,
++  outputs, schemas, deterministic judges, packaging, and honest evidence
++  boundaries.
++- **epistemic-calibration owns measurement**: versioned corpora, trial
++  orchestration, blinded scoring, longitudinal/provider slices, and estimates
++  of how those interventions behave.
++- Neither repository may silently change the other's contract. Shared work
++  crosses through immutable coordinates and an explicit compatibility record.
++
++This is a deliberately loose repository connection. There is no submodule or
++runtime dependency: installing the skill package must not pull in evaluation
++data or calibration infrastructure, and calibration must test immutable skill
++revisions rather than a mutable working tree.
++
++## Where epistemic-skills is now
++
++### Shipped and supported
++
++| Surface | Current state | Authority |
++|---|---|---|
++| Product version | 3.0.0, first stable immutable support point | `README.md`; `docs/release/RELEASE-3.0.0.md` |
++| Package | Eleven skills: router, nine disciplines, and Helix | `README.md` |
++| Core operating model | Routine fast path; positive triggers; silent non-events; proportional process | `README.md`; released skill contracts |
++| Cross-workflow coordination | Helix pairs epistemic methods with workflow stages but does not replace either router | `plugins/epistemic-skills/skills/helix/SKILL.md` |
++| Distribution | Multi-harness package surfaces pinned to v3.0.0 | `README.md`; package manifests |
++| Deterministic evidence | Repository test suites cover contracts, proportionality, formal-rigor fixtures, UAT triage, receipts, DCO, JSON, and Gauntlet mechanics | `.github/workflows/epistemic-flexibility.yml` |
++
++### Supported, with bounded claims
++
++The 3.0.0 support promise is about immutable contracts and deterministic
++repository checks. It is **not** proof of universal behavioral superiority,
++cross-provider generality, human equivalence, or current behavior in every
++harness. The release risk record names the accepted gaps.
++
++The V3 formal-rigor post-hoc report says “3.0.0 remains HOLD,” but that sentence
++is local to the diagnostic's no-release-credit boundary and predates the later
++release authorization/publication sequence. It must not be used as the current
++product status. The README and release record are the current public status;
++the diagnostic remains evidence with its original limitation.
++
++### Open measurement work that belongs in the relationship
++
++1. Native trigger precision and timing across supported harnesses.
++2. False-act and false-hold rates on clean controls and traps.
++3. Cross-model/provider and repeated-run behavior without provider/repetition
++   confounding.
++4. Gauntlet lens and arbitrator calibration on broader seeded corpora.
++5. Evidence-locked UAT's transition from `uncalibrated` to the existing
++   `calibrated:<corpus-ref>@<date>` vocabulary.
++6. Real-world catch rate, correction burden, latency, and token/tool cost.
++7. Version-to-version regression and transfer, while retaining negative and
++   parody controls.
++
++These are calibration questions. A finding may motivate a skill change, but a
++measurement gap alone must not cause evaluation machinery to leak into the
++runtime package.
++
++## Blindspot pass
++
++### Landmines
++
++- “Connect the repositories” could mean a Git submodule, a runtime dependency,
++  shared source, a Git remote, or a governance relationship. Only the last two
++  preserve the package/evidence boundary; a submodule would couple installs to
++  a changing corpus.
++- This checkout initially had no Git remotes, and network access could not
++  verify the calibration repository. The coordinate above is therefore an
++  operator-supplied naming inference, not an observed calibration-side fact.
++- The word *calibration* already has several scopes here: UAT seeded-defect
++  status, Gauntlet telemetry, fixture smoke checks, and broad behavioral
++  measurement. Treating them as one score would erase their populations and
++  validity limits.
++- Green deterministic checks do not estimate behavioral effectiveness. The
++  release documentation explicitly separates immutable support from universal
++  behavior claims.
++- The current README estate header says `maintenance` and portfolio role
++  `none`. Cross-product coordination must not silently override that external
++  lifecycle authority.
++
++### Hidden context
++
++- The collection audit already rejected “calibration reader” as another skill;
++  calibration should be machinery consumed at existing decision points, not
++  runtime ceremony (`docs/audits/2026-07-22-collection-audit/06-gap-analysis.md`).
++- UAT already defines a closed calibration status and transition shape, but
++  intentionally lacks the corpus that would authorize the transition
++  (`plugins/epistemic-skills/skills/evidence-locked-uat/references/schemas.md`).
++- Existing release evidence contains useful trials but also missingness,
++  same-family correlation, and provider/repetition confounding. Calibration
++  must preserve those limitations rather than normalize them away.
++- Helix's core division is useful here: workflow executes work; epistemic
++  skills define what warrants belief. Calibration is a third concern—measuring
++  whether those epistemic interventions work in specified populations—not a
++  replacement strand inside Helix.
++
++### What good looks like
++
++- The 3.0.0 risk-acceptance JSON gives every accepted gap an owner, scope,
++  revisit trigger, and exit criterion rather than a blanket waiver.
++- Formal-rigor evaluation artifacts pin subjects, prompts, judges, attempts,
++  missingness, and no-retry boundaries, allowing later interpretation without
++  rewriting the historical result.
++- UAT's calibration vocabulary requires a corpus reference and date instead of
++  permitting an ungrounded `calibrated` boolean.
++
++### Questions you should be asking
++
++1. **Is epistemic-calibration already public and canonical at the named URL?**
++   Best guess: yes, but this environment could not verify it; adoption remains
++   blocked on a calibration-side immutable reference.
++2. **Which product owns shared schemas?** Best guess: the repository that
++   produces the artifact owns its schema; the consumer pins and validates a
++   version, avoiding a third shared-source package for now.
++3. **Should calibration results gate skill releases immediately?** Best guess:
++   no. Start in observational mode, preregister thresholds, then promote only
++   stable metrics with adequate controls to release gates.
++4. **What is the first joint slice?** Best guess: UAT seeded-defect calibration,
++   because epistemic-skills already exposes an explicit status transition and
++   missing-corpus blocker.
++5. **Does coordination change the maintenance lifecycle?** Best guess: no; it
++   establishes interfaces and evidence intake. Lifecycle changes require the
++   estate authority named in `README.md`.
++
++## Product boundary and compatibility contract
++
++### Ownership
++
++| Concern | epistemic-skills | epistemic-calibration |
++|---|---|---|
++| Runtime trigger/procedure semantics | **owns** | consumes immutable subject |
++| Runtime schemas and judges | **owns** | validates and reports exact versions |
++| Corpus cases, labels, sampling frames | supplies testable contract requirements | **owns** |
++| Trial execution and raw run evidence | supplies adapters where necessary | **owns** |
++| Behavioral estimates and uncertainty | receives; does not inflate | **owns** |
++| Product change decision | **owns** | recommends with evidence |
++| Calibration methodology change | consulted when product meaning is affected | **owns** |
++
++### Immutable exchange unit
++
++Every cross-repository result must validate against
++`plugins/epistemic-skills/contracts/epistemic-product-calibration.schema.json`
++and carry at least:
++
++```json
++{
++  "protocol": "epistemic-product-calibration@1",
++  "producer": {"repo": "ZMS-Labs/epistemic-calibration", "revision": "<full SHA>"},
++  "subject": {
++    "repo": "ZMS-Labs/epistemic-skills",
++    "revision": "<full SHA>",
++    "version": "<semver>",
++    "skill_or_surface": "<stable-slug>"
++  },
++  "contract_revision": "<tested contract>",
++  "corpus": {"ref": "<path>", "revision": "<full SHA>", "sha256": "<hash>"},
++  "runner": {"ref": "<path>", "revision": "<full SHA>", "sha256": "<hash>"},
++  "execution": {"models": ["<pin>"], "harnesses": ["<pin>"], "started_at": "<RFC3339>", "completed_at": "<RFC3339>"},
++  "sampling_frame": {"population": "<scope>", "planned": 1, "observed": 1, "excluded": 0, "missing": 0},
++  "preregistration": {"ref": "<path>", "revision": "<full SHA>", "sha256": "<hash>"},
++  "result": {"ref": "<path>", "revision": "<full SHA>", "sha256": "<hash>"},
++  "status": "observed",
++  "limitations": ["<validity limit>"],
++  "never_attests": ["behavioral-merit-by-envelope", "statistical-validity-by-envelope", "release-readiness-by-envelope"]
++}
++```
++
++The receiving repository records a pointer, interpretation, and disposition;
++it does not copy mutable “latest” results or claim more than the sampling frame
++supports. Corrections append or supersede—they do not rewrite historical
++evidence.
++
++### Change protocol
++
++1. **Propose:** open a paired issue or design record naming both repositories,
++   exact affected contracts, owner, and desired decision.
++2. **Freeze:** pin the skill subject, corpus, runner, preregistration, and
++   scoring contract before empirical execution.
++3. **Run:** calibration retains attempts, failures, missingness, environment,
++   and raw/derived evidence under immutable coordinates.
++4. **Receive:** epistemic-skills independently verifies hashes, schema, subject
++   identity, and claim scope before accepting any conclusion.
++5. **Decide:** classify the result as no change, docs/claim correction,
++   contract change, behavioral candidate, or release-gate candidate.
++6. **Land independently:** each repository merges its own change with reciprocal
++   immutable links. Neither merge depends on an unmerged branch in the other.
++7. **Recalibrate:** contract or behavior changes invalidate only the explicitly
++   affected measurements; the compatibility record states what remains usable.
++
++## Phased coordination plan
++
++### Phase 0 — establish the link (now)
++
++- Treat `ZMS-Labs/epistemic-calibration` as the named measurement counterpart.
++- Add a local `calibration` Git remote when the repository is reachable:
++  `git remote add calibration https://github.com/ZMS-Labs/epistemic-calibration.git`.
++- Obtain and record its default branch, HEAD SHA, lifecycle owner, current
++  schemas, corpora, runners, and claims. Until then, all calibration-side state
++  is **unknown**, not absent.
++- Ask that repository to adopt or counter-propose `epistemic-product-calibration@1`.
++- Give it the schema, valid fixture, negative fixtures, and stdlib verifier in
++  `plugins/epistemic-skills/contracts/`; its first producer record must pass the
++  same verifier in both repositories.
++
++**Exit:** reciprocal immutable references and named owners exist in both repos.
++
++### Phase 1 — inventory and map
++
++- Create a matrix of each skill/surface to available corpus, runner, judge,
++  harness, metric, and validity status.
++- Import no results yet; identify duplicates, gaps, incompatible vocabularies,
++  and hidden shared dependencies.
++- Reconcile the calibration repo's roadmap with the accepted 3.0.0 risks and
++  open audit findings.
++
++**Exit:** every claimed measurement has a subject revision and sampling frame;
++every high-priority product gap has an owner or explicit hold.
++
++### Phase 2 — one end-to-end pilot
++
++- Pilot evidence-locked UAT seeded defects against immutable 3.0.0 and current
++  development HEAD as separate subjects.
++- Preregister expected planted-defect catches, clean-control false holds,
++  thresholds, exclusions, and what would *not* authorize `calibrated`.
++- Return an exchange-unit record and independently verify it here.
++
++**Exit:** reproducible cross-repo result, including at least one positive and
++one negative control; no product claim exceeds the evidence.
++
++### Phase 3 — broaden observational calibration
++
++- Add trigger/skip proportionality, formal-rigor semantic validity, Gauntlet
++  lens/arbitrator behavior, continuity recovery, and outsource receipt
++  behavior.
++- Cross providers, harnesses, repetitions, and judges where claims require it;
++  report missingness and correlated seats.
++- Maintain longitudinal results by immutable product version.
++
++**Exit:** versioned dashboards/reports can distinguish structural conformance,
++semantic merit, availability failure, and population uncertainty.
++
++### Phase 4 — promote selected gates
++
++- Promote only preregistered, stable, independently reproducible measures.
++- Put the threshold, corpus class, validity window, exception authority, and
++  rollback rule in both repositories.
++- Keep exploratory metrics non-governing.
++
++**Exit:** accepted gates fail closed without turning proxy improvement into the
++product objective.
++
++## Formal decision record
++
++- **Question:** How should two separately versioned products coordinate while
++  preserving runtime-package independence and measurement validity?
++- **Tier:** standard; this is a persistent cross-repository interface with
++  multiple viable coupling models.
++- **Alternatives:** merge calibration into skills; Git submodule/runtime
++  dependency; informal links; immutable protocol with independent repos
++  (**selected**); status quo (no coordination).
++- **Hard constraints:** 3.0.0 remains immutable; no runtime dependency on
++  calibration; evidence remains revision-bound; claims retain population and
++  uncertainty; each repository controls its own releases.
++- **Authorized objective:** coordinate the products “as they ought to be” while
++  starting from the user's belief that skills is at 3.0. The priority rule is
++  constraint-satisfaction, then minimize coupling and maximize traceability.
++- **Derivation:** merging or submodules violate independence and versioning;
++  informal links/status quo do not give identity, compatibility, or correction
++  custody; an immutable exchange protocol satisfies the constraints and leaves
++  either repository free to evolve.
++- **Outcome:** `conditional` selection of the independent-repository protocol.
++  It becomes bilateral only when the calibration repository verifies its
++  coordinate and adopts or revises the contract.
++- **Concessions:** more coordination overhead and duplicated validation logic;
++  recovery is a small shared schema package only after two real consumers prove
++  duplication is costlier than another compatibility surface.
++- **Property reconciliation:** P1 fired (exchange invariants); P2 not applicable
++  (no shared mutable datastore); P3 not applicable (no concurrent shared writes);
++  P4 not applicable (no replication protocol); P5 fired (supersession and
++  recovery); P6 not applicable to this public-metadata design; P7 not
++  applicable; P8 unmapped (calibration populations and statistical methods are
++  unobserved); P9 fired (versioning, compatibility, lifecycle).
++
++## Rewritten request and next handoff
++
++> Verify the canonical `ZMS-Labs/epistemic-calibration` repository and freeze
++> its current revision. Compare its actual ownership, schemas, corpora, runners,
++> roadmap, and evidence claims with epistemic-skills 3.0.0's supported contract,
++> accepted risks, and open measurement gaps. Counter-propose or adopt
++> `epistemic-product-calibration@1`, land reciprocal immutable references, then
++> plan one preregistered UAT seeded-defect pilot. Do not merge repositories,
++> introduce a runtime/submodule dependency, change estate lifecycle, or promote
++> a metric to a release gate during the pilot.
++
++Next workflow stage: calibration-side reconnaissance, followed by bilateral
++design review of a frozen revision. If that review changes this interface
++materially, update this charter before implementation.
+diff --git a/plugins/epistemic-skills/contracts/README.md b/plugins/epistemic-skills/contracts/README.md
+index 2455cee..00e5008 100644
+--- a/plugins/epistemic-skills/contracts/README.md
++++ b/plugins/epistemic-skills/contracts/README.md
+@@ -1,4 +1,19 @@
+-# Handoff receipts — `handoff-receipt@1`
++# Cross-skill and cross-product contracts
++
++This directory contains three deliberately narrow contract surfaces:
++
++- [`handoff-receipt@1`](handoff-receipt.schema.json) binds artifacts passed
++  between skills in one workflow.
++- [`epistemic-events/`](epistemic-events/) defines the fire-and-forget
++  epistemic event and outcome records the collection layer emits (see the
++  [Epistemic event collection](#epistemic-event-collection) section below).
++- [`epistemic-product-calibration@1`](epistemic-product-calibration.schema.json)
++  binds a calibration result to immutable producer, subject, corpus, runner,
++  preregistration, and result revisions across the two product repositories.
++
++None of these surfaces attests that a behavioral judgment is correct.
++
++## Handoff receipts — `handoff-receipt@1`
+ 
+ A **handoff receipt** is a small JSON document a skill emits alongside its
+ output so a downstream skill can mechanically verify it received a well-formed
+@@ -131,3 +146,29 @@ evaluates judgment content.
+ A new predicate, trigger-class, or artifact kind is added only by
+ **schema-version bump + verifier update in the same PR** — unknown values fail
+ closed by design, so a misfit blocks loudly and is never silently absorbed.
++
++## Product calibration — `epistemic-product-calibration@1`
++
++The calibration envelope is the executable boundary between
++`ZMS-Labs/epistemic-calibration` (measurement producer) and
++`ZMS-Labs/epistemic-skills` (immutable intervention subject). It requires:
++
++- full repository revisions rather than branches or mutable `latest` refs;
++- content hashes for corpus, runner, preregistration, and result artifacts;
++- explicit model, harness, time-window, and sampling-frame identity;
++- exact accounting: `observed + excluded + missing = planned`;
++- a closed lifecycle status and explicit supersession pointer; and
++- non-attestations separating envelope validity from behavioral merit,
++  statistical validity, release readiness, and declared independence.
++
++Validate an inbound record before interpreting its result:
++
++```bash
++python verify_calibration.py RECORD.json
++python verify_calibration.py --self-test
++```
++
++Validation is necessary but insufficient. The consumer still resolves and
++hashes the referenced artifacts, evaluates their methodology, and limits every
++claim to the declared sampling frame. `accepted-gate` records remain subject to
++the receiving repository's release authority; that status is not an approval.
+diff --git a/plugins/epistemic-skills/contracts/epistemic-product-calibration.schema.json b/plugins/epistemic-skills/contracts/epistemic-product-calibration.schema.json
+new file mode 100644
+index 0000000..bdccfa1
+--- /dev/null
++++ b/plugins/epistemic-skills/contracts/epistemic-product-calibration.schema.json
+@@ -0,0 +1,86 @@
++{
++  "$schema": "https://json-schema.org/draft/2020-12/schema",
++  "$id": "https://raw.githubusercontent.com/ZMS-Labs/epistemic-skills/main/plugins/epistemic-skills/contracts/epistemic-product-calibration.schema.json",
++  "title": "epistemic-product-calibration@1",
++  "description": "A revision-bound envelope for calibration results about an immutable epistemic-skills subject. Validity of the envelope does not attest behavioral merit, statistical validity, or release readiness.",
++  "type": "object",
++  "additionalProperties": false,
++  "required": [
++    "protocol", "producer", "subject", "contract_revision", "corpus",
++    "runner", "execution", "sampling_frame", "preregistration", "result",
++    "status", "limitations", "never_attests"
++  ],
++  "properties": {
++    "protocol": {"const": "epistemic-product-calibration@1"},
++    "synthetic": {"type": "boolean"},
++    "producer": {"$ref": "#/$defs/repositoryRevision"},
++    "subject": {
++      "type": "object",
++      "additionalProperties": false,
++      "required": ["repo", "revision", "version", "skill_or_surface"],
++      "properties": {
++        "repo": {"const": "ZMS-Labs/epistemic-skills"},
++        "revision": {"$ref": "#/$defs/gitRevision"},
++        "version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$"},
++        "skill_or_surface": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]{1,63}$"}
++      }
++    },
++    "contract_revision": {"type": "string", "minLength": 1},
++    "corpus": {"$ref": "#/$defs/contentRevision"},
++    "runner": {"$ref": "#/$defs/contentRevision"},
++    "execution": {
++      "type": "object",
++      "additionalProperties": false,
++      "required": ["models", "harnesses", "started_at", "completed_at"],
++      "properties": {
++        "models": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
++        "harnesses": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
++        "started_at": {"type": "string", "format": "date-time"},
++        "completed_at": {"type": "string", "format": "date-time"}
++      }
++    },
++    "sampling_frame": {
++      "type": "object",
++      "additionalProperties": false,
++      "required": ["population", "planned", "observed", "excluded", "missing"],
++      "properties": {
++        "population": {"type": "string", "minLength": 1},
++        "planned": {"type": "integer", "minimum": 1},
++        "observed": {"type": "integer", "minimum": 0},
++        "excluded": {"type": "integer", "minimum": 0},
++        "missing": {"type": "integer", "minimum": 0}
++      }
++    },
++    "preregistration": {"$ref": "#/$defs/contentRevision"},
++    "result": {"$ref": "#/$defs/contentRevision"},
++    "status": {"enum": ["observed", "candidate-gate", "accepted-gate", "superseded"]},
++    "supersedes": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
++    "limitations": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
++    "never_attests": {
++      "type": "array",
++      "minItems": 3,
++      "uniqueItems": true,
++      "items": {"enum": ["behavioral-merit-by-envelope", "statistical-validity-by-envelope", "release-readiness-by-envelope", "independence-by-declaration"]}
++    }
++  },
++  "$defs": {
++    "gitRevision": {"type": "string", "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$"},
++    "repositoryRevision": {
++      "type": "object", "additionalProperties": false,
++      "required": ["repo", "revision"],
++      "properties": {
++        "repo": {"const": "ZMS-Labs/epistemic-calibration"},
++        "revision": {"$ref": "#/$defs/gitRevision"}
++      }
++    },
++    "contentRevision": {
++      "type": "object", "additionalProperties": false,
++      "required": ["ref", "revision", "sha256"],
++      "properties": {
++        "ref": {"type": "string", "minLength": 1},
++        "revision": {"$ref": "#/$defs/gitRevision"},
++        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
++      }
++    }
++  }
++}
+diff --git a/plugins/epistemic-skills/contracts/examples/calibration/invalid-floating-revision.json b/plugins/epistemic-skills/contracts/examples/calibration/invalid-floating-revision.json
+new file mode 100644
+index 0000000..1685dc1
+--- /dev/null
++++ b/plugins/epistemic-skills/contracts/examples/calibration/invalid-floating-revision.json
+@@ -0,0 +1,62 @@
++{
++  "protocol": "epistemic-product-calibration@1",
++  "synthetic": true,
++  "producer": {
++    "repo": "ZMS-Labs/epistemic-calibration",
++    "revision": "main"
++  },
++  "subject": {
++    "repo": "ZMS-Labs/epistemic-skills",
++    "revision": "3333333333333333333333333333333333333333",
++    "version": "3.0.0",
++    "skill_or_surface": "evidence-locked-uat"
++  },
++  "contract_revision": "uat-seeded-defect@1",
++  "corpus": {
++    "ref": "corpora/uat-seeded-defects",
++    "revision": "4444444444444444444444444444444444444444",
++    "sha256": "5555555555555555555555555555555555555555555555555555555555555555"
++  },
++  "runner": {
++    "ref": "runners/uat-calibration",
++    "revision": "6666666666666666666666666666666666666666",
++    "sha256": "7777777777777777777777777777777777777777777777777777777777777777"
++  },
++  "execution": {
++    "models": [
++      "synthetic-model@1"
++    ],
++    "harnesses": [
++      "synthetic-harness@1"
++    ],
++    "started_at": "2026-07-29T00:00:00Z",
++    "completed_at": "2026-07-29T00:05:00Z"
++  },
++  "sampling_frame": {
++    "population": "Synthetic planted-defect and clean-control cases.",
++    "planned": 4,
++    "observed": 3,
++    "excluded": 0,
++    "missing": 1
++  },
++  "preregistration": {
++    "ref": "plans/uat-pilot.json",
++    "revision": "8888888888888888888888888888888888888888",
++    "sha256": "9999999999999999999999999999999999999999999999999999999999999999"
++  },
++  "result": {
++    "ref": "results/uat-pilot.json",
++    "revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++    "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
++  },
++  "status": "observed",
++  "supersedes": null,
++  "limitations": [
++    "Synthetic fixture only; does not establish real-user or cross-provider behavior."
++  ],
++  "never_attests": [
++    "behavioral-merit-by-envelope",
++    "statistical-validity-by-envelope",
++    "release-readiness-by-envelope"
++  ]
++}
+diff --git a/plugins/epistemic-skills/contracts/examples/calibration/invalid-missing-never-attests.json b/plugins/epistemic-skills/contracts/examples/calibration/invalid-missing-never-attests.json
+new file mode 100644
+index 0000000..f61d67e
+--- /dev/null
++++ b/plugins/epistemic-skills/contracts/examples/calibration/invalid-missing-never-attests.json
+@@ -0,0 +1,61 @@
++{
++  "protocol": "epistemic-product-calibration@1",
++  "synthetic": true,
++  "producer": {
++    "repo": "ZMS-Labs/epistemic-calibration",
++    "revision": "1111111111111111111111111111111111111111"
++  },
++  "subject": {
++    "repo": "ZMS-Labs/epistemic-skills",
++    "revision": "3333333333333333333333333333333333333333",
++    "version": "3.0.0",
++    "skill_or_surface": "evidence-locked-uat"
++  },
++  "contract_revision": "uat-seeded-defect@1",
++  "corpus": {
++    "ref": "corpora/uat-seeded-defects",
++    "revision": "4444444444444444444444444444444444444444",
++    "sha256": "5555555555555555555555555555555555555555555555555555555555555555"
++  },
++  "runner": {
++    "ref": "runners/uat-calibration",
++    "revision": "6666666666666666666666666666666666666666",
++    "sha256": "7777777777777777777777777777777777777777777777777777777777777777"
++  },
++  "execution": {
++    "models": [
++      "synthetic-model@1"
++    ],
++    "harnesses": [
++      "synthetic-harness@1"
++    ],
++    "started_at": "2026-07-29T00:00:00Z",
++    "completed_at": "2026-07-29T00:05:00Z"
++  },
++  "sampling_frame": {
++    "population": "Synthetic planted-defect and clean-control cases.",
++    "planned": 4,
++    "observed": 3,
++    "excluded": 0,
++    "missing": 1
++  },
++  "preregistration": {
++    "ref": "plans/uat-pilot.json",
++    "revision": "8888888888888888888888888888888888888888",
++    "sha256": "9999999999999999999999999999999999999999999999999999999999999999"
++  },
++  "result": {
++    "ref": "results/uat-pilot.json",
++    "revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++    "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
++  },
++  "status": "observed",
++  "supersedes": null,
++  "limitations": [
++    "Synthetic fixture only; does not establish real-user or cross-provider behavior."
++  ],
++  "never_attests": [
++    "behavioral-merit-by-envelope",
++    "release-readiness-by-envelope"
++  ]
++}
+diff --git a/plugins/epistemic-skills/contracts/examples/calibration/invalid-population.json b/plugins/epistemic-skills/contracts/examples/calibration/invalid-population.json
+new file mode 100644
+index 0000000..533dcd7
+--- /dev/null
++++ b/plugins/epistemic-skills/contracts/examples/calibration/invalid-population.json
+@@ -0,0 +1,62 @@
++{
++  "protocol": "epistemic-product-calibration@1",
++  "synthetic": true,
++  "producer": {
++    "repo": "ZMS-Labs/epistemic-calibration",
++    "revision": "1111111111111111111111111111111111111111"
++  },
++  "subject": {
++    "repo": "ZMS-Labs/epistemic-skills",
++    "revision": "3333333333333333333333333333333333333333",
++    "version": "3.0.0",
++    "skill_or_surface": "evidence-locked-uat"
++  },
++  "contract_revision": "uat-seeded-defect@1",
++  "corpus": {
++    "ref": "corpora/uat-seeded-defects",
++    "revision": "4444444444444444444444444444444444444444",
++    "sha256": "5555555555555555555555555555555555555555555555555555555555555555"
++  },
++  "runner": {
++    "ref": "runners/uat-calibration",
++    "revision": "6666666666666666666666666666666666666666",
++    "sha256": "7777777777777777777777777777777777777777777777777777777777777777"
++  },
++  "execution": {
++    "models": [
++      "synthetic-model@1"
++    ],
++    "harnesses": [
++      "synthetic-harness@1"
++    ],
++    "started_at": "2026-07-29T00:00:00Z",
++    "completed_at": "2026-07-29T00:05:00Z"
++  },
++  "sampling_frame": {
++    "population": "Synthetic planted-defect and clean-control cases.",
++    "planned": 4,
++    "observed": 2,
++    "excluded": 0,
++    "missing": 1
++  },
++  "preregistration": {
++    "ref": "plans/uat-pilot.json",
++    "revision": "8888888888888888888888888888888888888888",
++    "sha256": "9999999999999999999999999999999999999999999999999999999999999999"
++  },
++  "result": {
++    "ref": "results/uat-pilot.json",
++    "revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++    "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
++  },
++  "status": "observed",
++  "supersedes": null,
++  "limitations": [
++    "Synthetic fixture only; does not establish real-user or cross-provider behavior."
++  ],
++  "never_attests": [
++    "behavioral-merit-by-envelope",
++    "statistical-validity-by-envelope",
++    "release-readiness-by-envelope"
++  ]
++}
+diff --git a/plugins/epistemic-skills/contracts/examples/calibration/valid-observed.json b/plugins/epistemic-skills/contracts/examples/calibration/valid-observed.json
+new file mode 100644
+index 0000000..e9c6009
+--- /dev/null
++++ b/plugins/epistemic-skills/contracts/examples/calibration/valid-observed.json
+@@ -0,0 +1,62 @@
++{
++  "protocol": "epistemic-product-calibration@1",
++  "synthetic": true,
++  "producer": {
++    "repo": "ZMS-Labs/epistemic-calibration",
++    "revision": "1111111111111111111111111111111111111111"
++  },
++  "subject": {
++    "repo": "ZMS-Labs/epistemic-skills",
++    "revision": "3333333333333333333333333333333333333333",
++    "version": "3.0.0",
++    "skill_or_surface": "evidence-locked-uat"
++  },
++  "contract_revision": "uat-seeded-defect@1",
++  "corpus": {
++    "ref": "corpora/uat-seeded-defects",
++    "revision": "4444444444444444444444444444444444444444",
++    "sha256": "5555555555555555555555555555555555555555555555555555555555555555"
++  },
++  "runner": {
++    "ref": "runners/uat-calibration",
++    "revision": "6666666666666666666666666666666666666666",
++    "sha256": "7777777777777777777777777777777777777777777777777777777777777777"
++  },
++  "execution": {
++    "models": [
++      "synthetic-model@1"
++    ],
++    "harnesses": [
++      "synthetic-harness@1"
++    ],
++    "started_at": "2026-07-29T00:00:00Z",
++    "completed_at": "2026-07-29T00:05:00Z"
++  },
++  "sampling_frame": {
++    "population": "Synthetic planted-defect and clean-control cases.",
++    "planned": 4,
++    "observed": 3,
++    "excluded": 0,
++    "missing": 1
++  },
++  "preregistration": {
++    "ref": "plans/uat-pilot.json",
++    "revision": "8888888888888888888888888888888888888888",
++    "sha256": "9999999999999999999999999999999999999999999999999999999999999999"
++  },
++  "result": {
++    "ref": "results/uat-pilot.json",
++    "revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++    "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
++  },
++  "status": "observed",
++  "supersedes": null,
++  "limitations": [
++    "Synthetic fixture only; does not establish real-user or cross-provider behavior."
++  ],
++  "never_attests": [
++    "behavioral-merit-by-envelope",
++    "statistical-validity-by-envelope",
++    "release-readiness-by-envelope"
++  ]
++}
+diff --git a/plugins/epistemic-skills/contracts/verify_calibration.py b/plugins/epistemic-skills/contracts/verify_calibration.py
+new file mode 100644
+index 0000000..16a9c70
+--- /dev/null
++++ b/plugins/epistemic-skills/contracts/verify_calibration.py
+@@ -0,0 +1,212 @@
++#!/usr/bin/env python3
++"""Validate the epistemic-product-calibration@1 envelope and invariants.
++
++This verifier is intentionally stdlib-only. It validates identity, closed
++vocabularies, revision/hash shapes, and population accounting. It does not
++certify the referenced evidence or its behavioral/statistical conclusions.
++"""
++
++from __future__ import annotations
++
++import argparse
++from datetime import datetime
++import json
++from pathlib import Path
++import re
++import sys
++
++
++PROTOCOL = "epistemic-product-calibration@1"
++GIT_REVISION = re.compile(r"^(?:[0-9a-f]{40}|[0-9a-f]{64})$")
++SHA256 = re.compile(r"^[0-9a-f]{64}$")
++SLUG = re.compile(r"^[a-z0-9][a-z0-9-]{1,63}$")
++SEMVER = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$")
++STATUSES = {"observed", "candidate-gate", "accepted-gate", "superseded"}
++REQUIRED_NEVER_ATTESTS = {
++    "behavioral-merit-by-envelope",
++    "statistical-validity-by-envelope",
++    "release-readiness-by-envelope",
++}
++ALLOWED_NEVER_ATTESTS = REQUIRED_NEVER_ATTESTS | {"independence-by-declaration"}
++TOP_LEVEL_FIELDS = {
++    "protocol", "synthetic", "producer", "subject", "contract_revision",
++    "corpus", "runner", "execution", "sampling_frame", "preregistration",
++    "result", "status", "supersedes", "limitations", "never_attests",
++}
++REQUIRED_FIELDS = TOP_LEVEL_FIELDS - {"synthetic", "supersedes"}
++
++
++class ValidationError(ValueError):
++    """A named fail-closed contract violation."""
++
++
++def fail(code: str, detail: str) -> None:
++    raise ValidationError(f"{code}: {detail}")
++
++
++def object_fields(value: object, path: str, required: set[str], allowed: set[str]) -> dict:
++    if not isinstance(value, dict):
++        fail("SCHEMA_VIOLATION", f"{path} must be an object")
++    missing = required - value.keys()
++    extra = value.keys() - allowed
++    if missing:
++        fail("SCHEMA_VIOLATION", f"{path} missing {sorted(missing)}")
++    if extra:
++        fail("SCHEMA_VIOLATION", f"{path} has unknown fields {sorted(extra)}")
++    return value
++
++
++def revision(value: object, path: str) -> None:
++    if not isinstance(value, str) or not GIT_REVISION.fullmatch(value):
++        fail("BAD_REVISION", f"{path} must be a full 40- or 64-hex revision")
++
++
++def content_revision(value: object, path: str) -> None:
++    row = object_fields(value, path, {"ref", "revision", "sha256"}, {"ref", "revision", "sha256"})
++    if not isinstance(row["ref"], str) or not row["ref"]:
++        fail("SCHEMA_VIOLATION", f"{path}.ref must be non-empty")
++    revision(row["revision"], f"{path}.revision")
++    if not isinstance(row["sha256"], str) or not SHA256.fullmatch(row["sha256"]):
++        fail("BAD_HASH", f"{path}.sha256 must be 64 lowercase hex characters")
++
++
++def date_time(value: object, path: str) -> datetime:
++    if not isinstance(value, str):
++        fail("SCHEMA_VIOLATION", f"{path} must be an RFC 3339 date-time")
++    try:
++        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
++    except ValueError:
++        fail("SCHEMA_VIOLATION", f"{path} must be an RFC 3339 date-time")
++    if parsed.tzinfo is None:
++        fail("SCHEMA_VIOLATION", f"{path} must include a timezone")
++    return parsed
++
++
++def validate(value: object) -> None:
++    record = object_fields(value, "$", REQUIRED_FIELDS, TOP_LEVEL_FIELDS)
++    if record["protocol"] != PROTOCOL:
++        fail("UNKNOWN_PROTOCOL", f"expected {PROTOCOL}")
++    if "synthetic" in record and not isinstance(record["synthetic"], bool):
++        fail("SCHEMA_VIOLATION", "$.synthetic must be boolean")
++
++    producer = object_fields(record["producer"], "$.producer", {"repo", "revision"}, {"repo", "revision"})
++    if producer["repo"] != "ZMS-Labs/epistemic-calibration":
++        fail("WRONG_PRODUCER", "producer.repo must be ZMS-Labs/epistemic-calibration")
++    revision(producer["revision"], "$.producer.revision")
++
++    subject = object_fields(
++        record["subject"], "$.subject",
++        {"repo", "revision", "version", "skill_or_surface"},
++        {"repo", "revision", "version", "skill_or_surface"},
++    )
++    if subject["repo"] != "ZMS-Labs/epistemic-skills":
++        fail("WRONG_SUBJECT", "subject.repo must be ZMS-Labs/epistemic-skills")
++    revision(subject["revision"], "$.subject.revision")
++    if not isinstance(subject["version"], str) or not SEMVER.fullmatch(subject["version"]):
++        fail("SCHEMA_VIOLATION", "$.subject.version must be semver")
++    if not isinstance(subject["skill_or_surface"], str) or not SLUG.fullmatch(subject["skill_or_surface"]):
++        fail("SCHEMA_VIOLATION", "$.subject.skill_or_surface must be a slug")
++    if not isinstance(record["contract_revision"], str) or not record["contract_revision"]:
++        fail("SCHEMA_VIOLATION", "$.contract_revision must be non-empty")
++
++    for key in ("corpus", "runner", "preregistration", "result"):
++        content_revision(record[key], f"$.{key}")
++
++    execution = object_fields(
++        record["execution"], "$.execution",
++        {"models", "harnesses", "started_at", "completed_at"},
++        {"models", "harnesses", "started_at", "completed_at"},
++    )
++    for key in ("models", "harnesses"):
++        items = execution[key]
++        if not isinstance(items, list) or not items or len(items) != len(set(items)) or not all(isinstance(item, str) and item for item in items):
++            fail("SCHEMA_VIOLATION", f"$.execution.{key} must contain unique non-empty strings")
++    started = date_time(execution["started_at"], "$.execution.started_at")
++    completed = date_time(execution["completed_at"], "$.execution.completed_at")
++    if completed < started:
++        fail("INVALID_TIME_WINDOW", "completed_at precedes started_at")
++
++    frame = object_fields(
++        record["sampling_frame"], "$.sampling_frame",
++        {"population", "planned", "observed", "excluded", "missing"},
++        {"population", "planned", "observed", "excluded", "missing"},
++    )
++    if not isinstance(frame["population"], str) or not frame["population"]:
++        fail("SCHEMA_VIOLATION", "$.sampling_frame.population must be non-empty")
++    for key in ("planned", "observed", "excluded", "missing"):
++        minimum = 1 if key == "planned" else 0
++        if isinstance(frame[key], bool) or not isinstance(frame[key], int) or frame[key] < minimum:
++            fail("SCHEMA_VIOLATION", f"$.sampling_frame.{key} must be an integer >= {minimum}")
++    if frame["observed"] + frame["excluded"] + frame["missing"] != frame["planned"]:
++        fail("POPULATION_MISMATCH", "observed + excluded + missing must equal planned")
++
++    if record["status"] not in STATUSES:
++        fail("UNKNOWN_STATUS", f"status must be one of {sorted(STATUSES)}")
++    supersedes = record.get("supersedes")
++    if supersedes is not None and (not isinstance(supersedes, str) or not SHA256.fullmatch(supersedes)):
++        fail("BAD_HASH", "$.supersedes must be null or a sha256")
++    if record["status"] == "superseded" and supersedes is None:
++        fail("MISSING_SUPERSESSION", "superseded status requires supersedes")
++
++    limitations = record["limitations"]
++    if not isinstance(limitations, list) or not limitations or not all(isinstance(item, str) and item for item in limitations):
++        fail("MISSING_LIMITATIONS", "limitations must contain non-empty strings")
++    never = record["never_attests"]
++    if (
++        not isinstance(never, list)
++        or len(never) != len(set(never))
++        or not REQUIRED_NEVER_ATTESTS <= set(never)
++        or not set(never) <= ALLOWED_NEVER_ATTESTS
++    ):
++        fail("MISSING_NEVER_ATTESTS", f"never_attests must include {sorted(REQUIRED_NEVER_ATTESTS)}")
++
++
++def load(path: Path) -> object:
++    try:
++        return json.loads(path.read_text(encoding="utf-8"))
++    except (OSError, json.JSONDecodeError) as exc:
++        fail("INVALID_JSON", str(exc))
++
++
++def self_test() -> None:
++    root = Path(__file__).parent / "examples" / "calibration"
++    cases = {
++        "valid-observed.json": None,
++        "invalid-population.json": "POPULATION_MISMATCH",
++        "invalid-missing-never-attests.json": "MISSING_NEVER_ATTESTS",
++        "invalid-floating-revision.json": "BAD_REVISION",
++    }
++    for name, expected in cases.items():
++        try:
++            validate(load(root / name))
++        except ValidationError as exc:
++            actual = str(exc).split(":", 1)[0]
++            if expected != actual:
++                raise AssertionError(f"{name}: expected {expected}, got {actual}: {exc}") from exc
++        else:
++            if expected is not None:
++                raise AssertionError(f"{name}: expected {expected}, got pass")
++    print(f"calibration contract self-test: PASS ({len(cases)}/{len(cases)})")
++
++
++def main() -> int:
++    parser = argparse.ArgumentParser()
++    parser.add_argument("record", nargs="?", type=Path)
++    parser.add_argument("--self-test", action="store_true")
++    args = parser.parse_args()
++    try:
++        if args.self_test:
++            self_test()
++        elif args.record:
++            validate(load(args.record))
++            print(f"ok {args.record}: envelope valid")
++        else:
++            parser.error("provide RECORD or --self-test")
++    except ValidationError as exc:
++        print(f"error {exc}", file=sys.stderr)
++        return 1
++    return 0
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+diff --git a/plugins/epistemic-skills/skills/decision-ledger/reference/validate_examples.py b/plugins/epistemic-skills/skills/decision-ledger/reference/validate_examples.py
+index 6aed526..bbfbb2a 100755
+--- a/plugins/epistemic-skills/skills/decision-ledger/reference/validate_examples.py
++++ b/plugins/epistemic-skills/skills/decision-ledger/reference/validate_examples.py
+@@ -1,25 +1,52 @@
+ #!/usr/bin/env python3
+-"""Stdlib smoke check for ledger-entry@1 examples and recurrent corrections.
++"""Stdlib validator for ledger-entry@1 examples and durable JSONL stores.
+ 
+-This checks the narrow structural contract added for recurrent corrections. It is
+-not a general JSON Schema implementation and makes no truth/authorization claim.
++The implementation mirrors the repository's closed ``ledger-entry.schema.json``
++contract without introducing a runtime dependency on a general JSON Schema
++library.  It also checks the store-level invariants the schema cannot express:
++unique ids, durable-only committed entries, non-dangling supersedes links,
++acyclic supersession, and one head per connected supersession component.
++
++This is structural validation only.  It makes no truth, authorization, or
++freshness claim about a well-formed entry.
+ """
+ from __future__ import annotations
+ 
++import argparse
+ import json
++import re
+ from pathlib import Path
+-from typing import Any
++from typing import Any, Iterable
+ 
+ ROOT = Path(__file__).resolve().parent
++REPO_ROOT = ROOT.parents[4]
++DEFAULT_LEDGER = REPO_ROOT / ".ledger" / "entries.jsonl"
++
+ REQUIRED = {
+-    "entry", "id", "at", "type", "statement", "because",
+-    "supersedes", "revisit_when", "durability",
++    "entry",
++    "id",
++    "at",
++    "type",
++    "statement",
++    "because",
++    "supersedes",
++    "revisit_when",
++    "durability",
+ }
++OPTIONAL = {"synthetic", "session", "recurrence_risk", "failure_chain"}
++ALLOWED = REQUIRED | OPTIONAL
+ CHAIN_REQUIRED = {
+-    "prompting_event", "vulnerabilities", "links", "target_failure",
+-    "consequences", "earliest_interruptible_link", "replacement_behavior",
++    "prompting_event",
++    "vulnerabilities",
++    "links",
++    "target_failure",
++    "consequences",
++    "earliest_interruptible_link",
++    "replacement_behavior",
+     "rehearsal_fixture",
+ }
++ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]*-[0-9]{8}-[0-9]+$")
++DATE_RE = re.compile(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}$")
+ 
+ 
+ def nonempty(value: Any) -> bool:
+@@ -31,18 +58,50 @@ def nonempty_list(value: Any) -> bool:
+ 
+ 
+ def validate(entry: Any) -> list[str]:
++    """Validate one entry against the closed ledger-entry@1 shape."""
++
+     errors: list[str] = []
+     if not isinstance(entry, dict):
+         return ["root must be an object"]
++
+     missing = sorted(REQUIRED - entry.keys())
++    unknown = sorted(entry.keys() - ALLOWED)
+     if missing:
+         errors.append(f"missing required fields: {', '.join(missing)}")
++    if unknown:
++        errors.append(f"additional properties are forbidden: {', '.join(unknown)}")
++
+     if entry.get("entry") != "ledger-entry@1":
+         errors.append("entry must equal ledger-entry@1")
++
++    identifier = entry.get("id")
++    if not isinstance(identifier, str) or ID_RE.fullmatch(identifier) is None:
++        errors.append("id must match <slug>-<YYYYMMDD>-<seq>")
++
++    at = entry.get("at")
++    if not isinstance(at, str) or DATE_RE.fullmatch(at) is None:
++        errors.append("at must match YYYY-MM-DD")
++
++    if "synthetic" in entry and not isinstance(entry.get("synthetic"), bool):
++        errors.append("synthetic must be boolean")
++    if "session" in entry and not nonempty(entry.get("session")):
++        errors.append("session must be a non-empty string")
++
+     if entry.get("type") not in {"decision", "assumption", "correction"}:
+         errors.append("invalid type")
++    for field in ("statement", "because", "revisit_when"):
++        if not nonempty(entry.get(field)):
++            errors.append(f"{field} must be a non-empty string")
++
++    supersedes = entry.get("supersedes")
++    if not isinstance(supersedes, list) or not all(
++        isinstance(item, str) and ID_RE.fullmatch(item) is not None for item in supersedes
++    ):
++        errors.append("supersedes must be an array of ledger-entry ids")
++
+     if entry.get("durability") not in {"durable", "session-only"}:
+         errors.append("invalid durability")
++
+     recurrence = entry.get("recurrence_risk")
+     chain = entry.get("failure_chain")
+     if recurrence is not None and not isinstance(recurrence, bool):
+@@ -53,41 +112,191 @@ def validate(entry: Any) -> list[str]:
+         errors.append("failure_chain is correction-only")
+     if recurrence is True and chain is None:
+         errors.append("recurrent correction requires failure_chain")
++
+     if chain is not None:
+         if not isinstance(chain, dict):
+             errors.append("failure_chain must be an object")
+         else:
+             missing_chain = sorted(CHAIN_REQUIRED - chain.keys())
++            unknown_chain = sorted(chain.keys() - CHAIN_REQUIRED)
+             if missing_chain:
+                 errors.append(f"failure_chain missing: {', '.join(missing_chain)}")
++            if unknown_chain:
++                errors.append(
++                    "failure_chain additional properties are forbidden: "
++                    + ", ".join(unknown_chain)
++                )
+             for field in sorted(CHAIN_REQUIRED):
+                 value = chain.get(field)
+                 if field in {"vulnerabilities", "links"}:
+                     if not nonempty_list(value):
+-                        errors.append(f"failure_chain.{field} must be a non-empty string array")
++                        errors.append(
++                            f"failure_chain.{field} must be a non-empty string array"
++                        )
+                 elif not nonempty(value):
+                     errors.append(f"failure_chain.{field} must be a non-empty string")
+     return errors
+ 
+ 
+-def main() -> int:
++def validate_store(entries: list[dict[str, Any]]) -> list[str]:
++    """Validate invariants spanning a committed append-only JSONL store."""
++
++    errors: list[str] = []
++    by_id: dict[str, dict[str, Any]] = {}
++    for index, entry in enumerate(entries, 1):
++        identifier = entry.get("id")
++        if not isinstance(identifier, str):
++            continue
++        if identifier in by_id:
++            errors.append(f"line {index}: duplicate id {identifier}")
++        else:
++            by_id[identifier] = entry
++        if entry.get("durability") == "session-only":
++            errors.append(
++                f"line {index}: session-only entry {identifier} may not be committed to the durable store"
++            )
++
++    graph: dict[str, list[str]] = {}
++    undirected: dict[str, set[str]] = {identifier: set() for identifier in by_id}
++    for identifier, entry in by_id.items():
++        parents = [item for item in entry.get("supersedes", []) if isinstance(item, str)]
++        graph[identifier] = parents
++        for parent in parents:
++            if parent not in by_id:
++                errors.append(f"{identifier}: dangling supersedes id {parent}")
++                continue
++            undirected[identifier].add(parent)
++            undirected[parent].add(identifier)
++
++    visiting: set[str] = set()
++    visited: set[str] = set()
++
++    def visit(identifier: str, trail: list[str]) -> None:
++        if identifier in visiting:
++            cycle = " -> ".join([*trail, identifier])
++            errors.append(f"supersedes cycle: {cycle}")
++            return
++        if identifier in visited:
++            return
++        visiting.add(identifier)
++        for parent in graph.get(identifier, []):
++            if parent in by_id:
++                visit(parent, [*trail, identifier])
++        visiting.remove(identifier)
++        visited.add(identifier)
++
++    for identifier in sorted(by_id):
++        visit(identifier, [])
++
++    superseded = {
++        parent
++        for parents in graph.values()
++        for parent in parents
++        if parent in by_id
++    }
++    component_seen: set[str] = set()
++    for start in sorted(by_id):
++        if start in component_seen:
++            continue
++        stack = [start]
++        component: set[str] = set()
++        while stack:
++            current = stack.pop()
++            if current in component:
++                continue
++            component.add(current)
++            stack.extend(undirected.get(current, set()) - component)
++        component_seen |= component
++        heads = sorted(component - superseded)
++        if len(heads) != 1:
++            errors.append(
++                f"supersedes component {sorted(component)} must have exactly one head; got {heads}"
++            )
++    return errors
++
++
++def read_jsonl(path: Path) -> tuple[list[dict[str, Any]], list[str]]:
++    entries: list[dict[str, Any]] = []
++    errors: list[str] = []
++    for line_number, raw_line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
++        if not raw_line.strip():
++            continue
++        try:
++            value = json.loads(raw_line)
++        except json.JSONDecodeError as error:
++            errors.append(f"line {line_number}: malformed JSON: {error.msg}")
++            continue
++        entry_errors = validate(value)
++        if entry_errors:
++            errors.extend(f"line {line_number}: {error}" for error in entry_errors)
++            continue
++        entries.append(value)
++    errors.extend(validate_store(entries))
++    return entries, errors
++
++
++def check_examples() -> int:
+     failures = 0
+     for path in sorted(ROOT.glob("example-*.json")):
+         errors = validate(json.loads(path.read_text(encoding="utf-8")))
+-        print(f"[{'PASS' if not errors else 'FAIL'}] {path.name}: {'; '.join(errors) if errors else 'valid'}")
++        print(
++            f"[{'PASS' if not errors else 'FAIL'}] {path.name}: "
++            f"{'; '.join(errors) if errors else 'valid'}"
++        )
+         failures += bool(errors)
+ 
+     base = json.loads((ROOT / "example-correction-with-chain.json").read_text(encoding="utf-8"))
+     planted = {
+-        "recurrent correction without chain": {key: value for key, value in base.items() if key != "failure_chain"},
++        "recurrent correction without chain": {
++            key: value for key, value in base.items() if key != "failure_chain"
++        },
+         "chain on decision": {**base, "type": "decision"},
++        "unknown property": {**base, "verdict": "GO"},
++        "bad id": {**base, "id": "not-an-entry-id"},
+     }
+     for name, payload in planted.items():
+         errors = validate(payload)
+         passed = bool(errors)
+-        print(f"[{'PASS' if passed else 'FAIL'}] planted {name}: {'; '.join(errors) if errors else 'unexpectedly valid'}")
++        print(
++            f"[{'PASS' if passed else 'FAIL'}] planted {name}: "
++            f"{'; '.join(errors) if errors else 'unexpectedly valid'}"
++        )
+         failures += not passed
++    return failures
++
++
++def check_ledger(path: Path) -> int:
++    if not path.is_file():
++        print(f"[FAIL] durable ledger: missing {path}")
++        return 1
++    entries, errors = read_jsonl(path)
++    print(
++        f"[{'PASS' if not errors else 'FAIL'}] durable ledger {path}: "
++        f"{len(entries)} valid entries"
++    )
++    for error in errors:
++        print(f"  - {error}")
++    return bool(errors)
++
++
++def main(argv: Iterable[str] | None = None) -> int:
++    parser = argparse.ArgumentParser()
++    parser.add_argument(
++        "--ledger",
++        type=Path,
++        default=DEFAULT_LEDGER,
++        help="durable JSONL store to validate (default: repository .ledger/entries.jsonl)",
++    )
++    parser.add_argument(
++        "--examples-only",
++        action="store_true",
++        help="run fixture checks without validating a durable store",
++    )
++    args = parser.parse_args(list(argv) if argv is not None else None)
+ 
++    failures = check_examples()
++    if not args.examples_only:
++        failures += check_ledger(args.ledger)
+     print(f"\nRESULT: {'PASS' if failures == 0 else 'FAIL'}")
+     return 0 if failures == 0 else 1
+ 
+diff --git a/plugins/epistemic-skills/skills/gauntlet/examples/example-run/arbitration.md b/plugins/epistemic-skills/skills/gauntlet/examples/example-run/arbitration.md
+index 275fad9..ee5259d 100644
+--- a/plugins/epistemic-skills/skills/gauntlet/examples/example-run/arbitration.md
++++ b/plugins/epistemic-skills/skills/gauntlet/examples/example-run/arbitration.md
+@@ -11,7 +11,9 @@ same finding contract and arbitration path as every other evaluator.
+   mechanism and a mechanically runnable falsifier; the draft's evidence supports it.
+   Ruled UPHELD, open → blocking P2.
+ - **F2** — compliance-litigator's session-identity concern is answered by the draft
+-  itself (keyed-hash token). Ruled OVERRULED on the cited evidence, resolved.
++  itself (keyed-hash token). Ruled OVERRULED on the cited evidence, resolved. Its
++  valid kernel is preserved: session identity is load-bearing and must be bound
++  cryptographically rather than trusted from prose.
+ - **F3** — retention rule for stale receipts: real but minor, and partially covered
+   by the validity-window semantics. Ruled UPHELD-WITH-QUALIFICATIONS, resolved.
+ 
+@@ -49,6 +51,7 @@ and the ledger line derive from it (finalize_run.py), they never restate it.
+       "basin": "session-identity",
+       "ruling": "OVERRULED",
+       "status": "resolved",
++      "validation_kernel": "Session identity is load-bearing and must be cryptographically bound rather than trusted from prose.",
+       "acceptance_criteria": []
+     },
+     {
+diff --git a/plugins/epistemic-skills/skills/gauntlet/examples/example-run/run-record.json b/plugins/epistemic-skills/skills/gauntlet/examples/example-run/run-record.json
+index 4f38245..e431c77 100644
+--- a/plugins/epistemic-skills/skills/gauntlet/examples/example-run/run-record.json
++++ b/plugins/epistemic-skills/skills/gauntlet/examples/example-run/run-record.json
+@@ -48,7 +48,7 @@
+  },
+  "ruling_set": {
+   "path": "arbitration.md",
+-  "sha256": "49e446395c9ad4af395096b147bd27e5b0624ad0c5c6d2277dbb6982fdd90ba6"
++  "sha256": "8c0cbfc5a180146b9a48193ffbb882cd20427c648c5b9444d01ddb1983977375"
+  },
+  "run_id": "example-run",
+  "run_record": "gauntlet-run-record@1",
+diff --git a/plugins/epistemic-skills/skills/gauntlet/scripts/validate_ruling_set.py b/plugins/epistemic-skills/skills/gauntlet/scripts/validate_ruling_set.py
+new file mode 100644
+index 0000000..bc211d3
+--- /dev/null
++++ b/plugins/epistemic-skills/skills/gauntlet/scripts/validate_ruling_set.py
+@@ -0,0 +1,125 @@
++#!/usr/bin/env python3
++"""Validate ruling-set@1 arbitration structure that affects epistemic integrity.
++
++This narrow stdlib gate gives the Gauntlet's ``validation_kernel`` rule
++mechanical teeth: every OVERRULED criticism must preserve, in a non-empty field,
++what the criticism validly established before the arbitrator rejected its final
++conclusion.  The check is structural only; it does not judge whether the kernel
++is true or adequate.
++"""
++from __future__ import annotations
++
++import argparse
++import json
++import re
++import sys
++from pathlib import Path
++from typing import Any
++
++ROOT = Path(__file__).resolve().parent.parent
++EXAMPLE = ROOT / "examples" / "example-run" / "arbitration.md"
++FENCED_JSON_RE = re.compile(r"```json\s*(.*?)```", re.S)
++
++
++class RulingSetError(ValueError):
++    pass
++
++
++def extract_ruling_set(text: str) -> dict[str, Any]:
++    for block in FENCED_JSON_RE.findall(text):
++        try:
++            value = json.loads(block)
++        except json.JSONDecodeError:
++            continue
++        if isinstance(value, dict) and value.get("ruling_set") == "ruling-set@1":
++            return value
++    raise RulingSetError("RULING-SET-MISSING: no fenced ruling-set@1 JSON block")
++
++
++def validate_ruling_set(value: Any) -> list[str]:
++    errors: list[str] = []
++    if not isinstance(value, dict):
++        return ["RULING-SET-TYPE: root must be an object"]
++    if value.get("ruling_set") != "ruling-set@1":
++        errors.append("RULING-SET-KIND: ruling_set must equal ruling-set@1")
++    rulings = value.get("rulings")
++    if not isinstance(rulings, list):
++        return [*errors, "RULINGS-TYPE: rulings must be an array"]
++
++    seen_ids: set[str] = set()
++    for index, ruling in enumerate(rulings):
++        prefix = f"rulings[{index}]"
++        if not isinstance(ruling, dict):
++            errors.append(f"{prefix}: ruling must be an object")
++            continue
++        ruling_id = ruling.get("id")
++        if not isinstance(ruling_id, str) or not ruling_id.strip():
++            errors.append(f"{prefix}: id must be a non-empty string")
++            ruling_id = f"index-{index}"
++        elif ruling_id in seen_ids:
++            errors.append(f"{prefix}: duplicate ruling id {ruling_id}")
++        seen_ids.add(ruling_id)
++
++        if ruling.get("ruling") == "OVERRULED":
++            kernel = ruling.get("validation_kernel")
++            if not isinstance(kernel, str) or not kernel.strip():
++                errors.append(f"VALIDATION-KERNEL-MISSING:{ruling_id}")
++    return errors
++
++
++def validate_path(path: Path) -> list[str]:
++    try:
++        ruling_set = extract_ruling_set(path.read_text(encoding="utf-8"))
++    except (OSError, RulingSetError) as error:
++        return [str(error)]
++    return validate_ruling_set(ruling_set)
++
++
++def self_test() -> int:
++    failures = 0
++    positive = validate_path(EXAMPLE)
++    if positive:
++        failures += 1
++        print(f"[FAIL] shipped example: {positive}")
++    else:
++        print("[PASS] shipped example preserves validation kernels")
++
++    value = extract_ruling_set(EXAMPLE.read_text(encoding="utf-8"))
++    planted = json.loads(json.dumps(value))
++    for ruling in planted["rulings"]:
++        if ruling.get("ruling") == "OVERRULED":
++            ruling.pop("validation_kernel", None)
++    negative = validate_ruling_set(planted)
++    if not any(error.startswith("VALIDATION-KERNEL-MISSING:") for error in negative):
++        failures += 1
++        print(f"[FAIL] planted missing kernel was not rejected: {negative}")
++    else:
++        print("[PASS] planted missing kernel fails closed")
++
++    print(f"validate_ruling_set self-test: {'PASS' if failures == 0 else 'FAIL'}")
++    return 0 if failures == 0 else 1
++
++
++def main() -> int:
++    parser = argparse.ArgumentParser()
++    parser.add_argument("--arbitration", type=Path)
++    parser.add_argument("--self-test", action="store_true")
++    args = parser.parse_args()
++
++    if args.self_test:
++        return self_test()
++    if args.arbitration is None:
++        print("ERROR: --arbitration or --self-test is required", file=sys.stderr)
++        return 2
++
++    errors = validate_path(args.arbitration)
++    for error in errors:
++        print(f"[FAIL] {error}", file=sys.stderr)
++    if errors:
++        return 1
++    print(f"[PASS] {args.arbitration}: all overruled criticisms preserve validation_kernel")
++    return 0
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+diff --git a/plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/audit_enforcement_language.py b/plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/audit_enforcement_language.py
+new file mode 100644
+index 0000000..44eab20
+--- /dev/null
++++ b/plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/audit_enforcement_language.py
+@@ -0,0 +1,236 @@
++#!/usr/bin/env python3
++"""Audit enforcement language in every SKILL.md amended by PR #35.
++
++The audit is intentionally exhaustive over a frozen path inventory: every use of
++``enforce*`` or ``fail[- ]closed`` is emitted with a semantic category. A use
++that cannot be classified from its local context fails the gate rather than
++silently inheriting the strongest interpretation.
++
++Categories:
++- mechanical: an executable schema, validator, script, workflow, selector, or test;
++- policy: a normative discipline without a claimed runtime interlock;
++- external: a separately operated/environmental enforcement mechanism;
++- limitation: an explicit non-claim or category boundary.
++"""
++from __future__ import annotations
++
++import json
++import re
++import sys
++from pathlib import Path
++
++REPO_ROOT = Path(__file__).resolve().parents[6]
++REFERENCE = (
++    REPO_ROOT
++    / "plugins"
++    / "epistemic-skills"
++    / "skills"
++    / "using-epistemic-skills"
++    / "reference"
++    / "epistemic-flexibility.md"
++)
++SKILL_PATHS = [
++    "plugins/epistemic-skills/skills/applying-formal-rigor/SKILL.md",
++    "plugins/epistemic-skills/skills/blindspot-pass/SKILL.md",
++    "plugins/epistemic-skills/skills/continuity-verify/SKILL.md",
++    "plugins/epistemic-skills/skills/decision-ledger/SKILL.md",
++    "plugins/epistemic-skills/skills/evidence-locked-uat/SKILL.md",
++    "plugins/epistemic-skills/skills/evidence-research/SKILL.md",
++    "plugins/epistemic-skills/skills/gauntlet/SKILL.md",
++    "plugins/epistemic-skills/skills/helix/SKILL.md",
++    "plugins/epistemic-skills/skills/using-epistemic-skills/SKILL.md",
++    "plugins/epistemic-skills/skills/write-goal/SKILL.md",
++]
++TERM_RE = re.compile(
++    r"\b(?:enforc(?:e|ed|es|ing|ement)|fail(?:s|ed|ing)?(?:-|\s)closed)\b",
++    re.IGNORECASE,
++)
++
++LIMITATION_MARKERS = (
++    "not enforcement",
++    "not enforce",
++    "does not enforce",
++    "doesn't enforce",
++    "cannot enforce",
++    "can't enforce",
++    "not mechanically",
++    "unachievable",
++    "structural only",
++    "human review",
++    "policy backstop",
++    "advisory",
++    "no runtime",
++    "not a security control",
++    "never claimed",
++    "does not satisfy",
++    "not guaranteed",
++    "category limit",
++)
++EXTERNAL_MARKERS = (
++    "org-enforced",
++    "externally enforced",
++    "external gate",
++    "outside this skill",
++    "branch protection",
++    "runtime tool-call",
++    "tool-call boundary",
++    "if your environment",
++    "environment enforces",
++)
++MECHANICAL_MARKERS = (
++    "mechanically",
++    "validator",
++    "schema",
++    "workflow",
++    "script",
++    "selector",
++    "parser",
++    "test",
++    "reject",
++    "check",
++    "executable",
++    "machine-readable",
++    "required status",
++    "ci ",
++    "ci-",
++    " ci",
++)
++POLICY_MARKERS = (
++    "non-negotiable",
++    "must ",
++    " must",
++    "required",
++    "discipline",
++    "policy",
++    "operator",
++    "rule",
++    "guardrail",
++    # Shared-invariant language is a normative fallback contract unless the
++    # same local context names a validator/schema/workflow. Mechanical markers
++    # are evaluated first, so these phrases never upgrade a named mechanism to
++    # policy or downgrade a mechanical claim.
++    "missing evidence",
++    "no durable home",
++    "malformed chains",
++    "family resemblance",
++    "belongs in this collection",
++)
++
++
++def classify(context: str) -> str | None:
++    lowered = " ".join(context.lower().split())
++    if any(marker in lowered for marker in LIMITATION_MARKERS):
++        return "limitation"
++    if any(marker in lowered for marker in EXTERNAL_MARKERS):
++        return "external"
++    if any(marker in lowered for marker in MECHANICAL_MARKERS):
++        return "mechanical"
++    if any(marker in lowered for marker in POLICY_MARKERS):
++        return "policy"
++    return None
++
++
++def classification_self_test() -> list[str]:
++    """Pin category precedence and the four previously ambiguous policy forms."""
++
++    probes = {
++        "mechanical": (
++            "The schema validator rejects malformed entries and fails closed.",
++            "mechanical",
++        ),
++        "policy-missing-evidence": (
++            "Fail closed; degrade explicitly. Missing evidence means the claim is unverified.",
++            "policy",
++        ),
++        "policy-durable-home": (
++            "Fail closed. No durable home means session-only; malformed chains fail closed.",
++            "policy",
++        ),
++        "policy-family-membership": (
++            "A skill belongs in this collection only if it enforces all of these family resemblance invariants.",
++            "policy",
++        ),
++        "external": (
++            "An org-enforced branch protection external gate remains separate.",
++            "external",
++        ),
++        "limitation": (
++            "This is human-enforced policy and not enforcement by the harness.",
++            "limitation",
++        ),
++        "ambiguous": (
++            "The component enforces quality.",
++            None,
++        ),
++    }
++    errors: list[str] = []
++    for name, (context, expected) in probes.items():
++        actual = classify(context)
++        if actual != expected:
++            errors.append(
++                f"classification probe {name}: expected {expected!r}, got {actual!r}"
++            )
++    return errors
++
++
++def audit() -> tuple[list[dict[str, object]], list[str]]:
++    records: list[dict[str, object]] = []
++    errors: list[str] = classification_self_test()
++
++    if not REFERENCE.is_file() or "## Enforcement status" not in REFERENCE.read_text(
++        encoding="utf-8"
++    ):
++        errors.append("enforcement-status reference boundary is missing")
++
++    for relative in SKILL_PATHS:
++        path = REPO_ROOT / relative
++        if not path.is_file():
++            errors.append(f"missing audited skill: {relative}")
++            continue
++        lines = path.read_text(encoding="utf-8").splitlines()
++        for index, line in enumerate(lines):
++            terms = [match.group(0) for match in TERM_RE.finditer(line)]
++            if not terms:
++                continue
++            start = max(0, index - 2)
++            end = min(len(lines), index + 3)
++            context = "\n".join(lines[start:end])
++            category = classify(context)
++            record = {
++                "path": relative,
++                "line": index + 1,
++                "terms": terms,
++                "category": category,
++                "text": line.strip(),
++            }
++            records.append(record)
++            if category is None:
++                errors.append(
++                    f"AMBIGUOUS-ENFORCEMENT-LANGUAGE:{relative}:{index + 1}: {line.strip()}"
++                )
++
++    if not records:
++        errors.append("audit found zero enforcement-language occurrences")
++    return records, errors
++
++
++def main() -> int:
++    records, errors = audit()
++    for record in records:
++        print(json.dumps(record, ensure_ascii=False, sort_keys=True))
++    counts: dict[str, int] = {}
++    for record in records:
++        category = str(record["category"])
++        counts[category] = counts.get(category, 0) + 1
++    print(
++        "enforcement-language audit: "
++        f"{len(records)} occurrences across {len(SKILL_PATHS)} skill files; "
++        + ", ".join(f"{key}={value}" for key, value in sorted(counts.items()))
++    )
++    for error in errors:
++        print(f"ERROR: {error}", file=sys.stderr)
++    return 0 if not errors else 1
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
