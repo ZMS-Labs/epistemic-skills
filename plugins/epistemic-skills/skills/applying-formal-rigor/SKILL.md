@@ -213,7 +213,10 @@ until adequate semantics exist; the accelerator label alone still fires no
 family.
 For example, a value-of-information question with unmodeled measurement uncertainty marks `P8` as `unmapped` and `P9` as `fired`
 with `decision-theory-multiobjective`; that P9 synthesis module does not become
-a P8 statistics module.
+a P8 statistics module. When the measurement model and its required inputs
+(population, sampling mechanism, sample size, error tolerance) are available,
+the P8 slice fires `probability-statistics-randomization` instead of staying
+unmapped — but absent inputs still mean `unmapped`, never a borrowed module.
 For mixed-domain claims, reconcile each material slice independently.
 Do not let an unmapped external-semantic slice erase an adequately modeled engineering slice.
 Fire the adequate engineering module, and separately mark the external semantic

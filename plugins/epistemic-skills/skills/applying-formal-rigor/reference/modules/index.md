@@ -17,6 +17,7 @@ the six-link chain required by `SKILL.md`.
 | [`dependability-fault-models`](dependability-fault-models.md) | P5 | faults, failures, availability, recovery |
 | [`security-information-flow-privacy`](security-information-flow-privacy.md) | P1, P6 | threat/authority models, information flow, privacy |
 | [`queueing-capacity-parallelism`](queueing-capacity-parallelism.md) | P5, P7, P8 | stability, saturation, backpressure, parallel limits |
+| [`probability-statistics-randomization`](probability-statistics-randomization.md) | P7, P8 | probability models, estimation, power, multiplicity, calibration, randomized guarantees, Bayesian updating |
 | [`numerical-analysis-floating-point`](numerical-analysis-floating-point.md) | P7, P8 | conditioning, error, stability, IEEE 754 behavior |
 | [`interface-protocol-evolution`](interface-protocol-evolution.md) | P1, P5, P9 | compatibility, protocol state, migration, version skew |
 | [`decision-theory-multiobjective`](decision-theory-multiobjective.md) | synthesis | feasibility, Pareto sets, authorized choice rules, value of information |
@@ -25,8 +26,9 @@ the six-link chain required by `SKILL.md`.
 
 The following proposed terrains do not yet have production modules: general
 type theory/program logics beyond the bounded modules above, real-time
-scheduling, general probability/statistics/randomization, and general
-architecture quality attributes. Custom hardware memory models, legal or
+scheduling, and general architecture quality attributes.
+(`probability-statistics-randomization` graduated from this list on
+2026-08-04.) Custom hardware memory models, legal or
 regulatory semantics, and any other unregistered formal terrain are also
 `unmapped` unless an adequate pinned module is added. Never route them to a
 generic architecture substitute.

@@ -22,6 +22,7 @@ FIRST_RELEASE_MODULES = {
     "distributed-consistency",
     "interface-protocol-evolution",
     "numerical-analysis-floating-point",
+    "probability-statistics-randomization",  # added 2026-08-04 (v3.5.0 wave, C4)
     "queueing-capacity-parallelism",
     "relational-dependencies",
     "security-information-flow-privacy",
