@@ -1,0 +1,159 @@
+[
+ {
+  "id": "semantic-overlap-trace",
+  "action": "trace-and-resolve",
+  "traced": {
+   "auth-retry": {
+    "origin_a": "commit fix/retry-cap (ticket BUG-311)",
+    "origin_b": "commit refactor/backoff-extract (design note DN-7)",
+    "ruling": "both-preserved"
+   }
+  },
+  "checks_run": [
+   "retry-cap-regression-test",
+   "backoff-refactor-suite"
+  ],
+  "recorded": true
+ },
+ {
+  "id": "ambiguous-textual-trace",
+  "action": "escalate-decision",
+  "escalated": true,
+  "intents": {
+   "side_a": "Origin commit rename/parse-input: rename the helper to the parse-input name to conform to style ADR-3; intent pinned by check rename-a-callers-test, whose callers use that name.",
+   "side_b": "Origin commit rename/read-payload: rename the same helper to the read-payload name as part of the API sweep in PR #88; intent pinned by check rename-b-callers-test, whose callers use that name."
+  },
+  "routed_to": "decision owner / decision process for the naming collision between style ADR-3 and API sweep PR #88 (not decided inside the merge)",
+  "requested_rulings": {
+   "helper-rename": "Which sanctioned decision governs this helper's name: ADR-3 style (parse-input) or API sweep PR #88 (read-payload)? Tracing both origins shows two live, non-composing intents — one identifier cannot carry both names, either literal pick compiles, and picking one silently drops a sanctioned decision. Once the owner rules, the losing side's callers are re-pointed to the winning name, the dropped intent is recorded with reason and ledger entry, and both rename-a-callers-test and rename-b-callers-test must run green before the rebase continues."
+  }
+ },
+ {
+  "id": "mixed-hunks-classify",
+  "action": "trace-and-resolve",
+  "mechanical": [
+   "indentation-only",
+   "import-order"
+  ],
+  "traced": {
+   "cache-invalidation": {
+    "origin_a": "commit fix/stale-cache, ticket BUG-402 — bugfix for stale cache, motivated by stale-cache-fix-test",
+    "origin_b": "commit refactor/invalidation-paths, design doc DD-2 — invalidation-path refactor, motivated by invalidation-refactor-suite",
+    "ruling": "both-preserved — the BUG-402 stale-cache fix is re-expressed inside the DD-2 refactored invalidation shape; the intents compose (bugfix on one side, refactor on the other), so neither is dropped and no design decision is being made in the merge"
+   }
+  },
+  "checks_run": [
+   "stale-cache-fix-test",
+   "invalidation-refactor-suite"
+  ],
+  "recorded": true
+ },
+ {
+  "id": "dropped-intent-recorded",
+  "action": "trace-and-resolve",
+  "mechanical": false,
+  "traced": {
+   "upstream-workaround": {
+    "origin_a": "commit hack/upstream-null-guard, issue WORK-77 — temporary null-guard workaround for an upstream bug, motivated by workaround-motivating-test",
+    "origin_b": "commit chore/dep-bump-2.4, changelog link — dependency bump whose upstream 2.4 release properly fixes the same bug, motivated by dependency-bump-suite",
+    "ruling": "side-a-dropped",
+    "reason": "Side A's intent (protect against the upstream null bug) is not destroyed but superseded: the 2.4 release B brings in fixes the bug at its source, and WORK-77 marked the guard as temporary pending exactly this fix. Not an open design decision — no escalation needed — but the drop is only valid if side A's motivating check still passes on the merged result without the guard; workaround-motivating-test run against the merged tree with dep 2.4 confirms the guarded behavior still holds, so the workaround is dead code, not a dropped protection.",
+    "ledger_ref": "ledger#itm-3"
+   }
+  },
+  "checks_run": [
+   "workaround-motivating-test",
+   "dependency-bump-suite"
+  ],
+  "recorded": true,
+  "notes": "Simulation — no files written, no git run. Resolution takes side B's bumped dependency and removes side A's guard. Both origins' motivating checks are required green on the merged result (workaround-motivating-test covers the 50% blind spot of dropping A; if it failed, the ruling would be reversed and the guard re-expressed or escalated). Ledger entry itm-3 records the deliberately-dropped intent with revisit condition: if the upstream regressions return or the dependency is downgraded below 2.4, restore the WORK-77 guard. Merge commit message carries the per-hunk ruling with both origin refs per step 5."
+ },
+ {
+  "id": "divergent-decisions-escalate",
+  "action": "escalate-decision",
+  "escalated": true,
+  "intents": [
+   "cursor-pagination",
+   "offset-pagination"
+  ],
+  "routed_to": "endpoint's API design owner (design process/tech lead)",
+  "resolved": false,
+  "requested_rulings": true
+ },
+ {
+  "id": "undocumented-merge-review",
+  "action": "review-provenance",
+  "requested_rulings": true,
+  "approved_without_provenance": false
+ },
+ {
+  "id": "uncertain-tree-abort",
+  "action": "abort-restart",
+  "aborted": true,
+  "traces_kept": true,
+  "restarted": true,
+  "forced_continue": false,
+  "rationale": "The working tree is in exactly the state the skill's 'Aborting is a tool' section names: resolution went sideways, staged/unstaged hunks are interleaved, and it is no longer possible to distinguish deliberate rulings from accidental edits. An uncertain working tree is the thing you cannot afford to keep — pressing on would mean verifying and recording provenance against a tree whose contents I cannot vouch for, making every subsequent ruling unsanctioned drift. The traces are the work and they are already written down outside the tree, so they survive the abort at zero cost. Simulated plan: git merge --abort (restoring the pre-merge state and the return path), then restart the merge and re-apply each non-trivial hunk's resolution deliberately from the saved traces, staging each ruling as it is made, then run both origins' motivating checks and record per-hunk rulings in the merge commit message.",
+  "simulated": true,
+  "commands_run": []
+ },
+ {
+  "id": "formatting-only-mechanical",
+  "action": "mechanical-resolve",
+  "mechanical": [
+   "reformat-only"
+  ],
+  "rationale": "Protocol step 1 classifies hunks before anything else. This conflict is pure formatting — whitespace and line-wrapping only, with an identical token stream on both sides — which the skill explicitly marks as mechanically trivial: resolve or regenerate mechanically, no trace needed. The skill's trace/provenance machinery (steps 2-5) is reserved for non-trivial hunks and does not engage here; per its own gate, trivial hunks are never traced, so no 'traced' field is claimed.",
+  "resolution": "Take the formatter's side of the hunk (equivalently, resolve either side and re-run the auto-formatter), since both sides are token-identical and only the formatted layout differs; no intent exists to preserve or drop, so no per-hunk ruling or provenance record is required in the merge commit message.",
+  "verification": "Token-stream equality is itself the verification that no semantic intent from either origin can be lost; ordinary suite/build checks suffice, no both-origins check needed.",
+  "simulation": true,
+  "notes": "Simulation only — no files written, no git commands run."
+ },
+ {
+  "id": "lockfile-regenerate",
+  "action": "regenerate",
+  "regenerated": true,
+  "hand_resolved": false,
+  "rationale": "package-lock.json is a generated file the package manager can rebuild from the merged manifest — the skill's own scope excludes regenerable lockfiles from tracing (mechanically trivial per Protocol step 1). Correct handling: resolve the package.json manifest (both added dependencies compose, disjoint semantics), discard both conflicted lockfile sides, and regenerate the lockfile via the package manager (e.g. npm install) rather than hand-merging conflict markers. No provenance trace is warranted and none was performed; no design decision is embedded, so no escalation."
+ },
+ {
+  "id": "generated-file-regenerate",
+  "action": "regenerate",
+  "regenerated": true,
+  "hand_resolved": false,
+  "rationale": "The skill's own scope gate classifies this as a mechanically trivial conflict: it is a generated file whose generator can be re-run, so the tracing protocol does not fire. The schema — the actual source of intent — merged cleanly, meaning both branches' intents are already composed at the source level. The correct resolution is to discard the conflicted client file entirely (take neither side, no hunk-by-hunk resolution) and re-run the generator against the cleanly merged schema, then stage the regenerated output as the merge resolution. Hand-editing the generated file would be resolving derived text instead of its source and would be overwritten by the next generation anyway.",
+  "plan": [
+   "Confirm the schema merged with no conflict markers and represents both branches' schema changes.",
+   "Discard the conflicted generated client (do not pick ours/theirs and do not hand-merge hunks).",
+   "Run the generator against the merged schema and stage its output verbatim.",
+   "Verify: build/tests touching the client pass, and a second generator run is a no-op (output is in sync with the schema).",
+   "Record in the merge commit message that the client was regenerated from the merged schema rather than resolved by hand."
+  ],
+  "simulation": true,
+  "notes": "Trial is a simulation: no files were written and no git or generator commands were executed. The fields above report the decided resolution mode, not commands already run. 'traced' is omitted because no provenance tracing was performed or needed — the regenerate path explicitly bypasses it."
+ },
+ {
+  "id": "huge-lockfile-looks-semantic",
+  "action": "regenerate",
+  "regenerated": true,
+  "hand_resolved": false,
+  "rationale": "The skill's description and Protocol step 1 explicitly carve out lockfiles regenerable by the package manager as a do-not-fire case: classify as trivial/regenerable and regenerate instead of resolving. Size (400 lines) and superficial complexity (version pins, integrity hashes) do not change the classification — the lockfile is derived state, and the merged manifest is the source of truth. Correct handling: resolve the manifest conflict if any (none indicated here), discard both conflicted lockfile sides, and run the package manager to regenerate the lockfile from the merged manifest, then commit the regenerated file. No commit-by-commit trace is performed because tracing intent through generated content would be pattern-matching on derived artifacts; the intent lives in the manifest, which the regeneration honors. Simulation constraint observed: no files written, no git commands run — this is the decided disposition."
+ },
+ {
+  "id": "adjacent-disjoint-mechanical",
+  "action": "mechanical-resolve",
+  "mechanical": [
+   "import-append"
+  ],
+  "resolution": "keep-both-lines",
+  "rationale": "Step 1 classification: both sides appended semantically disjoint imports to the same block — a textual adjacency collision, not an intent collision. This falls in the trivial class (disjoint semantics), so it is resolved mechanically by keeping both added import lines; no provenance trace is performed because trivial hunks are never traced. Neither side's intent is dropped, so no escalation, no decision routing, and no per-hunk ruling beyond the mechanical classification is required.",
+  "verification": "Post-merge, the file must contain both appended imports exactly once each and compile/lint clean; no origin-specific behavioral checks apply since neither side's semantics are altered.",
+  "simulation": true,
+  "notes": "No files written and no git commands run per trial constraints; this is the decided resolution, not an applied one."
+ },
+ {
+  "id": "documented-merge-review-no-fire",
+  "action": "no-fire",
+  "reason": "The skill's review-side trigger is a merge commit whose resolution provenance is undocumented. This merge already satisfies the falsifiable gate: every non-trivial hunk carries a recorded ruling with both origin references in the PR description, and both sides' motivating checks ran green in CI. Being a merge commit under review is only superficially trigger-shaped; with provenance fully documented and both-origin verification passing, there is nothing for the discipline to add — normal review of the merge proceeds without invoking the protocol."
+ }
+]

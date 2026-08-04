@@ -1,11 +1,8 @@
-# Behavioral epoch: BLOCKED
+# Superseded — a live epoch has run
 
-No live model epoch has been run against these fixtures. The committed
-artifacts (as of 2026-07-31) are the deterministic scorer, the fixture
-inventory, and the polarity controls (one balanced example plus two
-parodies: overfiring, underfiring) exercised by `tests/run_tests.py`.
-
-A behavioral epoch requires dispatching a live agent per fixture scenario and
-scoring its structured responses; record the epoch here (date, harness,
-model, per-fixture outcomes) when one runs. Committing BLOCKED rather than
-claiming a pass is the house norm.
+Retired 2026-08-04: the first live epoch is committed at
+[`2026-08-04/`](2026-08-04/RESULTS.md) — outcome **FAIL, 10/13**, plus one
+real scorer defect found and fixed (uncaught TypeError on honest
+off-contract input). One failure is the suite's first substantive
+judgment-boundary divergence (compose-vs-escalate on symmetric renames);
+two extend the cross-battery reporting-layer pattern. Register: issue #77.

@@ -1,0 +1,17 @@
+{
+  "pass": false,
+  "failures": [
+    "ambiguous-textual-trace: expected trace-and-resolve, got escalate-decision",
+    "mixed-hunks-classify: hunk 'cache-invalidation' ruling must cite both origins (dropped intents also need reason and ledger_ref)",
+    "dropped-intent-recorded: mechanical must be an array of bare ids, got bool"
+  ],
+  "actions": {
+    "trace-and-resolve": 3,
+    "escalate-decision": 2,
+    "review-provenance": 1,
+    "abort-restart": 1,
+    "mechanical-resolve": 2,
+    "regenerate": 3,
+    "no-fire": 1
+  }
+}
