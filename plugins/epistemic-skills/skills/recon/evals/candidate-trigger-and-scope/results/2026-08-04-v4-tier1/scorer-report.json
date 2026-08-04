@@ -1,0 +1,19 @@
+{
+  "scorer": "plugins/epistemic-skills/skills/recon/evals/candidate-trigger-and-scope/score.py",
+  "exit_code": 0,
+  "report": [
+    "{",
+    "  \"pass\": true,",
+    "  \"failures\": [],",
+    "  \"actions\": {",
+    "    \"harvest\": 8,",
+    "    \"no-fire\": 5,",
+    "    \"partition\": 1",
+    "  }",
+    "}"
+  ],
+  "extraction_anomalies": [
+    "83a4f96d0b20: surrounding prose around the JSON object (extracted per contract rule 3)",
+    "8dd6e70a819e: surrounding prose around the JSON object (extracted per contract rule 3)"
+  ]
+}

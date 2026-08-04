@@ -60,3 +60,7 @@ environments produce contract failures that mask discipline behavior):
 
 First live behavioral epoch: 2026-08-04, PASS 14/14 — see
 `results/2026-08-04/RESULTS.md` (register: issue #77).
+
+Second epoch (first against the consolidated resolve subject): 2026-08-04
+v4 Tier-1, PASS 14/14 with zero instrument-selection failures — see
+`results/2026-08-04-v4-tier1/RESULTS.md`.

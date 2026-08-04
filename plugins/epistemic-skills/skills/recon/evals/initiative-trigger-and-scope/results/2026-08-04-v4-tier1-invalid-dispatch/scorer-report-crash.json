@@ -1,0 +1,18 @@
+{
+  "scorer": "plugins/epistemic-skills/skills/recon/evals/initiative-trigger-and-scope/score.py",
+  "exit_code": 1,
+  "report": [
+    "Traceback (most recent call last):",
+    "  File \"/home/user/epistemic-skills/plugins/epistemic-skills/skills/recon/evals/initiative-trigger-and-scope/score.py\", line 121, in <module>",
+    "    raise SystemExit(main())",
+    "                     ^^^^^^",
+    "  File \"/home/user/epistemic-skills/plugins/epistemic-skills/skills/recon/evals/initiative-trigger-and-scope/score.py\", line 115, in main",
+    "    report = score(fixtures, responses)",
+    "             ^^^^^^^^^^^^^^^^^^^^^^^^^^",
+    "  File \"/home/user/epistemic-skills/plugins/epistemic-skills/skills/recon/evals/initiative-trigger-and-scope/score.py\", line 65, in score",
+    "    if set(row.get(\"frontier\", [])) != _frontier(graph):",
+    "       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+    "TypeError: unhashable type: 'dict'"
+  ],
+  "extraction_anomalies": []
+}

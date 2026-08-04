@@ -1,0 +1,18 @@
+{
+  "scorer": "plugins/epistemic-skills/skills/recon/evals/brief-trigger-and-scope/score.py",
+  "exit_code": 1,
+  "report": [
+    "{",
+    "  \"pass\": false,",
+    "  \"failures\": [",
+    "    \"map-territory-contradiction: the report carries 3-5 expert questions, got 6\",",
+    "    \"ambiguous-brief-two-targets: the report carries 3-5 expert questions, got 6\"",
+    "  ],",
+    "  \"actions\": {",
+    "    \"full-pass\": 8,",
+    "    \"no-fire\": 6",
+    "  }",
+    "}"
+  ],
+  "extraction_anomalies": []
+}

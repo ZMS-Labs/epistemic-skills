@@ -75,5 +75,6 @@ vocabulary living outside the pinned dispatch text becomes the failure mode:
   artifacts (`harvest_record` and `levels_read` absent) — it is a spend
   decision without a read.
 
-No live behavioral epoch has run against these fixtures; see
-`results/BLOCKED.md`.
+First live behavioral epoch: 2026-08-04 (v4 Tier-1), PASS 14/14 with zero
+contract-shape failures — see `results/2026-08-04-v4-tier1/RESULTS.md`
+(register: issue #77), which supersedes `results/BLOCKED.md`.

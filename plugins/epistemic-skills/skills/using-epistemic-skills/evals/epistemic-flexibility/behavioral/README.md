@@ -20,6 +20,13 @@ Score a new trace:
 python score_behavior.py fixtures/<id>/scenario.json /path/to/trace.json
 ```
 
+Structural validity is delegated entirely to `../validate_trace.py` — the
+single trace authority (it accepts `residual_uncertainty` as a string or an
+array; the 2026-08-04 four-arm run found live subjects split between the
+two). A blinded harness that withholds the fixture id from subjects and
+binds trace to fixture itself passes `--bound`: an absent `trace.scenario`
+is then tolerated, while a present-but-wrong one still fails.
+
 ## What this proves
 
 The self-test proves that the scorer distinguishes the committed gold and planted-bad

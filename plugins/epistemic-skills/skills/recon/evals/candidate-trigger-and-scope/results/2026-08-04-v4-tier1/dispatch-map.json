@@ -1,0 +1,16 @@
+{
+  "0228ef0b8fb1": "state-injection-guard",
+  "160407813146": "hard-neg-factual-lookup",
+  "3ff1827bd392": "state-not-harvestable-disclosure",
+  "4a7129a74e24": "hard-neg-already-adopted",
+  "4e0006e6b184": "explicit-adopt-or-keep",
+  "5f35e92ff453": "state-harvest-record-handoff",
+  "7054f26125db": "use-x-instead-proposal",
+  "83a4f96d0b20": "hard-neg-dependency-upgrade",
+  "8dd6e70a819e": "state-partition-escalation",
+  "a75a54cc6ae1": "hard-neg-no-incumbent",
+  "c4e8fb56ada1": "mature-competitor-negative-harvest",
+  "d67c70f61475": "overlap-discovered-mid-design",
+  "d68b058bea85": "state-drop-at-top-read-still-due",
+  "e3c8c6416011": "hard-neg-in-repo-refactor"
+}

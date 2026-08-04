@@ -58,3 +58,8 @@ behavior):
 First live behavioral epoch: 2026-08-04, FAIL 13/14 — the sole failure is
 a question-count shape violation on the injection fixture over behaviorally
 correct conduct; see `results/2026-08-04/RESULTS.md` (register: issue #77).
+
+Second epoch (first against the consolidated recon subject): 2026-08-04
+v4 Tier-1, FAIL 12/14 — both failures question-count overruns (6 where the
+contract caps 5) over correct conduct; zero mode-selection failures; see
+`results/2026-08-04-v4-tier1/RESULTS.md`.
