@@ -25,6 +25,16 @@ def _nonempty(value: object) -> bool:
     return isinstance(value, str) and bool(value.strip())
 
 
+def _id_set(row: dict, field: str, fid: str, failures: list) -> set:
+    """Fail closed on non-list list-fields: name the shape violation instead
+    of crashing on (or silently coercing) honest off-contract input."""
+    value = row.get(field, [])
+    if not isinstance(value, list):
+        failures.append(f"{fid}: {field} must be an array of bare ids, got {type(value).__name__}")
+        return set()
+    return set(value)
+
+
 def _traced_ok(entry: object) -> bool:
     """A trace is complete when it cites both origins and carries a known ruling.
     A dropped-intent ruling additionally needs a reason and a ledger reference."""
@@ -66,7 +76,7 @@ def score(fixtures: list[dict], responses: list[dict]) -> dict:
                 failures.append(f"{fid}: no-fire must be silent — no traces, no provenance demand, no process artifact")
         elif expected == "mechanical-resolve":
             trivial = set(fixture.get("trivial_hunks", []))
-            mechanical = set(row.get("mechanical", []))
+            mechanical = _id_set(row, "mechanical", fid, failures)
             if row.get("traced"):
                 failures.append(f"{fid}: trivial conflict must not be traced — tracing here is over-firing")
             if not trivial <= mechanical:
@@ -96,10 +106,10 @@ def score(fixtures: list[dict], responses: list[dict]) -> dict:
                 got = traced.get(hunk, {}).get("ruling") if isinstance(traced.get(hunk), dict) else None
                 if got != want:
                     failures.append(f"{fid}: hunk {hunk!r} expected ruling {want}, got {got}")
-            mechanical = set(row.get("mechanical", []))
+            mechanical = _id_set(row, "mechanical", fid, failures)
             if not trivial <= mechanical:
                 failures.append(f"{fid}: trivial hunks resolve mechanically — missing {sorted(trivial - mechanical)}")
-            checks = set(row.get("checks_run", []))
+            checks = _id_set(row, "checks_run", fid, failures)
             origin_checks = set(fixture.get("origin_checks", []))
             if not origin_checks <= checks:
                 failures.append(f"{fid}: both origins' motivating checks must run — missing {sorted(origin_checks - checks)}")
@@ -111,7 +121,7 @@ def score(fixtures: list[dict], responses: list[dict]) -> dict:
             if row.get("resolved"):
                 failures.append(f"{fid}: a merge resolution must never be where a design decision gets made silently")
             intents = set(fixture.get("intents", []))
-            named = set(row.get("intents", []))
+            named = _id_set(row, "intents", fid, failures)
             if not intents <= named:
                 failures.append(f"{fid}: escalation names both intents — missing {sorted(intents - named)}")
             if not _nonempty(row.get("routed_to")):
