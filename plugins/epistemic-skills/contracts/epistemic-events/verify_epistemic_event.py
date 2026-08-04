@@ -13,7 +13,9 @@ EVENT_KINDS = {
     "routing-decision", "pairing-decision", "landmine-prediction",
     "formal-prediction", "evidence-claim", "goal-proof",
     "handoff-verification", "review-forecast", "uat-verdict",
-    "ledger-revisit", "continuity-reanchor",
+    "ledger-revisit", "continuity-reanchor", "interview-scope-decision",
+    "audit-cut-decision", "consumer-gate-outcome", "frontier-decision",
+    "probe-episode", "merge-ruling",
 }
 OUTCOME_CLASSES = {
     "correct", "incorrect", "partial", "unresolved",
@@ -35,7 +37,9 @@ SKILL_NAMES = {
     "using-epistemic-skills", "helix", "blindspot-pass",
     "applying-formal-rigor", "evidence-research", "write-goal",
     "outsource", "gauntlet", "evidence-locked-uat", "decision-ledger",
-    "continuity-verify",
+    "continuity-verify", "open-questions", "context-audit",
+    "agent-interface-design", "wayfinding", "throwaway-prototyping",
+    "intent-traced-merge",
 }
 PROHIBITED_CONTENT_KEYS = {
     "prompt", "transcript", "user_prose", "raw_content", "secret",
@@ -134,6 +138,48 @@ SKILL_EVENT_MAP = {
         "collection_mode": "observational",
         "sentinel_fixture": "continuity-contradiction.json",
     },
+    "open-questions": {
+        "event_kinds": ("interview-scope-decision",),
+        "eligible_when": ("evaluation-case", "correction-or-supersession"),
+        "outcome_sources": ("independent-adjudication", "field-observation"),
+        "collection_mode": "observational",
+        "sentinel_fixture": "interview-parked-default.json",
+    },
+    "context-audit": {
+        "event_kinds": ("audit-cut-decision",),
+        "eligible_when": ("preregistered-prediction", "correction-or-supersession"),
+        "outcome_sources": ("field-observation", "supersession-chain"),
+        "collection_mode": "conditional",
+        "sentinel_fixture": "audit-cut-regression.json",
+    },
+    "agent-interface-design": {
+        "event_kinds": ("consumer-gate-outcome",),
+        "eligible_when": ("independently-resolvable-verdict",),
+        "outcome_sources": ("independent-adjudication", "field-observation"),
+        "collection_mode": "observational",
+        "sentinel_fixture": "interface-consumer-miss.json",
+    },
+    "wayfinding": {
+        "event_kinds": ("frontier-decision",),
+        "eligible_when": ("evaluation-case", "correction-or-supersession"),
+        "outcome_sources": ("field-observation", "supersession-chain"),
+        "collection_mode": "observational",
+        "sentinel_fixture": "wayfinding-fog-ticket.json",
+    },
+    "throwaway-prototyping": {
+        "event_kinds": ("probe-episode",),
+        "eligible_when": ("independently-resolvable-verdict",),
+        "outcome_sources": ("deterministic-fixture", "field-observation"),
+        "collection_mode": "observational",
+        "sentinel_fixture": "prototype-promotion.json",
+    },
+    "intent-traced-merge": {
+        "event_kinds": ("merge-ruling",),
+        "eligible_when": ("independently-resolvable-verdict",),
+        "outcome_sources": ("deterministic-fixture", "field-observation"),
+        "collection_mode": "observational",
+        "sentinel_fixture": "merge-dropped-intent.json",
+    },
 }
 
 
@@ -210,7 +256,7 @@ def load_skill_event_map(path: Path) -> dict:
 
 
 def verify_skill_event_map(mapping: dict) -> None:
-    """Validate the closed eleven-surface collection eligibility map."""
+    """Validate the closed seventeen-surface collection eligibility map."""
     if not isinstance(mapping, dict) or set(mapping) != {"skills"}:
         _schema_error("skill event map must contain only skills")
     skills = mapping["skills"]

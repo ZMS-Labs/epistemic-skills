@@ -49,7 +49,9 @@ EXPECTED_SKILLS = {
     "using-epistemic-skills", "helix", "blindspot-pass",
     "applying-formal-rigor", "evidence-research", "write-goal",
     "outsource", "gauntlet", "evidence-locked-uat",
-    "decision-ledger", "continuity-verify",
+    "decision-ledger", "continuity-verify", "open-questions",
+    "context-audit", "agent-interface-design", "wayfinding",
+    "throwaway-prototyping", "intent-traced-merge",
 }
 
 
