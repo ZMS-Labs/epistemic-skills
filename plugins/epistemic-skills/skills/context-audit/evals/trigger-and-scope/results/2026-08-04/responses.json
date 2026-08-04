@@ -1,0 +1,469 @@
+[
+ {
+  "id": "explicit-claudemd-audit",
+  "action": "full-audit",
+  "layers_inventoried": true,
+  "cross_layer_merge": true,
+  "report_emitted": true,
+  "version_control": true,
+  "applied": true,
+  "apply_order": [
+   "CONFLICT",
+   "DUPLICATE",
+   "OVER-VERIFY",
+   "OBVIOUS",
+   "MODEL-HANDLES-THIS-NOW"
+  ],
+  "classification": true,
+  "origin_read": true,
+  "survivor": true,
+  "routed_upstream": true,
+  "projection_edited": false
+ },
+ {
+  "id": "explicit-prune-instructions",
+  "action": "report-only-audit",
+  "layers_inventoried": true,
+  "cross_layer_merge": true,
+  "report_emitted": true,
+  "version_control": false,
+  "applied": false,
+  "origin_read": false,
+  "routed_upstream": true,
+  "projection_edited": false,
+  "survivor": "C1: harness subagent reporting directive (findings returned inline to caller) survives; the skill's durable-report line is routed upstream as a finding to scope itself to environments with a report destination",
+  "classification": {
+   "CONFLICT": 3,
+   "DUPLICATE": 4,
+   "OVER-VERIFY": 3,
+   "OBVIOUS": 2,
+   "MODEL-HANDLES-THIS-NOW": 2,
+   "KEEP:GOTCHA": 3,
+   "KEEP:OPERATOR-PREFERENCE": 3,
+   "KEEP:ROUTING+THRESHOLD": 4,
+   "KEEP:NAMED-INTEGRATION": 3,
+   "KEEP:GOVERNANCE": 3,
+   "calibration_ratio": "16 kept : 14 cut-nominated across ~40 discrete directives examined"
+  },
+  "report": {
+   "mode_rationale": "Trigger is the verbatim explicit-request form ('prune my instructions'). Apply is forbidden: the audited layers are harness-generated and server-side projections with no version-control rollback path available to this session, and step 5 mandates stopping at the report without version control; step 5 apply is additionally operator-gated. No LOCAL.md overlay exists alongside SKILL.md (verified by listing, not opened), so the protocol binds unmodified.",
+   "layer_inventory": [
+    {
+     "order": 1,
+     "layer": "harness system prompt + core tool schemas (Artifact, Bash, Edit, Glob, Grep, Read, Skill, ToolSearch, Write, Adobe init/export, Claude_Code_Remote suite)",
+     "approx_tokens": 11000,
+     "status": "generated projection - report-only"
+    },
+    {
+     "order": 2,
+     "layer": "env block + scratchpad directive + system-reminder (userEmail, currentDate)",
+     "approx_tokens": 350,
+     "status": "audited"
+    },
+    {
+     "order": 3,
+     "layer": "deferred-tools name roster",
+     "approx_tokens": 1800,
+     "status": "audited"
+    },
+    {
+     "order": 4,
+     "layer": "skill-description roster (~40 skills, compiled from plugin frontmatter)",
+     "approx_tokens": 6500,
+     "status": "generated projection - report-only"
+    },
+    {
+     "order": 5,
+     "layer": "MCP server instructions (Consensus, Figma, github, Scite)",
+     "approx_tokens": 1800,
+     "status": "generated projection - report-only"
+    },
+    {
+     "order": 6,
+     "layer": "task prompt",
+     "approx_tokens": 350,
+     "status": "audited"
+    },
+    {
+     "order": 7,
+     "layer": "context-audit SKILL.md (loaded on demand)",
+     "approx_tokens": 2300,
+     "status": "audited"
+    }
+   ],
+   "skipped_layers": [
+    "operator CLAUDE.md / user memory files - not loaded into this subagent's assembly and file access outside SKILL.md out of scope this session; conflicts there are certified blindly and named as such",
+    "per-layer content hashes unavailable for in-context (non-file) layers; layer identity recorded by position and quoted text instead"
+   ],
+   "conflict_ledger": [
+    {
+     "id": "C1",
+     "a": "harness agent prompt: 'Do NOT Write report/summary/findings/analysis .md files. Return findings directly as your final assistant message'",
+     "b": "context-audit SKILL.md step 4: 'Emit a durable report... The report is the artifact; the inline summary is a pointer to it.'",
+     "survivor": "harness directive in subagent contexts; skill line should self-scope ('durable where a report destination exists, else inline')",
+     "routing": "upstream to skill source of truth, not edited in projection"
+    },
+    {
+     "id": "C2",
+     "a": "Consensus MCP instructions: 'At the END of your response, you MUST include the sign-up, upgrade, or usage message from the tool result word-for-word'",
+     "b": "harness: 'respond with a concise report covering what was done... only needs the essentials' plus task-layer fixed-format final message",
+     "survivor": "harness/task layer; unconditional response-format mandates in MCP projections conflict whenever the final format is constrained",
+     "routing": "upstream to MCP server owner - projection never edited"
+    },
+    {
+     "id": "C3",
+     "a": "Scite MCP instructions: 'You MUST provide a References section at the end of responses'",
+     "b": "Consensus's competing end-of-response mandate (C2a) and the same harness conciseness directive",
+     "survivor": "harness layer; two server projections cannot both own the end of every response",
+     "routing": "upstream to MCP server owners"
+    },
+    {
+     "id": "C4-noted",
+     "a": "harness: 'the assistant MUST avoid using emojis'",
+     "b": "Artifact tool: 'favicon (required): Pass one or two emoji'",
+     "survivor": "no cut needed - resolved by scope (favicon parameter is not prose communication); recorded to spare future reconciliation reasoning"
+    }
+   ],
+   "cut_list_nominations": {
+    "DUPLICATE": [
+     "Figma MCP server-instruction 'WHEN TO USE THESE TOOLS' roster restates per-tool description triggers - survivor: per-tool descriptions (most local, load-on-demand)",
+     "github MCP 'list_* vs search_*' guidance duplicated in per-tool descriptions - same survivor rule",
+     "adobe_mandatory_init enumerates every Adobe tool by name after already stating 'CALL BEFORE any Adobe tool' - survivor: the universal sentence (~600 tokens)",
+     "Artifact skill-loading mandates stated in both the Artifact tool description and the artifact-design/artifact-capabilities skill descriptions"
+    ],
+    "OVER-VERIFY": [
+     "Adobe export_html_to_express: readiness-check demand stated three ways in one description ('ALWAYS... before EVERY call', 'Re-validate each time', 'There is no origin-based exemption') and restated in the readiness tool itself",
+     "Scite 'MANDATORY USAGE REQUIREMENTS' MUSTs re-duplicated within the same block's FACT CHECKING and VERIFYING sections",
+     "github 'Always call get_me first' - a check-before-every-use demand"
+    ],
+    "OBVIOUS": [
+     "emphasis scaffolding across MCP projections (IMPORTANT/MANDATORY/all-caps MUST-NEVER)",
+     "Scite APA citation-format tutorial ('(Smith, 2023)' examples) - restates general knowledge"
+    ],
+    "MODEL-HANDLES-THIS-NOW": [
+     "Consensus 'if no filtering criteria mentioned, call search with only the query parameter' - default-behavior restatement",
+     "Scite full-text reading workflow tutorial - capability guidance a strong model does not need"
+    ]
+   },
+   "keeps": {
+    "KEEP:GOTCHA": [
+     "add_repo: unauthenticated 404-on-private-repo warning (failure mechanism documented inline in the layer itself, which was read in-context)",
+     "source-verification description: Position Library incident cited as origin",
+     "voice-profile description: claims non-obvious captured corrections - origin record unread, therefore ineligible for reclassification to a cut class"
+    ],
+    "KEEP:OPERATOR-PREFERENCE": [
+     "git commit trailer text",
+     "no-emoji rule",
+     "no-colon-before-tool-calls"
+    ],
+    "KEEP:ROUTING+THRESHOLD": [
+     "cron minimum interval hourly",
+     "artifact 16MB limit",
+     "Consensus batch-3 / 30s backoff",
+     "Bash timeout bounds"
+    ],
+    "KEEP:NAMED-INTEGRATION": [
+     "proxy + CA bundle paths",
+     "working directory and scratchpad path",
+     "homelab host names in relay skills"
+    ],
+    "KEEP:GOVERNANCE": [
+     "Artifact never-publish rules",
+     "Routine model-change explicit-consent rule",
+     "update_trigger prompt-rewrite consent rule - conflicts here would be reported only, text never cut"
+    ]
+   },
+   "origin_read_note": "No file-based origin records were opened this session; per the keep rule, every instruction with a claimed origin record therefore remained in a KEEP class - cut nominations are confined to directives with no origin record to read, and remain nominations pending origin verification at apply time.",
+   "baseline_estimate": "~1,900 tokens recoverable across MCP-instruction projections and the adobe_mandatory_init enumeration if all nominations survive upstream review; magnitude treated as estate-specific, not a quota",
+   "proposed_apply_order_if_versioned": [
+    "CONFLICT",
+    "DUPLICATE",
+    "OVER-VERIFY",
+    "OBVIOUS",
+    "MODEL-HANDLES-THIS-NOW"
+   ],
+   "re_baseline_gate": "not armed - no cuts applied; watch note deferred until an upstream owner applies cuts under version control, at which point any regression attributable to a cut line returns as KEEP:GOTCHA citing the new incident"
+  }
+ },
+ {
+  "id": "midtask-layer-conflict",
+  "action": "report-only-audit",
+  "layers_inventoried": true,
+  "cross_layer_merge": true,
+  "report_emitted": true,
+  "version_control": false,
+  "applied": false,
+  "apply_order": [],
+  "classification": "CONFLICT",
+  "origin_read": true,
+  "survivor": "project instruction file's 'always squash-merge' proposed as the single authoritative location, pending operator confirmation — merge strategy is KEEP:OPERATOR-PREFERENCE-grade policy the model cannot infer, so the proposal is a nomination, not a decision",
+  "routed_upstream": false,
+  "projection_edited": false,
+  "conflict_ledger": [
+   {
+    "class": "CONFLICT",
+    "text_a": "always squash-merge",
+    "location_a": "project instruction file (always-loaded project layer)",
+    "text_b": "never squash",
+    "location_b": "loaded command definition (load-on-demand command layer)",
+    "proposed_survivor": "project instruction file directive, operator-gated",
+    "rationale": "Both directives are verbatim in the assembled context and were cited from their loaded layers; two active layers direct incompatible merge behavior, and only the operator knows which policy is intended"
+   }
+  ],
+  "skipped_layers": "none — the assembly was enumerated as received: system prompt, project instruction file, command definitions, skill descriptions, MCP server instructions, hook/reminder output; no generated or governance projection is party to this conflict",
+  "notes": "A cross-layer conflict detected mid-task is an explicit entry trigger for context-audit, so no-fire would certify the conflict blindly. However, step 5 makes apply operator-gated and the operator has not asked for anything about instructions, and no version-control commit was made, so the audit MUST stop at the report: inventory and cross-layer merge performed, conflict ledger emitted with both texts and locations verbatim plus a proposed survivor, zero edits applied, no projection touched, no re-baseline watch opened since nothing was cut. The mid-task work continues under the operator's explicit task; resolution of the squash policy awaits the operator's decision on the emitted ledger."
+ },
+ {
+  "id": "model-upgrade-stale-guardrails",
+  "action": "report-only-audit",
+  "layers_inventoried": true,
+  "cross_layer_merge": true,
+  "report_emitted": true,
+  "version_control": false,
+  "applied": false,
+  "apply_order": [],
+  "classification": {
+   "CONFLICT": 4,
+   "DUPLICATE": 4,
+   "OVER-VERIFY": 2,
+   "OBVIOUS": 3,
+   "MODEL-HANDLES-THIS-NOW": 3,
+   "KEEP": 7,
+   "calibration_ratio_keep_to_cut": "7:16"
+  },
+  "origin_read": false,
+  "survivor": true,
+  "routed_upstream": true,
+  "projection_edited": false,
+  "trigger": "Model-generation upgrade is a named entry condition in SKILL.md ('after a model-generation upgrade invalidates guardrails written for a weaker model'); the handoff boundary confirms upgrade-triggered entry needs no operator request, so no-fire would under-fire.",
+  "mode_rationale": "Report-only, not full-audit: (a) every audited layer is a generated projection served by the harness or MCP vendors — the protocol marks those report-only, edits routed upstream, never made in the projection; (b) the assembled context is not under version control reachable from this session, and Step 5 says an audit without version control MUST stop at the report — apply is forbidden; (c) apply is operator-gated and no operator request is pending.",
+  "report": {
+   "layer_inventory": [
+    {
+     "n": 1,
+     "layer": "harness system prompt (agent core, guidelines, env, scratchpad directive)",
+     "tokens_approx": 1400,
+     "disposition": "generated/report-only"
+    },
+    {
+     "n": 2,
+     "layer": "system-reminder operator context (email, date)",
+     "tokens_approx": 80,
+     "disposition": "generated/report-only"
+    },
+    {
+     "n": 3,
+     "layer": "immediate tool schemas (Artifact, Bash, Edit, Glob, Grep, Read, Skill, ToolSearch, Write, 3 Adobe, 13 Claude_Code_Remote)",
+     "tokens_approx": 7000,
+     "disposition": "generated/report-only"
+    },
+    {
+     "n": 4,
+     "layer": "deferred-tool roster note",
+     "tokens_approx": 1600,
+     "disposition": "generated/report-only"
+    },
+    {
+     "n": 5,
+     "layer": "skill-description listing (~40 skills)",
+     "tokens_approx": 5500,
+     "disposition": "generated/report-only"
+    },
+    {
+     "n": 6,
+     "layer": "MCP server instructions (Consensus, Figma, github, Scite)",
+     "tokens_approx": 1600,
+     "disposition": "generated/report-only"
+    },
+    {
+     "n": 7,
+     "layer": "context-audit SKILL.md (loaded on demand this session)",
+     "tokens_approx": 1700,
+     "disposition": "source-of-truth, in scope as audit method not audit target"
+    }
+   ],
+   "skipped_layers": [
+    "repo CLAUDE.md / project instruction files — session constraint forbade reading any file beyond SKILL.md; their cross-layer conflicts are certified blindly and named here per Step 1",
+    "LOCAL.md overlay — verified absent via directory listing (not read)",
+    "evals/ — off-limits by session constraint and not a harness-loaded layer"
+   ],
+   "conflict_ledger": [
+    {
+     "id": "C1",
+     "a": "L1 system prompt: 'Agent threads always have their cwd reset between bash calls, as a result please only use absolute file paths.'",
+     "b": "L3 Bash schema: 'Working directory persists between calls, but prefer absolute paths.'",
+     "survivor": "Bash tool schema (most local, loads with the tool), reworded once; L1 line cut",
+     "note": "direct factual contradiction the model must reconcile before every shell call"
+    },
+    {
+     "id": "C2",
+     "a": "L1 system prompt: 'the assistant MUST avoid using emojis'",
+     "b": "L3 Artifact schema: 'favicon': 'one or two emoji ... Required to publish'",
+     "survivor": "both, with L1 scoped to prose replies; conflict reported, governance-adjacent text untouched"
+    },
+    {
+     "id": "C3",
+     "a": "L6 Consensus: 'you MUST cite papers inline using their numbered references ... [1], [2]'",
+     "b": "L6 Scite: 'You MUST cite ALL information retrieved using proper academic format (APA by default)'",
+     "survivor": "per-tool-result scoping so mandates never co-apply to one reply; routed upstream to each server's instruction author",
+     "note": "incompatible blanket citation mandates when both literature servers fire in one response"
+    },
+    {
+     "id": "C4",
+     "a": "L1 system prompt: 'Do NOT Write report/summary/findings/analysis .md files' / 'NEVER proactively create documentation files'",
+     "b": "L3 Artifact schema: 'write the content to a file (via Write/Edit) and call Artifact with its path' and 'Publishing proactively is fine for your own work-product'",
+     "survivor": "Artifact schema text; L1 line keeps its existing tool-input carve-out made explicit"
+    }
+   ],
+   "duplicate_ledger": [
+    {
+     "id": "D1",
+     "texts": "PR watch capability instructed twice: mcp__Claude_Code_Remote__subscribe_pr_activity/unsubscribe (L3) and mcp__github__subscribe_pr_activity/unsubscribe (L4)",
+     "survivor": "Claude_Code_Remote pair (carries the PR Steward semantics)"
+    },
+    {
+     "id": "D2",
+     "texts": "deferred-tool protocol stated in ToolSearch schema (L3) and again in the deferred-roster note (L4)",
+     "survivor": "L4 roster note, adjacent to the list it governs"
+    },
+    {
+     "id": "D3",
+     "texts": "'load artifact-design before writing the page' appears twice inside the Artifact schema (L3) and again as the artifact-design trigger in the skills listing (L5)",
+     "survivor": "single sentence in Artifact schema"
+    },
+    {
+     "id": "D4",
+     "texts": "Figma server instructions (L6) restate when-to-use guidance already carried by the Figma tool names (L4) and figma skills listing",
+     "survivor": "per-tool descriptions"
+    }
+   ],
+   "over_verify": [
+    {
+     "id": "V1",
+     "text": "L3 Adobe export_html_to_express: 'ALWAYS call html_export_readiness_skill immediately before EVERY call ... the first export, every re-export ... and every retry. Re-validate each time' — triple-stated re-validation demand",
+     "route": "upstream to Adobe MCP instruction source"
+    },
+    {
+     "id": "V2",
+     "text": "L6 Scite: 'You MUST use search_literature to verify scientific claims — never fabricate citations' + 'NEVER cite papers you have not retrieved' — verification demand duplicated within the layer and restating strong-model default citation honesty",
+     "route": "upstream to Scite server instructions"
+    }
+   ],
+   "obvious": [
+    {
+     "id": "O1",
+     "text": "L1: 'Be thorough: Check multiple locations, consider different naming conventions' — generic care exhortation"
+    },
+    {
+     "id": "O2",
+     "text": "emphasis scaffolding across L3/L6 ('IMPORTANT', 'MANDATORY', 'CALL BEFORE any Adobe tool. MANDATORY requirement') — keep the routing fact, cut the shouting"
+    },
+    {
+     "id": "O3",
+     "text": "L1: 'Complete the task fully—don't gold-plate, but don't leave it half-done' — generic quality exhortation"
+    }
+   ],
+   "model_handles_this_now": [
+    {
+     "id": "M1",
+     "text": "L1: 'Do not use a colon before tool calls. Text like \"Let me read the file:\" ...' — formatting guardrail for a prior generation's habit, no incident record visible in-context"
+    },
+    {
+     "id": "M2",
+     "text": "L3 Glob path param: 'DO NOT enter \"undefined\" or \"null\" - simply omit it' — weak-model failure-mode guardrail"
+    },
+    {
+     "id": "M3",
+     "text": "L3 Read: 'Do NOT re-read a file you just edited to verify' — targets a prior generation's re-read reflex"
+    }
+   ],
+   "keeps": [
+    "KEEP:OPERATOR-PREFERENCE — git commit trailer / PR footer text (L1)",
+    "KEEP:NAMED-INTEGRATION — agent-proxy CA bundle path and status endpoint (L1)",
+    "KEEP:NAMED-INTEGRATION — scratchpad directory path (L1)",
+    "KEEP:ROUTING+THRESHOLD — Bash timeout max 600000ms, Artifact 16MB limit, cron minimum-hourly, list limits",
+    "KEEP:GOVERNANCE — Artifact 'Never publish' impersonation/phishing block; conflicts there reported only, text never cut",
+    "KEEP:GOVERNANCE — add_repo authorization/denied-access relay rules",
+    "KEEP:GOTCHA — add_repo 'DO NOT PRE-CHECK THE REPO' (documented failure mode: unauthenticated 404s on private repos, record inline)"
+   ],
+   "origin_read_note": "No incident/origin records were reachable (session constraint barred file reads), so no KEEP:GOTCHA was reclassified to a cut class, and all MODEL-HANDLES-THIS-NOW entries remain nominations pending origin check — none finalized as cuts.",
+   "watch_note": "Recorded for any future operator-gated apply: any behavioral regression attributable to a cut line returns that line as KEEP:GOTCHA citing the new incident; a cut surviving the watch window is confirmed dead weight."
+  }
+ },
+ {
+  "id": "single-doc-prose",
+  "action": "no-fire"
+ },
+ {
+  "id": "new-agent-interface",
+  "action": "no-fire"
+ },
+ {
+  "id": "task-brief-recon",
+  "action": "no-fire"
+ },
+ {
+  "id": "single-task-prompt-tuning",
+  "action": "no-fire"
+ },
+ {
+  "id": "hard-neg-intradoc-contradictions",
+  "action": "no-fire"
+ },
+ {
+  "id": "hard-neg-system-prompt-tuning",
+  "action": "no-fire"
+ },
+ {
+  "id": "keep-gotcha-with-origin",
+  "action": "report-only-audit",
+  "layers_inventoried": false,
+  "cross_layer_merge": false,
+  "report_emitted": true,
+  "classification": "KEEP:GOTCHA",
+  "origin_read": true,
+  "notes": "Line cites INC-0042; per the discipline, classification required opening the cited record before deciding, not relying on memory or surface staleness. Record read in this audit: 2025-11-14 duplicate importer run corrupted the dedupe index (6h recovery; harmless in test, destructive in prod). Documented incident rules out MODEL-HANDLES-THIS-NOW; line is KEEP:GOTCHA and is never cut. Optional upstream finding: annotate the line with its prod-only blast radius. No apply occurred; scope was this single line, so no full layer inventory or cross-layer merge was performed."
+ },
+ {
+  "id": "duplicate-most-local-survives",
+  "action": "report-only-audit",
+  "layers_inventoried": true,
+  "cross_layer_merge": true,
+  "report_emitted": true,
+  "classification": "DUPLICATE",
+  "survivor": "tool-description",
+  "version_control": false,
+  "applied": false,
+  "routed_upstream": true,
+  "projection_edited": false,
+  "rationale": "Inventoried the assembled context in load order (system-prompt, system-reminder context, skill/tool description listings, MCP server instructions, the on-demand tool-description, and the explicitly read SKILL.md; skipped layers named: LOCAL.md overlay and evals/, excluded by operator instruction). Cross-layer merge shows the two copies are verbatim-identical, so this is DUPLICATE, not CONFLICT. Per the skill's DUPLICATE rule, exactly one authoritative copy survives, preferring the most local, load-on-demand location — a tool description over a system prompt — so the tool-description copy survives and the system-prompt copy is the cut. The system prompt is a harness-generated projection with no version-control rollback path available in this session, so apply is forbidden and the audit stops at the report: the cut is routed upstream to the system prompt's source of truth as a finding, never edited in the projection."
+ },
+ {
+  "id": "no-version-control-report-only",
+  "action": "report-only-audit",
+  "layers_inventoried": true,
+  "cross_layer_merge": true,
+  "report_emitted": true,
+  "applied": false,
+  "version_control": false,
+  "classification": true,
+  "survivor": true,
+  "routed_upstream": true,
+  "audit_timestamp": "2026-08-04T00:54:53Z",
+  "notes": "Estate outside version control; Protocol step 5 forbids apply without a rollback path, so the audit stopped at the report. Nine layers inventoried in load order with skipped layers named (deferred tool schemas, evals/, on-disk instruction files); generated/governance layers marked report-only with conflicts routed upstream, never edited. Cross-layer merge produced a conflict ledger (3 conflicts with verbatim citations and proposed survivors), 4 duplicates, 2 obvious, 1 provisional model-handles-this-now (origin record unreadable, so not decided), 1 over-verify. No cuts applied, no extraction, no projection edited. Conditional re-baseline watch note recorded for if the operator later applies nominations under version control."
+ },
+ {
+  "id": "governance-projection-conflict",
+  "action": "report-only-audit",
+  "layers_inventoried": true,
+  "cross_layer_merge": true,
+  "report_emitted": true,
+  "routed_upstream": true,
+  "projection_edited": false,
+  "applied": false,
+  "classification": "KEEP:GOVERNANCE",
+  "survivor": "proposed in the conflict ledger only — resolution belongs to the upstream source of truth; the projection is regenerated from the fixed source, never patched here",
+  "version_control": true,
+  "rationale": "Step 1 marks generated and governance layers (compiled rule projections, safety policy) as report-only: conflicts found there are routed upstream to their source of truth as findings, never edited in the projection. Step 5 reinforces it — never edit generated projections in place — and KEEP:GOVERNANCE text is reported, never cut. Version control exists but is irrelevant to this layer's disposition; apply is off the table for the projection regardless."
+ }
+]

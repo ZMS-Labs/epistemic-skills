@@ -19,5 +19,33 @@ live agent's actual audit was any good. Passing it is NOT behavioral proof.
 
 Run `python tests/run_tests.py`.
 
-No live behavioral epoch has been run against this battery; see
-`results/BLOCKED.md`.
+## Live-epoch response contract
+
+Pinned before the first live epoch (lesson of the open-questions 2026-08-04
+epoch: undefined reporting vocabulary produces contract failures that mask
+discipline behavior):
+
+- `action` names the **audit mode that fired**: `full-audit`,
+  `report-only-audit` (an audit whose estate has no rollback path — it stops
+  at the report), or `no-fire`.
+- A `no-fire` response is **silent**: it carries no audit-shape fields at all
+  (`layers_inventoried`, `cross_layer_merge`, `report_emitted`, `cut_list`,
+  `applied` all absent).
+- Any audit that runs reports `layers_inventoried`, `cross_layer_merge`, and
+  `report_emitted` as booleans describing what actually happened; the report
+  always precedes any apply.
+- `applied` means cuts were actually applied — only true on a
+  version-controlled estate (`version_control: true`) with the operator gate
+  passed; `apply_order` lists the cut classes in the order applied
+  (vocabulary: CONFLICT, DUPLICATE, OVER-VERIFY, OBVIOUS,
+  MODEL-HANDLES-THIS-NOW).
+- `classification` uses the cut/keep vocabulary (`KEEP:GOTCHA` etc.);
+  `origin_read` is true only when the cited origin record was actually
+  opened this audit, not remembered. `survivor` names the location whose
+  copy of a duplicate survives. `routed_upstream`/`projection_edited`
+  describe governance-projection handling.
+
+First live behavioral epoch: 2026-08-04, FAIL 8/14 — see
+`results/2026-08-04/RESULTS.md`. Trigger discipline scored clean (all six
+hard negatives silent, every expected fire fired); all six failures are one
+diagnosed battery-design divergence (register: issue #77).
