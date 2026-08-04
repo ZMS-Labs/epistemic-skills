@@ -13,7 +13,9 @@ EVENT_KINDS = {
     "routing-decision", "pairing-decision", "landmine-prediction",
     "formal-prediction", "evidence-claim", "goal-proof",
     "handoff-verification", "review-forecast", "uat-verdict",
-    "ledger-revisit", "continuity-reanchor",
+    "ledger-revisit", "continuity-reanchor", "interview-scope-decision",
+    "audit-cut-decision", "consumer-gate-outcome", "frontier-decision",
+    "probe-episode", "merge-ruling", "harvest-decision",
 }
 OUTCOME_CLASSES = {
     "correct", "incorrect", "partial", "unresolved",
@@ -32,10 +34,10 @@ EVIDENCE_REF_KINDS = {
     "ledger-entry-hash", "run-record-hash",
 }
 SKILL_NAMES = {
-    "using-epistemic-skills", "helix", "blindspot-pass",
-    "applying-formal-rigor", "evidence-research", "write-goal",
-    "outsource", "gauntlet", "evidence-locked-uat", "decision-ledger",
-    "continuity-verify",
+    "using-epistemic-skills", "helix", "recon", "resolve",
+    "write-goal", "outsource", "gauntlet", "evidence-locked-uat",
+    "decision-ledger", "open-questions",
+    "context-audit",
 }
 PROHIBITED_CONTENT_KEYS = {
     "prompt", "transcript", "user_prose", "raw_content", "secret",
@@ -71,27 +73,6 @@ SKILL_EVENT_MAP = {
         "collection_mode": "observational",
         "sentinel_fixture": "helix-missed-pair.json",
     },
-    "blindspot-pass": {
-        "event_kinds": ("landmine-prediction",),
-        "eligible_when": ("preregistered-prediction",),
-        "outcome_sources": ("field-observation",),
-        "collection_mode": "calibratable",
-        "sentinel_fixture": "blindspot-landmine.json",
-    },
-    "applying-formal-rigor": {
-        "event_kinds": ("formal-prediction",),
-        "eligible_when": ("preregistered-prediction",),
-        "outcome_sources": ("deterministic-fixture", "field-observation"),
-        "collection_mode": "calibratable",
-        "sentinel_fixture": "formal-prediction.json",
-    },
-    "evidence-research": {
-        "event_kinds": ("evidence-claim",),
-        "eligible_when": ("independently-resolvable-verdict",),
-        "outcome_sources": ("independent-adjudication", "field-observation"),
-        "collection_mode": "conditional",
-        "sentinel_fixture": "evidence-correction.json",
-    },
     "write-goal": {
         "event_kinds": ("goal-proof",),
         "eligible_when": ("independently-resolvable-verdict",),
@@ -121,18 +102,39 @@ SKILL_EVENT_MAP = {
         "sentinel_fixture": "uat-seeded-defect.json",
     },
     "decision-ledger": {
-        "event_kinds": ("ledger-revisit",),
-        "eligible_when": ("revisit-trigger-fired",),
-        "outcome_sources": ("supersession-chain",),
+        "event_kinds": ("continuity-reanchor", "ledger-revisit"),
+        "eligible_when": ("evaluation-case", "revisit-trigger-fired", "sampled-field-incident"),
+        "outcome_sources": ("deterministic-fixture", "field-observation", "supersession-chain"),
         "collection_mode": "observational",
         "sentinel_fixture": "ledger-revisit.json",
     },
-    "continuity-verify": {
-        "event_kinds": ("continuity-reanchor",),
-        "eligible_when": ("evaluation-case", "sampled-field-incident"),
-        "outcome_sources": ("deterministic-fixture", "field-observation"),
+    "open-questions": {
+        "event_kinds": ("interview-scope-decision",),
+        "eligible_when": ("evaluation-case", "correction-or-supersession"),
+        "outcome_sources": ("independent-adjudication", "field-observation"),
         "collection_mode": "observational",
-        "sentinel_fixture": "continuity-contradiction.json",
+        "sentinel_fixture": "interview-parked-default.json",
+    },
+    "context-audit": {
+        "event_kinds": ("audit-cut-decision",),
+        "eligible_when": ("preregistered-prediction", "correction-or-supersession"),
+        "outcome_sources": ("field-observation", "supersession-chain"),
+        "collection_mode": "conditional",
+        "sentinel_fixture": "audit-cut-regression.json",
+    },
+    "resolve": {
+        "event_kinds": ("evidence-claim", "formal-prediction", "probe-episode"),
+        "eligible_when": ("independently-resolvable-verdict", "preregistered-prediction"),
+        "outcome_sources": ("deterministic-fixture", "field-observation", "independent-adjudication"),
+        "collection_mode": "conditional",
+        "sentinel_fixture": "resolve-instrument-misfire.json",
+    },
+    "recon": {
+        "event_kinds": ("frontier-decision", "harvest-decision", "landmine-prediction"),
+        "eligible_when": ("correction-or-supersession", "evaluation-case", "independently-resolvable-verdict", "preregistered-prediction"),
+        "outcome_sources": ("field-observation", "supersession-chain"),
+        "collection_mode": "conditional",
+        "sentinel_fixture": "recon-mode-misfire.json",
     },
 }
 
@@ -210,7 +212,7 @@ def load_skill_event_map(path: Path) -> dict:
 
 
 def verify_skill_event_map(mapping: dict) -> None:
-    """Validate the closed eleven-surface collection eligibility map."""
+    """Validate the closed seventeen-surface collection eligibility map."""
     if not isinstance(mapping, dict) or set(mapping) != {"skills"}:
         _schema_error("skill event map must contain only skills")
     skills = mapping["skills"]

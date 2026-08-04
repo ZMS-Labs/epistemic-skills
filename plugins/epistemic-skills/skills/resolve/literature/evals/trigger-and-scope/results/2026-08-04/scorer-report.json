@@ -1,0 +1,17 @@
+{
+  "scorer": "plugins/epistemic-skills/skills/evidence-research/evals/trigger-and-scope/score.py",
+  "exit_code": 0,
+  "report": [
+    "{",
+    "  \"pass\": true,",
+    "  \"failures\": [],",
+    "  \"actions\": {",
+    "    \"run-evidence\": 6,",
+    "    \"precall-gate\": 1,",
+    "    \"no-fire\": 6,",
+    "    \"evidence-gate\": 1",
+    "  }",
+    "}"
+  ],
+  "extraction_problems": []
+}

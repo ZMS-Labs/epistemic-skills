@@ -29,7 +29,7 @@ state. Run **continuity-verify first**, before routine-path classification or an
 resumed workflow stage. Its live state digest feeds `using-epistemic-skills`,
 which then applies the routine gate and routes the verified task. When unfamiliar
 territory also has a positive reconnaissance trigger, the order is
-**continuity-verify → blindspot-pass**; continuity verifies remembered state,
+**continuity-verify → recon**; continuity verifies remembered state,
 then recon maps the present territory.
 
 For a fresh task, or after the resumption digest exists, apply
@@ -38,6 +38,11 @@ A reversible, local, directly checkable, non-precedential task proceeds through
 ordinary workflow with no epistemic pair, no `helix-check` line, and no process-
 only artifact. Unfamiliar routine-looking work gets the two-read micro-recon;
 unfamiliarity alone is not a positive pairing trigger.
+
+**Craft doctrine:** intent-traced-merge and agent-interface-design are
+reference doctrine, not paired members, as of v4.0.0 — read them at
+`../../reference/craft/` when merging with non-trivial conflicts or building
+an interface another agent consumes.
 
 ## The governing rule
 
@@ -56,25 +61,24 @@ are silent.
 | Workflow stage | Epistemic pair | Position |
 |---|---|---|
 | session start/resumption whose next action depends on summary, handoff, or remembered state | **continuity-verify** | *pre-arc* — before routine-path classification and every resumed workflow stage; its digest feeds the epistemic router |
-| task start after routine micro-recon reveals a material map/territory mismatch, unresolved hidden coupling, or costly fan-out risk | **blindspot-pass** | *before* brainstorming — full recon the territory, then design |
-| brainstorming (a material ≥2-option design choice) | **applying-formal-rigor** | *inside* — the choice is derived from named theory, not asserted |
-| any stage (a premise leans on "research says…", or any scholarly-tool call) | **evidence-research** | *cross-cutting* — reception-check the literature before the premise bears load |
+| task start after routine micro-recon reveals a material map/territory mismatch, unresolved hidden coupling, or costly fan-out risk | **recon** (brief mode) | *before* brainstorming — full recon the territory, then design |
+| brainstorming (a material ≥2-option design choice) | **resolve** (derivation instrument) | *inside* — the choice is derived from named theory, not asserted |
+| any stage (a premise leans on "research says…", or any scholarly-tool call) | **resolve** (literature instrument) | *cross-cutting* — reception-check the literature before the premise bears load |
 | brainstorming approval / writing-plans (per gauntlet's own positive trigger list) | **gauntlet** | *at approval* — after the design doc is written and committed, before writing-plans is invoked; freeze the committed design doc as the gauntlet subject |
 | persistent or long-horizon goal-mode runs (explicit goal-authoring intent only — plan execution alone is not intent) | **write-goal** | *before* persistent execution — bind the outcome to proof and stop rules |
-| subagent-driven-development / dispatching-parallel-agents (first material dispatch) | **blindspot-pass** | *before* the first dispatch — recon when a wrong premise could multiply across isolated agents |
+| subagent-driven-development / dispatching-parallel-agents (first material dispatch) | **recon** (brief mode) | *before* the first dispatch — recon when a wrong premise could multiply across isolated agents |
 | external delegation / model handoff | **outsource** | *before* sending — commit a context-complete GitHub packet and emit only its short pointer; returned relay claims are re-verified by the origin |
 | test-driven-development / implementation | (none mandatory) | epistemic disciplines fire only on their own positive triggers; clean implementation needs no ceremony |
-| implementation of an interface another agent will consume (tool/function schema, MCP surface, structured-output or dispatch contract) | **agent-interface-design** | *inside* the build — constraints move into structure, examples pass the example-lint, and the cold-consumer test gates the interface before it ships |
 | writing-skills / instruction-layer maintenance (explicit audit request, a detected cross-layer instruction conflict, or a model-generation upgrade) | **context-audit** | *outside the per-task arc* — audit the assembled instruction context as one set; report before apply, one version-controlled commit per cut class |
-| writing-plans (the effort is large and material decisions are still unresolved) | **wayfinding** | *before* planning — decompose by decisions, resolve the frontier, and plan only fog-free regions; tickets minted from fog are the failure the pairing prevents |
-| brainstorming (a live option is cheaper to build thin than to keep debating) | **throwaway-prototyping** | *inside* — instantiate the option as a disposable probe under the four-clause contract; the answer returns to the design dialogue, the code does not |
-| any stage, immediately after a consequential decision, load-bearing assumption, or recurrent/operator correction (per decision-ledger's own positive and no-op gates) | **decision-ledger** | *retrospective cross-cutting* — reuse an adequate durable artifact or append only the uncovered persistence gap; never log before the moment exists |
-| finishing-a-development-branch / any merge or rebase with non-trivial conflicts | **intent-traced-merge** | *at integration* — resolve hunks by tracing both origins, verify against both sides' motivating checks, record rulings in the merge commit |
+| writing-plans (the effort is large and material decisions are still unresolved) | **recon** (initiative mode) | *before* planning — decompose by decisions, resolve the frontier, and plan only fog-free regions; tickets minted from fog are the failure the pairing prevents |
+| brainstorming (a live option is cheaper to build thin than to keep debating) | **resolve** (probe instrument) | *inside* — instantiate the option as a disposable probe under the four-clause contract; the answer returns to the design dialogue, the code does not |
+| any stage, immediately after a consequential decision, load-bearing assumption, or recurrent/operator correction — or when a ledgered decision's outcome becomes observable at a completion/verification stage (per decision-ledger's own positive and no-op gates) | **decision-ledger** | *retrospective cross-cutting* — reuse an adequate durable artifact or append only the uncovered persistence gap; on outcome arrival, prediction and result as separate untouched facts; never log before the moment exists |
+| brainstorming / writing-plans (a proposal is "use X instead of ours", or an external project overlaps the thing being designed) | **recon** (candidate mode) | *before* the design commits — harvest the transferable ideas at zero risk and re-triage; the design dialogue receives the ideas, not an adoption |
 | receiving-code-review (acceptance about to be signed on a change the acceptor has not restated) | **evidence-locked-uat** acceptor comprehension gate | *at acceptance* — the acceptor states what changed and what breaks first if it's wrong, or the state is recorded `ACCEPTED-UNREVIEWED`, never silently upgraded |
-| systematic-debugging (fix rests on a complexity or correctness claim) | **applying-formal-rigor** | *inside* — "this is O(n log n) now" and "this can't race" are derived, not asserted |
+| systematic-debugging (fix rests on a complexity or correctness claim) | **resolve** (derivation instrument) | *inside* — "this is O(n log n) now" and "this can't race" are derived, not asserted |
 | verification-before-completion (material UI-facing acceptance surface) | **evidence-locked-uat** | *is* that skill's UI-facing instance — blinded verifier, never self-certification; routine directly checkable presentation changes use the bounded check instead of a full packet |
 | finishing-a-development-branch (per gauntlet's own positive trigger list) | **gauntlet** | *pre-merge* — after the user selects merge or push+PR, before the merge/push executes |
-| receiving-code-review (feedback asserts a material design claim or proposes an alternative) | **applying-formal-rigor** | *inside* — derive the claim from named theory before implementing it or pushing back on it |
+| receiving-code-review (feedback asserts a material design claim or proposes an alternative) | **resolve** (derivation instrument) | *inside* — derive the claim from named theory before implementing it or pushing back on it |
 | any gated stage outside active design dialogue (per open-questions' member-authoritative trigger) | **open-questions** | *before* the gated stage — explicit invocation uses full-exhaustion mode; the narrow automatic trigger uses fork-scoped mode; while a design skill is running, that skill owns its own questioning |
 | any workflow stage not listed above | *(none mandatory)* | disciplines still fire on their own standalone positive triggers — the member skill, not helix, remains authoritative |
 
@@ -102,12 +106,10 @@ pair and discard another positive member trigger.
 When multiple disciplines fire, follow the router's arc and the registry's
 context-bound order rules. The most important combined paths are:
 
-- `continuity-verify → blindspot-pass` when resumed state and unfamiliar
+- `continuity-verify → recon` when resumed state and unfamiliar
   territory both bear load;
 - formal rigor names an empirical premise, evidence research qualifies it,
   then formal rigor closes the derivation;
-- `intent-traced-merge → gauntlet` when a high-risk branch first needs semantic
-  conflict resolution and then a frozen pre-merge verdict; and
 - `gauntlet → evidence-locked-uat` when the same change needs both a high-risk
   gate and material UI proof.
 
@@ -140,23 +142,23 @@ relationship matters.
 
 - **A resumed workflow depends on remembered state.** Run continuity-verify
   before the routine gate or any resumed workflow skill. If recon also fires,
-  record both artifacts in `continuity-verify → blindspot-pass` order.
+  record both artifacts in `continuity-verify → recon` order.
 - **A workflow stage has a positive epistemic trigger.** Run the member in its
   position and reference its output. Do not re-implement or soften the member's
   trigger here.
 - **More than one epistemic member has a positive trigger.** Ask the epistemic
   router for the complete ordered set; do not select a single favorite pair.
 - **brainstorming is starting after routine micro-recon exposed a mismatch** →
-  run blindspot-pass before design.
-- **a material design choice is being argued** → applying-formal-rigor owns the
+  run recon (brief mode) before design.
+- **a material design choice is being argued** → resolve (derivation instrument) owns the
   derivation.
 - **a plan is about to be approved** → use gauntlet's own trigger list; do not
   narrow it to one adjective.
 - **a persistent goal is being created** → only explicit goal-authoring intent
   fires write-goal; task length alone is not intent.
-- **a fix rests on a complexity or correctness claim** → applying-formal-rigor
+- **a fix rests on a complexity or correctness claim** → resolve (derivation)
   fires inside systematic-debugging.
-- **subagents are about to receive a material fuzzy brief** → blindspot-pass
+- **subagents are about to receive a material fuzzy brief** → recon (brief mode)
   runs before fan-out. A local bounded dispatch whose target and check are
   already explicit does not need a report merely because another agent exists.
 - **work crosses to an external model, agent, or process** → run `outsource`
@@ -177,7 +179,7 @@ relationship matters.
 - **a branch is about to merge** → use gauntlet's own trigger list; the member
   gate, not Helix shorthand, decides.
 - **open-questions fires** → preserve its **explicit full-exhaustion mode and
-  automatic fork-scoped mode**. Blindspot-pass's Questions section may seed the
+  automatic fork-scoped mode**. Recon's Questions section may seed the
   ledger, but its presence alone never fires an interview; while active design
   dialogue owns questioning, open-questions defers.
 - **An epistemic discipline fired standalone.** Ask which workflow stage

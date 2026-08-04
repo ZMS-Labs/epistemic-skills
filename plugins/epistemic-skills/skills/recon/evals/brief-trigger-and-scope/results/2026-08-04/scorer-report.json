@@ -1,0 +1,17 @@
+{
+  "scorer": "plugins/epistemic-skills/skills/blindspot-pass/evals/trigger-and-scope/score.py",
+  "exit_code": 1,
+  "report": [
+    "{",
+    "  \"pass\": false,",
+    "  \"failures\": [",
+    "    \"state-injection-guard: the report carries 3-5 expert questions, got 6\"",
+    "  ],",
+    "  \"actions\": {",
+    "    \"full-pass\": 8,",
+    "    \"no-fire\": 6",
+    "  }",
+    "}"
+  ],
+  "extraction_problems": []
+}

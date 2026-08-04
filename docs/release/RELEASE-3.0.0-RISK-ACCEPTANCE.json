@@ -25,8 +25,11 @@
       "evidence": "docs/release/evidence/2026-07-26-formal-rigor-v3-posthoc-diagnostic.md",
       "owner": "ZMS-Labs epistemic-skills maintainers",
       "scope": "formal-rigor behavioral confidence",
-      "revisit_trigger": "before the next stable release, or on a report matching either failed scenario",
-      "exit_criterion": "a fresh preregistered campaign passes both scenarios under independent valid adjudication"
+      "revisit_trigger": "before the v3.5.0 tag is created, or 2026-10-31, whichever comes first; or immediately on a field report matching either failed scenario",
+      "exit_criterion": "a fresh preregistered campaign passes both scenarios under independent valid adjudication",
+      "revisit_history": [
+        "2026-07-31: re-adjudicated at the v3.3.0 publication gauntlet, re-accepted unchanged (issue #69)"
+      ]
     },
     {
       "id": "FR3-R2",
@@ -34,8 +37,11 @@
       "evidence": "docs/release/evidence/2026-07-26-formal-rigor-v3-posthoc-diagnostic.md",
       "owner": "ZMS-Labs epistemic-skills maintainers",
       "scope": "cross-provider semantic coverage",
-      "revisit_trigger": "when independent non-Codex adjudication capacity is available, or before the next stable release",
-      "exit_criterion": "complete independent semantic judgments exist for every planned provider arm"
+      "revisit_trigger": "before the v3.5.0 tag is created, or 2026-10-31, whichever comes first; or immediately when AGY-equivalent independent adjudication capacity becomes available",
+      "exit_criterion": "complete independent semantic judgments exist for every planned provider arm",
+      "revisit_history": [
+        "2026-07-31: re-adjudicated at the v3.3.0 publication gauntlet, re-accepted unchanged (issue #69)"
+      ]
     },
     {
       "id": "FR3-R3",
@@ -80,7 +86,10 @@
       "owner": "ZMS-Labs epistemic-skills maintainers",
       "scope": "current arbitrator certification claims",
       "revisit_trigger": "before claiming the current arbitrator is certified",
-      "exit_criterion": "the amended certification battery runs and its committed result meets the declared threshold"
+      "exit_criterion": "the amended certification battery runs and its committed result meets the declared threshold",
+      "revisit_history": [
+        "2026-08-04: exit criterion met \u2014 the amended battery (AC-07 = seat-provenance-prejudice) ran blind at 10/10 planted-flaw catch (threshold 9/10), verdict-match 8/10; committed at plugins/epistemic-skills/skills/gauntlet/evals/arbitrator-certification/results-2026-08-04.md (v3.5.0 wave, PR #78)"
+      ]
     }
   ],
   "non_waivable_gates": [

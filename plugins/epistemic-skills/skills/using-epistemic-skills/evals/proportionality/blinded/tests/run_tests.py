@@ -123,18 +123,19 @@ def main() -> int:
                 require(hidden not in serialized, f"packet leaks scorer-only field {hidden}")
         sample_packet = first / "packets" / "m-01-data-structure-choice" / "input.json"
         catalog = skill_catalog(REPO_ROOT)
-        require("name: applying-formal-rigor" in catalog, "member trigger catalog missing")
+        require("name: resolve" in catalog, "member trigger catalog missing")
         require(
             "when a proposed design needs correctness confirmation or reversal" in catalog,
             "member-owned formal-rigor trigger missing from catalog",
         )
-        require("# Applying Formal Rigor" not in catalog, "catalog must not preload skill bodies")
+        require("# resolve — settle the question" in catalog or "name: resolve" in catalog, "catalog must include resolve")
+        require("## OPERATIONAL DIRECTIVE" not in catalog, "catalog must not preload skill bodies")
         live_prompt = codex_live_prompt(sample_packet, REPO_ROOT)
         require(
             "plugins/epistemic-skills/skills/using-epistemic-skills/SKILL.md" in live_prompt,
             "live adapter must activate the pinned repository router",
         )
-        require("name: blindspot-pass" in live_prompt, "live adapter must expose member triggers")
+        require("name: recon" in live_prompt, "live adapter must expose member triggers")
         parody_prompt = codex_live_prompt(sample_packet, REPO_ROOT, arm_kind="parody")
         require(
             "PINNED PARODY POLICY OVERRIDES ROUTER" in parody_prompt,

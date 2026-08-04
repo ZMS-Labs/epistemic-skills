@@ -28,16 +28,14 @@ ROUTINE_REFERENCE_PATH = (
 )
 CATALOG_SKILL_PATHS = [
     "plugins/epistemic-skills/skills/using-epistemic-skills/reference/routine-fast-path.md",
-    "plugins/epistemic-skills/skills/blindspot-pass/SKILL.md",
-    "plugins/epistemic-skills/skills/applying-formal-rigor/SKILL.md",
-    "plugins/epistemic-skills/skills/evidence-research/SKILL.md",
+    "plugins/epistemic-skills/skills/recon/SKILL.md",
+    "plugins/epistemic-skills/skills/resolve/SKILL.md",
     "plugins/epistemic-skills/skills/write-goal/SKILL.md",
     "plugins/epistemic-skills/skills/outsource/SKILL.md",
     "plugins/epistemic-skills/skills/gauntlet/SKILL.md",
     "plugins/epistemic-skills/skills/helix/SKILL.md",
     "plugins/epistemic-skills/skills/evidence-locked-uat/SKILL.md",
     "plugins/epistemic-skills/skills/decision-ledger/SKILL.md",
-    "plugins/epistemic-skills/skills/continuity-verify/SKILL.md",
 ]
 SKILL_PATHS = [ROUTER_PATH, ROUTINE_REFERENCE_PATH, *CATALOG_SKILL_PATHS[1:]]
 

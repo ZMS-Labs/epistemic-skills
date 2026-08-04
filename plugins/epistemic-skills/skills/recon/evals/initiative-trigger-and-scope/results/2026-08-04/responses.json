@@ -1,0 +1,176 @@
+[
+ {
+  "id": "explicit-chart-initiative",
+  "action": "chart-map",
+  "map_artifact": "tracker#map-1",
+  "nodes": [
+   {
+    "decision": "storage-engine",
+    "resolve_by": "research"
+   },
+   {
+    "decision": "schema-shape",
+    "resolve_by": "derive"
+   },
+   {
+    "decision": "api-surface",
+    "resolve_by": "derive"
+   }
+  ],
+  "frontier": [
+   "storage-engine"
+  ],
+  "pulled_tickets": [],
+  "minted_tickets": [],
+  "visible_process": true
+ },
+ {
+  "id": "explicit-break-down-foggy",
+  "action": "chart-map",
+  "map_artifact": "WAYMAP-001 (/home/user/epistemic-skills/docs/wayfinding/WAYMAP-001.md)",
+  "nodes": [
+   {
+    "decision": "architecture-style",
+    "resolve_by": "ask"
+   },
+   {
+    "decision": "sync-protocol",
+    "resolve_by": "derive"
+   }
+  ],
+  "frontier": [
+   "architecture-style"
+  ],
+  "pulled_tickets": [],
+  "minted_tickets": [],
+  "visible_process": "Announced that the effort is decomposed by decisions, not tasks: charted durable map WAYMAP-001 in the tracker with two decision nodes (architecture-style: no dependencies, unresolved, cheapest resolution is asking the operator since two materially different architectures are live; sync-protocol: depends on architecture-style, unresolved, derivable once its parent lands). Computed the frontier — only architecture-style qualifies; sync-protocol is explicitly deferred so its answer is not wasted and re-litigated. Stated that zero build tickets are minted because no region is fog-free: every candidate ticket has the unresolved ancestor architecture-style upstream. Next step handed off: open-questions interviews the operator on architecture-style; resolutions land on the map with provenance, frontier recomputes, and ticket minting begins only in regions the resolution de-fogs."
+ },
+ {
+  "id": "foggy-brief-architectures-live",
+  "action": "chart-map",
+  "map_artifact": "MAP-001 (minted in the durable tracker as the map issue owning the decision tree: three decision nodes with blocks/parents/resolution-method recorded)",
+  "nodes": [
+   {
+    "decision": "runtime-target",
+    "resolve_by": "ask"
+   },
+   {
+    "decision": "packaging",
+    "resolve_by": "derive"
+   },
+   {
+    "decision": "telemetry-format",
+    "resolve_by": "research"
+   }
+  ],
+  "frontier": [
+   "runtime-target",
+   "telemetry-format"
+  ],
+  "pulled_tickets": [],
+  "minted_tickets": [],
+  "visible_process": "Read wayfinding SKILL.md. The discipline fires despite no explicit charting phrase: the description names this exact case — a brief for a large effort where materially different architectures (runtime targets) are still live, so any pre-sliced build tickets would silently encode a guess about runtime-target. Applied the protocol: (1) charted one durable map artifact MAP-001 in the existing tracker, nodes are decisions not tasks — runtime-target (decides the execution environment; blocks packaging and effectively all build work; no parents; cheapest resolution is ask, since the fork is a live operator-level architecture choice, to be interviewed via open-questions), packaging (decides distribution/bundling; parent runtime-target; once runtime-target lands it is derivable from that choice), telemetry-format (decides the emitted telemetry schema; no parents; cheapest resolution is research into candidate standards). (2) Computed the frontier: a node is frontier iff all its dependencies are resolved — runtime-target and telemetry-format qualify; packaging is non-frontier and was deliberately not worked or asked, since any answer would be re-litigated when runtime-target resolves. (3) Minted zero build tickets: no region is fog-free — runtime-target is unresolved and upstream of essentially everything, so any ticket minted now would fail the falsifiable gate (an unresolved ancestor on its upstream walk). Wayfinding here ends at the maintained map plus a ready frontier; resolution of frontier decisions is handed to open-questions (runtime-target) and a research pass (telemetry-format), with resolutions to be recorded on MAP-001 with provenance before the frontier is recomputed."
+ },
+ {
+  "id": "backlog-guess-tickets",
+  "action": "pull-ticket",
+  "map_artifact": "MAP-1 (wayfinding decision map minted in the tracker; owns the decision tree for the auth region)",
+  "nodes": [
+   {
+    "decision": "auth-model",
+    "resolve_by": "ask"
+   }
+  ],
+  "frontier": [
+   "auth-model"
+  ],
+  "pulled_tickets": [
+   "T-4",
+   "T-9"
+  ],
+  "minted_tickets": [],
+  "visible_process": "Backlog review tripped the falsifiable gate: walking upstream from T-4 and T-9 reaches the auth-model decision, which is unresolved and recorded nowhere — both tickets silently encode a session-token guess, so they were minted from fog. Charted MAP-1 as the durable map artifact in the tracker with a single decision node, auth-model (no parent decisions; blocks all auth-dependent build work; cheapest adequate resolution: ask the operator, routed to open-questions). Computed the frontier: auth-model has no dependencies, so it is frontier immediately. Pulled T-4 and T-9 off the buildable backlog and back onto MAP-1 as fog-region work blocked on auth-model, preserving their content as candidate slices. Minted no build tickets and did not resolve auth-model myself — wayfinding sequences, it never decides; tickets re-mint as tracer-bullet slices with the three-fact handoff only after auth-model resolves and the region is fog-free."
+ },
+ {
+  "id": "resolved-effort-planning",
+  "action": "no-fire"
+ },
+ {
+  "id": "single-open-decision",
+  "action": "no-fire",
+  "reason": "The skill's own scope gate excludes this case: wayfinding fires for large foggy efforts with many unresolved, interdependent decisions, and its description explicitly says not to fire 'for a single open decision (open-questions or the decision itself owns it)'. With everything settled except which queue library to adopt, there is no decision dependency tree to chart, no frontier to compute, and no fog-free regions to mint from — the single fork belongs to open-questions or to the decision's own resolution method, not to wayfinding."
+ },
+ {
+  "id": "one-task-recon",
+  "action": "no-fire"
+ },
+ {
+  "id": "goal-shaping-request",
+  "action": "no-fire"
+ },
+ {
+  "id": "hard-neg-break-down-resolved",
+  "action": "no-fire"
+ },
+ {
+  "id": "hard-neg-stale-backlog",
+  "action": "no-fire",
+  "rationale": "Wayfinding fires on backlogs whose tickets encode guesses about unmade decisions. This backlog passes the falsifiable gate: every ticket walks upstream to a resolved, linked decision, so no ticket was minted from fog. Outdated estimates and duplicate tickets are ordinary backlog hygiene owned by the workflow/planning layer, not a decision-dependency problem — nothing to chart, no frontier to compute, nothing to pull back to a map."
+ },
+ {
+  "id": "frontier-recompute-after-resolution",
+  "action": "work-frontier",
+  "frontier": [
+   "schema-shape",
+   "backup-policy"
+  ],
+  "worked": [
+   "schema-shape",
+   "backup-policy"
+  ],
+  "resolutions": [
+   {
+    "decision": "schema-shape",
+    "provenance": "ADR-9 derivation"
+   },
+   {
+    "decision": "backup-policy",
+    "provenance": "benchmark run bench#77"
+   }
+  ],
+  "visible_process": "Recomputed the frontier after storage-engine resolved: a decision is frontier iff every dependency is resolved, so schema-shape (dep: storage-engine, resolved) and backup-policy (dep: storage-engine, resolved) became workable; api-surface was excluded because its dependency schema-shape was still unresolved at recompute time — deciding it now would waste the answer. Worked the two frontier decisions one region at a time by their cheapest adequate method, recording each resolution on the map with provenance: schema-shape resolved by ADR-9 derivation, backup-policy resolved against benchmark run bench#77. Recomputed the frontier after each resolution: schema-shape's resolution moved api-surface onto the frontier for the next round; backup-policy's resolution opened no new branches and left its region fog-free (all upstream decisions resolved), making it eligible for ticket minting with the three-fact handoff. No tickets were minted this round and no non-frontier decision was touched."
+ },
+ {
+  "id": "fog-minted-ticket-pull",
+  "action": "pull-ticket",
+  "pulled_tickets": [
+   "T-12"
+  ],
+  "unresolved_ancestor": "schema-shape",
+  "minted_tickets": [],
+  "visible_process": "Walked the falsifiable gate on open build ticket T-12: traced upstream and found ancestor decision 'schema-shape' unresolved. Per the gate, one unresolved ancestor means the ticket was minted from fog, so T-12 is pulled off the build board and returned to the map as blocked pending resolution of 'schema-shape'. No new tickets minted — minting waits until the region is fog-free and the three-fact handoff (resolved linked decisions, observable proving behavior, invalidating upstream decision) can be attached."
+ },
+ {
+  "id": "fog-free-region-mint",
+  "action": "mint-ticket",
+  "minted_tickets": "T-20",
+  "ticket": {
+   "ticket_id": "T-20",
+   "title": "Ingestion write path — tracer-bullet vertical slice",
+   "region": "ingestion write path (fog-free)",
+   "type": "tracer-bullet vertical slice",
+   "depends_on": [
+    "storage-engine (RESOLVED, provenance linked on map)",
+    "schema-shape (RESOLVED, provenance linked on map)"
+   ],
+   "observable_behavior": "A single record submitted at the ingestion entry point travels the full write path end-to-end, however thin: it is accepted, transformed into the resolved schema shape, durably persisted in the resolved storage engine, and can be read back with every field intact and matching what was submitted. One successful write-then-readback of a real record through every layer of the slice is the proof; a stubbed or mocked persistence layer does not count, because the slice exists to exercise the resolved storage-engine and schema-shape decisions against reality.",
+   "invalidating_decision": "storage-engine — reversal of the resolved engine choice would obsolete the entire write path this ticket builds (a reversal of schema-shape would likewise force a rewrite of the persisted format); recorded so the loss is traceable rather than silent if either resolution is revisited.",
+   "gate_check": "Falsifiable gate walked before minting: from T-20 upstream, every decision on the path (schema-shape -> storage-engine) is RESOLVED with linked provenance; zero unresolved ancestors found, so the ticket is minted from a fog-free region, not from fog."
+  },
+  "map_artifact": false,
+  "map_artifact_note": "The decision map already exists per the situation with both nodes resolved and provenance linked; no project tracker is attached to this session, so the mint is recorded here as the three-fact handoff rather than by fabricating a tracker artifact — T-20 should be entered on that existing map/tracker with these three facts attached verbatim.",
+  "visible_process": true,
+  "visible_process_note": "Skill read first; step 4 (mint only from fog-free regions) and step 5 (handoff gate: resolved linked dependencies, observable end-to-end behavior, named invalidating decision) applied explicitly, with the falsifiable-gate upstream walk recorded in the ticket.",
+  "handoff": "T-20 now leaves wayfinding for the workflow layer's planning/execution skills; wayfinding never builds — the frontier is recomputed after the slice lands, since a tracer-bullet pass that contradicts a resolved decision reopens that node on the map."
+ }
+]

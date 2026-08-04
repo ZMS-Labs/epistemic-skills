@@ -1,0 +1,362 @@
+{
+ "T01": {
+  "arm": "B",
+  "scenario": "02-proxy-backup",
+  "repeat": 3
+ },
+ "T02": {
+  "arm": "A",
+  "scenario": "03-preregister-cache",
+  "repeat": 3
+ },
+ "T03": {
+  "arm": "B",
+  "scenario": "06-clean-local-edit",
+  "repeat": 1
+ },
+ "T04": {
+  "arm": "C",
+  "scenario": "02-proxy-backup",
+  "repeat": 2
+ },
+ "T05": {
+  "arm": "C",
+  "scenario": "04-research-or-probe",
+  "repeat": 2
+ },
+ "T06": {
+  "arm": "C",
+  "scenario": "05-recurrent-correction",
+  "repeat": 3
+ },
+ "T07": {
+  "arm": "A",
+  "scenario": "05-recurrent-correction",
+  "repeat": 1
+ },
+ "T08": {
+  "arm": "C",
+  "scenario": "06-clean-local-edit",
+  "repeat": 1
+ },
+ "T09": {
+  "arm": "A",
+  "scenario": "05-recurrent-correction",
+  "repeat": 3
+ },
+ "T10": {
+  "arm": "A",
+  "scenario": "03-preregister-cache",
+  "repeat": 2
+ },
+ "T11": {
+  "arm": "C",
+  "scenario": "02-proxy-backup",
+  "repeat": 1
+ },
+ "T12": {
+  "arm": "B",
+  "scenario": "03-preregister-cache",
+  "repeat": 3
+ },
+ "T13": {
+  "arm": "B",
+  "scenario": "04-research-or-probe",
+  "repeat": 1
+ },
+ "T14": {
+  "arm": "B",
+  "scenario": "02-proxy-backup",
+  "repeat": 2
+ },
+ "T15": {
+  "arm": "B",
+  "scenario": "05-recurrent-correction",
+  "repeat": 3
+ },
+ "T16": {
+  "arm": "B",
+  "scenario": "01-stale-handoff",
+  "repeat": 3
+ },
+ "T17": {
+  "arm": "B",
+  "scenario": "06-clean-local-edit",
+  "repeat": 3
+ },
+ "T18": {
+  "arm": "B",
+  "scenario": "02-proxy-backup",
+  "repeat": 1
+ },
+ "T19": {
+  "arm": "C",
+  "scenario": "03-preregister-cache",
+  "repeat": 3
+ },
+ "T20": {
+  "arm": "C",
+  "scenario": "06-clean-local-edit",
+  "repeat": 3
+ },
+ "T21": {
+  "arm": "A",
+  "scenario": "04-research-or-probe",
+  "repeat": 1
+ },
+ "T22": {
+  "arm": "C",
+  "scenario": "06-clean-local-edit",
+  "repeat": 2
+ },
+ "T23": {
+  "arm": "D",
+  "scenario": "04-research-or-probe",
+  "repeat": 1
+ },
+ "T24": {
+  "arm": "A",
+  "scenario": "06-clean-local-edit",
+  "repeat": 2
+ },
+ "T25": {
+  "arm": "B",
+  "scenario": "05-recurrent-correction",
+  "repeat": 2
+ },
+ "T26": {
+  "arm": "D",
+  "scenario": "02-proxy-backup",
+  "repeat": 1
+ },
+ "T27": {
+  "arm": "D",
+  "scenario": "04-research-or-probe",
+  "repeat": 3
+ },
+ "T28": {
+  "arm": "D",
+  "scenario": "01-stale-handoff",
+  "repeat": 1
+ },
+ "T29": {
+  "arm": "A",
+  "scenario": "01-stale-handoff",
+  "repeat": 2
+ },
+ "T30": {
+  "arm": "B",
+  "scenario": "04-research-or-probe",
+  "repeat": 2
+ },
+ "T31": {
+  "arm": "A",
+  "scenario": "02-proxy-backup",
+  "repeat": 3
+ },
+ "T32": {
+  "arm": "D",
+  "scenario": "06-clean-local-edit",
+  "repeat": 1
+ },
+ "T33": {
+  "arm": "B",
+  "scenario": "06-clean-local-edit",
+  "repeat": 2
+ },
+ "T34": {
+  "arm": "B",
+  "scenario": "01-stale-handoff",
+  "repeat": 2
+ },
+ "T35": {
+  "arm": "D",
+  "scenario": "03-preregister-cache",
+  "repeat": 1
+ },
+ "T36": {
+  "arm": "A",
+  "scenario": "06-clean-local-edit",
+  "repeat": 3
+ },
+ "T37": {
+  "arm": "B",
+  "scenario": "04-research-or-probe",
+  "repeat": 3
+ },
+ "T38": {
+  "arm": "D",
+  "scenario": "04-research-or-probe",
+  "repeat": 2
+ },
+ "T39": {
+  "arm": "C",
+  "scenario": "01-stale-handoff",
+  "repeat": 2
+ },
+ "T40": {
+  "arm": "A",
+  "scenario": "04-research-or-probe",
+  "repeat": 2
+ },
+ "T41": {
+  "arm": "C",
+  "scenario": "01-stale-handoff",
+  "repeat": 3
+ },
+ "T42": {
+  "arm": "A",
+  "scenario": "04-research-or-probe",
+  "repeat": 3
+ },
+ "T43": {
+  "arm": "D",
+  "scenario": "03-preregister-cache",
+  "repeat": 2
+ },
+ "T44": {
+  "arm": "C",
+  "scenario": "05-recurrent-correction",
+  "repeat": 1
+ },
+ "T45": {
+  "arm": "D",
+  "scenario": "03-preregister-cache",
+  "repeat": 3
+ },
+ "T46": {
+  "arm": "D",
+  "scenario": "01-stale-handoff",
+  "repeat": 3
+ },
+ "T47": {
+  "arm": "D",
+  "scenario": "01-stale-handoff",
+  "repeat": 2
+ },
+ "T48": {
+  "arm": "A",
+  "scenario": "01-stale-handoff",
+  "repeat": 1
+ },
+ "T49": {
+  "arm": "D",
+  "scenario": "06-clean-local-edit",
+  "repeat": 3
+ },
+ "T50": {
+  "arm": "B",
+  "scenario": "03-preregister-cache",
+  "repeat": 2
+ },
+ "T51": {
+  "arm": "D",
+  "scenario": "02-proxy-backup",
+  "repeat": 3
+ },
+ "T52": {
+  "arm": "D",
+  "scenario": "05-recurrent-correction",
+  "repeat": 3
+ },
+ "T53": {
+  "arm": "A",
+  "scenario": "02-proxy-backup",
+  "repeat": 1
+ },
+ "T54": {
+  "arm": "A",
+  "scenario": "06-clean-local-edit",
+  "repeat": 1
+ },
+ "T55": {
+  "arm": "B",
+  "scenario": "03-preregister-cache",
+  "repeat": 1
+ },
+ "T56": {
+  "arm": "C",
+  "scenario": "05-recurrent-correction",
+  "repeat": 2
+ },
+ "T57": {
+  "arm": "D",
+  "scenario": "02-proxy-backup",
+  "repeat": 2
+ },
+ "T58": {
+  "arm": "C",
+  "scenario": "04-research-or-probe",
+  "repeat": 1
+ },
+ "T59": {
+  "arm": "C",
+  "scenario": "01-stale-handoff",
+  "repeat": 1
+ },
+ "T60": {
+  "arm": "A",
+  "scenario": "02-proxy-backup",
+  "repeat": 2
+ },
+ "T61": {
+  "arm": "C",
+  "scenario": "02-proxy-backup",
+  "repeat": 3
+ },
+ "T62": {
+  "arm": "C",
+  "scenario": "03-preregister-cache",
+  "repeat": 2
+ },
+ "T63": {
+  "arm": "A",
+  "scenario": "03-preregister-cache",
+  "repeat": 1
+ },
+ "T64": {
+  "arm": "D",
+  "scenario": "05-recurrent-correction",
+  "repeat": 1
+ },
+ "T65": {
+  "arm": "D",
+  "scenario": "06-clean-local-edit",
+  "repeat": 2
+ },
+ "T66": {
+  "arm": "C",
+  "scenario": "03-preregister-cache",
+  "repeat": 1
+ },
+ "T67": {
+  "arm": "D",
+  "scenario": "05-recurrent-correction",
+  "repeat": 2
+ },
+ "T68": {
+  "arm": "A",
+  "scenario": "05-recurrent-correction",
+  "repeat": 2
+ },
+ "T69": {
+  "arm": "A",
+  "scenario": "01-stale-handoff",
+  "repeat": 3
+ },
+ "T70": {
+  "arm": "C",
+  "scenario": "04-research-or-probe",
+  "repeat": 3
+ },
+ "T71": {
+  "arm": "B",
+  "scenario": "01-stale-handoff",
+  "repeat": 1
+ },
+ "T72": {
+  "arm": "B",
+  "scenario": "05-recurrent-correction",
+  "repeat": 1
+ }
+}

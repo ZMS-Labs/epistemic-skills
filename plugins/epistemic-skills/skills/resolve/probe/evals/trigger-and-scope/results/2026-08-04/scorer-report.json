@@ -1,0 +1,11 @@
+{
+  "pass": true,
+  "failures": [],
+  "actions": {
+    "run-prototype": 4,
+    "no-fire": 5,
+    "refuse-live-target": 1,
+    "refuse-promotion": 1,
+    "record-and-dispose": 1
+  }
+}

@@ -105,8 +105,12 @@ exhaustion contract is scoped to the fork:
    questions: each is recorded in the exit stamp's coverage limits AND
    captured in the environment's durable tracker with its best-guess default
    (decision-ledger's sinks qualify; the local overlay names the concrete
-   sink). A deferred question is a tracked pending decision — never a
-   memory-only note.
+   sink). **Portable-install fallback:** when no overlay names a tracker,
+   decision-ledger's sink order binds as written — repo-local
+   `.ledger/entries.jsonl` where adopted, else a configured harness store,
+   else session-local with a named durability-gap record; the degenerate
+   case is never silent loss. A deferred question is a tracked pending
+   decision — never a memory-only note.
 
 Exit emits the collection's canonical 4-field stamp — `subject.ref` (the
 stage this interview gated + its ledger), `subject.revision` (the ledger's

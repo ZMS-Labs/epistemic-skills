@@ -11,20 +11,14 @@
     {
       "id": "resumption-before-recon",
       "when": "same-resumption-lineage",
-      "before": "continuity-verify",
-      "after": "blindspot-pass"
+      "before": "decision-ledger",
+      "after": "recon"
     },
     {
       "id": "task-start-recon-before-design-derivation",
       "when": "same-design-lineage-after-micro-recon-mismatch",
-      "before": "blindspot-pass",
-      "after": "applying-formal-rigor"
-    },
-    {
-      "id": "conflict-resolution-before-pre-merge-gate",
-      "when": "same-branch-pre-merge-lineage",
-      "before": "intent-traced-merge",
-      "after": "gauntlet"
+      "before": "recon",
+      "after": "resolve"
     },
     {
       "id": "gate-before-ui-proof",
@@ -36,37 +30,13 @@
   "interlocks": [
     {
       "members": [
-        "applying-formal-rigor",
-        "evidence-research"
+        "resolve"
       ],
-      "rule": "formal-names-empirical-premise-research-qualifies-formal-closes"
+      "id": "instrument-sequencing-internal",
+      "note": "the former formal-rigor/evidence-research interlock (formal names an empirical premise; research qualifies it; formal closes) is instrument sequencing inside resolve as of v4.0.0"
     }
   ],
   "members": {
-    "blindspot-pass": {
-      "composition_class": "stage-bound",
-      "moments": [
-        "task-start-after-micro-recon",
-        "first-material-agent-dispatch"
-      ],
-      "position": "before"
-    },
-    "applying-formal-rigor": {
-      "composition_class": "decision-point",
-      "moments": [
-        "material-design-choice",
-        "correctness-or-complexity-claim",
-        "material-design-claim-in-review"
-      ],
-      "position": "inside"
-    },
-    "evidence-research": {
-      "composition_class": "cross-cutting",
-      "moments": [
-        "qualifying-scholarly-premise"
-      ],
-      "position": "at-premise"
-    },
     "write-goal": {
       "composition_class": "pre-execution",
       "moments": [
@@ -74,29 +44,30 @@
       ],
       "position": "before"
     },
-    "continuity-verify": {
-      "composition_class": "pre-arc",
-      "moments": [
-        "resumption"
-      ],
-      "position": "before",
-      "precedes_boundaries": [
-        "routine-classification",
-        "workflow-stage"
-      ]
-    },
     "decision-ledger": {
       "composition_class": "retrospective-cross-cutting",
       "moments": [
         "consequential-decision",
         "load-bearing-assumption",
-        "recurrent-or-operator-correction"
+        "recurrent-or-operator-correction",
+        "summary-dependent-resumption"
       ],
       "position": "after",
       "persistence_modes": [
         "reuse-existing-durable-artifact",
         "append-gap-only"
-      ]
+      ],
+      "resume_mode": {
+        "mode": "continuity-verify",
+        "position": "before",
+        "precedes_boundaries": [
+          "routine-classification",
+          "workflow-stage"
+        ],
+        "moments": [
+          "resumption"
+        ]
+      }
     },
     "outsource": {
       "composition_class": "execution-boundary",
@@ -139,33 +110,25 @@
       ],
       "position": "outside"
     },
-    "agent-interface-design": {
-      "composition_class": "build-stage",
+    "recon": {
+      "composition_class": "stage-bound",
       "moments": [
-        "agent-consumed-interface-build"
-      ],
-      "position": "inside"
-    },
-    "wayfinding": {
-      "composition_class": "initiative-pre-arc",
-      "moments": [
-        "large-foggy-effort"
+        "task-start-after-micro-recon",
+        "first-material-agent-dispatch",
+        "large-foggy-effort",
+        "external-overlap-adopt-question"
       ],
       "position": "before"
     },
-    "throwaway-prototyping": {
+    "resolve": {
       "composition_class": "decide-instrument",
       "moments": [
-        "build-cheaper-than-debate"
+        "material-design-choice",
+        "qualifying-scholarly-premise",
+        "build-cheaper-than-debate",
+        "fix-rests-on-formal-claim"
       ],
       "position": "inside"
-    },
-    "intent-traced-merge": {
-      "composition_class": "integration-stage",
-      "moments": [
-        "non-trivial-merge-conflict"
-      ],
-      "position": "at-integration"
     }
   }
 }

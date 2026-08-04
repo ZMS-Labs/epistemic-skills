@@ -1,0 +1,15 @@
+# Pin gardening (gauntlet upgrades-landing-2026-08-03 ruling R11): the
+# supply-chain hardening pinned every action to an immutable SHA; this config
+# gives the pin inventory a renewal path — updates arrive as reviewable
+# SHA re-pin pull requests instead of silent tag drift. The pin-inventory
+# owner and revisit conditions are recorded in .ledger/entries.jsonl
+# (pin-inventory-gardening-20260804-10).
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "pin-gardening"

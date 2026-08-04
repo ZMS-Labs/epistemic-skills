@@ -1,0 +1,22 @@
+{
+ "prompting_event": "A UAT sign-off is requested while the same context that authored the change is available and willing to certify it",
+ "vulnerabilities": [
+  "actor and verifier share one context, so the verifier inherits the actor's expectations instead of forming its own observations",
+  "PASS is self-reported with no requirement to attach independently produced evidence",
+  "the first false PASS was not followed by a structural change, leaving the identical path open for the repeat"
+ ],
+ "links": [
+  "actor completes the change and holds the thought 'it works'",
+  "the same shared context is asked to verify",
+  "the verifier acts from that inherited expectation rather than from present-moment observation of the running system",
+  "PASS is recorded without an independent run or evidence",
+  "the false PASS is accepted downstream as a genuine acceptance signal",
+  "the pattern repeats because nothing in the process interrupted it"
+ ],
+ "target_failure": "False PASS self-certified on UAT, repeated",
+ "consequences": "Unverified changes are treated as user-accepted; downstream decisions rest on a fabricated quality signal; the UAT gate loses evidentiary value entirely if uncorrected",
+ "earliest_interruptible_link": "The moment the authoring context is asked to verify its own work \u2014 self-certification must be refused at that point and the request rerouted",
+ "replacement_behavior": "Route UAT to a verifier with no shared context with the actor; require the verifier to attach observed execution evidence (logs, outputs, screenshots) to any PASS; the actor may submit for verification but may never certify; treat any evidence-free or self-certified PASS as no PASS",
+ "rehearsal_fixture": "A known-broken build submitted for UAT under the corrected flow; correct behavior is an isolated verifier returning FAIL with evidence, and automatic rejection of any PASS originating from the actor's context",
+ "scenario": "05-recurrent-correction"
+}

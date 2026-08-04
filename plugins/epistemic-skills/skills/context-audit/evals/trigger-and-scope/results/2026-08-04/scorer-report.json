@@ -1,0 +1,16 @@
+{
+  "pass": false,
+  "failures": [
+    "explicit-prune-instructions: expected full-audit, got report-only-audit",
+    "midtask-layer-conflict: expected full-audit, got report-only-audit",
+    "model-upgrade-stale-guardrails: expected full-audit, got report-only-audit",
+    "keep-gotcha-with-origin: expected full-audit, got report-only-audit",
+    "duplicate-most-local-survives: expected full-audit, got report-only-audit",
+    "governance-projection-conflict: expected full-audit, got report-only-audit"
+  ],
+  "actions": {
+    "full-audit": 1,
+    "report-only-audit": 7,
+    "no-fire": 6
+  }
+}

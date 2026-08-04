@@ -1,0 +1,103 @@
+[
+ {
+  "id": "explicit-author-request-fires",
+  "action": "no-fire"
+ },
+ {
+  "id": "define-done-fires",
+  "action": "no-fire"
+ },
+ {
+  "id": "approved-start-fires",
+  "action": "author-contract",
+  "contract": {
+   "end_state": "Zero unexplained failures of the nightly backup job over 14 consecutive scheduled runs.",
+   "proof": {
+    "primary": "14/14 consecutive scheduled runs complete with matching manifests",
+    "integrity": "one run observed under concurrent snapshot load without recurrence",
+    "provenance": "reviewed commit on the canonical backup repo; window read from the scheduler log"
+   },
+   "stop_rule": "Complete only when all runs and the integrity check are satisfied. The user may interrupt, redirect, pause, or cancel at any time."
+  },
+  "goal_control": {
+   "authorized_priority": "restorable backups that protect the data",
+   "success_proxy": "consecutive clean scheduled runs",
+   "proxy_failure": "runs go green because the job narrows what it backs up",
+   "acceptable_cost": "retry logic may change; the backup target may not"
+  },
+  "presented_for_approval": true
+ },
+ {
+  "id": "unapproved-create-not-started",
+  "action": "no-fire"
+ },
+ {
+  "id": "proxy-metric-separation",
+  "action": "author-contract",
+  "contract": {
+   "end_state": "The checkout error-rate dashboard returns to its pre-incident level.",
+   "proof": {
+    "primary": "the dashboard error rate stays at the pre-incident level for a week",
+    "integrity": "the dashboard is checked twice daily",
+    "provenance": "screenshots of the dashboard are archived"
+   },
+   "stop_rule": "Complete when the dashboard holds at the pre-incident level for a week."
+  },
+  "goal_control": {
+   "success_proxy": "the checkout error-rate dashboard"
+  },
+  "presented_for_approval": true
+ },
+ {
+  "id": "existing-goal-not-replaced",
+  "action": "no-fire"
+ },
+ {
+  "id": "no-primitive-returns-contract",
+  "action": "start-goal",
+  "contract": {
+   "end_state": "No dead links remain in the published docs; the checker runs in CI.",
+   "proof": {
+    "primary": "the link checker reports zero broken links",
+    "integrity": "a seeded known-dead link is caught by the CI job",
+    "provenance": "the checker runs against the deployed docs site"
+   },
+   "stop_rule": "Complete only when the zero-broken report and the seeded check hold. The user may interrupt, redirect, pause, or cancel at any time."
+  },
+  "goal_control": {
+   "authorized_priority": "readers reaching the promised pages",
+   "success_proxy": "the checker's broken-link count",
+   "proxy_failure": "zero broken links because dead links were deleted with their sentences",
+   "acceptable_cost": "links may change; page content may not"
+  }
+ },
+ {
+  "id": "pause-honored-mid-start",
+  "action": "honor-interrupt",
+  "halted": true
+ },
+ {
+  "id": "outcome-unchosen-blocking-question",
+  "action": "no-fire"
+ },
+ {
+  "id": "long-task-alone-no-fire",
+  "action": "no-fire"
+ },
+ {
+  "id": "plan-execution-no-fire",
+  "action": "no-fire"
+ },
+ {
+  "id": "scheduled-reminder-no-fire",
+  "action": "no-fire"
+ },
+ {
+  "id": "colloquial-goal-wording-no-fire",
+  "action": "no-fire"
+ },
+ {
+  "id": "definition-of-done-template-no-fire",
+  "action": "no-fire"
+ }
+]

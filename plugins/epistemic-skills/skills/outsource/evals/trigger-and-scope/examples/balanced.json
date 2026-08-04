@@ -1,0 +1,138 @@
+[
+ {
+  "id": "explicit-superior-model-fires",
+  "action": "publish-packet",
+  "packet_committed": true,
+  "pushed": true,
+  "packet_published_first": true,
+  "immutable_ref": "3fa1c07d92b845e63fa1c07d92b845e63fa1c07d",
+  "handoff_path": "docs/outsource/architecture-audit/HANDOFF.md",
+  "prompt_emitted": true,
+  "prompt_is_pointer": true,
+  "relay_template_recorded": true
+ },
+ {
+  "id": "copy-paste-review-handoff-fires",
+  "action": "publish-packet",
+  "packet_committed": true,
+  "pushed": true,
+  "packet_published_first": true,
+  "immutable_ref": "8b2d4e6f0a1c39758b2d4e6f0a1c39758b2d4e6f",
+  "handoff_path": "docs/outsource/migration-design-review/HANDOFF.md",
+  "prompt_emitted": true,
+  "prompt_is_pointer": true,
+  "relay_template_recorded": true
+ },
+ {
+  "id": "beyond-origin-surface-fires",
+  "action": "publish-packet",
+  "packet_committed": true,
+  "pushed": true,
+  "packet_published_first": true,
+  "immutable_ref": "c95e17a3d40b628fc95e17a3d40b628fc95e17a3",
+  "handoff_path": "docs/outsource/gpu-load-test/HANDOFF.md",
+  "prompt_emitted": true,
+  "prompt_is_pointer": true,
+  "relay_template_recorded": true
+ },
+ {
+  "id": "capable-target-preflight-fires",
+  "action": "publish-packet",
+  "packet_committed": true,
+  "pushed": true,
+  "packet_published_first": true,
+  "immutable_ref": "6d0f2a8c4e1b97536d0f2a8c4e1b97536d0f2a8c",
+  "handoff_path": "docs/outsource/failing-suite-fix/HANDOFF.md",
+  "prompt_emitted": true,
+  "prompt_is_pointer": true,
+  "relay_template_recorded": true,
+  "capability_preflight": true,
+  "capabilities_verified": [
+   "writable-checkout",
+   "test-shell",
+   "github-mutation",
+   "isolated-context"
+  ]
+ },
+ {
+  "id": "in-session-subagent-no-fire",
+  "action": "no-fire"
+ },
+ {
+  "id": "self-handoff-local-task-no-fire",
+  "action": "no-fire"
+ },
+ {
+  "id": "colleague-agent-question-no-fire",
+  "action": "no-fire"
+ },
+ {
+  "id": "inbound-target-work-no-fire",
+  "action": "no-fire"
+ },
+ {
+  "id": "packet-before-prompt-state",
+  "action": "publish-packet",
+  "packet_committed": true,
+  "pushed": true,
+  "packet_published_first": true,
+  "immutable_ref": "e47b9d1f5c2a80e6e47b9d1f5c2a80e6e47b9d1f",
+  "handoff_path": "docs/outsource/index-rebuild/HANDOFF.md",
+  "prompt_emitted": true,
+  "prompt_is_pointer": true,
+  "relay_template_recorded": true
+ },
+ {
+  "id": "pointer-not-paste-state",
+  "action": "publish-packet",
+  "packet_committed": true,
+  "pushed": true,
+  "packet_published_first": true,
+  "immutable_ref": "1a5c8e3b7d9f24601a5c8e3b7d9f24601a5c8e3b",
+  "handoff_path": "docs/outsource/schema-migration/HANDOFF.md",
+  "prompt_emitted": true,
+  "prompt_is_pointer": true,
+  "full_context_pasted": false,
+  "relay_template_recorded": true
+ },
+ {
+  "id": "relay-claim-verified-state",
+  "action": "verify-relay",
+  "stored_verbatim": true,
+  "relay_verified": true,
+  "trusted_unverified": false,
+  "claims_checked": [
+   "tests-pass",
+   "commits-pushed"
+  ],
+  "packet_updated": true
+ },
+ {
+  "id": "unpushed-packet-blocked-state",
+  "action": "report-blocked",
+  "blocked": true,
+  "blocker": "unpushed-packet",
+  "prompt_emitted": false
+ },
+ {
+  "id": "readonly-target-preflight-blocked-state",
+  "action": "report-blocked",
+  "blocked": true,
+  "blocker": "target-capability",
+  "prompt_emitted": false,
+  "capability_preflight": true,
+  "capabilities_failed": [
+   "writable-checkout",
+   "test-shell",
+   "github-mutation",
+   "isolated-context"
+  ]
+ },
+ {
+  "id": "hidden-chat-context-blocked-state",
+  "action": "report-blocked",
+  "blocked": true,
+  "blocker": "hidden-context",
+  "prompt_emitted": false
+ }
+]

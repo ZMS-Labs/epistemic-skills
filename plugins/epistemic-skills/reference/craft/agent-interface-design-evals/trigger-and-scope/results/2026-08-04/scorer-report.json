@@ -1,0 +1,10 @@
+{
+  "pass": true,
+  "failures": [],
+  "actions": {
+    "engage": 6,
+    "no-fire": 6,
+    "consumer-gate": 1,
+    "example-lint": 1
+  }
+}

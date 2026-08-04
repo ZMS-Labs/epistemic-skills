@@ -11,7 +11,7 @@ HERE = Path(__file__).resolve()
 SKILL_ROOT = HERE.parents[1]
 PACKAGE_ROOT = HERE.parents[3]
 REPO_ROOT = HERE.parents[5]
-EXPECTED_VERSION = "3.4.0"
+EXPECTED_VERSION = "4.0.0"
 
 
 def require(condition: bool, message: str) -> None:
@@ -24,7 +24,7 @@ def read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
-WORDS = {11: "eleven", 12: "twelve", 13: "thirteen", 14: "fourteen", 15: "fifteen",
+WORDS = {9: "nine", 10: "ten", 11: "eleven", 12: "twelve", 13: "thirteen", 14: "fourteen", 15: "fifteen",
          16: "sixteen", 17: "seventeen", 18: "eighteen", 19: "nineteen", 20: "twenty"}
 
 
@@ -73,7 +73,7 @@ def check_live_surface_counts(skill_count: int) -> None:
     readme = read(REPO_ROOT / "README.md")
     mermaid = [ln for ln in readme.splitlines() if "router and" in ln and "disciplines" in ln]
     for ln in mermaid:
-        found = [w for w in WORDS.values() if w in ln.lower()]
+        found = [w for w in WORDS.values() if re.search(rf"\b{w}\b", ln.lower())]
         for w in found:
             require(w in ok_words, f"README mermaid node count stale: {ln.strip()}")
     gemini = read(REPO_ROOT / "GEMINI.md")
@@ -125,9 +125,9 @@ def main() -> int:
 
     router_root = PACKAGE_ROOT / "skills" / "using-epistemic-skills"
     router = read(router_root / "SKILL.md")
-    require("These fifteen disciplines" in router, "router discipline count is stale")
+    require("These nine disciplines" in router, "router discipline count is stale")
     require("**outsource**" in router, "router does not route outsource")
-    require("why these fifteen" in router, "router family-resemblance count is stale")
+    require("why these nine" in router, "router family-resemblance count is stale")
     require("Routine work leaves before the arc" in router, "router lacks routine-work exit")
     require("Absent triggers are silent" in router, "router still requires absent-trigger records")
     require(
@@ -139,7 +139,7 @@ def main() -> int:
     helix = read(helix_root / "SKILL.md")
     require("external delegation / model handoff" in helix, "helix lacks outsource pairing")
     require("Do **not** emit a line for an absent trigger" in helix, "helix still records non-events")
-    require("continuity-verify → blindspot-pass" in helix, "helix lacks pre-arc resumption ordering")
+    require("continuity-verify → recon" in helix, "helix lacks pre-arc resumption ordering")
     require("zero, one, or ordered set" in helix, "helix still implies single-pair selection")
     helix_contract = json.loads(read(helix_root / "reference" / "composition-contract.json"))
     require(
@@ -147,8 +147,8 @@ def main() -> int:
         "helix composition contract schema is missing or stale",
     )
     require(
-        len(helix_contract.get("members", {})) == 15,
-        "helix composition contract does not classify all fifteen disciplines",
+        len(helix_contract.get("members", {})) == 9,
+        "helix composition contract does not classify all nine disciplines",
     )
     helix_eval = helix_root / "evals" / "composition"
     for filename in (
@@ -161,11 +161,11 @@ def main() -> int:
 
     readme = read(REPO_ROOT / "README.md")
     require(f"**Version {EXPECTED_VERSION}.**" in readme, "README version is stale")
-    require("**seventeen** skills" in readme, "README skill count is stale")
-    require("**fifteen** disciplines" in readme, "README discipline count is stale")
-    require("all seventeen skills" in readme, "README harness success check is stale")
-    require("canonical skill cores (seventeen)" in readme, "README layout inventory count is stale")
-    require("canonical skill cores (fourteen)" not in readme, "README still advertises twelve skill cores")
+    require("**eleven** skills" in readme, "README skill count is stale")
+    require("**nine** disciplines" in readme, "README discipline count is stale")
+    require("the tag's full skill count" in readme, "README harness success check is stale")
+    require("canonical skill cores (eleven)" in readme, "README layout inventory count is stale")
+    require("canonical skill cores (sixteen)" not in readme, "README still advertises the pre-consolidation count")
     require("**outsource**" in readme, "README skill table lacks outsource")
     require("## Routine work first" in readme, "README does not present the routine path first")
 
@@ -176,12 +176,12 @@ def main() -> int:
     )
 
     gemini = read(REPO_ROOT / "GEMINI.md")
-    require("seventeen skills" in gemini, "GEMINI context skill count is stale")
-    require("fifteen disciplines" in gemini, "GEMINI context discipline count is stale")
+    require("eleven skills" in gemini, "GEMINI context skill count is stale")
+    require("nine disciplines" in gemini, "GEMINI context discipline count is stale")
 
     workflow = read(REPO_ROOT / ".github" / "workflows" / "epistemic-flexibility.yml")
     require(
-        "continuity-verify/evals/resume-fixtures/score.py" in workflow,
+        "decision-ledger/evals/resume-fixtures/score.py" in workflow,
         "CI omits continuity-verify committed-result scoring",
     )
     require(
@@ -201,15 +201,15 @@ def main() -> int:
         "CI omits blinded proportionality packet tests",
     )
     require(
-        "applying-formal-rigor/evals/formal-rigor-v2-fixtures/tests/run_tests.py" in workflow,
+        "resolve/derivation/evals/formal-rigor-v2-fixtures/tests/run_tests.py" in workflow,
         "CI omits formal-rigor v2 structural scorer tests",
     )
     require(
-        "applying-formal-rigor/evals/formal-rigor-v2-fixtures/tests/test_focused.py" in workflow,
+        "resolve/derivation/evals/formal-rigor-v2-fixtures/tests/test_focused.py" in workflow,
         "CI omits formal-rigor focused proportionality tests",
     )
     require(
-        "applying-formal-rigor/evals/formal-rigor-v2-fixtures/tests/test_posthoc_diagnostic.py" in workflow,
+        "resolve/derivation/evals/formal-rigor-v2-fixtures/tests/test_posthoc_diagnostic.py" in workflow,
         "CI omits formal-rigor V3 post-hoc diagnostic tests",
     )
     require(
@@ -226,10 +226,6 @@ def main() -> int:
     )
     for battery_skill in (
         "context-audit",
-        "agent-interface-design",
-        "wayfinding",
-        "throwaway-prototyping",
-        "intent-traced-merge",
     ):
         test_path = f"plugins/epistemic-skills/skills/{battery_skill}/evals/trigger-and-scope/tests/run_tests.py"
         require(
@@ -240,6 +236,17 @@ def main() -> int:
             (PACKAGE_ROOT / "skills" / battery_skill / "evals" / "trigger-and-scope"
              / "tests" / "run_tests.py").is_file(),
             f"{battery_skill} trigger-and-scope battery is missing",
+        )
+    for recon_battery in ("brief-trigger-and-scope", "initiative-trigger-and-scope"):
+        test_path = f"plugins/epistemic-skills/skills/recon/evals/{recon_battery}/tests/run_tests.py"
+        require(
+            f"run: python {test_path}" in workflow,
+            f"CI does not execute recon {recon_battery} tests",
+        )
+        require(
+            (PACKAGE_ROOT / "skills" / "recon" / "evals" / recon_battery
+             / "tests" / "run_tests.py").is_file(),
+            f"recon {recon_battery} battery is missing",
         )
 
     proportionality = router_root / "evals" / "proportionality"
@@ -260,7 +267,7 @@ def main() -> int:
     ):
         require((proportionality / filename).is_file(), f"missing proportionality artifact: {filename}")
 
-    formal_v2 = PACKAGE_ROOT / "skills" / "applying-formal-rigor" / "evals" / "formal-rigor-v2-fixtures"
+    formal_v2 = PACKAGE_ROOT / "skills" / "resolve" / "derivation" / "evals" / "formal-rigor-v2-fixtures"
     for filename in (
         "README.md",
         "formal-rigor-fixture-response.schema.json",
@@ -284,7 +291,7 @@ def main() -> int:
             require((suite / filename).is_file(), f"missing proportionality artifact: {suite.name}/{filename}")
 
     skill_dirs = [p for p in (PACKAGE_ROOT / "skills").iterdir() if p.is_dir()]
-    require(len(skill_dirs) == 17, f"expected 17 skill directories, found {len(skill_dirs)}")
+    require(len(skill_dirs) == 11, f"expected 11 skill directories, found {len(skill_dirs)}")
     check_live_surface_counts(len(skill_dirs))
     for directory in skill_dirs:
         require((directory / "SKILL.md").is_file(), f"missing SKILL.md: {directory.name}")

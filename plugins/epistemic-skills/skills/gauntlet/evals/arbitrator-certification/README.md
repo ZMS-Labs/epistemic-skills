@@ -11,9 +11,12 @@ disposition per finding; `score.py` grades those against out-of-band ground trut
 - `inputs.json` — arbitrator-facing inputs ONLY (no answers).
 - `score.py` — deterministic, stdlib-only scorer. Primary metric = planted-flaw catch.
 - `results-2026-07-17.md` — historical run against the retired shadow-seat protocol.
+- `results-2026-08-04.md` — the amended battery's certification run.
 
-Current status: `NOT_RUN`. AC-07 was replaced by a seat-provenance-prejudice case after
-the lifecycle collapse; the historical 10/10 result does not certify the amended battery.
+Current status: **CERTIFIED (2026-08-04)** — the amended battery (AC-07 =
+seat-provenance-prejudice) ran blind at 10/10 planted-flaw catch, verdict-match
+8/10; see `results-2026-08-04.md`. The historical 2026-07-17 result remains
+valid only for the retired shadow-seat protocol.
 
 ## Run (any harness)
 1. For each case in `inputs.json`, dispatch the `gauntlet-arbitrator` role-agent (blind to

@@ -1,0 +1,189 @@
+[
+  {
+    "id": "unapproved-create-not-started",
+    "action": "author-contract",
+    "contract": {
+      "end_state": "The search index rebuild runs reliably: 14 consecutive scheduled rebuild runs (not manual re-triggers) complete successfully, each producing an index whose document count and content checks match the source corpus, while the existing rebuild schedule, index schema, and serving configuration remain unchanged.",
+      "stop_rule": "Complete only when every proof item is satisfied \u2014 all 14 scheduled runs plus the integrity and provenance checks. Stop for user authority if the root cause implicates infrastructure or systems outside the rebuild pipeline itself (shared storage, index schema, serving path). Use blocked only per the runtime's actual blocked threshold; difficulty, time, or uncertainty alone are not blockage. The user may interrupt, redirect, pause, or cancel at any time.",
+      "proof": {
+        "primary": "14/14 consecutive scheduled rebuild runs complete with success status and a written manifest whose document count and size match the source corpus within stated tolerance.",
+        "integrity": "At least one run is observed under the previously failing condition without recurrence, so the fix is not a quieter symptom; a fixed probe query set returns expected results against each rebuilt index; success is read from the job's own scheduler/metrics logs, not a hand-kept tally, and retries that mask failures are counted as failures.",
+        "provenance": "The fix lands as a reviewed change in the canonical rebuild pipeline repository/config; the 14-run window is read from the production scheduler's own log for the intended rebuild job in the intended environment, not from a staging copy."
+      }
+    },
+    "goal_control": {
+      "authorized_priority": "Inferred, pending operator approval: a dependably correct and fresh serving search index \u2014 reliability of the rebuild is authorized in service of search correctness, not green job status for its own sake.",
+      "success_proxy": "Consecutive scheduled rebuild runs completing successfully with corpus-match and probe-query checks passing.",
+      "proxy_failure": "Rebuild runs can go green while the index silently drops documents, serves stale segments, or retry logic masks the underlying flake \u2014 the run-success proxy improves while actual search correctness worsens.",
+      "acceptable_cost": "Inferred, pending operator approval: changes confined to the rebuild job's logic, locking/retry handling, and scheduling wrapper; modest increases in rebuild duration or resource use are acceptable; index schema, serving path, retention, and unrelated jobs are protected and must remain intact."
+    },
+    "presented_for_approval": true,
+    "started": false,
+    "goal_created": false
+  },
+  {
+    "id": "plan-execution-no-fire",
+    "action": "no-fire"
+  },
+  {
+    "id": "explicit-author-request-fires",
+    "action": "author-contract",
+    "classification": "performance",
+    "presented_for_approval": true,
+    "started": false,
+    "goal_created": false,
+    "contract": {
+      "end_state": "The nightly ETL pipeline is trustworthy again: 14 consecutive scheduled runs (not manual re-triggers) complete successfully and their output passes an executable data-validation suite (row counts, freshness, schema conformance) against the production target. The existing schedule, retention policy, data contracts, and downstream consumer interfaces remain deliberately unchanged. Durable so another agent can pick it up: the contract, evidence locations, and run-window definition live in the objective itself, not in session memory.",
+      "proof": {
+        "primary": "14/14 consecutive scheduled runs exit successfully AND the output of each run passes the executable validation suite (row-count deltas within agreed bounds, freshness SLA met, schema validates) \u2014 an executable reference preferred over prose criteria; if no validation suite exists, creating one is the first in-scope action.",
+        "integrity": "At least one run is observed under the original failure condition without recurrence, so the fix is not a quieter symptom; validation thresholds are unchanged or tightened relative to the pre-fix baseline; retry counts per run are recorded so failures masked by silent retries are visible.",
+        "provenance": "The 14-run window is read from the scheduler's own run log, not a hand-kept tally; fixes land as reviewed commits on the canonical ETL repository; validation executes against the production ETL target, not a copy."
+      },
+      "boundaries": "In scope: the ETL job's code, retry/lock/alerting logic, scheduling wrapper, and the validation harness. Out of scope and protected: output data schema and downstream contracts, the run schedule, retention windows, and upstream source systems.",
+      "loop": "Inspect recent failures for a shared root cause, apply the smallest in-scope fix that addresses it, verify against the full proof bundle, and repeat while a distinct failure or validation-miss mode remains.",
+      "stop_rule": "Complete only when every proof item \u2014 14/14 clean scheduled runs, passing validation, integrity checks, and provenance \u2014 is satisfied; difficulty, elapsed time, or partial streaks are not completion. Stop for user authority if the root cause implicates upstream sources, shared infrastructure, or requires changing schema/downstream contracts. Use blocked only under the runtime's real threshold (e.g. the scheduler cannot produce a verifiable run log). The user may interrupt, redirect, pause, or cancel at any time."
+    },
+    "goal_control": {
+      "authorized_priority": "Restored operator trust in the nightly ETL: correct, complete, on-time data that downstream consumers can rely on \u2014 inferred from 'trustworthy again', requires approval.",
+      "success_proxy": "Consecutive clean scheduled runs plus passing executable data-validation checks, read from the scheduler and validation logs.",
+      "proxy_failure": "Runs go green while the data is silently wrong or partial \u2014 errors swallowed, failing steps skipped or hand-retried, or validation thresholds loosened \u2014 so the proxy improves while trustworthiness worsens.",
+      "acceptable_cost": "May modify ETL job code, retry/alerting logic, and the validation harness, and spend runtime on re-runs and validation; must preserve schemas, schedules, retention, downstream interfaces, and upstream systems \u2014 inferred, requires approval."
+    },
+    "notes": "Explicit 'write a goal for' invokes the skill; every field beyond the rough outcome is inferred, so this is a draft presented for approval \u2014 drafting and activation are separate state changes, and no start intent or approval exists yet. No token budget: none was requested and budgets are opt-in."
+  },
+  {
+    "id": "proxy-metric-separation",
+    "action": "author-contract",
+    "contract": {
+      "end_state": "Customers can reliably complete purchases through the checkout flow: end-to-end checkout succeeds for real customers, checkout-attributed purchase completion holds at or above its normal baseline over an agreed observation window, and the dashboard checkout error rate stays at or below its normal threshold as the monitoring signal. Pricing, payment behavior, and order data outside the checkout fix remain deliberately unchanged. (Observation window, baseline, and threshold are inferred, not quoted, and need operator approval.)",
+      "stop_rule": "Complete only when every layer of the proof bundle is satisfied within the authorized cost of two engineer-days. Stop for user authority if the two-engineer-day cap would be exceeded, if the root cause implicates systems outside the checkout flow, or if any fix would trade purchase completion against the error-rate signal. An exhausted budget, difficulty, or elapsed time is not proof of completion or blockage. The user may interrupt, redirect, pause, or cancel at any time.",
+      "proof": {
+        "primary": "Direct evidence that purchases complete: successful end-to-end checkout transactions through the full purchase path, and purchase-completion counts from order records at or above baseline over the observation window (inferred as the most direct available evidence; an executable end-to-end checkout test that currently fails and must pass is preferred if one exists or is cheap to create).",
+        "integrity": "The dashboard error rate is at or below threshold with error logging verified intact \u2014 no suppressed, reclassified, or silently swallowed errors \u2014 and completion counts are cross-checked against actual order records so the error-rate proxy cannot improve while purchases worsen.",
+        "provenance": "Metrics are read from the production checkout system's own dashboard and order store for the intended storefront, not hand-kept tallies, and any code changes land as reviewed commits on the canonical checkout repository (inferred)."
+      }
+    },
+    "goal_control": {
+      "authorized_priority": "Customers successfully completing purchases through checkout (operator-stated: 'what I actually care about is customers completing purchases').",
+      "success_proxy": "The dashboard checkout error rate (operator-designated: 'the dashboard error rate is just how we will watch it').",
+      "proxy_failure": "The error rate can fall while purchases worsen \u2014 e.g., errors are suppressed or downgraded in logging, checkout fails silently before an error is emitted, or a failing step is removed so errors vanish while customers abandon their carts.",
+      "acceptable_cost": "Up to two engineer-days of effort (operator-stated cap); protected state: purchase completion must not degrade, and pricing, payment behavior, and order data must remain intact."
+    },
+    "presented_for_approval": true,
+    "started": false,
+    "goal_created": false
+  },
+  {
+    "id": "define-done-fires",
+    "action": "author-contract",
+    "presented_for_approval": true,
+    "started": false,
+    "contract": {
+      "end_state": "Every importer run accounts for every input row: rows are either loaded or explicitly rejected with a recorded reason visible to the operator, so that input row count equals loaded count plus reported-rejected count on every run, with zero silently dropped rows. Existing correct handling of valid rows, the import schema, and downstream data contracts remain deliberately unchanged.",
+      "stop_rule": "Complete only when the full proof bundle is satisfied: the regression test passes, the reproduced silent-drop condition is observed to be reported rather than swallowed, and the verification run executes the canonical importer path. Stop for user authority if the fix would require changing the import schema, the upstream data source, or downstream consumers' contract. Difficulty, time spent, or partial accounting are not completion. The user may interrupt, redirect, pause, or cancel at any time.",
+      "proof": {
+        "primary": "A currently-failing regression test \u2014 a fixture containing rows known to trigger the silent drop \u2014 passes by asserting input row count equals loaded rows plus explicitly-reported rejected rows, and a re-run of a previously affected import shows zero unaccounted rows; the executable test is the primary oracle rather than prose criteria.",
+        "integrity": "Row accounting is computed by comparing the raw input file against the importer's emitted output and reject records, not the importer's own internal counters alone; the original silent-failure condition is deliberately reproduced and observed to surface as an explicit reported rejection, so the fix is verified as visible reporting rather than a quieter symptom.",
+        "provenance": "The fix lands as a reviewed change set on the canonical importer code path, and the verifying run executes the installed importer against the intended real data source and environment \u2014 not a patched local copy or synthetic-only path."
+      }
+    },
+    "goal_control": {
+      "authorized_priority": "Import data integrity: no input row is ever lost without an explicit, operator-visible account of why it was not loaded.",
+      "success_proxy": "Per-run row accounting (input == loaded + reported-rejected) plus the passing regression test on the drop-triggering fixture.",
+      "proxy_failure": "Counts can balance while the priority worsens: rows could be loaded with corrupted or defaulted values, or the importer could start rejecting rows it previously loaded correctly \u2014 the accounting proxy improves while actual data integrity degrades.",
+      "acceptable_cost": "Modest import-runtime increase and newly visible rejection errors requiring triage are acceptable; protected state is the existing correct row handling, the import schema, and downstream consumers' data contract, none of which may be traded away to make counts balance."
+    }
+  },
+  {
+    "id": "approved-start-fires",
+    "action": "start-goal",
+    "started": true,
+    "contract": {
+      "end_state": "Zero unexplained failures of the nightly backup job over 14 consecutive scheduled runs for the backup target, with the existing backup schedule and retention policy preserved.",
+      "stop_rule": "Complete only when all 14 consecutive scheduled runs and the integrity check are satisfied. Stop for user authority if the root cause implicates shared infrastructure outside the job itself. Use blocked only if the scheduler cannot produce a verifiable log. The user may interrupt, redirect, pause, or cancel at any time.",
+      "proof": {
+        "primary": "14/14 consecutive scheduled runs (not manual re-triggers) complete with exit code 0 and a written manifest matching source file count and size.",
+        "integrity": "At least one run is observed under the original failure condition (e.g. concurrent snapshot load) without recurrence, so the fix is not merely a quieter symptom.",
+        "provenance": "The fix lands as a reviewed commit on the canonical backup repo, and the 14-run window is read from the job's own scheduler log rather than a hand-kept tally."
+      }
+    },
+    "goal_control": {
+      "authorized_priority": "Reliable nightly backups \u2014 restorable backup data actually produced on every scheduled run.",
+      "success_proxy": "Consecutive clean scheduled runs with exit code 0 and manifests matching source count/size, read from the scheduler log.",
+      "proxy_failure": "Runs can exit 0 while capturing incomplete data, or failures can be masked by manual re-triggers so the log looks clean while the underlying flake persists.",
+      "acceptable_cost": "The job's retry/lock logic and scheduling wrapper may be changed; the backup target, schedule, retention policy, and notification channel must remain intact."
+    }
+  },
+  {
+    "id": "no-primitive-returns-contract",
+    "action": "start-goal",
+    "contract": {
+      "end_state": "Every internal and external link across the docs tree resolves to a working, correct destination: each previously broken link is repaired, redirected to a durable equivalent, or deliberately retired with its surrounding text updated, and the docs' content, structure, and documented meaning otherwise remain unchanged.",
+      "stop_rule": "Complete only when a fresh full re-crawl of the docs reports zero qualifying broken links and every proof layer is satisfied; do not declare complete on difficulty, elapsed time, or a shrinking count alone. Stop for user authority if a repair would alter documented meaning or require removing content rather than fixing a link. The user may interrupt, redirect, pause, or cancel at any time.",
+      "proof": {
+        "primary": "A machine-generated link-check run over the entire canonical docs tree completes with zero broken links, with the checker's own report as the evidence of the clean state.",
+        "integrity": "A sample of repaired links is independently fetched to confirm the destinations carry the referenced content; the checker's exclusion/ignore list is diffed against its pre-goal state to show failures were not hidden, and the final crawl runs from a clean cache so stale results cannot mask breakage.",
+        "provenance": "All fixes land as commits on the canonical docs repository and branch, and the clean report is produced by the checker running against that exact change set \u2014 not a hand-kept tally or a run against a partial copy."
+      },
+      "queue": "Queue-shaped: the checker discovers qualifying broken links, each is fixed or escalated and recorded, fixes are re-verified, and the goal is exhausted only when a full re-crawl finds no qualifying items remaining."
+    },
+    "goal_control": {
+      "authorized_priority": "Readers can follow every docs link to a working, correct destination with no loss of documented information.",
+      "success_proxy": "The broken-link count reported by the link checker across the docs tree, trending to and holding at zero on a full re-crawl.",
+      "proxy_failure": "The count can reach zero while the priority worsens \u2014 by deleting links or pages, adding paths to the checker's exclusion list, or retargeting links to generic landing pages that no longer carry the referenced content.",
+      "acceptable_cost": "Link targets and link markup may change and time may be spent crawling and verifying; surrounding prose, page structure, and documented meaning are protected, and no page or link may be removed merely to clear a failure."
+    },
+    "contract_returned": true,
+    "notes": "Explicit start intent on an already-approved objective activates the goal path; Claude Code exposes no persistent-goal primitive, so per the skill's host-adapter rule the approved contract is returned verbatim without pretending a persistent goal was started. No unfinished goal existed to inspect and no token budget was requested, so none is set."
+  },
+  {
+    "id": "outcome-unchosen-blocking-question",
+    "action": "ask-blocking-question",
+    "question": "The auth revamp has two materially different target outcomes still open and I can't author a completion contract until one is chosen: should the goal target adopting OIDC wholesale, or hardening the current stack in place?",
+    "options": [
+      "adopt-oidc",
+      "patch-current-stack"
+    ]
+  },
+  {
+    "id": "scheduled-reminder-no-fire",
+    "action": "no-fire"
+  },
+  {
+    "id": "long-task-alone-no-fire",
+    "action": "no-fire"
+  },
+  {
+    "id": "definition-of-done-template-no-fire",
+    "action": "no-fire"
+  },
+  {
+    "id": "colloquial-goal-wording-no-fire",
+    "action": "no-fire"
+  },
+  {
+    "id": "existing-goal-not-replaced",
+    "action": "start-goal",
+    "existing_goal_inspected": true,
+    "contract": {
+      "end_state": "Every in-scope dependency is upgraded to its target version, the project builds and its full test suite passes on the upgraded tree, no qualifying outdated dependency remains in the sweep queue, and unrelated code, configuration, and behavior are deliberately unchanged.",
+      "proof": {
+        "primary": "The committed manifest and lockfile show each in-scope dependency at its target version and the full test suite passes on a clean install of the upgraded tree.",
+        "integrity": "Tests execute against the updated lockfile from a clean environment, and any skipped, pinned, or newly failing test is accounted for, so a green result cannot come from weakened or bypassed checks.",
+        "provenance": "Upgrades land as reviewed commits on the canonical repository branch, and version and test evidence is read from the committed lockfile and the CI run's own log rather than a hand-kept tally."
+      },
+      "stop_rule": "Complete only when the full proof bundle is satisfied and no qualifying dependency remains in the queue; stop for user authority if an upgrade requires a breaking API migration or touches protected state outside the sweep's boundaries; difficulty, time, or a nearly exhausted queue are not completion; the user may interrupt, redirect, pause, or cancel at any time."
+    },
+    "goal_control": {
+      "authorized_priority": "A current, secure dependency tree that preserves existing application behavior.",
+      "success_proxy": "The count of in-scope dependencies at their target versions with the test suite green.",
+      "proxy_failure": "Version numbers can advance while tests are skipped, pinned, or behavior silently regresses, so the upgrade count improves while stability and correctness worsen.",
+      "acceptable_cost": "The manifest, lockfile, and minimal compatibility shims directly required by upgrades may change; application behavior, unrelated code, release configuration, and out-of-scope services must remain intact."
+    }
+  },
+  {
+    "id": "pause-honored-mid-start",
+    "action": "honor-interrupt",
+    "halted": true
+  }
+]

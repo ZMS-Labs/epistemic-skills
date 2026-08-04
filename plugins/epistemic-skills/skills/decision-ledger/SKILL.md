@@ -53,6 +53,29 @@ it.
 When unsure, identify the future consumer and inspect the artifact it would
 read. Do not default to logging merely because uncertainty exists.
 
+**Second trigger — outcome arrival (first-class, promoted 2026-08-04 by the
+creation-gate revisit).** Fire also when **a ledgered decision's outcome has
+just become observable**: the prediction the entry carried can now be compared
+against what actually happened. The method for this trigger is the
+[Outcome reviews](#outcome-reviews--the-anti-hindsight-boundary) section — the
+original prediction and the observed result recorded as separate untouched
+facts, lessons gated behind operator approval. This trigger typically fires in
+a *different session* than the decision did; continuity-verify's re-anchoring
+pass and a work batch's completion/verification stage are its usual carriers.
+
+**Third trigger — resumption (the resume mode, pre-arc; consolidated from
+continuity-verify, v4.0.0).** When the next action depends on a compaction
+summary, handoff note, or remembered prior-session state, the ledger's READ
+side fires **before** routine-path classification and before any resumed
+work: every load-bearing remembered claim is re-anchored to a durable
+artifact (this ledger's entries first, then files, git state, receipts) or
+stamped `(UNVERIFIED)`; an unverifiable approval escalates, never
+authorizes. The full method is
+[`reference/mode-resume.md`](reference/mode-resume.md) — its state digest
+feeds the router, and its double-fire order with reconnaissance is
+resume mode first, then recon for unfamiliar territory. The mode name
+continuity-verify survives for this trigger.
+
 ## No-op gate
 
 Create no ledger artifact when any of these holds:
@@ -119,7 +142,11 @@ validating synthetic examples beside it):
 
 ### 3. Write to the store
 
-Use the narrowest durable substrate the named consumer already reads:
+Use the narrowest durable substrate the named consumer already reads.
+This sink order is also the write path other disciplines borrow —
+open-questions defers declined/unanswered interview questions (with their
+best-guess defaults) directly into these sinks, and such entries are
+consumed under the same contract as native ones:
 
 1. repo-local `.ledger/entries.jsonl` when the repository has adopted it;
 2. a configured harness task/memory store via LOCAL.md; or
@@ -137,6 +164,18 @@ that repository's substrate.
 ## Store discipline
 
 - The store is **single-writer-or-locked append**.
+- **Concurrent appenders merge by union, then re-validate.** Two branches
+  that each appended entries produce a textual conflict at the store's
+  tail; the only sanctioned resolution is the append-only union — every
+  side's entries kept verbatim, none rewritten — followed by a mandatory
+  pre-merge run of the store validator
+  (`reference/validate_examples.py`) over the unioned file, so a
+  two-head supersession chain or duplicate id created by merge ordering
+  is caught before the merge completes, not after it lands. If
+  concurrent ledger-appending branches become frequent, escalate to a
+  repository-settings guard (require-branches-up-to-date or a merge
+  queue scoped to `.ledger/**`) rather than relying on per-merge
+  discipline.
 - `revisit_when` doubles as the GC horizon, with periodic compaction of fully
   superseded chains.
 - Session-only names the recovery gap: entries held only in session state die

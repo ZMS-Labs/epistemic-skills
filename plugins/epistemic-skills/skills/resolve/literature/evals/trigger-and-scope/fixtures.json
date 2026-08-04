@@ -1,0 +1,102 @@
+[
+  {
+    "id": "research-says-premise-fires",
+    "scenario": "A rollout decision on the team's compressed 4-day schedule is about to be finalized; its sole stated justification is 'studies show output rises when the week is compressed.' No paper has been named, and the decision memo goes out today. Consensus, Scite (authenticated — the collections canary passed), and Zotero are all live in this harness.",
+    "trigger": "implicit",
+    "expected_action": "run-evidence"
+  },
+  {
+    "id": "imminent-connector-call-fires",
+    "scenario": "A drafting task needs the abstract of one known DOI, and a Scite search call is already composed and one step from being sent. The evidence-research skill is not active in this session. All three scholarly layers are live and authenticated.",
+    "trigger": "auto",
+    "expected_action": "precall-gate"
+  },
+  {
+    "id": "explicit-lit-review-fires",
+    "scenario": "Operator says: run a literature review on remote-work productivity effects to back the Q4 staffing memo — decision support, not a formal systematic review. Consensus, Scite (authenticated — the collections canary passed), and Zotero are all live in this harness.",
+    "trigger": "explicit",
+    "expected_action": "run-evidence"
+  },
+  {
+    "id": "citation-verification-fires",
+    "scenario": "A draft whitepaper cites three external journal papers as its load-bearing empirical basis; the operator asks for those citations to be verified against the scholarly record before the draft ships. Consensus, Scite (authenticated — the collections canary passed), and Zotero are all live in this harness.",
+    "trigger": "explicit",
+    "expected_action": "run-evidence"
+  },
+  {
+    "id": "design-choice-no-scholarly-premise-no-fire",
+    "scenario": "Two internal pagination designs are being compared; a teammate asks 'what's the evidence for cursor-based here?' The evidence on the table is the org's own load benchmarks and the existing codebase conventions — no claim about the published literature appears anywhere in the thread.",
+    "trigger": "none",
+    "expected_action": "no-fire"
+  },
+  {
+    "id": "own-code-claim-no-fire",
+    "scenario": "A PR description claims the repo's retry helper implements exponential backoff with jitter; a reviewer asks for that claim to be verified with supporting evidence. The helper's source and tests are in this repo, and the claim is entirely about the repo's own code.",
+    "trigger": "none",
+    "expected_action": "no-fire"
+  },
+  {
+    "id": "casual-paper-mention-no-fire",
+    "scenario": "A design-doc footnote links a blog post that name-drops a 2019 attention-mechanisms paper as background color. Nothing in the doc's decisions rests on the paper, and nobody has asked anything about it.",
+    "trigger": "none",
+    "expected_action": "no-fire"
+  },
+  {
+    "id": "news-web-search-no-fire",
+    "scenario": "The operator asks what is being said about the vendor's outage this week — press coverage and the vendor's own status pages — phrased as 'do some research and find out what's out there on this.' No scholarly claim is anywhere in the request.",
+    "trigger": "none",
+    "expected_action": "no-fire"
+  },
+  {
+    "id": "trusted-internal-doc-no-fire",
+    "scenario": "The task is to confirm the rollback steps in the org's own deployment runbook — a single internal document the org already holds and trusts — before tonight's release. The request is phrased 'verify this against the source.'",
+    "trigger": "none",
+    "expected_action": "no-fire"
+  },
+  {
+    "id": "fuzzy-recon-no-fire",
+    "scenario": "A vague request has landed — 'make onboarding better' — and the next step named is a pre-work pass to surface hidden assumptions and open questions before any work is scoped. One surfaced question may later need literature-grade backing, but none has been named yet.",
+    "trigger": "none",
+    "expected_action": "no-fire"
+  },
+  {
+    "id": "verdict-requested-matrix-declined",
+    "scenario": "A frozen migration proposal is entering adversarial review; the reviewer says: assemble the scholarly record and then give me the GO or the NO-GO. The evidence pass is running now, and Consensus, Scite (authenticated), and Zotero are all live in this harness.",
+    "trigger": "state",
+    "expected_action": "evidence-gate"
+  },
+  {
+    "id": "retracted-paper-excluded",
+    "scenario": "A standard-mode pass on stimulant effects on vigilance is mid-run; the notice check on one result — 10.5555/vigil.2014.881 — returns RETRACTED, with the retraction notice attached. The two other results, 10.5555/vigil.2018.112 and 10.5555/vigil.2021.407, carry no notices and favorable reception. Consensus, Scite (authenticated), and Zotero are all live in this harness.",
+    "trigger": "state",
+    "expected_action": "run-evidence",
+    "result_dois": [
+      "10.5555/vigil.2014.881",
+      "10.5555/vigil.2018.112",
+      "10.5555/vigil.2021.407"
+    ],
+    "retracted_dois": [
+      "10.5555/vigil.2014.881"
+    ]
+  },
+  {
+    "id": "contrasting-heavy-disputed",
+    "scenario": "A deep-mode pass is assembling its synthesis; the reception pull on the load-bearing sleep-restriction paper 10.5555/sleep.2016.204 shows 19 contrasting versus 3 supporting citation statements, and the contrasting contexts read as replication failures, not methodological quibbles. A second result, 10.5555/sleep.2020.583, shows unremarkable favorable reception. Consensus, Scite (authenticated), and Zotero are all live in this harness.",
+    "trigger": "state",
+    "expected_action": "run-evidence",
+    "result_dois": [
+      "10.5555/sleep.2016.204",
+      "10.5555/sleep.2020.583"
+    ],
+    "contested_dois": [
+      "10.5555/sleep.2016.204"
+    ]
+  },
+  {
+    "id": "reception-live-not-memory",
+    "scenario": "A quick-mode pass touches a DOI the org library already holds — 10.5555/focus.2017.099 — and a Zotero note dated three weeks ago records Scite tallies pulled in a previous run. The current run's reception step is about to start, and the live Scite connection is authenticated and available right now.",
+    "trigger": "state",
+    "expected_action": "run-evidence",
+    "stale_reception_available": true
+  }
+]

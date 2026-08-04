@@ -1,0 +1,105 @@
+[
+  {
+    "id": "explicit-superior-model-fires",
+    "scenario": "Operator says: this architecture audit deserves the frontier model I use for deep review — hand the whole workload to it; I'll paste whatever you give me into its chat. The project lives in a GitHub repository, the branch is current with its reachable remote, pushing is authorized, and the operator confirms the chosen model can read the repository. The audit needs only repository read access and prose output, which the chosen model's surface provides. No secrets bear on the task.",
+    "trigger": "explicit",
+    "expected_action": "publish-packet"
+  },
+  {
+    "id": "copy-paste-review-handoff-fires",
+    "scenario": "Operator asks for something they can copy into a second, independent assistant so it can review the migration design before it lands. The repository is on GitHub with the design docs on the current branch, the remote is reachable and push-authorized, and the operator states the assistant has read access to the repository. The review is read-and-report work that fits the assistant's connector-only surface. Nothing private or credentialed is involved.",
+    "trigger": "explicit",
+    "expected_action": "publish-packet"
+  },
+  {
+    "id": "beyond-origin-surface-fires",
+    "scenario": "Mid-task it becomes clear the load test needs a GPU runner this harness does not have. The operator says get this to a process that can actually run it, and wants the whole exchange to leave a durable trace in the project itself, not in chat. The GitHub remote is reachable, pushing is authorized, and the operator names a runner harness with confirmed repository read access, a writable checkout, a runnable test shell, authenticated GitHub mutation actions, and isolated execution contexts.",
+    "trigger": "implicit",
+    "expected_action": "publish-packet"
+  },
+  {
+    "id": "capable-target-preflight-fires",
+    "scenario": "Operator says: send the failing-suite fix to the coding harness on the homelab — it has to check the code out, run the tests, and open the pull request itself. The GitHub remote is reachable and push-authorized. The named harness demonstrably holds a writable checkout, a runnable test shell, authenticated GitHub mutation actions, and isolated execution contexts, and its repository access is confirmed. No secrets are needed.",
+    "trigger": "explicit",
+    "expected_action": "publish-packet",
+    "required_capabilities": [
+      "writable-checkout",
+      "test-shell",
+      "github-mutation",
+      "isolated-context"
+    ]
+  },
+  {
+    "id": "in-session-subagent-no-fire",
+    "scenario": "Operator says: hand the lint cleanup off to a subagent while you keep working on the parser. The subagent runs inside this same session with the same harness and tools and reports back into this conversation; the operator asks for nothing to be recorded in the repository about the exchange.",
+    "trigger": "none",
+    "expected_action": "no-fire"
+  },
+  {
+    "id": "self-handoff-local-task-no-fire",
+    "scenario": "Operator says: I'm handing this one off to you — rename the config keys across the tree and update the docs to match. The task is bounded, everything it needs is in the working tree, and the operator expects the work done here, in this session, by this agent.",
+    "trigger": "none",
+    "expected_action": "no-fire"
+  },
+  {
+    "id": "colleague-agent-question-no-fire",
+    "scenario": "A colleague agent runs in the same multi-agent workspace and shares the live session context. The operator says: ask it whether the scheduler change already landed on its side. One short question, one short answer, no work product changes hands, and nothing is requested for the repository.",
+    "trigger": "none",
+    "expected_action": "no-fire"
+  },
+  {
+    "id": "inbound-target-work-no-fire",
+    "scenario": "The operator pastes a short pointer from another team: read and follow the HANDOFF.md at a pinned commit of their repository, and return the response contract defined there. This session is the receiving end; the operator wants the described work performed here.",
+    "trigger": "none",
+    "expected_action": "no-fire"
+  },
+  {
+    "id": "packet-before-prompt-state",
+    "scenario": "A handoff for the index-rebuild workload is mid-flight: docs/outsource/index-rebuild/HANDOFF.md and relay/0001-origin.md are written and complete, the context-erasure test passes, the GitHub remote is reachable and push-authorized, and the named target's repository access is confirmed. The operator is waiting to be told what to paste.",
+    "trigger": "state",
+    "expected_action": "publish-packet"
+  },
+  {
+    "id": "pointer-not-paste-state",
+    "scenario": "The handoff for the schema-migration workload is committed and pushed and the resolved packet commit is in hand. A draft message to the target has been sketched that copies the entire HANDOFF.md body into the chat so the target has everything in one place. The operator asks for the final message to send. The target's repository access is confirmed.",
+    "trigger": "state",
+    "expected_action": "publish-packet"
+  },
+  {
+    "id": "relay-claim-verified-state",
+    "scenario": "The operator pastes the target's reply for the flaky-suite workload: status COMPLETE, summary says all tests pass, work_product names two commits it says are pushed. The origin has a clean checkout of the packet branch, the remote is reachable, and the claimed commits and the test suite can be fetched and run locally.",
+    "trigger": "state",
+    "expected_action": "verify-relay",
+    "relay_claims": [
+      "tests-pass",
+      "commits-pushed"
+    ]
+  },
+  {
+    "id": "unpushed-packet-blocked-state",
+    "scenario": "The HANDOFF.md for the cache-rework workload is written and looks complete, but it exists only in the local working tree: nothing is committed, the branch has never been pushed, and the network path to the Git remote is down until tomorrow. The operator says: just give me the thing to paste now.",
+    "trigger": "state",
+    "expected_action": "report-blocked",
+    "expected_blocker": "unpushed-packet"
+  },
+  {
+    "id": "readonly-target-preflight-blocked-state",
+    "scenario": "The operator's chosen target for the suite-repair workload is a chat assistant with a read-only GitHub connector: it can open files in the repository but demonstrably has no shell, no writable checkout, no branch/commit/push/pull-request actions, and no isolated execution context. The workload requires checking out the code, running the tests, and opening a pull request. The packet itself is already committed and pushed.",
+    "trigger": "state",
+    "expected_action": "report-blocked",
+    "expected_blocker": "target-capability",
+    "failed_capabilities": [
+      "writable-checkout",
+      "test-shell",
+      "github-mutation",
+      "isolated-context"
+    ]
+  },
+  {
+    "id": "hidden-chat-context-blocked-state",
+    "scenario": "The operator wants the pricing-model rework handed to their preferred external model. The decisive requirements live in a spreadsheet attached earlier in this chat and in a verbal constraint from a meeting; neither exists anywhere in the repository, the attachment can no longer be opened from this session, and its contents cannot be reconstructed from the conversation. The GitHub remote is reachable and push-authorized, and the target's repository access is confirmed.",
+    "trigger": "state",
+    "expected_action": "report-blocked",
+    "expected_blocker": "hidden-context"
+  }
+]

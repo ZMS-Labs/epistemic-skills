@@ -1,0 +1,38 @@
+{
+  "campaign": "four-arm-superiority-2026-08-04",
+  "design": "../campaign-design-2026-08-04.md",
+  "seed": 20260804,
+  "trials": {
+    "arms": 4,
+    "scenarios": 6,
+    "repeats": 3,
+    "total": 72
+  },
+  "label": "EXPLORATORY (minimum design size, per the design's power-honesty rule)",
+  "arms": {
+    "A": {
+      "file": "arms/A-baseline-empty.md",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "description": "baseline: no discipline text"
+    },
+    "B": {
+      "file": "arms/B-pre-integration-router.md",
+      "sha256": "e814845d9335ace34ce6d3e81eac994769a008cece380ba1241567fa7dc596a7",
+      "description": "pre-integration router SKILL.md at commit e1f605461bc2665f98069ff049f6ef629bd849c9 (parent of the #35 integration; no v2.8.0 tag exists)"
+    },
+    "C": {
+      "file": "arms/C-psychology-language.md",
+      "sha256": "b54f286871daec255829ba7e7d151d9181ba792ab4d6eaa6e2e4c21cab58f7d9",
+      "description": "psychology-language-only gloss, authored frozen for this campaign"
+    },
+    "D": {
+      "file": "arms/D-integrated-controls.md",
+      "sha256": "098a2bcde6ca631e279b3db7555691c15230c7c3baa2431da4d34c163a5dbb20",
+      "description": "current reference/epistemic-flexibility.md (the five controls)"
+    }
+  },
+  "shared_contract": {
+    "file": "arms/SHARED-trace-contract.md",
+    "sha256": "543d60b96142bf189b2b0773cb92026bc0ce1bb775948e99eca8f43df29ad283"
+  }
+}

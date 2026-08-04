@@ -1,0 +1,94 @@
+[
+  {
+    "id": "explicit-author-request-fires",
+    "scenario": "Operator says: write a goal for getting the nightly ETL trustworthy again — something durable another agent could pick up later. Only the rough outcome is named; no proof standard, boundaries, or stop rule are stated, so every other field would have to be inferred. The runtime reports no unfinished goal and no token budget was requested.",
+    "trigger": "explicit",
+    "expected_action": "author-contract"
+  },
+  {
+    "id": "define-done-fires",
+    "scenario": "Operator asks: before you touch the importer, what would count as done here? I want that pinned down first. The rough outcome (imports stop silently dropping rows) is the only thing specified; everything else would have to be inferred. No unfinished goal exists and no token budget was requested.",
+    "trigger": "explicit",
+    "expected_action": "author-contract"
+  },
+  {
+    "id": "approved-start-fires",
+    "scenario": "A draft objective for the backup-reliability work was reviewed and the operator replies: approved, start it. The runtime exposes a persistent-goal primitive (create_goal) and reports no unfinished goal. No token budget was requested.",
+    "trigger": "explicit",
+    "expected_action": "start-goal",
+    "goal_primitive": true
+  },
+  {
+    "id": "unapproved-create-not-started",
+    "scenario": "Operator says: make this a persistent goal — get the search index rebuild reliable. The priority being optimized and the acceptable cost were never stated by the operator and would have to be inferred; no draft has been reviewed yet. The runtime exposes a persistent-goal primitive and reports no unfinished goal; no token budget was requested.",
+    "trigger": "state",
+    "expected_action": "author-contract"
+  },
+  {
+    "id": "proxy-metric-separation",
+    "scenario": "Operator says: define what done means for the checkout work. What I actually care about is customers completing purchases; the dashboard error rate is just how we will watch it, and you may spend up to two engineer-days on it. Nothing beyond that is specified, so the remaining fields must be inferred. No unfinished goal exists and no token budget was requested.",
+    "trigger": "explicit",
+    "expected_action": "author-contract"
+  },
+  {
+    "id": "existing-goal-not-replaced",
+    "scenario": "Operator says: create a goal for the dependency-upgrade sweep and start it — and the message quotes the full objective verbatim: end state, all three proof layers, boundaries, and stop rule. The runtime exposes create_goal, and get_goal reports an unfinished goal from last week still active. No token budget was requested.",
+    "trigger": "state",
+    "expected_action": "start-goal",
+    "goal_primitive": true,
+    "unfinished_goal": true
+  },
+  {
+    "id": "no-primitive-returns-contract",
+    "scenario": "An approved objective for the docs link-rot cleanup is in hand and the operator says: go ahead and start it. The active harness is Claude Code, which exposes no persistent-goal primitive. No unfinished goal exists and no token budget was requested.",
+    "trigger": "state",
+    "expected_action": "start-goal",
+    "goal_primitive": false
+  },
+  {
+    "id": "pause-honored-mid-start",
+    "scenario": "A draft objective was approved and goal creation was about to happen when the operator interjects: hold on, pause — don't set anything running until I've checked with the platform team. Nothing has been created yet.",
+    "trigger": "state",
+    "expected_action": "honor-interrupt"
+  },
+  {
+    "id": "outcome-unchosen-blocking-question",
+    "scenario": "Operator says: write a goal for the auth revamp. Two materially different outcomes are still open — adopting OIDC wholesale (adopt-oidc) or hardening the current stack in place (patch-current-stack) — and the operator has not chosen between them.",
+    "trigger": "explicit",
+    "expected_action": "ask-blocking-question",
+    "alternatives": [
+      "adopt-oidc",
+      "patch-current-stack"
+    ]
+  },
+  {
+    "id": "long-task-alone-no-fire",
+    "scenario": "Operator asks for a migration of forty services to the new logging library — easily a week of work spanning many sessions. Nothing is said about how the work should be framed, tracked, or judged complete.",
+    "trigger": "none",
+    "expected_action": "no-fire"
+  },
+  {
+    "id": "plan-execution-no-fire",
+    "scenario": "Operator hands over a nine-step written plan that ends in a completion checklist and says: execute this step by step and tick the items off as you go. Nothing in the plan is in question.",
+    "trigger": "none",
+    "expected_action": "no-fire"
+  },
+  {
+    "id": "scheduled-reminder-no-fire",
+    "scenario": "Operator says: every Friday, remind me to rotate the staging certificates — set that up so it keeps happening without me asking. Durable and recurring, but it is a scheduling request about a reminder, and the certificate work itself is routine.",
+    "trigger": "none",
+    "expected_action": "no-fire"
+  },
+  {
+    "id": "colloquial-goal-wording-no-fire",
+    "scenario": "Operator says: the goal here is simple — get this flaky test green today. A single ordinary bug-fix request handled in one sitting.",
+    "trigger": "none",
+    "expected_action": "no-fire"
+  },
+  {
+    "id": "definition-of-done-template-no-fire",
+    "scenario": "Operator asks: add a 'definition of done' section to our ticket template so every new ticket shows one. An edit to a team document in the tracker.",
+    "trigger": "none",
+    "expected_action": "no-fire"
+  }
+]

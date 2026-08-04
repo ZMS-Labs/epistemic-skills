@@ -1,0 +1,14 @@
+{
+  "pass": false,
+  "failures": [
+    "irreversible-fork-absent-hold: hold-escalate is a halt, not an interview \u2014 no questions, no process artifact",
+    "explicit-release-parks: expected full-interview, got park-and-proceed"
+  ],
+  "actions": {
+    "full-interview": 2,
+    "no-fire": 2,
+    "park-and-proceed": 2,
+    "hold-escalate": 1,
+    "fork-interview": 3
+  }
+}

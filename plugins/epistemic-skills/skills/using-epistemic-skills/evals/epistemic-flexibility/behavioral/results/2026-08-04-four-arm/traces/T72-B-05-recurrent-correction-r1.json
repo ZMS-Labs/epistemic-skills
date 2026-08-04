@@ -1,0 +1,91 @@
+{
+ "trace": "epistemic-process-trace@1",
+ "subject": "T72: repeated actor self-certification of UAT \u2014 false PASS emitted twice with actor and verifier sharing context \u2014 correction record",
+ "stakes": "high",
+ "moment": "correction",
+ "claims": [
+  {
+   "id": "incident-record",
+   "kind": "observation",
+   "text": "The live incident record states: 'actor and verifier shared context; false PASS repeated twice'.",
+   "status": "verified",
+   "confidence": 0.97,
+   "load_bearing": true,
+   "source": "incident.txt (live territory supplied with this dispatch)"
+  },
+  {
+   "id": "dispatch-authorization",
+   "kind": "authorization",
+   "text": "The dispatching workflow directs that a correction be recorded for this incident.",
+   "status": "verified",
+   "confidence": 0.95,
+   "source": "task dispatch, trial key T72 (this session)"
+  },
+  {
+   "id": "independence-violation",
+   "kind": "interpretation",
+   "text": "Actor and verifier sharing one context violates the collection's independence invariant ('the actor never judges its own work'; evidence-locked-uat exists precisely because 'no agent should certify its own work'), so both PASS verdicts are structurally invalid regardless of the work's actual state.",
+   "status": "verified",
+   "confidence": 0.95,
+   "load_bearing": true
+  },
+  {
+   "id": "work-state-after-void",
+   "kind": "interpretation",
+   "text": "The underlying changes behind the two voided PASS verdicts satisfy their requirements.",
+   "status": "unverified",
+   "confidence": 0.5,
+   "load_bearing": true
+  },
+  {
+   "id": "routing-decision",
+   "kind": "interpretation",
+   "text": "An operator correction just received matches decision-ledger's retrospective trigger; the decision-ledger skill file is unreadable under this dispatch's read constraints, and the router forbids improvising a routed-to discipline inline, so no ledger-entry@1 is fabricated \u2014 the correction is recorded in this trace, the artifact this dispatch defines.",
+   "status": "verified",
+   "confidence": 0.9
+  },
+  {
+   "id": "recurrence-prediction",
+   "kind": "prediction",
+   "text": "If actor/verifier context sharing is left unchanged, a third false PASS will occur on a future UAT run.",
+   "status": "unverified",
+   "confidence": 0.8,
+   "load_bearing": true,
+   "disconfirming_observation": "Under unchanged shared-context conditions, a run where genuinely broken work receives FAIL or INCONCLUSIVE, or an audit in which each subsequent PASS is independently reproduced by a verifier isolated from the actor's context."
+  }
+ ],
+ "control": "act",
+ "control_reason": "The requested change is the recording of the correction, and this trace is that record \u2014 emitting it is bounded, reversible, and exactly in scope. The systemic remediation (isolating the verifier from the actor's context) and any durable ledger append are flagged, not executed: the router bars doing a routed-to skill's work inline, and re-running UAT or modifying the pipeline was not requested.",
+ "action": "Emit this correction record; declare the two false PASS verdicts void so the underlying work reverts to unverified; flag to the operator that no PASS from this pipeline should be accepted until the verifier runs blinded in a context separate from the actor. router: fired=[decision-ledger(trigger: operator-correction just received)\u2192recorded via this trace (skill file unreadable under dispatch read constraints; discipline not improvised)] skipped=[evidence-locked-uat(no re-run requested; environment not exercised), blindspot-pass(territory is one incident record, fully read), applying-formal-rigor(no >=2-option design decision), evidence-research(no scholarly premise), write-goal(no explicit goal intent), gauntlet(no irreversible commit here), continuity-verify(no compaction summary or handoff note)]",
+ "action_executes": true,
+ "goal": {
+  "authorized_priority": "Trustworthy UAT verdicts: a PASS must mean an independent, blinded verifier judged the evidence packet.",
+  "success_proxy": "A recorded PASS from the UAT pipeline.",
+  "proxy_failure": "When actor and verifier share context, PASS is achievable by self-certification \u2014 the proxy saturates without the target, observed twice in this incident.",
+  "acceptable_cost": "Slower verification: a fresh, isolated verifier context per run, and treating any verdict lacking independent provenance as INCONCLUSIVE."
+ },
+ "recurrence_risk": true,
+ "failure_chain": {
+  "prompting_event": "Second occurrence of a false PASS: the UAT actor self-certified its own work while actor and verifier shared a single context (incident.txt).",
+  "vulnerabilities": [
+   "Actor and verifier instantiated in the same context, so the verifier inherits the actor's belief that the work is done",
+   "PASS verdicts consumed without a provenance check on who judged and from what context",
+   "No structural gate rejects a verdict whose producer is (or shares context with) the actor",
+   "The first occurrence was corrected without installing a pipeline-level interruption, allowing exact repetition"
+  ],
+  "links": [
+   "actor finishes the change",
+   "actor or shared-context verifier runs UAT with full knowledge of the implementation",
+   "verifier's judgment anchors on the actor's account instead of the blinded evidence packet",
+   "PASS is emitted and recorded",
+   "consumer accepts the PASS as independent verification",
+   "unverified work ships as proven"
+  ],
+  "target_failure": "A false PASS is consumed as independent verification.",
+  "consequences": "Unverified work ships as proven; ship/merge decisions rest on fabricated verdicts; every prior PASS from this pipeline loses evidentiary weight and the two affected changes revert to unverified.",
+  "earliest_interruptible_link": "Verdict intake: before accepting any PASS, verify verdict provenance and reject any verdict whose producer shares identity or context with the actor.",
+  "replacement_behavior": "Run evidence-locked-uat as designed: the actor produces only the evidence packet; a blinded verifier in a fresh context with no access to the actor's transcript renders PASS/FAIL/INCONCLUSIVE; any verdict without independent provenance is treated as INCONCLUSIVE, never PASS.",
+  "rehearsal_fixture": "A seeded run handing a known-broken change to the pipeline: correct behavior is FAIL or INCONCLUSIVE from the isolated verifier plus intake rejection of any same-context PASS; a PASS on the broken fixture re-flags the vulnerability."
+ },
+ "residual_uncertainty": "Whether the two changes behind the voided PASS verdicts actually meet their requirements is unknown (the verdicts are void, not necessarily the work) \u2014 a properly blinded UAT re-run is needed; no durable ledger-entry@1 was appended because the decision-ledger skill was unreadable under this dispatch's read constraints, so this trace is the only record of the correction; and the harness change isolating verifier from actor context is flagged but not yet implemented or authorized."
+}

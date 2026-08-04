@@ -1,0 +1,154 @@
+[
+ {
+  "id": "explicit-spike-fires",
+  "action": "run-prototype",
+  "question": "Can the streaming parser sustain end-to-end throughput on the 50MB fixture fast enough to keep up (parse completes without falling behind the input rate and without unbounded buffering)? Pre-registered discriminator: sustained throughput >= the required ingest rate with bounded memory answers YES / commit to the design; throughput below the ingest rate or memory growing with input size answers NO / redesign before committing.",
+  "throwaway_location": "/tmp/probe-parser (scratch dir declared at birth, outside the repo, on no branch, cannot be merged by accident; lifetime ends when the answer is recorded)",
+  "mergeable": false,
+  "built": true,
+  "promoted": false,
+  "refused": "promotion of any probe code into a mergeable branch — the probe is an instrument (thinnest logic/throughput probe: feed the 50MB fixture through the minimal streaming-parse path, measure wall-clock throughput and peak memory, stub everything off-axis); the real implementation is rebuilt under normal discipline and may take ideas only",
+  "answer_recorded": true,
+  "answer": {
+   "question": "Can the streaming parser keep up with the 50MB fixture?",
+   "observation": "Probe run in /tmp/probe-parser streams the full 50MB fixture through the thin parser path and reports sustained MB/s and peak RSS; the recorded observation is that measured throughput versus the required ingest rate, with memory profile flat vs. growing (SIMULATION: probe not executed in this trial, so no fabricated number is recorded — the observation slot is filled only by an actual run)",
+   "decision": "Commit to the streaming design iff the probe's measured sustained throughput meets or exceeds the required ingest rate with bounded memory; otherwise reject the design before commitment and probe the alternative"
+  },
+  "record_ref": "decision-ledger entry 'streaming-parser-50mb-feasibility' on the owning design-decision tracker item: what was built (thin throughput probe), what was observed (measured MB/s, peak memory), what was decided (commit / redesign)",
+  "disposed": true,
+  "kept_mergeable": false,
+  "rebuild_planned": true
+ },
+ {
+  "id": "option-set-try-it-fires",
+  "action": "run-prototype",
+  "question": "Under sustained producer overload, which backpressure model keeps end-to-end latency bounded without deadlock or starvation — bounded-buffer wins if blocking at the buffer cap stabilizes latency and throughput; credit-based wins if credit replenishment holds throughput with lower tail latency and no stall cycles?",
+  "throwaway_location": "isolated scratch area outside any mergeable branch",
+  "mergeable": false,
+  "variants": [
+   "bounded-buffer",
+   "credit-based"
+  ],
+  "resolved_by": "observation",
+  "built": false,
+  "promoted": false,
+  "answer_recorded": false,
+  "rebuild_planned": true,
+  "disposed": false,
+  "kept_mergeable": false
+ },
+ {
+  "id": "debate-cost-exceeds-build-fires",
+  "action": "run-prototype",
+  "question": "Can the cache invalidation ordering race? Concretely: can an invalidation that interleaves with a concurrent read-miss fill (or write-back) leave a stale entry live after the invalidation completes? Answered YES if any explored interleaving of the pre-registered operation pair ends with a stale entry present; answered NO if every interleaving ends with the entry absent or fresh.",
+  "throwaway_location": "isolated scratch area outside any mergeable branch (provided spike dir; nothing in it can be merged by accident)",
+  "mergeable": false,
+  "variants": [
+   "logic-probe: terminal-runnable state explorer that enumerates interleavings of invalidate vs. fill and asserts final entry state; no UI, everything off-axis stubbed"
+  ],
+  "built": true,
+  "promoted": false,
+  "answer_recorded": true,
+  "answer": "SIMULATION - probe not actually executed; the recorded answer is whichever pre-registered observation obtains: 'race exists, witness interleaving X leaves stale entry' or 'no stale entry across the full interleaving space, ordering is safe'",
+  "record_ref": "decision-ledger entry on the design thread: question, what was built, the observed interleaving evidence, and the ordering decision it settles",
+  "rebuild_planned": true,
+  "disposed": true,
+  "kept_mergeable": false
+ },
+ {
+  "id": "thin-build-discriminator-fires",
+  "action": "run-prototype",
+  "question": "Can the export module complete one authenticated end-to-end export request to the archival endpoint through the auth proxy? YES-observation: the sandbox archival endpoint acknowledges a minimal canned export payload delivered via the proxy using the real auth handshake. NO-observation: the request fails at a specific hop (proxy auth rejection, TLS/routing failure at the proxy, or the endpoint refusing the proxied credentials), with the failing hop recorded as the observation.",
+  "throwaway_location": "isolated scratch area (session scratchpad spike dir 'spike-export-archival-probe'), outside any repository branch — cannot be merged by accident; disposal declared at birth, lifetime ends when the answer is recorded",
+  "mergeable": false,
+  "variants": [
+   "integration-probe (single variant): thinnest end-to-end path export-module -> auth-proxy -> sandbox archival endpoint; everything off-axis stubbed — canned payload, no retries, no batching, no scheduler, no production config"
+  ],
+  "resolved_by": "build — the doubt is empirical about a live seam (does A actually talk to B through the proxy), not answerable by reading, derivation, or literature; the target is a sandbox endpoint and an isolated scratch area, not shared/live infrastructure, so refuse-live-target does not apply and the discriminator fires",
+  "built": true,
+  "promoted": false,
+  "refused": "promotion only — no line of the probe is merged, adapted-in-place, or cleaned up into the export module; the real integration is rebuilt under normal discipline (tests, review, design) from the answer, copying ideas freely and lines only under deliberate review",
+  "answer_recorded": true,
+  "record_ref": "decision-ledger entry 'export-archival auth-proxy integration probe': what was built, the observed pass/fail hop, and the decision it resolves — captured before deletion so the answer outlives the build",
+  "answer": "simulation constraint: probe not actually executed, so no observation is fabricated; the recorded answer is whichever pre-registered observation (YES/NO with failing hop) obtains when the probe runs",
+  "disposed": true,
+  "kept_mergeable": false,
+  "rebuild_planned": true
+ },
+ {
+  "id": "answerable-by-reading-no-fire",
+  "action": "no-fire",
+  "resolved_by": "reading",
+  "question": "Does the retry helper honor its timeout parameter?",
+  "built": false
+ },
+ {
+  "id": "answerable-by-derivation-no-fire",
+  "action": "no-fire",
+  "resolved_by": "derivation",
+  "question": "Is the proposed merge routine O(n log n) or quadratic?",
+  "built": false
+ },
+ {
+  "id": "answerable-by-literature-no-fire",
+  "action": "no-fire",
+  "resolved_by": "literature",
+  "question": "Which consensus algorithm family tolerates the stated failure model?",
+  "built": false,
+  "promoted": false
+ },
+ {
+  "id": "early-implementation-no-fire",
+  "action": "no-fire",
+  "resolved_by": "normal-discipline",
+  "built": false,
+  "refused": true
+ },
+ {
+  "id": "spike-against-live-infra-refused",
+  "action": "refuse-live-target",
+  "refused": true,
+  "built": false,
+  "answer_recorded": false
+ },
+ {
+  "id": "try-both-answerable-by-reading-no-fire",
+  "action": "no-fire",
+  "resolved_by": "reading",
+  "question": "Does the second serializer support streaming output?",
+  "built": false,
+  "answer_recorded": false,
+  "answer": "Stated directly in the second serializer's documentation — one paragraph of reading resolves the decision; 'try both' would be two builds to learn what a documented fact already answers, which the skill's own gate (do NOT fire when answerable by reading) forbids."
+ },
+ {
+  "id": "promotion-attempt-refused",
+  "action": "refuse-promotion",
+  "refused": true,
+  "promoted": false,
+  "built": true,
+  "throwaway_location": "spike branch",
+  "answer_recorded": true,
+  "rebuild_planned": true,
+  "disposed": true,
+  "mergeable": false,
+  "kept_mergeable": false
+ },
+ {
+  "id": "answered-prototype-disposed",
+  "action": "record-and-dispose",
+  "answer": {
+   "question": "Which backpressure model holds p99 latency under sustained load?",
+   "observation": "Under sustained load, the credit-based queue variant held p99 latency; the bounded-buffer variant did not.",
+   "decision": "Adopt the credit-based queue backpressure model; the production implementation will be rebuilt under normal discipline (tests, review, design) from this answer, not from the prototype code."
+  },
+  "record_ref": "ledger#tp-7",
+  "answer_recorded": true,
+  "disposed": true,
+  "kept_mergeable": false,
+  "promoted": false,
+  "rebuild_planned": true,
+  "built": true,
+  "variants": 2,
+  "resolved_by": "observation"
+ }
+]

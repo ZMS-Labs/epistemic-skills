@@ -45,3 +45,9 @@ latency, tool calls, and user-correction burden.
 The committed fixtures are a smoke subset. Add real incidents before making a superiority
 claim. A release may say “protocol and fixture scaffold shipped”; it may not say “behaviorally
 superior” until the four-arm run exists.
+
+The valid campaign design (full schema in the pinned dispatch text, arm
+materialization pinned by content hash, preregistered paired analysis with a
+clean-control guard, telemetry incl. actual serving model) is committed at
+[`campaign-design-2026-08-04.md`](campaign-design-2026-08-04.md); issue #39
+stays open until a run under that design is committed.

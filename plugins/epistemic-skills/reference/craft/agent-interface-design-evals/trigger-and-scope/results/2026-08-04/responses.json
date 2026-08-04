@@ -1,0 +1,95 @@
+[
+ {
+  "id": "tool-schema-new-engage",
+  "action": "engage",
+  "encodes_in_structure": true,
+  "consumer_test": true,
+  "examples_added": 0
+ },
+ {
+  "id": "mcp-surface-new-engage",
+  "action": "engage",
+  "encodes_in_structure": true,
+  "consumer_test": true,
+  "examples_added": 0
+ },
+ {
+  "id": "structured-output-contract-engage",
+  "action": "engage",
+  "encodes_in_structure": true,
+  "consumer_test": true,
+  "examples_added": 0
+ },
+ {
+  "id": "subagent-dispatch-contract-engage",
+  "action": "engage",
+  "encodes_in_structure": true,
+  "consumer_test": true,
+  "examples_added": 0
+ },
+ {
+  "id": "agent-caller-cli-engage",
+  "action": "engage",
+  "encodes_in_structure": true,
+  "consumer_test": true,
+  "examples_added": 0
+ },
+ {
+  "id": "review-adds-tool-engage",
+  "action": "engage",
+  "encodes_in_structure": true,
+  "consumer_test": true,
+  "examples_added": 0
+ },
+ {
+  "id": "human-ui-no-fire",
+  "action": "no-fire"
+ },
+ {
+  "id": "human-docs-no-fire",
+  "action": "no-fire"
+ },
+ {
+  "id": "throwaway-script-no-fire",
+  "action": "no-fire"
+ },
+ {
+  "id": "prose-dispatch-brief-no-fire",
+  "action": "no-fire",
+  "routed_to": "write-goal/outsource"
+ },
+ {
+  "id": "inbound-context-audit-no-fire",
+  "action": "no-fire",
+  "routed_to": "context-audit"
+ },
+ {
+  "id": "human-caller-cli-no-fire",
+  "action": "no-fire"
+ },
+ {
+  "id": "cold-consumer-gate-fail",
+  "action": "consumer-gate",
+  "remedy": "structural-fix",
+  "fixed_parameter": "mode",
+  "transcript_kept": true
+ },
+ {
+  "id": "example-lint-three-examples",
+  "action": "example-lint",
+  "dispositions": {
+   "ex-batch-call": {
+    "outcome": "justified",
+    "audience": "weaker consumers that would hit the rate limit by issuing unbatched calls"
+   },
+   "ex-retry-flow": {
+    "outcome": "deleted",
+    "structural_fix": "rely on the structured error shape: the error enum already encodes retryability, so the machine-readable retryable reason (with corrective move) replaces the walked-through retry example"
+   },
+   "ex-dry-run": {
+    "outcome": "deleted",
+    "structural_fix": "the dry_run parameter's boolean type and endorsed default already fully specify the behavior; the typed field with its default is the specification"
+   }
+  }
+ }
+]
