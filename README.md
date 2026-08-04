@@ -73,7 +73,7 @@ The Wiki is unversioned navigation over versioned sources. If a handbook summary
 1. **Install one immutable copy.** Choose the native path for your harness under [Installation and compatibility](#installation-and-compatibility). Use the generic Agent Skills path only when no native plugin or extension exists.
 2. **Reload the harness or start a fresh task.** Trigger discovery and role registries are commonly session-bound.
 3. **Choose the entry point.** Start with the epistemic router when only this collection is active. If a workflow-skill layer is also active and a positive pairing exists, enter through Helix.
-4. **Verify the inventory and source.** Expect exactly the count your source ships: this tree (the unreleased v3.5.0 wave) ships eighteen; a v3.4.0 package or tagged checkout ships seventeen (v3.3.0 ships fourteen; v3.1.0/v3.2.0 ship twelve; the pinned `v3.0.0` tag ships eleven)—not two copies found through different install mechanisms.
+4. **Verify the inventory and source.** Expect exactly the count your source ships: this tree (the unreleased v4.0.0 wave) ships eighteen; a v3.4.0 package or tagged checkout ships seventeen (v3.3.0 ships fourteen; v3.1.0/v3.2.0 ship twelve; the pinned `v3.0.0` tag ships eleven)—not two copies found through different install mechanisms.
 5. **Let routine work leave.** A local, reversible, directly checkable, non-precedential task should finish with its bounded check and no process-only artifact.
 
 For a harness without a native package surface, the complete generic install is:

@@ -118,12 +118,15 @@ jobs:
         run: python .github/scripts/test_check_dco.py
       - name: Skill inventory contract
         run: python .github/scripts/check_skill_inventory.py
+      - name: Skill surface synchronization
+        run: python .github/scripts/sync_skill_surfaces.py --check
       - name: Compile new Python
         run: |
           python -m py_compile \
             .github/scripts/check_json_artifacts.py \
             .github/scripts/check_ledger_append_only.py \
             .github/scripts/check_skill_inventory.py \
+            .github/scripts/sync_skill_surfaces.py \
             plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/validate_trace.py \
             plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/run_tests.py \
             plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/audit_enforcement_language.py \

@@ -4,7 +4,9 @@
   "title": "Epistemic Skill Event Eligibility Map",
   "type": "object",
   "additionalProperties": false,
-  "required": ["skills"],
+  "required": [
+    "skills"
+  ],
   "properties": {
     "skills": {
       "type": "array",
