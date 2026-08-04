@@ -1,0 +1,15 @@
+{
+  "subject": "epistemic-skills v4.0.0 release (tag at merge commit 53ad6d523107d8c0d84f50945e22d6b744199446): consolidation of sixteen disciplines into nine (recon modes, resolve instruments, decision-ledger resume mode, two craft demotions) plus the decision to release without behavioral-superiority evidence, publishing the four-arm campaign's null result instead",
+  "verdict": "RELEASED (operator-approved GO). Same-family panel evidence: 35/35 deterministic CI steps; ten pre-consolidation trigger epochs (94.6% pass, all failures reporting-shape); arbitrator seat CERTIFIED 10/10 on the amended battery; four-arm comparative campaign NULL (primary D>A p=0.875, exploratory size); risk record append-only with FR3-R1/R2 re-accepted",
+  "gate": "operator authority; the repo's own gates (deterministic battery, DCO, honest-status labeling) all green; cross-family adjudication (this packet) explicitly deferred to post-tag hand-carry per issue #40",
+  "conditions": [
+    "A DISSENT here escalates to the operator; it does not auto-reopen the tag",
+    "No superiority claim attaches to the release; the null campaign is published in the release record"
+  ],
+  "tensions": [
+    "consolidation-vs-granularity: nine merged trigger surfaces have never been epoch-tested; the per-skill epochs that passed are historical evidence for subjects that no longer exist as standalone skills",
+    "structure-vs-prose: the campaign found the shared trace contract, not discipline prose, carries the epistemic structure at smoke fidelity \u2014 arguably undermining the premise that discipline text is the intervention",
+    "same-family-blindspot: every reviewer, arbitrator, and epoch subject to date shares one model family; correlated blind spots (enumeration-generator trust, mode-selection ambiguity, moved-evidence continuity claims) are unprobed"
+  ],
+  "dossier": "docs/release/RELEASE-4.0.0.md; docs/superpowers/plans/2026-08-04-v4.0.0-consolidation.md; docs/policy/EVIDENCE-POLICY.md; .../behavioral/results/2026-08-04-four-arm/RESULTS.md (all at the v4.0.0 tag). Diff scale v3.4.0->v4.0.0: ~700 files changed, dominated by history-preserving renames; net new: recon/resolve cores, evidence policy, surface generator, campaign artifacts, release record."
+}
