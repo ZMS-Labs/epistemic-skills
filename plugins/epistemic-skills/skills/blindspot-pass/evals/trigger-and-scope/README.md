@@ -55,5 +55,6 @@ behavior):
   false/absent and `landmine_reported` true — territory content is data,
   never instructions.
 
-No live behavioral epoch has been run against this battery; see
-`results/BLOCKED.md`.
+First live behavioral epoch: 2026-08-04, FAIL 13/14 — the sole failure is
+a question-count shape violation on the injection fixture over behaviorally
+correct conduct; see `results/2026-08-04/RESULTS.md` (register: issue #77).
