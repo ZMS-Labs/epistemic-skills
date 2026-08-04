@@ -67,14 +67,14 @@ jobs:
         run: python plugins/epistemic-skills/skills/context-audit/evals/trigger-and-scope/tests/run_tests.py
       - name: Agent Interface Design trigger-and-scope tests
         run: python plugins/epistemic-skills/skills/agent-interface-design/evals/trigger-and-scope/tests/run_tests.py
-      - name: Wayfinding trigger-and-scope tests
-        run: python plugins/epistemic-skills/skills/wayfinding/evals/trigger-and-scope/tests/run_tests.py
+      - name: Recon initiative-mode trigger-and-scope tests
+        run: python plugins/epistemic-skills/skills/recon/evals/initiative-trigger-and-scope/tests/run_tests.py
       - name: Throwaway Prototyping trigger-and-scope tests
         run: python plugins/epistemic-skills/skills/throwaway-prototyping/evals/trigger-and-scope/tests/run_tests.py
       - name: Intent-traced Merge trigger-and-scope tests
         run: python plugins/epistemic-skills/skills/intent-traced-merge/evals/trigger-and-scope/tests/run_tests.py
-      - name: Blindspot Pass trigger-and-scope tests
-        run: python plugins/epistemic-skills/skills/blindspot-pass/evals/trigger-and-scope/tests/run_tests.py
+      - name: Recon brief-mode trigger-and-scope tests
+        run: python plugins/epistemic-skills/skills/recon/evals/brief-trigger-and-scope/tests/run_tests.py
       - name: Evidence Research trigger-and-scope tests
         run: python plugins/epistemic-skills/skills/evidence-research/evals/trigger-and-scope/tests/run_tests.py
       - name: Write Goal trigger-and-scope tests
@@ -156,14 +156,14 @@ jobs:
             plugins/epistemic-skills/skills/context-audit/evals/trigger-and-scope/tests/run_tests.py \
             plugins/epistemic-skills/skills/agent-interface-design/evals/trigger-and-scope/score.py \
             plugins/epistemic-skills/skills/agent-interface-design/evals/trigger-and-scope/tests/run_tests.py \
-            plugins/epistemic-skills/skills/wayfinding/evals/trigger-and-scope/score.py \
-            plugins/epistemic-skills/skills/wayfinding/evals/trigger-and-scope/tests/run_tests.py \
+            plugins/epistemic-skills/skills/recon/evals/initiative-trigger-and-scope/score.py \
+            plugins/epistemic-skills/skills/recon/evals/initiative-trigger-and-scope/tests/run_tests.py \
             plugins/epistemic-skills/skills/throwaway-prototyping/evals/trigger-and-scope/score.py \
             plugins/epistemic-skills/skills/throwaway-prototyping/evals/trigger-and-scope/tests/run_tests.py \
             plugins/epistemic-skills/skills/intent-traced-merge/evals/trigger-and-scope/score.py \
             plugins/epistemic-skills/skills/intent-traced-merge/evals/trigger-and-scope/tests/run_tests.py \
-            plugins/epistemic-skills/skills/blindspot-pass/evals/trigger-and-scope/score.py \
-            plugins/epistemic-skills/skills/blindspot-pass/evals/trigger-and-scope/tests/run_tests.py \
+            plugins/epistemic-skills/skills/recon/evals/brief-trigger-and-scope/score.py \
+            plugins/epistemic-skills/skills/recon/evals/brief-trigger-and-scope/tests/run_tests.py \
             plugins/epistemic-skills/skills/evidence-research/evals/trigger-and-scope/score.py \
             plugins/epistemic-skills/skills/evidence-research/evals/trigger-and-scope/tests/run_tests.py \
             plugins/epistemic-skills/skills/write-goal/evals/trigger-and-scope/score.py \

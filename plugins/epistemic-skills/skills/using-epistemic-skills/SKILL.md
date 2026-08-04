@@ -1,11 +1,11 @@
 ---
 name: using-epistemic-skills
-description: Use when a task does not clear the routine-work fast path and might need more than one of blindspot-pass, applying-formal-rigor, evidence-research, write-goal, outsource, gauntlet, evidence-locked-uat, decision-ledger, continuity-verify, open-questions, context-audit, agent-interface-design, wayfinding, throwaway-prototyping, intent-traced-merge, or harvest-before-adopt; when choosing their order; when work should cross into another model, agent, or process; or when resuming from a summary or handoff. Do not substitute this router for the skill it selects. When a workflow-skill layer is also present, helix pairs the two collections.
+description: Use when a task does not clear the routine-work fast path and might need more than one of recon, applying-formal-rigor, evidence-research, write-goal, outsource, gauntlet, evidence-locked-uat, decision-ledger, continuity-verify, open-questions, context-audit, agent-interface-design, throwaway-prototyping, or intent-traced-merge; when choosing their order; when work should cross into another model, agent, or process; or when resuming from a summary or handoff. Do not substitute this router for the skill it selects. When a workflow-skill layer is also present, helix pairs the two collections.
 ---
 
 # Using Epistemic Skills — the router
 
-These sixteen disciplines are one system: **how an agent knows things** before, during, and after
+These fourteen disciplines are one system: **how an agent knows things** before, during, and after
 work. A **workflow-skill layer** (such as [superpowers](https://github.com/obra/superpowers)) —
 brainstorming, TDD, systematic-debugging, plan-writing, verification-before-completion — covers
 *how you do* the work. This collection is the *epistemics* layer underneath it: the disciplines that keep every claim tethered to
@@ -19,7 +19,7 @@ Before routing, apply the four-condition routine gate in
 [`reference/routine-fast-path.md`](reference/routine-fast-path.md): the task must be
 reversible, local, directly checkable, and non-precedential. Unfamiliar routine-looking
 territory gets a two-read micro-recon (the target artifact plus the nearest test/example), not
-a blindspot report by default.
+a full recon report by default.
 
 If the gate holds, proceed with the change and bounded check. **No discipline fires, no skip
 inventory is emitted, and no process-only artifact is created.** If either read exposes a
@@ -29,7 +29,7 @@ positive trigger, leave the routine path and route from the newly observed fact.
 routine condition—especially a precedential schema, protocol, security, or public-contract
 fork—do not use two reads to close it as `micro-recon`. Route from the positive facts already
 present. When the non-routine brief still depends on an unresolved repository convention,
-Blindspot Pass establishes the territory before formal rigor decides the fork.
+recon (brief mode) establishes the territory before formal rigor decides the fork.
 
 ## The one idea that makes them a system
 
@@ -38,7 +38,7 @@ job. That is exactly what lets them compose without stepping on each other:
 
 | Skill | Consumes | Produces (its boundary) | Hands to | Valid until | Artifact shape |
 |---|---|---|---|---|---|
-| **blindspot-pass** | a materially fuzzy request + the real territory, after routine micro-recon cannot close the uncertainty | a **rewritten, de-risked request** (never a change — it ends at *understanding*) | brainstorming / plans, or a gauntlet subject | `subject-revision-unchanged`; void at next-stage-start | 4-field stamp |
+| **recon** *(three modes: brief = the blindspot pass; initiative = wayfinding; candidate = harvest-before-adopt)* | a materially fuzzy or contradicted request after micro-recon; a large foggy effort; or an external project overlapping something you already built | mode brief: a **rewritten, de-risked request**; mode initiative: a **decision-dependency map + fog-free tickets**; mode candidate: a **harvest record with per-level spend decisions** — recon ends at understanding, never a change | brainstorming / plans / gauntlet subjects (brief); open-questions / resolve instruments / planning skills (initiative); throwaway probes, decision-ledger, gauntlet one-way doors (candidate) | `subject-revision-unchanged`; candidate rows valid while both compared revisions hold | 4-field stamp; initiative also a tracker map; candidate also a harvest record |
 | **applying-formal-rigor** | a bounded formal question, a proposed design needing correctness confirmation or reversal, or material alternatives that differ on measurable/theorem-governed properties | a bounded **focused inline derivation**, or a standard/high-assurance **`formal-rigor-record@2`** with relative P1-P9 coverage and an authority-bound synthesis outcome | the design you build, or a gauntlet dossier | focused: inline subject/model scope; record: `subject-revision-unchanged` on the named inputs | focused: no process artifact; standard/high: `formal-rigor-record@2` |
 | **evidence-research** | a claim that rests on "the research says…" | a **claim-evidence matrix + reception + holdings** (never a GO/NO-GO) | a design decision, or the gauntlet Step-0 evidence gate | `session-continuous` — reception `[V]`-grade this run only; snapshot dated | JSON `handoff-receipt@1` over the matrix |
 | **write-goal** | explicit user intent, de-risked context, and any evidence/design inputs | an **approved, evidence-bound completion contract**; optionally a started persistent goal | the runtime's goal executor, then independent verification | `subject-revision-unchanged` on intent/scope/environment | `handoff-receipt@1` when file-written, else 4-field stamp |
@@ -46,14 +46,12 @@ job. That is exactly what lets them compose without stepping on each other:
 | **gauntlet** | a **frozen** subject (a de-risked request, a derived verdict, or an evidence matrix) | a **computed GO / CONDITIONAL / NO-GO** + Conflict Ledger | the commit / merge decision | `freeze-window-open` | JSON `handoff-receipt@1` (+ run record) |
 | **evidence-locked-uat** | a finished change + its requirements | an **evidence packet + blinded verdict** (PASS / FAIL / INCONCLUSIVE) | the ship / merge decision | `environment-reachable` | JSON `handoff-receipt@1` over the packet |
 | **decision-ledger** *(retrospective trigger: fires on a moment that already happened — a consequential decision formed, or a ledgered decision's outcome just became observable)* | a consequential decision / assumption / correction not already durably and adequately recorded for its future consumer; or an observable outcome for a ledgered decision (outcome review — prediction and result as separate untouched facts) | an **append-only `ledger-entry@1` with provenance + `revisit_when`** — never a verdict; or an outcome-shaped entry under the anti-hindsight rule; or no new artifact when an existing durable artifact already satisfies the persistence contract | continuity-verify (fires **first** on resumption), gauntlet dossiers, write-goal, future sessions | `revisit_when`-governed / consumer re-anchored — no contract predicate claimed | `ledger-entry@1` (JSONL) or an existing durable decision artifact |
-| **continuity-verify** *(pre-arc resumption trigger: fires before the arc, and before any resumed-work skill)* | a compaction summary / handoff note + the live territory (files, git state, ledger entries, receipts) | a **state digest** — verified claims (anchored), contradicted claims (live value), `(UNVERIFIED)` stamps, first-class `accepted_unverified` records (acceptor + risk) — or a re-scoped task | this router (double-fire: continuity-verify **first**, then blindspot-pass for unfamiliar territory); resumed work proceeds only on verified or accepted-unverified state | void the moment the underlying state moves — re-fires at the next resumption trigger (`subject-revision-unchanged` on the re-anchored state) | state digest (prose, 4-field stamp) |
-| **open-questions** | blindspot-pass Questions section (when present); operator-named open decisions | an **emptied-or-parked question ledger** (its boundary) | the stage the interview gated | session-continuous | 4-field stamp |
+| **continuity-verify** *(pre-arc resumption trigger: fires before the arc, and before any resumed-work skill)* | a compaction summary / handoff note + the live territory (files, git state, ledger entries, receipts) | a **state digest** — verified claims (anchored), contradicted claims (live value), `(UNVERIFIED)` stamps, first-class `accepted_unverified` records (acceptor + risk) — or a re-scoped task | this router (double-fire: continuity-verify **first**, then recon for unfamiliar territory); resumed work proceeds only on verified or accepted-unverified state | void the moment the underlying state moves — re-fires at the next resumption trigger (`subject-revision-unchanged` on the re-anchored state) | state digest (prose, 4-field stamp) |
+| **open-questions** | recon (brief mode) Questions section (when present); operator-named open decisions | an **emptied-or-parked question ledger** (its boundary) | the stage the interview gated | session-continuous | 4-field stamp |
 | **context-audit** *(maintenance trigger: explicit request, detected cross-layer conflict, or model-generation upgrade)* | the assembled instruction context — every layer the harness loads, as one set | a **classified cut list as diff + conflict ledger + re-baseline watch note** (report-only until operator-gated, class-by-class apply) | the operator apply decision; decision-ledger for applied cuts; upstream sources of truth for generated-layer findings | `subject-revision-unchanged` on the audited layer hashes | report file carrying the 4-field stamp |
 | **agent-interface-design** | an interface another agent will consume (tool/function schema, MCP surface, structured-output or dispatch contract) being authored or modified | a **shipped interface + cold-consumer test evidence** — constraints carried by structure; examples only as labeled compatibility concessions | the consuming agent; evidence-locked-uat when the surface is operator-facing; gauntlet when it is high-blast-radius | `subject-revision-unchanged` on the schema | consumer-test transcript + 4-field stamp |
-| **wayfinding** | a large foggy effort whose path holds unresolved decisions; a backlog whose tickets encode unmade decisions | a **decision-dependency map + fog-free build tickets** with the three-fact handoff (never a build, never a decision) | frontier decisions to open-questions / formal-rigor / throwaway-prototyping; fog-free tickets to the workflow layer's planning skills | map current while no upstream decision reopens | tracker map artifact + 4-field stamp |
-| **throwaway-prototyping** | a live decision cheaper to resolve by building a disposable probe than by argument, derivation, or literature | a **recorded answer (question + observation + decision) with the build disposed** — never promoted code | decision-ledger holds the finding; gauntlet option-sets and wayfinding nodes consume the answer; the workflow layer rebuilds for real | answer durable; build gone | ledger/tracker entry + 4-field stamp |
+| **throwaway-prototyping** | a live decision cheaper to resolve by building a disposable probe than by argument, derivation, or literature | a **recorded answer (question + observation + decision) with the build disposed** — never promoted code | decision-ledger holds the finding; gauntlet option-sets and recon initiative nodes consume the answer; the workflow layer rebuilds for real | answer durable; build gone | ledger/tracker entry + 4-field stamp |
 | **intent-traced-merge** | a merge/rebase conflict with non-trivial hunks, or a merge commit lacking resolution provenance | a **merged result whose non-trivial hunks carry rulings (both origins cited) and whose both-origin checks pass** | ordinary review; decision-ledger for deliberately-dropped intents; the decision process for collisions that are open designs | until either parent's motivating check regresses | merge-commit/PR ruling record |
-| **harvest-before-adopt** | an external project overlaps something you already built or plan to build, and the question is adopt / replace / ignore | a **harvest record (level, item, pinned source, taken-deferred-rejected) + a per-level spend decision**; a capability partition only when the harvest could not answer it | throwaway-prototyping when the residue is a cheap reversible probe; gauntlet before any one-way door; decision-ledger for the spend decision | rows valid while both the candidate revision and the compared incumbent revision hold | harvest record + 4-field stamp |
 
 *Artifact shape pins the carrier: prose outputs carry a 4-field stamp (`subject.ref`,
 `subject.revision`, `valid_while`, `coverage_limits`; the producer is the emitting skill by
@@ -66,7 +64,7 @@ skill's consumption contract). An existing durable plan, ADR, issue, PR descript
 contract, or derivation may satisfy persistence without duplicating it into JSONL when it has
 resolvable provenance and a revisit condition.*
 
-"blindspot-pass ends at understanding," "evidence-research never renders a verdict,"
+"recon ends at understanding," "evidence-research never renders a verdict,"
 "the UAT actor never certifies its own work" — these boundaries are the interfaces. A skill
 that respected no boundary could not be handed off from or to.
 
@@ -113,7 +111,7 @@ resume (pre-arc): a compaction summary / handoff note ──▶ continuity-verif
    the arc below proceeds only on verified or explicitly-accepted-unverified state
 
         ┌─ recon ───────┐  ┌─ decide ─────────┐  ┌─ contract ─┐  ┌─ build ─┐  ┌─ gate ─┐  ┌─ prove ───────┐
-task ──▶│ blindspot-    │─▶│ formal-rigor +   │─▶│ write-goal │─▶│ workflow│─▶│gauntlet│─▶│ evidence-      │──▶ done
+task ──▶│ recon         │─▶│ formal-rigor +   │─▶│ write-goal │─▶│ workflow│─▶│gauntlet│─▶│ evidence-      │──▶ done
         │ pass          │  │ evidence-research│  │ if explicit│  │ layer   │  │if needed│ │ locked-uat     │
         └───────────────┘  └──────────────────┘  └────────────┘  └─────────┘  └────────┘  └────────────────┘
 
@@ -149,7 +147,7 @@ clarify (cross-cutting): open-questions walks an emptied-or-parked question ledg
 - **agent-interface-design** is *build-stage* — it fires inside the build whenever the artifact
   under construction is an interface another agent will consume, and hands its consumer-test
   evidence to the gate/prove stages like any other build output.
-- **wayfinding** is *pre-arc at initiative scale* — it sequences the decisions a large effort
+- **recon (initiative mode)** is *pre-arc at initiative scale* — it sequences the decisions a large effort
   must resolve and releases fog-free tickets into the arc; individual tickets then run the arc
   normally.
 - **throwaway-prototyping** is a *decide-stage instrument* — it fires when the cheapest
@@ -169,7 +167,7 @@ eligibility remains silent.
 
 Emit a routing record only when **two or more disciplines actually fire**, or when a positive
 trigger is explicitly overridden by an authorized operator. Format:
-`router: fired=[blindspot-pass→<stamp|receipt-ref>] overridden=[gauntlet→<authority-ref>]`.
+`router: fired=[recon→<stamp|receipt-ref>] overridden=[gauntlet→<authority-ref>]`.
 A one-skill task relies on that skill's own output; a zero-skill task emits no router record.
 
 ## Routing — which one fires
@@ -178,7 +176,7 @@ Match the trigger you can *observe*, not a vibe:
 
 | You are about to… | Fire | Because |
 |---|---|---|
-| after two-read micro-recon, commit material effort into territory where the request conflicts with the repo, hidden coupling or an unresolved historical convention appears, the brief remains fuzzy, or fan-out would multiply a wrong premise | **blindspot-pass** | the map (request) may not match the territory; full recon is justified by an observed mismatch or multiplication risk, not unfamiliarity alone |
+| after two-read micro-recon, commit material effort into territory where the request conflicts with the repo, hidden coupling or an unresolved historical convention appears, the brief remains fuzzy, or fan-out would multiply a wrong premise | **recon** (brief mode) | the map (request) may not match the territory; full recon is justified by an observed mismatch or multiplication risk, not unfamiliarity alone |
 | choose between ≥2 material designs, decide whether a proposed design needs correctness confirmation or reversal, assert one is "better/cleaner/faster", or analyze an algorithm's complexity / Big-O | **applying-formal-rigor** | a property claim must be derived through model → preconditions → fact mapping → derivation; focused work stays inline, while material forks reconcile P1-P9 in `formal-rigor-record@2` |
 | rely on "studies show…" / a scholarly or empirical premise, or are about to make a Consensus/Scite/Zotero (scholarly-connector) tool call | **evidence-research** | a paper's *reception* (supporting/contrasting/retracted) and *holdings* (durable library) decide whether it's support, a landmine, or already paid-for judgment |
 | create, refine, or start a persistent goal; define what counts as done | **write-goal** | persistent work needs an approved completion contract that resists proxy success and preserves scope, provenance, and interruptibility |
@@ -188,22 +186,22 @@ Match the trigger you can *observe*, not a vibe:
 | **just made** a consequential decision, took on a load-bearing assumption, or **just received** a recurrent/operator correction, and no existing durable artifact already satisfies the future consumer's persistence needs | **decision-ledger** | what is neither durably recorded nor re-anchorable decays into unverifiable memory |
 | a ledgered decision's **outcome just became observable** — the entry's prediction can now be compared against what happened | **decision-ledger** (outcome-review trigger) | hindsight rewrites convert calibration data into flattering stories; prediction and result recorded as separate untouched facts keep the ledger self-correcting |
 | resume from a compaction summary, a handoff note, or a prior-session task whose next action depends on remembered state *(pre-arc trigger — fires before any resumed-work skill)* | **continuity-verify** | the summary is a claim, not a state — re-anchor every load-bearing claim to an artifact or stamp it `(UNVERIFIED)` before acting; an unverifiable approval escalates, never authorizes |
-| ask the operator to decide the open questions before work continues | **open-questions** | exhaustion is the termination contract; brainstorming ends at sufficiency, blindspot-pass ends at understanding |
+| ask the operator to decide the open questions before work continues | **open-questions** | exhaustion is the termination contract; brainstorming ends at sufficiency, recon ends at understanding |
 | act through an irreversible, high-blast-radius fork you cannot safely best-guess, with the operator interactively present | **open-questions** | the narrow auto-trigger, fork-scoped — the interview covers the fork's lineage, one offer for other surfaced questions, declined items deferred to a durable tracker; if the operator is absent, hold and escalate instead of interviewing or defaulting through |
 | audit the instruction context this agent receives — explicit request, a detected conflict between two active instruction layers, or a model-generation upgrade | **context-audit** | conflicts, duplicates, and dead weight live BETWEEN layers; only an assembly-wide classify-and-watch pass finds them, and version control makes every cut a reversible experiment |
 | author or modify a tool/function schema, MCP surface, structured-output contract, or dispatch contract that another agent will consume | **agent-interface-design** | the interface is the instruction channel — structure (types, enums, defaults, error shapes) teaches the consumer; usage examples narrow it to shown paths |
-| decompose a large effort whose path holds unresolved decisions, or mint build tickets from a partly-foggy backlog | **wayfinding** | tickets sliced from fog encode silent guesses; decompose by decisions, work only the frontier, mint tickets only from fog-free regions |
+| decompose a large effort whose path holds unresolved decisions, or mint build tickets from a partly-foggy backlog | **recon** (initiative mode) | tickets sliced from fog encode silent guesses; decompose by decisions, work only the frontier, mint tickets only from fog-free regions |
 | resolve a live design question where a disposable build is cheaper than more argument, derivation, or reading | **throwaway-prototyping** | a built probe is evidence; the contract (pre-registered question, disposal at birth, capture-then-delete, never promote) keeps it an instrument instead of unplanned work |
 | resolve a merge/rebase conflict containing any non-trivial hunk | **intent-traced-merge** | textual pattern-matching silently destroys one side's intent; trace both sides to their origins, preserve both or record the drop, verify against both origins |
-| decide whether to adopt, replace with, or ignore an external project that overlaps something you already have | **harvest-before-adopt** | the extractable unit is not the system — take the vocabulary, principles, constants and interface shapes first (free, reversible, no install), and only escalate to the expensive adopt question with what is left |
+| decide whether to adopt, replace with, or ignore an external project that overlaps something you already have | **recon** (candidate mode) | the extractable unit is not the system — take the vocabulary, principles, constants and interface shapes first (free, reversible, no install), and only escalate to the expensive adopt question with what is left |
 
 If **none** match, none fire — this router does not manufacture work. If **two** match, run
 them in arc order (recon → decide → contract → gate → prove) and pass each output to the next per the
 handoff table. **decision-ledger is exempt from arc ordering** — its trigger is retrospective, so
 it fires at the moment, alongside whichever stage produced the consequential moment.
 **continuity-verify is pre-arc** — on a resumption it fires **first** and hands its digest to this
-router, which may then fire blindspot-pass for unfamiliar territory (double-fire ordering:
-continuity-verify → blindspot-pass).
+router, which may then fire recon for unfamiliar territory (double-fire ordering:
+continuity-verify → recon).
 **outsource is execution-boundary ordered** — it consumes whatever upstream skill artifact defines
 the delegated workload, then hands the committed packet to the target; its returned relay is claim
 data that the originating agent verifies before any downstream gate or completion claim.
@@ -224,7 +222,7 @@ decide-stage re-fire loop between formal-rigor and research.
 gauntlet and evidence-locked-uat can both fire on the same merge (irreversible infra/security +
 user-facing surface) — gauntlet gates first, evidence-locked-uat proves after, per arc order.
 
-## Shared invariants (why these sixteen, and not others)
+## Shared invariants (why these fourteen, and not others)
 
 A skill belongs in this collection only if it enforces all of these. They are the family
 resemblance:
@@ -233,7 +231,7 @@ resemblance:
    and the routine path exits before the arc. Additional process earns no credit merely for
    existing; it must expose an error capable of changing action or the completion claim.
 2. **Derive / verify, don't assert.** A conclusion is earned by a chain — from named theory
-   (formal-rigor), read evidence (blindspot-pass, gauntlet `[V]` tags), the literature's
+   (formal-rigor), read evidence (recon, gauntlet `[V]` tags), the literature's
    reception (evidence-research), or an evidence packet (UAT). "It's better" / "looks done" is
    not a result.
 3. **Know where you stop.** Each ends at its boundary and hands off (see the table). Overreach
@@ -270,8 +268,8 @@ with the right evidence) and the workflow skill carries it out.
 | "I'll just read this router and skip the actual skill" | The router only routes. The discipline lives in the skill it points to — read it. |
 | "The task is big, run every discipline" | Fire only positive triggers. Additional artifacts and role calls are cost, not evidence. |
 | "I should list every skill I skipped so the process is auditable" | Ordinary absence is silent. Record fired skills and authorized overrides, not non-events. |
-| "The repo is unfamiliar, so a full blindspot report is mandatory" | Start with the target artifact plus its nearest test/example. Escalate only when those reads reveal a positive trigger. |
-| "blindspot-pass found a fix, let me apply it" | It ends at understanding. Capture the fix; don't act inside it. |
+| "The repo is unfamiliar, so a full recon report is mandatory" | Start with the target artifact plus its nearest test/example. Escalate only when those reads reveal a positive trigger. |
+| "recon found a fix, let me apply it" | It ends at understanding. Capture the fix; don't act inside it. |
 | "evidence-research says GO" | It never renders a verdict. It produces evidence; the gauntlet (or you) judges. |
 | "This task is long, so I'll create a goal" | Persistence is a user-controlled state change. `write-goal` requires explicit goal-authoring or start intent. |
 | "The UAT actor also verified it passed" | The actor never certifies its own material acceptance work — that's the whole point. A blinded verifier judges. |

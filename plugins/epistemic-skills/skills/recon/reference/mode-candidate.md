@@ -1,7 +1,5 @@
----
-name: harvest-before-adopt
-description: 'Use when an external project overlaps something you already built or plan to build, and the question is "should we adopt it, replace ours with it, or ignore it" — a competitor or upstream that does your job, a library that duplicates an in-house component, a framework someone proposes swapping in. Fires on "should we use X instead", "does X make ours obsolete", "evaluate X". Do NOT fire for choosing between candidates none of which you already have an incumbent for (that is an ordinary selection, not an adopt-or-keep question), for a dependency upgrade within a tool you already use, or as a way to justify a migration already decided.'
----
+<!-- recon mode: candidate (harvest-before-adopt) — consolidated into recon (v4.0.0, 2026-08-04); this file is the mode's full method, formerly its standalone SKILL.md -->
+
 
 # harvest-before-adopt — take the ideas first; the software is the expensive part
 

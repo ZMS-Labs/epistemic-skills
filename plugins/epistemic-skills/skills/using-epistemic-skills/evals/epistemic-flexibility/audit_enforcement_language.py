@@ -31,7 +31,7 @@ REFERENCE = (
 )
 SKILL_PATHS = [
     "plugins/epistemic-skills/skills/applying-formal-rigor/SKILL.md",
-    "plugins/epistemic-skills/skills/blindspot-pass/SKILL.md",
+    "plugins/epistemic-skills/skills/recon/SKILL.md",
     "plugins/epistemic-skills/skills/continuity-verify/SKILL.md",
     "plugins/epistemic-skills/skills/decision-ledger/SKILL.md",
     "plugins/epistemic-skills/skills/evidence-locked-uat/SKILL.md",

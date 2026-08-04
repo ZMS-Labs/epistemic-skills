@@ -34,12 +34,12 @@ EVIDENCE_REF_KINDS = {
     "ledger-entry-hash", "run-record-hash",
 }
 SKILL_NAMES = {
-    "using-epistemic-skills", "helix", "blindspot-pass",
+    "using-epistemic-skills", "helix", "recon",
     "applying-formal-rigor", "evidence-research", "write-goal",
     "outsource", "gauntlet", "evidence-locked-uat", "decision-ledger",
     "continuity-verify", "open-questions", "context-audit",
-    "agent-interface-design", "wayfinding", "throwaway-prototyping",
-    "intent-traced-merge", "harvest-before-adopt",
+    "agent-interface-design", "throwaway-prototyping",
+    "intent-traced-merge",
 }
 PROHIBITED_CONTENT_KEYS = {
     "prompt", "transcript", "user_prose", "raw_content", "secret",
@@ -74,13 +74,6 @@ SKILL_EVENT_MAP = {
         "outcome_sources": ("independent-adjudication",),
         "collection_mode": "observational",
         "sentinel_fixture": "helix-missed-pair.json",
-    },
-    "blindspot-pass": {
-        "event_kinds": ("landmine-prediction",),
-        "eligible_when": ("preregistered-prediction",),
-        "outcome_sources": ("field-observation",),
-        "collection_mode": "calibratable",
-        "sentinel_fixture": "blindspot-landmine.json",
     },
     "applying-formal-rigor": {
         "event_kinds": ("formal-prediction",),
@@ -159,13 +152,6 @@ SKILL_EVENT_MAP = {
         "collection_mode": "observational",
         "sentinel_fixture": "interface-consumer-miss.json",
     },
-    "wayfinding": {
-        "event_kinds": ("frontier-decision",),
-        "eligible_when": ("evaluation-case", "correction-or-supersession"),
-        "outcome_sources": ("field-observation", "supersession-chain"),
-        "collection_mode": "observational",
-        "sentinel_fixture": "wayfinding-fog-ticket.json",
-    },
     "throwaway-prototyping": {
         "event_kinds": ("probe-episode",),
         "eligible_when": ("independently-resolvable-verdict",),
@@ -180,12 +166,12 @@ SKILL_EVENT_MAP = {
         "collection_mode": "observational",
         "sentinel_fixture": "merge-dropped-intent.json",
     },
-    "harvest-before-adopt": {
-        "event_kinds": ("harvest-decision",),
-        "eligible_when": ("independently-resolvable-verdict",),
+    "recon": {
+        "event_kinds": ("frontier-decision", "harvest-decision", "landmine-prediction"),
+        "eligible_when": ("correction-or-supersession", "evaluation-case", "independently-resolvable-verdict", "preregistered-prediction"),
         "outcome_sources": ("field-observation", "supersession-chain"),
-        "collection_mode": "observational",
-        "sentinel_fixture": "harvest-drop-suppressed-read.json",
+        "collection_mode": "conditional",
+        "sentinel_fixture": "recon-mode-misfire.json",
     },
 }
 

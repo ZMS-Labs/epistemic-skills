@@ -15,11 +15,11 @@ REQUIRED_ORDER_RULES = {
     "resumption-before-recon": {
         "when": "same-resumption-lineage",
         "before": "continuity-verify",
-        "after": "blindspot-pass",
+        "after": "recon",
     },
     "task-start-recon-before-design-derivation": {
         "when": "same-design-lineage-after-micro-recon-mismatch",
-        "before": "blindspot-pass",
+        "before": "recon",
         "after": "applying-formal-rigor",
     },
     "conflict-resolution-before-pre-merge-gate": {
@@ -41,7 +41,7 @@ REQUIRED_TEXT_MARKERS = {
     "registry pointer": "reference/composition-contract.json",
     "ordered-set handshake": "zero, one, or ordered set",
     "member trigger authority": "the member skill owns its trigger",
-    "resumption order": "continuity-verify → blindspot-pass",
+    "resumption order": "continuity-verify → recon",
     "decision persistence breadth": "consequential decision, load-bearing assumption, or recurrent/operator correction",
     "open-questions modes": "explicit full-exhaustion mode and automatic fork-scoped mode",
     "gate/prove order": "gauntlet → evidence-locked-uat",

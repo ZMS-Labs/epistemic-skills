@@ -134,7 +134,7 @@ def main() -> int:
             "plugins/epistemic-skills/skills/using-epistemic-skills/SKILL.md" in live_prompt,
             "live adapter must activate the pinned repository router",
         )
-        require("name: blindspot-pass" in live_prompt, "live adapter must expose member triggers")
+        require("name: recon" in live_prompt, "live adapter must expose member triggers")
         parody_prompt = codex_live_prompt(sample_packet, REPO_ROOT, arm_kind="parody")
         require(
             "PINNED PARODY POLICY OVERRIDES ROUTER" in parody_prompt,

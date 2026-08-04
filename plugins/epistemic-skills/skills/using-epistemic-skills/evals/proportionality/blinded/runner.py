@@ -28,7 +28,7 @@ ROUTINE_REFERENCE_PATH = (
 )
 CATALOG_SKILL_PATHS = [
     "plugins/epistemic-skills/skills/using-epistemic-skills/reference/routine-fast-path.md",
-    "plugins/epistemic-skills/skills/blindspot-pass/SKILL.md",
+    "plugins/epistemic-skills/skills/recon/SKILL.md",
     "plugins/epistemic-skills/skills/applying-formal-rigor/SKILL.md",
     "plugins/epistemic-skills/skills/evidence-research/SKILL.md",
     "plugins/epistemic-skills/skills/write-goal/SKILL.md",

@@ -12,12 +12,12 @@
       "id": "resumption-before-recon",
       "when": "same-resumption-lineage",
       "before": "continuity-verify",
-      "after": "blindspot-pass"
+      "after": "recon"
     },
     {
       "id": "task-start-recon-before-design-derivation",
       "when": "same-design-lineage-after-micro-recon-mismatch",
-      "before": "blindspot-pass",
+      "before": "recon",
       "after": "applying-formal-rigor"
     },
     {
@@ -43,14 +43,6 @@
     }
   ],
   "members": {
-    "blindspot-pass": {
-      "composition_class": "stage-bound",
-      "moments": [
-        "task-start-after-micro-recon",
-        "first-material-agent-dispatch"
-      ],
-      "position": "before"
-    },
     "applying-formal-rigor": {
       "composition_class": "decision-point",
       "moments": [
@@ -146,13 +138,6 @@
       ],
       "position": "inside"
     },
-    "wayfinding": {
-      "composition_class": "initiative-pre-arc",
-      "moments": [
-        "large-foggy-effort"
-      ],
-      "position": "before"
-    },
     "throwaway-prototyping": {
       "composition_class": "decide-instrument",
       "moments": [
@@ -167,9 +152,12 @@
       ],
       "position": "at-integration"
     },
-    "harvest-before-adopt": {
+    "recon": {
       "composition_class": "stage-bound",
       "moments": [
+        "task-start-after-micro-recon",
+        "first-material-agent-dispatch",
+        "large-foggy-effort",
         "external-overlap-adopt-question"
       ],
       "position": "before"

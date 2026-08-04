@@ -125,9 +125,9 @@ def main() -> int:
 
     router_root = PACKAGE_ROOT / "skills" / "using-epistemic-skills"
     router = read(router_root / "SKILL.md")
-    require("These sixteen disciplines" in router, "router discipline count is stale")
+    require("These fourteen disciplines" in router, "router discipline count is stale")
     require("**outsource**" in router, "router does not route outsource")
-    require("why these sixteen" in router, "router family-resemblance count is stale")
+    require("why these fourteen" in router, "router family-resemblance count is stale")
     require("Routine work leaves before the arc" in router, "router lacks routine-work exit")
     require("Absent triggers are silent" in router, "router still requires absent-trigger records")
     require(
@@ -139,7 +139,7 @@ def main() -> int:
     helix = read(helix_root / "SKILL.md")
     require("external delegation / model handoff" in helix, "helix lacks outsource pairing")
     require("Do **not** emit a line for an absent trigger" in helix, "helix still records non-events")
-    require("continuity-verify → blindspot-pass" in helix, "helix lacks pre-arc resumption ordering")
+    require("continuity-verify → recon" in helix, "helix lacks pre-arc resumption ordering")
     require("zero, one, or ordered set" in helix, "helix still implies single-pair selection")
     helix_contract = json.loads(read(helix_root / "reference" / "composition-contract.json"))
     require(
@@ -147,8 +147,8 @@ def main() -> int:
         "helix composition contract schema is missing or stale",
     )
     require(
-        len(helix_contract.get("members", {})) == 16,
-        "helix composition contract does not classify all sixteen disciplines",
+        len(helix_contract.get("members", {})) == 14,
+        "helix composition contract does not classify all fourteen disciplines",
     )
     helix_eval = helix_root / "evals" / "composition"
     for filename in (
@@ -161,10 +161,10 @@ def main() -> int:
 
     readme = read(REPO_ROOT / "README.md")
     require(f"**Version {EXPECTED_VERSION}.**" in readme, "README version is stale")
-    require("**eighteen** skills" in readme, "README skill count is stale")
-    require("**sixteen** disciplines" in readme, "README discipline count is stale")
+    require("**sixteen** skills" in readme, "README skill count is stale")
+    require("**fourteen** disciplines" in readme, "README discipline count is stale")
     require("the tag's full skill count" in readme, "README harness success check is stale")
-    require("canonical skill cores (eighteen)" in readme, "README layout inventory count is stale")
+    require("canonical skill cores (sixteen)" in readme, "README layout inventory count is stale")
     require("canonical skill cores (fourteen)" not in readme, "README still advertises twelve skill cores")
     require("**outsource**" in readme, "README skill table lacks outsource")
     require("## Routine work first" in readme, "README does not present the routine path first")
@@ -176,8 +176,8 @@ def main() -> int:
     )
 
     gemini = read(REPO_ROOT / "GEMINI.md")
-    require("eighteen skills" in gemini, "GEMINI context skill count is stale")
-    require("sixteen disciplines" in gemini, "GEMINI context discipline count is stale")
+    require("sixteen skills" in gemini, "GEMINI context skill count is stale")
+    require("fourteen disciplines" in gemini, "GEMINI context discipline count is stale")
 
     workflow = read(REPO_ROOT / ".github" / "workflows" / "epistemic-flexibility.yml")
     require(
@@ -227,7 +227,6 @@ def main() -> int:
     for battery_skill in (
         "context-audit",
         "agent-interface-design",
-        "wayfinding",
         "throwaway-prototyping",
         "intent-traced-merge",
     ):
@@ -240,6 +239,17 @@ def main() -> int:
             (PACKAGE_ROOT / "skills" / battery_skill / "evals" / "trigger-and-scope"
              / "tests" / "run_tests.py").is_file(),
             f"{battery_skill} trigger-and-scope battery is missing",
+        )
+    for recon_battery in ("brief-trigger-and-scope", "initiative-trigger-and-scope"):
+        test_path = f"plugins/epistemic-skills/skills/recon/evals/{recon_battery}/tests/run_tests.py"
+        require(
+            f"run: python {test_path}" in workflow,
+            f"CI does not execute recon {recon_battery} tests",
+        )
+        require(
+            (PACKAGE_ROOT / "skills" / "recon" / "evals" / recon_battery
+             / "tests" / "run_tests.py").is_file(),
+            f"recon {recon_battery} battery is missing",
         )
 
     proportionality = router_root / "evals" / "proportionality"
@@ -284,7 +294,7 @@ def main() -> int:
             require((suite / filename).is_file(), f"missing proportionality artifact: {suite.name}/{filename}")
 
     skill_dirs = [p for p in (PACKAGE_ROOT / "skills").iterdir() if p.is_dir()]
-    require(len(skill_dirs) == 18, f"expected 18 skill directories, found {len(skill_dirs)}")
+    require(len(skill_dirs) == 16, f"expected 16 skill directories, found {len(skill_dirs)}")
     check_live_surface_counts(len(skill_dirs))
     for directory in skill_dirs:
         require((directory / "SKILL.md").is_file(), f"missing SKILL.md: {directory.name}")

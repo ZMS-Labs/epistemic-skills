@@ -46,12 +46,12 @@ PACKAGE_REFERENCE = (
     / "epistemic-data-collection.md"
 )
 EXPECTED_SKILLS = {
-    "using-epistemic-skills", "helix", "blindspot-pass",
+    "using-epistemic-skills", "helix", "recon",
     "applying-formal-rigor", "evidence-research", "write-goal",
     "outsource", "gauntlet", "evidence-locked-uat",
     "decision-ledger", "continuity-verify", "open-questions",
-    "context-audit", "agent-interface-design", "wayfinding",
-    "throwaway-prototyping", "intent-traced-merge", "harvest-before-adopt",
+    "context-audit", "agent-interface-design",
+    "throwaway-prototyping", "intent-traced-merge",
 }
 
 

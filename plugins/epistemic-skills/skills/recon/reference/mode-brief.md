@@ -1,7 +1,5 @@
----
-name: blindspot-pass
-description: 'Use when routine two-read micro-recon exposes a material map/territory mismatch, hidden coupling, an unresolved fuzzy brief, or fan-out risk; before writing plans or dispatching multiple agents when a wrong premise could multiply; before locking the subject of an adversarial review when the subject is not yet establishable; or on explicit request ("blindspot pass", "what am I missing", "find my unknowns", "recon this before we start", "de-risk the dispatch"). Do NOT fire merely because a codebase is unfamiliar, or for reversible local directly-checkable work whose target artifact and nearest test/example agree. Provenance: Thariq Shihipar (Anthropic), "A Field Guide to Claude Fable 5: Finding Your Unknowns" (2026-07-03).'
----
+<!-- recon mode: brief (the blindspot pass) — consolidated into recon (v4.0.0, 2026-08-04); this file is the mode's full method, formerly its standalone SKILL.md -->
+
 
 # Blindspot Pass — find the unknowns before they get expensive
 

@@ -29,7 +29,7 @@ The README is the fast path into the project. The [GitHub Wiki](https://github.c
 - [Helix: the central passage](#helix-the-central-passage)
 - [Choose by task](#choose-by-task)
 - [The epistemic arc](#the-epistemic-arc)
-- [Eighteen-skill catalog](#eighteen-skill-catalog)
+- [Sixteen-skill catalog](#sixteen-skill-catalog)
 - [Installation and compatibility](#installation-and-compatibility)
 - [Architecture and source policy](#architecture-and-source-policy)
 - [Coordination with epistemic-calibration](#coordination-with-epistemic-calibration)
@@ -40,7 +40,7 @@ The README is the fast path into the project. The [GitHub Wiki](https://github.c
 
 Most agent-skill collections organize **how work proceeds**: brainstorming, planning, implementation, debugging, review, and verification. epistemic-skills sits beneath that workflow layer and asks a different question: **what would make the target, decision, evidence, handoff, or acceptance claim trustworthy enough to bear load?**
 
-The package provides **eighteen** skills: one router, **sixteen** disciplines, and Helix—the passage that pairs those disciplines with a workflow-skill layer such as [superpowers](https://github.com/obra/superpowers). Each method has a positive trigger, an output contract, and a stopping boundary.
+The package provides **sixteen** skills: one router, **fourteen** disciplines, and Helix—the passage that pairs those disciplines with a workflow-skill layer such as [superpowers](https://github.com/obra/superpowers). Each method has a positive trigger, an output contract, and a stopping boundary.
 
 It is not:
 
@@ -73,7 +73,7 @@ The Wiki is unversioned navigation over versioned sources. If a handbook summary
 1. **Install one immutable copy.** Choose the native path for your harness under [Installation and compatibility](#installation-and-compatibility). Use the generic Agent Skills path only when no native plugin or extension exists.
 2. **Reload the harness or start a fresh task.** Trigger discovery and role registries are commonly session-bound.
 3. **Choose the entry point.** Start with the epistemic router when only this collection is active. If a workflow-skill layer is also active and a positive pairing exists, enter through Helix.
-4. **Verify the inventory and source.** Expect exactly the count your source ships: this tree (the unreleased v4.0.0 wave) ships eighteen; a v3.4.0 package or tagged checkout ships seventeen (v3.3.0 ships fourteen; v3.1.0/v3.2.0 ship twelve; the pinned `v3.0.0` tag ships eleven)—not two copies found through different install mechanisms.
+4. **Verify the inventory and source.** Expect exactly the count your source ships: this tree (the unreleased v4.0.0 wave) ships sixteen; a v3.4.0 package or tagged checkout ships seventeen (v3.3.0 ships fourteen; v3.1.0/v3.2.0 ship twelve; the pinned `v3.0.0` tag ships eleven)—not two copies found through different install mechanisms.
 5. **Let routine work leave.** A local, reversible, directly checkable, non-precedential task should finish with its bounded check and no process-only artifact.
 
 For a harness without a native package surface, the complete generic install is:
@@ -106,7 +106,7 @@ Helix is intentionally a centralized passage between the workflow layer and the 
 ```mermaid
 flowchart LR
     W["Workflow-skill layer<br/>how work gets done"] <--> H["Helix<br/>central passage"]
-    H <--> E["using-epistemic-skills<br/>router and sixteen disciplines"]
+    H <--> E["using-epistemic-skills<br/>router and fourteen disciplines"]
 ```
 
 - `using-epistemic-skills` remains the router **inside** this collection: it applies the routine gate, identifies positive triggers, sequences disciplines, and defines handoffs.
@@ -125,7 +125,7 @@ Read [Helix: Central Passage](https://github.com/ZMS-Labs/epistemic-skills/wiki/
 | Non-routine task with multiple possible disciplines or ordering questions | `using-epistemic-skills` | Triggered route and explicit handoffs; silent if the task clears the routine gate |
 | Workflow layer and epistemic collection must operate together | `helix` | Correctly ordered pair and member artifact; no absent-pair inventory |
 | Resume from a compaction summary, handoff, or remembered state | `continuity-verify` | Re-anchored state digest or visible uncertainty |
-| Micro-recon exposes map/territory mismatch, hidden coupling, fuzzy scope, or fan-out risk | `blindspot-pass` | Read-only territory map and rewritten request |
+| Micro-recon exposes map/territory mismatch, hidden coupling, fuzzy scope, or fan-out risk | `recon` (brief mode) | Read-only territory map and rewritten request |
 | Material software/system fork or correctness/property claim | `applying-formal-rigor` | Inline focused derivation or a revision-bound formal record |
 | Claim depends on scholarly evidence or a research connector | `evidence-research` | Qualified evidence with reception, holdings, and degradation stated |
 | Operator explicitly asks to author or start a persistent goal | `write-goal` | Approved completion contract with proof, scope, blockers, and stop rule |
@@ -165,15 +165,15 @@ flowchart LR
 
 Evidence Research, Decision Ledger, Outsource, and Open Questions are cross-cutting. Continuity Verify is pre-arc. Context Audit is maintenance-triggered outside the arc; Agent Interface Design fires inside the build stage. Most tasks clear the routine gate or fire one discipline. See [The Epistemic Arc](https://github.com/ZMS-Labs/epistemic-skills/wiki/The-Epistemic-Arc) for handoff details and [Core Concepts](https://github.com/ZMS-Labs/epistemic-skills/wiki/Core-Concepts) for the five epistemic-flexibility controls.
 
-## Eighteen-skill catalog
+## Sixteen-skill catalog
 
-The package contains exactly one router, Helix, and sixteen disciplines. Each name appears once in this catalog; the immutable tagged source defines the full contract, and the linked guide is unversioned navigation over it (per the precedence rule above — where they differ, the tagged source controls).
+The package contains exactly one router, Helix, and fourteen disciplines. Each name appears once in this catalog; the immutable tagged source defines the full contract, and the linked guide is unversioned navigation over it (per the precedence rule above — where they differ, the tagged source controls).
 
 | Skill | Positive trigger | Purpose | Output |
 |---|---|---|---|
 | [`using-epistemic-skills`](https://github.com/ZMS-Labs/epistemic-skills/wiki/Skill-Using-Epistemic-Skills) | Non-routine work may need multiple disciplines, ordering, external crossing, or resumption | Apply the routine gate and route epistemic members | Triggered route and handoff path; routine exit is record-free |
 | [`helix`](https://github.com/ZMS-Labs/epistemic-skills/wiki/Helix-Central-Passage) | Workflow and epistemic layers coexist and a positive pairing exists, or sequencing/crossing is ambiguous | Pair stages across the central passage | Member artifact plus compact fired/overridden custody record where applicable |
-| [`blindspot-pass`](https://github.com/ZMS-Labs/epistemic-skills/wiki/Skill-Blindspot-Pass) | Micro-recon reveals mismatch, hidden coupling, fuzzy scope, or material fan-out risk | Read-only reconnaissance before effort multiplies | Territory map, landmines, questions, and rewritten request |
+| [`recon`](plugins/epistemic-skills/skills/recon/SKILL.md) | Territory must be mapped before effort commits: a fuzzy/contradicted brief, a large foggy effort, or an external project overlapping your own (three modes: brief / initiative / candidate) | Read, decompose, or harvest — understanding only, never a change | Rewritten request; decision map + fog-free tickets; or harvest record with per-level spend decisions |
 | [`applying-formal-rigor`](https://github.com/ZMS-Labs/epistemic-skills/wiki/Skill-Applying-Formal-Rigor) | Explicit formal request or material multi-option systems/property decision | Derive rather than assert software and systems claims | ≤6 bullets/250-word focused answer, or `formal-rigor-record@2` at higher tiers |
 | [`evidence-research`](https://github.com/ZMS-Labs/epistemic-skills/wiki/Skill-Evidence-Research) | Scholarly evidence claim or any Consensus, Scite, or durable-library call | Check holdings, discover, reception-check, cross-validate, and preserve evidence | Source matrix with reception/holdings provenance and explicit degradation |
 | [`write-goal`](https://github.com/ZMS-Labs/epistemic-skills/wiki/Skill-Write-Goal) | Explicit intent to author, refine, or start a durable goal | Bind operator intent to proof, scope, blockers, and stop rules | Approved goal contract; execution/certification remains downstream |
@@ -185,10 +185,8 @@ The package contains exactly one router, Helix, and sixteen disciplines. Each na
 | [`open-questions`](https://github.com/ZMS-Labs/epistemic-skills/wiki/Skill-Open-Questions) | Operator asks to be interviewed until no open questions remain; un-best-guessable irreversible fork with operator present | Exhaustive serial clarification interview (docket + cascade modes); the auto-trigger runs fork-scoped only | Emptied-or-parked ledger + 4-field stamp; fork-scoped exit: lineage resolved, one closing offer, declined items deferred to the durable tracker with defaults |
 | [`context-audit`](plugins/epistemic-skills/skills/context-audit/SKILL.md) | Explicit audit request, detected cross-layer instruction conflict, or model-generation upgrade | Audit the assembled instruction context for conflicts, duplicates, and dead weight; classify-and-watch, never quota-cut | Cut list as diff, conflict ledger, re-baseline watch note; operator-gated class-by-class apply |
 | [`agent-interface-design`](plugins/epistemic-skills/skills/agent-interface-design/SKILL.md) | Authoring or modifying a tool schema, MCP surface, structured-output or dispatch contract another agent consumes | Encode constraints in interface structure rather than prose or usage examples | Shipped interface plus cold-consumer test evidence; examples only as labeled compatibility concessions |
-| [`wayfinding`](plugins/epistemic-skills/skills/wayfinding/SKILL.md) | Large foggy effort with unresolved decisions; backlog tickets encoding unmade decisions | Decompose by decisions, work the frontier, mint build tickets only from fog-free regions | Decision-dependency map + tickets with the three-fact handoff |
 | [`throwaway-prototyping`](plugins/epistemic-skills/skills/throwaway-prototyping/SKILL.md) | A live decision cheaper to resolve by a disposable build than by more argument | Build to answer one pre-registered question, capture the answer, dispose the build, never promote | Recorded answer; disposed prototype |
 | [`intent-traced-merge`](plugins/epistemic-skills/skills/intent-traced-merge/SKILL.md) | Merge/rebase conflicts with non-trivial hunks; merge commits without resolution provenance | Resolve each hunk by tracing both sides to their origins; verify against both; record rulings | Merged result with per-hunk rulings and both-origin checks green |
-| [`harvest-before-adopt`](plugins/epistemic-skills/skills/harvest-before-adopt/SKILL.md) | An external project overlaps something you already built; adopt / replace / ignore | Harvest the transferable ideas first (free and reversible), then triage what is left; the capability partition is the expensive fallback | Harvest record with a per-level spend decision; partition only when needed |
 
 ## Installation and compatibility
 
@@ -305,7 +303,7 @@ One canonical tree contains all method files; thin harness manifests expose that
 ```text
 epistemic-skills/
 ├── plugins/epistemic-skills/
-│   ├── skills/<name>/SKILL.md           canonical skill cores (eighteen)
+│   ├── skills/<name>/SKILL.md           canonical skill cores (sixteen)
 │   ├── agents/                          five canonical Gauntlet roles
 │   ├── contracts/                       shared receipt schema and verifier
 │   ├── .claude-plugin/plugin.json

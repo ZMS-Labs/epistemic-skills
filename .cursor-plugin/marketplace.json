@@ -4,7 +4,7 @@
     "name": "ZMS Labs"
   },
   "metadata": {
-    "description": "Epistemic-discipline skills for agentic coding \u2014 how an agent knows things before, during, and after work. One package, eighteen self-triggering skills. Composes with workflow layers via the helix tandem entry point.",
+    "description": "Epistemic-discipline skills for agentic coding \u2014 how an agent knows things before, during, and after work. One package, sixteen self-triggering skills. Composes with workflow layers via the helix tandem entry point.",
     "version": "3.4.0"
   },
   "plugins": [

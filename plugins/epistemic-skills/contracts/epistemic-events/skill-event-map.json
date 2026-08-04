@@ -17,14 +17,6 @@
       "sentinel_fixture": "helix-missed-pair.json"
     },
     {
-      "skill": "blindspot-pass",
-      "event_kinds": ["landmine-prediction"],
-      "eligible_when": ["preregistered-prediction"],
-      "outcome_sources": ["field-observation"],
-      "collection_mode": "calibratable",
-      "sentinel_fixture": "blindspot-landmine.json"
-    },
-    {
       "skill": "applying-formal-rigor",
       "event_kinds": ["formal-prediction"],
       "eligible_when": ["preregistered-prediction"],
@@ -113,14 +105,6 @@
       "sentinel_fixture": "interface-consumer-miss.json"
     },
     {
-      "skill": "wayfinding",
-      "event_kinds": ["frontier-decision"],
-      "eligible_when": ["evaluation-case", "correction-or-supersession"],
-      "outcome_sources": ["field-observation", "supersession-chain"],
-      "collection_mode": "observational",
-      "sentinel_fixture": "wayfinding-fog-ticket.json"
-    },
-    {
       "skill": "throwaway-prototyping",
       "event_kinds": ["probe-episode"],
       "eligible_when": ["independently-resolvable-verdict"],
@@ -137,12 +121,12 @@
       "sentinel_fixture": "merge-dropped-intent.json"
     },
     {
-      "skill": "harvest-before-adopt",
-      "event_kinds": ["harvest-decision"],
-      "eligible_when": ["independently-resolvable-verdict"],
+      "skill": "recon",
+      "event_kinds": ["frontier-decision", "harvest-decision", "landmine-prediction"],
+      "eligible_when": ["correction-or-supersession", "evaluation-case", "independently-resolvable-verdict", "preregistered-prediction"],
       "outcome_sources": ["field-observation", "supersession-chain"],
-      "collection_mode": "observational",
-      "sentinel_fixture": "harvest-drop-suppressed-read.json"
+      "collection_mode": "conditional",
+      "sentinel_fixture": "recon-mode-misfire.json"
     }
   ]
 }

@@ -53,6 +53,7 @@ WORDS = {
     27: "twenty-seven", 28: "twenty-eight", 29: "twenty-nine", 30: "thirty",
 }
 ANY_WORD = "(?:" + "|".join(sorted(WORDS.values(), key=len, reverse=True)) + ")"
+ANY_WORD_CAP = "(?:" + "|".join(w.capitalize() for w in sorted(WORDS.values(), key=len, reverse=True)) + ")"
 
 # Count-bearing surfaces. Each entry: (path, [(pattern, template)]).
 # {n}/{N} = total skill count word (lower/Title), {d}/{D} = discipline count
@@ -63,9 +64,9 @@ ANY_WORD = "(?:" + "|".join(sorted(WORDS.values(), key=len, reverse=True)) + ")"
 def count_surfaces() -> list[tuple[Path, list[tuple[str, str]]]]:
     return [
         (REPO / "README.md", [
-            (rf"- \[{ANY_WORD.capitalize()}-skill catalog\]\(#{ANY_WORD}-skill-catalog\)",
+            (rf"- \[{ANY_WORD_CAP}-skill catalog\]\(#{ANY_WORD}-skill-catalog\)",
              "- [{N}-skill catalog](#{slug}-skill-catalog)"),
-            (rf"## {ANY_WORD.capitalize()}-skill catalog", "## {N}-skill catalog"),
+            (rf"## {ANY_WORD_CAP}-skill catalog", "## {N}-skill catalog"),
             (rf"provides \*\*{ANY_WORD}\*\* skills: one router, \*\*{ANY_WORD}\*\* disciplines",
              "provides **{n}** skills: one router, **{d}** disciplines"),
             (rf"one router, Helix, and {ANY_WORD} disciplines",
@@ -97,7 +98,7 @@ def count_surfaces() -> list[tuple[Path, list[tuple[str, str]]]]:
         ]),
         (REPO / ".kimi-plugin" / "plugin.json", [
             (rf"a router plus {ANY_WORD} disciplines", "a router plus {d} disciplines"),
-            (rf"{ANY_WORD.capitalize()} composable disciplines", "{D} composable disciplines"),
+            (rf"{ANY_WORD_CAP} composable disciplines", "{D} composable disciplines"),
         ]),
         (REPO / "gemini-extension.json", [
             (rf"a router plus {ANY_WORD} disciplines", "a router plus {d} disciplines"),
@@ -115,7 +116,7 @@ def count_surfaces() -> list[tuple[Path, list[tuple[str, str]]]]:
         ]),
         (PACKAGE / ".kimi-plugin" / "plugin.json", [
             (rf"a router plus {ANY_WORD} disciplines", "a router plus {d} disciplines"),
-            (rf"{ANY_WORD.capitalize()} composable disciplines", "{D} composable disciplines"),
+            (rf"{ANY_WORD_CAP} composable disciplines", "{D} composable disciplines"),
         ]),
     ]
 

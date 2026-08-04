@@ -30,15 +30,14 @@ def main() -> int:
         REPO_ROOT / "plugins/epistemic-skills/skills/decision-ledger/reference",
         REPO_ROOT / "plugins/epistemic-skills/skills/open-questions/evals/trigger-and-scope",
     ]
+    roots.append(REPO_ROOT / "plugins/epistemic-skills/skills/recon/evals")
     roots.extend(
         REPO_ROOT / f"plugins/epistemic-skills/skills/{skill}/evals/trigger-and-scope"
         for skill in (
             "context-audit",
             "agent-interface-design",
-            "wayfinding",
             "throwaway-prototyping",
             "intent-traced-merge",
-            "blindspot-pass",
             "evidence-research",
             "write-goal",
             "outsource",

@@ -1,7 +1,5 @@
----
-name: wayfinding
-description: 'Use when decomposing a large, foggy effort into tracked work — the goal is real but the path is full of unresolved decisions ("chart this initiative", "break this down", a brief where materially different architectures are still live) — or when reviewing a backlog whose tickets encode guesses about decisions nobody has made. Do NOT fire for efforts whose decisions are already resolved (plan decomposition belongs to the workflow layer''s planning skill), for a single open decision (open-questions or the decision itself owns it), for pre-work recon on one task (blindspot-pass), or for goal-shaping (write-goal).'
----
+<!-- recon mode: initiative (wayfinding) — consolidated into recon (v4.0.0, 2026-08-04); this file is the mode's full method, formerly its standalone SKILL.md -->
+
 
 # wayfinding — decompose by decisions, not tasks
 
