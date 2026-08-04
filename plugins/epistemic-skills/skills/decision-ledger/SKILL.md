@@ -53,6 +53,16 @@ it.
 When unsure, identify the future consumer and inspect the artifact it would
 read. Do not default to logging merely because uncertainty exists.
 
+**Second trigger — outcome arrival (first-class, promoted 2026-08-04 by the
+creation-gate revisit).** Fire also when **a ledgered decision's outcome has
+just become observable**: the prediction the entry carried can now be compared
+against what actually happened. The method for this trigger is the
+[Outcome reviews](#outcome-reviews--the-anti-hindsight-boundary) section — the
+original prediction and the observed result recorded as separate untouched
+facts, lessons gated behind operator approval. This trigger typically fires in
+a *different session* than the decision did; continuity-verify's re-anchoring
+pass and a work batch's completion/verification stage are its usual carriers.
+
 ## No-op gate
 
 Create no ledger artifact when any of these holds:
