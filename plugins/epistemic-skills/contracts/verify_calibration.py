@@ -20,7 +20,14 @@ PROTOCOL = "epistemic-product-calibration@1"
 GIT_REVISION = re.compile(r"^(?:[0-9a-f]{40}|[0-9a-f]{64})$")
 SHA256 = re.compile(r"^[0-9a-f]{64}$")
 SLUG = re.compile(r"^[a-z0-9][a-z0-9-]{1,63}$")
-SEMVER = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$")
+SEMVER = re.compile(
+    r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)"
+    r"(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?"
+    r"(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$"
+)
+RFC3339 = re.compile(
+    r"^\d{4}-\d{2}-\d{2}[Tt]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:[Zz]|[+-]\d{2}:\d{2})$"
+)
 STATUSES = {"observed", "candidate-gate", "accepted-gate", "superseded"}
 REQUIRED_NEVER_ATTESTS = {
     "behavioral-merit-by-envelope",
@@ -71,10 +78,12 @@ def content_revision(value: object, path: str) -> None:
 
 
 def date_time(value: object, path: str) -> datetime:
-    if not isinstance(value, str):
+    # fromisoformat alone accepts ISO forms RFC 3339 forbids (space separator,
+    # basic-format offsets, week dates), so the grammar gates before parsing.
+    if not isinstance(value, str) or not RFC3339.fullmatch(value):
         fail("SCHEMA_VIOLATION", f"{path} must be an RFC 3339 date-time")
     try:
-        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00").replace("z", "+00:00"))
     except ValueError:
         fail("SCHEMA_VIOLATION", f"{path} must be an RFC 3339 date-time")
     if parsed.tzinfo is None:
@@ -119,7 +128,9 @@ def validate(value: object) -> None:
     )
     for key in ("models", "harnesses"):
         items = execution[key]
-        if not isinstance(items, list) or not items or len(items) != len(set(items)) or not all(isinstance(item, str) and item for item in items):
+        # element types gate before set() so non-hashable elements fail closed
+        # as SCHEMA_VIOLATION instead of an uncaught TypeError
+        if not isinstance(items, list) or not items or not all(isinstance(item, str) and item for item in items) or len(items) != len(set(items)):
             fail("SCHEMA_VIOLATION", f"$.execution.{key} must contain unique non-empty strings")
     started = date_time(execution["started_at"], "$.execution.started_at")
     completed = date_time(execution["completed_at"], "$.execution.completed_at")
@@ -154,6 +165,7 @@ def validate(value: object) -> None:
     never = record["never_attests"]
     if (
         not isinstance(never, list)
+        or not all(isinstance(item, str) for item in never)
         or len(never) != len(set(never))
         or not REQUIRED_NEVER_ATTESTS <= set(never)
         or not set(never) <= ALLOWED_NEVER_ATTESTS
@@ -175,6 +187,7 @@ def self_test() -> None:
         "invalid-population.json": "POPULATION_MISMATCH",
         "invalid-missing-never-attests.json": "MISSING_NEVER_ATTESTS",
         "invalid-floating-revision.json": "BAD_REVISION",
+        "invalid-nonrfc3339-timestamp.json": "SCHEMA_VIOLATION",
     }
     for name, expected in cases.items():
         try:
