@@ -21,12 +21,6 @@
       "after": "resolve"
     },
     {
-      "id": "conflict-resolution-before-pre-merge-gate",
-      "when": "same-branch-pre-merge-lineage",
-      "before": "intent-traced-merge",
-      "after": "gauntlet"
-    },
-    {
       "id": "gate-before-ui-proof",
       "when": "same-change-needs-gate-and-material-ui-proof",
       "before": "gauntlet",
@@ -115,20 +109,6 @@
         "instruction-assembly-maintenance"
       ],
       "position": "outside"
-    },
-    "agent-interface-design": {
-      "composition_class": "build-stage",
-      "moments": [
-        "agent-consumed-interface-build"
-      ],
-      "position": "inside"
-    },
-    "intent-traced-merge": {
-      "composition_class": "integration-stage",
-      "moments": [
-        "non-trivial-merge-conflict"
-      ],
-      "position": "at-integration"
     },
     "recon": {
       "composition_class": "stage-bound",

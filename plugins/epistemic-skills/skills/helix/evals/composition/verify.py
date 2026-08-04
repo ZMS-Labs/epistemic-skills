@@ -22,11 +22,6 @@ REQUIRED_ORDER_RULES = {
         "before": "recon",
         "after": "resolve",
     },
-    "conflict-resolution-before-pre-merge-gate": {
-        "when": "same-branch-pre-merge-lineage",
-        "before": "intent-traced-merge",
-        "after": "gauntlet",
-    },
     "gate-before-ui-proof": {
         "when": "same-change-needs-gate-and-material-ui-proof",
         "before": "gauntlet",

@@ -31,14 +31,13 @@ def main() -> int:
         REPO_ROOT / "plugins/epistemic-skills/skills/open-questions/evals/trigger-and-scope",
     ]
     roots.append(REPO_ROOT / "plugins/epistemic-skills/skills/recon/evals")
+    roots.append(REPO_ROOT / "plugins/epistemic-skills/reference/craft")
     roots.append(REPO_ROOT / "plugins/epistemic-skills/skills/resolve/literature/evals")
     roots.append(REPO_ROOT / "plugins/epistemic-skills/skills/resolve/probe/evals")
     roots.extend(
         REPO_ROOT / f"plugins/epistemic-skills/skills/{skill}/evals/trigger-and-scope"
         for skill in (
             "context-audit",
-            "agent-interface-design",
-            "intent-traced-merge",
             "write-goal",
             "outsource",
         )

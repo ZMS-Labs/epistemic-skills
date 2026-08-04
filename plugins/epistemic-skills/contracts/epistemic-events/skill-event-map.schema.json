@@ -10,8 +10,8 @@
   "properties": {
     "skills": {
       "type": "array",
-      "minItems": 13,
-      "maxItems": 13,
+      "minItems": 11,
+      "maxItems": 11,
       "items": {
         "oneOf": [
           {"type":"object","additionalProperties":false,"required":["skill","event_kinds","eligible_when","outcome_sources","collection_mode","sentinel_fixture"],"properties":{"skill":{"const":"using-epistemic-skills"},"event_kinds":{"const":["routing-decision"]},"eligible_when":{"const":["evaluation-case","sampled-field-incident"]},"outcome_sources":{"const":["independent-adjudication"]},"collection_mode":{"const":"observational"},"sentinel_fixture":{"const":"router-over-under.json"}}},
@@ -23,8 +23,6 @@
           {"type":"object","additionalProperties":false,"required":["skill","event_kinds","eligible_when","outcome_sources","collection_mode","sentinel_fixture"],"properties":{"skill":{"const":"decision-ledger"},"event_kinds":{"const":["continuity-reanchor","ledger-revisit"]},"eligible_when":{"const":["evaluation-case","revisit-trigger-fired","sampled-field-incident"]},"outcome_sources":{"const":["deterministic-fixture","field-observation","supersession-chain"]},"collection_mode":{"const":"observational"},"sentinel_fixture":{"const":"ledger-revisit.json"}}},
           {"type":"object","additionalProperties":false,"required":["skill","event_kinds","eligible_when","outcome_sources","collection_mode","sentinel_fixture"],"properties":{"skill":{"const":"open-questions"},"event_kinds":{"const":["interview-scope-decision"]},"eligible_when":{"const":["evaluation-case","correction-or-supersession"]},"outcome_sources":{"const":["independent-adjudication","field-observation"]},"collection_mode":{"const":"observational"},"sentinel_fixture":{"const":"interview-parked-default.json"}}},
           {"type":"object","additionalProperties":false,"required":["skill","event_kinds","eligible_when","outcome_sources","collection_mode","sentinel_fixture"],"properties":{"skill":{"const":"context-audit"},"event_kinds":{"const":["audit-cut-decision"]},"eligible_when":{"const":["preregistered-prediction","correction-or-supersession"]},"outcome_sources":{"const":["field-observation","supersession-chain"]},"collection_mode":{"const":"conditional"},"sentinel_fixture":{"const":"audit-cut-regression.json"}}},
-          {"type":"object","additionalProperties":false,"required":["skill","event_kinds","eligible_when","outcome_sources","collection_mode","sentinel_fixture"],"properties":{"skill":{"const":"agent-interface-design"},"event_kinds":{"const":["consumer-gate-outcome"]},"eligible_when":{"const":["independently-resolvable-verdict"]},"outcome_sources":{"const":["independent-adjudication","field-observation"]},"collection_mode":{"const":"observational"},"sentinel_fixture":{"const":"interface-consumer-miss.json"}}},
-          {"type":"object","additionalProperties":false,"required":["skill","event_kinds","eligible_when","outcome_sources","collection_mode","sentinel_fixture"],"properties":{"skill":{"const":"intent-traced-merge"},"event_kinds":{"const":["merge-ruling"]},"eligible_when":{"const":["independently-resolvable-verdict"]},"outcome_sources":{"const":["deterministic-fixture","field-observation"]},"collection_mode":{"const":"observational"},"sentinel_fixture":{"const":"merge-dropped-intent.json"}}},
           {"type":"object","additionalProperties":false,"required":["skill","event_kinds","eligible_when","outcome_sources","collection_mode","sentinel_fixture"],"properties":{"skill":{"const":"recon"},"event_kinds":{"const":["frontier-decision","harvest-decision","landmine-prediction"]},"eligible_when":{"const":["correction-or-supersession","evaluation-case","independently-resolvable-verdict","preregistered-prediction"]},"outcome_sources":{"const":["field-observation","supersession-chain"]},"collection_mode":{"const":"conditional"},"sentinel_fixture":{"const":"recon-mode-misfire.json"}}},
           {"type":"object","additionalProperties":false,"required":["skill","event_kinds","eligible_when","outcome_sources","collection_mode","sentinel_fixture"],"properties":{"skill":{"const":"resolve"},"event_kinds":{"const":["evidence-claim","formal-prediction","probe-episode"]},"eligible_when":{"const":["independently-resolvable-verdict","preregistered-prediction"]},"outcome_sources":{"const":["deterministic-fixture","field-observation","independent-adjudication"]},"collection_mode":{"const":"conditional"},"sentinel_fixture":{"const":"resolve-instrument-misfire.json"}}}
         ]
@@ -39,8 +37,6 @@
         {"contains":{"type":"object","required":["skill"],"properties":{"skill":{"const":"decision-ledger"}}},"minContains":1,"maxContains":1},
         {"contains":{"type":"object","required":["skill"],"properties":{"skill":{"const":"open-questions"}}},"minContains":1,"maxContains":1},
         {"contains":{"type":"object","required":["skill"],"properties":{"skill":{"const":"context-audit"}}},"minContains":1,"maxContains":1},
-        {"contains":{"type":"object","required":["skill"],"properties":{"skill":{"const":"agent-interface-design"}}},"minContains":1,"maxContains":1},
-        {"contains":{"type":"object","required":["skill"],"properties":{"skill":{"const":"intent-traced-merge"}}},"minContains":1,"maxContains":1},
         {"contains":{"type":"object","required":["skill"],"properties":{"skill":{"const":"recon"}}},"minContains":1,"maxContains":1},
         {"contains":{"type":"object","required":["skill"],"properties":{"skill":{"const":"resolve"}}},"minContains":1,"maxContains":1}
       ]

@@ -37,7 +37,7 @@ SKILL_NAMES = {
     "using-epistemic-skills", "helix", "recon", "resolve",
     "write-goal", "outsource", "gauntlet", "evidence-locked-uat",
     "decision-ledger", "open-questions",
-    "context-audit", "agent-interface-design", "intent-traced-merge",
+    "context-audit",
 }
 PROHIBITED_CONTENT_KEYS = {
     "prompt", "transcript", "user_prose", "raw_content", "secret",
@@ -121,20 +121,6 @@ SKILL_EVENT_MAP = {
         "outcome_sources": ("field-observation", "supersession-chain"),
         "collection_mode": "conditional",
         "sentinel_fixture": "audit-cut-regression.json",
-    },
-    "agent-interface-design": {
-        "event_kinds": ("consumer-gate-outcome",),
-        "eligible_when": ("independently-resolvable-verdict",),
-        "outcome_sources": ("independent-adjudication", "field-observation"),
-        "collection_mode": "observational",
-        "sentinel_fixture": "interface-consumer-miss.json",
-    },
-    "intent-traced-merge": {
-        "event_kinds": ("merge-ruling",),
-        "eligible_when": ("independently-resolvable-verdict",),
-        "outcome_sources": ("deterministic-fixture", "field-observation"),
-        "collection_mode": "observational",
-        "sentinel_fixture": "merge-dropped-intent.json",
     },
     "resolve": {
         "event_kinds": ("evidence-claim", "formal-prediction", "probe-episode"),

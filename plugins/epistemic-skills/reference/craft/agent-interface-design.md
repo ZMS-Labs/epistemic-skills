@@ -1,7 +1,5 @@
----
-name: agent-interface-design
-description: 'Use when authoring or modifying an interface another agent will consume — a tool or function-call schema, an MCP server surface, a structured-output contract, a subagent dispatch contract, or a CLI/API whose caller is an agent — and when reviewing a change that adds one. Do NOT fire for human-facing interfaces (UI/UX and docs for people), for one-off throwaway scripts with a single known caller, for prose handoffs to another mind (outsource and write-goal own prose contracts), or for auditing the instruction context an agent receives (context-audit owns the inbound channel).'
----
+<!-- craft doctrine: agent-interface-design — demoted from a standalone skill to reference doctrine (v4.0.0, 2026-08-04): a workflow/craft method, not an epistemic moment discipline; its battery and epoch results are archived in the sibling -evals directory -->
+
 
 # agent-interface-design — the interface IS the instruction
 

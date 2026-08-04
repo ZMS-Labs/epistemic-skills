@@ -39,6 +39,11 @@ ordinary workflow with no epistemic pair, no `helix-check` line, and no process-
 only artifact. Unfamiliar routine-looking work gets the two-read micro-recon;
 unfamiliarity alone is not a positive pairing trigger.
 
+**Craft doctrine:** intent-traced-merge and agent-interface-design are
+reference doctrine, not paired members, as of v4.0.0 — read them at
+`../../reference/craft/` when merging with non-trivial conflicts or building
+an interface another agent consumes.
+
 ## The governing rule
 
 Once a positive pairing trigger exists, **the epistemic member fires first,
@@ -64,12 +69,10 @@ are silent.
 | subagent-driven-development / dispatching-parallel-agents (first material dispatch) | **recon** (brief mode) | *before* the first dispatch — recon when a wrong premise could multiply across isolated agents |
 | external delegation / model handoff | **outsource** | *before* sending — commit a context-complete GitHub packet and emit only its short pointer; returned relay claims are re-verified by the origin |
 | test-driven-development / implementation | (none mandatory) | epistemic disciplines fire only on their own positive triggers; clean implementation needs no ceremony |
-| implementation of an interface another agent will consume (tool/function schema, MCP surface, structured-output or dispatch contract) | **agent-interface-design** | *inside* the build — constraints move into structure, examples pass the example-lint, and the cold-consumer test gates the interface before it ships |
 | writing-skills / instruction-layer maintenance (explicit audit request, a detected cross-layer instruction conflict, or a model-generation upgrade) | **context-audit** | *outside the per-task arc* — audit the assembled instruction context as one set; report before apply, one version-controlled commit per cut class |
 | writing-plans (the effort is large and material decisions are still unresolved) | **recon** (initiative mode) | *before* planning — decompose by decisions, resolve the frontier, and plan only fog-free regions; tickets minted from fog are the failure the pairing prevents |
 | brainstorming (a live option is cheaper to build thin than to keep debating) | **resolve** (probe instrument) | *inside* — instantiate the option as a disposable probe under the four-clause contract; the answer returns to the design dialogue, the code does not |
 | any stage, immediately after a consequential decision, load-bearing assumption, or recurrent/operator correction — or when a ledgered decision's outcome becomes observable at a completion/verification stage (per decision-ledger's own positive and no-op gates) | **decision-ledger** | *retrospective cross-cutting* — reuse an adequate durable artifact or append only the uncovered persistence gap; on outcome arrival, prediction and result as separate untouched facts; never log before the moment exists |
-| finishing-a-development-branch / any merge or rebase with non-trivial conflicts | **intent-traced-merge** | *at integration* — resolve hunks by tracing both origins, verify against both sides' motivating checks, record rulings in the merge commit |
 | brainstorming / writing-plans (a proposal is "use X instead of ours", or an external project overlaps the thing being designed) | **recon** (candidate mode) | *before* the design commits — harvest the transferable ideas at zero risk and re-triage; the design dialogue receives the ideas, not an adoption |
 | receiving-code-review (acceptance about to be signed on a change the acceptor has not restated) | **evidence-locked-uat** acceptor comprehension gate | *at acceptance* — the acceptor states what changed and what breaks first if it's wrong, or the state is recorded `ACCEPTED-UNREVIEWED`, never silently upgraded |
 | systematic-debugging (fix rests on a complexity or correctness claim) | **resolve** (derivation instrument) | *inside* — "this is O(n log n) now" and "this can't race" are derived, not asserted |
@@ -107,8 +110,6 @@ context-bound order rules. The most important combined paths are:
   territory both bear load;
 - formal rigor names an empirical premise, evidence research qualifies it,
   then formal rigor closes the derivation;
-- `intent-traced-merge → gauntlet` when a high-risk branch first needs semantic
-  conflict resolution and then a frozen pre-merge verdict; and
 - `gauntlet → evidence-locked-uat` when the same change needs both a high-risk
   gate and material UI proof.
 

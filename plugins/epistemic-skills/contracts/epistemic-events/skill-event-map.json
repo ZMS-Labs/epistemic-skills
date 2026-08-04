@@ -73,22 +73,6 @@
       "sentinel_fixture": "audit-cut-regression.json"
     },
     {
-      "skill": "agent-interface-design",
-      "event_kinds": ["consumer-gate-outcome"],
-      "eligible_when": ["independently-resolvable-verdict"],
-      "outcome_sources": ["independent-adjudication", "field-observation"],
-      "collection_mode": "observational",
-      "sentinel_fixture": "interface-consumer-miss.json"
-    },
-    {
-      "skill": "intent-traced-merge",
-      "event_kinds": ["merge-ruling"],
-      "eligible_when": ["independently-resolvable-verdict"],
-      "outcome_sources": ["deterministic-fixture", "field-observation"],
-      "collection_mode": "observational",
-      "sentinel_fixture": "merge-dropped-intent.json"
-    },
-    {
       "skill": "recon",
       "event_kinds": ["frontier-decision", "harvest-decision", "landmine-prediction"],
       "eligible_when": ["correction-or-supersession", "evaluation-case", "independently-resolvable-verdict", "preregistered-prediction"],

@@ -24,7 +24,7 @@ def read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
-WORDS = {11: "eleven", 12: "twelve", 13: "thirteen", 14: "fourteen", 15: "fifteen",
+WORDS = {9: "nine", 10: "ten", 11: "eleven", 12: "twelve", 13: "thirteen", 14: "fourteen", 15: "fifteen",
          16: "sixteen", 17: "seventeen", 18: "eighteen", 19: "nineteen", 20: "twenty"}
 
 
@@ -73,7 +73,7 @@ def check_live_surface_counts(skill_count: int) -> None:
     readme = read(REPO_ROOT / "README.md")
     mermaid = [ln for ln in readme.splitlines() if "router and" in ln and "disciplines" in ln]
     for ln in mermaid:
-        found = [w for w in WORDS.values() if w in ln.lower()]
+        found = [w for w in WORDS.values() if re.search(rf"\b{w}\b", ln.lower())]
         for w in found:
             require(w in ok_words, f"README mermaid node count stale: {ln.strip()}")
     gemini = read(REPO_ROOT / "GEMINI.md")
@@ -125,9 +125,9 @@ def main() -> int:
 
     router_root = PACKAGE_ROOT / "skills" / "using-epistemic-skills"
     router = read(router_root / "SKILL.md")
-    require("These eleven disciplines" in router, "router discipline count is stale")
+    require("These nine disciplines" in router, "router discipline count is stale")
     require("**outsource**" in router, "router does not route outsource")
-    require("why these eleven" in router, "router family-resemblance count is stale")
+    require("why these nine" in router, "router family-resemblance count is stale")
     require("Routine work leaves before the arc" in router, "router lacks routine-work exit")
     require("Absent triggers are silent" in router, "router still requires absent-trigger records")
     require(
@@ -147,8 +147,8 @@ def main() -> int:
         "helix composition contract schema is missing or stale",
     )
     require(
-        len(helix_contract.get("members", {})) == 11,
-        "helix composition contract does not classify all eleven disciplines",
+        len(helix_contract.get("members", {})) == 9,
+        "helix composition contract does not classify all nine disciplines",
     )
     helix_eval = helix_root / "evals" / "composition"
     for filename in (
@@ -161,10 +161,10 @@ def main() -> int:
 
     readme = read(REPO_ROOT / "README.md")
     require(f"**Version {EXPECTED_VERSION}.**" in readme, "README version is stale")
-    require("**thirteen** skills" in readme, "README skill count is stale")
-    require("**eleven** disciplines" in readme, "README discipline count is stale")
+    require("**eleven** skills" in readme, "README skill count is stale")
+    require("**nine** disciplines" in readme, "README discipline count is stale")
     require("the tag's full skill count" in readme, "README harness success check is stale")
-    require("canonical skill cores (thirteen)" in readme, "README layout inventory count is stale")
+    require("canonical skill cores (eleven)" in readme, "README layout inventory count is stale")
     require("canonical skill cores (sixteen)" not in readme, "README still advertises the pre-consolidation count")
     require("**outsource**" in readme, "README skill table lacks outsource")
     require("## Routine work first" in readme, "README does not present the routine path first")
@@ -176,8 +176,8 @@ def main() -> int:
     )
 
     gemini = read(REPO_ROOT / "GEMINI.md")
-    require("thirteen skills" in gemini, "GEMINI context skill count is stale")
-    require("eleven disciplines" in gemini, "GEMINI context discipline count is stale")
+    require("eleven skills" in gemini, "GEMINI context skill count is stale")
+    require("nine disciplines" in gemini, "GEMINI context discipline count is stale")
 
     workflow = read(REPO_ROOT / ".github" / "workflows" / "epistemic-flexibility.yml")
     require(
@@ -226,8 +226,6 @@ def main() -> int:
     )
     for battery_skill in (
         "context-audit",
-        "agent-interface-design",
-        "intent-traced-merge",
     ):
         test_path = f"plugins/epistemic-skills/skills/{battery_skill}/evals/trigger-and-scope/tests/run_tests.py"
         require(
@@ -293,7 +291,7 @@ def main() -> int:
             require((suite / filename).is_file(), f"missing proportionality artifact: {suite.name}/{filename}")
 
     skill_dirs = [p for p in (PACKAGE_ROOT / "skills").iterdir() if p.is_dir()]
-    require(len(skill_dirs) == 13, f"expected 13 skill directories, found {len(skill_dirs)}")
+    require(len(skill_dirs) == 11, f"expected 11 skill directories, found {len(skill_dirs)}")
     check_live_surface_counts(len(skill_dirs))
     for directory in skill_dirs:
         require((directory / "SKILL.md").is_file(), f"missing SKILL.md: {directory.name}")

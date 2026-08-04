@@ -1,7 +1,5 @@
----
-name: intent-traced-merge
-description: 'Use when resolving a merge/rebase conflict where any hunk is non-trivial — both sides changed the same logic, the textual resolution is ambiguous, the conflict spans semantics rather than formatting, or the branches embody different decisions — and when reviewing a merge commit whose resolution provenance is undocumented. Do NOT fire for mechanically trivial conflicts (pure formatting, lockfiles regenerable by the package manager, generated files whose generator can be re-run — regenerate instead of resolving), or to adjudicate WHICH decision should win when the sides embody a genuinely open decision (that is a decision, not a merge — escalate to its owner or the decision process before resolving).'
----
+<!-- craft doctrine: intent-traced-merge — demoted from a standalone skill to reference doctrine (v4.0.0, 2026-08-04): a workflow/craft method, not an epistemic moment discipline; its battery and epoch results are archived in the sibling -evals directory -->
+
 
 # intent-traced-merge — resolve hunks by provenance, not by pattern
 
