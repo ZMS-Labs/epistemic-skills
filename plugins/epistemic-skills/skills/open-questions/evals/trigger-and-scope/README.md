@@ -11,5 +11,6 @@ defects, not extra rigor.
 
 Run `python tests/run_tests.py`.
 
-No live behavioral epoch has been run against this battery; see
-`results/BLOCKED.md`.
+First live behavioral epoch: 2026-08-04, FAIL 8/10 — see
+`results/2026-08-04/RESULTS.md` for the record, methodology, and the two
+diagnosed reporting-contract failures (register: issue #77).
