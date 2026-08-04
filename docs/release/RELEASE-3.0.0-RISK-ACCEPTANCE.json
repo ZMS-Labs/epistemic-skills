@@ -86,7 +86,10 @@
       "owner": "ZMS-Labs epistemic-skills maintainers",
       "scope": "current arbitrator certification claims",
       "revisit_trigger": "before claiming the current arbitrator is certified",
-      "exit_criterion": "the amended certification battery runs and its committed result meets the declared threshold"
+      "exit_criterion": "the amended certification battery runs and its committed result meets the declared threshold",
+      "revisit_history": [
+        "2026-08-04: exit criterion met \u2014 the amended battery (AC-07 = seat-provenance-prejudice) ran blind at 10/10 planted-flaw catch (threshold 9/10), verdict-match 8/10; committed at plugins/epistemic-skills/skills/gauntlet/evals/arbitrator-certification/results-2026-08-04.md (v3.5.0 wave, PR #78)"
+      ]
     }
   ],
   "non_waivable_gates": [

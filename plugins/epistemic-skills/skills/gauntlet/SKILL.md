@@ -445,13 +445,15 @@ Shipped today: the staple, falsifiability contract, mechanical evidence checks,
 replayable Workflow log, the machine-readable registry + deterministic selector
 (mechanically validated: registry schema, 1000 selector constraint fixtures,
 targeted regressions — `tests/run_tests.py`). **Certified arbitrator: BUILT and RUN**
-(2026-07-17) — the historical planted-flaw seat battery (`evals/arbitrator-certification/`) ran the
-arbitrator blind against 10 defect classes it must catch (fabricated citation, binary-file
-`[V]`, correlated-as-independent, malformed falsifier, inadequate oracle, unresolved-P1
-rounding, seat-provenance prejudice, false-high, prompt-injection, polish-over-evidence);
-result **10/10 catch at standard rigor** (verdict-match 8/10). That result is now
-historical: AC-07 changed from shadow exclusion to seat-provenance neutrality, and the
-amended battery is `NOT_RUN`; do not claim current certification from the old result.
+(amended battery, 2026-08-04) — the planted-flaw seat battery (`evals/arbitrator-certification/`)
+ran the arbitrator blind against 10 defect classes it must catch (fabricated citation,
+binary-file `[V]`, correlated-as-independent, malformed falsifier, inadequate oracle,
+unresolved-P1 rounding, seat-provenance prejudice, false-high, prompt-injection,
+polish-over-evidence); result **10/10 catch at standard rigor** (verdict-match 8/10),
+including the amended AC-07 seat-provenance-neutrality case — the wildcard-seat P1 was
+upheld on its `[V]` merits with provenance carrying zero weight. Both verdict
+divergences were more-conservative-than-spec. The 2026-07-17 run remains on record for
+the retired shadow-seat protocol only.
 **Still partial/unbuilt:** the behavioral battery has only a
 **smoke subset run** (non-inferiority, not
 superiority; the full 24×4 sweep is unrun; smoke notes are not shipped as a standalone
