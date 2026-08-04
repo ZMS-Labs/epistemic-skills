@@ -74,8 +74,8 @@ def count_surfaces() -> list[tuple[Path, list[tuple[str, str]]]]:
              "one router, Helix, and {d} disciplines"),
             (rf"canonical skill cores \({ANY_WORD}\)", "canonical skill cores ({n})"),
             (rf"router and {ANY_WORD} disciplines", "router and {d} disciplines"),
-            (rf"this tree \(the unreleased v[0-9.]+ wave\) ships {ANY_WORD};",
-             "this tree (the unreleased v4.0.0 wave) ships {n};"),
+            (rf"a v4\.0\.0 package or tagged checkout ships {ANY_WORD} ",
+             "a v4.0.0 package or tagged checkout ships {n} "),
         ]),
         (REPO / "GEMINI.md", [
             (rf"{ANY_WORD} skills: router \+ {ANY_WORD} disciplines",

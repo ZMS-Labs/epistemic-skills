@@ -11,7 +11,7 @@ HERE = Path(__file__).resolve()
 SKILL_ROOT = HERE.parents[1]
 PACKAGE_ROOT = HERE.parents[3]
 REPO_ROOT = HERE.parents[5]
-EXPECTED_VERSION = "3.4.0"
+EXPECTED_VERSION = "4.0.0"
 
 
 def require(condition: bool, message: str) -> None:
