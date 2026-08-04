@@ -188,6 +188,7 @@ The package contains exactly one router, Helix, and fifteen disciplines. Each na
 | [`wayfinding`](plugins/epistemic-skills/skills/wayfinding/SKILL.md) | Large foggy effort with unresolved decisions; backlog tickets encoding unmade decisions | Decompose by decisions, work the frontier, mint build tickets only from fog-free regions | Decision-dependency map + tickets with the three-fact handoff |
 | [`throwaway-prototyping`](plugins/epistemic-skills/skills/throwaway-prototyping/SKILL.md) | A live decision cheaper to resolve by a disposable build than by more argument | Build to answer one pre-registered question, capture the answer, dispose the build, never promote | Recorded answer; disposed prototype |
 | [`intent-traced-merge`](plugins/epistemic-skills/skills/intent-traced-merge/SKILL.md) | Merge/rebase conflicts with non-trivial hunks; merge commits without resolution provenance | Resolve each hunk by tracing both sides to their origins; verify against both; record rulings | Merged result with per-hunk rulings and both-origin checks green |
+| [`harvest-before-adopt`](plugins/epistemic-skills/skills/harvest-before-adopt/SKILL.md) | An external project overlaps something you already built; adopt / replace / ignore | Harvest the transferable ideas first (free and reversible), then triage what is left; the capability partition is the expensive fallback | Harvest record with a per-level spend decision; partition only when needed |
 
 ## Installation and compatibility
 
