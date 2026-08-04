@@ -58,5 +58,5 @@ environments produce contract failures that mask discipline behavior):
   `run_record_produced: true`; `verdict_rendered` must be false/absent —
   this skill never renders GO/NO-GO.
 
-No live behavioral epoch has been run against this battery; see
-`results/BLOCKED.md`.
+First live behavioral epoch: 2026-08-04, PASS 14/14 — see
+`results/2026-08-04/RESULTS.md` (register: issue #77).

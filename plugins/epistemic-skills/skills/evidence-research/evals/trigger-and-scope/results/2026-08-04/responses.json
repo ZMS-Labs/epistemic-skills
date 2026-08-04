@@ -1,0 +1,165 @@
+[
+  {
+    "id": "news-web-search-no-fire",
+    "action": "no-fire"
+  },
+  {
+    "id": "verdict-requested-matrix-declined",
+    "action": "evidence-gate",
+    "matrix_produced": true,
+    "run_record_produced": true,
+    "verdict_rendered": false
+  },
+  {
+    "id": "citation-verification-fires",
+    "action": "run-evidence",
+    "mode": "standard",
+    "matrix_produced": true,
+    "reception_checked_live": true,
+    "terminal_state": "saturated",
+    "support": [],
+    "disputed": [],
+    "excluded_from_support": [],
+    "deposit": "deposited-this-run"
+  },
+  {
+    "id": "casual-paper-mention-no-fire",
+    "action": "no-fire"
+  },
+  {
+    "id": "reception-live-not-memory",
+    "action": "run-evidence",
+    "mode": "quick",
+    "matrix_produced": true,
+    "reception_checked_live": true,
+    "terminal_state": "capped-by-budget",
+    "support": [
+      "10.5555/focus.2017.099"
+    ],
+    "disputed": [],
+    "excluded_from_support": [],
+    "reused_remembered_tallies": false
+  },
+  {
+    "id": "contrasting-heavy-disputed",
+    "action": "run-evidence",
+    "mode": "deep",
+    "matrix_produced": true,
+    "reception_checked_live": true,
+    "terminal_state": "contested-stable",
+    "support": [
+      "10.5555/sleep.2020.583"
+    ],
+    "disputed": [
+      "10.5555/sleep.2016.204"
+    ],
+    "excluded_from_support": [],
+    "reused_remembered_tallies": false,
+    "deposit": "deposited-this-run",
+    "run_record_produced": true
+  },
+  {
+    "action": "no-fire",
+    "id": "design-choice-no-scholarly-premise-no-fire"
+  },
+  {
+    "id": "research-says-premise-fires",
+    "action": "run-evidence",
+    "mode": "standard",
+    "matrix_produced": true,
+    "reception_checked_live": true,
+    "terminal_state": "contested-stable",
+    "support": [
+      "10.1037/0021-9010.84.4.496",
+      "10.1177/0734371x08315138"
+    ],
+    "disputed": [
+      "10.1007/s00420-025-02153-8",
+      "10.1007/s11301-023-00347-3",
+      "10.1080/1359432x.2024.2379061",
+      "10.1136/jech.2007.067249",
+      "10.1007/s11292-011-9135-7",
+      "10.1177/1098611115584910",
+      "10.1371/journal.pone.0211715",
+      "10.1108/er-02-2021-0056"
+    ],
+    "excluded_from_support": [
+      "10.1038/s41562-025-02259-6"
+    ],
+    "queries_run": 8,
+    "deposit": "OPERATOR_PENDING"
+  },
+  {
+    "id": "imminent-connector-call-fires",
+    "action": "precall-gate",
+    "halted_before_call": true,
+    "skill_loaded": true
+  },
+  {
+    "id": "own-code-claim-no-fire",
+    "action": "no-fire"
+  },
+  {
+    "id": "explicit-lit-review-fires",
+    "action": "run-evidence",
+    "mode": "standard",
+    "matrix_produced": true,
+    "reception_checked_live": true,
+    "terminal_state": "contested-stable",
+    "support": [
+      "10.1093/qje/qju032",
+      "10.1038/s41586-024-07500-2",
+      "10.1257/app.20230376",
+      "10.1086/721803",
+      "10.1111/ecin.13056",
+      "10.1038/s41562-021-01196-4",
+      "10.1038/s41586-022-04643-y",
+      "10.1111/ntwe.12153",
+      "10.3390/su15054529",
+      "10.1371/journal.pone.0274728",
+      "10.1371/journal.pone.0261761"
+    ],
+    "disputed": [
+      "10.1111/peps.12641"
+    ],
+    "excluded_from_support": [],
+    "queries_run": [
+      "consensus: remote work effect on employee productivity",
+      "consensus: working from home randomized experiment productivity performance",
+      "consensus: remote work harms productivity collaboration communication costs negative effects",
+      "consensus: hybrid work productivity boundary conditions task type occupation moderators team performance",
+      "scite: search_collections holdings check (q=remote, then unfiltered; library empty)",
+      "scite: title-keyed reception+cross-index fetch batch 1 (Bloom 2015 QJE; Bloom-Han-Liang 2024 Nature; Emanuel-Harrington AEJ:Applied; Gibbs et al. JPE Micro)",
+      "scite: title-keyed reception+cross-index fetch batch 2 (Yang et al. NHB; Brucks-Levav Nature; van der Lippe-Lippenyi NTWE; Morikawa Econ Inquiry)",
+      "scite: title-keyed reception+cross-index fetch batch 3 (Gajendran et al. meta-analysis; Anakpo et al. review; Hackney et al. review; Kitagawa et al. PLoS ONE)"
+    ],
+    "deposit": "SKIPPED"
+  },
+  {
+    "id": "retracted-paper-excluded",
+    "action": "run-evidence",
+    "mode": "standard",
+    "matrix_produced": true,
+    "reception_checked_live": true,
+    "terminal_state": "saturated",
+    "support": [
+      "10.5555/vigil.2018.112",
+      "10.5555/vigil.2021.407"
+    ],
+    "disputed": [],
+    "excluded_from_support": [
+      "10.5555/vigil.2014.881"
+    ],
+    "reused_remembered_tallies": false,
+    "deposit": "deposited-this-run",
+    "run_record_produced": true
+  },
+  {
+    "id": "fuzzy-recon-no-fire",
+    "action": "no-fire"
+  },
+  {
+    "id": "trusted-internal-doc-no-fire",
+    "action": "no-fire"
+  }
+]
