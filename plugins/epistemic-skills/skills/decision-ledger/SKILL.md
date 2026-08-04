@@ -119,7 +119,11 @@ validating synthetic examples beside it):
 
 ### 3. Write to the store
 
-Use the narrowest durable substrate the named consumer already reads:
+Use the narrowest durable substrate the named consumer already reads.
+This sink order is also the write path other disciplines borrow —
+open-questions defers declined/unanswered interview questions (with their
+best-guess defaults) directly into these sinks, and such entries are
+consumed under the same contract as native ones:
 
 1. repo-local `.ledger/entries.jsonl` when the repository has adopted it;
 2. a configured harness task/memory store via LOCAL.md; or

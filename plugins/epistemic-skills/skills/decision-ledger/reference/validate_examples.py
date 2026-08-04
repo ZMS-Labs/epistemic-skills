@@ -267,7 +267,16 @@ def check_examples() -> int:
 
 def check_ledger(path: Path) -> int:
     if not path.is_file():
-        print(f"[FAIL] durable ledger: missing {path}")
+        # Portability note (gauntlet R12): a copied plugin tree outside the
+        # repository has no durable store at the derived default path. Failing
+        # is still correct (store validation is the default on purpose), but
+        # the message must say how to proceed, not just that a file is absent.
+        print(
+            f"[FAIL] durable ledger: no store at {path} — this checkout has no "
+            "durable ledger at the default location; pass --ledger <path> to "
+            "validate a store elsewhere, or --examples-only to validate only "
+            "the shipped examples"
+        )
         return 1
     entries, errors = read_jsonl(path)
     print(

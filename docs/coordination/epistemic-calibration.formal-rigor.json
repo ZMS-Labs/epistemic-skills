@@ -2,7 +2,7 @@
   "record": "formal-rigor-record@2",
   "subject": {
     "ref": "docs/coordination/epistemic-calibration.md",
-    "revision": "git-blob:b8d678c5cf9446cde8effa7806eca9ab85c9037b"
+    "revision": "git-blob:f123631765b8fa5ef6d1075d73b3bba0a9720854"
   },
   "valid_while": [
     "subject-revision-unchanged",
@@ -12,7 +12,8 @@
   "coverage_limits": [
     "The epistemic-calibration repository was not reachable from this environment.",
     "The result establishes a unilateral proposal, not bilateral adoption or calibration-side compatibility.",
-    "P8 measurement uncertainty remains unmapped until calibration-side populations and statistical methods are inspected."
+    "P8 measurement uncertainty remains unmapped until calibration-side populations and statistical methods are inspected.",
+    "2026-08-04 amendment (gauntlet R9b): a two-line frozen-baseline banner was prepended to the subject charter; the frozen body below the banner is unchanged, and the subject pin above tracks the banner-bearing blob."
   ],
   "rigor": {
     "tier": "standard",

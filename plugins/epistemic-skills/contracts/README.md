@@ -10,6 +10,11 @@ This directory contains three deliberately narrow contract surfaces:
 - [`epistemic-product-calibration@1`](epistemic-product-calibration.schema.json)
   binds a calibration result to immutable producer, subject, corpus, runner,
   preregistration, and result revisions across the two product repositories.
+  Counterpart handoffs must reference this schema at an **immutable
+  revision** (a tag or commit-pinned path); the schema's `$id` URL points at
+  the mutable `main` branch and is an identity string only, never a fetch
+  coordinate. No inbound calibration record is accepted before the charter's
+  Phase 0 reconnaissance confirms the canonical counterpart repository.
 
 None of these surfaces attests that a behavioral judgment is correct.
 

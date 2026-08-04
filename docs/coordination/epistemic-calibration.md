@@ -1,5 +1,8 @@
 # Epistemic Skills × Epistemic Calibration coordination charter
 
+> **Frozen baseline:** this charter's body describes the repository as of
+> `2d66a27` (v3.0.0-era); update owner: ZMS-Labs epistemic-skills maintainers.
+
 **Established:** 2026-07-29  
 **Skills subject:** `ZMS-Labs/epistemic-skills` at `2d66a27`  
 **Calibration coordinate:** `https://github.com/ZMS-Labs/epistemic-calibration.git`  
