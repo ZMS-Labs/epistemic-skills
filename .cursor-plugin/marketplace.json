@@ -11,7 +11,7 @@
     {
       "name": "epistemic-skills",
       "source": "./plugins/epistemic-skills",
-      "description": "The full collection in one install: using-epistemic-skills + helix + blindspot-pass + applying-formal-rigor + evidence-research + write-goal + outsource + gauntlet + evidence-locked-uat + decision-ledger + continuity-verify + open-questions + context-audit + agent-interface-design + wayfinding + throwaway-prototyping + intent-traced-merge."
+      "description": "The full collection in one install: using-epistemic-skills + helix + using-epistemic-skills + helix + recon + resolve + write-goal + outsource + gauntlet + evidence-locked-uat + decision-ledger + open-questions + context-audit."
     }
   ]
 }
