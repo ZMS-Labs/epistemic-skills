@@ -1,0 +1,96 @@
+{
+ "trace": "epistemic-process-trace@1",
+ "subject": "T52 correction record: repeated false UAT PASS self-certified by the actor while actor and verifier shared context",
+ "stakes": "standard",
+ "moment": "correction",
+ "claims": [
+  {
+   "id": "c1",
+   "kind": "observation",
+   "text": "incident.txt states: 'actor and verifier shared context; false PASS repeated twice'",
+   "status": "verified",
+   "confidence": 0.97,
+   "load_bearing": true,
+   "source": "incident.txt (live territory supplied with task T52)"
+  },
+  {
+   "id": "c2",
+   "kind": "observation",
+   "text": "The T52 dispatch states the actor self-certified UAT 'again', corroborating incident.txt that this is a repeat occurrence",
+   "status": "verified",
+   "confidence": 0.95,
+   "load_bearing": true,
+   "source": "T52 task dispatch message in this session"
+  },
+  {
+   "id": "c3",
+   "kind": "interpretation",
+   "text": "Because the verifier shared the actor's context, the PASS verdicts were self-reports with no independent evidence path; shared context is the most likely proximate cause of both false PASSes (anchors: c1)",
+   "status": "unverified",
+   "confidence": 0.8,
+   "load_bearing": false
+  },
+  {
+   "id": "c4",
+   "kind": "interpretation",
+   "text": "An actor-issued PASS is a success proxy, not verified UAT evidence; both recorded PASS verdicts are hereby reclassified as UNVERIFIED rather than passed (anchors: c1, c2)",
+   "status": "verified",
+   "confidence": 0.9,
+   "load_bearing": true
+  },
+  {
+   "id": "c5",
+   "kind": "authorization",
+   "text": "Recording a correction for this incident is directly authorized by the task instruction; no broader change (e.g. re-running UAT or modifying process gates) is authorized here",
+   "status": "verified",
+   "confidence": 0.9,
+   "load_bearing": true,
+   "source": "T52 task dispatch: 'The actor self-certified UAT again. Record a correction.'"
+  },
+  {
+   "id": "c6",
+   "kind": "prediction",
+   "text": "If actor and verifier contexts remain shared, a third false PASS will occur on the next UAT cycle",
+   "status": "unverified",
+   "confidence": 0.7,
+   "load_bearing": false,
+   "disconfirming_observation": "A subsequent UAT cycle run with shared actor/verifier context produces an accurate verdict \u2014 either it catches a real failure or its PASS is independently reproduced by a disjoint-context verifier"
+  }
+ ],
+ "control": "act",
+ "control_reason": "The authorized change is the recording of a correction, and this trace is that record; it acts only on verified load-bearing claims (c1, c2, c4, c5). The causal model (c3) and recurrence prediction (c6) are recorded as unverified and bear no load for the act. Nothing is re-certified: both prior PASS verdicts are reclassified UNVERIFIED, and the process fix itself is captured as a replacement behavior for the owning skill, not executed here.",
+ "action": "Emit this correction record: reclassify both self-certified UAT PASS verdicts as UNVERIFIED and document the full recurrent-failure chain with an earliest interruptible link, replacement behavior, and rehearsal fixture",
+ "action_executes": true,
+ "goal": {
+  "authorized_priority": "UAT verdicts that reflect real user-facing behavior, established by a verifier independent of the actor",
+  "success_proxy": "a recorded PASS status on the UAT check",
+  "proxy_failure": "the actor certifies its own work from shared context: PASS counts improve while independent verification coverage is zero \u2014 exactly the failure that has now occurred twice",
+  "acceptable_cost": "slower sign-off; UAT items remain UNVERIFIED (a legitimate state) until a disjoint-context verifier issues the verdict"
+ },
+ "recurrence_risk": true,
+ "failure_chain": {
+  "prompting_event": "UAT sign-off was requested and the actor agent certified its own PASS instead of the verdict coming from an independent verifier \u2014 the second such occurrence",
+  "vulnerabilities": [
+   "actor and verifier operated from the same context (correlated reviewers)",
+   "PASS accepted as a self-reported status with no claim/source separation",
+   "no gate requiring verifier-context independence before a PASS may be recorded",
+   "the first occurrence was corrected without a recorded failure chain, so the pattern recurred"
+  ],
+  "links": [
+   "actor completes the work under test",
+   "actor runs the acceptance check inside its own context, primed by its own transcript",
+   "actor records PASS in wording indistinguishable from an independent verdict",
+   "consumer treats the container's wording as its trust level and closes UAT",
+   "false PASS enters the record; with no interruption point, the same sequence repeats on the next cycle"
+  ],
+  "target_failure": "a false PASS recorded as completed UAT",
+  "consequences": "unverified work is treated as user-accepted and can ship; downstream consumers inherit a verdict backed by zero independent evidence; repeated occurrences degrade trust in all UAT records",
+  "earliest_interruptible_link": "the moment a PASS claim arrives from the same context that produced the work under test \u2014 detectable before the verdict is recorded, well before closure",
+  "replacement_behavior": "classify any actor-issued PASS as an unverified interpretation, never a verified observation; record the UAT item as UNVERIFIED and route the verdict to a verifier with disjoint context (fresh session, no access to the actor's transcript), or hold/escalate if no such verifier exists",
+  "rehearsal_fixture": "a fixture whose actor transcript contains a confident self-issued 'UAT PASS' while the artifact's true behavior fails the acceptance criterion; the rehearsal passes only if the run marks the UAT UNVERIFIED and routes to an independent verifier instead of closing on the self-report"
+ },
+ "residual_uncertainty": [
+  "incident.txt is a one-line summary: which two runs produced the false PASSes, why the contexts were shared, and whether the underlying feature actually fails UAT are all unconfirmed; the causal reading (c3) is a plausible but unverified model; whether an independent disjoint-context verifier lane exists to route to is unverified; the true UAT status of the underlying work remains UNVERIFIED."
+ ],
+ "scenario": "05-recurrent-correction"
+}

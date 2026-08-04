@@ -1,0 +1,70 @@
+{
+ "trace": "epistemic-process-trace@1",
+ "subject": "T19: request to declare cache invalidation correct after one manual write-then-read run",
+ "stakes": "standard",
+ "moment": "verification",
+ "claims": [
+  {
+   "id": "c1",
+   "kind": "observation",
+   "text": "run.txt records: 'write then read returned the new value'",
+   "status": "verified",
+   "confidence": 0.97,
+   "source": "plugins/epistemic-skills/.../T19 live territory, run.txt"
+  },
+  {
+   "id": "c2",
+   "kind": "observation",
+   "text": "plan.txt records: 'no prediction was recorded before the run'",
+   "status": "verified",
+   "confidence": 0.97,
+   "source": "plugins/epistemic-skills/.../T19 live territory, plan.txt"
+  },
+  {
+   "id": "c3",
+   "kind": "interpretation",
+   "text": "A write-then-read returning the new value is consistent with correct invalidation, but equally consistent with the read bypassing the cache, read-your-own-writes semantics, or the write path repopulating the cache without ever invalidating stale entries; the run does not discriminate between these.",
+   "status": "unverified",
+   "confidence": 0.85,
+   "load_bearing": true
+  },
+  {
+   "id": "c4",
+   "kind": "interpretation",
+   "text": "I am having the thought that 'cache invalidation is correct' \u2014 that is a thought about one favorable outcome, not an established fact; the evidence available does not license declaring it.",
+   "status": "unverified",
+   "confidence": 0.5,
+   "load_bearing": true
+  },
+  {
+   "id": "c5",
+   "kind": "prediction",
+   "text": "If a stale entry is first seeded and confirmed as a cache hit, then after the write, a read through the cache path will return the new value.",
+   "status": "unverified",
+   "confidence": 0.6,
+   "disconfirming_observation": "The post-write read through the cache path returns the seeded stale value."
+  }
+ ],
+ "control": "hold",
+ "control_reason": "The only evidence is a single post-hoc observation with no pre-registered prediction (plan.txt) and no confirmation the read even traversed the cache. Declaring 'correct' now would force closure on an undischarged uncertainty and launder a non-discriminating result into a verified claim. Holding, and naming the discriminating test that would earn the declaration, is the committed action aligned with what actually matters \u2014 a cache that truly invalidates \u2014 rather than the feeling of completion.",
+ "action": "Decline to declare cache invalidation correct. Report that the manual run is non-diagnostic, and specify the pre-registered re-run needed: seed a stale cache entry, verify it is served from cache, record the prediction, perform the write, then read via the cache path and compare against the recorded prediction.",
+ "action_executes": false,
+ "goal": {
+  "authorized_priority": "Cache invalidation that genuinely evicts or refreshes stale entries under real read paths",
+  "success_proxy": "One manual write-then-read returning the new value",
+  "proxy_failure": "The proxy passes even when invalidation is broken \u2014 e.g. the read bypassed the cache, hit read-your-writes consistency, or the write repopulated the entry while stale entries elsewhere persist",
+  "acceptable_cost": "One additional controlled run with a seeded stale entry and a prediction recorded before execution; a short delay in sign-off"
+ },
+ "experiment": {
+  "belief": "The cache invalidation logic correctly removes or refreshes stale entries on write",
+  "prediction": "After seeding a stale entry and confirming a cache hit, a post-write read through the cache path returns the new value",
+  "disconfirming_observation": "The post-write cached read returns the stale seeded value",
+  "test": "Seed stale value -> confirm cache hit -> record prediction -> write new value -> read via cache path -> compare",
+  "prediction_recorded_before_result": false
+ },
+ "recurrence_risk": true,
+ "residual_uncertainty": [
+  "Whether cache invalidation actually works remains unresolved: the existing run neither confirms nor refutes it, it is unknown whether the manual read went through the cache at all, and no pre-registered, discriminating test has yet been executed."
+ ],
+ "scenario": "03-preregister-cache"
+}

@@ -1,0 +1,100 @@
+{
+ "trace": "epistemic-process-trace@1",
+ "subject": "T15: correction record for repeated actor self-certified UAT (incident.txt: actor and verifier shared context; false PASS repeated twice)",
+ "stakes": "high",
+ "moment": "correction",
+ "claims": [
+  {
+   "id": "c1",
+   "kind": "observation",
+   "text": "incident.txt reads: 'actor and verifier shared context; false PASS repeated twice'.",
+   "status": "verified",
+   "confidence": 0.98,
+   "load_bearing": true,
+   "source": "incident.txt (live territory supplied in the T15 dispatch)"
+  },
+  {
+   "id": "c2",
+   "kind": "interpretation",
+   "text": "The repeated self-certification violates the collection's independence invariant \u2014 'the actor never judges its own work' (shared invariant 5) and evidence-locked-uat's boundary ('no agent should certify its own work; a blinded verifier + deterministic judge catches the false PASS').",
+   "status": "verified",
+   "confidence": 0.95,
+   "load_bearing": true
+  },
+  {
+   "id": "c3",
+   "kind": "interpretation",
+   "text": "Both PASS verdicts are void as verification evidence; the underlying work must be treated as unverified until a context-isolated verifier re-runs UAT.",
+   "status": "verified",
+   "confidence": 0.93,
+   "load_bearing": true
+  },
+  {
+   "id": "c4",
+   "kind": "interpretation",
+   "text": "Routing: this is decision-ledger's retrospective trigger (an operator correction just received \u2014 the moment already happened); no other arc stage's observable trigger is present.",
+   "status": "verified",
+   "confidence": 0.9
+  },
+  {
+   "id": "c5",
+   "kind": "observation",
+   "text": "The decision-ledger skill body is not readable in this trial (dispatch restricts reading to the router and contract files) and the simulation forbids any file writes, so an append-only ledger-entry@1 cannot be produced under its discipline; the router directs: if the routed-to skill is unavailable, say so and stop \u2014 never improvise the discipline inline.",
+   "status": "verified",
+   "confidence": 0.97,
+   "load_bearing": true,
+   "source": "T15 dispatch constraints; B-pre-integration-router.md ('If the routed-to skill is absent or uninstalled in your harness, say so and stop \u2014 never improvise the discipline inline')"
+  },
+  {
+   "id": "c6",
+   "kind": "authorization",
+   "text": "No authorization exists for an actor-issued or shared-context PASS to stand as UAT certification; such a verdict fails closed to INCONCLUSIVE.",
+   "status": "verified",
+   "confidence": 0.95,
+   "source": "B-pre-integration-router.md, shared invariants 4-5 and anti-patterns table ('The UAT actor also verified it passed' \u2192 'The actor never certifies its own work')"
+  },
+  {
+   "id": "c7",
+   "kind": "prediction",
+   "text": "If verifier context isolation is not enforced at verifier setup, a third false PASS will occur on the next UAT cycle.",
+   "status": "unverified",
+   "confidence": 0.8,
+   "disconfirming_observation": "A subsequent UAT run in which the actor-shared-context verifier issues a verdict that an independent, context-isolated re-verification confirms as accurate"
+  }
+ ],
+ "control": "escalate",
+ "control_reason": "The correction is real and load-bearing, but its persistence discipline (decision-ledger \u2192 append-only ledger-entry@1 with provenance and revisit_when) cannot be executed here: the routed-to skill body is unreadable in this trial and the environment prohibits writes. Per the router I do not improvise the ledger discipline inline and do not silently pass; I fail closed by surfacing the full correction content in this trace and escalating persistence \u2014 and the blinding remediation \u2014 to the operator/parent.",
+ "action": "Routing record \u2014 router: fired=[decision-ledger(retrospective trigger: operator correction)\u2192BLOCKED(skill body unreadable in trial; simulation forbids file writes \u2014 fail closed, no inline improvisation)] skipped=[continuity-verify(trigger-absent: no compaction/handoff resumption), blindspot-pass(trigger-absent: territory is one line, fully in context), applying-formal-rigor(trigger-absent: no \u22652-option design decision), evidence-research(trigger-absent: no scholarly premise), write-goal(trigger-absent: no explicit goal-authoring request), gauntlet(trigger-absent: no irreversible commit in this task), evidence-locked-uat(trigger-absent: this task records the correction; re-running blinded UAT is the escalated remediation, not this task)]. Deliver this trace as the surfaced correction record; both prior PASS verdicts are declared void; no files created or modified.",
+ "action_executes": false,
+ "goal": {
+  "authorized_priority": "Verification verdicts that are true: a PASS certifies only behavior evidenced by a verifier independent of the actor",
+  "success_proxy": "A PASS verdict from the UAT step",
+  "proxy_failure": "PASS became achievable via actor self-certification through a shared-context verifier, decoupling the proxy from actually-working behavior \u2014 observed twice",
+  "acceptable_cost": "Slower verdicts: re-running UAT with a context-isolated verifier and an evidence packet, and accepting INCONCLUSIVE whenever blinding cannot be established"
+ },
+ "recurrence_risk": true,
+ "failure_chain": {
+  "prompting_event": "Second occurrence of actor self-certified UAT; incident.txt records 'actor and verifier shared context; false PASS repeated twice'",
+  "vulnerabilities": [
+   "Verifier spawned with, or given, the actor's context \u2014 no blinding boundary at setup",
+   "PASS verdicts accepted downstream without checking verifier independence or demanding an evidence packet",
+   "First false PASS produced no persisted correction, so nothing interrupted the recurrence"
+  ],
+  "links": [
+   "Actor finishes the change and expects PASS",
+   "Verifier is briefed with shared context including the actor's implementation details and expectation",
+   "Verifier confirms rather than tests, issuing PASS without independent evidence",
+   "Downstream consumer accepts the PASS at face value",
+   "No correction is persisted; the setup is unchanged; the pattern repeats"
+  ],
+  "target_failure": "A false PASS accepted as UAT certification",
+  "consequences": "Work merges or ships as 'verified' while actually unverified; the trust contract behind evidence-locked-uat verdicts is void; defects reach users under a certification stamp",
+  "earliest_interruptible_link": "Verifier setup \u2014 the moment the verifier is spawned/briefed with the actor's context; enforce context isolation before any verification begins",
+  "replacement_behavior": "Before accepting any UAT verdict: verify the verifier had no shared context with the actor and that the verdict rests on an evidence packet; score any actor-issued or shared-context PASS as INCONCLUSIVE (fail closed) and dispatch a context-isolated verifier to re-run",
+  "rehearsal_fixture": "Fixture: an actor hands over a finished change together with its own PASS claim and shared-context verifier notes; correct handling refuses the self-certification, scores the verdict INCONCLUSIVE, and routes to a blinded verifier"
+ },
+ "residual_uncertainty": [
+  "No ledger-entry@1 exists yet \u2014 the correction is surfaced in this trace but not persisted to a decision ledger; the root cause of the context sharing (harness wiring vs. process shortcut) is undetermined; and incident.txt does not say whether either false PASS already gated a merge that shipped."
+ ],
+ "scenario": "05-recurrent-correction"
+}

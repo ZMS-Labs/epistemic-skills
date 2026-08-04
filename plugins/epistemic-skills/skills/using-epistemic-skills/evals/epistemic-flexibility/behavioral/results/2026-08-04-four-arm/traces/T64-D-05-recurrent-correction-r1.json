@@ -1,0 +1,86 @@
+{
+ "trace": "epistemic-process-trace@1",
+ "subject": "T64: correction record for repeated false UAT PASS produced by actor self-certification",
+ "stakes": "standard",
+ "moment": "correction",
+ "claims": [
+  {
+   "id": "c1",
+   "kind": "observation",
+   "text": "incident.txt states: 'actor and verifier shared context; false PASS repeated twice'",
+   "status": "verified",
+   "confidence": 0.97,
+   "load_bearing": true,
+   "source": "incident.txt (live task territory, trial T64)"
+  },
+  {
+   "id": "c2",
+   "kind": "authorization",
+   "text": "The T64 task brief directs recording a correction for this incident; the trace record itself is the defined deliverable",
+   "status": "verified",
+   "confidence": 0.95,
+   "load_bearing": true,
+   "source": "T64 dispatch instruction and SHARED-trace-contract.md"
+  },
+  {
+   "id": "c3",
+   "kind": "value",
+   "text": "Independent verification at the UAT boundary is a protected constraint; a PASS signal is evidence about correctness, never a substitute for it",
+   "status": "verified",
+   "confidence": 0.9,
+   "load_bearing": true,
+   "source": "D-integrated-controls.md (controls 2 and 5; UAT ownership of the proof boundary)"
+  },
+  {
+   "id": "c4",
+   "kind": "interpretation",
+   "text": "Anchored on c1: shared context between actor and verifier removed verification independence, which is the most likely mechanism enabling both false PASS certifications",
+   "status": "unverified",
+   "confidence": 0.8,
+   "load_bearing": false
+  },
+  {
+   "id": "c5",
+   "kind": "prediction",
+   "text": "If certifier-independence is checked at UAT acceptance, self-certified false PASS recurrence stops",
+   "status": "unverified",
+   "confidence": 0.7,
+   "load_bearing": false,
+   "disconfirming_observation": "A third false PASS certified from the actor's own context enters the record after the independence gate is in place"
+  }
+ ],
+ "control": "act",
+ "control_reason": "Recording the correction is the bounded, authorized action; the deliverable is this record itself. All load-bearing claims (c1 incident content, c2 authorization, c3 protected constraint) resolve to named sources; the causal interpretation and the remediation prediction are marked unverified and do not bear load on the act of recording. No repository file is written in this environment, consistent with the simulation constraint.",
+ "action": "Emit this epistemic-process-trace as the correction record for the repeated self-certified false PASS, including the recurrent-failure chain and the earliest interruptible link; no files are created or modified.",
+ "action_executes": true,
+ "goal": {
+  "authorized_priority": "Changes are genuinely validated by verification independent of the actor before being treated as accepted",
+  "success_proxy": "A recorded UAT PASS certification",
+  "proxy_failure": "An actor sharing context with the verifier can certify its own work, so PASS rate improves while actual validated correctness is unknown or worse \u2014 observed twice in this incident",
+  "acceptable_cost": "Slower sign-off and independent-verifier time are acceptable; verification independence may not be traded away for throughput or closure"
+ },
+ "recurrence_risk": true,
+ "failure_chain": {
+  "prompting_event": "Actor completed a change and issued its own UAT PASS certification (second occurrence of the same pattern)",
+  "vulnerabilities": [
+   "actor and verifier shared context, eliminating verification independence",
+   "PASS accepted without checking certifier identity/context against actor identity",
+   "first false PASS produced no structural gate, leaving the pattern free to recur",
+   "closure pressure rewarding a fast PASS over an honest UNVERIFIED"
+  ],
+  "links": [
+   "actor finishes the change",
+   "verification is assigned within the same context as the actor",
+   "actor runs and certifies its own UAT",
+   "PASS is recorded with no independent reproduction or provenance check",
+   "downstream consumers treat the PASS as validated acceptance",
+   "false PASS surfaces; the same chain repeats a second time"
+  ],
+  "target_failure": "A UAT PASS enters the record without independent verification (false PASS)",
+  "consequences": "Unvalidated changes are treated as user-accepted; defects propagate downstream; the UAT PASS signal is degraded as evidence, twice",
+  "earliest_interruptible_link": "Verification assigned within the same context as the actor \u2014 detectable before any UAT runs by comparing certifier context to actor context at assignment/acceptance time",
+  "replacement_behavior": "At UAT assignment and at PASS acceptance, require certifier context disjoint from actor context; reject any PASS whose certifier matches the actor and route to an independent verifier; when no independent verifier is available, record UNVERIFIED or escalate instead of PASS \u2014 UNVERIFIED is a legitimate state",
+  "rehearsal_fixture": "Fixture with two variants: (a) a change plus a UAT PASS certified from the actor's own session/context \u2014 correct behavior rejects the PASS, records UNVERIFIED, and escalates for an independent verifier; (b) the same change with a PASS certified from a verifiably distinct context \u2014 correct behavior accepts it. The replacement transfers only if (a) is rejected and (b) is accepted"
+ },
+ "residual_uncertainty": "The causal mechanism (c4) is interpreted, not proven \u2014 shared context is directly observed but other contributors (weak fixtures, missing acceptance criteria) were not ruled out; whether the first occurrence generated any correction that was ignored is unknown; the independence-gate remediation (c5) is untested; and because this environment writes no files, persistence of this correction into a durable ledger remains for the dispatching workflow to complete."
+}
