@@ -56,4 +56,6 @@ bare ids without annotations; a non-list value in any of them, or a
 non-string entry inside one, is a named shape violation, never a crash or
 a silent coercion.
 
-No live behavioral epoch has been run against this battery; see `results/BLOCKED.md`.
+First live behavioral epoch: 2026-08-04, FAIL 12/14 — both failures are
+capability-id vocabulary drift over behaviorally correct preflights; see
+`results/2026-08-04/RESULTS.md` (register: issue #77).

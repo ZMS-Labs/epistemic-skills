@@ -1,0 +1,20 @@
+{
+  "scorer": "plugins/epistemic-skills/skills/outsource/evals/trigger-and-scope/score.py",
+  "exit_code": 1,
+  "report": [
+    "{",
+    "  \"pass\": false,",
+    "  \"failures\": [",
+    "    \"capable-target-preflight-fires: capability preflight must verify every required check \\u2014 missing ['github-mutation', 'isolated-context', 'test-shell']\",",
+    "    \"readonly-target-preflight-blocked-state: every failed capability check is named \\u2014 missing ['github-mutation', 'isolated-context', 'test-shell']\"",
+    "  ],",
+    "  \"actions\": {",
+    "    \"publish-packet\": 6,",
+    "    \"no-fire\": 4,",
+    "    \"verify-relay\": 1,",
+    "    \"report-blocked\": 3",
+    "  }",
+    "}"
+  ],
+  "extraction_problems": []
+}

@@ -1,0 +1,168 @@
+[
+  {
+    "id": "copy-paste-review-handoff-fires",
+    "action": "publish-packet",
+    "packet_committed": true,
+    "pushed": true,
+    "packet_published_first": true,
+    "immutable_ref": "a3f8c2d914b07e6f5a1c8d2e9b4f7061c3d5e8a2",
+    "handoff_path": "docs/outsource/migration-design-review/HANDOFF.md",
+    "prompt_emitted": true,
+    "prompt_is_pointer": true,
+    "full_context_pasted": false,
+    "relay_template_recorded": true
+  },
+  {
+    "id": "pointer-not-paste-state",
+    "action": "publish-packet",
+    "packet_committed": true,
+    "pushed": true,
+    "packet_published_first": true,
+    "immutable_ref": "3f9c2a71d4e8b0a6c5f1e2d3a4b5c6d7e8f90a1b",
+    "handoff_path": "docs/outsource/schema-migration/HANDOFF.md",
+    "prompt_emitted": true,
+    "prompt_is_pointer": true,
+    "full_context_pasted": false,
+    "relay_template_recorded": true
+  },
+  {
+    "id": "hidden-chat-context-blocked-state",
+    "action": "report-blocked",
+    "blocked": true,
+    "prompt_emitted": false,
+    "blocker": "hidden-context"
+  },
+  {
+    "id": "colleague-agent-question-no-fire",
+    "action": "no-fire"
+  },
+  {
+    "id": "capable-target-preflight-fires",
+    "action": "publish-packet",
+    "packet_committed": true,
+    "pushed": true,
+    "packet_published_first": true,
+    "immutable_ref": "a3f6c9d2b8e1470f5c2d9a6b3e8f1c4d7a0b5e29",
+    "handoff_path": "docs/outsource/failing-suite-fix/HANDOFF.md",
+    "prompt_emitted": true,
+    "prompt_is_pointer": true,
+    "full_context_pasted": false,
+    "relay_template_recorded": true,
+    "capability_preflight": true,
+    "capabilities_verified": [
+      "writable-checkout",
+      "runnable-test-shell",
+      "github-mutation-actions",
+      "isolated-execution-contexts",
+      "repository-access"
+    ]
+  },
+  {
+    "id": "in-session-subagent-no-fire",
+    "action": "no-fire"
+  },
+  {
+    "id": "beyond-origin-surface-fires",
+    "action": "publish-packet",
+    "work_id": "gpu-load-test",
+    "packet_committed": true,
+    "pushed": true,
+    "packet_published_first": true,
+    "immutable_ref": "ec453be02dae991c13ce4c69e6495d1744da0036",
+    "handoff_path": "docs/outsource/gpu-load-test/HANDOFF.md",
+    "prompt_emitted": true,
+    "prompt_is_pointer": true,
+    "full_context_pasted": false,
+    "relay_template_recorded": true,
+    "capability_preflight": true,
+    "capabilities_verified": [
+      "repository-read-access",
+      "writable-checkout",
+      "runnable-test-shell",
+      "authenticated-github-mutation-actions",
+      "isolated-execution-contexts"
+    ]
+  },
+  {
+    "id": "packet-before-prompt-state",
+    "action": "publish-packet",
+    "packet_committed": true,
+    "pushed": true,
+    "packet_published_first": true,
+    "immutable_ref": "a3f6c2d9e8b14f7c05d21a9e6b8340cf7d1e5a92",
+    "handoff_path": "docs/outsource/index-rebuild/HANDOFF.md",
+    "prompt_emitted": true,
+    "prompt_is_pointer": true,
+    "full_context_pasted": false,
+    "relay_template_recorded": true
+  },
+  {
+    "id": "relay-claim-verified-state",
+    "action": "verify-relay",
+    "stored_verbatim": true,
+    "relay_verified": true,
+    "claims_checked": [
+      "status-complete",
+      "tests-pass",
+      "commits-pushed"
+    ],
+    "packet_updated": true
+  },
+  {
+    "id": "inbound-target-work-no-fire",
+    "action": "no-fire"
+  },
+  {
+    "id": "readonly-target-preflight-blocked-state",
+    "action": "report-blocked",
+    "blocked": true,
+    "blocker": "target-capability",
+    "capability_preflight": true,
+    "capabilities_failed": [
+      "shell",
+      "writable-checkout",
+      "test-execution",
+      "branch-commit-push",
+      "pull-request",
+      "isolated-execution"
+    ],
+    "prompt_emitted": false,
+    "notes": "Packet is committed and pushed, so publication is not the blocker. The operator-chosen target is a read-only chat assistant; the workload's completion contract requires checking out code, running tests, and opening a pull request, none of which the target can perform. Per the skill's stop conditions, a ready-looking prompt must not be emitted; the single blocking condition is target capability."
+  },
+  {
+    "id": "explicit-superior-model-fires",
+    "action": "publish-packet",
+    "packet_committed": true,
+    "pushed": true,
+    "packet_published_first": true,
+    "immutable_ref": "a3f6c9d2b8e14075c6a1d9e3f204b7a8c5d0e1f2",
+    "handoff_path": "docs/outsource/architecture-audit/HANDOFF.md",
+    "prompt_emitted": true,
+    "prompt_is_pointer": true,
+    "full_context_pasted": false,
+    "relay_template_recorded": true,
+    "capability_preflight": true,
+    "capabilities_verified": [
+      "repo-read",
+      "prose-output"
+    ]
+  },
+  {
+    "id": "self-handoff-local-task-no-fire",
+    "action": "no-fire",
+    "rationale": "The operator explicitly assigned the work to this agent, in this session, on the local working tree. The outsource skill exists for handing a workload to a different model, agent, or process via a repo-backed relay; nothing here is being handed off, no external target exists, and the operator's stated expectation is direct execution. Firing the discipline would manufacture a handoff packet, relay records, and commits for a task that never leaves the session \u2014 an over-application. The correct behavior is to simply perform the rename and doc updates directly, producing none of the outsource process artifacts.",
+    "packet_committed": false,
+    "pushed": false,
+    "prompt_emitted": false,
+    "capability_preflight": false,
+    "relay_template_recorded": false,
+    "visible_process": false
+  },
+  {
+    "id": "unpushed-packet-blocked-state",
+    "action": "report-blocked",
+    "blocked": true,
+    "blocker": "unpushed-packet",
+    "prompt_emitted": false
+  }
+]
