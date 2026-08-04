@@ -25,11 +25,12 @@
       "evidence": "docs/release/evidence/2026-07-26-formal-rigor-v3-posthoc-diagnostic.md",
       "owner": "ZMS-Labs epistemic-skills maintainers",
       "scope": "formal-rigor behavioral confidence",
-      "revisit_trigger": "before the next release tag after v4.0.0, or 2026-10-31, whichever comes first; or immediately on a field report matching either failed scenario",
+      "revisit_trigger": "before the next release tag after v4.1.0, or 2026-10-31, whichever comes first; or immediately on a field report matching either failed scenario",
       "exit_criterion": "a fresh preregistered campaign passes both scenarios under independent valid adjudication",
       "revisit_history": [
         "2026-07-31: re-adjudicated at the v3.3.0 publication gauntlet, re-accepted unchanged (issue #69)",
-        "2026-08-04: trigger fired at the v4.0.0 tag (created without a prior revisit; no v3.5.0 tag will exist). Re-adjudicated post-tag, re-accepted UNCHANGED: the 2026-08-04 four-arm campaign was an epistemic-flexibility comparison, not the preregistered formal-rigor behavioral campaign the exit criterion requires \u2014 no fresh evidence touches the tm-02/tm-03 P0 posture, and v4.0.0 moved the method unchanged into resolve/derivation. Exit criterion stands. Trigger re-dated to the earlier of the next release tag after v4.0.0 or 2026-10-31 (issue #69 closes; this record is now the dated artifact)."
+        "2026-08-04: trigger fired at the v4.0.0 tag (created without a prior revisit; no v3.5.0 tag will exist). Re-adjudicated post-tag, re-accepted UNCHANGED: the 2026-08-04 four-arm campaign was an epistemic-flexibility comparison, not the preregistered formal-rigor behavioral campaign the exit criterion requires \u2014 no fresh evidence touches the tm-02/tm-03 P0 posture, and v4.0.0 moved the method unchanged into resolve/derivation. Exit criterion stands. Trigger re-dated to the earlier of the next release tag after v4.0.0 or 2026-10-31 (issue #69 closes; this record is now the dated artifact).",
+        "2026-08-04: trigger fired ahead of the v4.1.0 tag (revisit-before-tag honored). Re-accepted UNCHANGED: no new formal-rigor behavioral evidence since the same-day v4.0.0 re-adjudication \u2014 the v4 Tier-1 wave epoched trigger surfaces, not the tm-02/tm-03 behavioral scenarios; the derivation instrument's semantic adjudication remains NOT_RUN. Trigger re-dated: before the next release tag after v4.1.0, or 2026-10-31, whichever comes first; field-report clause unchanged."
       ]
     },
     {
@@ -38,11 +39,12 @@
       "evidence": "docs/release/evidence/2026-07-26-formal-rigor-v3-posthoc-diagnostic.md",
       "owner": "ZMS-Labs epistemic-skills maintainers",
       "scope": "cross-provider semantic coverage",
-      "revisit_trigger": "before the next release tag after v4.0.0, or 2026-10-31, whichever comes first; or immediately when AGY-equivalent independent adjudication capacity becomes available",
+      "revisit_trigger": "before the next release tag after v4.1.0, or 2026-10-31, whichever comes first; or immediately when AGY-equivalent independent adjudication capacity becomes available",
       "exit_criterion": "complete independent semantic judgments exist for every planned provider arm",
       "revisit_history": [
         "2026-07-31: re-adjudicated at the v3.3.0 publication gauntlet, re-accepted unchanged (issue #69)",
-        "2026-08-04: trigger fired at the v4.0.0 tag (created without a prior revisit; no v3.5.0 tag will exist). Re-adjudicated post-tag, re-accepted UNCHANGED: independent non-Codex (AGY-equivalent) adjudication capacity has not materialized; the 44 OpenAI-origin candidates remain unadjudicated availability failures. Exit criterion stands. Trigger re-dated to the earlier of the next release tag after v4.0.0 or 2026-10-31 (issue #69 closes; this record is now the dated artifact)."
+        "2026-08-04: trigger fired at the v4.0.0 tag (created without a prior revisit; no v3.5.0 tag will exist). Re-adjudicated post-tag, re-accepted UNCHANGED: independent non-Codex (AGY-equivalent) adjudication capacity has not materialized; the 44 OpenAI-origin candidates remain unadjudicated availability failures. Exit criterion stands. Trigger re-dated to the earlier of the next release tag after v4.0.0 or 2026-10-31 (issue #69 closes; this record is now the dated artifact).",
+        "2026-08-04: trigger fired ahead of the v4.1.0 tag (revisit-before-tag honored). Re-accepted UNCHANGED: independent adjudication capacity still absent; the 44 OpenAI-origin candidates remain unadjudicated. The paired proposal (issue #84) names the counterpart's model-family round-robin runner as a candidate execution vehicle for a future cross-provider slice \u2014 noted as prospect, not capacity. Trigger re-dated: before the next release tag after v4.1.0, or 2026-10-31, whichever comes first; capacity clause unchanged."
       ]
     },
     {
