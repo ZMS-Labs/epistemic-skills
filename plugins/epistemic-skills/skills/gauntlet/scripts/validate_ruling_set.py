@@ -75,6 +75,44 @@ def validate_path(path: Path) -> list[str]:
     return validate_ruling_set(ruling_set)
 
 
+def scan(root: Path) -> int:
+    """Validate every arbitration.md under root that carries a ruling-set@1 block.
+
+    Files without the fenced block are pre-contract artifacts (the contract
+    postdates the earliest committed runs); they are skipped LOUDLY, never
+    silently. Any file that does carry the block is validated strictly.
+    """
+    if not root.is_dir():
+        print(f"[FAIL] SCAN-ROOT-MISSING: {root}", file=sys.stderr)
+        return 1
+    failures = 0
+    validated = 0
+    skipped: list[Path] = []
+    for path in sorted(root.rglob("arbitration.md")):
+        try:
+            ruling_set = extract_ruling_set(path.read_text(encoding="utf-8"))
+        except OSError as error:
+            print(f"[FAIL] {path}: {error}", file=sys.stderr)
+            failures += 1
+            continue
+        except RulingSetError:
+            skipped.append(path)
+            continue
+        errors = validate_ruling_set(ruling_set)
+        if errors:
+            failures += 1
+            for error in errors:
+                print(f"[FAIL] {path}: {error}", file=sys.stderr)
+        else:
+            validated += 1
+            print(f"[PASS] {path}")
+    for path in skipped:
+        print(f"[SKIP] {path}: no ruling-set@1 block (pre-contract artifact)")
+    print(f"ruling-set scan: {validated} validated, {len(skipped)} pre-contract skipped, "
+          f"{failures} failed under {root}")
+    return 1 if failures else 0
+
+
 def self_test() -> int:
     failures = 0
     positive = validate_path(EXAMPLE)
@@ -103,13 +141,16 @@ def self_test() -> int:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--arbitration", type=Path)
+    parser.add_argument("--scan", type=Path, metavar="DIR")
     parser.add_argument("--self-test", action="store_true")
     args = parser.parse_args()
 
     if args.self_test:
         return self_test()
+    if args.scan is not None:
+        return scan(args.scan)
     if args.arbitration is None:
-        print("ERROR: --arbitration or --self-test is required", file=sys.stderr)
+        print("ERROR: --arbitration, --scan, or --self-test is required", file=sys.stderr)
         return 2
 
     errors = validate_path(args.arbitration)

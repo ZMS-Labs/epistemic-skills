@@ -91,6 +91,14 @@ def load_selector():
     return mod
 
 
+def load_ruling_set_validator():
+    spec = importlib.util.spec_from_file_location(
+        "validate_ruling_set", ROOT / "scripts" / "validate_ruling_set.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
 class Leg:
     def __init__(self, name):
         self.name, self.failures, self.drift = name, [], False
@@ -169,6 +177,11 @@ def verify_run(run_dir: Path, record_path: Path | None = None) -> tuple[list, bo
     if ruling_set is None:
         gate_leg.failures.append("RULING-SET-MISSING: no fenced ruling-set@1 JSON in arbitration.md")
     else:
+        # structural ruling-set validation on the REAL artifact, not only the
+        # shipped fixture — every OVERRULED ruling must preserve its
+        # validation_kernel (issue #37's gate applied at the verify path)
+        for error in load_ruling_set_validator().validate_ruling_set(ruling_set):
+            gate_leg.failures.append(error)
         derived = derive_verdict(ruling_set.get("rulings", []))
         if derived != ruling_set.get("computed_verdict"):
             gate_leg.failures.append(f"VERDICT-MISMATCH: gate derives {derived} but ruling-set "
