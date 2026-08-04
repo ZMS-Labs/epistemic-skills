@@ -36,7 +36,6 @@ CATALOG_SKILL_PATHS = [
     "plugins/epistemic-skills/skills/helix/SKILL.md",
     "plugins/epistemic-skills/skills/evidence-locked-uat/SKILL.md",
     "plugins/epistemic-skills/skills/decision-ledger/SKILL.md",
-    "plugins/epistemic-skills/skills/continuity-verify/SKILL.md",
 ]
 SKILL_PATHS = [ROUTER_PATH, ROUTINE_REFERENCE_PATH, *CATALOG_SKILL_PATHS[1:]]
 

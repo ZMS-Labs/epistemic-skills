@@ -32,7 +32,7 @@ REFERENCE = (
 SKILL_PATHS = [
     "plugins/epistemic-skills/skills/resolve/derivation/METHOD.md",
     "plugins/epistemic-skills/skills/recon/SKILL.md",
-    "plugins/epistemic-skills/skills/continuity-verify/SKILL.md",
+    "plugins/epistemic-skills/skills/decision-ledger/reference/mode-resume.md",
     "plugins/epistemic-skills/skills/decision-ledger/SKILL.md",
     "plugins/epistemic-skills/skills/evidence-locked-uat/SKILL.md",
     "plugins/epistemic-skills/skills/resolve/literature/METHOD.md",

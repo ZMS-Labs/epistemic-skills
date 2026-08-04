@@ -36,7 +36,7 @@ EVIDENCE_REF_KINDS = {
 SKILL_NAMES = {
     "using-epistemic-skills", "helix", "recon", "resolve",
     "write-goal", "outsource", "gauntlet", "evidence-locked-uat",
-    "decision-ledger", "continuity-verify", "open-questions",
+    "decision-ledger", "open-questions",
     "context-audit", "agent-interface-design", "intent-traced-merge",
 }
 PROHIBITED_CONTENT_KEYS = {
@@ -102,18 +102,11 @@ SKILL_EVENT_MAP = {
         "sentinel_fixture": "uat-seeded-defect.json",
     },
     "decision-ledger": {
-        "event_kinds": ("ledger-revisit",),
-        "eligible_when": ("revisit-trigger-fired",),
-        "outcome_sources": ("supersession-chain",),
+        "event_kinds": ("continuity-reanchor", "ledger-revisit"),
+        "eligible_when": ("evaluation-case", "revisit-trigger-fired", "sampled-field-incident"),
+        "outcome_sources": ("deterministic-fixture", "field-observation", "supersession-chain"),
         "collection_mode": "observational",
         "sentinel_fixture": "ledger-revisit.json",
-    },
-    "continuity-verify": {
-        "event_kinds": ("continuity-reanchor",),
-        "eligible_when": ("evaluation-case", "sampled-field-incident"),
-        "outcome_sources": ("deterministic-fixture", "field-observation"),
-        "collection_mode": "observational",
-        "sentinel_fixture": "continuity-contradiction.json",
     },
     "open-questions": {
         "event_kinds": ("interview-scope-decision",),

@@ -48,7 +48,7 @@ PACKAGE_REFERENCE = (
 EXPECTED_SKILLS = {
     "using-epistemic-skills", "helix", "recon", "resolve",
     "write-goal", "outsource", "gauntlet", "evidence-locked-uat",
-    "decision-ledger", "continuity-verify", "open-questions",
+    "decision-ledger", "open-questions",
     "context-audit", "agent-interface-design", "intent-traced-merge",
 }
 

@@ -11,7 +11,7 @@
     {
       "id": "resumption-before-recon",
       "when": "same-resumption-lineage",
-      "before": "continuity-verify",
+      "before": "decision-ledger",
       "after": "recon"
     },
     {
@@ -50,29 +50,30 @@
       ],
       "position": "before"
     },
-    "continuity-verify": {
-      "composition_class": "pre-arc",
-      "moments": [
-        "resumption"
-      ],
-      "position": "before",
-      "precedes_boundaries": [
-        "routine-classification",
-        "workflow-stage"
-      ]
-    },
     "decision-ledger": {
       "composition_class": "retrospective-cross-cutting",
       "moments": [
         "consequential-decision",
         "load-bearing-assumption",
-        "recurrent-or-operator-correction"
+        "recurrent-or-operator-correction",
+        "summary-dependent-resumption"
       ],
       "position": "after",
       "persistence_modes": [
         "reuse-existing-durable-artifact",
         "append-gap-only"
-      ]
+      ],
+      "resume_mode": {
+        "mode": "continuity-verify",
+        "position": "before",
+        "precedes_boundaries": [
+          "routine-classification",
+          "workflow-stage"
+        ],
+        "moments": [
+          "resumption"
+        ]
+      }
     },
     "outsource": {
       "composition_class": "execution-boundary",

@@ -96,8 +96,8 @@ jobs:
         run: python plugins/epistemic-skills/skills/outsource/tests/run_tests.py
       - name: Continuity resume-fixture committed results
         run: |
-          score=plugins/epistemic-skills/skills/continuity-verify/evals/resume-fixtures/score.py
-          results=plugins/epistemic-skills/skills/continuity-verify/evals/resume-fixtures/results
+          score=plugins/epistemic-skills/skills/decision-ledger/evals/resume-fixtures/score.py
+          results=plugins/epistemic-skills/skills/decision-ledger/evals/resume-fixtures/results
           expect_pass() {
             python "$score" --results-dir "$1"
           }

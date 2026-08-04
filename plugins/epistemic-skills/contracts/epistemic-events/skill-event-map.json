@@ -50,19 +50,11 @@
     },
     {
       "skill": "decision-ledger",
-      "event_kinds": ["ledger-revisit"],
-      "eligible_when": ["revisit-trigger-fired"],
-      "outcome_sources": ["supersession-chain"],
+      "event_kinds": ["continuity-reanchor", "ledger-revisit"],
+      "eligible_when": ["evaluation-case", "revisit-trigger-fired", "sampled-field-incident"],
+      "outcome_sources": ["deterministic-fixture", "field-observation", "supersession-chain"],
       "collection_mode": "observational",
       "sentinel_fixture": "ledger-revisit.json"
-    },
-    {
-      "skill": "continuity-verify",
-      "event_kinds": ["continuity-reanchor"],
-      "eligible_when": ["evaluation-case", "sampled-field-incident"],
-      "outcome_sources": ["deterministic-fixture", "field-observation"],
-      "collection_mode": "observational",
-      "sentinel_fixture": "continuity-contradiction.json"
     },
     {
       "skill": "open-questions",

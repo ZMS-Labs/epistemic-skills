@@ -173,7 +173,10 @@ def check_inventory(
         # consolidated mode/instrument method (skills/<name>/<subtree>/METHOD.md,
         # v4.0.0) — always inside a packaged skill directory.
         valid_core = len(parts) == 5 and parts[4] == "SKILL.md"
-        valid_method = len(parts) == 6 and parts[5] == "METHOD.md"
+        valid_method = len(parts) == 6 and (
+            parts[5] == "METHOD.md"
+            or (parts[4] == "reference" and parts[5].startswith("mode-") and parts[5].endswith(".md"))
+        )
         if (
             not audit_path.startswith(AUDIT_PATH_PREFIX)
             or not (valid_core or valid_method)

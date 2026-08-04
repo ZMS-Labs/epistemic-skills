@@ -1,7 +1,5 @@
----
-name: continuity-verify
-description: 'Use when a session begins or resumes with a compaction summary, a handoff note, or a prior-session task whose next action depends on remembered state — re-anchor every load-bearing claim to a durable artifact before acting on it. Observable anchors: a compaction summary or handoff note exists in-context; "as we decided / it''s done / the repo is at X" claims the next step depends on; a cross-device or cross-session handoff. Do NOT fire for fresh tasks with no prior-state claims (blindspot-pass owns those), for verifying premises of a frozen review subject (gauntlet owns that), or for writing decisions down (decision-ledger owns persistence — this skill consumes, never writes, the ledger).'
----
+<!-- decision-ledger mode: resume (continuity-verify) — consolidated into decision-ledger (v4.0.0, 2026-08-04); this file is the mode's full method, formerly its standalone SKILL.md -->
+
 
 # Continuity Verify — the summary is a claim, not a state
 

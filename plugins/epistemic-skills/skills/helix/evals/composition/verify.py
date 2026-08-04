@@ -14,7 +14,7 @@ REQUIRED_MEMBER_FIELDS = {"composition_class", "moments", "position"}
 REQUIRED_ORDER_RULES = {
     "resumption-before-recon": {
         "when": "same-resumption-lineage",
-        "before": "continuity-verify",
+        "before": "decision-ledger",
         "after": "recon",
     },
     "task-start-recon-before-design-derivation": {
@@ -113,13 +113,13 @@ def validate(contract: object, discovered_members: set[str], skill_text: str) ->
         if not (isinstance(row.get("position"), str) and row["position"].strip()):
             failures.append(f"{name}: position must be a non-empty string")
 
-    continuity = members.get("continuity-verify", {})
-    if continuity.get("composition_class") != "pre-arc" or continuity.get("position") != "before":
-        failures.append("continuity-verify must be classified pre-arc and before")
-    if set(continuity.get("precedes_boundaries", [])) != {"routine-classification", "workflow-stage"}:
-        failures.append("continuity-verify must precede routine classification and every resumed workflow stage")
-    if "resumption" not in continuity.get("moments", []):
-        failures.append("continuity-verify must classify the resumption moment")
+    resume = members.get("decision-ledger", {}).get("resume_mode", {})
+    if resume.get("mode") != "continuity-verify" or resume.get("position") != "before":
+        failures.append("decision-ledger resume_mode (continuity-verify) must be classified before/pre-arc")
+    if set(resume.get("precedes_boundaries", [])) != {"routine-classification", "workflow-stage"}:
+        failures.append("resume mode must precede routine classification and every resumed workflow stage")
+    if "resumption" not in resume.get("moments", []):
+        failures.append("resume mode must classify the resumption moment")
 
     ledger = members.get("decision-ledger", {})
     if ledger.get("composition_class") != "retrospective-cross-cutting" or ledger.get("position") != "after":

@@ -63,6 +63,19 @@ facts, lessons gated behind operator approval. This trigger typically fires in
 a *different session* than the decision did; continuity-verify's re-anchoring
 pass and a work batch's completion/verification stage are its usual carriers.
 
+**Third trigger — resumption (the resume mode, pre-arc; consolidated from
+continuity-verify, v4.0.0).** When the next action depends on a compaction
+summary, handoff note, or remembered prior-session state, the ledger's READ
+side fires **before** routine-path classification and before any resumed
+work: every load-bearing remembered claim is re-anchored to a durable
+artifact (this ledger's entries first, then files, git state, receipts) or
+stamped `(UNVERIFIED)`; an unverifiable approval escalates, never
+authorizes. The full method is
+[`reference/mode-resume.md`](reference/mode-resume.md) — its state digest
+feeds the router, and its double-fire order with reconnaissance is
+resume mode first, then recon for unfamiliar territory. The mode name
+continuity-verify survives for this trigger.
+
 ## No-op gate
 
 Create no ledger artifact when any of these holds:

@@ -49,15 +49,15 @@ def main() -> int:
     require(clean["member_count"] == len(discovered), clean)
     require(clean["order_rules"] >= len(verifier.REQUIRED_ORDER_RULES), clean)
 
-    missing_continuity = copy.deepcopy(contract)
-    del missing_continuity["members"]["continuity-verify"]
+    missing_resume = copy.deepcopy(contract)
+    del missing_resume["members"]["decision-ledger"]["resume_mode"]
     expect_failure(
         verifier,
-        "missing-continuity",
-        missing_continuity,
+        "missing-resume-mode",
+        missing_resume,
         discovered,
         skill_text,
-        "member classification mismatch",
+        "resume_mode",
     )
 
     helix_owns_triggers = copy.deepcopy(contract)
