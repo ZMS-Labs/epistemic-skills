@@ -66,6 +66,15 @@ Update the install coordinate to `v3.4.0` and reload the harness. No existing
 trigger, contract, schema, or output shape changed; amendments are additive
 clauses inside existing sections.
 
+## Erratum (2026-08-04, post-tag)
+
+The honest-limits register moved: "NO eval battery or behavioral epoch
+(register: issue #70)" was true at tag time, but PR #73 landed deterministic
+trigger-and-scope batteries for all five v3.3/v3.4 disciplines shortly after
+the tag, and issue #70 was closed on the authoring half with the live-epoch
+half explicitly unmet. The live register is now issue #77 (behavioral epoch
+program). "No live behavioral epoch" remains the accurate residual limit.
+
 ## Erratum (2026-07-31, post-tag)
 
 The migration section's "No existing trigger, contract, schema, or output
