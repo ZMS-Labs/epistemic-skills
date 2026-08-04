@@ -118,6 +118,8 @@ jobs:
           expect_fail "$results/baseline-v4-2026-08-04/run-1"
           expect_pass "$results/baseline-v4-2026-08-04/run-2"
           expect_pass "$results/baseline-v4-2026-08-04/run-3"
+      - name: Pin-tag reachability guard
+        run: python .github/scripts/check_pin_tags.py
       - name: DCO policy unit tests
         run: python .github/scripts/test_check_dco.py
       - name: Skill inventory contract
@@ -129,6 +131,7 @@ jobs:
           python -m py_compile \
             .github/scripts/check_json_artifacts.py \
             .github/scripts/check_ledger_append_only.py \
+            .github/scripts/check_pin_tags.py \
             .github/scripts/check_skill_inventory.py \
             .github/scripts/sync_skill_surfaces.py \
             plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/validate_trace.py \

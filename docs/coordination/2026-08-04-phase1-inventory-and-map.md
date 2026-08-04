@@ -26,23 +26,26 @@ an owner or explicit hold.
 
 | Node | Decides | Depends on | Resolve by | Owner | Status |
 |---|---|---|---|---|---|
-| **D1 charter-subject-refresh** | Whether Phase 2's pilot subject pair stays "immutable 3.0.0 + current HEAD" (charter as written) or becomes "v4.0.0 + current HEAD". The charter's own closing rule requires amending it before implementation if material. | — | **ask** (operator; product-change decisions are skills-owned) | skills | **FRONTIER — open** |
+| **D1 charter-subject-refresh** | Whether Phase 2's pilot subject pair stays "immutable 3.0.0 + current HEAD" (charter as written) or becomes "v4.0.0 + current HEAD". The charter's own closing rule requires amending it before implementation if material. | — | **ask** (operator; product-change decisions are skills-owned) | skills | **RESOLVED — see resolution log** |
 | **D2 exchange-protocol-adoption** | Whether the counterpart adopts `epistemic-product-calibration@1` or counter-proposes. Its event-contract lock is a de facto counter-proposal scoped to event collection only; the result-exchange protocol has no counterpart surface. | — (proposal can be made now; decision is theirs) | **ask** (paired proposal per change-protocol step 1) | calibration decides; skills proposes | **FRONTIER — open** |
 | **D3 producer-vocabulary-bridge** | How v3-era producer names (counterpart's `ProducerSkill` enum + pinned map at `8d9b2f85`) coexist with the v4 eleven during Phase 1. | — | **derive** | skills (matrix convention); calibration (re-pin, later) | **RESOLVED below** |
 | **D4 matrix-row-schema** | What one matrix row must carry to satisfy the exit criterion. | D3 | **derive** | skills | **RESOLVED below** |
 | **D5 pilot-corpus-successor** | Design constraints and authorship of the Phase 2 corpus. The counterpart's existing pilot corpus is **ruled invalid by its own gauntlet** (baselines perfectly separable by outcome; a content-free 0.5 forecast beats the preregistered 15 % Brier bar — `docs/design/gauntlet/pilot-two-phase-verdict-2026-07-28.md` in the counterpart). | D1, D2 | ask + research (corpus is calibration-owned; skills supplies contract requirements) | calibration | non-frontier |
 | **D6 advisory-instrument-repair** | Whether/when the counterpart repairs its advisory arm (hardcoded placeholder advisory string in `tools/run_pilot.py`; no renderer exists — its own gate-status record `docs/evidence/publication-gate-status-2026-07-27.md`, which files ledger `ecs-pilot-treatment-placeholder-20260727-09`, calls the usefulness claim "unproved, and currently unprovable by the existing harness"). Blocks usefulness claims only, not calibration measurement. | — (counterpart-internal) | prototype (theirs) | calibration | counterpart-owned; recorded gap |
-| **D7 field-pair-supply** | Owner-or-hold for the field tier's supply problem: the ≥25-resolved-pairs mint gate (≥3 producers, ≥2 resolution rules) is unreachable by construction today — collection is fire-and-forget and operator-private, and in-repo resolved forecast→outcome pairs are ≈ zero (`docs/audits/2026-08-04-creation-gate-revisit.md`). | — | **ask** (operator resource decision) | operator | **FRONTIER — open** |
+| **D7 field-pair-supply** | Owner-or-hold for the field tier's supply problem: the ≥25-resolved-pairs mint gate (≥3 producers, ≥2 resolution rules) is unreachable by construction today — collection is fire-and-forget and operator-private, and in-repo resolved forecast→outcome pairs are ≈ zero (`docs/audits/2026-08-04-creation-gate-revisit.md`). | — | **ask** (operator resource decision) | operator | **DISPOSED — recommendation recorded, see resolution log** |
 | **D8 reachability-guard** | Whether bilateral reachability obligations get a mechanical guard (nothing today stops deletion of `pin/ecs-contract-2026-07-27`, on which the counterpart's CI depends). | — | derive | skills | **RESOLVED: guard it — mint T2** |
 | **D9 risk-reconciliation-disposition** | Owner-or-hold for each open FR3 risk against the counterpart's actual machinery. | matrix (T1) | derive | skills | **RESOLVED below (§5)** |
 
-**Frontier now (every dependency resolved, workable from this side): D1,
-D2, D7** — all three are *ask* decisions. D1 and D7 are operator
-interviews (open-questions owns the interview if run as one); D2 is a
-paired cross-repository proposal. **D6 is also dependency-free and open —
-frontier by the resolution rule — but counterpart-owned: it sits on their
-map, and is tracked here, not worked.** Everything else is either
-resolved in this pass or ticketed fog-free.
+**Frontier as first charted: D1, D2, D7** — all three *ask* decisions,
+with **D6 dependency-free and open — frontier by the resolution rule —
+but counterpart-owned: it sits on their map, and is tracked here, not
+worked.**
+
+**Frontier after the 2026-08-04 operator answers (resolution log, §9):
+D2 alone remains open on our side** — the paired proposal is filed
+(issue #84) and the decision is the counterpart's. D5 stays non-frontier
+until D2 answers (D1, its other ancestor, is resolved). D6 and the
+counterpart-side items remain theirs.
 
 ## 2. Frontier decisions resolved in this pass (derivations, focused tier)
 
@@ -165,20 +168,20 @@ instrument-broken (D6); its `ProducerSkill` enum speaks the v3-era eleven
 - **T1 — commit this matrix** *(executed by this document)*. Depends on:
   D3, D4 (resolved above). Observable behavior: every row carries subject
   revision + sampling frame; CI stays green. Invalidating decision: none.
-- **T2 — mechanical reachability guard.** A Tier-0 CI step asserting
-  `pin/ecs-contract-2026-07-27` resolves to `8d9b2f85…` (and a place to
-  register future pin tags). Depends on: D8 (resolved). Observable
+- **T2 — mechanical reachability guard** *(executed 2026-08-04:
+  `.github/scripts/check_pin_tags.py` + the "Pin-tag reachability guard"
+  CI step — an absent or moved pin tag turns CI red; future pin tags
+  register in its `PINS` map)*. Depends on: D8 (resolved). Observable
   behavior: deleting or moving the pin tag turns CI red. Invalidating
   decision: none.
-- **T3 — the D2 paired proposal.** Draft the cross-repository proposal
-  (change-protocol step 1) naming both repos, the exact contracts
-  (`epistemic-product-calibration@1`, event-contract re-pin to a v4.0.0
-  coordinate), owners, and the desired decision; file it as a skills-side
-  issue for the operator to carry to the counterpart. Depends on: nothing
-  (the *proposal*; the *decision* is D2, counterpart-owned). Observable
-  behavior: an issue exists whose text a counterpart maintainer can act on
-  without this session's context. Invalidating decision: D2 resolving as
-  "counter-proposal" reshapes but does not invalidate the ask.
+- **T3 — the D2 paired proposal** *(executed 2026-08-04: issue #84 —
+  change-protocol step 1 naming both repos, the exchange protocol, the
+  v4 re-pin, the D7 ownership recommendation, and the successor-corpus
+  requirements)*. Depends on: nothing (the *proposal*; the *decision* is
+  D2, counterpart-owned). Observable behavior: an issue exists whose text
+  a counterpart maintainer can act on without this session's context.
+  Invalidating decision: D2 resolving as "counter-proposal" reshapes but
+  does not invalidate the ask.
 
 Nothing else is ticketable: every other region has an unresolved ancestor
 (D1, D2, or D7) or a counterpart-side owner.
@@ -192,22 +195,22 @@ supply, whose owner-or-hold is exactly what D7 asks the operator to
 assign**. The exit criterion is therefore not yet fully met: its second
 clause closes with D7, and Phase 1 is not claimed complete here.
 
-**Open on the frontier (the actual remaining Phase 1 steps, in order):**
+**Remaining Phase 1 steps after the 2026-08-04 resolutions (§9):**
 
-1. **D1** — operator decides the Phase 2 subject pair; if it changes from
-   the charter's "3.0.0 + HEAD", amend the charter *before* implementation
-   (its own closing rule). An open-questions interview owns this fork.
-2. **T3 → D2** — file the paired proposal; counterpart adopts or
-   counter-proposes the exchange protocol and re-pins the event contract
-   at a v4.0.0 coordinate on its own schedule.
-3. **D7** — operator assigns an owner or an explicit hold to field-pair
-   supply (the ≥25-pair mint gate is unreachable until someone owns an
-   operator-visible outcome store).
-4. **T2** — land the reachability guard (mechanical, no decision left).
+1. ~~**D1** — operator decides the Phase 2 subject pair~~ **RESOLVED**:
+   test current reality (latest release tag + HEAD); charter amended.
+2. **D2** — proposal filed (issue #84); the counterpart adopts,
+   counter-proposes, or explicitly defers on its own schedule. *The only
+   step Phase 1 still waits on.*
+3. ~~**D7** — owner-or-hold for field-pair supply~~ **DISPOSED**:
+   ownership recommendation recorded and carried in #84 (calibration owns
+   store + resolution; skills owns emission; operator owns visibility);
+   final confirmation rides the #84 answer.
+4. ~~**T2** — reachability guard~~ **EXECUTED** (CI-enforced).
 5. Counterpart-side, tracked not forced: D5 successor corpus (with the
-   §5/FR3-R5 non-separability requirement), D6 advisory repair, and the
-   PUBLICATION-HOLD ownership-review gate from Phase 0's "substantially
-   met" owners criterion.
+   §5/FR3-R5 non-separability requirement, restated in #84), D6 advisory
+   repair, and the PUBLICATION-HOLD ownership-review gate from Phase 0's
+   "substantially met" owners criterion.
 
 **Phase 1 closes** when 1–4 are done and the counterpart has either
 adopted, counter-proposed, or explicitly deferred on D2 — at which point
@@ -229,5 +232,40 @@ preregistered, stable, independently reproducible measures to gates.
 Walk upstream from each minted ticket: T1 → D3, D4 (both resolved above);
 T2 → D8 (resolved); T3 → none (it is a proposal, not the decision). No
 ticket has an unresolved ancestor. D5 is deliberately **not** ticketed —
-its ancestors D1 and D2 stand open — and no build ticket exists for the
-Phase 2 pilot for the same reason. The map is honest.
+its ancestors D1 (now resolved, §9) and D2 (open) leave one unresolved
+ancestor standing — and no build ticket exists for the Phase 2 pilot for
+the same reason. The map is honest.
+
+## 9. Resolution log (recorded on the map with provenance)
+
+- **D1 — RESOLVED 2026-08-04, provenance: operator interview** ("always
+  be testing the current reality and not the past unless it's
+  necessary"). Phase 2's subjects are the **latest immutable release tag
+  (today v4.0.0) + current development HEAD**; past immutable subjects
+  enter a design only when a specific claim (regression, transfer,
+  longitudinal) requires them. The charter is amended accordingly
+  (`epistemic-calibration.md`, amendment banner + Phase 2 bullet) —
+  amendment-before-implementation honored. Revisit: if a regression or
+  longitudinal claim later needs a past subject, that design names it
+  explicitly.
+- **D7 — DISPOSED 2026-08-04, provenance: operator asked "who should
+  own?"; recommendation recorded and carried in issue #84.** Recommended
+  split per the charter ownership table: **epistemic-calibration owns**
+  the outcome store and resolution loop (trial evidence and estimates
+  are charter-side calibration property, and its event store is already
+  the right shape); **epistemic-skills owns** emission (events per the
+  pinned contract; decision-ledger outcome reviews as the resolution
+  feeder — already a first-class trigger); **the operator owns** the
+  privacy boundary — granting the store operator-visible status is what
+  makes the ≥25-pair mint gate *reachable*. Final confirmation rides the
+  #84 answer; until then this stands as the skills-side recommendation,
+  not a bilateral fact.
+- **D8/T2 — EXECUTED 2026-08-04, provenance: operator "ok".**
+  `.github/scripts/check_pin_tags.py` + the Tier-0 CI step; the pin-tag
+  registry carries `pin/ecs-contract-2026-07-27 → 8d9b2f85…`.
+- **T3 — EXECUTED 2026-08-04, provenance: operator authorization to act
+  within the skills-side purview.** Issue #84 files the charter's
+  change-protocol step 1 (exchange-protocol adoption; v4 event-contract
+  re-pin; D7 ownership recommendation; successor-corpus requirements
+  including the FR3-R5 non-separability constraint).
+- Ledger: `calibration-phase1-frontier-resolved-20260804-15`.
