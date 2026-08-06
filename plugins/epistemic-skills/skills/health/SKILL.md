@@ -2,7 +2,7 @@
 name: health
 description: Use when you need to know whether a running system is in the state it should be — "is everything OK", before a change with blast radius, after a restart or power event, or when a health claim is about to bear load and someone is about to act on "it is fine". Do NOT fire when a specific thing is already known broken and you want the cause, when one metric you could read directly would answer it, or when the question is about a change you are making rather than the state you are in.
 metadata:
-  hands-to: [decision-ledger]
+  hands-to: [triage, decision-ledger]
 ---
 
 # health — the state of a running system, and the honesty of the answer
@@ -98,11 +98,11 @@ registered, not by editing this file.
 
 ## Composition
 
+- **`triage`** consumes this output to find cause. It does not re-probe from
+  scratch, and this skill does not guess at cause — it stops at "which subjects,
+  in what order".
 - **`decision-ledger`** takes any consequential decision made off the back of
   this report. The report itself is evidence, never a decision.
-- **Diagnosis is a separate capability and does not exist in this package yet.**
-  This skill deliberately stops at "which subjects, in what order" and does not
-  guess at cause.
 - **Nothing here watches.** This skill answers when *asked*. Nothing in this
   package tells you a bound was crossed while you were not looking — that is a
   separate capability and it does not exist yet. **Do not let a green run here

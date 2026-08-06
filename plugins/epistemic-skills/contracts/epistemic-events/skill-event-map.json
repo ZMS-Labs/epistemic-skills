@@ -169,6 +169,22 @@
       "sentinel_fixture": "resolve-instrument-misfire.json"
     },
     {
+      "skill": "triage",
+      "event_kinds": [
+        "cause-verdict"
+      ],
+      "eligible_when": [
+        "evaluation-case",
+        "sampled-field-incident"
+      ],
+      "outcome_sources": [
+        "deterministic-fixture",
+        "field-observation"
+      ],
+      "collection_mode": "observational",
+      "sentinel_fixture": "triage-plausible-not-observed.json"
+    },
+    {
       "skill": "write-goal",
       "event_kinds": [
         "goal-proof"
