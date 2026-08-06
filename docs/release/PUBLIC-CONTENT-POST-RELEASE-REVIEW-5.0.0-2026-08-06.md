@@ -11,9 +11,9 @@
 
 A targeted review of the v5 additions found public-tree content that conflicts
 with the repository's previously recorded public-content policy. The July 21
-review explicitly treated the private fleet-repository name and user-specific
-local checkout or profile paths as scrub targets, retaining only a local path that
-referred to this public repository itself.
+review explicitly treated direct private-fleet repository identifiers and
+user-specific local checkout or profile paths as scrub targets, retaining only a
+local path that referred to this public repository itself.
 
 `v5.0.0` added new files containing both classes of information. A conforming
 pre-publication review applying the established policy should have caught and
@@ -22,15 +22,19 @@ scrubbed them before tag creation.
 This finding is a **P2 release-integrity and privacy-boundary defect**. No
 credential value or private key is alleged here, and the exact-tag full-history
 secret scan passed. The problem is disclosure of private-repository identity,
-local-user paths, and operator-estate topology in a public artifact.
+user-specific path structure, and operator-estate topology in a public artifact.
+
+The exact identifiers are intentionally **not duplicated in this review**. Their
+file locations and disclosure classes are sufficient to audit and remediate the
+current tree without reproducing the material in a second public document.
 
 ## Governing prior policy
 
 `docs/release/PUBLIC-RELEASE-REVIEW-ADDENDUM-2026-07-21.md` records that the public
 review swept, among other things:
 
-- the private repository name `zms-homelab`;
-- local user paths such as `C:\Users\zachs` / `C:/Users/zachs`;
+- private fleet-repository identifiers;
+- user-specific local checkout and profile paths;
 - internal topology and device identifiers; and
 - accidental fleet telemetry.
 
@@ -43,54 +47,42 @@ a stricter rule after publication.
 
 ## Confirmed v5 regressions
 
-### 1. User-specific local path in newly added evidence
+### 1. User-specific absolute path in newly added evidence
 
 `docs/evidence/2026-08-06-context-audit-firing-probe.md` was added between the two
-release tags and contains the literal path pattern:
+release tags and contains a user-specific absolute profile/plugin path.
 
-```text
-C:/Users/zachs/.claude/plugins/**/skills/*/SKILL.md
-```
-
-The username is not required to preserve the experimental result. The public
-form should be:
+The username and absolute home-directory prefix are not required to preserve the
+experimental result. The public form should use a platform-neutral placeholder,
+for example:
 
 ```text
 <user-home>/.claude/plugins/**/skills/*/SKILL.md
 ```
 
-or an equivalent platform-neutral placeholder.
+### 2. Private repository coordinate in newly added evidence
 
-### 2. Private repository identity and commit in newly added evidence
-
-The same newly added evidence file records:
-
-```text
-zms-homelab@75ae184
-```
+The same newly added evidence file records a private fleet-repository identifier
+paired with an exact private commit coordinate.
 
 The public result needs only the fact that superseded commands were removed from
-the operator's private command estate. The repository identity and exact private
-commit coordinate should be replaced with:
+the operator's private command estate. The public form should be:
 
 ```text
 <private-fleet-repo>@<commit>
 ```
 
-The private coordinate may be preserved in the private repository or another
-owner-controlled record if reciprocal provenance is needed.
+The exact reciprocal coordinate may be preserved in the private repository or
+another owner-controlled record if provenance is still needed.
 
-### 3. Private checkout/repository identity in the newly added design document
+### 3. Private checkout identity in the newly added design document
 
 `docs/superpowers/specs/2026-08-06-epistemic-skills-v5-design.md` was added in the
-same release and says that a vendored Helix copy exists under:
+same release and names a private fleet checkout while locating a vendored Helix
+copy beneath its skills directory.
 
-```text
-zms-homelab-main/skills/
-```
-
-The public design decision is that a duplicate exists in a private fleet
-checkout and requires disposition. The public form should be:
+The public design decision is that a duplicate exists in a private fleet checkout
+and requires disposition. The public form should be:
 
 ```text
 <private-fleet-checkout>/skills/
@@ -100,8 +92,7 @@ checkout and requires disposition. The public form should be:
 
 The two files also contain detailed installed-estate observations and private
 command names: loaded skill counts, command-estate counts, cache/marketplace
-behavior, and names such as `pihole-analytics`, `mac-up`, `fo-repo-hygiene`, and
-`nas-troubleshoot`.
+behavior, and names of operator-specific commands.
 
 Some of that evidence has genuine public methodological value. Unlike the three
 direct references above, it is not automatically classified as private by this
@@ -122,9 +113,10 @@ The exact-tag release-security workflow passed, including its planted-secret
 positive control and full-history scan. That is strong evidence that the tagged
 history did not match the scanner's credential patterns.
 
-It is not a public-content review. A private repository name, a Windows username,
-or a detailed estate receipt need not resemble a secret token. The passing scan
-therefore does not conflict with this finding; it answers a different question.
+It is not a public-content review. A private repository identifier, a local
+username, or a detailed estate receipt need not resemble a secret token. The
+passing scan therefore does not conflict with this finding; it answers a
+different question.
 
 ## Required remediation
 
@@ -135,8 +127,8 @@ therefore does not conflict with this finding; it answers a different question.
   generalize, relocate, or remove for each material category;
 - [ ] rerun the July public-content pattern set across the full current tree and
   the full `v4.1.0..HEAD` diff;
-- [ ] add a seeded positive control proving the review automation detects both a
-  private-repository name and a user-specific local path; and
+- [ ] add seeded positive controls proving the review automation detects both a
+  private-repository identifier and a user-specific local path; and
 - [ ] ensure future release notes point to the immutable public-content review
   receipt for the exact candidate.
 
@@ -173,5 +165,5 @@ application of the repository's own prior policy should have removed.
 The durable record is:
 
 > **Secret scan passed; v5 public-content gate did not; direct private-repository
-> and local-user references require current-tree scrubbing; immutable tag remains
-> unchanged; history treatment remains an explicit owner decision.**
+> and user-specific-path references require current-tree scrubbing; immutable tag
+> remains unchanged; history treatment remains an explicit owner decision.**
