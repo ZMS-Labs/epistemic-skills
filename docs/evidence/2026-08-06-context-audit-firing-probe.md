@@ -227,3 +227,59 @@ Reality produced a fourth: **the hypothesis was refuted and the investigation
 succeeded anyway**, because the refuting observation (unchanged files flipping)
 named a better mechanism than the one under test. A plan that only branches on
 its own hypothesis cannot represent that.
+
+## Outcome — round 4: PREDICTION CONFIRMED, plus two corrections
+
+Eight superseded commands deleted (canonically in `zms-homelab@75ae184`, and
+removed from the local load path). `/reload-skills` -> **100 skills**.
+
+**`epistemic-skills:context-audit` renders its description again.**
+
+Prediction was recorded before the deletion: ~800 bytes returned against a
+762-byte deficit, "close enough to flip, but close enough that it might not." It
+flipped. The budget model is now confirmed end to end, in both directions, with a
+deliberate intervention:
+
+```
+108 skills            -> context-audit BLANK
+111 skills (+3 probes)-> context-audit + 4 others BLANK
+108 skills (-3 probes)-> the 4 restored, context-audit still BLANK
+100 skills (-8 cmds)  -> context-audit RESTORED
+```
+
+Description bytes in, skills out. This is a **working lever**: "should I add this
+skill?" now has a measurable answer.
+
+### Correction 1 — the apostrophe refutation is now airtight
+
+The description that came back is the **pre-#91 text** (it reads
+"agent-interface-design owns the outbound channel"), which carries **two `''`
+escapes**. Measured:
+
+```
+CACHE 4.1.0        escapes=2  PRE-#91 text   <- this is what renders
+MARKETPLACE CLONE  escapes=0  POST-#91 text  <- patched, not loaded
+```
+
+**The construct hypothesized to break rendering is present in the text that is
+rendering.** No further argument is needed.
+
+### Correction 2 — D9 named the wrong copy, and I verified a fix on a file that is not loaded
+
+**The harness loads from `~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/`,
+not from `~/.claude/plugins/marketplaces/<name>/`.** D9 in the design spec asserted
+the marketplace clone. It is wrong and is corrected there.
+
+Consequence for this session's own conduct, recorded because it is the exact
+failure the whole gate exists to catch: the round-2 "fix" was checked out into the
+marketplace clone, `grep -c "''"` was run against **that** file, it returned `0`,
+and that was reported as the change having landed. It had not. The loaded copy was
+never touched.
+
+**A source-read was promoted to a runtime claim — by the agent investigating that
+exact failure mode, twice in one session** (the other being a `git grep \b`
+reference scan that silently returned zero). Neither was caught by reasoning. Both
+were caught by an independent observation disagreeing with the tool.
+
+The rewording in 08d1917 remains correct-but-inert: harmless, not a fix, and not
+loaded.
