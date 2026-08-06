@@ -40,7 +40,7 @@ The README is the fast path into the project. The [GitHub Wiki](https://github.c
 
 Most agent-skill collections organize **how work proceeds**: brainstorming, planning, implementation, debugging, review, and verification. epistemic-skills sits beneath that workflow layer and asks a different question: **what would make the target, decision, evidence, handoff, or acceptance claim trustworthy enough to bear load?**
 
-The package provides **fourteen** skills: one entry point, **thirteen** disciplines, and Helix—the passage that pairs those disciplines with a workflow-skill layer such as [superpowers](https://github.com/obra/superpowers). Each method has a positive trigger, an output contract, and a stopping boundary.
+The package provides **fourteen** skills: one entry point, **thirteen** disciplines, and Metacognate—the passage that pairs those disciplines with a workflow-skill layer such as [superpowers](https://github.com/obra/superpowers). Each method has a positive trigger, an output contract, and a stopping boundary.
 
 It is not:
 
@@ -61,7 +61,7 @@ Users and maintainers are equal first-class audiences:
 | [Start Here](https://github.com/ZMS-Labs/epistemic-skills/wiki/Start-Here) | [Architecture and Contracts](https://github.com/ZMS-Labs/epistemic-skills/wiki/Architecture-and-Contracts) |
 | [Choosing a Skill](https://github.com/ZMS-Labs/epistemic-skills/wiki/Choosing-a-Skill) | [Cross-Harness Packaging](https://github.com/ZMS-Labs/epistemic-skills/wiki/Cross-Harness-Packaging) |
 | [Routine Work and Proportionality](https://github.com/ZMS-Labs/epistemic-skills/wiki/Routine-Work-and-Proportionality) | [Testing and Evaluations](https://github.com/ZMS-Labs/epistemic-skills/wiki/Testing-and-Evaluations) |
-| [Helix: Central Passage](https://github.com/ZMS-Labs/epistemic-skills/wiki/Helix-Central-Passage) | [Evidence, Status, and Known Limitations](https://github.com/ZMS-Labs/epistemic-skills/wiki/Evidence-Status-and-Known-Limitations) |
+| [Metacognate: Central Passage](https://github.com/ZMS-Labs/epistemic-skills/wiki/Metacognate-Central-Passage) | [Evidence, Status, and Known Limitations](https://github.com/ZMS-Labs/epistemic-skills/wiki/Evidence-Status-and-Known-Limitations) |
 | [Workflow Recipes](https://github.com/ZMS-Labs/epistemic-skills/wiki/Workflow-Recipes) | [Contributing](https://github.com/ZMS-Labs/epistemic-skills/wiki/Contributing) |
 | [Installation and Harness Compatibility](https://github.com/ZMS-Labs/epistemic-skills/wiki/Installation-and-Harness-Compatibility) | [Release Process and Versioning](https://github.com/ZMS-Labs/epistemic-skills/wiki/Release-Process-and-Versioning) |
 | [Skill Catalog](https://github.com/ZMS-Labs/epistemic-skills/wiki/Skill-Catalog) | [Security, Provenance, and DCO](https://github.com/ZMS-Labs/epistemic-skills/wiki/Security-Provenance-and-DCO) |
@@ -122,10 +122,10 @@ flowchart LR
   If all are answerable, engage nothing — **silence is a success state**.
 - **Pairing is a judgment at a moment, not a table.** Either strand may interrupt
   the other, and control comes back to the point of interruption. That is why the
-  former `helix` pair table was replaced rather than renamed: a table maps stages,
+  former `metacognate` pair table was replaced rather than renamed: a table maps stages,
   but it cannot hand control back.
 
-*Replaced `using-epistemic-skills` and `helix` in v5.0.0. Both seats were deleted;
+*Replaced `using-epistemic-skills` and `metacognate` in v5.0.0. Both seats were deleted;
 their evaluation corpora were preserved at package level. See
 `docs/superpowers/specs/2026-08-06-epistemic-skills-v5-design.md`.*
 
