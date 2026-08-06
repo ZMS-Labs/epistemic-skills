@@ -155,3 +155,75 @@ ability to fire.** A 43-command estate plus 111 loaded skills is not free.
 
 The rewording committed in 08d1917 stands: it is harmless and the possessives were
 never load-bearing. It is no longer a fix, because there was nothing to fix.
+
+## Outcome — round 3: BUDGET CONFIRMED by reversible manipulation
+
+Probes deleted, `/reload-skills` (108 skills). The manipulation reversed cleanly.
+
+| skill | 108 skills (baseline) | 111 skills (+3 probes) | 108 skills (probes removed) |
+|---|---|---|---|
+| `impeccable:impeccable` | renders | BLANK | **restored** |
+| `epistemic-skills:outsource` | renders | BLANK | **restored** |
+| `review` | renders | BLANK | **restored** |
+| `security-review` | renders | BLANK | **restored** |
+| `epistemic-skills:context-audit` | **BLANK** | BLANK | **BLANK** |
+
+Adding three skills blanked four descriptions; removing the same three restored
+exactly those four. **Deterministic, reversible, and directional** — this is a
+manipulation with a control, not a correlation.
+
+### Byte accounting
+
+```
+probe descriptions removed : 521 + 510 + 515            = 1546 bytes
+descriptions restored      : impeccable 1203 + outsource 358 = 1561 bytes
+                             (+ review / security-review, built-in commands,
+                                short descriptions, not separately measurable)
+```
+
+Approximately conserving. Consistent with a **total description-byte cap** rather
+than a skill-count cap: 108 skills yielded 107 descriptions, 111 skills yielded
+106 — the count of rendered descriptions is not constant, but the byte total is
+approximately so.
+
+**Exact cap value: unknown.** Establishing it would require a bisection this
+finding does not need.
+
+### The single mechanism, and what it means
+
+Both phenomena collapse into one: **the estate is already over the description
+budget at baseline, and `context-audit` is the entry currently being sacrificed.**
+
+```
+108 skills -> 1 description dropped  (context-audit)
+111 skills -> 5 dropped              (context-audit + 4)
+108 skills -> 1 dropped              (context-audit)
+```
+
+Monotonic. `context-audit` is not defective; it is *marginal*. It has been
+functionally uninstalled the entire time — not by a bug in its file, but by the
+size of everything else installed alongside it.
+
+### Consequences
+
+1. **Every skill added silently uninstalls roughly its own byte-weight of other
+   skills' descriptions.** Adding a skill is not additive; it is a transfer.
+2. **The fix for `context-audit` is not to edit `context-audit`.** It is to
+   reduce total description bytes across the estate. The v5.0.0 consolidation —
+   14 skills replacing 11 + 43 commands, and deleting ~24 superseded commands —
+   *is* the fix for this gate.
+3. **`metacognate`'s wide trigger must be re-costed.** It was designed on the
+   reasoning that "a false fire costs zero context because the decline test lives
+   in the description." That reasoning is dead: the description itself is the
+   scarce resource, and it is paid for by other skills' ability to fire.
+4. This is the estate's own failure pattern at harness scale: a control (the
+   skill file) is written and correct, and the runtime silently does not install
+   it — with no error anywhere.
+
+### Note on the plan
+
+The plan anticipated three outcomes: CONFIRMED, REFUTED, APPARATUS INVALID.
+Reality produced a fourth: **the hypothesis was refuted and the investigation
+succeeded anyway**, because the refuting observation (unchanged files flipping)
+named a better mechanism than the one under test. A plan that only branches on
+its own hypothesis cannot represent that.
