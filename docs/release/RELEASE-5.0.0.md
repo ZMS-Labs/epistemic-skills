@@ -3,14 +3,22 @@
 **Date:** 2026-08-06. **Breaking.** Fourteen skills: one entry point,
 `metacognate`, and thirteen disciplines.
 
-> **PUBLISHED.** Release-gate items 4, 5 and 6 are met on the exact tagged commit —
-> the deterministic suite, CodeQL, and the full-history secret scan all passed there,
-> verified at job and step level.
+> **PUBLISHED**, with two gate items not fully satisfied. Read the gate table before
+> relying on this release's assurances.
 >
-> **Item 8 — an independent Gauntlet publication review reaching GO — was WAIVED by
-> the repository owner and was never run.** There is no GO verdict for 5.0.0. This is
-> stated here rather than in a footnote because the alternative is a release record
-> that reads as though the gate passed.
+> Items 4 and 5 are met on the exact tagged commit — version surfaces, the
+> deterministic suite, and CodeQL all passed there, verified at job and step level.
+>
+> **Item 6 is only PARTIALLY met.** The full-history secret scan passed; the
+> public-content/provenance review it also requires was never performed. The tag
+> annotation says item 6 was met — that is an overclaim, corrected below and
+> uncorrectable in the tag itself.
+>
+> **Item 8 was WAIVED by the repository owner and never run.** No adversarial
+> publication review, no GO verdict. Item 7 was never assessed as a gate row.
+>
+> These are stated at the top rather than in a footnote, because the alternative is a
+> release record that reads as though the gate passed.
 
 ## What changed and why
 
@@ -142,8 +150,9 @@ the exact commit `3a18cd3`, verified at job and step level rather than by run la
 |---|---|
 | 4 — version surfaces aligned, link-existence checked | **met.** All ten surfaces agree on 5.0.0. Version-pinned URLs were checked individually: `.../using-epistemic-skills/reference/routine-fast-path.md` does not exist in the v5 tree, so that link was repointed to the file's new home rather than blind-bumped — the P1 class caught in v3.2.0. |
 | 5 — deterministic suite, DCO, manifest parity, committed-JSON, CodeQL | **met** on `3a18cd3`. `epistemic-flexibility` job `stdlib-checks` succeeded across 45 steps — 44 success and one correctly skipped (`Durable ledger append-only against merge base`, which needs a PR merge base and has none on a dispatch run). CodeQL `Analyze (actions)`, `(javascript-typescript)` and `(python)` all succeeded on the same commit. |
-| 6 — redacted full-history secret scan | **met** on `3a18cd3`. `release-security` job `full-history-secret-scan` succeeded, including its own positive control step *"Prove the scanner detects a planted secret"* — so the clean result is a measurement, not a scanner that finds nothing. |
-| 8 — independent Gauntlet publication review reaching GO | **WAIVED, not met.** Explicitly waived by the repository owner on 2026-08-06 ("i approve the release and we don't need the full gauntlet"). No Gauntlet publication review was run for 5.0.0, and no GO verdict exists. Recorded as waived rather than satisfied, because a release record that reads as if a gate passed when it was skipped is worse than no record. |
+| 6 — redacted full-history secret scan **and public-content/provenance review of the release diff** | **PARTIALLY MET.** The scan half passed on `3a18cd3` and again on the tagged commit: `release-security` job `full-history-secret-scan` succeeded, including its own positive control step *"Prove the scanner detects a planted secret"* — so the clean result is a measurement, not a scanner that finds nothing. **The public-content/provenance-review half was never performed and no v5.0.0-dated review document exists.** See *Correction* below. |
+| 7 — supported harness surfaces exercised live or assigned an honest verification tier; known limitations recorded | **NOT TRACKED IN THIS TABLE.** Addressed narratively in *Evidence posture* above (clean-room run, UNESTABLISHED behavioural status, known limitations) but never assessed as a gate row. Recorded here as untracked rather than silently omitted. |
+| 8 — **Helix routing is recorded** and an independent Gauntlet publication review reaches GO | **WAIVED, not met — both halves.** Explicitly waived by the repository owner on 2026-08-06 ("i approve the release and we don't need the full gauntlet"). No Gauntlet publication review was run for 5.0.0 and no GO verdict exists. The first half is additionally **unsatisfiable as written**: `RELEASING.md` item 8 still requires recording "Helix routing", and this release *deleted* Helix. That text needs updating in `RELEASING.md` itself. |
 
 ### How items 5 and 6 became reachable
 
@@ -164,6 +173,34 @@ Runner assignment was intermittently failing throughout — jobs auto-cancelled 
 run-level `failure`. **Re-dispatching succeeds**; that, not waiting, is the lever. Quota
 was never the cause (29,752 of 50,000 included minutes, $0 billable) and neither was
 queue depth (3 runs in flight org-wide). Diagnosis in issue #95.
+
+### Correction — this table overclaimed item 6, and the tag records the overclaim
+
+The v5.0.0 tag annotation and the first version of this table both state
+`item 6 ... MET`. That was wrong, and the way it was wrong is worth naming.
+
+`RELEASING.md` item 6 reads, in full:
+
+> A redacted full-history secret scan passes, **and public-content/provenance review
+> covers the release diff.**
+
+Only the first clause was checked. The gate row was written from the name of the CI
+job that passed rather than from the text of the requirement, so a two-part item was
+recorded as met on one part. **The provenance review was never performed.**
+
+This is the oracle-adequacy failure — confirming that a check ran green rather than
+that the check covers the claim — committed in the same document that defines it, on
+the same day, by the agent writing that definition. It was caught by an independent
+reviewer reading `RELEASING.md` against this table, not by anyone re-reading their own
+work.
+
+**The tag cannot be corrected.** `v5.0.0` is annotated, pushed, and immutable, and
+`RELEASING.md` forbids moving or reusing a published version tag. Its annotation will
+permanently assert that item 6 was met. This section is the correction of record; the
+GitHub Release body carries it too.
+
+Item 7 was likewise absent from the original table rather than assessed. It is now
+listed as untracked.
 
 ### On the waiver of item 8
 
