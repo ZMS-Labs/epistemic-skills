@@ -1,6 +1,12 @@
 name: epistemic-flexibility
 
 "on":
+  # Manual trigger. A release gate reachable only by pushing a commit cannot be run
+  # against the exact commit you are about to tag, which is what the gate asks for.
+  # It is also the only way in when event delivery stalls: on 2026-08-06 no `push`
+  # or `pull_request` event dispatched a run in this repository for over an hour,
+  # while `pull_request_target` and GitHub-managed workflows kept working.
+  workflow_dispatch:
   pull_request:
     paths:
       - "plugins/epistemic-skills/skills/**"
