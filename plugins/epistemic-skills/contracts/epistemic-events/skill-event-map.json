@@ -36,6 +36,22 @@
       "sentinel_fixture": "ledger-revisit.json"
     },
     {
+      "skill": "did-it-land",
+      "event_kinds": [
+        "landing-verdict"
+      ],
+      "eligible_when": [
+        "evaluation-case",
+        "sampled-field-incident"
+      ],
+      "outcome_sources": [
+        "deterministic-fixture",
+        "field-observation"
+      ],
+      "collection_mode": "observational",
+      "sentinel_fixture": "did-it-land-source-read-as-landed.json"
+    },
+    {
       "skill": "evidence-locked-uat",
       "event_kinds": [
         "uat-verdict"

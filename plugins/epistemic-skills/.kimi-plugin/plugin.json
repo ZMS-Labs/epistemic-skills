@@ -1,7 +1,7 @@
 {
   "name": "epistemic-skills",
   "version": "4.1.0",
-  "description": "The full epistemic-discipline collection in one package: an entry point plus eleven disciplines including recon (territory mapping: brief, initiative, and external-candidate modes), resolve (question settling: derivation, literature, and probe instruments), goal authoring, outsource repo-backed external handoff, adversarial review, evidence-locked acceptance, decision persistence with resumption re-anchoring, open-questions clarification, and context-audit instruction hygiene.",
+  "description": "The full epistemic-discipline collection in one package: an entry point plus twelve disciplines including recon (territory mapping: brief, initiative, and external-candidate modes), resolve (question settling: derivation, literature, and probe instruments), goal authoring, outsource repo-backed external handoff, adversarial review, evidence-locked acceptance, decision persistence with resumption re-anchoring, open-questions clarification, and context-audit instruction hygiene.",
   "author": {
     "name": "ZMS Labs",
     "url": "https://github.com/ZMS-Labs"
@@ -22,7 +22,7 @@
   "interface": {
     "displayName": "Epistemic Skills",
     "shortDescription": "Evidence-grounded methods for agentic work",
-    "longDescription": "Eleven composable disciplines including recon (territory mapping: brief, initiative, and external-candidate modes), resolve (question settling: derivation, literature, and probe instruments), goal authoring, outsource repo-backed external handoff, adversarial review, evidence-locked acceptance, decision persistence with resumption re-anchoring, open-questions clarification, and context-audit instruction hygiene.",
+    "longDescription": "Twelve composable disciplines including recon (territory mapping: brief, initiative, and external-candidate modes), resolve (question settling: derivation, literature, and probe instruments), goal authoring, outsource repo-backed external handoff, adversarial review, evidence-locked acceptance, decision persistence with resumption re-anchoring, open-questions clarification, and context-audit instruction hygiene.",
     "developerName": "ZMS Labs",
     "websiteURL": "https://github.com/ZMS-Labs/epistemic-skills"
   }

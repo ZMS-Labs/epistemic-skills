@@ -26,10 +26,10 @@ The README is the fast path into the project. The [GitHub Wiki](https://github.c
 - [Choose your path](#choose-your-path)
 - [Five-minute start](#five-minute-start)
 - [Routine work first](#routine-work-first)
-- [Helix: the central passage](#helix-the-central-passage)
+- [metacognate: the single entry point](#metacognate-the-single-entry-point)
 - [Choose by task](#choose-by-task)
 - [The epistemic arc](#the-epistemic-arc)
-- [Twelve-skill catalog](#twelve-skill-catalog)
+- [Thirteen-skill catalog](#thirteen-skill-catalog)
 - [Installation and compatibility](#installation-and-compatibility)
 - [Architecture and source policy](#architecture-and-source-policy)
 - [Coordination with epistemic-calibration](#coordination-with-epistemic-calibration)
@@ -40,7 +40,7 @@ The README is the fast path into the project. The [GitHub Wiki](https://github.c
 
 Most agent-skill collections organize **how work proceeds**: brainstorming, planning, implementation, debugging, review, and verification. epistemic-skills sits beneath that workflow layer and asks a different question: **what would make the target, decision, evidence, handoff, or acceptance claim trustworthy enough to bear load?**
 
-The package provides **twelve** skills: one entry point, **eleven** disciplines, and Helix—the passage that pairs those disciplines with a workflow-skill layer such as [superpowers](https://github.com/obra/superpowers). Each method has a positive trigger, an output contract, and a stopping boundary.
+The package provides **thirteen** skills: one entry point, **twelve** disciplines, and Helix—the passage that pairs those disciplines with a workflow-skill layer such as [superpowers](https://github.com/obra/superpowers). Each method has a positive trigger, an output contract, and a stopping boundary.
 
 It is not:
 
@@ -72,7 +72,7 @@ The Wiki is unversioned navigation over versioned sources. If a handbook summary
 
 1. **Install one immutable copy.** Choose the native path for your harness under [Installation and compatibility](#installation-and-compatibility). Use the generic Agent Skills path only when no native plugin or extension exists.
 2. **Reload the harness or start a fresh task.** Trigger discovery and role registries are commonly session-bound.
-3. **Choose the entry point.** Start with the epistemic router when only this collection is active. If a workflow-skill layer is also active and a positive pairing exists, enter through Helix.
+3. **Choose the entry point.** There is one: `metacognate`. It is the only skill you invoke by name; every other member fires on its own description. It applies the routine gate first, and declining is its most common correct outcome.
 4. **Verify the inventory and source.** Expect exactly the count your source ships: a v4.1.0 package or tagged checkout ships eleven (v4.0.0 ships the same eleven; v3.4.0 ships seventeen; v3.3.0 ships fourteen; v3.1.0/v3.2.0 ship twelve; the pinned `v3.0.0` tag also ships eleven — its different eleven)—not two copies found through different install mechanisms.
 5. **Let routine work leave.** A local, reversible, directly checkable, non-precedential task should finish with its bounded check and no process-only artifact.
 
@@ -95,35 +95,49 @@ Routine work is the default exit, not a lesser form of rigor. A task stays on th
 
 For unfamiliar but routine-looking work, perform **two-read micro-recon**: inspect the target artifact and its nearest test or example. If they agree with the request and the four conditions still hold, make the smallest change and run the bounded check.
 
-Routine work produces no router record, Helix skip inventory, blindspot report, formal record, ledger entry, UAT packet, or proof that other triggers were absent. Escalate only when the reads expose an observed mismatch, hidden coupling, unresolved scope, material fan-out risk, or another positive trigger.
+Routine work produces no entry-point record, blindspot report, formal record, ledger entry, UAT packet, or proof that other triggers were absent. Escalate only when the reads expose an observed mismatch, hidden coupling, unresolved scope, material fan-out risk, or another positive trigger.
 
 See the [routine-work guide](https://github.com/ZMS-Labs/epistemic-skills/wiki/Routine-Work-and-Proportionality) and the [released normative reference](https://github.com/ZMS-Labs/epistemic-skills/blob/v4.1.0/plugins/epistemic-skills/skills/using-epistemic-skills/reference/routine-fast-path.md).
 
-## Helix: the central passage
+## metacognate: the single entry point
 
-Helix is intentionally a centralized passage between the workflow layer and the epistemic router and disciplines:
+`metacognate` is the one skill you invoke by name. Every other member fires on its
+own `description`.
 
 ```mermaid
 flowchart LR
-    W["Workflow-skill layer<br/>how work gets done"] <--> H["Helix<br/>central passage"]
-    H <--> E["using-epistemic-skills<br/>router and eleven disciplines"]
+    W["Workflow-skill layer<br/>how work gets done"] <--> M["metacognate<br/>entry point and twelve disciplines"]
 ```
 
-- `using-epistemic-skills` remains the router **inside** this collection: it applies the routine gate, identifies positive triggers, sequences disciplines, and defines handoffs.
-- Helix never routes within either collection. It maps a positively triggered epistemic member to the workflow stage that consumes it and preserves the required ordering.
-- Once a positive pair exists, the epistemic member runs first and the workflow stage carries its output forward. Recon after design is archaeology; evidence after a verdict is rationalization.
-- Helix is not mandatory ceremony, an extra discipline, or a replacement for the routine exit.
-- Routine work, absent pairings, and `(none mandatory)` stages are silent. A fired pair or explicit authorized override gets the compact custody record; non-events do not.
+- **It carries a procedure, never an inventory.** No member list appears in it, and
+  none may be added. A seat that enumerates its members becomes a hand-maintained
+  projection of a directory, and every such projection here has drifted — one
+  shipped a description naming two skills that no longer existed.
+- **Tier 1 is iron**, scoped strictly to the irreversible: consent before an
+  irreversible act, an oracle adequate to its claim, no actor certifying its own
+  acceptance, and no hard gate overridable from the other side. These bind both
+  strands, including a workflow layer's own gates.
+- **Tier 2 is judgment**: what would have to be true for this to be right, and
+  which of those can I not currently answer? The unanswerable one names the work.
+  If all are answerable, engage nothing — **silence is a success state**.
+- **Pairing is a judgment at a moment, not a table.** Either strand may interrupt
+  the other, and control comes back to the point of interruption. That is why the
+  former `helix` pair table was replaced rather than renamed: a table maps stages,
+  but it cannot hand control back.
 
-Read [Helix: Central Passage](https://github.com/ZMS-Labs/epistemic-skills/wiki/Helix-Central-Passage) for the released pairing semantics. The paired member's own `SKILL.md`—not the map—governs its trigger and output.
+*Replaced `using-epistemic-skills` and `helix` in v5.0.0. Both seats were deleted;
+their evaluation corpora were preserved at package level. See
+`docs/superpowers/specs/2026-08-06-epistemic-skills-v5-design.md`.*
 
 ## Choose by task
 
 | Task shape | Entry point | Expected result |
 |---|---|---|
 | Local, reversible, directly checkable, non-precedential change | Ordinary workflow | Change plus bounded check; no epistemic artifact |
-| Non-routine task with multiple possible disciplines or ordering questions | `using-epistemic-skills` | Triggered route and explicit handoffs; silent if the task clears the routine gate |
-| Workflow layer and epistemic collection must operate together | `helix` | Correctly ordered pair and member artifact; no absent-pair inventory |
+| Non-routine task, or the approach itself is uncertain | `metacognate` | The unanswerable condition, the discipline it names, and where to return; silent if the task clears the routine gate |
+| Need the state of a running system, or a health claim is about to bear load | `health` | Per-subject `OK`/`WARN`/`CRITICAL`/`UNKNOWN`; `UNKNOWN` never aggregates into `OK` |
+| A specific thing is broken and the cause is not established | `triage` | `CAUSE`/`NARROWED`/`UNKNOWN`/`NOT-BROKEN` with the discriminating observation |
+| A change is believed applied and something depends on it | `did-it-land` | `LANDED`/`REVERTED`/`UNVERIFIED` from a runtime observation, never a source read |
 | Resume from a compaction summary, handoff, or remembered state | `decision-ledger` (resume mode) | Re-anchored state digest or visible uncertainty |
 | Micro-recon exposes map/territory mismatch, hidden coupling, fuzzy scope, or fan-out risk | `recon` (brief mode) | Read-only territory map and rewritten request |
 | Material software/system fork or correctness/property claim | `resolve` (derivation) | Inline focused derivation or a revision-bound formal record |
@@ -165,14 +179,16 @@ flowchart LR
 
 Evidence Research, Decision Ledger, Outsource, and Open Questions are cross-cutting. Continuity Verify is pre-arc. Context Audit is maintenance-triggered outside the arc; Agent Interface Design fires inside the build stage. Most tasks clear the routine gate or fire one discipline. See [The Epistemic Arc](https://github.com/ZMS-Labs/epistemic-skills/wiki/The-Epistemic-Arc) for handoff details and [Core Concepts](https://github.com/ZMS-Labs/epistemic-skills/wiki/Core-Concepts) for the five epistemic-flexibility controls.
 
-## Twelve-skill catalog
+## Thirteen-skill catalog
 
-The package contains exactly one entry point and eleven disciplines. Each name appears once in this catalog; the immutable tagged source defines the full contract, and the linked guide is unversioned navigation over it (per the precedence rule above — where they differ, the tagged source controls).
+The package contains exactly one entry point and twelve disciplines. Each name appears once in this catalog; the immutable tagged source defines the full contract, and the linked guide is unversioned navigation over it (per the precedence rule above — where they differ, the tagged source controls).
 
 | Skill | Positive trigger | Purpose | Output |
 |---|---|---|---|
-| [`using-epistemic-skills`](https://github.com/ZMS-Labs/epistemic-skills/wiki/Skill-Using-Epistemic-Skills) | Non-routine work may need multiple disciplines, ordering, external crossing, or resumption | Apply the routine gate and route epistemic members | Triggered route and handoff path; routine exit is record-free |
-| [`helix`](https://github.com/ZMS-Labs/epistemic-skills/wiki/Helix-Central-Passage) | Workflow and epistemic layers coexist and a positive pairing exists, or sequencing/crossing is ambiguous | Pair stages across the central passage | Member artifact plus compact fired/overridden custody record where applicable |
+| [`metacognate`](plugins/epistemic-skills/skills/metacognate/SKILL.md) | The approach is uncertain, a claim is about to bear load, an observation contradicts a tool, or work resumes from a summary | Decide how much process this deserves — usually none — and hand control back | The unanswerable condition and the discipline it names; silence when the routine gate clears |
+| [`health`](plugins/epistemic-skills/skills/health/SKILL.md) | The state of a running system is wanted, or a health claim is about to bear load | Probe declared subjects against declared bounds, and say what could not be reached | Per-subject state; a roll-up carrying any `UNKNOWN` is at best `UNKNOWN` |
+| [`triage`](plugins/epistemic-skills/skills/triage/SKILL.md) | A specific subject is broken or degraded and the cause is not established | Eliminate candidates by observation, cheapest discriminator first, and stop at the cause | A verdict with the observation that ruled the alternatives out; the remedy is a separate act |
+| [`did-it-land`](plugins/epistemic-skills/skills/did-it-land/SKILL.md) | A change is believed applied and something now depends on it being true | Observe the runtime, identify what actually loads, and re-check past the revert window | `LANDED`/`REVERTED`/`UNVERIFIED`; `UNVERIFIED` is the default |
 | [`recon`](plugins/epistemic-skills/skills/recon/SKILL.md) | Territory must be mapped before effort commits: a fuzzy/contradicted brief, a large foggy effort, or an external project overlapping your own (three modes: brief / initiative / candidate) | Read, decompose, or harvest — understanding only, never a change | Rewritten request; decision map + fog-free tickets; or harvest record with per-level spend decisions |
 | [`resolve`](plugins/epistemic-skills/skills/resolve/SKILL.md) | A live question or material decision needs an instrument, not an opinion (three instruments: derivation / literature / probe) | Settle it with the cheapest sufficient instrument; the instrument produces evidence, never the downstream verdict | Derivation or `formal-rigor-record@2`; claim-evidence matrix; or recorded probe answer with the build disposed |
 | [`write-goal`](https://github.com/ZMS-Labs/epistemic-skills/wiki/Skill-Write-Goal) | Explicit intent to author, refine, or start a durable goal | Bind operator intent to proof, scope, blockers, and stop rules | Approved goal contract; execution/certification remains downstream |
@@ -300,7 +316,7 @@ One canonical tree contains all method files; thin harness manifests expose that
 ```text
 epistemic-skills/
 ├── plugins/epistemic-skills/
-│   ├── skills/<name>/SKILL.md           canonical skill cores (twelve)
+│   ├── skills/<name>/SKILL.md           canonical skill cores (thirteen)
 │   ├── agents/                          five canonical Gauntlet roles
 │   ├── contracts/                       shared receipt schema and verifier
 │   ├── .claude-plugin/plugin.json
@@ -389,8 +405,8 @@ Run checks in proportion to the change:
 
 ```powershell
 # Routing and proportionality
-python plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/run_tests.py
-python plugins/epistemic-skills/skills/using-epistemic-skills/evals/proportionality/run_tests.py
+python plugins/epistemic-skills/evals/epistemic-flexibility/run_tests.py
+python plugins/epistemic-skills/evals/proportionality/run_tests.py
 
 # Formal-rigor and package integration
 python plugins/epistemic-skills/skills/resolve/derivation/evals/formal-rigor-v2-fixtures/tests/run_tests.py
