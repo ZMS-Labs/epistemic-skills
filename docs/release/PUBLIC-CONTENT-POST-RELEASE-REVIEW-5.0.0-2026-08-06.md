@@ -60,6 +60,10 @@ for example:
 <user-home>/.claude/plugins/**/skills/*/SKILL.md
 ```
 
+**Current-tree disposition:** scrubbed on the draft corrective branch in commit
+`1eab8d47649fffb3f47c81863803c4c5ca225ba6`; not yet on `main` until the PR is
+merged.
+
 ### 2. Private repository coordinate in newly added evidence
 
 The same newly added evidence file records a private fleet-repository identifier
@@ -75,6 +79,10 @@ the operator's private command estate. The public form should be:
 The exact reciprocal coordinate may be preserved in the private repository or
 another owner-controlled record if provenance is still needed.
 
+**Current-tree disposition:** scrubbed on the draft corrective branch in commit
+`1eab8d47649fffb3f47c81863803c4c5ca225ba6`; not yet on `main` until the PR is
+merged.
+
 ### 3. Private checkout identity in the newly added design document
 
 `docs/superpowers/specs/2026-08-06-epistemic-skills-v5-design.md` was added in the
@@ -87,6 +95,9 @@ and requires disposition. The public form should be:
 ```text
 <private-fleet-checkout>/skills/
 ```
+
+**Current-tree disposition:** open and tracked in issue #105. It is not silently
+classified as resolved by the two evidence-file scrubs above.
 
 ### 4. Operator-estate telemetry requiring an explicit classification
 
@@ -122,7 +133,11 @@ different question.
 
 ### Current public tree
 
-- [ ] scrub the three confirmed direct references above on `main`;
+- [x] scrub the user-specific absolute profile/plugin path on the draft corrective
+  branch;
+- [x] scrub the private repository coordinate on the draft corrective branch;
+- [ ] scrub the private checkout identity in the design document;
+- [ ] merge the completed direct-reference scrubs to `main` after review;
 - [ ] review every operator-estate detail added by v5 and record retain,
   generalize, relocate, or remove for each material category;
 - [ ] rerun the July public-content pattern set across the full current tree and
@@ -165,5 +180,5 @@ application of the repository's own prior policy should have removed.
 The durable record is:
 
 > **Secret scan passed; v5 public-content gate did not; direct private-repository
-> and user-specific-path references require current-tree scrubbing; immutable tag
-> remains unchanged; history treatment remains an explicit owner decision.**
+> and user-specific-path references require current-tree remediation; immutable
+> tag remains unchanged; history treatment remains an explicit owner decision.**
