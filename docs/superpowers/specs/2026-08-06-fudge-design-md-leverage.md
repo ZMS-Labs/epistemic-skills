@@ -3,6 +3,7 @@
 **Date:** 2026-08-06  
 **Status:** exploratory draft (Approach A recommended; not approved)  
 **Upstream:** [scroobius-pip/fudge-design-md](https://github.com/scroobius-pip/fudge-design-md) (MIT) · [design.withfudge.com](https://design.withfudge.com/)  
+**Future-agent pick-up:** [`docs/handoffs/2026-08-06-fudge-design-md-leverage.md`](../../handoffs/2026-08-06-fudge-design-md-leverage.md)  
 **Sibling note:** `epistemic-calibration` remains no-UI by design; this proposal does not add a surface there.
 
 ## What Fudge DESIGN.md is
