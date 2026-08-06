@@ -37,7 +37,7 @@ SKILL_NAMES = {
     "using-epistemic-skills", "helix", "recon", "resolve",
     "write-goal", "outsource", "gauntlet", "evidence-locked-uat",
     "decision-ledger", "open-questions",
-    "context-audit",
+    "context-audit", "health",
 }
 PROHIBITED_CONTENT_KEYS = {
     "prompt", "transcript", "user_prose", "raw_content", "secret",
