@@ -93,3 +93,65 @@ have exactly one. There is nothing to compare it against.
 A probe with two escapes placed on the **plugin** path — the same source
 `context-audit` loads from — and observed in the live listing. Requires writing
 into installed plugin files, which is an operator decision.
+
+## Outcome — round 2: HYPOTHESIS REFUTED. The cause is not the skill's content.
+
+Observed 2026-08-06 after `/reload-plugins` + `/reload-skills` (111 skills loaded).
+The loaded clone's `context-audit` had been patched to **0 apostrophe escapes**
+(verified: `grep -c "''"` -> `0`).
+
+| skill | escapes | rendered at session start | rendered after reload |
+|---|---|---|---|
+| `epistemic-skills:context-audit` | 0 (patched) | BLANK | **BLANK** |
+| `epistemic-skills:outsource` | 0 (unchanged file) | **had description** | **BLANK** |
+| `impeccable:impeccable` | 0 (unchanged file) | **had description** | **BLANK** |
+| `review` | 0 (unchanged file) | **had description** | **BLANK** |
+| `security-review` | 0 (unchanged file) | **had description** | **BLANK** |
+| `probe-alpha` | 2 | — | **RENDERS** |
+| `probe-bravo` | 1 | — | **RENDERS** |
+| `probe-charlie` | 0 | — | **RENDERS** |
+
+### The decisive observation
+
+**Three unchanged files flipped from rendering to blank.** `outsource`,
+`impeccable`, `review` and `security-review` were not edited by anything in this
+session. A property that changes while the file does not cannot be caused by the
+file.
+
+Therefore **every content-based hypothesis is refuted**, including the apostrophe
+hypothesis this round was built to test: `probe-alpha` renders *with* two escapes,
+and `context-audit` stays blank *without* them. Both directions fail.
+
+### What changed instead
+
+The **size of the loaded skill set**. Three probes were added, carrying roughly
+1,500 characters of description. Four entries lost descriptions totalling roughly
+1,400 characters. This is consistent with a **total-listing budget**: when the
+assembled listing exceeds some limit, descriptions are dropped to fit.
+
+Status: **hypothesis, not established.** The correlation is suggestive and the
+magnitudes are close, but one observation is not a mechanism.
+
+### Testable prediction
+
+Removing the three probes and reloading should **restore** the descriptions of
+`outsource`, `impeccable`, `review` and `security-review`. If they return, the
+budget hypothesis is confirmed and the defect is a harness capacity limit, not a
+skill defect. If they do not return, the budget hypothesis is refuted too.
+
+### Consequence for v5.0.0 — this inverts the release gate
+
+The gate was written as "fix `context-audit` before shipping v5.0.0". There is
+nothing wrong with `context-audit`. The real finding is worse and more useful:
+
+**Descriptions are the firing surface, and the firing surface has a capacity
+limit that silently drops entries as the skill set grows.** Any skill can become
+functionally uninstalled by the mere addition of unrelated skills elsewhere in the
+estate.
+
+This is direct empirical support for the v5.0.0 thesis. Consolidation is not a
+tidiness preference — **skill count has a measured cost paid in other skills'
+ability to fire.** A 43-command estate plus 111 loaded skills is not free.
+
+The rewording committed in 08d1917 stands: it is harmless and the possessives were
+never load-bearing. It is no longer a fix, because there was nothing to fix.
