@@ -251,7 +251,7 @@ Windows local install:
 ```powershell
 git clone --depth 1 --branch main https://github.com/ZMS-Labs/epistemic-skills.git .\epistemic-skills
 Set-Location .\epistemic-skills
-if ((git describe --tags --exact-match) -ne 'v3.4.0') { throw 'expected v3.4.0' }
+if ((git rev-parse --abbrev-ref HEAD) -ne 'main') { throw 'expected main' }
 New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.cursor\plugins\local" | Out-Null
 $src = (Resolve-Path .\plugins\epistemic-skills).Path
 $dest = Join-Path $env:USERPROFILE '.cursor\plugins\local\epistemic-skills'
@@ -262,9 +262,9 @@ cmd /c mklink /J "$dest" "$src"
 macOS/Linux local install:
 
 ```bash
-git clone --depth 1 --branch v3.4.0 https://github.com/ZMS-Labs/epistemic-skills.git ./epistemic-skills-v3.4.0
-cd ./epistemic-skills-v3.4.0
-test "$(git describe --tags --exact-match)" = v3.4.0
+git clone --depth 1 --branch main https://github.com/ZMS-Labs/epistemic-skills.git ./epistemic-skills
+cd ./epistemic-skills
+test "$(git rev-parse --abbrev-ref HEAD)" = main
 mkdir -p ~/.cursor/plugins/local
 ln -sfn "$(pwd)/plugins/epistemic-skills" ~/.cursor/plugins/local/epistemic-skills
 ```
@@ -274,7 +274,7 @@ Run **Developer: Reload Window**, verify the tag's full skill count (fourteen at
 ### Gemini CLI
 
 ```bash
-gemini extensions install https://github.com/ZMS-Labs/epistemic-skills --ref v3.4.0 --consent
+gemini extensions install https://github.com/ZMS-Labs/epistemic-skills --ref main --consent
 # Local development only:
 gemini extensions link /path/to/epistemic-skills
 ```
@@ -294,7 +294,7 @@ Use one of native `agy plugin install`, Gemini extension link, or `agy plugin im
 ### Kimi Code
 
 ```text
-/plugins install https://github.com/ZMS-Labs/epistemic-skills/tree/v3.4.0
+/plugins install https://github.com/ZMS-Labs/epistemic-skills/tree/main
 # Local development only, from a clone:
 /plugins install /path/to/epistemic-skills
 ```
