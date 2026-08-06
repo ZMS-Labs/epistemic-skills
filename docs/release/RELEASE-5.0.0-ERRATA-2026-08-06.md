@@ -84,10 +84,11 @@ The release says:
 
 The more exact statement is:
 
-> `watch` specifies, installs, and proves the **external observer** that notices;
-> `health` assesses observed state against declared bounds; `triage` identifies a
-> cause from discriminating observations; and `did-it-land` verifies runtime
-> effect.
+> `watch` specifies the external observer and governs its inert preparation,
+> bounded enablement, kill-switch exercise, deliberate proof crossing, and alert
+> receipt; `health` assesses observed state against declared bounds; `triage`
+> identifies a cause from discriminating observations; and `did-it-land` verifies
+> runtime effect.
 
 The package ships agent disciplines in Markdown. It does not itself ship the
 scheduler, probe, alert destination, or unattended runtime process.
