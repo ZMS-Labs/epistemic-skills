@@ -112,6 +112,16 @@ def count_surfaces() -> list[tuple[Path, list[tuple[str, str]]]]:
         (REPO / "gemini-extension.json", [
             (rf"a router plus {ANY_WORD} disciplines", "a router plus {d} disciplines"),
         ]),
+        # ADDED 2026-08-06: the ROOT plugin.json carries the same phrase as
+        # gemini-extension.json and the package manifests below, but was never
+        # listed here — so it was the one live surface the generator did not
+        # maintain. It went stale on every skill addition and was caught only by
+        # the outsource suite's count lint, one release late. A generator that
+        # covers all-but-one instance of a phrase is worse than none: it makes the
+        # remaining hand-edit invisible.
+        (REPO / "plugin.json", [
+            (rf"a router plus {ANY_WORD} disciplines", "a router plus {d} disciplines"),
+        ]),
         (PACKAGE / ".claude-plugin" / "plugin.json", [
             (rf"a router plus {ANY_WORD} disciplines", "a router plus {d} disciplines"),
         ]),

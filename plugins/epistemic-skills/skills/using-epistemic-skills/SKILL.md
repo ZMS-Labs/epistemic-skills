@@ -1,11 +1,11 @@
 ---
 name: using-epistemic-skills
-description: Use when a task does not clear the routine-work fast path and might need more than one of recon, resolve, write-goal, outsource, gauntlet, evidence-locked-uat, decision-ledger, open-questions, context-audit, or health; when choosing their order; when work should cross into another model, agent, or process; or when resuming from a summary or handoff. Do not substitute this router for the skill it selects. When a workflow-skill layer is also present, helix pairs the two collections.
+description: Use when a task does not clear the routine-work fast path and might need more than one of recon, resolve, write-goal, outsource, gauntlet, evidence-locked-uat, decision-ledger, open-questions, context-audit, health, or metacognate; when choosing their order; when work should cross into another model, agent, or process; or when resuming from a summary or handoff. Do not substitute this router for the skill it selects. When a workflow-skill layer is also present, helix pairs the two collections.
 ---
 
 # Using Epistemic Skills — the router
 
-These ten disciplines are one system: **how an agent knows things** before, during, and after
+These eleven disciplines are one system: **how an agent knows things** before, during, and after
 work. A **workflow-skill layer** (such as [superpowers](https://github.com/obra/superpowers)) —
 brainstorming, TDD, systematic-debugging, plan-writing, verification-before-completion — covers
 *how you do* the work. This collection is the *epistemics* layer underneath it: the disciplines that keep every claim tethered to
@@ -222,7 +222,7 @@ agent consumers). They are workflow/craft methods — read them at
 arise; the router does not fire them, and their archived batteries and
 epoch results live beside them.
 
-## Shared invariants (why these ten, and not others)
+## Shared invariants (why these eleven, and not others)
 
 A skill belongs in this collection only if it enforces all of these. They are the family
 resemblance:

@@ -98,6 +98,21 @@
       "sentinel_fixture": "helix-missed-pair.json"
     },
     {
+      "skill": "metacognate",
+      "event_kinds": [
+        "routing-decision"
+      ],
+      "eligible_when": [
+        "evaluation-case",
+        "sampled-field-incident"
+      ],
+      "outcome_sources": [
+        "independent-adjudication"
+      ],
+      "collection_mode": "observational",
+      "sentinel_fixture": "metacognate-over-under.json"
+    },
+    {
       "skill": "open-questions",
       "event_kinds": [
         "interview-scope-decision"

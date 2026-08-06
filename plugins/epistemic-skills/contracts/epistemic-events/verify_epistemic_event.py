@@ -37,7 +37,7 @@ SKILL_NAMES = {
     "using-epistemic-skills", "helix", "recon", "resolve",
     "write-goal", "outsource", "gauntlet", "evidence-locked-uat",
     "decision-ledger", "open-questions",
-    "context-audit", "health",
+    "context-audit", "health", "metacognate",
 }
 PROHIBITED_CONTENT_KEYS = {
     "prompt", "transcript", "user_prose", "raw_content", "secret",
@@ -59,6 +59,13 @@ ELIGIBILITY_PREDICATES = {
 }
 COLLECTION_MODES = {"calibratable", "observational", "conditional"}
 SKILL_EVENT_MAP = {
+    "metacognate": {
+        "event_kinds": ("routing-decision",),
+        "eligible_when": ("evaluation-case", "sampled-field-incident"),
+        "outcome_sources": ("independent-adjudication",),
+        "collection_mode": "observational",
+        "sentinel_fixture": "metacognate-over-under.json",
+    },
     "health": {
         "event_kinds": ("state-readout",),
         "eligible_when": ("evaluation-case", "sampled-field-incident"),

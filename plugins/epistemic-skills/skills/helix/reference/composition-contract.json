@@ -138,6 +138,16 @@
         "health-claim-about-to-bear-load"
       ],
       "position": "before"
+    },
+    "metacognate": {
+      "composition_class": "entry-point",
+      "moments": [
+        "approach-uncertain",
+        "claim-about-to-bear-load",
+        "observation-contradicts-tool",
+        "resumption-from-summary"
+      ],
+      "position": "before"
     }
   }
 }
