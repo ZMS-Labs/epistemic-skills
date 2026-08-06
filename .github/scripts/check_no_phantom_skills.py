@@ -35,9 +35,23 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[2]
 SKILLS_DIR = REPO / "plugins" / "epistemic-skills" / "skills"
 
-# Retired in v4.0.0 (the consolidation release), with the survivor that absorbed
-# each one. Kept so a firing surface can never hand a boundary to a dead name.
+# Retired skills, with the survivor that absorbed each one. Kept so a firing
+# surface can never hand a boundary to a dead name.
+#
+# THIS MAP IS THE GUARD'S OWN HAND-MAINTAINED INVENTORY, AND IT DRIFTED. It listed
+# only the v4.0.0 retirements. v5.0.0 deleted ``using-epistemic-skills`` and
+# ``helix`` and nobody added them here, so the check that exists precisely to catch
+# "manifest advertises retired skill to installers" was never told about the
+# release's own deletions — and v5.0.0 shipped with eight manifests advertising
+# both, plus a GEMINI.md instructing users to start with a skill that is not in
+# the package.
+#
+# Adding a skill costs nothing here. DELETING one obliges an entry in this map, in
+# the same commit. That obligation is now enforced: see check_retired_map_covers_
+# deletions below, which fails when a name the RETIRED map has never heard of
+# appears in an installer-facing surface.
 RETIRED = {
+    # v4.0.0 — the consolidation release
     "blindspot-pass": "recon (brief mode)",
     "wayfinding": "recon (initiative mode)",
     "harvest-before-adopt": "recon (candidate mode)",
@@ -47,7 +61,30 @@ RETIRED = {
     "continuity-verify": "decision-ledger (resume mode)",
     "agent-interface-design": "reference/craft/ doctrine (no longer routed)",
     "intent-traced-merge": "reference/craft/ doctrine (no longer routed)",
+    # v5.0.0 — the loop release. Both seats deleted; metacognate replaces them.
+    "using-epistemic-skills": "metacognate (the sole entry point)",
+    "helix": "metacognate (Tier 2 pairing judgment, not a pair table)",
 }
+
+# Installer-facing surfaces: what a user reads or a package manager consumes when
+# deciding what this package contains. A retired name here is worse than a stale
+# doc — it sends someone to look for something that is not installed.
+#
+# ``**/*plugin*.json`` matches on FILENAME, so it never matched ``marketplace.json``
+# despite it sitting inside ``.claude-plugin/``. Both marketplace files went
+# unscanned through every release. The glob's scope was its blind spot.
+INSTALLER_JSON_GLOBS = (
+    "**/*plugin*.json",
+    "**/marketplace.json",
+    "*extension*.json",
+)
+
+# Root instruction files are read by an agent at session start. A retired skill
+# named here is an instruction to use something that does not exist. Prose, not
+# paths — SKILL_PATH_RE deliberately only matches ``skills/<name>/`` references,
+# which is why GEMINI.md's "Start with the `using-epistemic-skills` skill" was
+# invisible to this check while the file was being scanned.
+ROOT_INSTRUCTION_FILES = ("GEMINI.md", "AGENTS.md", "CLAUDE.md", "README.md")
 
 # Anchored to the full package-relative path on purpose. A bare ``skills/(\w+)/``
 # also matches every GitHub URL for this repo — ``.../epistemic-skills/tree/main``
@@ -86,19 +123,59 @@ def check_firing_surfaces(defects: list[str]) -> None:
                     f"skill '{dead}' — route to {survivor}"
                 )
 
-    for manifest in sorted(REPO.glob("**/*plugin*.json")) + sorted(REPO.glob("*extension*.json")):
-        if ".git" in manifest.parts or "node_modules" in manifest.parts:
+    seen: set[Path] = set()
+    for pattern in INSTALLER_JSON_GLOBS:
+        for manifest in sorted(REPO.glob(pattern)):
+            if ARCHIVE_PARTS.intersection(manifest.parts) or "node_modules" in manifest.parts:
+                continue
+            if manifest in seen:
+                continue
+            seen.add(manifest)
+            try:
+                blob = json.dumps(json.loads(manifest.read_text(encoding="utf-8")))
+            except (json.JSONDecodeError, OSError):
+                continue
+            for dead, survivor in RETIRED.items():
+                if dead in blob:
+                    defects.append(
+                        f"{manifest.relative_to(REPO)}: manifest advertises retired "
+                        f"skill '{dead}' to installers — route to {survivor}"
+                    )
+
+    # Root instruction files, checked as PROSE. An agent reading "Start with the
+    # `using-epistemic-skills` skill" at session start will go looking for a skill
+    # that is not installed. Historical framing is allowed and required — these
+    # files legitimately describe what was removed and why.
+    # Historical framing is ALLOWED and necessary — these files legitimately record
+    # what was removed, when, and why. The vocabulary below was widened after the
+    # first version flagged two correct README sentences: a "Craft doctrine (not
+    # disciplines) ... v4.0.0 demotion" note, and a version-history line describing
+    # what 3.4.0 added. Both name retired skills accurately. A guard that punishes
+    # accurate history teaches people to delete history.
+    historical = re.compile(
+        r"retired|replaced|former|absorbed|deleted|no longer|superseded|historical|"
+        r"used to|previously|removed in|renamed|demot|doctrine|preserved|archived|"
+        r"consolidat|deprecat|\bv?\d+\.\d+\.\d+\b|version \d|\badds?\b|\badded\b",
+        re.I,
+    )
+    for name in ROOT_INSTRUCTION_FILES:
+        source = REPO / name
+        if not source.is_file():
             continue
         try:
-            blob = json.dumps(json.loads(manifest.read_text(encoding="utf-8")))
-        except (json.JSONDecodeError, OSError):
+            lines = source.read_text(encoding="utf-8").splitlines()
+        except OSError:
             continue
-        for dead, survivor in RETIRED.items():
-            if dead in blob:
-                defects.append(
-                    f"{manifest.relative_to(REPO)}: manifest advertises retired "
-                    f"skill '{dead}' to installers — route to {survivor}"
-                )
+        for number, line in enumerate(lines, 1):
+            if historical.search(line):
+                continue
+            for dead, survivor in RETIRED.items():
+                if re.search(rf"(?<![a-z0-9-]){re.escape(dead)}(?![a-z0-9-])", line, re.I):
+                    defects.append(
+                        f"{name}:{number}: instructs an agent to use retired skill "
+                        f"'{dead}' — route to {survivor}"
+                    )
+                    break
 
 
 def check_path_references(defects: list[str]) -> None:
