@@ -141,7 +141,7 @@ asserts it does not report `OK`**, which is the assertion that actually matters
 and the one a naive suite omits.
 
 **One control must fail against a build that treats absence as health, or the
-suite proves nothing.** A control that passes on a path production does not take
+suite proves nothing.** A control that passes on a path production does not use
 proves nothing either: verify the control exercises the same resolution and
 probe path the real run uses, not a convenient stand-in.
 
