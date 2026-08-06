@@ -29,6 +29,8 @@ Consolidation, not proliferation, was the actual request.
 | D5 | **Pairing is two-tier:** iron laws + question-driven. | Iron where being wrong is irreversible; judgment everywhere else. No table of stage→skill pairs. |
 | D6 | **Portable core + `LOCAL.md` is kept as self-imposed discipline**, not for distribution. | The portability constraint is what produced a 9/9 skill. A hostname in `SKILL.md` is a defect regardless of audience. |
 | D7 | **Evidence emission is intrinsic**, never a call to an external service. | ECS has 290 claims, 86% unverified, and **zero** skills have ever called `register_claim`. The loop fails open by construction. Intrinsic records cannot be skipped. |
+| D8 | **Description bytes are a shared, rivalrous budget.** Every description must be as short as it can be while still carrying a decidable trigger and decline test. Adding a skill is never free. | Measured 2026-08-06: adding three skills silently blanked the descriptions of four unrelated ones. A skill whose description is dropped cannot fire on description match, so every skill's description spends from the same pool that governs whether *other* skills can fire. |
+| D9 | **Committed ≠ deployed applies to this package's own skills.** A skill change is not live until it is merged to `main` **and** the loaded clone has pulled. | The loaded plugin is a shallow, single-branch clone tracking `main` (`plugins/marketplaces/epistemic-skills`, refspec `+refs/heads/main:refs/remotes/origin/main`). Measured 2026-08-06 while trying to observe a change that had been committed but not delivered. |
 
 ### On the name `metacognate`
 
@@ -294,9 +296,41 @@ should be deleted, 5 evicted to project repos per ADR-183:
   `nas-troubleshoot` (289 lines of site-specific diagnostics) into `triage`;
   device probes into `health`.
 
-## Blocking requirement: the `context-audit` firing defect
+## RESOLVED, AND INVERTED: the `context-audit` firing defect
 
-**This is a release gate for v5.0.0, not a follow-up.** Operator decision,
+> **Updated 2026-08-06 after the gate ran.** The gate is discharged, and its
+> finding argues *for* v5.0.0 rather than blocking it. `context-audit` was never
+> broken. Full evidence:
+> [`docs/evidence/2026-08-06-context-audit-firing-probe.md`](../../evidence/2026-08-06-context-audit-firing-probe.md).
+>
+> **What was measured.** Three *unchanged* skill files — `outsource`,
+> `impeccable`, `review`, `security-review` — flipped from rendering their
+> descriptions to blank after three probe skills were added to the estate. A
+> property that changes while the file does not cannot be caused by the file.
+> Both directions of the leading hypothesis failed: a two-escape probe renders,
+> and `context-audit` stays blank with zero escapes.
+>
+> **The real defect.** Descriptions are the firing surface, and the firing surface
+> appears to have a **capacity limit that silently drops entries as the skill set
+> grows**. Any skill can be made functionally uninstalled by the addition of
+> unrelated skills elsewhere. (Budget mechanism: hypothesis, confirmed or refuted
+> by whether removing the probes restores the lost descriptions.)
+>
+> **Why this inverts the gate.** The design's central assumption — descriptions
+> govern firing — survives. What fails is the assumption that a skill's firing is
+> *independent of the rest of the estate*. That makes skill count a measured cost
+> paid in other skills' ability to fire, which is direct empirical support for
+> consolidating 11 + 43 artifacts into 14 rather than a reason to delay it.
+>
+> **Consequences carried into the design below:** the estate-size budget becomes a
+> first-class constraint (see Global Constraints), `metacognate`'s wide trigger is
+> re-examined because description length is no longer free, and the delivery path
+> is pinned: the loaded plugin is a **shallow, single-branch clone tracking `main`**,
+> so a skill change is not live until it is on `main` *and* the clone has pulled.
+
+### Original gate statement (retained for provenance)
+
+**This was a release gate for v5.0.0, not a follow-up.** Operator decision,
 2026-08-06: v5.0.0 does not ship until this is solved.
 
 `epistemic-skills:context-audit` renders with **no description** in the live skill
