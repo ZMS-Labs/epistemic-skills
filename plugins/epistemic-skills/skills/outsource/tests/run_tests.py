@@ -149,13 +149,14 @@ def main() -> int:
 
     # Relocated to package level with the rest of the corpora when helix was deleted.
     helix_eval = PACKAGE_ROOT / "evals" / "composition"
-    for filename in (
-        "README.md",
-        "verify.py",
-        "tests/run_tests.py",
-        "results/BLOCKED.md",
-    ):
+    # The composition battery was RETIRED 2026-08-06: its subject
+    # (helix-composition-contract@1) was deleted with the helix seat, so verify.py
+    # and tests/ were removed. Evidence was kept. Assert the retirement is RECORDED
+    # rather than asserting a harness that intentionally no longer exists.
+    for filename in ("README.md", "RETIRED.md", "results/BLOCKED.md"):
         require((helix_eval / filename).is_file(), f"missing composition eval artifact: {filename}")
+    require("verify.py" not in [p.name for p in helix_eval.glob("*.py")],
+            "composition harness was retired but a .py harness is present again")
 
     readme = read(REPO_ROOT / "README.md")
     require(f"**Version {EXPECTED_VERSION}.**" in readme, "README version is stale")
@@ -182,9 +183,16 @@ def main() -> int:
         "decision-ledger/evals/resume-fixtures/score.py" in workflow,
         "CI omits continuity-verify committed-result scoring",
     )
+    # The composition battery was retired 2026-08-06 (subject deleted with the
+    # helix seat). CI must NOT run a harness that no longer exists, and must not
+    # silently forget why. Assert the inverse of the old requirement.
     require(
-        "helix/evals/composition/tests/run_tests.py" in workflow,
-        "CI omits Helix composition contract tests",
+        "evals/composition/tests/run_tests.py" not in workflow,
+        "CI still invokes the retired composition harness",
+    )
+    require(
+        "RETIRED 2026-08-06" in workflow,
+        "CI drops the retired batteries without recording why",
     )
     require(
         "python .github/scripts/test_check_dco.py" in workflow,
@@ -195,8 +203,8 @@ def main() -> int:
         "CI omits proportionality scorer polarity tests",
     )
     require(
-        "evals/proportionality/blinded/tests/run_tests.py" in workflow,
-        "CI omits blinded proportionality packet tests",
+        "evals/proportionality/blinded/tests/run_tests.py" not in workflow,
+        "CI still invokes the retired blinded-proportionality harness",
     )
     require(
         "resolve/derivation/evals/formal-rigor-v2-fixtures/tests/run_tests.py" in workflow,
@@ -263,9 +271,12 @@ def main() -> int:
         "blinded/README.md",
         "blinded/arms.json",
         "blinded/scenarios.json",
-        "blinded/runner.py",
+        # runner.py and tests/ were RETIRED 2026-08-06 -- their subject (the router
+        # seat) was deleted. Design and results are kept as evidence; the harness
+        # is not. Assert the retirement record instead of the removed harness.
+        "blinded/RETIRED.md",
         "blinded/results/BLOCKED.md",
-        "blinded/tests/run_tests.py",
+        "blinded/results/RESULTS.md",
     ):
         require((proportionality / filename).is_file(), f"missing proportionality artifact: {filename}")
 

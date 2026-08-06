@@ -102,7 +102,7 @@ def minimal_record(outcome: str = "underdetermined", selected_option=None) -> di
 def assert_v2_production_contract() -> None:
     skill_text = (SKILL_ROOT / "METHOD.md").read_text(encoding="utf-8")
     theory_text = (SKILL_ROOT / "theory-battery.md").read_text(encoding="utf-8")
-    router_text = (PACKAGE_ROOT / "skills" / "using-epistemic-skills" / "SKILL.md").read_text(encoding="utf-8")
+    router_text = (PACKAGE_ROOT / "skills" / "metacognate" / "SKILL.md").read_text(encoding="utf-8")
 
     for marker in (
         "cost of error × uncertainty × downstream dependence × irreversibility",
@@ -144,8 +144,14 @@ def assert_v2_production_contract() -> None:
     require("enumerate all 7 lenses" not in skill_text, "v1 closed seven-lens sweep remains normative")
     require("4NF decomposition eliminating the MVD `user_id ↠ method`" not in skill_text,
             "invalid ranked-contact 4NF derivation remains in production skill")
-    require("formal-rigor-record@2" in router_text and "focused" in router_text,
-            "router handoff does not distinguish focused inline output from v2 records")
+    # RETIRED 2026-08-06: this asserted the ROUTER's enumerated handoff text
+    # distinguished focused output from v2 records. The router was deleted and
+    # replaced by metacognate, which enumerates NO members and therefore carries no
+    # per-member handoff content -- that is the property it exists to have. The
+    # distinction still matters, so it is asserted where it actually lives now: in
+    # the skill that owns the output contract.
+    require("formal-rigor-record@2" in skill_text and "focused" in skill_text,
+            "derivation skill does not distinguish focused inline output from v2 records")
     require("persistent schema, architecture, protocol, or operational decision" in skill_text
             and "use `standard`" in skill_text,
             "bounded theorem rule does not escalate a downstream decision mandate")
