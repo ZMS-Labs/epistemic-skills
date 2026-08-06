@@ -29,7 +29,7 @@ Consolidation, not proliferation, was the actual request.
 | D5 | **Pairing is two-tier:** iron laws + question-driven. | Iron where being wrong is irreversible; judgment everywhere else. No table of stage→skill pairs. |
 | D6 | **Portable core + `LOCAL.md` is kept as self-imposed discipline**, not for distribution. | The portability constraint is what produced a 9/9 skill. A hostname in `SKILL.md` is a defect regardless of audience. |
 | D7 | **Evidence emission is intrinsic**, never a call to an external service. | ECS has 290 claims, 86% unverified, and **zero** skills have ever called `register_claim`. The loop fails open by construction. Intrinsic records cannot be skipped. |
-| D8 | **Description bytes are a shared, rivalrous budget.** Every description must be as short as it can be while still carrying a decidable trigger and decline test. Adding a skill is never free. | Measured 2026-08-06: adding three skills silently blanked the descriptions of four unrelated ones. A skill whose description is dropped cannot fire on description match, so every skill's description spends from the same pool that governs whether *other* skills can fire. |
+| D8 | **Description bytes are a shared, rivalrous budget, and this estate is already over it.** Adding a skill is a **transfer**, not an addition: it silently uninstalls roughly its own byte-weight of other skills' descriptions. Every description must be as short as it can be while still carrying a decidable trigger and decline test. | **Confirmed by reversible manipulation, 2026-08-06.** Adding three skills blanked four unrelated descriptions; removing the same three restored exactly those four (~1546 bytes out, ~1561 back). 108 skills → 1 dropped; 111 → 5; 108 → 1. Monotonic. `context-audit` is not defective — it is *marginal*, and has been functionally uninstalled at baseline the whole time. Evidence: [`docs/evidence/2026-08-06-context-audit-firing-probe.md`](../../evidence/2026-08-06-context-audit-firing-probe.md). |
 | D9 | **Committed ≠ deployed applies to this package's own skills.** A skill change is not live until it is merged to `main` **and** the loaded clone has pulled. | The loaded plugin is a shallow, single-branch clone tracking `main` (`plugins/marketplaces/epistemic-skills`, refspec `+refs/heads/main:refs/remotes/origin/main`). Measured 2026-08-06 while trying to observe a change that had been committed but not delivered. |
 
 ### On the name `metacognate`
@@ -108,12 +108,37 @@ TIER 2 — WISE. Judgment, bidirectional, bounded.
   5. all answerable -> engage nothing
 ```
 
-**Trigger width: wide, with the decline test stated in the `description` itself.**
+**Trigger width: wide, with the decline test stated in the `description` itself —
+and the description held to a hard byte ceiling.**
 
-Skills fire on their `description`, which is always resident in context; the body
-loads only once fired. Therefore a wide trigger is affordable **if and only if**
-routine work can be declined from the description alone — a false fire then costs
-zero context. If the decline requires reading the body, the trigger must narrow.
+Skills fire on their `description`, which is always resident; the body loads only
+once fired. So a wide trigger is affordable **if and only if** routine work can be
+declined from the description alone.
+
+**Re-costed 2026-08-06.** The original justification was *"a false fire costs zero
+context, so width is free."* That is now known to be false in its second half.
+A false *fire* is indeed cheap. But the **description is not** — description bytes
+are a shared, rivalrous budget (D8), and this estate is already over it, so every
+byte `metacognate` spends on trigger breadth is paid for by another skill's
+ability to fire at all.
+
+The constraint therefore has two halves, both binding:
+
+1. **Declinable from the description alone** — otherwise routine work loads the
+   body and the false fire stops being cheap.
+2. **Byte ceiling: `metacognate`'s description must not exceed the combined
+   descriptions of `using-epistemic-skills` + `helix`, the two seats it replaces.**
+   It is a consolidation; it must not cost more than what it consolidates. Measured
+   on `main` after #91: `using-epistemic-skills` 477 + `helix` 524 = **1001 bytes**.
+   That is the ceiling, and coming in materially under it is the goal.
+   (Note the router is 477 rather than the 522 its shipped v4.1.0 copy carries —
+   #91 removed two phantom skill names from it. Measure the repo, not the installed
+   cache; they diverge, which is D9 restated.)
+
+Width is bought with concision, not with bytes. If the five trigger conditions
+cannot be stated inside the ceiling, the correct response is to **narrow the
+trigger**, not to raise the ceiling — because the cost of raising it is invisible
+and lands on a different skill.
 
 Fires when any is observably true:
 
@@ -260,28 +285,49 @@ skills improve outcomes. The README must continue to say **UNESTABLISHED**.
 
 ## Sequencing
 
-0. **Solve the `context-audit` firing defect.** Release gate — see above. Nothing
-   else in v5.0.0 is worth building until the firing surface is proven sound,
-   because every other step assumes it.
-1. **Land PR #91 first.** v5.0.0 must not sit on unmerged work.
-2. **Build `health` alone, to the bar, and stop.** It already exists as
+0. ~~**Solve the `context-audit` firing defect.**~~ **DISCHARGED 2026-08-06.**
+   `context-audit` is not defective; it is marginal against a description-byte
+   budget the estate already exceeds. Nothing to fix in the skill. The finding
+   promotes step 1 below from housekeeping to the highest-value step in the plan.
+1. **Delete the superseded commands FIRST** (see "In scope" below). This was
+   originally out of scope. It is now step 1, because it is the only step that
+   *buys back* description budget rather than spending it, and because
+   `context-audit` — a skill the operator uses — stays functionally uninstalled
+   until it happens. Deletions are free: no design, no review, fully reversible
+   via git.
+2. **Land PR #91 first.** ✅ merged 2026-08-06.
+3. **Build `health` alone, to the bar, and stop.** It already exists as
    `fleet-health` at 9/9, making it the cheapest way to prove the whole pipeline —
    rename, portable/`LOCAL.md` split, `metadata.hands-to`, generated `ROUTING.md`,
    eval corpus, CI — before repeating it four more times.
-3. `metacognate` — required before router and helix can be removed.
-4. Delete `using-epistemic-skills` and `helix`.
-5. `triage`.
-6. `did-it-land`.
-7. `watch` **last**, because it is the only actuator.
+4. `metacognate` — required before router and helix can be removed.
+5. Delete `using-epistemic-skills` and `helix`. **Net budget effect: negative** —
+   two long descriptions leave, one shorter one arrives.
+6. `triage`.
+7. `did-it-land`.
+8. `watch` **last**, because it is the only actuator.
+
+**Budget ledger.** Every step above states its net effect on the shared
+description-byte budget, and the plan must end net-negative. The estate is over
+the cap today; a v5.0.0 that ships 14 good skills while leaving the estate over
+budget has uninstalled something the operator uses in order to add something he
+might.
 
 Existing machinery already covers the mechanical half: `check_skill_inventory.py`
 enforces glob ↔ schema enum ↔ event map ↔ verifier agreement, and
 `sync_skill_surfaces.py --write` regenerates count words across all manifests.
 
-## Out of scope for v5.0.0 (decided, tracked separately)
+## IN SCOPE for v5.0.0 — the command-estate deletions
 
-Command estate disposition — approximately 24 of 43 commands are superseded and
-should be deleted, 5 evicted to project repos per ADR-183:
+> **Moved in 2026-08-06, operator decision.** Originally scoped out as "tracked
+> separately." The budget finding makes that untenable: these deletions are the
+> only part of the programme that *returns* description budget, and until they
+> happen `context-audit` — a skill actually in use — remains functionally
+> uninstalled. Deleting them is also the cheapest work here: no design, no
+> review, and fully reversible through git history.
+
+Approximately 24 of 43 commands are superseded and should be deleted, 5 evicted
+to project repos per ADR-183:
 
 - **Harness-native** (the runtime now does it): `worktree-setup`, `run-all`,
   `parallelize`, `token-report`, `park`, `park-fast`, `wrap-up-fast`,
