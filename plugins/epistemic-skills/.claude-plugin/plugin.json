@@ -1,6 +1,6 @@
 {
   "name": "epistemic-skills",
-  "description": "The full epistemic-discipline collection in one package: a router plus nine disciplines including recon (territory mapping: brief, initiative, and external-candidate modes), resolve (question settling: derivation, literature, and probe instruments), goal authoring, outsource repo-backed external handoff, adversarial review, evidence-locked acceptance, decision persistence with resumption re-anchoring, open-questions clarification, and context-audit instruction hygiene, with the helix tandem layer for workflow-skill pairing.",
+  "description": "The full epistemic-discipline collection in one package: an entry point plus thirteen disciplines including recon (territory mapping: brief, initiative, and external-candidate modes), resolve (question settling: derivation, literature, and probe instruments), goal authoring, outsource repo-backed external handoff, adversarial review, evidence-locked acceptance, decision persistence with resumption re-anchoring, open-questions clarification, and context-audit instruction hygiene, with the helix tandem layer for workflow-skill pairing.",
   "version": "4.1.0",
   "author": {
     "name": "ZMS Labs"

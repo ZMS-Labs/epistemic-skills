@@ -110,8 +110,17 @@ def check_path_references(defects: list[str]) -> None:
             text = source.read_text(encoding="utf-8")
         except (UnicodeDecodeError, OSError):
             continue
+        # Tag-pinned and commit-pinned URLs are historical by construction: the
+        # path existed at that ref. Rewriting them would falsify a citation.
+        text = re.sub(r"blob/v?\d[^)\s]*", "", text)
         for name in sorted(set(SKILL_PATH_RE.findall(text))):
-            if name not in live and (SKILLS_DIR / name).exists() is False:
+            # NO `.exists()` fallback. It made this check environment-dependent:
+            # `git rm` leaves empty directories behind on Windows, so `.exists()`
+            # returned True for a DELETED skill and silently suppressed the
+            # finding. The same check passed on a dirty Windows tree and failed on
+            # a clean Linux clone, against identical content. The filesystem glob
+            # (`live`) is the only authority on what exists.
+            if name not in live:
                 defects.append(
                     f"{source.relative_to(REPO)}: references skills/{name}/ "
                     f"which does not exist"

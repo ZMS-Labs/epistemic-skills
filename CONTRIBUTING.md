@@ -19,7 +19,7 @@ goal, material UI acceptance uncertainty, or a high-stakes/irreversible
 boundary.
 
 The normative gate is
-[`routine-fast-path.md`](plugins/epistemic-skills/skills/using-epistemic-skills/reference/routine-fast-path.md).
+[`routine-fast-path.md`](plugins/epistemic-skills/skills/metacognate/reference/routine-fast-path.md).
 Maintainers may ask for a discipline when its trigger is present; invocation
 count and artifact volume are never contribution-quality metrics.
 

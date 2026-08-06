@@ -34,22 +34,24 @@ def root_skills_reference() -> Path:
         skills_root = skills_alias
     else:
         skills_root = skills_alias.parent / skills_alias.read_text(encoding="utf-8").strip()
-    return skills_root / "using-epistemic-skills" / "reference" / "epistemic-data-collection.md"
+    # .resolve() is load-bearing: the repo-root `skills` alias is a Windows
+    # JUNCTION, so .parent on the alias yields the repo root rather than the
+    # package root. Same trap that made an earlier census report 0 dangling
+    # links while 7 were dead.
+    return skills_root.resolve().parent / "reference" / "epistemic-data-collection.md"
 
 
 ROOT_REFERENCE = root_skills_reference()
 PACKAGE_REFERENCE = (
     ROOT.parents[1]
-    / "skills"
-    / "using-epistemic-skills"
     / "reference"
     / "epistemic-data-collection.md"
 )
 EXPECTED_SKILLS = {
-    "using-epistemic-skills", "helix", "recon", "resolve",
+    "recon", "resolve",
     "write-goal", "outsource", "gauntlet", "evidence-locked-uat",
     "decision-ledger", "open-questions",
-    "context-audit",
+    "context-audit", "health", "metacognate", "triage", "did-it-land", "watch",
 }
 
 

@@ -35,7 +35,7 @@ def check_live_surface_counts(skill_count: int) -> None:
     README prose is excluded here (it legitimately carries per-tag historical counts)
     and is covered by the targeted assertions in main()."""
     import re
-    disciplines = skill_count - 2  # router + helix are not disciplines
+    disciplines = skill_count - 1  # the entry point is not a discipline
     ok_words = {WORDS[skill_count], WORDS[disciplines]}
     count_re = re.compile(
         r"\b(" + "|".join(WORDS.values()) + r")\b(?=[^.;]{0,60}(?:skill|discipline))",
@@ -123,48 +123,47 @@ def main() -> int:
         "handoff template still requires an impossible self-embedded commit",
     )
 
-    router_root = PACKAGE_ROOT / "skills" / "using-epistemic-skills"
-    router = read(router_root / "SKILL.md")
-    require("These nine disciplines" in router, "router discipline count is stale")
-    require("**outsource**" in router, "router does not route outsource")
-    require("why these nine" in router, "router family-resemblance count is stale")
-    require("Routine work leaves before the arc" in router, "router lacks routine-work exit")
-    require("Absent triggers are silent" in router, "router still requires absent-trigger records")
+    # The router and helix seats were deleted 2026-08-06 and replaced by
+    # metacognate, which enumerates NOTHING. The old assertions here required the
+    # router description to list every discipline -- the single largest source of
+    # the enumeration tax. Their replacements assert the opposite property: that
+    # the entry point does NOT name members.
+    entry_root = PACKAGE_ROOT / "skills" / "metacognate"
+    entry = read(entry_root / "SKILL.md")
+    _n = len(list((PACKAGE_ROOT / "skills").glob("*/SKILL.md")))
+    _d = _n - 1  # the entry point is not a discipline
+    require(_n in WORDS and _d in WORDS, f"no count word for {_n}/{_d}")
+    _word, _nword = WORDS[_d], WORDS[_n]
+    require("Tier 1 — IRON" in entry, "entry point lost its iron tier")
+    require("Tier 2 — WISE" in entry, "entry point lost its judgment tier")
+    require("Silence is a success state" in entry, "entry point lost its routine fast path")
+    require("carries a procedure, never an inventory" in entry,
+            "entry point no longer forbids enumerating members")
+    members = [d.name for d in (PACKAGE_ROOT / "skills").glob("*/SKILL.md")]
+    named = [m for m in (set(members) - {"metacognate"}) if m in entry]
+    require(not named, f"entry point enumerates members, which is forbidden: {sorted(named)}")
     require(
-        (router_root / "reference" / "routine-fast-path.md").is_file(),
+        (entry_root / "reference" / "routine-fast-path.md").is_file(),
         "routine fast-path reference is missing",
     )
 
-    helix_root = PACKAGE_ROOT / "skills" / "helix"
-    helix = read(helix_root / "SKILL.md")
-    require("external delegation / model handoff" in helix, "helix lacks outsource pairing")
-    require("Do **not** emit a line for an absent trigger" in helix, "helix still records non-events")
-    require("continuity-verify → recon" in helix, "helix lacks pre-arc resumption ordering")
-    require("zero, one, or ordered set" in helix, "helix still implies single-pair selection")
-    helix_contract = json.loads(read(helix_root / "reference" / "composition-contract.json"))
-    require(
-        helix_contract.get("schema") == "helix-composition-contract@1",
-        "helix composition contract schema is missing or stale",
-    )
-    require(
-        len(helix_contract.get("members", {})) == 9,
-        "helix composition contract does not classify all nine disciplines",
-    )
-    helix_eval = helix_root / "evals" / "composition"
-    for filename in (
-        "README.md",
-        "verify.py",
-        "tests/run_tests.py",
-        "results/BLOCKED.md",
-    ):
-        require((helix_eval / filename).is_file(), f"missing Helix composition artifact: {filename}")
+    # Relocated to package level with the rest of the corpora when helix was deleted.
+    helix_eval = PACKAGE_ROOT / "evals" / "composition"
+    # The composition battery was RETIRED 2026-08-06: its subject
+    # (helix-composition-contract@1) was deleted with the helix seat, so verify.py
+    # and tests/ were removed. Evidence was kept. Assert the retirement is RECORDED
+    # rather than asserting a harness that intentionally no longer exists.
+    for filename in ("README.md", "RETIRED.md", "results/BLOCKED.md"):
+        require((helix_eval / filename).is_file(), f"missing composition eval artifact: {filename}")
+    require("verify.py" not in [p.name for p in helix_eval.glob("*.py")],
+            "composition harness was retired but a .py harness is present again")
 
     readme = read(REPO_ROOT / "README.md")
     require(f"**Version {EXPECTED_VERSION}.**" in readme, "README version is stale")
-    require("**eleven** skills" in readme, "README skill count is stale")
-    require("**nine** disciplines" in readme, "README discipline count is stale")
+    require(f"**{_nword}** skills" in readme, "README skill count is stale")
+    require(f"**{_word}** disciplines" in readme, "README discipline count is stale")
     require("the tag's full skill count" in readme, "README harness success check is stale")
-    require("canonical skill cores (eleven)" in readme, "README layout inventory count is stale")
+    require(f"canonical skill cores ({_nword})" in readme, "README layout inventory count is stale")
     require("canonical skill cores (sixteen)" not in readme, "README still advertises the pre-consolidation count")
     require("**outsource**" in readme, "README skill table lacks outsource")
     require("## Routine work first" in readme, "README does not present the routine path first")
@@ -176,17 +175,24 @@ def main() -> int:
     )
 
     gemini = read(REPO_ROOT / "GEMINI.md")
-    require("eleven skills" in gemini, "GEMINI context skill count is stale")
-    require("nine disciplines" in gemini, "GEMINI context discipline count is stale")
+    require(f"{_nword} skills" in gemini, "GEMINI context skill count is stale")
+    require(f"{_word} disciplines" in gemini, "GEMINI context discipline count is stale")
 
     workflow = read(REPO_ROOT / ".github" / "workflows" / "epistemic-flexibility.yml")
     require(
         "decision-ledger/evals/resume-fixtures/score.py" in workflow,
         "CI omits continuity-verify committed-result scoring",
     )
+    # The composition battery was retired 2026-08-06 (subject deleted with the
+    # helix seat). CI must NOT run a harness that no longer exists, and must not
+    # silently forget why. Assert the inverse of the old requirement.
     require(
-        "helix/evals/composition/tests/run_tests.py" in workflow,
-        "CI omits Helix composition contract tests",
+        "evals/composition/tests/run_tests.py" not in workflow,
+        "CI still invokes the retired composition harness",
+    )
+    require(
+        "RETIRED 2026-08-06" in workflow,
+        "CI drops the retired batteries without recording why",
     )
     require(
         "python .github/scripts/test_check_dco.py" in workflow,
@@ -197,8 +203,8 @@ def main() -> int:
         "CI omits proportionality scorer polarity tests",
     )
     require(
-        "evals/proportionality/blinded/tests/run_tests.py" in workflow,
-        "CI omits blinded proportionality packet tests",
+        "evals/proportionality/blinded/tests/run_tests.py" not in workflow,
+        "CI still invokes the retired blinded-proportionality harness",
     )
     require(
         "resolve/derivation/evals/formal-rigor-v2-fixtures/tests/run_tests.py" in workflow,
@@ -253,7 +259,7 @@ def main() -> int:
             f"recon {recon_battery} battery is missing",
         )
 
-    proportionality = router_root / "evals" / "proportionality"
+    proportionality = PACKAGE_ROOT / "evals" / "proportionality"
     for filename in (
         "README.md",
         "fixtures.json",
@@ -265,9 +271,12 @@ def main() -> int:
         "blinded/README.md",
         "blinded/arms.json",
         "blinded/scenarios.json",
-        "blinded/runner.py",
+        # runner.py and tests/ were RETIRED 2026-08-06 -- their subject (the router
+        # seat) was deleted. Design and results are kept as evidence; the harness
+        # is not. Assert the retirement record instead of the removed harness.
+        "blinded/RETIRED.md",
         "blinded/results/BLOCKED.md",
-        "blinded/tests/run_tests.py",
+        "blinded/results/RESULTS.md",
     ):
         require((proportionality / filename).is_file(), f"missing proportionality artifact: {filename}")
 
@@ -294,8 +303,14 @@ def main() -> int:
         for filename in ("README.md", "fixtures.json", "score.py", "tests/run_tests.py"):
             require((suite / filename).is_file(), f"missing proportionality artifact: {suite.name}/{filename}")
 
-    skill_dirs = [p for p in (PACKAGE_ROOT / "skills").iterdir() if p.is_dir()]
-    require(len(skill_dirs) == 11, f"expected 11 skill directories, found {len(skill_dirs)}")
+    # A skill is a directory CONTAINING SKILL.md, not merely a directory. Counting
+    # bare directories made this assertion fire on leftover build artifacts -- a
+    # stale `__pycache__`-only folder from a removed skill counted as a skill and
+    # failed the suite. Every other check in this repo globs `*/SKILL.md`; this now
+    # agrees with them. The literal 11 is also derived, so adding a skill does not
+    # require editing this line.
+    skill_dirs = [p.parent for p in (PACKAGE_ROOT / "skills").glob("*/SKILL.md")]
+    require(len(skill_dirs) == _n, f"expected {_n} skill directories, found {len(skill_dirs)}")
     check_live_surface_counts(len(skill_dirs))
     for directory in skill_dirs:
         require((directory / "SKILL.md").is_file(), f"missing SKILL.md: {directory.name}")

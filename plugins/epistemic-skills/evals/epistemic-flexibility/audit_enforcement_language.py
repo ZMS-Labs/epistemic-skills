@@ -19,13 +19,18 @@ import re
 import sys
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parents[6]
+# parents[4], not [6]: this file moved two levels shallower on 2026-08-06 when the
+# corpus was relocated out of skills/using-epistemic-skills/evals/ to package-level
+# evals/. At the old depth REPO_ROOT resolved to the drive root and every audited
+# path went missing. Credit where due: the check FAILED LOUDLY -- one named
+# "missing audited skill" error per path plus an explicit zero-occurrence error,
+# exit 1. It did not report a clean audit over nothing, which is the failure this
+# repo has hit elsewhere.
+REPO_ROOT = Path(__file__).resolve().parents[4]
 REFERENCE = (
     REPO_ROOT
     / "plugins"
     / "epistemic-skills"
-    / "skills"
-    / "using-epistemic-skills"
     / "reference"
     / "epistemic-flexibility.md"
 )
@@ -37,8 +42,7 @@ SKILL_PATHS = [
     "plugins/epistemic-skills/skills/evidence-locked-uat/SKILL.md",
     "plugins/epistemic-skills/skills/resolve/literature/METHOD.md",
     "plugins/epistemic-skills/skills/gauntlet/SKILL.md",
-    "plugins/epistemic-skills/skills/helix/SKILL.md",
-    "plugins/epistemic-skills/skills/using-epistemic-skills/SKILL.md",
+    "plugins/epistemic-skills/skills/metacognate/SKILL.md",
     "plugins/epistemic-skills/skills/write-goal/SKILL.md",
 ]
 TERM_RE = re.compile(

@@ -1,92 +1,235 @@
 {
   "skills": [
     {
-      "skill": "using-epistemic-skills",
-      "event_kinds": ["routing-decision"],
-      "eligible_when": ["evaluation-case", "sampled-field-incident"],
-      "outcome_sources": ["independent-adjudication"],
-      "collection_mode": "observational",
-      "sentinel_fixture": "router-over-under.json"
-    },
-    {
-      "skill": "helix",
-      "event_kinds": ["pairing-decision"],
-      "eligible_when": ["evaluation-case", "correction-or-supersession"],
-      "outcome_sources": ["independent-adjudication"],
-      "collection_mode": "observational",
-      "sentinel_fixture": "helix-missed-pair.json"
-    },
-    {
-      "skill": "write-goal",
-      "event_kinds": ["goal-proof"],
-      "eligible_when": ["independently-resolvable-verdict"],
-      "outcome_sources": ["field-observation", "supersession-chain"],
-      "collection_mode": "conditional",
-      "sentinel_fixture": "goal-regression.json"
-    },
-    {
-      "skill": "outsource",
-      "event_kinds": ["handoff-verification"],
-      "eligible_when": ["evaluation-case", "sampled-field-incident"],
-      "outcome_sources": ["deterministic-fixture", "independent-adjudication"],
-      "collection_mode": "observational",
-      "sentinel_fixture": "outsource-relay.json"
-    },
-    {
-      "skill": "gauntlet",
-      "event_kinds": ["review-forecast"],
-      "eligible_when": ["preregistered-prediction", "correction-or-supersession"],
-      "outcome_sources": ["field-observation", "supersession-chain"],
-      "collection_mode": "conditional",
-      "sentinel_fixture": "gauntlet-dissent.json"
-    },
-    {
-      "skill": "evidence-locked-uat",
-      "event_kinds": ["uat-verdict"],
-      "eligible_when": ["independently-resolvable-verdict"],
-      "outcome_sources": ["deterministic-fixture", "field-observation"],
-      "collection_mode": "calibratable",
-      "sentinel_fixture": "uat-seeded-defect.json"
-    },
-    {
-      "skill": "decision-ledger",
-      "event_kinds": ["continuity-reanchor", "ledger-revisit"],
-      "eligible_when": ["evaluation-case", "revisit-trigger-fired", "sampled-field-incident"],
-      "outcome_sources": ["deterministic-fixture", "field-observation", "supersession-chain"],
-      "collection_mode": "observational",
-      "sentinel_fixture": "ledger-revisit.json"
-    },
-    {
-      "skill": "open-questions",
-      "event_kinds": ["interview-scope-decision"],
-      "eligible_when": ["evaluation-case", "correction-or-supersession"],
-      "outcome_sources": ["independent-adjudication", "field-observation"],
-      "collection_mode": "observational",
-      "sentinel_fixture": "interview-parked-default.json"
-    },
-    {
       "skill": "context-audit",
-      "event_kinds": ["audit-cut-decision"],
-      "eligible_when": ["preregistered-prediction", "correction-or-supersession"],
-      "outcome_sources": ["field-observation", "supersession-chain"],
+      "event_kinds": [
+        "audit-cut-decision"
+      ],
+      "eligible_when": [
+        "preregistered-prediction",
+        "correction-or-supersession"
+      ],
+      "outcome_sources": [
+        "field-observation",
+        "supersession-chain"
+      ],
       "collection_mode": "conditional",
       "sentinel_fixture": "audit-cut-regression.json"
     },
     {
+      "skill": "decision-ledger",
+      "event_kinds": [
+        "continuity-reanchor",
+        "ledger-revisit"
+      ],
+      "eligible_when": [
+        "evaluation-case",
+        "revisit-trigger-fired",
+        "sampled-field-incident"
+      ],
+      "outcome_sources": [
+        "deterministic-fixture",
+        "field-observation",
+        "supersession-chain"
+      ],
+      "collection_mode": "observational",
+      "sentinel_fixture": "ledger-revisit.json"
+    },
+    {
+      "skill": "did-it-land",
+      "event_kinds": [
+        "landing-verdict"
+      ],
+      "eligible_when": [
+        "evaluation-case",
+        "sampled-field-incident"
+      ],
+      "outcome_sources": [
+        "deterministic-fixture",
+        "field-observation"
+      ],
+      "collection_mode": "observational",
+      "sentinel_fixture": "did-it-land-source-read-as-landed.json"
+    },
+    {
+      "skill": "evidence-locked-uat",
+      "event_kinds": [
+        "uat-verdict"
+      ],
+      "eligible_when": [
+        "independently-resolvable-verdict"
+      ],
+      "outcome_sources": [
+        "deterministic-fixture",
+        "field-observation"
+      ],
+      "collection_mode": "calibratable",
+      "sentinel_fixture": "uat-seeded-defect.json"
+    },
+    {
+      "skill": "gauntlet",
+      "event_kinds": [
+        "review-forecast"
+      ],
+      "eligible_when": [
+        "preregistered-prediction",
+        "correction-or-supersession"
+      ],
+      "outcome_sources": [
+        "field-observation",
+        "supersession-chain"
+      ],
+      "collection_mode": "conditional",
+      "sentinel_fixture": "gauntlet-dissent.json"
+    },
+    {
+      "skill": "health",
+      "event_kinds": [
+        "state-readout"
+      ],
+      "eligible_when": [
+        "evaluation-case",
+        "sampled-field-incident"
+      ],
+      "outcome_sources": [
+        "deterministic-fixture",
+        "independent-adjudication"
+      ],
+      "collection_mode": "observational",
+      "sentinel_fixture": "health-unknown-not-ok.json"
+    },
+    {
+      "skill": "metacognate",
+      "event_kinds": [
+        "routing-decision"
+      ],
+      "eligible_when": [
+        "evaluation-case",
+        "sampled-field-incident"
+      ],
+      "outcome_sources": [
+        "independent-adjudication"
+      ],
+      "collection_mode": "observational",
+      "sentinel_fixture": "metacognate-over-under.json"
+    },
+    {
+      "skill": "open-questions",
+      "event_kinds": [
+        "interview-scope-decision"
+      ],
+      "eligible_when": [
+        "evaluation-case",
+        "correction-or-supersession"
+      ],
+      "outcome_sources": [
+        "independent-adjudication",
+        "field-observation"
+      ],
+      "collection_mode": "observational",
+      "sentinel_fixture": "interview-parked-default.json"
+    },
+    {
+      "skill": "outsource",
+      "event_kinds": [
+        "handoff-verification"
+      ],
+      "eligible_when": [
+        "evaluation-case",
+        "sampled-field-incident"
+      ],
+      "outcome_sources": [
+        "deterministic-fixture",
+        "independent-adjudication"
+      ],
+      "collection_mode": "observational",
+      "sentinel_fixture": "outsource-relay.json"
+    },
+    {
       "skill": "recon",
-      "event_kinds": ["frontier-decision", "harvest-decision", "landmine-prediction"],
-      "eligible_when": ["correction-or-supersession", "evaluation-case", "independently-resolvable-verdict", "preregistered-prediction"],
-      "outcome_sources": ["field-observation", "supersession-chain"],
+      "event_kinds": [
+        "frontier-decision",
+        "harvest-decision",
+        "landmine-prediction"
+      ],
+      "eligible_when": [
+        "correction-or-supersession",
+        "evaluation-case",
+        "independently-resolvable-verdict",
+        "preregistered-prediction"
+      ],
+      "outcome_sources": [
+        "field-observation",
+        "supersession-chain"
+      ],
       "collection_mode": "conditional",
       "sentinel_fixture": "recon-mode-misfire.json"
     },
     {
       "skill": "resolve",
-      "event_kinds": ["evidence-claim", "formal-prediction", "probe-episode"],
-      "eligible_when": ["independently-resolvable-verdict", "preregistered-prediction"],
-      "outcome_sources": ["deterministic-fixture", "field-observation", "independent-adjudication"],
+      "event_kinds": [
+        "evidence-claim",
+        "formal-prediction",
+        "probe-episode"
+      ],
+      "eligible_when": [
+        "independently-resolvable-verdict",
+        "preregistered-prediction"
+      ],
+      "outcome_sources": [
+        "deterministic-fixture",
+        "field-observation",
+        "independent-adjudication"
+      ],
       "collection_mode": "conditional",
       "sentinel_fixture": "resolve-instrument-misfire.json"
+    },
+    {
+      "skill": "triage",
+      "event_kinds": [
+        "cause-verdict"
+      ],
+      "eligible_when": [
+        "evaluation-case",
+        "sampled-field-incident"
+      ],
+      "outcome_sources": [
+        "deterministic-fixture",
+        "field-observation"
+      ],
+      "collection_mode": "observational",
+      "sentinel_fixture": "triage-plausible-not-observed.json"
+    },
+    {
+      "skill": "watch",
+      "event_kinds": [
+        "bound-crossing"
+      ],
+      "eligible_when": [
+        "evaluation-case",
+        "sampled-field-incident"
+      ],
+      "outcome_sources": [
+        "deterministic-fixture",
+        "field-observation"
+      ],
+      "collection_mode": "observational",
+      "sentinel_fixture": "watch-silence-read-as-healthy.json"
+    },
+    {
+      "skill": "write-goal",
+      "event_kinds": [
+        "goal-proof"
+      ],
+      "eligible_when": [
+        "independently-resolvable-verdict"
+      ],
+      "outcome_sources": [
+        "field-observation",
+        "supersession-chain"
+      ],
+      "collection_mode": "conditional",
+      "sentinel_fixture": "goal-regression.json"
     }
   ]
 }

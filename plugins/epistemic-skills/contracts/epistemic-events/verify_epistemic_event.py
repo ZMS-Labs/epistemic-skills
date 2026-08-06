@@ -10,7 +10,7 @@ from typing import Any
 EVENT_RECORD = "epistemic-event@1"
 OUTCOME_RECORD = "epistemic-outcome@1"
 EVENT_KINDS = {
-    "routing-decision", "pairing-decision", "landmine-prediction",
+    "bound-crossing", "landing-verdict", "cause-verdict", "state-readout", "routing-decision", "pairing-decision", "landmine-prediction",
     "formal-prediction", "evidence-claim", "goal-proof",
     "handoff-verification", "review-forecast", "uat-verdict",
     "ledger-revisit", "continuity-reanchor", "interview-scope-decision",
@@ -34,10 +34,10 @@ EVIDENCE_REF_KINDS = {
     "ledger-entry-hash", "run-record-hash",
 }
 SKILL_NAMES = {
-    "using-epistemic-skills", "helix", "recon", "resolve",
+    "recon", "resolve",
     "write-goal", "outsource", "gauntlet", "evidence-locked-uat",
     "decision-ledger", "open-questions",
-    "context-audit",
+    "context-audit", "health", "metacognate", "triage", "did-it-land", "watch",
 }
 PROHIBITED_CONTENT_KEYS = {
     "prompt", "transcript", "user_prose", "raw_content", "secret",
@@ -59,19 +59,40 @@ ELIGIBILITY_PREDICATES = {
 }
 COLLECTION_MODES = {"calibratable", "observational", "conditional"}
 SKILL_EVENT_MAP = {
-    "using-epistemic-skills": {
+    "watch": {
+        "event_kinds": ("bound-crossing",),
+        "eligible_when": ("evaluation-case", "sampled-field-incident"),
+        "outcome_sources": ("deterministic-fixture", "field-observation"),
+        "collection_mode": "observational",
+        "sentinel_fixture": "watch-silence-read-as-healthy.json",
+    },
+    "did-it-land": {
+        "event_kinds": ("landing-verdict",),
+        "eligible_when": ("evaluation-case", "sampled-field-incident"),
+        "outcome_sources": ("deterministic-fixture", "field-observation"),
+        "collection_mode": "observational",
+        "sentinel_fixture": "did-it-land-source-read-as-landed.json",
+    },
+    "triage": {
+        "event_kinds": ("cause-verdict",),
+        "eligible_when": ("evaluation-case", "sampled-field-incident"),
+        "outcome_sources": ("deterministic-fixture", "field-observation"),
+        "collection_mode": "observational",
+        "sentinel_fixture": "triage-plausible-not-observed.json",
+    },
+    "metacognate": {
         "event_kinds": ("routing-decision",),
         "eligible_when": ("evaluation-case", "sampled-field-incident"),
         "outcome_sources": ("independent-adjudication",),
         "collection_mode": "observational",
-        "sentinel_fixture": "router-over-under.json",
+        "sentinel_fixture": "metacognate-over-under.json",
     },
-    "helix": {
-        "event_kinds": ("pairing-decision",),
-        "eligible_when": ("evaluation-case", "correction-or-supersession"),
-        "outcome_sources": ("independent-adjudication",),
+    "health": {
+        "event_kinds": ("state-readout",),
+        "eligible_when": ("evaluation-case", "sampled-field-incident"),
+        "outcome_sources": ("deterministic-fixture", "independent-adjudication"),
         "collection_mode": "observational",
-        "sentinel_fixture": "helix-missed-pair.json",
+        "sentinel_fixture": "health-unknown-not-ok.json",
     },
     "write-goal": {
         "event_kinds": ("goal-proof",),
