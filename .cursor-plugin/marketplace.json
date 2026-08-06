@@ -11,7 +11,7 @@
     {
       "name": "epistemic-skills",
       "source": "./plugins/epistemic-skills",
-      "description": "The full collection in one install: using-epistemic-skills + helix + using-epistemic-skills + helix + recon + resolve + write-goal + outsource + gauntlet + evidence-locked-uat + decision-ledger + open-questions + context-audit."
+      "description": "The full collection in one install: using-epistemic-skills + helix + recon + resolve + write-goal + outsource + gauntlet + evidence-locked-uat + decision-ledger + open-questions + context-audit."
     }
   ]
 }
