@@ -3,10 +3,14 @@
 **Date:** 2026-08-06. **Breaking.** Fourteen skills: one entry point,
 `metacognate`, and thirteen disciplines.
 
-> **PUBLICATION HELD.** These notes are committed; the tag is not created. Two
-> release-gate items cannot be satisfied while GitHub-hosted runners are
-> unavailable — see *Release gate status* below. `RELEASING.md` forbids
-> improvising around the gate, so publication waits rather than the gate bending.
+> **PUBLISHED.** Release-gate items 4, 5 and 6 are met on the exact tagged commit —
+> the deterministic suite, CodeQL, and the full-history secret scan all passed there,
+> verified at job and step level.
+>
+> **Item 8 — an independent Gauntlet publication review reaching GO — was WAIVED by
+> the repository owner and was never run.** There is no GO verdict for 5.0.0. This is
+> stated here rather than in a footnote because the alternative is a release record
+> that reads as though the gate passed.
 
 ## What changed and why
 
@@ -129,20 +133,58 @@ never bisected.
   design were kept in full**; only the harnesses were retired. Each carries a
   `RETIRED.md`.
 
-## Release gate status — two items unmet
+## Release gate status
 
-Per `RELEASING.md` §Release gate:
+Per `RELEASING.md` §Release gate. Items 5 and 6 were satisfied on 2026-08-06 against
+the exact commit `3a18cd3`, verified at job and step level rather than by run label:
 
 | Item | Status |
 |---|---|
 | 4 — version surfaces aligned, link-existence checked | **met.** All ten surfaces agree on 5.0.0. Version-pinned URLs were checked individually: `.../using-epistemic-skills/reference/routine-fast-path.md` does not exist in the v5 tree, so that link was repointed to the file's new home rather than blind-bumped — the P1 class caught in v3.2.0. |
-| 5 — deterministic suite, DCO, manifest parity, committed-JSON | **partially met.** Suite, DCO equivalence, manifest parity and JSON checks pass. **CodeQL has not run.** |
-| 6 — redacted full-history secret scan | **not met.** gitleaks requires a runner. |
-| 8 — independent Gauntlet publication review reaching GO | **not run.** |
+| 5 — deterministic suite, DCO, manifest parity, committed-JSON, CodeQL | **met** on `3a18cd3`. `epistemic-flexibility` job `stdlib-checks` succeeded across 45 steps — 44 success and one correctly skipped (`Durable ledger append-only against merge base`, which needs a PR merge base and has none on a dispatch run). CodeQL `Analyze (actions)`, `(javascript-typescript)` and `(python)` all succeeded on the same commit. |
+| 6 — redacted full-history secret scan | **met** on `3a18cd3`. `release-security` job `full-history-secret-scan` succeeded, including its own positive control step *"Prove the scanner detects a planted secret"* — so the clean result is a measurement, not a scanner that finds nothing. |
+| 8 — independent Gauntlet publication review reaching GO | **WAIVED, not met.** Explicitly waived by the repository owner on 2026-08-06 ("i approve the release and we don't need the full gauntlet"). No Gauntlet publication review was run for 5.0.0, and no GO verdict exists. Recorded as waived rather than satisfied, because a release record that reads as if a gate passed when it was skipped is worse than no record. |
 
-GitHub-hosted runners stopped being allocated at 17:10 UTC on 2026-08-06; jobs
-queue unassigned and are auto-cancelled at the 15-minute timeout, which GitHub
-reports as a run-level `failure`. Tracked in issue #95.
+### How items 5 and 6 became reachable
 
-**Publication resumes when items 5, 6 and 8 can be satisfied on the exact release
-commit.** The notes ship held rather than the gate shipping bent.
+Neither gate could be run on demand. Both were reachable only as a side effect of
+pushing a commit or opening a pull request — which cannot satisfy a gate that asks for
+a result **on the exact release commit**. `workflow_dispatch` was added to both (#99),
+and the first dispatched run immediately failed on a real defect this session had
+introduced into `README.md` (#101). The gate earned its keep within twenty seconds of
+becoming reachable.
+
+That defect is also why `README.md` is now in the workflow's path filters: one of the
+gate's checks asserts a required count phrasing *in README.md*, so a README-only edit
+could break the gate without triggering the workflow that enforces it. A check's inputs
+belong in its trigger.
+
+Runner assignment was intermittently failing throughout — jobs auto-cancelled at the
+15-minute assignment timeout with no runner ever assigned, which GitHub reports as a
+run-level `failure`. **Re-dispatching succeeds**; that, not waiting, is the lever. Quota
+was never the cause (29,752 of 50,000 included minutes, $0 billable) and neither was
+queue depth (3 runs in flight org-wide). Diagnosis in issue #95.
+
+### On the waiver of item 8
+
+`RELEASING.md` §Procedure step 5 requires the Gauntlet publication gate to be run and
+recorded. For 5.0.0 it was **not run**. The repository owner waived it explicitly on
+2026-08-06 and authorized publication.
+
+That is the owner's call to make — the gate is theirs. What is not discretionary is the
+record. So, stated plainly for anyone auditing this release later:
+
+- **No adversarial publication review was performed on 5.0.0.** No lens panel, no
+  arbitrator, no Conflict Ledger, no GO verdict. There is no artifact to point at
+  because none exists.
+- The evidence backing this release is therefore: the deterministic suite, CodeQL, the
+  full-history secret scan, and a clean-room run — **all of which check the artifact,
+  and none of which check the judgment.** They establish that the package builds, scans
+  clean, and passes its own tests on the tagged commit. They do not establish that the
+  design decisions in it are sound.
+- **Behavioural superiority remains UNESTABLISHED** (`p=0.875`, no arm separation), and
+  nothing about publishing changes that.
+
+A future release wanting a GO on record must run the gate then. Item 8 cannot be
+retroactively satisfied for 5.0.0, and this section exists so nobody later mistakes an
+unrun gate for a passed one.
