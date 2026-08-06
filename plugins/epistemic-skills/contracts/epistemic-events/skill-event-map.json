@@ -201,6 +201,22 @@
       "sentinel_fixture": "triage-plausible-not-observed.json"
     },
     {
+      "skill": "watch",
+      "event_kinds": [
+        "bound-crossing"
+      ],
+      "eligible_when": [
+        "evaluation-case",
+        "sampled-field-incident"
+      ],
+      "outcome_sources": [
+        "deterministic-fixture",
+        "field-observation"
+      ],
+      "collection_mode": "observational",
+      "sentinel_fixture": "watch-silence-read-as-healthy.json"
+    },
+    {
       "skill": "write-goal",
       "event_kinds": [
         "goal-proof"

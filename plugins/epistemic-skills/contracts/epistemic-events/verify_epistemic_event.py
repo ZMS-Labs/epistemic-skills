@@ -10,7 +10,7 @@ from typing import Any
 EVENT_RECORD = "epistemic-event@1"
 OUTCOME_RECORD = "epistemic-outcome@1"
 EVENT_KINDS = {
-    "landing-verdict", "cause-verdict", "state-readout", "routing-decision", "pairing-decision", "landmine-prediction",
+    "bound-crossing", "landing-verdict", "cause-verdict", "state-readout", "routing-decision", "pairing-decision", "landmine-prediction",
     "formal-prediction", "evidence-claim", "goal-proof",
     "handoff-verification", "review-forecast", "uat-verdict",
     "ledger-revisit", "continuity-reanchor", "interview-scope-decision",
@@ -37,7 +37,7 @@ SKILL_NAMES = {
     "recon", "resolve",
     "write-goal", "outsource", "gauntlet", "evidence-locked-uat",
     "decision-ledger", "open-questions",
-    "context-audit", "health", "metacognate", "triage", "did-it-land",
+    "context-audit", "health", "metacognate", "triage", "did-it-land", "watch",
 }
 PROHIBITED_CONTENT_KEYS = {
     "prompt", "transcript", "user_prose", "raw_content", "secret",
@@ -59,6 +59,13 @@ ELIGIBILITY_PREDICATES = {
 }
 COLLECTION_MODES = {"calibratable", "observational", "conditional"}
 SKILL_EVENT_MAP = {
+    "watch": {
+        "event_kinds": ("bound-crossing",),
+        "eligible_when": ("evaluation-case", "sampled-field-incident"),
+        "outcome_sources": ("deterministic-fixture", "field-observation"),
+        "collection_mode": "observational",
+        "sentinel_fixture": "watch-silence-read-as-healthy.json",
+    },
     "did-it-land": {
         "event_kinds": ("landing-verdict",),
         "eligible_when": ("evaluation-case", "sampled-field-incident"),

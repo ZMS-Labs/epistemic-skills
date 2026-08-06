@@ -103,11 +103,10 @@ registered, not by editing this file.
   in what order".
 - **`decision-ledger`** takes any consequential decision made off the back of
   this report. The report itself is evidence, never a decision.
-- **Nothing here watches.** This skill answers when *asked*. Nothing in this
-  package tells you a bound was crossed while you were not looking — that is a
-  separate capability and it does not exist yet. **Do not let a green run here
-  imply you would have been told.** Measured 2026-08-05 as the largest single
-  hole in the capability set it was derived from.
+- **This skill answers when *asked*; it does not watch.** `watch` owns unattended
+  observation. **A green run here does not imply you would have been told** —
+  that depends entirely on whether a `watch` covering this bound has reached
+  `PROVEN`. An unproven watcher and no watcher are the same thing.
 
 ## Anti-rationalizations
 
@@ -119,7 +118,7 @@ registered, not by editing this file.
 | "It has no threshold but the number looks fine" | Judging without a declared bound is inventing policy at read time. |
 | "The summary is cleaner without the unreachable ones" | The unreachable ones are why anyone runs this. |
 | "This is the same as the quick status command, just bigger" | Scope and depth are arguments. Artifacts sharing one trigger were never separate capabilities. |
-| "A green run means I would hear about it if it broke" | Nothing here watches. There is no alert path. |
+| "A green run means I would hear about it if it broke" | Only if a `watch` covering that bound has reached `PROVEN`. This skill does not watch, and an unproven watcher is not one. |
 
 ## Degraded operation
 

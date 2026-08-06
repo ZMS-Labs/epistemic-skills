@@ -51,7 +51,7 @@ EXPECTED_SKILLS = {
     "recon", "resolve",
     "write-goal", "outsource", "gauntlet", "evidence-locked-uat",
     "decision-ledger", "open-questions",
-    "context-audit", "health", "metacognate", "triage", "did-it-land",
+    "context-audit", "health", "metacognate", "triage", "did-it-land", "watch",
 }
 
 
