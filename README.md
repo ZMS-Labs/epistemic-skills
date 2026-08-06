@@ -222,35 +222,35 @@ Full installation, migration, runtime-degradation, and troubleshooting guidance 
 ### Claude Code
 
 ```bash
-git clone --depth 1 --branch v3.4.0 https://github.com/ZMS-Labs/epistemic-skills.git /path/to/epistemic-skills-v3.4.0
+git clone --depth 1 --branch main https://github.com/ZMS-Labs/epistemic-skills.git /path/to/epistemic-skills
 ```
 
 ```text
-/plugin marketplace add /absolute/path/to/epistemic-skills-v3.4.0
+/plugin marketplace add ZMS-Labs/epistemic-skills
 /plugin install epistemic-skills@epistemic-skills
 ```
 
-Use the dedicated tagged checkout as the single marketplace source, then start a fresh task.
+Use one marketplace source only, then start a fresh task. Until v5.0.0 is tagged, `main` is the channel; see docs/release/RELEASE-5.0.0.md for why the tag is held.
 
 ### Codex
 
 ```powershell
-codex plugin marketplace add ZMS-Labs/epistemic-skills --ref v3.4.0
+codex plugin marketplace add ZMS-Labs/epistemic-skills --ref main
 codex plugin add epistemic-skills@epistemic-skills
-python "$HOME/.codex/plugins/cache/epistemic-skills/epistemic-skills/3.4.0/skills/gauntlet/scripts/render_codex_agents.py" --out "$HOME/.codex/agents"
+python "$HOME/.codex/plugins/cache/epistemic-skills/epistemic-skills/5.0.0/skills/gauntlet/scripts/render_codex_agents.py" --out "$HOME/.codex/agents"
 ```
 
 Start a new Codex task after rendering. The renderer converts the five canonical packaged Markdown roles into Codex's user-agent registry. The Gauntlet retains a hashed exact-role materialization fallback for tasks that started before registration.
 
 ### Cursor
 
-Cursor packaging is present in v3.4.0, but the plugin is **not publicly listed**. `/add-plugin epistemic-skills` is not a valid public-install claim until Cursor accepts the listing. Use a tagged local checkout or a Cursor Teams/Enterprise team-marketplace import.
+Cursor packaging is present, but the plugin is **not publicly listed**. `/add-plugin epistemic-skills` is not a valid public-install claim until Cursor accepts the listing. Use a tagged local checkout or a Cursor Teams/Enterprise team-marketplace import.
 
 Windows local install:
 
 ```powershell
-git clone --depth 1 --branch v3.4.0 https://github.com/ZMS-Labs/epistemic-skills.git .\epistemic-skills-v3.4.0
-Set-Location .\epistemic-skills-v3.4.0
+git clone --depth 1 --branch main https://github.com/ZMS-Labs/epistemic-skills.git .\epistemic-skills
+Set-Location .\epistemic-skills
 if ((git describe --tags --exact-match) -ne 'v3.4.0') { throw 'expected v3.4.0' }
 New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.cursor\plugins\local" | Out-Null
 $src = (Resolve-Path .\plugins\epistemic-skills).Path
@@ -284,9 +284,9 @@ Restart the session and run `gemini extensions validate` when validating a check
 ### Antigravity (`agy`)
 
 ```bash
-git clone --depth 1 --branch v3.4.0 https://github.com/ZMS-Labs/epistemic-skills.git /path/to/epistemic-skills-v3.4.0
-agy plugin install /path/to/epistemic-skills-v3.4.0
-agy plugin validate /path/to/epistemic-skills-v3.4.0
+git clone --depth 1 --branch main https://github.com/ZMS-Labs/epistemic-skills.git /path/to/epistemic-skills
+agy plugin install /path/to/epistemic-skills
+agy plugin validate /path/to/epistemic-skills
 ```
 
 Use one of native `agy plugin install`, Gemini extension link, or `agy plugin import gemini`; do not combine them.
