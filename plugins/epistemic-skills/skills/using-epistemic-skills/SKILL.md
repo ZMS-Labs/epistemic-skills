@@ -1,6 +1,6 @@
 ---
 name: using-epistemic-skills
-description: Use when a task does not clear the routine-work fast path and might need more than one of recon, resolve, write-goal, outsource, gauntlet, evidence-locked-uat, decision-ledger, open-questions, context-audit, agent-interface-design, or intent-traced-merge; when choosing their order; when work should cross into another model, agent, or process; or when resuming from a summary or handoff. Do not substitute this router for the skill it selects. When a workflow-skill layer is also present, helix pairs the two collections.
+description: Use when a task does not clear the routine-work fast path and might need more than one of recon, resolve, write-goal, outsource, gauntlet, evidence-locked-uat, decision-ledger, open-questions, or context-audit; when choosing their order; when work should cross into another model, agent, or process; or when resuming from a summary or handoff. Do not substitute this router for the skill it selects. When a workflow-skill layer is also present, helix pairs the two collections.
 ---
 
 # Using Epistemic Skills — the router
