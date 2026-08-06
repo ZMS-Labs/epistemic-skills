@@ -258,6 +258,9 @@ skills improve outcomes. The README must continue to say **UNESTABLISHED**.
 
 ## Sequencing
 
+0. **Solve the `context-audit` firing defect.** Release gate — see above. Nothing
+   else in v5.0.0 is worth building until the firing surface is proven sound,
+   because every other step assumes it.
 1. **Land PR #91 first.** v5.0.0 must not sit on unmerged work.
 2. **Build `health` alone, to the bar, and stop.** It already exists as
    `fleet-health` at 9/9, making it the cheapest way to prove the whole pipeline —
@@ -291,14 +294,48 @@ should be deleted, 5 evicted to project repos per ADR-183:
   `nas-troubleshoot` (289 lines of site-specific diagnostics) into `triage`;
   device probes into `health`.
 
-## Known open items
+## Blocking requirement: the `context-audit` firing defect
 
-- `epistemic-skills:context-audit` currently renders with **no description** in the
-  live skill listing while its file has a correct one. Replicated in three
-  independent contexts. A skill with no listed description cannot fire on
-  description match. Two hypotheses (YAML quoting, description length) tested and
-  refuted; cause unknown. Must be resolved before v5.0.0, since the entire design
-  depends on descriptions being the firing surface.
+**This is a release gate for v5.0.0, not a follow-up.** Operator decision,
+2026-08-06: v5.0.0 does not ship until this is solved.
+
+`epistemic-skills:context-audit` renders with **no description** in the live skill
+listing while its file carries a correct one. Replicated in three independent
+contexts. A skill with no listed description cannot fire on description match — it
+is, functionally, not installed. The entire v5.0.0 design rests on descriptions
+being the firing surface, so an unexplained failure of that surface invalidates the
+architecture's central assumption.
+
+**Eliminated** (measured 2026-08-06, across the dev checkout and the installed
+4.1.0 cache):
+
+| hypothesis | why it is dead |
+|---|---|
+| file content wrong | both dev and installed copies carry a correct description |
+| YAML quoting style | `open-questions`, `recon`, `resolve`, `decision-ledger` are also single-quoted and render |
+| description length | `open-questions` (832) and `recon` (878) are **longer** and render; `context-audit` is 762 |
+| colons in the value | `recon` has 2, `resolve` and `decision-ledger` have 1; all render |
+| a shadowing second `SKILL.md` | only the cache, marketplace, and dev copies exist — all legitimate |
+| `settings.local.json` `skillOverrides` | contains only `{"goal": "off"}` |
+
+**Leading hypothesis, and the only dimension not eliminated:** `context-audit` is
+the sole skill whose description contains **two** YAML `''` apostrophe escapes
+(`document''s`, `task''s`). `decision-ledger` contains exactly one and renders.
+A loader that unescapes the first and mishandles the second would produce exactly
+this.
+
+**Test — by observation, never by reading the loader:** rewrite the description to
+contain no apostrophes, reload, and inspect the live listing. If the description
+appears, the cause is confirmed and the fix is a house rule: **no apostrophes in
+`description` fields**, enforced by `check_no_phantom_skills.py` or a sibling check.
+If it still does not appear, the hypothesis is refuted and the defect is escalated
+before any further v5.0.0 work proceeds.
+
+This follows the estate's own method lesson: every significant defect has been
+found by an independent measurement disagreeing with a tool, never by reading
+source.
+
+## Known open items
 - `helix` exists as an 18KB vendored `SKILL.md` in `zms-homelab-main/skills/`
   alongside the package copy. Disposition needed when `helix` is deleted.
 - Whether `metacognate` should also be operator-invocable by name in addition to
