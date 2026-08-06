@@ -21,13 +21,13 @@ SCENARIOS = HERE / "scenarios.json"
 FIXTURES = PARENT / "fixtures.json"
 SCORER = PARENT / "score.py"
 RESPONSE_SCHEMA = HERE / "proportionality-fixture-response.schema.json"
-REPO_ROOT = HERE.parents[6]
-ROUTER_PATH = "plugins/epistemic-skills/skills/using-epistemic-skills/SKILL.md"
+REPO_ROOT = HERE.parents[5]  # corpus moved two levels shallower 2026-08-06
+ROUTER_PATH = "plugins/epistemic-skills/skills/metacognate/SKILL.md"
 ROUTINE_REFERENCE_PATH = (
-    "plugins/epistemic-skills/skills/using-epistemic-skills/reference/routine-fast-path.md"
+    "plugins/epistemic-skills/skills/metacognate/reference/routine-fast-path.md"
 )
 CATALOG_SKILL_PATHS = [
-    "plugins/epistemic-skills/skills/using-epistemic-skills/reference/routine-fast-path.md",
+    "plugins/epistemic-skills/skills/metacognate/reference/routine-fast-path.md",
     "plugins/epistemic-skills/skills/recon/SKILL.md",
     "plugins/epistemic-skills/skills/resolve/SKILL.md",
     "plugins/epistemic-skills/skills/write-goal/SKILL.md",
@@ -128,7 +128,7 @@ def codex_live_prompt(
         routing_instruction = (
             "Use these member-owned descriptions when deciding which positive triggers apply. "
             "Activate the epistemic router by reading "
-            "plugins/epistemic-skills/skills/using-epistemic-skills/SKILL.md. "
+            "plugins/epistemic-skills/skills/metacognate/SKILL.md. "
             "Follow that router and read only member skill files whose positive triggers apply. "
         )
     else:

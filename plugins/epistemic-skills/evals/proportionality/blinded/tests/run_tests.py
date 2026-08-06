@@ -62,19 +62,19 @@ def main() -> int:
         "parody prompts must vary against the same final source checkout",
     )
 
-    router = (REPO_ROOT / "plugins/epistemic-skills/skills/using-epistemic-skills/SKILL.md").read_text(
+    entry = (REPO_ROOT / "plugins/epistemic-skills/skills/metacognate/SKILL.md").read_text(
         encoding="utf-8"
     )
     require(
-        "proposed design needs correctness confirmation or reversal" in router,
+        "proposed design needs correctness confirmation or reversal" in entry,
         "router must preserve the member-owned single-design formal-rigor trigger",
     )
     require(
-        "historical convention" in router,
+        "historical convention" in entry,
         "router must identify unresolved repository conventions as blindspot evidence",
     )
     require(
-        "Micro-recon is not a third path for non-routine work" in router,
+        "Micro-recon is not a third path for non-routine work" in entry,
         "router must not use routine micro-recon to close a precedential fork",
     )
 
@@ -100,7 +100,7 @@ def main() -> int:
         hashes = source_skill_hashes(historical)
         require(isinstance(hashes[SKILL_PATHS[0]], str), "present historical skill must be hashed")
         require(
-            hashes["plugins/epistemic-skills/skills/using-epistemic-skills/reference/routine-fast-path.md"]
+            hashes["plugins/epistemic-skills/skills/metacognate/reference/routine-fast-path.md"]
             is None,
             "a file absent at a pinned historical commit must be recorded as absent",
         )
@@ -132,7 +132,7 @@ def main() -> int:
         require("## OPERATIONAL DIRECTIVE" not in catalog, "catalog must not preload skill bodies")
         live_prompt = codex_live_prompt(sample_packet, REPO_ROOT)
         require(
-            "plugins/epistemic-skills/skills/using-epistemic-skills/SKILL.md" in live_prompt,
+            "plugins/epistemic-skills/skills/metacognate/SKILL.md" in live_prompt,
             "live adapter must activate the pinned repository router",
         )
         require("name: recon" in live_prompt, "live adapter must expose member triggers")

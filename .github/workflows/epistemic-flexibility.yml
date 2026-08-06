@@ -40,15 +40,15 @@ jobs:
       - name: Compile epistemic event verifier
         run: python -m py_compile plugins/epistemic-skills/contracts/epistemic-events/verify_epistemic_event.py
       - name: Epistemic-flexibility protocol fixtures
-        run: python plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/run_tests.py
+        run: python plugins/epistemic-skills/evals/epistemic-flexibility/run_tests.py
       - name: Behavioral fixture scorer self-test
-        run: python plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/behavioral/run_tests.py
+        run: python plugins/epistemic-skills/evals/epistemic-flexibility/behavioral/run_tests.py
       - name: Proportionality scorer polarity tests
-        run: python plugins/epistemic-skills/skills/using-epistemic-skills/evals/proportionality/run_tests.py
+        run: python plugins/epistemic-skills/evals/proportionality/run_tests.py
       - name: Blinded proportionality packet tests
-        run: python plugins/epistemic-skills/skills/using-epistemic-skills/evals/proportionality/blinded/tests/run_tests.py
+        run: python plugins/epistemic-skills/evals/proportionality/blinded/tests/run_tests.py
       - name: Helix composition contract tests
-        run: python plugins/epistemic-skills/skills/helix/evals/composition/tests/run_tests.py
+        run: python plugins/epistemic-skills/evals/composition/tests/run_tests.py
       - name: Resolve derivation formal-rigor v2 structural scorer self-test
         run: python plugins/epistemic-skills/skills/resolve/derivation/evals/formal-rigor-v2-fixtures/tests/run_tests.py
       - name: Resolve derivation formal-rigor focused proportionality test
@@ -137,17 +137,17 @@ jobs:
             .github/scripts/check_skill_inventory.py \
             .github/scripts/check_no_phantom_skills.py \
             .github/scripts/sync_skill_surfaces.py \
-            plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/validate_trace.py \
-            plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/run_tests.py \
+            plugins/epistemic-skills/evals/epistemic-flexibility/validate_trace.py \
+            plugins/epistemic-skills/evals/epistemic-flexibility/run_tests.py \
             plugins/epistemic-skills/skills/evals/epistemic-flexibility/audit_enforcement_language.py \
-            plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/behavioral/score_behavior.py \
-            plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/behavioral/run_tests.py \
-            plugins/epistemic-skills/skills/using-epistemic-skills/evals/proportionality/score.py \
-            plugins/epistemic-skills/skills/using-epistemic-skills/evals/proportionality/run_tests.py \
-            plugins/epistemic-skills/skills/using-epistemic-skills/evals/proportionality/blinded/runner.py \
-            plugins/epistemic-skills/skills/using-epistemic-skills/evals/proportionality/blinded/tests/run_tests.py \
-            plugins/epistemic-skills/skills/helix/evals/composition/verify.py \
-            plugins/epistemic-skills/skills/helix/evals/composition/tests/run_tests.py \
+            plugins/epistemic-skills/evals/epistemic-flexibility/behavioral/score_behavior.py \
+            plugins/epistemic-skills/evals/epistemic-flexibility/behavioral/run_tests.py \
+            plugins/epistemic-skills/evals/proportionality/score.py \
+            plugins/epistemic-skills/evals/proportionality/run_tests.py \
+            plugins/epistemic-skills/evals/proportionality/blinded/runner.py \
+            plugins/epistemic-skills/evals/proportionality/blinded/tests/run_tests.py \
+            plugins/epistemic-skills/evals/composition/verify.py \
+            plugins/epistemic-skills/evals/composition/tests/run_tests.py \
             plugins/epistemic-skills/skills/resolve/derivation/evals/formal-rigor-v2-fixtures/score.py \
             plugins/epistemic-skills/skills/resolve/derivation/evals/formal-rigor-v2-fixtures/tests/run_tests.py \
             plugins/epistemic-skills/skills/resolve/derivation/evals/formal-rigor-v2-fixtures/tests/test_focused.py \
