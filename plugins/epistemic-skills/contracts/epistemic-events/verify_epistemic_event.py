@@ -34,7 +34,7 @@ EVIDENCE_REF_KINDS = {
     "ledger-entry-hash", "run-record-hash",
 }
 SKILL_NAMES = {
-    "using-epistemic-skills", "helix", "recon", "resolve",
+    "recon", "resolve",
     "write-goal", "outsource", "gauntlet", "evidence-locked-uat",
     "decision-ledger", "open-questions",
     "context-audit", "health", "metacognate",
@@ -72,20 +72,6 @@ SKILL_EVENT_MAP = {
         "outcome_sources": ("deterministic-fixture", "independent-adjudication"),
         "collection_mode": "observational",
         "sentinel_fixture": "health-unknown-not-ok.json",
-    },
-    "using-epistemic-skills": {
-        "event_kinds": ("routing-decision",),
-        "eligible_when": ("evaluation-case", "sampled-field-incident"),
-        "outcome_sources": ("independent-adjudication",),
-        "collection_mode": "observational",
-        "sentinel_fixture": "router-over-under.json",
-    },
-    "helix": {
-        "event_kinds": ("pairing-decision",),
-        "eligible_when": ("evaluation-case", "correction-or-supersession"),
-        "outcome_sources": ("independent-adjudication",),
-        "collection_mode": "observational",
-        "sentinel_fixture": "helix-missed-pair.json",
     },
     "write-goal": {
         "event_kinds": ("goal-proof",),

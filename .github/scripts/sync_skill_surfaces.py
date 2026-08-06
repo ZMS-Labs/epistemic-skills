@@ -40,10 +40,10 @@ MAP_PATH = EVENTS_DIR / "skill-event-map.json"
 MAP_SCHEMA_PATH = EVENTS_DIR / "skill-event-map.schema.json"
 VERIFIER_PATH = EVENTS_DIR / "verify_epistemic_event.py"
 EVENTS_TEST_PATH = EVENTS_DIR / "test_epistemic_events.py"
-COMPOSITION_PATH = PACKAGE / "skills" / "helix" / "reference" / "composition-contract.json"
-ROUTER_PATH = SKILLS_DIR / "using-epistemic-skills" / "SKILL.md"
 
-NON_DISCIPLINES = {"using-epistemic-skills", "helix"}
+# The entry point is not a discipline. Was {router, helix}; both seats were
+# deleted 2026-08-06 and replaced by metacognate, so the arithmetic is n-1.
+NON_DISCIPLINES = {"metacognate"}
 
 WORDS = {
     9: "nine", 10: "ten",
@@ -68,12 +68,12 @@ def count_surfaces() -> list[tuple[Path, list[tuple[str, str]]]]:
             (rf"- \[{ANY_WORD_CAP}-skill catalog\]\(#{ANY_WORD}-skill-catalog\)",
              "- [{N}-skill catalog](#{slug}-skill-catalog)"),
             (rf"## {ANY_WORD_CAP}-skill catalog", "## {N}-skill catalog"),
-            (rf"provides \*\*{ANY_WORD}\*\* skills: one router, \*\*{ANY_WORD}\*\* disciplines",
-             "provides **{n}** skills: one router, **{d}** disciplines"),
-            (rf"one router, Helix, and {ANY_WORD} disciplines",
-             "one router, Helix, and {d} disciplines"),
+            (rf"provides \*\*{ANY_WORD}\*\* skills: (?:one router|one entry point), \*\*{ANY_WORD}\*\* disciplines",
+             "provides **{n}** skills: one entry point, **{d}** disciplines"),
+            (rf"(?:one router, Helix, and|one entry point and) {ANY_WORD} disciplines",
+             "one entry point and {d} disciplines"),
             (rf"canonical skill cores \({ANY_WORD}\)", "canonical skill cores ({n})"),
-            (rf"router and {ANY_WORD} disciplines", "router and {d} disciplines"),
+            (rf"(?:router and|entry point and) {ANY_WORD} disciplines", "entry point and {d} disciplines"),
             # REMOVED 2026-08-06: a one-shot v4.0.0 -> v4.1.0 migration rule that
             # rewrote the per-RELEASE install-verification count from the CURRENT
             # glob. Two defects. (1) It contradicted this file's own stated intent
@@ -86,13 +86,8 @@ def count_surfaces() -> list[tuple[Path, list[tuple[str, str]]]]:
             # tree are generated.
         ]),
         (REPO / "GEMINI.md", [
-            (rf"{ANY_WORD} skills: router \+ {ANY_WORD} disciplines",
-             "{n} skills: router + {d} disciplines"),
-        ]),
-        (ROUTER_PATH, [
-            (rf"These {ANY_WORD} disciplines are one system",
-             "These {d} disciplines are one system"),
-            (rf"why these {ANY_WORD}, and not others", "why these {d}, and not others"),
+            (rf"{ANY_WORD} skills: (?:router|entry point) \+ {ANY_WORD} disciplines",
+             "{n} skills: entry point + {d} disciplines"),
         ]),
         (REPO / ".claude-plugin" / "marketplace.json", [
             (rf"One package, {ANY_WORD} self-triggering skills",
@@ -103,14 +98,14 @@ def count_surfaces() -> list[tuple[Path, list[tuple[str, str]]]]:
              "One package, {n} self-triggering skills"),
         ]),
         (REPO / ".cursor-plugin" / "plugin.json", [
-            (rf"a router plus {ANY_WORD} disciplines", "a router plus {d} disciplines"),
+            (rf"(?:a router plus|an entry point plus) {ANY_WORD} disciplines", "an entry point plus {d} disciplines"),
         ]),
         (REPO / ".kimi-plugin" / "plugin.json", [
-            (rf"a router plus {ANY_WORD} disciplines", "a router plus {d} disciplines"),
+            (rf"(?:a router plus|an entry point plus) {ANY_WORD} disciplines", "an entry point plus {d} disciplines"),
             (rf"{ANY_WORD_CAP} composable disciplines", "{D} composable disciplines"),
         ]),
         (REPO / "gemini-extension.json", [
-            (rf"a router plus {ANY_WORD} disciplines", "a router plus {d} disciplines"),
+            (rf"(?:a router plus|an entry point plus) {ANY_WORD} disciplines", "an entry point plus {d} disciplines"),
         ]),
         # ADDED 2026-08-06: the ROOT plugin.json carries the same phrase as
         # gemini-extension.json and the package manifests below, but was never
@@ -120,21 +115,21 @@ def count_surfaces() -> list[tuple[Path, list[tuple[str, str]]]]:
         # covers all-but-one instance of a phrase is worse than none: it makes the
         # remaining hand-edit invisible.
         (REPO / "plugin.json", [
-            (rf"a router plus {ANY_WORD} disciplines", "a router plus {d} disciplines"),
+            (rf"(?:a router plus|an entry point plus) {ANY_WORD} disciplines", "an entry point plus {d} disciplines"),
         ]),
         (PACKAGE / ".claude-plugin" / "plugin.json", [
-            (rf"a router plus {ANY_WORD} disciplines", "a router plus {d} disciplines"),
+            (rf"(?:a router plus|an entry point plus) {ANY_WORD} disciplines", "an entry point plus {d} disciplines"),
         ]),
         (PACKAGE / ".codex-plugin" / "plugin.json", [
-            (rf"A router plus {ANY_WORD} composable disciplines",
-             "A router plus {d} composable disciplines"),
-            (rf"a router plus {ANY_WORD} disciplines", "a router plus {d} disciplines"),
+            (rf"(?:A router plus|An entry point plus) {ANY_WORD} composable disciplines",
+             "An entry point plus {d} composable disciplines"),
+            (rf"(?:a router plus|an entry point plus) {ANY_WORD} disciplines", "an entry point plus {d} disciplines"),
         ]),
         (PACKAGE / ".cursor-plugin" / "plugin.json", [
-            (rf"a router plus {ANY_WORD} disciplines", "a router plus {d} disciplines"),
+            (rf"(?:a router plus|an entry point plus) {ANY_WORD} disciplines", "an entry point plus {d} disciplines"),
         ]),
         (PACKAGE / ".kimi-plugin" / "plugin.json", [
-            (rf"a router plus {ANY_WORD} disciplines", "a router plus {d} disciplines"),
+            (rf"(?:a router plus|an entry point plus) {ANY_WORD} disciplines", "an entry point plus {d} disciplines"),
             (rf"{ANY_WORD_CAP} composable disciplines", "{D} composable disciplines"),
         ]),
     ]
@@ -302,18 +297,14 @@ def main(argv: list[str] | None = None) -> int:
         failures.append(
             f"TEST_EXPECTED_SKILLS_DRIFT: add/remove {sorted(set(events_test.EXPECTED_SKILLS) ^ skills)}")
 
-    composition = json.loads(COMPOSITION_PATH.read_text(encoding="utf-8"))
-    members = set(composition.get("members", {}))
-    if members != disciplines:
-        failures.append(
-            f"COMPOSITION_MEMBER_DRIFT: add/remove {sorted(members ^ disciplines)}")
 
-    router_text = ROUTER_PATH.read_text(encoding="utf-8")
-    front = router_text.split("---", 2)[1]
-    listed = {name for name in disciplines if re.search(rf"\b{re.escape(name)}\b", front)}
-    if listed != disciplines:
-        failures.append(
-            f"ROUTER_DESCRIPTION_DRIFT: frontmatter omits {sorted(disciplines - listed)}")
+    # REMOVED 2026-08-06 with the router seat itself: ROUTER_DESCRIPTION_DRIFT
+    # required the router's frontmatter to enumerate every discipline. It was the
+    # single largest source of the enumeration tax — adding any skill forced an
+    # edit to another skill's firing surface — and it is exactly the defect that
+    # shipped in v4.0.0, where the router's description named two skills that no
+    # longer existed. metacognate replaces the seat and enumerates nothing, so
+    # there is no list to keep in sync and this check has nothing left to check.
 
     # Counts everywhere.
     apply_counts(args.write, len(skills), len(disciplines), failures)

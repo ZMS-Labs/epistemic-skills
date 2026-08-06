@@ -83,21 +83,6 @@
       "sentinel_fixture": "health-unknown-not-ok.json"
     },
     {
-      "skill": "helix",
-      "event_kinds": [
-        "pairing-decision"
-      ],
-      "eligible_when": [
-        "evaluation-case",
-        "correction-or-supersession"
-      ],
-      "outcome_sources": [
-        "independent-adjudication"
-      ],
-      "collection_mode": "observational",
-      "sentinel_fixture": "helix-missed-pair.json"
-    },
-    {
       "skill": "metacognate",
       "event_kinds": [
         "routing-decision"
@@ -182,21 +167,6 @@
       ],
       "collection_mode": "conditional",
       "sentinel_fixture": "resolve-instrument-misfire.json"
-    },
-    {
-      "skill": "using-epistemic-skills",
-      "event_kinds": [
-        "routing-decision"
-      ],
-      "eligible_when": [
-        "evaluation-case",
-        "sampled-field-incident"
-      ],
-      "outcome_sources": [
-        "independent-adjudication"
-      ],
-      "collection_mode": "observational",
-      "sentinel_fixture": "router-over-under.json"
     },
     {
       "skill": "write-goal",

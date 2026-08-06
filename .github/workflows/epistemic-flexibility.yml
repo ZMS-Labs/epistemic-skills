@@ -82,7 +82,7 @@ jobs:
       - name: Enforcement-language precision audit
         run: |
           set +e
-          python plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/audit_enforcement_language.py > enforcement-language-report.ndjson
+          python plugins/epistemic-skills/skills/evals/epistemic-flexibility/audit_enforcement_language.py > enforcement-language-report.ndjson
           status=$?
           cat enforcement-language-report.ndjson
           exit "$status"
@@ -139,7 +139,7 @@ jobs:
             .github/scripts/sync_skill_surfaces.py \
             plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/validate_trace.py \
             plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/run_tests.py \
-            plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/audit_enforcement_language.py \
+            plugins/epistemic-skills/skills/evals/epistemic-flexibility/audit_enforcement_language.py \
             plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/behavioral/score_behavior.py \
             plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/behavioral/run_tests.py \
             plugins/epistemic-skills/skills/using-epistemic-skills/evals/proportionality/score.py \

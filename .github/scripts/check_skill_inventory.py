@@ -27,14 +27,18 @@ EVENTS_ROOT = REPO_ROOT / "plugins" / "epistemic-skills" / "contracts" / "episte
 EVENT_SCHEMA_PATH = EVENTS_ROOT / "epistemic-event.schema.json"
 SKILL_EVENT_MAP_PATH = EVENTS_ROOT / "skill-event-map.json"
 VERIFIER_PATH = EVENTS_ROOT / "verify_epistemic_event.py"
+# Relocated 2026-08-06 from skills/using-epistemic-skills/evals/ to package-level
+# evals/ when the router seat was deleted. The corpus measures the COLLECTION, not
+# the seat it happened to be stored under — see docs/superpowers/specs/
+# 2026-08-06-epistemic-skills-v5-design.md, "a seat and its directory are not the
+# same object".
 AUDIT_PATH = (
-    SKILLS_ROOT
-    / "using-epistemic-skills"
+    SKILLS_ROOT.parent
     / "evals"
     / "epistemic-flexibility"
     / "audit_enforcement_language.py"
 )
-AUDIT_PATH_PREFIX = "plugins/epistemic-skills/skills/"
+AUDIT_PATH_PREFIX = "plugins/epistemic-skills/"
 
 
 class InventoryError(ValueError):

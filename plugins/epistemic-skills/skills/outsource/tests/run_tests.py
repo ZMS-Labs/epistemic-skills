@@ -35,7 +35,7 @@ def check_live_surface_counts(skill_count: int) -> None:
     README prose is excluded here (it legitimately carries per-tag historical counts)
     and is covered by the targeted assertions in main()."""
     import re
-    disciplines = skill_count - 2  # router + helix are not disciplines
+    disciplines = skill_count - 1  # the entry point is not a discipline
     ok_words = {WORDS[skill_count], WORDS[disciplines]}
     count_re = re.compile(
         r"\b(" + "|".join(WORDS.values()) + r")\b(?=[^.;]{0,60}(?:skill|discipline))",
@@ -123,50 +123,39 @@ def main() -> int:
         "handoff template still requires an impossible self-embedded commit",
     )
 
-    router_root = PACKAGE_ROOT / "skills" / "using-epistemic-skills"
-    router = read(router_root / "SKILL.md")
-    # Derived, not hardcoded. These two assertions previously pinned the literal
-    # word "nine", which made this test a tenth hand-maintained projection of the
-    # skills directory: adding any skill turned the generator's correct rewrite of
-    # the router into a test failure here. Derive the count from the same glob the
-    # generator uses, so the assertion checks AGREEMENT rather than a frozen value.
+    # The router and helix seats were deleted 2026-08-06 and replaced by
+    # metacognate, which enumerates NOTHING. The old assertions here required the
+    # router description to list every discipline -- the single largest source of
+    # the enumeration tax. Their replacements assert the opposite property: that
+    # the entry point does NOT name members.
+    entry_root = PACKAGE_ROOT / "skills" / "metacognate"
+    entry = read(entry_root / "SKILL.md")
     _n = len(list((PACKAGE_ROOT / "skills").glob("*/SKILL.md")))
-    _d = _n - 2  # router + helix are not disciplines
+    _d = _n - 1  # the entry point is not a discipline
     require(_n in WORDS and _d in WORDS, f"no count word for {_n}/{_d}")
     _word, _nword = WORDS[_d], WORDS[_n]
-    require(f"These {_word} disciplines" in router, "router discipline count is stale")
-    require("**outsource**" in router, "router does not route outsource")
-    require(f"why these {_word}" in router, "router family-resemblance count is stale")
-    require("Routine work leaves before the arc" in router, "router lacks routine-work exit")
-    require("Absent triggers are silent" in router, "router still requires absent-trigger records")
+    require("Tier 1 — IRON" in entry, "entry point lost its iron tier")
+    require("Tier 2 — WISE" in entry, "entry point lost its judgment tier")
+    require("Silence is a success state" in entry, "entry point lost its routine fast path")
+    require("carries a procedure, never an inventory" in entry,
+            "entry point no longer forbids enumerating members")
+    members = [d.name for d in (PACKAGE_ROOT / "skills").glob("*/SKILL.md")]
+    named = [m for m in (set(members) - {"metacognate"}) if m in entry]
+    require(not named, f"entry point enumerates members, which is forbidden: {sorted(named)}")
     require(
-        (router_root / "reference" / "routine-fast-path.md").is_file(),
+        (entry_root / "reference" / "routine-fast-path.md").is_file(),
         "routine fast-path reference is missing",
     )
 
-    helix_root = PACKAGE_ROOT / "skills" / "helix"
-    helix = read(helix_root / "SKILL.md")
-    require("external delegation / model handoff" in helix, "helix lacks outsource pairing")
-    require("Do **not** emit a line for an absent trigger" in helix, "helix still records non-events")
-    require("continuity-verify → recon" in helix, "helix lacks pre-arc resumption ordering")
-    require("zero, one, or ordered set" in helix, "helix still implies single-pair selection")
-    helix_contract = json.loads(read(helix_root / "reference" / "composition-contract.json"))
-    require(
-        helix_contract.get("schema") == "helix-composition-contract@1",
-        "helix composition contract schema is missing or stale",
-    )
-    require(
-        len(helix_contract.get("members", {})) == _d,
-        f"helix composition contract does not classify all {_word} disciplines",
-    )
-    helix_eval = helix_root / "evals" / "composition"
+    # Relocated to package level with the rest of the corpora when helix was deleted.
+    helix_eval = PACKAGE_ROOT / "evals" / "composition"
     for filename in (
         "README.md",
         "verify.py",
         "tests/run_tests.py",
         "results/BLOCKED.md",
     ):
-        require((helix_eval / filename).is_file(), f"missing Helix composition artifact: {filename}")
+        require((helix_eval / filename).is_file(), f"missing composition eval artifact: {filename}")
 
     readme = read(REPO_ROOT / "README.md")
     require(f"**Version {EXPECTED_VERSION}.**" in readme, "README version is stale")
@@ -262,7 +251,7 @@ def main() -> int:
             f"recon {recon_battery} battery is missing",
         )
 
-    proportionality = router_root / "evals" / "proportionality"
+    proportionality = PACKAGE_ROOT / "evals" / "proportionality"
     for filename in (
         "README.md",
         "fixtures.json",
