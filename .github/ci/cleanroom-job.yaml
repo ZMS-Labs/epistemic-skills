@@ -1,0 +1,86 @@
+# Run this repo's CI suites as a Kubernetes Job, without GitHub Actions.
+#
+# WHY
+#   GitHub-hosted runners can stop being allocated (billing, quota, incident),
+#   and when they do the jobs are auto-cancelled at the 15-minute assignment
+#   timeout — which GitHub reports as a run-level "failure". CI then looks broken
+#   while nothing is broken.
+#
+#   Running the same suites here gives three things a developer workstation
+#   cannot: Linux, a clean checkout of a named ref, and a machine that is not the
+#   one the code was written on. The last is the point — "the host that wrote the
+#   change verified the change" is weak evidence, and it is the failure mode this
+#   package exists to attack.
+#
+# FIDELITY
+#   image python:3.12 matches the runner's Python (3.12.x); the workflow targets
+#   ubuntu-24.04 and this pins amd64 so the architecture matches too. Do NOT let
+#   this land on arm64 nodes: a pass there would not be evidence about what CI
+#   runs. That is what the nodeSelector is for.
+#
+#   The step list is EXTRACTED from the workflow by cleanroom_ci.sh, not copied
+#   here. A hardcoded list would be one more hand-maintained projection, which is
+#   the defect class this repo keeps finding.
+#
+# USAGE
+#   kubectl create -f .github/ci/cleanroom-job.yaml            # runs main
+#   REF=feat/x envsubst < ... | kubectl create -f -            # or edit CI_REF
+#   kubectl logs -f job/epistemic-skills-cleanroom-ci
+#
+# SECURITY
+#   This is NOT a GitHub Actions self-hosted runner. It pulls a public repo and
+#   runs its committed test suites; it accepts no webhook, exposes no listener,
+#   and holds no token. A self-hosted RUNNER on a public repo would let any fork
+#   pull-request execute arbitrary code on this cluster — a different and much
+#   larger exposure, and one to adopt deliberately rather than as a workaround.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: epistemic-skills-cleanroom-ci
+  labels:
+    app.kubernetes.io/name: epistemic-skills-cleanroom-ci
+spec:
+  backoffLimit: 0          # a failing suite is a result, not something to retry
+  ttlSecondsAfterFinished: 3600
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: epistemic-skills-cleanroom-ci
+    spec:
+      restartPolicy: Never
+      nodeSelector:
+        kubernetes.io/arch: amd64
+      containers:
+        - name: ci
+          image: python:3.12
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: CI_REF
+              value: "main"
+            - name: CI_REMOTE
+              value: "https://github.com/ZMS-Labs/epistemic-skills.git"
+            - name: PYTHONIOENCODING
+              value: "utf-8"
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              set -uo pipefail
+              echo "cleanroom CI on $(hostname), arch $(uname -m), $(python3 --version)"
+              git clone --quiet --depth 50 --branch "$CI_REF" "$CI_REMOTE" /tmp/repo || {
+                echo "FATAL: clone failed for ref $CI_REF"; exit 2; }
+              cd /tmp/repo
+              # The harness is fetched WITH the ref under test, so it can never be
+              # a stale copy verifying a newer tree.
+              exec bash .github/scripts/cleanroom_ci.sh "$CI_REF" "$CI_REMOTE"
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "512Mi"
+            limits:
+              cpu: "2"
+              memory: "2Gi"
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: false
+            capabilities:
+              drop: ["ALL"]
