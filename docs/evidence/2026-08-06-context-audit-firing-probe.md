@@ -48,3 +48,48 @@ junctions, for which `is_symlink()` returns False.
 ## Outcome
 
 (To be filled in by Task 3. Do not edit anything above this line.)
+
+## Outcome — round 1: INCONCLUSIVE (control validated the wrong mechanism)
+
+Observed 2026-08-06. **No session restart was required** — the harness hot-loaded
+the three probes into the live skill listing as soon as the files existed. The
+plan's restart gate was unnecessary.
+
+| probe | escapes | path | predicted | observed |
+|---|---|---|---|---|
+| probe-charlie (control) | 0 | local (`~/.claude/skills/`) | renders | **RENDERS** |
+| probe-bravo | 1 | local | renders | **RENDERS** |
+| probe-alpha | 2 | local | blank | **RENDERS** |
+| context-audit (production) | 2 | **plugin** | — | **BLANK** |
+
+Validity condition: **MET for the local loader, NOT MET for the case under test.**
+
+### Why this is inconclusive rather than a refutation
+
+The three probes are **local** skills. `context-audit` is a **plugin** skill.
+`probe-charlie` proves the *local* loader renders descriptions; it does not prove
+the *plugin* loader renders a description carrying two escapes. The control
+validated a different mechanism from the one production uses.
+
+This is the same failure this estate has already paid for once: `Path.symlink_to()`
+created a real symlink and the control passed, while all 18 production projection
+links were Windows junctions, for which `is_symlink()` returns False. A control is
+only as good as its match to the production path.
+
+No free discriminating observation exists: a scan of every installed plugin
+(`C:/Users/zachs/.claude/plugins/**/skills/*/SKILL.md`) found **`context-audit` is
+the only plugin skill anywhere with two escapes**; all 11 others with any escape
+have exactly one. There is nothing to compare it against.
+
+### Established regardless
+
+1. The harness hot-loads skills; observation does not require a restart.
+2. The local loader unescapes `''` correctly — `probe-alpha` renders
+   `document's` and `task's`.
+3. The apostrophe hypothesis remains **untested on the plugin path**.
+
+### What would decide it
+
+A probe with two escapes placed on the **plugin** path — the same source
+`context-audit` loads from — and observed in the live listing. Requires writing
+into installed plugin files, which is an operator decision.
