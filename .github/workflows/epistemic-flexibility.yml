@@ -15,6 +15,11 @@ name: epistemic-flexibility
       - ".ledger/**"
       - ".github/scripts/**"
       - ".github/workflows/epistemic-flexibility.yml"
+      # sync_skill_surfaces.py asserts a required count phrasing IN README.md, so a
+      # README edit can break this gate. Without README.md here, that break does not
+      # trigger the workflow that would catch it -- which is exactly how it reached
+      # main on 2026-08-06. A check's inputs belong in its trigger.
+      - "README.md"
   push:
     branches: [main]
     paths:
@@ -24,6 +29,11 @@ name: epistemic-flexibility
       - ".ledger/**"
       - ".github/scripts/**"
       - ".github/workflows/epistemic-flexibility.yml"
+      # sync_skill_surfaces.py asserts a required count phrasing IN README.md, so a
+      # README edit can break this gate. Without README.md here, that break does not
+      # trigger the workflow that would catch it -- which is exactly how it reached
+      # main on 2026-08-06. A check's inputs belong in its trigger.
+      - "README.md"
 
 permissions:
   contents: read
