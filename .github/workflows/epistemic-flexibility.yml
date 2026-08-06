@@ -130,6 +130,10 @@ jobs:
         run: python .github/scripts/sync_skill_surfaces.py --check
       - name: No phantom skill references in routing surfaces
         run: python .github/scripts/check_no_phantom_skills.py
+      - name: Description budget self-test
+        run: python .github/scripts/check_description_budget.py --self-test
+      - name: Aggregate skill description byte ceiling
+        run: python .github/scripts/check_description_budget.py
       - name: Compile new Python
         run: |
           python -m py_compile \
@@ -138,6 +142,7 @@ jobs:
             .github/scripts/check_pin_tags.py \
             .github/scripts/check_skill_inventory.py \
             .github/scripts/check_no_phantom_skills.py \
+            .github/scripts/check_description_budget.py \
             .github/scripts/sync_skill_surfaces.py \
             plugins/epistemic-skills/evals/epistemic-flexibility/validate_trace.py \
             plugins/epistemic-skills/evals/epistemic-flexibility/run_tests.py \

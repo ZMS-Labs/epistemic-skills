@@ -68,9 +68,33 @@ Confirmed by reversible manipulation and then by intervention:
 
 **Adding a skill is a transfer, not an addition** — it silently uninstalls roughly
 its own byte-weight of other skills' descriptions. Total description budget across
-all fourteen skills: **8,208 bytes**.
+all fourteen skills: **8,200 bytes**, measured as the harness resolves them, so a
+quoted description is charged for its content and not its delimiters.
 
 This is why consolidation here is a resource constraint rather than a preference.
+
+### Known limitation — this release shipped over its own budget
+
+v5.0.0 is net **+1,389 description bytes**. Each individual description was held
+inside sibling range; **the sum was never checked against the live budget.** The
+result was that `triage` and `watch` — two of the four skills this release adds —
+could not fire at all until unrelated slash-commands were deleted elsewhere on the
+installing machine. No error was raised anywhere, because there is no error to
+raise: a dropped description simply stops matching.
+
+That is per-item discipline with no aggregate check, which is precisely the defect
+class this package exists to catch, committed by the package itself.
+
+The gap is now closed at the artifact boundary:
+`.github/scripts/check_description_budget.py` fails CI if the packaged total
+exceeds a recorded ceiling, so any increase must be paid for in the same diff.
+It does not and cannot observe the harness cap — that is a property of the whole
+installed estate — but it does make this package's own contribution a number that
+was chosen rather than one that drifted.
+
+**If you install this alongside a large existing skill collection, budget for it.**
+The measured figures below are the only ones we have; the exact ceiling was bounded,
+never bisected.
 
 ## Migration from 4.1.0
 
