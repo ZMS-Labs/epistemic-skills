@@ -10,7 +10,7 @@ from typing import Any
 EVENT_RECORD = "epistemic-event@1"
 OUTCOME_RECORD = "epistemic-outcome@1"
 EVENT_KINDS = {
-    "routing-decision", "pairing-decision", "landmine-prediction",
+    "state-readout", "routing-decision", "pairing-decision", "landmine-prediction",
     "formal-prediction", "evidence-claim", "goal-proof",
     "handoff-verification", "review-forecast", "uat-verdict",
     "ledger-revisit", "continuity-reanchor", "interview-scope-decision",
@@ -59,6 +59,13 @@ ELIGIBILITY_PREDICATES = {
 }
 COLLECTION_MODES = {"calibratable", "observational", "conditional"}
 SKILL_EVENT_MAP = {
+    "health": {
+        "event_kinds": ("state-readout",),
+        "eligible_when": ("evaluation-case", "sampled-field-incident"),
+        "outcome_sources": ("deterministic-fixture", "independent-adjudication"),
+        "collection_mode": "observational",
+        "sentinel_fixture": "health-unknown-not-ok.json",
+    },
     "using-epistemic-skills": {
         "event_kinds": ("routing-decision",),
         "eligible_when": ("evaluation-case", "sampled-field-incident"),

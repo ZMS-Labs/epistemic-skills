@@ -125,9 +125,18 @@ def main() -> int:
 
     router_root = PACKAGE_ROOT / "skills" / "using-epistemic-skills"
     router = read(router_root / "SKILL.md")
-    require("These nine disciplines" in router, "router discipline count is stale")
+    # Derived, not hardcoded. These two assertions previously pinned the literal
+    # word "nine", which made this test a tenth hand-maintained projection of the
+    # skills directory: adding any skill turned the generator's correct rewrite of
+    # the router into a test failure here. Derive the count from the same glob the
+    # generator uses, so the assertion checks AGREEMENT rather than a frozen value.
+    _n = len(list((PACKAGE_ROOT / "skills").glob("*/SKILL.md")))
+    _d = _n - 2  # router + helix are not disciplines
+    require(_n in WORDS and _d in WORDS, f"no count word for {_n}/{_d}")
+    _word, _nword = WORDS[_d], WORDS[_n]
+    require(f"These {_word} disciplines" in router, "router discipline count is stale")
     require("**outsource**" in router, "router does not route outsource")
-    require("why these nine" in router, "router family-resemblance count is stale")
+    require(f"why these {_word}" in router, "router family-resemblance count is stale")
     require("Routine work leaves before the arc" in router, "router lacks routine-work exit")
     require("Absent triggers are silent" in router, "router still requires absent-trigger records")
     require(
@@ -147,8 +156,8 @@ def main() -> int:
         "helix composition contract schema is missing or stale",
     )
     require(
-        len(helix_contract.get("members", {})) == 9,
-        "helix composition contract does not classify all nine disciplines",
+        len(helix_contract.get("members", {})) == _d,
+        f"helix composition contract does not classify all {_word} disciplines",
     )
     helix_eval = helix_root / "evals" / "composition"
     for filename in (
@@ -161,10 +170,10 @@ def main() -> int:
 
     readme = read(REPO_ROOT / "README.md")
     require(f"**Version {EXPECTED_VERSION}.**" in readme, "README version is stale")
-    require("**eleven** skills" in readme, "README skill count is stale")
-    require("**nine** disciplines" in readme, "README discipline count is stale")
+    require(f"**{_nword}** skills" in readme, "README skill count is stale")
+    require(f"**{_word}** disciplines" in readme, "README discipline count is stale")
     require("the tag's full skill count" in readme, "README harness success check is stale")
-    require("canonical skill cores (eleven)" in readme, "README layout inventory count is stale")
+    require(f"canonical skill cores ({_nword})" in readme, "README layout inventory count is stale")
     require("canonical skill cores (sixteen)" not in readme, "README still advertises the pre-consolidation count")
     require("**outsource**" in readme, "README skill table lacks outsource")
     require("## Routine work first" in readme, "README does not present the routine path first")
@@ -176,8 +185,8 @@ def main() -> int:
     )
 
     gemini = read(REPO_ROOT / "GEMINI.md")
-    require("eleven skills" in gemini, "GEMINI context skill count is stale")
-    require("nine disciplines" in gemini, "GEMINI context discipline count is stale")
+    require(f"{_nword} skills" in gemini, "GEMINI context skill count is stale")
+    require(f"{_word} disciplines" in gemini, "GEMINI context discipline count is stale")
 
     workflow = read(REPO_ROOT / ".github" / "workflows" / "epistemic-flexibility.yml")
     require(
@@ -294,8 +303,14 @@ def main() -> int:
         for filename in ("README.md", "fixtures.json", "score.py", "tests/run_tests.py"):
             require((suite / filename).is_file(), f"missing proportionality artifact: {suite.name}/{filename}")
 
-    skill_dirs = [p for p in (PACKAGE_ROOT / "skills").iterdir() if p.is_dir()]
-    require(len(skill_dirs) == 11, f"expected 11 skill directories, found {len(skill_dirs)}")
+    # A skill is a directory CONTAINING SKILL.md, not merely a directory. Counting
+    # bare directories made this assertion fire on leftover build artifacts -- a
+    # stale `__pycache__`-only folder from a removed skill counted as a skill and
+    # failed the suite. Every other check in this repo globs `*/SKILL.md`; this now
+    # agrees with them. The literal 11 is also derived, so adding a skill does not
+    # require editing this line.
+    skill_dirs = [p.parent for p in (PACKAGE_ROOT / "skills").glob("*/SKILL.md")]
+    require(len(skill_dirs) == _n, f"expected {_n} skill directories, found {len(skill_dirs)}")
     check_live_surface_counts(len(skill_dirs))
     for directory in skill_dirs:
         require((directory / "SKILL.md").is_file(), f"missing SKILL.md: {directory.name}")

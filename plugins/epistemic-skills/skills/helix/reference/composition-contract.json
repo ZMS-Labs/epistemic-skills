@@ -129,6 +129,15 @@
         "fix-rests-on-formal-claim"
       ],
       "position": "inside"
+    },
+    "health": {
+      "composition_class": "stage-bound",
+      "moments": [
+        "before-blast-radius-change",
+        "after-restart-or-power-event",
+        "health-claim-about-to-bear-load"
+      ],
+      "position": "before"
     }
   }
 }

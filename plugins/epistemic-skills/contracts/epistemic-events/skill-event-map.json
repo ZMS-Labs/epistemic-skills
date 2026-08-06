@@ -76,7 +76,7 @@
         "sampled-field-incident"
       ],
       "outcome_sources": [
-        "deterministic-oracle",
+        "deterministic-fixture",
         "independent-adjudication"
       ],
       "collection_mode": "observational",

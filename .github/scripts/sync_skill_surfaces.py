@@ -74,8 +74,16 @@ def count_surfaces() -> list[tuple[Path, list[tuple[str, str]]]]:
              "one router, Helix, and {d} disciplines"),
             (rf"canonical skill cores \({ANY_WORD}\)", "canonical skill cores ({n})"),
             (rf"router and {ANY_WORD} disciplines", "router and {d} disciplines"),
-            (rf"a v4\.0\.0 package or tagged checkout ships {ANY_WORD} ",
-             "a v4.1.0 package or tagged checkout ships {n} "),
+            # REMOVED 2026-08-06: a one-shot v4.0.0 -> v4.1.0 migration rule that
+            # rewrote the per-RELEASE install-verification count from the CURRENT
+            # glob. Two defects. (1) It contradicted this file's own stated intent
+            # four lines above — "never touch the historical per-version counts" —
+            # because what a released tag ships is a historical fact and cannot be
+            # derived from today's tree. (2) Its anchor was consumed the first time
+            # it ran, so it could never match again and raised COUNT_PATTERN_MISSING
+            # on every subsequent skill addition, silently blocking them.
+            # Release counts stay hand-written. Only counts describing the CURRENT
+            # tree are generated.
         ]),
         (REPO / "GEMINI.md", [
             (rf"{ANY_WORD} skills: router \+ {ANY_WORD} disciplines",
