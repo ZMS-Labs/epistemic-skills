@@ -42,14 +42,22 @@ the final SHA and these runs.
 | item 4 — version and pinned-link alignment | **MET** | the release record identifies the live surfaces and the repointed routine-fast-path link |
 | item 5 — deterministic suite, DCO/manifest/JSON checks, CodeQL | **MET on the final tag** | exact workflow runs above; this does not establish design soundness |
 | item 6a — redacted full-history secret scan | **MET on the final tag** | exact security run above, including positive control |
-| item 6b — v5-specific public-content/provenance review | **UNESTABLISHED IN THE RELEASE RECORD** | no immutable v5-specific review artifact was located; this is a record status, not proof that no human looked |
+| item 6b — v5-specific public-content review | **NOT MET** | no pre-publication v5 artifact exists, and the post-release review found newly added private-repository and user-specific path references contrary to the repository's established scrub policy |
+| item 6c — provenance/license review as a distinct v5 record | **UNESTABLISHED IN THE RELEASE RECORD** | no immutable v5-specific provenance review artifact was located |
 | item 7 — supported harness live exercise or explicit verification tiers | **UNESTABLISHED IN THE RELEASE RECORD** | the notes discuss clean-room execution and installed-estate behavior but do not provide a complete harness-by-harness tier table |
 | item 8 — independent Gauntlet publication review reaching GO | **WAIVED / NOT MET** | explicitly waived by the owner; no pre-publication panel, arbitrator, Conflict Ledger, or GO exists |
 | publication identity | **MET** | annotated tag, peeled target, `main`, and GitHub Release target agree |
 
-`UNESTABLISHED IN THE RELEASE RECORD` is deliberately narrower than `FAILED`.
-The missing immutable evidence coordinate prevents a pass claim; it does not
-license speculation about unrecorded activity.
+The item 6b correction is supported by
+[`PUBLIC-CONTENT-POST-RELEASE-REVIEW-5.0.0-2026-08-06.md`](PUBLIC-CONTENT-POST-RELEASE-REVIEW-5.0.0-2026-08-06.md).
+That review found a user-specific local path and direct private-fleet repository
+coordinates in files added by v5. A passing credential-pattern scan does not
+establish that public-content boundaries were respected.
+
+`UNESTABLISHED IN THE RELEASE RECORD` remains deliberately narrower than
+`FAILED`. It is used only where the missing immutable evidence coordinate prevents
+a pass claim but no contrary artifact finding has been established. Item 6b is no
+longer in that category.
 
 ## 4. Post-release judgment review
 
@@ -96,10 +104,13 @@ After this erratum is merged, the mutable GitHub Release body should be amended
 only to:
 
 1. replace the intermediate SHA with the final release SHA and run IDs;
-2. link this erratum and the post-release review;
-3. add the omitted item 6b and item 7 statuses; and
-4. preserve the original item-8 waiver language and the statement that no GO
-   existed at publication.
+2. link this erratum, the public-content review, and the post-release judgment
+   review;
+3. record item 6b as **NOT MET**, item 6c and item 7 as unestablished, and item 8
+   as **WAIVED / NOT MET**;
+4. identify the current-tree scrub and successor-release work without implying
+   the tagged tree changed; and
+5. preserve the statement that no GO existed at publication.
 
 The tagged tree must not be changed or re-created. Any artifact correction ships
 under a new semantic version.
