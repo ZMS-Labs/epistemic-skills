@@ -64,6 +64,12 @@
     ]
   },
   "coverage_limits": [
-    "the prior proof remains historical evidence; current delivery is not reliable"
-  ]
+    "the prior proof remains historical evidence; current delivery is not reliable",
+    "isolated fixture evidence; no production provider or environment claimed"
+  ],
+  "block_evidence": {
+    "detail": null,
+    "observed_at": null,
+    "receipt_ref": null
+  }
 }

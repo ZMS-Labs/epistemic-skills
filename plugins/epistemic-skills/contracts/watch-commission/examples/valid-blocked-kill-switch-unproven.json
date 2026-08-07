@@ -1,7 +1,7 @@
 {
   "_expected": "ACCEPT",
   "schema": "watch-commission@1",
-  "commission_id": "wc-example-inert-history-001",
+  "commission_id": "wc-example-blocked-kill-unproven-001",
   "subject": {
     "ref": "service:example",
     "revision": "rev-1"
@@ -35,18 +35,18 @@
   },
   "kill_switch": {
     "procedure_ref": "fixture://kill/example-001",
-    "exercised": true,
-    "exercise_receipt_ref": "fixture://receipt/kill-001"
+    "exercised": false,
+    "exercise_receipt_ref": null
   },
   "proof": {
-    "authorized_by": "operator:example",
-    "authorization_ref": "fixture://authority/proof-001",
-    "safe_crossing": "fixture threshold override",
-    "production_path": true,
-    "bound_crossed": true,
-    "alert_received": true,
-    "received_at": "2026-08-07T12:00:00Z",
-    "alert_receipt_ref": "fixture://receipt/alert-001"
+    "authorized_by": null,
+    "authorization_ref": null,
+    "safe_crossing": null,
+    "production_path": false,
+    "bound_crossed": false,
+    "alert_received": false,
+    "received_at": null,
+    "alert_receipt_ref": null
   },
   "failure": {
     "kind": null,
@@ -54,9 +54,9 @@
     "observed_at": null,
     "receipt_ref": null
   },
-  "state": "INERT",
-  "block_reason": null,
-  "reprove_after": "2026-09-07T12:00:00Z",
+  "state": "BLOCKED",
+  "block_reason": "KILL_SWITCH_UNPROVEN",
+  "reprove_after": null,
   "handoff": {
     "on_crossing": [
       "triage",
@@ -64,12 +64,11 @@
     ]
   },
   "coverage_limits": [
-    "proof succeeded, but continued operation was not authorized",
-    "isolated fixture evidence; no production provider or environment claimed"
+    "isolated fixture transition; no production provider or environment claimed"
   ],
   "block_evidence": {
-    "detail": null,
-    "observed_at": null,
-    "receipt_ref": null
+    "detail": "the real mechanism exists but its disable path has not been exercised",
+    "observed_at": "2026-08-07T11:57:00Z",
+    "receipt_ref": "fixture://receipt/block-kill-unproven-001"
   }
 }

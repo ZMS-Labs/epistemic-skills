@@ -65,5 +65,10 @@
   },
   "coverage_limits": [
     "no external execution substrate was available"
-  ]
+  ],
+  "block_evidence": {
+    "detail": "capability discovery found no external observation substrate",
+    "observed_at": "2026-08-07T11:55:00Z",
+    "receipt_ref": "fixture://receipt/block-no-substrate-001"
+  }
 }

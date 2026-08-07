@@ -65,5 +65,10 @@
   },
   "coverage_limits": [
     "planted category error"
-  ]
+  ],
+  "block_evidence": {
+    "detail": null,
+    "observed_at": null,
+    "receipt_ref": null
+  }
 }

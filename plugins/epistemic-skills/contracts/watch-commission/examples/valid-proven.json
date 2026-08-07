@@ -65,5 +65,10 @@
   },
   "coverage_limits": [
     "isolated fixture adapter; no production provider claimed"
-  ]
+  ],
+  "block_evidence": {
+    "detail": null,
+    "observed_at": null,
+    "receipt_ref": null
+  }
 }

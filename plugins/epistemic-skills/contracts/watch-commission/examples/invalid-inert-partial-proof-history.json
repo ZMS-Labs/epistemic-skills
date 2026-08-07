@@ -64,6 +64,12 @@
     ]
   },
   "coverage_limits": [
-    "planted partial-proof-history control"
-  ]
+    "planted partial-proof-history control",
+    "isolated fixture evidence; no production provider or environment claimed"
+  ],
+  "block_evidence": {
+    "detail": null,
+    "observed_at": null,
+    "receipt_ref": null
+  }
 }
