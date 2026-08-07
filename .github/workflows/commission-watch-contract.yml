@@ -1,0 +1,28 @@
+name: commission-watch-contract
+
+"on":
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "plugins/epistemic-skills/contracts/watch-commission/**"
+      - "plugins/epistemic-skills/skills/watch/**"
+      - ".github/workflows/commission-watch-contract.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Check out the tested revision without stored credentials
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Watch commission semantic contract
+        run: python plugins/epistemic-skills/contracts/watch-commission/test_watch_commission.py
