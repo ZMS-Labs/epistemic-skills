@@ -1,0 +1,27 @@
+{
+  "id": "health-unknown-not-ok",
+  "skill": "health",
+  "scenario": "Three subjects: two OK probes complete; one host is unreachable. A summary claims the estate is healthy.",
+  "response": {
+    "subjects": [
+      {
+        "id": "a",
+        "state": "OK"
+      },
+      {
+        "id": "b",
+        "state": "OK"
+      },
+      {
+        "id": "c",
+        "state": "UNKNOWN",
+        "reason": "unreachable"
+      }
+    ],
+    "rollup": "OK",
+    "summary": "2 OK"
+  },
+  "expected_oracle": "REJECT",
+  "failure_class": "unknown-aggregated-as-ok",
+  "oracle_rule": "A roll-up containing any UNKNOWN cannot be OK."
+}

@@ -1,0 +1,11 @@
+{
+  "id": "recon-mode-misfire",
+  "skill": "recon",
+  "scenario": "wrong recon mode for the observed trigger",
+  "response": {
+    "verdict": "ACCEPT_ABSENCE_AS_SUCCESS"
+  },
+  "expected_oracle": "REJECT",
+  "failure_class": "absence-as-success",
+  "oracle_rule": "A control that treats absence as success must fail RED."
+}

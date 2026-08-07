@@ -200,6 +200,24 @@ def check_inventory(
                 f"EMPTY_SENTINEL_FIXTURE: skill-event-map.json entry for {entry['skill']!r} "
                 "lacks a non-empty sentinel_fixture"
             )
+            continue
+        sentinel_path = (
+            "plugins/epistemic-skills/contracts/epistemic-events/sentinels/"
+            f"{sentinel}"
+        )
+        if not path_exists(sentinel_path):
+            violations.append(
+                f"MISSING_SENTINEL_FILE: skill-event-map.json entry for {entry['skill']!r} "
+                f"names {sentinel!r} but {sentinel_path} does not exist"
+            )
+
+    for skill in sorted(packaged):
+        ledger_path = f"plugins/epistemic-skills/skills/{skill}/runs/ledger.jsonl"
+        if not path_exists(ledger_path):
+            violations.append(
+                f"MISSING_RUN_LEDGER: packaged skill {skill!r} lacks intrinsic "
+                f"{ledger_path}"
+            )
 
     return violations
 
@@ -304,6 +322,20 @@ def run_self_test() -> int:
             set(packaged),
             aligned_paths,
             lambda _: True,
+        ),
+        "MISSING_SENTINEL_FILE": run(
+            ["alpha-skill", "beta-skill"],
+            aligned_entries,
+            set(packaged),
+            aligned_paths,
+            lambda path: not path.endswith(".json"),
+        ),
+        "MISSING_RUN_LEDGER": run(
+            ["alpha-skill", "beta-skill"],
+            aligned_entries,
+            set(packaged),
+            aligned_paths,
+            lambda path: path.endswith("SKILL.md") or path.endswith(".json"),
         ),
     }
     for expected_name, violations in probes.items():

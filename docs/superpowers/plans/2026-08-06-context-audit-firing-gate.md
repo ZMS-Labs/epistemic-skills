@@ -14,16 +14,16 @@
 - **No hostnames, IPs, credentials, or share paths in any `SKILL.md`.** Site specifics belong in `LOCAL.md`.
 - **Windows/MSYS2 shell.** Set `PYTHONIOENCODING=utf-8` before running any Python that prints non-ASCII, or emoji/em-dash output raises `UnicodeEncodeError`.
 - **`cmd | tail` makes `$?` the pipe's exit status, not the script's.** Capture exit codes before piping.
-- **Probe skills live under `C:\Users\zachs\.claude\skills\`.** This is Claude's own config directory and is the one C:-drive write permitted by RULE-PC-004. All probes are deleted in Task 4.
+- **Probe skills live under `<user-home>/.claude/skills/`.** This is Claude's own config directory and is the one C:-drive write permitted by RULE-PC-004. All probes are deleted in Task 4.
 - **No check ships on its author's reading of its own green** (ADR-184). Every check in this plan is proven RED against a seeded defect before its green is trusted.
 
 ## File Structure
 
 | File | Responsibility | Lifetime |
 |---|---|---|
-| `C:\Users\zachs\.claude\skills\probe-charlie\SKILL.md` | positive control — 0 apostrophe escapes; proves the probe apparatus renders descriptions at all | disposable |
-| `C:\Users\zachs\.claude\skills\probe-bravo\SKILL.md` | 1 apostrophe escape — mirrors `decision-ledger`, which renders | disposable |
-| `C:\Users\zachs\.claude\skills\probe-alpha\SKILL.md` | 2 apostrophe escapes — mirrors `context-audit`, which does not render | disposable |
+| `<user-home>/.claude/skills/probe-charlie\SKILL.md` | positive control — 0 apostrophe escapes; proves the probe apparatus renders descriptions at all | disposable |
+| `<user-home>/.claude/skills/probe-bravo\SKILL.md` | 1 apostrophe escape — mirrors `decision-ledger`, which renders | disposable |
+| `<user-home>/.claude/skills/probe-alpha\SKILL.md` | 2 apostrophe escapes — mirrors `context-audit`, which does not render | disposable |
 | `docs/evidence/2026-08-06-context-audit-firing-probe.md` | predictions written before observation; results written after | permanent |
 | `plugins/epistemic-skills/skills/context-audit/SKILL.md` | the fix, if the hypothesis is confirmed | permanent |
 | `.github/scripts/check_description_renders.py` | guard preventing reintroduction | permanent |
@@ -113,9 +113,9 @@ probe exists, so the result cannot be rationalised after the fact."
 ### Task 2: Author the three probes
 
 **Files:**
-- Create: `C:\Users\zachs\.claude\skills\probe-charlie\SKILL.md`
-- Create: `C:\Users\zachs\.claude\skills\probe-bravo\SKILL.md`
-- Create: `C:\Users\zachs\.claude\skills\probe-alpha\SKILL.md`
+- Create: `<user-home>/.claude/skills/probe-charlie\SKILL.md`
+- Create: `<user-home>/.claude/skills/probe-bravo\SKILL.md`
+- Create: `<user-home>/.claude/skills/probe-alpha\SKILL.md`
 
 **Interfaces:**
 - Consumes: the predictions from Task 1.
@@ -127,7 +127,7 @@ of `''` escapes varies.** Any other difference invalidates the experiment.
 
 - [ ] **Step 1: Write the positive control (0 escapes)**
 
-Create `C:\Users\zachs\.claude\skills\probe-charlie\SKILL.md`:
+Create `<user-home>/.claude/skills/probe-charlie\SKILL.md`:
 
 ```markdown
 ---
@@ -148,7 +148,7 @@ Delete after observation.
 
 - [ ] **Step 2: Write the one-escape probe**
 
-Create `C:\Users\zachs\.claude\skills\probe-bravo\SKILL.md`:
+Create `<user-home>/.claude/skills/probe-bravo\SKILL.md`:
 
 ```markdown
 ---
@@ -165,7 +165,7 @@ Delete after observation.
 
 - [ ] **Step 3: Write the two-escape probe**
 
-Create `C:\Users\zachs\.claude\skills\probe-alpha\SKILL.md`:
+Create `<user-home>/.claude/skills/probe-alpha\SKILL.md`:
 
 ```markdown
 ---
@@ -185,7 +185,7 @@ Delete after observation.
 Run:
 
 ```bash
-cd "/c/Users/zachs/.claude/skills" && export PYTHONIOENCODING=utf-8 && python -c "
+cd "<user-home>/.claude/skills" && export PYTHONIOENCODING=utf-8 && python -c "
 import re,pathlib
 for n in ['probe-alpha','probe-bravo','probe-charlie']:
     t=pathlib.Path(n,'SKILL.md').read_text(encoding='utf-8')
@@ -506,7 +506,7 @@ this is understood."
 Runs after Task 4 or Task 5, whichever executed.
 
 **Files:**
-- Delete: `C:\Users\zachs\.claude\skills\probe-alpha\`, `probe-bravo\`, `probe-charlie\`
+- Delete: `<user-home>/.claude/skills/probe-alpha\`, `probe-bravo\`, `probe-charlie\`
 
 **Interfaces:**
 - Consumes: a completed Task 4 or Task 5.

@@ -4,7 +4,7 @@
 
 > **Estate status:** `maintenance` · **Purpose:** `governance_method` · **Portfolio role:** `none`
 > **Canonical for:** epistemic-agent-skill-package
-> Lifecycle authority: `ZMS-Labs/zms-homelab/governance/estate.yaml`.
+> Lifecycle authority: `<private-fleet-repo>/governance/estate.yaml`.
 
 <!-- ZMS-ESTATE:END -->
 
@@ -106,7 +106,7 @@ own `description`.
 
 ```mermaid
 flowchart LR
-    W["Workflow-skill layer<br/>how work gets done"] <--> M["metacognate<br/>entry point and twelve disciplines"]
+    W["Workflow-skill layer<br/>how work gets done"] <--> M["metacognate<br/>entry point and thirteen disciplines"]
 ```
 
 - **It carries a procedure, never an inventory.** No member list appears in it, and
@@ -162,7 +162,7 @@ flowchart LR
     Q -- no --> R{"Routine?<br/>all four tests"}
     CV --> R
     R -- yes --> B["Change + bounded check<br/>record-free exit"]
-    R -- no --> U["Epistemic router"]
+    R -- no --> U["metacognate"]
 
     U -. "mismatch / coupling / fan-out" .-> BP["Blindspot Pass<br/>recon"]
     BP -. "material design fork" .-> FR["Applying Formal Rigor<br/>derive"]
@@ -177,7 +177,7 @@ flowchart LR
     OQ["Open Questions<br/>walk ledger to empty"] -. "cross-cutting, any gated stage" .-> U
 ```
 
-Evidence Research, Decision Ledger, Outsource, and Open Questions are cross-cutting. Continuity Verify is pre-arc. Context Audit is maintenance-triggered outside the arc; Agent Interface Design fires inside the build stage. Most tasks clear the routine gate or fire one discipline. See [The Epistemic Arc](https://github.com/ZMS-Labs/epistemic-skills/wiki/The-Epistemic-Arc) for handoff details and [Core Concepts](https://github.com/ZMS-Labs/epistemic-skills/wiki/Core-Concepts) for the five epistemic-flexibility controls.
+Evidence Research, Decision Ledger, Outsource, and Open Questions are cross-cutting. Continuity Verify is pre-arc. Context Audit is maintenance-triggered outside the arc. Agent Interface Design is craft doctrine read on demand — it is not a firing skill. Most tasks clear the routine gate or fire one discipline. See [The Epistemic Arc](https://github.com/ZMS-Labs/epistemic-skills/wiki/The-Epistemic-Arc) for handoff details and [Core Concepts](https://github.com/ZMS-Labs/epistemic-skills/wiki/Core-Concepts) for the five epistemic-flexibility controls.
 
 ## Fourteen-skill catalog
 

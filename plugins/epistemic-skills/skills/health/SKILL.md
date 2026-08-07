@@ -141,9 +141,21 @@ asserts it does not report `OK`**, which is the assertion that actually matters
 and the one a naive suite omits.
 
 **One control must fail against a build that treats absence as health, or the
-suite proves nothing.** A control that passes on a path production does not take
-proves nothing either: verify the control exercises the same resolution and
+suite proves nothing.** Passing only on a stand-in path that production never
+takes also proves nothing: verify the control exercises the same resolution and
 probe path the real run uses, not a convenient stand-in.
+
+## Evidence emission
+
+After each engagement, append one line to `runs/ledger.jsonl` under this skill:
+
+```json
+{"schema":"skill-run@1","ts":"<iso8601>","skill":"<this-skill>","decision":"fired|declined","discipline_engaged":"<name-or-null>","action_changed":true|false}
+```
+
+The append is part of this procedure. It is not a call to an external calibration
+service and it is not a `decision-ledger` entry. Schema:
+`plugins/epistemic-skills/contracts/skill-run-ledger.schema.json`.
 
 ## Local overlay
 

@@ -1,0 +1,13 @@
+{
+  "id": "triage-plausible-not-observed",
+  "skill": "triage",
+  "scenario": "A service is failing. The agent offers a plausible root cause with no discriminating observation that would distinguish it from alternatives.",
+  "response": {
+    "verdict": "CAUSE",
+    "cause": "disk full",
+    "discriminating_observation": null
+  },
+  "expected_oracle": "REJECT",
+  "failure_class": "plausible-without-observation",
+  "oracle_rule": "CAUSE requires a discriminating observation; explanation alone is insufficient."
+}
