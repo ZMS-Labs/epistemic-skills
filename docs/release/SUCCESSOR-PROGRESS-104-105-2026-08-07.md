@@ -38,3 +38,10 @@ Subject branch: `cursor/v5-post-release-104-105-4cee` (continues draft PR #103 o
   multi-family Gauntlet) gate a *conforming successor tag*, not the corrective merge.
   Close #104 when those are discharged **or** explicitly waived/amended for that
   release with the same honesty rules as item 8.
+
+## Documentation follow-up (2026-08-07)
+
+README, CONTRIBUTING, and the GitHub Wiki were aligned to the post-#107 v5
+architecture (fourteen skills, `metacognate`, operational loop, honest gate
+status). Wiki published at `epistemic-skills.wiki` commit `e6c6ba7`; in-repo
+mirror: `docs/wiki-updates/v5.0.0/`.

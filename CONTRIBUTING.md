@@ -8,7 +8,7 @@ Contributions are accepted under the repository's
 A contributor fixing a typo, changing local copy or styling, renaming a private
 helper, or making another reversible/local/directly-checkable/non-precedential
 change is not expected to create a Gauntlet dossier, formal-rigor record,
-decision-ledger entry, UAT manifest, router skip inventory, or similar process
+decision-ledger entry, UAT manifest, entry-point skip inventory, or similar process
 artifact.
 
 For unfamiliar routine-looking work, inspect the file being changed and its
