@@ -25,7 +25,7 @@
 
 ## As-built contract refinement — normative over the original task sketches
 
-Implementation uncovered a state/evidence distinction the original task-level
+Implementation uncovered state/evidence distinctions the original task-level
 examples did not express. The following rules govern every task below and
 supersede any simpler fixture or field sketch later in this plan:
 
@@ -37,17 +37,24 @@ supersede any simpler fixture or field sketch later in this plan:
 - Positive claims require durable receipt references for destination
   reachability, external persistence, kill-switch exercise, proof authority, and
   alert delivery.
+- `BLOCKED` requires a checked missing or unproven dependency, observation time,
+  and external evidence receipt; its closed reason must agree with the record.
+- A newly prepared persistent mechanism remains
+  `BLOCKED: KILL_SWITCH_UNPROVEN` until the real disable path is exercised and
+  receipted. Only then can the disabled mechanism become `INERT`.
 - External substrates use a closed type set that excludes Markdown skills and
-  prompt/session memory even when they self-assert persistence.
+  prompt/session memory even when mislabeled or self-asserted as persistent.
+- Fixture evidence is accepted only with explicit isolated/test scope and a
+  statement of the unestablished production coverage.
 - `PROVEN` requires a re-proof boundary.
 - `SUSPECT` requires an observed failure kind, detail, time, and receipt; possible
   failure modes alone are not an incident.
-- A `BLOCKED` reason must agree with the other fields in the record.
 
 Additional committed fixtures are required:
 
 - `valid-inert-with-proof-history.json`;
 - `valid-suspect-observed-failure.json`;
+- `valid-blocked-kill-switch-unproven.json`;
 - `invalid-inert-partial-proof-history.json`; and
 - `invalid-suspect-without-observed-failure.json`.
 

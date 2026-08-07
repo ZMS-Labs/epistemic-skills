@@ -327,7 +327,7 @@ It produces a `watch-commission@1` record. It does not run continuously.
 
 ## `watch-commission@1`
 
-The carrier separates four facts that must never be collapsed:
+The carrier separates five facts that must never be collapsed:
 
 1. **current operating state** — whether the observer is absent, blocked,
    disabled, currently trusted and enabled, or presently suspect;
@@ -335,8 +335,10 @@ The carrier separates four facts that must never be collapsed:
    bundle, retained even after deliberate disablement;
 3. **positive-claim evidence** — durable references supporting reachability,
    external persistence, kill-switch exercise, proof authority, and alert
-   receipt; and
-4. **observed failure** — a separately typed, timestamped, receipted incident
+   receipt;
+4. **block evidence** — the checked missing or unproven dependency, observation
+   time, and external receipt used only when current state is `BLOCKED`; and
+5. **observed failure** — a separately typed, timestamped, receipted incident
    used only when current state is `SUSPECT`.
 
 The JSON Schema is the structural carrier. The stdlib semantic verifier is the
@@ -388,6 +390,10 @@ failure:
   detail: <observed failure or null>
   observed_at: <timestamp or null>
   receipt_ref: <durable evidence ref or null>
+block_evidence:
+  detail: <checked missing or unproven dependency, or null>
+  observed_at: <timestamp or null>
+  receipt_ref: <durable external check ref or null>
 state: DECLARED|BLOCKED|INERT|PROVEN|SUSPECT
 block_reason: <closed enum or null>
 reprove_after: <timestamp/condition or null>
@@ -401,7 +407,7 @@ coverage_limits: []
 | State | Meaning |
 |---|---|
 | `DECLARED` | The commission specification exists; no external mechanism or proof attempt is implied. |
-| `BLOCKED` | A required dependency is absent, the closed reason agrees with the recorded fields, and the observer remains disabled. |
+| `BLOCKED` | A required dependency was checked and found absent or unproven, the reason agrees with the recorded fields, dated block evidence exists, and the observer remains disabled. |
 | `INERT` | A permitted external mechanism is persistence-proven, disabled, and governed by an exercised kill switch. Proof history is either wholly absent or complete. |
 | `PROVEN` | The external mechanism is currently enabled, every positive claim is evidence-bound, the production path was safely proof-fired, and a re-proof boundary exists. |
 | `SUSPECT` | A permitted external mechanism exists and a specific later failure is recorded with kind, detail, observation time, and receipt. Possible failure modes alone cannot establish this state. |
@@ -410,6 +416,13 @@ coverage_limits: []
 disablement yields `INERT` with complete proof history retained. It does not stay
 `PROVEN`, and the proof is not erased. Partial proof history is invalid because it
 manufactures an easy-to-overread intermediate state.
+
+Preparing or deploying a new persistent mechanism does not immediately earn
+`INERT`. Until the real disable procedure has stopped that mechanism under
+observation, the honest state is `BLOCKED: KILL_SWITCH_UNPROVEN` with dated block
+evidence. Successful kill-switch exercise clears the block and yields `INERT`.
+A pre-existing mechanism may enter `INERT` directly only when persistence and
+kill-switch receipts already exist.
 
 `BLOCKED` reasons are closed initially:
 
@@ -425,9 +438,12 @@ PROBE_UNAVAILABLE
 
 The semantic verifier rejects a reason contradicted by the record, such as
 `NO_EXECUTION_SUBSTRATE` beside a populated external mechanism and persistence
-receipt.
+receipt. Every `BLOCKED` record also requires `block_evidence.detail`,
+`block_evidence.observed_at`, and an external `block_evidence.receipt_ref`.
+Those fields are empty in all non-blocked states; a reason string or an agent's
+unsearched inability to imagine a capability is not evidence of absence.
 
-### Positive-claim and promotion rules
+### Positive-claim, evidence, and promotion rules
 
 A positive boolean never bears load alone:
 
@@ -437,6 +453,17 @@ A positive boolean never bears load alone:
 - named proof authority requires `authorization_ref`; and
 - `alert_received: true` requires both `received_at` and
   `alert_receipt_ref`.
+
+A `BLOCKED` result likewise requires a dated evidence carrier naming the check
+that established the missing or unproven dependency. The reason must agree with
+the other fields. In particular, a prepared persistent mechanism whose disable
+procedure is not yet exercised is `BLOCKED: KILL_SWITCH_UNPROVEN`, not `INERT`.
+
+Evidence references using self-assertion, prompt/chat/session state, or remembered
+model context are refused. An allowed substrate label cannot hide an obvious
+`SKILL.md` or other prompt-time mechanism reference. A fixture is permitted only
+for isolated contract/proof-path evaluation and must disclose fixture/test scope
+and the unestablished production environment in `coverage_limits`.
 
 `PROVEN` additionally requires:
 
@@ -451,11 +478,11 @@ A positive boolean never bears load alone:
 - a dated or condition-bound `reprove_after` value.
 
 `INERT` may retain that same complete proof bundle only while the mechanism is
-currently disabled. `SUSPECT` may retain historical receipts but requires its own
-later observed-failure carrier. Configuration presence, source inspection,
-deployment, formatter tests, self-asserted persistence, partial proof fields,
-generic failure possibilities, bypass messages, and "no alert yet" cannot satisfy
-these rules.
+currently disabled and its kill switch is already proven. `SUSPECT` may retain
+historical receipts but requires its own later observed-failure carrier.
+Configuration presence, source inspection, deployment, formatter tests,
+self-asserted persistence, partial proof fields, generic failure possibilities,
+bypass messages, and "no alert yet" cannot satisfy these rules.
 
 ### Runtime division
 

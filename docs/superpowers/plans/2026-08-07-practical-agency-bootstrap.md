@@ -902,29 +902,39 @@ Signed-off-by: SternOne <89846440+SternOne@users.noreply.github.com>"
 
 #### Hardened commission carrier requirements
 
-The adapter must preserve the distinction between current state and historical
-proof. It never synthesizes or strips evidence fields:
+The adapter must preserve the distinction among current state, historical proof,
+block evidence, and later observed failure. It never synthesizes, strips, or
+reinterprets evidence fields:
 
-- every adapter claim returns a durable receipt reference;
+- every adapter claim returns a durable external receipt reference;
+- a missing or unproven dependency returns dated `block_evidence` as well as the
+  closed `block_reason`;
+- preparing a disabled external mechanism yields
+  `BLOCKED: KILL_SWITCH_UNPROVEN` until `exercise_kill_switch` returns a verified
+  receipt; only then may the adapter request `INERT`;
 - `INERT` can retain a complete prior proof after deliberate disablement;
 - `PROVEN` is accepted only from the upstream semantic verifier and only while
   the external mechanism remains enabled;
 - `SUSPECT` carries a later observed failure kind, detail, time, and receipt;
+- prompt/chat/session artifacts and self-asserted receipt references are refused;
+- fixture adapters explicitly identify isolated scope and unestablished
+  production coverage;
 - a missing verifier leaves the external contract unverified; and
-- revocation/disablement changes current state without rewriting prior proof
-  evidence.
+- revocation/disablement changes current state without rewriting prior proof or
+  block evidence.
 
-Tests must round-trip all four dedicated fixtures from `epistemic-skills`:
-valid proven, valid inert-with-proof-history, valid suspect-observed-failure, and
-valid blocked-no-substrate. Also prove rejection of self-asserted skill
-persistence and partial proof history.
+Tests must round-trip the dedicated upstream fixtures: valid proven, valid
+inert-with-proof-history, valid suspect-observed-failure, valid
+blocked-no-substrate, and valid blocked-kill-switch-unproven. Also prove rejection
+of self-asserted skill persistence, missing block evidence, undeclared fixture
+scope, and partial proof history.
 
 - [ ] **Step 1: Write failing integration tests**
 
 Define a fake adapter and prove:
 
 - `BLOCKED/NO_EXECUTION_SUBSTRATE` is retained without dispatch;
-- a `DECLARED` commission can be prepared `INERT` only through an adapter receipt;
+- a prepared external mechanism remains `BLOCKED: KILL_SWITCH_UNPROVEN` until the adapter returns a verified kill-switch receipt, then becomes `INERT`;
 - `PROVEN` is accepted only after the external verifier accepts the returned record;
 - the mission steward cannot synthesize `PROVEN` from adapter success alone;
 - an incoming crossing event references the retained commission id and reopens the mission frontier; and
@@ -940,7 +950,7 @@ python -m unittest tests.test_watch_commission_adapter -v
 
 ```python
 class WatchExecutionAdapter(Protocol):
-    def prepare_inert(self, commission: Mapping[str, Any]) -> Mapping[str, Any]: ...
+    def prepare_disabled(self, commission: Mapping[str, Any]) -> Mapping[str, Any]: ...
     def exercise_kill_switch(self, mechanism_ref: str) -> Mapping[str, Any]: ...
     def enable_for_proof(self, mechanism_ref: str, authority_ref: str) -> Mapping[str, Any]: ...
     def perform_safe_crossing(self, mechanism_ref: str, proof_spec: Mapping[str, Any]) -> Mapping[str, Any]: ...
@@ -951,7 +961,7 @@ Practical Agency stores adapter receipts and calls the `epistemic-skills` verifi
 
 - [ ] **Step 4: Add the example mission**
 
-The example contains a mission whose desired state is a proven external disk-space alert. It begins with `watch_commissions` containing `BLOCKED/NO_EXECUTION_SUBSTRATE`, demonstrating honest degradation rather than fabricated persistence.
+The example contains a mission whose desired state is a proven external disk-space alert. It begins with `watch_commissions` containing `BLOCKED/NO_EXECUTION_SUBSTRATE` plus dated discovery evidence, demonstrating honest degradation rather than fabricated persistence. A second transition fixture prepares a mechanism as `BLOCKED/KILL_SWITCH_UNPROVEN` and reaches `INERT` only after a verified kill-switch receipt.
 
 - [ ] **Step 5: Run GREEN and commit**
 
