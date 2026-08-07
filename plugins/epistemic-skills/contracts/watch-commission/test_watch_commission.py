@@ -28,27 +28,67 @@ def proven_record() -> dict[str, object]:
             "cadence_or_event": "every 5 minutes",
             "failure_modes": ["timeout", "authentication failure"],
         },
-        "destination": {"ref": "recipient:test", "reachable": True},
+        "destination": {
+            "ref": "recipient:test",
+            "reachable": True,
+            "reachability_receipt_ref": "fixture://receipt/destination-001",
+        },
         "external_observer": {
+            "substrate_kind": "fixture",
             "substrate": "fixture-adapter",
             "mechanism_ref": "fixture://watch/001",
+            "persistence_receipt_ref": "fixture://receipt/persistence-001",
             "persistent_outside_session": True,
             "enabled": True,
         },
-        "kill_switch": {"procedure_ref": "fixture://kill/001", "exercised": True},
+        "kill_switch": {
+            "procedure_ref": "fixture://kill/001",
+            "exercised": True,
+            "exercise_receipt_ref": "fixture://receipt/kill-001",
+        },
         "proof": {
             "authorized_by": "operator:test",
+            "authorization_ref": "fixture://authority/proof-001",
             "safe_crossing": "fixture threshold override",
             "production_path": True,
             "bound_crossed": True,
             "alert_received": True,
             "received_at": "2026-08-07T12:00:00Z",
+            "alert_receipt_ref": "fixture://receipt/alert-001",
+        },
+        "failure": {
+            "kind": None,
+            "detail": None,
+            "observed_at": None,
+            "receipt_ref": None,
         },
         "state": "PROVEN",
         "block_reason": None,
         "reprove_after": "2026-09-07T12:00:00Z",
         "handoff": {"on_crossing": ["triage", "decision-ledger"]},
         "coverage_limits": ["fixture only"],
+    }
+
+
+def empty_proof() -> dict[str, object]:
+    return {
+        "authorized_by": None,
+        "authorization_ref": None,
+        "safe_crossing": None,
+        "production_path": False,
+        "bound_crossed": False,
+        "alert_received": False,
+        "received_at": None,
+        "alert_receipt_ref": None,
+    }
+
+
+def empty_failure() -> dict[str, object]:
+    return {
+        "kind": None,
+        "detail": None,
+        "observed_at": None,
+        "receipt_ref": None,
     }
 
 
@@ -61,15 +101,15 @@ def test_complete_external_path_is_proven() -> None:
     assert validate_record(proven_record()) == []
 
 
-def test_skill_text_cannot_be_the_external_observer() -> None:
+def test_skill_text_cannot_be_the_external_observer_even_if_it_claims_persistence() -> None:
     record = proven_record()
-    record["external_observer"] = {
-        "substrate": "markdown-skill",
-        "mechanism_ref": "plugins/epistemic-skills/skills/watch/SKILL.md",
-        "persistent_outside_session": False,
-        "enabled": True,
-    }
-    assert_rejected(record, "EXTERNAL_PERSISTENCE_REQUIRED")
+    observer = copy.deepcopy(record["external_observer"])
+    assert isinstance(observer, dict)
+    observer["substrate_kind"] = "markdown-skill"
+    observer["substrate"] = "Markdown skill"
+    observer["mechanism_ref"] = "plugins/epistemic-skills/skills/watch/SKILL.md"
+    record["external_observer"] = observer
+    assert_rejected(record, "INVALID_SUBSTRATE_KIND")
 
 
 def test_silence_cannot_be_proven() -> None:
@@ -78,13 +118,18 @@ def test_silence_cannot_be_proven() -> None:
     assert isinstance(proof, dict)
     proof["alert_received"] = False
     proof["received_at"] = None
+    proof["alert_receipt_ref"] = None
     record["proof"] = proof
     assert_rejected(record, "ALERT_RECEIPT_REQUIRED")
 
 
 def test_documented_kill_switch_is_not_exercised() -> None:
     record = proven_record()
-    record["kill_switch"] = {"procedure_ref": "docs/kill.md", "exercised": False}
+    record["kill_switch"] = {
+        "procedure_ref": "docs/kill.md",
+        "exercised": False,
+        "exercise_receipt_ref": None,
+    }
     assert_rejected(record, "KILL_SWITCH_EXERCISE_REQUIRED")
 
 
@@ -102,20 +147,21 @@ def test_missing_substrate_is_explicitly_blocked() -> None:
     record["state"] = "BLOCKED"
     record["block_reason"] = "NO_EXECUTION_SUBSTRATE"
     record["external_observer"] = {
+        "substrate_kind": None,
         "substrate": None,
         "mechanism_ref": None,
+        "persistence_receipt_ref": None,
         "persistent_outside_session": False,
         "enabled": False,
     }
-    record["kill_switch"] = {"procedure_ref": None, "exercised": False}
-    record["proof"] = {
-        "authorized_by": None,
-        "safe_crossing": None,
-        "production_path": False,
-        "bound_crossed": False,
-        "alert_received": False,
-        "received_at": None,
+    record["kill_switch"] = {
+        "procedure_ref": None,
+        "exercised": False,
+        "exercise_receipt_ref": None,
     }
+    record["proof"] = empty_proof()
+    record["failure"] = empty_failure()
+    record["reprove_after"] = None
     assert validate_record(record) == []
 
 
@@ -126,6 +172,20 @@ def test_blocked_requires_a_closed_reason() -> None:
     assert_rejected(record, "BLOCK_REASON_REQUIRED")
 
 
+def test_block_reason_must_match_the_recorded_dependency() -> None:
+    record = proven_record()
+    record["state"] = "BLOCKED"
+    record["block_reason"] = "NO_EXECUTION_SUBSTRATE"
+    observer = copy.deepcopy(record["external_observer"])
+    assert isinstance(observer, dict)
+    observer["enabled"] = False
+    record["external_observer"] = observer
+    record["proof"] = empty_proof()
+    record["failure"] = empty_failure()
+    record["reprove_after"] = None
+    assert_rejected(record, "BLOCK_REASON_MISMATCH")
+
+
 def test_non_proven_record_cannot_claim_active_watching() -> None:
     record = proven_record()
     record["state"] = "INERT"
@@ -134,6 +194,90 @@ def test_non_proven_record_cannot_claim_active_watching() -> None:
     observer["enabled"] = True
     record["external_observer"] = observer
     assert_rejected(record, "INERT_MUST_BE_DISABLED")
+
+
+def test_successful_proof_can_end_inert_without_claiming_current_watching() -> None:
+    record = proven_record()
+    record["state"] = "INERT"
+    observer = copy.deepcopy(record["external_observer"])
+    assert isinstance(observer, dict)
+    observer["enabled"] = False
+    record["external_observer"] = observer
+    assert validate_record(record) == []
+
+
+def test_partial_historical_proof_is_rejected_for_inert_state() -> None:
+    record = proven_record()
+    record["state"] = "INERT"
+    observer = copy.deepcopy(record["external_observer"])
+    proof = copy.deepcopy(record["proof"])
+    assert isinstance(observer, dict)
+    assert isinstance(proof, dict)
+    observer["enabled"] = False
+    proof["bound_crossed"] = False
+    record["external_observer"] = observer
+    record["proof"] = proof
+    assert_rejected(record, "INCOMPLETE_PROOF_BUNDLE")
+
+
+def test_proven_requires_a_reproof_boundary() -> None:
+    record = proven_record()
+    record["reprove_after"] = None
+    assert_rejected(record, "REPROOF_BOUNDARY_REQUIRED")
+
+
+def test_positive_claims_require_evidence_receipts() -> None:
+    cases = [
+        ("destination", "reachability_receipt_ref", "DESTINATION_RECEIPT_REQUIRED"),
+        ("external_observer", "persistence_receipt_ref", "PERSISTENCE_RECEIPT_REQUIRED"),
+        ("kill_switch", "exercise_receipt_ref", "KILL_SWITCH_RECEIPT_REQUIRED"),
+        ("proof", "authorization_ref", "PROOF_AUTHORIZATION_RECEIPT_REQUIRED"),
+        ("proof", "alert_receipt_ref", "ALERT_RECEIPT_REF_REQUIRED"),
+    ]
+    for object_name, field, code in cases:
+        record = proven_record()
+        child = copy.deepcopy(record[object_name])
+        assert isinstance(child, dict)
+        child[field] = None
+        record[object_name] = child
+        assert_rejected(record, code)
+
+
+def test_suspect_requires_an_observed_failure_not_a_possible_failure_list() -> None:
+    record = proven_record()
+    record["state"] = "SUSPECT"
+    record["failure"] = empty_failure()
+    assert_rejected(record, "SUSPECT_FAILURE_REQUIRED")
+
+
+def test_suspect_with_a_receipted_observed_failure_is_valid() -> None:
+    record = proven_record()
+    record["state"] = "SUSPECT"
+    record["failure"] = {
+        "kind": "delivery",
+        "detail": "destination returned an authentication failure",
+        "observed_at": "2026-08-07T12:05:00Z",
+        "receipt_ref": "fixture://receipt/failure-001",
+    }
+    assert validate_record(record) == []
+
+
+def test_bound_direction_is_closed() -> None:
+    record = proven_record()
+    bound = copy.deepcopy(record["bound"])
+    assert isinstance(bound, dict)
+    bound["direction"] = "sideways"
+    record["bound"] = bound
+    assert_rejected(record, "INVALID_DIRECTION")
+
+
+def test_receipt_without_its_claim_is_rejected() -> None:
+    record = proven_record()
+    destination = copy.deepcopy(record["destination"])
+    assert isinstance(destination, dict)
+    destination["reachable"] = False
+    record["destination"] = destination
+    assert_rejected(record, "RECEIPT_WITHOUT_CLAIM")
 
 
 def test_skill_surface_names_commission_boundary() -> None:
