@@ -1,0 +1,81 @@
+name: apply-pr110-truth-hardening
+
+"on":
+  push:
+    branches:
+      - chatgpt/practical-agency-manifest
+    paths:
+      - .github/scripts/apply_pr110_truth_hardening.py
+      - .github/workflows/apply-pr110-truth-hardening.yml
+
+permissions:
+  contents: write
+
+jobs:
+  harden:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Check out the writable PR branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: chatgpt/practical-agency-manifest
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Apply the exact truth hardening
+        run: python .github/scripts/apply_pr110_truth_hardening.py
+      - name: Remove branch-scoped migration machinery
+        run: |
+          rm .github/scripts/apply_pr110_truth_hardening.py
+          rm .github/workflows/apply-pr110-truth-hardening.yml
+          test ! -e .github/scripts/apply_pr110_truth_hardening.py
+          test ! -e .github/workflows/apply-pr110-truth-hardening.yml
+      - name: Inspect and commit the final product tree
+        run: |
+          git diff --check
+          git status --short
+          git add -A
+          git diff --cached --check
+          git diff --cached --quiet && { echo "expected a product diff"; exit 1; } || true
+          git config user.name "SternOne"
+          git config user.email "89846440+SternOne@users.noreply.github.com"
+          git commit -m "fix: enforce the commission-watch manifest boundary
+
+          Close handoff.on_crossing to the exact post-crossing epistemic classification, add the schema/verifier parity test already claimed by the review record, and reconcile the approved Practical Agency target with the actual unreleased seed without inventing an intake route.
+
+          Signed-off-by: SternOne <89846440+SternOne@users.noreply.github.com>"
+      - name: Verify focused commission-watch contract
+        run: |
+          python plugins/epistemic-skills/contracts/watch-commission/test_watch_commission.py
+          python -m py_compile plugins/epistemic-skills/contracts/watch-commission/verify_watch_commission.py
+          mapfile -t examples < <(find plugins/epistemic-skills/contracts/watch-commission/examples -maxdepth 1 -name 'valid-*.json' -print | sort)
+          test "${#examples[@]}" -gt 0
+          python plugins/epistemic-skills/contracts/watch-commission/verify_watch_commission.py "${examples[@]}"
+      - name: Verify repository invariants
+        run: |
+          python .github/scripts/score_sentinels.py --self-test
+          python .github/scripts/score_sentinels.py
+          python .github/scripts/check_description_budget.py --self-test
+          python .github/scripts/check_description_budget.py --report
+          python .github/scripts/check_description_budget.py
+          python .github/scripts/check_json_artifacts.py
+          python .github/scripts/check_no_phantom_skills.py
+          python .github/scripts/check_skill_inventory.py --self-test
+          python .github/scripts/check_skill_inventory.py
+          python .github/scripts/sync_skill_surfaces.py --check
+          python .github/scripts/check_public_content.py --self-test
+          python .github/scripts/check_public_content.py
+          git diff --check HEAD^
+      - name: Verify the committed tree in the canonical clean room
+        run: bash .github/scripts/cleanroom_ci.sh HEAD
+      - name: Prove final-tree hygiene
+        run: |
+          test ! -e .github/scripts/apply_pr110_truth_hardening.py
+          test ! -e .github/workflows/apply-pr110-truth-hardening.yml
+          test -z "$(git status --porcelain)"
+          echo "final_sha=$(git rev-parse HEAD)"
+      - name: Push only the verified final commit
+        run: git push origin HEAD:chatgpt/practical-agency-manifest
