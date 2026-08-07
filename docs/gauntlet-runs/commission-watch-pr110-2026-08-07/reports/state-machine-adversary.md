@@ -1,5 +1,12 @@
 # Lens report — state-machine adversary
 
+> **Current-status notice (2026-08-07):** This is a preserved frozen review
+> artifact. Its cross-repository premises and current merge conditions are
+> superseded by [POST-FREEZE-RECONCILIATION.md](../POST-FREEZE-RECONCILIATION.md).
+> Do not use statements below that Practical Agency does not exist, that no
+> `manifest` skill exists, or that workflows created no jobs as current facts.
+
+
 **Role:** adversarial evaluator  
 **Subject:** frozen `review/pr110-commission-watch-candidate-v2`  
 **Question:** Can a persuasive but false record still obtain a trusted watch state?

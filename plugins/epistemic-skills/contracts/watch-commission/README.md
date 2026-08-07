@@ -43,3 +43,14 @@ A load-bearing consumer therefore performs two distinct checks:
 Only the second check can turn a reference into verified evidence about the
 world. Failure or inability to resolve a material reference degrades the
 commission; it never upgrades silence into success.
+
+
+## Handoff semantics
+
+`handoff.on_crossing` is intentionally narrow: it names the disciplines that may
+consume a **real crossing** after the external observer reports one. It does not
+name the system that stores or operates the commission. Optional mission-control
+custody is a separate outward transport concern and remains explicit/generic
+until an external package publishes and verifies a `watch-commission@1` intake
+contract. The carrier therefore implies no automatic routing to Practical Agency
+or any other package.

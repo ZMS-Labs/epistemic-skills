@@ -268,6 +268,13 @@ reference, checkpoint the evidence receipts, and route later crossings or
 failures back into the mission. This package does not assume that layer is
 installed.
 
+
+`handoff.on_crossing` and `metadata.hands-to` name post-crossing epistemic
+consumers: `triage` for cause and `decision-ledger` for durable consequential
+state. They do **not** declare commission custody by another package. A
+cross-package mission-control handoff becomes machine-routable only after that
+package publishes and verifies an intake contract.
+
 ## Anti-rationalizations
 
 | Thought | Reality |

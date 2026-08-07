@@ -11,9 +11,10 @@
 #     so it can pass on artifacts that were never committed;
 #   - it shares state with whatever the developer was just doing.
 #
-# This script removes all three: a fresh clone of a named ref, on Linux, in a
-# scratch directory, running exactly the `run: python ...` steps the workflow
-# declares. It is not a replacement for CI's independence — it runs on the same
+# This script removes all three: a fresh detached checkout of the exact
+# locally available commit named by REF, or a fresh clone of a remote branch/tag
+# when that commit is not local, running exactly the workflow-declared Python
+# steps. It is not a replacement for CI's independence — it runs on the same
 # operator's hardware — but it is a strictly better local signal, and it costs
 # no Actions minutes.
 #
@@ -38,9 +39,25 @@ echo "  python  : $(python3 --version 2>&1)"
 echo "  workdir : $WORK"
 echo
 
-git clone --quiet --depth 50 --branch "$REF" "$REMOTE" "$WORK/repo" || {
-  echo "FATAL: clone failed for ref '$REF'"; exit 2; }
-cd "$WORK/repo" || exit 2
+SOURCE_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || true)"
+RESOLVED_REF=""
+if [ -n "$SOURCE_ROOT" ]; then
+  RESOLVED_REF="$(git -C "$SOURCE_ROOT" rev-parse --verify "${REF}^{commit}" 2>/dev/null || true)"
+fi
+
+if [ -n "$RESOLVED_REF" ]; then
+  # Clone committed objects only. --no-local avoids shared-object shortcuts while
+  # preserving otherwise hidden PR merge commits available in the tested checkout.
+  git clone --quiet --no-local --no-checkout "$SOURCE_ROOT" "$WORK/repo" || {
+    echo "FATAL: clean clone failed for local commit '$RESOLVED_REF'"; exit 2; }
+  cd "$WORK/repo" || exit 2
+  git checkout --quiet --detach "$RESOLVED_REF" || {
+    echo "FATAL: checkout failed for local commit '$RESOLVED_REF'"; exit 2; }
+else
+  git clone --quiet --depth 50 --branch "$REF" "$REMOTE" "$WORK/repo" || {
+    echo "FATAL: clone failed for remote ref '$REF'"; exit 2; }
+  cd "$WORK/repo" || exit 2
+fi
 echo "  commit  : $(git rev-parse --short HEAD)"
 echo
 

@@ -74,7 +74,7 @@
       "id": "F-EI-3",
       "severity": "P2",
       "status": "external-condition",
-      "detail": "GitHub PR workflows are action_required and created zero jobs"
+      "detail": "exact-head jobs execute and focused checks pass; clean-room exits because a raw PR merge SHA is treated as a branch/tag"
     },
     {
       "id": "independent-review",
@@ -86,7 +86,7 @@
       "id": "F-UB-1",
       "severity": "P2",
       "status": "program-scope",
-      "detail": "Practical Agency repository and manifest skill are designed, not implemented"
+      "detail": "Practical Agency repository and initial manifest skill exist; deterministic kernel and watch-commission intake are not implemented or verified"
     },
     {
       "id": "F-SA-1",
@@ -114,9 +114,9 @@
   },
   "verdict": "CONDITIONAL",
   "conditions": [
-    "trusted exact-final-head jobs execute and pass",
+    "fix raw-SHA clean-room checkout and pass trusted exact-final-head jobs",
     "genuine separate review returns or an explicit degraded-review waiver is recorded",
-    "PR text preserves no-production-watch and no-Practical-Agency-implementation limits",
+    "PR text acknowledges the existing Practical Agency seed while preserving no-kernel/no-automatic-handoff/no-production-watch limits",
     "DCO and repository gates remain green"
   ],
   "artifacts": [
@@ -126,5 +126,6 @@
     "reports/usability-and-boundary.md",
     "arbitration.md",
     "GAUNTLET-SUMMARY.md"
-  ]
+  ],
+  "post_freeze_reconciliation": "POST-FREEZE-RECONCILIATION.md"
 }

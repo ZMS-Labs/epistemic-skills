@@ -1,5 +1,12 @@
 # Arbitration — commission-watch PR #110
 
+> **Current-status notice (2026-08-07):** This is a preserved frozen review
+> artifact. Its cross-repository premises and current merge conditions are
+> superseded by [POST-FREEZE-RECONCILIATION.md](POST-FREEZE-RECONCILIATION.md).
+> Do not use statements below that Practical Agency does not exist, that no
+> `manifest` skill exists, or that workflows created no jobs as current facts.
+
+
 **Judge mode:** pragmatic synthesis over a degraded manual docket  
 **Subject:** frozen `review/pr110-commission-watch-candidate-v2`
 

@@ -10,6 +10,38 @@
 
 ## Global Constraints
 
+### Existing-seed amendment — normative over absence assumptions below
+
+`ZMS-Labs/practical-agency` already exists at inspected `main` revision
+`e244d534a6e26bc9a352846a25ffce18b8d93a53` with `README.md`, `LICENSE`, `plugin.json`,
+`.cursor-plugin/plugin.json`, `docs/mission-manifest.md`, and the canonical root
+`skills/manifest/SKILL.md`.
+
+Interpret the original task sketches as follows:
+
+- **Task 1 adopts and normalizes the existing repository; it does not create it.**
+  Existing history, README, license, metadata, and skill are inputs to inspect and
+  modify. Repository settings still need normalization: projects/wiki are
+  enabled, merge/rebase commits are allowed, and head branches are not deleted
+  automatically.
+- **The root `skills/manifest/SKILL.md` is the canonical v0.1 skill surface.** Do
+  not add a second independently editable copy under `plugins/`; point harness
+  metadata at the one canonical directory.
+- **Task 7 upgrades an existing seed skill.** Its RED condition is missing
+  mission-kernel, checkpoint, independent-acceptance, `"helix it"`, and
+  commission-intake semantics—not absence of a skill file.
+- The current v0 Markdown manifest guide is not `mission-manifest@1`; the planned
+  schema, deterministic Python kernel, tests, checkpoints, capability discovery,
+  coordinator, and watch adapter remain unimplemented.
+- The current seed does not accept `watch-commission@1`. Task 8 remains the first
+  machine-verified cross-package handoff; until then no automatic route may be
+  claimed.
+
+These amendments supersede every later instruction to create the repository,
+create a first `manifest` skill from nothing, or treat the target layout and
+compatibility phrases as already implemented. All other safety, TDD, authority,
+state, and verification requirements remain in force.
+
 - Project/repository: **Practical Agency** / `practical-agency`.
 - Sole v1 public skill: **`manifest`**.
 - Do not create public skills for resume, checkpoint, reconcile, dispatch, commission, or close; those are internal mission operations.

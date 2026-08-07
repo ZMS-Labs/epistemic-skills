@@ -6,6 +6,27 @@
 
 ## Summary
 
+### Current external baseline — normative factual amendment
+
+As of 2026-08-07, `ZMS-Labs/practical-agency` exists. Its inspected `main`
+revision is `e244d534a6e26bc9a352846a25ffce18b8d93a53` and contains one initial root
+`skills/manifest/SKILL.md`, root/Cursor plugin metadata, a README, and a v0
+Markdown mission-manifest field guide.
+
+That seed establishes the project identity and sole public entry skill. It does
+**not** yet implement the deterministic `mission-manifest@1` kernel, authority
+state machine, atomic checkpoints, dynamic capability discovery, independent
+acceptance, `"helix it"` compatibility, or `watch-commission@1` intake described
+later in this document. All later repository shapes, lifecycle rules, invocation
+aliases, and handoff diagrams are approved **target architecture**, not claims
+about the inspected external repository. Implementation must adopt the seed and
+preserve one canonical `manifest` skill body rather than create competing copies.
+
+PR #110 does not modify or verify the external repository and creates no
+automatic `watch`→`manifest` route. `watch`'s generic outward handoff remains the
+truthful boundary until Practical Agency publishes and verifies an intake
+contract.
+
 Two defects are resolved together:
 
 1. `watch` was described in a way that blurred a prompt-time discipline, a specification, and the external mechanism that actually remains active between sessions.

@@ -1,5 +1,12 @@
 # Frozen dossier — commission-watch and Practical Agency boundary
 
+> **Current-status notice (2026-08-07):** This is a preserved frozen review
+> artifact. Its cross-repository premises and current merge conditions are
+> superseded by [POST-FREEZE-RECONCILIATION.md](POST-FREEZE-RECONCILIATION.md).
+> Do not use statements below that Practical Agency does not exist, that no
+> `manifest` skill exists, or that workflows created no jobs as current facts.
+
+
 <!-- gauntlet-dossier@1
 frozen_at: 2026-08-07
 subject_path: refs/heads/review/pr110-commission-watch-candidate-v2

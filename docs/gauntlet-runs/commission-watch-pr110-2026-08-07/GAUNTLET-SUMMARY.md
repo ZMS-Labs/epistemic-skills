@@ -1,5 +1,15 @@
 # Gauntlet summary — commission-watch PR #110
 
+> **Current-status correction:** See
+> [POST-FREEZE-RECONCILIATION.md](POST-FREEZE-RECONCILIATION.md). Practical Agency
+> and one initial `manifest` skill now exist; its deterministic kernel and
+> commission intake do not. Exact-head jobs execute, but the clean-room step is
+> red on raw-SHA checkout. The historical frozen verdict below remains
+> `CONDITIONAL`; the current recommendation remains **NO-MERGE** until the exact
+> final head passes and independent review (or an explicit degraded waiver) is
+> recorded.
+
+
 ## Verdict
 
 # CONDITIONAL
@@ -46,11 +56,11 @@ verdict was present at freeze.
 
 - No production watch is installed or operating.
 - No production adapter exists.
-- No `practical-agency` repository or live `manifest` skill exists.
+- The separate `practical-agency` repository and one initial `manifest` skill exist, but this PR neither changes nor verifies their planned kernel or commission intake.
 - No external receipt has been authenticated merely by passing the semantic
   verifier.
 - No behavioral superiority claim is made.
-- GitHub's `action_required` runs are not test passes.
+- Exact-head jobs execute; the current raw-SHA clean-room checkout failure is not a test pass.
 - The manual docket is not an independent panel.
 
 ## Open conditions
