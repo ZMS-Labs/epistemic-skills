@@ -1,0 +1,59 @@
+name: align-final-watch-contract-docs
+
+"on":
+  push:
+    branches:
+      - chatgpt/practical-agency-manifest
+    paths:
+      - ".github/scripts/align_final_watch_contract_docs.py"
+      - ".github/workflows/align-final-watch-contract-docs.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Check out the branch with push credentials
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: chatgpt/practical-agency-manifest
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Apply exact final documentation alignment
+        run: python .github/scripts/align_final_watch_contract_docs.py
+      - name: Verify final contract and repository invariants
+        run: |
+          python plugins/epistemic-skills/contracts/watch-commission/test_watch_commission.py
+          python -m py_compile plugins/epistemic-skills/contracts/watch-commission/verify_watch_commission.py
+          python .github/scripts/check_json_artifacts.py
+          python .github/scripts/score_sentinels.py --self-test
+          python .github/scripts/score_sentinels.py
+          python .github/scripts/check_description_budget.py --report
+          python .github/scripts/check_description_budget.py
+          python .github/scripts/check_no_phantom_skills.py
+          python .github/scripts/check_skill_inventory.py
+          python .github/scripts/sync_skill_surfaces.py --check
+          git diff --check
+      - name: Commit aligned design and plans
+        run: |
+          if git diff --quiet; then
+            echo "Expected final documentation alignment produced no diff" >&2
+            exit 1
+          fi
+          git config user.name "SternOne"
+          git config user.email "89846440+SternOne@users.noreply.github.com"
+          git add \
+            docs/superpowers/specs/2026-08-07-practical-agency-and-commission-watch-design.md \
+            docs/superpowers/plans/2026-08-07-commission-watch-clarification.md \
+            docs/superpowers/plans/2026-08-07-practical-agency-bootstrap.md
+          git commit -m "docs: align durable artifacts with the final watch carrier" \
+            -m "Make BLOCKED evidence-bearing, keep prepared mechanisms blocked until kill-switch proof, refuse prompt-time/self-asserted evidence, scope fixtures honestly, and rename the Practical Agency adapter operation to prepare_disabled." \
+            -m "Signed-off-by: SternOne <89846440+SternOne@users.noreply.github.com>"
+          git push origin HEAD:chatgpt/practical-agency-manifest
