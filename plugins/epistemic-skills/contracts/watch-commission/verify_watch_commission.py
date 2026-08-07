@@ -9,6 +9,24 @@ from pathlib import Path
 from typing import Any
 
 STATES = {"DECLARED", "BLOCKED", "INERT", "PROVEN", "SUSPECT"}
+DIRECTIONS = {"above", "below", "equals", "changes", "absent"}
+SUBSTRATE_KINDS = {
+    "scheduler",
+    "event-listener",
+    "monitoring-service",
+    "human-cadence",
+    "other-external",
+    "fixture",
+}
+FAILURE_KINDS = {
+    "probe",
+    "delivery",
+    "proof",
+    "freshness",
+    "kill-switch",
+    "external-mechanism",
+    "unknown",
+}
 BLOCK_REASONS = {
     "NO_EXECUTION_SUBSTRATE",
     "NO_REACHABLE_DESTINATION",
@@ -29,6 +47,7 @@ TOP_LEVEL_FIELDS = {
     "external_observer",
     "kill_switch",
     "proof",
+    "failure",
     "state",
     "block_reason",
     "reprove_after",
@@ -40,22 +59,27 @@ OBJECT_FIELDS = {
     "subject": {"ref", "revision"},
     "bound": {"expression", "units", "direction", "threshold"},
     "probe": {"mechanism", "cadence_or_event", "failure_modes"},
-    "destination": {"ref", "reachable"},
+    "destination": {"ref", "reachable", "reachability_receipt_ref"},
     "external_observer": {
+        "substrate_kind",
         "substrate",
         "mechanism_ref",
+        "persistence_receipt_ref",
         "persistent_outside_session",
         "enabled",
     },
-    "kill_switch": {"procedure_ref", "exercised"},
+    "kill_switch": {"procedure_ref", "exercised", "exercise_receipt_ref"},
     "proof": {
         "authorized_by",
+        "authorization_ref",
         "safe_crossing",
         "production_path",
         "bound_crossed",
         "alert_received",
         "received_at",
+        "alert_receipt_ref",
     },
+    "failure": {"kind", "detail", "observed_at", "receipt_ref"},
     "handoff": {"on_crossing"},
 }
 
@@ -78,11 +102,9 @@ def _require_object(
         _error(errors, "MISSING_FIELD", f"{key} must be an object")
         return None
     expected = OBJECT_FIELDS[key]
-    missing = sorted(expected - value.keys())
-    for field in missing:
+    for field in sorted(expected - value.keys()):
         _error(errors, "MISSING_FIELD", f"{key}.{field} is required")
-    unexpected = sorted(value.keys() - expected)
-    for field in unexpected:
+    for field in sorted(value.keys() - expected):
         _error(errors, "UNEXPECTED_FIELD", f"{key}.{field} is not allowed")
     return value
 
@@ -129,7 +151,81 @@ def _require_string_list(
     if not isinstance(value, list) or any(not isinstance(item, str) for item in value):
         _error(errors, "INVALID_TYPE", f"{path}.{key} must be an array of strings")
         return None
+    if len(value) != len(set(value)):
+        _error(errors, "DUPLICATE_VALUE", f"{path}.{key} contains duplicates")
     return value
+
+
+def _proof_absent(proof: dict[str, Any] | None) -> bool:
+    if proof is None:
+        return False
+    return (
+        not _is_non_empty_string(proof.get("authorized_by"))
+        and not _is_non_empty_string(proof.get("authorization_ref"))
+        and not _is_non_empty_string(proof.get("safe_crossing"))
+        and proof.get("production_path") is False
+        and proof.get("bound_crossed") is False
+        and proof.get("alert_received") is False
+        and not _is_non_empty_string(proof.get("received_at"))
+        and not _is_non_empty_string(proof.get("alert_receipt_ref"))
+    )
+
+
+def _proof_complete(proof: dict[str, Any] | None) -> bool:
+    if proof is None:
+        return False
+    return (
+        _is_non_empty_string(proof.get("authorized_by"))
+        and _is_non_empty_string(proof.get("authorization_ref"))
+        and _is_non_empty_string(proof.get("safe_crossing"))
+        and proof.get("production_path") is True
+        and proof.get("bound_crossed") is True
+        and proof.get("alert_received") is True
+        and _is_non_empty_string(proof.get("received_at"))
+        and _is_non_empty_string(proof.get("alert_receipt_ref"))
+    )
+
+
+def _failure_empty(failure: dict[str, Any] | None) -> bool:
+    if failure is None:
+        return False
+    return (
+        failure.get("kind") is None
+        and not _is_non_empty_string(failure.get("detail"))
+        and not _is_non_empty_string(failure.get("observed_at"))
+        and not _is_non_empty_string(failure.get("receipt_ref"))
+    )
+
+
+def _failure_complete(failure: dict[str, Any] | None) -> bool:
+    if failure is None:
+        return False
+    return (
+        failure.get("kind") in FAILURE_KINDS
+        and _is_non_empty_string(failure.get("detail"))
+        and _is_non_empty_string(failure.get("observed_at"))
+        and _is_non_empty_string(failure.get("receipt_ref"))
+    )
+
+
+def _external_identity_complete(observer: dict[str, Any] | None) -> bool:
+    if observer is None:
+        return False
+    return (
+        observer.get("substrate_kind") in SUBSTRATE_KINDS
+        and _is_non_empty_string(observer.get("substrate"))
+        and _is_non_empty_string(observer.get("mechanism_ref"))
+    )
+
+
+def _kill_switch_complete(kill_switch: dict[str, Any] | None) -> bool:
+    if kill_switch is None:
+        return False
+    return (
+        _is_non_empty_string(kill_switch.get("procedure_ref"))
+        and kill_switch.get("exercised") is True
+        and _is_non_empty_string(kill_switch.get("exercise_receipt_ref"))
+    )
 
 
 def validate_record(record: dict[str, Any]) -> list[str]:
@@ -139,11 +235,9 @@ def validate_record(record: dict[str, Any]) -> list[str]:
     if not isinstance(record, dict):
         return ["RECORD_MUST_BE_OBJECT: root must be an object"]
 
-    missing_top = sorted(TOP_LEVEL_FIELDS - record.keys())
-    for field in missing_top:
+    for field in sorted(TOP_LEVEL_FIELDS - record.keys()):
         _error(errors, "MISSING_FIELD", f"{field} is required")
-    unexpected_top = sorted(record.keys() - TOP_LEVEL_FIELDS)
-    for field in unexpected_top:
+    for field in sorted(record.keys() - TOP_LEVEL_FIELDS):
         _error(errors, "UNEXPECTED_FIELD", f"{field} is not allowed")
 
     if record.get("schema") != "watch-commission@1":
@@ -158,21 +252,28 @@ def validate_record(record: dict[str, Any]) -> list[str]:
     observer = _require_object(record, "external_observer", errors)
     kill_switch = _require_object(record, "kill_switch", errors)
     proof = _require_object(record, "proof", errors)
+    failure = _require_object(record, "failure", errors)
     handoff = _require_object(record, "handoff", errors)
 
     if subject is not None:
         if not _is_non_empty_string(subject.get("ref")):
             _error(errors, "MISSING_FIELD", "subject.ref must be a non-empty string")
         revision = subject.get("revision")
-        if revision is not None and not isinstance(revision, (str, int)):
+        if isinstance(revision, bool) or (
+            revision is not None and not isinstance(revision, (str, int))
+        ):
             _error(errors, "INVALID_TYPE", "subject.revision must be string, integer, or null")
 
     if bound is not None:
-        for field in ("expression", "units", "direction"):
+        for field in ("expression", "units"):
             if not _is_non_empty_string(bound.get(field)):
                 _error(errors, "MISSING_FIELD", f"bound.{field} must be a non-empty string")
-        if "threshold" in bound and bound["threshold"] is None:
-            _error(errors, "MISSING_FIELD", "bound.threshold cannot be null")
+        direction = bound.get("direction")
+        if direction not in DIRECTIONS:
+            _error(errors, "INVALID_DIRECTION", f"bound.direction must be one of {sorted(DIRECTIONS)}")
+        threshold = bound.get("threshold")
+        if threshold is None or isinstance(threshold, (list, dict)):
+            _error(errors, "INVALID_TYPE", "bound.threshold must be a scalar value")
 
     failure_modes = _require_string_list(probe, "failure_modes", "probe", errors)
     if probe is not None:
@@ -180,36 +281,70 @@ def validate_record(record: dict[str, Any]) -> list[str]:
             if not _is_non_empty_string(probe.get(field)):
                 _error(errors, "MISSING_FIELD", f"probe.{field} must be a non-empty string")
 
-    if destination is not None:
-        ref = destination.get("ref")
-        if ref is not None and not isinstance(ref, str):
-            _error(errors, "INVALID_TYPE", "destination.ref must be a string or null")
+    destination_ref = _require_string_or_null(destination, "ref", "destination", errors)
     destination_reachable = _require_bool(destination, "reachable", "destination", errors)
+    destination_receipt = _require_string_or_null(
+        destination, "reachability_receipt_ref", "destination", errors
+    )
 
+    substrate_kind = _require_string_or_null(
+        observer, "substrate_kind", "external_observer", errors
+    )
     substrate = _require_string_or_null(observer, "substrate", "external_observer", errors)
     mechanism_ref = _require_string_or_null(
         observer, "mechanism_ref", "external_observer", errors
+    )
+    persistence_receipt = _require_string_or_null(
+        observer, "persistence_receipt_ref", "external_observer", errors
     )
     persistent = _require_bool(
         observer, "persistent_outside_session", "external_observer", errors
     )
     enabled = _require_bool(observer, "enabled", "external_observer", errors)
+    if substrate_kind is not None and substrate_kind not in SUBSTRATE_KINDS:
+        _error(
+            errors,
+            "INVALID_SUBSTRATE_KIND",
+            f"external_observer.substrate_kind must be one of {sorted(SUBSTRATE_KINDS)}",
+        )
 
     procedure_ref = _require_string_or_null(
         kill_switch, "procedure_ref", "kill_switch", errors
     )
     exercised = _require_bool(kill_switch, "exercised", "kill_switch", errors)
+    exercise_receipt = _require_string_or_null(
+        kill_switch, "exercise_receipt_ref", "kill_switch", errors
+    )
 
     authorized_by = _require_string_or_null(proof, "authorized_by", "proof", errors)
+    authorization_ref = _require_string_or_null(
+        proof, "authorization_ref", "proof", errors
+    )
     safe_crossing = _require_string_or_null(proof, "safe_crossing", "proof", errors)
     production_path = _require_bool(proof, "production_path", "proof", errors)
     bound_crossed = _require_bool(proof, "bound_crossed", "proof", errors)
     alert_received = _require_bool(proof, "alert_received", "proof", errors)
     received_at = _require_string_or_null(proof, "received_at", "proof", errors)
+    alert_receipt = _require_string_or_null(
+        proof, "alert_receipt_ref", "proof", errors
+    )
+
+    failure_kind = _require_string_or_null(failure, "kind", "failure", errors)
+    failure_detail = _require_string_or_null(failure, "detail", "failure", errors)
+    failure_observed_at = _require_string_or_null(
+        failure, "observed_at", "failure", errors
+    )
+    failure_receipt = _require_string_or_null(failure, "receipt_ref", "failure", errors)
+    if failure_kind is not None and failure_kind not in FAILURE_KINDS:
+        _error(
+            errors,
+            "INVALID_FAILURE_KIND",
+            f"failure.kind must be one of {sorted(FAILURE_KINDS)} or null",
+        )
 
     on_crossing = _require_string_list(handoff, "on_crossing", "handoff", errors)
-    if on_crossing is not None and len(on_crossing) != len(set(on_crossing)):
-        _error(errors, "DUPLICATE_HANDOFF", "handoff.on_crossing contains duplicates")
+    if on_crossing is not None and any(not item.strip() for item in on_crossing):
+        _error(errors, "INVALID_VALUE", "handoff.on_crossing entries must be non-empty")
 
     coverage_limits = record.get("coverage_limits")
     if not isinstance(coverage_limits, list) or any(
@@ -240,55 +375,154 @@ def validate_record(record: dict[str, Any]) -> list[str]:
     elif block_reason is not None:
         _error(errors, "BLOCK_REASON_FORBIDDEN", "block_reason is only valid for BLOCKED")
 
-    if persistent is True and not _is_non_empty_string(mechanism_ref):
+    # A positive claim must carry the receipt that supports it. Receipts may
+    # remain after the current claim becomes false; they are historical evidence.
+    if destination_reachable is True and not _is_non_empty_string(destination_receipt):
         _error(
             errors,
-            "EXTERNAL_MECHANISM_REQUIRED",
-            "persistent observer requires external_observer.mechanism_ref",
+            "DESTINATION_RECEIPT_REQUIRED",
+            "destination.reachable=true requires reachability_receipt_ref",
+        )
+    if persistent is True and not _is_non_empty_string(persistence_receipt):
+        _error(
+            errors,
+            "PERSISTENCE_RECEIPT_REQUIRED",
+            "persistent_outside_session=true requires persistence_receipt_ref",
+        )
+    if exercised is True and not _is_non_empty_string(exercise_receipt):
+        _error(
+            errors,
+            "KILL_SWITCH_RECEIPT_REQUIRED",
+            "kill_switch.exercised=true requires exercise_receipt_ref",
+        )
+    if _is_non_empty_string(authorized_by) and not _is_non_empty_string(authorization_ref):
+        _error(
+            errors,
+            "PROOF_AUTHORIZATION_RECEIPT_REQUIRED",
+            "proof.authorized_by requires authorization_ref",
+        )
+    if alert_received is True and not _is_non_empty_string(alert_receipt):
+        _error(
+            errors,
+            "ALERT_RECEIPT_REF_REQUIRED",
+            "proof.alert_received=true requires alert_receipt_ref",
+        )
+    if alert_received is True and not _is_non_empty_string(received_at):
+        _error(
+            errors,
+            "RECEIPT_TIMESTAMP_REQUIRED",
+            "proof.alert_received=true requires received_at",
+        )
+
+    if failure_kind is None:
+        if any(
+            _is_non_empty_string(value)
+            for value in (failure_detail, failure_observed_at, failure_receipt)
+        ):
+            _error(
+                errors,
+                "FAILURE_FIELDS_WITHOUT_KIND",
+                "failure details require a failure.kind",
+            )
+    elif not _failure_complete(failure):
+        _error(
+            errors,
+            "OBSERVED_FAILURE_RECEIPT_REQUIRED",
+            "a named failure requires detail, observed_at, and receipt_ref",
         )
 
     if state == "DECLARED":
-        if enabled is True:
-            _error(errors, "DECLARED_MUST_BE_DISABLED", "DECLARED observer cannot be enabled")
-        if alert_received is True or received_at is not None:
-            _error(errors, "ALERT_RECEIPT_FORBIDDEN", "DECLARED cannot claim an alert receipt")
+        if enabled is not False:
+            _error(errors, "DECLARED_MUST_BE_DISABLED", "DECLARED observer must be disabled")
+        if not _proof_absent(proof):
+            _error(errors, "PROOF_FORBIDDEN", "DECLARED cannot carry a proof attempt")
+        if not _failure_empty(failure):
+            _error(errors, "FAILURE_ONLY_VALID_FOR_SUSPECT", "DECLARED cannot carry a live failure")
 
     elif state == "BLOCKED":
-        if enabled is True:
-            _error(errors, "BLOCKED_MUST_BE_DISABLED", "BLOCKED observer cannot be enabled")
-        if alert_received is True or received_at is not None:
-            _error(errors, "ALERT_RECEIPT_FORBIDDEN", "BLOCKED cannot claim an alert receipt")
+        if enabled is not False:
+            _error(errors, "BLOCKED_MUST_BE_DISABLED", "BLOCKED observer must be disabled")
+        if not _proof_absent(proof):
+            _error(errors, "PROOF_FORBIDDEN", "BLOCKED cannot carry a proof attempt")
+        if not _failure_empty(failure):
+            _error(errors, "FAILURE_ONLY_VALID_FOR_SUSPECT", "BLOCKED cannot carry a live failure")
+
+        mismatch = False
+        if block_reason == "NO_EXECUTION_SUBSTRATE":
+            mismatch = any(
+                (
+                    _is_non_empty_string(substrate_kind),
+                    _is_non_empty_string(substrate),
+                    _is_non_empty_string(mechanism_ref),
+                    _is_non_empty_string(persistence_receipt),
+                    persistent is True,
+                )
+            )
+        elif block_reason == "NO_REACHABLE_DESTINATION":
+            mismatch = destination_reachable is not False or not _is_non_empty_string(
+                destination_receipt
+            )
+        elif block_reason == "NO_AUTHORITY_TO_ENABLE":
+            mismatch = _is_non_empty_string(authorized_by) or _is_non_empty_string(
+                authorization_ref
+            )
+        elif block_reason == "NO_KILL_SWITCH":
+            mismatch = _is_non_empty_string(procedure_ref) or exercised is True
+        elif block_reason == "KILL_SWITCH_UNPROVEN":
+            mismatch = not _is_non_empty_string(procedure_ref) or exercised is True
+        elif block_reason == "NO_SAFE_PROOF_CROSSING":
+            mismatch = _is_non_empty_string(safe_crossing)
+        elif block_reason == "PROBE_UNAVAILABLE":
+            mismatch = not any(item.strip() for item in (failure_modes or []) + coverage_limits)
+        if mismatch:
+            _error(
+                errors,
+                "BLOCK_REASON_MISMATCH",
+                f"recorded fields do not support block_reason={block_reason}",
+            )
 
     elif state == "INERT":
-        if not _is_non_empty_string(substrate) or not _is_non_empty_string(mechanism_ref):
+        if not _external_identity_complete(observer):
             _error(
                 errors,
                 "EXTERNAL_MECHANISM_REQUIRED",
-                "INERT requires substrate and mechanism_ref",
+                "INERT requires a valid external substrate and mechanism_ref",
             )
-        if persistent is not True:
+        if persistent is not True or not _is_non_empty_string(persistence_receipt):
             _error(
                 errors,
                 "EXTERNAL_PERSISTENCE_REQUIRED",
-                "INERT requires a mechanism persistent outside the session",
+                "INERT requires a mechanism proven persistent outside the session",
             )
         if enabled is not False:
             _error(errors, "INERT_MUST_BE_DISABLED", "INERT observer must be disabled")
-        if alert_received is True or received_at is not None:
-            _error(errors, "ALERT_RECEIPT_FORBIDDEN", "INERT cannot claim an alert receipt")
-
-    elif state == "PROVEN":
-        if destination_reachable is not True:
+        if not _kill_switch_complete(kill_switch):
             _error(
                 errors,
-                "DESTINATION_REACHABILITY_REQUIRED",
-                "PROVEN requires a reachable destination",
+                "KILL_SWITCH_EXERCISE_REQUIRED",
+                "INERT requires an exercised, receipted kill switch",
             )
-        if not _is_non_empty_string(substrate) or not _is_non_empty_string(mechanism_ref):
+        if not _failure_empty(failure):
+            _error(errors, "FAILURE_ONLY_VALID_FOR_SUSPECT", "INERT cannot carry a live failure")
+        if not _proof_absent(proof) and not _proof_complete(proof):
+            _error(
+                errors,
+                "INCOMPLETE_PROOF_BUNDLE",
+                "INERT proof history must be wholly absent or a complete historical proof",
+            )
+        if _proof_complete(proof) and not _is_non_empty_string(reprove_after):
+            _error(
+                errors,
+                "REPROOF_BOUNDARY_REQUIRED",
+                "historical successful proof requires reprove_after",
+            )
+
+    elif state == "PROVEN":
+        if not _external_identity_complete(observer):
             _error(
                 errors,
                 "EXTERNAL_MECHANISM_REQUIRED",
-                "PROVEN requires substrate and mechanism_ref",
+                "PROVEN requires a valid external substrate and mechanism_ref",
             )
         if persistent is not True:
             _error(
@@ -298,11 +532,17 @@ def validate_record(record: dict[str, Any]) -> list[str]:
             )
         if enabled is not True:
             _error(errors, "PROVEN_MUST_BE_ENABLED", "PROVEN observer must be enabled")
-        if not _is_non_empty_string(procedure_ref) or exercised is not True:
+        if not _is_non_empty_string(destination_ref) or destination_reachable is not True:
+            _error(
+                errors,
+                "DESTINATION_REACHABILITY_REQUIRED",
+                "PROVEN requires a named reachable destination",
+            )
+        if not _kill_switch_complete(kill_switch):
             _error(
                 errors,
                 "KILL_SWITCH_EXERCISE_REQUIRED",
-                "PROVEN requires a real exercised kill switch",
+                "PROVEN requires an exercised, receipted kill switch",
             )
         if not _is_non_empty_string(authorized_by):
             _error(errors, "PROOF_AUTHORITY_REQUIRED", "PROVEN requires proof authority")
@@ -317,31 +557,34 @@ def validate_record(record: dict[str, Any]) -> list[str]:
         if bound_crossed is not True:
             _error(errors, "BOUND_CROSSING_REQUIRED", "PROVEN requires an observed crossing")
         if alert_received is not True:
-            _error(errors, "ALERT_RECEIPT_REQUIRED", "PROVEN requires received alert")
-        if not _is_non_empty_string(received_at):
+            _error(errors, "ALERT_RECEIPT_REQUIRED", "PROVEN requires a received alert")
+        if not _proof_complete(proof):
             _error(
                 errors,
-                "RECEIPT_TIMESTAMP_REQUIRED",
-                "PROVEN requires the alert receipt timestamp",
+                "INCOMPLETE_PROOF_BUNDLE",
+                "PROVEN requires a complete proof bundle and evidence refs",
             )
+        if not _is_non_empty_string(reprove_after):
+            _error(
+                errors,
+                "REPROOF_BOUNDARY_REQUIRED",
+                "PROVEN requires a dated or condition-bound reprove_after value",
+            )
+        if not _failure_empty(failure):
+            _error(errors, "FAILURE_ONLY_VALID_FOR_SUSPECT", "PROVEN cannot carry a live failure")
 
     elif state == "SUSPECT":
-        if not _is_non_empty_string(substrate) and not _is_non_empty_string(mechanism_ref):
+        if not _external_identity_complete(observer):
             _error(
                 errors,
                 "EXTERNAL_MECHANISM_REQUIRED",
-                "SUSPECT must identify the mechanism under suspicion",
+                "SUSPECT must identify the external mechanism under suspicion",
             )
-        named_failures = [
-            item
-            for item in (failure_modes or []) + (coverage_limits or [])
-            if item.strip()
-        ]
-        if not named_failures:
+        if not _failure_complete(failure):
             _error(
                 errors,
                 "SUSPECT_FAILURE_REQUIRED",
-                "SUSPECT must name the observation, delivery, proof, or freshness failure",
+                "SUSPECT requires a receipted observed failure",
             )
 
     return errors
