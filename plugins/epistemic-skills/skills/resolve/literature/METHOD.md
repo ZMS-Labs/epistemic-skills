@@ -127,6 +127,17 @@ explicitly, never silently:**
   signed-in returns a collections list; anonymous errors with a sign-in
   message. Canary fails → treat Scite as unauthenticated (below); never read
   slim results as "no contrasting citations / no notices".
+- **Consensus discovery canary (mandatory when Consensus search tools are
+  present):** the discovery engine can also serve an anonymous free tier whose
+  calls *succeed* with plausible full records (title, abstract, journal, URL) —
+  indistinguishable in-band from authenticated results. The only signal is often
+  a quota-counter trailer appended *after* the result block (for example a line
+  reporting free searches used this month). Before any discovery pass, inspect
+  the **entire** response for free-tier / quota / sign-in trailers. Trailer
+  present → treat discovery as **present-but-unauthenticated** (below); stamp
+  every matrix row `discovery: DEGRADED (free tier)` and do not grade coverage
+  as clean. Re-authenticate and re-run the canary before trusting discovery
+  output for load-bearing rows.
 - Scite absent/unauthenticated → run Consensus + Zotero (when available) and
   stamp every matrix row `reception: UNVERIFIED (Scite unavailable)`. The
   synthesis must carry a visible coverage limit; do not soften conclusions'
@@ -136,6 +147,11 @@ explicitly, never silently:**
   with a live Scite MCP pass.
 - Consensus absent → Scite-led discovery, labeled; note the loss of
   study-design filtering; still run the Zotero holdings/deposit steps.
+- Consensus present-but-unauthenticated (discovery canary failed) → continue
+  only with explicit `discovery: DEGRADED (free tier)` on every matrix row; do
+  not treat the run as saturated or coverage-clean until discovery is
+  re-authenticated or the operator accepts the degraded ceiling in the run
+  record.
 - **Zotero / library substrate absent, unreachable, empty, or
   operator-GUI-only with no operator available this turn** → stamp every
   matrix row `holdings: UNVERIFIED (Zotero unavailable)` and record
@@ -263,6 +279,7 @@ Fail transparently; partial verified record beats gap-filling from memory.
 |---|---|
 | "The abstract said it supports X, good enough" | Abstract-level is not passage-level. Verification level must be recorded honestly (§8); an abstract claim can be contradicted by the paper's own results or methods section, and does not license a `[V]` reception claim. |
 | "Scite returned results, so reception is checked" | Results could be from a slim, anonymous-tier response indistinguishable in-band from an authenticated one (§2 auth canary). Re-probe authed via `search_collections` before trusting any reception signal, and label degraded coverage (`filter-level`, `UNVERIFIED`) rather than silently treating slim records as a full reception pass. |
+| "Consensus returned a full page of papers, so discovery is checked" | Discovery can succeed on a free tier with plausible records; the quota trailer is easy to miss (§2 discovery canary). Inspect the full response, stamp `discovery: DEGRADED (free tier)` when the trailer appears, and never report coverage as clean on a degraded discovery pass. |
 | "It's old and well-cited, skip the retraction check" | Citation count is not quality, and age does not exempt a paper from being retracted years after publication. The retraction/notice check (§5-6) is unconditional for every load-bearing paper, regardless of vintage or citation volume. |
 | "One engine found it, that's the literature" | A single engine is not triangulated. Consensus and Scite answer different epistemic questions (discovery vs. reception) and must both weigh in per §7 Cross-validate; divergence between them is a coverage limit to record, not a result to discard. |
 
