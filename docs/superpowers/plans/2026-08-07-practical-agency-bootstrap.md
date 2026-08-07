@@ -1,5 +1,13 @@
 # Practical Agency Seed-Adoption Implementation Plan
 
+> **Historical status banner:** This plan was authored before
+> `ZMS-Labs/practical-agency` existed as a checked-in repository and originally
+> read as create-from-zero work. The checked-in Practical Agency tree on
+> inspected `main` (`e244d534a6e26bc9a352846a25ffce18b8d93a53`) is authoritative
+> for as-built status. Preserve the historical task sequence below as the
+> adoption roadmap; do not treat create-from-zero language as a claim that the
+> repository or initial `manifest` package are still missing.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Evolve the existing `ZMS-Labs/practical-agency` seed into a portable mission-control project whose sole public skill `manifest` carries operator-authorized intent through durable, coordinated, resumable action without self-certifying completion.

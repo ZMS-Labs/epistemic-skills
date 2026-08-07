@@ -262,20 +262,26 @@ honestly saying the observer is currently disabled. A validated `BLOCKED` record
 must show the check that established the block; it cannot be created from an
 agent's unsearched assumption.
 
-When an admitted mission-control intake is available, hand the validated
-commission record outward through that versioned intake so the consumer can
-select an authorized adapter, retain the external mechanism reference,
-checkpoint evidence receipts, and route later events back into the mission.
-Repository or package existence alone is not routability; no automatic
-Practical Agency intake is claimed here.
+Practical Agency’s `manifest` is **one conditional compatible consumer** of a
+validated `watch-commission@1` record: only when that package is installed in
+the current harness and a compatible adapter/intake is available may it custody
+the commission, perform authorized external operations, and retain receipts or
+external references. Repository or package existence alone is not routability;
+no automatic Practical Agency intake and no live observer are claimed here.
+Handoff does **not** transfer state-promotion authority. Adapter success and
+receipt references are not self-authenticating facts: resolved external evidence
+and adapter receipts must return to this commission-watch semantic verifier
+before `PROVEN` (or any other trusted state) may bear load. `manifest` must not
+copy or locally re-decide `DECLARED` → `BLOCKED` → `INERT` → `PROVEN` →
+`SUSPECT`.
 
-`handoff.on_crossing` and `metadata.hands-to` are the same closed post-crossing
-classification: exactly `triage` for cause and `decision-ledger` for durable
-consequential state. Array order is not semantic, and the classification does not
-compel either discipline to fire — each still owns its trigger. It does **not**
-declare commission custody, and `manifest` is not a valid value in this field.
-A cross-package mission-control handoff becomes machine-routable only after its
-versioned intake contract is implemented, verified, and admitted.
+`handoff.on_crossing` and `metadata.hands-to` remain the closed post-crossing
+epistemic classification: exactly `triage` for cause and `decision-ledger` for
+durable consequential state. Array order is not semantic, and the classification
+does not compel either discipline to fire — each still owns its trigger. It does
+**not** declare commission custody; do **not** add `manifest` to
+`metadata.hands-to`. Mission-control custody is a separate, installation-
+dependent edge from the post-crossing successor path.
 
 ## Anti-rationalizations
 

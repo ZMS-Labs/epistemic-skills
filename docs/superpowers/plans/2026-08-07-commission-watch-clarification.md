@@ -8,6 +8,17 @@
 
 **Tech Stack:** Markdown Agent Skill, JSON Schema draft 2020-12, Python 3.12 standard library, GitHub Actions, existing sentinel and description-budget checks.
 
+## Current branch status
+
+On PR #110 / branch `chatgpt/practical-agency-manifest`, the producer side is
+already implemented. The checked-in schema, semantic verifier, `watch` skill,
+executable example corpus, sentinel alignment, and focused
+`commission-watch-contract` CI are authoritative over earlier RED-stage
+statements and illustrative snippets later in this plan (including any text that
+still says production code is missing). Preserve the RED → GREEN chronology
+below as implementation history; do not weaken the final carrier from an
+earlier excerpt.
+
 ## Global Constraints
 
 - Keep `plugins/epistemic-skills/skills/watch/` and frontmatter `name: watch` in the current major line.

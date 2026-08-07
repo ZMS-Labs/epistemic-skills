@@ -6,7 +6,7 @@
 
 ## Summary
 
-### Current external baseline — normative factual amendment
+### As-built cross-repo status
 
 As of 2026-08-07, `ZMS-Labs/practical-agency` exists. Its inspected `main`
 revision is `e244d534a6e26bc9a352846a25ffce18b8d93a53` and contains one initial root
@@ -14,6 +14,19 @@ revision is `e244d534a6e26bc9a352846a25ffce18b8d93a53` and contains one initial 
 Markdown mission-manifest field guide. Cursor metadata declares `0.1.0`, but no
 tag or GitHub release exists; that value is an unreleased seed version, not
 evidence that the deterministic mission kernel has shipped.
+
+**Landed (as-built):**
+
+- Practical Agency repository identity and sole public entry skill `manifest`;
+- unreleased seed packaging (root/Cursor plugin metadata, README, v0 guide);
+- authorization-and-recording steward behavior in the seed `manifest` skill.
+
+**Not established by repository existence alone:**
+
+- installation of `manifest` in this or any harness;
+- a compatible execution adapter;
+- a persistent external observer;
+- automatic `watch`→`manifest` routing.
 
 That seed establishes the project identity and sole public entry skill. It is an
 authorization-and-recording steward, not yet the approved mission driver: its
@@ -27,17 +40,18 @@ and `watch-commission@1` intake described later in this document. The v0 guide's
 `mission-manifest@1` state machine.
 
 All later repository shapes, lifecycle rules, invocation aliases, and handoff
-diagrams are approved **target architecture**, not claims about the inspected
-external repository. Implementation must adopt the seed and preserve the root
-`skills/manifest/SKILL.md` as the one canonical skill body rather than create a
-competing copy.
+diagrams are approved **target / planned architecture**, not claims about the
+inspected external repository. Implementation must adopt the seed and preserve
+the root `skills/manifest/SKILL.md` as the one canonical skill body rather than
+create a competing copy.
 
 PR #110 does not modify the external repository or verify its target kernel,
-checkpoint, adapter, or intake behavior. It does record the inspected seed
-baseline above so this design does not reason from a nonexistent repository.
+checkpoint, adapter, or intake behavior. It records the inspected seed baseline
+above so this design does not reason from a nonexistent repository.
 The PR creates no automatic `watch`→`manifest` route; generic outward transport
 remains the truthful boundary until a versioned Practical Agency intake contract
-is implemented, verified, and admitted.
+is implemented, verified, and admitted. Consumption remains conditional on
+installation and capability; no live observer is implied.
 
 Two defects are resolved together:
 
