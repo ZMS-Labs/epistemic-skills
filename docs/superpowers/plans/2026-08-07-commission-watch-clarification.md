@@ -23,6 +23,38 @@
 
 ---
 
+## As-built contract refinement — normative over the original task sketches
+
+Implementation uncovered a state/evidence distinction the original task-level
+examples did not express. The following rules govern every task below and
+supersede any simpler fixture or field sketch later in this plan:
+
+- `state` is current operating state; proof is retained historical evidence.
+- A successful proof followed by disablement is valid `INERT` with a complete
+  proof bundle, never current `PROVEN` and never discarded evidence.
+- Proof history under `INERT` is either wholly absent or complete; partial proof
+  is rejected.
+- Positive claims require durable receipt references for destination
+  reachability, external persistence, kill-switch exercise, proof authority, and
+  alert delivery.
+- External substrates use a closed type set that excludes Markdown skills and
+  prompt/session memory even when they self-assert persistence.
+- `PROVEN` requires a re-proof boundary.
+- `SUSPECT` requires an observed failure kind, detail, time, and receipt; possible
+  failure modes alone are not an incident.
+- A `BLOCKED` reason must agree with the other fields in the record.
+
+Additional committed fixtures are required:
+
+- `valid-inert-with-proof-history.json`;
+- `valid-suspect-observed-failure.json`;
+- `invalid-inert-partial-proof-history.json`; and
+- `invalid-suspect-without-observed-failure.json`.
+
+The authoritative executable surface is the checked-in schema, verifier, tests,
+and examples. Preserve the original RED/GREEN chronology below as implementation
+history; do not use an earlier code excerpt to weaken the final carrier.
+
 ## File structure
 
 - `plugins/epistemic-skills/contracts/watch-commission/watch-commission.schema.json` — structural carrier for `watch-commission@1`.

@@ -327,6 +327,21 @@ It produces a `watch-commission@1` record. It does not run continuously.
 
 ## `watch-commission@1`
 
+The carrier separates four facts that must never be collapsed:
+
+1. **current operating state** — whether the observer is absent, blocked,
+   disabled, currently trusted and enabled, or presently suspect;
+2. **proof history** — either wholly absent or a complete end-to-end proof
+   bundle, retained even after deliberate disablement;
+3. **positive-claim evidence** — durable references supporting reachability,
+   external persistence, kill-switch exercise, proof authority, and alert
+   receipt; and
+4. **observed failure** — a separately typed, timestamped, receipted incident
+   used only when current state is `SUSPECT`.
+
+The JSON Schema is the structural carrier. The stdlib semantic verifier is the
+cross-field oracle; a schema-valid record is not automatically trusted.
+
 ### Required fields
 
 ```yaml
@@ -339,31 +354,42 @@ bound:
   expression: <comparison>
   units: <units>
   direction: above|below|equals|changes|absent
-  threshold: <value>
+  threshold: <scalar value>
 probe:
   mechanism: <how state is observed>
   cadence_or_event: <when observation occurs>
   failure_modes: []
 destination:
-  ref: <reachable recipient or endpoint>
+  ref: <recipient or endpoint>
   reachable: <boolean>
+  reachability_receipt_ref: <durable evidence ref or null>
 external_observer:
-  substrate: <adapter/provider/runtime or null>
+  substrate_kind: scheduler|event-listener|monitoring-service|human-cadence|other-external|fixture|null
+  substrate: <provider/runtime/human-cadence label or null>
   mechanism_ref: <external id or null>
+  persistence_receipt_ref: <durable evidence ref or null>
   persistent_outside_session: <boolean>
   enabled: <boolean>
 kill_switch:
-  procedure_ref: <reference>
+  procedure_ref: <reference or null>
   exercised: <boolean>
+  exercise_receipt_ref: <durable evidence ref or null>
 proof:
-  authorized_by: <authority ref or null>
+  authorized_by: <authority identity or null>
+  authorization_ref: <durable authority ref or null>
   safe_crossing: <description or null>
   production_path: <boolean>
   bound_crossed: <boolean>
   alert_received: <boolean>
   received_at: <timestamp or null>
+  alert_receipt_ref: <durable evidence ref or null>
+failure:
+  kind: probe|delivery|proof|freshness|kill-switch|external-mechanism|unknown|null
+  detail: <observed failure or null>
+  observed_at: <timestamp or null>
+  receipt_ref: <durable evidence ref or null>
 state: DECLARED|BLOCKED|INERT|PROVEN|SUSPECT
-block_reason: <enum or null>
+block_reason: <closed enum or null>
 reprove_after: <timestamp/condition or null>
 handoff:
   on_crossing: [triage, decision-ledger]
@@ -374,11 +400,16 @@ coverage_limits: []
 
 | State | Meaning |
 |---|---|
-| `DECLARED` | The bound, probe, destination, kill switch, and proof requirement are specified. No runtime mechanism is implied. |
-| `BLOCKED` | A required commission dependency is absent. The reason is explicit; no watching claim is permitted. |
-| `INERT` | An external mechanism is prepared or deployed but disabled. It is not watching. |
-| `PROVEN` | The external mechanism was explicitly enabled under authority, the safe bound crossing occurred through the production observation path, and the alert arrived at the named destination. |
-| `SUSPECT` | Probe, delivery, proof, liveness, or freshness failed or expired. This is treated as an alert, never as quiet success. |
+| `DECLARED` | The commission specification exists; no external mechanism or proof attempt is implied. |
+| `BLOCKED` | A required dependency is absent, the closed reason agrees with the recorded fields, and the observer remains disabled. |
+| `INERT` | A permitted external mechanism is persistence-proven, disabled, and governed by an exercised kill switch. Proof history is either wholly absent or complete. |
+| `PROVEN` | The external mechanism is currently enabled, every positive claim is evidence-bound, the production path was safely proof-fired, and a re-proof boundary exists. |
+| `SUSPECT` | A permitted external mechanism exists and a specific later failure is recorded with kind, detail, observation time, and receipt. Possible failure modes alone cannot establish this state. |
+
+`state` reports the observer now. A successful proof followed by deliberate
+disablement yields `INERT` with complete proof history retained. It does not stay
+`PROVEN`, and the proof is not erased. Partial proof history is invalid because it
+manufactures an easy-to-overread intermediate state.
 
 `BLOCKED` reasons are closed initially:
 
@@ -392,22 +423,39 @@ NO_SAFE_PROOF_CROSSING
 PROBE_UNAVAILABLE
 ```
 
-### Promotion rules
+The semantic verifier rejects a reason contradicted by the record, such as
+`NO_EXECUTION_SUBSTRATE` beside a populated external mechanism and persistence
+receipt.
 
-`PROVEN` requires all of:
+### Positive-claim and promotion rules
 
-- an external mechanism reference;
-- `persistent_outside_session: true`;
-- destination reachability established;
-- kill switch exercised against the real mechanism;
-- explicit proof authority;
-- explicit bounded enablement;
-- a safe deliberate crossing;
-- the production observation and delivery path;
-- bound crossing observed; and
-- alert received.
+A positive boolean never bears load alone:
 
-Configuration presence, source inspection, deployment, formatter tests, synthetic messages that bypass the production path, and "no alert yet" cannot satisfy promotion.
+- `destination.reachable: true` requires `reachability_receipt_ref`;
+- `persistent_outside_session: true` requires `persistence_receipt_ref`;
+- `kill_switch.exercised: true` requires `exercise_receipt_ref`;
+- named proof authority requires `authorization_ref`; and
+- `alert_received: true` requires both `received_at` and
+  `alert_receipt_ref`.
+
+`PROVEN` additionally requires:
+
+- a permitted external `substrate_kind`, not skill text or chat state;
+- populated substrate and external `mechanism_ref`;
+- current enablement;
+- a named reachable destination;
+- an exercised and receipted kill switch;
+- a complete proof bundle;
+- safe crossing through the production observation and delivery path;
+- observed bound crossing and alert receipt; and
+- a dated or condition-bound `reprove_after` value.
+
+`INERT` may retain that same complete proof bundle only while the mechanism is
+currently disabled. `SUSPECT` may retain historical receipts but requires its own
+later observed-failure carrier. Configuration presence, source inspection,
+deployment, formatter tests, self-asserted persistence, partial proof fields,
+generic failure possibilities, bypass messages, and "no alert yet" cannot satisfy
+these rules.
 
 ### Runtime division
 

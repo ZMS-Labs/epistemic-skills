@@ -900,6 +900,25 @@ Signed-off-by: SternOne <89846440+SternOne@users.noreply.github.com>"
 - Consumes: a validated `watch-commission@1` record from `epistemic-skills` and a `WatchExecutionAdapter`.
 - Produces: retained mechanism/proof refs and a mission event; never performs epistemic promotion itself.
 
+#### Hardened commission carrier requirements
+
+The adapter must preserve the distinction between current state and historical
+proof. It never synthesizes or strips evidence fields:
+
+- every adapter claim returns a durable receipt reference;
+- `INERT` can retain a complete prior proof after deliberate disablement;
+- `PROVEN` is accepted only from the upstream semantic verifier and only while
+  the external mechanism remains enabled;
+- `SUSPECT` carries a later observed failure kind, detail, time, and receipt;
+- a missing verifier leaves the external contract unverified; and
+- revocation/disablement changes current state without rewriting prior proof
+  evidence.
+
+Tests must round-trip all four dedicated fixtures from `epistemic-skills`:
+valid proven, valid inert-with-proof-history, valid suspect-observed-failure, and
+valid blocked-no-substrate. Also prove rejection of self-asserted skill
+persistence and partial proof history.
+
 - [ ] **Step 1: Write failing integration tests**
 
 Define a fake adapter and prove:
