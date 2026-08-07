@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/ZMS-Labs/epistemic-skills/contracts/watch-commission@1",
   "title": "watch-commission@1",
-  "description": "Structural carrier for commissioning and proving an external observer. Cross-field promotion, receipt, block-reason, proof-history, and failure rules are enforced by verify_watch_commission.py.",
+  "description": "Structural carrier for commissioning and proving an external observer. Cross-field promotion, receipt, block-evidence, proof-history, and failure rules are enforced by verify_watch_commission.py.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -16,6 +16,7 @@
     "kill_switch",
     "proof",
     "failure",
+    "block_evidence",
     "state",
     "block_reason",
     "reprove_after",
@@ -291,6 +292,35 @@
             "unknown"
           ]
         },
+        "detail": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "observed_at": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "receipt_ref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "block_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "detail",
+        "observed_at",
+        "receipt_ref"
+      ],
+      "properties": {
         "detail": {
           "type": [
             "string",
