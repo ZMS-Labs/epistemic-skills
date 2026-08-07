@@ -1,0 +1,275 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ZMS-Labs/epistemic-skills/contracts/watch-commission@1",
+  "title": "watch-commission@1",
+  "description": "Structural carrier for a commission to an external observer. Cross-field promotion rules are enforced by verify_watch_commission.py.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "commission_id",
+    "subject",
+    "bound",
+    "probe",
+    "destination",
+    "external_observer",
+    "kill_switch",
+    "proof",
+    "state",
+    "block_reason",
+    "reprove_after",
+    "handoff",
+    "coverage_limits"
+  ],
+  "properties": {
+    "schema": {
+      "const": "watch-commission@1"
+    },
+    "commission_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ref",
+        "revision"
+      ],
+      "properties": {
+        "ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "revision": {
+          "type": [
+            "string",
+            "integer",
+            "null"
+          ]
+        }
+      }
+    },
+    "bound": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "expression",
+        "units",
+        "direction",
+        "threshold"
+      ],
+      "properties": {
+        "expression": {
+          "type": "string",
+          "minLength": 1
+        },
+        "units": {
+          "type": "string",
+          "minLength": 1
+        },
+        "direction": {
+          "enum": [
+            "above",
+            "below",
+            "equals",
+            "changes",
+            "absent"
+          ]
+        },
+        "threshold": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ]
+        }
+      }
+    },
+    "probe": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mechanism",
+        "cadence_or_event",
+        "failure_modes"
+      ],
+      "properties": {
+        "mechanism": {
+          "type": "string",
+          "minLength": 1
+        },
+        "cadence_or_event": {
+          "type": "string",
+          "minLength": 1
+        },
+        "failure_modes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "destination": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ref",
+        "reachable"
+      ],
+      "properties": {
+        "ref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "reachable": {
+          "type": "boolean"
+        }
+      }
+    },
+    "external_observer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "substrate",
+        "mechanism_ref",
+        "persistent_outside_session",
+        "enabled"
+      ],
+      "properties": {
+        "substrate": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "mechanism_ref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "persistent_outside_session": {
+          "type": "boolean"
+        },
+        "enabled": {
+          "type": "boolean"
+        }
+      }
+    },
+    "kill_switch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "procedure_ref",
+        "exercised"
+      ],
+      "properties": {
+        "procedure_ref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "exercised": {
+          "type": "boolean"
+        }
+      }
+    },
+    "proof": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "authorized_by",
+        "safe_crossing",
+        "production_path",
+        "bound_crossed",
+        "alert_received",
+        "received_at"
+      ],
+      "properties": {
+        "authorized_by": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "safe_crossing": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "production_path": {
+          "type": "boolean"
+        },
+        "bound_crossed": {
+          "type": "boolean"
+        },
+        "alert_received": {
+          "type": "boolean"
+        },
+        "received_at": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "state": {
+      "enum": [
+        "DECLARED",
+        "BLOCKED",
+        "INERT",
+        "PROVEN",
+        "SUSPECT"
+      ]
+    },
+    "block_reason": {
+      "enum": [
+        null,
+        "NO_EXECUTION_SUBSTRATE",
+        "NO_REACHABLE_DESTINATION",
+        "NO_AUTHORITY_TO_ENABLE",
+        "NO_KILL_SWITCH",
+        "KILL_SWITCH_UNPROVEN",
+        "NO_SAFE_PROOF_CROSSING",
+        "PROBE_UNAVAILABLE"
+      ]
+    },
+    "reprove_after": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "handoff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "on_crossing"
+      ],
+      "properties": {
+        "on_crossing": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "coverage_limits": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

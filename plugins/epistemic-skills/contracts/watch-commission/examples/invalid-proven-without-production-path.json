@@ -1,0 +1,24 @@
+{
+  "_expected": "REJECT",
+  "schema": "watch-commission@1",
+  "commission_id": "wc-example-invalid-bypass",
+  "subject": {"ref": "service:example", "revision": "rev-1"},
+  "bound": {"expression": "free_space_percent < 15", "units": "percent", "direction": "below", "threshold": 15},
+  "probe": {"mechanism": "external metric query", "cadence_or_event": "every 5 minutes", "failure_modes": ["timeout", "authentication failure"]},
+  "destination": {"ref": "recipient:example", "reachable": true},
+  "external_observer": {"substrate": "fixture-adapter", "mechanism_ref": "fixture://watch/example-001", "persistent_outside_session": true, "enabled": true},
+  "kill_switch": {"procedure_ref": "fixture://kill/example-001", "exercised": true},
+  "proof": {
+    "authorized_by": "operator:example",
+    "safe_crossing": "fixture threshold override",
+    "production_path": false,
+    "bound_crossed": true,
+    "alert_received": true,
+    "received_at": "2026-08-07T12:00:00Z"
+  },
+  "state": "PROVEN",
+  "block_reason": null,
+  "reprove_after": "2026-09-07T12:00:00Z",
+  "handoff": {"on_crossing": ["triage", "decision-ledger"]},
+  "coverage_limits": ["isolated fixture adapter; no production provider claimed"]
+}

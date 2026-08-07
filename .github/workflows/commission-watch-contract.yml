@@ -26,3 +26,10 @@ jobs:
           python-version: "3.12"
       - name: Watch commission semantic contract
         run: python plugins/epistemic-skills/contracts/watch-commission/test_watch_commission.py
+      - name: Compile watch commission verifier
+        run: python -m py_compile plugins/epistemic-skills/contracts/watch-commission/verify_watch_commission.py
+      - name: Validate accepted watch commission examples
+        run: |
+          python plugins/epistemic-skills/contracts/watch-commission/verify_watch_commission.py \
+            plugins/epistemic-skills/contracts/watch-commission/examples/valid-proven.json \
+            plugins/epistemic-skills/contracts/watch-commission/examples/valid-blocked.json
