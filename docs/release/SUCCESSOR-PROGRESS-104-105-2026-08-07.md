@@ -32,12 +32,10 @@ Subject branch: `cursor/v5-post-release-104-105-4cee` (continues draft PR #103 o
 
 ## Closure posture
 
-- **#105:** close after PR merge + Release body amend + repo description update.
-- **#104:** mechanical design commitments on this branch are implemented. Remaining
-  release conditions C1–C3 (live captures, estate headroom or amendment, isolated
-  multi-family Gauntlet) gate a *conforming successor tag*, not the corrective merge.
-  Close #104 when those are discharged **or** explicitly waived/amended for that
-  release with the same honesty rules as item 8.
+- **#105:** close after operator applies Release body amend + repo description (see
+  `RELEASE-BODY-AMEND-v5.0.0.md`). Tree remediation and CI gate are on `main`.
+- **#104:** mechanical design commitments are on `main`. C1–C3 gate a *conforming
+  successor tag*; tracked in `BACKLOG-REGISTER-2026-08-08.md`.
 
 ## Documentation follow-up (2026-08-07)
 
