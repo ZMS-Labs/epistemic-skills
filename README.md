@@ -138,6 +138,7 @@ their evaluation corpora were preserved at package level. See
 | Need the state of a running system, or a health claim is about to bear load | `health` | Per-subject `OK`/`WARN`/`CRITICAL`/`UNKNOWN`; `UNKNOWN` never aggregates into `OK` |
 | A specific thing is broken and the cause is not established | `triage` | `CAUSE`/`NARROWED`/`UNKNOWN`/`NOT-BROKEN` with the discriminating observation |
 | A change is believed applied and something depends on it | `did-it-land` | `LANDED`/`REVERTED`/`UNVERIFIED` from a runtime observation, never a source read |
+| A bound must be noticed while unattended, or a watcher must be proven | `watch` | `DECLARED`/`INERT`/`PROVEN`/`SUSPECT`; never “installed” before a proof fire |
 | Resume from a compaction summary, handoff, or remembered state | `decision-ledger` (resume mode) | Re-anchored state digest or visible uncertainty |
 | Micro-recon exposes map/territory mismatch, hidden coupling, fuzzy scope, or fan-out risk | `recon` (brief mode) | Read-only territory map and rewritten request |
 | Material software/system fork or correctness/property claim | `resolve` (derivation) | Inline focused derivation or a revision-bound formal record |
@@ -158,26 +159,31 @@ The arc is a set of trigger-dependent handoffs, not a conveyor belt every task m
 ```mermaid
 flowchart LR
     T["Task or resumed work"] --> Q{"Prior-state claim<br/>bears load?"}
-    Q -- yes --> CV["Continuity Verify<br/>re-anchor state"]
+    Q -- yes --> CV["decision-ledger<br/>resume / re-anchor"]
     Q -- no --> R{"Routine?<br/>all four tests"}
     CV --> R
     R -- yes --> B["Change + bounded check<br/>record-free exit"]
     R -- no --> U["metacognate"]
 
-    U -. "mismatch / coupling / fan-out" .-> BP["Blindspot Pass<br/>recon"]
-    BP -. "material design fork" .-> FR["Applying Formal Rigor<br/>derive"]
+    U -. "mismatch / coupling / fan-out" .-> BP["recon<br/>brief / initiative / candidate"]
+    BP -. "material design fork" .-> FR["resolve<br/>derivation"]
     U -. "material design fork" .-> FR
-    ER["Evidence Research<br/>qualify scholarly premise"] -. "grounds" .-> FR
-    FR -. "explicit persistent goal" .-> WG["Write Goal<br/>completion contract"]
-    WG -. "high-stakes gate" .-> G["Gauntlet<br/>adversarial verdict"]
-    G -. "material UI acceptance" .-> UAT["Evidence-Locked UAT<br/>blinded proof"]
+    ER["resolve<br/>literature"] -. "grounds" .-> FR
+    FR -. "explicit persistent goal" .-> WG["write-goal<br/>completion contract"]
+    WG -. "high-stakes gate" .-> G["gauntlet<br/>adversarial verdict"]
+    G -. "material UI acceptance" .-> UAT["evidence-locked-uat<br/>blinded proof"]
 
-    U -. "external boundary" .-> O["Outsource<br/>immutable handoff"]
-    D["Decision Ledger<br/>persist uncovered consequential moment"] -. "cross-cutting reuse" .-> U
-    OQ["Open Questions<br/>walk ledger to empty"] -. "cross-cutting, any gated stage" .-> U
+    U -. "running-system state" .-> H["health"]
+    H -. "known broken" .-> TR["triage"]
+    U -. "change believed applied" .-> DIL["did-it-land"]
+    U -. "unattended bound" .-> W["watch"]
+
+    U -. "external boundary" .-> O["outsource<br/>immutable handoff"]
+    D["decision-ledger<br/>persist consequential moment"] -. "cross-cutting reuse" .-> U
+    OQ["open-questions<br/>walk ledger to empty"] -. "cross-cutting, any gated stage" .-> U
 ```
 
-Evidence Research, Decision Ledger, Outsource, and Open Questions are cross-cutting. Continuity Verify is pre-arc. Context Audit is maintenance-triggered outside the arc. Agent Interface Design is craft doctrine read on demand — it is not a firing skill. Most tasks clear the routine gate or fire one discipline. See [The Epistemic Arc](https://github.com/ZMS-Labs/epistemic-skills/wiki/The-Epistemic-Arc) for handoff details and [Core Concepts](https://github.com/ZMS-Labs/epistemic-skills/wiki/Core-Concepts) for the five epistemic-flexibility controls.
+`resolve` (literature), `decision-ledger`, `outsource`, and `open-questions` are cross-cutting. Resume re-anchoring is `decision-ledger` resume mode (pre-arc). `context-audit` is maintenance-triggered outside the arc. Craft doctrine (`intent-traced-merge`, `agent-interface-design`) is read on demand — not a firing skill. Most tasks clear the routine gate or fire one discipline. See [The Epistemic Arc](https://github.com/ZMS-Labs/epistemic-skills/wiki/The-Epistemic-Arc) for handoff details and [Core Concepts](https://github.com/ZMS-Labs/epistemic-skills/wiki/Core-Concepts) for the five epistemic-flexibility controls.
 
 ## Fourteen-skill catalog
 
@@ -189,6 +195,7 @@ The package contains exactly one entry point and thirteen disciplines. Each name
 | [`health`](plugins/epistemic-skills/skills/health/SKILL.md) | The state of a running system is wanted, or a health claim is about to bear load | Probe declared subjects against declared bounds, and say what could not be reached | Per-subject state; a roll-up carrying any `UNKNOWN` is at best `UNKNOWN` |
 | [`triage`](plugins/epistemic-skills/skills/triage/SKILL.md) | A specific subject is broken or degraded and the cause is not established | Eliminate candidates by observation, cheapest discriminator first, and stop at the cause | A verdict with the observation that ruled the alternatives out; the remedy is a separate act |
 | [`did-it-land`](plugins/epistemic-skills/skills/did-it-land/SKILL.md) | A change is believed applied and something now depends on it being true | Observe the runtime, identify what actually loads, and re-check past the revert window | `LANDED`/`REVERTED`/`UNVERIFIED`; `UNVERIFIED` is the default |
+| [`watch`](plugins/epistemic-skills/skills/watch/SKILL.md) | A bound must be noticed while unattended, or an existing watcher must be proven to still fire | Specify and prove an external watcher that acts unattended | `DECLARED`/`INERT`/`PROVEN`/`SUSPECT`; never “installed” before a proof fire |
 | [`recon`](plugins/epistemic-skills/skills/recon/SKILL.md) | Territory must be mapped before effort commits: a fuzzy/contradicted brief, a large foggy effort, or an external project overlapping your own (three modes: brief / initiative / candidate) | Read, decompose, or harvest — understanding only, never a change | Rewritten request; decision map + fog-free tickets; or harvest record with per-level spend decisions |
 | [`resolve`](plugins/epistemic-skills/skills/resolve/SKILL.md) | A live question or material decision needs an instrument, not an opinion (three instruments: derivation / literature / probe) | Settle it with the cheapest sufficient instrument; the instrument produces evidence, never the downstream verdict | Derivation or `formal-rigor-record@2`; claim-evidence matrix; or recorded probe answer with the build disposed |
 | [`write-goal`](https://github.com/ZMS-Labs/epistemic-skills/wiki/Skill-Write-Goal) | Explicit intent to author, refine, or start a durable goal | Bind operator intent to proof, scope, blockers, and stop rules | Approved goal contract; execution/certification remains downstream |
@@ -222,20 +229,20 @@ Full installation, migration, runtime-degradation, and troubleshooting guidance 
 ### Claude Code
 
 ```bash
-git clone --depth 1 --branch main https://github.com/ZMS-Labs/epistemic-skills.git /path/to/epistemic-skills
+git clone --depth 1 --branch v5.0.0 https://github.com/ZMS-Labs/epistemic-skills.git /path/to/epistemic-skills-v5.0.0
 ```
 
 ```text
-/plugin marketplace add ZMS-Labs/epistemic-skills
+/plugin marketplace add /absolute/path/to/epistemic-skills-v5.0.0
 /plugin install epistemic-skills@epistemic-skills
 ```
 
-Use one marketplace source only, then start a fresh task. Until v5.0.0 is tagged, `main` is the channel; see docs/release/RELEASE-5.0.0.md for why the tag is held.
+Use one marketplace source only, then start a fresh task. Prefer the immutable `v5.0.0` tag for stable installs; `main` may include post-tag corrective documentation and contract hardening (see [successor progress](docs/release/SUCCESSOR-PROGRESS-104-105-2026-08-07.md)).
 
 ### Codex
 
 ```powershell
-codex plugin marketplace add ZMS-Labs/epistemic-skills --ref main
+codex plugin marketplace add ZMS-Labs/epistemic-skills --ref v5.0.0
 codex plugin add epistemic-skills@epistemic-skills
 python "$HOME/.codex/plugins/cache/epistemic-skills/epistemic-skills/5.0.0/skills/gauntlet/scripts/render_codex_agents.py" --out "$HOME/.codex/agents"
 ```
@@ -249,9 +256,9 @@ Cursor packaging is present, but the plugin is **not publicly listed**. `/add-pl
 Windows local install:
 
 ```powershell
-git clone --depth 1 --branch main https://github.com/ZMS-Labs/epistemic-skills.git .\epistemic-skills
-Set-Location .\epistemic-skills
-if ((git rev-parse --abbrev-ref HEAD) -ne 'main') { throw 'expected main' }
+git clone --depth 1 --branch v5.0.0 https://github.com/ZMS-Labs/epistemic-skills.git .\epistemic-skills-v5.0.0
+Set-Location .\epistemic-skills-v5.0.0
+if ((git describe --tags --exact-match) -ne 'v5.0.0') { throw 'expected v5.0.0' }
 New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.cursor\plugins\local" | Out-Null
 $src = (Resolve-Path .\plugins\epistemic-skills).Path
 $dest = Join-Path $env:USERPROFILE '.cursor\plugins\local\epistemic-skills'
@@ -262,9 +269,9 @@ cmd /c mklink /J "$dest" "$src"
 macOS/Linux local install:
 
 ```bash
-git clone --depth 1 --branch main https://github.com/ZMS-Labs/epistemic-skills.git ./epistemic-skills
-cd ./epistemic-skills
-test "$(git rev-parse --abbrev-ref HEAD)" = main
+git clone --depth 1 --branch v5.0.0 https://github.com/ZMS-Labs/epistemic-skills.git ./epistemic-skills-v5.0.0
+cd ./epistemic-skills-v5.0.0
+test "$(git describe --tags --exact-match)" = v5.0.0
 mkdir -p ~/.cursor/plugins/local
 ln -sfn "$(pwd)/plugins/epistemic-skills" ~/.cursor/plugins/local/epistemic-skills
 ```
@@ -274,7 +281,7 @@ Run **Developer: Reload Window**, verify the tag's full skill count (fourteen at
 ### Gemini CLI
 
 ```bash
-gemini extensions install https://github.com/ZMS-Labs/epistemic-skills --ref main --consent
+gemini extensions install https://github.com/ZMS-Labs/epistemic-skills --ref v5.0.0 --consent
 # Local development only:
 gemini extensions link /path/to/epistemic-skills
 ```
@@ -284,9 +291,9 @@ Restart the session and run `gemini extensions validate` when validating a check
 ### Antigravity (`agy`)
 
 ```bash
-git clone --depth 1 --branch main https://github.com/ZMS-Labs/epistemic-skills.git /path/to/epistemic-skills
-agy plugin install /path/to/epistemic-skills
-agy plugin validate /path/to/epistemic-skills
+git clone --depth 1 --branch v5.0.0 https://github.com/ZMS-Labs/epistemic-skills.git /path/to/epistemic-skills-v5.0.0
+agy plugin install /path/to/epistemic-skills-v5.0.0
+agy plugin validate /path/to/epistemic-skills-v5.0.0
 ```
 
 Use one of native `agy plugin install`, Gemini extension link, or `agy plugin import gemini`; do not combine them.
@@ -294,7 +301,7 @@ Use one of native `agy plugin install`, Gemini extension link, or `agy plugin im
 ### Kimi Code
 
 ```text
-/plugins install https://github.com/ZMS-Labs/epistemic-skills/tree/main
+/plugins install https://github.com/ZMS-Labs/epistemic-skills/tree/v5.0.0
 # Local development only, from a clone:
 /plugins install /path/to/epistemic-skills
 ```
@@ -371,11 +378,13 @@ contract into an accepted one.
 
 ## Trust, evidence, and known limits
 
-Version 3.2.0 is a real release with aligned package surfaces, deterministic checks, a tagged source snapshot, and committed evidence. It is also deliberately honest about what those facts do not prove. Version 3.3.0 added two disciplines (`context-audit`, `agent-interface-design`) and four targeted amendments; version 3.4.0 adds three more (`wayfinding`, `throwaway-prototyping`, `intent-traced-merge`) plus five amendment sets, on the same basis: the new skills ship with graded doctrine and named provenance (Shihipar essay; ConnorGriffin/skills, MIT; community synthesis — re-derived, not copied). Since PR #73 all five carry deterministic trigger-and-scope batteries (fixtures, polarity parodies, CI-wired scorers), but **no live behavioral epoch has been run against any of them** — each battery ships a `results/BLOCKED.md` saying so (tracked: issue #77, the successor register to the closed #70) — and the evaluation posture below describes the 3.2.0 campaign and is inherited, not extended, by 3.3.0 or 3.4.0.
+**Version 5.0.0** is the current immutable support point: fourteen skills, aligned package surfaces, deterministic checks, and a tagged source snapshot. It was **published with explicit gate honesty** — item 6 only PARTIALLY MET at publication, item 8 WAIVED / NOT MET — and a post-release independent review returned **NO-GO** for retrospective certification. Read the [errata](docs/release/RELEASE-5.0.0-ERRATA-2026-08-06.md), [post-release review](docs/release/POST-RELEASE-INDEPENDENT-REVIEW-5.0.0-2026-08-06.md), and [successor progress](docs/release/SUCCESSOR-PROGRESS-104-105-2026-08-07.md) before treating v5.0.0 as gate-complete. Corrective work for issues #104/#105 landed on `main` after the immutable tag; do not move the tag.
+
+Earlier support points remain historically accurate for their own campaigns. Version 3.2.0 established the behavioral-evidence posture that later releases inherit unless a new campaign re-opens it: aligned surfaces and deterministic checks, with named behavioral limits that were never rewritten into passes.
 
 ### What the evidence supports
 
-- Deterministic checks protect named routing, proportionality, schema, receipt, UAT-judge, DCO-policy, package-integration, and Gauntlet-mechanics invariants.
+- Deterministic checks protect named routing, proportionality, schema, receipt, UAT-judge, DCO-policy, package-integration, public-content, and Gauntlet-mechanics invariants (including post-v5 successor gates on `main`).
 - The blinded proportionality campaign retained 162/162 terminal, schema-valid matched calls; the candidate passed the routine, material, and high-risk contract while corrected full-ceremony and always-routine parodies failed.
 - The tag and GitHub Release provide an immutable support coordinate for the packaged contracts and installation instructions.
 
@@ -393,7 +402,7 @@ Version 3.2.0 is a real release with aligned package surfaces, deterministic che
 
 Operator risk acceptance covered only the named behavioral-confidence gaps. It did **not** waive or satisfy deterministic, DCO, CodeQL, secret-scanning, provenance, independent-review, or publication-identity gates. The machine-readable [risk record](docs/release/RELEASE-3.0.0-RISK-ACCEPTANCE.json) — append-only since 3.0.0 (revisit history records re-adjudications and met exit criteria; accepted scopes are never rewritten) — controls the precise scope.
 
-Read [Evidence, Status, and Known Limitations](https://github.com/ZMS-Labs/epistemic-skills/wiki/Evidence-Status-and-Known-Limitations), the [3.3.0 release record](https://github.com/ZMS-Labs/epistemic-skills/blob/v3.3.0/docs/release/RELEASE-3.3.0.md), the [3.2.0 release record](https://github.com/ZMS-Labs/epistemic-skills/blob/v3.3.0/docs/release/RELEASE-3.2.0.md) (the evidence campaign described above), and the [no-credit diagnostic](https://github.com/ZMS-Labs/epistemic-skills/blob/v3.2.0/docs/release/evidence/2026-07-26-formal-rigor-v3-posthoc-diagnostic.md) before making broad behavioral claims.
+Read [Evidence, Status, and Known Limitations](https://github.com/ZMS-Labs/epistemic-skills/wiki/Evidence-Status-and-Known-Limitations), the [5.0.0 release record](docs/release/RELEASE-5.0.0.md), the [5.0.0 errata](docs/release/RELEASE-5.0.0-ERRATA-2026-08-06.md), the [3.2.0 release record](https://github.com/ZMS-Labs/epistemic-skills/blob/v3.2.0/docs/release/RELEASE-3.2.0.md) (the behavioral campaign summarized above), and the [no-credit diagnostic](https://github.com/ZMS-Labs/epistemic-skills/blob/v3.2.0/docs/release/evidence/2026-07-26-formal-rigor-v3-posthoc-diagnostic.md) before making broad behavioral claims.
 
 ## Developing and contributing
 
