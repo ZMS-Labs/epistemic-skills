@@ -5,6 +5,7 @@
 **Draft PR:** [#100](https://github.com/ZMS-Labs/epistemic-skills/pull/100)  
 **Design spec:** [`docs/superpowers/specs/2026-08-06-fudge-design-md-leverage.md`](../superpowers/specs/2026-08-06-fudge-design-md-leverage.md)  
 **Stack alignment (Fudge + Claude Design + frontend-design + Impeccable):** [`docs/superpowers/specs/2026-08-07-visual-design-stack-alignment.md`](../superpowers/specs/2026-08-07-visual-design-stack-alignment.md)  
+**ZMS org design repo placement (skill decision + fleet):** [`docs/superpowers/specs/2026-08-07-zms-labs-design-fleet-placement.md`](../superpowers/specs/2026-08-07-zms-labs-design-fleet-placement.md) — *blocked until `zms-labs-design` is readable by agents*  
 **Draft craft stub:** [`plugins/epistemic-skills/reference/craft/visual-design-md.md`](../../plugins/epistemic-skills/reference/craft/visual-design-md.md)  
 **Upstream:** [scroobius-pip/fudge-design-md](https://github.com/scroobius-pip/fudge-design-md) (MIT)  
 **Status:** recommendations recorded; **not operator-approved**; no implementation beyond this exploratory PR
