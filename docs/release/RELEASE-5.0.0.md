@@ -80,7 +80,7 @@ Confirmed by reversible manipulation and then by intervention:
 
 **Adding a skill is a transfer, not an addition** — it silently uninstalls roughly
 its own byte-weight of other skills' descriptions. Total description budget across
-all fourteen skills: **8,200 bytes**, measured as the harness resolves them, so a
+all fourteen skills: **8,230 UTF-8 bytes**, measured as the harness resolves them, so a
 quoted description is charged for its content and not its delimiters.
 
 This is why consolidation here is a resource constraint rather than a preference.

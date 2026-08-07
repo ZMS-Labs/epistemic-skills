@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Ship `open-questions` as the tenth discipline in the epistemic-skills collection, release v3.1.0, then bring the zms-homelab fleet layer up to date with all six missing skills.
+**Goal:** Ship `open-questions` as the tenth discipline in the epistemic-skills collection, release v3.1.0, then bring the <private-fleet-repo> fleet layer up to date with all six missing skills.
 
-**Architecture:** Three sequential phases. Phase A (feature PR, this repo): author the skill core and update every count-asserted integration surface, driven by the package integration test. Phase B (release PR, this repo): version bump per RELEASING.md. Phase C (fleet PR, zms-homelab): worktree-isolated core sync + LOCAL.md overlays + status table.
+**Architecture:** Three sequential phases. Phase A (feature PR, this repo): author the skill core and update every count-asserted integration surface, driven by the package integration test. Phase B (release PR, this repo): version bump per RELEASING.md. Phase C (fleet PR, <private-fleet-repo>): worktree-isolated core sync + LOCAL.md overlays + status table.
 
 **Tech Stack:** Plain markdown skill cores; Python stdlib integration test (`plugins/epistemic-skills/skills/outsource/tests/run_tests.py`); GitHub Actions CI (`.github/workflows/epistemic-flexibility.yml`); git worktrees for the fleet repo.
 
@@ -18,7 +18,7 @@
 - The skill core MUST end with the standard `## Local overlay` section.
 - Count literals are CI-asserted as exact substrings including markdown emphasis (`**eleven** skills` and `eleven skills` are distinct assertions). Update the test FIRST, then edit prose until the test passes.
 - Version numbers change ONLY in Phase B (RELEASING.md: version alignment happens in the release PR, not the feature PR). Count text inside manifest descriptions changes in Phase A.
-- zms-homelab currently has uncommitted work on `feat/pm-corpus-github-cutover`. Phase C uses `git worktree add` off `origin/main` — never stash, checkout, or pull in the existing working tree (RULE-028).
+- <private-fleet-repo> currently has uncommitted work on `feat/pm-corpus-github-cutover`. Phase C uses `git worktree add` off `origin/main` — never stash, checkout, or pull in the existing working tree (RULE-028).
 
 ---
 
@@ -362,21 +362,21 @@ https://claude.ai/code/session_011L3kh3mNct92BFDrfWKD5G"
 gh pr checks --watch && gh pr merge --squash
 ```
 
-## Phase C — Fleet-layer catch-up (zms-homelab)
+## Phase C — Fleet-layer catch-up (<private-fleet-repo>)
 
 ### Task C1: Safety gate + worktree
 
 - [ ] **Step 1: RULE-028 gate — report, never touch**
 
 ```bash
-cd /y/dev/zms-homelab && git status --short | head -20
+cd /y/dev/<private-fleet-checkout> && git status --short | head -20
 ```
 Expected: uncommitted work on `feat/pm-corpus-github-cutover`. Do NOT stash/checkout/pull. Proceed via worktree only.
 
 - [ ] **Step 2: Worktree off fresh origin/main**
 
 ```bash
-git fetch origin && git worktree add /y/dev/zms-homelab-wt-fleet-catchup -b feat/epistemic-fleet-catchup origin/main
+git fetch origin && git worktree add /y/dev/<private-fleet-checkout>-wt-fleet-catchup -b feat/epistemic-fleet-catchup origin/main
 ```
 
 ### Task C2: Sync the six missing cores byte-identical
@@ -389,7 +389,7 @@ git fetch origin && git worktree add /y/dev/zms-homelab-wt-fleet-catchup -b feat
 
 ```bash
 SRC=/y/dev/epistemic-skills/plugins/epistemic-skills/skills
-DST=/y/dev/zms-homelab-wt-fleet-catchup/skills
+DST=/y/dev/<private-fleet-checkout>-wt-fleet-catchup/skills
 for s in helix write-goal outsource continuity-verify decision-ledger open-questions; do
   mkdir -p "$DST/$s" && cp "$SRC/$s/SKILL.md" "$DST/$s/SKILL.md"
 done
@@ -414,7 +414,7 @@ Required bindings per skill (keep each file short — pointers, not prose):
 - **continuity-verify**: durable anchors on this fleet = GitHub issues/PRs, session logs, memory directory; compaction summaries are the primary trigger.
 - **decision-ledger**: the fleet's durable sinks = ADRs (`/decide`), GitHub issues, session-log `[DECISION]` lines; do not duplicate rules.json content.
 
-Each ends with a `## Durability` section naming zms-homelab as canonical and the deploy cache path.
+Each ends with a `## Durability` section naming <private-fleet-repo> as canonical and the deploy cache path.
 
 ### Task C4: Status table + PR
 
@@ -424,10 +424,10 @@ Each ends with a `## Durability` section naming zms-homelab as canonical and the
 - [ ] **Step 1: Update table, verify LF, commit, push, PR**
 
 ```bash
-cd /y/dev/zms-homelab-wt-fleet-catchup
+cd /y/dev/<private-fleet-checkout>-wt-fleet-catchup
 git add skills/ && git commit --signoff -m "feat(skills): fleet-layer catch-up — six epistemic-skills cores + LOCAL.md overlays (v3.1.0)"
 git push -u origin feat/epistemic-fleet-catchup
-gh pr create -R ZMS-Labs/zms-homelab --title "feat: epistemic-skills fleet-layer catch-up (helix, write-goal, outsource, continuity-verify, decision-ledger, open-questions)" --body "Brings skills/ to parity with public v3.1.0. Byte-identical cores + fleet LOCAL.md overlays + status table refresh. Worktree-isolated; primary working tree untouched.
+gh pr create -R <private-fleet-repo> --title "feat: epistemic-skills fleet-layer catch-up (helix, write-goal, outsource, continuity-verify, decision-ledger, open-questions)" --body "Brings skills/ to parity with public v3.1.0. Byte-identical cores + fleet LOCAL.md overlays + status table refresh. Worktree-isolated; primary working tree untouched.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
@@ -438,7 +438,7 @@ gh pr checks --watch && gh pr merge --squash
 - [ ] **Step 2: Clean up worktree**
 
 ```bash
-cd /y/dev/zms-homelab && git worktree remove /y/dev/zms-homelab-wt-fleet-catchup
+cd /y/dev/<private-fleet-checkout> && git worktree remove /y/dev/<private-fleet-checkout>-wt-fleet-catchup
 ```
 
 ### Task C5: Operator handoff notes

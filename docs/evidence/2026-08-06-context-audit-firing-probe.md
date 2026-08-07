@@ -77,7 +77,7 @@ links were Windows junctions, for which `is_symlink()` returns False. A control 
 only as good as its match to the production path.
 
 No free discriminating observation exists: a scan of every installed plugin
-(`C:/Users/zachs/.claude/plugins/**/skills/*/SKILL.md`) found **`context-audit` is
+(`<user-home>/.claude/plugins/**/skills/*/SKILL.md`) found **`context-audit` is
 the only plugin skill anywhere with two escapes**; all 11 others with any escape
 have exactly one. There is nothing to compare it against.
 
@@ -230,8 +230,9 @@ its own hypothesis cannot represent that.
 
 ## Outcome — round 4: PREDICTION CONFIRMED, plus two corrections
 
-Eight superseded commands deleted (canonically in `zms-homelab@75ae184`, and
-removed from the local load path). `/reload-skills` -> **100 skills**.
+Eight superseded commands deleted (canonically in
+`<private-fleet-repo>@<commit>`, and removed from the local load path).
+`/reload-skills` -> **100 skills**.
 
 **`epistemic-skills:context-audit` renders its description again.**
 

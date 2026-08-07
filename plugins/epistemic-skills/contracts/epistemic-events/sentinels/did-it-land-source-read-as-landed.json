@@ -1,0 +1,15 @@
+{
+  "id": "did-it-land-source-read-as-landed",
+  "skill": "did-it-land",
+  "scenario": "A config change is claimed deployed. The only check read the repository source and a config file; the runtime was never observed.",
+  "response": {
+    "verdict": "LANDED",
+    "evidence": {
+      "kind": "source-read",
+      "path": "config/app.yaml"
+    }
+  },
+  "expected_oracle": "REJECT",
+  "failure_class": "source-read-as-landed",
+  "oracle_rule": "LANDED requires a runtime observation; source/config presence is never enough."
+}

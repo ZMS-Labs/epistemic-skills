@@ -1,0 +1,12 @@
+{
+  "schema": "gauntlet-run-record@1",
+  "subject": "epistemic-skills successor corrective branch for issues #104 and #105",
+  "subject_ref": "pin-after-merge: re-verify with git rev-parse of the merge commit on main",
+  "branch": "cursor/v5-post-release-104-105-4cee",
+  "depth": "standard",
+  "independence_mode": "degraded \u2014 single-family manual panel; not a multi-provider isolated Gauntlet",
+  "docket_mode": "manual-docket",
+  "started_at": "2026-08-07T02:08:00Z",
+  "purpose": "Publication judgment for landing the successor corrective work; not a retrospective certification of immutable v5.0.0",
+  "subject_ref_at_authoring": "cd7528a (pre-pin-commit; see GAUNTLET-SUMMARY)"
+}

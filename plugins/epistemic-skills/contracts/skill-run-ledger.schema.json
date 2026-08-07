@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://zms-labs.github.io/epistemic-skills/contracts/skill-run-ledger.schema.json",
+  "title": "Intrinsic skill run ledger line",
+  "description": "One append-only JSONL record per skill engagement. Intrinsic to the skill: not a call to an external calibration service.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "ts",
+    "skill",
+    "decision",
+    "discipline_engaged",
+    "action_changed"
+  ],
+  "properties": {
+    "schema": {
+      "const": "skill-run@1"
+    },
+    "ts": {
+      "type": "string",
+      "minLength": 1,
+      "description": "ISO-8601 timestamp of the append."
+    },
+    "skill": {
+      "type": "string",
+      "minLength": 1
+    },
+    "decision": {
+      "type": "string",
+      "enum": ["fired", "declined"]
+    },
+    "discipline_engaged": {
+      "type": ["string", "null"],
+      "description": "When fired, the discipline or instrument that ran; null when declined."
+    },
+    "action_changed": {
+      "type": "boolean",
+      "description": "Whether the engagement changed the subsequent action."
+    },
+    "example": {
+      "type": "boolean",
+      "description": "When true, the line is a synthetic exemplar and not live telemetry."
+    },
+    "notes": {
+      "type": "string"
+    }
+  }
+}

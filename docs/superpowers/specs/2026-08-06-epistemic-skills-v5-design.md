@@ -416,7 +416,7 @@ found by an independent measurement disagreeing with a tool, never by reading
 source.
 
 ## Known open items
-- `helix` exists as an 18KB vendored `SKILL.md` in `zms-homelab-main/skills/`
+- `helix` exists as an 18KB vendored `SKILL.md` in `<private-fleet-checkout>/skills/`
   alongside the package copy. Disposition needed when `helix` is deleted.
 - Whether `metacognate` should also be operator-invocable by name in addition to
   auto-firing (assumed yes; costs nothing).
@@ -495,3 +495,44 @@ arm separation, `p=0.875`, still UNESTABLISHED.
 **Six stale paths were found by the move, and the last two only by *running* the
 scripts rather than checking they existed.** Both were `REPO_ROOT` depths
 resolving to the drive root; an existence check passed them.
+
+## AMENDMENT 2026-08-07 — D8 budget scope and the v5.0.0 net-negative miss
+
+**D8 stands as a dual-scope constraint.** Clarify:
+
+1. **Package-local ceiling** — the sum of packaged `description` UTF-8 bytes is
+   bounded by `check_description_budget.py`. Raising the ceiling is a reviewed
+   diff. This is necessary and insufficient.
+2. **Estate-wide harness cap** — Claude Code (and similar) apply a total
+   description budget across *everything installed*. No single package can observe
+   or guarantee estate headroom. `.github/scripts/check_loaded_descriptions.py`
+   compares a live harness capture when provided; without a capture it reports
+   `LIVE_BLOCKED` and must not be narrated as a pass.
+
+**v5.0.0 recorded +1,389 description bytes** and therefore **did not meet** the
+plan's "end net-negative" acceptance line. That miss is historical fact on the
+immutable tag. Successor releases must either:
+
+- shrink packaged description bytes below the pre-v5 baseline **and** show estate
+  headroom via a capture receipt; or
+- publish an explicit owner amendment retiring estate net-negative as a *release
+  gate* while retaining the package-local ceiling as a *CI gate*.
+
+Silent reinterpretation of "net-negative" as "package ceiling held" is forbidden.
+
+## AMENDMENT 2026-08-07 — generated routing is governing; forbidden surfaces
+
+**Decision (issue #104 §1):** `ROUTING.md` remains a governing design commitment.
+It is generated solely from `metadata.hands-to` and byte-verified in CI via
+`sync_skill_surfaces.py`.
+
+**Forbidden hand-authored routing surfaces** (must not reappear as live
+instructions):
+
+- any central member/pair table inside an entry-point SKILL body;
+- harness install prose that tells an agent to start with a deleted seat;
+- repository description / README live diagrams that name "Epistemic router" as
+  the current seat (historical version notes remain allowed when framed).
+
+**Allowed:** per-skill `metadata.hands-to`; generated `ROUTING.md`; historical
+docs under version framing; craft doctrine read on demand (not a firing skill).

@@ -4,15 +4,15 @@
 Drift disease this prevents: **per-item discipline with no aggregate check.**
 
 A skill's ``description`` is the only text that governs whether it fires. The
-harness caps the *total* description bytes it will carry across everything
-installed, and when that cap is exceeded it silently drops descriptions. A
-skill whose description is dropped cannot fire on description match at all --
-**it is functionally uninstalled, and no error is emitted anywhere.** Nothing
-in the package fails, nothing in CI goes red, and the seat is simply gone.
+harness caps the *total* UTF-8 description bytes it will carry across everything
+installed, and when that cap is exceeded it silently drops descriptions. A skill
+whose description is dropped cannot fire on description match at all -- **it is
+functionally uninstalled, and no error is emitted anywhere.** Nothing in the
+package fails, nothing in CI goes red, and the seat is simply gone.
 
-Adding a skill is therefore a *transfer*, not an addition: it displaces
-roughly its own byte-weight of some other skill's ability to fire, possibly in
-a different package entirely.
+Adding a skill is therefore a *transfer*, not an addition: it displaces roughly
+its own byte-weight of some other skill's ability to fire, possibly in a different
+package entirely.
 
 This is not hypothetical. Measured on a live estate 2026-08-06 by reversible
 manipulation -- adding probes, then removing them, then removing unrelated
@@ -27,25 +27,25 @@ commands -- with the count of blank descriptions as the observable::
 v5.0.0 shipped **+1,389 net description bytes** and knocked two of its own new
 skills (``triage``, ``watch``) out of the firing set until unrelated commands
 were deleted elsewhere on the machine. Every individual description had been
-held inside sibling range; the *sum* was never checked. That is the exact
-defect class this package exists to catch, committed by the package itself.
+held inside sibling range; the *sum* was never checked. That is the exact defect
+class this package exists to catch, committed by the package itself.
 
 What this check can and cannot do
 ---------------------------------
 
 It cannot see the harness cap -- that is a property of the whole installed
 estate, which no single package can observe or control. What it *can* do, and
-does, is bound this package's own contribution to a number that was
-deliberately chosen and is visible in a diff whenever it changes.
+does, is bound this package's own contribution to a number that was deliberately
+chosen and is visible in a diff whenever it changes.
 
 ``CEILING_BYTES`` is set to the measured total at the time of writing, so any
 increase fails closed and must be paid for explicitly: either shorten another
-description, or raise the constant in the same commit and say in the message
-what the added bytes bought. Raising it is allowed. Raising it *silently* is
-what this prevents.
+description, or raise the constant in the same commit and say in the message what
+the added bytes bought. Raising it is allowed. Raising it *silently* is what this
+prevents.
 
-If the total drops well below the ceiling, lower the constant to match. A
-ceiling with slack quietly re-permits the growth it was installed to stop.
+If the total drops well below the ceiling, lower the constant to match. A ceiling
+with slack quietly re-permits the growth it was installed to stop.
 """
 from __future__ import annotations
 
@@ -58,14 +58,21 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 SKILLS_ROOT = REPO_ROOT / "plugins" / "epistemic-skills" / "skills"
 
 # The recorded budget: the sum of the 14 packaged v5.0.0 skills' description
-# values, measured 2026-08-06 as the harness sees them -- YAML-resolved, so a
-# quoted scalar is charged for its content and not its delimiters. Verified
-# per-skill against pyyaml with zero mismatches; pyyaml is the oracle for that
-# check but not a runtime dependency of this one.
+# values, measured as the harness sees them -- YAML-resolved and then UTF-8
+# encoded, so a quoted scalar is charged for its content and not its
+# delimiters, while non-ASCII characters are charged for their real byte width.
+# Verified per-skill against pyyaml with zero mismatches; pyyaml is the oracle for
+# that check but not a runtime dependency of this one.
+#
+# Originally recorded as 8200 under a character-count bug. Corrected to 8230 on
+# 2026-08-07 when the guard switched to UTF-8 bytes: the packaged descriptions
+# themselves did not grow; twelve skills contain non-ASCII code points that cost
+# two UTF-8 bytes each. Raising the ceiling here records the true harness cost of
+# the already-shipped text — it does not authorize further growth.
 #
 # Changing this number is a reviewed act: it must appear in a diff with a
 # justification, which is the entire point of the check.
-CEILING_BYTES = 8200
+CEILING_BYTES = 8230
 
 FRONTMATTER = re.compile(r"\A---\r?\n(.*?)\r?\n---", re.S)
 # `description:` runs until the next top-level YAML key or end of frontmatter,
@@ -79,13 +86,13 @@ def unquote_scalar(value: str) -> str:
 
     This matters, and is not pedantry. Five of the packaged descriptions are
     quoted. Counting the raw frontmatter text charges them for their delimiters
-    and escapes -- 11 bytes across the package -- so the budget would not mean
-    what it claims, and merely *unquoting* a description would look like 2 bytes
-    of new headroom when nothing was actually freed.
+    and escapes, so the budget would not mean what it claims, and merely
+    *unquoting* a description would look like freed headroom when nothing was
+    actually freed.
 
-    Done in stdlib on purpose: every other check in this directory runs on a
-    bare interpreter, and a gate that needs a dependency installed is a gate
-    that can silently fail to run.
+    Done in stdlib on purpose: every other check in this directory runs on a bare
+    interpreter, and a gate that needs a dependency installed is a gate that can
+    silently fail to run.
     """
     if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
         inner = value[1:-1]
@@ -105,7 +112,7 @@ class BudgetError(ValueError):
 
 
 def description_bytes(text: str, skill: str) -> int:
-    """Length of a SKILL.md's description value, failing closed on any defect."""
+    """UTF-8 byte width of a SKILL.md description, failing closed on defects."""
     front = FRONTMATTER.match(text)
     if front is None:
         raise BudgetError("MALFORMED_FRONTMATTER", f"{skill}/SKILL.md has no leading --- block")
@@ -117,11 +124,11 @@ def description_bytes(text: str, skill: str) -> int:
         # A blank description is the failure this check exists to detect, so it
         # is never silently counted as zero cost.
         raise BudgetError("EMPTY_DESCRIPTION", f"{skill}/SKILL.md description is empty; it cannot fire")
-    return len(value)
+    return len(value.encode("utf-8"))
 
 
 def measure(skills_root: Path) -> dict[str, int]:
-    """Ground truth: every skill directory carrying a SKILL.md, mapped to its bytes."""
+    """Ground truth: every skill directory carrying a SKILL.md, mapped to bytes."""
     if not skills_root.is_dir():
         raise BudgetError("MISSING_SURFACE", f"{skills_root} is not a directory")
     sizes: dict[str, int] = {}
@@ -225,23 +232,38 @@ def run_self_test() -> int:
         else:
             failures.append(f"planted {expected} was not detected")
 
-    # Positive control: the parser must actually measure a well-formed skill,
-    # so the failures above are real detections and not a parser that rejects
+    # Positive control: the parser must actually measure a well-formed skill, so
+    # the failures above are real detections and not a parser that rejects
     # everything it is handed.
-    good = "---\nname: alpha\ndescription: Use when the thing happens.\nmodel: sonnet\n---\nbody\n"
+    plain_value = "Use when the thing happens."
+    good = f"---\nname: alpha\ndescription: {plain_value}\nmodel: sonnet\n---\nbody\n"
     measured = description_bytes(good, "alpha-skill")
-    if measured != len("Use when the thing happens."):
+    if measured != len(plain_value.encode("utf-8")):
         failures.append(f"positive control mis-measured a valid description: {measured}")
 
     # A folded multi-line description must be counted in full, not truncated at
     # its first line -- undercounting would let the real total drift above the
     # ceiling while the gate reported green.
     folded = "---\nname: alpha\ndescription: first line\n  second line\nmodel: sonnet\n---\n"
-    if description_bytes(folded, "alpha-skill") <= len("first line"):
+    if description_bytes(folded, "alpha-skill") <= len("first line".encode("utf-8")):
         failures.append("a multi-line description was truncated at its first line")
 
-    # Quoted scalars must be charged for their content, not their delimiters,
-    # or unquoting a description would read as freed budget.
+    # UTF-8 byte width is load-bearing. `é` is one Python character but two UTF-8
+    # bytes; a character count would silently undercharge the actual harness
+    # budget.
+    unicode_value = "Use when café state matters."
+    unicode_skill = f"---\nname: alpha\ndescription: {unicode_value}\n---\n"
+    unicode_measured = description_bytes(unicode_skill, "alpha-skill")
+    if unicode_measured != len(unicode_value.encode("utf-8")):
+        failures.append(
+            f"UTF-8 control measured {unicode_measured}, expected "
+            f"{len(unicode_value.encode('utf-8'))} bytes"
+        )
+    if unicode_measured == len(unicode_value):
+        failures.append("UTF-8 control collapsed to character count")
+
+    # Quoted scalars must be charged for their content, not their delimiters, or
+    # unquoting a description would read as freed budget.
     quoted_probes = {
         '"Use when the thing happens."': "Use when the thing happens.",
         "'Use when the thing happens.'": "Use when the thing happens.",
@@ -260,7 +282,7 @@ def run_self_test() -> int:
         for failure in failures:
             print(f"SELF-TEST FAILURE: {failure}", file=sys.stderr)
         return 1
-    print("description budget self-test ok: planted overruns and parse defects all failed closed")
+    print("description budget self-test ok: planted overruns, UTF-8 width, and parse defects all passed")
     return 0
 
 

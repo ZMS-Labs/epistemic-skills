@@ -141,15 +141,29 @@ jobs:
       - name: DCO policy unit tests
         run: python .github/scripts/test_check_dco.py
       - name: Skill inventory contract
-        run: python .github/scripts/check_skill_inventory.py
+        run: |
+          python .github/scripts/check_skill_inventory.py --self-test
+          python .github/scripts/check_skill_inventory.py
       - name: Skill surface synchronization
         run: python .github/scripts/sync_skill_surfaces.py --check
+      - name: Sentinel fixture corpus
+        run: |
+          python .github/scripts/score_sentinels.py --self-test
+          python .github/scripts/score_sentinels.py
       - name: No phantom skill references in routing surfaces
         run: python .github/scripts/check_no_phantom_skills.py
       - name: Description budget self-test
         run: python .github/scripts/check_description_budget.py --self-test
       - name: Aggregate skill description byte ceiling
         run: python .github/scripts/check_description_budget.py
+      - name: Public-content gate
+        run: |
+          python .github/scripts/check_public_content.py --self-test
+          python .github/scripts/check_public_content.py
+      - name: Loaded-description inventory helper
+        run: |
+          python .github/scripts/check_loaded_descriptions.py --self-test
+          python .github/scripts/check_loaded_descriptions.py
       - name: Compile new Python
         run: |
           python -m py_compile \
@@ -159,6 +173,9 @@ jobs:
             .github/scripts/check_skill_inventory.py \
             .github/scripts/check_no_phantom_skills.py \
             .github/scripts/check_description_budget.py \
+            .github/scripts/check_public_content.py \
+            .github/scripts/check_loaded_descriptions.py \
+            .github/scripts/score_sentinels.py \
             .github/scripts/sync_skill_surfaces.py \
             plugins/epistemic-skills/evals/epistemic-flexibility/validate_trace.py \
             plugins/epistemic-skills/evals/epistemic-flexibility/run_tests.py \

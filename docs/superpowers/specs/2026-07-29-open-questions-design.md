@@ -159,7 +159,7 @@ proceed on defaults instead).
 2. **Release PR**: version bump to 3.1.0 across all manifest surfaces, per
    RELEASING.md (version alignment happens in the release PR, not the
    feature PR).
-3. **Fleet layering deferred to an issue**: zms-homelab carries uncommitted
+3. **Fleet layering deferred to an issue**: <private-fleet-repo> carries uncommitted
    work on another branch (cross-repo safety blocks touching it), and the
    fleet layer is already five skills behind the public collection
    (helix, write-goal, outsource, continuity-verify, decision-ledger). The

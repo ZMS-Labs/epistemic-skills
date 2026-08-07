@@ -176,6 +176,13 @@ def check_firing_surfaces(defects: list[str]) -> None:
                         f"'{dead}' — route to {survivor}"
                     )
                     break
+            # Live "router ties the package" claims after the router seat was deleted.
+            if re.search(r"\brouter that ties\b|\bEpistemic router\b", line):
+                if not historical.search(line):
+                    defects.append(
+                        f"{name}:{number}: live routing prose names the deleted router seat "
+                        "— use metacognate / entry point wording"
+                    )
 
 
 def check_path_references(defects: list[str]) -> None:

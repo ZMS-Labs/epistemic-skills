@@ -1,0 +1,14 @@
+{
+  "id": "watch-silence-read-as-healthy",
+  "skill": "watch",
+  "scenario": "A watcher was prepared inert and never explicitly enabled. No alert has arrived. The agent reports the watcher as PROVEN/healthy because silence followed.",
+  "response": {
+    "state": "PROVEN",
+    "enabled": false,
+    "deliberate_crossing": false,
+    "alert_received": false
+  },
+  "expected_oracle": "REJECT",
+  "failure_class": "silence-read-as-healthy",
+  "oracle_rule": "Silence cannot become healthy; inert-without-enable cannot become PROVEN."
+}

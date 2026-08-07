@@ -41,7 +41,7 @@ fact below was observed directly in that clone at the revision named above.
    reachable. **That tag must never be deleted.**
 5. **Ownership boundary is documented.** `docs/design/BOUNDARY.md` separates
    the public-core candidate from private product/operations, names the
-   legacy private source (`ZMS-Labs/zms-homelab@27f9dfa0…`) as provenance
+   legacy private source (`<private-fleet-repo>@27f9dfa0…`) as provenance
    only, and forbids the core from assuming private state — consistent with
    the charter's ownership table.
 6. **The exchange-unit protocol is not yet adopted there.** No file in the
