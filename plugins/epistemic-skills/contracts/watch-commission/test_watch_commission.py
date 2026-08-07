@@ -136,6 +136,21 @@ def test_non_proven_record_cannot_claim_active_watching() -> None:
     assert_rejected(record, "INERT_MUST_BE_DISABLED")
 
 
+def test_skill_surface_names_commission_boundary() -> None:
+    text = (ROOT.parents[1] / "skills" / "watch" / "SKILL.md").read_text(
+        encoding="utf-8"
+    )
+    required = [
+        "commission-watch",
+        "The skill is not the external observer",
+        "watch-commission@1",
+        "BLOCKED",
+        "NO_EXECUTION_SUBSTRATE",
+    ]
+    missing = [needle for needle in required if needle not in text]
+    assert missing == [], missing
+
+
 def test_committed_examples_match_expected_oracles() -> None:
     example_dir = ROOT / "examples"
     for path in sorted(example_dir.glob("*.json")):
