@@ -4,6 +4,7 @@
 **Status:** exploratory draft (Approach A recommended; not approved)  
 **Upstream:** [scroobius-pip/fudge-design-md](https://github.com/scroobius-pip/fudge-design-md) (MIT) · [design.withfudge.com](https://design.withfudge.com/)  
 **Future-agent pick-up:** [`docs/handoffs/2026-08-06-fudge-design-md-leverage.md`](../../handoffs/2026-08-06-fudge-design-md-leverage.md)  
+**Stack alignment:** [`2026-08-07-visual-design-stack-alignment.md`](2026-08-07-visual-design-stack-alignment.md) (Fudge + Claude Design + `frontend-design` + Impeccable)  
 **Sibling note:** `epistemic-calibration` remains no-UI by design; this proposal does not add a surface there.
 
 ## What Fudge DESIGN.md is

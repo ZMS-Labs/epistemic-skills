@@ -32,6 +32,30 @@ DESIGN.md improves acceptance rates — UAT still owns acceptance.
 | Acceptance of the built surface | `evidence-locked-uat` | Judges the rendered surface; does not pick the reference |
 | High-blast-radius product claims | `gauntlet` | Adversarial review when stakes require it |
 
+## Stack alignment (Fudge + Claude Design + frontend-design + Impeccable)
+
+These layers are complementary when **ordered** and **harness-aware**; they are
+not competing authorities for the same `DESIGN.md` slot. Full spec:
+[`docs/superpowers/specs/2026-08-07-visual-design-stack-alignment.md`](../../../../docs/superpowers/specs/2026-08-07-visual-design-stack-alignment.md).
+
+| Layer | Role |
+|---|---|
+| **Claude Design** (product) | Optional explore/handoff on Claude harness — canvas, org design system, export; [Help Center](https://support.claude.com/en/articles/14604416-get-started-with-claude-design) |
+| **`/design-login` + `/design-sync`** | Claude Code only (Anthropic API): sync **React** design system with Claude Design — [commands](https://code.claude.com/docs/en/commands); **not** on Bedrock/Foundry |
+| **Fudge guide** (link or thin cite) | Reference *seed* — character, hierarchy, known gaps |
+| **Project `DESIGN.md` + `PRODUCT.md`** | Build-time truth when [Impeccable](https://impeccable.style) (or equivalent) is installed |
+| **Claude `frontend-design`** | Implementation craft — not the Claude Design canvas; usually via Impeccable |
+| **Impeccable commands** | Optional passes (`audit`, `normalize`, `polish`, …) before acceptance |
+| **This craft** | Gate: direction pinned before pixels; handoff bundle ≠ PASS |
+| **`evidence-locked-uat`** | Acceptance after build |
+
+**Cursor / non-Claude-Design harnesses:** Fudge pin → repo `DESIGN.md` →
+Impeccable/`frontend-design` → UAT. Do not assume `/design-sync` or Claude
+Design MCP.
+
+Do not add Impeccable, Claude Design, or the full Fudge tree to
+`epistemic-skills`; estate description bytes are rivalrous (v5 D8).
+
 ## Core moves
 
 1. **Pin one guide.** Before implementing human-facing layout, place or link a

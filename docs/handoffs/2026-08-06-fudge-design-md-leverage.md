@@ -4,6 +4,7 @@
 **Branch:** `cursor/fudge-design-md-leverage-b285`  
 **Draft PR:** [#100](https://github.com/ZMS-Labs/epistemic-skills/pull/100)  
 **Design spec:** [`docs/superpowers/specs/2026-08-06-fudge-design-md-leverage.md`](../superpowers/specs/2026-08-06-fudge-design-md-leverage.md)  
+**Stack alignment (Fudge + Claude Design + frontend-design + Impeccable):** [`docs/superpowers/specs/2026-08-07-visual-design-stack-alignment.md`](../superpowers/specs/2026-08-07-visual-design-stack-alignment.md)  
 **Draft craft stub:** [`plugins/epistemic-skills/reference/craft/visual-design-md.md`](../../plugins/epistemic-skills/reference/craft/visual-design-md.md)  
 **Upstream:** [scroobius-pip/fudge-design-md](https://github.com/scroobius-pip/fudge-design-md) (MIT)  
 **Status:** recommendations recorded; **not operator-approved**; no implementation beyond this exploratory PR
@@ -17,6 +18,13 @@ approves the design and the exploratory markers are removed.
 **Ship Approach A only:** thin craft doctrine under
 `plugins/epistemic-skills/reference/craft/visual-design-md.md`, pin Fudge
 guides **by link**, do not vendor the collection, do not add a routed skill.
+
+**Stack (2026-08-07):** Treat Fudge as the *reference seed*; **Claude Design**
+(canvas + org design system + Claude Code handoff/`/design-sync` on API) as
+*optional Claude-harness exploration* — distinct from the **`frontend-design`**
+skill; Impeccable as *optional per-project* `PRODUCT.md` / `DESIGN.md` + commands.
+See the alignment spec. Do **not** bundle Impeccable or Claude Design into
+`epistemic-skills` (D8 budget).
 
 ### Why
 
