@@ -1,0 +1,98 @@
+name: pr110-verification-receipt
+
+"on":
+  push:
+    branches:
+      - chatgpt/practical-agency-manifest
+    paths:
+      - ".github/workflows/pr110-verification-receipt.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  verify-and-record:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Check out the exact candidate with push credentials
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: chatgpt/practical-agency-manifest
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Execute and persist the exact candidate gate
+        shell: bash
+        run: |
+          set -uo pipefail
+          candidate_sha="$(git rev-parse HEAD)"
+          root="docs/verification"
+          work="${root}/pr110-commission-watch.tmp"
+          mkdir -p "${root}"
+          : > "${work}"
+          printf '# PR #110 exact-candidate verification\n\n' >> "${work}"
+          printf -- '- Candidate SHA: `%s`\n' "${candidate_sha}" >> "${work}"
+          printf -- '- Runner: `ubuntu-24.04`\n' >> "${work}"
+          printf -- '- Python: `%s`\n\n' "$(python --version 2>&1)" >> "${work}"
+
+          failed=0
+          run_check() {
+            name="$1"
+            shift
+            printf '\n## %s\n\n```text\n' "${name}" >> "${work}"
+            "$@" >> "${work}" 2>&1
+            status=$?
+            printf '\n[exit=%s]\n```\n' "${status}" >> "${work}"
+            if [ "${status}" -ne 0 ]; then
+              failed=1
+            fi
+          }
+
+          run_check "watch commission semantic and schema contract" \
+            python plugins/epistemic-skills/contracts/watch-commission/test_watch_commission.py
+          run_check "compile watch verifier" \
+            python -m py_compile plugins/epistemic-skills/contracts/watch-commission/verify_watch_commission.py
+          run_check "sentinel self-test" \
+            python .github/scripts/score_sentinels.py --self-test
+          run_check "sentinel corpus" \
+            python .github/scripts/score_sentinels.py
+          run_check "description budget self-test" \
+            python .github/scripts/check_description_budget.py --self-test
+          run_check "description budget report" \
+            python .github/scripts/check_description_budget.py --report
+          run_check "description budget gate" \
+            python .github/scripts/check_description_budget.py
+          run_check "JSON artifacts" \
+            python .github/scripts/check_json_artifacts.py
+          run_check "phantom skill references" \
+            python .github/scripts/check_no_phantom_skills.py
+          run_check "skill inventory" \
+            python .github/scripts/check_skill_inventory.py
+          run_check "generated surfaces" \
+            python .github/scripts/sync_skill_surfaces.py --check
+          run_check "diff whitespace" git diff --check
+          run_check "canonical clean-room package gate" \
+            bash .github/scripts/cleanroom_ci.sh "${candidate_sha}"
+
+          if [ "${failed}" -eq 0 ]; then
+            outcome="PASS"
+            destination="${root}/pr110-commission-watch-PASS.md"
+          else
+            outcome="FAIL"
+            destination="${root}/pr110-commission-watch-FAIL.md"
+          fi
+          printf '\n# Outcome: %s\n' "${outcome}" >> "${work}"
+          mv "${work}" "${destination}"
+
+          git config user.name "SternOne"
+          git config user.email "89846440+SternOne@users.noreply.github.com"
+          git add "${destination}"
+          git commit -m "test: record PR #110 exact-candidate ${outcome}" \
+            -m "Persist the exact candidate SHA, runner, command output, and exit status for the commission-watch contract, package invariants, and canonical clean-room gate." \
+            -m "Signed-off-by: SternOne <89846440+SternOne@users.noreply.github.com>"
+          git push origin HEAD:chatgpt/practical-agency-manifest
+          exit "${failed}"
