@@ -22,25 +22,37 @@
   },
   "destination": {
     "ref": "recipient:example",
-    "reachable": true
+    "reachable": true,
+    "reachability_receipt_ref": "fixture://receipt/destination-001"
   },
   "external_observer": {
+    "substrate_kind": null,
     "substrate": null,
     "mechanism_ref": null,
+    "persistence_receipt_ref": null,
     "persistent_outside_session": false,
     "enabled": false
   },
   "kill_switch": {
     "procedure_ref": null,
-    "exercised": false
+    "exercised": false,
+    "exercise_receipt_ref": null
   },
   "proof": {
     "authorized_by": null,
+    "authorization_ref": null,
     "safe_crossing": null,
     "production_path": false,
     "bound_crossed": false,
     "alert_received": false,
-    "received_at": null
+    "received_at": null,
+    "alert_receipt_ref": null
+  },
+  "failure": {
+    "kind": null,
+    "detail": null,
+    "observed_at": null,
+    "receipt_ref": null
   },
   "state": "BLOCKED",
   "block_reason": "NO_EXECUTION_SUBSTRATE",
