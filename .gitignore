@@ -11,3 +11,6 @@ artifacts/uat/**/screenshots/
 .epistemic-events/
 outputs/epistemic-events/
 pilot/runs/
+
+# Deterministic OpenAI/ChatGPT archives are CI artifacts, not source.
+dist/openai/

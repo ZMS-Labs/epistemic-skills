@@ -1,0 +1,62 @@
+name: openai-bundles
+
+"on":
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".agents/plugins/marketplace.json"
+      - "plugins/epistemic-skills/**"
+      - "packaging/openai/**"
+      - ".github/scripts/build_openai_bundles.py"
+      - ".github/scripts/test_build_openai_bundles.py"
+      - ".github/workflows/openai-bundles.yml"
+      - "docs/CHATGPT-AND-OPENAI-PACKAGING.md"
+  push:
+    branches: [main]
+    paths:
+      - ".agents/plugins/marketplace.json"
+      - "plugins/epistemic-skills/**"
+      - "packaging/openai/**"
+      - ".github/scripts/build_openai_bundles.py"
+      - ".github/scripts/test_build_openai_bundles.py"
+      - ".github/workflows/openai-bundles.yml"
+      - "docs/CHATGPT-AND-OPENAI-PACKAGING.md"
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: openai-bundles-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out the exact revision without stored credentials
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Builder unit tests
+        run: python .github/scripts/test_build_openai_bundles.py
+      - name: Validate the live canonical package
+        run: python .github/scripts/build_openai_bundles.py --check --source-revision "$GITHUB_SHA"
+      - name: Build revision-bound bundles
+        run: python .github/scripts/build_openai_bundles.py --out-dir dist/openai --source-revision "$GITHUB_SHA"
+      - name: Upload generated bundles
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: epistemic-skills-openai-${{ github.sha }}
+          path: |
+            dist/openai/epistemic-skills-chatgpt-skill.zip
+            dist/openai/epistemic-skills-openai-plugin.zip
+            dist/openai/SHA256SUMS
+          if-no-files-found: error
+          retention-days: 90
