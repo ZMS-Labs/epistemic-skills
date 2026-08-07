@@ -36,6 +36,22 @@ BLOCK_REASONS = {
     "NO_SAFE_PROOF_CROSSING",
     "PROBE_UNAVAILABLE",
 }
+FORBIDDEN_EVIDENCE_PREFIXES = (
+    "self-asserted:",
+    "memory:",
+    "chat:",
+    "session:",
+    "prompt:",
+)
+PROMPT_TIME_MECHANISM_MARKERS = (
+    "/skills/",
+    "\\skills\\",
+    "skill.md",
+    "chat:",
+    "session:",
+    "prompt:",
+    "memory:",
+)
 
 TOP_LEVEL_FIELDS = {
     "schema",
@@ -48,6 +64,7 @@ TOP_LEVEL_FIELDS = {
     "kill_switch",
     "proof",
     "failure",
+    "block_evidence",
     "state",
     "block_reason",
     "reprove_after",
@@ -80,6 +97,7 @@ OBJECT_FIELDS = {
         "alert_receipt_ref",
     },
     "failure": {"kind", "detail", "observed_at", "receipt_ref"},
+    "block_evidence": {"detail", "observed_at", "receipt_ref"},
     "handoff": {"on_crossing"},
 }
 
@@ -156,6 +174,18 @@ def _require_string_list(
     return value
 
 
+def _validate_evidence_ref(value: str | None, path: str, errors: list[str]) -> None:
+    if not _is_non_empty_string(value):
+        return
+    lowered = value.strip().lower()
+    if lowered.startswith(FORBIDDEN_EVIDENCE_PREFIXES):
+        _error(
+            errors,
+            "INVALID_EVIDENCE_REF",
+            f"{path} cannot use prompt/session memory or self-assertion as evidence",
+        )
+
+
 def _proof_absent(proof: dict[str, Any] | None) -> bool:
     if proof is None:
         return False
@@ -208,6 +238,26 @@ def _failure_complete(failure: dict[str, Any] | None) -> bool:
     )
 
 
+def _block_evidence_empty(block_evidence: dict[str, Any] | None) -> bool:
+    if block_evidence is None:
+        return False
+    return (
+        not _is_non_empty_string(block_evidence.get("detail"))
+        and not _is_non_empty_string(block_evidence.get("observed_at"))
+        and not _is_non_empty_string(block_evidence.get("receipt_ref"))
+    )
+
+
+def _block_evidence_complete(block_evidence: dict[str, Any] | None) -> bool:
+    if block_evidence is None:
+        return False
+    return (
+        _is_non_empty_string(block_evidence.get("detail"))
+        and _is_non_empty_string(block_evidence.get("observed_at"))
+        and _is_non_empty_string(block_evidence.get("receipt_ref"))
+    )
+
+
 def _external_identity_complete(observer: dict[str, Any] | None) -> bool:
     if observer is None:
         return False
@@ -253,6 +303,7 @@ def validate_record(record: dict[str, Any]) -> list[str]:
     kill_switch = _require_object(record, "kill_switch", errors)
     proof = _require_object(record, "proof", errors)
     failure = _require_object(record, "failure", errors)
+    block_evidence = _require_object(record, "block_evidence", errors)
     handoff = _require_object(record, "handoff", errors)
 
     if subject is not None:
@@ -307,6 +358,14 @@ def validate_record(record: dict[str, Any]) -> list[str]:
             "INVALID_SUBSTRATE_KIND",
             f"external_observer.substrate_kind must be one of {sorted(SUBSTRATE_KINDS)}",
         )
+    if _is_non_empty_string(mechanism_ref):
+        lowered_mechanism = mechanism_ref.strip().lower()
+        if any(marker in lowered_mechanism for marker in PROMPT_TIME_MECHANISM_MARKERS):
+            _error(
+                errors,
+                "PROMPT_TIME_MECHANISM_FORBIDDEN",
+                "external_observer.mechanism_ref resolves to prompt/session instructions, not an external mechanism",
+            )
 
     procedure_ref = _require_string_or_null(
         kill_switch, "procedure_ref", "kill_switch", errors
@@ -342,6 +401,16 @@ def validate_record(record: dict[str, Any]) -> list[str]:
             f"failure.kind must be one of {sorted(FAILURE_KINDS)} or null",
         )
 
+    block_detail = _require_string_or_null(
+        block_evidence, "detail", "block_evidence", errors
+    )
+    block_observed_at = _require_string_or_null(
+        block_evidence, "observed_at", "block_evidence", errors
+    )
+    block_receipt = _require_string_or_null(
+        block_evidence, "receipt_ref", "block_evidence", errors
+    )
+
     on_crossing = _require_string_list(handoff, "on_crossing", "handoff", errors)
     if on_crossing is not None and any(not item.strip() for item in on_crossing):
         _error(errors, "INVALID_VALUE", "handoff.on_crossing entries must be non-empty")
@@ -356,6 +425,28 @@ def validate_record(record: dict[str, Any]) -> list[str]:
     reprove_after = record.get("reprove_after")
     if reprove_after is not None and not isinstance(reprove_after, str):
         _error(errors, "INVALID_TYPE", "reprove_after must be a string or null")
+
+    for path, value in (
+        ("destination.reachability_receipt_ref", destination_receipt),
+        ("external_observer.persistence_receipt_ref", persistence_receipt),
+        ("kill_switch.exercise_receipt_ref", exercise_receipt),
+        ("proof.authorization_ref", authorization_ref),
+        ("proof.alert_receipt_ref", alert_receipt),
+        ("failure.receipt_ref", failure_receipt),
+        ("block_evidence.receipt_ref", block_receipt),
+    ):
+        _validate_evidence_ref(value, path, errors)
+
+    if substrate_kind == "fixture":
+        scope_text = " ".join(coverage_limits).lower()
+        if "fixture" not in scope_text or not any(
+            marker in scope_text for marker in ("production", "test", "isolated")
+        ):
+            _error(
+                errors,
+                "FIXTURE_SCOPE_REQUIRED",
+                "fixture observers must disclose test/isolated scope and production limits",
+            )
 
     state = record.get("state")
     if state not in STATES:
@@ -434,18 +525,38 @@ def validate_record(record: dict[str, Any]) -> list[str]:
     if state == "DECLARED":
         if enabled is not False:
             _error(errors, "DECLARED_MUST_BE_DISABLED", "DECLARED observer must be disabled")
+        if _is_non_empty_string(mechanism_ref) or persistent is True or _is_non_empty_string(
+            persistence_receipt
+        ):
+            _error(
+                errors,
+                "DECLARED_MECHANISM_FORBIDDEN",
+                "DECLARED cannot hide an externally prepared mechanism; use BLOCKED or INERT",
+            )
         if not _proof_absent(proof):
             _error(errors, "PROOF_FORBIDDEN", "DECLARED cannot carry a proof attempt")
         if not _failure_empty(failure):
             _error(errors, "FAILURE_ONLY_VALID_FOR_SUSPECT", "DECLARED cannot carry a live failure")
+        if not _block_evidence_empty(block_evidence):
+            _error(
+                errors,
+                "BLOCK_EVIDENCE_FORBIDDEN",
+                "block_evidence is only valid for BLOCKED",
+            )
 
     elif state == "BLOCKED":
         if enabled is not False:
-            _error(errors, "BLOCKED_MUST_BE_DISABLED", "BLOCKED observer must be disabled")
+            _error(errors, "BLOCKED_MUST_BE_DISABLED", "BLOCKED observer cannot be enabled")
         if not _proof_absent(proof):
             _error(errors, "PROOF_FORBIDDEN", "BLOCKED cannot carry a proof attempt")
         if not _failure_empty(failure):
             _error(errors, "FAILURE_ONLY_VALID_FOR_SUSPECT", "BLOCKED cannot carry a live failure")
+        if not _block_evidence_complete(block_evidence):
+            _error(
+                errors,
+                "BLOCK_EVIDENCE_REQUIRED",
+                "BLOCKED requires detail, observed_at, and an external evidence receipt",
+            )
 
         mismatch = False
         if block_reason == "NO_EXECUTION_SUBSTRATE":
@@ -469,11 +580,16 @@ def validate_record(record: dict[str, Any]) -> list[str]:
         elif block_reason == "NO_KILL_SWITCH":
             mismatch = _is_non_empty_string(procedure_ref) or exercised is True
         elif block_reason == "KILL_SWITCH_UNPROVEN":
-            mismatch = not _is_non_empty_string(procedure_ref) or exercised is True
+            mismatch = (
+                not _external_identity_complete(observer)
+                or persistent is not True
+                or not _is_non_empty_string(persistence_receipt)
+                or not _is_non_empty_string(procedure_ref)
+                or exercised is True
+                or _is_non_empty_string(exercise_receipt)
+            )
         elif block_reason == "NO_SAFE_PROOF_CROSSING":
             mismatch = _is_non_empty_string(safe_crossing)
-        elif block_reason == "PROBE_UNAVAILABLE":
-            mismatch = not any(item.strip() for item in (failure_modes or []) + coverage_limits)
         if mismatch:
             _error(
                 errors,
@@ -482,6 +598,12 @@ def validate_record(record: dict[str, Any]) -> list[str]:
             )
 
     elif state == "INERT":
+        if not _block_evidence_empty(block_evidence):
+            _error(
+                errors,
+                "BLOCK_EVIDENCE_FORBIDDEN",
+                "block_evidence is only valid for BLOCKED",
+            )
         if not _external_identity_complete(observer):
             _error(
                 errors,
@@ -518,6 +640,12 @@ def validate_record(record: dict[str, Any]) -> list[str]:
             )
 
     elif state == "PROVEN":
+        if not _block_evidence_empty(block_evidence):
+            _error(
+                errors,
+                "BLOCK_EVIDENCE_FORBIDDEN",
+                "block_evidence is only valid for BLOCKED",
+            )
         if not _external_identity_complete(observer):
             _error(
                 errors,
@@ -574,6 +702,12 @@ def validate_record(record: dict[str, Any]) -> list[str]:
             _error(errors, "FAILURE_ONLY_VALID_FOR_SUSPECT", "PROVEN cannot carry a live failure")
 
     elif state == "SUSPECT":
+        if not _block_evidence_empty(block_evidence):
+            _error(
+                errors,
+                "BLOCK_EVIDENCE_FORBIDDEN",
+                "block_evidence is only valid for BLOCKED",
+            )
         if not _external_identity_complete(observer):
             _error(
                 errors,
@@ -586,6 +720,11 @@ def validate_record(record: dict[str, Any]) -> list[str]:
                 "SUSPECT_FAILURE_REQUIRED",
                 "SUSPECT requires a receipted observed failure",
             )
+
+    # Keep variables bound to their typed validations even where the state rules
+    # use the helper predicates; this prevents silently accepting malformed
+    # block-evidence fields merely because a state does not consume them.
+    _ = (block_detail, block_observed_at)
 
     return errors
 
