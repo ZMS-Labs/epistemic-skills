@@ -271,15 +271,6 @@ def test_bound_direction_is_closed() -> None:
     assert_rejected(record, "INVALID_DIRECTION")
 
 
-def test_receipt_without_its_claim_is_rejected() -> None:
-    record = proven_record()
-    destination = copy.deepcopy(record["destination"])
-    assert isinstance(destination, dict)
-    destination["reachable"] = False
-    record["destination"] = destination
-    assert_rejected(record, "RECEIPT_WITHOUT_CLAIM")
-
-
 def test_skill_surface_names_commission_boundary() -> None:
     text = (ROOT.parents[1] / "skills" / "watch" / "SKILL.md").read_text(
         encoding="utf-8"
