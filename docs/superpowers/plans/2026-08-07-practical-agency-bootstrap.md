@@ -32,8 +32,10 @@ The seed is useful but materially short of the approved driver:
   merge/rebase commits are allowed, and merged head branches are retained.
 
 Every task below modifies this seed in place. The root
-`skills/manifest/SKILL.md` remains the sole canonical skill body and all harness
-metadata must point at `./skills`.
+`skills/manifest/SKILL.md` remains the sole canonical skill body. Each harness
+metadata surface uses its native schema; only schemas with an explicit skill-path
+field point at `./skills`. No surface may introduce a copied skill body or
+hand-maintained inventory.
 
 - Project/repository: **Practical Agency** / `practical-agency`.
 - Sole v1 public skill: **`manifest`**.
@@ -95,6 +97,7 @@ practical-agency/
 │   ├── test_manifest_model.py
 │   ├── test_manifest_skill.py
 │   └── test_state_machine.py
+├── tests/__init__.py
 ├── AGENTS.md
 ├── LICENSE
 ├── README.md
@@ -116,6 +119,7 @@ practical-agency/
 - Create: `.github/scripts/check_dco.py`
 - Create: `.github/workflows/ci.yml`
 - Create: `practical_agency/__init__.py`
+- Create: `tests/__init__.py`
 
 **Interfaces:**
 - Consumes: the existing seed plus the approved design in
@@ -163,7 +167,11 @@ preserves those constraints while coordinating workflow, epistemic discipline,
 execution substrates, continuity, and independent proof.
 ```
 
-Add a status section stating that v0.1 is a deterministic mission kernel and portable skill, not a daemon, hosted service, or autonomous background actor.
+Add a status section stating that the existing `0.1.0` metadata describes an
+unreleased seed with a portable authorization-and-recording skill. Do not call it
+a deterministic mission kernel until Tasks 2–9 and independent acceptance pass;
+at every stage it remains neither a daemon, hosted service, nor autonomous
+background actor.
 
 - [ ] **Step 3: Add project metadata**
 
@@ -190,6 +198,10 @@ include = ["practical_agency*"]
 
 Use distribution name `zms-practical-agency` to avoid claiming an unscoped package name. The repository and project remain `practical-agency`.
 
+The inspected Cursor metadata already declares `0.1.0`, but no tag or GitHub
+release exists. Treat it as the unreleased seed version, keep all version surfaces
+synchronized, and do not tag `0.1.0` until the release boundary in Task 10 is met.
+
 - [ ] **Step 4: Add the minimal test command**
 
 Create `practical_agency/__init__.py`:
@@ -199,6 +211,9 @@ Create `practical_agency/__init__.py`:
 
 __version__ = "0.1.0"
 ```
+
+Also create an empty `tests/__init__.py` so `unittest` discovery has a real
+start directory before the first behavior test exists.
 
 Run:
 
@@ -905,7 +920,10 @@ Do not enumerate installed skill names. Mention external packages only as exampl
 
 - [ ] **Step 4: Add package metadata**
 
-Root, Cursor, and any Claude harness metadata point directly at the same `./skills` directory and describe one explicit-entry mission-control skill. No copied skill inventory or duplicate skill body is permitted.
+Root, Cursor, Claude, and later harness metadata each use their native schema
+and describe the same one explicit-entry mission-control skill. Only metadata
+schemas with a path field point at `./skills`; no copied skill inventory or
+duplicate skill body is permitted.
 
 - [ ] **Step 5: Extend CI**
 

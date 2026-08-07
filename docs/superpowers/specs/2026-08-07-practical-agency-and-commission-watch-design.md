@@ -11,7 +11,9 @@
 As of 2026-08-07, `ZMS-Labs/practical-agency` exists. Its inspected `main`
 revision is `e244d534a6e26bc9a352846a25ffce18b8d93a53` and contains one initial root
 `skills/manifest/SKILL.md`, root/Cursor plugin metadata, a README, and a v0
-Markdown mission-manifest field guide.
+Markdown mission-manifest field guide. Cursor metadata declares `0.1.0`, but no
+tag or GitHub release exists; that value is an unreleased seed version, not
+evidence that the deterministic mission kernel has shipped.
 
 That seed establishes the project identity and sole public entry skill. It is an
 authorization-and-recording steward, not yet the approved mission driver: its
@@ -30,10 +32,12 @@ external repository. Implementation must adopt the seed and preserve the root
 `skills/manifest/SKILL.md` as the one canonical skill body rather than create a
 competing copy.
 
-PR #110 does not modify or verify the external repository and creates no
-automatic `watch`→`manifest` route. `watch`'s generic outward handoff remains the
-truthful boundary until Practical Agency publishes and verifies an intake
-contract.
+PR #110 does not modify the external repository or verify its target kernel,
+checkpoint, adapter, or intake behavior. It does record the inspected seed
+baseline above so this design does not reason from a nonexistent repository.
+The PR creates no automatic `watch`→`manifest` route; generic outward transport
+remains the truthful boundary until a versioned Practical Agency intake contract
+is implemented, verified, and admitted.
 
 Two defects are resolved together:
 
@@ -161,8 +165,10 @@ Everything else begins as an internal contract, module, role, adapter, or evalua
 
 ### Recommended repository shape
 
-The existing root skill remains canonical. Harness metadata points at `./skills`;
-no second independently editable skill tree is introduced.
+The existing root skill remains canonical. Each harness metadata surface uses
+its native schema; surfaces that support an explicit skill-path field point at
+`./skills`. No second independently editable skill tree or copied skill inventory
+is introduced.
 
 ```text
 practical-agency/
@@ -437,6 +443,10 @@ handoff:
 coverage_limits: []
 ```
 
+`handoff.on_crossing` is closed to exactly `triage` and `decision-ledger`;
+ordering is not semantic. It classifies possible epistemic consumers after a
+real crossing, does not compel either to fire, and never denotes mission custody.
+
 ### State semantics
 
 | State | Meaning |
@@ -526,7 +536,7 @@ commission-watch
     defines and proves the observation claim
                          │
                          ▼
-manifest / mission steward
+future admitted mission-control intake (for example `manifest`)
     selects an authorized adapter, retains the commission, routes later events
                          │
                          ▼
@@ -534,7 +544,7 @@ external observer
     scheduler, listener, monitor, service, or human cadence that actually persists
 ```
 
-Where Practical Agency is unavailable, commission-watch may still produce `DECLARED`, `BLOCKED`, or a provider-specific commission if the current harness can directly configure and prove an external observer. It must never pretend the missing mission layer exists.
+Where an admitted, intake-capable Practical Agency mission-control layer is unavailable, commission-watch may still produce `DECLARED`, `BLOCKED`, or a provider-specific commission if the current harness can directly configure and prove an external observer. It must never infer intake capability from repository or package existence.
 
 ## Authority and integrity
 

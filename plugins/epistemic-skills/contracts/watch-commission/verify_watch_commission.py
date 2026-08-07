@@ -36,6 +36,7 @@ BLOCK_REASONS = {
     "NO_SAFE_PROOF_CROSSING",
     "PROBE_UNAVAILABLE",
 }
+POST_CROSSING_HANDOFF = frozenset({"triage", "decision-ledger"})
 FORBIDDEN_EVIDENCE_PREFIXES = (
     "self-asserted:",
     "memory:",
@@ -414,6 +415,12 @@ def validate_record(record: dict[str, Any]) -> list[str]:
     on_crossing = _require_string_list(handoff, "on_crossing", "handoff", errors)
     if on_crossing is not None and any(not item.strip() for item in on_crossing):
         _error(errors, "INVALID_VALUE", "handoff.on_crossing entries must be non-empty")
+    if on_crossing is not None and set(on_crossing) != POST_CROSSING_HANDOFF:
+        _error(
+            errors,
+            "INVALID_POST_CROSSING_HANDOFF",
+            "handoff.on_crossing must classify exactly triage and decision-ledger; mission custody is separate",
+        )
 
     coverage_limits = record.get("coverage_limits")
     if not isinstance(coverage_limits, list) or any(

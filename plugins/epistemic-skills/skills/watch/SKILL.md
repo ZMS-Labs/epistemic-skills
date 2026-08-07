@@ -262,18 +262,20 @@ honestly saying the observer is currently disabled. A validated `BLOCKED` record
 must show the check that established the block; it cannot be created from an
 agent's unsearched assumption.
 
-When a mission-control layer is available, hand the validated commission record
-outward so it can select an authorized adapter, retain the external mechanism
-reference, checkpoint the evidence receipts, and route later crossings or
-failures back into the mission. This package does not assume that layer is
-installed.
+When an admitted mission-control intake is available, hand the validated
+commission record outward through that versioned intake so the consumer can
+select an authorized adapter, retain the external mechanism reference,
+checkpoint evidence receipts, and route later events back into the mission.
+Repository or package existence alone is not routability; no automatic
+Practical Agency intake is claimed here.
 
-
-`handoff.on_crossing` and `metadata.hands-to` name post-crossing epistemic
-consumers: `triage` for cause and `decision-ledger` for durable consequential
-state. They do **not** declare commission custody by another package. A
-cross-package mission-control handoff becomes machine-routable only after that
-package publishes and verifies an intake contract.
+`handoff.on_crossing` and `metadata.hands-to` are the same closed post-crossing
+classification: exactly `triage` for cause and `decision-ledger` for durable
+consequential state. Array order is not semantic, and the classification does not
+compel either discipline to fire — each still owns its trigger. It does **not**
+declare commission custody, and `manifest` is not a valid value in this field.
+A cross-package mission-control handoff becomes machine-routable only after its
+versioned intake contract is implemented, verified, and admitted.
 
 ## Anti-rationalizations
 

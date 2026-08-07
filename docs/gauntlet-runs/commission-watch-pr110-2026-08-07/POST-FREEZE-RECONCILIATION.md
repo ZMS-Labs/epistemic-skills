@@ -45,7 +45,9 @@ those behaviors are seed limitations, not the approved driver contract.
 | `"helix it"` is already supported | It is approved target compatibility intent and is absent from the inspected seed. |
 | `manifest` can retain or operate `watch-commission@1` | No intake, adapter, or verifier integration exists on inspected `main`. |
 | Adding `manifest` to `watch.metadata.hands-to` is now correct | Still false: no admitted cross-package intake contract exists. |
-| `handoff.on_crossing` denotes mission custody | It denotes post-crossing `triage`/`decision-ledger`; custody is separate outward transport. |
+| `handoff.on_crossing` denotes mission custody | It is a closed classification containing exactly `triage` and `decision-ledger`; order is non-semantic, each discipline still owns its trigger, and custody is separate outward transport. |
+| Schema/verifier parity was already enforced | The frozen evidence report named a parity test that did not exist. PR #110 now contains the actual exact field/enum parity test. |
+| Prose alone prevented a custody target in `handoff.on_crossing` | The schema and verifier accepted arbitrary strings, including `manifest`. PR #110 now rejects that and machine-enforces the documented boundary. |
 | The raw-SHA clean-room checkout defect is still open | Closed: reconciliation run `31196648201` passed focused checks and exact-commit clean-room checkout before pushing the verified commit. |
 | Temporary self-mutating workflows are product surfaces | They are absent from the reconciled PR tree and must remain absent. |
 
@@ -56,8 +58,10 @@ those behaviors are seed limitations, not the approved driver contract.
   history.
 - The external observer—not either Markdown skill—owns persistence between
   sessions.
-- `handoff.on_crossing` and `watch.metadata.hands-to` remain
-  `[triage, decision-ledger]` because they describe response after a real crossing.
+- `handoff.on_crossing` and `watch.metadata.hands-to` are machine-closed to
+  exactly `[triage, decision-ledger]` because they classify possible response
+  after a real crossing. Ordering is not semantic, neither is compelled to fire,
+  and neither field denotes custody.
 - Optional mission-control custody is a separate outward transport concern. A
   future Practical Agency consumer may retain a validated commission, select an
   authorized adapter, checkpoint receipts, and reopen a mission. It may not
@@ -76,16 +80,19 @@ those behaviors are seed limitations, not the approved driver contract.
 3. Temporary migration and verification workflows are absent from the final tree.
 4. The design and implementation plan now start directly from the actual
    Practical Agency seed and preserve the root canonical skill.
-5. Post-crossing response is explicitly separated from commission custody.
-6. The PR body and current-status review records distinguish proved
+5. Post-crossing response is explicitly separated from commission custody,
+   and the schema/verifier reject `manifest` or arbitrary custody targets.
+6. The schema/verifier field and closed-enum parity claim is backed by the actual
+   executable test named in the review record.
+7. The PR body and current-status review records distinguish proved
    commission-watch behavior from unimplemented Practical Agency behavior.
 
 ## Current blockers and recommendation
 
-- **B1 — ordinary final-head gates:** the dedicated reconciliation workflow is
-  green, but the ordinary PR-triggered workflows for the current head are
-  `action_required`. Approve them and require successful conclusions before
-  merge.
+- **B1 — ordinary final-head gates:** branch-push verification is necessary
+  evidence but does not substitute for required PR checks. The exact final-head
+  branch run is recorded in the PR body; approve the ordinary PR-triggered
+  workflows and require successful conclusions before merge.
 - **B2 — independent acceptance:** no formal independent PR review is recorded.
   Obtain one and resolve actionable P1/P2 findings, or record an explicit bounded
   degraded-review waiver. A waiver is not independence.

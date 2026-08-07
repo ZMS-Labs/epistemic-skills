@@ -3,9 +3,10 @@
 > **Current-status correction:** See
 > [POST-FREEZE-RECONCILIATION.md](POST-FREEZE-RECONCILIATION.md). Practical Agency
 > and one initial `manifest` skill now exist; its deterministic kernel and
-> commission intake do not. The dedicated reconciliation workflow passed the
-> exact-commit clean-room and focused repository gates. The ordinary PR-triggered
-> workflows for the current head are `action_required` and still need approval
+> commission intake do not. The reconciliation also corrects the frozen report's
+> nonexistent parity-test claim and machine-closes `handoff.on_crossing` to the
+> post-crossing epistemic classification. The exact final-head branch run is
+> recorded in the PR body. Ordinary PR-triggered workflows still need approval
 > and a green conclusion. The historical frozen verdict remains `CONDITIONAL`;
 > the current recommendation remains **NO-MERGE** until those ordinary gates and
 > independent review (or an explicit degraded waiver) close.
@@ -42,7 +43,10 @@ verdict was present at freeze.
 - `BLOCKED` is evidence-bearing; absence cannot be asserted from memory or lack
   of imagination.
 - `SUSPECT` requires an observed, typed, dated, receipted failure.
-- Schema and semantic verifier fields/enums are parity-tested.
+- Schema and semantic verifier fields/enums are parity-tested by the actual
+  executable test named in the review record.
+- `handoff.on_crossing` is closed to exactly `triage` and `decision-ledger` and
+  cannot be repurposed as `manifest` custody.
 - Receipt references are mandatory carriers but are not falsely represented as
   authenticated facts.
 - Prompt/session/self-asserted evidence and obvious skill-file mechanisms are

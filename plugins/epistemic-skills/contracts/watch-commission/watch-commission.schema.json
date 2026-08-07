@@ -377,9 +377,14 @@
       "properties": {
         "on_crossing": {
           "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
           "items": {
             "type": "string",
-            "minLength": 1
+            "enum": [
+              "triage",
+              "decision-ledger"
+            ]
           },
           "uniqueItems": true
         }

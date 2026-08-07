@@ -47,10 +47,15 @@ commission; it never upgrades silence into success.
 
 ## Handoff semantics
 
-`handoff.on_crossing` is intentionally narrow: it names the disciplines that may
-consume a **real crossing** after the external observer reports one. It does not
-name the system that stores or operates the commission. Optional mission-control
-custody is a separate outward transport concern and remains explicit/generic
-until an external package publishes and verifies a `watch-commission@1` intake
-contract. The carrier therefore implies no automatic routing to Practical Agency
-or any other package.
+`handoff.on_crossing` is a closed post-crossing classification containing
+exactly `triage` and `decision-ledger`; array order has no meaning. It identifies
+the two epistemic disciplines that may consume a **real crossing** after the
+external observer reports one. It does not compel either discipline to fire —
+each still owns its positive trigger — and it does not name the system that
+stores or operates the commission.
+
+Optional mission-control custody is a separate outward transport concern and
+remains explicit/generic until a consumer publishes, verifies, and admits a
+versioned `watch-commission@1` intake contract. The carrier therefore rejects
+`manifest` or any other custody target in `handoff.on_crossing` and implies no
+automatic routing to Practical Agency or any other package.

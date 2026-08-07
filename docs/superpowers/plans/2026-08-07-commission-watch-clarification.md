@@ -589,13 +589,18 @@ State that `DECLARED`, `BLOCKED`, `INERT`, `PROVEN`, and `SUSPECT` are all legit
 Describe the consumer generically:
 
 ```markdown
-When a mission-control layer is available, hand the validated commission record
-outward so it can select an authorized adapter, retain the external mechanism
-reference, checkpoint the proof receipt, and route later crossings back into the
-mission. This package does not assume that layer is installed.
+When an admitted mission-control intake is available, hand the validated
+commission record outward through that versioned intake so the consumer can
+select an authorized adapter, retain the external mechanism reference,
+checkpoint evidence receipts, and route later events back into the mission.
+Repository or package existence alone is not routability.
 ```
 
-Do not add `manifest` to `metadata.hands-to` until a package containing that capability exists and the cross-package routing contract has been admitted.
+Practical Agency and an initial `manifest` package now exist. That fact alone does
+not establish a `watch-commission@1` intake or cross-package route. Do not add
+`manifest` to `metadata.hands-to`; add no custody target there unless a versioned
+intake/routing contract is implemented, verified, and admitted. Post-crossing
+classification remains exactly `triage` and `decision-ledger`.
 
 - [ ] **Step 7: Run focused and budget tests**
 
@@ -762,7 +767,7 @@ The PR summary must state:
 - commission-watch role made explicit;
 - new semantic contract and RED controls;
 - external persistence still requires a real substrate;
-- Practical Agency is specified separately and not falsely claimed implemented by this PR; and
+- the existing Practical Agency seed is acknowledged while its target kernel and commission intake are not falsely claimed implemented by this PR; and
 - exact CI status and any unverified live-adapter claims.
 
 - [ ] **Step 5: Run independent review before readiness**
