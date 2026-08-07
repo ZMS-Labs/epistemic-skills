@@ -63,6 +63,9 @@ def oracle(fixture: dict) -> str:
             not response.get("enabled")
             or not response.get("deliberate_crossing")
             or not response.get("alert_received")
+            or not response.get("external_mechanism_ref")
+            or response.get("persistent_outside_session") is not True
+            or response.get("skill_claimed_as_observer") is True
         ):
             return "REJECT"
         return "ACCEPT"
