@@ -12,6 +12,36 @@ sys.path.insert(0, str(ROOT))
 from verify_watch_commission import validate_record  # noqa: E402
 
 
+def empty_proof() -> dict[str, object]:
+    return {
+        "authorized_by": None,
+        "authorization_ref": None,
+        "safe_crossing": None,
+        "production_path": False,
+        "bound_crossed": False,
+        "alert_received": False,
+        "received_at": None,
+        "alert_receipt_ref": None,
+    }
+
+
+def empty_failure() -> dict[str, object]:
+    return {
+        "kind": None,
+        "detail": None,
+        "observed_at": None,
+        "receipt_ref": None,
+    }
+
+
+def empty_block_evidence() -> dict[str, object]:
+    return {
+        "detail": None,
+        "observed_at": None,
+        "receipt_ref": None,
+    }
+
+
 def proven_record() -> dict[str, object]:
     return {
         "schema": "watch-commission@1",
@@ -56,40 +86,44 @@ def proven_record() -> dict[str, object]:
             "received_at": "2026-08-07T12:00:00Z",
             "alert_receipt_ref": "fixture://receipt/alert-001",
         },
-        "failure": {
-            "kind": None,
-            "detail": None,
-            "observed_at": None,
-            "receipt_ref": None,
-        },
+        "failure": empty_failure(),
+        "block_evidence": empty_block_evidence(),
         "state": "PROVEN",
         "block_reason": None,
         "reprove_after": "2026-09-07T12:00:00Z",
         "handoff": {"on_crossing": ["triage", "decision-ledger"]},
-        "coverage_limits": ["fixture only"],
+        "coverage_limits": [
+            "isolated fixture adapter; no production provider claimed"
+        ],
     }
 
 
-def empty_proof() -> dict[str, object]:
-    return {
-        "authorized_by": None,
-        "authorization_ref": None,
-        "safe_crossing": None,
-        "production_path": False,
-        "bound_crossed": False,
-        "alert_received": False,
-        "received_at": None,
-        "alert_receipt_ref": None,
+def blocked_no_substrate_record() -> dict[str, object]:
+    record = proven_record()
+    record["state"] = "BLOCKED"
+    record["block_reason"] = "NO_EXECUTION_SUBSTRATE"
+    record["external_observer"] = {
+        "substrate_kind": None,
+        "substrate": None,
+        "mechanism_ref": None,
+        "persistence_receipt_ref": None,
+        "persistent_outside_session": False,
+        "enabled": False,
     }
-
-
-def empty_failure() -> dict[str, object]:
-    return {
-        "kind": None,
-        "detail": None,
-        "observed_at": None,
-        "receipt_ref": None,
+    record["kill_switch"] = {
+        "procedure_ref": None,
+        "exercised": False,
+        "exercise_receipt_ref": None,
     }
+    record["proof"] = empty_proof()
+    record["failure"] = empty_failure()
+    record["block_evidence"] = {
+        "detail": "capability discovery found no external observation substrate",
+        "observed_at": "2026-08-07T11:55:00Z",
+        "receipt_ref": "fixture://receipt/block-no-substrate-001",
+    }
+    record["reprove_after"] = None
+    return record
 
 
 def assert_rejected(record: dict[str, object], code: str) -> None:
@@ -110,6 +144,31 @@ def test_skill_text_cannot_be_the_external_observer_even_if_it_claims_persistenc
     observer["mechanism_ref"] = "plugins/epistemic-skills/skills/watch/SKILL.md"
     record["external_observer"] = observer
     assert_rejected(record, "INVALID_SUBSTRATE_KIND")
+
+
+def test_allowed_kind_cannot_hide_a_prompt_time_mechanism_ref() -> None:
+    record = proven_record()
+    observer = copy.deepcopy(record["external_observer"])
+    assert isinstance(observer, dict)
+    observer["substrate_kind"] = "fixture"
+    observer["mechanism_ref"] = "plugins/epistemic-skills/skills/watch/SKILL.md"
+    record["external_observer"] = observer
+    assert_rejected(record, "PROMPT_TIME_MECHANISM_FORBIDDEN")
+
+
+def test_self_asserted_receipt_is_not_external_evidence() -> None:
+    record = proven_record()
+    observer = copy.deepcopy(record["external_observer"])
+    assert isinstance(observer, dict)
+    observer["persistence_receipt_ref"] = "self-asserted://persistent-because-I-said-so"
+    record["external_observer"] = observer
+    assert_rejected(record, "INVALID_EVIDENCE_REF")
+
+
+def test_fixture_proof_must_disclose_its_scope() -> None:
+    record = proven_record()
+    record["coverage_limits"] = ["all checks passed"]
+    assert_rejected(record, "FIXTURE_SCOPE_REQUIRED")
 
 
 def test_silence_cannot_be_proven() -> None:
@@ -143,47 +202,76 @@ def test_bypass_message_is_not_production_path_proof() -> None:
 
 
 def test_missing_substrate_is_explicitly_blocked() -> None:
+    assert validate_record(blocked_no_substrate_record()) == []
+
+
+def test_blocked_requires_a_closed_reason() -> None:
+    record = blocked_no_substrate_record()
+    record["block_reason"] = None
+    assert_rejected(record, "BLOCK_REASON_REQUIRED")
+
+
+def test_blocked_requires_dated_evidence() -> None:
+    record = blocked_no_substrate_record()
+    record["block_evidence"] = empty_block_evidence()
+    assert_rejected(record, "BLOCK_EVIDENCE_REQUIRED")
+
+
+def test_non_blocked_state_cannot_carry_live_block_evidence() -> None:
+    record = proven_record()
+    record["block_evidence"] = {
+        "detail": "stale block claim",
+        "observed_at": "2026-08-07T11:55:00Z",
+        "receipt_ref": "fixture://receipt/stale-block-001",
+    }
+    assert_rejected(record, "BLOCK_EVIDENCE_FORBIDDEN")
+
+
+def test_block_reason_must_match_the_recorded_dependency() -> None:
+    record = blocked_no_substrate_record()
+    observer = copy.deepcopy(proven_record()["external_observer"])
+    assert isinstance(observer, dict)
+    observer["enabled"] = False
+    record["external_observer"] = observer
+    assert_rejected(record, "BLOCK_REASON_MISMATCH")
+
+
+def test_prepared_mechanism_remains_blocked_until_kill_switch_is_proven() -> None:
     record = proven_record()
     record["state"] = "BLOCKED"
-    record["block_reason"] = "NO_EXECUTION_SUBSTRATE"
-    record["external_observer"] = {
-        "substrate_kind": None,
-        "substrate": None,
-        "mechanism_ref": None,
-        "persistence_receipt_ref": None,
-        "persistent_outside_session": False,
-        "enabled": False,
-    }
+    record["block_reason"] = "KILL_SWITCH_UNPROVEN"
+    observer = copy.deepcopy(record["external_observer"])
+    assert isinstance(observer, dict)
+    observer["enabled"] = False
+    record["external_observer"] = observer
     record["kill_switch"] = {
-        "procedure_ref": None,
+        "procedure_ref": "fixture://kill/001",
         "exercised": False,
         "exercise_receipt_ref": None,
     }
     record["proof"] = empty_proof()
     record["failure"] = empty_failure()
+    record["block_evidence"] = {
+        "detail": "the real mechanism exists but its disable path has not been exercised",
+        "observed_at": "2026-08-07T11:57:00Z",
+        "receipt_ref": "fixture://receipt/block-kill-unproven-001",
+    }
     record["reprove_after"] = None
     assert validate_record(record) == []
 
 
-def test_blocked_requires_a_closed_reason() -> None:
+def test_declared_state_cannot_hide_a_prepared_mechanism() -> None:
     record = proven_record()
-    record["state"] = "BLOCKED"
-    record["block_reason"] = None
-    assert_rejected(record, "BLOCK_REASON_REQUIRED")
-
-
-def test_block_reason_must_match_the_recorded_dependency() -> None:
-    record = proven_record()
-    record["state"] = "BLOCKED"
-    record["block_reason"] = "NO_EXECUTION_SUBSTRATE"
+    record["state"] = "DECLARED"
     observer = copy.deepcopy(record["external_observer"])
     assert isinstance(observer, dict)
     observer["enabled"] = False
     record["external_observer"] = observer
     record["proof"] = empty_proof()
     record["failure"] = empty_failure()
+    record["block_evidence"] = empty_block_evidence()
     record["reprove_after"] = None
-    assert_rejected(record, "BLOCK_REASON_MISMATCH")
+    assert_rejected(record, "DECLARED_MECHANISM_FORBIDDEN")
 
 
 def test_non_proven_record_cannot_claim_active_watching() -> None:
