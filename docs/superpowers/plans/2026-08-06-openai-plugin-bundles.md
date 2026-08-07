@@ -52,15 +52,17 @@
 
 **Files:**
 - Create: `.github/workflows/openai-bundles.yml`
+- Create: `.github/scripts/test_openai_bundle_workflow.py`
 
 **Interfaces:**
-- Consumes: the exact checked-out PR, `main`, release, or manually dispatched revision.
-- Produces: one Actions artifact containing both bundles and `SHA256SUMS`.
+- Consumes: the durable PR head SHA or the current `main`, release, or manually dispatched event SHA.
+- Produces: one Actions artifact containing both bundles and `SHA256SUMS`, named and indexed with that same source revision.
 
 - [x] Trigger on every path that can change package bytes or packaging behavior.
 - [x] Pin checkout, setup-python, and upload-artifact actions to immutable commits.
 - [x] Run unit tests, live-package validation, build, and artifact upload in order.
 - [x] Keep permissions read-only.
+- [x] Add a regression test binding PR checkout, provenance, and artifact naming to the durable PR head SHA rather than the temporary merge-ref SHA.
 
 ### Task 4: Document installation and refresh boundaries
 
@@ -83,9 +85,9 @@
 
 **Interfaces:**
 - Consumes: verified branch diff and DCO identity.
-- Produces: a signed commit and draft PR against `main`.
+- Produces: signed commits and a draft PR against `main`.
 
-- [ ] Append the bounded metacognate engagement record.
-- [ ] Commit all files with `Signed-off-by: SternOne <89846440+SternOne@users.noreply.github.com>`.
-- [ ] Open a draft PR with validation evidence and explicit platform boundaries.
-- [ ] Inspect the resulting PR diff and CI state; correct any deterministic failure.
+- [x] Append the bounded metacognate engagement record.
+- [x] Commit all files with `Signed-off-by: SternOne <89846440+SternOne@users.noreply.github.com>`.
+- [x] Open a draft PR with validation evidence and explicit platform boundaries.
+- [x] Inspect the resulting PR diff and CI state; correct the observed temporary-merge-SHA provenance defect with a regression test.

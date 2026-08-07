@@ -14,6 +14,8 @@ work.
   wrapper, workflow, or manifest inventory.
 - Bundles must be revision-bound, deterministic, and fail closed on malformed
   frontmatter or a marketplace path that points away from the canonical tree.
+- Pull-request artifacts must identify a durable source commit, not a temporary
+  merge-ref SHA whose lifetime is coupled to the PR.
 - The immediate upload path must remain honest: uploaded Personal Skills are
   snapshots, not live repository mounts.
 - Public directory publication is outside GitHub and must not be represented as
@@ -31,7 +33,10 @@ index. It produces two archives from the same bytes:
    marketplace and canonical package paths.
 
 A dedicated GitHub Actions workflow runs tests and builds both artifacts for
-relevant PRs, every relevant `main` push, releases, and manual dispatch.
+relevant PRs, every relevant `main` push, releases, and manual dispatch. On PRs,
+the workflow checks out and records the durable PR head SHA; other events use
+their event SHA. Checkout, index provenance, and artifact naming share that one
+revision value.
 
 ## Data flow
 
@@ -62,7 +67,9 @@ than `./skills/`. Archive members are sorted, timestamps fixed, permissions
 normalized, and checksums emitted.
 
 Unit tests plant inventory additions, source drift, and malformed frontmatter;
-they also compare archive bytes from repeated builds.
+they also compare archive bytes from repeated builds. A separate workflow
+contract test prevents PR artifacts from regressing to a temporary merge-ref SHA
+or omitting their own test from workflow execution and path triggers.
 
 ## Concurrency and future evolution
 

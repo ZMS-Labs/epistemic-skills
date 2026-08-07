@@ -45,7 +45,9 @@ is changed to a copied snapshot.
 `.github/workflows/openai-bundles.yml` runs on relevant pull requests, pushes to
 `main`, published releases, and manual dispatch. Every successful run tests the
 builder, validates the live package, and uploads freshly generated bundles for
-the exact workflow revision.
+a durable source revision. Pull-request runs bind to the PR head SHA rather than
+GitHub's temporary merge-ref SHA; other events use their event SHA. The same
+revision is used for checkout, generated provenance, and artifact naming.
 
 This makes repository-to-bundle synchronization automatic. It does **not** make
 an already uploaded Personal Skill self-updating: that installation is a
@@ -81,7 +83,8 @@ package rather than a manually synchronized copy.
 
 ```bash
 python .github/scripts/test_build_openai_bundles.py
+python .github/scripts/test_openai_bundle_workflow.py
 python .github/scripts/build_openai_bundles.py --check
 ```
 
-A change is not package-ready if either command fails.
+A change is not package-ready if any command fails.
