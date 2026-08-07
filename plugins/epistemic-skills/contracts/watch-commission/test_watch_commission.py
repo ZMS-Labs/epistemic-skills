@@ -9,7 +9,16 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 
-from verify_watch_commission import validate_record  # noqa: E402
+from verify_watch_commission import (  # noqa: E402
+    BLOCK_REASONS,
+    DIRECTIONS,
+    FAILURE_KINDS,
+    OBJECT_FIELDS,
+    STATES,
+    SUBSTRATE_KINDS,
+    TOP_LEVEL_FIELDS,
+    validate_record,
+)
 
 
 def empty_proof() -> dict[str, object]:
@@ -357,6 +366,63 @@ def test_bound_direction_is_closed() -> None:
     bound["direction"] = "sideways"
     record["bound"] = bound
     assert_rejected(record, "INVALID_DIRECTION")
+
+
+def test_post_crossing_handoff_rejects_manifest_custody() -> None:
+    record = proven_record()
+    record["handoff"] = {"on_crossing": ["manifest"]}
+    assert_rejected(record, "INVALID_POST_CROSSING_HANDOFF")
+
+
+def test_post_crossing_handoff_requires_both_epistemic_consumers() -> None:
+    for on_crossing in ([], ["triage"], ["decision-ledger"]):
+        record = proven_record()
+        record["handoff"] = {"on_crossing": on_crossing}
+        assert_rejected(record, "INVALID_POST_CROSSING_HANDOFF")
+
+
+def test_post_crossing_handoff_order_is_not_semantic() -> None:
+    record = proven_record()
+    record["handoff"] = {"on_crossing": ["decision-ledger", "triage"]}
+    assert validate_record(record) == []
+
+
+def test_structural_schema_matches_semantic_verifier() -> None:
+    schema = json.loads((ROOT / "watch-commission.schema.json").read_text(encoding="utf-8"))
+    properties = schema["properties"]
+
+    assert set(schema["required"]) == TOP_LEVEL_FIELDS
+    assert set(properties) == TOP_LEVEL_FIELDS
+
+    for object_name, expected_fields in OBJECT_FIELDS.items():
+        object_schema = properties[object_name]
+        assert set(object_schema["required"]) == expected_fields
+        assert set(object_schema["properties"]) == expected_fields
+
+    assert set(properties["state"]["enum"]) == STATES
+    assert set(properties["bound"]["properties"]["direction"]["enum"]) == DIRECTIONS
+    assert {
+        item
+        for item in properties["external_observer"]["properties"]["substrate_kind"]["enum"]
+        if item is not None
+    } == SUBSTRATE_KINDS
+    assert {
+        item
+        for item in properties["failure"]["properties"]["kind"]["enum"]
+        if item is not None
+    } == FAILURE_KINDS
+    assert {
+        item for item in properties["block_reason"]["enum"] if item is not None
+    } == BLOCK_REASONS
+
+    on_crossing_schema = properties["handoff"]["properties"]["on_crossing"]
+    assert set(on_crossing_schema.get("items", {}).get("enum", [])) == {
+        "triage",
+        "decision-ledger",
+    }
+    assert on_crossing_schema.get("minItems") == 2
+    assert on_crossing_schema.get("maxItems") == 2
+    assert on_crossing_schema.get("uniqueItems") is True
 
 
 def test_skill_surface_names_commission_boundary() -> None:
