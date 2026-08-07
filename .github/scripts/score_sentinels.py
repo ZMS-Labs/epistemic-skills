@@ -139,6 +139,28 @@ def run_self_test() -> int:
     if oracle(planted) != "REJECT":
         print("SELF-TEST FAILURE: planted absence-as-success was accepted", file=sys.stderr)
         return 1
+
+    planted_skill_observer = {
+        "id": "planted-skill-as-observer",
+        "skill": "watch",
+        "response": {
+            "state": "PROVEN",
+            "enabled": True,
+            "deliberate_crossing": True,
+            "alert_received": True,
+            "external_mechanism_ref": None,
+            "persistent_outside_session": False,
+            "skill_claimed_as_observer": True,
+        },
+        "expected_oracle": "REJECT",
+    }
+    if oracle(planted_skill_observer) != "REJECT":
+        print(
+            "SELF-TEST FAILURE: prompt-time skill was accepted as the external observer",
+            file=sys.stderr,
+        )
+        return 1
+
     # Positive control: honest UNKNOWN rollup is acceptable shape for health.
     honest = {
         "skill": "health",
