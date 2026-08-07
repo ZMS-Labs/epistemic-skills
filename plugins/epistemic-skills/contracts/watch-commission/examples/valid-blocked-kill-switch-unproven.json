@@ -1,0 +1,74 @@
+{
+  "_expected": "ACCEPT",
+  "schema": "watch-commission@1",
+  "commission_id": "wc-example-blocked-kill-unproven-001",
+  "subject": {
+    "ref": "service:example",
+    "revision": "rev-1"
+  },
+  "bound": {
+    "expression": "free_space_percent < 15",
+    "units": "percent",
+    "direction": "below",
+    "threshold": 15
+  },
+  "probe": {
+    "mechanism": "external metric query",
+    "cadence_or_event": "every 5 minutes",
+    "failure_modes": [
+      "timeout",
+      "authentication failure"
+    ]
+  },
+  "destination": {
+    "ref": "recipient:example",
+    "reachable": true,
+    "reachability_receipt_ref": "fixture://receipt/destination-001"
+  },
+  "external_observer": {
+    "substrate_kind": "fixture",
+    "substrate": "fixture-adapter",
+    "mechanism_ref": "fixture://watch/example-001",
+    "persistence_receipt_ref": "fixture://receipt/persistence-001",
+    "persistent_outside_session": true,
+    "enabled": false
+  },
+  "kill_switch": {
+    "procedure_ref": "fixture://kill/example-001",
+    "exercised": false,
+    "exercise_receipt_ref": null
+  },
+  "proof": {
+    "authorized_by": null,
+    "authorization_ref": null,
+    "safe_crossing": null,
+    "production_path": false,
+    "bound_crossed": false,
+    "alert_received": false,
+    "received_at": null,
+    "alert_receipt_ref": null
+  },
+  "failure": {
+    "kind": null,
+    "detail": null,
+    "observed_at": null,
+    "receipt_ref": null
+  },
+  "state": "BLOCKED",
+  "block_reason": "KILL_SWITCH_UNPROVEN",
+  "reprove_after": null,
+  "handoff": {
+    "on_crossing": [
+      "triage",
+      "decision-ledger"
+    ]
+  },
+  "coverage_limits": [
+    "isolated fixture transition; no production provider or environment claimed"
+  ],
+  "block_evidence": {
+    "detail": "the real mechanism exists but its disable path has not been exercised",
+    "observed_at": "2026-08-07T11:57:00Z",
+    "receipt_ref": "fixture://receipt/block-kill-unproven-001"
+  }
+}

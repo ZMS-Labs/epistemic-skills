@@ -57,22 +57,22 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SKILLS_ROOT = REPO_ROOT / "plugins" / "epistemic-skills" / "skills"
 
-# The recorded budget: the sum of the 14 packaged v5.0.0 skills' description
+# The recorded budget: the sum of the 14 packaged skill description
 # values, measured as the harness sees them -- YAML-resolved and then UTF-8
 # encoded, so a quoted scalar is charged for its content and not its
 # delimiters, while non-ASCII characters are charged for their real byte width.
 # Verified per-skill against pyyaml with zero mismatches; pyyaml is the oracle for
 # that check but not a runtime dependency of this one.
 #
-# Originally recorded as 8200 under a character-count bug. Corrected to 8230 on
-# 2026-08-07 when the guard switched to UTF-8 bytes: the packaged descriptions
-# themselves did not grow; twelve skills contain non-ASCII code points that cost
-# two UTF-8 bytes each. Raising the ceiling here records the true harness cost of
-# the already-shipped text — it does not authorize further growth.
+# Originally recorded as 8200 under a character-count bug, then corrected to
+# 8230 on 2026-08-07 when the guard switched to UTF-8 bytes. The commission-watch
+# clarification reduced the exact package total by 71 bytes without adding a
+# skill or weakening another trigger. The ceiling therefore moves down to 8159
+# so that released headroom cannot silently refill.
 #
 # Changing this number is a reviewed act: it must appear in a diff with a
 # justification, which is the entire point of the check.
-CEILING_BYTES = 8230
+CEILING_BYTES = 8159
 
 FRONTMATTER = re.compile(r"\A---\r?\n(.*?)\r?\n---", re.S)
 # `description:` runs until the next top-level YAML key or end of frontmatter,
