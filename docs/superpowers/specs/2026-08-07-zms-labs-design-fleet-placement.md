@@ -158,4 +158,4 @@ Avoid: pasting tokens into each repo’s `DESIGN.md` without a single upstream.
 
 1. Diff this doc against `zms-labs-design` README, ADRs, and any existing skills.
 2. Update [`visual-design-md.md`](../../../plugins/epistemic-skills/reference/craft/visual-design-md.md) with the **canonical pin URL/path** for ZMS.
-3. Optionally add `zms-labs-design` to the Cloud Agent environment `repos` array.
+3. Optionally add `zms-labs-design` to the [Cloud Agent environment](https://cursor.com/dashboard/cloud-agents/environments/e/688d12dd-9109-11f1-ba66-0e7d0216e441) repos (see `epistemic-calibration/.cursor/environment.json` `repositoryDependencies`).
