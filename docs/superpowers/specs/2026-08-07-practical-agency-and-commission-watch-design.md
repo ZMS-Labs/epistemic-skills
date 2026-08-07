@@ -2,7 +2,7 @@
 
 **Date:** 2026-08-07  
 **Status:** approved  
-**Scope:** successor design for `epistemic-skills/watch` plus the boundary and bootstrap contract for a separate `practical-agency` project
+**Scope:** successor design for `epistemic-skills/watch` plus the boundary and seed-adoption contract for the existing `practical-agency` project
 
 ## Summary
 
@@ -13,14 +13,22 @@ revision is `e244d534a6e26bc9a352846a25ffce18b8d93a53` and contains one initial 
 `skills/manifest/SKILL.md`, root/Cursor plugin metadata, a README, and a v0
 Markdown mission-manifest field guide.
 
-That seed establishes the project identity and sole public entry skill. It does
-**not** yet implement the deterministic `mission-manifest@1` kernel, authority
-state machine, atomic checkpoints, dynamic capability discovery, independent
-acceptance, `"helix it"` compatibility, or `watch-commission@1` intake described
-later in this document. All later repository shapes, lifecycle rules, invocation
-aliases, and handoff diagrams are approved **target architecture**, not claims
-about the inspected external repository. Implementation must adopt the seed and
-preserve one canonical `manifest` skill body rather than create competing copies.
+That seed establishes the project identity and sole public entry skill. It is an
+authorization-and-recording steward, not yet the approved mission driver: its
+current trigger explicitly declines use when a current mission manifest already
+governs the task, and its completion flow does not require an independent
+acceptor. It also lacks the deterministic `mission-manifest@1` kernel, target
+lifecycle, create/resume/reconcile/advance/verify/close modes, atomic checkpoints,
+dynamic capability discovery, bounded return points, `"helix it"` compatibility,
+and `watch-commission@1` intake described later in this document. The v0 guide's
+`draft|active|hold|complete|cancelled` vocabulary is an input to migrate, not the
+`mission-manifest@1` state machine.
+
+All later repository shapes, lifecycle rules, invocation aliases, and handoff
+diagrams are approved **target architecture**, not claims about the inspected
+external repository. Implementation must adopt the seed and preserve the root
+`skills/manifest/SKILL.md` as the one canonical skill body rather than create a
+competing copy.
 
 PR #110 does not modify or verify the external repository and creates no
 automatic `watch`→`manifest` route. `watch`'s generic outward handoff remains the
@@ -153,9 +161,15 @@ Everything else begins as an internal contract, module, role, adapter, or evalua
 
 ### Recommended repository shape
 
+The existing root skill remains canonical. Harness metadata points at `./skills`;
+no second independently editable skill tree is introduced.
+
 ```text
 practical-agency/
-├── plugins/practical-agency/skills/manifest/SKILL.md
+├── skills/manifest/SKILL.md
+├── plugin.json
+├── .cursor-plugin/plugin.json
+├── .claude-plugin/plugin.json        # optional harness metadata; points at ./skills
 ├── contracts/
 │   ├── mission-manifest.schema.json
 │   ├── mission-event.schema.json

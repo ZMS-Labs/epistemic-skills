@@ -3,11 +3,12 @@
 > **Current-status correction:** See
 > [POST-FREEZE-RECONCILIATION.md](POST-FREEZE-RECONCILIATION.md). Practical Agency
 > and one initial `manifest` skill now exist; its deterministic kernel and
-> commission intake do not. Exact-head jobs execute, but the clean-room step is
-> red on raw-SHA checkout. The historical frozen verdict below remains
-> `CONDITIONAL`; the current recommendation remains **NO-MERGE** until the exact
-> final head passes and independent review (or an explicit degraded waiver) is
-> recorded.
+> commission intake do not. The dedicated reconciliation workflow passed the
+> exact-commit clean-room and focused repository gates. The ordinary PR-triggered
+> workflows for the current head are `action_required` and still need approval
+> and a green conclusion. The historical frozen verdict remains `CONDITIONAL`;
+> the current recommendation remains **NO-MERGE** until those ordinary gates and
+> independent review (or an explicit degraded waiver) close.
 
 
 ## Verdict
@@ -49,8 +50,8 @@ verdict was present at freeze.
 - Fixture evidence is scoped away from untested production environments.
 - The current `watch` skill id remains stable and no alias skill is added.
 - Package description cost is reduced to and locked at 8,159 UTF-8 bytes.
-- Practical Agency is correctly separated as future mission control with one
-  public `manifest` skill.
+- Practical Agency is correctly separated as an existing seed with one public
+  `manifest` skill and an explicitly unimplemented target mission-control kernel.
 
 ## What the candidate does not establish
 
@@ -60,7 +61,7 @@ verdict was present at freeze.
 - No external receipt has been authenticated merely by passing the semantic
   verifier.
 - No behavioral superiority claim is made.
-- Exact-head jobs execute; the current raw-SHA clean-room checkout failure is not a test pass.
+- The dedicated exact-commit reconciliation gate passed; ordinary PR-triggered workflows for the current head remain approval-blocked and are not yet green.
 - The manual docket is not an independent panel.
 
 ## Open conditions

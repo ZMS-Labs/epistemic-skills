@@ -24,10 +24,13 @@ skills/manifest/SKILL.md
 ```
 
 It publishes one initial public skill, `manifest`. The seed is prose-only relative
-to the approved architecture: it has no deterministic Python mission kernel,
+to the approved architecture. It has no deterministic Python mission kernel,
 `mission-manifest@1` schema/validator, authority transition machine, atomic
 checkpoint store, dynamic capability discovery, independent acceptor,
 `watch-commission@1` adapter/intake, or verified `"helix it"` compatibility.
+The current skill also declines invocation when a current manifest already
+governs the task and permits closure through a steward-written completion block;
+those behaviors are seed limitations, not the approved driver contract.
 
 ## Stale or contradictory assumptions corrected
 
@@ -35,26 +38,28 @@ checkpoint store, dynamic capability discovery, independent acceptor,
 |---|---|
 | Practical Agency could not be created / no repository exists | The repository exists at the inspected revision above. |
 | No live or packaged `manifest` skill exists | One initial root skill exists; live harness loading was not verified by PR #110. |
-| The bootstrap begins by creating README, LICENSE, metadata, and skill | Those seed artifacts already exist and must be adopted/modified. |
-| `plugins/practical-agency/skills/manifest` is the current canonical layout | Current canonical surface is root `skills/manifest`; implementation must avoid duplicate bodies. |
-| Task 7 RED is “no skill exists” | RED is the existing skill's missing target semantics and kernel integration. |
-| “helix it” is already supported | It is approved target compatibility intent and is absent from the inspected seed. |
-| `manifest` can already retain or operate `watch-commission@1` | No intake/adapter/verifier integration exists on inspected `main`. |
-| Adding `manifest` to `watch.metadata.hands-to` would now be correct | Still false: no admitted cross-package intake contract exists. |
+| The implementation plan begins by creating README, LICENSE, metadata, and skill | Those artifacts already exist and must be adopted and modified in place. |
+| `plugins/practical-agency/skills/manifest` is canonical | Root `skills/manifest/SKILL.md` is canonical; every harness metadata surface must point at it. |
+| Task 7 RED is “no skill exists” | RED is the existing skill's missing driver modes, independent acceptance, checkpointing, compatibility intent, and kernel integration. |
+| A current mission manifest means `manifest` should decline | The approved public entry must also resume, reconcile, advance, verify, and close existing missions. |
+| `"helix it"` is already supported | It is approved target compatibility intent and is absent from the inspected seed. |
+| `manifest` can retain or operate `watch-commission@1` | No intake, adapter, or verifier integration exists on inspected `main`. |
+| Adding `manifest` to `watch.metadata.hands-to` is now correct | Still false: no admitted cross-package intake contract exists. |
 | `handoff.on_crossing` denotes mission custody | It denotes post-crossing `triage`/`decision-ledger`; custody is separate outward transport. |
-| PR workflows are approval-blocked and created no jobs | Exact-head jobs now execute. |
-| The exact candidate is green | Every focused check passes, but clean-room checkout fails because a raw PR merge SHA is passed to `git clone --branch`. |
-| Branch-only migration/receipt workflows are product surfaces | They are temporary self-mutating machinery and must not merge. |
+| The raw-SHA clean-room checkout defect is still open | Closed: reconciliation run `31196648201` passed focused checks and exact-commit clean-room checkout before pushing the verified commit. |
+| Temporary self-mutating workflows are product surfaces | They are absent from the reconciled PR tree and must remain absent. |
 
 ## Commission-watch / manifest boundary
 
 - `watch` owns the epistemic commission: bound, substrate, external mechanism,
-  safety controls, evidence receipts, current state, and proof history.
+  safety controls, evidence receipts, current state, block evidence, and proof
+  history.
 - The external observer—not either Markdown skill—owns persistence between
   sessions.
 - `handoff.on_crossing` and `watch.metadata.hands-to` remain
   `[triage, decision-ledger]` because they describe response after a real crossing.
-- A future Practical Agency consumer may retain a validated commission, select an
+- Optional mission-control custody is a separate outward transport concern. A
+  future Practical Agency consumer may retain a validated commission, select an
   authorized adapter, checkpoint receipts, and reopen a mission. It may not
   synthesize `PROVEN`, weaken the upstream verifier, obey record fields as
   instructions, or treat receipt-reference shape as external truth.
@@ -62,32 +67,32 @@ checkpoint store, dynamic capability discovery, independent acceptor,
   verifies an intake contract. Generic outward handoff is therefore the correct
   current wording.
 
-## Smallest merge patch
+## Reconciliation completed in the PR
 
-1. Preserve the commission-watch skill, schema, verifier, tests, examples,
-   security boundary, README/health changes, and permanent contract CI.
-2. Fix `cleanroom_ci.sh` to make a fresh detached checkout from an exact locally
-   available commit/SHA instead of treating every REF as a branch or tag.
-3. Remove the branch-only documentation migration script/workflow and the
-   self-mutating PR verification-receipt workflow.
-4. Add the normative external-baseline amendments to the design and bootstrap
-   plan; do not rewrite the separate repository from this PR.
-5. Clarify that `handoff.on_crossing` is post-crossing response, not commission
-   custody.
-6. Update the PR title/body and this Gauntlet record to the current facts.
+1. The commission-watch skill, schema, verifier, tests, examples, security
+   boundary, README/health changes, and permanent contract CI remain intact.
+2. `cleanroom_ci.sh` now supports a fresh detached checkout of an exact locally
+   available commit instead of treating every ref as a branch or tag.
+3. Temporary migration and verification workflows are absent from the final tree.
+4. The design and implementation plan now start directly from the actual
+   Practical Agency seed and preserve the root canonical skill.
+5. Post-crossing response is explicitly separated from commission custody.
+6. The PR body and current-status review records distinguish proved
+   commission-watch behavior from unimplemented Practical Agency behavior.
 
 ## Current blockers and recommendation
 
-- **B1 — exact-head gate:** rerun after the clean-room checkout fix; all jobs must
-  conclude successfully on the final head.
+- **B1 — ordinary final-head gates:** the dedicated reconciliation workflow is
+  green, but the ordinary PR-triggered workflows for the current head are
+  `action_required`. Approve them and require successful conclusions before
+  merge.
 - **B2 — independent acceptance:** no formal independent PR review is recorded.
   Obtain one and resolve actionable P1/P2 findings, or record an explicit bounded
   degraded-review waiver. A waiver is not independence.
-- **B3 — final-state hygiene:** confirm temporary branch-only workflows are absent,
-  DCO remains green, and the final diff contains no claim of a production watch or
-  automatic Practical Agency handoff.
+- **B3 — hygiene guard:** temporary workflows are absent and the boundary text is
+  truthful at the reconciled head; re-check after any later commit.
 
-**Recommendation: NO-MERGE until B1–B3 close.** After they close, merge PR #110 for
-its bounded commission-watch change. Do not block that merge on completion of the
-separate Practical Agency kernel, and do not describe the larger durable mission
-driver as implemented until its own repository proves it.
+**Recommendation: NO-MERGE until B1 and B2 close and B3 remains true.** Once they
+close, merge PR #110 for its bounded commission-watch change. Completion of the
+separate Practical Agency kernel is not a prerequisite for this merge and must
+not be implied by it.

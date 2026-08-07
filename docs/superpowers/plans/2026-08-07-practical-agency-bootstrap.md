@@ -1,8 +1,8 @@
-# Practical Agency Bootstrap Implementation Plan
+# Practical Agency Seed-Adoption Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Create `ZMS-Labs/practical-agency`, a portable mission-control project whose sole public skill `manifest` carries operator-authorized intent through durable, coordinated, resumable action without self-certifying completion.
+**Goal:** Evolve the existing `ZMS-Labs/practical-agency` seed into a portable mission-control project whose sole public skill `manifest` carries operator-authorized intent through durable, coordinated, resumable action without self-certifying completion.
 
 **Architecture:** A stdlib-first deterministic mission kernel owns authority, state transitions, capability discovery, invocation records, and atomic checkpoints. The `manifest` skill is a concise explicit-entry instruction surface over that kernel. External execution, schedulers, monitoring, and model-specific behavior are adapters; epistemic judgments remain in their originating packages.
 
@@ -10,37 +10,30 @@
 
 ## Global Constraints
 
-### Existing-seed amendment — normative over absence assumptions below
+### Verified starting point
 
-`ZMS-Labs/practical-agency` already exists at inspected `main` revision
-`e244d534a6e26bc9a352846a25ffce18b8d93a53` with `README.md`, `LICENSE`, `plugin.json`,
-`.cursor-plugin/plugin.json`, `docs/mission-manifest.md`, and the canonical root
-`skills/manifest/SKILL.md`.
+This plan starts from inspected `main` revision `e244d534a6e26bc9a352846a25ffce18b8d93a53`. The repository
+already contains `README.md`, `LICENSE`, root and Cursor plugin metadata,
+`docs/mission-manifest.md`, and the canonical root `skills/manifest/SKILL.md`.
+Do not recreate, fork, or replace that history with a second package tree.
 
-Interpret the original task sketches as follows:
+The seed is useful but materially short of the approved driver:
 
-- **Task 1 adopts and normalizes the existing repository; it does not create it.**
-  Existing history, README, license, metadata, and skill are inputs to inspect and
-  modify. Repository settings still need normalization: projects/wiki are
-  enabled, merge/rebase commits are allowed, and head branches are not deleted
-  automatically.
-- **The root `skills/manifest/SKILL.md` is the canonical v0.1 skill surface.** Do
-  not add a second independently editable copy under `plugins/`; point harness
-  metadata at the one canonical directory.
-- **Task 7 upgrades an existing seed skill.** Its RED condition is missing
-  mission-kernel, checkpoint, independent-acceptance, `"helix it"`, and
-  commission-intake semantics—not absence of a skill file.
-- The current v0 Markdown manifest guide is not `mission-manifest@1`; the planned
-  schema, deterministic Python kernel, tests, checkpoints, capability discovery,
-  coordinator, and watch adapter remain unimplemented.
-- The current seed does not accept `watch-commission@1`. Task 8 remains the first
-  machine-verified cross-package handoff; until then no automatic route may be
-  claimed.
+- `manifest` currently declines invocation when a current mission manifest already
+  governs the task; the target must create **and** resume, reconcile, advance,
+  verify, or close an existing mission;
+- its completion block does not yet require an independent acceptor;
+- the v0 guide uses `draft|active|hold|complete|cancelled`, not the closed
+  `mission-manifest@1` lifecycle;
+- no deterministic kernel, atomic checkpoint store, dynamic capability discovery,
+  bounded return-point coordinator, `"helix it"` compatibility, or
+  `watch-commission@1` intake exists; and
+- repository settings still need normalization: projects/wiki are enabled,
+  merge/rebase commits are allowed, and merged head branches are retained.
 
-These amendments supersede every later instruction to create the repository,
-create a first `manifest` skill from nothing, or treat the target layout and
-compatibility phrases as already implemented. All other safety, TDD, authority,
-state, and verification requirements remain in force.
+Every task below modifies this seed in place. The root
+`skills/manifest/SKILL.md` remains the sole canonical skill body and all harness
+metadata must point at `./skills`.
 
 - Project/repository: **Practical Agency** / `practical-agency`.
 - Sole v1 public skill: **`manifest`**.
@@ -59,16 +52,17 @@ state, and verification requirements remain in force.
 
 ---
 
-## Initial repository structure
+## Target repository structure
 
 ```text
 practical-agency/
 ├── .github/
 │   ├── scripts/check_dco.py
 │   └── workflows/ci.yml
-├── plugins/practical-agency/
-│   ├── .claude-plugin/plugin.json
-│   └── skills/manifest/SKILL.md
+├── skills/manifest/SKILL.md
+├── plugin.json
+├── .cursor-plugin/plugin.json
+├── .claude-plugin/plugin.json
 ├── practical_agency/
 │   ├── __init__.py
 │   ├── authority.py
@@ -109,12 +103,14 @@ practical-agency/
 
 ---
 
-### Task 1: Create the repository and fail-closed CI shell
+### Task 1: Adopt the seed and add a fail-closed CI shell
 
 **Files:**
-- Create repository: `ZMS-Labs/practical-agency`
-- Create: `README.md`
-- Create: `LICENSE`
+- Inspect/modify: `README.md`
+- Inspect/preserve: `LICENSE`
+- Modify: `plugin.json`
+- Modify: `.cursor-plugin/plugin.json`
+- Create: `.claude-plugin/plugin.json`
 - Create: `pyproject.toml`
 - Create: `AGENTS.md`
 - Create: `.github/scripts/check_dco.py`
@@ -122,21 +118,22 @@ practical-agency/
 - Create: `practical_agency/__init__.py`
 
 **Interfaces:**
-- Consumes: the approved design in `epistemic-skills/docs/superpowers/specs/2026-08-07-practical-agency-and-commission-watch-design.md`.
-- Produces: a public repository with a deterministic test command and DCO enforcement.
+- Consumes: the existing seed plus the approved design in
+  `epistemic-skills/docs/superpowers/specs/2026-08-07-practical-agency-and-commission-watch-design.md`.
+- Produces: the same public repository and canonical skill history with a
+  deterministic test command, normalized settings, and DCO enforcement.
 
-- [ ] **Step 1: Create the GitHub repository**
+- [ ] **Step 1: Verify the seed and normalize repository settings**
 
-Create `ZMS-Labs/practical-agency` with:
+Before editing, assert the inspected files and commit are present and that exactly
+one root `skills/*/SKILL.md` exists, named `manifest`. Then normalize settings to:
 
 ```text
 visibility: public
 default branch: main
-initial README: disabled (the committed tree supplies it)
-license template: disabled (the committed tree supplies GPL-3.0-or-later)
 issues: enabled
-projects: disabled initially
-wiki: disabled initially
+projects: disabled
+wiki: disabled
 squash merge: enabled
 merge commits: disabled
 rebase merge: disabled
@@ -144,11 +141,12 @@ auto-merge: disabled initially
 delete head branches: enabled
 ```
 
-Do not create a repository named `manifest`, `praxis`, or `practical-agency-skills`.
+Do not recreate the repository, rewrite its initial commits, or add a second skill
+body under `plugins/`.
 
-- [ ] **Step 2: Add the first-screen README**
+- [ ] **Step 2: Reconcile the existing first-screen README**
 
-Use this opening exactly:
+Preserve useful seed material, but make the current-versus-target status explicit and use this opening:
 
 ```markdown
 # Practical Agency
@@ -220,7 +218,7 @@ Expected: zero tests discovered, compile succeeds.
 3. run `python -m unittest discover -s tests -p 'test_*.py' -v`;
 4. run `python -m compileall -q practical_agency tests`;
 5. parse every committed `.json` file with stdlib;
-6. ensure exactly one `plugins/practical-agency/skills/*/SKILL.md` exists once Task 6 lands;
+6. ensure exactly one root `skills/*/SKILL.md` exists and it is `skills/manifest/SKILL.md`;
 7. run the DCO checker on pull requests.
 
 Copy the author-matching DCO semantics from `epistemic-skills`; do not weaken them.
@@ -229,7 +227,7 @@ Copy the author-matching DCO semantics from `epistemic-skills`; do not weaken th
 
 ```bash
 git add .
-git commit -m "chore: bootstrap practical-agency repository
+git commit -m "chore: adopt practical-agency seed
 
 Signed-off-by: SternOne <89846440+SternOne@users.noreply.github.com>"
 ```
@@ -821,12 +819,14 @@ Signed-off-by: SternOne <89846440+SternOne@users.noreply.github.com>"
 
 ---
 
-### Task 7: Add the sole public `manifest` skill
+### Task 7: Upgrade the sole public `manifest` skill
 
 **Files:**
 - Create: `tests/test_manifest_skill.py`
-- Create: `plugins/practical-agency/skills/manifest/SKILL.md`
-- Create: `plugins/practical-agency/.claude-plugin/plugin.json`
+- Modify: `skills/manifest/SKILL.md`
+- Modify: `plugin.json`
+- Modify: `.cursor-plugin/plugin.json`
+- Create/modify: `.claude-plugin/plugin.json`
 - Modify: `.github/workflows/ci.yml`
 - Modify: `README.md`
 
@@ -839,7 +839,7 @@ Signed-off-by: SternOne <89846440+SternOne@users.noreply.github.com>"
 Test:
 
 ```python
-SKILLS = ROOT / "plugins" / "practical-agency" / "skills"
+SKILLS = ROOT / "skills"
 skill_files = sorted(SKILLS.glob("*/SKILL.md"))
 self.assertEqual([path.parent.name for path in skill_files], ["manifest"])
 
@@ -852,8 +852,11 @@ for required in (
     "capability",
     "checkpoint",
     "helix it",
+    "resume",
+    "reconcile",
 ):
     self.assertIn(required, text)
+self.assertNotIn("when a mission manifest already governs the task and is current", text)
 ```
 
 Also parse the frontmatter description and enforce a recorded UTF-8 byte ceiling of **420 bytes** for v0.1. Raising the ceiling requires an explicit same-commit justification.
@@ -864,9 +867,9 @@ Also parse the frontmatter description and enforce a recorded UTF-8 byte ceiling
 python -m unittest tests.test_manifest_skill -v
 ```
 
-Expected: no skill exists.
+Expected: the existing seed skill fails the target semantic assertions (driver modes, independent completion, checkpointing, or compatibility intent).
 
-- [ ] **Step 3: Write the `manifest` skill**
+- [ ] **Step 3: Upgrade the canonical `manifest` skill in place**
 
 Frontmatter:
 
@@ -878,6 +881,10 @@ description: Use when the operator asks to make an intended outcome real through
 ```
 
 If this exceeds 420 UTF-8 bytes, shorten without removing explicit invocation, authority, checkpoint, independence, and routine-decline semantics.
+
+Remove the seed's decline rule for an already-current manifest: the same
+public entry must be able to create, resume, reconcile, advance, verify, or close
+a mission. Preserve proportional decline only for genuinely routine one-step work.
 
 The body must define:
 
@@ -898,7 +905,7 @@ Do not enumerate installed skill names. Mention external packages only as exampl
 
 - [ ] **Step 4: Add package metadata**
 
-`plugin.json` points directly at `./skills` and describes the package as one explicit-entry mission-control skill. No copied skill inventory.
+Root, Cursor, and any Claude harness metadata point directly at the same `./skills` directory and describe one explicit-entry mission-control skill. No copied skill inventory or duplicate skill body is permitted.
 
 - [ ] **Step 5: Extend CI**
 
@@ -912,8 +919,8 @@ python -m unittest discover -s tests -p 'test_*.py' -v
 ```
 
 ```bash
-git add plugins README.md .github/workflows/ci.yml tests/test_manifest_skill.py
-git commit -m "feat: add the manifest mission-control skill
+git add skills/manifest/SKILL.md plugin.json .cursor-plugin .claude-plugin README.md .github/workflows/ci.yml tests/test_manifest_skill.py
+git commit -m "feat: upgrade the manifest mission-control skill
 
 Signed-off-by: SternOne <89846440+SternOne@users.noreply.github.com>"
 ```
