@@ -35,7 +35,7 @@ authorized by the public-content finding (identifiers/topology, not credentials)
 
 ## Operator checklist
 
-- [ ] Merge corrective PR to `main`
+- [x] Merge corrective PR to `main` (#107, 2026-08-07)
 - [ ] Paste the additions into the GitHub Release body for `v5.0.0`
 - [ ] Update the repository description string
 - [ ] Confirm tag SHA unchanged

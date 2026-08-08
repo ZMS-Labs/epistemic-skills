@@ -1,0 +1,131 @@
+{
+  "schema": "gauntlet-manual-run@1",
+  "run_id": "commission-watch-pr110-2026-08-07",
+  "frozen_at": "2026-08-07",
+  "subject": {
+    "repository": "ZMS-Labs/epistemic-skills",
+    "pull_request": 110,
+    "ref": "refs/heads/review/pr110-commission-watch-candidate-v2",
+    "revision_strength": "frozen branch ref; exact object id must be resolved from GitHub before merge",
+    "base_ref": "refs/heads/main",
+    "axis": "fixed-artifact-gate"
+  },
+  "execution": {
+    "docket_mode": "manual-docket-degraded",
+    "independent_context_isolation": false,
+    "separate_reviewer_requested": "github-copilot",
+    "separate_reviewer_verdict_at_freeze": null,
+    "self_certification_permitted": false
+  },
+  "panel": [
+    {
+      "id": "state-machine-adversary",
+      "role": "adversarial",
+      "report": "reports/state-machine-adversary.md",
+      "outcome": "PASS_WITH_RESIDUAL_LIMITS"
+    },
+    {
+      "id": "evidence-integrity",
+      "role": "metatextual",
+      "report": "reports/evidence-integrity.md",
+      "outcome": "CONDITIONAL"
+    },
+    {
+      "id": "usability-and-boundary",
+      "role": "constructive",
+      "report": "reports/usability-and-boundary.md",
+      "outcome": "PASS_COMMISSION_WATCH_CONDITIONAL_PROGRAM"
+    }
+  ],
+  "resolved_findings": [
+    {
+      "id": "F-EI-1",
+      "severity": "P2",
+      "resolution": "schema/verifier field and enum parity test"
+    },
+    {
+      "id": "F-EI-2",
+      "severity": "P2",
+      "resolution": "contract evidence boundary and safe-resolution security rules"
+    },
+    {
+      "id": "state-proof-collapse",
+      "severity": "P1",
+      "resolution": "current state separated from complete retained proof history"
+    },
+    {
+      "id": "block-by-assertion",
+      "severity": "P1",
+      "resolution": "BLOCKED requires dated external block evidence and field-consistent reason"
+    },
+    {
+      "id": "prepared-equals-inert",
+      "severity": "P1",
+      "resolution": "prepared mechanism remains KILL_SWITCH_UNPROVEN until real disable receipt"
+    },
+    {
+      "id": "prompt-time-observer",
+      "severity": "P1",
+      "resolution": "closed external substrates plus mechanism-ref and self-asserted evidence refusal"
+    }
+  ],
+  "open_findings": [
+    {
+      "id": "F-EI-3",
+      "severity": "P2",
+      "status": "external-condition",
+      "detail": "exact-head jobs execute and focused checks pass; clean-room exits because a raw PR merge SHA is treated as a branch/tag"
+    },
+    {
+      "id": "independent-review",
+      "severity": "P2",
+      "status": "external-condition",
+      "detail": "separate reviewer verdict absent at dossier freeze"
+    },
+    {
+      "id": "F-UB-1",
+      "severity": "P2",
+      "status": "program-scope",
+      "detail": "Practical Agency repository and initial manifest skill exist; deterministic kernel and watch-commission intake are not implemented or verified"
+    },
+    {
+      "id": "F-SA-1",
+      "severity": "P3",
+      "status": "documented-coverage-limit",
+      "detail": "semantic verifier does not authenticate external receipt truth"
+    },
+    {
+      "id": "F-SA-2",
+      "severity": "P3",
+      "status": "future-consumer-requirement",
+      "detail": "timestamp and condition interpretation is consumer-owned"
+    },
+    {
+      "id": "F-SA-3",
+      "severity": "P3",
+      "status": "documented-security-limit",
+      "detail": "identifier guards are not a universal URL/path/injection scanner"
+    }
+  ],
+  "verdict_rule": {
+    "open_p1": "NO_GO",
+    "no_open_p1_any_open_p2": "CONDITIONAL",
+    "no_open_p1_p2_and_gates_complete": "GO"
+  },
+  "verdict": "CONDITIONAL",
+  "conditions": [
+    "fix raw-SHA clean-room checkout and pass trusted exact-final-head jobs",
+    "genuine separate review returns or an explicit degraded-review waiver is recorded",
+    "PR text acknowledges the existing Practical Agency seed while preserving no-kernel/no-automatic-handoff/no-production-watch limits",
+    "DCO and repository gates remain green"
+  ],
+  "artifacts": [
+    "dossier.md",
+    "reports/state-machine-adversary.md",
+    "reports/evidence-integrity.md",
+    "reports/usability-and-boundary.md",
+    "arbitration.md",
+    "GAUNTLET-SUMMARY.md"
+  ],
+  "post_freeze_reconciliation": "POST-FREEZE-RECONCILIATION.md"
+}

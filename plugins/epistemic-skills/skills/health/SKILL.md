@@ -103,10 +103,11 @@ registered, not by editing this file.
   in what order".
 - **`decision-ledger`** takes any consequential decision made off the back of
   this report. The report itself is evidence, never a decision.
-- **This skill answers when *asked*; it does not watch.** `watch` owns unattended
-  observation. **A green run here does not imply you would have been told** —
-  that depends entirely on whether a `watch` covering this bound has reached
-  `PROVEN`. An unproven watcher and no watcher are the same thing.
+- **This skill answers when *asked*; it does not watch.** `watch` commissions
+  unattended observation. **A green run here does not imply you would have been
+  told** — that depends entirely on whether an external observer covering this
+  bound was commissioned under `watch` and has reached `PROVEN`. An unproven
+  commission and no observer are operationally the same.
 
 ## Anti-rationalizations
 
@@ -118,7 +119,7 @@ registered, not by editing this file.
 | "It has no threshold but the number looks fine" | Judging without a declared bound is inventing policy at read time. |
 | "The summary is cleaner without the unreachable ones" | The unreachable ones are why anyone runs this. |
 | "This is the same as the quick status command, just bigger" | Scope and depth are arguments. Artifacts sharing one trigger were never separate capabilities. |
-| "A green run means I would hear about it if it broke" | Only if a `watch` covering that bound has reached `PROVEN`. This skill does not watch, and an unproven watcher is not one. |
+| "A green run means I would hear about it if it broke" | Only if an external observer covering that bound was commissioned under `watch` and has reached `PROVEN`. This skill does not watch. |
 
 ## Degraded operation
 

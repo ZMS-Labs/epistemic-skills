@@ -138,7 +138,7 @@ their evaluation corpora were preserved at package level. See
 | Need the state of a running system, or a health claim is about to bear load | `health` | Per-subject `OK`/`WARN`/`CRITICAL`/`UNKNOWN`; `UNKNOWN` never aggregates into `OK` |
 | A specific thing is broken and the cause is not established | `triage` | `CAUSE`/`NARROWED`/`UNKNOWN`/`NOT-BROKEN` with the discriminating observation |
 | A change is believed applied and something depends on it | `did-it-land` | `LANDED`/`REVERTED`/`UNVERIFIED` from a runtime observation, never a source read |
-| A bound must be noticed while unattended, or a watcher must be proven | `watch` | `DECLARED`/`INERT`/`PROVEN`/`SUSPECT`; never “installed” before a proof fire |
+| A bound must be noticed between sessions, or an external observer must be commissioned or re-proved | `watch` | Validated `watch-commission@1`: `DECLARED`/`BLOCKED`/`INERT`/`PROVEN`/`SUSPECT`; the skill itself never watches |
 | Resume from a compaction summary, handoff, or remembered state | `decision-ledger` (resume mode) | Re-anchored state digest or visible uncertainty |
 | Micro-recon exposes map/territory mismatch, hidden coupling, fuzzy scope, or fan-out risk | `recon` (brief mode) | Read-only territory map and rewritten request |
 | Material software/system fork or correctness/property claim | `resolve` (derivation) | Inline focused derivation or a revision-bound formal record |
@@ -176,12 +176,16 @@ flowchart LR
     U -. "running-system state" .-> H["health"]
     H -. "known broken" .-> TR["triage"]
     U -. "change believed applied" .-> DIL["did-it-land"]
-    U -. "unattended bound" .-> W["watch"]
+    U -. "unattended bound" .-> W["Commission Watch<br/>(watch)"]
 
     U -. "external boundary" .-> O["outsource<br/>immutable handoff"]
     D["decision-ledger<br/>persist consequential moment"] -. "cross-cutting reuse" .-> U
     OQ["open-questions<br/>walk ledger to empty"] -. "cross-cutting, any gated stage" .-> U
 ```
+
+`watch` commissions observation; an external runtime performs it. A separate
+mission-control layer may retain and act on the commission, but no Markdown skill
+remains awake between sessions.
 
 `resolve` (literature), `decision-ledger`, `outsource`, and `open-questions` are cross-cutting. Resume re-anchoring is `decision-ledger` resume mode (pre-arc). `context-audit` is maintenance-triggered outside the arc. Craft doctrine (`intent-traced-merge`, `agent-interface-design`) is read on demand — not a firing skill. Most tasks clear the routine gate or fire one discipline. See [The Epistemic Arc](https://github.com/ZMS-Labs/epistemic-skills/wiki/The-Epistemic-Arc) for handoff details and [Core Concepts](https://github.com/ZMS-Labs/epistemic-skills/wiki/Core-Concepts) for the five epistemic-flexibility controls.
 
@@ -195,7 +199,7 @@ The package contains exactly one entry point and thirteen disciplines. Each name
 | [`health`](plugins/epistemic-skills/skills/health/SKILL.md) | The state of a running system is wanted, or a health claim is about to bear load | Probe declared subjects against declared bounds, and say what could not be reached | Per-subject state; a roll-up carrying any `UNKNOWN` is at best `UNKNOWN` |
 | [`triage`](plugins/epistemic-skills/skills/triage/SKILL.md) | A specific subject is broken or degraded and the cause is not established | Eliminate candidates by observation, cheapest discriminator first, and stop at the cause | A verdict with the observation that ruled the alternatives out; the remedy is a separate act |
 | [`did-it-land`](plugins/epistemic-skills/skills/did-it-land/SKILL.md) | A change is believed applied and something now depends on it being true | Observe the runtime, identify what actually loads, and re-check past the revert window | `LANDED`/`REVERTED`/`UNVERIFIED`; `UNVERIFIED` is the default |
-| [`watch`](plugins/epistemic-skills/skills/watch/SKILL.md) | A bound must be noticed while unattended, or an existing watcher must be proven to still fire | Specify and prove an external watcher that acts unattended | `DECLARED`/`INERT`/`PROVEN`/`SUSPECT`; never “installed” before a proof fire |
+| [Commission Watch (`watch`)](plugins/epistemic-skills/skills/watch/SKILL.md) | A bound must be noticed between sessions, or an external observer must be commissioned or re-proved | Specify, commission, and proof-fire an external observer; the skill itself never persists | Validated `watch-commission@1`: `DECLARED`/`BLOCKED`/`INERT`/`PROVEN`/`SUSPECT` |
 | [`recon`](plugins/epistemic-skills/skills/recon/SKILL.md) | Territory must be mapped before effort commits: a fuzzy/contradicted brief, a large foggy effort, or an external project overlapping your own (three modes: brief / initiative / candidate) | Read, decompose, or harvest — understanding only, never a change | Rewritten request; decision map + fog-free tickets; or harvest record with per-level spend decisions |
 | [`resolve`](plugins/epistemic-skills/skills/resolve/SKILL.md) | A live question or material decision needs an instrument, not an opinion (three instruments: derivation / literature / probe) | Settle it with the cheapest sufficient instrument; the instrument produces evidence, never the downstream verdict | Derivation or `formal-rigor-record@2`; claim-evidence matrix; or recorded probe answer with the build disposed |
 | [`write-goal`](https://github.com/ZMS-Labs/epistemic-skills/wiki/Skill-Write-Goal) | Explicit intent to author, refine, or start a durable goal | Bind operator intent to proof, scope, blockers, and stop rules | Approved goal contract; execution/certification remains downstream |
@@ -436,7 +440,7 @@ Every pull-request commit must carry an author-matching DCO trailer:
 git commit --signoff
 ```
 
-A release additionally requires exact-head CI, DCO, CodeQL, full-history secret scanning with a positive control, provenance review, independent publication review, final Gauntlet, and tag/Release identity checks. See [Release Process and Versioning](https://github.com/ZMS-Labs/epistemic-skills/wiki/Release-Process-and-Versioning) and [Security, Provenance, and DCO](https://github.com/ZMS-Labs/epistemic-skills/wiki/Security-Provenance-and-DCO).
+A release additionally requires exact-head CI, DCO, CodeQL, full-history secret scanning with a positive control, provenance review, independent publication review, final Gauntlet, and tag/Release identity checks. See [Release Process and Versioning](https://github.com/ZMS-Labs/epistemic-skills/wiki/Release-Process-and-Versioning) and [Security, Provenance, and DCO](https://github.com/ZMS-Labs/epistemic-skills/wiki/Security-Provenance-and-DCO). When GitHub Actions cannot assign runners, use [local CI fallback](docs/CI-LOCAL-FALLBACK.md) and record a receipt.
 
 ### Maintainer map
 

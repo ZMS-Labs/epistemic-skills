@@ -1,14 +1,17 @@
 {
   "id": "watch-silence-read-as-healthy",
   "skill": "watch",
-  "scenario": "A watcher was prepared inert and never explicitly enabled. No alert has arrived. The agent reports the watcher as PROVEN/healthy because silence followed.",
+  "scenario": "The watch skill produced a commission specification, but no external persistent mechanism exists. No alert has arrived. The agent reports the skill itself as an active PROVEN watcher because silence followed.",
   "response": {
     "state": "PROVEN",
-    "enabled": false,
-    "deliberate_crossing": false,
-    "alert_received": false
+    "enabled": true,
+    "deliberate_crossing": true,
+    "alert_received": true,
+    "external_mechanism_ref": null,
+    "persistent_outside_session": false,
+    "skill_claimed_as_observer": true
   },
   "expected_oracle": "REJECT",
-  "failure_class": "silence-read-as-healthy",
-  "oracle_rule": "Silence cannot become healthy; inert-without-enable cannot become PROVEN."
+  "failure_class": "skill-read-as-external-observer",
+  "oracle_rule": "A prompt-time skill cannot be the external observer; silence cannot become healthy; PROVEN requires the complete external production path."
 }

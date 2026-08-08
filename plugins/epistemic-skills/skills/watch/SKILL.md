@@ -1,207 +1,392 @@
 ---
 name: watch
-description: Use when something must be noticed while nobody is looking — a bound that matters between runs, a condition whose first symptom would otherwise be an outage, or an existing watcher that must be proven to still fire. Do NOT fire when you want the current state right now (that is a health readout), when the condition is already known crossed and the cause is wanted, or when nothing would change by learning about it late.
+description: Use to commission or re-prove an external watch when a bound must be noticed between sessions. This skill specifies the bound, substrate, destination, kill switch, safe proof crossing, and alert receipt; it does not itself watch. Do NOT use for a current-state readout, diagnosis of a known crossing, auto-remediation, or a condition nobody will act on.
 metadata:
   hands-to: [triage, decision-ledger]
 ---
 
-# watch — prove the external observer that notices a crossed bound
+# watch — commission and prove an external observer
 
-> Every other member of this collection answers when asked. This discipline
-> specifies and proves an **external watcher** that acts unattended. The skill is
-> not itself a scheduler, probe, or alerting service.
+> `watch` is the **commission-watch** discipline. It runs during an agent
+> engagement and produces a validated `watch-commission@1` record.
 >
-> Unattended observation inverts the ordinary risk: a watcher that stays silent
-> because nothing is wrong looks exactly like a watcher that stays silent because
-> it is broken.
+> **The skill is not the external observer.** The observer is the scheduler,
+> event listener, monitoring service, human cadence, or other mechanism that
+> remains active after the engagement ends.
 >
-> This skill owns one decision: **what must be noticed between runs, and how do I
-> know the external watcher would actually tell me?**
+> This discipline owns one decision: **what must be noticed between runs, which
+> external mechanism can notice it, and what evidence proves the complete
+> observation and delivery path works?**
 
-## The state it must earn
+## Three objects, one honest boundary
 
-A watcher is not a file. It is a claim that you will be told, and that claim has
-exactly one honest state until proven.
-
-| State | Meaning | Rule |
+| Object | What it is | What it is not |
 |---|---|---|
-| `DECLARED` | bound, probe, destination, and kill switch written down | no runtime mechanism is implied |
-| `INERT` | mechanism prepared or deployed but deliberately disabled | **not installed, not watching, and the only state in which a new mechanism may arrive** |
-| `PROVEN` | enabled explicitly, then fired on a bound crossed **on purpose**, and the alert arrived | the only state in which it may be called installed or watching |
-| `SUSPECT` | its probe failed, delivery failed, the proof failed, or the proof expired | treated as an alert, never as silence |
+| `watch` | the prompt-time commissioning and proof discipline | a daemon, scheduler, probe, recipient, or background actor |
+| `watch-commission@1` | the durable specification, current operating state, proof history, block evidence, and evidence references | evidence that an observer exists merely because the record exists |
+| external observer | the real mechanism that probes, persists, and delivers alerts | this Markdown file or the agent session that read it |
 
-**A watcher that has never fired is not a watcher.** It is an intention with a
-configuration file. `PROVEN` is not reachable by inspection, by unit test, or by
-reasoning about the code — only by explicitly enabling the external mechanism,
-crossing the bound, and receiving the alert.
+Only the external observer operates between sessions. This skill may configure one
+through an available adapter, but it never promotes its own instructions into a
+persistence claim.
 
-The enablement used for proof is a **transient transition**, not a fifth trusted
-state:
+## Current state, proof history, and blocking evidence are different facts
+
+| State | Meaning | Honest claim |
+|---|---|---|
+| `DECLARED` | bound, probe, destination, kill-switch requirement, and proof plan are specified | a commission specification exists; no external mechanism is prepared |
+| `BLOCKED` | a required dependency was checked and found absent or unproven | no active watch exists; `block_reason` and dated `block_evidence` say exactly why |
+| `INERT` | a real external mechanism is persistence-proven, its real kill switch is exercised, and it is currently disabled | the mechanism exists but is not watching; a complete prior proof may remain as history |
+| `PROVEN` | the mechanism is externally persistent, currently enabled under authority, proof-fired safely through the production path, and the alert arrived | the observer is currently watching; this is the only state that permits that phrase |
+| `SUSPECT` | a specific mechanism, probe, delivery, proof, kill-switch, or freshness failure was observed and receipted | observation cannot currently be relied upon; treat the observed failure as an alert |
+
+`state` reports the observer **now**. The `proof` object records an end-to-end
+proof event and may outlive the state that followed it. A proof can succeed and
+the mechanism can then be deliberately disabled; the honest result is `INERT`
+with a complete historical proof bundle, not `PROVEN` and not erased evidence.
+A partial proof bundle is invalid because it is easy to misread as end-to-end
+validation.
+
+`BLOCKED` is also evidence-bearing. A reason string alone cannot establish that
+no substrate, authority, destination, kill switch, safe crossing, or usable probe
+exists. Every blocked record carries the check performed, its observation time,
+and a durable evidence reference. Those fields are empty in every non-blocked
+state.
+
+A commission that has never completed an end-to-end proof is not an active watch.
+It is `DECLARED`, `BLOCKED`, or `INERT`. Inspection, deployment, unit tests, and
+silence cannot reach `PROVEN`.
 
 ```text
-DECLARED -> INERT -> [explicit bounded enable for proof] -> PROVEN
-                      \-> any proof failure -> SUSPECT
+DECLARED -> BLOCKED(NO_EXECUTION_SUBSTRATE) when discovery finds no external mechanism
+DECLARED -> BLOCKED(KILL_SWITCH_UNPROVEN)   when a mechanism is prepared but its real disable path is not yet proven
+BLOCKED  -> INERT                           after persistence and kill-switch evidence exist and the mechanism is disabled
+INERT -> [authorized bounded enable + safe production-path crossing]
+      -> PROVEN                             when continued operation is authorized and remains enabled
+      -> INERT                              when proof succeeds but the mechanism is then disabled
+any observed live/proof/delivery/freshness/kill-switch failure after a mechanism exists
+      -> SUSPECT                            with failure kind, detail, time, and receipt
 ```
 
-Until the alert is received, the mechanism remains unproven even while temporarily
-enabled. If the proof is abandoned, disabled, or inconclusive, return it to
-`INERT`; never promote it by intent.
+A pre-existing mechanism whose persistence and kill-switch evidence already
+exist may enter `INERT` directly. Merely deploying a new mechanism does not.
+
+## Closed block reasons
+
+A missing or unproven dependency is not `SUSPECT`; it is an explicit `BLOCKED`
+commission. Use exactly one of:
+
+| Reason | Meaning |
+|---|---|
+| `NO_EXECUTION_SUBSTRATE` | capability discovery found no scheduler, listener, monitoring provider, human cadence, or other persistent mechanism |
+| `NO_REACHABLE_DESTINATION` | a reachability check found no recipient or endpoint that can be reached and acted upon |
+| `NO_AUTHORITY_TO_ENABLE` | the authority check does not permit the mechanism to be enabled or left operating |
+| `NO_KILL_SWITCH` | the proposed mechanism has no bounded disable path |
+| `KILL_SWITCH_UNPROVEN` | a real mechanism and disable procedure exist, but the procedure has not stopped that mechanism under observation |
+| `NO_SAFE_PROOF_CROSSING` | the proof analysis found that crossing the bound would create the protected harm or another irreversible condition |
+| `PROBE_UNAVAILABLE` | a probe attempt or capability check found that the subject cannot be observed through the proposed path |
+
+The chosen reason must agree with the record. For example,
+`NO_EXECUTION_SUBSTRATE` cannot coexist with a populated external mechanism and
+persistence receipt; `KILL_SWITCH_UNPROVEN` requires a prepared persistent
+mechanism and a named procedure that is not yet exercised. Every reason also
+requires `block_evidence.detail`, `block_evidence.observed_at`, and a durable
+`block_evidence.receipt_ref`.
+
+`BLOCKED` is a successful act of epistemic honesty. It prevents “we should watch
+this” from quietly becoming “we are watching this.”
 
 ## Iron constraints
 
-These are not defaults. They are the conditions under which this skill may create
-or enable anything at all.
+These are conditions of commission, not preferences.
 
-1. **Ships inert.** A newly authored external watcher is deployed disabled.
-   Enabling it is a separate, explicit, scoped act. An autonomous observer that
-   arrives already running has never been reviewed in its live form.
-2. **Has a kill switch that has been exercised.** Not documented — *used*. The
-   procedure that stops it must have been run against the real mechanism, and it
-   must work without a code change or deploy. **If the kill switch is untested,
-   the watcher stays `INERT`.**
-3. **Reports its own failure to observe.** A probe that errors, times out, or
-   cannot authenticate raises an alert. **Silent watcher failure is the worst
-   outcome in this design** — it is indistinguishable from "nothing is wrong,"
-   and it is the state a broken watcher decays into by default.
-4. **Names its destination before it is enabled.** An alert with no reachable
-   recipient is a log line.
-5. **Uses a bounded, reversible proof crossing.** Deliberately crossing a bound
-   must not create the outage, data loss, security exposure, or irreversible
-   condition the watcher exists to prevent. If no safe proof exists, report
-   `SUSPECT (unproven)` and escalate rather than manufacture danger.
+1. **The observer is external and persistent.** A skill, chat, source file, or
+   configuration document cannot be the observer. The closed `substrate_kind`
+   vocabulary permits schedulers, event listeners, monitoring services, human
+   cadences, other external mechanisms, and isolated fixtures — never Markdown.
+   Obvious skill, chat, prompt, session, or memory references are refused even
+   when mislabeled as an allowed substrate kind.
+2. **Positive claims carry evidence references.** Reachability, persistence,
+   kill-switch exercise, proof authority, and alert receipt each require a
+   durable receipt reference. A boolean without its evidence carrier is not a
+   trusted fact. Self-asserted or prompt/session-memory references are not
+   external evidence.
+3. **Blocked claims carry evidence too.** The missing or unproven dependency, the
+   time it was checked, and the external check receipt are mandatory. “I could
+   not think of one” is not `NO_EXECUTION_SUBSTRATE`.
+4. **Fixtures disclose their scope.** A fixture may prove the contract and an
+   isolated faithful path; its coverage limits must explicitly say that it is a
+   fixture/test and what production environment is not established.
+5. **New mechanisms arrive disabled and blocked until controllable.** Preparing
+   or deploying a mechanism does not yet earn `INERT`. Until the real kill
+   switch has been exercised and receipted, the state is
+   `BLOCKED: KILL_SWITCH_UNPROVEN`.
+6. **The kill switch is exercised against the real mechanism.** Documentation is
+   not proof. If the mechanism cannot be stopped without a code change or deploy,
+   it remains `BLOCKED`.
+7. **Probe failure is visible.** Error, timeout, authentication failure, and the
+   inability to observe are not quiet skips. Once commissioned, an actual
+   failure produces `SUSPECT` plus a failure kind, detail, time, and receipt.
+8. **The destination exists before enablement.** A log line with no reachable
+   recipient is not an alert.
+9. **The proof crossing is bounded and reversible.** Never cause the outage,
+   data loss, exposure, or irreversible state the observer exists to prevent.
+10. **The production path is the proof path.** A formatter test, source read,
+    dry parse, or direct test message that bypasses the real probe and delivery
+    chain cannot establish `PROVEN`.
+11. **Trusted proof has an expiry boundary.** `PROVEN`, and `INERT` records that
+    retain a complete prior proof, name when or under what condition it must be
+    re-proved. A proof with no freshness boundary silently becomes permanent.
+12. **Noticing never implies fixing.** This discipline does not remediate. Any
+    corrective action requires its own authority and workflow.
+13. **No alert without an actor.** Do not commission a notification nobody has
+    agreed to receive and act upon.
 
 ## Trigger
 
-Fires when:
+Fire when:
 
-- a bound matters *between* runs and nothing currently observes it;
-- the first symptom of a condition would be an outage or data loss;
-- a health readout is green and someone is about to conclude they would be told;
-- an existing watcher needs re-proving — it has not fired in long enough that its
-  liveness is now an assumption.
+- a bound matters between agent runs and nothing currently observes it;
+- the first natural symptom would otherwise be an outage, loss, or material
+  degradation;
+- someone is about to infer from a green health readout that they would be told
+  if the condition changed;
+- an external observer exists but has never completed an end-to-end proof; or
+- a prior proof is old enough that liveness has become an assumption.
 
-Does **not** fire when:
+Do not fire when:
 
-- you want current state now — that is a health readout;
-- the condition is already known crossed and the cause is wanted;
-- nothing would change by learning about it late;
-- a human reliably looks at the thing on a cadence shorter than the harm.
+- the user wants the current state now — use `health`;
+- the bound is already known crossed and the cause is wanted — use `triage`;
+- learning late would change no action;
+- a human reliably observes the condition on a cadence shorter than the harm;
+- the request is to auto-remediate; or
+- the only proposed “mechanism” is the skill or current agent session.
 
 ## Method
 
-1. **Write the bound as a comparison, not a feeling.** Give it units and a
-   direction. "Disk getting full" is not a bound; a percentage is.
-2. **Name the probe and its failure modes.** How is the bound observed, and what
-   does the probe return when it cannot observe? That answer becomes an alert
-   path, not a silence.
-3. **Name the destination and prove it is reachable** before enabling the
-   watcher. A generic test message is not yet proof of the production alert path,
-   but it establishes that the destination exists.
-4. **Deploy the external mechanism inert.** Confirm it is disabled and cannot
-   perform unattended observation in this state. Record `INERT`, never
-   "installed."
-5. **Exercise the kill switch against the real mechanism.** Enable only the
-   smallest safe proof activity needed to observe that it is alive, invoke the
-   kill switch, and confirm the activity stops without a code change or deploy.
-   Return the mechanism to `INERT`.
-6. **Explicitly authorize and enable the bounded proof run.** This is the
-   transition missing from a naive inert-to-proof procedure. Record who or what
-   authorized it, its scope, and the stop condition. Enabled-but-unproven is not
-   `PROVEN`.
-7. **Cross the bound on purpose, safely.** Confirm the alert arrives at the named
-   destination through the same path production will use, with enough content to
-   act. A source read, dry configuration parse, or formatter unit test cannot
-   satisfy this step.
-8. **Assign the state from the observation.** Alert received through the real
-   path: `PROVEN`. Probe, delivery, or proof failure: `SUSPECT`. Proof abandoned
-   or disabled before completion: return to `INERT`. Never infer promotion from
-   intent.
-9. **Exercise the post-proof operating decision explicitly.** Leave the watcher
-   enabled only when that state is authorized and its kill switch remains
-   available. Otherwise return it to `INERT`; a successful proof does not itself
-   authorize indefinite operation.
-10. **Record the proof with a date.** A proof is perishable; liveness decays into
-    assumption without one.
-11. **Hand real crossings to diagnosis.** This skill notices. It does not
-    diagnose and it does not remediate.
+1. **Confirm that late notice changes an action.** Name the recipient and what
+   they would do. If no action changes, decline rather than manufacture alert
+   debt.
+2. **Write the bound as a comparison.** Give it units, one closed direction
+   (`above`, `below`, `equals`, `changes`, or `absent`), and a scalar threshold.
+   “Disk getting full” is not a bound; `free_space_percent < 15` is.
+3. **Name the probe and its possible failure modes.** State how the subject is
+   observed, when observation occurs, and what timeout, authentication failure,
+   malformed output, or absence would look like. Possible failures guide design;
+   they do not themselves establish that a failure occurred.
+4. **Name and reach the destination.** A generic delivery test may establish that
+   the recipient exists. Retain its reachability receipt. It does not yet prove
+   the production alert path. If the check fails, emit
+   `BLOCKED: NO_REACHABLE_DESTINATION` with dated block evidence.
+5. **Discover an external execution substrate.** Search the capabilities actually
+   available in the current environment and name the closed `substrate_kind`,
+   provider or human cadence, and adapter that would remain active after this
+   engagement. If none is found, emit `BLOCKED: NO_EXECUTION_SUBSTRATE` with the
+   discovery receipt and stop.
+6. **Emit and validate the initial commission.** Record the subject, bound, probe,
+   destination, proposed observer, safety controls, proof plan, empty failure
+   carrier, empty block-evidence carrier, and current state in
+   `watch-commission@1`.
+7. **Prepare the real mechanism disabled.** Confirm and retain the external
+   `mechanism_ref` and a receipt establishing persistence outside the session.
+   If the real kill switch is not already proven, the current result is
+   `BLOCKED: KILL_SWITCH_UNPROVEN` with dated block evidence — not `INERT`.
+8. **Exercise the kill switch.** Use the smallest safe activity needed to show
+   that the real mechanism is alive, invoke the disable path, observe that it
+   stops without a code change or deploy, and retain the exercise receipt.
+   Success clears the block fields and yields `INERT`. Failure remains
+   `BLOCKED: KILL_SWITCH_UNPROVEN` before ordinary operation, or becomes
+   `SUSPECT` with a receipted observed failure for a previously commissioned
+   observer.
+9. **Authorize the bounded proof run.** Record the authorizing identity, durable
+   authorization reference, scope, stop condition, and whether continued
+   operation after proof is authorized. If authority is absent, emit
+   `BLOCKED: NO_AUTHORITY_TO_ENABLE` with the authority-check receipt.
+   Enabled-but-unproven is not `PROVEN`.
+10. **Establish a safe crossing.** If no bounded reversible proof can exercise
+    the real path, emit `BLOCKED: NO_SAFE_PROOF_CROSSING` with the analysis or
+    test receipt. Do not create the protected harm to satisfy a ritual.
+11. **Cross the bound safely through the production path.** Observe the actual
+    probe detect the crossing and the real delivery path place an actionable
+    alert at the named destination. Retain the alert receipt and receipt time.
+12. **Assign current state without destroying proof history.** A complete proof
+    plus authorized continued enablement yields `PROVEN`. A successful proof
+    followed by deliberate disablement yields `INERT` with the complete proof
+    bundle retained. An abandoned attempt leaves the proof bundle wholly absent;
+    never persist a persuasive-looking partial proof as trusted history.
+13. **Record actual failures separately.** A live probe, delivery, proof,
+    freshness, kill-switch, or mechanism failure yields `SUSPECT` only when the
+    record names the failure kind, detail, observation time, and receipt.
+14. **Set the re-proof boundary.** Record the date or condition after which the
+    proof no longer supports trust. Crossing that boundary creates a receipted
+    `freshness` failure and `SUSPECT` until another deliberate production-path
+    crossing succeeds.
+15. **Hand real crossings to diagnosis and persistence.** This discipline notices
+    only. `triage` determines cause; `decision-ledger` records consequential
+    decisions or outcomes when its own trigger fires.
 
-## Boundaries
+## Output
 
-- **Never remediates.** Noticing and fixing are different acts with different
-  authority. An auto-remediating watcher is an unattended actuator with a consent
-  problem, and this skill does not create one.
-- **Never treats its Markdown instructions as the watcher.** The external probe,
-  scheduler, delivery path, and recipient are the mechanism under proof.
-- **Never claims installed before `PROVEN`.** `INERT` means prepared but disabled,
-  not installed.
-- **Never treats its own outage as quiet.** No probe result is not a good result.
-- **Never adds a watcher whose alert nobody will act on.** A muted alert is worse
-  than none: it costs attention and manufactures false assurance.
-- **Never crosses a dangerous bound merely to satisfy the proof ritual.** Unsafe
-  proof yields `SUSPECT (unproven)` and escalation.
+Every engagement that does not decline produces one complete
+`watch-commission@1` JSON record conforming to:
+
+```text
+plugins/epistemic-skills/contracts/watch-commission/watch-commission.schema.json
+```
+
+Validate it with:
+
+```bash
+python plugins/epistemic-skills/contracts/watch-commission/verify_watch_commission.py <record.json>
+```
+
+The record separates:
+
+- **current operating state** — `DECLARED`, `BLOCKED`, `INERT`, `PROVEN`, or
+  `SUSPECT`;
+- **proof history** — wholly absent or a complete production-path proof bundle;
+- **positive-claim evidence** — destination, persistence, kill-switch,
+  authorization, and alert receipt references;
+- **block evidence** — detail, observation time, and receipt for the missing or
+  unproven dependency when state is `BLOCKED`; and
+- **observed failure** — kind, detail, observation time, and receipt, populated
+  when current state is `SUSPECT`.
+
+A structurally valid record is not automatically trusted; the semantic verifier
+applies the cross-field rules. Only a validated record with `state: PROVEN`, an
+enabled externally persistent mechanism, a complete proof bundle, all required
+receipts, and a re-proof boundary supports the present-tense claim “watching.”
+A validated `INERT` record may preserve exactly the same proof history while
+honestly saying the observer is currently disabled. A validated `BLOCKED` record
+must show the check that established the block; it cannot be created from an
+agent's unsearched assumption.
+
+Practical Agency’s `manifest` is **one conditional compatible consumer** of a
+validated `watch-commission@1` record: only when that package is installed in
+the current harness and a compatible adapter/intake is available may it custody
+the commission, perform authorized external operations, and retain receipts or
+external references. Repository or package existence alone is not routability;
+no automatic Practical Agency intake and no live observer are claimed here.
+Handoff does **not** transfer state-promotion authority. Adapter success and
+receipt references are not self-authenticating facts: resolved external evidence
+and adapter receipts must return to this commission-watch semantic verifier
+before `PROVEN` (or any other trusted state) may bear load. `manifest` must not
+copy or locally re-decide `DECLARED` → `BLOCKED` → `INERT` → `PROVEN` →
+`SUSPECT`.
+
+`handoff.on_crossing` and `metadata.hands-to` remain the closed post-crossing
+epistemic classification: exactly `triage` for cause and `decision-ledger` for
+durable consequential state. Array order is not semantic, and the classification
+does not compel either discipline to fire — each still owns its trigger. It does
+**not** declare commission custody; do **not** add `manifest` to
+`metadata.hands-to`. Mission-control custody is a separate, installation-
+dependent edge from the post-crossing successor path.
 
 ## Anti-rationalizations
 
 | Thought | Reality |
 |---|---|
-| "The config is deployed, so it is watching" | Deployed and disabled is `INERT`. Explicitly enable, cross the bound, and receive the alert. |
-| "It has not alerted, so everything is fine" | Or it is broken. Those look identical. When did it last fire? |
-| "The unit test covers the alert path" | The test proves the code can format an alert. It does not prove one arrives. |
-| "I will enable it now and verify later" | Later is where unverified watchers live permanently. Enable only as a bounded proof act. |
-| "The kill switch is documented" | Then run it against the real mechanism. Documentation is a hypothesis. |
-| "It is inert; now I will cross the bound" | A disabled watcher cannot alert. The explicit proof enable transition comes first. |
-| "Just alert on everything to be safe" | Alerts nobody acts on get muted, and muted is indistinguishable from absent. |
-| "It fired last month, it is fine" | That is a proof with a date. Is the date still good? |
-| "The skill will watch it" | The skill specifies the proof. Which external mechanism actually runs between sessions? |
+| “The skill will watch it” | The skill commissions and proves. Which external mechanism remains active after the session? |
+| “I labeled it a fixture, so the skill path counts” | An allowed label cannot hide a `SKILL.md`, chat, prompt, session, or memory reference. The mechanism itself must be external. |
+| “The receipt says self-asserted” | Self-assertion is not external evidence. Use a durable receipt produced by the capability, authority source, probe, or destination. |
+| “I could not think of a monitor” | That is not `NO_EXECUTION_SUBSTRATE`. Show the capability-discovery check and its receipt. |
+| “The config is deployed, so it is inert” | A prepared mechanism remains `BLOCKED: KILL_SWITCH_UNPROVEN` until the real disable path has been exercised. |
+| “It has not alerted, so everything is fine” | Silence and observer failure look identical. Where is the last production-path proof receipt? |
+| “The boolean says persistent” | What durable receipt establishes operation outside this session, and is the substrate type actually external? |
+| “The unit test covers alerts” | It may prove formatting. It does not prove the real probe, scheduler, delivery service, and destination. |
+| “The destination received my test message” | A bypass message proves reachability, not the production observation path. |
+| “The kill switch is documented” | Exercise it against the real mechanism and retain the receipt. Until then the commission is blocked. |
+| “The proof succeeded, so it is watching” | Only if the external observer remains enabled. Successful proof followed by disablement is `INERT` with proof history. |
+| “Some proof fields are better than none” | A partial proof bundle is easier to overread than an explicit absence. Retain the complete proof or no trusted proof. |
+| “These are possible failure modes, so the watch is suspect” | `SUSPECT` requires an observed failure with kind, detail, time, and receipt. Possibility is not an incident. |
+| “I will enable it now and prove it later” | Later is where unproven observers remain forever. Prepare disabled; enable only as an authorized proof act. |
+| “There is no safe test, but the configuration is obvious” | Emit `BLOCKED: NO_SAFE_PROOF_CROSSING` with evidence; do not manufacture danger or confidence. |
+| “The fixture passed, so production is proven” | Fixture evidence proves only the disclosed isolated scope. It must explicitly name what production environment remains unestablished. |
+| “Just alert on everything” | Alerts nobody acts on become muted; muted is operationally indistinguishable from absent. |
+| “It fired last month” | That is dated proof evidence. Has its re-proof boundary passed, and what is its current state? |
 
 ## Degraded operation
 
-| Condition | Behaviour |
+| Condition | Required result |
 |---|---|
-| probe fails | **alert** and `SUSPECT`, never silence |
-| destination unreachable | `SUSPECT`; a watcher that cannot deliver is not watching |
-| kill switch untested | remains `INERT`; may not be enabled for ordinary operation |
-| proof enablement unauthorized | remains `INERT`; no proof run occurs |
-| no safe deliberate crossing exists | `SUSPECT (unproven)` and escalate; do not create harm to prove observation |
-| proof expired | `SUSPECT` until re-proven by another deliberate crossing |
-| bound undeclared or unitless | refuse to create; there is nothing to compare against |
+| no persistent substrate after capability discovery | `BLOCKED: NO_EXECUTION_SUBSTRATE` with discovery evidence |
+| destination absent or unreachable | `BLOCKED: NO_REACHABLE_DESTINATION` with reachability evidence |
+| enablement or continued operation lacks authority | `BLOCKED: NO_AUTHORITY_TO_ENABLE` with authority-check evidence |
+| no kill switch | `BLOCKED: NO_KILL_SWITCH` with capability evidence |
+| mechanism prepared but kill switch not exercised | `BLOCKED: KILL_SWITCH_UNPROVEN` with mechanism and block evidence |
+| no safe proof crossing | `BLOCKED: NO_SAFE_PROOF_CROSSING` with analysis evidence |
+| subject cannot be probed | `BLOCKED: PROBE_UNAVAILABLE` with probe evidence |
+| prepared mechanism disabled, persistence and kill switch proven, no prior proof | `INERT` with an absent proof bundle |
+| proof succeeded and mechanism was then disabled | `INERT` with the complete historical proof and re-proof boundary retained |
+| partial proof history | invalid record; clear or complete it before relying on the commission |
+| live probe, delivery, proof, freshness, kill-switch, or mechanism failure | `SUSPECT` with failure kind, detail, observation time, and receipt; never quiet success |
+| fixture or test substrate | state applies only to the disclosed isolated scope; no production claim |
+| contract verifier unavailable | retain the record as unverified; never promote it by inspection |
 
 ## Oracle
 
-The failure is silence, and silence passes every naive test. The fixture set must
-assert:
+The failure is false assurance produced from silence, configuration presence, an
+unsearched absence claim, or an evidence field detached from the fact it
+supposedly supports. The executable corpus must reject:
 
-- a **crossed bound produces an alert at the destination** — proven by an explicit
-  enable followed by crossing, not by inspecting configuration;
-- the pre-fix sequence **deploy inert -> exercise kill switch -> remain inert ->
-  cross the bound** cannot reach `PROVEN`, because the watcher is still disabled;
-- a **failed probe produces an alert**, not a quiet skip;
-- an **unreachable destination is `SUSPECT`**, not success;
-- a watcher that has never fired reports `INERT`, **never** installed;
-- the **kill switch actually stops it** — exercised in the fixture, not asserted;
-- a positive control exercises the same runtime and delivery path production uses;
-  and
-- an unsafe deliberate crossing is refused rather than performed for ceremony.
+- this skill or another Markdown file presented as the external observer, even
+  when it is mislabeled as an allowed substrate and fills every proof boolean;
+- self-asserted, prompt, chat, session, or memory references presented as
+  external evidence;
+- a fixture whose coverage limits do not disclose its isolated/test scope and
+  missing production coverage;
+- a prepared mechanism represented as `DECLARED` or `INERT` before the real kill
+  switch is exercised;
+- a `BLOCKED` record without dated evidence, or with a reason contradicted by its
+  other fields;
+- a deployed-but-disabled mechanism reported as watching;
+- a `PROVEN` record with no permitted external substrate or persistent
+  `mechanism_ref`;
+- positive claims with no evidence receipt reference;
+- silence reported as health;
+- a destination test substituted for the production delivery chain;
+- an unexercised or unreceipted kill switch;
+- a proof crossing without durable scoped authorization;
+- an unsafe crossing performed for ceremony;
+- `PROVEN` or complete historical proof with no re-proof boundary;
+- partial proof history stored under `INERT`;
+- `SUSPECT` inferred only from possible failure modes rather than a receipted
+  observed failure; and
+- a missing dependency omitted instead of represented as evidence-bearing
+  `BLOCKED`.
 
-**One control must fail against a build that treats "no alert" as "no problem,"
-and another must fail against the v5.0.0 inert-without-enable sequence, or the
-suite proves nothing.**
+Positive controls must accept:
+
+- a currently enabled `PROVEN` observer;
+- a currently disabled `INERT` observer that retains the same complete proof
+  history;
+- `SUSPECT` only when the later failure is independently observed and
+  receipted;
+- `BLOCKED: NO_EXECUTION_SUBSTRATE` only with a discovery receipt; and
+- a prepared persistent mechanism as `BLOCKED: KILL_SWITCH_UNPROVEN` until its
+  real disable path is exercised.
+
+A corpus that merely rejects every record proves nothing.
 
 ## Evidence emission
 
 After each engagement, append one line to `runs/ledger.jsonl` under this skill:
 
 ```json
-{"schema":"skill-run@1","ts":"<iso8601>","skill":"<this-skill>","decision":"fired|declined","discipline_engaged":"<name-or-null>","action_changed":true|false}
+{"schema":"skill-run@1","ts":"<iso8601>","skill":"watch","decision":"fired|declined","discipline_engaged":"watch|<name-or-null>","action_changed":true|false}
 ```
 
-The append is part of this procedure. It is not a call to an external calibration
-service and it is not a `decision-ledger` entry. Schema:
+The append records use of the discipline. It does not prove that an external
+observer was commissioned; only the validated commission and external receipts
+can do that. Schema:
 `plugins/epistemic-skills/contracts/skill-run-ledger.schema.json`.
 
 ## Local overlay
 
-If a `LOCAL.md` exists alongside this file, read it after this one. It binds
-concrete bounds, probes, destinations, kill-switch procedures, safe proof
-crossings, authorization rules, and the dates of the last proofs. This file must
-stay free of them.
+If a `LOCAL.md` exists alongside this file, read it after this one. It may bind
+concrete bounds, probes, destinations, adapter names, kill-switch procedures,
+safe crossings, authorization rules, evidence-receipt formats, block-evidence
+procedures, and proof-expiry policy. It may never treat local configuration,
+prompt/session memory, or self-assertion as proof, and it may never replace the
+external-observer requirement.

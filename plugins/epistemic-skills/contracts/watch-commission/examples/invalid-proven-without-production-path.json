@@ -1,0 +1,75 @@
+{
+  "_expected": "REJECT",
+  "schema": "watch-commission@1",
+  "commission_id": "wc-example-invalid-bypass",
+  "subject": {
+    "ref": "service:example",
+    "revision": "rev-1"
+  },
+  "bound": {
+    "expression": "free_space_percent < 15",
+    "units": "percent",
+    "direction": "below",
+    "threshold": 15
+  },
+  "probe": {
+    "mechanism": "external metric query",
+    "cadence_or_event": "every 5 minutes",
+    "failure_modes": [
+      "timeout",
+      "authentication failure"
+    ]
+  },
+  "destination": {
+    "ref": "recipient:example",
+    "reachable": true,
+    "reachability_receipt_ref": "fixture://receipt/destination-001"
+  },
+  "external_observer": {
+    "substrate_kind": "fixture",
+    "substrate": "fixture-adapter",
+    "mechanism_ref": "fixture://watch/example-001",
+    "persistence_receipt_ref": "fixture://receipt/persistence-001",
+    "persistent_outside_session": true,
+    "enabled": true
+  },
+  "kill_switch": {
+    "procedure_ref": "fixture://kill/example-001",
+    "exercised": true,
+    "exercise_receipt_ref": "fixture://receipt/kill-001"
+  },
+  "proof": {
+    "authorized_by": "operator:example",
+    "authorization_ref": "fixture://authority/proof-001",
+    "safe_crossing": "fixture threshold override",
+    "production_path": false,
+    "bound_crossed": true,
+    "alert_received": true,
+    "received_at": "2026-08-07T12:00:00Z",
+    "alert_receipt_ref": "fixture://receipt/alert-001"
+  },
+  "failure": {
+    "kind": null,
+    "detail": null,
+    "observed_at": null,
+    "receipt_ref": null
+  },
+  "state": "PROVEN",
+  "block_reason": null,
+  "reprove_after": "2026-09-07T12:00:00Z",
+  "handoff": {
+    "on_crossing": [
+      "triage",
+      "decision-ledger"
+    ]
+  },
+  "coverage_limits": [
+    "planted delivery-path bypass control",
+    "isolated fixture evidence; no production provider or environment claimed"
+  ],
+  "block_evidence": {
+    "detail": null,
+    "observed_at": null,
+    "receipt_ref": null
+  }
+}
