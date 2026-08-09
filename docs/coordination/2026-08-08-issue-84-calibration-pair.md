@@ -16,8 +16,8 @@ ownership (`docs/coordination/epistemic-calibration.md` step 1).
 
 | Item | Owner | Status |
 |---|---|---|
-| Adopt or counter-propose `epistemic-product-calibration@1` | calibration | **Open** — not verified in this sweep |
-| Re-pin event contract at v4+ coordinate | calibration | **Open** |
+| Adopt or counter-propose `epistemic-product-calibration@1` | calibration | **Adopted** — `docs/coordination/2026-08-09-adopt-exchange-protocol.md` on calibration `main` (pending merge via PR) |
+| Re-pin event contract at v4+ coordinate | calibration | **Done** — `epistemic-skills-event-contract@2` core lock; catalog decoupled |
 | Field-pair supply for mint gate | joint | **Open** |
 
 No forced merge from this issue. Next step: calibration maintainer records adopt/counter
