@@ -40,3 +40,11 @@ jobs:
         run: python plugins/epistemic-skills/contracts/mission-custody/test_mission_custody.py
       - name: Compile mission custody verifier
         run: python -m py_compile plugins/epistemic-skills/contracts/mission-custody/verify_mission_custody.py
+      - name: Custody store unit tests
+        run: python plugins/epistemic-skills/contracts/mission-custody/test_custody_store.py
+      - name: Custody mission lifecycle unit tests
+        run: python plugins/epistemic-skills/contracts/mission-custody/test_custody_mission.py
+      - name: Custody CLI black-box tests
+        run: python plugins/epistemic-skills/contracts/mission-custody/test_custody_cli.py
+      - name: Three-subprocess kill/resume/repair continuity proof
+        run: python plugins/epistemic-skills/contracts/mission-custody/test_custody_process_proof.py
