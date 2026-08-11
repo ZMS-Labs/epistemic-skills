@@ -137,6 +137,16 @@ def test_verdict_operator_tier_binds_acceptor() -> None:
     check("verdict-operator-tier-acceptor", validate_record(rec) != [])
 
 
+def test_receipt_and_verdict_mission_id_kebab_required() -> None:
+    rec = load("valid-receipt.json")
+    rec["mission_id"] = "Bad_ID"
+    check("receipt-mission-id-kebab", validate_record(rec) != [])
+
+    rec = load("valid-verdict-pass-separated.json")
+    rec["mission_id"] = "Bad_ID"
+    check("verdict-mission-id-kebab", validate_record(rec) != [])
+
+
 def test_examples_corpus() -> None:
     ex = ROOT / "examples"
     for path in sorted(ex.glob("valid-*.json")):
@@ -165,6 +175,7 @@ def main() -> int:
     test_verdict_valid_pass()
     test_verdict_self_certification_refused()
     test_verdict_operator_tier_binds_acceptor()
+    test_receipt_and_verdict_mission_id_kebab_required()
     test_examples_corpus()
     print(f"\n{len(FAILURES)} failures")
     return 1 if FAILURES else 0

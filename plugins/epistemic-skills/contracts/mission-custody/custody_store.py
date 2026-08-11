@@ -101,6 +101,9 @@ class MissionStore:
             raise StoreError(f"invalid receipt: {errors[:3]}")
         name = sha256_bytes(record["request_id"].encode("utf-8")) + ".json"
         path = self.receipts_dir / name
+        if path.exists():
+            raise StoreError(
+                f"receipt already exists for request_id {record['request_id']!r}")
         atomic_write_json(path, record)
         return path
 
