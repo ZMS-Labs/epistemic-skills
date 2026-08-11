@@ -110,6 +110,33 @@ def test_checkpoint_status_closed_list() -> None:
     check("checkpoint-closed-status", validate_record(rec) != [])
 
 
+def test_receipt_valid() -> None:
+    check("receipt-valid", validate_record(load("valid-receipt.json")) == [])
+
+
+def test_receipt_after_hash_required() -> None:
+    rec = load("valid-receipt.json")
+    rec["after_sha256"] = "not-a-hash"
+    check("receipt-after-hash", validate_record(rec) != [])
+
+
+def test_verdict_valid_pass() -> None:
+    check("verdict-pass", validate_record(load("valid-verdict-pass-separated.json")) == [])
+    check("verdict-fail", validate_record(load("valid-verdict-fail.json")) == [])
+
+
+def test_verdict_self_certification_refused() -> None:
+    rec = load("valid-verdict-pass-separated.json")
+    rec["acceptor_id"] = rec["worker_id"]
+    check("verdict-no-self-cert", validate_record(rec) != [])
+
+
+def test_verdict_operator_tier_binds_acceptor() -> None:
+    rec = load("valid-verdict-pass-separated.json")
+    rec["assurance_tier"] = "operator-accepted"
+    check("verdict-operator-tier-acceptor", validate_record(rec) != [])
+
+
 def test_examples_corpus() -> None:
     ex = ROOT / "examples"
     for path in sorted(ex.glob("valid-*.json")):
@@ -133,6 +160,11 @@ def main() -> int:
     test_checkpoint_r2_requires_prev_sha()
     test_checkpoint_embedded_manifest_is_validated()
     test_checkpoint_status_closed_list()
+    test_receipt_valid()
+    test_receipt_after_hash_required()
+    test_verdict_valid_pass()
+    test_verdict_self_certification_refused()
+    test_verdict_operator_tier_binds_acceptor()
     test_examples_corpus()
     print(f"\n{len(FAILURES)} failures")
     return 1 if FAILURES else 0
