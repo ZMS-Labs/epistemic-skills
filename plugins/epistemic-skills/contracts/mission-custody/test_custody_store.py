@@ -88,6 +88,13 @@ def main() -> int:
         check("receipt-written", rp.exists())
         check("receipt-loaded", store.load_receipts() == [receipt])
 
+        # writing a second receipt with the same request_id must be refused
+        try:
+            store.write_receipt(receipt)
+            check("store-refuses-duplicate-receipt", False)
+        except StoreError:
+            check("store-refuses-duplicate-receipt", True)
+
     print(f"\n{len(FAILURES)} failures")
     return 1 if FAILURES else 0
 

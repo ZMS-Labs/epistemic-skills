@@ -196,7 +196,10 @@ def validate_receipt(rec: dict) -> list[str]:
     _check_exact_fields(errors, rec, RECEIPT_FIELDS, "receipt")
     if errors:
         return errors
-    for name in ("mission_id", "request_id", "actor", "artifact_path"):
+    _require(errors, isinstance(rec["mission_id"], str)
+             and bool(_ID_RE.match(rec["mission_id"])),
+             "mission_id", "kebab-case identifier required")
+    for name in ("request_id", "actor", "artifact_path"):
         _require(errors, isinstance(rec[name], str) and rec[name],
                  name, "non-empty string required")
     _require(errors, is_iso_utc(rec["utc"]), "utc", "ISO-8601 Z required")
@@ -218,8 +221,10 @@ def validate_acceptance_verdict(rec: dict) -> list[str]:
              f"one of {sorted(VERDICTS)} required")
     _require(errors, rec["assurance_tier"] in TIERS, "assurance_tier",
              f"one of {sorted(TIERS)} required")
-    for name in ("acceptor_id", "worker_id", "operator_ref", "reason",
-                 "mission_id"):
+    _require(errors, isinstance(rec["mission_id"], str)
+             and bool(_ID_RE.match(rec["mission_id"])),
+             "mission_id", "kebab-case identifier required")
+    for name in ("acceptor_id", "worker_id", "operator_ref", "reason"):
         _require(errors, isinstance(rec[name], str) and rec[name],
                  name, "non-empty string required")
     _require(errors, _str_list(rec["receipt_refs"]), "receipt_refs",
