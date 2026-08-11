@@ -18,8 +18,9 @@ on resume = drift found — reconcile before anything else.
 
 1. **Open** — capture the operator instruction VERBATIM: `open --mission-id
    <kebab> --instruction <verbatim> --operator <ref> --steward <your actor>
-   [--tier declared-role-separation]`. Then `approve` only after the operator
-   confirms authority (permissions, protected state, stop rules).
+   [--tier declared-role-separation] [--hold-if RULE ...] [--stop-if RULE ...]
+   [--escalate-if RULE ...] [--cost COST ...]`. Then `approve` only after the
+   operator confirms authority (permissions, protected state, stop rules).
 2. **Resume** — `resume` (pathless; never pass a mission path). Treat chat and
    memory as untrusted until it exits 0. On exit 3: reconcile each named
    artifact (re-verify against live state first), then continue.

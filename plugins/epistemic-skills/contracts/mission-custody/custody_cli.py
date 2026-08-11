@@ -55,6 +55,10 @@ def build_parser() -> argparse.ArgumentParser:
     p_open.add_argument("--scope-out", action="append", default=[])
     p_open.add_argument("--permission", action="append", default=[])
     p_open.add_argument("--protected", action="append", default=[])
+    p_open.add_argument("--hold-if", action="append", default=[], dest="hold_if")
+    p_open.add_argument("--stop-if", action="append", default=[], dest="stop_if")
+    p_open.add_argument("--escalate-if", action="append", default=[], dest="escalate_if")
+    p_open.add_argument("--cost", action="append", default=[], dest="acceptable_costs")
 
     sub.add_parser("approve", parents=[common])
     sub.add_parser("status", parents=[common])
@@ -104,7 +108,9 @@ def dispatch(args: argparse.Namespace) -> int:
             operator_ref=args.operator, steward_ref=args.steward,
             required_tier=args.tier, actor=args.actor,
             scope_in=args.scope_in, scope_out=args.scope_out,
-            permissions=args.permission, protected_state=args.protected)
+            permissions=args.permission, protected_state=args.protected,
+            hold_if=args.hold_if, stop_if=args.stop_if, escalate_if=args.escalate_if,
+            acceptable_costs=args.acceptable_costs)
         return 0
 
     mission = Mission.load(workspace, actor=args.actor)
