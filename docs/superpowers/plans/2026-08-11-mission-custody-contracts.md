@@ -1127,7 +1127,9 @@ Write each `...` body out in full in the file (the assertions described in the c
 - [ ] **Step 4: Run all three test files** — 0 failures; check total line count: `wc -l custody_store.py custody_mission.py` — flag if the two already exceed ~600 (budget for the CLI).
 - [ ] **Step 5: Commit** — `feat: mission lifecycle with drift reanchoring and clearable FAIL`.
 
----### Task 7: CLI (`custody_cli.py`)
+---
+
+### Task 7: CLI (`custody_cli.py`)
 
 **Files:**
 - Create: `plugins/epistemic-skills/contracts/mission-custody/custody_cli.py`
