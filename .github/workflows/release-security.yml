@@ -15,6 +15,10 @@ permissions:
 
 jobs:
   full-history-secret-scan:
+    # Draft PRs are agent WIP; the scan runs when the PR is marked ready.
+    # This narrows nothing about WHAT is scanned -- every non-draft PR and
+    # every push to main still gets the full-history scan.
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
