@@ -10,8 +10,8 @@
   "properties": {
     "skills": {
       "type": "array",
-      "minItems": 14,
-      "maxItems": 14,
+      "minItems": 15,
+      "maxItems": 15,
       "items": {
         "oneOf": [
           {"type":"object","additionalProperties":false,"required":["skill","event_kinds","eligible_when","outcome_sources","collection_mode","sentinel_fixture"],"properties":{"skill":{"const":"context-audit"},"event_kinds":{"const":["audit-cut-decision"]},"eligible_when":{"const":["preregistered-prediction","correction-or-supersession"]},"outcome_sources":{"const":["field-observation","supersession-chain"]},"collection_mode":{"const":"conditional"},"sentinel_fixture":{"const":"audit-cut-regression.json"}}},
@@ -27,7 +27,8 @@
           {"type":"object","additionalProperties":false,"required":["skill","event_kinds","eligible_when","outcome_sources","collection_mode","sentinel_fixture"],"properties":{"skill":{"const":"resolve"},"event_kinds":{"const":["evidence-claim","formal-prediction","probe-episode"]},"eligible_when":{"const":["independently-resolvable-verdict","preregistered-prediction"]},"outcome_sources":{"const":["deterministic-fixture","field-observation","independent-adjudication"]},"collection_mode":{"const":"conditional"},"sentinel_fixture":{"const":"resolve-instrument-misfire.json"}}},
           {"type":"object","additionalProperties":false,"required":["skill","event_kinds","eligible_when","outcome_sources","collection_mode","sentinel_fixture"],"properties":{"skill":{"const":"triage"},"event_kinds":{"const":["cause-verdict"]},"eligible_when":{"const":["evaluation-case","sampled-field-incident"]},"outcome_sources":{"const":["deterministic-fixture","field-observation"]},"collection_mode":{"const":"observational"},"sentinel_fixture":{"const":"triage-plausible-not-observed.json"}}},
           {"type":"object","additionalProperties":false,"required":["skill","event_kinds","eligible_when","outcome_sources","collection_mode","sentinel_fixture"],"properties":{"skill":{"const":"watch"},"event_kinds":{"const":["bound-crossing"]},"eligible_when":{"const":["evaluation-case","sampled-field-incident"]},"outcome_sources":{"const":["deterministic-fixture","field-observation"]},"collection_mode":{"const":"observational"},"sentinel_fixture":{"const":"watch-silence-read-as-healthy.json"}}},
-          {"type":"object","additionalProperties":false,"required":["skill","event_kinds","eligible_when","outcome_sources","collection_mode","sentinel_fixture"],"properties":{"skill":{"const":"write-goal"},"event_kinds":{"const":["goal-proof"]},"eligible_when":{"const":["independently-resolvable-verdict"]},"outcome_sources":{"const":["field-observation","supersession-chain"]},"collection_mode":{"const":"conditional"},"sentinel_fixture":{"const":"goal-regression.json"}}}
+          {"type":"object","additionalProperties":false,"required":["skill","event_kinds","eligible_when","outcome_sources","collection_mode","sentinel_fixture"],"properties":{"skill":{"const":"write-goal"},"event_kinds":{"const":["goal-proof"]},"eligible_when":{"const":["independently-resolvable-verdict"]},"outcome_sources":{"const":["field-observation","supersession-chain"]},"collection_mode":{"const":"conditional"},"sentinel_fixture":{"const":"goal-regression.json"}}},
+          {"type":"object","additionalProperties":false,"required":["skill","event_kinds","eligible_when","outcome_sources","collection_mode","sentinel_fixture"],"properties":{"skill":{"const":"manifest"},"event_kinds":{"const":["continuity-reanchor"]},"eligible_when":{"const":["evaluation-case","sampled-field-incident"]},"outcome_sources":{"const":["deterministic-fixture","field-observation"]},"collection_mode":{"const":"observational"},"sentinel_fixture":{"const":"manifest-unaccepted-read-as-complete.json"}}}
         ]
       },
       "allOf": [
@@ -44,7 +45,8 @@
         {"contains":{"type":"object","required":["skill"],"properties":{"skill":{"const":"resolve"}}},"minContains":1,"maxContains":1},
         {"contains":{"type":"object","required":["skill"],"properties":{"skill":{"const":"triage"}}},"minContains":1,"maxContains":1},
         {"contains":{"type":"object","required":["skill"],"properties":{"skill":{"const":"watch"}}},"minContains":1,"maxContains":1},
-        {"contains":{"type":"object","required":["skill"],"properties":{"skill":{"const":"write-goal"}}},"minContains":1,"maxContains":1}
+        {"contains":{"type":"object","required":["skill"],"properties":{"skill":{"const":"write-goal"}}},"minContains":1,"maxContains":1},
+        {"contains":{"type":"object","required":["skill"],"properties":{"skill":{"const":"manifest"}}},"minContains":1,"maxContains":1}
       ]
     }
   }

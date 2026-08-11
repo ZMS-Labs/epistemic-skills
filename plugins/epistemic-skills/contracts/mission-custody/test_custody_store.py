@@ -71,10 +71,16 @@ def main() -> int:
         latest, path = store.load_latest()
         check("latest-is-r2", latest["revision"] == 2)
 
-        # tamper with r1 on disk -> chain verification must fail
+        # tamper with r1 on disk -> chain verification must fail.
+        # Replace a string that provably exists in the store-written record and
+        # keep newline handling platform-stable, so the byte change is the
+        # tamper itself (CI caught the prior version passing on Windows only
+        # via LF->CRLF rewriting while the target string never matched).
         p1 = mdir / "checkpoints" / "r00000001.json"
-        p1.write_text(p1.read_text(encoding="utf-8").replace(
-            "await operator approval", "tampered"), encoding="utf-8")
+        tampered = p1.read_text(encoding="utf-8").replace(
+            "agent:worker", "agent:tamper")
+        assert tampered != p1.read_text(encoding="utf-8")
+        p1.write_text(tampered, encoding="utf-8", newline="\n")
         try:
             store.load_latest()
             check("chain-tamper-detected", False)

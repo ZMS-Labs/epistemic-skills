@@ -37,8 +37,9 @@ on resume = drift found — reconcile before anything else.
   load-bearing condition blocks progress (an unverified claim, an unmapped
   territory, an irreversible fork), STATE THE CONDITION and the return point
   (mission id + frontier) and let the surrounding stack answer it.
-- Custody here is convention-held (no enforcement hook yet — Stage C is
-  gated on the tracer retro): honestly label it if asked.
+- Custody here is convention-held, not mechanically enforced — no enforcement
+  hook exists yet (Stage C is gated on the tracer retro): honestly label it if
+  asked.
 - Degraded modes: core unavailable -> author a markdown mission manifest,
   label it session-bounded; store unwritable -> surface immediately; operator
   revocation -> stop consequential work, surface AUTHORITY_REVOKED.

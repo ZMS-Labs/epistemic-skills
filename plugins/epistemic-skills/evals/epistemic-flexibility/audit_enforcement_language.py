@@ -44,6 +44,7 @@ SKILL_PATHS = [
     "plugins/epistemic-skills/skills/gauntlet/SKILL.md",
     "plugins/epistemic-skills/skills/metacognate/SKILL.md",
     "plugins/epistemic-skills/skills/write-goal/SKILL.md",
+    "plugins/epistemic-skills/skills/manifest/SKILL.md",
 ]
 TERM_RE = re.compile(
     r"\b(?:enforc(?:e|ed|es|ing|ement)|fail(?:s|ed|ing)?(?:-|\s)closed)\b",
