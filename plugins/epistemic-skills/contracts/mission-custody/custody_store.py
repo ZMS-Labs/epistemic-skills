@@ -1,0 +1,111 @@
+#!/usr/bin/env python3
+"""Durable mission store: atomic JSON writes, checkpoint hash chain, receipts."""
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+import tempfile
+from pathlib import Path
+
+from verify_mission_custody import validate_record
+
+
+class StoreError(Exception):
+    pass
+
+
+class ChainBroken(StoreError):
+    pass
+
+
+def sha256_bytes(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def sha256_file(path: Path) -> str:
+    return sha256_bytes(path.read_bytes())
+
+
+def atomic_write_json(path: Path, record: dict) -> str:
+    errors = validate_record(record)
+    if errors:
+        raise StoreError(f"invalid record for {path.name}: {errors[:3]}")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    data = (json.dumps(record, indent=1, sort_keys=True) + "\n").encode("utf-8")
+    fd, tmp = tempfile.mkstemp(dir=str(path.parent), suffix=".tmp")
+    try:
+        with os.fdopen(fd, "wb") as handle:
+            handle.write(data)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(tmp, path)
+    except BaseException:
+        if os.path.exists(tmp):
+            os.unlink(tmp)
+        raise
+    return sha256_bytes(data)
+
+
+class MissionStore:
+    def __init__(self, mission_dir: Path) -> None:
+        self.mission_dir = Path(mission_dir)
+        self.checkpoints_dir = self.mission_dir / "checkpoints"
+        self.receipts_dir = self.mission_dir / "receipts"
+
+    def checkpoint_paths(self) -> list[Path]:
+        if not self.checkpoints_dir.is_dir():
+            return []
+        return sorted(self.checkpoints_dir.glob("r????????.json"))
+
+    def _path_for(self, revision: int) -> Path:
+        return self.checkpoints_dir / f"r{revision:08d}.json"
+
+    def write_checkpoint(self, record: dict) -> str:
+        errors = validate_record(record)
+        if errors:
+            raise StoreError(f"invalid checkpoint: {errors[:3]}")
+        revision = record["revision"]
+        existing = self.checkpoint_paths()
+        expected_rev = len(existing) + 1
+        if revision != expected_rev:
+            raise StoreError(
+                f"revision {revision} out of order; expected {expected_rev}")
+        if revision == 1:
+            if record["prev_checkpoint_sha256"] is not None:
+                raise StoreError("revision 1 must have null prev sha")
+        else:
+            prior_sha = sha256_file(existing[-1])
+            if record["prev_checkpoint_sha256"] != prior_sha:
+                raise StoreError("prev_checkpoint_sha256 does not match prior file")
+        return atomic_write_json(self._path_for(revision), record)
+
+    def load_latest(self) -> tuple[dict, Path]:
+        paths = self.checkpoint_paths()
+        if not paths:
+            raise StoreError(f"no checkpoints under {self.checkpoints_dir}")
+        prev_sha: str | None = None
+        for path in paths:
+            record = json.loads(path.read_text(encoding="utf-8"))
+            errors = validate_record(record)
+            if errors:
+                raise ChainBroken(f"{path.name}: invalid: {errors[:3]}")
+            if record["prev_checkpoint_sha256"] != prev_sha:
+                raise ChainBroken(f"{path.name}: chain mismatch")
+            prev_sha = sha256_file(path)
+        return record, paths[-1]
+
+    def write_receipt(self, record: dict) -> Path:
+        errors = validate_record(record)
+        if errors:
+            raise StoreError(f"invalid receipt: {errors[:3]}")
+        name = sha256_bytes(record["request_id"].encode("utf-8")) + ".json"
+        path = self.receipts_dir / name
+        atomic_write_json(path, record)
+        return path
+
+    def load_receipts(self) -> list[dict]:
+        if not self.receipts_dir.is_dir():
+            return []
+        return [json.loads(p.read_text(encoding="utf-8"))
+                for p in sorted(self.receipts_dir.glob("*.json"))]
