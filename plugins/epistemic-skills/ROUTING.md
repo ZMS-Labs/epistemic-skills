@@ -23,6 +23,7 @@ regeneration that CI already requires.
 | `evidence-locked-uat` | _(none)_ |
 | `gauntlet` | _(none)_ |
 | `health` | `triage`, `decision-ledger` |
+| `manifest` | _(none)_ |
 | `metacognate` | _(none)_ |
 | `open-questions` | _(none)_ |
 | `outsource` | _(none)_ |

@@ -1,0 +1,13 @@
+{
+  "record": "acceptance-verdict@1",
+  "mission_id": "tracer-media-missing",
+  "revision": 6,
+  "verdict": "PASS",
+  "acceptor_id": "agent:claude-code-session",
+  "worker_id": "agent:claude-code-session",
+  "operator_ref": "operator:zach-stern",
+  "assurance_tier": "declared-role-separation",
+  "receipt_refs": ["req-0001"],
+  "reason": "Artifact re-observed; hashes match the receipt chain.",
+  "utc": "2026-08-11T01:00:00Z"
+}

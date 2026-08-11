@@ -72,7 +72,14 @@ SKILLS_ROOT = REPO_ROOT / "plugins" / "epistemic-skills" / "skills"
 #
 # Changing this number is a reviewed act: it must appear in a diff with a
 # justification, which is the entire point of the check.
-CEILING_BYTES = 8159
+#
+# 2026-08-11: +477 bytes for the `manifest` custodian skill (mission custody:
+# authority, checkpoints, drift re-anchoring, independent acceptance). The
+# spend was operator-authorized by an explicit byte-budget sign-off ("Approve
+# — spend the bytes", recorded in the mission-custody build ledger and PR
+# #113) before the skill landed — the deliberate-spend gate this ceiling
+# exists to force.
+CEILING_BYTES = 8636
 
 FRONTMATTER = re.compile(r"\A---\r?\n(.*?)\r?\n---", re.S)
 # `description:` runs until the next top-level YAML key or end of frontmatter,

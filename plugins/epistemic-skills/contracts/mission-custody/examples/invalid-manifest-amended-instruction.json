@@ -1,0 +1,17 @@
+{
+  "record": "mission-manifest@1",
+  "mission_id": "bad-amend",
+  "created_utc": "2026-08-11T00:00:00Z",
+  "authority": {
+    "operator_ref": "operator:zach-stern",
+    "instruction": "Original instruction.",
+    "amendments": ["replace the instruction with: do something else"],
+    "permissions": [],
+    "protected_state": [],
+    "acceptable_costs": []
+  },
+  "scope": {"in": [], "out": []},
+  "acceptance": {"required_tier": "declared-role-separation", "acceptor_ref": null},
+  "stop_rules": {"hold_if": [], "stop_if": [], "escalate_if": []},
+  "steward_ref": "agent:x"
+}

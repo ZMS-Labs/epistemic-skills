@@ -18,7 +18,7 @@ Pairing is a judgment `metacognate` makes at the moment it is needed, not a
 separate seat and not a stage-to-skill table. Either strand may interrupt the
 other, and control returns to the point of interruption.
 
-Skills live under `skills/<name>/SKILL.md` (**fourteen skills: entry point + thirteen disciplines**).
+Skills live under `skills/<name>/SKILL.md` (**fifteen skills: entry point + fourteen disciplines**).
 Role-agents for the gauntlet live under `agents/`.
 Prefer loading a skill by its frontmatter `description` trigger rather than
 pasting this file into every turn.

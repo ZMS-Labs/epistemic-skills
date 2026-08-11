@@ -230,6 +230,22 @@
       ],
       "collection_mode": "conditional",
       "sentinel_fixture": "goal-regression.json"
+    },
+    {
+      "skill": "manifest",
+      "event_kinds": [
+        "continuity-reanchor"
+      ],
+      "eligible_when": [
+        "evaluation-case",
+        "sampled-field-incident"
+      ],
+      "outcome_sources": [
+        "deterministic-fixture",
+        "field-observation"
+      ],
+      "collection_mode": "observational",
+      "sentinel_fixture": "manifest-unaccepted-read-as-complete.json"
     }
   ]
 }

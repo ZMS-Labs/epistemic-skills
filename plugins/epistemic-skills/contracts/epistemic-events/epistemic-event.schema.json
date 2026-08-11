@@ -14,7 +14,7 @@
       "additionalProperties": false,
       "required": ["skill", "skill_version", "producer_sha256"],
       "properties": {
-        "skill": {"enum": ["context-audit", "decision-ledger", "did-it-land", "evidence-locked-uat", "gauntlet", "health", "metacognate", "open-questions", "outsource", "recon", "resolve", "triage", "watch", "write-goal"]},
+        "skill": {"enum": ["context-audit", "decision-ledger", "did-it-land", "evidence-locked-uat", "gauntlet", "health", "manifest", "metacognate", "open-questions", "outsource", "recon", "resolve", "triage", "watch", "write-goal"]},
         "skill_version": {"type": "string", "minLength": 1},
         "producer_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
       }
