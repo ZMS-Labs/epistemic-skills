@@ -3,7 +3,7 @@
 **Date:** 2026-08-11
 **Status:** operator-approved in-session 2026-08-11 (brainstorming dialogue; approach and all eleven sections approved verbatim)
 **Repo:** epistemic-skills (contract home)
-**Provenance:** This design executes the FOLD cell of the pre-committed demand×vehicle decision rule from the practical-agency gauntlet run (`practical-agency-telos-2026-08-10`, verdict NO-GO on unconditional continuation, hypothesis ruling H-GATE-FIRST + H-FOLD; VEHICLE = fold-feasibility spike PASS; DEMAND = media/content tracer mission named by operator 2026-08-11). Run record: operator archive `zms-homelab/scratch/practical-agency-gauntlet-2026-08-10/` (hash-chain verified). Lineage: helix (banked 2026-07-20) → practical-agency (custody pivot, 2026-08-07) → this design. Related: `2026-08-07-practical-agency-and-commission-watch-design.md`, `contracts/watch-commission/`.
+**Provenance:** This design executes the FOLD cell of the pre-committed demand×vehicle decision rule from the practical-agency gauntlet run (`practical-agency-telos-2026-08-10`, verdict NO-GO on unconditional continuation, hypothesis ruling H-GATE-FIRST + H-FOLD; VEHICLE = fold-feasibility spike PASS; DEMAND = media/content tracer mission named by operator 2026-08-11). Run record: retained in the operator's private run archive (hash-chain verified). Lineage: helix (banked 2026-07-20) → practical-agency (custody pivot, 2026-08-07) → this design. Related: `2026-08-07-practical-agency-and-commission-watch-design.md`, `contracts/watch-commission/`.
 
 ## Purpose
 

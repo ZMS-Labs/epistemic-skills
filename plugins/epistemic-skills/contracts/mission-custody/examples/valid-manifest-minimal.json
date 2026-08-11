@@ -6,7 +6,7 @@
     "operator_ref": "operator:zach-stern",
     "instruction": "Reconcile the monitored-missing media backlog without re-grabbing over VPN.",
     "amendments": [],
-    "permissions": ["repo:vanta:read", "repo:vanta:write-config"],
+    "permissions": ["repo:media-library:read", "repo:media-library:write-config"],
     "protected_state": ["download-clients:enabled-state"],
     "acceptable_costs": ["one working session per stage"]
   },
