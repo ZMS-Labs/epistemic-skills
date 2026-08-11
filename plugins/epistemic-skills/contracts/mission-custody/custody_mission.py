@@ -63,7 +63,10 @@ class Mission:
               required_tier: str = "declared-role-separation", *, actor: str,
               scope_in: list[str] | None = None, scope_out: list[str] | None = None,
               permissions: list[str] | None = None,
-              protected_state: list[str] | None = None) -> "Mission":
+              protected_state: list[str] | None = None,
+              hold_if: list[str] | None = None, stop_if: list[str] | None = None,
+              escalate_if: list[str] | None = None,
+              acceptable_costs: list[str] | None = None) -> "Mission":
         workspace = Path(workspace)
         store = MissionStore(workspace / "missions" / mission_id)
         created = now_utc()
@@ -77,11 +80,15 @@ class Mission:
                 "amendments": [],
                 "permissions": list(permissions or []),
                 "protected_state": list(protected_state or []),
-                "acceptable_costs": [],
+                "acceptable_costs": list(acceptable_costs or []),
             },
             "scope": {"in": list(scope_in or []), "out": list(scope_out or [])},
             "acceptance": {"required_tier": required_tier, "acceptor_ref": None},
-            "stop_rules": {"hold_if": [], "stop_if": [], "escalate_if": []},
+            "stop_rules": {
+                "hold_if": list(hold_if or []),
+                "stop_if": list(stop_if or []),
+                "escalate_if": list(escalate_if or []),
+            },
             "steward_ref": steward_ref,
         }
         checkpoint = {

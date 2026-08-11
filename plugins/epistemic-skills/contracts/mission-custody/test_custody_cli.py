@@ -203,6 +203,52 @@ def test_ascii_safe_drift_and_error_output() -> None:
         check("clear-fail-ascii-stderr-escapes-non-ascii", "\\xe9" in r.stderr)
 
 
+def test_open_stop_rules_and_acceptable_costs() -> None:
+    """open's --hold-if/--stop-if/--escalate-if/--cost flags land verbatim,
+    in order, in the manifest's stop_rules and acceptable_costs."""
+    with tempfile.TemporaryDirectory() as td:
+        ws = Path(td)
+        r = run("open", "--workspace", str(ws), "--actor", "agent:worker",
+                 "--mission-id", "m-cli-stoprules", "--instruction", "Guard the stop rules.",
+                 "--operator", "operator:zach", "--steward", "agent:worker",
+                 "--hold-if", "clientA re-grabs", "--hold-if", "second hold",
+                 "--stop-if", "operator revokes",
+                 "--escalate-if", "protected state touched",
+                 "--cost", "one session per stage")
+        check("open-stop-rules-exit-0", r.returncode == 0)
+
+        r = run("status", "--workspace", str(ws), "--actor", "agent:worker")
+        check("open-stop-rules-status-exit-0", r.returncode == 0)
+        st = json.loads(r.stdout)
+        manifest = st["manifest"]
+        check("open-stop-rules-hold-if",
+              manifest["stop_rules"]["hold_if"] == ["clientA re-grabs", "second hold"])
+        check("open-stop-rules-stop-if",
+              manifest["stop_rules"]["stop_if"] == ["operator revokes"])
+        check("open-stop-rules-escalate-if",
+              manifest["stop_rules"]["escalate_if"] == ["protected state touched"])
+        check("open-stop-rules-acceptable-costs",
+              manifest["authority"]["acceptable_costs"] == ["one session per stage"])
+
+
+def test_open_without_stop_rules_yields_empty_lists() -> None:
+    """Existing behavior unchanged: omitting the new flags still yields
+    empty stop_rules/acceptable_costs lists."""
+    with tempfile.TemporaryDirectory() as td:
+        ws = Path(td)
+        open_cli(ws, "m-cli-nostoprules", "No stop rules given.")
+
+        r = run("status", "--workspace", str(ws), "--actor", "agent:worker")
+        st = json.loads(r.stdout)
+        manifest = st["manifest"]
+        check("open-no-stop-rules-hold-if-empty", manifest["stop_rules"]["hold_if"] == [])
+        check("open-no-stop-rules-stop-if-empty", manifest["stop_rules"]["stop_if"] == [])
+        check("open-no-stop-rules-escalate-if-empty",
+              manifest["stop_rules"]["escalate_if"] == [])
+        check("open-no-stop-rules-costs-empty",
+              manifest["authority"]["acceptable_costs"] == [])
+
+
 def test_no_mission_flags_outside_open() -> None:
     tree = ast.parse(CLI.read_text(encoding="utf-8"))
 
@@ -248,6 +294,8 @@ TESTS = [
     test_accept_self_cert_refused_exit_2,
     test_full_lifecycle_via_cli,
     test_ascii_safe_drift_and_error_output,
+    test_open_stop_rules_and_acceptable_costs,
+    test_open_without_stop_rules_yields_empty_lists,
     test_no_mission_flags_outside_open,
 ]
 
