@@ -1,0 +1,42 @@
+name: mission-custody-contract
+
+"on":
+  workflow_dispatch:
+  push:
+    paths:
+      - "plugins/epistemic-skills/contracts/mission-custody/**"
+      - "docs/superpowers/specs/2026-08-11-mission-custody-contracts-design.md"
+      - "docs/superpowers/plans/2026-08-11-mission-custody-contracts.md"
+      - ".github/workflows/mission-custody-contract.yml"
+  pull_request:
+    paths:
+      - "plugins/epistemic-skills/contracts/mission-custody/**"
+      - "docs/superpowers/specs/2026-08-11-mission-custody-contracts-design.md"
+      - "docs/superpowers/plans/2026-08-11-mission-custody-contracts.md"
+      - ".github/workflows/mission-custody-contract.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Check out the tested revision without stored credentials
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Record the exact tested revision
+        run: |
+          echo "candidate_sha=$(git rev-parse HEAD)"
+          git status --short
+      - name: Mission custody semantic and schema contract
+        run: python plugins/epistemic-skills/contracts/mission-custody/test_mission_custody.py
+      - name: Compile mission custody verifier
+        run: python -m py_compile plugins/epistemic-skills/contracts/mission-custody/verify_mission_custody.py
