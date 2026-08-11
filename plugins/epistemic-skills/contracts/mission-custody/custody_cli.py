@@ -24,6 +24,15 @@ def _print_status(checkpoint: dict) -> None:
     print(json.dumps(checkpoint, indent=2, sort_keys=True, ensure_ascii=True))
 
 
+def _ascii_safe(text: str) -> str:
+    """Render text as ASCII-only, escaping any non-ASCII characters so a
+    print to stdout/stderr never raises UnicodeEncodeError regardless of
+    PYTHONIOENCODING or the console codepage. Mirrors the ensure_ascii=True
+    guarantee _print_status already gets from json.dumps, for the two
+    output paths that print a raw str instead of a JSON document."""
+    return text.encode("ascii", "backslashreplace").decode("ascii")
+
+
 def _common_parser() -> argparse.ArgumentParser:
     common = argparse.ArgumentParser(add_help=False)
     common.add_argument("--workspace", required=True)
@@ -113,7 +122,7 @@ def dispatch(args: argparse.Namespace) -> int:
     elif args.command == "resume":
         drift = mission.resume()
         for relpath in drift:
-            print(relpath)
+            print(_ascii_safe(relpath))
         return 3 if drift else 0
     elif args.command == "reconcile":
         mission.reconcile(args.path, args.content, args.request_id)
@@ -137,7 +146,7 @@ def main(argv: list[str]) -> int:
     try:
         return dispatch(args)
     except CustodyError as exc:
-        print(f"{type(exc).__name__}: {exc}", file=sys.stderr)
+        print(_ascii_safe(f"{type(exc).__name__}: {exc}"), file=sys.stderr)
         return 2
 
 

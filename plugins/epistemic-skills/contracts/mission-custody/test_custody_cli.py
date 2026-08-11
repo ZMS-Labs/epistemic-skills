@@ -155,6 +155,54 @@ def test_full_lifecycle_via_cli() -> None:
         check("full-cancel-refused-exit-2", r.returncode == 2)
 
 
+def test_ascii_safe_drift_and_error_output() -> None:
+    """Non-ASCII content in a drifted relpath or a CustodyError message must
+    render as an ASCII-only escape on stdout/stderr -- never a raw non-ASCII
+    byte, and never a crash regardless of the console codepage (brief Step 3:
+    "PYTHONIOENCODING-safe (ASCII-only output)"). Covers both raw-str print
+    sites: the `resume` drift list and the top-level CustodyError handler."""
+    # Built via a \uXXXX escape (not a literal character) so this source
+    # file itself stays pure ASCII (isascii() true).
+    e_acute = "\u00e9"  # 'e' with acute accent, U+00E9
+    with tempfile.TemporaryDirectory() as td:
+        ws = Path(td)
+        open_cli(ws, "m-cli-ascii", "Exercise ASCII-safe output.")
+        run("approve", "--workspace", str(ws), "--actor", "agent:worker")
+
+        non_ascii_path = f"notes/r{e_acute}sum{e_acute}.md"
+        run("effect", "--workspace", str(ws), "--actor", "agent:worker",
+            "--path", non_ascii_path, "--content", "hello",
+            "--request-id", "req-ascii-1")
+        (ws / "notes" / f"r{e_acute}sum{e_acute}.md").write_text(
+            "tampered", encoding="utf-8")
+
+        r = run("resume", "--workspace", str(ws), "--actor", "agent:second")
+        check("resume-ascii-exit-3", r.returncode == 3)
+        check("resume-ascii-stdout-is-ascii", r.stdout.isascii())
+        check("resume-ascii-stdout-escapes-non-ascii", "\\xe9" in r.stdout)
+
+        # Drive the mission to 'reopened' via a legitimate (non-self-cert)
+        # FAIL verdict, then trigger a CustodyError whose message embeds a
+        # non-ASCII value supplied verbatim by the operator: clear-fail's
+        # "no FAIL marker matching {fragment!r}" with a non-matching,
+        # non-ASCII --match fragment.
+        run("reconcile", "--workspace", str(ws), "--actor", "agent:worker",
+            "--path", non_ascii_path, "--content", "hello",
+            "--request-id", "req-ascii-2")
+        run("verify", "--workspace", str(ws), "--actor", "agent:worker")
+        run("accept", "--workspace", str(ws), "--actor", "agent:worker",
+            "--verdict", "FAIL", "--acceptor", "agent:acceptor",
+            "--tier", "declared-role-separation", "--reason", "needs review")
+
+        r = run("clear-fail", "--workspace", str(ws), "--actor", "agent:worker",
+                 "--match", f"caf{e_acute}-does-not-match",
+                 "--request-id", "req-ascii-2")
+        check("clear-fail-ascii-exit-2", r.returncode == 2)
+        check("clear-fail-ascii-stderr-is-ascii", r.stderr.isascii())
+        check("clear-fail-ascii-stderr-names-exception", "CustodyError" in r.stderr)
+        check("clear-fail-ascii-stderr-escapes-non-ascii", "\\xe9" in r.stderr)
+
+
 def test_no_mission_flags_outside_open() -> None:
     tree = ast.parse(CLI.read_text(encoding="utf-8"))
 
@@ -199,6 +247,7 @@ TESTS = [
     test_resume_detects_drift_exit_3,
     test_accept_self_cert_refused_exit_2,
     test_full_lifecycle_via_cli,
+    test_ascii_safe_drift_and_error_output,
     test_no_mission_flags_outside_open,
 ]
 
