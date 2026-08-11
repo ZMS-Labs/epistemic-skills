@@ -2,7 +2,9 @@ name: DCO
 
 on:
   pull_request_target:
-    types: [opened, synchronize, reopened]
+    # ready_for_review included so a PR opened as draft gets its DCO check
+    # the moment it becomes a real candidate.
+    types: [opened, synchronize, reopened, ready_for_review]
 
 permissions:
   contents: read
@@ -11,6 +13,8 @@ permissions:
 jobs:
   dco:
     name: DCO
+    # Draft PRs are agent WIP; the check runs when the PR is marked ready.
+    if: github.event.pull_request.draft == false
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
