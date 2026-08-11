@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "acceptance-verdict@1",
+  "title": "acceptance-verdict@1",
+  "description": "Acceptance verdict: verified outcome assessment by independent acceptor. Semantic rules (enforced by verifier): (1) acceptor_id must not equal worker_id (self-certification refused); (2) if assurance_tier == 'operator-accepted', then acceptor_id must equal operator_ref. Validation authority: verify_mission_custody.py (stdlib).",
+  "type": "object",
+  "required": ["record", "mission_id", "revision", "verdict", "acceptor_id", "worker_id", "operator_ref", "assurance_tier", "receipt_refs", "reason", "utc"],
+  "additionalProperties": false,
+  "properties": {
+    "record": {"const": "acceptance-verdict@1"},
+    "mission_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"},
+    "revision": {"type": "integer", "minimum": 1},
+    "verdict": {"enum": ["PASS", "FAIL", "INCONCLUSIVE"]},
+    "acceptor_id": {"type": "string", "minLength": 1},
+    "worker_id": {"type": "string", "minLength": 1},
+    "operator_ref": {"type": "string", "minLength": 1},
+    "assurance_tier": {"enum": ["operator-accepted", "declared-role-separation"]},
+    "receipt_refs": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+    "reason": {"type": "string", "minLength": 1},
+    "utc": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"}
+  }
+}

@@ -39,6 +39,14 @@ CHECKPOINT_FIELDS = {
     "record", "mission_id", "revision", "status", "prev_checkpoint_sha256",
     "manifest", "state", "receipt_ids", "written_utc", "written_by",
 }
+RECEIPT_FIELDS = {
+    "record", "mission_id", "request_id", "actor", "utc",
+    "artifact_path", "before_sha256", "after_sha256",
+}
+VERDICT_FIELDS = {
+    "record", "mission_id", "revision", "verdict", "acceptor_id", "worker_id",
+    "operator_ref", "assurance_tier", "receipt_refs", "reason", "utc",
+}
 
 
 def is_iso_utc(value: Any) -> bool:
@@ -183,12 +191,48 @@ def validate_checkpoint(rec: dict) -> list[str]:
     return errors
 
 
-def validate_receipt(rec: dict) -> list[str]:  # replaced in Task 3
-    return ["record: receipt@1 validation not implemented"]
+def validate_receipt(rec: dict) -> list[str]:
+    errors: list[str] = []
+    _check_exact_fields(errors, rec, RECEIPT_FIELDS, "receipt")
+    if errors:
+        return errors
+    for name in ("mission_id", "request_id", "actor", "artifact_path"):
+        _require(errors, isinstance(rec[name], str) and rec[name],
+                 name, "non-empty string required")
+    _require(errors, is_iso_utc(rec["utc"]), "utc", "ISO-8601 Z required")
+    _require(errors, rec["before_sha256"] is None or is_sha256(rec["before_sha256"]),
+             "before_sha256", "null (new artifact) or 64-hex sha256 required")
+    _require(errors, is_sha256(rec["after_sha256"]),
+             "after_sha256", "64-hex sha256 required")
+    return errors
 
 
-def validate_acceptance_verdict(rec: dict) -> list[str]:  # replaced in Task 3
-    return ["record: acceptance-verdict@1 validation not implemented"]
+def validate_acceptance_verdict(rec: dict) -> list[str]:
+    errors: list[str] = []
+    _check_exact_fields(errors, rec, VERDICT_FIELDS, "verdict")
+    if errors:
+        return errors
+    _require(errors, isinstance(rec["revision"], int) and rec["revision"] >= 1,
+             "revision", "integer >= 1 required")
+    _require(errors, rec["verdict"] in VERDICTS, "verdict",
+             f"one of {sorted(VERDICTS)} required")
+    _require(errors, rec["assurance_tier"] in TIERS, "assurance_tier",
+             f"one of {sorted(TIERS)} required")
+    for name in ("acceptor_id", "worker_id", "operator_ref", "reason",
+                 "mission_id"):
+        _require(errors, isinstance(rec[name], str) and rec[name],
+                 name, "non-empty string required")
+    _require(errors, _str_list(rec["receipt_refs"]), "receipt_refs",
+             "list of receipt id strings required")
+    _require(errors, is_iso_utc(rec["utc"]), "utc", "ISO-8601 Z required")
+    if not errors:
+        _require(errors, rec["acceptor_id"] != rec["worker_id"],
+                 "acceptor_id", "self-certification refused (== worker_id)")
+        if rec["assurance_tier"] == "operator-accepted":
+            _require(errors, rec["acceptor_id"] == rec["operator_ref"],
+                     "acceptor_id",
+                     "operator-accepted tier requires acceptor_id == operator_ref")
+    return errors
 
 
 def main(argv: list[str]) -> int:
