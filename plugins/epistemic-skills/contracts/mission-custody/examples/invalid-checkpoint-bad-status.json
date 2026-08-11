@@ -1,0 +1,16 @@
+{
+  "record": "checkpoint@1",
+  "mission_id": "tracer-media-missing",
+  "revision": 1,
+  "status": "paused",
+  "prev_checkpoint_sha256": null,
+  "manifest": { "record": "mission-manifest@1", "mission_id": "tracer-media-missing", "created_utc": "2026-08-11T00:00:00Z", "authority": { "operator_ref": "operator:zach-stern", "instruction": "Reconcile the monitored-missing media backlog without re-grabbing over VPN.", "amendments": [], "permissions": ["repo:vanta:read", "repo:vanta:write-config"], "protected_state": ["download-clients:enabled-state"], "acceptable_costs": ["one working session per stage"] }, "scope": {"in": ["monitored-missing reconciliation"], "out": ["indexer changes", "VPN configuration"]}, "acceptance": {"required_tier": "declared-role-separation", "acceptor_ref": null}, "stop_rules": {"hold_if": ["any download client starts re-grabbing"], "stop_if": ["operator revokes"], "escalate_if": ["protected state would be touched"]}, "steward_ref": "agent:claude-code-session" },
+  "state": {
+    "frontier": "await operator approval",
+    "notes": [],
+    "unresolved_verdicts": []
+  },
+  "receipt_ids": [],
+  "written_utc": "2026-08-11T00:00:01Z",
+  "written_by": "agent:claude-code-session"
+}

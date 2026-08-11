@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "checkpoint@1",
+  "title": "checkpoint@1",
+  "description": "Mission checkpoint: versioned record of progress and state. Embeds mission-manifest@1 for immutability; chain rule (r1→null, r≥2→sha256) enforced in verifier. Validation authority: verify_mission_custody.py (stdlib).",
+  "type": "object",
+  "required": ["record", "mission_id", "revision", "status", "prev_checkpoint_sha256", "manifest", "state", "receipt_ids", "written_utc", "written_by"],
+  "additionalProperties": false,
+  "properties": {
+    "record": {"const": "checkpoint@1"},
+    "mission_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"},
+    "revision": {"type": "integer", "minimum": 1},
+    "status": {"enum": ["draft", "active", "reopened", "verifying", "completed", "cancelled"]},
+    "prev_checkpoint_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+    "manifest": {
+      "type": "object",
+      "required": ["record", "mission_id", "created_utc", "authority", "scope", "acceptance", "stop_rules", "steward_ref"],
+      "additionalProperties": false,
+      "properties": {
+        "record": {"const": "mission-manifest@1"},
+        "mission_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"},
+        "created_utc": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"},
+        "authority": {
+          "type": "object",
+          "required": ["operator_ref", "instruction", "amendments", "permissions", "protected_state", "acceptable_costs"],
+          "additionalProperties": false,
+          "properties": {
+            "operator_ref": {"type": "string", "minLength": 1},
+            "instruction": {"type": "string", "minLength": 1},
+            "amendments": {"type": "array", "items": {"type": "object", "required": ["utc", "text"], "additionalProperties": false, "properties": {"utc": {"type": "string"}, "text": {"type": "string", "minLength": 1}}}},
+            "permissions": {"type": "array", "items": {"type": "string"}},
+            "protected_state": {"type": "array", "items": {"type": "string"}},
+            "acceptable_costs": {"type": "array", "items": {"type": "string"}}
+          }
+        },
+        "scope": {"type": "object", "required": ["in", "out"], "additionalProperties": false, "properties": {"in": {"type": "array", "items": {"type": "string"}}, "out": {"type": "array", "items": {"type": "string"}}}},
+        "acceptance": {"type": "object", "required": ["required_tier", "acceptor_ref"], "additionalProperties": false, "properties": {"required_tier": {"enum": ["operator-accepted", "declared-role-separation"]}, "acceptor_ref": {"type": ["string", "null"]}}},
+        "stop_rules": {"type": "object", "required": ["hold_if", "stop_if", "escalate_if"], "additionalProperties": false, "properties": {"hold_if": {"type": "array", "items": {"type": "string"}}, "stop_if": {"type": "array", "items": {"type": "string"}}, "escalate_if": {"type": "array", "items": {"type": "string"}}}},
+        "steward_ref": {"type": "string", "minLength": 1}
+      }
+    },
+    "state": {
+      "type": "object",
+      "required": ["frontier", "notes", "unresolved_verdicts"],
+      "additionalProperties": false,
+      "properties": {
+        "frontier": {"type": "string", "minLength": 1},
+        "notes": {"type": "array", "items": {"type": "string"}},
+        "unresolved_verdicts": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "receipt_ids": {"type": "array", "items": {"type": "string"}},
+    "written_utc": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"},
+    "written_by": {"type": "string", "minLength": 1}
+  }
+}
