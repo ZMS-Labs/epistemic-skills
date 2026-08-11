@@ -17,3 +17,9 @@ Evolution: additive optional fields only within `@1`; anything else is a new
 epoch with a documented migration. Acceptance tiers are closed:
 `operator-accepted`, `declared-role-separation` — no `externally-proven` tier
 exists until evidence could support one.
+
+## Harness bindings
+
+- Skill: `manifest`
+- CLI: `plugins/epistemic-skills/contracts/mission-custody/custody_cli.py`
+- Stage C (enforcement) is gated on the tracer retro.
