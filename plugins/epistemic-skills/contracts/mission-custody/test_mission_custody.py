@@ -77,6 +77,39 @@ def test_unknown_record_kind_rejected() -> None:
     check("unknown-record-kind", validate_record({"record": "mystery@1"}) != [])
 
 
+def valid_checkpoint_r1() -> dict:
+    return load("valid-checkpoint-r1.json")
+
+
+def test_checkpoint_valid_examples() -> None:
+    check("checkpoint-r1", validate_record(valid_checkpoint_r1()) == [])
+    check("checkpoint-r2", validate_record(load("valid-checkpoint-r2-chained.json")) == [])
+
+
+def test_checkpoint_r1_must_have_null_prev() -> None:
+    rec = copy.deepcopy(valid_checkpoint_r1())
+    rec["prev_checkpoint_sha256"] = "a" * 64
+    check("checkpoint-r1-null-prev", validate_record(rec) != [])
+
+
+def test_checkpoint_r2_requires_prev_sha() -> None:
+    rec = load("valid-checkpoint-r2-chained.json")
+    rec["prev_checkpoint_sha256"] = None
+    check("checkpoint-r2-needs-prev", validate_record(rec) != [])
+
+
+def test_checkpoint_embedded_manifest_is_validated() -> None:
+    rec = copy.deepcopy(valid_checkpoint_r1())
+    del rec["manifest"]["authority"]
+    check("checkpoint-embedded-manifest", validate_record(rec) != [])
+
+
+def test_checkpoint_status_closed_list() -> None:
+    rec = copy.deepcopy(valid_checkpoint_r1())
+    rec["status"] = "paused"
+    check("checkpoint-closed-status", validate_record(rec) != [])
+
+
 def test_examples_corpus() -> None:
     ex = ROOT / "examples"
     for path in sorted(ex.glob("valid-*.json")):
@@ -95,6 +128,11 @@ def main() -> int:
     test_manifest_bad_tier()
     test_manifest_amendments_must_be_list_of_dated_text()
     test_unknown_record_kind_rejected()
+    test_checkpoint_valid_examples()
+    test_checkpoint_r1_must_have_null_prev()
+    test_checkpoint_r2_requires_prev_sha()
+    test_checkpoint_embedded_manifest_is_validated()
+    test_checkpoint_status_closed_list()
     test_examples_corpus()
     print(f"\n{len(FAILURES)} failures")
     return 1 if FAILURES else 0

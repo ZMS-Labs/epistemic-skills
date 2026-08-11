@@ -35,6 +35,10 @@ AUTHORITY_FIELDS = {
     "operator_ref", "instruction", "amendments", "permissions",
     "protected_state", "acceptable_costs",
 }
+CHECKPOINT_FIELDS = {
+    "record", "mission_id", "revision", "status", "prev_checkpoint_sha256",
+    "manifest", "state", "receipt_ids", "written_utc", "written_by",
+}
 
 
 def is_iso_utc(value: Any) -> bool:
@@ -138,8 +142,45 @@ def validate_record(record: Any) -> list[str]:
     return validate_acceptance_verdict(record)  # Task 3
 
 
-def validate_checkpoint(rec: dict) -> list[str]:  # replaced in Task 2
-    return ["record: checkpoint@1 validation not implemented"]
+def validate_checkpoint(rec: dict) -> list[str]:
+    errors: list[str] = []
+    _check_exact_fields(errors, rec, CHECKPOINT_FIELDS, "checkpoint")
+    if errors:
+        return errors
+    _require(errors, isinstance(rec["revision"], int) and rec["revision"] >= 1,
+             "revision", "integer >= 1 required")
+    _require(errors, rec["status"] in STATES, "status",
+             f"one of {sorted(STATES)} required")
+    prev = rec["prev_checkpoint_sha256"]
+    if rec.get("revision") == 1:
+        _require(errors, prev is None, "prev_checkpoint_sha256",
+                 "null required at revision 1")
+    else:
+        _require(errors, is_sha256(prev), "prev_checkpoint_sha256",
+                 "64-hex sha256 of prior checkpoint file required")
+    if isinstance(rec["manifest"], dict) \
+            and rec["manifest"].get("record") == "mission-manifest@1":
+        for err in validate_manifest(rec["manifest"]):
+            errors.append(f"manifest.{err}")
+        if rec["manifest"].get("mission_id") != rec["mission_id"]:
+            errors.append("manifest.mission_id: must equal checkpoint mission_id")
+    else:
+        errors.append("manifest: embedded mission-manifest@1 required")
+    state = rec["state"]
+    ok = isinstance(state, dict) \
+        and set(state) == {"frontier", "notes", "unresolved_verdicts"} \
+        and isinstance(state.get("frontier"), str) and state["frontier"] \
+        and _str_list(state.get("notes")) \
+        and _str_list(state.get("unresolved_verdicts"))
+    _require(errors, ok, "state",
+             "frontier (non-empty str), notes[], unresolved_verdicts[] required")
+    _require(errors, _str_list(rec["receipt_ids"]), "receipt_ids",
+             "list of receipt id strings required")
+    _require(errors, is_iso_utc(rec["written_utc"]), "written_utc",
+             "ISO-8601 Z timestamp required")
+    _require(errors, isinstance(rec["written_by"], str) and rec["written_by"],
+             "written_by", "non-empty actor id required")
+    return errors
 
 
 def validate_receipt(rec: dict) -> list[str]:  # replaced in Task 3
