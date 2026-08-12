@@ -373,7 +373,17 @@ def test_probe_p6_receipt_tamper_is_caught(workspace: Path) -> None:
     m = open_mission(workspace, "m-p6", "P6.")
     m.approve()
     m.record_effect("notes/a.md", "original", "p6-1")
-    m.migrate()                      # Task 7; chains the receipt sha
+    # Chain the receipt sha WITHOUT depending on Task 7's migrate verb: write
+    # one @2 checkpoint directly. Task 3 must be testable on its own, and a
+    # forward dependency on a later task would make it not so.
+    latest, path = m.store.load_latest()
+    sha = sha256_file(m.store.receipt_path("p6-1"))
+    upgraded = json.loads(json.dumps(latest))
+    upgraded["record"] = "checkpoint@2"
+    upgraded["revision"] = latest["revision"] + 1
+    upgraded["prev_checkpoint_sha256"] = sha256_file(path)
+    upgraded["receipt_ids"] = [{"request_id": "p6-1", "receipt_sha256": sha}]
+    m.store.write_checkpoint(upgraded)
     (workspace / "notes" / "a.md").write_text("tampered", encoding="utf-8")
     receipt_path = m.store.receipt_path("p6-1")
     record = json.loads(receipt_path.read_text(encoding="utf-8"))
