@@ -226,6 +226,33 @@ def uncompared_scope_entries(manifest: dict) -> dict:
 
 _TOKEN_TRIM = "\"'`,;:()[]{}<>"
 
+# A path OCCURRENCE is not a grant. "secrets.env remains forbidden" names the
+# path and authorises nothing -- yet a token match read it as a discharge, so
+# the one amendment that explicitly DENIED authority unlocked the PASS. Prose
+# cannot establish grant semantics (es#150 proposes the structured field that
+# can); until then a segment carrying a denial marker cannot discharge.
+#
+# The error direction is deliberate: a genuine grant phrased with one of these
+# words is a false BLOCK, discharged by re-amending in plainer terms. Reading a
+# prohibition as permission is a false ALLOW that writes "clean" over the exact
+# work the operator forbade.
+_DENIAL_MARKERS = (
+    "forbidden", "prohibited", "off-limits", "off limits", "not authorised",
+    "not authorized", "unauthorised", "unauthorized", "denied", "deny",
+    "must not", "may not", "cannot", "can not", "can't", "do not", "don't",
+    "never", "no longer", "without authorisation", "without authorization",
+    "out of scope", "out-of-scope", "not permitted", "not allowed",
+)
+
+
+def _segments(text: str):
+    """Sentence-ish spans, so a denial in one clause cannot veto a grant in
+    another -- and a grant in one cannot launder a denial in its own."""
+    for line in text.replace("\\", "/").splitlines():
+        for part in re.split(r"(?<=[.;!?])\s+", line):
+            if part.strip():
+                yield part
+
 
 def _amendment_names(text: str, rel_path: str) -> bool:
     """Does this verbatim operator grant name `rel_path`?
@@ -237,23 +264,31 @@ def _amendment_names(text: str, rel_path: str) -> bool:
     and they go through the same `_glob_regex` the scope entries use."""
     from custody_gate import _glob_regex, _norm_path
     target = _norm_path(rel_path)
-    for raw in text.replace("\\", "/").split():
-        token = raw.strip(_TOKEN_TRIM).rstrip(".")
-        if not token or not _is_path_pattern(token):
+    for segment in _segments(text):
+        lowered = segment.lower()
+        if any(marker in lowered for marker in _DENIAL_MARKERS):
+            # This clause names the path in order to FORBID it. Reading it as
+            # a grant is how "secrets.env remains forbidden" unlocked a PASS
+            # for writing secrets.env.
             continue
-        if not _names_a_specific_path(token):
-            continue          # a bare wildcard names everything: not a name
-        if token.endswith("/"):
-            # "the src/ work was authorized" grants a DIRECTORY, and operators
-            # write it that way. A trailing slash covers what is under it --
-            # still a scoped grant naming a specific subtree, not a universal
-            # key, which is the property that matters here.
-            prefix = _norm_path(token.rstrip("/"))
-            if prefix and (target == prefix or target.startswith(prefix + "/")):
+        for raw in segment.split():
+            token = raw.strip(_TOKEN_TRIM).rstrip(".")
+            if not token or not _is_path_pattern(token):
+                continue
+            if not _names_a_specific_path(token):
+                continue      # a bare wildcard names everything: not a name
+            if token.endswith("/"):
+                # "the src/ work was authorized" grants a DIRECTORY, and
+                # operators write it that way. A trailing slash covers what is
+                # under it -- still a scoped grant naming a specific subtree,
+                # not a universal key, which is the property that matters here.
+                prefix = _norm_path(token.rstrip("/"))
+                if prefix and (target == prefix
+                               or target.startswith(prefix + "/")):
+                    return True
+                continue
+            if _glob_regex(_norm_path(token)).match(target):
                 return True
-            continue
-        if _glob_regex(_norm_path(token)).match(target):
-            return True
     return False
 
 
@@ -1115,12 +1150,30 @@ class Mission:
             resolved = self._resolved_relpath(rel)
             if resolved is not None and resolved != target:
                 candidates.append(resolved)
-            if any(rx.match(c) for rx in excludes for c in candidates):
+            # WHICH representation violated is recorded, not just that one did.
+            # The finding used to carry only the lexical path, so an amendment
+            # naming `docs/**` discharged a write that -- through a link --
+            # landed in `secrets/`. The operator authorised `docs/`; nothing
+            # authorised `secrets/x`; the PASS was accepted anyway.
+            violating = next((c for c in candidates
+                              if any(rx.match(c) for rx in excludes)), None)
+            if violating is not None:
                 findings.append({"artifact_path": rel, "request_id": request_id,
+                                 "violating_path": violating,
                                  "reason": "matches scope.out"})
-            elif includes and not any(rx.match(target) for rx in includes):
-                findings.append({"artifact_path": rel, "request_id": request_id,
-                                 "reason": "outside scope.in"})
+            elif includes:
+                # INCLUSION is tested against every representation too. The
+                # exclusion side checked both while this one stayed lexical, so
+                # `scope.in=["docs/**"]` with `docs/alias -> src/` accepted a
+                # write to `src/a.py`. "Where it was not permitted to go" is
+                # the same defect as "where it was forbidden to go".
+                outside = [c for c in candidates
+                           if not any(rx.match(c) for rx in includes)]
+                if outside:
+                    findings.append({"artifact_path": rel,
+                                     "request_id": request_id,
+                                     "violating_path": outside[0],
+                                     "reason": "outside scope.in"})
         findings.sort(key=lambda f: (f["artifact_path"], f["request_id"]))
         return findings
 
@@ -1190,12 +1243,18 @@ class Mission:
                 # guard-change rule already carries (custody_mission.py's
                 # amendments-grew test), and repeating it here would build a
                 # gate whose key is any key.
+                # Discharge is tested against the path that ACTUALLY violated
+                # the boundary, not the path the receipt happens to name. With
+                # a link, those differ, and using the lexical one let a grant
+                # for the allowed path discharge a write to the forbidden one.
                 undischarged = [
                     f for f in drifted
-                    if not self._discharged_by_amendment(f["artifact_path"])]
+                    if not self._discharged_by_amendment(
+                        f.get("violating_path") or f["artifact_path"])]
                 if undischarged:
-                    paths = ", ".join(sorted({f["artifact_path"]
-                                              for f in undischarged}))
+                    paths = ", ".join(sorted({
+                        f.get("violating_path") or f["artifact_path"]
+                        for f in undischarged}))
                     raise AcceptanceRefused(
                         f"{len(undischarged)} receipted artifact(s) fall "
                         f"outside the declared scope with no authority "

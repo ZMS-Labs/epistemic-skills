@@ -1362,6 +1362,104 @@ def test_amendment_naming_is_token_wise_not_substring(workspace: Path) -> None:
           not _amendment_names("operator: the src/ work", "srcx/a.py"))
 
 
+def test_a_denial_is_not_a_grant(workspace: Path) -> None:
+    """Naming a path in order to FORBID it must not discharge drift on it.
+
+    A token match cannot tell a grant from a denial, so "secrets.env remains
+    forbidden" -- the one amendment that explicitly withheld authority --
+    unlocked the PASS for writing secrets.env. Prose cannot establish grant
+    semantics; es#150 proposes the structured field that can. Until then a
+    clause carrying a denial marker discharges nothing.
+
+    Error direction is chosen: a genuine grant phrased with one of these words
+    is a false BLOCK, re-amendable in plainer terms. Reading a prohibition as
+    permission writes "clean" over exactly the work the operator forbade."""
+    from custody_mission import _amendment_names
+    check("denial-does-not-name",
+          not _amendment_names("secrets.env remains forbidden", "secrets.env"))
+    check("may-not-does-not-name",
+          not _amendment_names("you may not touch src/app.py", "src/app.py"))
+    check("plain-grant-still-names",
+          _amendment_names("you may rotate secrets.env now", "secrets.env"))
+    check("denial-is-clause-scoped",
+          _amendment_names("docs/x.md is forbidden. You may edit src/app.py.",
+                           "src/app.py"))
+
+    m = open_mission(workspace, "m-deny", "Denied.", scope_out=["secrets.env"])
+    m.approve()
+    m.record_effect("secrets.env", "TOKEN=x", "dn-1")
+    m.amend_authority("operator: secrets.env remains forbidden")
+    m.begin_verification()
+    acceptor = Mission.load(workspace, actor="agent:acceptor")
+    try:
+        acceptor.record_verdict("PASS", acceptor_id="agent:acceptor",
+                                 assurance_tier="declared-role-separation",
+                                 reason="done")
+        check("denial-does-not-discharge-e2e", False)
+    except AcceptanceRefused as exc:
+        check("denial-does-not-discharge-e2e",
+              "outside the declared scope" in str(exc))
+
+
+def test_symlinked_path_must_satisfy_scope_in_too(workspace: Path) -> None:
+    """Inclusion is tested against where the write LANDS, like exclusion.
+
+    The exclusion side checked both the declared and the resolved path while
+    this one stayed lexical, so scope.in=["docs/**"] with docs/alias -> src/
+    accepted a write to src/a.py. "Where it was not permitted to go" is the
+    same defect as "where it was forbidden to go"."""
+    m = open_mission(workspace, "m-in-link", "Included.", scope_in=["docs/**"])
+    m.approve()
+    (workspace / "src").mkdir(parents=True, exist_ok=True)
+    (workspace / "docs").mkdir(exist_ok=True)
+    try:
+        (workspace / "docs" / "alias").symlink_to(workspace / "src",
+                                                   target_is_directory=True)
+    except (OSError, NotImplementedError):
+        print("skip scope-in-symlink (symlinks unavailable on this host)")
+        return
+    m.record_effect("docs/alias/a.py", "lands in src/", "il-1")
+    flagged = [(f["artifact_path"], f["reason"]) for f in m.scope_consistency()]
+    check("scope-in-resolved-target-flagged",
+          flagged == [("docs/alias/a.py", "outside scope.in")])
+
+
+def test_amendment_must_name_the_path_that_actually_violated(
+        workspace: Path) -> None:
+    """A grant for the ALLOWED path must not discharge the FORBIDDEN landing.
+
+    The finding carried only the lexical path, so with docs/alias -> secrets/
+    an amendment naming docs/** discharged a write that landed in secrets/.
+    The operator authorised docs/; nothing authorised secrets/x; PASS was
+    accepted anyway."""
+    m = open_mission(workspace, "m-viol", "Linked drift.",
+                     scope_in=["docs/**"], scope_out=["secrets/**"])
+    m.approve()
+    (workspace / "secrets").mkdir(parents=True, exist_ok=True)
+    (workspace / "docs").mkdir(exist_ok=True)
+    try:
+        (workspace / "docs" / "alias").symlink_to(workspace / "secrets",
+                                                   target_is_directory=True)
+    except (OSError, NotImplementedError):
+        print("skip violating-path (symlinks unavailable on this host)")
+        return
+    m.record_effect("docs/alias/x.txt", "lands in secrets/", "vp-1")
+    findings = m.scope_consistency()
+    check("violating-path-recorded",
+          bool(findings) and findings[0].get("violating_path") == "secrets/x.txt")
+    m.amend_authority("operator: you may write under docs/**")
+    m.begin_verification()
+    acceptor = Mission.load(workspace, actor="agent:acceptor")
+    try:
+        acceptor.record_verdict("PASS", acceptor_id="agent:acceptor",
+                                 assurance_tier="declared-role-separation",
+                                 reason="done")
+        check("grant-for-allowed-path-does-not-discharge-landing", False)
+    except AcceptanceRefused as exc:
+        check("grant-for-allowed-path-does-not-discharge-landing",
+              "secrets/x.txt" in str(exc))
+
+
 def test_symlinked_path_cannot_dodge_an_exclusion(workspace: Path) -> None:
     """A lexical path test alone lets a symlink walk around scope.out.
 
@@ -1433,6 +1531,9 @@ TESTS = [
     test_bare_wildcard_is_not_a_discharge_key,
     test_later_amendment_must_name_the_drift_it_discharges,
     test_amendment_naming_is_token_wise_not_substring,
+    test_a_denial_is_not_a_grant,
+    test_symlinked_path_must_satisfy_scope_in_too,
+    test_amendment_must_name_the_path_that_actually_violated,
     test_symlinked_path_cannot_dodge_an_exclusion,
     test_forged_receipt_path_cannot_dodge_scope,
     test_scope_consistency_and_acceptance_boundary,
