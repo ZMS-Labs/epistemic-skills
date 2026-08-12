@@ -1,0 +1,17 @@
+{
+  "description": "Stage-C mission-custody PreToolUse gate (es#117) -- INSTALL SNIPPET, not a live config. Codex reads hooks from ~/.codex/hooks.json or <repo>/.codex/hooks.json (verified against https://developers.openai.com/codex/hooks, 2026-08-12). Copy the PreToolUse entry into one of those files, replacing <plugin-root> with the absolute path to this plugin directory. Payload carries session_id/cwd/tool_name/tool_input (Bash and apply_patch use tool_input.command); exit 2 + stderr blocks. Caveats from the same docs: hosted tools (e.g. WebSearch) do not fire hooks; repo-local hooks load only in trusted projects; new hooks must be trusted via /hooks before they run.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|apply_patch|Edit|Write|mcp__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"<plugin-root>/contracts/mission-custody/custody_hook.py\" --harness codex",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

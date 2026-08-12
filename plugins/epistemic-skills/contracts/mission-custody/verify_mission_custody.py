@@ -35,6 +35,20 @@ AUTHORITY_FIELDS = {
     "operator_ref", "instruction", "amendments", "permissions",
     "protected_state", "acceptable_costs",
 }
+AUTHORITY_OPTIONAL_FIELDS = {"guard_mode", "actuator_guards"}
+GUARD_MODES = {"audit", "enforce"}
+GUARD_RULE_FIELDS = {"name", "tool_names", "command_regexes", "path_globs"}
+GUARD_RULE_REQUIRED = {"name", "tool_names", "command_regexes", "path_globs"}
+# Tool-name classes for inert-shape detection: a rule whose pattern lists can
+# never fire for its tools arms nothing while reading as armed.
+GUARD_SHELL_TOOLS = {
+    "Bash", "bash", "shell", "Shell",
+    "run_command", "local_shell", "run_shell_command",
+}
+GUARD_FS_WRITE_TOOLS = {
+    "Write", "Edit", "MultiEdit", "write_file", "replace",
+    "apply_patch", "str_replace_editor",
+}
 CHECKPOINT_FIELDS = {
     "record", "mission_id", "revision", "status", "prev_checkpoint_sha256",
     "manifest", "state", "receipt_ids", "written_utc", "written_by",
@@ -94,7 +108,12 @@ def validate_manifest(rec: dict) -> list[str]:
     if not isinstance(auth, dict):
         errors.append("authority: object required")
         return errors
-    _check_exact_fields(errors, auth, AUTHORITY_FIELDS, "authority")
+    for key in auth:
+        if key not in AUTHORITY_FIELDS | AUTHORITY_OPTIONAL_FIELDS:
+            errors.append(f"authority.{key}: unknown field")
+    for key in AUTHORITY_FIELDS:
+        if key not in auth:
+            errors.append(f"authority.{key}: missing")
     if not errors:
         _require(errors, isinstance(auth["operator_ref"], str)
                  and auth["operator_ref"],
@@ -112,6 +131,88 @@ def validate_manifest(rec: dict) -> list[str]:
         for name in ("permissions", "protected_state", "acceptable_costs"):
             _require(errors, _str_list(auth[name]),
                      f"authority.{name}", "list of strings required")
+        mode = auth.get("guard_mode")
+        guards = auth.get("actuator_guards")
+        if mode is not None:
+            _require(errors, mode in GUARD_MODES,
+                     "authority.guard_mode", "must be 'audit' or 'enforce'")
+            _require(errors, isinstance(guards, list) and bool(guards),
+                     "authority.guard_mode",
+                     "guard_mode requires a non-empty actuator_guards list")
+        if guards is not None:
+            if not isinstance(guards, list) or not guards:
+                errors.append(
+                    "authority.actuator_guards: non-empty list of guard rules "
+                    "required (to disarm, amend with actuator_guards=None)")
+            else:
+                for i, rule in enumerate(guards):
+                    where = f"authority.actuator_guards[{i}]"
+                    if not isinstance(rule, dict) or set(rule) != GUARD_RULE_FIELDS:
+                        errors.append(
+                            f"{where}: rule must carry exactly "
+                            "{name, tool_names, command_regexes, path_globs}")
+                        continue
+                    if not (isinstance(rule["name"], str) and rule["name"]):
+                        errors.append(f"{where}.name: non-empty string required")
+                        continue
+                    if not rule["tool_names"] or not _str_list(rule["tool_names"]):
+                        errors.append(
+                            f"{where}.tool_names: non-empty list of non-empty "
+                            "strings required")
+                        continue
+                    patterns = []
+                    shape_bad = False
+                    for field in ("command_regexes", "path_globs"):
+                        value = rule[field]
+                        if not isinstance(value, list) or not all(
+                                isinstance(p, str) for p in value):
+                            errors.append(
+                                f"{where}.{field}: list of strings required")
+                            shape_bad = True
+                            break
+                        patterns.extend(value)
+                    if shape_bad:
+                        continue
+                    if not patterns:
+                        # a patternless rule matches nothing -> inert by accident
+                        errors.append(
+                            f"{where}: >=1 pattern across command_regexes and "
+                            "path_globs required (patternless rule is inert)")
+                        continue
+                    regex_bad = False
+                    for pattern in rule["command_regexes"]:
+                        try:
+                            re.compile(pattern)
+                        except re.error:
+                            errors.append(
+                                f"{where}.command_regexes: does not compile: "
+                                f"{pattern!r}")
+                            regex_bad = True
+                            break
+                    if regex_bad:
+                        continue
+                    # Inert-shape refusal: the pattern lists a rule carries
+                    # must be ones its tools can actually fire. Mixed or
+                    # unknown tool names pass -- unknown tools are the
+                    # operator's responsibility.
+                    names = rule["tool_names"]
+                    if all(n in GUARD_SHELL_TOOLS for n in names) \
+                            and not rule["command_regexes"]:
+                        errors.append(
+                            f"{where}: shell tools carry no file_path, so "
+                            "path_globs never fire; command_regexes required")
+                    elif all(n in GUARD_FS_WRITE_TOOLS for n in names) \
+                            and not rule["path_globs"]:
+                        errors.append(
+                            f"{where}: fs-write tools carry no command "
+                            "string, so command_regexes never fire; "
+                            "path_globs required")
+                    elif all(n.startswith("mcp__") for n in names) \
+                            and not rule["command_regexes"]:
+                        errors.append(
+                            f"{where}: MCP arguments match command_regexes "
+                            "(serialized tool_input) only, so path_globs "
+                            "never fire; command_regexes required")
 
     scope = rec["scope"]
     ok = isinstance(scope, dict) and set(scope) == {"in", "out"} \

@@ -399,6 +399,76 @@ def test_no_mission_flags_outside_open() -> None:
     check("open-declares-mission-id", saw_mission_id_in_open)
 
 
+def test_gate_verb() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        tmp = Path(td)
+        # open an enforced mission guarding 'rm -rf'
+        guards = [{"name": "no-rm", "tool_names": ["Bash"],
+                   "command_regexes": ["rm -rf"], "path_globs": []}]
+        gfile = tmp / "guards.json"
+        gfile.write_text(json.dumps(guards), encoding="utf-8")
+        run("open", "--workspace", str(tmp), "--actor", "agent:t",
+            "--mission-id", "gate-cli", "--instruction", "i",
+            "--operator", "operator:t", "--steward", "agent:t",
+            "--guards-file", str(gfile), "--guard-mode", "enforce")
+        run("approve", "--workspace", str(tmp), "--actor", "agent:t")
+        blocked = subprocess.run(
+            [sys.executable, str(CLI), "gate", "--workspace", str(tmp),
+             "--actor", "hook:custody-gate"],
+            input=json.dumps({"tool_name": "Bash", "command": "rm -rf x",
+                              "file_path": None}),
+            capture_output=True, text=True)
+        check("gate-blocks-enforced", blocked.returncode == 2)
+        verdict = json.loads(blocked.stdout)
+        check("gate-verdict-fields",
+              verdict["decision"] == "block" and verdict["rule"] == "no-rm")
+        allowed = subprocess.run(
+            [sys.executable, str(CLI), "gate", "--workspace", str(tmp),
+             "--actor", "hook:custody-gate"],
+            input=json.dumps({"tool_name": "Bash", "command": "ls",
+                              "file_path": None}),
+            capture_output=True, text=True)
+        check("gate-allows-unmatched", allowed.returncode == 0)
+
+
+def test_gate_no_mission_allows() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        tmp = Path(td)
+        res = subprocess.run(
+            [sys.executable, str(CLI), "gate", "--workspace", str(tmp),
+             "--actor", "hook:custody-gate"],
+            input=json.dumps({"tool_name": "Bash", "command": "rm -rf /"}),
+            capture_output=True, text=True)
+        check("gate-no-mission-exit-0", res.returncode == 0)
+
+
+def test_open_guard_mode_without_guards_refused() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        tmp = Path(td)
+        res = run("open", "--workspace", str(tmp), "--actor", "agent:t",
+                  "--mission-id", "bad-open", "--instruction", "i",
+                  "--operator", "operator:t", "--steward", "agent:t",
+                  "--guard-mode", "audit")
+        check("open-mode-without-guards-refused", res.returncode == 2)
+
+
+def test_amend_guard_mode_flag() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        tmp = Path(td)
+        run("open", "--workspace", str(tmp), "--actor", "agent:t",
+            "--mission-id", "amend-cli", "--instruction", "i",
+            "--operator", "operator:t", "--steward", "agent:t")
+        run("approve", "--workspace", str(tmp), "--actor", "agent:t")
+        guards = [{"name": "g", "tool_names": ["Bash"],
+                   "command_regexes": ["x"], "path_globs": []}]
+        gfile = tmp / "g.json"
+        gfile.write_text(json.dumps(guards), encoding="utf-8")
+        res = run("amend", "--workspace", str(tmp), "--actor", "agent:t",
+                  "--text", "operator: arm audit mode",
+                  "--guards-file", str(gfile), "--guard-mode", "audit")
+        check("amend-guards-accepted", res.returncode == 0)
+
+
 TESTS = [
     test_open_approve_effect_status_roundtrip,
     test_resume_detects_drift_exit_3,
@@ -411,6 +481,10 @@ TESTS = [
     test_resume_vacuous_clean_is_labelled,
     test_resume_missing_receipt_via_cli,
     test_no_mission_flags_outside_open,
+    test_gate_verb,
+    test_gate_no_mission_allows,
+    test_open_guard_mode_without_guards_refused,
+    test_amend_guard_mode_flag,
 ]
 
 

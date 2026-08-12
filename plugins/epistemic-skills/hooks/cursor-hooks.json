@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "hooks": {
+    "beforeShellExecution": [
+      {
+        "command": "python ./contracts/mission-custody/custody_hook.py --harness cursor",
+        "timeout": 10
+      }
+    ],
+    "preToolUse": [
+      {
+        "command": "python ./contracts/mission-custody/custody_hook.py --harness cursor",
+        "timeout": 10,
+        "matcher": "Shell|Write|Delete"
+      }
+    ],
+    "beforeMCPExecution": [
+      {
+        "command": "python ./contracts/mission-custody/custody_hook.py --harness cursor",
+        "timeout": 10
+      }
+    ]
+  }
+}

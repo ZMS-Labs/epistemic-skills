@@ -11,9 +11,13 @@ mission under --workspace on every other command.
 
 Exit codes: 0 success; 2 usage/refusal (argparse prints usage; a CustodyError
 subclass prints its class name + message to stderr); 3 drift detected on
-`resume`. On a clean resume the drift list on stdout is empty by contract;
-a one-line summary goes to stderr so vacuous cleanliness (zero receipts on
-record) is visible instead of indistinguishable from verified cleanliness.
+`resume`. `gate` adds: exit 2 = block (a guarded actuator fired outside the
+armed envelope), exit 0 = allow. Exit 2 is deliberately uniform across
+usage/refusal/block: a `gate` block is distinguishable by the verdict JSON
+on stdout ("decision": "block"), not by a dedicated exit code. On a clean
+resume the drift list on stdout is empty by contract; a one-line summary
+goes to stderr so vacuous cleanliness (zero receipts on record) is visible
+instead of indistinguishable from verified cleanliness.
 """
 from __future__ import annotations
 
@@ -84,6 +88,9 @@ def build_parser() -> argparse.ArgumentParser:
     p_open.add_argument("--stop-if", action="append", default=[], dest="stop_if")
     p_open.add_argument("--escalate-if", action="append", default=[], dest="escalate_if")
     p_open.add_argument("--cost", action="append", default=[], dest="acceptable_costs")
+    p_open.add_argument("--guards-file", dest="guards_file")
+    p_open.add_argument("--guard-mode", dest="guard_mode",
+                        choices=["audit", "enforce"])
 
     sub.add_parser("approve", parents=[common])
 
@@ -94,6 +101,12 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_amend = sub.add_parser("amend", parents=[common])
     p_amend.add_argument("--text", required=True)
+    p_amend.add_argument("--guards-file", dest="guards_file")
+    p_amend.add_argument("--guard-mode", dest="guard_mode",
+                         choices=["audit", "enforce"])
+
+    p_gate = sub.add_parser("gate", parents=[common])
+    p_gate.add_argument("--input-file", dest="input_file")
 
     p_note = sub.add_parser("note", parents=[common])
     p_note.add_argument("--text", required=True)
@@ -134,6 +147,31 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _read_guards_file(path: str) -> list:
+    with open(path, encoding="utf-8") as handle:
+        guards = json.load(handle)
+    if not isinstance(guards, list):
+        raise CustodyError("guards file must contain a JSON list of rules")
+    return guards
+
+
+def _read_tool_call(args: argparse.Namespace) -> dict:
+    # stdin carries the tool-call JSON by default -- argv has a ~32KB ceiling
+    # on Windows and every shell metachar must survive, same reason
+    # --content-file exists. --input-file is the explicit-file escape hatch.
+    raw = (Path(args.input_file).read_text(encoding="utf-8")
+           if args.input_file else sys.stdin.read())
+    try:
+        call = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise CustodyError(f"gate: tool-call JSON unreadable: {exc}") from None
+    if not isinstance(call, dict) or not isinstance(call.get("tool_name"), str):
+        raise CustodyError("gate: tool-call JSON needs a string 'tool_name'")
+    call.setdefault("command", None)
+    call.setdefault("file_path", None)
+    return call
+
+
 def _brief(checkpoint: dict) -> dict:
     return {
         "mission_id": checkpoint["mission_id"],
@@ -154,6 +192,10 @@ def dispatch(args: argparse.Namespace) -> int:
     workspace = Path(args.workspace)
 
     if args.command == "open":
+        if args.guard_mode and not args.guards_file:
+            raise CustodyError("--guard-mode requires --guards-file")
+        guards = (_read_guards_file(args.guards_file)
+                  if args.guards_file else None)
         Mission.open(
             workspace, mission_id=args.mission_id, instruction=args.instruction,
             operator_ref=args.operator, steward_ref=args.steward,
@@ -161,9 +203,17 @@ def dispatch(args: argparse.Namespace) -> int:
             scope_in=args.scope_in, scope_out=args.scope_out,
             permissions=args.permission, protected_state=args.protected,
             hold_if=args.hold_if, stop_if=args.stop_if, escalate_if=args.escalate_if,
-            acceptable_costs=args.acceptable_costs)
+            acceptable_costs=args.acceptable_costs,
+            guard_mode=args.guard_mode, actuator_guards=guards)
         print(1)  # Mission.open always writes revision 1
         return 0
+
+    if args.command == "gate":
+        from custody_gate import run_gate
+        verdict = run_gate(workspace, _read_tool_call(args), actor=args.actor,
+                           session_id="", harness="cli")
+        _print_status(verdict)
+        return 2 if verdict["decision"] == "block" else 0
 
     mission = Mission.load(workspace, actor=args.actor)
 
@@ -178,7 +228,12 @@ def dispatch(args: argparse.Namespace) -> int:
                         "continuity_breaks": breaks})
         return 3 if breaks else 0
     elif args.command == "amend":
-        print(mission.amend_authority(args.text))
+        kwargs: dict = {}
+        if args.guards_file:
+            kwargs["actuator_guards"] = _read_guards_file(args.guards_file)
+        if args.guard_mode:
+            kwargs["guard_mode"] = args.guard_mode
+        print(mission.amend_authority(args.text, **kwargs))
     elif args.command == "note":
         print(mission.note(args.text))
     elif args.command == "frontier":
