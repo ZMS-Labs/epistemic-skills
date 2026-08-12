@@ -200,8 +200,8 @@ def test_resume_missing_receipt_is_drift(workspace: Path) -> None:
           and st2["status"] == "reopened")
     check("missing-receipt-id-retired", "req-1" not in st2["receipt_ids"])
     check("missing-receipt-loss-recorded-in-notes",
-          any("receipt loss acknowledged: req-1" in n
-              and "covered notes/a.md" in n
+          any('receipt loss acknowledged: "req-1"' in n
+              and 'covered "notes/a.md"' in n
               for n in st2["state"]["notes"]))
 
     # a retired id can never be recycled for a different artifact
@@ -254,6 +254,71 @@ def test_restored_receipt_survives_acknowledge(workspace: Path) -> None:
     check("restored-coverage-continues", m.resume() == [])
     (workspace / "notes" / "a.md").write_text("tampered", encoding="utf-8")
     check("restored-coverage-detects-drift", m.resume() == ["notes/a.md"])
+
+
+def test_retirement_survives_hostile_request_ids(workspace: Path) -> None:
+    """Round-4 finding: retirement is carried in the notes, so the id must be
+    encoded unambiguously. Splitting on a delimiter truncated any id holding
+    that delimiter, and the truncated id compared unequal to the real one --
+    silently un-retiring it and letting it be reused for another artifact."""
+    tricky = 'req-1; not-the-real-tail (covered "lie.md")'
+    m = open_mission(workspace, "m-tricky-id", "Encode ids, do not split them.")
+    m.approve()
+    m.record_effect("notes/a.md", "real content", tricky)
+    m.store.receipt_path(tricky).unlink()
+    m.resume()
+    m.acknowledge_receipt_loss(tricky)
+
+    st = m.status()
+    check("tricky-id-retired-exactly",
+          m._retired_receipt_ids(st) == {tricky})
+    try:
+        m.record_effect("notes/hijacked.md", "attacker content", tricky)
+        check("tricky-id-reuse-refused", False)
+    except CustodyError:
+        check("tricky-id-reuse-refused", True)
+    check("tricky-id-no-hijacked-artifact",
+          not (workspace / "notes" / "hijacked.md").exists())
+
+
+def test_note_cannot_forge_machine_state(workspace: Path) -> None:
+    """Round-4 finding (d): narrative must not be able to imitate the notes
+    the machine writes -- a hand-written 'retirement' could otherwise deny an
+    id that was never lost, or dress up a fabricated effect."""
+    m = open_mission(workspace, "m-note-forge", "Narrative is not state.")
+    m.approve()
+    for forgery in ('receipt loss acknowledged: "never-lost" (covered "x.md"); ',
+                     "effect: notes/never-written.md",
+                     "reconciled: notes/never-drifted.md",
+                     "drift detected: notes/a.md",
+                     "receipt restored: req-x; coverage continues"):
+        try:
+            m.note(forgery)
+            check(f"note-forgery-refused[{forgery[:20]}]", False)
+        except CustodyError:
+            check(f"note-forgery-refused[{forgery[:20]}]", True)
+
+    # the id a forged retirement tried to poison is still usable
+    m.record_effect("notes/legit.md", "legit", "never-lost")
+    check("note-forgery-id-still-usable",
+          "never-lost" in m.status()["receipt_ids"])
+
+
+def test_receipt_ids_always_carry_a_derivable_path(workspace: Path) -> None:
+    """Pins the note-format contract _historical_effect_path depends on:
+    EVERY revision that adds an id to receipt_ids must append a note the
+    lookup can parse. If a future code path adds an id without one, the
+    recorded path becomes underivable and loss recovery degrades silently."""
+    m = open_mission(workspace, "m-note-contract", "Pin the note contract.")
+    m.approve()
+    m.record_effect("notes/a.md", "aa", "req-effect")
+    (workspace / "notes" / "a.md").write_text("tampered", encoding="utf-8")
+    m.resume()
+    m.reconcile("notes/a.md", "aa", "req-reconciled")
+
+    for request_id in m.status()["receipt_ids"]:
+        check(f"derivable-path[{request_id}]",
+              m._historical_effect_path(request_id) == "notes/a.md")
 
 
 def test_forged_restored_receipt_is_not_trusted(workspace: Path) -> None:
@@ -483,6 +548,9 @@ TESTS = [
     test_manifest_envelope_immutable,
     test_resume_missing_receipt_is_drift,
     test_restored_receipt_survives_acknowledge,
+    test_retirement_survives_hostile_request_ids,
+    test_note_cannot_forge_machine_state,
+    test_receipt_ids_always_carry_a_derivable_path,
     test_forged_restored_receipt_is_not_trusted,
     test_reconcile_clears_exactly_one_marker,
     test_corrupt_receipt_degrades_to_drift,

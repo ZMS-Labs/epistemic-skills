@@ -22,6 +22,15 @@ assert set(_TIER_RANK) == TIERS, "tier rank table out of sync with verify_missio
 
 _ABS_DRIVE_RE = re.compile(r"^[A-Za-z]:")
 _RETIRED_NOTE = "receipt loss acknowledged: "
+# Notes are the mission's append-only, hash-chained narrative AND the carrier
+# for retirement (checkpoint state is exact-field-closed in @1, so a
+# retired_ids field would break the schema). Machine-written notes therefore
+# own these prefixes exclusively: a caller-supplied note that could imitate
+# one would let ordinary narrative forge machine state.
+_RESERVED_NOTE_PREFIXES = (
+    "effect: ", "reconciled: ", "drift detected: ", "receipt restored: ",
+    _RETIRED_NOTE,
+)
 
 
 def now_utc() -> str:
@@ -302,10 +311,20 @@ class Mission:
         @1), so a retired id can never be silently recycled for a different
         artifact once the file that once occupied its path is gone."""
         retired: set[str] = set()
+        decoder = json.JSONDecoder()
         for note in latest["state"]["notes"]:
-            if note.startswith(_RETIRED_NOTE):
-                tail = note[len(_RETIRED_NOTE):].split(";")[0]
-                retired.add(tail.split(" (covered ")[0].strip())
+            if not note.startswith(_RETIRED_NOTE):
+                continue
+            # The id is JSON-encoded, so it is read back exactly regardless of
+            # what it contains. Splitting on a delimiter truncated any id
+            # holding that delimiter, and a truncated id compared unequal to
+            # the real one -- silently un-retiring it (merge-gate round 4).
+            try:
+                value, _ = decoder.raw_decode(note[len(_RETIRED_NOTE):])
+            except ValueError:
+                continue
+            if isinstance(value, str):
+                retired.add(value)
         return retired
 
     def _find_verdict_record(self, verdict: str, reason: str) -> dict | None:
@@ -364,6 +383,12 @@ class Mission:
         self._verify_manifest(latest)
         if latest["status"] not in _OPEN_STATES:
             raise IllegalTransition(f"cannot note: status is {latest['status']!r}")
+        for prefix in _RESERVED_NOTE_PREFIXES:
+            if text.startswith(prefix):
+                raise CustodyError(
+                    f"note text may not begin with {prefix!r}: machine-written "
+                    "notes carry mission state and narrative must not be able "
+                    "to imitate them")
         new = self._write_next(latest, path, status=latest["status"], note=text)
         return new["revision"]
 
@@ -486,7 +511,8 @@ class Mission:
                       f"effect on {recorded_path}; coverage continues"))
             return new["revision"]
 
-        covered = f" (covered {recorded_path})" if recorded_path else ""
+        covered = (f" (covered {json.dumps(recorded_path)})"
+                   if recorded_path else "")
         if receipt is None:
             why = "receipt unloadable"
         elif recorded_path is None:
@@ -507,8 +533,9 @@ class Mission:
         new = self._write_next(
             latest, path, status=next_status, unresolved_verdicts=remaining,
             receipt_ids=receipt_ids,
-            note=(f"{_RETIRED_NOTE}{request_id}{covered}; {why}; id retired "
-                  "permanently -- re-cover the artifact with a fresh effect"))
+            note=(f"{_RETIRED_NOTE}{json.dumps(request_id)}{covered}; {why}; "
+                  "id retired permanently -- re-cover the artifact with a "
+                  "fresh effect"))
         return new["revision"]
 
     def begin_verification(self) -> int:
