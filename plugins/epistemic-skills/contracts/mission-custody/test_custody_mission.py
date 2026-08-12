@@ -373,6 +373,8 @@ def test_note_cannot_forge_machine_state(workspace: Path) -> None:
     m = open_mission(workspace, "m-note-forge", "Narrative is not state.")
     m.approve()
     for forgery in ('receipt loss acknowledged: "never-lost" (covered "x.md"); ',
+                     'receipt tamper acknowledged: "never-tampered" '
+                     '(covered "x.md"); ',
                      "effect: notes/never-written.md",
                      "reconciled: notes/never-drifted.md",
                      "drift detected: notes/a.md",
@@ -1318,12 +1320,138 @@ def test_tampered_receipt_not_byte_restored_retires_id(workspace: Path) -> None:
     check("not-restored-reason-recorded",
           any("bytes do not match the chain-attested hash" in n
               for n in st["state"]["notes"]))
+    # T3-1: tamper-retirement carries its OWN note prefix, distinct from an
+    # honest loss's -- otherwise the distinction survives only as free text
+    # nothing downstream can act on.
+    check("not-restored-uses-tamper-prefix",
+          any(n.startswith('receipt tamper acknowledged: "p6-1"')
+              for n in st["state"]["notes"]))
+    check("not-restored-does-not-use-loss-prefix",
+          not any(n.startswith('receipt loss acknowledged: "p6-1"')
+                  for n in st["state"]["notes"]))
 
     try:
         m.record_effect("notes/unrelated.md", "other", "p6-1")
         check("not-restored-id-reuse-refused", False)
     except CustodyError:
         check("not-restored-id-reuse-refused", True)
+
+
+def test_tampered_retired_id_reuse_message_names_retirement(workspace: Path) -> None:
+    """_retired_receipt_ids must recognize a TAMPER-retired id, not merely
+    an honest-loss-retired one (T3-1). While the receipt file for p6-1
+    still exists, reuse is refused before _retired_receipt_ids is ever
+    consulted (an earlier, unrelated 'receipt already exists' check fires
+    first) -- so this test deletes the file first to reach the actual
+    retired-id check. And while ANY previously-used id is refused via
+    _all_receipt_ids_ever as a safety net regardless of retirement
+    bookkeeping, that fallback produces a DIFFERENT, generic message --
+    only the SPECIFIC 'retired by an acknowledged receipt loss' message
+    proves _retired_receipt_ids itself recognized the tamper-retired id,
+    rather than silently missing it and relying on the fallback to still
+    (accidentally) refuse the reuse."""
+    m, _original = _setup_p6_tampered(workspace)
+    m.resume()
+    m.acknowledge_receipt_loss("p6-1")
+    m.store.receipt_path("p6-1").unlink()
+    try:
+        m.record_effect("notes/unrelated.md", "other", "p6-1")
+        check("tamper-retired-reuse-refused", False)
+    except CustodyError as exc:
+        check("tamper-retired-reuse-refused", True)
+        check("tamper-retired-reuse-names-retirement",
+              "retired by an acknowledged receipt loss" in str(exc))
+
+
+def _setup_tampered_then_superseded(workspace: Path) -> Mission:
+    """id-A's receipt sha is chained (the same two-write dance
+    _setup_p6_tampered uses, for the same _write_next-hazard reason: the
+    latest checkpoint must be checkpoint@1-shaped before any further
+    state-mutating call), then id-A's RECEIPT is tampered -- the artifact is
+    left alone, because what matters here is that id-A's OWN receipt fails
+    its chain-attested hash, which resume() must catch regardless of the
+    live artifact's content. id-B then supersedes id-A's path with a fresh,
+    valid effect via the ordinary record_effect API, so 'notes/a.md' is
+    genuinely, currently covered by id-B when the caller proceeds.
+
+    Shared by two fix-round-1 tests (es#118 Task 3, round 1):
+    - T3-2: RECEIPT-TAMPERED must still be reported for id-A even though
+      id-B has superseded it (resume() must not route tampered ids through
+      the one-artifact-one-current-receipt supersession logic).
+    - T3-3: acknowledge_receipt_loss retiring id-A must NOT raise a
+      RECOVER obligation for 'notes/a.md' -- id-B already, genuinely covers
+      it, so the obligation would be spurious, discharged only by a
+      redundant rewrite."""
+    m = open_mission(workspace, "m-super", "Supersession.")
+    m.approve()
+    m.record_effect("notes/a.md", "v1", "id-A")
+    receipt_path = m.store.receipt_path("id-A")
+    sha = sha256_file(receipt_path)
+    _write_reattestation(m, "id-A", sha)
+    attested, attested_path = m.store.load_latest()
+    continued = json.loads(json.dumps(attested))
+    continued["record"] = "checkpoint@1"
+    continued["revision"] = attested["revision"] + 1
+    continued["prev_checkpoint_sha256"] = sha256_file(attested_path)
+    continued["receipt_ids"] = ["id-A"]
+    continued["written_utc"] = now_utc()
+    m.store.write_checkpoint(continued)
+    record = json.loads(receipt_path.read_bytes().decode("utf-8"))
+    record["after_sha256"] = sha256_bytes(b"forged")
+    receipt_path.write_bytes(
+        (json.dumps(record, indent=1, sort_keys=True) + "\n").encode("utf-8"))
+    m.record_effect("notes/a.md", "v2", "id-B")
+    return m
+
+
+def test_tamper_reported_despite_supersession(workspace: Path) -> None:
+    """T3-2: a tampered id must be reported unconditionally, not routed
+    through the one-artifact-one-current-receipt supersession logic. id-B
+    has already superseded id-A for 'notes/a.md' by the time resume() runs
+    -- silence on id-A here would be the false-clean direction: the tamper
+    happened and is provable from the chain regardless of what superseded
+    it afterward."""
+    m = _setup_tampered_then_superseded(workspace)
+    findings = m.resume()
+    check("supersession-tamper-still-reported",
+          "RECEIPT-TAMPERED:id-A" in findings)
+    check("supersession-tamper-not-misreported-as-missing",
+          "RECEIPT-MISSING:id-A" not in findings)
+    # id-B's own coverage is genuinely clean -- it must not be dragged into
+    # the finding just because it shares id-A's superseded path.
+    check("supersession-superseding-id-not-flagged",
+          not any(f.endswith(":id-B") for f in findings))
+    st = m.status()
+    check("supersession-tamper-marker-persisted",
+          "RECEIPT-TAMPERED:id-A" in st["state"]["unresolved_verdicts"])
+
+
+def test_acknowledge_tampered_superseded_id_no_spurious_recover(
+        workspace: Path) -> None:
+    """T3-3: retiring a tampered, ALREADY-SUPERSEDED id must not raise a
+    RECOVER obligation for a path a surviving, loadable id (id-B) still
+    genuinely covers -- that obligation would be spurious, discharged only
+    by a redundant rewrite of an artifact that was never actually
+    uncovered."""
+    m = _setup_tampered_then_superseded(workspace)
+    findings = m.resume()
+    check("spurious-recover-precondition-tampered",
+          "RECEIPT-TAMPERED:id-A" in findings)
+
+    rev = m.acknowledge_receipt_loss("id-A")
+    st = m.status()
+    check("spurious-recover-ack-revision", st["revision"] == rev)
+    check("spurious-recover-id-a-retired", "id-A" not in st["receipt_ids"])
+    check("spurious-recover-id-b-kept", "id-B" in st["receipt_ids"])
+    check("spurious-recover-no-recover-obligation",
+          not any(marker.startswith("RECOVER:")
+                  for marker in st["state"]["unresolved_verdicts"]))
+    check("spurious-recover-marker-cleared",
+          "RECEIPT-TAMPERED:id-A" not in st["state"]["unresolved_verdicts"])
+    check("spurious-recover-mission-active", st["status"] == "active")
+    # id-B's coverage is real, not merely assumed: a follow-up resume() must
+    # stay clean.
+    check("spurious-recover-resume-still-clean", m.resume() == [])
 
 
 _RAW_RECEIPT_IDS_TOKEN_RE = re.compile(r"""["']receipt_ids["']""")
@@ -1420,6 +1548,9 @@ TESTS = [
     test_probe_p6_receipt_tamper_is_caught,
     test_tampered_receipt_byte_restored_survives_acknowledge,
     test_tampered_receipt_not_byte_restored_retires_id,
+    test_tampered_retired_id_reuse_message_names_retirement,
+    test_tamper_reported_despite_supersession,
+    test_acknowledge_tampered_superseded_id_no_spurious_recover,
 ]
 
 

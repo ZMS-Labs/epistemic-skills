@@ -24,6 +24,15 @@ assert set(_TIER_RANK) == TIERS, "tier rank table out of sync with verify_missio
 
 _ABS_DRIVE_RE = re.compile(r"^[A-Za-z]:")
 _RETIRED_NOTE = "receipt loss acknowledged: "
+# Tamper-retirement gets its OWN prefix, distinct from an honest loss's
+# (T3-1, es#118 fix round 1): the two are already distinguished live (a
+# tampered id's "why" is re-derived from evidence, never from which marker
+# won priority -- see acknowledge_receipt_loss), but that distinction lived
+# only in free text, unreadable to any consumer that wants to treat
+# "tampering" and "honest loss" differently (e.g. paging a human on the
+# former, not the latter). _retired_receipt_ids still unions both --
+# permanent non-reusability is correct either way.
+_RETIRED_TAMPERED_NOTE = "receipt tamper acknowledged: "
 # Notes are the mission's append-only, hash-chained narrative AND the carrier
 # for retirement (checkpoint state is exact-field-closed in @1, so a
 # retired_ids field would break the schema). Machine-written notes therefore
@@ -31,7 +40,7 @@ _RETIRED_NOTE = "receipt loss acknowledged: "
 # one would let ordinary narrative forge machine state.
 _RESERVED_NOTE_PREFIXES = (
     "effect: ", "reconciled: ", "drift detected: ", "receipt restored: ",
-    "authority amended: ", _RETIRED_NOTE,
+    "authority amended: ", _RETIRED_NOTE, _RETIRED_TAMPERED_NOTE,
 )
 
 
@@ -466,6 +475,42 @@ class Mission:
             return None
         return record
 
+    def _covered_by_other_id(self, recorded_path: str, excluding: str,
+                              entries: list[tuple[str, str | None]]) -> bool:
+        """True iff recorded_path is CURRENTLY covered by a loadable receipt
+        belonging to an id OTHER than `excluding`, using resume()'s own
+        last-id-wins-by-append-order rule over the FULL `entries` list --
+        `excluding` INCLUDED, in its own chronological position (T3-3, fix
+        round 1: acknowledge_receipt_loss must not raise a spurious RECOVER
+        for a path a surviving id already, genuinely covers).
+
+        Must walk the id's ORIGINAL append order, not merely "does any
+        surviving id's receipt happen to load and claim this path": an id
+        being retired because it IS the current one for this path (the last
+        id covering it) must not be treated as covered just because an
+        EARLIER, already-superseded id for the same path still loads. That
+        earlier id was already stale ground truth before this retirement --
+        crediting it as 'coverage' reintroduces exactly the silent-promotion
+        bug test_superseded_receipt_never_shadows_the_current_one guards (a
+        lost newest receipt letting a superseded older one stand in for it,
+        so resume compares live content against stale ground truth). Only
+        an id that comes AFTER `excluding` in append order -- one that had
+        ALREADY superseded it before this retirement -- can count; an id
+        that comes before, or `excluding` itself, cannot."""
+        current_id: str | None = None
+        current_receipt: dict | None = None
+        for other_id, other_sha in entries:
+            try:
+                other_receipt = self._load_receipt(other_id, other_sha)
+            except _ReceiptTampered:
+                other_receipt = None
+            other_rel = (other_receipt["artifact_path"] if other_receipt is not None
+                         else self._historical_effect_path(other_id))
+            if other_rel is not None and _same_artifact(other_rel, recorded_path):
+                current_id, current_receipt = other_id, other_receipt
+        return (current_id is not None and current_id != excluding
+                and current_receipt is not None)
+
     def _historical_effect_path(self, request_id: str, kind: bool = False) -> str | None:
         """The artifact path this request id was minted against, read from the
         hash-chained checkpoint history: the effect note appended by the very
@@ -510,25 +555,32 @@ class Mission:
         return seen
 
     def _retired_receipt_ids(self, latest: dict) -> set[str]:
-        """Ids whose loss was acknowledged. Retirement is permanent and lives
-        in the append-only notes (checkpoint state is exact-field-closed in
-        @1), so a retired id can never be silently recycled for a different
-        artifact once the file that once occupied its path is gone."""
+        """Ids whose loss OR tamper was acknowledged -- unioning both note
+        prefixes. Retirement is permanent and lives in the append-only notes
+        (checkpoint state is exact-field-closed in @1, so a retired_ids field
+        would break the schema), so a retired id can never be silently
+        recycled for a different artifact once the file that once occupied
+        its path is gone. Permanent non-reusability is correct either way: a
+        tampered id that could not be byte-provably restored is exactly as
+        untrustworthy to recycle as a lost one (T3-1)."""
         retired: set[str] = set()
         decoder = json.JSONDecoder()
         for note in latest["state"]["notes"]:
-            if not note.startswith(_RETIRED_NOTE):
-                continue
-            # The id is JSON-encoded, so it is read back exactly regardless of
-            # what it contains. Splitting on a delimiter truncated any id
-            # holding that delimiter, and a truncated id compared unequal to
-            # the real one -- silently un-retiring it (merge-gate round 4).
-            try:
-                value, _ = decoder.raw_decode(note[len(_RETIRED_NOTE):])
-            except ValueError:
-                continue
-            if isinstance(value, str):
-                retired.add(value)
+            for prefix in (_RETIRED_NOTE, _RETIRED_TAMPERED_NOTE):
+                if not note.startswith(prefix):
+                    continue
+                # The id is JSON-encoded, so it is read back exactly
+                # regardless of what it contains. Splitting on a delimiter
+                # truncated any id holding that delimiter, and a truncated id
+                # compared unequal to the real one -- silently un-retiring it
+                # (merge-gate round 4).
+                try:
+                    value, _ = decoder.raw_decode(note[len(prefix):])
+                except ValueError:
+                    continue
+                if isinstance(value, str):
+                    retired.add(value)
+                break
         return retired
 
     def _receipt_entries(self, checkpoint: dict) -> list[tuple[str, str | None]]:
@@ -979,7 +1031,16 @@ class Mission:
             in zip(latest["receipt_ids"], self._receipt_entries(latest))  # ALLOW-RAW-RECEIPT-IDS
             if rid != request_id
         ]
-        if recorded_path is not None:
+        # T3-3: recorded_path may already be covered by a DIFFERENT id that
+        # had ALREADY superseded request_id before this retirement (e.g. a
+        # fresh effect re-covered it after request_id was tampered) --
+        # retiring request_id then does not leave the artifact uncovered.
+        # Walks the FULL pre-retirement entries (latest, not the filtered
+        # receipt_ids local) so append order -- and request_id's own
+        # chronological position in it -- is preserved; see
+        # _covered_by_other_id for why that ordering is load-bearing.
+        if recorded_path is not None and not self._covered_by_other_id(
+                recorded_path, request_id, self._receipt_entries(latest)):
             # Losing coverage is an OBLIGATION, not a footnote: the mission
             # stays reopened, naming the artifact that must be re-covered, so
             # an uncovered artifact can never sit quietly in an active
@@ -987,10 +1048,18 @@ class Mission:
             if _find_marker(remaining, "RECOVER:", recorded_path) is None:
                 remaining = remaining + [f"RECOVER:{recorded_path}"]
             next_status = "reopened"
+        # T3-1: which prefix records WHICH marker was discharged, not the
+        # live re-check outcome -- a TAMPERED marker that could not be
+        # restored is a tamper-retirement even if the live reason turns out
+        # to be e.g. "receipt unloadable" (deleted after detection); the
+        # "why" text already carries that nuance, the prefix carries the
+        # coarser, machine-actionable distinction.
+        retired_note = (_RETIRED_TAMPERED_NOTE if marker == tampered_marker
+                         else _RETIRED_NOTE)
         new = self._write_next(
             latest, path, status=next_status, unresolved_verdicts=remaining,
             receipt_ids=receipt_ids,
-            note=(f"{_RETIRED_NOTE}{json.dumps(request_id)}{covered}; {why}; "
+            note=(f"{retired_note}{json.dumps(request_id)}{covered}; {why}; "
                   "id retired permanently -- re-cover the artifact with a "
                   "fresh effect"))
         return new["revision"]
