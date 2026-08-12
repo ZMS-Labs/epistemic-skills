@@ -28,12 +28,14 @@ else.
    left one empty. Then `approve` only after the operator confirms the whole
    envelope (scope in/out, permissions, protected state, stop rules).
    **The envelope is ADVISORY: you read it, nothing refuses on it.** `scope` is
-   not an authority field — it is a top-level sibling, and the enforcement
-   chokepoint is only ever handed `authority`, so no gate can ever consult it.
-   Machine enforcement lives solely in `authority.actuator_guards`. Declare the
-   envelope anyway: it is immutable, so it is the fixed reference an acceptor
-   and an auditor compare the finished work against, and it cannot be
-   retro-fitted later to match whatever the mission drifted into.
+   advisory and does not enforce — it is a top-level sibling of `authority`,
+   never an authority field, and the advisory declaration is not enforcement
+   because the runtime chokepoint is only ever handed `authority` itself.
+   Only `authority.actuator_guards` is machine-enforced; every other envelope
+   field is advisory. Declare the envelope anyway: it is immutable, so it is
+   the fixed reference an acceptor and an auditor compare the finished work
+   against, and it cannot be retro-fitted later to match whatever the mission
+   drifted into.
 2. **Resume** — `resume` (pathless = no mission id or path; `--workspace` is
    still required). Treat chat and memory as untrusted until it exits 0. It
    hash-checks ONLY receipted artifacts — with zero receipts a clean exit is

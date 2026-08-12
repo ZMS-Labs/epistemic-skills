@@ -118,6 +118,33 @@ class AcceptanceRefused(CustodyError):
     pass
 
 
+def _is_path_pattern(entry: str) -> bool:
+    """Is this scope entry a PATH pattern, or prose?
+
+    `scope` has always been free text, and real manifests declare boundaries in
+    English -- the bundled examples carry entries like
+    "monitored-missing reconciliation" and "indexer changes". Treating those as
+    globs would classify every ordinary receipt as out-of-scope and refuse a
+    legitimate PASS on every mission with a populated prose scope: a silent
+    compatibility break dressed as a security check.
+
+    So only entries that LOOK like path patterns take part in the comparison; a
+    prose declaration remains exactly what it always was -- advisory text a
+    human reads.
+
+    The two error directions are not symmetric, so the tie-break is not close.
+    Mistaking a GLOB for prose loses one comparison: the status quo, benign.
+    Mistaking PROSE for a glob makes a scope.in that matches nothing, which
+    flags every receipt and wedges an honest mission's close. So anything
+    ambiguous is prose. Whitespace and commas are the discriminator, because
+    real declarations read like sentences -- "media acquisition, arr/Plex/NAS
+    operations" contains slashes and is unmistakably prose, and it appeared in
+    a real manifest written during this very change."""
+    if not entry or any(c.isspace() for c in entry) or "," in entry:
+        return False
+    return "/" in entry or "*" in entry or "?" in entry or entry.endswith("\\")
+
+
 class Mission:
     def __init__(self, store: MissionStore, workspace: Path, actor: str) -> None:
         self.store = store
@@ -849,6 +876,34 @@ class Mission:
         new = self._write_next(latest, path, status="verifying", note="verification started")
         return new["revision"]
 
+    def _amended_after(self, request_id: str) -> bool:
+        """Was an authority amendment recorded AFTER this receipt id entered
+        the chain?
+
+        Ordering is read from the hash-chained checkpoints, never from
+        timestamps: `written_utc` is self-reported by the writer, so a record
+        that could be back-dated must not be what decides whether a grant
+        covers a drift. The revision that first admitted the id is a chain
+        fact; so is the revision whose amendments list grew."""
+        admitted_at = None
+        prev_count = 0
+        amended_revisions: list[int] = []
+        prev_ids: list[str] = []
+        for cp_path in self.store.checkpoint_paths():
+            record = json.loads(cp_path.read_text(encoding="utf-8"))
+            ids = [e if isinstance(e, str) else e.get("request_id")
+                   for e in record["receipt_ids"]]
+            count = len(record["manifest"]["authority"]["amendments"])
+            if admitted_at is None and request_id in ids \
+                    and request_id not in prev_ids:
+                admitted_at = record["revision"]
+            if count > prev_count:
+                amended_revisions.append(record["revision"])
+            prev_count, prev_ids = count, ids
+        if admitted_at is None:
+            return False
+        return any(rev > admitted_at for rev in amended_revisions)
+
     def scope_consistency(self) -> list[dict]:
         """Receipted artifacts falling OUTSIDE declared scope.in, or INSIDE
         scope.out. Read-only; raises nothing.
@@ -874,15 +929,24 @@ class Mission:
         from custody_gate import _glob_regex, _norm_path
         latest, _ = self.store.load_latest()
         scope = latest["manifest"]["scope"]
-        includes = [_glob_regex(_norm_path(g)) for g in scope["in"]]
-        excludes = [_glob_regex(_norm_path(g)) for g in scope["out"]]
+        includes = [_glob_regex(_norm_path(g)) for g in scope["in"]
+                    if _is_path_pattern(g)]
+        excludes = [_glob_regex(_norm_path(g)) for g in scope["out"]
+                    if _is_path_pattern(g)]
         if not includes and not excludes:
             return []
         findings: list[dict] = []
         for request_id in self._all_receipt_ids_ever():
-            receipt = self._load_receipt(request_id)
-            rel = (receipt["artifact_path"] if receipt is not None
-                   else self._historical_effect_path(request_id))
+            # The CHAINED effect note, not the receipt file, decides which
+            # artifact an id covers. A receipt is a mutable file: a schema-valid
+            # replacement keeping the same request_id but claiming a different
+            # artifact_path would move an out-of-scope write into scope and let
+            # PASS through. The chain is tamper-evident and is already treated
+            # as the sounder authority everywhere else in this module.
+            rel = self._historical_effect_path(request_id)
+            if rel is None:
+                receipt = self._load_receipt(request_id)
+                rel = receipt["artifact_path"] if receipt is not None else None
             if rel is None:
                 continue
             target = _norm_path(rel)
@@ -952,14 +1016,27 @@ class Mission:
             # therefore ordinary and already-precedented: the reference mission
             # discharged exactly this, seventeen hours late.
             drifted = self.scope_consistency()
-            if drifted and not manifest["authority"]["amendments"]:
-                paths = ", ".join(sorted({f["artifact_path"] for f in drifted}))
-                raise AcceptanceRefused(
-                    f"{len(drifted)} receipted artifact(s) fall outside the "
-                    f"declared scope and no authority amendment covers the "
-                    f"change: {paths}. Record the operator's grant with "
-                    "`amend` (verbatim), or accept with FAIL/INCONCLUSIVE -- "
-                    "a PASS would assert a boundary the record contradicts")
+            if drifted:
+                # The discharging amendment must come AFTER the drift it
+                # answers. Accepting "any amendment exists" would let an
+                # unrelated, earlier grant -- a cost allowance, a guard-mode
+                # change -- silently discharge later out-of-scope work it
+                # never mentioned. That is the same length-only weakness the
+                # guard-change rule already carries (custody_mission.py's
+                # amendments-grew test), and repeating it here would build a
+                # gate whose key is any key.
+                undischarged = [f for f in drifted
+                                if not self._amended_after(f["request_id"])]
+                if undischarged:
+                    paths = ", ".join(sorted({f["artifact_path"]
+                                              for f in undischarged}))
+                    raise AcceptanceRefused(
+                        f"{len(undischarged)} receipted artifact(s) fall "
+                        f"outside the declared scope with no authority "
+                        f"amendment recorded AFTER them: {paths}. Record the "
+                        "operator's grant with `amend` (verbatim), or accept "
+                        "with FAIL/INCONCLUSIVE -- a PASS would assert a "
+                        "boundary the record contradicts")
             self._store_verdict(new_revision, verdict, verdict_record)
             self._write_next(latest, path, status="completed", note=f"PASS: {reason}")
         elif verdict == "FAIL":

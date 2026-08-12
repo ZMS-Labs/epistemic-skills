@@ -312,10 +312,14 @@ def test_success_output_confirms_the_write() -> None:
                           "receipt_ids_count", "written_utc", "written_by",
                           "checkpoints_since_last_amendment",
                           "envelope_advisory", "envelope_unset"})
+        # acceptable_costs belongs here too: the ENFORCEMENT STATUS table names
+        # it a declaration read by the steward AND the acceptor, so omitting it
+        # let a resumed steward see the advisory header and every other field
+        # while still missing the mission's cost boundary.
         check("status-brief-envelope-keys",
               set(st["envelope_advisory"]) == {
                   "scope_in", "scope_out", "protected_state",
-                  "hold_if", "stop_if", "escalate_if"})
+                  "hold_if", "stop_if", "escalate_if", "acceptable_costs"})
         # this fixture opens with no envelope flags at all, so every field is
         # unset -- silence must not be allowed to imply boundedness
         check("status-brief-names-unset-envelope-fields",

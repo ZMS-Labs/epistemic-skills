@@ -1082,6 +1082,95 @@ def test_scope_consistency_and_acceptance_boundary(workspace: Path) -> None:
     check("scope-pass-accepted-after-amendment", isinstance(revision, int))
 
 
+def test_scope_entry_classification_table(workspace: Path) -> None:
+    """`scope` is free text and always has been. Which entries can take part
+    in a path comparison is therefore a CASE TABLE, not one asserted example.
+
+    The error directions are asymmetric: mistaking a glob for prose loses one
+    comparison (status quo, benign); mistaking prose for a glob makes a
+    scope.in that matches nothing, flags every receipt, and wedges an honest
+    mission's close. Everything ambiguous is prose."""
+    from custody_mission import _is_path_pattern
+    cases = [
+        # genuine path patterns
+        ("docs/**", True), ("secrets/**", True), ("*.md", True),
+        ("a?b", True), ("plugins/epistemic-skills/**", True),
+        # prose that real manifests actually carry -- the bundled examples use
+        # the first two, and the third was written during this very change
+        ("monitored-missing reconciliation", False),
+        ("indexer changes", False),
+        ("media acquisition, arr/Plex/NAS operations", False),
+        ("VPN configuration", False),
+        # ambiguous -> prose, deliberately
+        ("docs and/or specs", False), ("TCP/IP tuning", False),
+        ("", False),
+    ]
+    for entry, want in cases:
+        check(f"scope-classify-{entry[:26] or 'empty'}",
+              _is_path_pattern(entry) == want)
+
+
+def test_prose_scope_does_not_refuse_acceptance(workspace: Path) -> None:
+    """A populated PROSE scope must not break a legitimate close.
+
+    Treating every scope entry as a glob classified ordinary receipts as
+    outside scope.in and refused PASS on every mission with a prose
+    declaration -- a silent compatibility break dressed as a security check."""
+    m = open_mission(workspace, "m-prose", "Prose-bounded work.",
+                     scope_in=["monitored-missing reconciliation"],
+                     scope_out=["indexer changes"])
+    m.approve()
+    m.record_effect("notes/a.md", "ordinary work", "pr-1")
+    check("prose-scope-flags-nothing", m.scope_consistency() == [])
+    m.begin_verification()
+    acceptor = Mission.load(workspace, actor="agent:acceptor")
+    check("prose-scope-pass-accepted",
+          isinstance(acceptor.record_verdict(
+              "PASS", acceptor_id="agent:acceptor",
+              assurance_tier="declared-role-separation", reason="done"), int))
+
+
+def test_discharging_amendment_must_follow_the_drift(workspace: Path) -> None:
+    """An EARLIER, unrelated amendment must not discharge LATER drift.
+
+    Checking only that the amendments list is non-empty would let a cost
+    allowance or a guard-mode change silently answer for out-of-scope work it
+    never mentioned -- the same length-only weakness the guard-change rule
+    already carries. Ordering comes from the hash-chained revisions, never from
+    self-reported timestamps."""
+    m = open_mission(workspace, "m-order", "Ordered work.", scope_in=["docs/**"])
+    m.approve()
+    m.amend_authority("operator: unrelated cost allowance")   # amendment FIRST
+    m.record_effect("src/late.py", "drift AFTER it", "ord-1")  # drift SECOND
+    m.begin_verification()
+    acceptor = Mission.load(workspace, actor="agent:acceptor")
+    try:
+        acceptor.record_verdict("PASS", acceptor_id="agent:acceptor",
+                                 assurance_tier="declared-role-separation",
+                                 reason="done")
+        check("earlier-amendment-does-not-discharge-later-drift", False)
+    except AcceptanceRefused as exc:
+        check("earlier-amendment-does-not-discharge-later-drift",
+              "outside the declared scope" in str(exc))
+
+
+def test_forged_receipt_path_cannot_dodge_scope(workspace: Path) -> None:
+    """Scope classification reads the CHAINED effect note, not the mutable
+    receipt file. A schema-valid receipt keeping the same request_id but
+    claiming a different artifact_path would otherwise move out-of-scope work
+    into scope and let PASS through."""
+    m = open_mission(workspace, "m-forge", "Bounded.", scope_in=["docs/**"])
+    m.approve()
+    m.record_effect("src/b.py", "out of scope", "fg-1")
+    receipt_path = m.store.receipt_path("fg-1")
+    record = json.loads(receipt_path.read_text(encoding="utf-8"))
+    record["artifact_path"] = "docs/decoy.md"
+    receipt_path.write_text(json.dumps(record, indent=1, sort_keys=True) + "\n",
+                            encoding="utf-8")
+    check("forged-receipt-path-still-flagged",
+          any(f["artifact_path"] == "src/b.py" for f in m.scope_consistency()))
+
+
 def test_empty_scope_declares_nothing_and_flags_nothing(workspace: Path) -> None:
     """Every mission opened before this change has scope.in=[] and
     scope.out=[]. An empty declaration is UNBOUNDED, so it must flag nothing
@@ -1100,6 +1189,10 @@ def test_empty_scope_declares_nothing_and_flags_nothing(workspace: Path) -> None
 
 
 TESTS = [
+    test_scope_entry_classification_table,
+    test_prose_scope_does_not_refuse_acceptance,
+    test_discharging_amendment_must_follow_the_drift,
+    test_forged_receipt_path_cannot_dodge_scope,
     test_scope_consistency_and_acceptance_boundary,
     test_empty_scope_declares_nothing_and_flags_nothing,
     test_open_creates_draft_r1,

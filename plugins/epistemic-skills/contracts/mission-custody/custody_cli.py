@@ -245,6 +245,7 @@ def _print_envelope(checkpoint: dict, file=sys.stdout) -> None:
         ("hold_if", manifest["stop_rules"]["hold_if"]),
         ("stop_if", manifest["stop_rules"]["stop_if"]),
         ("escalate_if", manifest["stop_rules"]["escalate_if"]),
+        ("acceptable_costs", manifest["authority"]["acceptable_costs"]),
     ]
     print("envelope (ADVISORY -- read by you, enforced by nothing; machine "
           "enforcement lives in authority.actuator_guards):", file=file)
@@ -308,6 +309,7 @@ def _brief(checkpoint: dict, mission=None) -> dict:
         "hold_if": manifest["stop_rules"]["hold_if"],
         "stop_if": manifest["stop_rules"]["stop_if"],
         "escalate_if": manifest["stop_rules"]["escalate_if"],
+        "acceptable_costs": manifest["authority"]["acceptable_costs"],
     }
     empty = sorted(name for name, value in brief["envelope_advisory"].items()
                    if not value)
