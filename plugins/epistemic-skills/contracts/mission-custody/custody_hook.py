@@ -35,45 +35,69 @@ def _find_workspace(cwd: str) -> Path | None:
         current = parent
 
 
-def _discover_workspace(call: dict) -> Path | None:
-    """Find the mission workspace from whatever location the payload offers.
+def _root_location(root: object) -> str:
+    """Best-effort path string from one workspace_roots entry.
 
-    The payload cwd is preferred and decides alone whenever present, so this
-    cannot change behaviour for any harness that sends one. The fallback exists
-    because Cursor's `beforeMCPExecution` documents NO cwd -- its event-specific
-    fields are tool_name/tool_input plus url|command -- while every Cursor event
-    carries the base field `workspace_roots`
-    (https://cursor.com/docs/agent/hooks, 2026-08-12).
+    The entry shape is taken from Cursor's docs prose, NOT from a captured
+    payload -- so this accepts the shapes editors actually use rather than
+    trusting one: a bare path, a `file://` URI (the LSP/VS Code convention),
+    or an object carrying `uri`/`path`. An unrecognised shape yields "" and is
+    skipped. Guessing wrong here would make the whole fallback a silent no-op
+    in production while every test passed."""
+    if isinstance(root, dict):
+        root = root.get("uri") or root.get("path") or ""
+    if not isinstance(root, str) or not root:
+        return ""
+    if root.startswith("file://"):
+        from urllib.parse import unquote, urlparse
+        parsed = urlparse(root)
+        path = unquote(parsed.path)
+        # file:///C:/x -> /C:/x on Windows; strip the leading slash
+        if len(path) > 2 and path[0] == "/" and path[2] == ":":
+            path = path[1:]
+        return path
+    return root
 
-    Without the fallback that event resolved Path("") -> Path("."), i.e. it
-    walked up from the HOOK PROCESS's own working directory, which Cursor leaves
-    undocumented for plugin-shipped hooks. The failure was therefore not merely
-    inert but nondeterministic, and its likely outcome -- discovering no mission
-    -- is a silent ALLOW for exactly the actuator class (MCP calls to the arr
-    APIs) the Stage-C ruling scoped the teeth to. A false allow is the error
-    direction this contract treats as unrecoverable.
 
-    Multi-root: roots are tried in order and the first holding a mission wins.
-    Searching more places can only discover a mission where none was found
-    before, so it can only add blocks, never remove one.
+def _candidate_workspaces(call: dict) -> list[Path]:
+    """EVERY workspace this payload could belong to, in priority order.
 
-    With NO usable location the answer is INERT (None), never `Path(".")`.
-    Coercing to "." searches from wherever the hook process happens to be
-    running -- which is not the agent's location and is undocumented for
-    plugin-shipped hooks -- so it can gate a call against a mission the caller
-    has nothing to do with, or miss the armed one entirely. Both directions are
-    wrong, and one of them is a false allow. This also matches the module's
-    stated contract ("a harness that reports no cwd ... stays inert"), which
-    the previous `or "."` quietly contradicted."""
-    cwd = call.get("cwd") or ""
-    if cwd:
-        return _find_workspace(cwd)
-    for root in call.get("workspace_roots") or []:
-        if isinstance(root, str) and root:
-            workspace = _find_workspace(root)
-            if workspace is not None:
-                return workspace
-    return None
+    Deliberately a list, not a single answer. An earlier version returned the
+    first location holding a `missions/` directory, and that was a REPRODUCED
+    FALSE ALLOW: `_find_workspace` only asks "does a missions/ dir exist here",
+    which says nothing about whether a mission there is active, armed, or
+    relevant. With workspace_roots [A, B] where A holds a CANCELLED mission and
+    B holds an ACTIVE enforce mission whose guard matches, first-wins gated
+    against A, hit NoActiveMission, and allowed the call SILENTLY -- while the
+    reverse order blocked it. Root order is set by the IDE, not the mission
+    author, so ordinary usage decided whether enforcement happened.
+
+    That also falsified the claim this function used to carry ("searching more
+    places can only add blocks"): true only if "found" means "found an
+    actionable decision", whereas the code meant "found a directory".
+
+    The caller therefore gates against EVERY candidate and blocks if ANY of
+    them blocks. A false block names its rule and is discharged by an amend; a
+    false allow silently retires custody. cwd is placed first so its verdict is
+    reported first, but it no longer masks the others.
+
+    No usable location yields an EMPTY list -- inert, never `Path(".")`, which
+    would search from wherever the hook process happens to be running."""
+    candidates: list[Path] = []
+
+    def consider(location: str) -> None:
+        if not location:
+            return
+        workspace = _find_workspace(location)
+        if workspace is not None and workspace not in candidates:
+            candidates.append(workspace)
+
+    consider(call.get("cwd") or "")
+    roots = call.get("workspace_roots")
+    if isinstance(roots, list):  # a bare string would iterate per-character
+        for root in roots:
+            consider(_root_location(root))
+    return candidates
 
 
 def _claude_kimi(payload: dict) -> dict | None:
@@ -139,21 +163,32 @@ def main(argv: list[str]) -> int:
         call = adapter(payload)
         if not call or (not call.get("tool_name") and not call.get("command")):
             return 0
-        workspace = _discover_workspace(call)
-        if workspace is None:
-            return 0  # inert fast path: no custody state at or above cwd
+        workspaces = _candidate_workspaces(call)
+        if not workspaces:
+            return 0  # inert fast path: no custody state at any reported location
         from custody_gate import run_gate
-        verdict = run_gate(
-            workspace,
-            {"tool_name": call["tool_name"], "command": call.get("command"),
-             "file_path": call.get("file_path"),
-             "tool_input": call.get("tool_input")},
-            actor="hook:custody-gate",
-            session_id=call.get("session_id", ""), harness=args.harness)
-        if verdict["decision"] == "block":
-            print(f"custody gate: BLOCKED -- {verdict['reason']}",
-                  file=sys.stderr)
-            return 2
+        tool_call = {"tool_name": call["tool_name"],
+                     "command": call.get("command"),
+                     "file_path": call.get("file_path"),
+                     "tool_input": call.get("tool_input")}
+        # ANY candidate blocking blocks the call. A custody error on one
+        # candidate must not skip the rest: an unreadable mission in the first
+        # workspace would otherwise suppress a real block from the second,
+        # turning a tamper signal into a silent allow.
+        for workspace in workspaces:
+            try:
+                verdict = run_gate(
+                    workspace, tool_call, actor="hook:custody-gate",
+                    session_id=call.get("session_id", ""), harness=args.harness)
+            except CustodyError as exc:
+                print(f"custody gate: TAMPER/custody error detected at "
+                      f"{workspace}, failing open for that mission: "
+                      f"{type(exc).__name__}: {exc}", file=sys.stderr)
+                continue
+            if verdict["decision"] == "block":
+                print(f"custody gate: BLOCKED -- {verdict['reason']}",
+                      file=sys.stderr)
+                return 2
         return 0
     except CustodyError as exc:
         # Fail-open posture stands, but a tamper/custody signal must not be

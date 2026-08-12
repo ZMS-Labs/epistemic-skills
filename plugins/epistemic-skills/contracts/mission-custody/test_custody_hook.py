@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -223,6 +224,80 @@ def test_cursor_mcp_without_cwd_discovers_via_workspace_roots() -> None:
             check(f"hook-cursor-malformed-roots-{type(bad).__name__}-{bad!r:.12}",
                   run_hook("cursor", dict(payload, workspace_roots=bad)
                            ).returncode in (0, 2))
+
+
+def test_multi_root_order_cannot_decide_whether_a_guard_fires() -> None:
+    """REPRODUCED FALSE ALLOW, now a regression test.
+
+    _find_workspace only asks "does a missions/ dir exist here" -- it says
+    nothing about whether a mission there is active, armed, or relevant. With
+    first-wins, workspace_roots [A, B] where A holds a CANCELLED mission and B
+    holds an ACTIVE enforce mission whose guard matches gated against A, hit
+    NoActiveMission, and allowed the call SILENTLY -- while [B, A] blocked it.
+    Root order is set by the IDE, not the mission author, so ordinary usage
+    decided whether enforcement happened at all.
+
+    Both orders must block."""
+    guards = [{"name": "no-deploy", "tool_names": ["Bash"],
+               "command_regexes": ["deploy-prod"], "path_globs": []}]
+    with tempfile.TemporaryDirectory() as tmp:
+        a, b = Path(tmp) / "A", Path(tmp) / "B"
+        a.mkdir(); b.mkdir()
+        stale = Mission.open(a, "stale", "i", "operator:t", "agent:t",
+                             actor="agent:t")
+        stale.approve()
+        stale.cancel("finished")          # missions/ exists, nothing active
+        live = Mission.open(b, "live", "i", "operator:t", "agent:t",
+                            actor="agent:t", guard_mode="enforce",
+                            actuator_guards=guards)
+        live.approve()
+
+        payload = {"tool_name": "Bash",
+                   "tool_input": {"command": "deploy-prod now"}}
+        check("multi-root-stale-first-still-blocks",
+              run_hook("cursor", dict(payload,
+                                      workspace_roots=[str(a), str(b)])
+                       ).returncode == 2)
+        check("multi-root-armed-first-blocks",
+              run_hook("cursor", dict(payload,
+                                      workspace_roots=[str(b), str(a)])
+                       ).returncode == 2)
+        # a cwd that resolves to the stale mission must not MASK an armed root
+        check("cwd-does-not-mask-an-armed-root",
+              run_hook("cursor", dict(payload, cwd=str(a),
+                                      workspace_roots=[str(b)])
+                       ).returncode == 2)
+
+
+def test_workspace_root_entry_shapes() -> None:
+    """The entry shape comes from docs prose, not a captured payload, so the
+    plausible editor conventions are all accepted rather than one being
+    trusted. Guessing wrong would make the fallback a silent no-op in
+    production while every test still passed."""
+    guards = [{"name": "no-deploy", "tool_names": ["Bash"],
+               "command_regexes": ["deploy-prod"], "path_globs": []}]
+    with tempfile.TemporaryDirectory() as tmp:
+        ws = Path(tmp) / "ws"
+        ws.mkdir()
+        m = Mission.open(ws, "shapes", "i", "operator:t", "agent:t",
+                         actor="agent:t", guard_mode="enforce",
+                         actuator_guards=guards)
+        m.approve()
+        payload = {"tool_name": "Bash",
+                   "tool_input": {"command": "deploy-prod now"}}
+        uri = "file:///" + str(ws).replace(os.sep, "/")
+        check("root-as-file-uri-blocks",
+              run_hook("cursor", dict(payload, workspace_roots=[uri])
+                       ).returncode == 2)
+        check("root-as-uri-object-blocks",
+              run_hook("cursor", dict(payload,
+                                      workspace_roots=[{"uri": str(ws),
+                                                        "name": "ws"}])
+                       ).returncode == 2)
+        check("root-as-path-object-blocks",
+              run_hook("cursor", dict(payload,
+                                      workspace_roots=[{"path": str(ws)}])
+                       ).returncode == 2)
 
 
 def test_missing_payload_cwd_is_inert_even_when_hook_process_runs_inside_armed_workspace() -> None:
