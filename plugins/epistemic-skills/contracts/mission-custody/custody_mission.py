@@ -522,14 +522,22 @@ class Mission:
         self._verify_manifest(latest)
         if latest["status"] in ("completed", "cancelled"):
             raise IllegalTransition(f"cannot resume: status is {latest['status']!r}")
-        latest_by_key: dict[str, dict] = {}
+        # One artifact, one current receipt: receipt_ids is append-ordered, so
+        # the LAST id covering a path supersedes the earlier ones. Attribution
+        # must not depend on the receipt being loadable, or a lost newest
+        # receipt would let a superseded older one silently become the
+        # authority again -- comparing live content against stale ground truth
+        # and reporting a mismatch that never happened, while the real loss of
+        # the current receipt went unreported.
+        current_by_key: dict[str, tuple[str, dict | None]] = {}
         missing: list[str] = []
         for request_id in latest["receipt_ids"]:
             receipt = self._load_receipt(request_id)
-            if receipt is None:
-                # An unloadable receipt is drift, not a skip: the artifact it
-                # covered can no longer be verified, and silence here is a
-                # false "clean" for exactly the file most likely tampered.
+            rel = (receipt["artifact_path"] if receipt is not None
+                   else self._historical_effect_path(request_id))
+            if rel is None:
+                # Unloadable AND unattributable: it can only be reported as
+                # the lost receipt it is (see _historical_effect_path).
                 if request_id not in missing:
                     missing.append(request_id)
                 continue
@@ -539,13 +547,19 @@ class Mission:
             # str.casefold() would map two genuinely distinct files onto one
             # key here, and the loser would vanish from the drift check
             # entirely (see _ascii_case_fold).
-            key = receipt["artifact_path"]
-            key = _normalize_relpath(key)
+            key = _normalize_relpath(rel)
             if os.name == "nt":
                 key = _ascii_case_fold(key)
-            latest_by_key[key] = receipt
+            current_by_key[key] = (request_id, receipt)
         mismatched: list[str] = []
-        for receipt in latest_by_key.values():
+        for request_id, receipt in current_by_key.values():
+            if receipt is None:
+                # An unloadable receipt is drift, not a skip: the artifact it
+                # covered can no longer be verified, and silence here is a
+                # false "clean" for exactly the file most likely tampered.
+                if request_id not in missing:
+                    missing.append(request_id)
+                continue
             rel = receipt["artifact_path"]
             target = self.workspace / rel
             actual = sha256_file(target) if target.exists() else None
