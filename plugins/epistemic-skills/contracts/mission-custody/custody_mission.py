@@ -7,6 +7,7 @@ import json
 import os
 import re
 import sys
+import unicodedata
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -55,7 +56,21 @@ scope-ack by agent:acceptor: secrets.env" passed.
     `amend`, `cancel` and verdict reasons -- because the composed note is
     machine-written but the text inside it is not."""
     for line in (text or "").splitlines() or [text or ""]:
-        candidate = line.strip().casefold()
+        # Invisible characters are neither whitespace nor line separators, so
+        # strip()/splitlines() do not see them while a reader sees nothing:
+        # ZWSP, BOM, LRM, WORD JOINER and SOFT HYPHEN each walked past the
+        # guard, producing a stored note that renders IDENTICALLY to a genuine
+        # acknowledgement. NFKC + dropping category Cf closes that class in one
+        # place, and only for the COMPARISON -- the text is stored verbatim.
+        #
+        # Homoglyphs (Cyrillic 'a' in "scope-ack") are deliberately NOT chased
+        # here. Confusables are unbounded, and enumerating them would be the
+        # denial-marker mistake in a new location. The structural fix is
+        # `scope_ack` as a validated field on the acceptance-verdict record
+        # (es#150 / contract@2 Task 9), which retires string matching entirely.
+        flat = "".join(c for c in unicodedata.normalize("NFKC", line)
+                       if unicodedata.category(c) != "Cf")
+        candidate = flat.strip().casefold()
         for prefix in _RESERVED_NOTE_PREFIXES:
             if candidate.startswith(prefix.casefold()):
                 raise CustodyError(
@@ -780,6 +795,11 @@ class Mission:
         self._verify_manifest(latest)
         if latest["status"] not in _OPEN_STATES:
             raise IllegalTransition(f"cannot set_frontier: status is {latest['status']!r}")
+        # A frontier is not a note, so it forges no note -- but it is displayed
+        # by `status`/`resume` and lives in the same checkpoint JSON, so an
+        # auditor grepping the chain for a machine-note prefix hits it just the
+        # same. Same guard, same reason.
+        _refuse_reserved_note(text)
         new = self._write_next(latest, path, status=latest["status"], frontier=text)
         return new["revision"]
 
