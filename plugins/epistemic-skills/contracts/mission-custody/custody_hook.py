@@ -75,7 +75,9 @@ ADAPTERS = {
     "kimi": _claude_kimi,
     "codex": _claude_kimi,   # same PreToolUse shape; Task 6 docs-verify
     "cursor": _cursor,
-    "gemini": _claude_kimi,  # BeforeTool shape; Task 6 docs-verify (agy shares it)
+    "gemini": _claude_kimi,  # BeforeTool shape (Gemini CLI only; agy REFUTED --
+                             # own hooks.json, toolCall.name/args payload,
+                             # JSON-decision blocking: needs its own adapter)
     "generic": _claude_kimi,
 }
 
