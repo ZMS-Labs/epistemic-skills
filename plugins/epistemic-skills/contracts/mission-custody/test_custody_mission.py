@@ -453,9 +453,14 @@ def test_distinct_files_never_share_an_obligation(workspace: Path) -> None:
           not _same_artifact("Kelvin.txt", "Kelvin.txt"))
     check("ascii-case-still-same-artifact-on-nt",
           _same_artifact("Sub/File.TXT", "sub/file.txt") == (os.name == "nt"))
-    for spelling in ("./notes/a.md", "notes//a.md", "notes\\a.md"):
+    for spelling in ("./notes/a.md", "notes//a.md", "notes\\a.md",
+                      "notes/./a.md", "./notes/./a.md", "notes/a.md/"):
         check(f"normalized-same-artifact[{spelling}]",
               _same_artifact(spelling, "notes/a.md"))
+    # normalization must not reach past spellings of ONE location
+    for distinct in ("notes/b.md", "other/a.md", "notes/a.md.bak", "a.md"):
+        check(f"normalization-not-overreaching[{distinct}]",
+              not _same_artifact(distinct, "notes/a.md"))
 
     # end to end: covering a different file must not discharge the obligation
     m = open_mission(workspace, "m-distinct", "Distinct files stay distinct.")

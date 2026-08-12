@@ -66,6 +66,8 @@ def _normalize_relpath(path: str) -> str:
     norm = path.replace("\\", "/")
     while "//" in norm:
         norm = norm.replace("//", "/")
+    while "/./" in norm:
+        norm = norm.replace("/./", "/")
     while norm.startswith("./"):
         norm = norm[2:]
     return norm.rstrip("/") or norm
@@ -622,6 +624,13 @@ class Mission:
 
         receipt = self._load_receipt(request_id)  # already request_id-checked
         recorded_path = self._historical_effect_path(request_id)
+        # Deliberately raw equality, NOT _same_artifact: everywhere else the
+        # question is "does this write satisfy that obligation", where two
+        # spellings of one file must match. Here the question is "is this the
+        # receipt the chain recorded", and a receipt that reappears respelled
+        # is not provably the original -- the safe answer is to retire the id
+        # and let a fresh effect re-establish coverage honestly. Strictness
+        # here is intentional, not an oversight.
         if receipt is not None and recorded_path is not None \
                 and receipt["artifact_path"] == recorded_path:
             new = self._write_next(
