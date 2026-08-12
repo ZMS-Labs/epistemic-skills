@@ -90,15 +90,41 @@ def _add_text_flags(parser: argparse.ArgumentParser, name: str) -> None:
 def _read_text(args: argparse.Namespace, name: str) -> str:
     """Read a text argument from its inline flag or its file.
 
-    newline='' for the same reason _read_content uses it: the bytes recorded
-    are the bytes supplied. A trailing newline is stripped because a file
-    almost always ends with one and it is not part of what the operator said;
-    interior bytes are untouched."""
+    Exactly two editor/shell artifacts are removed, and nothing else:
+
+    - a leading UTF-8 BOM (`utf-8-sig`). PowerShell 5.1's `Out-File` and
+      `Set-Content -Encoding utf8` write one by default on this fleet, and
+      plain `utf-8` decoding keeps it as U+FEFF -- which is NOT whitespace, so
+      it survives the empty-text checks and lands as the first character of a
+      "verbatim" operator grant.
+    - ONE trailing line terminator (\\r\\n, \\n, or \\r), because a file
+      practically always ends with one and it is not part of what the operator
+      said. Deliberately not `rstrip("\\r\\n")`: that eats an entire trailing
+      RUN, silently deleting a blank line the operator meant to keep.
+
+    Interior bytes are untouched -- newline='' keeps CRLF exactly as supplied.
+
+    A file that is not valid UTF-8 is a REFUSAL, not a crash: PowerShell's
+    bare `Out-File` writes UTF-16LE, and letting UnicodeDecodeError escape
+    exits 1 with a traceback, violating this module's documented 0/2/3
+    contract."""
     path = getattr(args, f"{name}_file", None)
-    if path is not None:
-        with open(path, encoding="utf-8", newline="") as handle:
-            return handle.read().rstrip("\r\n")
-    return getattr(args, name)
+    if path is None:
+        return getattr(args, name)
+    try:
+        with open(path, encoding="utf-8-sig", newline="") as handle:
+            text = handle.read()
+    except UnicodeDecodeError as exc:
+        raise CustodyError(
+            f"{name} file is not valid UTF-8 ({exc.reason}); custody records "
+            "text, and a file this cannot decode would be recorded wrong or "
+            "not at all -- re-save it as UTF-8") from None
+    except OSError as exc:
+        raise CustodyError(f"cannot read {name} file: {exc}") from None
+    for terminator in ("\r\n", "\n", "\r"):
+        if text.endswith(terminator):
+            return text[:-len(terminator)]
+    return text
 
 
 def build_parser() -> argparse.ArgumentParser:

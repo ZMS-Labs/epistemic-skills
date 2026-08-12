@@ -85,5 +85,10 @@ double-quoted shell string silently rewrote a recorded note while the CLI
 exited 0.
 
 Use the `--*-file` variants for anything whose exactness matters, and always
-for `amend`. They read the bytes directly (`newline=''`, trailing newline
-stripped), so the recorded text is the supplied text.
+for `amend`. They remove exactly two editor artifacts and nothing else: a
+leading UTF-8 BOM (PowerShell writes one by default, and U+FEFF is not
+whitespace, so it otherwise lands as the first character of a "verbatim"
+grant) and ONE trailing line terminator. Interior bytes -- including CRLF and
+deliberate blank lines -- are preserved exactly. A file that is not valid
+UTF-8 is refused with exit 2 rather than crashing, since PowerShell's bare
+`Out-File` writes UTF-16LE.
