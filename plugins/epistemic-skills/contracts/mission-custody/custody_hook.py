@@ -35,6 +35,76 @@ def _find_workspace(cwd: str) -> Path | None:
         current = parent
 
 
+def _root_location(root: object) -> str:
+    """Best-effort path string from one workspace_roots entry.
+
+    The entry shape is taken from Cursor's docs prose, NOT from a captured
+    payload -- so this accepts the shapes editors actually use rather than
+    trusting one: a bare path, a `file://` URI (the LSP/VS Code convention),
+    or an object carrying `uri`/`path`. An unrecognised shape yields "" and is
+    skipped. Guessing wrong here would make the whole fallback a silent no-op
+    in production while every test passed."""
+    if isinstance(root, dict):
+        root = root.get("uri") or root.get("path") or ""
+    if not isinstance(root, str) or not root:
+        return ""
+    if root.startswith("file://"):
+        from urllib.parse import unquote, urlparse
+        parsed = urlparse(root)
+        path = unquote(parsed.path)
+        if parsed.netloc:
+            # RFC 8089 authority form: file://server/share -> \\server\share.
+            # Dropping the host silently resolves to the WRONG local path, and
+            # this fleet is UNC-heavy (Y: is a mapping of \\10.10.10.127).
+            return "\\\\" + parsed.netloc + path.replace("/", "\\")
+        # file:///C:/x -> /C:/x on Windows; strip the leading slash
+        if len(path) > 2 and path[0] == "/" and path[2] == ":":
+            path = path[1:]
+        return path
+    return root
+
+
+def _candidate_workspaces(call: dict) -> list[Path]:
+    """EVERY workspace this payload could belong to, in priority order.
+
+    Deliberately a list, not a single answer. An earlier version returned the
+    first location holding a `missions/` directory, and that was a REPRODUCED
+    FALSE ALLOW: `_find_workspace` only asks "does a missions/ dir exist here",
+    which says nothing about whether a mission there is active, armed, or
+    relevant. With workspace_roots [A, B] where A holds a CANCELLED mission and
+    B holds an ACTIVE enforce mission whose guard matches, first-wins gated
+    against A, hit NoActiveMission, and allowed the call SILENTLY -- while the
+    reverse order blocked it. Root order is set by the IDE, not the mission
+    author, so ordinary usage decided whether enforcement happened.
+
+    That also falsified the claim this function used to carry ("searching more
+    places can only add blocks"): true only if "found" means "found an
+    actionable decision", whereas the code meant "found a directory".
+
+    The caller therefore gates against EVERY candidate and blocks if ANY of
+    them blocks. A false block names its rule and is discharged by an amend; a
+    false allow silently retires custody. cwd is placed first so its verdict is
+    reported first, but it no longer masks the others.
+
+    No usable location yields an EMPTY list -- inert, never `Path(".")`, which
+    would search from wherever the hook process happens to be running."""
+    candidates: list[Path] = []
+
+    def consider(location: str) -> None:
+        if not location:
+            return
+        workspace = _find_workspace(location)
+        if workspace is not None and workspace not in candidates:
+            candidates.append(workspace)
+
+    consider(call.get("cwd") or "")
+    roots = call.get("workspace_roots")
+    if isinstance(roots, list):  # a bare string would iterate per-character
+        for root in roots:
+            consider(_root_location(root))
+    return candidates
+
+
 def _claude_kimi(payload: dict) -> dict | None:
     tool_input = payload.get("tool_input") or {}
     return {
@@ -67,6 +137,9 @@ def _cursor(payload: dict) -> dict | None:
         "tool_input": tool_input or None,
         "session_id": payload.get("session_id", ""),
         "cwd": payload.get("cwd", ""),
+        # beforeMCPExecution documents no cwd; workspace_roots is a BASE
+        # field present on every Cursor event -- see _discover_workspace.
+        "workspace_roots": payload.get("workspace_roots"),
     }
 
 
@@ -95,21 +168,32 @@ def main(argv: list[str]) -> int:
         call = adapter(payload)
         if not call or (not call.get("tool_name") and not call.get("command")):
             return 0
-        workspace = _find_workspace(call.get("cwd") or ".")
-        if workspace is None:
-            return 0  # inert fast path: no custody state at or above cwd
+        workspaces = _candidate_workspaces(call)
+        if not workspaces:
+            return 0  # inert fast path: no custody state at any reported location
         from custody_gate import run_gate
-        verdict = run_gate(
-            workspace,
-            {"tool_name": call["tool_name"], "command": call.get("command"),
-             "file_path": call.get("file_path"),
-             "tool_input": call.get("tool_input")},
-            actor="hook:custody-gate",
-            session_id=call.get("session_id", ""), harness=args.harness)
-        if verdict["decision"] == "block":
-            print(f"custody gate: BLOCKED -- {verdict['reason']}",
-                  file=sys.stderr)
-            return 2
+        tool_call = {"tool_name": call["tool_name"],
+                     "command": call.get("command"),
+                     "file_path": call.get("file_path"),
+                     "tool_input": call.get("tool_input")}
+        # ANY candidate blocking blocks the call. A custody error on one
+        # candidate must not skip the rest: an unreadable mission in the first
+        # workspace would otherwise suppress a real block from the second,
+        # turning a tamper signal into a silent allow.
+        for workspace in workspaces:
+            try:
+                verdict = run_gate(
+                    workspace, tool_call, actor="hook:custody-gate",
+                    session_id=call.get("session_id", ""), harness=args.harness)
+            except CustodyError as exc:
+                print(f"custody gate: TAMPER/custody error detected at "
+                      f"{workspace}, failing open for that mission: "
+                      f"{type(exc).__name__}: {exc}", file=sys.stderr)
+                continue
+            if verdict["decision"] == "block":
+                print(f"custody gate: BLOCKED -- {verdict['reason']}",
+                      file=sys.stderr)
+                return 2
         return 0
     except CustodyError as exc:
         # Fail-open posture stands, but a tamper/custody signal must not be
