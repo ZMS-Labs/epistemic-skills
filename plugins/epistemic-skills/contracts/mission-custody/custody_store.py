@@ -27,7 +27,40 @@ def sha256_file(path: Path) -> str:
     return sha256_bytes(path.read_bytes())
 
 
-def atomic_write_json(path: Path, record: dict) -> str:
+def _publish_exclusive(tmp: str, path: Path) -> None:
+    """Publish tmp at path, refusing to overwrite: two writers racing to the
+    same checkpoint name must produce one winner and one LOUD failure, never a
+    silent last-writer-wins clobber of a chained record."""
+    try:
+        os.link(tmp, path)
+        return
+    except FileExistsError:
+        raise StoreError(
+            f"{path.name} already exists; concurrent writer detected") from None
+    except OSError:
+        pass  # hard links unsupported on this filesystem
+    try:
+        with open(path, "xb") as out, open(tmp, "rb") as src:
+            out.write(src.read())
+            out.flush()
+            os.fsync(out.fileno())
+    except FileExistsError:
+        raise StoreError(
+            f"{path.name} already exists; concurrent writer detected") from None
+    except BaseException:
+        # Never leave a partial record at the canonical name: it would brick
+        # chain loading AND block every retry with a misleading concurrent-
+        # writer refusal. Residual window: a hard kill between write and this
+        # unlink still strands a partial file -- load_latest fails loudly on
+        # it (never silently), and the os.link path above has no such window.
+        try:
+            os.unlink(path)
+        except OSError:
+            pass
+        raise
+
+
+def atomic_write_json(path: Path, record: dict, *, exclusive: bool = False) -> str:
     errors = validate_record(record)
     if errors:
         raise StoreError(f"invalid record for {path.name}: {errors[:3]}")
@@ -39,7 +72,11 @@ def atomic_write_json(path: Path, record: dict) -> str:
             handle.write(data)
             handle.flush()
             os.fsync(handle.fileno())
-        os.replace(tmp, path)
+        if exclusive:
+            _publish_exclusive(tmp, path)
+            os.unlink(tmp)
+        else:
+            os.replace(tmp, path)
     except BaseException:
         if os.path.exists(tmp):
             os.unlink(tmp)
@@ -78,7 +115,7 @@ class MissionStore:
             prior_sha = sha256_file(existing[-1])
             if record["prev_checkpoint_sha256"] != prior_sha:
                 raise StoreError("prev_checkpoint_sha256 does not match prior file")
-        return atomic_write_json(self._path_for(revision), record)
+        return atomic_write_json(self._path_for(revision), record, exclusive=True)
 
     def load_latest(self) -> tuple[dict, Path]:
         paths = self.checkpoint_paths()
@@ -95,12 +132,15 @@ class MissionStore:
             prev_sha = sha256_file(path)
         return record, paths[-1]
 
+    def receipt_path(self, request_id: str) -> Path:
+        name = sha256_bytes(request_id.encode("utf-8")) + ".json"
+        return self.receipts_dir / name
+
     def write_receipt(self, record: dict) -> Path:
         errors = validate_record(record)
         if errors:
             raise StoreError(f"invalid receipt: {errors[:3]}")
-        name = sha256_bytes(record["request_id"].encode("utf-8")) + ".json"
-        path = self.receipts_dir / name
+        path = self.receipt_path(record["request_id"])
         if path.exists():
             raise StoreError(
                 f"receipt already exists for request_id {record['request_id']!r}")

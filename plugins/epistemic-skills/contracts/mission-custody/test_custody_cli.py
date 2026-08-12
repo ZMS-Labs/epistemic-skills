@@ -125,7 +125,16 @@ def test_full_lifecycle_via_cli() -> None:
         check("full-frontier-set", st["state"]["frontier"] == "next: write the fix")
 
         run("verify", "--workspace", str(ws), "--actor", "agent:worker")
+
+        # a verdict is recorded by its acceptor: the worker session naming a
+        # different acceptor is refused
         r = run("accept", "--workspace", str(ws), "--actor", "agent:worker",
+                 "--verdict", "FAIL", "--acceptor", "agent:acceptor",
+                 "--tier", "declared-role-separation", "--reason", "missing case")
+        check("full-fabricated-acceptor-exit-2", r.returncode == 2)
+        check("full-fabricated-acceptor-refused", "AcceptanceRefused" in r.stderr)
+
+        r = run("accept", "--workspace", str(ws), "--actor", "agent:acceptor",
                  "--verdict", "FAIL", "--acceptor", "agent:acceptor",
                  "--tier", "declared-role-separation", "--reason", "missing case")
         check("full-fail-exit-0", r.returncode == 0)
@@ -138,7 +147,7 @@ def test_full_lifecycle_via_cli() -> None:
         check("full-clear-fail-exit-0", r.returncode == 0)
 
         run("verify", "--workspace", str(ws), "--actor", "agent:worker")
-        r = run("accept", "--workspace", str(ws), "--actor", "agent:worker",
+        r = run("accept", "--workspace", str(ws), "--actor", "agent:acceptor",
                  "--verdict", "PASS", "--acceptor", "agent:acceptor",
                  "--tier", "declared-role-separation", "--reason", "fix verified")
         check("full-accept-pass-exit-0", r.returncode == 0)
@@ -190,7 +199,7 @@ def test_ascii_safe_drift_and_error_output() -> None:
             "--path", non_ascii_path, "--content", "hello",
             "--request-id", "req-ascii-2")
         run("verify", "--workspace", str(ws), "--actor", "agent:worker")
-        run("accept", "--workspace", str(ws), "--actor", "agent:worker",
+        run("accept", "--workspace", str(ws), "--actor", "agent:acceptor",
             "--verdict", "FAIL", "--acceptor", "agent:acceptor",
             "--tier", "declared-role-separation", "--reason", "needs review")
 
@@ -249,6 +258,108 @@ def test_open_without_stop_rules_yields_empty_lists() -> None:
               manifest["authority"]["acceptable_costs"] == [])
 
 
+def test_success_output_confirms_the_write() -> None:
+    """Every mutating command prints its landed revision (or receipt): a mute
+    success path is what got resume misread as broken (efficacy evaluation
+    2026-08-12). Also covers --brief and --content-file."""
+    with tempfile.TemporaryDirectory() as td:
+        ws = Path(td)
+        r = open_cli(ws, "m-cli-output", "Confirm every write.")
+        check("open-prints-r1", r.stdout.strip() == "1")
+
+        r = run("approve", "--workspace", str(ws), "--actor", "agent:worker")
+        check("approve-prints-r2", r.stdout.strip() == "2")
+
+        r = run("note", "--workspace", str(ws), "--actor", "agent:worker",
+                 "--text", "landed?")
+        check("note-prints-r3", r.stdout.strip() == "3")
+
+        r = run("frontier", "--workspace", str(ws), "--actor", "agent:worker",
+                 "--text", "next step")
+        check("frontier-prints-r4", r.stdout.strip() == "4")
+
+        # --content-file carries bodies argv cannot: quoting-hostile text
+        body = 'a "quoted" $body with `backticks` and\nnewlines\n'
+        src = ws / "body-src.md"
+        src.write_text(body, encoding="utf-8")
+        r = run("effect", "--workspace", str(ws), "--actor", "agent:worker",
+                 "--path", "notes/from-file.md", "--content-file", str(src),
+                 "--request-id", "req-file-1")
+        check("effect-content-file-exit-0", r.returncode == 0)
+        check("effect-content-file-written",
+              (ws / "notes" / "from-file.md").read_text(encoding="utf-8") == body)
+        receipt = json.loads(r.stdout)
+        check("effect-prints-receipt",
+              receipt["record"] == "receipt@1"
+              and receipt["request_id"] == "req-file-1")
+
+        r = run("effect", "--workspace", str(ws), "--actor", "agent:worker",
+                 "--path", "notes/x.md", "--content", "inline",
+                 "--content-file", str(src), "--request-id", "req-both")
+        check("effect-content-flags-exclusive", r.returncode == 2)
+
+        r = run("status", "--workspace", str(ws), "--actor", "agent:worker",
+                 "--brief")
+        st = json.loads(r.stdout)
+        check("status-brief-shape",
+              set(st) == {"mission_id", "status", "revision", "frontier",
+                          "unresolved_verdicts", "notes_count",
+                          "receipt_ids_count", "written_utc", "written_by"})
+        check("status-brief-revision", st["revision"] == 5)
+
+        # clean resume: stdout stays empty by contract; the summary (with the
+        # vacuous-clean distinction) goes to stderr
+        r = run("resume", "--workspace", str(ws), "--actor", "agent:second")
+        check("resume-clean-summary-on-stderr", "resume: clean" in r.stderr)
+        check("resume-clean-not-vacuous", "vacuously" not in r.stderr)
+        check("resume-clean-stdout-still-empty", r.stdout.strip() == "")
+
+
+def test_resume_vacuous_clean_is_labelled() -> None:
+    """Zero receipts means the drift check verified nothing -- the prior
+    session read exactly this silence as tool breakage, three times."""
+    with tempfile.TemporaryDirectory() as td:
+        ws = Path(td)
+        open_cli(ws, "m-cli-vacuous", "No effects yet.")
+        run("approve", "--workspace", str(ws), "--actor", "agent:worker")
+        r = run("resume", "--workspace", str(ws), "--actor", "agent:second")
+        check("resume-vacuous-exit-0", r.returncode == 0)
+        check("resume-vacuous-stdout-empty", r.stdout.strip() == "")
+        check("resume-vacuous-labelled", "vacuously" in r.stderr)
+
+
+def test_resume_missing_receipt_via_cli() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        ws = Path(td)
+        open_cli(ws, "m-cli-lostrec", "Guard receipts.")
+        run("approve", "--workspace", str(ws), "--actor", "agent:worker")
+        run("effect", "--workspace", str(ws), "--actor", "agent:worker",
+            "--path", "notes/a.md", "--content", "hello", "--request-id", "req-1")
+        mission_dir = ws / "missions" / "m-cli-lostrec"
+        for p in (mission_dir / "receipts").glob("*.json"):
+            p.unlink()
+
+        r = run("resume", "--workspace", str(ws), "--actor", "agent:second")
+        check("lostrec-exit-3", r.returncode == 3)
+        check("lostrec-names-request-id", "RECEIPT-MISSING:req-1" in r.stdout)
+
+        # the forgery channel is closed at the CLI: a decoy path cannot claim
+        # the lost id (round-2 finding A ran this exact sequence and won)
+        r = run("reconcile", "--workspace", str(ws), "--actor", "agent:worker",
+                 "--path", "notes/decoy.md", "--content", "harmless decoy",
+                 "--request-id", "req-1")
+        check("lostrec-forgery-exit-2", r.returncode == 2)
+        check("lostrec-decoy-not-written", not (ws / "notes" / "decoy.md").exists())
+
+        r = run("acknowledge-loss", "--workspace", str(ws),
+                 "--actor", "agent:worker", "--request-id", "req-1")
+        check("lostrec-ack-exit-0", r.returncode == 0)
+        check("lostrec-ack-prints-revision", r.stdout.strip().isdigit())
+        r = run("resume", "--workspace", str(ws), "--actor", "agent:third")
+        check("lostrec-clean-after-ack", r.returncode == 0)
+        check("lostrec-clean-is-vacuous-again", "vacuously" in r.stderr)
+
+
 def test_no_mission_flags_outside_open() -> None:
     tree = ast.parse(CLI.read_text(encoding="utf-8"))
 
@@ -296,6 +407,9 @@ TESTS = [
     test_ascii_safe_drift_and_error_output,
     test_open_stop_rules_and_acceptable_costs,
     test_open_without_stop_rules_yields_empty_lists,
+    test_success_output_confirms_the_write,
+    test_resume_vacuous_clean_is_labelled,
+    test_resume_missing_receipt_via_cli,
     test_no_mission_flags_outside_open,
 ]
 

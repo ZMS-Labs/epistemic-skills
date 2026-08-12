@@ -130,6 +130,11 @@ def test_verdict_self_certification_refused() -> None:
     rec["acceptor_id"] = rec["worker_id"]
     check("verdict-no-self-cert", validate_record(rec) != [])
 
+    # a capitalization variant of the worker is still the worker
+    rec = load("valid-verdict-pass-separated.json")
+    rec["acceptor_id"] = rec["worker_id"].title()
+    check("verdict-no-self-cert-casefold", validate_record(rec) != [])
+
 
 def test_verdict_operator_tier_binds_acceptor() -> None:
     rec = load("valid-verdict-pass-separated.json")
