@@ -152,6 +152,40 @@ def test_receipt_and_verdict_mission_id_kebab_required() -> None:
     check("verdict-mission-id-kebab", validate_record(rec) != [])
 
 
+def test_manifest_guards_valid_example() -> None:
+    check("manifest-guards-valid-example",
+          validate_record(load("valid-manifest-guards.json")) == [])
+
+
+def test_manifest_guard_examples_invalid() -> None:
+    for name in (
+        "invalid-manifest-guard-bad-mode.json",
+        "invalid-manifest-guard-empty-rule.json",
+        "invalid-manifest-guard-bad-regex.json",
+        "invalid-manifest-guard-mode-without-guards.json",
+        "invalid-manifest-guard-unknown-field.json",
+    ):
+        check(f"manifest-{name}", validate_record(load(name)) != [])
+
+
+def test_manifest_guards_optional_absent() -> None:
+    # The pre-change minimal manifest must still validate: fields are additive.
+    check("manifest-guards-optional-absent",
+          validate_record(valid_manifest()) == [])
+
+
+def test_manifest_guard_rules_shape() -> None:
+    rec = copy.deepcopy(valid_manifest())
+    rec["authority"]["guard_mode"] = "audit"
+    rec["authority"]["actuator_guards"] = [{
+        "name": "arr", "tool_names": ["Bash"],
+        "command_regexes": ["7878"], "path_globs": []}]
+    check("manifest-guard-rules-inline-valid", validate_record(rec) == [])
+    bad = copy.deepcopy(rec)
+    bad["authority"]["actuator_guards"][0]["tool_names"] = []
+    check("manifest-guard-empty-tool-names", validate_record(bad) != [])
+
+
 def test_examples_corpus() -> None:
     ex = ROOT / "examples"
     for path in sorted(ex.glob("valid-*.json")):
@@ -181,6 +215,10 @@ def main() -> int:
     test_verdict_self_certification_refused()
     test_verdict_operator_tier_binds_acceptor()
     test_receipt_and_verdict_mission_id_kebab_required()
+    test_manifest_guards_valid_example()
+    test_manifest_guard_examples_invalid()
+    test_manifest_guards_optional_absent()
+    test_manifest_guard_rules_shape()
     test_examples_corpus()
     print(f"\n{len(FAILURES)} failures")
     return 1 if FAILURES else 0

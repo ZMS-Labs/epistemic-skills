@@ -35,6 +35,10 @@ AUTHORITY_FIELDS = {
     "operator_ref", "instruction", "amendments", "permissions",
     "protected_state", "acceptable_costs",
 }
+AUTHORITY_OPTIONAL_FIELDS = {"guard_mode", "actuator_guards"}
+GUARD_MODES = {"audit", "enforce"}
+GUARD_RULE_FIELDS = {"name", "tool_names", "command_regexes", "path_globs"}
+GUARD_RULE_REQUIRED = {"name", "tool_names", "command_regexes", "path_globs"}
 CHECKPOINT_FIELDS = {
     "record", "mission_id", "revision", "status", "prev_checkpoint_sha256",
     "manifest", "state", "receipt_ids", "written_utc", "written_by",
@@ -94,7 +98,12 @@ def validate_manifest(rec: dict) -> list[str]:
     if not isinstance(auth, dict):
         errors.append("authority: object required")
         return errors
-    _check_exact_fields(errors, auth, AUTHORITY_FIELDS, "authority")
+    for key in auth:
+        if key not in AUTHORITY_FIELDS | AUTHORITY_OPTIONAL_FIELDS:
+            errors.append(f"authority.{key}: unknown field")
+    for key in AUTHORITY_FIELDS:
+        if key not in auth:
+            errors.append(f"authority.{key}: missing")
     if not errors:
         _require(errors, isinstance(auth["operator_ref"], str)
                  and auth["operator_ref"],
@@ -112,6 +121,51 @@ def validate_manifest(rec: dict) -> list[str]:
         for name in ("permissions", "protected_state", "acceptable_costs"):
             _require(errors, _str_list(auth[name]),
                      f"authority.{name}", "list of strings required")
+        mode = auth.get("guard_mode")
+        guards = auth.get("actuator_guards")
+        if mode is not None:
+            _require(errors, mode in GUARD_MODES,
+                     "authority.guard_mode", "must be 'audit' or 'enforce'")
+            _require(errors, isinstance(guards, list) and bool(guards),
+                     "authority.guard_mode",
+                     "guard_mode requires a non-empty actuator_guards list")
+        if guards is not None:
+            ok = isinstance(guards, list)
+            if ok:
+                for rule in guards:
+                    if not isinstance(rule, dict) or set(rule) != GUARD_RULE_FIELDS:
+                        ok = False
+                        break
+                    if not (isinstance(rule["name"], str) and rule["name"]):
+                        ok = False
+                        break
+                    if not rule["tool_names"] or not _str_list(rule["tool_names"]):
+                        ok = False
+                        break
+                    patterns = []
+                    for field in ("command_regexes", "path_globs"):
+                        value = rule[field]
+                        if not isinstance(value, list) or not all(
+                                isinstance(p, str) for p in value):
+                            ok = False
+                            break
+                        patterns.extend(value)
+                    if not ok:
+                        break
+                    if not patterns:
+                        ok = False  # a patternless rule matches nothing -> inert by accident
+                        break
+                    for pattern in rule["command_regexes"]:
+                        try:
+                            re.compile(pattern)
+                        except re.error:
+                            ok = False
+                            break
+                    if not ok:
+                        break
+            _require(errors, ok, "authority.actuator_guards",
+                     "list of {name, tool_names, command_regexes, path_globs} "
+                     "rules; tool_names non-empty; >=1 pattern; regexes must compile")
 
     scope = rec["scope"]
     ok = isinstance(scope, dict) and set(scope) == {"in", "out"} \
