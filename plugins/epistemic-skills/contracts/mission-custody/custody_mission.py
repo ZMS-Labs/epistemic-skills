@@ -21,6 +21,7 @@ _TIER_RANK = {"declared-role-separation": 1, "operator-accepted": 2}
 assert set(_TIER_RANK) == TIERS, "tier rank table out of sync with verify_mission_custody.TIERS"
 
 _ABS_DRIVE_RE = re.compile(r"^[A-Za-z]:")
+_RETIRED_NOTE = "receipt loss acknowledged: "
 
 
 def now_utc() -> str:
@@ -229,6 +230,12 @@ class Mission:
             raise CustodyError(
                 f"receipt already exists for request_id {request_id!r}; "
                 "effects are idempotent by request id -- use a fresh id")
+        if request_id in self._retired_receipt_ids(latest):
+            # Reuse would make one id mean two different artifacts across the
+            # record, forcing an auditor to walk revisions to disambiguate.
+            raise CustodyError(
+                f"request_id {request_id!r} was retired by an acknowledged "
+                "receipt loss and can never be reused -- use a fresh id")
         target = self._resolve_artifact_path(artifact_relpath)
         before_sha = sha256_file(target) if target.exists() else None
         data = content.encode("utf-8")
@@ -259,7 +266,47 @@ class Mission:
             return None
         except ValueError:
             return None
-        return record if not validate_record(record) else None
+        if validate_record(record):
+            return None
+        # A receipt whose own request_id disagrees with the content-addressed
+        # name it is stored under is malformed by construction -- never a
+        # trustworthy source for a claim about that id.
+        return record if record.get("request_id") == request_id else None
+
+    def _historical_effect_path(self, request_id: str) -> str | None:
+        """The artifact path this request id was minted against, read from the
+        hash-chained checkpoint history: the effect note appended by the very
+        revision that put the id into receipt_ids. A lost receipt's path is
+        NOT unknowable -- the chain remembers it, and interior checkpoints are
+        tamper-evident, so this is a sounder authority than a receipt file
+        anyone able to write the receipts dir could have replaced.
+        None when underivable (treated as unprovable, never as agreement)."""
+        prev_ids: list[str] = []
+        prev_notes: list[str] = []
+        for cp_path in self.store.checkpoint_paths():
+            record = json.loads(cp_path.read_text(encoding="utf-8"))
+            ids = record["receipt_ids"]
+            notes = record["state"]["notes"]
+            if request_id in ids and request_id not in prev_ids:
+                for note in notes[len(prev_notes):]:
+                    for prefix in ("effect: ", "reconciled: "):
+                        if note.startswith(prefix):
+                            return note[len(prefix):]
+                return None
+            prev_ids, prev_notes = ids, notes
+        return None
+
+    def _retired_receipt_ids(self, latest: dict) -> set[str]:
+        """Ids whose loss was acknowledged. Retirement is permanent and lives
+        in the append-only notes (checkpoint state is exact-field-closed in
+        @1), so a retired id can never be silently recycled for a different
+        artifact once the file that once occupied its path is gone."""
+        retired: set[str] = set()
+        for note in latest["state"]["notes"]:
+            if note.startswith(_RETIRED_NOTE):
+                tail = note[len(_RETIRED_NOTE):].split(";")[0]
+                retired.add(tail.split(" (covered ")[0].strip())
+        return retired
 
     def _find_verdict_record(self, verdict: str, reason: str) -> dict | None:
         verdicts_dir = self.store.mission_dir / "verdicts"
@@ -297,7 +344,18 @@ class Mission:
         if latest["status"] not in _EFFECT_STATES:
             raise IllegalTransition(f"cannot record_effect: status is {latest['status']!r}")
         receipt = self._write_effect(latest, artifact_relpath, content, request_id)
-        self._write_next(latest, path, status=latest["status"], add_receipt_id=request_id,
+        # A fresh effect on an artifact awaiting re-coverage discharges that
+        # obligation -- that is exactly what RECOVER asks for.
+        unresolved = latest["state"]["unresolved_verdicts"]
+        recover = f"RECOVER:{artifact_relpath.replace(chr(92), '/')}"
+        status = latest["status"]
+        remaining = None
+        if recover in unresolved:
+            remaining = [m for m in unresolved if m != recover]
+            if status == "reopened" and not remaining:
+                status = "active"
+        self._write_next(latest, path, status=status, add_receipt_id=request_id,
+                          unresolved_verdicts=remaining,
                           note=f"effect: {artifact_relpath}")
         return receipt
 
@@ -395,14 +453,16 @@ class Mission:
         return receipt
 
     def acknowledge_receipt_loss(self, request_id: str) -> int:
-        """The only exit for a RECEIPT-MISSING marker, and it never writes an
-        artifact or deletes a file. If the receipt has been restored since
-        detection, the stale marker clears and coverage simply continues
-        (round-2 finding B: the old re-mint path destroyed a healthy restored
-        receipt and overwrote the live artifact). If it is still unloadable,
-        the loss is recorded permanently in the notes and the id leaves
-        receipt_ids -- provenance cannot be resurrected, so ongoing coverage
-        requires a FRESH effect, minted honestly as a new event."""
+        """The only exit for a RECEIPT-MISSING marker. It never writes an
+        artifact and never deletes a file, and it never asserts continuity it
+        has not proven: a receipt found at the id's path counts as RESTORED
+        only if it agrees with the chained history (its own request_id, and
+        the artifact path the id was originally minted against). A receipt
+        that disagrees is a different receipt wearing the id's name -- trusting
+        its schema-validity alone let a forged path silently replace real
+        coverage while the mission read clean (merge-gate round 3). Anything
+        unproven retires the id with the loss recorded permanently; ongoing
+        coverage then requires a FRESH effect, minted as a new event."""
         latest, path = self.store.load_latest()
         self._verify_manifest(latest)
         if latest["status"] != "reopened":
@@ -415,17 +475,40 @@ class Mission:
             raise CustodyError(f"no receipt-loss marker for {request_id!r}")
         remaining = [m for m in unresolved if m != marker]
         next_status = "active" if not remaining else "reopened"
-        if self._load_receipt(request_id) is not None:
+
+        receipt = self._load_receipt(request_id)  # already request_id-checked
+        recorded_path = self._historical_effect_path(request_id)
+        if receipt is not None and recorded_path is not None \
+                and receipt["artifact_path"] == recorded_path:
             new = self._write_next(
                 latest, path, status=next_status, unresolved_verdicts=remaining,
-                note=f"receipt restored: {request_id}; coverage continues")
+                note=(f"receipt restored: {request_id}; matches the recorded "
+                      f"effect on {recorded_path}; coverage continues"))
             return new["revision"]
+
+        covered = f" (covered {recorded_path})" if recorded_path else ""
+        if receipt is None:
+            why = "receipt unloadable"
+        elif recorded_path is None:
+            why = "no recorded effect in the chain to check the receipt against"
+        else:
+            why = (f"present receipt claims {receipt['artifact_path']!r}, "
+                   f"chain records {recorded_path!r} -- NOT trusted")
         receipt_ids = [rid for rid in latest["receipt_ids"] if rid != request_id]
+        if recorded_path is not None:
+            # Losing coverage is an OBLIGATION, not a footnote: the mission
+            # stays reopened, naming the artifact that must be re-covered, so
+            # an uncovered artifact can never sit quietly in an active
+            # mission just because its receipt was destroyed.
+            recover = f"RECOVER:{recorded_path}"
+            if recover not in remaining:
+                remaining = remaining + [recover]
+            next_status = "reopened"
         new = self._write_next(
             latest, path, status=next_status, unresolved_verdicts=remaining,
             receipt_ids=receipt_ids,
-            note=(f"receipt loss acknowledged: {request_id}; prior coverage "
-                  "unknown -- re-cover the artifact with a fresh effect"))
+            note=(f"{_RETIRED_NOTE}{request_id}{covered}; {why}; id retired "
+                  "permanently -- re-cover the artifact with a fresh effect"))
         return new["revision"]
 
     def begin_verification(self) -> int:

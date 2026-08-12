@@ -193,14 +193,32 @@ def test_resume_missing_receipt_is_drift(workspace: Path) -> None:
     check("missing-receipt-ack-revision", st2["revision"] == rev)
     check("missing-receipt-marker-cleared",
           "RECEIPT-MISSING:req-1" not in st2["state"]["unresolved_verdicts"])
-    check("missing-receipt-status-active", st2["status"] == "active")
+    # lost coverage is an obligation, not a footnote: the mission stays
+    # reopened naming the artifact that must be re-covered
+    check("missing-receipt-recover-obligation",
+          st2["state"]["unresolved_verdicts"] == ["RECOVER:notes/a.md"]
+          and st2["status"] == "reopened")
     check("missing-receipt-id-retired", "req-1" not in st2["receipt_ids"])
     check("missing-receipt-loss-recorded-in-notes",
           any("receipt loss acknowledged: req-1" in n
+              and "covered notes/a.md" in n
               for n in st2["state"]["notes"]))
 
-    # ongoing coverage is re-established honestly, as a NEW event
+    # a retired id can never be recycled for a different artifact
+    try:
+        m.record_effect("notes/unrelated.md", "other", "req-1")
+        check("retired-id-reuse-refused", False)
+    except CustodyError:
+        check("retired-id-reuse-refused", True)
+    check("retired-id-reuse-no-artifact",
+          not (workspace / "notes" / "unrelated.md").exists())
+
+    # ongoing coverage is re-established honestly, as a NEW event, and doing
+    # so discharges the RECOVER obligation
     m.record_effect("notes/a.md", "hello", "req-1b")
+    st3 = m.status()
+    check("missing-receipt-recover-discharged",
+          st3["state"]["unresolved_verdicts"] == [] and st3["status"] == "active")
     check("missing-receipt-clean-after-recover", m.resume() == [])
     (workspace / "notes" / "a.md").write_text("tampered", encoding="utf-8")
     check("missing-receipt-recovered-coverage-live",
@@ -238,6 +256,45 @@ def test_restored_receipt_survives_acknowledge(workspace: Path) -> None:
     check("restored-coverage-detects-drift", m.resume() == ["notes/a.md"])
 
 
+def test_forged_restored_receipt_is_not_trusted(workspace: Path) -> None:
+    """Round-3 finding: a schema-valid receipt planted at the lost id's path
+    must not buy continuity. The chain records which artifact the id was
+    minted against, so a receipt naming a different path is a different
+    receipt wearing the id's name -- retire, never affirm coverage."""
+    m = open_mission(workspace, "m-forged", "Do not trust a planted receipt.")
+    m.approve()
+    m.record_effect("notes/real-secret.md", "the real secret", "req-9")
+    genuine = json.loads(
+        m.store.receipt_path("req-9").read_text(encoding="utf-8"))
+    m.store.receipt_path("req-9").unlink()
+    m.resume()
+
+    # attacker plants a well-formed receipt for a decoy artifact under the
+    # lost id's content-addressed name
+    (workspace / "decoy.md").write_text("harmless decoy", encoding="utf-8")
+    forged = dict(genuine, artifact_path="decoy.md",
+                  after_sha256=sha256_bytes(b"harmless decoy"))
+    m.store.receipt_path("req-9").write_text(
+        json.dumps(forged, indent=1, sort_keys=True) + "\n", encoding="utf-8")
+
+    m.acknowledge_receipt_loss("req-9")
+    st = m.status()
+    check("forged-receipt-not-affirmed",
+          not any("coverage continues" in n for n in st["state"]["notes"]))
+    check("forged-receipt-id-retired", "req-9" not in st["receipt_ids"])
+    check("forged-receipt-mismatch-recorded",
+          any("NOT trusted" in n and "decoy.md" in n
+              and "notes/real-secret.md" in n for n in st["state"]["notes"]))
+
+    # the decoy never becomes monitored coverage, and the real file's true
+    # state is honestly uncovered rather than falsely reported clean
+    (workspace / "decoy.md").write_text("changed", encoding="utf-8")
+    check("forged-receipt-decoy-not-covered", m.resume() == [])
+    check("forged-receipt-real-file-intact",
+          (workspace / "notes" / "real-secret.md").read_text(encoding="utf-8")
+          == "the real secret")
+
+
 def test_reconcile_clears_exactly_one_marker(workspace: Path) -> None:
     """One receipt must not retire two unrelated obligations (merge-gate
     blocker 1): drift clears through reconcile with a FRESH id; the loss
@@ -267,10 +324,12 @@ def test_reconcile_clears_exactly_one_marker(workspace: Path) -> None:
           and st["status"] == "reopened")
 
     m.acknowledge_receipt_loss("req-b")
-    check("two-markers-all-cleared", m.status()["status"] == "active")
+    check("two-markers-loss-becomes-recover-obligation",
+          m.status()["state"]["unresolved_verdicts"] == ["RECOVER:notes/b.md"])
 
     # b.md's coverage is re-established as a new event, then verified live
     m.record_effect("notes/b.md", "bb", "req-b2")
+    check("two-markers-all-cleared", m.status()["status"] == "active")
     (workspace / "notes" / "b.md").write_text("tampered too", encoding="utf-8")
     check("two-markers-b-recovered-coverage", m.resume() == ["notes/b.md"])
 
@@ -289,7 +348,9 @@ def test_corrupt_receipt_degrades_to_drift(workspace: Path) -> None:
 
     m.acknowledge_receipt_loss("req-1")
     st = m.status()
-    check("corrupt-receipt-acknowledged", st["status"] == "active")
+    check("corrupt-receipt-acknowledged",
+          st["state"]["unresolved_verdicts"] == ["RECOVER:notes/a.md"]
+          and st["status"] == "reopened")
     check("corrupt-receipt-id-retired", "req-1" not in st["receipt_ids"])
     check("corrupt-receipt-file-preserved",
           m.store.receipt_path("req-1").read_text(encoding="utf-8")
@@ -422,6 +483,7 @@ TESTS = [
     test_manifest_envelope_immutable,
     test_resume_missing_receipt_is_drift,
     test_restored_receipt_survives_acknowledge,
+    test_forged_restored_receipt_is_not_trusted,
     test_reconcile_clears_exactly_one_marker,
     test_corrupt_receipt_degrades_to_drift,
     test_effect_duplicate_id_leaves_workspace_untouched,
