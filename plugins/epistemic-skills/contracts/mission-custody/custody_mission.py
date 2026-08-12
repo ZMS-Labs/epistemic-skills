@@ -35,6 +35,35 @@ _RESERVED_NOTE_PREFIXES = (
 )
 
 
+def _refuse_reserved_note(text: str) -> None:
+    """Refuse caller text that imitates a machine-written note ON ANY LINE.
+
+    The first version checked `text.startswith(prefix)` on the whole string,
+    case-sensitively. Four ways past it, each verified: a leading space, a
+    capital, a leading newline, and -- the load-bearing one -- an ordinary
+    multi-line note whose SECOND line is a byte-identical machine note. The
+    guard only inspected the start of the string, so a note reading
+    "session note
+scope-ack by agent:acceptor: secrets.env" passed.
+
+    That never bypassed a gate (the acceptance gate reads `scope_ack`, never
+    notes). What it defeated is the AUDIT property those prefixes exist for: an
+    auditor grepping the chain for who took responsibility could not tell a
+    genuine acknowledgement from steward narrative.
+
+    Applied to every surface that embeds caller text into a note -- `note`,
+    `amend`, `cancel` and verdict reasons -- because the composed note is
+    machine-written but the text inside it is not."""
+    for line in (text or "").splitlines() or [text or ""]:
+        candidate = line.strip().casefold()
+        for prefix in _RESERVED_NOTE_PREFIXES:
+            if candidate.startswith(prefix.casefold()):
+                raise CustodyError(
+                    f"text may not contain a line beginning with {prefix!r}: "
+                    "machine-written notes carry mission state and narrative "
+                    "must not be able to imitate them, on any line")
+
+
 def now_utc() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
@@ -716,6 +745,7 @@ class Mission:
         if not isinstance(text, str) or not text.strip():
             raise CustodyError("amendment text required (verbatim operator grant)")
         manifest = json.loads(json.dumps(latest["manifest"]))
+        _refuse_reserved_note(text)
         manifest["authority"]["amendments"].append(
             {"utc": now_utc(), "text": text})
         if actuator_guards is not _UNSET:
@@ -741,12 +771,7 @@ class Mission:
         self._verify_manifest(latest)
         if latest["status"] not in _OPEN_STATES:
             raise IllegalTransition(f"cannot note: status is {latest['status']!r}")
-        for prefix in _RESERVED_NOTE_PREFIXES:
-            if text.startswith(prefix):
-                raise CustodyError(
-                    f"note text may not begin with {prefix!r}: machine-written "
-                    "notes carry mission state and narrative must not be able "
-                    "to imitate them")
+        _refuse_reserved_note(text)
         new = self._write_next(latest, path, status=latest["status"], note=text)
         return new["revision"]
 
@@ -1135,6 +1160,7 @@ class Mission:
         self._verify_manifest(latest)
         if verdict not in VERDICTS:
             raise CustodyError(f"unknown verdict {verdict!r}")
+        _refuse_reserved_note(reason)
         if verdict in ("PASS", "FAIL"):
             if latest["status"] != "verifying":
                 raise IllegalTransition(
@@ -1248,8 +1274,16 @@ class Mission:
                 # side effect: it names who judged what, so an auditor can see
                 # that the boundary was crossed AND that a distinct acceptor
                 # took responsibility for it.
+                # Only paths that were ACTUALLY outstanding are recorded. An
+                # ack naming something that was never a finding used to be
+                # written verbatim into the permanent note -- inert for the
+                # gate, but it pollutes the one record that says what the
+                # acceptor judged, which is the record's entire purpose.
+                covered = sorted({p for f in drifted
+                                  for p in f["violating_paths"]}
+                                 & acknowledged)
                 scope_note = (f"scope-ack by {acceptor_id}: "
-                              f"{', '.join(sorted(acknowledged))}")
+                              f"{', '.join(covered)}")
                 self._write_next(latest, path, status=latest["status"],
                                  note=scope_note)
                 latest, path = self.store.load_latest()
@@ -1300,6 +1334,7 @@ class Mission:
         self._verify_manifest(latest)
         if latest["status"] not in ("draft", "active", "reopened", "verifying"):
             raise IllegalTransition(f"cannot cancel: status is {latest['status']!r}")
+        _refuse_reserved_note(reason)
         new = self._write_next(latest, path, status="cancelled", note=f"cancelled: {reason}")
         return new["revision"]
 
