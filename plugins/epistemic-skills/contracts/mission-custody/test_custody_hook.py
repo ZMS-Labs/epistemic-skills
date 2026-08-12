@@ -364,8 +364,39 @@ def test_relative_root_never_becomes_a_candidate() -> None:
         custody_hook._find_workspace = original
     check("uri-literal-not-probed",
           not any(a.startswith("file:") for a in asked))
+    # NATIVE absoluteness, asserted the same way the gate decides it. An
+    # earlier version of this check passed on Windows and FAILED on POSIX,
+    # because the gate accepted "absolute under either flavour" while
+    # _find_workspace parses natively -- so `c:/work/project` slipped through
+    # on Linux and reached `.`. A platform-dependent assertion is how that got
+    # past a green local run.
     check("no-relative-location-probed",
           all(Path(a).is_absolute() for a in asked))
+
+
+def test_object_shaped_root_also_offers_both_readings() -> None:
+    """An object root must get the dual reading a bare string gets.
+
+    Gating the second reading on `isinstance(root, str)` skipped
+    {"uri": "/c:/work/project"} entirely, so on POSIX only the stripped form
+    -- relative there -- was offered, and a mission under the real absolute
+    path was missed. A fail-open for exactly the editor shape this module set
+    out to support."""
+    import custody_hook
+    for shape in ({"uri": "/c:/work/project"}, {"path": "/c:/work/project"}):
+        asked: list[str] = []
+        original = custody_hook._find_workspace
+        custody_hook._find_workspace = lambda loc: (asked.append(loc), None)[1]
+        try:
+            custody_hook._candidate_workspaces({"workspace_roots": [shape]})
+        finally:
+            custody_hook._find_workspace = original
+        key = "uri" if "uri" in shape else "path"
+        # exactly one reading is native-absolute per platform; the point is
+        # that the object shape gets both OFFERED, not that both survive
+        check(f"object-root-{key}-offers-a-reading", bool(asked))
+        check(f"object-root-{key}-all-native-absolute",
+              all(Path(a).is_absolute() for a in asked))
 
 
 def test_malformed_root_does_not_disarm_the_others() -> None:
@@ -402,9 +433,15 @@ def test_bare_drive_root_offers_both_readings() -> None:
     the guarded call. Gating the rewrite on the platform only moves the
     fail-open to the other platform -- both wrong readings end the same way.
 
-    So neither reading is chosen. Both are offered as candidates,
-    `_find_workspace` drops whichever has no missions/ tree, and any-blocks-wins
-    does the rest."""
+    So neither reading is chosen. Both are OFFERED; the native-absoluteness
+    gate then keeps whichever one is real on this platform, `_find_workspace`
+    drops whichever has no missions/ tree, and any-blocks-wins does the rest.
+
+    The assertion is deliberately platform-aware. Asserting that BOTH readings
+    are probed passed on Windows and would have failed on Linux, because only
+    one of them is native-absolute on any given platform -- and a
+    platform-dependent assertion that happens to hold locally is how a hole
+    reaches CI green."""
     import custody_hook
     asked: list[str] = []
     original = custody_hook._find_workspace
@@ -414,8 +451,12 @@ def test_bare_drive_root_offers_both_readings() -> None:
             {"workspace_roots": ["/c:/work/project"]})
     finally:
         custody_hook._find_workspace = original
-    check("bare-drive-offers-stripped-reading", "c:/work/project" in asked)
-    check("bare-drive-offers-unstripped-reading", "/c:/work/project" in asked)
+    native = "c:/work/project" if os.name == "nt" else "/c:/work/project"
+    other = "/c:/work/project" if os.name == "nt" else "c:/work/project"
+    check("bare-drive-probes-the-native-reading", native in asked)
+    check("bare-drive-drops-the-non-native-reading", other not in asked)
+    check("bare-drive-probes-nothing-relative",
+          all(Path(a).is_absolute() for a in asked))
     # a path with only ONE reading must not be probed twice
     asked.clear()
     custody_hook._find_workspace = lambda loc: (asked.append(loc), None)[1]
@@ -424,7 +465,11 @@ def test_bare_drive_root_offers_both_readings() -> None:
             {"workspace_roots": ["/opt/u/proj"]})
     finally:
         custody_hook._find_workspace = original
-    check("single-reading-probed-once", asked == ["/opt/u/proj"])
+    # A POSIX root has ONE reading. It is probed once where it is real, and
+    # not probed at all on Windows, where "/opt/u/proj" is rooted-but-driveless
+    # and `_find_workspace` would walk it to `.`.
+    check("single-reading-probed-once",
+          asked == ([] if os.name == "nt" else ["/opt/u/proj"]))
 
 
 def test_missing_payload_cwd_is_inert_even_when_hook_process_runs_inside_armed_workspace() -> None:

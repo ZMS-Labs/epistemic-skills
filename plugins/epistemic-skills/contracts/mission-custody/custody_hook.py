@@ -121,15 +121,19 @@ def _candidate_workspaces(call: dict) -> list[Path]:
         # relative. Both produced `Path(".")` as a candidate: a block naming a
         # rule from a mission the user is not in, and an entry written into
         # that unrelated mission's guard log.
-        # Absolute under EITHER flavour, not under the host's. `Path` on
-        # Windows calls "/opt/u/proj" not-absolute (rooted, but driveless), so
-        # gating on the native answer would discard a genuine POSIX root the
-        # moment the hook ran on Windows -- trading this fail-open for a
-        # different one. "/c:/work" is POSIX-absolute, "c:/work" is
-        # Windows-absolute, and "file:///c:/w" is neither.
+        # NATIVE absoluteness, because `_find_workspace` parses with the
+        # native `Path`. An earlier attempt accepted "absolute under either
+        # flavour", which let `c:/work/project` through on POSIX -- absolute
+        # to PureWindowsPath, relative to the `Path` that actually consumes it,
+        # so the ancestor walk still reached `.`. A gate whose notion of valid
+        # differs from its consumer's is not a gate.
+        #
+        # This is also what makes the two readings correct per platform rather
+        # than by luck: on POSIX the UNSTRIPPED "/c:/work" is native-absolute
+        # and the stripped form is not; on Windows the reverse. Each platform
+        # accepts exactly the reading that is real there.
         try:
-            if not (PurePosixPath(location).is_absolute()
-                    or PureWindowsPath(location).is_absolute()):
+            if not Path(location).is_absolute():
                 return
         except (OSError, ValueError):
             return
@@ -165,8 +169,17 @@ def _candidate_workspaces(call: dict) -> list[Path]:
             # whichever has no missions/ tree, and any-blocks-wins covers the
             # rest -- the same reasoning that made this function return a list
             # instead of a first-wins answer.
-            if isinstance(root, str) and root and root != location:
-                consider(root)
+            # The raw value, including from an OBJECT-shaped root. Gating the
+            # second reading on `isinstance(root, str)` skipped
+            # {"uri": "/c:/work/project"} entirely, so on POSIX only the
+            # stripped (and there, relative) form was ever offered and a
+            # mission under the real absolute path was missed -- a fail-open
+            # for exactly the editor shape this module set out to support.
+            raw = root
+            if isinstance(raw, dict):
+                raw = raw.get("uri") or raw.get("path") or ""
+            if isinstance(raw, str) and raw and raw != location:
+                consider(raw)
     return candidates
 
 
