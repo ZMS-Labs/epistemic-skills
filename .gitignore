@@ -11,3 +11,10 @@ artifacts/uat/**/screenshots/
 .epistemic-events/
 outputs/epistemic-events/
 pilot/runs/
+
+# Skill run telemetry — real ledger/adjudication lines are runtime state
+# (operator-private), not public content; only the synthetic example ships
+# (see plugins/epistemic-skills/skills/gauntlet/runs/README.md).
+**/runs/*.jsonl
+!**/runs/*.example.jsonl
+!**/runs/README.md

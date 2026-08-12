@@ -6,8 +6,11 @@ or selects a lens; those decisions come from the two-state registry and claim ev
 Appending remains part of Step 8 so a completed run has a durable projection.
 
 Aggregate observability: `python scripts/lens_stats.py` (add `--json` for machine
-output). This ledger lives in the durable repo (commit it with the run), never only in
-the deployed skill cache (`~/.claude/skills` or your harness's equivalent).
+output). **Real telemetry is git-ignored runtime state, not repo content** — this
+directory ships only `ledger.example.jsonl` (the synthetic exemplar line). Keep your
+real `ledger.jsonl` / `adjudications.jsonl` in your own durable private home (a local
+directory, possibly junctioned into the skill cache); never commit them to this
+public repo.
 
 ## Schema versions
 
@@ -26,16 +29,20 @@ is **derived** into the ledger line in the same pass. `scripts/verify_run.py`
 re-checks the record against the run directory and hard-fails on any disagreement, so
 the projection can never drift from its source silently.
 
-- **Committed (this repo, public by design):** ledger lines only — the `run_dir`
-  pointer, `dossier_sha256`, modes, verdict, and per-lens counts, with per-seat
-  `model` at **family granularity**. Retention is indefinite audit telemetry.
+- **Committed (this repo, public by design):** the synthetic **example line only**
+  (`ledger.example.jsonl`, marked `"example": true`). Real ledger lines — the
+  `run_dir` pointer, `dossier_sha256`, modes, verdict, per-lens counts, per-seat
+  `model` at **family granularity** — are indefinite audit telemetry and are
+  **git-ignored runtime state**: they live in the operator's private durable home,
+  never in this public repo.
 - **Local-only (never committed):** run directories themselves — dossiers, reports,
   prompts, `run-record.json` — which may keep exact timestamps and per-seat EXACT
   model identity (`prompts/seats.json`) because they never leave the operator's
   machine. Run output roots (`outputs/` and equivalents) are gitignored.
 - **Synthetic exemplar:** `examples/example-run/` ships one fully-worked synthetic
-  run plus its ledger line marked `"example": true` (and `eligible: false`). Example
-  lines are documentation, not telemetry: `lens_stats.py` skips them mechanically.
+  run plus its ledger line marked `"example": true` (and `eligible: false`) in
+  `ledger.example.jsonl`. Example lines are documentation, not telemetry:
+  `lens_stats.py` skips them mechanically.
 
 The run record certifies the ENVELOPE only — artifact binding, replay, gate
 arithmetic. It **never attests**: verdict-truth (the lenses/judge may be wrong),
