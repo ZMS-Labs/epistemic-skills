@@ -164,6 +164,7 @@ def test_manifest_guard_examples_invalid() -> None:
         "invalid-manifest-guard-bad-regex.json",
         "invalid-manifest-guard-mode-without-guards.json",
         "invalid-manifest-guard-unknown-field.json",
+        "invalid-manifest-guard-shell-only-globs.json",
     ):
         check(f"manifest-{name}", validate_record(load(name)) != [])
 
@@ -192,6 +193,41 @@ def test_manifest_guard_empty_guards_list_invalid() -> None:
     rec = copy.deepcopy(valid_manifest())
     rec["authority"]["actuator_guards"] = []
     check("manifest-guards-empty-list", validate_record(rec) != [])
+
+
+def test_manifest_guard_inert_shapes_rejected() -> None:
+    # A rule whose patterns can never fire for its tools arms nothing while
+    # reading as armed -- refuse those shapes at validation.
+    rec = copy.deepcopy(valid_manifest())
+    rec["authority"]["actuator_guards"] = [{
+        "name": "g", "tool_names": ["Bash"],
+        "command_regexes": [], "path_globs": ["M:/Media/**"]}]
+    check("guard-shell-only-globs-inert", validate_record(rec) != [])
+
+    rec = copy.deepcopy(valid_manifest())
+    rec["authority"]["actuator_guards"] = [{
+        "name": "g", "tool_names": ["Write"],
+        "command_regexes": ["secret"], "path_globs": []}]
+    check("guard-write-only-regexes-inert", validate_record(rec) != [])
+
+    rec = copy.deepcopy(valid_manifest())
+    rec["authority"]["actuator_guards"] = [{
+        "name": "g", "tool_names": ["mcp__sonarr__post"],
+        "command_regexes": [], "path_globs": ["M:/Media/**"]}]
+    check("guard-mcp-only-globs-inert", validate_record(rec) != [])
+
+    # mixed or unknown tool names pass: one arm can still fire (mixed), and
+    # unknown tools are the operator's responsibility
+    rec = copy.deepcopy(valid_manifest())
+    rec["authority"]["actuator_guards"] = [{
+        "name": "g", "tool_names": ["Bash", "Write"],
+        "command_regexes": [], "path_globs": ["M:/Media/**"]}]
+    check("guard-mixed-tools-pass", validate_record(rec) == [])
+    rec = copy.deepcopy(valid_manifest())
+    rec["authority"]["actuator_guards"] = [{
+        "name": "g", "tool_names": ["FutureTool"],
+        "command_regexes": [], "path_globs": ["M:/Media/**"]}]
+    check("guard-unknown-tools-pass", validate_record(rec) == [])
 
 
 def test_examples_corpus() -> None:
@@ -228,6 +264,7 @@ def main() -> int:
     test_manifest_guards_optional_absent()
     test_manifest_guard_rules_shape()
     test_manifest_guard_empty_guards_list_invalid()
+    test_manifest_guard_inert_shapes_rejected()
     test_examples_corpus()
     print(f"\n{len(FAILURES)} failures")
     return 1 if FAILURES else 0

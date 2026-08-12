@@ -28,7 +28,11 @@ exists until evidence could support one.
   `gate` (design: `docs/superpowers/specs/2026-08-12-stage-c-custody-hook-design.md`).
   Inert by default: a mission arms it by adding operator-approved
   `actuator_guards` + `guard_mode` to its manifest (`open --guards-file` /
-  `amend --guard-mode`). Harness wiring:
+  `amend --guard-mode`). The CLI can downgrade enforce -> audit
+  (`amend --guard-mode audit`), but full guard REMOVAL is API-only
+  (`Mission.amend_authority(..., actuator_guards=None)` -- the CLI's
+  `amend --guards-file` with `[]` is refused by validation); plan disarm
+  accordingly mid-incident. Harness wiring:
   | harness | mechanism | verified |
   |---|---|---|
   | Claude Code | plugin `hooks/hooks.json` PreToolUse | yes |
@@ -50,6 +54,11 @@ exists until evidence could support one.
   `command_regexes` match the shell command when there is one, and otherwise
   the full `tool_input` JSON serialized with sorted keys -- so MCP arguments
   (URLs, paths) are coverable by regex, crudely and deliberately over-broad.
+  The haystack is `json.dumps` output: backslashes and quotes in arguments
+  are JSON-escaped before your regex sees them, so prefer matching on
+  `host:port` substrings (e.g. `:7878/api`) over literal Windows paths.
+  Unknown tool names are the operator's responsibility: the validator refuses
+  silently-inert shapes only for the known shell / fs-write / `mcp__` classes.
 
   Mixed-fleet hazard: arming guards writes the new manifest fields into that
   mission's checkpoints, which pre-#117 plugin caches cannot validate (the
