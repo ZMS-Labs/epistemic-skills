@@ -17,7 +17,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
@@ -111,6 +111,28 @@ def _candidate_workspaces(call: dict) -> list[Path]:
     def consider(location: str) -> None:
         if not location:
             return
+        # A RELATIVE location is not a usable root. `_find_workspace` walks
+        # ancestors, and a relative path's chain terminates at `.` -- so a
+        # root the process cannot interpret would resolve to "wherever the
+        # hook happens to be running", which this function's own docstring
+        # promises never happens. Observed with a `file://` URI fed through as
+        # a literal (`Path("file:///c:/w")` is relative on both platforms) and
+        # with the stripped bare-drive form on POSIX, where `c:/work` is
+        # relative. Both produced `Path(".")` as a candidate: a block naming a
+        # rule from a mission the user is not in, and an entry written into
+        # that unrelated mission's guard log.
+        # Absolute under EITHER flavour, not under the host's. `Path` on
+        # Windows calls "/opt/u/proj" not-absolute (rooted, but driveless), so
+        # gating on the native answer would discard a genuine POSIX root the
+        # moment the hook ran on Windows -- trading this fail-open for a
+        # different one. "/c:/work" is POSIX-absolute, "c:/work" is
+        # Windows-absolute, and "file:///c:/w" is neither.
+        try:
+            if not (PurePosixPath(location).is_absolute()
+                    or PureWindowsPath(location).is_absolute()):
+                return
+        except (OSError, ValueError):
+            return
         workspace = _find_workspace(location)
         if workspace is not None and workspace not in candidates:
             candidates.append(workspace)
@@ -119,7 +141,18 @@ def _candidate_workspaces(call: dict) -> list[Path]:
     roots = call.get("workspace_roots")
     if isinstance(roots, list):  # a bare string would iterate per-character
         for root in roots:
-            location = _root_location(root)
+            try:
+                location = _root_location(root)
+            except Exception as exc:                      # noqa: BLE001
+                # `urlparse` raises ValueError on a malformed authority
+                # ("file://[oops" -> Invalid IPv6 URL). Unhandled, it escaped
+                # discovery into the outer handler and returned ALLOW with an
+                # empty stderr -- one malformed IDE-supplied root silently
+                # disarming an armed guard, which is verbatim the fail-open
+                # the per-candidate handler downstream was added to close.
+                print(f"custody-gate: unreadable workspace root, skipping: "
+                      f"{type(exc).__name__}", file=sys.stderr)
+                continue
             consider(location)
             # '/c:/work/project' has TWO readings: a Windows drive path (which
             # _root_location resolves) and, on POSIX, a perfectly legal

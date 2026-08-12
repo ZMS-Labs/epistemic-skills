@@ -343,6 +343,56 @@ def test_root_location_uri_forms() -> None:
               custody_hook._root_location(src) == want)
 
 
+def test_relative_root_never_becomes_a_candidate() -> None:
+    """A root the process cannot interpret must not resolve to the cwd.
+
+    `_find_workspace` walks ancestors, and a RELATIVE path's chain terminates
+    at `.`, so a `file://` URI fed through as a literal (Path("file:///c:/w")
+    is relative on both platforms) made `Path(".")` -- "wherever the hook
+    happens to be running" -- a candidate. Consequences measured: a block
+    naming a rule from a mission the user is not in, and an entry written into
+    that unrelated mission's guard log. The same shape hits the stripped
+    bare-drive form on POSIX, where `c:/work` is relative."""
+    import custody_hook
+    asked: list[str] = []
+    original = custody_hook._find_workspace
+    custody_hook._find_workspace = lambda loc: (asked.append(loc), None)[1]
+    try:
+        custody_hook._candidate_workspaces(
+            {"workspace_roots": ["file:///c:/some/other/project"]})
+    finally:
+        custody_hook._find_workspace = original
+    check("uri-literal-not-probed",
+          not any(a.startswith("file:") for a in asked))
+    check("no-relative-location-probed",
+          all(Path(a).is_absolute() for a in asked))
+
+
+def test_malformed_root_does_not_disarm_the_others() -> None:
+    """`urlparse` raises on a malformed authority; unhandled it returned ALLOW.
+
+    "file://[oops" -> ValueError: Invalid IPv6 URL escaped discovery into the
+    outer handler, so ONE malformed IDE-supplied root silently disarmed an
+    armed guard with an empty stderr -- verbatim the fail-open the
+    per-candidate handler downstream exists to close, left open one function
+    earlier."""
+    import custody_hook
+    asked: list[str] = []
+    original = custody_hook._find_workspace
+    custody_hook._find_workspace = lambda loc: (asked.append(loc), None)[1]
+    try:
+        custody_hook._candidate_workspaces(
+            {"workspace_roots": ["file://[oops", "file:///c:/ok"]})
+    except Exception as exc:                                  # noqa: BLE001
+        check("malformed-root-does-not-raise", False)
+        print(f"  raised {type(exc).__name__}")
+    else:
+        check("malformed-root-does-not-raise", True)
+    finally:
+        custody_hook._find_workspace = original
+    check("later-root-still-evaluated", any("ok" in a for a in asked))
+
+
 def test_bare_drive_root_offers_both_readings() -> None:
     """'/c:/work/project' is a Windows drive path AND a legal POSIX path.
 
