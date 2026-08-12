@@ -367,14 +367,18 @@ class Mission:
         # trustworthy source for a claim about that id.
         return record if record.get("request_id") == request_id else None
 
-    def _historical_effect_path(self, request_id: str) -> str | None:
+    def _historical_effect_path(self, request_id: str, kind: bool = False) -> str | None:
         """The artifact path this request id was minted against, read from the
         hash-chained checkpoint history: the effect note appended by the very
         revision that put the id into receipt_ids. A lost receipt's path is
         NOT unknowable -- the chain remembers it, and interior checkpoints are
         tamper-evident, so this is a sounder authority than a receipt file
         anyone able to write the receipts dir could have replaced.
-        None when underivable (treated as unprovable, never as agreement)."""
+        None when underivable (treated as unprovable, never as agreement).
+
+        With kind=True, returns HOW it was minted instead ('effect' or
+        'reconciled') -- the same note that records the path records whether
+        the write was an ordinary effect or a reconciliation."""
         prev_ids: list[str] = []
         prev_notes: list[str] = []
         for cp_path in self.store.checkpoint_paths():
@@ -385,7 +389,8 @@ class Mission:
                 for note in notes[len(prev_notes):]:
                     for prefix in ("effect: ", "reconciled: "):
                         if note.startswith(prefix):
-                            return note[len(prefix):]
+                            return note[len(prefix):] if not kind \
+                                else prefix.rstrip(": ")
                 return None
             prev_ids, prev_notes = ids, notes
         return None
@@ -516,6 +521,55 @@ class Mission:
             raise IllegalTransition(f"cannot set_frontier: status is {latest['status']!r}")
         new = self._write_next(latest, path, status=latest["status"], frontier=text)
         return new["revision"]
+
+    def continuity_breaks(self) -> list[dict]:
+        """Where an artifact changed between two receipted events without a
+        receipted event of its own.
+
+        Each receipt records the artifact's hash BEFORE its write and AFTER.
+        Chained per path those must meet: receipt[n].before_sha256 ==
+        receipt[n-1].after_sha256. A gap is positive evidence of unreceipted
+        mutation -- including the one case drift detection structurally
+        cannot see, where a steward re-effects over a file it never resumed
+        against, so the current receipt truthfully describes content nobody
+        ever sanctioned. The evidence was always in the receipts; nothing
+        read it.
+
+        Read-only, and it raises NOTHING. A break is history: it cannot be
+        discharged, so making it an obligation would create a marker with no
+        exit -- the wedge RECOVER-UNKNOWN was rejected for. Surfaced, not
+        enforced."""
+        by_path: dict[str, list[dict]] = {}
+        for request_id in self.status()["receipt_ids"]:
+            receipt = self._load_receipt(request_id)
+            if receipt is None:
+                continue
+            key = _normalize_relpath(receipt["artifact_path"])
+            if os.name == "nt":
+                key = _ascii_case_fold(key)
+            by_path.setdefault(key, []).append(receipt)
+        breaks: list[dict] = []
+        for receipts in by_path.values():
+            for prior, nxt in zip(receipts, receipts[1:]):
+                if nxt["before_sha256"] == prior["after_sha256"]:
+                    continue
+                # A reconciliation FOLLOWS a mutation that drift detection
+                # already caught and the steward already answered for. The
+                # break is real either way, but only an unreconciled one is
+                # news -- that is the case nothing else in the contract sees.
+                reconciled = self._historical_effect_path(
+                    nxt["request_id"], kind=True) == "reconciled"
+                breaks.append({
+                    "artifact_path": nxt["artifact_path"],
+                    "prior_request_id": prior["request_id"],
+                    "request_id": nxt["request_id"],
+                    "expected_before_sha256": prior["after_sha256"],
+                    "observed_before_sha256": nxt["before_sha256"],
+                    "no_op_write": nxt["before_sha256"] == nxt["after_sha256"],
+                    "already_reconciled": reconciled,
+                })
+        breaks.sort(key=lambda b: (b["artifact_path"], b["request_id"]))
+        return breaks
 
     def resume(self) -> list[str]:
         latest, path = self.store.load_latest()

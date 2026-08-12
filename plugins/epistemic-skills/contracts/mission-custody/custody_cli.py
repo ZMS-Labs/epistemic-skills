@@ -90,6 +90,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_status = sub.add_parser("status", parents=[common])
     p_status.add_argument("--brief", action="store_true")
 
+    sub.add_parser("audit", parents=[common])
+
     p_amend = sub.add_parser("amend", parents=[common])
     p_amend.add_argument("--text", required=True)
 
@@ -170,6 +172,11 @@ def dispatch(args: argparse.Namespace) -> int:
     elif args.command == "status":
         latest = mission.status()
         _print_status(_brief(latest) if args.brief else latest)
+    elif args.command == "audit":
+        breaks = mission.continuity_breaks()
+        _print_status({"record": "continuity-report@1",
+                        "continuity_breaks": breaks})
+        return 3 if breaks else 0
     elif args.command == "amend":
         print(mission.amend_authority(args.text))
     elif args.command == "note":
@@ -189,6 +196,17 @@ def dispatch(args: argparse.Namespace) -> int:
             vacuous = " -- vacuously (no effects recorded)" if n == 0 else ""
             print(f"resume: clean; {n} receipt id(s) on record{vacuous}",
                   file=sys.stderr)
+        # A continuity break is not drift and raises no obligation, but a
+        # clean resume is exactly where its absence would be misread as
+        # "nothing happened here" -- so it rides alongside the verdict.
+        unanswered = [b for b in mission.continuity_breaks()
+                      if not b["already_reconciled"]]
+        if unanswered:
+            paths = ", ".join(sorted({b["artifact_path"] for b in unanswered}))
+            print(f"resume: {len(unanswered)} unreconciled continuity "
+                  f"break(s) -- the artifact changed between receipted events "
+                  f"with no reconciliation answering for it: {paths}; run "
+                  "`audit` for detail", file=sys.stderr)
         return 3 if drift else 0
     elif args.command == "reconcile":
         receipt = mission.reconcile(args.path, _read_content(args),

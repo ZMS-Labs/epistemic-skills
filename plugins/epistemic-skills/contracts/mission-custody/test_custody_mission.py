@@ -583,6 +583,52 @@ def test_superseded_receipt_never_shadows_the_current_one(workspace: Path) -> No
           m.status()["status"] == "active" and m.resume() == [])
 
 
+def test_continuity_surfaces_unreceipted_mutation(workspace: Path) -> None:
+    """The one custody gap drift detection structurally cannot see: a steward
+    re-effects over a tampered file WITHOUT resuming first, so the current
+    receipt truthfully describes content nobody sanctioned and resume reads
+    clean forever. The evidence was always in the receipts -- each records the
+    artifact hash before and after its own write -- and nothing read it."""
+    m = open_mission(workspace, "m-continuity", "Surface the unseen gap.")
+    m.approve()
+    m.record_effect("notes/a.md", "v1", "req-1")
+    m.record_effect("notes/a.md", "v2", "req-2")
+    check("continuity-clean-chain", m.continuity_breaks() == [])
+
+    (workspace / "notes" / "a.md").write_text("TAMPERED", encoding="utf-8")
+    m.record_effect("notes/a.md", "TAMPERED", "req-3")
+    check("continuity-drift-oracle-blind", m.resume() == [])
+
+    breaks = m.continuity_breaks()
+    check("continuity-break-found", len(breaks) == 1)
+    b = breaks[0]
+    check("continuity-names-artifact", b["artifact_path"] == "notes/a.md")
+    check("continuity-names-both-receipts",
+          b["prior_request_id"] == "req-2" and b["request_id"] == "req-3")
+    check("continuity-flags-no-op-write", b["no_op_write"] is True)
+    check("continuity-raises-no-obligation",
+          m.status()["state"]["unresolved_verdicts"] == []
+          and m.status()["status"] == "active")
+
+    # honest legitimate history stays clean: reconcile after real drift is a
+    # receipted event and must NOT read as a break
+    m2 = open_mission(workspace, "m-continuity-ok", "Legitimate history.")
+    m2.approve()
+    m2.record_effect("notes/b.md", "v1", "r1")
+    (workspace / "notes" / "b.md").write_text("drifted", encoding="utf-8")
+    m2.resume()
+    m2.reconcile("notes/b.md", "v1", "r2")
+    # a reconciliation FOLLOWS a real mutation, so the break is real -- but it
+    # is answered for, and only unanswered breaks are news
+    rec = m2.continuity_breaks()
+    check("continuity-reconcile-break-recorded", len(rec) == 1)
+    check("continuity-reconcile-marked-answered",
+          rec[0]["already_reconciled"] is True)
+    check("continuity-unanswered-only-in-the-blind-case",
+          [b for b in rec if not b["already_reconciled"]] == []
+          and [b for b in breaks if not b["already_reconciled"]] == breaks)
+
+
 def test_reconcile_clears_exactly_one_marker(workspace: Path) -> None:
     """One receipt must not retire two unrelated obligations (merge-gate
     blocker 1): drift clears through reconcile with a FRESH id; the loss
@@ -781,6 +827,7 @@ TESTS = [
     test_obligations_match_by_artifact_not_by_string,
     test_drift_marker_matches_by_artifact,
     test_superseded_receipt_never_shadows_the_current_one,
+    test_continuity_surfaces_unreceipted_mutation,
     test_reconcile_clears_exactly_one_marker,
     test_corrupt_receipt_degrades_to_drift,
     test_effect_duplicate_id_leaves_workspace_untouched,
