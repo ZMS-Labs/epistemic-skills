@@ -302,8 +302,8 @@ def test_success_output_confirms_the_write() -> None:
                  "--brief")
         st = json.loads(r.stdout)
         check("status-brief-shape",
-              set(st) == {"mission_id", "status", "revision", "frontier",
-                          "unresolved_verdicts", "notes_count",
+              set(st) == {"mission_id", "status", "revision", "amendments_count",
+                          "frontier", "unresolved_verdicts", "notes_count",
                           "receipt_ids_count", "written_utc", "written_by"})
         check("status-brief-revision", st["revision"] == 5)
 

@@ -90,6 +90,9 @@ def build_parser() -> argparse.ArgumentParser:
     p_status = sub.add_parser("status", parents=[common])
     p_status.add_argument("--brief", action="store_true")
 
+    p_amend = sub.add_parser("amend", parents=[common])
+    p_amend.add_argument("--text", required=True)
+
     p_note = sub.add_parser("note", parents=[common])
     p_note.add_argument("--text", required=True)
 
@@ -134,6 +137,8 @@ def _brief(checkpoint: dict) -> dict:
         "mission_id": checkpoint["mission_id"],
         "status": checkpoint["status"],
         "revision": checkpoint["revision"],
+        "amendments_count": len(
+            checkpoint["manifest"]["authority"]["amendments"]),
         "frontier": checkpoint["state"]["frontier"],
         "unresolved_verdicts": checkpoint["state"]["unresolved_verdicts"],
         "notes_count": len(checkpoint["state"]["notes"]),
@@ -165,6 +170,8 @@ def dispatch(args: argparse.Namespace) -> int:
     elif args.command == "status":
         latest = mission.status()
         _print_status(_brief(latest) if args.brief else latest)
+    elif args.command == "amend":
+        print(mission.amend_authority(args.text))
     elif args.command == "note":
         print(mission.note(args.text))
     elif args.command == "frontier":

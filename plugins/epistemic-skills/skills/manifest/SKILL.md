@@ -43,7 +43,12 @@ else.
    state) cannot be receipted: `note` them with their verification evidence.
    Update `frontier` whenever the true next action changes and before session
    end — it is the next resume's anchor.
-4. **Verify / Close** — `verify`, then acceptance by a DIFFERENT actor: a
+4. **Amend** — when the operator grants authority the manifest does not carry,
+   record it VERBATIM with `amend --text <operator's words>` before acting on
+   it, then continue. Amendments are append-only and never self-authored:
+   this records a grant, it does not create one. Authority you cannot record
+   is authority you do not have — escalate instead.
+5. **Verify / Close** — `verify`, then acceptance by a DIFFERENT actor: a
    distinct session runs `accept` as itself (`--actor` must equal
    `--acceptor`). Never accept work you performed; the core refuses it
    (AcceptanceRefused) — do not work around the refusal.
