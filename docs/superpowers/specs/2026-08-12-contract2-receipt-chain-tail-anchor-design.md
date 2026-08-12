@@ -3,10 +3,14 @@
 **Date:** 2026-08-12 · **Author:** claude-code steward session (operator grant: "proceed on
 all of the open queue items") · **Issue:** es#118 · **Subsumes:** the reachable half of
 es#124's second residue; the #117 forged-amendment-on-tail residue class (SECURITY.md)
-· **Rev 3** — rev 1 reviewed by a three-lens panel (§10.1), rev 2 re-checked adversarially
-(§10.2). Both rounds found real defects; two of round 2's were holes rev 2's own *fixes*
-created. Every claim in §10.2 was independently re-verified against the source before
-this revision (citations inline).
+· **Rev 4** — three independent review rounds before any implementation: a three-lens panel
+(§10.1), a focused adversarial re-check (§10.2), and a fresh convergence check by a
+different reviewer (§10.3). Every round found real defects, and **three of them were holes
+created by the previous round's own fixes** — which is why each round is gated by a fresh
+adversary rather than a re-read. Every claim in §10.2 and §10.3 was independently
+re-verified against the source before being acted on (citations inline). The architecture
+— receipt-sha inline, off-box anchor, append-only epoch, gate inside `write_checkpoint` —
+has now held unchanged across two fresh adversaries; §10.3's verdict is **converged**.
 
 ## 1. Problem
 
@@ -43,6 +47,16 @@ in the workspace tree with ordinary file tools (so it can **append** a well-form
 checkpoint as easily as edit one: `prev_checkpoint_sha256` is computable from the readable
 tail), it can **invoke processes** (including custody verbs) and **control their
 environment**, and it cannot write the user home directly.
+
+⚠ **That last clause is an ASSUMPTION with a named external dependency, not a property this
+contract enforces.** Nothing in custody code prevents a user-home write; it rests entirely
+on the harness permission control (this fleet's `safety_gate` hook) covering *every* write
+path — including a spawned shell doing `echo x > ~/.mission-custody/anchors/...`. This fleet
+found and fixed exactly that class of Bash bypass in its own safety gate within the last two
+weeks, so the dependency is live, not hypothetical. Stating it as a flat attacker property
+would be the same "writing a control is not installing one" error named below. If that
+control does not cover shell writes, the anchor's off-box property degrades to the
+user-account-scoped case already disclosed.
 
 That last pair is load-bearing and rev 2 got it wrong. Process invocation means:
 - the attacker can run `anchor-repair` and have the process write the anchor **on its
@@ -119,11 +133,26 @@ advances the anchor onto it → `anchor-repair`'s delta print never runs and the
 sees the forged amendment.
 
 **Therefore: `MissionStore.write_checkpoint` evaluates the anchor gate itself, against the
-same bytes it uses to compute `prior_sha`** (`custody_store.py:115`). One rule closes four
+same bytes it uses to compute `prior_sha`** (`custody_store.py:115`). This closes three
 holes: no verb can be miscategorized; the verify-then-write race (§10.2 E1) cannot open,
-because the conclusion and the write are justified by one read of one byte sequence; a
-forged tail cannot declare its own guard mode; and the enforce gate keeps evaluating
-correctly after an honest crash.
+because the write is justified by the same read that approved it; and a *forged* tail
+cannot declare its own guard mode (an *unforged* one still can via the sanctioned `amend`
+path — §4.7 residue). It does **not** by itself make the enforce gate evaluate correctly
+after an honest crash — rev 3 claimed that and it was false; §4.7's strictest-of rule is
+what delivers it.
+
+**Revision 1 is exempt.** At `Mission.open` no chain exists, so there is no tail to verify
+and no anchor to check; the anchor is minted by the post-publish advance. (The @1 code
+already structures this correctly — the `prior_sha` comparison lives inside the
+`else:` of `if revision == 1`, `custody_store.py:111` — but a literal reading of the state
+list below would call `load_latest()` on an empty chain and make opening a mission
+impossible, so the exemption is stated rather than left to be rediscovered.)
+
+**An anchor present over an EMPTY chain refuses at open**, naming `anchor-adopt`. Reachable
+without an attacker: delete a mission dir and reopen the same mission-id at the same path
+(§4.2a keys on path, so the key is unchanged); discovery skips checkpoint-less dirs
+(`custody_mission.py:211-212`) so `open` would succeed at r1, and then the advance-only CAS
+refuses to regress the anchor — wedging the mission permanently at its first r2 write.
 
 **Anchor file** `<anchor-root>/anchors/<mission-key>.json`:
 `{mission_id, revision, checkpoint_sha256, resolved_root, adopted_utc, adoption_revision,
@@ -146,7 +175,11 @@ none, and stays exactly as unbricked as before.
 - pinned sha not found on disk, pinned file's sha differs, anchor ahead, not an ancestor,
   or **unparseable/shape-invalid** → **`AnchorMismatch`** (refuse loudly). Corruption and
   a missing pinned file MUST NOT alias to "absent" — absence is the one state the in-scope
-  attacker cannot fabricate.
+  attacker cannot fabricate **at a given root**. Under §4.2b's env-redirect absence is
+  trivially fabricable at the *attacker's* root, and absence→TOFU is the most permissive
+  state; the two clauses are in tension by construction and must be read together. What
+  redirection buys the attacker is a *private* anchor, not control of the steward's — the
+  honest steward's next run still reads `lagging` and refuses.
 - absent → **TOFU-adopt** the fully-verified tail, loudly, recording `adopted_utc`,
   `adoption_revision`, and `resolved_root`. First run the **mission_id secondary scan**:
   another anchor carrying the same `mission_id` means path-aliasing, relocation, or a
@@ -272,24 +305,55 @@ no schema change and are printed by `status --brief`, so an acceptor cannot read
 - `status --brief` gains `record` (epoch), `anchor` (state, `adopted_utc`,
   `adoption_revision`, effective root), and the backfilled/minted-chained receipt counts.
 
-### 4.7 Hook/gate — authority comes from the pinned checkpoint
+### 4.7 Hook/gate — STRICTEST-OF pinned and tail (rev-4 correction)
 
 - **Hook-internal errors** (crash, timeout, unreadable payload) → fail open LOUD.
-- **When the anchor is not `verified`, guards and authority are evaluated from the
-  anchor-PINNED checkpoint**, which is on disk and sha-verified by the lagging precondition
-  itself. Rev 2 left "which record determines enforce-armed" unspecified; read from the
-  tail — the obvious implementation — the attacker appends a forged checkpoint with a grown
-  `amendments` list (satisfying `_verify_manifest`, `custody_mission.py:296-302`) and
-  `guard_mode: "audit"`, and the gate then downgrades its own tamper response to
-  log-and-allow. The attacker-controlled record would decide how seriously its own tamper
-  signal is taken.
-  Consequences of the pinned rule: guarded calls are judged against the last verified
-  guards, unguarded calls proceed, and the mission simply cannot **write** until repaired —
-  so an honest crash does not brick the harness.
+- **When the anchor is not `verified`, guards are the STRICTEST-OF the pinned and tail
+  records**: the UNION of their guard rules, and `enforce` if EITHER says enforce.
+
+  Rev 3 said *pinned-only*, and that was asymmetric in the wrong direction — verified
+  reachable **with no attacker at all**. §4.2 makes a failed anchor advance warn-and-succeed
+  (correctly — the alternative bricks a mission whenever the anchor root blinks), so the
+  chain legitimately sits one revision ahead whenever the root is briefly unwritable. If
+  *that* revision is the `amend` that armed `guard_mode: enforce`, the pinned record is the
+  pre-arming one, and `evaluate()` returns `{"decision": "allow", "mode": "inert",
+  "reason": "no guards armed"}` (`custody_gate.py:106-110`, verified) — **the operator's
+  just-armed enforce guard is silently disarmed.** Silently, because the guard-log is only
+  written `if verdict["matched"]` (`custody_gate.py:154`), and nothing matches when nothing
+  is armed, so §4.7's promised `degraded-anchor` entry never appears either. One revision of
+  lag is exactly enough when it is the arming revision, and custody *writes* freezing does
+  not help: the agent's tool calls keep flowing through a gate that now allows everything.
+
+  Strictest-of keeps rev 3's genuine win — a forged tail can only ever **add** restrictions,
+  i.e. produce a false block, which this module's own doctrine calls the safe direction
+  (`custody_gate.py:11-13`: a false block names its rule and is discharged by an `amend`;
+  a false allow silently retires custody) — while making a lagging anchor incapable of
+  disarming anything.
+- **A tail claiming `completed`/`cancelled` over an OPEN pinned record is a loud refusal,
+  never `NoActiveMission`.** Second, distinct hole, verified: activeness is decided from the
+  TAIL's status (`custody_mission.py:228`) before the gate ever reads authority, and
+  `run_gate` converts `NoActiveMission` into `{"decision": "allow", "mode": "inert"}`
+  (`custody_gate.py:139-141`). So appending a forged checkpoint with `status: "completed"`
+  disarms every guard on a live mission — the same "attacker-controlled record decides how
+  seriously its own tamper is taken" shape, moved one layer out. The anchor is the first
+  artifact that ever recorded *"this mission was open at rN"* outside the workspace, so @2
+  is the first release that **can** close this.
 - **True `AnchorMismatch`** (pinned record unresolvable): block on enforce, loud-allow on
   audit.
-- Audit missions log a distinguishable `degraded-anchor` guard-log entry and allow.
+- Audit missions log a distinguishable `degraded-anchor` guard-log entry and allow. That
+  entry must be written on the degraded path itself, not only on a rule match.
 - The next `status`/`resume`/`audit` refuses regardless, so tamper cannot stay quiet.
+- **Known residue, disclosed (pre-existing @1, not a @2 regression):** the guard-change
+  sanction is **length-only** — `len(latest_amendments) <= len(baseline_amendments)`
+  (`custody_mission.py:298-302`), never reading amendment text — and `amend` accepts
+  `--guard-mode` with no `--guards-file` (`custody_cli.py:230-236`). Since §2 grants the
+  attacker process invocation *including custody verbs*, `amend --text "anything"
+  --guard-mode audit` is a **chain-legal enforce→audit downgrade through the sanctioned
+  path**, which `write_checkpoint` then blesses and the anchor advances onto. §4.2's "a
+  forged tail cannot declare its own guard mode" is true but incomplete: an *unforged* tail
+  can. Recorded in SECURITY.md; a guard-**weakening** amend deserves the same
+  interactive-consent treatment §4.6 gives `anchor-repair`, tracked separately rather than
+  smuggled into @2.
 
 ### 4.8 Discovery
 
@@ -303,14 +367,34 @@ verb with one decoy mission dir (`custody_mission.py:233-235`) and push the gate
 verb — it must not be swallowed into `NoActiveMission`, which would permit a duplicate
 `open`.
 
-### 4.9 Acceptance verdicts enter the chain (free win, high value)
+### 4.9 Acceptance verdicts enter the chain
 
-The completing checkpoint's note becomes `PASS: <reason>; verdict_sha256=<hex>` (same for
-FAIL/INCONCLUSIVE). No schema change, no new field: the verdict file's hash now rides the
-hash-chained notes, so `acceptor_id` and `assurance_tier` become tamper-evident. A PASS
-checkpoint is terminal and never sealed by a successor — which is exactly why this only
-works now: **the anchor pins it at write time.** The two halves of @2 combine to protect
-the record that makes "done" defensible.
+Today `_store_verdict` writes `verdicts/<rev>-<verdict>.json` outside the chain
+(`custody_mission.py:502-504`) and the completing note is only `f"PASS: {reason}"` (`:903`),
+so `acceptor_id` and `assurance_tier` are nowhere in the chain. The verdict file's hash
+therefore rides the hash-chained notes.
+
+**Format: machine fields FIRST, behind a reserved prefix** — `verdict PASS <sha256hex>:
+<reason>` — and `verdict ` joins `_RESERVED_NOTE_PREFIXES`. Rev 3 proposed
+`PASS: <reason>; verdict_sha256=<hex>`, which had two defects: `"PASS: "` is **not** a
+reserved prefix (`custody_mission.py:32-35`), so ordinary `note()` can forge it — and rev 3
+made it the first note-parsing surface whose prefix is unreserved, while every existing
+note-parser reads a reserved one (`_historical_effect_path` at `:443`,
+`_retired_receipt_ids` at `:474`). Worse, `reason` is free operator text
+(`custody_cli.py:138`), so a reason *ending* in `; verdict_sha256=<attacker-hex>` is
+byte-indistinguishable from the machine suffix, and whether the attacker wins depends on
+whether the reader takes the first or last match. Machine-fields-first kills both.
+(`"cleared: "` at `:939` is likewise unreserved — folded in.)
+
+**A terminal PASS needs a reader, or "tamper-evident" is unsupported.** The record is pinned
+at write time, but two gaps: its final anchor advance can fail warn-and-succeed like any
+other and — because no verb may write after `completed` — there is no future write to retry
+it; and **no CLI surface can load a completed mission at all** (`Mission.load` excludes
+completed/cancelled at `:228`, every verb but `open`/`gate` routes through it, and discovery
+is pathless by contract). `verify_mission_custody.py` validates record *shape* only — not
+the chain, not the anchor, not the verdict hash. So @2 adds **`verify --mission-id`**, a
+mission-addressable surface that checks chain + anchor + `verdict_sha256` on a completed
+mission. Without it the tamper would be *recorded*, not *evident*.
 
 ## 5. What @2 deliberately does not do
 
@@ -334,7 +418,22 @@ deployed, and this fleet currently has concurrent agents landing changes) → mi
 Existing suites stay green with **two sanctioned modifications**: a conftest-level
 `--anchor-root` injection so tests never write into the real `~/.mission-custody` (on this
 device, the sacred C:), and deliberate, enumerated updates to tamper assertions whose error
-KIND legitimately changes. New coverage:
+KIND legitimately changes.
+
+⚠ **The dangerous direction is not a test that goes red — it is one that stays GREEN while
+testing nothing.** `test_amendments_cannot_be_rewritten`
+(`test_custody_mission.py:202-217`) forges by rewriting the tail **in place** and asserts
+`except (CustodyError, StoreError)`. Under @2 the rewritten tail's sha no longer matches the
+anchor, so `AnchorMismatch` (a `StoreError`) fires *before* `_verify_manifest` ever runs —
+the broad except swallows the substitution and the test silently stops covering the
+append-only amendment check. Contrast `test_tail_guard_tamper_without_amendment_detected`
+(`:910-927`), which forges via `store.write_checkpoint`, so the anchor advances onto the
+forgery and `_verify_manifest` still runs: **in-place edits erode, appends do not.**
+Therefore every manifest-tamper test MUST assert the **specific** error kind (or arrange the
+anchor onto the forged tail first). Auditing the existing suite for this pattern is a
+required implementation step, not a nicety.
+
+New coverage:
 
 - **validator**: @2 matrix; invalid corpus (≥8); `checkpoint@3` → EPOCH-TOO-NEW.
 - **store**: read-path epoch monotonicity (reject @1-after-@2 append; reject double 1→2);
@@ -393,6 +492,38 @@ attacker-constructible on demand. Also found: epoch enforcement was write-path o
 migration blessed P6-tampered state; and the anchor key was unstable on this fleet's
 Y:/UNC/case spellings. Rev 2 deleted auto-advance, moved epoch checks to the read path,
 hardened migration, stabilized the key, and added the `_receipt_entries` chokepoint.
+
+### 10.3 Rev 3 → rev 4 (fresh convergence check; every claim re-verified in source)
+
+A **different** reviewer (not the one who proposed the `write_checkpoint` placement — no
+actor certifies its own recommendation) scoped to four questions. It **proved the E1 race
+closed** and validated quarantine, migration, and anchor-repair mechanically. It found two
+CRITICALs, both at leaf level, and one of them was again mine:
+
+- **§4.7 pinned-only was asymmetric in the wrong direction** — and reachable with **no
+  attacker**. §4.2's warn-and-succeed makes a one-revision lag a permanent architectural
+  possibility; if that revision is the `amend` that armed enforce, pinned-only evaluates the
+  pre-arming record and `evaluate()` returns inert-allow, **silently** (the guard-log writes
+  only on match). → strictest-of.
+- **A forged `completed` tail disarms every guard** via `NoActiveMission` → inert gate;
+  §4.8's protection was scoped to `AnchorMismatch` and never fired for `lagging`.
+- **Rev 3 repeated rev 2's error class in one sentence**: "the enforce gate keeps evaluating
+  correctly after an honest crash" was falsified by the finding above. Corrected in §4.2.
+- **§4.9's note format was unreserved and injectable**; **a completed mission has no reader
+  at all**, so "tamper-evident" was unsupported → `verify --mission-id`.
+- **§7 silent test erosion**: an in-place tamper test would stay GREEN while testing nothing.
+- **§2 stated an external control as an attacker property** — the same
+  writing-≠-installing error the section itself invokes.
+- Confirmed and **argued against changing**: the single-receipt P6 residue, migration
+  preconditions, `receipt_refs` as a string list, the `write_checkpoint` placement, and
+  warn-and-succeed. Also confirmed `manifest['scope']` is consumed nowhere and rev 3 leans
+  on it nowhere — with the nuance that it *is* tamper-checked by `_verify_manifest`'s byte
+  comparison while being enforced by nothing, which is precisely the shape a reader mistakes
+  for a control (→ SECURITY.md).
+
+Verdict: **CONVERGED** — the architecture held under a second fresh adversary, and every
+remaining defect sits at a leaf (which record supplies authority, how a note is formatted,
+which surface reads it), the defect profile of a design settling rather than moving.
 
 ### 10.2 Rev 2 → rev 3 (focused adversarial re-check; every claim re-verified in source)
 
