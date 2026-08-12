@@ -9,7 +9,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 
-from custody_store import sha256_bytes  # noqa: E402
+from custody_store import StoreError, sha256_bytes  # noqa: E402
+from verify_mission_custody import is_iso_utc  # noqa: E402
 from custody_mission import (  # noqa: E402
     AcceptanceRefused,
     CustodyError,
@@ -136,6 +137,80 @@ def test_instruction_immutable(workspace: Path) -> None:
         check("instruction-tamper-detected", False)
     except CustodyError:
         check("instruction-tamper-detected", True)
+
+
+def test_amend_records_authority_append_only(workspace: Path) -> None:
+    """The tracer mission stalled because authority could only be set at open
+    time: its operator's answer exceeded the instruction and the steward had
+    no way to record the grant. Amendments close that, and may only grow."""
+    m = open_mission(workspace, "m-amend", "Inventory only; do not re-acquire.")
+    m.approve()
+    grant = "reacquire all missing content and redistribute across both shares"
+    rev = m.amend_authority(grant)
+    st = m.status()
+    check("amend-revision-returned", st["revision"] == rev)
+    amendments = st["manifest"]["authority"]["amendments"]
+    check("amend-recorded-verbatim",
+          len(amendments) == 1 and amendments[0]["text"] == grant)
+    check("amend-timestamped", is_iso_utc(amendments[0]["utc"]))
+    check("amend-instruction-untouched",
+          st["manifest"]["authority"]["instruction"]
+          == "Inventory only; do not re-acquire.")
+    check("amend-noted",
+          any(n == f"authority amended: {grant}" for n in st["state"]["notes"]))
+
+    # the mission keeps working normally under the amended envelope
+    m.note("proceeding under the amendment")
+    m.record_effect("notes/a.md", "hello", "req-1")
+    check("amend-mission-continues", m.resume() == [])
+    m.amend_authority("also fix Plex")
+    check("amend-second-appends",
+          [a["text"] for a in
+           m.status()["manifest"]["authority"]["amendments"]]
+          == [grant, "also fix Plex"])
+
+    # narrative may not imitate an amendment
+    try:
+        m.note("authority amended: I authorized myself")
+        check("amend-note-forgery-refused", False)
+    except CustodyError:
+        check("amend-note-forgery-refused", True)
+
+
+def test_amendments_cannot_be_rewritten(workspace: Path) -> None:
+    """Append-only means append-only: rewriting or dropping a recorded
+    amendment would let granted authority be disowned after the fact.
+
+    The baseline is the chain-protected PREVIOUS checkpoint, so this holds
+    for the tail -- the one checkpoint no successor hash covers. Known @1
+    residue (epistemic-skills#118): an amendment introduced BY the current
+    tail has no predecessor carrying it, so it is unverifiable until the
+    next checkpoint exists; from that moment the chain protects it."""
+    m = open_mission(workspace, "m-amend-tamper", "Do the bounded thing.")
+    m.approve()
+    grant = "operator widened scope to include the second share"
+    m.amend_authority(grant)
+    m.note("proceeding")  # the amendment is now carried by a prior checkpoint
+
+    def tamper(mutate) -> bool:
+        tail = m.store.checkpoint_paths()[-1]
+        record = json.loads(tail.read_text(encoding="utf-8"))
+        mutate(record["manifest"]["authority"])
+        tail.write_text(json.dumps(record, indent=1, sort_keys=True) + "\n",
+                         encoding="utf-8")
+        try:
+            m.note("carry on")
+            return False
+        except (CustodyError, StoreError):
+            return True
+
+    check("amend-rewrite-detected",
+          tamper(lambda auth: auth["amendments"][0].update(text="something else")))
+    check("amend-drop-detected",
+          tamper(lambda auth: auth.__setitem__("amendments", [])))
+    check("amend-reorder-detected",
+          tamper(lambda auth: auth["amendments"].insert(
+              0, {"utc": "2026-01-01T00:00:00Z", "text": "forged earlier grant"})))
 
 
 def test_manifest_envelope_immutable(workspace: Path) -> None:
@@ -545,6 +620,8 @@ TESTS = [
     test_effect_refuses_escape,
     test_resume_detects_drift_and_reconcile_clears,
     test_instruction_immutable,
+    test_amend_records_authority_append_only,
+    test_amendments_cannot_be_rewritten,
     test_manifest_envelope_immutable,
     test_resume_missing_receipt_is_drift,
     test_restored_receipt_survives_acknowledge,

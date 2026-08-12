@@ -29,7 +29,7 @@ _RETIRED_NOTE = "receipt loss acknowledged: "
 # one would let ordinary narrative forge machine state.
 _RESERVED_NOTE_PREFIXES = (
     "effect: ", "reconciled: ", "drift detected: ", "receipt restored: ",
-    _RETIRED_NOTE,
+    "authority amended: ", _RETIRED_NOTE,
 )
 
 
@@ -163,19 +163,48 @@ class Mission:
     # -- internal helpers ---------------------------------------------------
 
     def _verify_manifest(self, latest: dict) -> None:
-        """The whole manifest is immutable from open to close (no code path
-        amends it in @1). Verifying only the instruction left every other
-        authority field -- scope, permissions, stop_rules, and critically
-        acceptance.required_tier -- silently editable on the tail checkpoint,
-        which no successor hash references."""
-        origin_path = self.store.checkpoint_paths()[0]
-        origin = json.loads(origin_path.read_text(encoding="utf-8"))
+        """The manifest is immutable from open to close EXCEPT for
+        authority.amendments, which is append-only. Verifying only the
+        instruction left every other authority field -- scope, permissions,
+        stop_rules, and critically acceptance.required_tier -- silently
+        editable on the tail checkpoint, which no successor hash references.
+        Amendments are the one sanctioned way authority changes, and they
+        may only GROW: rewriting or dropping a recorded amendment would let
+        granted authority be quietly disowned after the fact."""
+        paths = self.store.checkpoint_paths()
+        origin = json.loads(paths[0].read_text(encoding="utf-8"))
         origin_manifest = origin["manifest"]
         latest_manifest = latest["manifest"]
-        if origin_manifest != latest_manifest:
+        # No equality fast path: dropping an amendment makes the manifest
+        # equal to the origin again, so "same as origin" is not proof of
+        # integrity once amendments exist.
+        #
+        # The append-only baseline is the PREVIOUS checkpoint, not the origin:
+        # the origin's amendment list is empty by construction, so comparing
+        # against it would let any already-recorded amendment be rewritten on
+        # the tail -- the one checkpoint no successor hash protects. Interior
+        # checkpoints cannot be edited without breaking the chain, so the
+        # chain-protected predecessor is the trustworthy baseline.
+        baseline = origin_manifest
+        if len(paths) >= 2:
+            baseline = json.loads(
+                paths[-2].read_text(encoding="utf-8"))["manifest"]
+        baseline_amendments = baseline["authority"]["amendments"]
+        latest_amendments = latest_manifest["authority"]["amendments"]
+        if latest_amendments[:len(baseline_amendments)] != baseline_amendments:
+            raise CustodyError(
+                "authority.amendments is append-only; recorded amendments "
+                "were rewritten or dropped (tampered)")
+
+        # Everything except the amendments list must be byte-identical.
+        origin_rest = json.loads(json.dumps(origin_manifest))
+        latest_rest = json.loads(json.dumps(latest_manifest))
+        origin_rest["authority"]["amendments"] = []
+        latest_rest["authority"]["amendments"] = []
+        if origin_rest != latest_rest:
             differing = sorted(
-                key for key in set(origin_manifest) | set(latest_manifest)
-                if origin_manifest.get(key) != latest_manifest.get(key))
+                key for key in set(origin_rest) | set(latest_rest)
+                if origin_rest.get(key) != latest_rest.get(key))
             raise CustodyError(
                 "manifest changed since mission open (tampered): "
                 + ", ".join(differing))
@@ -184,6 +213,7 @@ class Mission:
                      note: str | None = None, frontier: str | None = None,
                      add_receipt_id: str | None = None,
                      receipt_ids: list[str] | None = None,
+                     manifest: dict | None = None,
                      unresolved_verdicts: list[str] | None = None) -> dict:
         notes = list(latest["state"]["notes"])
         if note is not None:
@@ -205,7 +235,7 @@ class Mission:
             "revision": latest["revision"] + 1,
             "status": status,
             "prev_checkpoint_sha256": sha256_file(latest_path),
-            "manifest": latest["manifest"],
+            "manifest": manifest if manifest is not None else latest["manifest"],
             "state": state,
             "receipt_ids": receipt_ids,
             "written_utc": now_utc(),
@@ -377,6 +407,38 @@ class Mission:
                           unresolved_verdicts=remaining,
                           note=f"effect: {artifact_relpath}")
         return receipt
+
+    def amend_authority(self, text: str) -> int:
+        """Record a VERBATIM operator grant that changes the mission's
+        authority, appended to authority.amendments.
+
+        The tracer mission stalled at exactly this point -- its operator's
+        answer exceeded the recorded instruction, and the steward could only
+        escalate and stop, because the schema had an amendments list that no
+        method or CLI surface could ever write. Authority that can only be
+        set at open time forces a false choice between acting outside the
+        envelope and abandoning the mission.
+
+        This records authority; it does not grant it. Like the opening
+        instruction, the text is the operator's words carried verbatim, and
+        the contract cannot verify the operator said them -- that is the
+        runtime boundary's job. What it does guarantee is that the grant is
+        durable, timestamped, hash-chained, and append-only: once recorded,
+        an amendment can never be rewritten or quietly dropped."""
+        latest, path = self.store.load_latest()
+        self._verify_manifest(latest)
+        if latest["status"] not in _OPEN_STATES:
+            raise IllegalTransition(
+                f"cannot amend_authority: status is {latest['status']!r}")
+        if not isinstance(text, str) or not text.strip():
+            raise CustodyError("amendment text required (verbatim operator grant)")
+        manifest = json.loads(json.dumps(latest["manifest"]))
+        manifest["authority"]["amendments"].append(
+            {"utc": now_utc(), "text": text})
+        new = self._write_next(latest, path, status=latest["status"],
+                                manifest=manifest,
+                                note=f"authority amended: {text}")
+        return new["revision"]
 
     def note(self, text: str) -> int:
         latest, path = self.store.load_latest()
