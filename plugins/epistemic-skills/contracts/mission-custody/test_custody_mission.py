@@ -583,6 +583,112 @@ def test_superseded_receipt_never_shadows_the_current_one(workspace: Path) -> No
           m.status()["status"] == "active" and m.resume() == [])
 
 
+def test_continuity_surfaces_unreceipted_mutation(workspace: Path) -> None:
+    """The one custody gap drift detection structurally cannot see: a steward
+    re-effects over a tampered file WITHOUT resuming first, so the current
+    receipt truthfully describes content nobody sanctioned and resume reads
+    clean forever. The evidence was always in the receipts -- each records the
+    artifact hash before and after its own write -- and nothing read it."""
+    m = open_mission(workspace, "m-continuity", "Surface the unseen gap.")
+    m.approve()
+    m.record_effect("notes/a.md", "v1", "req-1")
+    m.record_effect("notes/a.md", "v2", "req-2")
+    check("continuity-clean-chain", m.continuity_breaks() == [])
+
+    (workspace / "notes" / "a.md").write_text("TAMPERED", encoding="utf-8")
+    m.record_effect("notes/a.md", "TAMPERED", "req-3")
+    check("continuity-drift-oracle-blind", m.resume() == [])
+
+    breaks = m.continuity_breaks()
+    check("continuity-break-found", len(breaks) == 1)
+    b = breaks[0]
+    check("continuity-names-artifact", b["artifact_path"] == "notes/a.md")
+    check("continuity-names-both-receipts",
+          b["prior_request_id"] == "req-2" and b["request_id"] == "req-3")
+    check("continuity-flags-no-op-write", b["no_op_write"] is True)
+    check("continuity-raises-no-obligation",
+          m.status()["state"]["unresolved_verdicts"] == []
+          and m.status()["status"] == "active")
+
+    # honest legitimate history stays clean: reconcile after real drift is a
+    # receipted event and must NOT read as a break
+    m2 = open_mission(workspace, "m-continuity-ok", "Legitimate history.")
+    m2.approve()
+    m2.record_effect("notes/b.md", "v1", "r1")
+    (workspace / "notes" / "b.md").write_text("drifted", encoding="utf-8")
+    m2.resume()
+    m2.reconcile("notes/b.md", "v1", "r2")
+    # a reconciliation FOLLOWS a real mutation, so the break is real -- but it
+    # is answered for, and only unanswered breaks are news
+    rec = m2.continuity_breaks()
+    check("continuity-reconcile-break-recorded", len(rec) == 1)
+    check("continuity-reconcile-marked-answered",
+          rec[0]["already_reconciled"] is True)
+    check("continuity-unanswered-only-in-the-blind-case",
+          [b for b in rec if not b["already_reconciled"]] == []
+          and [b for b in breaks if not b["already_reconciled"]] == breaks)
+
+
+def test_continuity_is_silent_on_sanctioned_recovery(workspace: Path) -> None:
+    """The check must not fire on the recovery flow this contract built.
+    Retirement removes the lost id from receipt_ids, so ordering the chain
+    from that list compared two receipts that were never adjacent and
+    invented a break across the gap where the retired one honestly sat --
+    firing on ordinary correct operation, which trains stewards to ignore
+    the signal (merge-gate review of #125). Order comes from the chain."""
+    m = open_mission(workspace, "m-mid-retire", "Silence on correct operation.")
+    m.approve()
+    m.record_effect("P.txt", "v1", "id-A")
+    m.record_effect("P.txt", "v2", "id-B")
+    m.store.receipt_path("id-B").unlink()
+    m.resume()
+    m.acknowledge_receipt_loss("id-B")
+    m.record_effect("P.txt", "v3-recovered", "id-C")
+
+    st = m.status()
+    check("sanctioned-recovery-is-clean",
+          st["state"]["unresolved_verdicts"] == [] and st["status"] == "active")
+    check("sanctioned-recovery-no-phantom-break", m.continuity_breaks() == [])
+
+    # deeper: three receipts, the LAST retired, then recovered
+    m2 = open_mission(workspace, "m-deep-retire", "Deeper chain.")
+    m2.approve()
+    for content, rid in (("v1", "A"), ("v2", "B"), ("v3", "C")):
+        m2.record_effect("Q.txt", content, rid)
+    m2.store.receipt_path("C").unlink()
+    m2.resume()
+    m2.acknowledge_receipt_loss("C")
+    m2.record_effect("Q.txt", "v4", "D")
+    check("deep-recovery-no-phantom-break", m2.continuity_breaks() == [])
+
+    # and the real thing is still caught (a fix that silences everything is
+    # worse than the bug it fixes)
+    (workspace / "Q.txt").write_text("TAMPERED", encoding="utf-8")
+    m2.record_effect("Q.txt", "TAMPERED", "E")
+    real = m2.continuity_breaks()
+    check("real-tampering-still-caught",
+          len(real) == 1 and real[0]["request_id"] == "E"
+          and real[0]["already_reconciled"] is False)
+
+
+def test_request_ids_are_never_reusable(workspace: Path) -> None:
+    """An id whose receipt file merely vanished is not free for reuse: the
+    chain still remembers what it was minted against, so rebinding it
+    backdates the new write to the old event -- which made a legitimate
+    reconciliation read as unreconciled (merge-gate review of #125)."""
+    m = open_mission(workspace, "m-id-reuse", "Ids are spent when used.")
+    m.approve()
+    m.record_effect("x.md", "v1", "dup")
+    m.store.receipt_path("dup").unlink()
+    try:
+        m.record_effect("y.md", "other", "dup")
+        check("id-reuse-refused-after-receipt-vanishes", False)
+    except CustodyError:
+        check("id-reuse-refused-after-receipt-vanishes", True)
+    check("id-reuse-no-artifact-written",
+          not (workspace / "y.md").exists())
+
+
 def test_reconcile_clears_exactly_one_marker(workspace: Path) -> None:
     """One receipt must not retire two unrelated obligations (merge-gate
     blocker 1): drift clears through reconcile with a FRESH id; the loss
@@ -781,6 +887,9 @@ TESTS = [
     test_obligations_match_by_artifact_not_by_string,
     test_drift_marker_matches_by_artifact,
     test_superseded_receipt_never_shadows_the_current_one,
+    test_continuity_surfaces_unreceipted_mutation,
+    test_continuity_is_silent_on_sanctioned_recovery,
+    test_request_ids_are_never_reusable,
     test_reconcile_clears_exactly_one_marker,
     test_corrupt_receipt_degrades_to_drift,
     test_effect_duplicate_id_leaves_workspace_untouched,

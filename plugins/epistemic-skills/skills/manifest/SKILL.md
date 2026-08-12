@@ -34,7 +34,10 @@ else.
    exit 3: reconcile each drifted artifact (re-verify against live state
    first); a RECEIPT-MISSING finding clears only via `acknowledge-loss` —
    lost provenance is recorded, never re-minted — then re-cover the artifact
-   with a fresh effect. Then continue.
+   with a fresh effect. Then continue. A resume that reports an
+   UNRECONCILED continuity break is telling you an artifact changed between
+   two receipted events with nothing answering for it -- `audit` names the
+   pair; that gap is the one drift detection cannot see.
 3. **Advance** — one bounded step inside authority. Durable workspace files go
    through `effect --path <ws-relative> --content-file <file> --request-id <id>`
    IN PLACE of Write/Edit — effect IS the write: it writes the file and mints
