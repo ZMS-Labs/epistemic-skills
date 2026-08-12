@@ -226,36 +226,15 @@ def uncompared_scope_entries(manifest: dict) -> dict:
 
 _TOKEN_TRIM = "\"'`,;:()[]{}<>"
 
-# A path OCCURRENCE is not a grant. "secrets.env remains forbidden" names the
-# path and authorises nothing -- yet a token match read it as a discharge, so
-# the one amendment that explicitly DENIED authority unlocked the PASS. Prose
-# cannot establish grant semantics (es#150 proposes the structured field that
-# can); until then a segment carrying a denial marker cannot discharge.
-#
-# The error direction is deliberate: a genuine grant phrased with one of these
-# words is a false BLOCK, discharged by re-amending in plainer terms. Reading a
-# prohibition as permission is a false ALLOW that writes "clean" over the exact
-# work the operator forbade.
-_DENIAL_MARKERS = (
-    "forbidden", "prohibited", "off-limits", "off limits", "not authorised",
-    "not authorized", "unauthorised", "unauthorized", "denied", "deny",
-    "must not", "may not", "cannot", "can not", "can't", "do not", "don't",
-    "never", "no longer", "without authorisation", "without authorization",
-    "out of scope", "out-of-scope", "not permitted", "not allowed",
-)
-
-
-def _segments(text: str):
-    """Sentence-ish spans, so a denial in one clause cannot veto a grant in
-    another -- and a grant in one cannot launder a denial in its own."""
-    for line in text.replace("\\", "/").splitlines():
-        for part in re.split(r"(?<=[.;!?])\s+", line):
-            if part.strip():
-                yield part
-
-
 def _amendment_names(text: str, rel_path: str) -> bool:
-    """Does this verbatim operator grant name `rel_path`?
+    """Does this amendment MENTION `rel_path`? A hint for the acceptor.
+
+    This was a gate and is now a hint, which is the honest reading of what a
+    substring test can establish. It says the operator's text mentions a path.
+    It cannot say the operator granted it -- "secrets.env remains forbidden"
+    mentions secrets.env and authorises nothing. Discharge now requires an
+    explicit acceptor acknowledgement (`scope_ack`); this only tells the
+    acceptor WHERE TO LOOK.
 
     Token-wise, never as a raw substring: a substring test would let an
     amendment mentioning `data.py` discharge drift on `a.py`, which is the
@@ -264,13 +243,7 @@ def _amendment_names(text: str, rel_path: str) -> bool:
     and they go through the same `_glob_regex` the scope entries use."""
     from custody_gate import _glob_regex, _norm_path
     target = _norm_path(rel_path)
-    for segment in _segments(text):
-        lowered = segment.lower()
-        if any(marker in lowered for marker in _DENIAL_MARKERS):
-            # This clause names the path in order to FORBID it. Reading it as
-            # a grant is how "secrets.env remains forbidden" unlocked a PASS
-            # for writing secrets.env.
-            continue
+    for segment in text.replace("\\", "/").splitlines():
         for raw in segment.split():
             token = raw.strip(_TOKEN_TRIM).rstrip(".")
             if not token or not _is_path_pattern(token):
@@ -1023,41 +996,6 @@ class Mission:
         new = self._write_next(latest, path, status="verifying", note="verification started")
         return new["revision"]
 
-    def _discharged_by_amendment(self, rel_path: str) -> bool:
-        """Does ANY authority amendment NAME this artifact?
-
-        The first version accepted "some amendment was recorded after the
-        drift", which made every later grant a universal key: a cost allowance
-        saying nothing about any boundary discharged an out-of-scope write it
-        never mentioned. The fix was to require the amendment to NAME the
-        artifact -- as a standalone token, a glob, or a directory prefix.
-
-        ORDERING WAS THEN DROPPED, deliberately. Once naming is required it
-        earns nothing: the attack it was built for -- an unrelated grant
-        discharging unrelated drift -- is already dead, because an unrelated
-        grant names nothing. What ordering still did was PUNISH THE RIGHT
-        BEHAVIOUR. Authorising before acting was refused while authorising
-        after was accepted, and the only way through was to append a duplicate
-        amendment to satisfy the machine. A rule that makes pre-authorisation
-        the harder path is inverted, and a rule whose only remaining effect is
-        to extract a redundant record is ceremony.
-
-        (The test that claimed to prove ordering could not see it: its fixture
-        used an amendment that named nothing, so it passed identically with
-        the ordering rule removed.)
-
-        Operator text is never compiled as a regex -- only tokens
-        `_is_path_pattern` accepts become globs, and only those that name
-        something specific (`_names_a_specific_path`).
-
-        The error direction is chosen. A false BLOCK is discharged by
-        re-running `amend` with the path named, which leaves the record
-        strictly better than before. A false ALLOW writes "the chain is clean"
-        over work no grant covers, and nothing downstream can tell."""
-        latest, _ = self.store.load_latest()
-        return any(_amendment_names(a.get("text", ""), rel_path)
-                   for a in latest["manifest"]["authority"]["amendments"])
-
     def _resolved_relpath(self, rel: str) -> str | None:
         """Where `rel` actually lands inside the workspace, or None.
 
@@ -1155,11 +1093,17 @@ class Mission:
             # naming `docs/**` discharged a write that -- through a link --
             # landed in `secrets/`. The operator authorised `docs/`; nothing
             # authorised `secrets/x`; the PASS was accepted anyway.
-            violating = next((c for c in candidates
-                              if any(rx.match(c) for rx in excludes)), None)
-            if violating is not None:
+            # ALL violating representations, not the first. `next()` recorded
+            # only one, so when two exclusions both fired -- secrets/alias ->
+            # keys/, with scope.out=["secrets/**","keys/**"] -- discharging the
+            # lexical one was enough, and a private key landed in keys/ under
+            # an amendment that named only secrets/alias/. Every path that
+            # crossed a boundary has to be covered.
+            violating = [c for c in candidates
+                         if any(rx.match(c) for rx in excludes)]
+            if violating:
                 findings.append({"artifact_path": rel, "request_id": request_id,
-                                 "violating_path": violating,
+                                 "violating_paths": violating,
                                  "reason": "matches scope.out"})
             elif includes:
                 # INCLUSION is tested against every representation too. The
@@ -1172,13 +1116,14 @@ class Mission:
                 if outside:
                     findings.append({"artifact_path": rel,
                                      "request_id": request_id,
-                                     "violating_path": outside[0],
+                                     "violating_paths": outside,
                                      "reason": "outside scope.in"})
         findings.sort(key=lambda f: (f["artifact_path"], f["request_id"]))
         return findings
 
     def record_verdict(self, verdict: str, acceptor_id: str, assurance_tier: str,
-                        reason: str) -> int:
+                        reason: str,
+                        scope_ack: list[str] | None = None) -> int:
         latest, path = self.store.load_latest()
         self._verify_manifest(latest)
         if verdict not in VERDICTS:
@@ -1228,41 +1173,65 @@ class Mission:
                     f"assurance_tier {assurance_tier!r} does not meet "
                     f"required {required_tier!r}")
             # A PASS asserts the chain is clean. If receipted work fell outside
-            # the boundary the operator declared at open, that assertion needs
-            # an answer -- and an amendment IS the answer, because it records
-            # verbatim that the operator widened the mission. Discharge is
-            # therefore ordinary and already-precedented: the reference mission
-            # discharged exactly this, seventeen hours late.
+            # the declared boundary, that assertion needs an answer.
+            #
+            # PROSE IS NO LONGER THE ANSWER. Three rounds tried to read the
+            # operator's verbatim amendment and decide whether it AUTHORISED a
+            # path: first any-amendment, then name-the-path, then
+            # name-it-without-a-denial-marker. Each closed a real hole and each
+            # opened the next, because the decision procedure was "pattern-match
+            # English" and the input space is unbounded. Measured at the end of
+            # that line: the denial-marker list caught 1 of 14 denial shapes,
+            # and two of the misses -- a denial header with paths listed
+            # beneath it, and a grant and a prohibition in one clause -- cannot
+            # be fixed by adding vocabulary. A substring test establishes that
+            # an amendment MENTIONS a path. It cannot establish that the
+            # operator granted it, and "secrets.env remains forbidden"
+            # discharging a write to secrets.env is what that difference costs.
+            #
+            # So the parse is demoted to a HINT and the judgement moves to a
+            # party who can actually make it: the ACCEPTOR, who is already
+            # required to be distinct from the steward. `scope_ack` is an
+            # explicit, per-path acknowledgement. The record then asserts "an
+            # acceptor judged these covered", which is true and attributable,
+            # instead of "an amendment covers these", which the parser
+            # demonstrably cannot establish.
+            #
+            # es#150 replaces this with a structured `--grants-path` populated
+            # by an affirmative act; a denial never populates it, and all 14
+            # shapes collapse to one case.
             drifted = self.scope_consistency()
             if drifted:
-                # The discharging amendment must come AFTER the drift it
-                # answers. Accepting "any amendment exists" would let an
-                # unrelated, earlier grant -- a cost allowance, a guard-mode
-                # change -- silently discharge later out-of-scope work it
-                # never mentioned. That is the same length-only weakness the
-                # guard-change rule already carries (custody_mission.py's
-                # amendments-grew test), and repeating it here would build a
-                # gate whose key is any key.
-                # Discharge is tested against the path that ACTUALLY violated
-                # the boundary, not the path the receipt happens to name. With
-                # a link, those differ, and using the lexical one let a grant
-                # for the allowed path discharge a write to the forbidden one.
-                undischarged = [
-                    f for f in drifted
-                    if not self._discharged_by_amendment(
-                        f.get("violating_path") or f["artifact_path"])]
-                if undischarged:
-                    paths = ", ".join(sorted({
-                        f.get("violating_path") or f["artifact_path"]
-                        for f in undischarged}))
+                acknowledged = set(scope_ack or ())
+                outstanding = sorted({p for f in drifted
+                                      for p in f["violating_paths"]
+                                      if p not in acknowledged})
+                if outstanding:
+                    mentioned = sorted(
+                        p for p in outstanding
+                        if any(_amendment_names(a.get("text", ""), p)
+                               for a in manifest["authority"]["amendments"]))
+                    hint = (f" Amendments MENTION {', '.join(mentioned)} -- "
+                            "read them and decide; a mention is not a grant."
+                            if mentioned else "")
                     raise AcceptanceRefused(
-                        f"{len(undischarged)} receipted artifact(s) fall "
-                        f"outside the declared scope with no authority "
-                        f"amendment naming them: {paths}. Record the "
-                        "operator's grant with `amend` (verbatim), naming the "
-                        "path(s) it covers, or accept with FAIL/INCONCLUSIVE "
-                        "-- a PASS would assert a boundary the record "
-                        "contradicts")
+                        f"{len(outstanding)} path(s) crossed the declared "
+                        f"scope and are not acknowledged: "
+                        f"{', '.join(outstanding)}.{hint} Re-record the "
+                        "verdict with scope_ack naming each path you have "
+                        "judged covered, or accept with FAIL/INCONCLUSIVE -- a "
+                        "PASS would assert a boundary the record contradicts")
+                # The acknowledgement is a first-class chain fact, not a
+                # side effect: it names who judged what, so an auditor can see
+                # that the boundary was crossed AND that a distinct acceptor
+                # took responsibility for it.
+                scope_note = (f"scope-ack by {acceptor_id}: "
+                              f"{', '.join(sorted(acknowledged))}")
+                self._write_next(latest, path, status=latest["status"],
+                                 note=scope_note)
+                latest, path = self.store.load_latest()
+                new_revision = latest["revision"] + 1
+                verdict_record["revision"] = new_revision
             self._store_verdict(new_revision, verdict, verdict_record)
             self._write_next(latest, path, status="completed", note=f"PASS: {reason}")
         elif verdict == "FAIL":

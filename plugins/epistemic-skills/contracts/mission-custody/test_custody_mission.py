@@ -1069,17 +1069,19 @@ def test_scope_consistency_and_acceptance_boundary(workspace: Path) -> None:
     except AcceptanceRefused as exc:
         # must refuse for THIS reason, not incidentally for another rule
         check("scope-pass-refused-without-amendment",
-              "outside the declared scope" in str(exc))
+              "crossed the declared scope" in str(exc))
 
-    # an amendment IS the discharge: it records verbatim that the operator
-    # widened the mission, which is exactly what happened on the real mission
+    # The amendment is recorded because it is the operator's word, but the
+    # DISCHARGE is the acceptor's explicit acknowledgement -- prose cannot
+    # establish a grant (see test_scope_ack_is_the_only_discharge).
     Mission.load(workspace, actor="agent:worker").amend_authority(
         "operator: the src/ and secrets/ work was authorized")
     acceptor = Mission.load(workspace, actor="agent:acceptor")
     revision = acceptor.record_verdict(
         "PASS", acceptor_id="agent:acceptor",
-        assurance_tier="declared-role-separation", reason="done")
-    check("scope-pass-accepted-after-amendment", isinstance(revision, int))
+        assurance_tier="declared-role-separation", reason="done",
+        scope_ack=["src/b.py", "secrets/c.env"])
+    check("scope-pass-accepted-after-ack", isinstance(revision, int))
 
 
 def test_scope_entry_classification_table(workspace: Path) -> None:
@@ -1173,7 +1175,7 @@ def test_bare_filename_exclusion_is_enforced(workspace: Path) -> None:
                                  reason="done")
         check("bare-filename-pass-refused", False)
     except AcceptanceRefused as exc:
-        check("bare-filename-pass-refused", "outside the declared scope" in str(exc))
+        check("bare-filename-pass-refused", "crossed the declared scope" in str(exc))
 
 
 def test_prose_scope_does_not_refuse_acceptance(workspace: Path) -> None:
@@ -1219,7 +1221,7 @@ def test_unrelated_amendment_never_discharges_regardless_of_order(
         check("unrelated-amendments-never-discharge", False)
     except AcceptanceRefused as exc:
         check("unrelated-amendments-never-discharge",
-              "outside the declared scope" in str(exc))
+              "crossed the declared scope" in str(exc))
 
 
 def test_mixed_prose_and_path_scope_in_does_not_flag_everything(
@@ -1247,23 +1249,116 @@ def test_mixed_prose_and_path_scope_in_does_not_flag_everything(
           [f["artifact_path"] for f in m.scope_consistency()] == ["secrets.env"])
 
 
-def test_pre_authorisation_discharges(workspace: Path) -> None:
-    """A grant recorded BEFORE the work is authorisation, not a violation.
+def test_scope_ack_is_the_only_discharge(workspace: Path) -> None:
+    """An amendment that plainly grants the path still does not discharge it.
 
-    The ordering rule refused exactly this while accepting the same grant
-    recorded afterwards, so the only way through was to append a duplicate
-    amendment to satisfy the machine. A rule that makes pre-authorisation the
-    harder path is inverted."""
-    m = open_mission(workspace, "m-pre", "Pre-authorised.", scope_in=["docs/**"])
+    This test used to assert the opposite. Three rounds of trying to read
+    authorisation out of prose ended at a measurement: the denial-marker list
+    caught 1 of 14 denial shapes, and two of the misses -- a denial header with
+    paths listed beneath, and a grant plus a prohibition in one clause --
+    cannot be fixed by adding vocabulary. A substring test establishes MENTION;
+    it cannot establish a GRANT.
+
+    So discharge moved to a party who can judge: the acceptor, who is already
+    required to be distinct from the steward. The record now asserts "an
+    acceptor judged these covered" -- true and attributable -- instead of "an
+    amendment covers these", which the parser cannot establish."""
+    m = open_mission(workspace, "m-ack", "Ack required.", scope_in=["docs/**"])
     m.approve()
-    m.amend_authority("operator: you may write src/early.py")   # grant FIRST
+    m.amend_authority("operator: you may write src/early.py")
     m.record_effect("src/early.py", "authorised in advance", "pre-1")
     m.begin_verification()
     acceptor = Mission.load(workspace, actor="agent:acceptor")
-    check("pre-authorisation-discharges",
+    try:
+        acceptor.record_verdict("PASS", acceptor_id="agent:acceptor",
+                                 assurance_tier="declared-role-separation",
+                                 reason="done")
+        check("plain-grant-alone-does-not-discharge", False)
+    except AcceptanceRefused as exc:
+        check("plain-grant-alone-does-not-discharge",
+              "crossed the declared scope" in str(exc))
+        # the parse survives as a HINT that points the acceptor at the text
+        check("refusal-names-the-mentioning-amendment",
+              "MENTION" in str(exc) and "a mention is not a grant" in str(exc))
+
+    # the acceptor's explicit acknowledgement is what discharges
+    revision = acceptor.record_verdict(
+        "PASS", acceptor_id="agent:acceptor",
+        assurance_tier="declared-role-separation", reason="done",
+        scope_ack=["src/early.py"])
+    check("scope-ack-discharges", isinstance(revision, int))
+
+    # and it is a chain fact naming who judged what, not a side effect
+    # read the chain directly: the mission is COMPLETED, so Mission.load --
+    # which looks for an ACTIVE mission -- correctly finds nothing
+    final, _ = acceptor.store.load_latest()
+    notes = " ".join(final["state"]["notes"])
+    check("scope-ack-recorded-in-the-chain",
+          "scope-ack by agent:acceptor" in notes and "src/early.py" in notes)
+
+
+def test_every_violating_representation_must_be_acknowledged(
+        workspace: Path) -> None:
+    """When BOTH representations violate, acking one must not cover the other.
+
+    Recording only the FIRST violating path meant discharging it was enough:
+    with secrets/alias -> keys/ and scope.out=["secrets/**","keys/**"], an
+    acknowledgement naming secrets/alias/leak.pem let a private key land in
+    keys/leak.pem -- forbidden by a separate exclusion, covered by nothing."""
+    m = open_mission(workspace, "m-both", "Two exclusions.",
+                     scope_out=["secrets/**", "keys/**"])
+    m.approve()
+    (workspace / "keys").mkdir(parents=True, exist_ok=True)
+    (workspace / "secrets").mkdir(exist_ok=True)
+    try:
+        (workspace / "secrets" / "alias").symlink_to(workspace / "keys",
+                                                      target_is_directory=True)
+    except (OSError, NotImplementedError):
+        print("skip both-representations (symlinks unavailable on this host)")
+        return
+    m.record_effect("secrets/alias/leak.pem", "KEY", "bo-1")
+    paths = m.scope_consistency()[0]["violating_paths"]
+    check("both-representations-recorded",
+          "secrets/alias/leak.pem" in paths and "keys/leak.pem" in paths)
+    m.begin_verification()
+    acceptor = Mission.load(workspace, actor="agent:acceptor")
+    try:
+        acceptor.record_verdict("PASS", acceptor_id="agent:acceptor",
+                                 assurance_tier="declared-role-separation",
+                                 reason="done",
+                                 scope_ack=["secrets/alias/leak.pem"])
+        check("acking-the-lexical-path-does-not-cover-the-landing", False)
+    except AcceptanceRefused as exc:
+        check("acking-the-lexical-path-does-not-cover-the-landing",
+              "keys/leak.pem" in str(exc))
+
+
+def test_partial_scope_ack_does_not_discharge_the_rest(workspace: Path) -> None:
+    """Acknowledging one path must not carry the others.
+
+    With two exclusions firing through a link, recording only the first meant
+    discharging it was enough -- a private key landed in keys/ under a grant
+    that named only secrets/alias/. Every path that crossed a boundary must be
+    acknowledged, so an ack list is checked per path, never as a token gesture."""
+    m = open_mission(workspace, "m-partial", "Two drifts.", scope_in=["docs/**"])
+    m.approve()
+    m.record_effect("src/one.py", "drift a", "pa-1")
+    m.record_effect("etc/two.conf", "drift b", "pa-2")
+    m.begin_verification()
+    acceptor = Mission.load(workspace, actor="agent:acceptor")
+    try:
+        acceptor.record_verdict("PASS", acceptor_id="agent:acceptor",
+                                 assurance_tier="declared-role-separation",
+                                 reason="done", scope_ack=["src/one.py"])
+        check("partial-ack-does-not-discharge", False)
+    except AcceptanceRefused as exc:
+        check("partial-ack-does-not-discharge",
+              "etc/two.conf" in str(exc) and "src/one.py" not in str(exc))
+    check("full-ack-discharges",
           isinstance(acceptor.record_verdict(
               "PASS", acceptor_id="agent:acceptor",
-              assurance_tier="declared-role-separation", reason="done"), int))
+              assurance_tier="declared-role-separation", reason="done",
+              scope_ack=["src/one.py", "etc/two.conf"]), int))
 
 
 def test_bare_wildcard_is_not_a_discharge_key(workspace: Path) -> None:
@@ -1303,7 +1398,7 @@ def test_bare_wildcard_is_not_a_discharge_key(workspace: Path) -> None:
         check("bullet-list-does-not-discharge-e2e", False)
     except AcceptanceRefused as exc:
         check("bullet-list-does-not-discharge-e2e",
-              "outside the declared scope" in str(exc))
+              "crossed the declared scope" in str(exc))
 
 
 def test_later_amendment_must_name_the_drift_it_discharges(workspace: Path) -> None:
@@ -1331,16 +1426,22 @@ def test_later_amendment_must_name_the_drift_it_discharges(workspace: Path) -> N
         check("unrelated-later-amendment-does-not-discharge", False)
     except AcceptanceRefused as exc:
         check("unrelated-later-amendment-does-not-discharge",
-              "outside the declared scope" in str(exc))
+              "crossed the declared scope" in str(exc))
 
-    # naming the path IS the discharge, and the refusal said exactly this
+    # An amendment that NAMES the path still does not discharge it. This
+    # assertion used to be the opposite; see test_scope_ack_is_the_only_
+    # discharge for why reading authorisation out of prose was abandoned.
     Mission.load(workspace, actor="agent:worker").amend_authority(
         "operator: src/late.py was authorized")
     acceptor = Mission.load(workspace, actor="agent:acceptor")
-    check("naming-amendment-discharges",
-          isinstance(acceptor.record_verdict(
-              "PASS", acceptor_id="agent:acceptor",
-              assurance_tier="declared-role-separation", reason="done"), int))
+    try:
+        acceptor.record_verdict("PASS", acceptor_id="agent:acceptor",
+                                 assurance_tier="declared-role-separation",
+                                 reason="done")
+        check("naming-amendment-still-does-not-discharge", False)
+    except AcceptanceRefused as exc:
+        check("naming-amendment-still-does-not-discharge",
+              "crossed the declared scope" in str(exc))
 
 
 def test_amendment_naming_is_token_wise_not_substring(workspace: Path) -> None:
@@ -1375,15 +1476,15 @@ def test_a_denial_is_not_a_grant(workspace: Path) -> None:
     is a false BLOCK, re-amendable in plainer terms. Reading a prohibition as
     permission writes "clean" over exactly the work the operator forbade."""
     from custody_mission import _amendment_names
-    check("denial-does-not-name",
-          not _amendment_names("secrets.env remains forbidden", "secrets.env"))
-    check("may-not-does-not-name",
-          not _amendment_names("you may not touch src/app.py", "src/app.py"))
-    check("plain-grant-still-names",
+    # `_amendment_names` is now a HINT and deliberately does NOT judge intent:
+    # it reports that the text mentions the path, which is all a substring test
+    # can honestly claim. A denial mentions the path too -- that is the point.
+    check("denial-mentions-the-path",
+          _amendment_names("secrets.env remains forbidden", "secrets.env"))
+    check("grant-mentions-the-path",
           _amendment_names("you may rotate secrets.env now", "secrets.env"))
-    check("denial-is-clause-scoped",
-          _amendment_names("docs/x.md is forbidden. You may edit src/app.py.",
-                           "src/app.py"))
+    check("unrelated-text-mentions-nothing",
+          not _amendment_names("budget raised to 50 dollars", "secrets.env"))
 
     m = open_mission(workspace, "m-deny", "Denied.", scope_out=["secrets.env"])
     m.approve()
@@ -1398,7 +1499,7 @@ def test_a_denial_is_not_a_grant(workspace: Path) -> None:
         check("denial-does-not-discharge-e2e", False)
     except AcceptanceRefused as exc:
         check("denial-does-not-discharge-e2e",
-              "outside the declared scope" in str(exc))
+              "crossed the declared scope" in str(exc))
 
 
 def test_symlinked_path_must_satisfy_scope_in_too(workspace: Path) -> None:
@@ -1445,8 +1546,8 @@ def test_amendment_must_name_the_path_that_actually_violated(
         return
     m.record_effect("docs/alias/x.txt", "lands in secrets/", "vp-1")
     findings = m.scope_consistency()
-    check("violating-path-recorded",
-          bool(findings) and findings[0].get("violating_path") == "secrets/x.txt")
+    check("violating-paths-recorded",
+          bool(findings) and findings[0].get("violating_paths") == ["secrets/x.txt"])
     m.amend_authority("operator: you may write under docs/**")
     m.begin_verification()
     acceptor = Mission.load(workspace, actor="agent:acceptor")
@@ -1527,7 +1628,9 @@ TESTS = [
     test_prose_scope_does_not_refuse_acceptance,
     test_unrelated_amendment_never_discharges_regardless_of_order,
     test_mixed_prose_and_path_scope_in_does_not_flag_everything,
-    test_pre_authorisation_discharges,
+    test_scope_ack_is_the_only_discharge,
+    test_every_violating_representation_must_be_acknowledged,
+    test_partial_scope_ack_does_not_discharge_the_rest,
     test_bare_wildcard_is_not_a_discharge_key,
     test_later_amendment_must_name_the_drift_it_discharges,
     test_amendment_naming_is_token_wise_not_substring,
