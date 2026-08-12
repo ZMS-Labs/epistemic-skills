@@ -51,5 +51,17 @@ jobs:
         run: python plugins/epistemic-skills/contracts/mission-custody/test_custody_mission.py
       - name: Custody CLI black-box tests
         run: python plugins/epistemic-skills/contracts/mission-custody/test_custody_cli.py
+      - name: Custody gate unit tests
+        run: python plugins/epistemic-skills/contracts/mission-custody/test_custody_gate.py
+      # The Stage-C enforcement hook's own suite was NOT run by any workflow.
+      # Its platform-aware assertions are written to discriminate on POSIX --
+      # `native = "c:/ok" if os.name == "nt" else "/c:/ok"` -- so on a Windows
+      # dev host they assert the Windows branch and the POSIX branch executed
+      # nowhere at all. Two rounds of fixes to POSIX workspace-root handling
+      # were therefore verified only by simulation. A test that no runner
+      # executes is not coverage; its green is read as coverage, which is worse
+      # than having none.
+      - name: Custody enforcement hook tests (POSIX branch runs here, not on dev hosts)
+        run: python plugins/epistemic-skills/contracts/mission-custody/test_custody_hook.py
       - name: Three-subprocess kill/resume/repair continuity proof
         run: python plugins/epistemic-skills/contracts/mission-custody/test_custody_process_proof.py

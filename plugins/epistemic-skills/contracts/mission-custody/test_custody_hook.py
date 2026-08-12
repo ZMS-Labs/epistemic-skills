@@ -320,10 +320,190 @@ def test_root_location_uri_forms() -> None:
         (12345, ""),
         (None, ""),
         ({}, ""),
+        # BARE Windows form. Cursor's Windows workspace_roots use "/c:/...".
+        # Returned unchanged it parses as a DRIVELESS "\\c:\\..." on Windows,
+        # so the mission tree is never found and guarded MCP calls fail open --
+        # exactly the hole the workspace_roots fallback exists to close.
+        ("/c:/work/project", "c:/work/project"),
+        ("/C:/work/project", "C:/work/project"),
+        # RFC 8089: "localhost" is EQUIVALENT TO AN EMPTY AUTHORITY, i.e. a
+        # LOCAL path. The UNC fix originally turned it into \\localhost\C:\...,
+        # which resolves nowhere -- a hole that fix itself opened.
+        ("file://localhost/C:/work/proj", "C:/work/proj"),
+        ("file://localhost/opt/u/proj", "/opt/u/proj"),
+        ("file://LOCALHOST/C:/work/proj", "C:/work/proj"),
+        # a bare POSIX path must not be mangled by the drive-slash strip
+        ("/opt/u/proj", "/opt/u/proj"),
+        # the drive letter must be a LETTER: rewriting "/1:/x" would invent a
+        # location out of a string nothing identified as a drive path
+        ("/1:/work/project", "/1:/work/project"),
     ]
     for src, want in cases:
         check(f"root-location-{str(src)[:28]}",
               custody_hook._root_location(src) == want)
+
+
+def test_relative_root_never_becomes_a_candidate() -> None:
+    """A root the process cannot interpret must not resolve to the cwd.
+
+    `_find_workspace` walks ancestors, and a RELATIVE path's chain terminates
+    at `.`, so a `file://` URI fed through as a literal (Path("file:///c:/w")
+    is relative on both platforms) made `Path(".")` -- "wherever the hook
+    happens to be running" -- a candidate. Consequences measured: a block
+    naming a rule from a mission the user is not in, and an entry written into
+    that unrelated mission's guard log. The same shape hits the stripped
+    bare-drive form on POSIX, where `c:/work` is relative."""
+    import custody_hook
+    asked: list[str] = []
+    original = custody_hook._find_workspace
+    custody_hook._find_workspace = lambda loc: (asked.append(loc), None)[1]
+    try:
+        custody_hook._candidate_workspaces(
+            {"workspace_roots": ["file:///c:/some/other/project"]})
+    finally:
+        custody_hook._find_workspace = original
+    check("uri-literal-not-probed",
+          not any(a.startswith("file:") for a in asked))
+    # NATIVE absoluteness, asserted the same way the gate decides it. An
+    # earlier version of this check passed on Windows and FAILED on POSIX,
+    # because the gate accepted "absolute under either flavour" while
+    # _find_workspace parses natively -- so `c:/work/project` slipped through
+    # on Linux and reached `.`. A platform-dependent assertion is how that got
+    # past a green local run.
+    check("no-relative-location-probed",
+          all(Path(a).is_absolute() for a in asked))
+
+
+def test_object_shaped_root_also_offers_both_readings() -> None:
+    """An object root must get the dual reading a bare string gets.
+
+    Gating the second reading on `isinstance(root, str)` skipped
+    {"uri": "/c:/work/project"} entirely, so on POSIX only the stripped form
+    -- relative there -- was offered, and a mission under the real absolute
+    path was missed. A fail-open for exactly the editor shape this module set
+    out to support."""
+    import custody_hook
+    for shape in ({"uri": "/c:/work/project"}, {"path": "/c:/work/project"}):
+        asked: list[str] = []
+        original = custody_hook._find_workspace
+        custody_hook._find_workspace = lambda loc: (asked.append(loc), None)[1]
+        try:
+            custody_hook._candidate_workspaces({"workspace_roots": [shape]})
+        finally:
+            custody_hook._find_workspace = original
+        key = "uri" if "uri" in shape else "path"
+        # exactly one reading is native-absolute per platform; the point is
+        # that the object shape gets both OFFERED, not that both survive
+        check(f"object-root-{key}-offers-a-reading", bool(asked))
+        check(f"object-root-{key}-all-native-absolute",
+              all(Path(a).is_absolute() for a in asked))
+
+
+def test_drive_shaped_file_uri_offers_the_decoded_posix_reading() -> None:
+    """`file:///c:/ok` decodes to `/c:/ok`, which is absolute on POSIX.
+
+    The alternate reading used to be the RAW string. For a bare root that is
+    the same thing, but for a URI it is not: the raw `file:///c:/ok` is
+    relative to `Path` on both platforms, so on POSIX the stripped reading was
+    rejected as relative AND the raw fallback was rejected too -- both readings
+    discarded, workspace never evaluated, an armed mission there failing open.
+
+    The alternate is now the unstripped DECODED path, so each platform still
+    sees the reading that is absolute there."""
+    import custody_hook
+    check("uri-primary-is-the-windows-reading",
+          custody_hook._root_location("file:///c:/ok") == "c:/ok")
+    check("uri-alternate-is-the-posix-reading",
+          custody_hook._root_location("file:///c:/ok", strip=False) == "/c:/ok")
+    # UNC resolves before any stripping, so both readings agree
+    unc = "\\" + "\\" + "server" + "\\" + "share" + "\\" + "p"
+    check("uri-unc-unaffected-by-strip",
+          custody_hook._root_location("file://server/share/p", strip=False) == unc)
+
+    asked: list[str] = []
+    original = custody_hook._find_workspace
+    custody_hook._find_workspace = lambda loc: (asked.append(loc), None)[1]
+    try:
+        custody_hook._candidate_workspaces({"workspace_roots": ["file:///c:/ok"]})
+    finally:
+        custody_hook._find_workspace = original
+    native = "c:/ok" if os.name == "nt" else "/c:/ok"
+    check("uri-native-reading-probed", native in asked)
+    check("uri-probes-nothing-relative",
+          all(Path(a).is_absolute() for a in asked))
+
+
+def test_malformed_root_does_not_disarm_the_others() -> None:
+    """`urlparse` raises on a malformed authority; unhandled it returned ALLOW.
+
+    "file://[oops" -> ValueError: Invalid IPv6 URL escaped discovery into the
+    outer handler, so ONE malformed IDE-supplied root silently disarmed an
+    armed guard with an empty stderr -- verbatim the fail-open the
+    per-candidate handler downstream exists to close, left open one function
+    earlier."""
+    import custody_hook
+    asked: list[str] = []
+    original = custody_hook._find_workspace
+    custody_hook._find_workspace = lambda loc: (asked.append(loc), None)[1]
+    try:
+        custody_hook._candidate_workspaces(
+            {"workspace_roots": ["file://[oops", "file:///c:/ok"]})
+    except Exception as exc:                                  # noqa: BLE001
+        check("malformed-root-does-not-raise", False)
+        print(f"  raised {type(exc).__name__}")
+    else:
+        check("malformed-root-does-not-raise", True)
+    finally:
+        custody_hook._find_workspace = original
+    check("later-root-still-evaluated", any("ok" in a for a in asked))
+
+
+def test_bare_drive_root_offers_both_readings() -> None:
+    """'/c:/work/project' is a Windows drive path AND a legal POSIX path.
+
+    On POSIX ':' is an ordinary filename character, so stripping the leading
+    slash there yields a RELATIVE path: `_find_workspace` would search from
+    wherever the hook process happens to run, find nothing, and silently allow
+    the guarded call. Gating the rewrite on the platform only moves the
+    fail-open to the other platform -- both wrong readings end the same way.
+
+    So neither reading is chosen. Both are OFFERED; the native-absoluteness
+    gate then keeps whichever one is real on this platform, `_find_workspace`
+    drops whichever has no missions/ tree, and any-blocks-wins does the rest.
+
+    The assertion is deliberately platform-aware. Asserting that BOTH readings
+    are probed passed on Windows and would have failed on Linux, because only
+    one of them is native-absolute on any given platform -- and a
+    platform-dependent assertion that happens to hold locally is how a hole
+    reaches CI green."""
+    import custody_hook
+    asked: list[str] = []
+    original = custody_hook._find_workspace
+    custody_hook._find_workspace = lambda loc: (asked.append(loc), None)[1]
+    try:
+        custody_hook._candidate_workspaces(
+            {"workspace_roots": ["/c:/work/project"]})
+    finally:
+        custody_hook._find_workspace = original
+    native = "c:/work/project" if os.name == "nt" else "/c:/work/project"
+    other = "/c:/work/project" if os.name == "nt" else "c:/work/project"
+    check("bare-drive-probes-the-native-reading", native in asked)
+    check("bare-drive-drops-the-non-native-reading", other not in asked)
+    check("bare-drive-probes-nothing-relative",
+          all(Path(a).is_absolute() for a in asked))
+    # a path with only ONE reading must not be probed twice
+    asked.clear()
+    custody_hook._find_workspace = lambda loc: (asked.append(loc), None)[1]
+    try:
+        custody_hook._candidate_workspaces(
+            {"workspace_roots": ["/opt/u/proj"]})
+    finally:
+        custody_hook._find_workspace = original
+    # A POSIX root has ONE reading. It is probed once where it is real, and
+    # not probed at all on Windows, where "/opt/u/proj" is rooted-but-driveless
+    # and `_find_workspace` would walk it to `.`.
+    check("single-reading-probed-once",
+          asked == ([] if os.name == "nt" else ["/opt/u/proj"]))
 
 
 def test_missing_payload_cwd_is_inert_even_when_hook_process_runs_inside_armed_workspace() -> None:
@@ -356,6 +536,37 @@ def test_missing_payload_cwd_is_inert_even_when_hook_process_runs_inside_armed_w
         check("no-cwd-no-roots-is-inert-not-process-relative",
               r.returncode == 0)
         check("inert-path-emits-no-block", "BLOCKED" not in r.stderr)
+
+
+def test_non_custody_error_on_one_root_does_not_suppress_a_later_block() -> None:
+    """A non-CustodyError on an earlier candidate must not abort the loop.
+
+    The loop originally caught only CustodyError, so anything else -- and
+    Mission.load intentionally PROPAGATES environmental OSErrors such as
+    PermissionError -- escaped to the outer `except Exception: return 0`. One
+    unreadable root then silently suppressed every later root's block: root
+    ORDER causing a false allow, the exact defect the loop was built to close.
+    """
+    guards = [{"name": "no-deploy", "tool_names": ["Bash"],
+               "command_regexes": ["deploy-prod"], "path_globs": []}]
+    with tempfile.TemporaryDirectory() as tmp:
+        a, b = Path(tmp) / "A", Path(tmp) / "B"
+        a.mkdir(); b.mkdir()
+        # structurally poisoned: a DIRECTORY where a checkpoint file must be,
+        # which raises outside the CustodyError family
+        (a / "missions" / "broken" / "checkpoints").mkdir(parents=True)
+        (a / "missions" / "broken" / "checkpoints" / "r00000001.json").mkdir()
+        live = Mission.open(b, "live", "i", "operator:t", "agent:t",
+                            actor="agent:t", guard_mode="enforce",
+                            actuator_guards=guards)
+        live.approve()
+        payload = {"tool_name": "Bash",
+                   "tool_input": {"command": "deploy-prod now"},
+                   "workspace_roots": [str(a), str(b)]}
+        res = run_hook("cursor", payload)
+        check("poisoned-earlier-root-does-not-suppress-later-block",
+              res.returncode == 2)
+        check("poisoned-root-failure-is-loud", "failing open" in res.stderr)
 
 
 if __name__ == "__main__":
