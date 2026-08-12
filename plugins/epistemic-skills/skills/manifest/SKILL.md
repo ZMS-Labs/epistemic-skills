@@ -27,12 +27,17 @@ else.
    unbounded, not safely defaulted — fill all four or `note` why the operator
    left one empty. Then `approve` only after the operator confirms the whole
    envelope (scope in/out, permissions, protected state, stop rules).
-   **The envelope is ADVISORY: you read it, nothing refuses on it.** `scope` is
-   advisory and does not enforce — it is a top-level sibling of `authority`,
-   never an authority field, and the advisory declaration is not enforcement
-   because the runtime chokepoint is only ever handed `authority` itself.
-   Only `authority.actuator_guards` is machine-enforced; every other envelope
-   field is advisory. Declare the envelope anyway: it is immutable, so it is
+   **The envelope is ADVISORY AT RUN TIME: nothing blocks a tool call on it.**
+   No envelope field reaches the runtime chokepoint, which is only ever handed
+   `authority` itself — so only `authority.actuator_guards` can refuse an
+   action. **But `scope` is not inert at ACCEPTANCE:** path-pattern entries in
+   `scope.in`/`scope.out` are machine-compared against the receipted artifacts,
+   and a PASS is refused when work fell outside the declared boundary with no
+   amendment naming it. Prose entries cannot be compared and are reported as
+   such rather than silently dropped. Advisory-at-run-time,
+   compared-at-acceptance — collapsing that distinction in either direction
+   misleads, and "nothing refuses on it" was this file's own stale honesty
+   label. Declare the envelope anyway: it is immutable, so it is
    the fixed reference an acceptor and an auditor compare the finished work
    against, and it cannot be retro-fitted later to match whatever the mission
    drifted into.

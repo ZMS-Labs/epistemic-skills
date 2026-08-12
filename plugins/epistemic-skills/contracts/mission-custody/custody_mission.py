@@ -164,8 +164,26 @@ def _is_path_pattern(entry: str) -> bool:
     is real and is not silently absorbed -- `uncompared_scope_entries` reports
     every entry this predicate declines, so an operator sees which of their
     declarations no machine is checking instead of assuming all of them are."""
-    if not entry or any(c.isspace() for c in entry) or "," in entry:
+    if not entry or "," in entry:
         return False
+    if any(c.isspace() for c in entry):
+        # A SPACE ALONE NO LONGER MEANS PROSE. Testing whitespace before the
+        # slash test made every path containing a space invisible:
+        # "My Documents/secrets.env" and "docs/release notes/**" were dropped
+        # from the comparison entirely, so PASS succeeded after writing them.
+        #
+        # A spaced entry is a path only when it both contains a separator and
+        # ENDS like a path -- a wildcard, a trailing slash, or a final segment
+        # with an extension. That keeps real prose out: "TCP/IP tuning" and
+        # "arr/Plex/NAS operations" carry slashes but end in a bare word, and
+        # "What now?" has no separator at all.
+        if "/" not in entry:
+            return False
+        last = entry.rstrip("/").rpartition("/")[2]
+        if entry.endswith("/") or "*" in entry or "?" in entry:
+            return True
+        stem, dot, ext = last.rpartition(".")
+        return bool(stem) and bool(dot) and ext.isalnum()
     if "/" in entry or "*" in entry or "?" in entry or entry.endswith("\\"):
         return True
     name = entry[1:] if entry.startswith(".") else entry
@@ -173,6 +191,26 @@ def _is_path_pattern(entry: str) -> bool:
     if entry.startswith(".") and not dot:
         return bool(name) and name.isalnum()      # .env, .gitignore
     return bool(stem) and bool(dot) and ext.isalnum()
+
+
+def _names_a_specific_path(token: str) -> bool:
+    """Does this token name SOMETHING, rather than everything?
+
+    `_is_path_pattern` accepts `*` and `**`, which is right for a scope
+    declaration (an operator may legitimately exclude everything) and
+    catastrophic for a discharge token: `_glob_regex("*")` is `[^/]*$` and
+    `_glob_regex("**")` is `.*$`, so a bare wildcard in an amendment matches
+    every drifted artifact.
+
+    That is not a hypothetical shape. `amend` carries the operator's words
+    VERBATIM, and a multi-part grant is most naturally written as a markdown
+    bullet list -- whose bullets are bare `*` tokens. A genuine, unrelated
+    two-line grant was demonstrated discharging an out-of-scope write to
+    `secrets.env`, with no surface anywhere reporting that the key was `*`.
+
+    So a discharge token must retain at least one literal character after its
+    wildcards and separators are removed."""
+    return bool(token.strip("*?/\\"))
 
 
 def uncompared_scope_entries(manifest: dict) -> dict:
@@ -203,6 +241,8 @@ def _amendment_names(text: str, rel_path: str) -> bool:
         token = raw.strip(_TOKEN_TRIM).rstrip(".")
         if not token or not _is_path_pattern(token):
             continue
+        if not _names_a_specific_path(token):
+            continue          # a bare wildcard names everything: not a name
         if token.endswith("/"):
             # "the src/ work was authorized" grants a DIRECTORY, and operators
             # write it that way. A trailing slash covers what is under it --
@@ -948,51 +988,40 @@ class Mission:
         new = self._write_next(latest, path, status="verifying", note="verification started")
         return new["revision"]
 
-    def _discharged_by_amendment(self, request_id: str, rel_path: str) -> bool:
-        """Does a later authority amendment actually NAME this artifact?
+    def _discharged_by_amendment(self, rel_path: str) -> bool:
+        """Does ANY authority amendment NAME this artifact?
 
-        Ordering is read from the hash-chained checkpoints, never from
-        timestamps: `written_utc` is self-reported by the writer, so a record
-        that could be back-dated must not be what decides whether a grant
-        covers a drift. The revision that first admitted the id is a chain
-        fact; so is the revision whose amendments list grew.
+        The first version accepted "some amendment was recorded after the
+        drift", which made every later grant a universal key: a cost allowance
+        saying nothing about any boundary discharged an out-of-scope write it
+        never mentioned. The fix was to require the amendment to NAME the
+        artifact -- as a standalone token, a glob, or a directory prefix.
 
-        Ordering ALONE is not enough, and the previous version stopped there.
-        "Some amendment was recorded after the drift" makes every later grant a
-        universal key: a cost allowance or a guard-mode change, saying nothing
-        about any boundary, would discharge an out-of-scope write it never
-        mentioned. A gate whose key is any key is not a gate -- which is the
-        precise weakness this method's own comment warned about one layer up
-        and then reproduced one layer down.
+        ORDERING WAS THEN DROPPED, deliberately. Once naming is required it
+        earns nothing: the attack it was built for -- an unrelated grant
+        discharging unrelated drift -- is already dead, because an unrelated
+        grant names nothing. What ordering still did was PUNISH THE RIGHT
+        BEHAVIOUR. Authorising before acting was refused while authorising
+        after was accepted, and the only way through was to append a duplicate
+        amendment to satisfy the machine. A rule that makes pre-authorisation
+        the harder path is inverted, and a rule whose only remaining effect is
+        to extract a redundant record is ceremony.
 
-        So the amendment must NAME the artifact: as a standalone token, or
-        through a path pattern that covers it. Operator text is never compiled
-        as a regex -- only tokens `_is_path_pattern` accepts become globs.
+        (The test that claimed to prove ordering could not see it: its fixture
+        used an amendment that named nothing, so it passed identically with
+        the ordering rule removed.)
 
-        The error direction is chosen, not accidental. A false BLOCK is
-        discharged by re-running `amend` with the path named, which leaves the
-        record strictly better than before. A false ALLOW writes "the chain is
-        clean" over work no grant covers, and nothing downstream can tell."""
-        admitted_at = None
-        prev_count = 0
-        later: list[tuple[int, str]] = []
-        prev_ids: list[str] = []
-        for cp_path in self.store.checkpoint_paths():
-            record = json.loads(cp_path.read_text(encoding="utf-8"))
-            ids = [e if isinstance(e, str) else e.get("request_id")
-                   for e in record["receipt_ids"]]
-            amendments = record["manifest"]["authority"]["amendments"]
-            if admitted_at is None and request_id in ids \
-                    and request_id not in prev_ids:
-                admitted_at = record["revision"]
-            if len(amendments) > prev_count:
-                later.extend((record["revision"], a.get("text", ""))
-                             for a in amendments[prev_count:])
-            prev_count, prev_ids = len(amendments), ids
-        if admitted_at is None:
-            return False
-        return any(revision > admitted_at and _amendment_names(text, rel_path)
-                   for revision, text in later)
+        Operator text is never compiled as a regex -- only tokens
+        `_is_path_pattern` accepts become globs, and only those that name
+        something specific (`_names_a_specific_path`).
+
+        The error direction is chosen. A false BLOCK is discharged by
+        re-running `amend` with the path named, which leaves the record
+        strictly better than before. A false ALLOW writes "the chain is clean"
+        over work no grant covers, and nothing downstream can tell."""
+        latest, _ = self.store.load_latest()
+        return any(_amendment_names(a.get("text", ""), rel_path)
+                   for a in latest["manifest"]["authority"]["amendments"])
 
     def _resolved_relpath(self, rel: str) -> str | None:
         """Where `rel` actually lands inside the workspace, or None.
@@ -1038,6 +1067,20 @@ class Mission:
                     if _is_path_pattern(g)]
         excludes = [_glob_regex(_norm_path(g)) for g in scope["out"]
                     if _is_path_pattern(g)]
+        # "outside scope.in" is an ABSENCE inference: it concludes from a
+        # receipt matching NO include that it is out of bounds. That is only
+        # sound when the whole include set is comparable. With a mixed
+        # declaration -- one path pattern plus a prose entry -- the prose is
+        # dropped, `includes` is non-empty, and every artifact the prose
+        # covered is reported outside a boundary that in fact permits it,
+        # wedging an honest close.
+        #
+        # "matches scope.out" is a PRESENCE inference: one pattern matching is
+        # positive evidence on its own, so a partially-prose exclusion list
+        # still contributes everything it can. Same data, opposite soundness
+        # conditions -- which is why only one side is gated here.
+        if any(not _is_path_pattern(g) for g in scope["in"]):
+            includes = []
         if not includes and not excludes:
             return []
         findings: list[dict] = []
@@ -1149,19 +1192,18 @@ class Mission:
                 # gate whose key is any key.
                 undischarged = [
                     f for f in drifted
-                    if not self._discharged_by_amendment(f["request_id"],
-                                                         f["artifact_path"])]
+                    if not self._discharged_by_amendment(f["artifact_path"])]
                 if undischarged:
                     paths = ", ".join(sorted({f["artifact_path"]
                                               for f in undischarged}))
                     raise AcceptanceRefused(
                         f"{len(undischarged)} receipted artifact(s) fall "
                         f"outside the declared scope with no authority "
-                        f"amendment naming them recorded AFTER them: {paths}. "
-                        "Record the operator's grant with `amend` (verbatim), "
-                        "naming the path(s) it covers, or accept with "
-                        "FAIL/INCONCLUSIVE -- a PASS would assert a boundary "
-                        "the record contradicts")
+                        f"amendment naming them: {paths}. Record the "
+                        "operator's grant with `amend` (verbatim), naming the "
+                        "path(s) it covers, or accept with FAIL/INCONCLUSIVE "
+                        "-- a PASS would assert a boundary the record "
+                        "contradicts")
             self._store_verdict(new_revision, verdict, verdict_record)
             self._write_next(latest, path, status="completed", note=f"PASS: {reason}")
         elif verdict == "FAIL":

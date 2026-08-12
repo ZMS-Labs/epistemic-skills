@@ -1113,6 +1113,16 @@ def test_scope_entry_classification_table(workspace: Path) -> None:
         # directory or a noun and nothing in the string decides which. This
         # residue is REPORTED (uncompared_scope_entries), never silent.
         ("reconciliation", False), ("notes", False),
+        # PATHS CONTAINING SPACES. Testing whitespace BEFORE the slash test
+        # made every one of these prose, so the comparison silently ran with
+        # them dropped: writing exactly the excluded path produced a clean
+        # scope_consistency() and an accepted PASS.
+        ("My Documents/secrets.env", True), ("docs/release notes/**", True),
+        ("a/b c/d.txt", True), ("docs/release notes/", True),
+        # ...while genuine prose that happens to carry a slash still reads as
+        # prose, because it ends in a bare word rather than a path ending
+        ("TCP/IP tuning", False), ("arr/Plex/NAS operations", False),
+        ("docs and/or specs", False),
         # ambiguous -> prose, deliberately
         ("docs and/or specs", False), ("TCP/IP tuning", False),
         ("", False),
@@ -1186,27 +1196,113 @@ def test_prose_scope_does_not_refuse_acceptance(workspace: Path) -> None:
               assurance_tier="declared-role-separation", reason="done"), int))
 
 
-def test_discharging_amendment_must_follow_the_drift(workspace: Path) -> None:
-    """An EARLIER, unrelated amendment must not discharge LATER drift.
+def test_unrelated_amendment_never_discharges_regardless_of_order(
+        workspace: Path) -> None:
+    """An unrelated grant discharges nothing, before OR after the drift.
 
-    Checking only that the amendments list is non-empty would let a cost
-    allowance or a guard-mode change silently answer for out-of-scope work it
-    never mentioned -- the same length-only weakness the guard-change rule
-    already carries. Ordering comes from the hash-chained revisions, never from
-    self-reported timestamps."""
+    The predecessor tested ORDER: an earlier unrelated amendment must not
+    discharge later drift. That test could not see the rule it claimed to
+    prove -- its amendment named nothing, so it passed identically with the
+    ordering rule removed. Naming is what does the work; this asserts that
+    directly, in both orders."""
     m = open_mission(workspace, "m-order", "Ordered work.", scope_in=["docs/**"])
     m.approve()
     m.amend_authority("operator: unrelated cost allowance")   # amendment FIRST
     m.record_effect("src/late.py", "drift AFTER it", "ord-1")  # drift SECOND
+    m.amend_authority("operator: you may restart the pod")     # and one AFTER
     m.begin_verification()
     acceptor = Mission.load(workspace, actor="agent:acceptor")
     try:
         acceptor.record_verdict("PASS", acceptor_id="agent:acceptor",
                                  assurance_tier="declared-role-separation",
                                  reason="done")
-        check("earlier-amendment-does-not-discharge-later-drift", False)
+        check("unrelated-amendments-never-discharge", False)
     except AcceptanceRefused as exc:
-        check("earlier-amendment-does-not-discharge-later-drift",
+        check("unrelated-amendments-never-discharge",
+              "outside the declared scope" in str(exc))
+
+
+def test_mixed_prose_and_path_scope_in_does_not_flag_everything(
+        workspace: Path) -> None:
+    """A partially-prose scope.in must not report every receipt outside it.
+
+    "outside scope.in" is an ABSENCE inference: it concludes from a receipt
+    matching no include that it is out of bounds. With one path entry and one
+    prose entry, the prose was dropped, `includes` stayed non-empty, and every
+    artifact the prose covered was flagged against a boundary that in fact
+    permits it -- wedging an honest close.
+
+    "matches scope.out" is a PRESENCE inference, so a partly-prose exclusion
+    list still contributes everything it can. Only the absence side is gated."""
+    m = open_mission(workspace, "m-mixed", "Mixed declaration.",
+                     scope_in=["src/**", "monitored-missing reconciliation"],
+                     scope_out=["secrets.env", "VPN configuration"])
+    m.approve()
+    m.record_effect("docs/notes.md", "covered by the prose entry", "mx-1")
+    m.record_effect("README.md", "also covered by prose", "mx-2")
+    check("mixed-scope-in-flags-nothing-outside", m.scope_consistency() == [])
+    # the exclusion half still works: presence needs only one comparable entry
+    m.record_effect("secrets.env", "TOKEN=x", "mx-3")
+    check("mixed-scope-out-still-flags",
+          [f["artifact_path"] for f in m.scope_consistency()] == ["secrets.env"])
+
+
+def test_pre_authorisation_discharges(workspace: Path) -> None:
+    """A grant recorded BEFORE the work is authorisation, not a violation.
+
+    The ordering rule refused exactly this while accepting the same grant
+    recorded afterwards, so the only way through was to append a duplicate
+    amendment to satisfy the machine. A rule that makes pre-authorisation the
+    harder path is inverted."""
+    m = open_mission(workspace, "m-pre", "Pre-authorised.", scope_in=["docs/**"])
+    m.approve()
+    m.amend_authority("operator: you may write src/early.py")   # grant FIRST
+    m.record_effect("src/early.py", "authorised in advance", "pre-1")
+    m.begin_verification()
+    acceptor = Mission.load(workspace, actor="agent:acceptor")
+    check("pre-authorisation-discharges",
+          isinstance(acceptor.record_verdict(
+              "PASS", acceptor_id="agent:acceptor",
+              assurance_tier="declared-role-separation", reason="done"), int))
+
+
+def test_bare_wildcard_is_not_a_discharge_key(workspace: Path) -> None:
+    """A markdown bullet list must not discharge every drifted path.
+
+    `_is_path_pattern` accepts `*` and `**` -- correct for a scope declaration,
+    catastrophic for a discharge token: _glob_regex('*') is '[^/]*$' and
+    _glob_regex('**') is '.*$'. `amend` carries the operator's words VERBATIM
+    and a multi-part grant is most naturally a bullet list, so the bullets
+    themselves became a universal key. Demonstrated end to end: a genuine,
+    entirely unrelated two-line grant discharged an out-of-scope write to
+    secrets.env."""
+    from custody_mission import _amendment_names
+    bullets = "* you may spend up to 20 dollars on API calls\n* you may restart the pod"
+    check("bullet-list-does-not-name", not _amendment_names(bullets, "secrets.env"))
+    check("double-star-does-not-name",
+          not _amendment_names("go ahead ** proceed **", "secrets/prod.env"))
+    check("parenthesised-star-does-not-name",
+          not _amendment_names("approved for all files (*)", "src/app.py"))
+    check("arithmetic-star-does-not-name",
+          not _amendment_names("budget is 5 * 4 dollars", "src/app.py"))
+    # a wildcard that still names something specific must keep working
+    check("extension-glob-still-names",
+          _amendment_names("operator: *.env files are fine", "secrets.env"))
+
+    m = open_mission(workspace, "m-star", "Bulleted grant.",
+                     scope_out=["secrets.env"])
+    m.approve()
+    m.record_effect("secrets.env", "TOKEN=hunter2", "st-1")
+    m.amend_authority(bullets)
+    m.begin_verification()
+    acceptor = Mission.load(workspace, actor="agent:acceptor")
+    try:
+        acceptor.record_verdict("PASS", acceptor_id="agent:acceptor",
+                                 assurance_tier="declared-role-separation",
+                                 reason="done")
+        check("bullet-list-does-not-discharge-e2e", False)
+    except AcceptanceRefused as exc:
+        check("bullet-list-does-not-discharge-e2e",
               "outside the declared scope" in str(exc))
 
 
@@ -1331,7 +1427,10 @@ TESTS = [
     test_uncompared_scope_entries_are_reported,
     test_bare_filename_exclusion_is_enforced,
     test_prose_scope_does_not_refuse_acceptance,
-    test_discharging_amendment_must_follow_the_drift,
+    test_unrelated_amendment_never_discharges_regardless_of_order,
+    test_mixed_prose_and_path_scope_in_does_not_flag_everything,
+    test_pre_authorisation_discharges,
+    test_bare_wildcard_is_not_a_discharge_key,
     test_later_amendment_must_name_the_drift_it_discharges,
     test_amendment_naming_is_token_wise_not_substring,
     test_symlinked_path_cannot_dodge_an_exclusion,
