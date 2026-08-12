@@ -311,12 +311,12 @@ def test_root_location_uri_forms() -> None:
     unc = "\\" + "\\" + "server" + "\\" + "share" + "\\" + "project"
     cases = [
         ("file://server/share/project", unc),
-        ("file:///C:/Users/x/proj", "C:/Users/x/proj"),
-        ("file:///home/u/proj", "/home/u/proj"),
+        ("file:///C:/work/proj", "C:/work/proj"),
+        ("file:///opt/u/proj", "/opt/u/proj"),
         ("file:///C:/a%20b/proj", "C:/a b/proj"),
-        ("Y:/dev/thing", "Y:/dev/thing"),
-        ({"uri": "Y:/dev/thing"}, "Y:/dev/thing"),
-        ({"path": "Y:/dev/thing"}, "Y:/dev/thing"),
+        ("D:/dev/thing", "D:/dev/thing"),
+        ({"uri": "D:/dev/thing"}, "D:/dev/thing"),
+        ({"path": "D:/dev/thing"}, "D:/dev/thing"),
         (12345, ""),
         (None, ""),
         ({}, ""),
