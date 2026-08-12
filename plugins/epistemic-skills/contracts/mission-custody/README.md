@@ -22,4 +22,25 @@ exists until evidence could support one.
 
 - Skill: `manifest`
 - CLI: `plugins/epistemic-skills/contracts/mission-custody/custody_cli.py`
-- Stage C (enforcement) is gated on the tracer retro.
+- Stage C (enforcement): the tracer retro (2026-08-11, vanta
+  `mission/tracer-media-missing-record` @ `4540ddb`) ruled teeth IN, scoped to
+  the successor mission's real actuators. Shipped as `custody_hook.py` +
+  `gate` (design: `docs/superpowers/specs/2026-08-12-stage-c-custody-hook-design.md`).
+  Inert by default: a mission arms it by adding operator-approved
+  `actuator_guards` + `guard_mode` to its manifest (`open --guards-file` /
+  `amend --guard-mode`). Harness wiring:
+  | harness | mechanism | verified |
+  |---|---|---|
+  | Claude Code | plugin `hooks/hooks.json` PreToolUse | yes |
+  | Kimi Code | plugin.json `hooks` array | yes (official docs 2026-08-12) |
+  | Codex | `hooks/codex-hooks.json` install note | yes — https://developers.openai.com/codex/hooks (2026-08-12): payload shape, exit-2 block, and `~/.codex/hooks.json` / `<repo>/.codex/hooks.json` discovery all confirmed; hosted tools never fire hooks (their docs' caveat, ours too) |
+  | Cursor | plugin.json `hooks` key -> `hooks/cursor-hooks.json` | mostly — https://cursor.com/docs/agent/hooks (2026-08-12) confirms payload shapes and exit-2 block; the plugin manifest `hooks` key is confirmed by https://cursor.com/docs/plugins plus third-party plugins using it, but the CWD plugin-shipped hook commands run from is undocumented (our `./contracts/...` command assumes the plugin root), and a 2026-06 forum report says Cursor CLI ignores plugin-shipped hooks (IDE honors them) |
+  | Gemini CLI + agy | `~/.gemini/settings.json` BeforeTool snippet (`hooks/gemini-settings-snippet.json`) | yes — https://geminicli.com/docs/hooks/reference/ (2026-08-12): payload shape, exit-2 block, millisecond timeout; built-in tool names differ (`run_shell_command` etc.) so guards must name them; agy coverage rests on the shared `~/.gemini/settings.json` surface (third-party evidence) |
+  | others | `generic` adapter recipe (below) | by construction |
+
+  Generic adapter recipe: point any harness that can pipe a JSON tool-call
+  payload to a script at `custody_hook.py --harness generic`. The payload
+  needs `tool_name` plus a `tool_input` object carrying `command` and/or
+  `file_path`, and a `cwd` naming the workspace that holds `missions/`;
+  anything missing degrades to allow (fail-open). Exit 0 allows, exit 2
+  blocks with the reason on stderr.

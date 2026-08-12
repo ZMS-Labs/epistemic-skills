@@ -29,3 +29,20 @@
   outside the mission channel, which this document already places out of
   scope; this entry names the asymmetry so it is a known property rather than
   a rediscovery.
+
+## Stage-C hook: fail-open and guard-tamper residue
+
+The PreToolUse custody hook is an enforcement layer over convention, not a
+sole barrier. Every supported harness fails open on hook error, timeout, or
+crash (Kimi documents this explicitly; Claude's contract is the same), so a
+broken hook silently reverts enforcement to convention-held. Denial travels
+only via the deliberate exit-2 / decision-JSON path.
+
+Guard matching is deliberately over-broad: a false block names its rule and
+is discharged by an `amend`; a false allow silently retires custody of the
+actuator class.
+
+A guard change without a recorded authority amendment is detected as manifest
+tampering. A guard change accompanied by a FORGED amendment on the unsealed
+tail checkpoint is the same residue class as amendment fabrication today;
+the structural fix (tail anchor) is tracked as es#118.

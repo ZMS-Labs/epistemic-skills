@@ -63,10 +63,11 @@ else.
   load-bearing condition blocks progress (an unverified claim, an unmapped
   territory, an irreversible fork), STATE THE CONDITION and the return point
   (mission id + frontier) and let the surrounding stack answer it.
-- Custody here is convention-held, not mechanically enforced — the tracer
-  retro (2026-08-11) ruled Stage C teeth IN, tracked as epistemic-skills#117;
-  until that PreToolUse hook ships, honestly label enforcement as
-  convention-held if asked.
+- Custody enforcement is opt-in per mission: if the operator armed
+  `actuator_guards` + `guard_mode` (the es#117 Stage-C hook), guarded
+  actuators are mechanically gated -- a block names the rule and is
+  discharged only by an operator-granted `amend`. If the mission carries no
+  guards, custody remains convention-held; say so honestly if asked.
 - Degraded modes: core unavailable -> author a markdown mission manifest,
   label it session-bounded; store unwritable -> surface immediately; operator
   revocation -> stop consequential work, surface AUTHORITY_REVOKED.
