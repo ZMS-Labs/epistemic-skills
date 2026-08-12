@@ -15,6 +15,10 @@ pilot/runs/
 # Deterministic OpenAI/ChatGPT archives are CI artifacts, not source.
 dist/openai/
 
+# Mission-custody checkpoints — live mission chains are fleet-local runtime
+# state (like run telemetry), not source.
+missions/
+
 # Skill run telemetry — real ledger/adjudication lines are runtime state
 # (operator-private), not public content; only the synthetic example ships
 # (see plugins/epistemic-skills/skills/gauntlet/runs/README.md).
