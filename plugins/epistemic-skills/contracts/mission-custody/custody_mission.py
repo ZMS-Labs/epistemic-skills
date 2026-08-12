@@ -4,7 +4,9 @@ reanchoring on resume and a clearable FAIL path (no PA reject dead-end)."""
 from __future__ import annotations
 
 import json
+import os
 import re
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -115,6 +117,7 @@ class Mission:
         workspace = Path(workspace)
         missions_root = workspace / "missions"
         active: list[Path] = []
+        skipped: list[str] = []
         if missions_root.is_dir():
             for mission_dir in sorted(missions_root.iterdir()):
                 if not mission_dir.is_dir():
@@ -124,12 +127,21 @@ class Mission:
                     continue
                 try:
                     latest, _ = store.load_latest()
-                except StoreError:
+                except (StoreError, ValueError, OSError) as exc:
+                    # A corrupt sibling must not brick discovery of a healthy
+                    # mission -- but the skip is loud, and if nothing loads the
+                    # skip reasons ride the NoActiveMission error.
+                    reason = f"{mission_dir.name}: {type(exc).__name__}: {exc}"
+                    skipped.append(reason)
+                    print(("custody: skipping unreadable mission dir " + reason)
+                          .encode("ascii", "backslashreplace").decode("ascii"),
+                          file=sys.stderr)
                     continue
                 if latest["status"] not in ("completed", "cancelled"):
                     active.append(mission_dir)
         if not active:
-            raise NoActiveMission(f"no active mission under {missions_root}")
+            detail = f"; skipped unreadable: {'; '.join(skipped)}" if skipped else ""
+            raise NoActiveMission(f"no active mission under {missions_root}{detail}")
         if len(active) > 1:
             names = ", ".join(p.name for p in active)
             raise MultipleActiveMissions(f"multiple active missions: {names}")
@@ -137,14 +149,23 @@ class Mission:
 
     # -- internal helpers ---------------------------------------------------
 
-    def _verify_instruction(self, latest: dict) -> None:
+    def _verify_manifest(self, latest: dict) -> None:
+        """The whole manifest is immutable from open to close (no code path
+        amends it in @1). Verifying only the instruction left every other
+        authority field -- scope, permissions, stop_rules, and critically
+        acceptance.required_tier -- silently editable on the tail checkpoint,
+        which no successor hash references."""
         origin_path = self.store.checkpoint_paths()[0]
         origin = json.loads(origin_path.read_text(encoding="utf-8"))
-        origin_instruction = origin["manifest"]["authority"]["instruction"]
-        latest_instruction = latest["manifest"]["authority"]["instruction"]
-        if origin_instruction != latest_instruction:
+        origin_manifest = origin["manifest"]
+        latest_manifest = latest["manifest"]
+        if origin_manifest != latest_manifest:
+            differing = sorted(
+                key for key in set(origin_manifest) | set(latest_manifest)
+                if origin_manifest.get(key) != latest_manifest.get(key))
             raise CustodyError(
-                "authority.instruction changed since mission open (tampered)")
+                "manifest changed since mission open (tampered): "
+                + ", ".join(differing))
 
     def _write_next(self, latest: dict, latest_path: Path, *, status: str,
                      note: str | None = None, frontier: str | None = None,
@@ -243,7 +264,7 @@ class Mission:
 
     def approve(self) -> int:
         latest, path = self.store.load_latest()
-        self._verify_instruction(latest)
+        self._verify_manifest(latest)
         if latest["status"] != "draft":
             raise IllegalTransition(
                 f"cannot approve: status is {latest['status']!r}, expected 'draft'")
@@ -253,7 +274,7 @@ class Mission:
     def record_effect(self, artifact_relpath: str, content: str,
                        request_id: str) -> dict:
         latest, path = self.store.load_latest()
-        self._verify_instruction(latest)
+        self._verify_manifest(latest)
         if latest["status"] not in _EFFECT_STATES:
             raise IllegalTransition(f"cannot record_effect: status is {latest['status']!r}")
         receipt = self._write_effect(latest, artifact_relpath, content, request_id)
@@ -263,7 +284,7 @@ class Mission:
 
     def note(self, text: str) -> int:
         latest, path = self.store.load_latest()
-        self._verify_instruction(latest)
+        self._verify_manifest(latest)
         if latest["status"] not in _OPEN_STATES:
             raise IllegalTransition(f"cannot note: status is {latest['status']!r}")
         new = self._write_next(latest, path, status=latest["status"], note=text)
@@ -271,7 +292,7 @@ class Mission:
 
     def set_frontier(self, text: str) -> int:
         latest, path = self.store.load_latest()
-        self._verify_instruction(latest)
+        self._verify_manifest(latest)
         if latest["status"] not in _OPEN_STATES:
             raise IllegalTransition(f"cannot set_frontier: status is {latest['status']!r}")
         new = self._write_next(latest, path, status=latest["status"], frontier=text)
@@ -279,54 +300,82 @@ class Mission:
 
     def resume(self) -> list[str]:
         latest, path = self.store.load_latest()
-        self._verify_instruction(latest)
+        self._verify_manifest(latest)
         if latest["status"] in ("completed", "cancelled"):
             raise IllegalTransition(f"cannot resume: status is {latest['status']!r}")
-        latest_by_path: dict[str, dict] = {}
+        latest_by_key: dict[str, dict] = {}
+        missing: list[str] = []
         for request_id in latest["receipt_ids"]:
             receipt = self._load_receipt(request_id)
-            if receipt is not None:
-                latest_by_path[receipt["artifact_path"]] = receipt
+            if receipt is None:
+                # An unloadable receipt is drift, not a skip: the artifact it
+                # covered can no longer be verified, and silence here is a
+                # false "clean" for exactly the file most likely tampered.
+                if request_id not in missing:
+                    missing.append(request_id)
+                continue
+            key = receipt["artifact_path"]
+            if os.name == "nt":
+                # Case-insensitive filesystems: Doc.md and doc.md are one
+                # artifact; keying case-sensitively splits them and reports
+                # spurious drift on the superseded casing.
+                key = key.casefold()
+            latest_by_key[key] = receipt
         mismatched: list[str] = []
-        for rel, receipt in latest_by_path.items():
+        for receipt in latest_by_key.values():
+            rel = receipt["artifact_path"]
             target = self.workspace / rel
             actual = sha256_file(target) if target.exists() else None
             if actual != receipt["after_sha256"]:
                 mismatched.append(rel)
-        if not mismatched:
-            return []
         mismatched.sort()
+        missing.sort()
+        findings = mismatched + [f"RECEIPT-MISSING:{rid}" for rid in missing]
+        if not findings:
+            return []
         unresolved = list(latest["state"]["unresolved_verdicts"])
         for rel in mismatched:
             marker = f"RECONCILIATION:{rel}"
             if marker not in unresolved:
                 unresolved.append(marker)
+        for rid in missing:
+            marker = f"RECEIPT-MISSING:{rid}"
+            if marker not in unresolved:
+                unresolved.append(marker)
         self._write_next(latest, path, status="reopened", unresolved_verdicts=unresolved,
-                          note=f"drift detected: {', '.join(mismatched)}")
-        return mismatched
+                          note=f"drift detected: {', '.join(findings)}")
+        return findings
 
     def reconcile(self, artifact_relpath: str, content: str, request_id: str) -> dict:
         latest, path = self.store.load_latest()
-        self._verify_instruction(latest)
+        self._verify_manifest(latest)
         if latest["status"] != "reopened":
             raise IllegalTransition(
                 f"cannot reconcile: status is {latest['status']!r}, expected 'reopened'")
         norm = artifact_relpath.replace("\\", "/")
-        marker = f"RECONCILIATION:{norm}"
         unresolved = latest["state"]["unresolved_verdicts"]
-        if marker not in unresolved:
-            raise CustodyError(f"no reconciliation marker for {artifact_relpath!r}")
+        # A drifted artifact clears RECONCILIATION:<path>; a lost receipt
+        # clears RECEIPT-MISSING:<request_id> by re-minting under the same id
+        # (write_receipt's duplicate refusal cannot fire -- the file is gone).
+        markers = [m for m in (f"RECONCILIATION:{norm}",
+                                f"RECEIPT-MISSING:{request_id}")
+                   if m in unresolved]
+        if not markers:
+            raise CustodyError(
+                f"no reconciliation or receipt-missing marker for "
+                f"{artifact_relpath!r} / {request_id!r}")
         receipt = self._write_effect(latest, artifact_relpath, content, request_id)
-        remaining = [m for m in unresolved if m != marker]
+        remaining = [m for m in unresolved if m not in markers]
         next_status = "active" if not remaining else "reopened"
-        self._write_next(latest, path, status=next_status, add_receipt_id=request_id,
+        add_id = request_id if request_id not in latest["receipt_ids"] else None
+        self._write_next(latest, path, status=next_status, add_receipt_id=add_id,
                           unresolved_verdicts=remaining,
                           note=f"reconciled: {artifact_relpath}")
         return receipt
 
     def begin_verification(self) -> int:
         latest, path = self.store.load_latest()
-        self._verify_instruction(latest)
+        self._verify_manifest(latest)
         if latest["status"] != "active":
             raise IllegalTransition(
                 f"cannot begin_verification: status is {latest['status']!r}, expected 'active'")
@@ -339,7 +388,7 @@ class Mission:
     def record_verdict(self, verdict: str, acceptor_id: str, assurance_tier: str,
                         reason: str) -> int:
         latest, path = self.store.load_latest()
-        self._verify_instruction(latest)
+        self._verify_manifest(latest)
         if verdict not in VERDICTS:
             raise CustodyError(f"unknown verdict {verdict!r}")
         if verdict in ("PASS", "FAIL"):
@@ -349,6 +398,15 @@ class Mission:
                     "expected 'verifying'")
         elif latest["status"] not in _OPEN_STATES:
             raise IllegalTransition(f"cannot record verdict: status is {latest['status']!r}")
+        if acceptor_id != self.actor:
+            # A verdict is recorded by its acceptor: the acting session must
+            # BE the named acceptor, so a worker session cannot fabricate a
+            # verdict under someone else's name (it can still lie about who it
+            # is -- principal binding is the enforcement hook's job -- but the
+            # record can no longer be incoherent about it).
+            raise AcceptanceRefused(
+                f"acceptor_id {acceptor_id!r} must equal the acting actor "
+                f"{self.actor!r}: a verdict is recorded by its acceptor")
 
         manifest = latest["manifest"]
         worker_id = manifest["steward_ref"]
@@ -392,7 +450,7 @@ class Mission:
 
     def clear_fail(self, reason_fragment: str, receipt_request_id: str) -> int:
         latest, path = self.store.load_latest()
-        self._verify_instruction(latest)
+        self._verify_manifest(latest)
         if latest["status"] != "reopened":
             raise IllegalTransition(
                 f"cannot clear_fail: status is {latest['status']!r}, expected 'reopened'")
@@ -419,7 +477,7 @@ class Mission:
 
     def cancel(self, reason: str) -> int:
         latest, path = self.store.load_latest()
-        self._verify_instruction(latest)
+        self._verify_manifest(latest)
         if latest["status"] not in ("draft", "active", "reopened", "verifying"):
             raise IllegalTransition(f"cannot cancel: status is {latest['status']!r}")
         new = self._write_next(latest, path, status="cancelled", note=f"cancelled: {reason}")
@@ -427,5 +485,5 @@ class Mission:
 
     def status(self) -> dict:
         latest, _ = self.store.load_latest()
-        self._verify_instruction(latest)
+        self._verify_manifest(latest)
         return latest

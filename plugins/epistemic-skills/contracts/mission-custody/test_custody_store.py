@@ -101,6 +101,23 @@ def main() -> int:
         except StoreError:
             check("store-refuses-duplicate-receipt", True)
 
+    # two writers racing to the same checkpoint name: exclusive publication
+    # makes the loser fail loudly instead of silently clobbering the winner
+    # (probe P8: last-writer-wins lost a session's checkpoint with no trace)
+    with tempfile.TemporaryDirectory() as td:
+        target = Path(td) / "r00000001.json"
+        atomic_write_json(target, checkpoint(1, None), exclusive=True)
+        first_sha = sha256_file(target)
+        try:
+            atomic_write_json(target, checkpoint(1, None, "active"),
+                              exclusive=True)
+            check("store-refuses-checkpoint-clobber", False)
+        except StoreError:
+            check("store-refuses-checkpoint-clobber", True)
+        check("store-clobber-loser-left-no-tmp",
+              list(Path(td).glob("*.tmp")) == [])
+        check("store-clobber-winner-intact", sha256_file(target) == first_sha)
+
     print(f"\n{len(FAILURES)} failures")
     return 1 if FAILURES else 0
 

@@ -231,8 +231,11 @@ def validate_acceptance_verdict(rec: dict) -> list[str]:
              "list of receipt id strings required")
     _require(errors, is_iso_utc(rec["utc"]), "utc", "ISO-8601 Z required")
     if not errors:
-        _require(errors, rec["acceptor_id"] != rec["worker_id"],
-                 "acceptor_id", "self-certification refused (== worker_id)")
+        # Casefolded: "Steward-A" accepting "steward-a" is the same principal
+        # wearing different capitalization, not role separation.
+        _require(errors,
+                 rec["acceptor_id"].casefold() != rec["worker_id"].casefold(),
+                 "acceptor_id", "self-certification refused (== worker_id, casefolded)")
         if rec["assurance_tier"] == "operator-accepted":
             _require(errors, rec["acceptor_id"] == rec["operator_ref"],
                      "acceptor_id",

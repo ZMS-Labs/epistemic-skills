@@ -138,6 +138,55 @@ def test_instruction_immutable(workspace: Path) -> None:
         check("instruction-tamper-detected", True)
 
 
+def test_manifest_envelope_immutable(workspace: Path) -> None:
+    """Tail-checkpoint tamper of ANY manifest field must be caught, not just
+    the instruction: scope, stop_rules, and acceptance.required_tier were
+    silently editable (probe P4, efficacy evaluation 2026-08-12), enabling a
+    tier downgrade followed by self-acceptance."""
+    m = open_mission(workspace, "m-envelope", "Keep the envelope stable.")
+    m.approve()
+    r2_path = m.store.checkpoints_dir / "r00000002.json"
+    tampered = json.loads(r2_path.read_text(encoding="utf-8"))
+    tampered["manifest"]["stop_rules"]["hold_if"] = []
+    tampered["manifest"]["acceptance"]["required_tier"] = "declared-role-separation"
+    tampered["manifest"]["authority"]["permissions"] = ["do anything"]
+    r2_path.write_text(json.dumps(tampered, indent=1, sort_keys=True) + "\n",
+                        encoding="utf-8")
+    try:
+        m.note("carry on")
+        check("envelope-tamper-detected", False)
+    except CustodyError:
+        check("envelope-tamper-detected", True)
+
+
+def test_resume_missing_receipt_is_drift(workspace: Path) -> None:
+    """A receipt file that cannot be loaded is drift, not a silent skip: the
+    artifact it covered can no longer be verified (probe P5 reported a false
+    'clean' after deleting receipts/)."""
+    m = open_mission(workspace, "m-receiptless", "Guard the receipts.")
+    m.approve()
+    m.record_effect("notes/a.md", "hello", "req-1")
+    for p in m.store.receipts_dir.glob("*.json"):
+        p.unlink()
+
+    findings = m.resume()
+    check("missing-receipt-reported", findings == ["RECEIPT-MISSING:req-1"])
+    st = m.status()
+    check("missing-receipt-status-reopened", st["status"] == "reopened")
+    check("missing-receipt-marker-present",
+          "RECEIPT-MISSING:req-1" in st["state"]["unresolved_verdicts"])
+
+    # reconcile re-mints the lost receipt under the same request id
+    m.reconcile("notes/a.md", "hello", "req-1")
+    st2 = m.status()
+    check("missing-receipt-marker-cleared",
+          "RECEIPT-MISSING:req-1" not in st2["state"]["unresolved_verdicts"])
+    check("missing-receipt-status-active", st2["status"] == "active")
+    check("missing-receipt-no-duplicate-id",
+          st2["receipt_ids"].count("req-1") == 1)
+    check("missing-receipt-clean-after", m.resume() == [])
+
+
 def test_accept_requires_verifying_and_separation(workspace: Path) -> None:
     m = open_mission(workspace, "m-accept", "Finish task.")
     m.approve()
@@ -158,9 +207,30 @@ def test_accept_requires_verifying_and_separation(workspace: Path) -> None:
     except AcceptanceRefused:
         check("accept-refuses-self-cert", True)
 
-    m.record_verdict("PASS", acceptor_id="agent:acceptor",
-                      assurance_tier="declared-role-separation",
-                      reason="separately reviewed")
+    # the worker session naming somebody else as acceptor is a fabricated
+    # verdict, not role separation: the acting actor must BE the acceptor
+    try:
+        m.record_verdict("PASS", acceptor_id="agent:acceptor",
+                          assurance_tier="declared-role-separation",
+                          reason="worker speaking for an absent acceptor")
+        check("accept-refuses-fabricated-acceptor", False)
+    except AcceptanceRefused:
+        check("accept-refuses-fabricated-acceptor", True)
+
+    # a case variant of the worker is still the worker
+    acc_case = Mission.load(workspace, actor="Agent:Worker")
+    try:
+        acc_case.record_verdict("PASS", acceptor_id="Agent:Worker",
+                                 assurance_tier="declared-role-separation",
+                                 reason="worker in a different capitalization")
+        check("accept-refuses-case-variant-self-cert", False)
+    except AcceptanceRefused:
+        check("accept-refuses-case-variant-self-cert", True)
+
+    acceptor = Mission.load(workspace, actor="agent:acceptor")
+    acceptor.record_verdict("PASS", acceptor_id="agent:acceptor",
+                             assurance_tier="declared-role-separation",
+                             reason="separately reviewed")
     st = m.status()
     check("accept-pass-completes", st["status"] == "completed")
 
@@ -169,9 +239,10 @@ def test_fail_is_clearable(workspace: Path) -> None:
     m = open_mission(workspace, "m-fail", "Ship safely.")
     m.approve()
     m.begin_verification()
-    m.record_verdict("FAIL", acceptor_id="agent:acceptor",
-                      assurance_tier="declared-role-separation",
-                      reason="missing edge case")
+    acceptor = Mission.load(workspace, actor="agent:acceptor")
+    acceptor.record_verdict("FAIL", acceptor_id="agent:acceptor",
+                             assurance_tier="declared-role-separation",
+                             reason="missing edge case")
     st = m.status()
     check("fail-status-reopened", st["status"] == "reopened")
     check("fail-marker-present",
@@ -185,9 +256,9 @@ def test_fail_is_clearable(workspace: Path) -> None:
     check("fail-status-active-after-clear", st2["status"] == "active")
 
     m.begin_verification()
-    m.record_verdict("PASS", acceptor_id="agent:acceptor",
-                      assurance_tier="declared-role-separation",
-                      reason="fix verified")
+    acceptor.record_verdict("PASS", acceptor_id="agent:acceptor",
+                             assurance_tier="declared-role-separation",
+                             reason="fix verified")
     st3 = m.status()
     check("fail-then-pass-completes", st3["status"] == "completed")
 
@@ -197,17 +268,19 @@ def test_operator_tier(workspace: Path) -> None:
                       required_tier="operator-accepted")
     m.approve()
     m.begin_verification()
+    acceptor = Mission.load(workspace, actor="agent:acceptor")
     try:
-        m.record_verdict("PASS", acceptor_id="agent:acceptor",
-                          assurance_tier="declared-role-separation",
-                          reason="peer reviewed")
+        acceptor.record_verdict("PASS", acceptor_id="agent:acceptor",
+                                 assurance_tier="declared-role-separation",
+                                 reason="peer reviewed")
         check("tier-insufficient-refused", False)
     except AcceptanceRefused:
         check("tier-insufficient-refused", True)
 
-    m.record_verdict("PASS", acceptor_id="operator:zach",
-                      assurance_tier="operator-accepted",
-                      reason="operator signed off")
+    operator = Mission.load(workspace, actor="operator:zach")
+    operator.record_verdict("PASS", acceptor_id="operator:zach",
+                             assurance_tier="operator-accepted",
+                             reason="operator signed off")
     st = m.status()
     check("tier-operator-accept-completes", st["status"] == "completed")
 
@@ -220,6 +293,8 @@ TESTS = [
     test_effect_refuses_escape,
     test_resume_detects_drift_and_reconcile_clears,
     test_instruction_immutable,
+    test_manifest_envelope_immutable,
+    test_resume_missing_receipt_is_drift,
     test_accept_requires_verifying_and_separation,
     test_fail_is_clearable,
     test_operator_tier,
