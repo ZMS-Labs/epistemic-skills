@@ -23,6 +23,7 @@ import sys
 from pathlib import Path
 
 from custody_mission import CustodyError, Mission
+from custody_store import StoreError
 
 
 def _print_status(checkpoint: dict) -> None:
@@ -202,7 +203,10 @@ def main(argv: list[str]) -> int:
     args = parser.parse_args(argv)
     try:
         return dispatch(args)
-    except CustodyError as exc:
+    except (CustodyError, StoreError) as exc:
+        # StoreError refusals (concurrent writer, duplicate receipt, invalid
+        # record) honor the same exit-2 contract as custody refusals instead
+        # of escaping as a traceback with exit 1.
         print(_ascii_safe(f"{type(exc).__name__}: {exc}"), file=sys.stderr)
         return 2
 

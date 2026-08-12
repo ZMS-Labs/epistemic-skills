@@ -187,6 +187,75 @@ def test_resume_missing_receipt_is_drift(workspace: Path) -> None:
     check("missing-receipt-clean-after", m.resume() == [])
 
 
+def test_reconcile_clears_exactly_one_marker(workspace: Path) -> None:
+    """One receipt must not retire two unrelated obligations: clearing a
+    drift marker and an unrelated RECEIPT-MISSING marker together silently
+    dropped the lost receipt's artifact from custody (merge-gate blocker 1)."""
+    m = open_mission(workspace, "m-two-markers", "Keep obligations separate.")
+    m.approve()
+    m.record_effect("notes/a.md", "aa", "req-a")
+    m.record_effect("notes/b.md", "bb", "req-b")
+    (workspace / "notes" / "a.md").write_text("tampered", encoding="utf-8")
+    m.store.receipt_path("req-b").unlink()
+
+    findings = m.resume()
+    check("two-markers-both-reported",
+          findings == ["notes/a.md", "RECEIPT-MISSING:req-b"])
+
+    try:
+        m.reconcile("notes/a.md", "aa", "req-b")
+        check("two-markers-ambiguity-refused", False)
+    except CustodyError:
+        check("two-markers-ambiguity-refused", True)
+
+    m.reconcile("notes/a.md", "aa", "req-c")
+    st = m.status()
+    check("two-markers-drift-cleared-missing-remains",
+          st["state"]["unresolved_verdicts"] == ["RECEIPT-MISSING:req-b"]
+          and st["status"] == "reopened")
+
+    m.reconcile("notes/b.md", "bb", "req-b")
+    check("two-markers-all-cleared", m.status()["status"] == "active")
+
+    # custody of b.md survived: tampering it is still detected
+    (workspace / "notes" / "b.md").write_text("tampered too", encoding="utf-8")
+    check("two-markers-b-still-covered", m.resume() == ["notes/b.md"])
+
+
+def test_corrupt_receipt_degrades_to_drift(workspace: Path) -> None:
+    """A corrupt-but-present receipt must surface as RECEIPT-MISSING drift,
+    not crash resume; and reconcile must re-mint over the stale file instead
+    of wedging on the duplicate refusal (merge-gate blocker 2)."""
+    m = open_mission(workspace, "m-corrupt-receipt", "Survive mangled receipts.")
+    m.approve()
+    m.record_effect("notes/a.md", "hello", "req-1")
+    m.store.receipt_path("req-1").write_text("{not json", encoding="utf-8")
+
+    findings = m.resume()
+    check("corrupt-receipt-is-drift", findings == ["RECEIPT-MISSING:req-1"])
+
+    m.reconcile("notes/a.md", "hello", "req-1")
+    st = m.status()
+    check("corrupt-receipt-reminted", st["status"] == "active")
+    check("corrupt-receipt-clean-after", m.resume() == [])
+
+
+def test_effect_duplicate_id_leaves_workspace_untouched(workspace: Path) -> None:
+    """Idempotency refusal must fire BEFORE the workspace mutates."""
+    m = open_mission(workspace, "m-dup-effect", "Refuse before writing.")
+    m.approve()
+    m.record_effect("notes/a.md", "hello", "req-1")
+    try:
+        m.record_effect("notes/b.md", "evil", "req-1")
+        check("dup-effect-refused", False)
+    except CustodyError:
+        check("dup-effect-refused", True)
+    check("dup-effect-no-new-artifact",
+          not (workspace / "notes" / "b.md").exists())
+    check("dup-effect-original-intact",
+          (workspace / "notes" / "a.md").read_text(encoding="utf-8") == "hello")
+
+
 def test_accept_requires_verifying_and_separation(workspace: Path) -> None:
     m = open_mission(workspace, "m-accept", "Finish task.")
     m.approve()
@@ -295,6 +364,9 @@ TESTS = [
     test_instruction_immutable,
     test_manifest_envelope_immutable,
     test_resume_missing_receipt_is_drift,
+    test_reconcile_clears_exactly_one_marker,
+    test_corrupt_receipt_degrades_to_drift,
+    test_effect_duplicate_id_leaves_workspace_untouched,
     test_accept_requires_verifying_and_separation,
     test_fail_is_clearable,
     test_operator_tier,

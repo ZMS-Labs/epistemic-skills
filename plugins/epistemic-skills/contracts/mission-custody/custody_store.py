@@ -47,6 +47,17 @@ def _publish_exclusive(tmp: str, path: Path) -> None:
     except FileExistsError:
         raise StoreError(
             f"{path.name} already exists; concurrent writer detected") from None
+    except BaseException:
+        # Never leave a partial record at the canonical name: it would brick
+        # chain loading AND block every retry with a misleading concurrent-
+        # writer refusal. Residual window: a hard kill between write and this
+        # unlink still strands a partial file -- load_latest fails loudly on
+        # it (never silently), and the os.link path above has no such window.
+        try:
+            os.unlink(path)
+        except OSError:
+            pass
+        raise
 
 
 def atomic_write_json(path: Path, record: dict, *, exclusive: bool = False) -> str:
@@ -121,12 +132,15 @@ class MissionStore:
             prev_sha = sha256_file(path)
         return record, paths[-1]
 
+    def receipt_path(self, request_id: str) -> Path:
+        name = sha256_bytes(request_id.encode("utf-8")) + ".json"
+        return self.receipts_dir / name
+
     def write_receipt(self, record: dict) -> Path:
         errors = validate_record(record)
         if errors:
             raise StoreError(f"invalid receipt: {errors[:3]}")
-        name = sha256_bytes(record["request_id"].encode("utf-8")) + ".json"
-        path = self.receipts_dir / name
+        path = self.receipt_path(record["request_id"])
         if path.exists():
             raise StoreError(
                 f"receipt already exists for request_id {record['request_id']!r}")

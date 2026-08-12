@@ -127,10 +127,13 @@ class Mission:
                     continue
                 try:
                     latest, _ = store.load_latest()
-                except (StoreError, ValueError, OSError) as exc:
-                    # A corrupt sibling must not brick discovery of a healthy
+                except (StoreError, ValueError) as exc:
+                    # A CORRUPT sibling must not brick discovery of a healthy
                     # mission -- but the skip is loud, and if nothing loads the
-                    # skip reasons ride the NoActiveMission error.
+                    # skip reasons ride the NoActiveMission error. Environmental
+                    # OSErrors (transient locks, permissions) propagate instead:
+                    # skipping those would reroute discovery around a mission
+                    # that is merely busy, inviting a duplicate open.
                     reason = f"{mission_dir.name}: {type(exc).__name__}: {exc}"
                     skipped.append(reason)
                     print(("custody: skipping unreadable mission dir " + reason)
@@ -217,6 +220,13 @@ class Mission:
 
     def _write_effect(self, latest: dict, artifact_relpath: str, content: str,
                        request_id: str) -> dict:
+        # Idempotency is checked BEFORE the workspace mutates: previously the
+        # target file was rewritten and only then did write_receipt refuse the
+        # duplicate, leaving an unreceipted mutation behind.
+        if self.store.receipt_path(request_id).exists():
+            raise CustodyError(
+                f"receipt already exists for request_id {request_id!r}; "
+                "effects are idempotent by request id -- use a fresh id")
         target = self._resolve_artifact_path(artifact_relpath)
         before_sha = sha256_file(target) if target.exists() else None
         data = content.encode("utf-8")
@@ -236,11 +246,18 @@ class Mission:
         return receipt
 
     def _load_receipt(self, request_id: str) -> dict | None:
-        name = sha256_bytes(request_id.encode("utf-8")) + ".json"
-        path = self.store.receipts_dir / name
-        if not path.exists():
+        """None means UNLOADABLE -- absent, corrupt, or schema-invalid alike.
+        A corrupt receipt must degrade to drift (RECEIPT-MISSING), never crash
+        resume: crashing the recovery path on a mangled receipt is a denial of
+        service by exactly the tampering drift detection exists to catch."""
+        path = self.store.receipt_path(request_id)
+        try:
+            record = json.loads(path.read_text(encoding="utf-8"))
+        except FileNotFoundError:
             return None
-        return json.loads(path.read_text(encoding="utf-8"))
+        except ValueError:
+            return None
+        return record if not validate_record(record) else None
 
     def _find_verdict_record(self, verdict: str, reason: str) -> dict | None:
         verdicts_dir = self.store.mission_dir / "verdicts"
@@ -354,18 +371,36 @@ class Mission:
                 f"cannot reconcile: status is {latest['status']!r}, expected 'reopened'")
         norm = artifact_relpath.replace("\\", "/")
         unresolved = latest["state"]["unresolved_verdicts"]
-        # A drifted artifact clears RECONCILIATION:<path>; a lost receipt
-        # clears RECEIPT-MISSING:<request_id> by re-minting under the same id
-        # (write_receipt's duplicate refusal cannot fire -- the file is gone).
-        markers = [m for m in (f"RECONCILIATION:{norm}",
-                                f"RECEIPT-MISSING:{request_id}")
-                   if m in unresolved]
-        if not markers:
+        # Exactly ONE obligation clears per call. A drifted artifact clears
+        # RECONCILIATION:<path>; a lost receipt clears RECEIPT-MISSING:<id> by
+        # re-minting under the same id. When the call matches BOTH, they are
+        # separate obligations sharing one receipt -- clearing them together
+        # would silently drop the missing receipt's artifact from custody.
+        drift_marker = f"RECONCILIATION:{norm}"
+        missing_marker = f"RECEIPT-MISSING:{request_id}"
+        drift_hit = drift_marker in unresolved
+        missing_hit = missing_marker in unresolved
+        if drift_hit and missing_hit:
+            raise CustodyError(
+                f"ambiguous reconciliation: {drift_marker} and {missing_marker} "
+                "are separate obligations -- clear the drift with a fresh "
+                "request id, then re-mint the missing receipt on its own")
+        if drift_hit:
+            marker = drift_marker
+        elif missing_hit:
+            marker = missing_marker
+            # The missing-receipt file may still exist corrupt or stale (that
+            # is HOW it went missing); re-minting must replace it, not wedge
+            # on the duplicate refusal.
+            stale = self.store.receipt_path(request_id)
+            if stale.exists():
+                stale.unlink()
+        else:
             raise CustodyError(
                 f"no reconciliation or receipt-missing marker for "
                 f"{artifact_relpath!r} / {request_id!r}")
         receipt = self._write_effect(latest, artifact_relpath, content, request_id)
-        remaining = [m for m in unresolved if m not in markers]
+        remaining = [m for m in unresolved if m != marker]
         next_status = "active" if not remaining else "reopened"
         add_id = request_id if request_id not in latest["receipt_ids"] else None
         self._write_next(latest, path, status=next_status, add_receipt_id=add_id,

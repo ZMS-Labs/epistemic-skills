@@ -118,6 +118,42 @@ def main() -> int:
               list(Path(td).glob("*.tmp")) == [])
         check("store-clobber-winner-intact", sha256_file(target) == first_sha)
 
+    # the no-hardlink fallback must not strand a partial record at the
+    # canonical name on failure, and a retry must then succeed (merge-gate
+    # blocker 3: partial JSON bricked loading AND blocked every retry with a
+    # misleading concurrent-writer refusal)
+    import custody_store as cs
+    with tempfile.TemporaryDirectory() as td:
+        target = Path(td) / "r00000001.json"
+        real_link, real_fsync = cs.os.link, cs.os.fsync
+
+        def no_link(*a, **k):
+            raise OSError("hard links unsupported")
+
+        calls = {"n": 0}
+
+        def flaky_fsync(fd):
+            calls["n"] += 1
+            if calls["n"] == 2:  # 1st = tmp write; 2nd = fallback target
+                raise OSError(28, "No space left on device")
+            return real_fsync(fd)
+
+        cs.os.link, cs.os.fsync = no_link, flaky_fsync
+        try:
+            try:
+                atomic_write_json(target, checkpoint(1, None), exclusive=True)
+                check("fallback-failure-propagates", False)
+            except OSError:
+                check("fallback-failure-propagates", True)
+            check("fallback-no-partial-left", not target.exists())
+            check("fallback-no-tmp-left", list(Path(td).glob("*.tmp")) == [])
+
+            cs.os.fsync = real_fsync  # link still unsupported: retry via fallback
+            atomic_write_json(target, checkpoint(1, None), exclusive=True)
+            check("fallback-retry-succeeds", target.exists())
+        finally:
+            cs.os.link, cs.os.fsync = real_link, real_fsync
+
     print(f"\n{len(FAILURES)} failures")
     return 1 if FAILURES else 0
 
