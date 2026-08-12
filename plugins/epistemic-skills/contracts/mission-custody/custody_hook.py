@@ -37,8 +37,11 @@ def _find_workspace(cwd: str) -> Path | None:
 
 def _strip_leading_drive_slash(path: str) -> str:
     """'/C:/x' -> 'C:/x'. A URI path and Cursor's bare Windows roots both carry
-    the leading slash; Windows reads the un-stripped form as a driveless path."""
-    if len(path) > 2 and path[0] == "/" and path[2] == ":":
+    the leading slash; Windows reads the un-stripped form as a driveless path.
+
+    The drive letter must be a LETTER. '/1:/x' is not a drive path, and
+    rewriting it would invent a location out of an unrecognised string."""
+    if len(path) > 2 and path[0] == "/" and path[1].isalpha() and path[2] == ":":
         return path[1:]
     return path
 
@@ -116,7 +119,21 @@ def _candidate_workspaces(call: dict) -> list[Path]:
     roots = call.get("workspace_roots")
     if isinstance(roots, list):  # a bare string would iterate per-character
         for root in roots:
-            consider(_root_location(root))
+            location = _root_location(root)
+            consider(location)
+            # '/c:/work/project' has TWO readings: a Windows drive path (which
+            # _root_location resolves) and, on POSIX, a perfectly legal
+            # absolute path, because ':' is an ordinary filename character
+            # there. Choosing one platform's reading gets the other wrong, and
+            # both wrong answers end identically: no workspace found, no
+            # mission consulted, the guarded call SILENTLY ALLOWED.
+            #
+            # So neither is chosen. Both are offered, _find_workspace discards
+            # whichever has no missions/ tree, and any-blocks-wins covers the
+            # rest -- the same reasoning that made this function return a list
+            # instead of a first-wins answer.
+            if isinstance(root, str) and root and root != location:
+                consider(root)
     return candidates
 
 

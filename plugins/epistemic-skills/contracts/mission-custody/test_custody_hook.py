@@ -334,10 +334,47 @@ def test_root_location_uri_forms() -> None:
         ("file://LOCALHOST/C:/work/proj", "C:/work/proj"),
         # a bare POSIX path must not be mangled by the drive-slash strip
         ("/opt/u/proj", "/opt/u/proj"),
+        # the drive letter must be a LETTER: rewriting "/1:/x" would invent a
+        # location out of a string nothing identified as a drive path
+        ("/1:/work/project", "/1:/work/project"),
     ]
     for src, want in cases:
         check(f"root-location-{str(src)[:28]}",
               custody_hook._root_location(src) == want)
+
+
+def test_bare_drive_root_offers_both_readings() -> None:
+    """'/c:/work/project' is a Windows drive path AND a legal POSIX path.
+
+    On POSIX ':' is an ordinary filename character, so stripping the leading
+    slash there yields a RELATIVE path: `_find_workspace` would search from
+    wherever the hook process happens to run, find nothing, and silently allow
+    the guarded call. Gating the rewrite on the platform only moves the
+    fail-open to the other platform -- both wrong readings end the same way.
+
+    So neither reading is chosen. Both are offered as candidates,
+    `_find_workspace` drops whichever has no missions/ tree, and any-blocks-wins
+    does the rest."""
+    import custody_hook
+    asked: list[str] = []
+    original = custody_hook._find_workspace
+    custody_hook._find_workspace = lambda loc: (asked.append(loc), None)[1]
+    try:
+        custody_hook._candidate_workspaces(
+            {"workspace_roots": ["/c:/work/project"]})
+    finally:
+        custody_hook._find_workspace = original
+    check("bare-drive-offers-stripped-reading", "c:/work/project" in asked)
+    check("bare-drive-offers-unstripped-reading", "/c:/work/project" in asked)
+    # a path with only ONE reading must not be probed twice
+    asked.clear()
+    custody_hook._find_workspace = lambda loc: (asked.append(loc), None)[1]
+    try:
+        custody_hook._candidate_workspaces(
+            {"workspace_roots": ["/opt/u/proj"]})
+    finally:
+        custody_hook._find_workspace = original
+    check("single-reading-probed-once", asked == ["/opt/u/proj"])
 
 
 def test_missing_payload_cwd_is_inert_even_when_hook_process_runs_inside_armed_workspace() -> None:
