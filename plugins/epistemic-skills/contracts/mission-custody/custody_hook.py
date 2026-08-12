@@ -52,6 +52,11 @@ def _root_location(root: object) -> str:
         from urllib.parse import unquote, urlparse
         parsed = urlparse(root)
         path = unquote(parsed.path)
+        if parsed.netloc:
+            # RFC 8089 authority form: file://server/share -> \\server\share.
+            # Dropping the host silently resolves to the WRONG local path, and
+            # this fleet is UNC-heavy (Y: is a mapping of \\10.10.10.127).
+            return "\\\\" + parsed.netloc + path.replace("/", "\\")
         # file:///C:/x -> /C:/x on Windows; strip the leading slash
         if len(path) > 2 and path[0] == "/" and path[2] == ":":
             path = path[1:]

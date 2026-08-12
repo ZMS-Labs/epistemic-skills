@@ -300,6 +300,32 @@ def test_workspace_root_entry_shapes() -> None:
                        ).returncode == 2)
 
 
+def test_root_location_uri_forms() -> None:
+    """`_root_location` unit cases, including the RFC 8089 authority form.
+
+    `file://server/share` carries the host in netloc, not path. Dropping it
+    yields `/share`, which resolves to the WRONG local path -- and this fleet
+    is UNC-heavy (Y: is a mapping of a UNC share), so the authority form is the
+    one most likely to appear here."""
+    import custody_hook
+    unc = "\\" + "\\" + "server" + "\\" + "share" + "\\" + "project"
+    cases = [
+        ("file://server/share/project", unc),
+        ("file:///C:/Users/x/proj", "C:/Users/x/proj"),
+        ("file:///home/u/proj", "/home/u/proj"),
+        ("file:///C:/a%20b/proj", "C:/a b/proj"),
+        ("Y:/dev/thing", "Y:/dev/thing"),
+        ({"uri": "Y:/dev/thing"}, "Y:/dev/thing"),
+        ({"path": "Y:/dev/thing"}, "Y:/dev/thing"),
+        (12345, ""),
+        (None, ""),
+        ({}, ""),
+    ]
+    for src, want in cases:
+        check(f"root-location-{str(src)[:28]}",
+              custody_hook._root_location(src) == want)
+
+
 def test_missing_payload_cwd_is_inert_even_when_hook_process_runs_inside_armed_workspace() -> None:
     """No usable location means INERT, never a search from the hook process's
     own directory.
