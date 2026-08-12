@@ -41,6 +41,61 @@ def _tier_meets(actual: str, required: str) -> bool:
     return _TIER_RANK[actual] >= _TIER_RANK[required]
 
 
+def _ascii_case_fold(text: str) -> str:
+    """Fold A-Z only, leaving every other codepoint byte-exact.
+
+    NOT str.casefold(): full Unicode folding performs 1-to-many expansions
+    that NTFS's per-codepoint upcase table does not -- 'strasse.txt' and
+    'strasse.txt' with an eszett casefold equal while coexisting on disk as
+    two independent files (verified on NTFS), and U+212A KELVIN SIGN folds
+    onto 'k'. Under a marker comparison those false positives let a write to
+    one artifact discharge another artifact's obligation, dropping a real
+    file from custody while the mission reads clean.
+
+    The two error directions are not symmetric, so the tie-break is not a
+    close call. Under-matching leaves an obligation outstanding, and the
+    marker names the exact path that discharges it -- visible, recoverable.
+    Over-matching silently retires custody of a file nobody is watching."""
+    return "".join(c.lower() if "A" <= c <= "Z" else c for c in text)
+
+
+def _normalize_relpath(path: str) -> str:
+    """Spelling differences that cannot denote two different files:
+    separator flavor, repeated separators, a leading './', a trailing '/'.
+    ('..' never appears -- _resolve_artifact_path rejects it at the door.)"""
+    norm = path.replace("\\", "/")
+    while "//" in norm:
+        norm = norm.replace("//", "/")
+    while "/./" in norm:
+        norm = norm.replace("/./", "/")
+    while norm.startswith("./"):
+        norm = norm[2:]
+    return norm.rstrip("/") or norm
+
+
+def _same_artifact(left: str, right: str) -> bool:
+    """Do two workspace-relative paths name the same artifact on THIS
+    platform? Obligation markers must answer this the same way resume()
+    answers it for drift keys, or an obligation raised under one spelling
+    can never be discharged under another -- and since both name one
+    physical file, that is a mission that can never legitimately close."""
+    left = _normalize_relpath(left)
+    right = _normalize_relpath(right)
+    if os.name == "nt":
+        return _ascii_case_fold(left) == _ascii_case_fold(right)
+    return left == right
+
+
+def _find_marker(unresolved: list[str], prefix: str, artifact_relpath: str) -> str | None:
+    """The marker in `unresolved` naming this artifact, or None. Matching is
+    by artifact identity, never by string equality of the whole marker."""
+    for marker in unresolved:
+        if marker.startswith(prefix) and _same_artifact(
+                marker[len(prefix):], artifact_relpath):
+            return marker
+    return None
+
+
 class CustodyError(Exception):
     pass
 
@@ -396,10 +451,10 @@ class Mission:
         # A fresh effect on an artifact awaiting re-coverage discharges that
         # obligation -- that is exactly what RECOVER asks for.
         unresolved = latest["state"]["unresolved_verdicts"]
-        recover = f"RECOVER:{artifact_relpath.replace(chr(92), '/')}"
         status = latest["status"]
         remaining = None
-        if recover in unresolved:
+        recover = _find_marker(unresolved, "RECOVER:", artifact_relpath)
+        if recover is not None:
             remaining = [m for m in unresolved if m != recover]
             if status == "reopened" and not remaining:
                 status = "active"
@@ -478,12 +533,16 @@ class Mission:
                 if request_id not in missing:
                     missing.append(request_id)
                 continue
+            # Case-insensitive filesystems: Doc.md and doc.md are one
+            # artifact; keying case-sensitively splits them and reports
+            # spurious drift on the superseded casing. Folded ASCII-only --
+            # str.casefold() would map two genuinely distinct files onto one
+            # key here, and the loser would vanish from the drift check
+            # entirely (see _ascii_case_fold).
             key = receipt["artifact_path"]
+            key = _normalize_relpath(key)
             if os.name == "nt":
-                # Case-insensitive filesystems: Doc.md and doc.md are one
-                # artifact; keying case-sensitively splits them and reports
-                # spurious drift on the superseded casing.
-                key = key.casefold()
+                key = _ascii_case_fold(key)
             latest_by_key[key] = receipt
         mismatched: list[str] = []
         for receipt in latest_by_key.values():
@@ -523,8 +582,8 @@ class Mission:
         # to a caller-chosen path is a forgery channel (merge-gate round 2,
         # finding A): acknowledge_receipt_loss is the only exit for
         # RECEIPT-MISSING markers, and it destroys nothing.
-        marker = f"RECONCILIATION:{norm}"
-        if marker not in unresolved:
+        marker = _find_marker(unresolved, "RECONCILIATION:", norm)
+        if marker is None:
             raise CustodyError(f"no reconciliation marker for {artifact_relpath!r}")
         if f"RECEIPT-MISSING:{request_id}" in unresolved:
             raise CustodyError(
@@ -565,6 +624,13 @@ class Mission:
 
         receipt = self._load_receipt(request_id)  # already request_id-checked
         recorded_path = self._historical_effect_path(request_id)
+        # Deliberately raw equality, NOT _same_artifact: everywhere else the
+        # question is "does this write satisfy that obligation", where two
+        # spellings of one file must match. Here the question is "is this the
+        # receipt the chain recorded", and a receipt that reappears respelled
+        # is not provably the original -- the safe answer is to retire the id
+        # and let a fresh effect re-establish coverage honestly. Strictness
+        # here is intentional, not an oversight.
         if receipt is not None and recorded_path is not None \
                 and receipt["artifact_path"] == recorded_path:
             new = self._write_next(
@@ -588,9 +654,8 @@ class Mission:
             # stays reopened, naming the artifact that must be re-covered, so
             # an uncovered artifact can never sit quietly in an active
             # mission just because its receipt was destroyed.
-            recover = f"RECOVER:{recorded_path}"
-            if recover not in remaining:
-                remaining = remaining + [recover]
+            if _find_marker(remaining, "RECOVER:", recorded_path) is None:
+                remaining = remaining + [f"RECOVER:{recorded_path}"]
             next_status = "reopened"
         new = self._write_next(
             latest, path, status=next_status, unresolved_verdicts=remaining,

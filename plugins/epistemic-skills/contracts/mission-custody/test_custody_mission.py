@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 import tempfile
 from pathlib import Path
@@ -12,6 +13,7 @@ sys.path.insert(0, str(ROOT))
 from custody_store import StoreError, sha256_bytes  # noqa: E402
 from verify_mission_custody import is_iso_utc  # noqa: E402
 from custody_mission import (  # noqa: E402
+    _same_artifact,
     AcceptanceRefused,
     CustodyError,
     IllegalTransition,
@@ -435,6 +437,112 @@ def test_forged_restored_receipt_is_not_trusted(workspace: Path) -> None:
           == "the real secret")
 
 
+def test_distinct_files_never_share_an_obligation(workspace: Path) -> None:
+    """The inverse risk of case-insensitive matching, and the worse one.
+
+    str.casefold() expands the eszett to 'ss' and folds U+212A onto 'k';
+    NTFS does neither, so those names coexist as separate files on disk
+    (verified). Folding them together let a write to one artifact discharge
+    another's RECOVER obligation -- the real file left uncovered, no receipt
+    naming it, resume clean, and nothing in the record saying so. Silent
+    custody loss is strictly worse than an outstanding obligation, so the
+    fold is ASCII-only and these must NEVER match."""
+    check("eszett-not-same-artifact",
+          not _same_artifact("straße.txt", "strasse.txt"))
+    check("kelvin-not-same-artifact",
+          not _same_artifact("Kelvin.txt", "Kelvin.txt"))
+    check("ascii-case-still-same-artifact-on-nt",
+          _same_artifact("Sub/File.TXT", "sub/file.txt") == (os.name == "nt"))
+    for spelling in ("./notes/a.md", "notes//a.md", "notes\\a.md",
+                      "notes/./a.md", "./notes/./a.md", "notes/a.md/"):
+        check(f"normalized-same-artifact[{spelling}]",
+              _same_artifact(spelling, "notes/a.md"))
+    # normalization must not reach past spellings of ONE location
+    for distinct in ("notes/b.md", "other/a.md", "notes/a.md.bak", "a.md"):
+        check(f"normalization-not-overreaching[{distinct}]",
+              not _same_artifact(distinct, "notes/a.md"))
+
+    # end to end: covering a different file must not discharge the obligation
+    m = open_mission(workspace, "m-distinct", "Distinct files stay distinct.")
+    m.approve()
+    m.record_effect("straße.txt", "the real content", "id-true")
+    m.store.receipt_path("id-true").unlink()
+    m.resume()
+    m.acknowledge_receipt_loss("id-true")
+    check("distinct-recover-raised",
+          m.status()["state"]["unresolved_verdicts"]
+          == ["RECOVER:straße.txt"])
+
+    m.record_effect("strasse.txt", "unrelated decoy", "id-decoy")
+    st = m.status()
+    check("distinct-decoy-did-not-discharge",
+          st["state"]["unresolved_verdicts"] == ["RECOVER:straße.txt"]
+          and st["status"] == "reopened")
+    check("distinct-real-file-untouched",
+          (workspace / "straße.txt").read_text(encoding="utf-8")
+          == "the real content")
+
+    # and both files are independently covered once each is genuinely written
+    m.record_effect("straße.txt", "recovered for real", "id-true-2")
+    st2 = m.status()
+    check("distinct-real-recovery-discharges",
+          st2["state"]["unresolved_verdicts"] == [] and st2["status"] == "active")
+    (workspace / "strasse.txt").write_text("tampered", encoding="utf-8")
+    check("distinct-both-files-tracked-separately",
+          m.resume() == ["strasse.txt"])
+
+
+def test_obligations_match_by_artifact_not_by_string(workspace: Path) -> None:
+    """An obligation raised under one spelling of a path must be dischargeable
+    by genuinely covering THAT artifact, however the caller spells it. On a
+    case-insensitive filesystem 'Sub/File.TXT' and 'sub/file.txt' are one
+    physical file; matching markers by raw string equality left a mission
+    permanently unable to close after a legitimate recovery (independent
+    audit of e08a470). resume() already casefolded its drift keys -- the
+    obligation markers had not."""
+    m = open_mission(workspace, "m-case", "Match artifacts, not strings.")
+    m.approve()
+    m.record_effect("Sub/Dir/File.TXT", "original", "req-1")
+    m.store.receipt_path("req-1").unlink()
+    m.resume()
+    m.acknowledge_receipt_loss("req-1")
+    st = m.status()
+    check("case-recover-raised",
+          st["state"]["unresolved_verdicts"] == ["RECOVER:Sub/Dir/File.TXT"])
+
+    variant = "sub/dir/file.txt" if os.name == "nt" else "Sub/Dir/File.TXT"
+    m.record_effect(variant, "recovered", "req-2")
+    st2 = m.status()
+    check("case-recover-discharged",
+          st2["state"]["unresolved_verdicts"] == []
+          and st2["status"] == "active")
+
+    # and the mission can actually reach completion afterwards
+    m.begin_verification()
+    acceptor = Mission.load(workspace, actor="agent:acceptor")
+    acceptor.record_verdict("PASS", acceptor_id="agent:acceptor",
+                             assurance_tier="declared-role-separation",
+                             reason="recovered artifact re-observed")
+    check("case-recover-mission-can-close",
+          m.store.load_latest()[0]["status"] == "completed")
+
+
+def test_drift_marker_matches_by_artifact(workspace: Path) -> None:
+    """Same rule for drift markers: reconcile must find the obligation for
+    the artifact it is covering, not for a byte-identical spelling of it."""
+    m = open_mission(workspace, "m-case-drift", "Drift matches artifacts too.")
+    m.approve()
+    m.record_effect("Notes/A.md", "aa", "req-1")
+    (workspace / "Notes" / "A.md").write_text("tampered", encoding="utf-8")
+    check("case-drift-detected", m.resume() == ["Notes/A.md"])
+
+    variant = "notes/a.md" if os.name == "nt" else "Notes/A.md"
+    m.reconcile(variant, "aa", "req-2")
+    st = m.status()
+    check("case-drift-reconciled",
+          st["state"]["unresolved_verdicts"] == [] and st["status"] == "active")
+
+
 def test_reconcile_clears_exactly_one_marker(workspace: Path) -> None:
     """One receipt must not retire two unrelated obligations (merge-gate
     blocker 1): drift clears through reconcile with a FRESH id; the loss
@@ -629,6 +737,9 @@ TESTS = [
     test_note_cannot_forge_machine_state,
     test_receipt_ids_always_carry_a_derivable_path,
     test_forged_restored_receipt_is_not_trusted,
+    test_distinct_files_never_share_an_obligation,
+    test_obligations_match_by_artifact_not_by_string,
+    test_drift_marker_matches_by_artifact,
     test_reconcile_clears_exactly_one_marker,
     test_corrupt_receipt_degrades_to_drift,
     test_effect_duplicate_id_leaves_workspace_untouched,
