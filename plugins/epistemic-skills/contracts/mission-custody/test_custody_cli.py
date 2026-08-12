@@ -665,7 +665,42 @@ def test_text_and_text_file_are_mutually_exclusive() -> None:
                   "--actor", "agent:worker").returncode == 2)
 
 
+def test_scope_ack_has_a_cli_door() -> None:
+    """A gate with no door is not a gate, it is a wedge.
+
+    `scope_ack` shipped as a Python parameter only: `accept` had no
+    --scope-ack and never passed one, so through the ONLY supported surface a
+    legitimate, operator-granted piece of drift was permanently un-PASSable --
+    and the refusal message named a remedy that did not exist. Writing a
+    control without installing it, in the refusal text of the control itself."""
+    with tempfile.TemporaryDirectory() as td:
+        ws = Path(td)
+        run("open", "--mission-id", "m-door", "--instruction", "w",
+            "--operator", "op", "--steward", "agent:worker",
+            "--actor", "agent:worker", "--scope-out", "secrets.env",
+            "--workspace", str(ws))
+        run("approve", "--actor", "agent:worker", "--workspace", str(ws))
+        run("effect", "--path", "secrets.env", "--content", "TOKEN=x",
+            "--request-id", "r1", "--actor", "agent:worker",
+            "--workspace", str(ws))
+        run("verify", "--actor", "agent:worker", "--workspace", str(ws))
+
+        accept = ["accept", "--verdict", "PASS", "--actor", "agent:acceptor",
+                  "--acceptor", "agent:acceptor",
+                  "--tier", "declared-role-separation", "--reason", "done",
+                  "--workspace", str(ws)]
+        refused = run(*accept)
+        check("cli-accept-refuses-unacknowledged-drift", refused.returncode == 2)
+        # the refusal must name the flag an acceptor can actually type
+        check("cli-refusal-names-the-real-flag",
+              "--scope-ack secrets.env" in (refused.stdout + refused.stderr))
+
+        ok = run(*accept, "--scope-ack", "secrets.env")
+        check("cli-scope-ack-discharges", ok.returncode == 0)
+
+
 TESTS = [
+    test_scope_ack_has_a_cli_door,
     test_open_approve_effect_status_roundtrip,
     test_resume_detects_drift_exit_3,
     test_accept_self_cert_refused_exit_2,
@@ -695,6 +730,7 @@ def main() -> int:
         fn()
     print(f"\n{len(FAILURES)} failures")
     return 1 if FAILURES else 0
+
 
 
 if __name__ == "__main__":

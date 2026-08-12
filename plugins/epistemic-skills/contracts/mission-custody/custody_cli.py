@@ -193,6 +193,17 @@ def build_parser() -> argparse.ArgumentParser:
     p_accept.add_argument("--verdict", required=True)
     p_accept.add_argument("--acceptor", required=True)
     p_accept.add_argument("--tier", required=True)
+    # The gate this feeds refuses a PASS over undischarged scope drift and its
+    # refusal message names this flag. Shipping the gate without the flag left
+    # a legitimate, operator-granted drift permanently un-PASSable on the only
+    # supported surface, while telling the acceptor to use a remedy that did
+    # not exist -- writing a control without installing it, in the refusal text
+    # of the control itself.
+    p_accept.add_argument("--scope-ack", action="append", default=[],
+                          metavar="PATH",
+                          help="acknowledge one path that crossed the declared "
+                               "scope; repeatable. Each path in the refusal "
+                               "message needs its own --scope-ack.")
     _add_text_flags(p_accept, "reason")
 
     p_clear = sub.add_parser("clear-fail", parents=[common])
@@ -264,6 +275,10 @@ def _print_envelope(checkpoint: dict, file=sys.stdout) -> None:
             print(f"  {name}: (unset -- UNBOUNDED, not safely defaulted)",
                   file=file)
     uncompared = uncompared_scope_entries(manifest)
+    if uncompared.get("in_comparison_disabled"):
+        print("  scope.in: COMPARISON DISABLED -- the declaration mixes prose "
+              "with path patterns, so NOTHING in scope.in is compared",
+              file=file)
     for direction in ("in", "out"):
         for entry in uncompared[direction]:
             # Naming what is NOT compared, so "scope is checked now" never
@@ -433,7 +448,8 @@ def dispatch(args: argparse.Namespace) -> int:
     elif args.command == "accept":
         print(mission.record_verdict(args.verdict, acceptor_id=args.acceptor,
                                       assurance_tier=args.tier,
-                                      reason=_read_text(args, "reason")))
+                                      reason=_read_text(args, "reason"),
+                                      scope_ack=args.scope_ack))
     elif args.command == "clear-fail":
         print(mission.clear_fail(args.match, args.request_id))
     elif args.command == "cancel":

@@ -32,9 +32,11 @@ else.
    `authority` itself — so only `authority.actuator_guards` can refuse an
    action. **But `scope` is not inert at ACCEPTANCE:** path-pattern entries in
    `scope.in`/`scope.out` are machine-compared against the receipted artifacts,
-   and a PASS is refused when work fell outside the declared boundary with no
-   amendment naming it. Prose entries cannot be compared and are reported as
-   such rather than silently dropped. Advisory-at-run-time,
+   and a PASS is refused when work crossed the declared boundary until the
+   ACCEPTOR acknowledges each crossing path (`--scope-ack`, see Verify/Close).
+   Prose entries cannot be compared and are reported as such rather than
+   silently dropped — and a `scope.in` that mixes prose with patterns disables
+   the include comparison entirely and says so. Advisory-at-run-time,
    compared-at-acceptance — collapsing that distinction in either direction
    misleads, and "nothing refuses on it" was this file's own stale honesty
    label. Declare the envelope anyway: it is immutable, so it is
@@ -75,7 +77,13 @@ else.
    live: a word was silently deleted from a recorded note, exit 0.
 5. **Verify / Close** — `verify`, then acceptance by a DIFFERENT actor: a
    distinct session runs `accept` as itself (`--actor` must equal
-   `--acceptor`). Never accept work you performed; the core refuses it
+   `--acceptor`). **If receipted work crossed the declared scope, a PASS is
+   refused until the acceptor acknowledges each crossing path explicitly:
+   `accept ... --scope-ack <path>` (repeatable).** An amendment MENTIONING the
+   path is a hint, not a discharge — a substring cannot tell a grant from a
+   prohibition, so the judgement is the acceptor's and is recorded as theirs.
+   The refusal message prints the exact flags to paste. Never accept work you
+   performed; the core refuses it
    (AcceptanceRefused) — do not work around the refusal.
 
 ## Boundaries

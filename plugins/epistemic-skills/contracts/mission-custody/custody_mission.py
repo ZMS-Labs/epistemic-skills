@@ -31,7 +31,7 @@ _RETIRED_NOTE = "receipt loss acknowledged: "
 # one would let ordinary narrative forge machine state.
 _RESERVED_NOTE_PREFIXES = (
     "effect: ", "reconciled: ", "drift detected: ", "receipt restored: ",
-    "authority amended: ", _RETIRED_NOTE,
+    "authority amended: ", _RETIRED_NOTE, "scope-ack by ",
 )
 
 
@@ -220,8 +220,15 @@ def uncompared_scope_entries(manifest: dict) -> dict:
     keystone failure. The comparison silently ignoring half a declaration is
     that failure in miniature, so the ignored half gets a surface."""
     scope = manifest["scope"]
-    return {direction: [e for e in scope[direction] if not _is_path_pattern(e)]
-            for direction in ("in", "out")}
+    uncompared = {direction: [e for e in scope[direction]
+                              if not _is_path_pattern(e)]
+                  for direction in ("in", "out")}
+    # One prose entry disables the scope.in comparison ENTIRELY -- "outside
+    # scope.in" is an absence inference and is unsound on a partial include
+    # set. Listing only the prose entry let a reader conclude the OTHER entries
+    # were compared. They were not; nothing was.
+    uncompared["in_comparison_disabled"] = bool(uncompared["in"])
+    return uncompared
 
 
 _TOKEN_TRIM = "\"'`,;:()[]{}<>"
@@ -1202,7 +1209,21 @@ class Mission:
             # shapes collapse to one case.
             drifted = self.scope_consistency()
             if drifted:
-                acknowledged = set(scope_ack or ())
+                # NORMALISE the ack the same way the findings were normalised.
+                # `violating_paths` hold `_norm_path` output, and exact string
+                # equality meant the acceptor had to supply a spelling that
+                # appears nowhere except the refusal message: not the path the
+                # operator wrote, not the path in the receipt. "Secrets.ENV",
+                # "./secrets.env" and a trailing space all refused. Worse,
+                # `_norm_path` folds case only on NT, so an ack captured in a
+                # runbook was platform-specific.
+                # Surrounding whitespace is stripped before normalising: an
+                # acceptor pastes these out of the refusal message or a handoff
+                # note, and refusing over a trailing space is a false block
+                # with no diagnostic value.
+                from custody_gate import _norm_path as _np
+                acknowledged = {_np(p.strip()) for p in (scope_ack or ())
+                                if p and p.strip()}
                 outstanding = sorted({p for f in drifted
                                       for p in f["violating_paths"]
                                       if p not in acknowledged})
@@ -1218,9 +1239,11 @@ class Mission:
                         f"{len(outstanding)} path(s) crossed the declared "
                         f"scope and are not acknowledged: "
                         f"{', '.join(outstanding)}.{hint} Re-record the "
-                        "verdict with scope_ack naming each path you have "
-                        "judged covered, or accept with FAIL/INCONCLUSIVE -- a "
-                        "PASS would assert a boundary the record contradicts")
+                        "verdict acknowledging each path you have judged "
+                        "covered -- CLI: `accept ... "
+                        + " ".join(f"--scope-ack {p}" for p in outstanding)
+                        + "` -- or accept with FAIL/INCONCLUSIVE. A PASS would "
+                        "assert a boundary the record contradicts.")
                 # The acknowledgement is a first-class chain fact, not a
                 # side effect: it names who judged what, so an auditor can see
                 # that the boundary was crossed AND that a distinct acceptor

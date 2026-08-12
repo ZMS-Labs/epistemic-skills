@@ -1333,6 +1333,74 @@ def test_every_violating_representation_must_be_acknowledged(
               "keys/leak.pem" in str(exc))
 
 
+def test_scope_ack_is_normalised_like_the_findings(workspace: Path) -> None:
+    """The acceptor must not have to guess an internal spelling.
+
+    `violating_paths` hold `_norm_path` output and the comparison was exact
+    string equality, so the only string that worked appeared nowhere except the
+    refusal message -- not the path the operator wrote, not the path in the
+    receipt. "./secrets.env" and a trailing space both refused, and because
+    `_norm_path` folds case only on NT, an ack captured in a runbook was
+    platform-specific."""
+    spellings = ["secrets.env", "./secrets.env", "secrets.env ", ".\secrets.env"]
+    for i, spelling in enumerate(spellings):
+        # a fresh workspace per spelling: reusing one store would collide on
+        # revision ordering and mask the thing under test
+        m = open_mission(workspace / f"ws{i}", "m-norm", "Norm.",
+                         scope_out=["secrets.env"])
+        m.approve()
+        m.record_effect("secrets.env", "TOKEN=x", "nm-1")
+        m.begin_verification()
+        acceptor = Mission.load(m.workspace, actor="agent:acceptor")
+        check(f"ack-accepts-{spelling.strip() or 'blank'}",
+              isinstance(acceptor.record_verdict(
+                  "PASS", acceptor_id="agent:acceptor",
+                  assurance_tier="declared-role-separation", reason="done",
+                  scope_ack=[spelling]), int))
+
+
+def test_scope_ack_note_cannot_be_forged_by_narrative(workspace: Path) -> None:
+    """The ack note is machine state, so an ordinary note must not imitate it.
+
+    The acknowledgement's whole value is that an auditor can see WHO took
+    responsibility. While any caller could write the same bytes through the
+    `note` verb, a genuine ack and a forged one were byte-identical -- so the
+    only durable evidence was a string the constrained party could write at
+    will."""
+    m = open_mission(workspace, "m-forge-ack", "Forge.", scope_out=["x.env"])
+    m.approve()
+    try:
+        m.note("scope-ack by agent:acceptor: x.env")
+        check("narrative-cannot-forge-a-scope-ack", False)
+    except CustodyError as exc:
+        check("narrative-cannot-forge-a-scope-ack",
+              "may not begin with" in str(exc))
+
+
+def test_disabled_scope_in_comparison_is_disclosed_as_such(
+        workspace: Path) -> None:
+    """One prose entry disables the include comparison ENTIRELY, and the
+    disclosure must say that rather than listing the one entry.
+
+    Listing only the prose entry let a reader conclude the OTHER entries were
+    compared. They were not -- nothing was -- while `status --brief` showed a
+    populated scope.in that reads as bounded."""
+    from custody_mission import uncompared_scope_entries
+    m = open_mission(workspace, "m-disabled", "Mixed.",
+                     scope_in=["docs/**", "the reconciliation work"])
+    latest, _ = m.store.load_latest()
+    report = uncompared_scope_entries(latest["manifest"])
+    check("mixed-scope-in-reports-comparison-disabled",
+          report.get("in_comparison_disabled") is True)
+
+    m2 = open_mission(workspace / "pure", "m-pure", "Pure patterns.",
+                      scope_in=["docs/**"])
+    latest2, _ = m2.store.load_latest()
+    check("pure-pattern-scope-in-is-not-disabled",
+          uncompared_scope_entries(latest2["manifest"])
+          .get("in_comparison_disabled") is False)
+
+
 def test_partial_scope_ack_does_not_discharge_the_rest(workspace: Path) -> None:
     """Acknowledging one path must not carry the others.
 
@@ -1630,6 +1698,9 @@ TESTS = [
     test_mixed_prose_and_path_scope_in_does_not_flag_everything,
     test_scope_ack_is_the_only_discharge,
     test_every_violating_representation_must_be_acknowledged,
+    test_scope_ack_is_normalised_like_the_findings,
+    test_scope_ack_note_cannot_be_forged_by_narrative,
+    test_disabled_scope_in_comparison_is_disclosed_as_such,
     test_partial_scope_ack_does_not_discharge_the_rest,
     test_bare_wildcard_is_not_a_discharge_key,
     test_later_amendment_must_name_the_drift_it_discharges,
