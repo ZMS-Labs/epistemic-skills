@@ -41,16 +41,46 @@ def _tier_meets(actual: str, required: str) -> bool:
     return _TIER_RANK[actual] >= _TIER_RANK[required]
 
 
+def _ascii_case_fold(text: str) -> str:
+    """Fold A-Z only, leaving every other codepoint byte-exact.
+
+    NOT str.casefold(): full Unicode folding performs 1-to-many expansions
+    that NTFS's per-codepoint upcase table does not -- 'strasse.txt' and
+    'strasse.txt' with an eszett casefold equal while coexisting on disk as
+    two independent files (verified on NTFS), and U+212A KELVIN SIGN folds
+    onto 'k'. Under a marker comparison those false positives let a write to
+    one artifact discharge another artifact's obligation, dropping a real
+    file from custody while the mission reads clean.
+
+    The two error directions are not symmetric, so the tie-break is not a
+    close call. Under-matching leaves an obligation outstanding, and the
+    marker names the exact path that discharges it -- visible, recoverable.
+    Over-matching silently retires custody of a file nobody is watching."""
+    return "".join(c.lower() if "A" <= c <= "Z" else c for c in text)
+
+
+def _normalize_relpath(path: str) -> str:
+    """Spelling differences that cannot denote two different files:
+    separator flavor, repeated separators, a leading './', a trailing '/'.
+    ('..' never appears -- _resolve_artifact_path rejects it at the door.)"""
+    norm = path.replace("\\", "/")
+    while "//" in norm:
+        norm = norm.replace("//", "/")
+    while norm.startswith("./"):
+        norm = norm[2:]
+    return norm.rstrip("/") or norm
+
+
 def _same_artifact(left: str, right: str) -> bool:
     """Do two workspace-relative paths name the same artifact on THIS
-    platform? resume() already casefolds its drift keys on Windows; the
-    obligation markers must use the identical rule or an obligation raised
-    under one casing can never be discharged under another -- and since
-    both name one physical file, that is a mission that can never close."""
-    left = left.replace("\\", "/")
-    right = right.replace("\\", "/")
+    platform? Obligation markers must answer this the same way resume()
+    answers it for drift keys, or an obligation raised under one spelling
+    can never be discharged under another -- and since both name one
+    physical file, that is a mission that can never legitimately close."""
+    left = _normalize_relpath(left)
+    right = _normalize_relpath(right)
     if os.name == "nt":
-        return left.casefold() == right.casefold()
+        return _ascii_case_fold(left) == _ascii_case_fold(right)
     return left == right
 
 
@@ -439,12 +469,16 @@ class Mission:
                 if request_id not in missing:
                     missing.append(request_id)
                 continue
+            # Case-insensitive filesystems: Doc.md and doc.md are one
+            # artifact; keying case-sensitively splits them and reports
+            # spurious drift on the superseded casing. Folded ASCII-only --
+            # str.casefold() would map two genuinely distinct files onto one
+            # key here, and the loser would vanish from the drift check
+            # entirely (see _ascii_case_fold).
             key = receipt["artifact_path"]
+            key = _normalize_relpath(key)
             if os.name == "nt":
-                # Case-insensitive filesystems: Doc.md and doc.md are one
-                # artifact; keying case-sensitively splits them and reports
-                # spurious drift on the superseded casing.
-                key = key.casefold()
+                key = _ascii_case_fold(key)
             latest_by_key[key] = receipt
         mismatched: list[str] = []
         for receipt in latest_by_key.values():

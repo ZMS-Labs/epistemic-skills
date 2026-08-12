@@ -12,6 +12,7 @@ sys.path.insert(0, str(ROOT))
 
 from custody_store import sha256_bytes  # noqa: E402
 from custody_mission import (  # noqa: E402
+    _same_artifact,
     AcceptanceRefused,
     CustodyError,
     IllegalTransition,
@@ -361,6 +362,56 @@ def test_forged_restored_receipt_is_not_trusted(workspace: Path) -> None:
           == "the real secret")
 
 
+def test_distinct_files_never_share_an_obligation(workspace: Path) -> None:
+    """The inverse risk of case-insensitive matching, and the worse one.
+
+    str.casefold() expands the eszett to 'ss' and folds U+212A onto 'k';
+    NTFS does neither, so those names coexist as separate files on disk
+    (verified). Folding them together let a write to one artifact discharge
+    another's RECOVER obligation -- the real file left uncovered, no receipt
+    naming it, resume clean, and nothing in the record saying so. Silent
+    custody loss is strictly worse than an outstanding obligation, so the
+    fold is ASCII-only and these must NEVER match."""
+    check("eszett-not-same-artifact",
+          not _same_artifact("straße.txt", "strasse.txt"))
+    check("kelvin-not-same-artifact",
+          not _same_artifact("Kelvin.txt", "Kelvin.txt"))
+    check("ascii-case-still-same-artifact-on-nt",
+          _same_artifact("Sub/File.TXT", "sub/file.txt") == (os.name == "nt"))
+    for spelling in ("./notes/a.md", "notes//a.md", "notes\\a.md"):
+        check(f"normalized-same-artifact[{spelling}]",
+              _same_artifact(spelling, "notes/a.md"))
+
+    # end to end: covering a different file must not discharge the obligation
+    m = open_mission(workspace, "m-distinct", "Distinct files stay distinct.")
+    m.approve()
+    m.record_effect("straße.txt", "the real content", "id-true")
+    m.store.receipt_path("id-true").unlink()
+    m.resume()
+    m.acknowledge_receipt_loss("id-true")
+    check("distinct-recover-raised",
+          m.status()["state"]["unresolved_verdicts"]
+          == ["RECOVER:straße.txt"])
+
+    m.record_effect("strasse.txt", "unrelated decoy", "id-decoy")
+    st = m.status()
+    check("distinct-decoy-did-not-discharge",
+          st["state"]["unresolved_verdicts"] == ["RECOVER:straße.txt"]
+          and st["status"] == "reopened")
+    check("distinct-real-file-untouched",
+          (workspace / "straße.txt").read_text(encoding="utf-8")
+          == "the real content")
+
+    # and both files are independently covered once each is genuinely written
+    m.record_effect("straße.txt", "recovered for real", "id-true-2")
+    st2 = m.status()
+    check("distinct-real-recovery-discharges",
+          st2["state"]["unresolved_verdicts"] == [] and st2["status"] == "active")
+    (workspace / "strasse.txt").write_text("tampered", encoding="utf-8")
+    check("distinct-both-files-tracked-separately",
+          m.resume() == ["strasse.txt"])
+
+
 def test_obligations_match_by_artifact_not_by_string(workspace: Path) -> None:
     """An obligation raised under one spelling of a path must be dischargeable
     by genuinely covering THAT artifact, however the caller spells it. On a
@@ -604,6 +655,7 @@ TESTS = [
     test_note_cannot_forge_machine_state,
     test_receipt_ids_always_carry_a_derivable_path,
     test_forged_restored_receipt_is_not_trusted,
+    test_distinct_files_never_share_an_obligation,
     test_obligations_match_by_artifact_not_by_string,
     test_drift_marker_matches_by_artifact,
     test_reconcile_clears_exactly_one_marker,
