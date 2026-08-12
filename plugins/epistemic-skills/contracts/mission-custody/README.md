@@ -44,3 +44,14 @@ exists until evidence could support one.
   `file_path`, and a `cwd` naming the workspace that holds `missions/`;
   anything missing degrades to allow (fail-open). Exit 0 allows, exit 2
   blocks with the reason on stderr.
+
+  MCP coverage note: `tool_names` in a guard rule are exact-match against the
+  harness's tool name (`mcp__sonarr__post`, `run_shell_command`, ...);
+  `command_regexes` match the shell command when there is one, and otherwise
+  the full `tool_input` JSON serialized with sorted keys -- so MCP arguments
+  (URLs, paths) are coverable by regex, crudely and deliberately over-broad.
+
+  Mixed-fleet hazard: arming guards writes the new manifest fields into that
+  mission's checkpoints, which pre-#117 plugin caches cannot validate (the
+  armed mission reads as ChainBroken/unreadable there). Update every custody
+  consumer before arming guards on a shared mission.

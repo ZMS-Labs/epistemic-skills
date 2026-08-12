@@ -139,6 +139,19 @@ class Mission:
               guard_mode: str | None = None,
               actuator_guards: list | None = None) -> "Mission":
         workspace = Path(workspace)
+        # One ACTIVE mission per workspace, enforced at the door: every other
+        # command refuses multiple-active discovery, so open creating that
+        # state would be a decoy-disarm wedge (a second armed-or-unarmed
+        # mission bricks the gate's discovery). Checked BEFORE anything is
+        # written, so a refused open leaves no partial mission dir.
+        try:
+            cls.load(workspace, actor=actor)
+        except NoActiveMission:
+            pass  # the expected state: nothing active to conflict with
+        else:
+            raise CustodyError(
+                "an active mission already exists under this workspace; "
+                "complete or cancel it before opening another")
         store = MissionStore(workspace / "missions" / mission_id)
         created = now_utc()
         manifest = {
@@ -264,18 +277,28 @@ class Mission:
         origin_rest["authority"]["amendments"] = []
         latest_rest["authority"]["amendments"] = []
         # Guard fields are authority too: they may change only via amend, and
-        # amend always appends the operator's verbatim grant -- so a guard
-        # difference without any recorded amendment is tampering. (A forged
+        # amend always appends the operator's verbatim grant. The trustworthy
+        # baseline is the chain-protected PREVIOUS checkpoint (the same
+        # baseline the append-only check above uses), NOT the origin: an
+        # amended mission legitimately diverges from its origin, so a forged
+        # tail that reverts guards to the origin spelling -- or rides on an
+        # earlier unrelated amendment -- must still read as tampering. A
+        # guard difference from the baseline is sanctioned only when the
+        # amendments list GREW between baseline and latest. (A forged
         # amendment stays possible on the unsealed tail; that is the es#118
         # residue, disclosed in SECURITY.md, not something this check invents
         # coverage for.)
-        origin_guards = {k: origin_rest["authority"].pop(k, None)
-                         for k in _GUARD_AUTHORITY_KEYS}
+        baseline_rest = json.loads(json.dumps(baseline))
+        baseline_guards = {k: baseline_rest["authority"].pop(k, None)
+                           for k in _GUARD_AUTHORITY_KEYS}
         latest_guards = {k: latest_rest["authority"].pop(k, None)
                          for k in _GUARD_AUTHORITY_KEYS}
-        if origin_guards != latest_guards and not latest_amendments:
+        for k in _GUARD_AUTHORITY_KEYS:
+            origin_rest["authority"].pop(k, None)
+        if baseline_guards != latest_guards \
+                and len(latest_amendments) <= len(baseline_amendments):
             raise CustodyError(
-                "actuator guards changed with no authority amendment "
+                "actuator guards changed with no new authority amendment "
                 "recorded (tampered)")
         if origin_rest != latest_rest:
             differing = sorted(
@@ -542,9 +565,18 @@ class Mission:
         manifest["authority"]["amendments"].append(
             {"utc": now_utc(), "text": text})
         if actuator_guards is not _UNSET:
-            manifest["authority"]["actuator_guards"] = actuator_guards
+            # None clears the field (the key is removed, not nulled -- the
+            # schema has no nullable guard fields); a [] "clear" is refused
+            # by validation (minItems: 1), so clearing MUST go through None.
+            if actuator_guards is None:
+                manifest["authority"].pop("actuator_guards", None)
+            else:
+                manifest["authority"]["actuator_guards"] = actuator_guards
         if guard_mode is not _UNSET:
-            manifest["authority"]["guard_mode"] = guard_mode
+            if guard_mode is None:
+                manifest["authority"].pop("guard_mode", None)
+            else:
+                manifest["authority"]["guard_mode"] = guard_mode
         new = self._write_next(latest, path, status=latest["status"],
                                 manifest=manifest,
                                 note=f"authority amended: {text}")

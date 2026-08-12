@@ -21,7 +21,7 @@
   "hooks": [
     {
       "event": "PreToolUse",
-      "matcher": "Bash|Write|Edit",
+      "matcher": "Bash|Write|Edit|mcp__.*",
       "command": "python ./contracts/mission-custody/custody_hook.py --harness kimi",
       "timeout": 10
     }

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import sys
 import tempfile
 from pathlib import Path
@@ -66,8 +67,12 @@ def test_load_refuses_zero_and_multiple(workspace: Path) -> None:
     except NoActiveMission:
         check("load-zero-raises", True)
 
-    open_mission(workspace, "m-one", "A.")
-    open_mission(workspace, "m-two", "B.")
+    m1 = open_mission(workspace, "m-one", "A.")
+    # open() refuses to CREATE a second active mission in one workspace
+    # (decoy-disarm wedge, es#117 review fix 4); a duplicated mission dir
+    # arriving out-of-band (sync, copy) is exactly the multiple-active state
+    # load() must still refuse, so build it that way.
+    shutil.copytree(m1.store.mission_dir, workspace / "missions" / "m-two")
     try:
         Mission.load(workspace, actor="agent:x")
         check("load-multiple-raises", False)
@@ -611,7 +616,9 @@ def test_continuity_surfaces_unreceipted_mutation(workspace: Path) -> None:
           and m.status()["status"] == "active")
 
     # honest legitimate history stays clean: reconcile after real drift is a
-    # receipted event and must NOT read as a break
+    # receipted event and must NOT read as a break. (The first scenario is
+    # cancelled first: open() refuses a second ACTIVE mission per workspace.)
+    m.cancel("first scenario done")
     m2 = open_mission(workspace, "m-continuity-ok", "Legitimate history.")
     m2.approve()
     m2.record_effect("notes/b.md", "v1", "r1")
@@ -650,7 +657,9 @@ def test_continuity_is_silent_on_sanctioned_recovery(workspace: Path) -> None:
           st["state"]["unresolved_verdicts"] == [] and st["status"] == "active")
     check("sanctioned-recovery-no-phantom-break", m.continuity_breaks() == [])
 
-    # deeper: three receipts, the LAST retired, then recovered
+    # deeper: three receipts, the LAST retired, then recovered. (The first
+    # scenario is cancelled first: open() refuses a second ACTIVE mission.)
+    m.cancel("first scenario done")
     m2 = open_mission(workspace, "m-deep-retire", "Deeper chain.")
     m2.approve()
     for content, rid in (("v1", "A"), ("v2", "B"), ("v3", "C")):
@@ -918,6 +927,111 @@ def test_tail_guard_tamper_without_amendment_detected(workspace: Path) -> None:
         check("tail-guard-tamper-detected", True)
 
 
+def test_open_refuses_second_active_mission(workspace: Path) -> None:
+    # A second ACTIVE mission under one workspace makes every other command
+    # refuse (MultipleActiveMissions) -- including the gate's discovery -- so
+    # open creating one is a decoy-disarm wedge, not a feature.
+    open_mission(workspace, "m-first", "First.")
+    try:
+        open_mission(workspace, "m-second", "Decoy.")
+        check("open-refuses-second-active", False)
+    except CustodyError:
+        check("open-refuses-second-active", True)
+    # the refused open must not leave a partial mission dir behind
+    check("open-refused-left-no-dir",
+          not (workspace / "missions" / "m-second").exists())
+
+
+def test_amend_none_clears_guard_keys(workspace: Path) -> None:
+    m = open_mission(workspace, "guard-clear", "i",
+                     guard_mode="audit",
+                     actuator_guards=[{"name": "g", "tool_names": ["Bash"],
+                                       "command_regexes": ["rm"],
+                                       "path_globs": []}])
+    m.approve()
+    m.amend_authority("operator: disarm the hook",
+                      guard_mode=None, actuator_guards=None)
+    auth = m.status()["manifest"]["authority"]
+    check("amend-none-clears-guards",
+          "guard_mode" not in auth and "actuator_guards" not in auth)
+
+
+def test_amend_empty_guards_list_refused(workspace: Path) -> None:
+    m = open_mission(workspace, "guard-empty-list", "i")
+    m.approve()
+    try:
+        m.amend_authority("operator: empty guards", actuator_guards=[])
+        check("amend-empty-guards-refused", False)
+    except (CustodyError, StoreError):
+        check("amend-empty-guards-refused", True)
+
+
+def test_amend_arms_guards_legitimately(workspace: Path) -> None:
+    # (a) a legitimate amend arming guards must verify clean afterwards,
+    # including on the NEXT ordinary operation (baseline moves forward).
+    guards = [{"name": "g", "tool_names": ["Bash"],
+               "command_regexes": ["rm"], "path_globs": []}]
+    m = open_mission(workspace, "guard-amend-legit", "i")
+    m.approve()
+    m.amend_authority("operator: arm audit mode",
+                      guard_mode="audit", actuator_guards=guards)
+    m.note("still fine")
+    auth = m.status()["manifest"]["authority"]
+    check("amend-armed-guards-persist",
+          auth["actuator_guards"] == guards and auth["guard_mode"] == "audit")
+
+
+def test_amend_then_tail_guard_strip_detected(workspace: Path) -> None:
+    # (b) guards armed via amend, then a forged tail strips them without a
+    # new amendment: comparing against ORIGIN is blind here (origin had no
+    # guards either) -- the chain-protected BASELINE catches it.
+    m = open_mission(workspace, "guard-strip", "i")
+    m.approve()
+    m.amend_authority("operator: arm audit mode",
+                      guard_mode="audit",
+                      actuator_guards=[{"name": "g", "tool_names": ["Bash"],
+                                        "command_regexes": ["rm"],
+                                        "path_globs": []}])
+    latest, path = m.store.load_latest()
+    forged = json.loads(json.dumps(latest))
+    forged["revision"] = latest["revision"] + 1
+    forged["prev_checkpoint_sha256"] = sha256_file(path)
+    del forged["manifest"]["authority"]["actuator_guards"]
+    del forged["manifest"]["authority"]["guard_mode"]
+    m.store.write_checkpoint(forged)
+    try:
+        m.note("probe")
+        check("tail-guard-strip-after-amend-detected", False)
+    except CustodyError:
+        check("tail-guard-strip-after-amend-detected", True)
+
+
+def test_unrelated_amend_then_tail_regex_narrow_detected(workspace: Path) -> None:
+    # (c) guards armed at open; a text-only (unrelated) amend grows the
+    # amendments list; then a forged tail narrows the regex. The old rule
+    # (fires only when amendments empty) was blessed by the prior unrelated
+    # amendment -- the baseline rule catches it.
+    m = open_mission(workspace, "guard-narrow", "i",
+                     guard_mode="enforce",
+                     actuator_guards=[{"name": "g", "tool_names": ["Bash"],
+                                       "command_regexes": ["rm -rf"],
+                                       "path_globs": []}])
+    m.approve()
+    m.amend_authority("operator: unrelated scope note")
+    latest, path = m.store.load_latest()
+    forged = json.loads(json.dumps(latest))
+    forged["revision"] = latest["revision"] + 1
+    forged["prev_checkpoint_sha256"] = sha256_file(path)
+    forged["manifest"]["authority"]["actuator_guards"][0][
+        "command_regexes"] = ["rm -rf /very/specific"]
+    m.store.write_checkpoint(forged)
+    try:
+        m.note("probe")
+        check("tail-regex-narrow-after-unrelated-amend-detected", False)
+    except CustodyError:
+        check("tail-regex-narrow-after-unrelated-amend-detected", True)
+
+
 TESTS = [
     test_open_creates_draft_r1,
     test_pathless_load_single_active,
@@ -952,6 +1066,12 @@ TESTS = [
     test_open_without_guards_omits_fields,
     test_amend_changes_guards,
     test_tail_guard_tamper_without_amendment_detected,
+    test_amend_arms_guards_legitimately,
+    test_amend_none_clears_guard_keys,
+    test_open_refuses_second_active_mission,
+    test_amend_empty_guards_list_refused,
+    test_amend_then_tail_guard_strip_detected,
+    test_unrelated_amend_then_tail_regex_narrow_detected,
 ]
 
 

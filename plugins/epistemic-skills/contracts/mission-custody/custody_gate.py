@@ -17,6 +17,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import sys
 from pathlib import Path
 
 from custody_mission import (
@@ -33,14 +34,22 @@ _PREVIEW = 120
 
 
 def _glob_regex(glob: str) -> "re.Pattern[str]":
-    """Translate a path glob: '**' crosses separators, '*'/'?' stay in-segment.
-    Paths are normalized ('\\' -> '/', no './', no trailing '/') before match;
-    on NT both sides fold A-Z only (_ascii_case_fold -- never str.casefold)."""
+    """Translate a path glob: '**' crosses separators ('**/' matches ZERO or
+    more segments; a trailing '/**' also matches the base path itself),
+    '*'/'?' stay in-segment. Paths are normalized ('\\' -> '/', no './', no
+    trailing '/') before match; on NT both sides fold A-Z only
+    (_ascii_case_fold -- never str.casefold)."""
+    trailing_base = glob.endswith("/**")
+    if trailing_base:
+        glob = glob[:-3]
     out: list[str] = []
     i = 0
     while i < len(glob):
         if glob[i] == "*":
-            if glob[i:i + 2] == "**":
+            if glob[i:i + 3] == "**/":
+                out.append("(?:.*/)?")
+                i += 3
+            elif glob[i:i + 2] == "**":
                 out.append(".*")
                 i += 2
             else:
@@ -52,6 +61,8 @@ def _glob_regex(glob: str) -> "re.Pattern[str]":
         else:
             out.append(re.escape(glob[i]))
             i += 1
+    if trailing_base:
+        out.append("(?:/.*)?")
     return re.compile("".join(out) + "$", re.DOTALL)
 
 
@@ -69,6 +80,15 @@ def _tool_in(rule: dict, tool_name: str) -> bool:
 
 def _patterns_match(rule: dict, tool_call: dict) -> bool:
     command = tool_call.get("command")
+    if not command:
+        # MCP and other non-shell tools carry their payload as structured
+        # arguments, not a command string. Serializing (sorted keys, so the
+        # haystack is deterministic) lets command_regexes cover URLs, paths,
+        # and flags inside those arguments. Deliberately crude: over-matching
+        # is the safe direction, and a false block names its rule.
+        tool_input = tool_call.get("tool_input")
+        if tool_input is not None:
+            command = json.dumps(tool_input, sort_keys=True)
     if command:
         for pattern in rule["command_regexes"]:
             if re.search(pattern, command):
@@ -116,7 +136,17 @@ def run_gate(workspace: Path, tool_call: dict, *, actor: str,
     workspace = Path(workspace)
     try:
         mission = Mission.load(workspace, actor=actor)
-    except (NoActiveMission, MultipleActiveMissions) as exc:
+    except NoActiveMission as exc:
+        return {"decision": "allow", "matched": False, "rule": None,
+                "mode": "inert", "reason": f"gate inert: {type(exc).__name__}"}
+    except MultipleActiveMissions as exc:
+        # Fail-open posture stands (a hook must never brick the tool loop on
+        # discovery ambiguity), but a decoy second mission silently disarming
+        # the gate must not pass quietly.
+        print(f"custody gate: MULTIPLE ACTIVE MISSIONS under {workspace} -- "
+              "gate inert, enforcement degraded to convention-held; resolve "
+              "the duplicate mission dirs before relying on guards",
+              file=sys.stderr)
         return {"decision": "allow", "matched": False, "rule": None,
                 "mode": "inert", "reason": f"gate inert: {type(exc).__name__}"}
     latest = mission.status()
@@ -135,5 +165,13 @@ def run_gate(workspace: Path, tool_call: dict, *, actor: str,
             "command_preview": command[:_PREVIEW],
             "file_path": tool_call.get("file_path"),
         }
-        _append_guard_log(mission.store.mission_dir, entry)
+        try:
+            _append_guard_log(mission.store.mission_dir, entry)
+        except Exception as exc:
+            # The audit append is best-effort; the VERDICT is not. A log
+            # failure must never flip a block into an allow.
+            print(f"custody gate: guard-log append failed "
+                  f"({type(exc).__name__}: {exc}); verdict "
+                  f"{verdict['decision']} stands but was not logged",
+                  file=sys.stderr)
     return verdict

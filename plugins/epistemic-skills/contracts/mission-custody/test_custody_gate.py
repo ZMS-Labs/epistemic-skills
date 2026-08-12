@@ -2,7 +2,10 @@
 """Unit + integration tests for custody_gate.py."""
 from __future__ import annotations
 
+import contextlib
+import io
 import json
+import shutil
 import sys
 import tempfile
 from pathlib import Path
@@ -89,6 +92,79 @@ def test_evaluate_case_fold_is_ascii_only() -> None:
               evaluate(auth("enforce", guards), call_ascii)["matched"])
 
 
+def test_glob_doublestar_zero_segments() -> None:
+    guards = [{"name": "g", "tool_names": ["Write"], "command_regexes": [],
+               "path_globs": ["src/**/secret*"]}]
+    # '**/' must match ZERO or more segments, not one-or-more
+    call = {"tool_name": "Write", "command": None, "file_path": "src/secret.txt"}
+    check("glob-doublestar-zero-segments",
+          evaluate(auth("enforce", guards), call)["matched"])
+    call = {"tool_name": "Write", "command": None,
+            "file_path": "src/a/b/secret.txt"}
+    check("glob-doublestar-many-segments",
+          evaluate(auth("enforce", guards), call)["matched"])
+    # trailing '/**' must match the base path itself
+    guards[0]["path_globs"] = ["M:/Media/**"]
+    call = {"tool_name": "Write", "command": None, "file_path": "M:/Media"}
+    check("glob-trailing-doublestar-base",
+          evaluate(auth("enforce", guards), call)["matched"])
+
+
+def test_glob_overmatch_still_held() -> None:
+    guards = [{"name": "g", "tool_names": ["Write"], "command_regexes": [],
+               "path_globs": ["M:/Media/**"]}]
+    call = {"tool_name": "Write", "command": None, "file_path": "M:/Mediaevil/x"}
+    check("glob-mediaevil-rejected",
+          not evaluate(auth("enforce", guards), call)["matched"])
+    call = {"tool_name": "Write", "command": None, "file_path": "M:/Media/a/b/c.mkv"}
+    check("glob-deep-still-matches",
+          evaluate(auth("enforce", guards), call)["matched"])
+    # '..' is not collapsed by normalization, so it over-matches -- the safe
+    # direction (a false block names its rule; a false allow retires custody)
+    call = {"tool_name": "Write", "command": None,
+            "file_path": "M:/Media/../etc/passwd"}
+    check("glob-dotdot-overmatches",
+          evaluate(auth("enforce", guards), call)["matched"])
+
+
+def test_mcp_tool_input_serialized_match() -> None:
+    guards = [{"name": "arr-mcp", "tool_names": ["mcp__sonarr__post"],
+               "command_regexes": ["7878"], "path_globs": []}]
+    call = {"tool_name": "mcp__sonarr__post", "command": None,
+            "file_path": None,
+            "tool_input": {"url": "http://10.10.10.50:7878/api/v3/series",
+                           "method": "POST"}}
+    v = evaluate(auth("enforce", guards), call)
+    check("eval-mcp-serialized-args-block",
+          v["decision"] == "block" and v["rule"] == "arr-mcp")
+    safe = {"tool_name": "mcp__sonarr__post", "command": None,
+            "file_path": None,
+            "tool_input": {"url": "http://10.10.10.50:8989/api/v3/series"}}
+    check("eval-mcp-no-match-allows",
+          not evaluate(auth("enforce", guards), safe)["matched"])
+
+
+def test_run_gate_mcp_end_to_end() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        ws = Path(tmp)
+        m = Mission.open(ws, "gate-mcp", "i", "operator:test", "agent:test",
+                         actor="agent:test", guard_mode="enforce",
+                         actuator_guards=[{
+                             "name": "arr-mcp",
+                             "tool_names": ["mcp__sonarr__post"],
+                             "command_regexes": ["7878"], "path_globs": []}])
+        m.approve()
+        v = run_gate(ws, {"tool_name": "mcp__sonarr__post", "command": None,
+                          "file_path": None,
+                          "tool_input": {"url": "http://h:7878/api"}},
+                     actor="hook:custody-gate")
+        check("run-gate-mcp-blocks", v["decision"] == "block")
+        entry = json.loads(
+            (ws / "missions" / "gate-mcp" / "guard-log.jsonl")
+            .read_text(encoding="utf-8").splitlines()[-1])
+        check("run-gate-mcp-logged", entry["rule"] == "arr-mcp")
+
+
 def test_run_gate_chain_untouched_and_log() -> None:
     with tempfile.TemporaryDirectory() as tmp:
         ws = Path(tmp)
@@ -125,6 +201,44 @@ def test_run_gate_no_mission_allows() -> None:
                                  "file_path": None}, actor="hook:custody-gate")
         check("run-gate-no-mission-allow",
               v["decision"] == "allow" and not v["matched"])
+
+
+def test_run_gate_log_failure_keeps_verdict() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        ws = Path(tmp)
+        m = Mission.open(ws, "gate-logfail", "i", "operator:test", "agent:test",
+                         actor="agent:test", guard_mode="enforce",
+                         actuator_guards=GUARDS)
+        m.approve()
+        # guard-log.jsonl occupied by a directory: the append must fail
+        (ws / "missions" / "gate-logfail" / "guard-log.jsonl").mkdir()
+        buf = io.StringIO()
+        with contextlib.redirect_stderr(buf):
+            v = run_gate(ws, {"tool_name": "Bash", "command": "curl :7878/api",
+                              "file_path": None}, actor="hook:custody-gate")
+        check("run-gate-log-failure-keeps-block",
+              v["decision"] == "block" and v["matched"])
+        check("run-gate-log-failure-notes-loss",
+              "guard-log" in buf.getvalue())
+
+
+def test_run_gate_multiple_active_allows_loudly() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        ws = Path(tmp)
+        m = Mission.open(ws, "gate-multi", "i", "operator:test", "agent:test",
+                         actor="agent:test", guard_mode="enforce",
+                         actuator_guards=GUARDS)
+        m.approve()
+        # a duplicated mission dir arriving out-of-band (sync, copy) -- the
+        # decoy shape open() now refuses to create itself
+        shutil.copytree(m.store.mission_dir, ws / "missions" / "gate-multi-2")
+        buf = io.StringIO()
+        with contextlib.redirect_stderr(buf):
+            v = run_gate(ws, {"tool_name": "Bash", "command": "curl :7878/api",
+                              "file_path": None}, actor="hook:custody-gate")
+        check("run-gate-multi-active-allows", v["decision"] == "allow")
+        check("run-gate-multi-active-warns",
+              "multiple active" in buf.getvalue().lower())
 
 
 if __name__ == "__main__":

@@ -130,7 +130,7 @@ def validate_manifest(rec: dict) -> list[str]:
                      "authority.guard_mode",
                      "guard_mode requires a non-empty actuator_guards list")
         if guards is not None:
-            ok = isinstance(guards, list)
+            ok = isinstance(guards, list) and bool(guards)
             if ok:
                 for rule in guards:
                     if not isinstance(rule, dict) or set(rule) != GUARD_RULE_FIELDS:

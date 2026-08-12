@@ -186,6 +186,14 @@ def test_manifest_guard_rules_shape() -> None:
     check("manifest-guard-empty-tool-names", validate_record(bad) != [])
 
 
+def test_manifest_guard_empty_guards_list_invalid() -> None:
+    # [] is not "clear the guards" (that is amend(..., actuator_guards=None));
+    # the schema's minItems: 1 forbids it and the hand validator must agree.
+    rec = copy.deepcopy(valid_manifest())
+    rec["authority"]["actuator_guards"] = []
+    check("manifest-guards-empty-list", validate_record(rec) != [])
+
+
 def test_examples_corpus() -> None:
     ex = ROOT / "examples"
     for path in sorted(ex.glob("valid-*.json")):
@@ -219,6 +227,7 @@ def main() -> int:
     test_manifest_guard_examples_invalid()
     test_manifest_guards_optional_absent()
     test_manifest_guard_rules_shape()
+    test_manifest_guard_empty_guards_list_invalid()
     test_examples_corpus()
     print(f"\n{len(FAILURES)} failures")
     return 1 if FAILURES else 0

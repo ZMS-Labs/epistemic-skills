@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -12,6 +13,7 @@ ROOT = Path(__file__).resolve().parent
 HOOK = ROOT / "custody_hook.py"
 sys.path.insert(0, str(ROOT))
 from custody_mission import Mission  # noqa: E402
+from custody_store import sha256_file  # noqa: E402
 
 FAILURES: list[str] = []
 
@@ -82,6 +84,95 @@ def test_allow_paths() -> None:
         p = payloads(tmp)["claude"]
         check("hook-no-missions-dir-allows",
               run_hook("claude", p).returncode == 0)
+
+
+def test_log_write_failure_still_blocks() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        ws = Path(tmp)
+        m = Mission.open(ws, "hook-logfail", "i", "operator:t", "agent:t",
+                         actor="agent:t", guard_mode="enforce",
+                         actuator_guards=GUARDS)
+        m.approve()
+        (ws / "missions" / "hook-logfail" / "guard-log.jsonl").mkdir()
+        res = run_hook("claude", payloads(tmp)["claude"])
+        check("hook-log-failure-still-blocks", res.returncode == 2)
+
+
+def test_subdirectory_cwd_still_gates() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        ws = Path(tmp)
+        m = Mission.open(ws, "hook-subdir", "i", "operator:t", "agent:t",
+                         actor="agent:t", guard_mode="enforce",
+                         actuator_guards=GUARDS)
+        m.approve()
+        sub = ws / "deep" / "nest"
+        sub.mkdir(parents=True)
+        p = payloads(str(sub))["claude"]
+        check("hook-subdir-cwd-blocks", run_hook("claude", p).returncode == 2)
+
+
+def test_tampered_mission_fails_open_loudly() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        ws = Path(tmp)
+        m = Mission.open(ws, "hook-tamper", "i", "operator:t", "agent:t",
+                         actor="agent:t", guard_mode="enforce",
+                         actuator_guards=GUARDS)
+        m.approve()
+        # forge a tail checkpoint rewriting the instruction
+        latest, path = m.store.load_latest()
+        forged = json.loads(json.dumps(latest))
+        forged["revision"] = latest["revision"] + 1
+        forged["prev_checkpoint_sha256"] = sha256_file(path)
+        forged["manifest"]["authority"]["instruction"] = "rewritten"
+        m.store.write_checkpoint(forged)
+        res = run_hook("claude", payloads(tmp)["claude"])
+        check("hook-tamper-fails-open", res.returncode == 0)
+        check("hook-tamper-stderr-loud",
+              "CustodyError" in res.stderr and "TAMPER" in res.stderr)
+
+
+def test_completed_mission_allows() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        ws = Path(tmp)
+        m = Mission.open(ws, "hook-done", "i", "operator:t", "agent:t",
+                         actor="agent:t", guard_mode="enforce",
+                         actuator_guards=GUARDS)
+        m.approve()
+        m.cancel("done")  # completed/cancelled missions are out of scope
+        check("hook-completed-mission-allows",
+              run_hook("claude", payloads(tmp)["claude"]).returncode == 0)
+
+
+def test_cursor_string_tool_input_mcp() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        ws = Path(tmp)
+        guards = [{"name": "no-rm-mcp", "tool_names": ["mcp__arr__mutate"],
+                   "command_regexes": ["rm -rf"], "path_globs": []}]
+        m = Mission.open(ws, "hook-mcp-str", "i", "operator:t", "agent:t",
+                         actor="agent:t", guard_mode="enforce",
+                         actuator_guards=guards)
+        m.approve()
+        # beforeMCPExecution sends tool_input as a JSON STRING
+        payload = {"tool_name": "mcp__arr__mutate",
+                   "tool_input": json.dumps({"command": "rm -rf x"}),
+                   "cwd": tmp}
+        check("hook-cursor-string-tool-input-blocks",
+              run_hook("cursor", payload).returncode == 2)
+
+
+def test_multiple_active_allows_with_warning() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        ws = Path(tmp)
+        m = Mission.open(ws, "hook-multi", "i", "operator:t", "agent:t",
+                         actor="agent:t", guard_mode="enforce",
+                         actuator_guards=GUARDS)
+        m.approve()
+        shutil.copytree(ws / "missions" / "hook-multi",
+                        ws / "missions" / "hook-multi-2")
+        res = run_hook("claude", payloads(tmp)["claude"])
+        check("hook-multi-active-allows", res.returncode == 0)
+        check("hook-multi-active-warns",
+              "multiple active" in res.stderr.lower())
 
 
 def test_fail_open() -> None:

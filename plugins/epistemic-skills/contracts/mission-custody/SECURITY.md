@@ -42,7 +42,30 @@ Guard matching is deliberately over-broad: a false block names its rule and
 is discharged by an `amend`; a false allow silently retires custody of the
 actuator class.
 
-A guard change without a recorded authority amendment is detected as manifest
-tampering. A guard change accompanied by a FORGED amendment on the unsealed
-tail checkpoint is the same residue class as amendment fabrication today;
-the structural fix (tail anchor) is tracked as es#118.
+A guard change relative to the chain-protected previous checkpoint without a
+NEW recorded authority amendment since that checkpoint is detected as
+manifest tampering (reverting guards to the origin spelling, or riding on an
+earlier unrelated amendment, does not evade this). A guard change accompanied
+by a FORGED amendment on the unsealed tail checkpoint is the same residue
+class as amendment fabrication today; the structural fix (tail anchor) is
+tracked as es#118.
+
+## Stage-C hook: discovery scope, log sensitivity, mixed-fleet hazard
+
+Mission discovery walks up from the payload's cwd to the nearest ancestor
+holding `missions/`. A payload cwd OUTSIDE the workspace tree (or a harness
+that reports no cwd) finds nothing and the gate stays inert: the hook covers
+work reported from inside the mission's tree, not work reported from
+elsewhere.
+
+Guard-log command previews (`command_preview`, up to 120 chars of the matched
+command) may carry secrets embedded in command lines, and mission dirs ride
+sync/commit flows -- treat `guard-log.jsonl` as sensitive at the same level
+as shell history.
+
+Arming guards on a mission writes `actuator_guards` / `guard_mode` into that
+mission's checkpoints, and pre-#117 plugin caches cannot validate those
+fields: their stores will read the armed mission's checkpoints as
+ChainBroken (or skip the mission as unreadable). On a mixed fleet, update
+ALL custody consumers to the #117-or-later plugin before arming guards on
+any shared mission.

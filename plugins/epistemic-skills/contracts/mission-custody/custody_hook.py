@@ -4,7 +4,13 @@
 Fail-open by contract: ANY error (bad JSON, unknown harness, missing cwd,
 no mission, evaluator exception) exits 0. Denial travels only via the
 deliberate block path. Timeout is the harness's (configure <=10s); the inert
-fast path is one directory stat.
+fast path is one directory stat per ancestor level.
+
+Mission discovery walks UP from the payload's cwd (git-style) to the nearest
+ancestor holding missions/. Residual, disclosed in SECURITY.md: a payload
+cwd OUTSIDE the workspace tree (or a harness that reports no cwd) finds no
+missions/ and stays inert -- the gate covers work done under the mission's
+tree, not work reported from elsewhere.
 """
 from __future__ import annotations
 
@@ -15,6 +21,19 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+from custody_mission import CustodyError
+
+
+def _find_workspace(cwd: str) -> Path | None:
+    current = Path(cwd or ".")
+    while True:
+        if (current / "missions").is_dir():
+            return current
+        parent = current.parent
+        if parent == current:
+            return None
+        current = parent
+
 
 def _claude_kimi(payload: dict) -> dict | None:
     tool_input = payload.get("tool_input") or {}
@@ -22,6 +41,7 @@ def _claude_kimi(payload: dict) -> dict | None:
         "tool_name": payload.get("tool_name", ""),
         "command": tool_input.get("command"),
         "file_path": tool_input.get("file_path"),
+        "tool_input": tool_input or None,
         "session_id": payload.get("session_id", ""),
         "cwd": payload.get("cwd", ""),
     }
@@ -44,6 +64,7 @@ def _cursor(payload: dict) -> dict | None:
         "tool_name": payload.get("tool_name", "Shell"),
         "command": payload.get("command") or tool_input.get("command"),
         "file_path": tool_input.get("file_path"),
+        "tool_input": tool_input or None,
         "session_id": payload.get("session_id", ""),
         "cwd": payload.get("cwd", ""),
     }
@@ -70,23 +91,29 @@ def main(argv: list[str]) -> int:
         if not isinstance(payload, dict):
             return 0
         call = adapter(payload)
-        if not call or not call.get("tool_name") and not call.get("command"):
+        if not call or (not call.get("tool_name") and not call.get("command")):
             return 0
-        cwd = call.get("cwd") or "."
-        workspace = Path(cwd)
-        if not (workspace / "missions").is_dir():
-            return 0  # inert fast path: no custody state here at all
+        workspace = _find_workspace(call.get("cwd") or ".")
+        if workspace is None:
+            return 0  # inert fast path: no custody state at or above cwd
         from custody_gate import run_gate
         verdict = run_gate(
             workspace,
             {"tool_name": call["tool_name"], "command": call.get("command"),
-             "file_path": call.get("file_path")},
+             "file_path": call.get("file_path"),
+             "tool_input": call.get("tool_input")},
             actor="hook:custody-gate",
             session_id=call.get("session_id", ""), harness=args.harness)
         if verdict["decision"] == "block":
             print(f"custody gate: BLOCKED -- {verdict['reason']}",
                   file=sys.stderr)
             return 2
+        return 0
+    except CustodyError as exc:
+        # Fail-open posture stands, but a tamper/custody signal must not be
+        # silent: name it on stderr so the session log carries it.
+        print(f"custody gate: TAMPER/custody error detected, failing open: "
+              f"{type(exc).__name__}: {exc}", file=sys.stderr)
         return 0
     except Exception:
         return 0  # fail open, always

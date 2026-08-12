@@ -12,10 +12,12 @@ mission under --workspace on every other command.
 Exit codes: 0 success; 2 usage/refusal (argparse prints usage; a CustodyError
 subclass prints its class name + message to stderr); 3 drift detected on
 `resume`. `gate` adds: exit 2 = block (a guarded actuator fired outside the
-armed envelope), exit 0 = allow. On a clean resume the drift list on stdout
-is empty by contract; a one-line summary goes to stderr so vacuous
-cleanliness (zero receipts on record) is visible instead of indistinguishable
-from verified cleanliness.
+armed envelope), exit 0 = allow. Exit 2 is deliberately uniform across
+usage/refusal/block: a `gate` block is distinguishable by the verdict JSON
+on stdout ("decision": "block"), not by a dedicated exit code. On a clean
+resume the drift list on stdout is empty by contract; a one-line summary
+goes to stderr so vacuous cleanliness (zero receipts on record) is visible
+instead of indistinguishable from verified cleanliness.
 """
 from __future__ import annotations
 
