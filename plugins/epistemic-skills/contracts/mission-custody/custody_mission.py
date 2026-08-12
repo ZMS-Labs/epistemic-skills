@@ -562,7 +562,13 @@ class Mission:
         Read-only, and it raises NOTHING. A break is history: it cannot be
         discharged, so making it an obligation would create a marker with no
         exit -- the wedge RECOVER-UNKNOWN was rejected for. Surfaced, not
-        enforced."""
+        enforced.
+
+        Visibility is asymmetric and SECURITY.md names it: a break whose far
+        receipt was superseded AND then deleted is invisible here, because
+        nothing may be asserted across a receipt that cannot be loaded.
+        Bridging the gap instead would fabricate breaks on honest histories
+        where an intervening write legitimately changed the content."""
         # Order comes from the CHAIN, not from the current receipt_ids list.
         # Retirement removes a lost id from that list, so zipping survivors
         # would compare two receipts that were never adjacent -- inventing a
