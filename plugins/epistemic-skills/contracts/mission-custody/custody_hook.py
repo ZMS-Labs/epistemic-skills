@@ -35,6 +35,14 @@ def _find_workspace(cwd: str) -> Path | None:
         current = parent
 
 
+def _strip_leading_drive_slash(path: str) -> str:
+    """'/C:/x' -> 'C:/x'. A URI path and Cursor's bare Windows roots both carry
+    the leading slash; Windows reads the un-stripped form as a driveless path."""
+    if len(path) > 2 and path[0] == "/" and path[2] == ":":
+        return path[1:]
+    return path
+
+
 def _root_location(root: object) -> str:
     """Best-effort path string from one workspace_roots entry.
 
@@ -52,16 +60,23 @@ def _root_location(root: object) -> str:
         from urllib.parse import unquote, urlparse
         parsed = urlparse(root)
         path = unquote(parsed.path)
-        if parsed.netloc:
-            # RFC 8089 authority form: file://server/share -> \\server\share.
-            # Dropping the host silently resolves to the WRONG local path, and
-            # this fleet is UNC-heavy (Y: is a mapping of \\10.10.10.127).
+        # RFC 8089 defines "localhost" as EQUIVALENT TO AN EMPTY AUTHORITY, so
+        # file://localhost/C:/work is a LOCAL path. Treating it as a UNC
+        # authority produced \\localhost\C:\work, which resolves nowhere -- a
+        # hole the UNC fix itself opened, caught in review.
+        if parsed.netloc and parsed.netloc.lower() != "localhost":
+            # Authority form: file://server/share -> \\server\share. Dropping
+            # the host silently resolves to the WRONG local path, and this
+            # fleet is UNC-heavy (a mapped drive over a UNC share).
             return "\\\\" + parsed.netloc + path.replace("/", "\\")
-        # file:///C:/x -> /C:/x on Windows; strip the leading slash
-        if len(path) > 2 and path[0] == "/" and path[2] == ":":
-            path = path[1:]
-        return path
-    return root
+        return _strip_leading_drive_slash(path)
+    # Bare (non-URI) roots need the same treatment: Cursor's Windows
+    # workspace_roots use the form "/c:/work/project". Returned unchanged, a
+    # Windows path parse reads that as "\c:\work\project" with NO DRIVE, so
+    # _find_workspace never sees the real missions/ tree and the gate takes the
+    # inert path -- silently allowing exactly the guarded MCP calls this
+    # fallback exists to catch.
+    return _strip_leading_drive_slash(root)
 
 
 def _candidate_workspaces(call: dict) -> list[Path]:
@@ -186,8 +201,24 @@ def main(argv: list[str]) -> int:
                     workspace, tool_call, actor="hook:custody-gate",
                     session_id=call.get("session_id", ""), harness=args.harness)
             except CustodyError as exc:
+                # Tamper keeps its own distinct, greppable signal: a session log
+                # must be searchable for TAMPER, and folding it into the generic
+                # branch below silently retired that marker.
                 print(f"custody gate: TAMPER/custody error detected at "
                       f"{workspace}, failing open for that mission: "
+                      f"{type(exc).__name__}: {exc}", file=sys.stderr)
+                continue
+            except Exception as exc:
+                # Deliberately broad, and per-candidate. Catching ONLY
+                # CustodyError let every other exception -- Mission.load
+                # intentionally propagates environmental OSErrors such as
+                # PermissionError -- escape to the outer handler, which returns
+                # 0 immediately. One unreadable root then silently suppressed
+                # every later root's block: root ORDER causing a false allow,
+                # the exact defect this loop was built to close. Fail open for
+                # the candidate that failed, never for the rest.
+                print(f"custody gate: error evaluating {workspace}, failing "
+                      f"open for that mission only: "
                       f"{type(exc).__name__}: {exc}", file=sys.stderr)
                 continue
             if verdict["decision"] == "block":

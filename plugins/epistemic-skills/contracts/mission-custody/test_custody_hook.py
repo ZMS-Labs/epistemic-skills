@@ -320,6 +320,20 @@ def test_root_location_uri_forms() -> None:
         (12345, ""),
         (None, ""),
         ({}, ""),
+        # BARE Windows form. Cursor's Windows workspace_roots use "/c:/...".
+        # Returned unchanged it parses as a DRIVELESS "\\c:\\..." on Windows,
+        # so the mission tree is never found and guarded MCP calls fail open --
+        # exactly the hole the workspace_roots fallback exists to close.
+        ("/c:/work/project", "c:/work/project"),
+        ("/C:/work/project", "C:/work/project"),
+        # RFC 8089: "localhost" is EQUIVALENT TO AN EMPTY AUTHORITY, i.e. a
+        # LOCAL path. The UNC fix originally turned it into \\localhost\C:\...,
+        # which resolves nowhere -- a hole that fix itself opened.
+        ("file://localhost/C:/work/proj", "C:/work/proj"),
+        ("file://localhost/opt/u/proj", "/opt/u/proj"),
+        ("file://LOCALHOST/C:/work/proj", "C:/work/proj"),
+        # a bare POSIX path must not be mangled by the drive-slash strip
+        ("/opt/u/proj", "/opt/u/proj"),
     ]
     for src, want in cases:
         check(f"root-location-{str(src)[:28]}",
@@ -356,6 +370,37 @@ def test_missing_payload_cwd_is_inert_even_when_hook_process_runs_inside_armed_w
         check("no-cwd-no-roots-is-inert-not-process-relative",
               r.returncode == 0)
         check("inert-path-emits-no-block", "BLOCKED" not in r.stderr)
+
+
+def test_non_custody_error_on_one_root_does_not_suppress_a_later_block() -> None:
+    """A non-CustodyError on an earlier candidate must not abort the loop.
+
+    The loop originally caught only CustodyError, so anything else -- and
+    Mission.load intentionally PROPAGATES environmental OSErrors such as
+    PermissionError -- escaped to the outer `except Exception: return 0`. One
+    unreadable root then silently suppressed every later root's block: root
+    ORDER causing a false allow, the exact defect the loop was built to close.
+    """
+    guards = [{"name": "no-deploy", "tool_names": ["Bash"],
+               "command_regexes": ["deploy-prod"], "path_globs": []}]
+    with tempfile.TemporaryDirectory() as tmp:
+        a, b = Path(tmp) / "A", Path(tmp) / "B"
+        a.mkdir(); b.mkdir()
+        # structurally poisoned: a DIRECTORY where a checkpoint file must be,
+        # which raises outside the CustodyError family
+        (a / "missions" / "broken" / "checkpoints").mkdir(parents=True)
+        (a / "missions" / "broken" / "checkpoints" / "r00000001.json").mkdir()
+        live = Mission.open(b, "live", "i", "operator:t", "agent:t",
+                            actor="agent:t", guard_mode="enforce",
+                            actuator_guards=guards)
+        live.approve()
+        payload = {"tool_name": "Bash",
+                   "tool_input": {"command": "deploy-prod now"},
+                   "workspace_roots": [str(a), str(b)]}
+        res = run_hook("cursor", payload)
+        check("poisoned-earlier-root-does-not-suppress-later-block",
+              res.returncode == 2)
+        check("poisoned-root-failure-is-loud", "failing open" in res.stderr)
 
 
 if __name__ == "__main__":
