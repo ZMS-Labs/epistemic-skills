@@ -301,10 +301,27 @@ def test_success_output_confirms_the_write() -> None:
         r = run("status", "--workspace", str(ws), "--actor", "agent:worker",
                  "--brief")
         st = json.loads(r.stdout)
+        # Shape deliberately widened: the envelope previously had NO read
+        # surface anywhere -- _brief omitted it and resume printed no manifest
+        # content -- so every "the steward should read scope/stop_rules"
+        # argument was about text nothing ever displayed. Updated as an
+        # intended change, not patched to chase a red.
         check("status-brief-shape",
               set(st) == {"mission_id", "status", "revision", "amendments_count",
                           "frontier", "unresolved_verdicts", "notes_count",
-                          "receipt_ids_count", "written_utc", "written_by"})
+                          "receipt_ids_count", "written_utc", "written_by",
+                          "checkpoints_since_last_amendment",
+                          "envelope_advisory", "envelope_unset"})
+        check("status-brief-envelope-keys",
+              set(st["envelope_advisory"]) == {
+                  "scope_in", "scope_out", "protected_state",
+                  "hold_if", "stop_if", "escalate_if"})
+        # this fixture opens with no envelope flags at all, so every field is
+        # unset -- silence must not be allowed to imply boundedness
+        check("status-brief-names-unset-envelope-fields",
+              set(st["envelope_unset"]) == set(st["envelope_advisory"]))
+        check("status-brief-amendment-latency-none-when-never-amended",
+              st["checkpoints_since_last_amendment"] is None)
         check("status-brief-revision", st["revision"] == 5)
 
         # clean resume: stdout stays empty by contract; the summary (with the

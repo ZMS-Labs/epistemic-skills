@@ -1032,7 +1032,76 @@ def test_unrelated_amend_then_tail_regex_narrow_detected(workspace: Path) -> Non
         check("tail-regex-narrow-after-unrelated-amend-detected", True)
 
 
+def test_scope_consistency_and_acceptance_boundary(workspace: Path) -> None:
+    """`scope` earns exactly one machine job: the acceptance comparison.
+
+    Not a runtime gate. Prevention was never available for the failure this
+    addresses -- most of the measured contamination was note text no path
+    predicate ranges over, plus work in a different repo where the gate is
+    structurally inert, during a stretch when the work was operator-AUTHORIZED
+    but `amend` did not yet exist (a block with no discharge = the rejected
+    RECOVER-UNKNOWN wedge).
+
+    Refusing the CLAIM is different: every artifact already exists, so it
+    cannot wedge, and the constrained actor cannot disarm it, because scope
+    lives in the manifest tamper-compare and is not a guard key."""
+    m = open_mission(workspace, "m-scope", "Bounded work.",
+                     scope_in=["docs/**"], scope_out=["secrets/**"])
+    m.approve()
+    m.record_effect("docs/a.md", "in scope", "sc-1")
+    m.record_effect("src/b.py", "outside scope.in", "sc-2")
+    m.record_effect("secrets/c.env", "matches scope.out", "sc-3")
+
+    findings = m.scope_consistency()
+    by_path = {f["artifact_path"]: f["reason"] for f in findings}
+    check("scope-flags-outside-in", by_path.get("src/b.py") == "outside scope.in")
+    check("scope-flags-matching-out",
+          by_path.get("secrets/c.env") == "matches scope.out")
+    check("scope-does-not-flag-in-scope", "docs/a.md" not in by_path)
+
+    m.begin_verification()
+    acceptor = Mission.load(workspace, actor="agent:acceptor")
+    try:
+        acceptor.record_verdict("PASS", acceptor_id="agent:acceptor",
+                                 assurance_tier="declared-role-separation",
+                                 reason="done")
+        check("scope-pass-refused-without-amendment", False)
+    except AcceptanceRefused as exc:
+        # must refuse for THIS reason, not incidentally for another rule
+        check("scope-pass-refused-without-amendment",
+              "outside the declared scope" in str(exc))
+
+    # an amendment IS the discharge: it records verbatim that the operator
+    # widened the mission, which is exactly what happened on the real mission
+    Mission.load(workspace, actor="agent:worker").amend_authority(
+        "operator: the src/ and secrets/ work was authorized")
+    acceptor = Mission.load(workspace, actor="agent:acceptor")
+    revision = acceptor.record_verdict(
+        "PASS", acceptor_id="agent:acceptor",
+        assurance_tier="declared-role-separation", reason="done")
+    check("scope-pass-accepted-after-amendment", isinstance(revision, int))
+
+
+def test_empty_scope_declares_nothing_and_flags_nothing(workspace: Path) -> None:
+    """Every mission opened before this change has scope.in=[] and
+    scope.out=[]. An empty declaration is UNBOUNDED, so it must flag nothing
+    and refuse nothing -- otherwise this change retroactively breaks every
+    existing mission's ability to close."""
+    m = open_mission(workspace, "m-noscope", "Unbounded work.")
+    m.approve()
+    m.record_effect("anything/at/all.md", "x", "ns-1")
+    check("empty-scope-flags-nothing", m.scope_consistency() == [])
+    m.begin_verification()
+    acceptor = Mission.load(workspace, actor="agent:acceptor")
+    revision = acceptor.record_verdict(
+        "PASS", acceptor_id="agent:acceptor",
+        assurance_tier="declared-role-separation", reason="done")
+    check("empty-scope-pass-accepted", isinstance(revision, int))
+
+
 TESTS = [
+    test_scope_consistency_and_acceptance_boundary,
+    test_empty_scope_declares_nothing_and_flags_nothing,
     test_open_creates_draft_r1,
     test_pathless_load_single_active,
     test_load_refuses_zero_and_multiple,

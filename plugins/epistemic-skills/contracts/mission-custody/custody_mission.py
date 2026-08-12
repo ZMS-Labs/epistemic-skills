@@ -849,6 +849,52 @@ class Mission:
         new = self._write_next(latest, path, status="verifying", note="verification started")
         return new["revision"]
 
+    def scope_consistency(self) -> list[dict]:
+        """Receipted artifacts falling OUTSIDE declared scope.in, or INSIDE
+        scope.out. Read-only; raises nothing.
+
+        This is the one machine job `scope` earns, and the placement is the
+        whole point. Teeth on the ACTION would be prevention, and prevention
+        was never available: the measured contamination was mostly `note` text
+        (which no path predicate ranges over) plus work whose cwd sat in a
+        different repo, where the gate is structurally inert. A mint-time
+        refusal would also have fired during a stretch when the work was
+        operator-AUTHORIZED but the `amend` verb did not yet exist -- a block
+        with no legal discharge, the RECOVER-UNKNOWN wedge already rejected.
+
+        Teeth on the CLAIM is different. It refuses only the assertion that the
+        chain is clean, never the work: every artifact already exists when this
+        runs, so it cannot wedge. And unlike a guard, the actor it constrains
+        cannot disarm it -- `scope` sits inside the manifest tamper-compare and
+        is NOT one of _GUARD_AUTHORITY_KEYS, so it cannot be amended away the
+        way `amend --guard-mode audit` retires a guard.
+
+        An empty scope declares nothing and flags nothing: unbounded, exactly
+        as an empty envelope field means everywhere else."""
+        from custody_gate import _glob_regex, _norm_path
+        latest, _ = self.store.load_latest()
+        scope = latest["manifest"]["scope"]
+        includes = [_glob_regex(_norm_path(g)) for g in scope["in"]]
+        excludes = [_glob_regex(_norm_path(g)) for g in scope["out"]]
+        if not includes and not excludes:
+            return []
+        findings: list[dict] = []
+        for request_id in self._all_receipt_ids_ever():
+            receipt = self._load_receipt(request_id)
+            rel = (receipt["artifact_path"] if receipt is not None
+                   else self._historical_effect_path(request_id))
+            if rel is None:
+                continue
+            target = _norm_path(rel)
+            if any(rx.match(target) for rx in excludes):
+                findings.append({"artifact_path": rel, "request_id": request_id,
+                                 "reason": "matches scope.out"})
+            elif includes and not any(rx.match(target) for rx in includes):
+                findings.append({"artifact_path": rel, "request_id": request_id,
+                                 "reason": "outside scope.in"})
+        findings.sort(key=lambda f: (f["artifact_path"], f["request_id"]))
+        return findings
+
     def record_verdict(self, verdict: str, acceptor_id: str, assurance_tier: str,
                         reason: str) -> int:
         latest, path = self.store.load_latest()
@@ -899,6 +945,21 @@ class Mission:
                 raise AcceptanceRefused(
                     f"assurance_tier {assurance_tier!r} does not meet "
                     f"required {required_tier!r}")
+            # A PASS asserts the chain is clean. If receipted work fell outside
+            # the boundary the operator declared at open, that assertion needs
+            # an answer -- and an amendment IS the answer, because it records
+            # verbatim that the operator widened the mission. Discharge is
+            # therefore ordinary and already-precedented: the reference mission
+            # discharged exactly this, seventeen hours late.
+            drifted = self.scope_consistency()
+            if drifted and not manifest["authority"]["amendments"]:
+                paths = ", ".join(sorted({f["artifact_path"] for f in drifted}))
+                raise AcceptanceRefused(
+                    f"{len(drifted)} receipted artifact(s) fall outside the "
+                    f"declared scope and no authority amendment covers the "
+                    f"change: {paths}. Record the operator's grant with "
+                    "`amend` (verbatim), or accept with FAIL/INCONCLUSIVE -- "
+                    "a PASS would assert a boundary the record contradicts")
             self._store_verdict(new_revision, verdict, verdict_record)
             self._write_next(latest, path, status="completed", note=f"PASS: {reason}")
         elif verdict == "FAIL":

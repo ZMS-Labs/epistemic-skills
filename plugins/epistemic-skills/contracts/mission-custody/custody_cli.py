@@ -230,13 +230,62 @@ def _read_tool_call(args: argparse.Namespace) -> dict:
     return call
 
 
-def _brief(checkpoint: dict) -> dict:
-    return {
+def _print_envelope(checkpoint: dict, file=sys.stdout) -> None:
+    """Show the advisory envelope, marked advisory.
+
+    Every "the steward should have read scope" argument was about a field no
+    surface displayed. This is the display. It refuses nothing and says so --
+    a boundary a reader could mistake for a control is the estate's keystone
+    failure (writing a control is not installing one) in labelling form."""
+    manifest = checkpoint["manifest"]
+    rows = [
+        ("scope.in", manifest["scope"]["in"]),
+        ("scope.out", manifest["scope"]["out"]),
+        ("protected_state", manifest["authority"]["protected_state"]),
+        ("hold_if", manifest["stop_rules"]["hold_if"]),
+        ("stop_if", manifest["stop_rules"]["stop_if"]),
+        ("escalate_if", manifest["stop_rules"]["escalate_if"]),
+    ]
+    print("envelope (ADVISORY -- read by you, enforced by nothing; machine "
+          "enforcement lives in authority.actuator_guards):", file=file)
+    for name, values in rows:
+        if values:
+            for value in values:
+                print(f"  {name}: {_ascii_safe(value)}", file=file)
+        else:
+            print(f"  {name}: (unset -- UNBOUNDED, not safely defaulted)",
+                  file=file)
+
+
+def _checkpoints_since_last_amendment(mission, latest: dict) -> int | None:
+    """How many revisions have passed since authority last changed.
+
+    The measured failure on the reference mission was not an unenforced
+    boundary field -- it was AMENDMENT LATENCY. An operator reframed a mission
+    at r52; the `amend` verb existed from r59; the grant was not recorded until
+    r85. Seventeen hours and twenty-seven checkpoints of work ran under
+    authority the record did not carry, and nothing counted.
+
+    This counts. It is objective, needs no field to be populated, and cannot be
+    gamed without recording a real amendment. None when the mission has never
+    been amended -- distinct from 0, which means "amended at this revision"."""
+    amendments = latest["manifest"]["authority"]["amendments"]
+    if not amendments:
+        return None
+    for path in mission.store.checkpoint_paths():
+        record = json.loads(path.read_text(encoding="utf-8"))
+        if len(record["manifest"]["authority"]["amendments"]) == len(amendments):
+            return latest["revision"] - record["revision"]
+    return None
+
+
+def _brief(checkpoint: dict, mission=None) -> dict:
+    manifest = checkpoint["manifest"]
+    brief = {
         "mission_id": checkpoint["mission_id"],
         "status": checkpoint["status"],
         "revision": checkpoint["revision"],
-        "amendments_count": len(
-            checkpoint["manifest"]["authority"]["amendments"]),
+        "amendments_count": len(manifest["authority"]["amendments"]),
         "frontier": checkpoint["state"]["frontier"],
         "unresolved_verdicts": checkpoint["state"]["unresolved_verdicts"],
         "notes_count": len(checkpoint["state"]["notes"]),
@@ -244,6 +293,29 @@ def _brief(checkpoint: dict) -> dict:
         "written_utc": checkpoint["written_utc"],
         "written_by": checkpoint["written_by"],
     }
+    if mission is not None:
+        brief["checkpoints_since_last_amendment"] = \
+            _checkpoints_since_last_amendment(mission, checkpoint)
+    # The envelope had NO read surface at all: _brief omitted it and `resume`
+    # printed no manifest content, so every "the steward should read it"
+    # argument was about text that nothing ever displayed. Advisory fields are
+    # labelled as such right here, so a reader never has to infer their class
+    # from the company they keep -- see README.md's ENFORCEMENT STATUS table.
+    brief["envelope_advisory"] = {
+        "scope_in": manifest["scope"]["in"],
+        "scope_out": manifest["scope"]["out"],
+        "protected_state": manifest["authority"]["protected_state"],
+        "hold_if": manifest["stop_rules"]["hold_if"],
+        "stop_if": manifest["stop_rules"]["stop_if"],
+        "escalate_if": manifest["stop_rules"]["escalate_if"],
+    }
+    empty = sorted(name for name, value in brief["envelope_advisory"].items()
+                   if not value)
+    if empty:
+        # An empty envelope field is UNBOUNDED, not safely defaulted, and
+        # `_str_list` accepts [] forever with no surface ever saying so.
+        brief["envelope_unset"] = empty
+    return brief
 
 
 def dispatch(args: argparse.Namespace) -> int:
@@ -280,7 +352,7 @@ def dispatch(args: argparse.Namespace) -> int:
         print(mission.approve())
     elif args.command == "status":
         latest = mission.status()
-        _print_status(_brief(latest) if args.brief else latest)
+        _print_status(_brief(latest, mission) if args.brief else latest)
     elif args.command == "audit":
         breaks = mission.continuity_breaks()
         _print_status({"record": "continuity-report@1",
@@ -310,6 +382,11 @@ def dispatch(args: argparse.Namespace) -> int:
             vacuous = " -- vacuously (no effects recorded)" if n == 0 else ""
             print(f"resume: clean; {n} receipt id(s) on record{vacuous}",
                   file=sys.stderr)
+        # Resume is the ONE moment a steward reliably reads before acting, and
+        # it printed no manifest content at all -- so the envelope was never in
+        # front of anyone at the moment it was supposed to inform. Advisory:
+        # nothing here refuses anything; that is stated so it cannot be misread.
+        _print_envelope(mission.status(), file=sys.stderr)
         # A continuity break is not drift and raises no obligation, but a
         # clean resume is exactly where its absence would be misread as
         # "nothing happened here" -- so it rides alongside the verdict.
