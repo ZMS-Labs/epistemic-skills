@@ -629,6 +629,66 @@ def test_continuity_surfaces_unreceipted_mutation(workspace: Path) -> None:
           and [b for b in breaks if not b["already_reconciled"]] == breaks)
 
 
+def test_continuity_is_silent_on_sanctioned_recovery(workspace: Path) -> None:
+    """The check must not fire on the recovery flow this contract built.
+    Retirement removes the lost id from receipt_ids, so ordering the chain
+    from that list compared two receipts that were never adjacent and
+    invented a break across the gap where the retired one honestly sat --
+    firing on ordinary correct operation, which trains stewards to ignore
+    the signal (merge-gate review of #125). Order comes from the chain."""
+    m = open_mission(workspace, "m-mid-retire", "Silence on correct operation.")
+    m.approve()
+    m.record_effect("P.txt", "v1", "id-A")
+    m.record_effect("P.txt", "v2", "id-B")
+    m.store.receipt_path("id-B").unlink()
+    m.resume()
+    m.acknowledge_receipt_loss("id-B")
+    m.record_effect("P.txt", "v3-recovered", "id-C")
+
+    st = m.status()
+    check("sanctioned-recovery-is-clean",
+          st["state"]["unresolved_verdicts"] == [] and st["status"] == "active")
+    check("sanctioned-recovery-no-phantom-break", m.continuity_breaks() == [])
+
+    # deeper: three receipts, the LAST retired, then recovered
+    m2 = open_mission(workspace, "m-deep-retire", "Deeper chain.")
+    m2.approve()
+    for content, rid in (("v1", "A"), ("v2", "B"), ("v3", "C")):
+        m2.record_effect("Q.txt", content, rid)
+    m2.store.receipt_path("C").unlink()
+    m2.resume()
+    m2.acknowledge_receipt_loss("C")
+    m2.record_effect("Q.txt", "v4", "D")
+    check("deep-recovery-no-phantom-break", m2.continuity_breaks() == [])
+
+    # and the real thing is still caught (a fix that silences everything is
+    # worse than the bug it fixes)
+    (workspace / "Q.txt").write_text("TAMPERED", encoding="utf-8")
+    m2.record_effect("Q.txt", "TAMPERED", "E")
+    real = m2.continuity_breaks()
+    check("real-tampering-still-caught",
+          len(real) == 1 and real[0]["request_id"] == "E"
+          and real[0]["already_reconciled"] is False)
+
+
+def test_request_ids_are_never_reusable(workspace: Path) -> None:
+    """An id whose receipt file merely vanished is not free for reuse: the
+    chain still remembers what it was minted against, so rebinding it
+    backdates the new write to the old event -- which made a legitimate
+    reconciliation read as unreconciled (merge-gate review of #125)."""
+    m = open_mission(workspace, "m-id-reuse", "Ids are spent when used.")
+    m.approve()
+    m.record_effect("x.md", "v1", "dup")
+    m.store.receipt_path("dup").unlink()
+    try:
+        m.record_effect("y.md", "other", "dup")
+        check("id-reuse-refused-after-receipt-vanishes", False)
+    except CustodyError:
+        check("id-reuse-refused-after-receipt-vanishes", True)
+    check("id-reuse-no-artifact-written",
+          not (workspace / "y.md").exists())
+
+
 def test_reconcile_clears_exactly_one_marker(workspace: Path) -> None:
     """One receipt must not retire two unrelated obligations (merge-gate
     blocker 1): drift clears through reconcile with a FRESH id; the loss
@@ -828,6 +888,8 @@ TESTS = [
     test_drift_marker_matches_by_artifact,
     test_superseded_receipt_never_shadows_the_current_one,
     test_continuity_surfaces_unreceipted_mutation,
+    test_continuity_is_silent_on_sanctioned_recovery,
+    test_request_ids_are_never_reusable,
     test_reconcile_clears_exactly_one_marker,
     test_corrupt_receipt_degrades_to_drift,
     test_effect_duplicate_id_leaves_workspace_untouched,

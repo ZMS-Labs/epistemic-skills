@@ -330,6 +330,15 @@ class Mission:
             raise CustodyError(
                 f"request_id {request_id!r} was retired by an acknowledged "
                 "receipt loss and can never be reused -- use a fresh id")
+        if request_id in set(self._all_receipt_ids_ever()):
+            # An id whose receipt file merely vanished is NOT free for reuse
+            # either: the chain still remembers what it was minted against,
+            # and rebinding it silently backdates the new write to the old
+            # event -- which made a legitimate reconciliation read as
+            # unreconciled (merge-gate review of #125).
+            raise CustodyError(
+                f"request_id {request_id!r} is already recorded in this "
+                "mission's history and can never be reused -- use a fresh id")
         target = self._resolve_artifact_path(artifact_relpath)
         before_sha = sha256_file(target) if target.exists() else None
         data = content.encode("utf-8")
@@ -394,6 +403,21 @@ class Mission:
                 return None
             prev_ids, prev_notes = ids, notes
         return None
+
+    def _all_receipt_ids_ever(self) -> list[str]:
+        """Every request id ever admitted to receipt_ids, in the order the
+        chain admitted it -- including ids since retired, which the current
+        list no longer carries. The chain is the only place the full order
+        survives."""
+        seen: list[str] = []
+        known: set[str] = set()
+        for cp_path in self.store.checkpoint_paths():
+            record = json.loads(cp_path.read_text(encoding="utf-8"))
+            for request_id in record["receipt_ids"]:
+                if request_id not in known:
+                    known.add(request_id)
+                    seen.append(request_id)
+        return seen
 
     def _retired_receipt_ids(self, latest: dict) -> set[str]:
         """Ids whose loss was acknowledged. Retirement is permanent and lives
@@ -539,18 +563,34 @@ class Mission:
         discharged, so making it an obligation would create a marker with no
         exit -- the wedge RECOVER-UNKNOWN was rejected for. Surfaced, not
         enforced."""
-        by_path: dict[str, list[dict]] = {}
-        for request_id in self.status()["receipt_ids"]:
+        # Order comes from the CHAIN, not from the current receipt_ids list.
+        # Retirement removes a lost id from that list, so zipping survivors
+        # would compare two receipts that were never adjacent -- inventing a
+        # break across the gap where the retired one honestly sat. That fires
+        # on the ordinary sanctioned recovery flow, which would train stewards
+        # to ignore the signal on day one.
+        by_path: dict[str, list[str]] = {}
+        for request_id in self._all_receipt_ids_ever():
             receipt = self._load_receipt(request_id)
-            if receipt is None:
+            rel = (receipt["artifact_path"] if receipt is not None
+                   else self._historical_effect_path(request_id))
+            if rel is None:
                 continue
-            key = _normalize_relpath(receipt["artifact_path"])
+            key = _normalize_relpath(rel)
             if os.name == "nt":
                 key = _ascii_case_fold(key)
-            by_path.setdefault(key, []).append(receipt)
+            by_path.setdefault(key, []).append(request_id)
         breaks: list[dict] = []
-        for receipts in by_path.values():
-            for prior, nxt in zip(receipts, receipts[1:]):
+        for ids in by_path.values():
+            for prior_id, next_id in zip(ids, ids[1:]):
+                prior = self._load_receipt(prior_id)
+                nxt = self._load_receipt(next_id)
+                if prior is None or nxt is None:
+                    # A gap we cannot read is not evidence of a break. The
+                    # missing receipt is already reported by resume as its own
+                    # finding; claiming a mismatch across it would be asserting
+                    # something this data cannot support.
+                    continue
                 if nxt["before_sha256"] == prior["after_sha256"]:
                     continue
                 # A reconciliation FOLLOWS a mutation that drift detection
