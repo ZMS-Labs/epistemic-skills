@@ -543,6 +543,46 @@ def test_drift_marker_matches_by_artifact(workspace: Path) -> None:
           st["state"]["unresolved_verdicts"] == [] and st["status"] == "active")
 
 
+def test_superseded_receipt_never_shadows_the_current_one(workspace: Path) -> None:
+    """One artifact, one current receipt. receipt_ids is append-ordered, so
+    the last id covering a path supersedes the earlier ones -- and that
+    attribution must not depend on the current receipt still being loadable.
+    Otherwise a lost newest receipt silently promotes a superseded older one
+    back to authority: resume compares live content against stale ground
+    truth, reports a mismatch that never happened, and says nothing about
+    the receipt that actually went missing. Converged on independently by
+    both reviewers of PR #119 (epistemic-skills#120)."""
+    m = open_mission(workspace, "m-supersede", "One artifact, one receipt.")
+    m.approve()
+    m.record_effect("notes/a.md", "v1", "req-1")
+    (workspace / "notes" / "a.md").write_text("tampered", encoding="utf-8")
+    check("supersede-drift-detected", m.resume() == ["notes/a.md"])
+
+    m.reconcile("notes/a.md", "v2", "req-2")
+    check("supersede-reconciled", m.status()["status"] == "active")
+    check("supersede-both-ids-retained",
+          m.status()["receipt_ids"] == ["req-1", "req-2"])
+
+    # the CURRENT receipt is lost; the superseded one must not stand in
+    m.store.receipt_path("req-2").unlink()
+    findings = m.resume()
+    check("supersede-only-real-finding",
+          findings == ["RECEIPT-MISSING:req-2"])
+    check("supersede-no-phantom-drift",
+          "notes/a.md" not in findings)
+    st = m.status()
+    check("supersede-no-phantom-marker",
+          st["state"]["unresolved_verdicts"] == ["RECEIPT-MISSING:req-2"])
+
+    # and the honest recovery path still works from there
+    m.acknowledge_receipt_loss("req-2")
+    check("supersede-recover-obligation",
+          m.status()["state"]["unresolved_verdicts"] == ["RECOVER:notes/a.md"])
+    m.record_effect("notes/a.md", "v3", "req-3")
+    check("supersede-recovered-clean",
+          m.status()["status"] == "active" and m.resume() == [])
+
+
 def test_reconcile_clears_exactly_one_marker(workspace: Path) -> None:
     """One receipt must not retire two unrelated obligations (merge-gate
     blocker 1): drift clears through reconcile with a FRESH id; the loss
@@ -740,6 +780,7 @@ TESTS = [
     test_distinct_files_never_share_an_obligation,
     test_obligations_match_by_artifact_not_by_string,
     test_drift_marker_matches_by_artifact,
+    test_superseded_receipt_never_shadows_the_current_one,
     test_reconcile_clears_exactly_one_marker,
     test_corrupt_receipt_degrades_to_drift,
     test_effect_duplicate_id_leaves_workspace_untouched,
