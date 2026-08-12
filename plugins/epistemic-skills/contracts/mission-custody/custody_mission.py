@@ -1076,14 +1076,20 @@ class Mission:
             if _find_marker(remaining, "RECOVER:", recorded_path) is None:
                 remaining = remaining + [f"RECOVER:{recorded_path}"]
             next_status = "reopened"
-        # T3-1: which prefix records WHICH marker was discharged, not the
-        # live re-check outcome -- a TAMPERED marker that could not be
-        # restored is a tamper-retirement even if the live reason turns out
-        # to be e.g. "receipt unloadable" (deleted after detection); the
-        # "why" text already carries that nuance, the prefix carries the
-        # coarser, machine-actionable distinction.
-        retired_note = (_RETIRED_TAMPERED_NOTE if marker == tampered_marker
-                         else _RETIRED_NOTE)
+        # T3-4d (fix round 3): the prefix is taken from still_tampered --
+        # the LIVE evidence re-checked above -- not from which marker won
+        # priority. In the double-marker window (both RECEIPT-MISSING and
+        # RECEIPT-TAMPERED open for one id: an earlier loss followed by a
+        # forged receipt reappearing), MISSING wins priority regardless of
+        # what the live receipt now shows, so keying the prefix on `marker`
+        # let a proven-tampered id retire under the 'loss' prefix while its
+        # own note's "why" clause said otherwise -- a prefix that
+        # contradicts the evidence written beside it in the SAME note.
+        # still_tampered is exactly "the receipt file present right now
+        # fails the chain-attested hash", which is the only live signal
+        # that actually means tamper; everything else (unloadable, no
+        # recorded path, or an @1-heuristic path mismatch) is loss-shaped.
+        retired_note = _RETIRED_TAMPERED_NOTE if still_tampered else _RETIRED_NOTE
         new = self._write_next(
             latest, path, status=next_status, unresolved_verdicts=remaining,
             receipt_ids=receipt_ids,

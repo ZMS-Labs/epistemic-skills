@@ -1537,6 +1537,93 @@ def test_covered_by_other_id_rejects_tampered_covering_receipt(
           "RECOVER:notes/a.md" in st["state"]["unresolved_verdicts"])
 
 
+def test_double_marker_window_kind_agrees_with_evidence(workspace: Path) -> None:
+    """T3-4d (fix round 3): when BOTH RECEIPT-MISSING and RECEIPT-TAMPERED
+    are open for the same id -- delete a receipt, resume (MISSING), place a
+    forged one back, resume again (TAMPERED persists alongside the stale
+    MISSING marker: resume only APPENDS markers for its current findings,
+    it never retracts one no longer re-detected) -- acknowledge_receipt_loss
+    selects MISSING by priority (checked first in the if/elif chain). The
+    retirement prefix must still read 'tamper', taken from still_tampered
+    (the live evidence re-checked at discharge time), NOT from which marker
+    won that priority selection -- otherwise the note's own prefix
+    contradicts the 'why' evidence clause written beside it in the SAME
+    note (round 1's reasoning -- 'the prefix records which marker was
+    discharged' -- does not survive this scenario: here the marker that
+    won priority is MISSING, but the live evidence is unambiguously
+    tamper).
+
+    Bounded even before this fix: the leftover TAMPERED marker stays open,
+    the mission stays reopened, and begin_verification refuses -- so
+    acceptance was never reachable in the mislabeled state. Fixed anyway
+    because under-reporting a tamper as a loss is the wrong direction to
+    leave an escalation-policy consumer in."""
+    m = open_mission(workspace, "m-t34d", "Double marker window.")
+    m.approve()
+    m.record_effect("notes/a.md", "v1", "x-1")
+    sha = sha256_file(m.store.receipt_path("x-1"))
+    _write_reattestation(m, "x-1", sha)
+    attested, attested_path = m.store.load_latest()
+    continued = json.loads(json.dumps(attested))
+    continued["record"] = "checkpoint@1"
+    continued["revision"] = attested["revision"] + 1
+    continued["prev_checkpoint_sha256"] = sha256_file(attested_path)
+    continued["receipt_ids"] = ["x-1"]
+    continued["written_utc"] = now_utc()
+    m.store.write_checkpoint(continued)
+
+    receipt_path = m.store.receipt_path("x-1")
+    receipt_path.unlink()
+    findings1 = m.resume()
+    check("t34d-first-resume-missing", findings1 == ["RECEIPT-MISSING:x-1"])
+
+    forged = {
+        "record": "receipt@1",
+        "mission_id": m.status()["mission_id"],
+        "request_id": "x-1",
+        "actor": "agent:attacker",
+        "utc": now_utc(),
+        "artifact_path": "notes/a.md",
+        "before_sha256": None,
+        "after_sha256": sha256_bytes(b"forged"),
+    }
+    receipt_path.write_bytes(
+        (json.dumps(forged, indent=1, sort_keys=True) + "\n").encode("utf-8"))
+    findings2 = m.resume()
+    check("t34d-second-resume-tampered", findings2 == ["RECEIPT-TAMPERED:x-1"])
+    st_before = m.status()
+    check("t34d-double-marker-window",
+          "RECEIPT-MISSING:x-1" in st_before["state"]["unresolved_verdicts"]
+          and "RECEIPT-TAMPERED:x-1" in st_before["state"]["unresolved_verdicts"])
+
+    m.acknowledge_receipt_loss("x-1")
+    st = m.status()
+    check("t34d-missing-marker-cleared-by-priority",
+          "RECEIPT-MISSING:x-1" not in st["state"]["unresolved_verdicts"])
+    check("t34d-tampered-marker-left-open",
+          "RECEIPT-TAMPERED:x-1" in st["state"]["unresolved_verdicts"])
+    check("t34d-recover-obligation-raised",
+          "RECOVER:notes/a.md" in st["state"]["unresolved_verdicts"])
+    check("t34d-mission-still-reopened", st["status"] == "reopened")
+    # The load-bearing check: the recorded kind agrees with the LIVE
+    # evidence (still tampered), not with which marker won priority.
+    check("t34d-kind-reads-tamper-at-first-discharge",
+          m._retired_receipt_ids(st).get("x-1") == "tamper")
+    check("t34d-note-uses-tamper-prefix",
+          any(n.startswith('receipt tamper acknowledged: "x-1"')
+              for n in st["state"]["notes"]))
+    check("t34d-note-does-not-use-loss-prefix",
+          not any(n.startswith('receipt loss acknowledged: "x-1"')
+                  for n in st["state"]["notes"]))
+    # acceptance is unreachable while the leftover marker is open --
+    # bounded even before the fix, and still true after it.
+    try:
+        m.begin_verification()
+        check("t34d-verification-refused-while-open", False)
+    except CustodyError:
+        check("t34d-verification-refused-while-open", True)
+
+
 _RAW_RECEIPT_IDS_TOKEN_RE = re.compile(r"""["']receipt_ids["']""")
 _RECEIPT_IDS_DICT_KEY_RE = re.compile(r"""["']receipt_ids["']\s*:""")
 
@@ -1635,6 +1722,7 @@ TESTS = [
     test_tamper_reported_despite_supersession,
     test_acknowledge_tampered_superseded_id_no_spurious_recover,
     test_covered_by_other_id_rejects_tampered_covering_receipt,
+    test_double_marker_window_kind_agrees_with_evidence,
 ]
 
 
