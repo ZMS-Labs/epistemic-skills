@@ -35,6 +35,38 @@ def _find_workspace(cwd: str) -> Path | None:
         current = parent
 
 
+def _discover_workspace(call: dict) -> Path | None:
+    """Find the mission workspace from whatever location the payload offers.
+
+    The payload cwd is preferred and decides alone whenever present, so this
+    cannot change behaviour for any harness that sends one. The fallback exists
+    because Cursor's `beforeMCPExecution` documents NO cwd -- its event-specific
+    fields are tool_name/tool_input plus url|command -- while every Cursor event
+    carries the base field `workspace_roots`
+    (https://cursor.com/docs/agent/hooks, 2026-08-12).
+
+    Without the fallback that event resolved Path("") -> Path("."), i.e. it
+    walked up from the HOOK PROCESS's own working directory, which Cursor leaves
+    undocumented for plugin-shipped hooks. The failure was therefore not merely
+    inert but nondeterministic, and its likely outcome -- discovering no mission
+    -- is a silent ALLOW for exactly the actuator class (MCP calls to the arr
+    APIs) the Stage-C ruling scoped the teeth to. A false allow is the error
+    direction this contract treats as unrecoverable.
+
+    Multi-root: roots are tried in order and the first holding a mission wins.
+    Searching more places can only discover a mission where none was found
+    before, so it can only add blocks, never remove one."""
+    cwd = call.get("cwd") or ""
+    if cwd:
+        return _find_workspace(cwd)
+    for root in call.get("workspace_roots") or []:
+        if isinstance(root, str) and root:
+            workspace = _find_workspace(root)
+            if workspace is not None:
+                return workspace
+    return _find_workspace(".")
+
+
 def _claude_kimi(payload: dict) -> dict | None:
     tool_input = payload.get("tool_input") or {}
     return {
@@ -67,6 +99,9 @@ def _cursor(payload: dict) -> dict | None:
         "tool_input": tool_input or None,
         "session_id": payload.get("session_id", ""),
         "cwd": payload.get("cwd", ""),
+        # beforeMCPExecution documents no cwd; workspace_roots is a BASE
+        # field present on every Cursor event -- see _discover_workspace.
+        "workspace_roots": payload.get("workspace_roots"),
     }
 
 
@@ -95,7 +130,7 @@ def main(argv: list[str]) -> int:
         call = adapter(payload)
         if not call or (not call.get("tool_name") and not call.get("command")):
             return 0
-        workspace = _find_workspace(call.get("cwd") or ".")
+        workspace = _discover_workspace(call)
         if workspace is None:
             return 0  # inert fast path: no custody state at or above cwd
         from custody_gate import run_gate

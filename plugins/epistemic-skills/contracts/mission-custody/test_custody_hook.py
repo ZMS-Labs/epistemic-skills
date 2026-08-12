@@ -184,6 +184,47 @@ def test_fail_open() -> None:
                          text=True).returncode == 0)
 
 
+def test_cursor_mcp_without_cwd_discovers_via_workspace_roots() -> None:
+    """Cursor's beforeMCPExecution documents NO cwd -- only the base field
+    workspace_roots. Before this fallback the payload resolved Path("") ->
+    Path("."), walking up from the HOOK PROCESS's cwd (undocumented for
+    plugin-shipped hooks), so the gate silently ALLOWED guarded MCP calls --
+    a false allow, the direction this contract treats as unrecoverable."""
+    with tempfile.TemporaryDirectory() as tmp:
+        ws = Path(tmp)
+        guards = [{"name": "no-arr-mutate", "tool_names": ["mcp__arr__mutate"],
+                   "command_regexes": [":8989/api"], "path_globs": []}]
+        m = Mission.open(ws, "hook-mcp-roots", "i", "operator:t", "agent:t",
+                         actor="agent:t", guard_mode="enforce",
+                         actuator_guards=guards)
+        m.approve()
+        nested = ws / "src" / "deep"
+        nested.mkdir(parents=True)
+
+        # NO cwd key at all -- exactly what beforeMCPExecution documents
+        payload = {"tool_name": "mcp__arr__mutate",
+                   "tool_input": json.dumps({"url": "http://h:8989/api/v3/cmd"}),
+                   "workspace_roots": [str(nested)]}
+        check("hook-cursor-mcp-no-cwd-blocks-via-roots",
+              run_hook("cursor", payload).returncode == 2)
+
+        # a root holding no mission must not invent one: stays inert (allow)
+        outside = Path(tempfile.mkdtemp())
+        try:
+            check("hook-cursor-roots-without-mission-inert",
+                  run_hook("cursor", dict(payload,
+                                          workspace_roots=[str(outside)])
+                           ).returncode == 0)
+        finally:
+            shutil.rmtree(outside, ignore_errors=True)
+
+        # malformed roots must fail open, never raise
+        for bad in ([None], [123], [""], "notalist", []):
+            check(f"hook-cursor-malformed-roots-{type(bad).__name__}-{bad!r:.12}",
+                  run_hook("cursor", dict(payload, workspace_roots=bad)
+                           ).returncode in (0, 2))
+
+
 if __name__ == "__main__":
     for fn in list(globals().values()):
         if callable(fn) and getattr(fn, "__name__", "").startswith("test_"):
