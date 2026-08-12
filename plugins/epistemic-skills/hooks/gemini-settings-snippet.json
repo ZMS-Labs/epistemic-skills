@@ -1,0 +1,18 @@
+{
+  "_comment": "Stage-C mission-custody BeforeTool gate (es#117) -- INSTALL SNIPPET, not a live config. Gemini CLI reads hooks from ~/.gemini/settings.json (user) or .gemini/settings.json (project); the Antigravity CLI (agy) shares the ~/.gemini/settings.json surface. Verified against https://geminicli.com/docs/hooks/reference/ (2026-08-12): BeforeTool input carries session_id/cwd/tool_name/tool_input; exit 2 + stderr blocks the tool and the turn continues; timeout is in MILLISECONDS. Merge the hooks object below into your settings.json, replacing <plugin-root> with the absolute path to this plugin directory. NOTE: Gemini built-in tool names differ from Claude's -- guards in a mission manifest must name run_shell_command / write_file / replace / mcp_<server>_<tool> to match.",
+  "hooks": {
+    "BeforeTool": [
+      {
+        "matcher": "run_shell_command|write_file|replace|mcp_.*",
+        "hooks": [
+          {
+            "name": "mission-custody-gate",
+            "type": "command",
+            "command": "python \"<plugin-root>/contracts/mission-custody/custody_hook.py\" --harness gemini",
+            "timeout": 10000
+          }
+        ]
+      }
+    ]
+  }
+}
