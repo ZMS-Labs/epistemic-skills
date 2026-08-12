@@ -225,6 +225,38 @@ def test_cursor_mcp_without_cwd_discovers_via_workspace_roots() -> None:
                            ).returncode in (0, 2))
 
 
+def test_missing_payload_cwd_is_inert_even_when_hook_process_runs_inside_armed_workspace() -> None:
+    """No usable location means INERT, never a search from the hook process's
+    own directory.
+
+    Coercing an absent cwd to "." searches from wherever the hook happens to be
+    running -- not where the agent is, and undocumented for plugin-shipped
+    hooks. It can gate a call against a mission the caller has nothing to do
+    with, or miss the armed one entirely; one of those directions is a false
+    allow. The module's own contract already says a harness reporting no cwd
+    stays inert, which the previous `or "."` quietly contradicted.
+
+    Named to match the acceptance test in es#137, which owns this contract from
+    the main() side; this covers the discovery function es#130 replaced that
+    call site with."""
+    with tempfile.TemporaryDirectory() as tmp:
+        ws = Path(tmp)
+        m = Mission.open(ws, "hook-inert-cwd", "i", "operator:t", "agent:t",
+                         actor="agent:t", guard_mode="enforce",
+                         actuator_guards=GUARDS)
+        m.approve()
+        # the hook subprocess runs with cwd INSIDE the armed workspace -- the
+        # exact situation a "." fallback would silently exploit
+        payload = {"tool_name": "Bash", "tool_input": {"command": "rm -rf x"}}
+        r = subprocess.run(
+            [sys.executable, str(HOOK), "--harness", "claude"],
+            input=json.dumps(payload), capture_output=True, text=True,
+            cwd=str(ws))
+        check("no-cwd-no-roots-is-inert-not-process-relative",
+              r.returncode == 0)
+        check("inert-path-emits-no-block", "BLOCKED" not in r.stderr)
+
+
 if __name__ == "__main__":
     for fn in list(globals().values()):
         if callable(fn) and getattr(fn, "__name__", "").startswith("test_"):

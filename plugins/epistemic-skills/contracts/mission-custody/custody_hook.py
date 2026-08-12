@@ -55,7 +55,16 @@ def _discover_workspace(call: dict) -> Path | None:
 
     Multi-root: roots are tried in order and the first holding a mission wins.
     Searching more places can only discover a mission where none was found
-    before, so it can only add blocks, never remove one."""
+    before, so it can only add blocks, never remove one.
+
+    With NO usable location the answer is INERT (None), never `Path(".")`.
+    Coercing to "." searches from wherever the hook process happens to be
+    running -- which is not the agent's location and is undocumented for
+    plugin-shipped hooks -- so it can gate a call against a mission the caller
+    has nothing to do with, or miss the armed one entirely. Both directions are
+    wrong, and one of them is a false allow. This also matches the module's
+    stated contract ("a harness that reports no cwd ... stays inert"), which
+    the previous `or "."` quietly contradicted."""
     cwd = call.get("cwd") or ""
     if cwd:
         return _find_workspace(cwd)
@@ -64,7 +73,7 @@ def _discover_workspace(call: dict) -> Path | None:
             workspace = _find_workspace(root)
             if workspace is not None:
                 return workspace
-    return _find_workspace(".")
+    return None
 
 
 def _claude_kimi(payload: dict) -> dict | None:
