@@ -399,8 +399,8 @@ Append-only: every artifact path, engine log root, reports, arbitration, summary
 ### Step 9 — Append the run record (lifecycle telemetry, non-optional)
 
 Finalize the run, then append one JSON line to `runs/ledger.jsonl` in this
-skill's directory — commit it if you version your skills (schema in
-`runs/README.md`):
+skill's directory — git-ignored runtime state; keep it in your durable private
+home, never commit it to this public repo (schema in `runs/README.md`):
 
 ```
 python scripts/finalize_run.py --run-dir <run-dir> --ledger-line >> runs/ledger.jsonl

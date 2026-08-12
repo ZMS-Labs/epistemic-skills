@@ -225,9 +225,10 @@ def test_collapsed_lifecycle():
 
 
 def test_shipped_example_ledger_line():
-    """runs/ledger.jsonl ships exactly one line: the example projection, marked
-    example:true, schema ledger@2, ineligible, family-granular models only."""
-    ledger = ROOT / "runs" / "ledger.jsonl"
+    """runs/ledger.example.jsonl ships exactly one line: the example projection,
+    marked example:true, schema ledger@2, ineligible, family-granular models only.
+    (Real runs/ledger.jsonl telemetry is git-ignored runtime state, not shipped.)"""
+    ledger = ROOT / "runs" / "ledger.example.jsonl"
     lines = [l for l in ledger.read_text(encoding="utf-8").splitlines() if l.strip()]
     assert len(lines) == 1, f"expected exactly the example line, found {len(lines)}"
     rec = json.loads(lines[0])

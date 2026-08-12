@@ -213,10 +213,14 @@ def check_inventory(
 
     for skill in sorted(packaged):
         ledger_path = f"plugins/epistemic-skills/skills/{skill}/runs/ledger.jsonl"
-        if not path_exists(ledger_path):
+        example_path = f"plugins/epistemic-skills/skills/{skill}/runs/ledger.example.jsonl"
+        # Real telemetry (ledger.jsonl) is git-ignored runtime state; the repo
+        # ships only the synthetic example. Either satisfies the intrinsic-ledger
+        # requirement.
+        if not (path_exists(ledger_path) or path_exists(example_path)):
             violations.append(
                 f"MISSING_RUN_LEDGER: packaged skill {skill!r} lacks intrinsic "
-                f"{ledger_path}"
+                f"{ledger_path} or {example_path}"
             )
 
     return violations
