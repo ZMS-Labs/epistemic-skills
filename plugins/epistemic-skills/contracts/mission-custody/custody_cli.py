@@ -306,7 +306,10 @@ def dispatch(args: argparse.Namespace) -> int:
         for relpath in drift:
             print(_ascii_safe(relpath))
         if not drift:
-            n = len(set(mission.status()["receipt_ids"]))
+            # Count via _receipt_entries, not a raw set() over receipt_ids:
+            # dict entries (checkpoint@2) are unhashable and set() over them
+            # raises TypeError on this otherwise-happy path.
+            n = len({rid for rid, _ in mission._receipt_entries(mission.status())})
             vacuous = " -- vacuously (no effects recorded)" if n == 0 else ""
             print(f"resume: clean; {n} receipt id(s) on record{vacuous}",
                   file=sys.stderr)

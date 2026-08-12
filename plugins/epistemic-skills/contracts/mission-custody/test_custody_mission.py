@@ -1085,6 +1085,33 @@ def test_checkpoint2_validation_table(workspace: Path) -> None:
           not any("unknown kind" in e for e in errors))
 
 
+def test_receipt_entries_chokepoint(workspace: Path) -> None:
+    """@1 and @2 chains normalise to the same shape, and no consumer may index
+    receipt_ids directly -- a string-vs-dict comparison silently never matches,
+    which is the false-clean direction."""
+    m = open_mission(workspace, "m-entries", "Entries.")
+    m.approve()
+    m.record_effect("notes/a.md", "hello", "req-1")
+    entries = m._receipt_entries(m.status())
+    check("entries-normalises-@1", entries == [("req-1", None)])
+    check("entries-sha-none-on-@1", entries[0][1] is None)
+
+
+def test_no_raw_receipt_ids_indexing(workspace: Path) -> None:
+    """Grep guard. Four latent defects in the predecessor came from exactly
+    this: a consumer comparing a string against dict entries, or hashing a
+    dict, or filtering by identity that never matches."""
+    source = (ROOT / "custody_mission.py").read_text(encoding="utf-8")
+    offenders = []
+    for i, line in enumerate(source.splitlines(), 1):
+        if '["receipt_ids"]' not in line:
+            continue
+        if "def _receipt_entries" in line or "ALLOW-RAW-RECEIPT-IDS" in line:
+            continue
+        offenders.append(f"{i}: {line.strip()}")
+    check("no-raw-receipt-ids-indexing", not offenders)
+
+
 TESTS = [
     test_open_creates_draft_r1,
     test_pathless_load_single_active,
@@ -1126,6 +1153,8 @@ TESTS = [
     test_amend_then_tail_guard_strip_detected,
     test_unrelated_amend_then_tail_regex_narrow_detected,
     test_checkpoint2_validation_table,
+    test_receipt_entries_chokepoint,
+    test_no_raw_receipt_ids_indexing,
 ]
 
 

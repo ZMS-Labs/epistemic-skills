@@ -310,8 +310,8 @@ class Mission:
 
     def _write_next(self, latest: dict, latest_path: Path, *, status: str,
                      note: str | None = None, frontier: str | None = None,
-                     add_receipt_id: str | None = None,
-                     receipt_ids: list[str] | None = None,
+                     add_receipt_id: str | dict | None = None,
+                     receipt_ids: list[str | dict] | None = None,
                      manifest: dict | None = None,
                      unresolved_verdicts: list[str] | None = None) -> dict:
         notes = list(latest["state"]["notes"])
@@ -324,8 +324,12 @@ class Mission:
                 list(unresolved_verdicts) if unresolved_verdicts is not None
                 else list(latest["state"]["unresolved_verdicts"])),
         }
+        # Copy-forward must preserve each entry's existing @1/@2 shape exactly
+        # -- never normalise it through _receipt_entries, which collapses both
+        # shapes into uniform tuples and would silently upgrade an @1 chain to
+        # @2 on every write, a migration this refactor must not perform.
         receipt_ids = (list(receipt_ids) if receipt_ids is not None
-                       else list(latest["receipt_ids"]))
+                       else list(latest["receipt_ids"]))  # ALLOW-RAW-RECEIPT-IDS
         if add_receipt_id is not None:
             receipt_ids.append(add_receipt_id)
         checkpoint = {
@@ -401,11 +405,20 @@ class Mission:
         self.store.write_receipt(receipt)
         return receipt
 
-    def _load_receipt(self, request_id: str) -> dict | None:
-        """None means UNLOADABLE -- absent, corrupt, or schema-invalid alike.
+    def _load_receipt(self, request_id: str,
+                       expected_sha: str | None = None) -> dict | None:
+        """None means UNLOADABLE -- absent, corrupt, schema-invalid, or (when
+        the chain attests a receipt_sha256 for this id) hash-mismatched alike.
         A corrupt receipt must degrade to drift (RECEIPT-MISSING), never crash
         resume: crashing the recovery path on a mangled receipt is a denial of
-        service by exactly the tampering drift detection exists to catch."""
+        service by exactly the tampering drift detection exists to catch.
+
+        expected_sha is the LATEST chain attestation for this id (see
+        _expected_sha) -- the receipt file's own bytes, hashed, as the chain
+        last recorded them. No @1 entry ever carries one, and nothing writes
+        checkpoint@2 yet, so today expected_sha is always None and this check
+        never fires; it exists so @2-aware callers do not need a second
+        interface change once a chain starts attesting receipt hashes."""
         path = self.store.receipt_path(request_id)
         try:
             record = json.loads(path.read_text(encoding="utf-8"))
@@ -418,7 +431,11 @@ class Mission:
         # A receipt whose own request_id disagrees with the content-addressed
         # name it is stored under is malformed by construction -- never a
         # trustworthy source for a claim about that id.
-        return record if record.get("request_id") == request_id else None
+        if record.get("request_id") != request_id:
+            return None
+        if expected_sha is not None and sha256_file(path) != expected_sha:
+            return None
+        return record
 
     def _historical_effect_path(self, request_id: str, kind: bool = False) -> str | None:
         """The artifact path this request id was minted against, read from the
@@ -436,7 +453,7 @@ class Mission:
         prev_notes: list[str] = []
         for cp_path in self.store.checkpoint_paths():
             record = json.loads(cp_path.read_text(encoding="utf-8"))
-            ids = record["receipt_ids"]
+            ids = [rid for rid, _ in self._receipt_entries(record)]
             notes = record["state"]["notes"]
             if request_id in ids and request_id not in prev_ids:
                 for note in notes[len(prev_notes):]:
@@ -457,7 +474,7 @@ class Mission:
         known: set[str] = set()
         for cp_path in self.store.checkpoint_paths():
             record = json.loads(cp_path.read_text(encoding="utf-8"))
-            for request_id in record["receipt_ids"]:
+            for request_id, _ in self._receipt_entries(record):
                 if request_id not in known:
                     known.add(request_id)
                     seen.append(request_id)
@@ -484,6 +501,36 @@ class Mission:
             if isinstance(value, str):
                 retired.add(value)
         return retired
+
+    def _receipt_entries(self, checkpoint: dict) -> list[tuple[str, str | None]]:
+        """(request_id, receipt_sha256|None) for one checkpoint, @1 or @2.
+
+        THE single reader of receipt_ids. @1 entries are bare strings and carry
+        no sha; @2 entries are objects. Every consumer goes through here,
+        because a string-vs-dict comparison never matches and never raises --
+        it silently reports nothing, which is the false-clean direction."""
+        entries: list[tuple[str, str | None]] = []
+        for entry in checkpoint["receipt_ids"]:  # ALLOW-RAW-RECEIPT-IDS
+            if isinstance(entry, str):
+                entries.append((entry, None))
+            else:
+                entries.append((entry["request_id"], entry.get("receipt_sha256")))
+        return entries
+
+    def _expected_sha(self, request_id: str) -> str | None:
+        """The LATEST chain attestation for this id, not the first.
+
+        A pre-migration id appears with sha None in @1 records and with a
+        backfilled sha from the migration checkpoint onward. Taking the first
+        occurrence would discard the backfill and verify at @1 strength while
+        the record claims otherwise -- a silent downgrade."""
+        latest: str | None = None
+        for cp_path in self.store.checkpoint_paths():
+            record = json.loads(cp_path.read_text(encoding="utf-8"))
+            for rid, sha in self._receipt_entries(record):
+                if rid == request_id and sha is not None:
+                    latest = sha
+        return latest
 
     def _find_verdict_record(self, verdict: str, reason: str) -> dict | None:
         verdicts_dir = self.store.mission_dir / "verdicts"
@@ -689,8 +736,8 @@ class Mission:
         # the current receipt went unreported.
         current_by_key: dict[str, tuple[str, dict | None]] = {}
         missing: list[str] = []
-        for request_id in latest["receipt_ids"]:
-            receipt = self._load_receipt(request_id)
+        for request_id, _ in self._receipt_entries(latest):
+            receipt = self._load_receipt(request_id, self._expected_sha(request_id))
             rel = (receipt["artifact_path"] if receipt is not None
                    else self._historical_effect_path(request_id))
             if rel is None:
@@ -764,7 +811,8 @@ class Mission:
         receipt = self._write_effect(latest, artifact_relpath, content, request_id)
         remaining = [m for m in unresolved if m != marker]
         next_status = "active" if not remaining else "reopened"
-        add_id = request_id if request_id not in latest["receipt_ids"] else None
+        existing_ids = {rid for rid, _ in self._receipt_entries(latest)}
+        add_id = request_id if request_id not in existing_ids else None
         self._write_next(latest, path, status=next_status, add_receipt_id=add_id,
                           unresolved_verdicts=remaining,
                           note=f"reconciled: {artifact_relpath}")
@@ -820,7 +868,14 @@ class Mission:
         else:
             why = (f"present receipt claims {receipt['artifact_path']!r}, "
                    f"chain records {recorded_path!r} -- NOT trusted")
-        receipt_ids = [rid for rid in latest["receipt_ids"] if rid != request_id]
+        # Filter by NORMALISED id (rid) while keeping the RAW entry (entry) in
+        # the output -- shape must survive the filter unchanged, same reason
+        # _write_next's copy-forward does not route through _receipt_entries.
+        receipt_ids = [
+            entry for entry, (rid, _)
+            in zip(latest["receipt_ids"], self._receipt_entries(latest))  # ALLOW-RAW-RECEIPT-IDS
+            if rid != request_id
+        ]
         if recorded_path is not None:
             # Losing coverage is an OBLIGATION, not a footnote: the mission
             # stays reopened, naming the artifact that must be re-covered, so
@@ -885,7 +940,7 @@ class Mission:
             "worker_id": worker_id,
             "operator_ref": operator_ref,
             "assurance_tier": assurance_tier,
-            "receipt_refs": list(latest["receipt_ids"]),
+            "receipt_refs": [rid for rid, _ in self._receipt_entries(latest)],
             "reason": reason,
             "utc": now_utc(),
         }
