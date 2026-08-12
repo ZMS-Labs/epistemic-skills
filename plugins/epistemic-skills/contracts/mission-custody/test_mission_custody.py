@@ -42,7 +42,8 @@ def test_constants() -> None:
     check("tiers", TIERS == {"operator-accepted", "declared-role-separation"})
     check("verdicts", VERDICTS == {"PASS", "FAIL", "INCONCLUSIVE"})
     check("record-kinds", RECORD_KINDS == {
-        "mission-manifest@1", "checkpoint@1", "receipt@1", "acceptance-verdict@1"})
+        "mission-manifest@1", "checkpoint@1", "checkpoint@2", "receipt@1",
+        "acceptance-verdict@1"})
 
 
 def test_manifest_valid_example() -> None:

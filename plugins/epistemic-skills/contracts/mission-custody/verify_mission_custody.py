@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Validate mission-custody@1 records without third-party dependencies.
 
-Record kinds: mission-manifest@1, checkpoint@1, receipt@1, acceptance-verdict@1.
+Record kinds: mission-manifest@1, checkpoint@1, checkpoint@2, receipt@1,
+acceptance-verdict@1.
 validate_record() dispatches on the required "record" field and returns a list
 of "FIELD: reason" strings; empty list means valid.
 """
@@ -19,13 +20,33 @@ VERDICTS = {"PASS", "FAIL", "INCONCLUSIVE"}
 RECORD_KINDS = {
     "mission-manifest@1",
     "checkpoint@1",
+    "checkpoint@2",
     "receipt@1",
     "acceptance-verdict@1",
 }
 
+# The highest checkpoint epoch this build understands. A record from a NEWER
+# epoch must be distinguishable from garbage: read as an unknown kind it makes
+# the mission look CORRUPT, and discovery SKIPS corrupt siblings -- which lets
+# a duplicate `open` succeed and silently disarms an armed mission.
+# Present-but-unreadable and unreadable are different states.
+CHECKPOINT_EPOCH_MAX = 2
+EPOCH_TOO_NEW = "EPOCH-TOO-NEW"
+_CHECKPOINT_KIND_RE = re.compile(r"^checkpoint@(\d+)$")
+
+CHECKPOINT2_ENTRY_FIELDS = {"request_id", "receipt_sha256"}
+
 _ISO_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
 _SHA_RE = re.compile(r"^[0-9a-f]{64}$")
 _ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
+
+
+def checkpoint_epoch(kind: object) -> int | None:
+    """The epoch number of a checkpoint kind, or None if not a checkpoint."""
+    if not isinstance(kind, str):
+        return None
+    match = _CHECKPOINT_KIND_RE.match(kind)
+    return int(match.group(1)) if match else None
 
 MANIFEST_FIELDS = {
     "record", "mission_id", "created_utc", "authority", "scope",
@@ -240,15 +261,23 @@ def validate_record(record: Any) -> list[str]:
     if not isinstance(record, dict):
         return ["record: JSON object required"]
     kind = record.get("record")
+    epoch = checkpoint_epoch(kind)
+    if epoch is not None and epoch > CHECKPOINT_EPOCH_MAX:
+        # NOT "unknown kind": a caller must be able to tell "written by a newer
+        # build" from "corrupt", because discovery treats those differently.
+        return [f"record: {EPOCH_TOO_NEW}: {kind!r} is newer than this build "
+                f"understands (max checkpoint@{CHECKPOINT_EPOCH_MAX})"]
     if kind not in RECORD_KINDS:
         return [f"record: unknown kind {kind!r}"]
     if kind == "mission-manifest@1":
         return validate_manifest(record)
     if kind == "checkpoint@1":
-        return validate_checkpoint(record)      # Task 2
+        return validate_checkpoint(record)
+    if kind == "checkpoint@2":
+        return validate_checkpoint2(record)
     if kind == "receipt@1":
-        return validate_receipt(record)         # Task 3
-    return validate_acceptance_verdict(record)  # Task 3
+        return validate_receipt(record)
+    return validate_acceptance_verdict(record)
 
 
 def validate_checkpoint(rec: dict) -> list[str]:
@@ -289,6 +318,43 @@ def validate_checkpoint(rec: dict) -> list[str]:
              "ISO-8601 Z timestamp required")
     _require(errors, isinstance(rec["written_by"], str) and rec["written_by"],
              "written_by", "non-empty actor id required")
+    return errors
+
+
+def validate_checkpoint2(rec: dict) -> list[str]:
+    """@2 differs from @1 in exactly one field: receipt_ids entries are
+    {request_id, receipt_sha256} objects rather than bare id strings."""
+    errors: list[str] = []
+    _check_exact_fields(errors, rec, CHECKPOINT_FIELDS, "checkpoint")
+    if errors:
+        return errors
+    entries = rec["receipt_ids"]
+    if not isinstance(entries, list):
+        errors.append("receipt_ids: list of {request_id, receipt_sha256} required")
+    else:
+        seen: set[str] = set()
+        for i, entry in enumerate(entries):
+            where = f"receipt_ids[{i}]"
+            if not isinstance(entry, dict) or set(entry) != CHECKPOINT2_ENTRY_FIELDS:
+                errors.append(
+                    f"{where}: exactly {{request_id, receipt_sha256}} required")
+                continue
+            if not (isinstance(entry["request_id"], str) and entry["request_id"]):
+                errors.append(f"{where}.request_id: non-empty string required")
+            elif entry["request_id"] in seen:
+                # one id, one current entry: duplicates make "the sha for this
+                # id" ambiguous, and an auditor cannot resolve it
+                errors.append(f"{where}.request_id: duplicate in this list")
+            else:
+                seen.add(entry["request_id"])
+            if not is_sha256(entry["receipt_sha256"]):
+                errors.append(f"{where}.receipt_sha256: 64-hex sha256 required")
+    # every other field validates exactly as @1
+    shared = dict(rec)
+    shared["record"] = "checkpoint@1"
+    shared["receipt_ids"] = []
+    errors.extend(e for e in validate_checkpoint(shared)
+                  if not e.startswith("receipt_ids"))
     return errors
 
 

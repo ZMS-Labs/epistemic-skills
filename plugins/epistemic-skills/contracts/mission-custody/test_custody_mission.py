@@ -1032,6 +1032,59 @@ def test_unrelated_amend_then_tail_regex_narrow_detected(workspace: Path) -> Non
         check("tail-regex-narrow-after-unrelated-amend-detected", True)
 
 
+def _valid_checkpoint2_fixture() -> dict:
+    """A minimal, valid checkpoint@2. Built from a real @1 open so the manifest
+    is genuinely schema-valid rather than hand-approximated."""
+    with tempfile.TemporaryDirectory() as tmp:
+        ws = Path(tmp)
+        m = Mission.open(ws, "fixture", "i", "operator:t", "agent:t",
+                         actor="agent:t")
+        record = json.loads(json.dumps(m.status()))
+    record["record"] = "checkpoint@2"
+    record["receipt_ids"] = [{"request_id": "req-1", "receipt_sha256": "0" * 64}]
+    return record
+
+
+def test_checkpoint2_validation_table(workspace: Path) -> None:
+    """The @2 record shape as a CASE TABLE, not one asserted example."""
+    from verify_mission_custody import (
+        validate_record, checkpoint_epoch, EPOCH_TOO_NEW)
+    check("epoch-of-@1", checkpoint_epoch("checkpoint@1") == 1)
+    check("epoch-of-@2", checkpoint_epoch("checkpoint@2") == 2)
+    check("epoch-of-@9", checkpoint_epoch("checkpoint@9") == 9)
+    check("epoch-of-non-checkpoint", checkpoint_epoch("receipt@1") is None)
+
+    base = json.loads(json.dumps(_valid_checkpoint2_fixture()))
+    check("valid-@2-clean", validate_record(base) == [])
+
+    bad = json.loads(json.dumps(base)); bad["receipt_ids"] = ["plain-string"]
+    check("@2-rejects-string-entry", validate_record(bad) != [])
+
+    bad = json.loads(json.dumps(base)); bad["receipt_ids"] = [{"request_id": "a"}]
+    check("@2-rejects-missing-sha", validate_record(bad) != [])
+
+    bad = json.loads(json.dumps(base))
+    bad["receipt_ids"] = [{"request_id": "a", "receipt_sha256": "nothex"}]
+    check("@2-rejects-bad-sha", validate_record(bad) != [])
+
+    bad = json.loads(json.dumps(base))
+    bad["receipt_ids"] = [{"request_id": "a", "receipt_sha256": "0" * 64},
+                          {"request_id": "a", "receipt_sha256": "1" * 64}]
+    check("@2-rejects-duplicate-request-id", validate_record(bad) != [])
+
+    bad = json.loads(json.dumps(base))
+    bad["receipt_ids"] = [{"request_id": "a", "receipt_sha256": "0" * 64,
+                           "extra": 1}]
+    check("@2-rejects-entry-extra-key", validate_record(bad) != [])
+
+    future = json.loads(json.dumps(base)); future["record"] = "checkpoint@3"
+    errors = validate_record(future)
+    check("@3-is-epoch-too-new-not-unknown-kind",
+          any(EPOCH_TOO_NEW in e for e in errors))
+    check("@3-does-not-read-as-unknown-kind",
+          not any("unknown kind" in e for e in errors))
+
+
 TESTS = [
     test_open_creates_draft_r1,
     test_pathless_load_single_active,
@@ -1072,6 +1125,7 @@ TESTS = [
     test_amend_empty_guards_list_refused,
     test_amend_then_tail_guard_strip_detected,
     test_unrelated_amend_then_tail_regex_narrow_detected,
+    test_checkpoint2_validation_table,
 ]
 
 
