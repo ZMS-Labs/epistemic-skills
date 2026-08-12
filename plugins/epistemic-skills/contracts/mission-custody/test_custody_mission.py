@@ -1120,33 +1120,46 @@ def test_receipt_entries_normalises_at2_and_mixed(workspace: Path) -> None:
           entries[2] == ("obj-2", None))
 
 
-def test_expected_sha_latest_wins(workspace: Path) -> None:
-    """The LATEST chain attestation wins, not the first: a pre-migration id
-    appears unattested in @1 records and attested from a migration
-    checkpoint onward -- _expected_sha must return the backfilled sha.
+def _write_reattestation(m: Mission, request_id: str, sha: str) -> None:
+    """Append one checkpoint@2 to m's chain attesting request_id -> sha,
+    whatever the chain currently ends with. Nothing in the Mission API
+    writes checkpoint@2 yet (a later task's job), so tests that need one
+    build it directly via the store, the same way
+    _valid_checkpoint2_fixture does."""
+    latest, path = m.store.load_latest()
+    record = json.loads(json.dumps(latest))
+    record["record"] = "checkpoint@2"
+    record["revision"] = latest["revision"] + 1
+    record["prev_checkpoint_sha256"] = sha256_file(path)
+    record["receipt_ids"] = [{"request_id": request_id, "receipt_sha256": sha}]
+    record["written_utc"] = now_utc()
+    m.store.write_checkpoint(record)
 
-    Nothing in the Mission API writes checkpoint@2 yet (a later task's job),
-    so this builds one directly via the store, the same way
-    _valid_checkpoint2_fixture does, to prove _expected_sha (and its
-    _expected_sha_map backing) read it correctly once such a record exists."""
+
+def test_expected_sha_latest_wins(workspace: Path) -> None:
+    """The LATEST chain attestation wins, not the first -- not merely "an
+    attestation beats no attestation". A single re-attestation with a
+    DIFFERENT sha is required to discriminate the two: with only one
+    attestation on the chain, first-non-None-wins and latest-wins agree, so
+    a fixture that stops there cannot detect a regression to the former
+    (proven by mutation below). A pre-migration id appears unattested in @1
+    records, attested from a migration checkpoint onward, and then
+    RE-attested (e.g. a receipt legitimately rewritten and re-chained) --
+    _expected_sha must return the newest sha, not the first non-None one."""
     m = open_mission(workspace, "m-sha", "Sha.")
     m.approve()
     m.record_effect("notes/a.md", "hello", "req-1")
     check("unattested-before-migration", m._expected_sha("req-1") is None)
 
-    latest, path = m.store.load_latest()
-    migrated = json.loads(json.dumps(latest))
-    migrated["record"] = "checkpoint@2"
-    migrated["revision"] = latest["revision"] + 1
-    migrated["prev_checkpoint_sha256"] = sha256_file(path)
-    migrated["receipt_ids"] = [
-        {"request_id": "req-1", "receipt_sha256": "a" * 64}]
-    migrated["written_utc"] = now_utc()
-    m.store.write_checkpoint(migrated)
-
+    _write_reattestation(m, "req-1", "a" * 64)
     check("attested-after-migration", m._expected_sha("req-1") == "a" * 64)
     check("map-agrees-with-single-id-lookup",
           m._expected_sha_map() == {"req-1": "a" * 64})
+
+    _write_reattestation(m, "req-1", "b" * 64)
+    check("latest-wins-not-first-attestation", m._expected_sha("req-1") == "b" * 64)
+    check("map-latest-wins-not-first-attestation",
+          m._expected_sha_map() == {"req-1": "b" * 64})
 
 
 def test_load_receipt_expected_sha_check(workspace: Path) -> None:
@@ -1186,15 +1199,26 @@ def test_no_raw_receipt_ids_indexing(workspace: Path) -> None:
     file-scoped guard cannot see regardless of how the line itself is
     written. A dict-LITERAL key declaration ("receipt_ids": value) is a
     write, not a read, and needs no exemption; anything else quoting the
-    token is a read and must carry ALLOW-RAW-RECEIPT-IDS."""
+    token is a read and must carry ALLOW-RAW-RECEIPT-IDS.
+
+    The dict-key exemption is applied per-OCCURRENCE, not per-line: strip
+    every matched key-declaration substring out of the line first, then
+    search what remains. A whole-line exemption would let a legitimate
+    declaration on one part of a line hide an unrelated raw read elsewhere on
+    the SAME line -- e.g. a mutated copy-forward like
+    `"receipt_ids": list(latest["receipt_ids"]),` starts with a real
+    dict-key declaration, but also silently discards the computed
+    receipt_ids local (breaking add_receipt_id and the retirement filter);
+    a whole-line check reads that first declaration and stops looking."""
     offenders = []
     for fname in ("custody_mission.py", "custody_cli.py"):
         source = (ROOT / fname).read_text(encoding="utf-8")
         for i, line in enumerate(source.splitlines(), 1):
             if not _RAW_RECEIPT_IDS_TOKEN_RE.search(line):
                 continue
-            if _RECEIPT_IDS_DICT_KEY_RE.search(line):
-                continue  # dict-literal key declaration, not a read
+            remainder = _RECEIPT_IDS_DICT_KEY_RE.sub("", line)
+            if not _RAW_RECEIPT_IDS_TOKEN_RE.search(remainder):
+                continue  # every occurrence was a dict-literal key declaration
             if "def _receipt_entries" in line or "ALLOW-RAW-RECEIPT-IDS" in line:
                 continue
             offenders.append(f"{fname}:{i}: {line.strip()}")
