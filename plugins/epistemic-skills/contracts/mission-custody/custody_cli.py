@@ -69,6 +69,64 @@ def _add_content_flags(parser: argparse.ArgumentParser) -> None:
     group.add_argument("--content-file", dest="content_file")
 
 
+def _add_text_flags(parser: argparse.ArgumentParser, name: str) -> None:
+    """A `--<name>` / `--<name>-file` pair, for the SAME reason artifact
+    bodies got one: argv caps near 32K chars on Windows and every shell
+    metacharacter must survive quoting.
+
+    The reason is strictest for `amend`, whose text is the operator's
+    VERBATIM grant -- the one string in the contract whose exactness is the
+    whole point. Corruption here happens BEFORE the contract sees the string,
+    so every downstream guarantee (validation, hash chain, drift detection,
+    tail anchor) is intact and irrelevant: the mangled text is sealed as
+    authoritative. Observed live -- backticks in a double-quoted shell string
+    were executed as command substitution and silently deleted a word from a
+    recorded note, exit 0 (es#133)."""
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument(f"--{name}")
+    group.add_argument(f"--{name}-file", dest=f"{name}_file")
+
+
+def _read_text(args: argparse.Namespace, name: str) -> str:
+    """Read a text argument from its inline flag or its file.
+
+    Exactly two editor/shell artifacts are removed, and nothing else:
+
+    - a leading UTF-8 BOM (`utf-8-sig`). PowerShell 5.1's `Out-File` and
+      `Set-Content -Encoding utf8` write one by default on this fleet, and
+      plain `utf-8` decoding keeps it as U+FEFF -- which is NOT whitespace, so
+      it survives the empty-text checks and lands as the first character of a
+      "verbatim" operator grant.
+    - ONE trailing line terminator (\\r\\n, \\n, or \\r), because a file
+      practically always ends with one and it is not part of what the operator
+      said. Deliberately not `rstrip("\\r\\n")`: that eats an entire trailing
+      RUN, silently deleting a blank line the operator meant to keep.
+
+    Interior bytes are untouched -- newline='' keeps CRLF exactly as supplied.
+
+    A file that is not valid UTF-8 is a REFUSAL, not a crash: PowerShell's
+    bare `Out-File` writes UTF-16LE, and letting UnicodeDecodeError escape
+    exits 1 with a traceback, violating this module's documented 0/2/3
+    contract."""
+    path = getattr(args, f"{name}_file", None)
+    if path is None:
+        return getattr(args, name)
+    try:
+        with open(path, encoding="utf-8-sig", newline="") as handle:
+            text = handle.read()
+    except UnicodeDecodeError as exc:
+        raise CustodyError(
+            f"{name} file is not valid UTF-8 ({exc.reason}); custody records "
+            "text, and a file this cannot decode would be recorded wrong or "
+            "not at all -- re-save it as UTF-8") from None
+    except OSError as exc:
+        raise CustodyError(f"cannot read {name} file: {exc}") from None
+    for terminator in ("\r\n", "\n", "\r"):
+        if text.endswith(terminator):
+            return text[:-len(terminator)]
+    return text
+
+
 def build_parser() -> argparse.ArgumentParser:
     common = _common_parser()
     parser = argparse.ArgumentParser(prog="custody_cli.py")
@@ -76,7 +134,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_open = sub.add_parser("open", parents=[common])
     p_open.add_argument("--mission-id", required=True)
-    p_open.add_argument("--instruction", required=True)
+    _add_text_flags(p_open, "instruction")
     p_open.add_argument("--operator", required=True)
     p_open.add_argument("--steward", required=True)
     p_open.add_argument("--tier", default="declared-role-separation")
@@ -100,7 +158,7 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("audit", parents=[common])
 
     p_amend = sub.add_parser("amend", parents=[common])
-    p_amend.add_argument("--text", required=True)
+    _add_text_flags(p_amend, "text")
     p_amend.add_argument("--guards-file", dest="guards_file")
     p_amend.add_argument("--guard-mode", dest="guard_mode",
                          choices=["audit", "enforce"])
@@ -109,10 +167,10 @@ def build_parser() -> argparse.ArgumentParser:
     p_gate.add_argument("--input-file", dest="input_file")
 
     p_note = sub.add_parser("note", parents=[common])
-    p_note.add_argument("--text", required=True)
+    _add_text_flags(p_note, "text")
 
     p_frontier = sub.add_parser("frontier", parents=[common])
-    p_frontier.add_argument("--text", required=True)
+    _add_text_flags(p_frontier, "text")
 
     p_effect = sub.add_parser("effect", parents=[common])
     p_effect.add_argument("--path", required=True)
@@ -135,14 +193,14 @@ def build_parser() -> argparse.ArgumentParser:
     p_accept.add_argument("--verdict", required=True)
     p_accept.add_argument("--acceptor", required=True)
     p_accept.add_argument("--tier", required=True)
-    p_accept.add_argument("--reason", required=True)
+    _add_text_flags(p_accept, "reason")
 
     p_clear = sub.add_parser("clear-fail", parents=[common])
     p_clear.add_argument("--match", required=True)
     p_clear.add_argument("--request-id", required=True)
 
     p_cancel = sub.add_parser("cancel", parents=[common])
-    p_cancel.add_argument("--reason", required=True)
+    _add_text_flags(p_cancel, "reason")
 
     return parser
 
@@ -197,7 +255,8 @@ def dispatch(args: argparse.Namespace) -> int:
         guards = (_read_guards_file(args.guards_file)
                   if args.guards_file else None)
         Mission.open(
-            workspace, mission_id=args.mission_id, instruction=args.instruction,
+            workspace, mission_id=args.mission_id,
+            instruction=_read_text(args, "instruction"),
             operator_ref=args.operator, steward_ref=args.steward,
             required_tier=args.tier, actor=args.actor,
             scope_in=args.scope_in, scope_out=args.scope_out,
@@ -233,11 +292,11 @@ def dispatch(args: argparse.Namespace) -> int:
             kwargs["actuator_guards"] = _read_guards_file(args.guards_file)
         if args.guard_mode:
             kwargs["guard_mode"] = args.guard_mode
-        print(mission.amend_authority(args.text, **kwargs))
+        print(mission.amend_authority(_read_text(args, "text"), **kwargs))
     elif args.command == "note":
-        print(mission.note(args.text))
+        print(mission.note(_read_text(args, "text")))
     elif args.command == "frontier":
-        print(mission.set_frontier(args.text))
+        print(mission.set_frontier(_read_text(args, "text")))
     elif args.command == "effect":
         receipt = mission.record_effect(args.path, _read_content(args),
                                          args.request_id)
@@ -273,11 +332,12 @@ def dispatch(args: argparse.Namespace) -> int:
         print(mission.begin_verification())
     elif args.command == "accept":
         print(mission.record_verdict(args.verdict, acceptor_id=args.acceptor,
-                                      assurance_tier=args.tier, reason=args.reason))
+                                      assurance_tier=args.tier,
+                                      reason=_read_text(args, "reason")))
     elif args.command == "clear-fail":
         print(mission.clear_fail(args.match, args.request_id))
     elif args.command == "cancel":
-        print(mission.cancel(args.reason))
+        print(mission.cancel(_read_text(args, "reason")))
     else:
         raise AssertionError(f"unhandled command {args.command!r}")
     return 0

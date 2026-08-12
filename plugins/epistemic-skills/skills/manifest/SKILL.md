@@ -20,7 +20,7 @@ else.
 ## Modes
 
 1. **Open** — capture the operator instruction VERBATIM: `open --mission-id
-   <kebab> --instruction <verbatim> --operator <ref> --steward <your actor>
+   <kebab> --instruction-file <file> --operator <ref> --steward <your actor>
    --scope-in ... --scope-out ... --permission ... --protected ...
    [--tier declared-role-separation] [--hold-if RULE ...] [--stop-if RULE ...]
    [--escalate-if RULE ...] [--cost COST ...]`. An empty authority field is
@@ -47,10 +47,18 @@ else.
    Update `frontier` whenever the true next action changes and before session
    end — it is the next resume's anchor.
 4. **Amend** — when the operator grants authority the manifest does not carry,
-   record it VERBATIM with `amend --text <operator's words>` before acting on
-   it, then continue. Amendments are append-only and never self-authored:
-   this records a grant, it does not create one. Authority you cannot record
-   is authority you do not have — escalate instead.
+   record it VERBATIM with `amend --text-file <file>` before acting on it, then
+   continue. Amendments are append-only and never self-authored: this records a
+   grant, it does not create one. Authority you cannot record is authority you
+   do not have — escalate instead.
+   **Write the grant to a file and use `--text-file`, never `--text`** (same
+   for `--instruction-file` at open). Text passed inline travels argv, where a
+   shell rewrites it BEFORE custody sees it: backticks and `$(...)` execute,
+   `$VAR` expands, and argv truncates near 32K on Windows. The mangled text is
+   then validated, hashed, chained and anchored perfectly faithfully — the
+   record ends up intact and WRONG, and no downstream guarantee can catch it
+   because the corruption happened upstream of every one of them. Observed
+   live: a word was silently deleted from a recorded note, exit 0.
 5. **Verify / Close** — `verify`, then acceptance by a DIFFERENT actor: a
    distinct session runs `accept` as itself (`--actor` must equal
    `--acceptor`). Never accept work you performed; the core refuses it

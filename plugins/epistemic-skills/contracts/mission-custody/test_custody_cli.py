@@ -469,6 +469,177 @@ def test_amend_guard_mode_flag() -> None:
         check("amend-guards-accepted", res.returncode == 0)
 
 
+def test_text_file_preserves_bytes_exactly() -> None:
+    """A verbatim grant must survive the CLI byte-for-byte.
+
+    The inline flags travel argv, where a shell can rewrite the string before
+    the contract ever sees it -- and the corruption is then hashed, chained and
+    sealed as authoritative, so no downstream guarantee can catch it (es#133).
+    The file path is the one that must be exact."""
+    hostile = ('operator grants: run `amend` and $HOME cleanup; '
+               '"quoted" \'single\' and $(date) stay literal; 100% & <>|;')
+    with tempfile.TemporaryDirectory() as tmp:
+        ws = Path(tmp) / "ws"
+        ws.mkdir()
+        grant = Path(tmp) / "grant.txt"
+        # a trailing newline is what a heredoc or editor leaves behind; it must
+        # be stripped, not recorded as part of what the operator said
+        grant.write_text(hostile + "\n", encoding="utf-8", newline="")
+
+        r = run("open", "--workspace", str(ws), "--actor", "agent:w",
+                "--mission-id", "textfile", "--instruction-file", str(grant),
+                "--operator", "operator:zach", "--steward", "agent:w")
+        check("open-instruction-file-exit-0", r.returncode == 0)
+        run("approve", "--workspace", str(ws), "--actor", "agent:w")
+
+        r = run("amend", "--workspace", str(ws), "--actor", "agent:w",
+                "--text-file", str(grant))
+        check("amend-text-file-exit-0", r.returncode == 0)
+
+        auth = json.loads(run("status", "--workspace", str(ws),
+                               "--actor", "agent:w").stdout)["manifest"]["authority"]
+        check("instruction-byte-identical", auth["instruction"] == hostile)
+        check("amendment-byte-identical", auth["amendments"][0]["text"] == hostile)
+
+        check("note-text-file-exit-0",
+              run("note", "--workspace", str(ws), "--actor", "agent:w",
+                  "--text-file", str(grant)).returncode == 0)
+        check("frontier-text-file-exit-0",
+              run("frontier", "--workspace", str(ws), "--actor", "agent:w",
+                  "--text-file", str(grant)).returncode == 0)
+        st = json.loads(run("status", "--workspace", str(ws),
+                             "--actor", "agent:w").stdout)
+        check("note-byte-identical", st["state"]["notes"][-1] == hostile)
+        check("frontier-byte-identical", st["state"]["frontier"] == hostile)
+
+
+def test_text_file_artifact_stripping_is_exact() -> None:
+    """Exactly two editor artifacts are removed, and nothing else.
+
+    A greedy rstrip("\r\n") ate an operator's deliberate trailing blank line,
+    and plain utf-8 decoding let a PowerShell-written BOM become the first
+    character of a "verbatim" grant -- both silently, both producing a record
+    that is intact and wrong."""
+    with tempfile.TemporaryDirectory() as tmp:
+        ws = Path(tmp) / "ws"
+        ws.mkdir()
+        multi = Path(tmp) / "multi.txt"
+        # deliberate blank line at the end, CRLF throughout: only the LAST
+        # terminator is an artifact, the blank line is content
+        multi.write_bytes(b"Line one.\r\nLine two.\r\n\r\n")
+        r = run("open", "--workspace", str(ws), "--actor", "agent:w",
+                "--mission-id", "artifacts", "--instruction-file", str(multi),
+                "--operator", "operator:zach", "--steward", "agent:w")
+        check("multiline-open-exit-0", r.returncode == 0)
+        st = json.loads(run("status", "--workspace", str(ws),
+                             "--actor", "agent:w").stdout)
+        check("multiline-blank-line-preserved",
+              st["manifest"]["authority"]["instruction"]
+              == "Line one.\r\nLine two.\r\n")
+
+        run("approve", "--workspace", str(ws), "--actor", "agent:w")
+        bom = Path(tmp) / "bom.txt"
+        bom.write_bytes(b"\xef\xbb\xbf" + b"operator grants: proceed\n")
+        r = run("amend", "--workspace", str(ws), "--actor", "agent:w",
+                "--text-file", str(bom))
+        check("bom-amend-exit-0", r.returncode == 0)
+        st = json.loads(run("status", "--workspace", str(ws),
+                             "--actor", "agent:w").stdout)
+        check("bom-stripped-from-verbatim-grant",
+              st["manifest"]["authority"]["amendments"][0]["text"]
+              == "operator grants: proceed")
+
+
+def test_text_file_invalid_utf8_refuses_not_crashes() -> None:
+    """PowerShell's bare Out-File writes UTF-16LE. Letting UnicodeDecodeError
+    escape exits 1 with a traceback, breaking the documented 0/2/3 contract."""
+    with tempfile.TemporaryDirectory() as tmp:
+        ws = Path(tmp) / "ws"
+        ws.mkdir()
+        bad = Path(tmp) / "utf16.txt"
+        bad.write_bytes(b"\xff\xfeo\x00p\x00")
+        r = run("open", "--workspace", str(ws), "--actor", "agent:w",
+                "--mission-id", "badenc", "--instruction-file", str(bad),
+                "--operator", "operator:zach", "--steward", "agent:w")
+        check("invalid-utf8-exit-2", r.returncode == 2)
+        check("invalid-utf8-names-custody-error", "CustodyError" in r.stderr)
+        check("invalid-utf8-no-traceback", "Traceback" not in r.stderr)
+
+
+def test_reason_file_on_accept_and_cancel() -> None:
+    """accept's reason is hash-chained into the acceptance-verdict record --
+    the same exactness stakes as an amendment, and previously untested."""
+    reason = "accepted: `verified` end-to-end; $SCOPE unchanged; 100% green"
+    with tempfile.TemporaryDirectory() as tmp:
+        ws = Path(tmp) / "ws"
+        ws.mkdir()
+        rf = Path(tmp) / "reason.txt"
+        rf.write_text(reason + "\n", encoding="utf-8", newline="")
+        open_cli(ws, "reasonfile", "instruction")
+        run("approve", "--workspace", str(ws), "--actor", "agent:worker")
+        run("verify", "--workspace", str(ws), "--actor", "agent:worker")
+        r = run("accept", "--workspace", str(ws), "--actor", "agent:acceptor",
+                "--verdict", "PASS", "--acceptor", "agent:acceptor",
+                "--tier", "declared-role-separation", "--reason-file", str(rf))
+        check("accept-reason-file-exit-0", r.returncode == 0)
+        verdicts = list((ws / "missions" / "reasonfile" / "verdicts").glob("*.json"))
+        check("accept-reason-byte-identical",
+              bool(verdicts) and json.loads(
+                  verdicts[0].read_text(encoding="utf-8"))["reason"] == reason)
+
+    with tempfile.TemporaryDirectory() as tmp:
+        ws = Path(tmp) / "ws"
+        ws.mkdir()
+        rf = Path(tmp) / "reason.txt"
+        rf.write_text(reason + "\n", encoding="utf-8", newline="")
+        open_cli(ws, "cancelfile", "instruction")
+        run("approve", "--workspace", str(ws), "--actor", "agent:worker")
+        r = run("cancel", "--workspace", str(ws), "--actor", "agent:worker",
+                "--reason-file", str(rf))
+        check("cancel-reason-file-exit-0", r.returncode == 0)
+
+
+def test_text_file_mutual_exclusion_across_subcommands() -> None:
+    """Mutual exclusion must hold on every verb that takes text, not only the
+    one that happened to get a test."""
+    with tempfile.TemporaryDirectory() as tmp:
+        ws = Path(tmp) / "ws"
+        ws.mkdir()
+        f = Path(tmp) / "t.txt"
+        f.write_text("x", encoding="utf-8")
+        r = run("open", "--workspace", str(ws), "--actor", "agent:w",
+                "--mission-id", "excl2", "--instruction", "a",
+                "--instruction-file", str(f),
+                "--operator", "op", "--steward", "agent:w")
+        check("open-both-instruction-flags-refused", r.returncode == 2)
+
+        open_cli(ws, "excl2", "instruction")
+        run("approve", "--workspace", str(ws), "--actor", "agent:worker")
+        for verb in ("amend", "frontier"):
+            r = run(verb, "--workspace", str(ws), "--actor", "agent:worker",
+                    "--text", "a", "--text-file", str(f))
+            check(f"{verb}-both-text-flags-refused", r.returncode == 2)
+
+
+def test_text_and_text_file_are_mutually_exclusive() -> None:
+    """Both flags is ambiguous about which is the record of truth; neither
+    leaves the verb with nothing to record. Both refuse."""
+    with tempfile.TemporaryDirectory() as tmp:
+        ws = Path(tmp) / "ws"
+        ws.mkdir()
+        grant = Path(tmp) / "g.txt"
+        grant.write_text("hello", encoding="utf-8")
+        open_cli(ws, "excl", "instruction")
+        run("approve", "--workspace", str(ws), "--actor", "agent:worker")
+
+        check("note-both-flags-refused",
+              run("note", "--workspace", str(ws), "--actor", "agent:worker",
+                  "--text", "a", "--text-file", str(grant)).returncode == 2)
+        check("note-neither-flag-refused",
+              run("note", "--workspace", str(ws),
+                  "--actor", "agent:worker").returncode == 2)
+
+
 TESTS = [
     test_open_approve_effect_status_roundtrip,
     test_resume_detects_drift_exit_3,
@@ -485,6 +656,12 @@ TESTS = [
     test_gate_no_mission_allows,
     test_open_guard_mode_without_guards_refused,
     test_amend_guard_mode_flag,
+    test_text_file_preserves_bytes_exactly,
+    test_text_and_text_file_are_mutually_exclusive,
+    test_text_file_artifact_stripping_is_exact,
+    test_text_file_invalid_utf8_refuses_not_crashes,
+    test_reason_file_on_accept_and_cancel,
+    test_text_file_mutual_exclusion_across_subcommands,
 ]
 
 
