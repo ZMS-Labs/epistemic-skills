@@ -46,7 +46,7 @@ def _strip_leading_drive_slash(path: str) -> str:
     return path
 
 
-def _root_location(root: object) -> str:
+def _root_location(root: object, *, strip: bool = True) -> str:
     """Best-effort path string from one workspace_roots entry.
 
     The entry shape is taken from Cursor's docs prose, NOT from a captured
@@ -72,14 +72,14 @@ def _root_location(root: object) -> str:
             # the host silently resolves to the WRONG local path, and this
             # fleet is UNC-heavy (a mapped drive over a UNC share).
             return "\\\\" + parsed.netloc + path.replace("/", "\\")
-        return _strip_leading_drive_slash(path)
+        return _strip_leading_drive_slash(path) if strip else path
     # Bare (non-URI) roots need the same treatment: Cursor's Windows
     # workspace_roots use the form "/c:/work/project". Returned unchanged, a
     # Windows path parse reads that as "\c:\work\project" with NO DRIVE, so
     # _find_workspace never sees the real missions/ tree and the gate takes the
     # inert path -- silently allowing exactly the guarded MCP calls this
     # fallback exists to catch.
-    return _strip_leading_drive_slash(root)
+    return _strip_leading_drive_slash(root) if strip else root
 
 
 def _candidate_workspaces(call: dict) -> list[Path]:
@@ -169,17 +169,18 @@ def _candidate_workspaces(call: dict) -> list[Path]:
             # whichever has no missions/ tree, and any-blocks-wins covers the
             # rest -- the same reasoning that made this function return a list
             # instead of a first-wins answer.
-            # The raw value, including from an OBJECT-shaped root. Gating the
-            # second reading on `isinstance(root, str)` skipped
-            # {"uri": "/c:/work/project"} entirely, so on POSIX only the
-            # stripped (and there, relative) form was ever offered and a
-            # mission under the real absolute path was missed -- a fail-open
-            # for exactly the editor shape this module set out to support.
-            raw = root
-            if isinstance(raw, dict):
-                raw = raw.get("uri") or raw.get("path") or ""
-            if isinstance(raw, str) and raw and raw != location:
-                consider(raw)
+            # The alternate reading is the UNSTRIPPED, DECODED path -- never
+            # the raw string. For a bare root those are the same thing, but for
+            # a URI they are not: on POSIX `file:///c:/ok` decodes to the valid
+            # absolute path `/c:/ok`, while the raw URI is relative to `Path`
+            # and gets rejected. Offering the raw form meant BOTH readings were
+            # discarded there and an armed mission under that root failed open.
+            #
+            # This also covers object-shaped roots, which an `isinstance(root,
+            # str)` guard previously skipped entirely.
+            alternate = _root_location(root, strip=False)
+            if alternate and alternate != location:
+                consider(alternate)
     return candidates
 
 

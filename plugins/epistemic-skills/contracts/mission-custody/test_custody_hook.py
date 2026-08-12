@@ -399,6 +399,40 @@ def test_object_shaped_root_also_offers_both_readings() -> None:
               all(Path(a).is_absolute() for a in asked))
 
 
+def test_drive_shaped_file_uri_offers_the_decoded_posix_reading() -> None:
+    """`file:///c:/ok` decodes to `/c:/ok`, which is absolute on POSIX.
+
+    The alternate reading used to be the RAW string. For a bare root that is
+    the same thing, but for a URI it is not: the raw `file:///c:/ok` is
+    relative to `Path` on both platforms, so on POSIX the stripped reading was
+    rejected as relative AND the raw fallback was rejected too -- both readings
+    discarded, workspace never evaluated, an armed mission there failing open.
+
+    The alternate is now the unstripped DECODED path, so each platform still
+    sees the reading that is absolute there."""
+    import custody_hook
+    check("uri-primary-is-the-windows-reading",
+          custody_hook._root_location("file:///c:/ok") == "c:/ok")
+    check("uri-alternate-is-the-posix-reading",
+          custody_hook._root_location("file:///c:/ok", strip=False) == "/c:/ok")
+    # UNC resolves before any stripping, so both readings agree
+    unc = "\\" + "\\" + "server" + "\\" + "share" + "\\" + "p"
+    check("uri-unc-unaffected-by-strip",
+          custody_hook._root_location("file://server/share/p", strip=False) == unc)
+
+    asked: list[str] = []
+    original = custody_hook._find_workspace
+    custody_hook._find_workspace = lambda loc: (asked.append(loc), None)[1]
+    try:
+        custody_hook._candidate_workspaces({"workspace_roots": ["file:///c:/ok"]})
+    finally:
+        custody_hook._find_workspace = original
+    native = "c:/ok" if os.name == "nt" else "/c:/ok"
+    check("uri-native-reading-probed", native in asked)
+    check("uri-probes-nothing-relative",
+          all(Path(a).is_absolute() for a in asked))
+
+
 def test_malformed_root_does_not_disarm_the_others() -> None:
     """`urlparse` raises on a malformed authority; unhandled it returned ALLOW.
 
