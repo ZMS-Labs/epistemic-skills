@@ -41,6 +41,29 @@ def _tier_meets(actual: str, required: str) -> bool:
     return _TIER_RANK[actual] >= _TIER_RANK[required]
 
 
+def _same_artifact(left: str, right: str) -> bool:
+    """Do two workspace-relative paths name the same artifact on THIS
+    platform? resume() already casefolds its drift keys on Windows; the
+    obligation markers must use the identical rule or an obligation raised
+    under one casing can never be discharged under another -- and since
+    both name one physical file, that is a mission that can never close."""
+    left = left.replace("\\", "/")
+    right = right.replace("\\", "/")
+    if os.name == "nt":
+        return left.casefold() == right.casefold()
+    return left == right
+
+
+def _find_marker(unresolved: list[str], prefix: str, artifact_relpath: str) -> str | None:
+    """The marker in `unresolved` naming this artifact, or None. Matching is
+    by artifact identity, never by string equality of the whole marker."""
+    for marker in unresolved:
+        if marker.startswith(prefix) and _same_artifact(
+                marker[len(prefix):], artifact_relpath):
+            return marker
+    return None
+
+
 class CustodyError(Exception):
     pass
 
@@ -366,10 +389,10 @@ class Mission:
         # A fresh effect on an artifact awaiting re-coverage discharges that
         # obligation -- that is exactly what RECOVER asks for.
         unresolved = latest["state"]["unresolved_verdicts"]
-        recover = f"RECOVER:{artifact_relpath.replace(chr(92), '/')}"
         status = latest["status"]
         remaining = None
-        if recover in unresolved:
+        recover = _find_marker(unresolved, "RECOVER:", artifact_relpath)
+        if recover is not None:
             remaining = [m for m in unresolved if m != recover]
             if status == "reopened" and not remaining:
                 status = "active"
@@ -461,8 +484,8 @@ class Mission:
         # to a caller-chosen path is a forgery channel (merge-gate round 2,
         # finding A): acknowledge_receipt_loss is the only exit for
         # RECEIPT-MISSING markers, and it destroys nothing.
-        marker = f"RECONCILIATION:{norm}"
-        if marker not in unresolved:
+        marker = _find_marker(unresolved, "RECONCILIATION:", norm)
+        if marker is None:
             raise CustodyError(f"no reconciliation marker for {artifact_relpath!r}")
         if f"RECEIPT-MISSING:{request_id}" in unresolved:
             raise CustodyError(
@@ -526,9 +549,8 @@ class Mission:
             # stays reopened, naming the artifact that must be re-covered, so
             # an uncovered artifact can never sit quietly in an active
             # mission just because its receipt was destroyed.
-            recover = f"RECOVER:{recorded_path}"
-            if recover not in remaining:
-                remaining = remaining + [recover]
+            if _find_marker(remaining, "RECOVER:", recorded_path) is None:
+                remaining = remaining + [f"RECOVER:{recorded_path}"]
             next_status = "reopened"
         new = self._write_next(
             latest, path, status=next_status, unresolved_verdicts=remaining,

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 import tempfile
 from pathlib import Path
@@ -360,6 +361,57 @@ def test_forged_restored_receipt_is_not_trusted(workspace: Path) -> None:
           == "the real secret")
 
 
+def test_obligations_match_by_artifact_not_by_string(workspace: Path) -> None:
+    """An obligation raised under one spelling of a path must be dischargeable
+    by genuinely covering THAT artifact, however the caller spells it. On a
+    case-insensitive filesystem 'Sub/File.TXT' and 'sub/file.txt' are one
+    physical file; matching markers by raw string equality left a mission
+    permanently unable to close after a legitimate recovery (independent
+    audit of e08a470). resume() already casefolded its drift keys -- the
+    obligation markers had not."""
+    m = open_mission(workspace, "m-case", "Match artifacts, not strings.")
+    m.approve()
+    m.record_effect("Sub/Dir/File.TXT", "original", "req-1")
+    m.store.receipt_path("req-1").unlink()
+    m.resume()
+    m.acknowledge_receipt_loss("req-1")
+    st = m.status()
+    check("case-recover-raised",
+          st["state"]["unresolved_verdicts"] == ["RECOVER:Sub/Dir/File.TXT"])
+
+    variant = "sub/dir/file.txt" if os.name == "nt" else "Sub/Dir/File.TXT"
+    m.record_effect(variant, "recovered", "req-2")
+    st2 = m.status()
+    check("case-recover-discharged",
+          st2["state"]["unresolved_verdicts"] == []
+          and st2["status"] == "active")
+
+    # and the mission can actually reach completion afterwards
+    m.begin_verification()
+    acceptor = Mission.load(workspace, actor="agent:acceptor")
+    acceptor.record_verdict("PASS", acceptor_id="agent:acceptor",
+                             assurance_tier="declared-role-separation",
+                             reason="recovered artifact re-observed")
+    check("case-recover-mission-can-close",
+          m.store.load_latest()[0]["status"] == "completed")
+
+
+def test_drift_marker_matches_by_artifact(workspace: Path) -> None:
+    """Same rule for drift markers: reconcile must find the obligation for
+    the artifact it is covering, not for a byte-identical spelling of it."""
+    m = open_mission(workspace, "m-case-drift", "Drift matches artifacts too.")
+    m.approve()
+    m.record_effect("Notes/A.md", "aa", "req-1")
+    (workspace / "Notes" / "A.md").write_text("tampered", encoding="utf-8")
+    check("case-drift-detected", m.resume() == ["Notes/A.md"])
+
+    variant = "notes/a.md" if os.name == "nt" else "Notes/A.md"
+    m.reconcile(variant, "aa", "req-2")
+    st = m.status()
+    check("case-drift-reconciled",
+          st["state"]["unresolved_verdicts"] == [] and st["status"] == "active")
+
+
 def test_reconcile_clears_exactly_one_marker(workspace: Path) -> None:
     """One receipt must not retire two unrelated obligations (merge-gate
     blocker 1): drift clears through reconcile with a FRESH id; the loss
@@ -552,6 +604,8 @@ TESTS = [
     test_note_cannot_forge_machine_state,
     test_receipt_ids_always_carry_a_derivable_path,
     test_forged_restored_receipt_is_not_trusted,
+    test_obligations_match_by_artifact_not_by_string,
+    test_drift_marker_matches_by_artifact,
     test_reconcile_clears_exactly_one_marker,
     test_corrupt_receipt_degrades_to_drift,
     test_effect_duplicate_id_leaves_workspace_untouched,
