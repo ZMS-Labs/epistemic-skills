@@ -16,6 +16,7 @@ from custody_store import StoreError, sha256_bytes, sha256_file  # noqa: E402
 from verify_mission_custody import is_iso_utc  # noqa: E402
 from custody_mission import (  # noqa: E402
     _same_artifact,
+    _ReceiptTampered,
     now_utc,
     AcceptanceRefused,
     CustodyError,
@@ -1165,9 +1166,14 @@ def test_expected_sha_latest_wins(workspace: Path) -> None:
 def test_load_receipt_expected_sha_check(workspace: Path) -> None:
     """_load_receipt's expected_sha parameter: loads when the receipt
     file's own bytes match the chain-attested hash, is unaffected when no
-    attestation exists (expected_sha=None, today's only reachable case), and
-    treats a mismatch as UNLOADABLE -- the same tamper-evidence _load_receipt
-    already gives a corrupt or id-mismatched receipt."""
+    attestation exists (expected_sha=None -- the pre-attestation fallback),
+    and raises _ReceiptTampered -- NOT the UNLOADABLE None a corrupt or
+    id-mismatched receipt gets -- on a mismatch. A tampered receipt is a
+    DIFFERENT state from unloadable: folding it into None would let
+    acknowledge_receipt_loss retire it as an honest loss (Task 2's original
+    behaviour here, corrected by the CONTROLLER NOTE -- that return value was
+    a judgment call pending exactly this reconciliation, not settled
+    precedent)."""
     m = open_mission(workspace, "m-loadsha", "LoadSha.")
     m.approve()
     m.record_effect("notes/a.md", "hello", "req-1")
@@ -1176,8 +1182,148 @@ def test_load_receipt_expected_sha_check(workspace: Path) -> None:
           m._load_receipt("req-1") is not None)
     check("load-receipt-matching-expected-sha-loads",
           m._load_receipt("req-1", actual_sha) is not None)
-    check("load-receipt-mismatched-expected-sha-rejects",
-          m._load_receipt("req-1", "0" * 64) is None)
+    try:
+        m._load_receipt("req-1", "0" * 64)
+        check("load-receipt-mismatched-expected-sha-raises-tampered", False)
+    except _ReceiptTampered as exc:
+        check("load-receipt-mismatched-expected-sha-raises-tampered",
+              exc.request_id == "req-1")
+
+
+def _setup_p6_tampered(workspace: Path) -> tuple[Mission, bytes]:
+    """Shared P6 scaffold: opens a mission, chains 'p6-1's receipt sha
+    WITHOUT depending on Task 7's migrate verb, then tampers the artifact AND
+    the receipt's after_sha256 to match. Returns (mission, the receipt
+    file's ORIGINAL bytes pre-tamper) so a caller can restore it
+    byte-for-byte to exercise the byte-provable RESTORED path -- BYTES, not
+    str: Path.write_text on Windows translates '\\n' to '\\r\\n', so a
+    round-tripped str would silently stop being byte-identical to what
+    sha256_file hashed, defeating the very restore this scaffold exists to
+    let a caller perform (caught by mutation: the first draft of this helper
+    used str and test_tampered_receipt_byte_restored_survives_acknowledge
+    failed on real Windows I/O, not a code defect).
+
+    Chaining the sha takes TWO manual writes, not one: first a checkpoint@2
+    attesting it (via _write_reattestation), then ONE MORE checkpoint
+    continuing the chain in checkpoint@1 (bare-string) shape before ever
+    calling resume(). The second write is deliberate, not incidental:
+    nothing in the Mission API emits checkpoint@2 yet -- _write_next
+    hardcodes "record": "checkpoint@1" on every state change,
+    unconditionally, regardless of what shape the latest checkpoint it is
+    copying forward from was. Calling resume() (or acknowledge_receipt_loss)
+    with checkpoint@2 still the LATEST checkpoint hits that head-on:
+    _write_next would copy the @2, dict-shaped receipt_ids forward into a
+    record it still labels checkpoint@1, which fails checkpoint@1's own
+    schema (receipt_ids must be a list of strings) before any assertion here
+    is ever reached -- a known, separately-tracked gap in the write path
+    (the record-kind switch and the copy-forward have to land together, in a
+    later task, or the chain bricks), not something Task 3 owns or should
+    paper over. Continuing the constructed chain back to @1 shape -- exactly
+    what _write_next can actually produce today -- keeps every test built on
+    this scaffold exercising the real write path end-to-end instead of
+    stopping short of it. The attestation survives the shape reversion
+    regardless: _expected_sha_map reads every checkpoint in the chain, not
+    just the latest, and latest-wins is about attestations, not about which
+    checkpoint happens to be newest (see test_expected_sha_latest_wins)."""
+    m = open_mission(workspace, "m-p6t", "P6.")
+    m.approve()
+    m.record_effect("notes/a.md", "original", "p6-1")
+    receipt_path = m.store.receipt_path("p6-1")
+    original_receipt = receipt_path.read_bytes()
+    sha = sha256_file(receipt_path)
+    _write_reattestation(m, "p6-1", sha)
+    attested, attested_path = m.store.load_latest()
+    continued = json.loads(json.dumps(attested))
+    continued["record"] = "checkpoint@1"
+    continued["revision"] = attested["revision"] + 1
+    continued["prev_checkpoint_sha256"] = sha256_file(attested_path)
+    continued["receipt_ids"] = ["p6-1"]
+    continued["written_utc"] = now_utc()
+    m.store.write_checkpoint(continued)
+    (workspace / "notes" / "a.md").write_text("tampered", encoding="utf-8")
+    record = json.loads(original_receipt.decode("utf-8"))
+    record["after_sha256"] = sha256_bytes(b"tampered")
+    receipt_path.write_bytes(
+        (json.dumps(record, indent=1, sort_keys=True) + "\n").encode("utf-8"))
+    return m, original_receipt
+
+
+def test_probe_p6_receipt_tamper_is_caught(workspace: Path) -> None:
+    """P6: edit an artifact AND its receipt's after_sha256 to match. Under @1
+    resume reports clean -- the drift oracle trusts a receipt whose integrity
+    nothing attests. Under @2 the chained sha catches it."""
+    m, _original_receipt = _setup_p6_tampered(workspace)
+    findings = m.resume()
+    check("p6-caught-as-tampered",
+          any(f == "RECEIPT-TAMPERED:p6-1" for f in findings))
+    check("p6-not-misreported-as-missing",
+          "RECEIPT-MISSING:p6-1" not in findings)
+    st = m.status()
+    check("p6-mission-reopened", st["status"] == "reopened")
+    check("p6-marker-persisted-in-unresolved",
+          "RECEIPT-TAMPERED:p6-1" in st["state"]["unresolved_verdicts"])
+
+
+def test_tampered_receipt_byte_restored_survives_acknowledge(workspace: Path) -> None:
+    """A RECEIPT-TAMPERED marker discharges cleanly when the receipt file is
+    restored to EXACTLY the chain-attested bytes -- byte-provable, not
+    path-heuristic (see acknowledge_receipt_loss). The id is KEPT, not
+    retired: this is proven restoration, not an honest loss. The artifact
+    itself is left tampered by this scaffold, so once the receipt is honest
+    again, drift correctly moves from RECEIPT-TAMPERED to an ordinary
+    RECONCILIATION mismatch on the artifact -- the distinction tracks the
+    evidence, not the id."""
+    m, original_receipt = _setup_p6_tampered(workspace)
+    findings = m.resume()
+    check("byte-restore-precondition-tampered",
+          findings == ["RECEIPT-TAMPERED:p6-1"])
+
+    m.store.receipt_path("p6-1").write_bytes(original_receipt)
+    rev = m.acknowledge_receipt_loss("p6-1")
+    st = m.status()
+    check("byte-restore-ack-revision", st["revision"] == rev)
+    check("byte-restore-marker-cleared",
+          "RECEIPT-TAMPERED:p6-1" not in st["state"]["unresolved_verdicts"])
+    check("byte-restore-status-active", st["status"] == "active")
+    check("byte-restore-id-kept", "p6-1" in st["receipt_ids"])
+    check("byte-restore-noted-as-restored",
+          any(n.startswith("receipt restored: p6-1") for n in st["state"]["notes"]))
+    check("byte-restore-artifact-drift-now-reconciliation",
+          m.resume() == ["notes/a.md"])
+
+
+def test_tampered_receipt_not_byte_restored_retires_id(workspace: Path) -> None:
+    """The OLD path-match heuristic alone would have wrongly called this
+    RESTORED: the tampered receipt's artifact_path field is untouched, so it
+    still agrees with the chain-recorded path. With a chained sha, restore
+    requires the STRONGER byte-provable check -- agreeing paths on a receipt
+    proven to hold different bytes than the chain attested is not proof of
+    anything, and acknowledge_receipt_loss must not be fooled by it."""
+    m, _original_receipt = _setup_p6_tampered(workspace)
+    findings = m.resume()
+    check("not-restored-precondition-tampered",
+          findings == ["RECEIPT-TAMPERED:p6-1"])
+
+    # receipt file is left exactly as tampered -- artifact_path field intact,
+    # only after_sha256 forged to match the tampered artifact.
+    rev = m.acknowledge_receipt_loss("p6-1")
+    st = m.status()
+    check("not-restored-ack-revision", st["revision"] == rev)
+    check("not-restored-marker-cleared",
+          "RECEIPT-TAMPERED:p6-1" not in st["state"]["unresolved_verdicts"])
+    check("not-restored-id-retired", "p6-1" not in st["receipt_ids"])
+    check("not-restored-recover-obligation",
+          st["state"]["unresolved_verdicts"] == ["RECOVER:notes/a.md"]
+          and st["status"] == "reopened")
+    check("not-restored-reason-recorded",
+          any("bytes do not match the chain-attested hash" in n
+              for n in st["state"]["notes"]))
+
+    try:
+        m.record_effect("notes/unrelated.md", "other", "p6-1")
+        check("not-restored-id-reuse-refused", False)
+    except CustodyError:
+        check("not-restored-id-reuse-refused", True)
 
 
 _RAW_RECEIPT_IDS_TOKEN_RE = re.compile(r"""["']receipt_ids["']""")
@@ -1271,6 +1417,9 @@ TESTS = [
     test_receipt_entries_normalises_at2_and_mixed,
     test_expected_sha_latest_wins,
     test_load_receipt_expected_sha_check,
+    test_probe_p6_receipt_tamper_is_caught,
+    test_tampered_receipt_byte_restored_survives_acknowledge,
+    test_tampered_receipt_not_byte_restored_retires_id,
 ]
 
 

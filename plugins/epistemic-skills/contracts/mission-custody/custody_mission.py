@@ -118,6 +118,22 @@ class AcceptanceRefused(CustodyError):
     pass
 
 
+class _ReceiptTampered(Exception):
+    """Module-private signal, not a CustodyError: raised by _load_receipt,
+    caught only by its two @2-aware callers (resume, acknowledge_receipt_loss)
+    and never meant to escape either. Distinct from None (UNLOADABLE) on
+    purpose -- a receipt whose bytes disagree with the chain-attested sha for
+    its id is not absent or corrupt, it is a different receipt wearing the
+    id's name. Collapsing the two into one None-shaped signal let a tampered
+    receipt read as an honest loss and be silently retired by
+    acknowledge_receipt_loss's old path-match heuristic -- discharging
+    tampering as if nothing had happened."""
+
+    def __init__(self, request_id: str) -> None:
+        super().__init__(request_id)
+        self.request_id = request_id
+
+
 class Mission:
     def __init__(self, store: MissionStore, workspace: Path, actor: str) -> None:
         self.store = store
@@ -407,24 +423,39 @@ class Mission:
 
     def _load_receipt(self, request_id: str,
                        expected_sha: str | None = None) -> dict | None:
-        """None means UNLOADABLE -- absent, corrupt, schema-invalid, or (when
-        the chain attests a receipt_sha256 for this id) hash-mismatched alike.
-        A corrupt receipt must degrade to drift (RECEIPT-MISSING), never crash
-        resume: crashing the recovery path on a mangled receipt is a denial of
-        service by exactly the tampering drift detection exists to catch.
+        """None means UNLOADABLE -- absent, corrupt, schema-invalid, or
+        id-mismatched. A hash mismatch against a chain-attested sha is a
+        DIFFERENT state and is never folded into None: it raises
+        _ReceiptTampered instead (caught by resume, which reports
+        RECEIPT-TAMPERED, and by acknowledge_receipt_loss's byte-provable
+        restoration check -- see both). None already means "unloadable,
+        treat as an honest loss", and acknowledge_receipt_loss retires a None
+        id on that basis; a tampered receipt returning None would be retired
+        the same way, discharging tampering as if nothing had happened. A
+        corrupt receipt must still degrade to drift (RECEIPT-MISSING), never
+        crash resume: crashing the recovery path on a mangled receipt is a
+        denial of service by exactly the tampering drift detection exists to
+        catch.
 
         expected_sha is the LATEST chain attestation for this id (see
         _expected_sha) -- the receipt file's own bytes, hashed, as the chain
-        last recorded them. No @1 entry ever carries one, and nothing writes
-        checkpoint@2 yet, so today expected_sha is always None and this check
-        never fires; it exists so @2-aware callers do not need a second
-        interface change once a chain starts attesting receipt hashes."""
+        last recorded them. No @1 entry ever carries one, so for a
+        pre-attestation id expected_sha is always None and the tamper check
+        below never fires; the schema/id-match checks are the fallback for
+        those ids, same as before @2 existed."""
         path = self.store.receipt_path(request_id)
         try:
-            record = json.loads(path.read_text(encoding="utf-8"))
+            raw = path.read_bytes()
         except FileNotFoundError:
             return None
-        except ValueError:
+        if expected_sha is not None and sha256_bytes(raw) != expected_sha:
+            # TAMPERED is distinct from unloadable: the chain attests
+            # specific bytes for this id and these are not them -- whether or
+            # not they still happen to parse as a well-formed receipt.
+            raise _ReceiptTampered(request_id)
+        try:
+            record = json.loads(raw.decode("utf-8"))
+        except (ValueError, UnicodeDecodeError):
             return None
         if validate_record(record):
             return None
@@ -432,8 +463,6 @@ class Mission:
         # name it is stored under is malformed by construction -- never a
         # trustworthy source for a claim about that id.
         if record.get("request_id") != request_id:
-            return None
-        if expected_sha is not None and sha256_file(path) != expected_sha:
             return None
         return record
 
@@ -753,11 +782,22 @@ class Mission:
         # the current receipt went unreported.
         current_by_key: dict[str, tuple[str, dict | None]] = {}
         missing: list[str] = []
+        tampered: list[str] = []
         # One chain pass for every id's attestation, not one pass per id
         # (_expected_sha_map's docstring has the measured blow-up).
         expected_shas = self._expected_sha_map()
         for request_id, _ in self._receipt_entries(latest):
-            receipt = self._load_receipt(request_id, expected_shas.get(request_id))
+            try:
+                receipt = self._load_receipt(request_id, expected_shas.get(request_id))
+            except _ReceiptTampered:
+                # Reported unconditionally, per id -- deliberately NOT routed
+                # through the "one artifact, one current receipt" supersession
+                # logic below. A later id superseding this one's path does
+                # not un-happen a proven tamper on this one; silence here
+                # would be the exact false-clean this check exists to catch.
+                if request_id not in tampered:
+                    tampered.append(request_id)
+                continue
             rel = (receipt["artifact_path"] if receipt is not None
                    else self._historical_effect_path(request_id))
             if rel is None:
@@ -792,7 +832,9 @@ class Mission:
                 mismatched.append(rel)
         mismatched.sort()
         missing.sort()
-        findings = mismatched + [f"RECEIPT-MISSING:{rid}" for rid in missing]
+        tampered.sort()
+        findings = (mismatched + [f"RECEIPT-MISSING:{rid}" for rid in missing]
+                    + [f"RECEIPT-TAMPERED:{rid}" for rid in tampered])
         if not findings:
             return []
         unresolved = list(latest["state"]["unresolved_verdicts"])
@@ -802,6 +844,10 @@ class Mission:
                 unresolved.append(marker)
         for rid in missing:
             marker = f"RECEIPT-MISSING:{rid}"
+            if marker not in unresolved:
+                unresolved.append(marker)
+        for rid in tampered:
+            marker = f"RECEIPT-TAMPERED:{rid}"
             if marker not in unresolved:
                 unresolved.append(marker)
         self._write_next(latest, path, status="reopened", unresolved_verdicts=unresolved,
@@ -839,49 +885,86 @@ class Mission:
         return receipt
 
     def acknowledge_receipt_loss(self, request_id: str) -> int:
-        """The only exit for a RECEIPT-MISSING marker. It never writes an
-        artifact and never deletes a file, and it never asserts continuity it
-        has not proven: a receipt found at the id's path counts as RESTORED
-        only if it agrees with the chained history (its own request_id, and
-        the artifact path the id was originally minted against). A receipt
-        that disagrees is a different receipt wearing the id's name -- trusting
-        its schema-validity alone let a forged path silently replace real
-        coverage while the mission read clean (merge-gate round 3). Anything
-        unproven retires the id with the loss recorded permanently; ongoing
-        coverage then requires a FRESH effect, minted as a new event."""
+        """The only exit for a RECEIPT-MISSING or RECEIPT-TAMPERED marker. It
+        never writes an artifact and never deletes a file, and it never
+        asserts continuity it has not proven: a receipt found at the id's
+        path counts as RESTORED only if it is proven to be the original.
+
+        When the chain attests a receipt_sha256 for this id, that proof is
+        byte-provable: the file at the id's path hashing to EXACTLY the
+        chained sha IS the original, no further check needed -- strictly
+        stronger than comparing paths, which only proves two claims agree
+        with each other, never that either is genuine. For a pre-attestation
+        id (expected_sha is None), the only available proof is @1's path-match
+        heuristic: the receipt loads, and agrees with the chained history (its
+        own request_id, and the artifact path the id was originally minted
+        against) -- kept as the fallback, not the primary check, now that a
+        stronger one exists. A receipt that disagrees is a different receipt
+        wearing the id's name -- trusting its schema-validity alone let a
+        forged path silently replace real coverage while the mission read
+        clean (merge-gate round 3). Anything unproven retires the id with the
+        loss (or tamper) recorded permanently; ongoing coverage then requires
+        a FRESH effect, minted as a new event."""
         latest, path = self.store.load_latest()
         self._verify_manifest(latest)
         if latest["status"] != "reopened":
             raise IllegalTransition(
                 f"cannot acknowledge_receipt_loss: status is "
                 f"{latest['status']!r}, expected 'reopened'")
-        marker = f"RECEIPT-MISSING:{request_id}"
+        missing_marker = f"RECEIPT-MISSING:{request_id}"
+        tampered_marker = f"RECEIPT-TAMPERED:{request_id}"
         unresolved = latest["state"]["unresolved_verdicts"]
-        if marker not in unresolved:
-            raise CustodyError(f"no receipt-loss marker for {request_id!r}")
+        if missing_marker in unresolved:
+            marker = missing_marker
+        elif tampered_marker in unresolved:
+            marker = tampered_marker
+        else:
+            raise CustodyError(
+                f"no receipt-loss or receipt-tamper marker for {request_id!r}")
         remaining = [m for m in unresolved if m != marker]
         next_status = "active" if not remaining else "reopened"
 
-        receipt = self._load_receipt(request_id)  # already request_id-checked
+        expected_sha = self._expected_sha(request_id)
+        still_tampered = False
+        try:
+            receipt = self._load_receipt(request_id, expected_sha)
+        except _ReceiptTampered:
+            # Still not the chain-attested bytes -- not restored, whatever
+            # marker brought us here.
+            receipt = None
+            still_tampered = True
         recorded_path = self._historical_effect_path(request_id)
-        # Deliberately raw equality, NOT _same_artifact: everywhere else the
-        # question is "does this write satisfy that obligation", where two
-        # spellings of one file must match. Here the question is "is this the
-        # receipt the chain recorded", and a receipt that reappears respelled
-        # is not provably the original -- the safe answer is to retire the id
-        # and let a fresh effect re-establish coverage honestly. Strictness
-        # here is intentional, not an oversight.
-        if receipt is not None and recorded_path is not None \
-                and receipt["artifact_path"] == recorded_path:
+        if expected_sha is not None:
+            # A chained sha makes RESTORED byte-provable: _load_receipt only
+            # returns non-None here when the file's bytes hashed to EXACTLY
+            # what the chain last attested. That already IS the original --
+            # a path comparison on top would only weaken the claim.
+            restored = receipt is not None
+        else:
+            # Deliberately raw equality, NOT _same_artifact: everywhere else
+            # the question is "does this write satisfy that obligation",
+            # where two spellings of one file must match. Here the question
+            # is "is this the receipt the chain recorded", and a receipt that
+            # reappears respelled is not provably the original -- the safe
+            # answer is to retire the id and let a fresh effect re-establish
+            # coverage honestly. Strictness here is intentional, not an
+            # oversight.
+            restored = (receipt is not None and recorded_path is not None
+                        and receipt["artifact_path"] == recorded_path)
+        if restored:
+            effect_path = recorded_path if recorded_path is not None \
+                else receipt["artifact_path"]
             new = self._write_next(
                 latest, path, status=next_status, unresolved_verdicts=remaining,
                 note=(f"receipt restored: {request_id}; matches the recorded "
-                      f"effect on {recorded_path}; coverage continues"))
+                      f"effect on {effect_path}; coverage continues"))
             return new["revision"]
 
         covered = (f" (covered {json.dumps(recorded_path)})"
                    if recorded_path else "")
-        if receipt is None:
+        if still_tampered:
+            why = "receipt present but its bytes do not match the chain-attested hash"
+        elif receipt is None:
             why = "receipt unloadable"
         elif recorded_path is None:
             why = "no recorded effect in the chain to check the receipt against"
