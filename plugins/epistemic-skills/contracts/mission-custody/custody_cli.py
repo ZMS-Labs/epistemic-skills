@@ -240,7 +240,10 @@ def _brief(checkpoint: dict) -> dict:
         "frontier": checkpoint["state"]["frontier"],
         "unresolved_verdicts": checkpoint["state"]["unresolved_verdicts"],
         "notes_count": len(checkpoint["state"]["notes"]),
-        "receipt_ids_count": len(checkpoint["receipt_ids"]),
+        # len() is shape-agnostic across @1 bare-string and @2 object
+        # entries -- a genuine count, not a comparison, so raw indexing here
+        # needs no conversion through _receipt_entries.
+        "receipt_ids_count": len(checkpoint["receipt_ids"]),  # ALLOW-RAW-RECEIPT-IDS
         "written_utc": checkpoint["written_utc"],
         "written_by": checkpoint["written_by"],
     }

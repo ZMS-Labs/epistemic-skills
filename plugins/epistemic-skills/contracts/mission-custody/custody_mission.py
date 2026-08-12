@@ -517,20 +517,37 @@ class Mission:
                 entries.append((entry["request_id"], entry.get("receipt_sha256")))
         return entries
 
+    def _expected_sha_map(self) -> dict[str, str]:
+        """The LATEST chain attestation for EVERY id, in a single chain pass.
+
+        The data _expected_sha(id) answers per id, computed once for the
+        whole chain instead of once per id: a caller resolving many ids (e.g.
+        resume() over every receipt) must not re-read and re-parse every
+        checkpoint file per id -- that is O(ids x checkpoints), and it grows
+        unusably on a long-lived mission (measured: read_text calls 124 ->
+        3844 going from 30 to 60 receipts). Same latest-wins rule as
+        _expected_sha; the two must stay in sync, which is why _expected_sha
+        delegates to this rather than duplicating the walk."""
+        latest: dict[str, str] = {}
+        for cp_path in self.store.checkpoint_paths():
+            record = json.loads(cp_path.read_text(encoding="utf-8"))
+            for rid, sha in self._receipt_entries(record):
+                if sha is not None:
+                    latest[rid] = sha
+        return latest
+
     def _expected_sha(self, request_id: str) -> str | None:
         """The LATEST chain attestation for this id, not the first.
 
         A pre-migration id appears with sha None in @1 records and with a
         backfilled sha from the migration checkpoint onward. Taking the first
         occurrence would discard the backfill and verify at @1 strength while
-        the record claims otherwise -- a silent downgrade."""
-        latest: str | None = None
-        for cp_path in self.store.checkpoint_paths():
-            record = json.loads(cp_path.read_text(encoding="utf-8"))
-            for rid, sha in self._receipt_entries(record):
-                if rid == request_id and sha is not None:
-                    latest = sha
-        return latest
+        the record claims otherwise -- a silent downgrade.
+
+        Single-id convenience wrapper over _expected_sha_map; a caller
+        resolving many ids in one call (resume()) should use the map
+        directly instead of calling this in a loop -- see its docstring."""
+        return self._expected_sha_map().get(request_id)
 
     def _find_verdict_record(self, verdict: str, reason: str) -> dict | None:
         verdicts_dir = self.store.mission_dir / "verdicts"
@@ -736,8 +753,11 @@ class Mission:
         # the current receipt went unreported.
         current_by_key: dict[str, tuple[str, dict | None]] = {}
         missing: list[str] = []
+        # One chain pass for every id's attestation, not one pass per id
+        # (_expected_sha_map's docstring has the measured blow-up).
+        expected_shas = self._expected_sha_map()
         for request_id, _ in self._receipt_entries(latest):
-            receipt = self._load_receipt(request_id, self._expected_sha(request_id))
+            receipt = self._load_receipt(request_id, expected_shas.get(request_id))
             rel = (receipt["artifact_path"] if receipt is not None
                    else self._historical_effect_path(request_id))
             if rel is None:

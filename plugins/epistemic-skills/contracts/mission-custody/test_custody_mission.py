@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 import sys
 import tempfile
@@ -15,6 +16,7 @@ from custody_store import StoreError, sha256_bytes, sha256_file  # noqa: E402
 from verify_mission_custody import is_iso_utc  # noqa: E402
 from custody_mission import (  # noqa: E402
     _same_artifact,
+    now_utc,
     AcceptanceRefused,
     CustodyError,
     IllegalTransition,
@@ -1097,18 +1099,105 @@ def test_receipt_entries_chokepoint(workspace: Path) -> None:
     check("entries-sha-none-on-@1", entries[0][1] is None)
 
 
+def test_receipt_entries_normalises_at2_and_mixed(workspace: Path) -> None:
+    """_receipt_entries's @2 branch: an object entry normalises to
+    (request_id, receipt_sha256); a mixed @1/@2 list normalises per-entry,
+    not uniformly; an entry missing receipt_sha256 normalises its sha to
+    None rather than raising -- _receipt_entries reads raw-parsed records
+    that have not necessarily been schema-validated yet."""
+    m = open_mission(workspace, "m-entries2", "Entries2.")
+    checkpoint = {"receipt_ids": [
+        "bare-1",
+        {"request_id": "obj-1", "receipt_sha256": "a" * 64},
+        {"request_id": "obj-2"},
+    ]}
+    entries = m._receipt_entries(checkpoint)
+    check("entries-@2-object-normalises",
+          entries[1] == ("obj-1", "a" * 64))
+    check("entries-mixed-@1-then-@2",
+          entries[0] == ("bare-1", None))
+    check("entries-@2-missing-sha-is-none",
+          entries[2] == ("obj-2", None))
+
+
+def test_expected_sha_latest_wins(workspace: Path) -> None:
+    """The LATEST chain attestation wins, not the first: a pre-migration id
+    appears unattested in @1 records and attested from a migration
+    checkpoint onward -- _expected_sha must return the backfilled sha.
+
+    Nothing in the Mission API writes checkpoint@2 yet (a later task's job),
+    so this builds one directly via the store, the same way
+    _valid_checkpoint2_fixture does, to prove _expected_sha (and its
+    _expected_sha_map backing) read it correctly once such a record exists."""
+    m = open_mission(workspace, "m-sha", "Sha.")
+    m.approve()
+    m.record_effect("notes/a.md", "hello", "req-1")
+    check("unattested-before-migration", m._expected_sha("req-1") is None)
+
+    latest, path = m.store.load_latest()
+    migrated = json.loads(json.dumps(latest))
+    migrated["record"] = "checkpoint@2"
+    migrated["revision"] = latest["revision"] + 1
+    migrated["prev_checkpoint_sha256"] = sha256_file(path)
+    migrated["receipt_ids"] = [
+        {"request_id": "req-1", "receipt_sha256": "a" * 64}]
+    migrated["written_utc"] = now_utc()
+    m.store.write_checkpoint(migrated)
+
+    check("attested-after-migration", m._expected_sha("req-1") == "a" * 64)
+    check("map-agrees-with-single-id-lookup",
+          m._expected_sha_map() == {"req-1": "a" * 64})
+
+
+def test_load_receipt_expected_sha_check(workspace: Path) -> None:
+    """_load_receipt's expected_sha parameter: loads when the receipt
+    file's own bytes match the chain-attested hash, is unaffected when no
+    attestation exists (expected_sha=None, today's only reachable case), and
+    treats a mismatch as UNLOADABLE -- the same tamper-evidence _load_receipt
+    already gives a corrupt or id-mismatched receipt."""
+    m = open_mission(workspace, "m-loadsha", "LoadSha.")
+    m.approve()
+    m.record_effect("notes/a.md", "hello", "req-1")
+    actual_sha = sha256_file(m.store.receipt_path("req-1"))
+    check("load-receipt-no-expected-sha-loads",
+          m._load_receipt("req-1") is not None)
+    check("load-receipt-matching-expected-sha-loads",
+          m._load_receipt("req-1", actual_sha) is not None)
+    check("load-receipt-mismatched-expected-sha-rejects",
+          m._load_receipt("req-1", "0" * 64) is None)
+
+
+_RAW_RECEIPT_IDS_TOKEN_RE = re.compile(r"""["']receipt_ids["']""")
+_RECEIPT_IDS_DICT_KEY_RE = re.compile(r"""["']receipt_ids["']\s*:""")
+
+
 def test_no_raw_receipt_ids_indexing(workspace: Path) -> None:
-    """Grep guard. Four latent defects in the predecessor came from exactly
-    this: a consumer comparing a string against dict entries, or hashing a
-    dict, or filtering by identity that never matches."""
-    source = (ROOT / "custody_mission.py").read_text(encoding="utf-8")
+    """Grep guard over every file that reads receipt_ids. Four latent defects
+    in the predecessor came from exactly this: a consumer comparing a string
+    against dict entries, or hashing a dict, or filtering by identity that
+    never matches.
+
+    Matches the quoted token by REGEX, not the exact ["receipt_ids"] literal,
+    and scans custody_cli.py too. An earlier version of this guard (exact
+    literal, custody_mission.py only) missed single-quoted ['receipt_ids'],
+    .get("receipt_ids", ...), a read split across lines, AND every raw site
+    in custody_cli.py -- including the exact unhashable-dict TypeError the
+    brief warns about, reintroduced at the clean-resume summary, which a
+    file-scoped guard cannot see regardless of how the line itself is
+    written. A dict-LITERAL key declaration ("receipt_ids": value) is a
+    write, not a read, and needs no exemption; anything else quoting the
+    token is a read and must carry ALLOW-RAW-RECEIPT-IDS."""
     offenders = []
-    for i, line in enumerate(source.splitlines(), 1):
-        if '["receipt_ids"]' not in line:
-            continue
-        if "def _receipt_entries" in line or "ALLOW-RAW-RECEIPT-IDS" in line:
-            continue
-        offenders.append(f"{i}: {line.strip()}")
+    for fname in ("custody_mission.py", "custody_cli.py"):
+        source = (ROOT / fname).read_text(encoding="utf-8")
+        for i, line in enumerate(source.splitlines(), 1):
+            if not _RAW_RECEIPT_IDS_TOKEN_RE.search(line):
+                continue
+            if _RECEIPT_IDS_DICT_KEY_RE.search(line):
+                continue  # dict-literal key declaration, not a read
+            if "def _receipt_entries" in line or "ALLOW-RAW-RECEIPT-IDS" in line:
+                continue
+            offenders.append(f"{fname}:{i}: {line.strip()}")
     check("no-raw-receipt-ids-indexing", not offenders)
 
 
@@ -1155,6 +1244,9 @@ TESTS = [
     test_checkpoint2_validation_table,
     test_receipt_entries_chokepoint,
     test_no_raw_receipt_ids_indexing,
+    test_receipt_entries_normalises_at2_and_mixed,
+    test_expected_sha_latest_wins,
+    test_load_receipt_expected_sha_check,
 ]
 
 
