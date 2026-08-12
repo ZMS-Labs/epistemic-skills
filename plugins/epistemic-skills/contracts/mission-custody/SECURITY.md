@@ -69,3 +69,21 @@ fields: their stores will read the armed mission's checkpoints as
 ChainBroken (or skip the mission as unreadable). On a mixed fleet, update
 ALL custody consumers to the #117-or-later plugin before arming guards on
 any shared mission.
+
+## Verbatim text and the argv channel
+
+`amend` records the operator's VERBATIM grant, and `open --instruction` records
+the mission's founding instruction. Both, plus `note`/`frontier`/`--reason`,
+accept text inline on the command line -- where a shell can rewrite the string
+BEFORE the contract ever sees it. Backticks and `$(...)` are command
+substitution, `$VAR` expands, and argv caps near 32K chars on Windows.
+
+That corruption is invisible to every guarantee this contract provides: the
+mangled string is validated, hashed, chained, and (under contract@2) anchored,
+all faithfully -- the record is intact and wrong. Observed live: backticks in a
+double-quoted shell string silently rewrote a recorded note while the CLI
+exited 0.
+
+Use the `--*-file` variants for anything whose exactness matters, and always
+for `amend`. They read the bytes directly (`newline=''`, trailing newline
+stripped), so the recorded text is the supplied text.

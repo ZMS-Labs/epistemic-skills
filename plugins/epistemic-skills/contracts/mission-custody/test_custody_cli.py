@@ -469,6 +469,69 @@ def test_amend_guard_mode_flag() -> None:
         check("amend-guards-accepted", res.returncode == 0)
 
 
+def test_text_file_preserves_bytes_exactly() -> None:
+    """A verbatim grant must survive the CLI byte-for-byte.
+
+    The inline flags travel argv, where a shell can rewrite the string before
+    the contract ever sees it -- and the corruption is then hashed, chained and
+    sealed as authoritative, so no downstream guarantee can catch it (es#133).
+    The file path is the one that must be exact."""
+    hostile = ('operator grants: run `amend` and $HOME cleanup; '
+               '"quoted" \'single\' and $(date) stay literal; 100% & <>|;')
+    with tempfile.TemporaryDirectory() as tmp:
+        ws = Path(tmp) / "ws"
+        ws.mkdir()
+        grant = Path(tmp) / "grant.txt"
+        # a trailing newline is what a heredoc or editor leaves behind; it must
+        # be stripped, not recorded as part of what the operator said
+        grant.write_text(hostile + "\n", encoding="utf-8", newline="")
+
+        r = run("open", "--workspace", str(ws), "--actor", "agent:w",
+                "--mission-id", "textfile", "--instruction-file", str(grant),
+                "--operator", "operator:zach", "--steward", "agent:w")
+        check("open-instruction-file-exit-0", r.returncode == 0)
+        run("approve", "--workspace", str(ws), "--actor", "agent:w")
+
+        r = run("amend", "--workspace", str(ws), "--actor", "agent:w",
+                "--text-file", str(grant))
+        check("amend-text-file-exit-0", r.returncode == 0)
+
+        auth = json.loads(run("status", "--workspace", str(ws),
+                               "--actor", "agent:w").stdout)["manifest"]["authority"]
+        check("instruction-byte-identical", auth["instruction"] == hostile)
+        check("amendment-byte-identical", auth["amendments"][0]["text"] == hostile)
+
+        check("note-text-file-exit-0",
+              run("note", "--workspace", str(ws), "--actor", "agent:w",
+                  "--text-file", str(grant)).returncode == 0)
+        check("frontier-text-file-exit-0",
+              run("frontier", "--workspace", str(ws), "--actor", "agent:w",
+                  "--text-file", str(grant)).returncode == 0)
+        st = json.loads(run("status", "--workspace", str(ws),
+                             "--actor", "agent:w").stdout)
+        check("note-byte-identical", st["state"]["notes"][-1] == hostile)
+        check("frontier-byte-identical", st["state"]["frontier"] == hostile)
+
+
+def test_text_and_text_file_are_mutually_exclusive() -> None:
+    """Both flags is ambiguous about which is the record of truth; neither
+    leaves the verb with nothing to record. Both refuse."""
+    with tempfile.TemporaryDirectory() as tmp:
+        ws = Path(tmp) / "ws"
+        ws.mkdir()
+        grant = Path(tmp) / "g.txt"
+        grant.write_text("hello", encoding="utf-8")
+        open_cli(ws, "excl", "instruction")
+        run("approve", "--workspace", str(ws), "--actor", "agent:worker")
+
+        check("note-both-flags-refused",
+              run("note", "--workspace", str(ws), "--actor", "agent:worker",
+                  "--text", "a", "--text-file", str(grant)).returncode == 2)
+        check("note-neither-flag-refused",
+              run("note", "--workspace", str(ws),
+                  "--actor", "agent:worker").returncode == 2)
+
+
 TESTS = [
     test_open_approve_effect_status_roundtrip,
     test_resume_detects_drift_exit_3,
@@ -485,6 +548,8 @@ TESTS = [
     test_gate_no_mission_allows,
     test_open_guard_mode_without_guards_refused,
     test_amend_guard_mode_flag,
+    test_text_file_preserves_bytes_exactly,
+    test_text_and_text_file_are_mutually_exclusive,
 ]
 
 
