@@ -173,6 +173,7 @@ class Mission:
     def _write_next(self, latest: dict, latest_path: Path, *, status: str,
                      note: str | None = None, frontier: str | None = None,
                      add_receipt_id: str | None = None,
+                     receipt_ids: list[str] | None = None,
                      unresolved_verdicts: list[str] | None = None) -> dict:
         notes = list(latest["state"]["notes"])
         if note is not None:
@@ -184,7 +185,8 @@ class Mission:
                 list(unresolved_verdicts) if unresolved_verdicts is not None
                 else list(latest["state"]["unresolved_verdicts"])),
         }
-        receipt_ids = list(latest["receipt_ids"])
+        receipt_ids = (list(receipt_ids) if receipt_ids is not None
+                       else list(latest["receipt_ids"]))
         if add_receipt_id is not None:
             receipt_ids.append(add_receipt_id)
         checkpoint = {
@@ -371,34 +373,18 @@ class Mission:
                 f"cannot reconcile: status is {latest['status']!r}, expected 'reopened'")
         norm = artifact_relpath.replace("\\", "/")
         unresolved = latest["state"]["unresolved_verdicts"]
-        # Exactly ONE obligation clears per call. A drifted artifact clears
-        # RECONCILIATION:<path>; a lost receipt clears RECEIPT-MISSING:<id> by
-        # re-minting under the same id. When the call matches BOTH, they are
-        # separate obligations sharing one receipt -- clearing them together
-        # would silently drop the missing receipt's artifact from custody.
-        drift_marker = f"RECONCILIATION:{norm}"
-        missing_marker = f"RECEIPT-MISSING:{request_id}"
-        drift_hit = drift_marker in unresolved
-        missing_hit = missing_marker in unresolved
-        if drift_hit and missing_hit:
+        # reconcile clears DRIFT only. A lost receipt's path is unknowable
+        # once the receipt is gone, so any flow that re-binds its request id
+        # to a caller-chosen path is a forgery channel (merge-gate round 2,
+        # finding A): acknowledge_receipt_loss is the only exit for
+        # RECEIPT-MISSING markers, and it destroys nothing.
+        marker = f"RECONCILIATION:{norm}"
+        if marker not in unresolved:
+            raise CustodyError(f"no reconciliation marker for {artifact_relpath!r}")
+        if f"RECEIPT-MISSING:{request_id}" in unresolved:
             raise CustodyError(
-                f"ambiguous reconciliation: {drift_marker} and {missing_marker} "
-                "are separate obligations -- clear the drift with a fresh "
-                "request id, then re-mint the missing receipt on its own")
-        if drift_hit:
-            marker = drift_marker
-        elif missing_hit:
-            marker = missing_marker
-            # The missing-receipt file may still exist corrupt or stale (that
-            # is HOW it went missing); re-minting must replace it, not wedge
-            # on the duplicate refusal.
-            stale = self.store.receipt_path(request_id)
-            if stale.exists():
-                stale.unlink()
-        else:
-            raise CustodyError(
-                f"no reconciliation or receipt-missing marker for "
-                f"{artifact_relpath!r} / {request_id!r}")
+                f"request_id {request_id!r} has a pending receipt-loss marker; "
+                "acknowledge the loss and reconcile under a fresh id")
         receipt = self._write_effect(latest, artifact_relpath, content, request_id)
         remaining = [m for m in unresolved if m != marker]
         next_status = "active" if not remaining else "reopened"
@@ -407,6 +393,40 @@ class Mission:
                           unresolved_verdicts=remaining,
                           note=f"reconciled: {artifact_relpath}")
         return receipt
+
+    def acknowledge_receipt_loss(self, request_id: str) -> int:
+        """The only exit for a RECEIPT-MISSING marker, and it never writes an
+        artifact or deletes a file. If the receipt has been restored since
+        detection, the stale marker clears and coverage simply continues
+        (round-2 finding B: the old re-mint path destroyed a healthy restored
+        receipt and overwrote the live artifact). If it is still unloadable,
+        the loss is recorded permanently in the notes and the id leaves
+        receipt_ids -- provenance cannot be resurrected, so ongoing coverage
+        requires a FRESH effect, minted honestly as a new event."""
+        latest, path = self.store.load_latest()
+        self._verify_manifest(latest)
+        if latest["status"] != "reopened":
+            raise IllegalTransition(
+                f"cannot acknowledge_receipt_loss: status is "
+                f"{latest['status']!r}, expected 'reopened'")
+        marker = f"RECEIPT-MISSING:{request_id}"
+        unresolved = latest["state"]["unresolved_verdicts"]
+        if marker not in unresolved:
+            raise CustodyError(f"no receipt-loss marker for {request_id!r}")
+        remaining = [m for m in unresolved if m != marker]
+        next_status = "active" if not remaining else "reopened"
+        if self._load_receipt(request_id) is not None:
+            new = self._write_next(
+                latest, path, status=next_status, unresolved_verdicts=remaining,
+                note=f"receipt restored: {request_id}; coverage continues")
+            return new["revision"]
+        receipt_ids = [rid for rid in latest["receipt_ids"] if rid != request_id]
+        new = self._write_next(
+            latest, path, status=next_status, unresolved_verdicts=remaining,
+            receipt_ids=receipt_ids,
+            note=(f"receipt loss acknowledged: {request_id}; prior coverage "
+                  "unknown -- re-cover the artifact with a fresh effect"))
+        return new["revision"]
 
     def begin_verification(self) -> int:
         latest, path = self.store.load_latest()

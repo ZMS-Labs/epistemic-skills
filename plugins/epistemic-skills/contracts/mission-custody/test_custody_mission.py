@@ -162,7 +162,9 @@ def test_manifest_envelope_immutable(workspace: Path) -> None:
 def test_resume_missing_receipt_is_drift(workspace: Path) -> None:
     """A receipt file that cannot be loaded is drift, not a silent skip: the
     artifact it covered can no longer be verified (probe P5 reported a false
-    'clean' after deleting receipts/)."""
+    'clean' after deleting receipts/). The lost receipt's path is unknowable,
+    so the ONLY exit is acknowledge_receipt_loss -- never a re-mint that
+    binds the id to a caller-chosen path (round-2 finding A: forgery)."""
     m = open_mission(workspace, "m-receiptless", "Guard the receipts.")
     m.approve()
     m.record_effect("notes/a.md", "hello", "req-1")
@@ -176,21 +178,70 @@ def test_resume_missing_receipt_is_drift(workspace: Path) -> None:
     check("missing-receipt-marker-present",
           "RECEIPT-MISSING:req-1" in st["state"]["unresolved_verdicts"])
 
-    # reconcile re-mints the lost receipt under the same request id
-    m.reconcile("notes/a.md", "hello", "req-1")
+    # the forgery channel is closed: reconcile cannot bind the lost id (or
+    # any fresh id) to a decoy path with no drift marker of its own
+    try:
+        m.reconcile("notes/decoy.md", "harmless decoy", "req-1")
+        check("missing-receipt-forgery-refused", False)
+    except CustodyError:
+        check("missing-receipt-forgery-refused", True)
+    check("missing-receipt-decoy-not-written",
+          not (workspace / "notes" / "decoy.md").exists())
+
+    rev = m.acknowledge_receipt_loss("req-1")
     st2 = m.status()
+    check("missing-receipt-ack-revision", st2["revision"] == rev)
     check("missing-receipt-marker-cleared",
           "RECEIPT-MISSING:req-1" not in st2["state"]["unresolved_verdicts"])
     check("missing-receipt-status-active", st2["status"] == "active")
-    check("missing-receipt-no-duplicate-id",
-          st2["receipt_ids"].count("req-1") == 1)
-    check("missing-receipt-clean-after", m.resume() == [])
+    check("missing-receipt-id-retired", "req-1" not in st2["receipt_ids"])
+    check("missing-receipt-loss-recorded-in-notes",
+          any("receipt loss acknowledged: req-1" in n
+              for n in st2["state"]["notes"]))
+
+    # ongoing coverage is re-established honestly, as a NEW event
+    m.record_effect("notes/a.md", "hello", "req-1b")
+    check("missing-receipt-clean-after-recover", m.resume() == [])
+    (workspace / "notes" / "a.md").write_text("tampered", encoding="utf-8")
+    check("missing-receipt-recovered-coverage-live",
+          m.resume() == ["notes/a.md"])
+
+
+def test_restored_receipt_survives_acknowledge(workspace: Path) -> None:
+    """Round-2 finding B: a receipt restored between detection and recovery
+    must NOT be destroyed, and the live artifact must NOT be overwritten --
+    the stale marker clears and coverage simply continues."""
+    m = open_mission(workspace, "m-restored", "Never destroy a healthy receipt.")
+    m.approve()
+    m.record_effect("notes/a.md", "correct content", "req-1")
+    original_receipt = m.store.receipt_path("req-1").read_text(encoding="utf-8")
+    m.store.receipt_path("req-1").unlink()
+    m.resume()  # marker recorded
+
+    # a second session / backup restores the receipt intact
+    m.store.receipt_path("req-1").write_text(original_receipt, encoding="utf-8")
+
+    m.acknowledge_receipt_loss("req-1")
+    st = m.status()
+    check("restored-receipt-marker-cleared",
+          "RECEIPT-MISSING:req-1" not in st["state"]["unresolved_verdicts"])
+    check("restored-receipt-status-active", st["status"] == "active")
+    check("restored-receipt-id-kept", "req-1" in st["receipt_ids"])
+    check("restored-receipt-file-intact",
+          m.store.receipt_path("req-1").read_text(encoding="utf-8")
+          == original_receipt)
+    check("restored-artifact-untouched",
+          (workspace / "notes" / "a.md").read_text(encoding="utf-8")
+          == "correct content")
+    check("restored-coverage-continues", m.resume() == [])
+    (workspace / "notes" / "a.md").write_text("tampered", encoding="utf-8")
+    check("restored-coverage-detects-drift", m.resume() == ["notes/a.md"])
 
 
 def test_reconcile_clears_exactly_one_marker(workspace: Path) -> None:
-    """One receipt must not retire two unrelated obligations: clearing a
-    drift marker and an unrelated RECEIPT-MISSING marker together silently
-    dropped the lost receipt's artifact from custody (merge-gate blocker 1)."""
+    """One receipt must not retire two unrelated obligations (merge-gate
+    blocker 1): drift clears through reconcile with a FRESH id; the loss
+    marker only through acknowledge_receipt_loss."""
     m = open_mission(workspace, "m-two-markers", "Keep obligations separate.")
     m.approve()
     m.record_effect("notes/a.md", "aa", "req-a")
@@ -202,11 +253,12 @@ def test_reconcile_clears_exactly_one_marker(workspace: Path) -> None:
     check("two-markers-both-reported",
           findings == ["notes/a.md", "RECEIPT-MISSING:req-b"])
 
+    # a lost id cannot piggyback on a real drift reconciliation
     try:
         m.reconcile("notes/a.md", "aa", "req-b")
-        check("two-markers-ambiguity-refused", False)
+        check("two-markers-lost-id-refused", False)
     except CustodyError:
-        check("two-markers-ambiguity-refused", True)
+        check("two-markers-lost-id-refused", True)
 
     m.reconcile("notes/a.md", "aa", "req-c")
     st = m.status()
@@ -214,18 +266,19 @@ def test_reconcile_clears_exactly_one_marker(workspace: Path) -> None:
           st["state"]["unresolved_verdicts"] == ["RECEIPT-MISSING:req-b"]
           and st["status"] == "reopened")
 
-    m.reconcile("notes/b.md", "bb", "req-b")
+    m.acknowledge_receipt_loss("req-b")
     check("two-markers-all-cleared", m.status()["status"] == "active")
 
-    # custody of b.md survived: tampering it is still detected
+    # b.md's coverage is re-established as a new event, then verified live
+    m.record_effect("notes/b.md", "bb", "req-b2")
     (workspace / "notes" / "b.md").write_text("tampered too", encoding="utf-8")
-    check("two-markers-b-still-covered", m.resume() == ["notes/b.md"])
+    check("two-markers-b-recovered-coverage", m.resume() == ["notes/b.md"])
 
 
 def test_corrupt_receipt_degrades_to_drift(workspace: Path) -> None:
     """A corrupt-but-present receipt must surface as RECEIPT-MISSING drift,
-    not crash resume; and reconcile must re-mint over the stale file instead
-    of wedging on the duplicate refusal (merge-gate blocker 2)."""
+    not crash resume (merge-gate blocker 2); acknowledging the loss never
+    deletes the corrupt file (forensic evidence) and never wedges."""
     m = open_mission(workspace, "m-corrupt-receipt", "Survive mangled receipts.")
     m.approve()
     m.record_effect("notes/a.md", "hello", "req-1")
@@ -234,9 +287,13 @@ def test_corrupt_receipt_degrades_to_drift(workspace: Path) -> None:
     findings = m.resume()
     check("corrupt-receipt-is-drift", findings == ["RECEIPT-MISSING:req-1"])
 
-    m.reconcile("notes/a.md", "hello", "req-1")
+    m.acknowledge_receipt_loss("req-1")
     st = m.status()
-    check("corrupt-receipt-reminted", st["status"] == "active")
+    check("corrupt-receipt-acknowledged", st["status"] == "active")
+    check("corrupt-receipt-id-retired", "req-1" not in st["receipt_ids"])
+    check("corrupt-receipt-file-preserved",
+          m.store.receipt_path("req-1").read_text(encoding="utf-8")
+          == "{not json")
     check("corrupt-receipt-clean-after", m.resume() == [])
 
 
@@ -364,6 +421,7 @@ TESTS = [
     test_instruction_immutable,
     test_manifest_envelope_immutable,
     test_resume_missing_receipt_is_drift,
+    test_restored_receipt_survives_acknowledge,
     test_reconcile_clears_exactly_one_marker,
     test_corrupt_receipt_degrades_to_drift,
     test_effect_duplicate_id_leaves_workspace_untouched,

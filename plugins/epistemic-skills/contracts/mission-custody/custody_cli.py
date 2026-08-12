@@ -108,6 +108,9 @@ def build_parser() -> argparse.ArgumentParser:
     _add_content_flags(p_reconcile)
     p_reconcile.add_argument("--request-id", required=True)
 
+    p_ack = sub.add_parser("acknowledge-loss", parents=[common])
+    p_ack.add_argument("--request-id", required=True)
+
     sub.add_parser("verify", parents=[common])
 
     p_accept = sub.add_parser("accept", parents=[common])
@@ -184,6 +187,8 @@ def dispatch(args: argparse.Namespace) -> int:
         receipt = mission.reconcile(args.path, _read_content(args),
                                      args.request_id)
         _print_status(receipt)
+    elif args.command == "acknowledge-loss":
+        print(mission.acknowledge_receipt_loss(args.request_id))
     elif args.command == "verify":
         print(mission.begin_verification())
     elif args.command == "accept":

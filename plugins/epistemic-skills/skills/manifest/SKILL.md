@@ -31,8 +31,10 @@ else.
    still required). Treat chat and memory as untrusted until it exits 0. It
    hash-checks ONLY receipted artifacts — with zero receipts a clean exit is
    vacuous (stderr says so): a statement about your custody, not the tool. On
-   exit 3: reconcile each named artifact (re-verify against live state first),
-   then continue.
+   exit 3: reconcile each drifted artifact (re-verify against live state
+   first); a RECEIPT-MISSING finding clears only via `acknowledge-loss` —
+   lost provenance is recorded, never re-minted — then re-cover the artifact
+   with a fresh effect. Then continue.
 3. **Advance** — one bounded step inside authority. Durable workspace files go
    through `effect --path <ws-relative> --content-file <file> --request-id <id>`
    IN PLACE of Write/Edit — effect IS the write: it writes the file and mints

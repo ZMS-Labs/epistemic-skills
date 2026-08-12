@@ -343,12 +343,21 @@ def test_resume_missing_receipt_via_cli() -> None:
         check("lostrec-exit-3", r.returncode == 3)
         check("lostrec-names-request-id", "RECEIPT-MISSING:req-1" in r.stdout)
 
+        # the forgery channel is closed at the CLI: a decoy path cannot claim
+        # the lost id (round-2 finding A ran this exact sequence and won)
         r = run("reconcile", "--workspace", str(ws), "--actor", "agent:worker",
-                 "--path", "notes/a.md", "--content", "hello",
+                 "--path", "notes/decoy.md", "--content", "harmless decoy",
                  "--request-id", "req-1")
-        check("lostrec-reconcile-exit-0", r.returncode == 0)
+        check("lostrec-forgery-exit-2", r.returncode == 2)
+        check("lostrec-decoy-not-written", not (ws / "notes" / "decoy.md").exists())
+
+        r = run("acknowledge-loss", "--workspace", str(ws),
+                 "--actor", "agent:worker", "--request-id", "req-1")
+        check("lostrec-ack-exit-0", r.returncode == 0)
+        check("lostrec-ack-prints-revision", r.stdout.strip().isdigit())
         r = run("resume", "--workspace", str(ws), "--actor", "agent:third")
-        check("lostrec-clean-after-reconcile", r.returncode == 0)
+        check("lostrec-clean-after-ack", r.returncode == 0)
+        check("lostrec-clean-is-vacuous-again", "vacuously" in r.stderr)
 
 
 def test_no_mission_flags_outside_open() -> None:
