@@ -10,7 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 
-from custody_store import StoreError, sha256_bytes  # noqa: E402
+from custody_store import StoreError, sha256_bytes, sha256_file  # noqa: E402
 from verify_mission_custody import is_iso_utc  # noqa: E402
 from custody_mission import (  # noqa: E402
     _same_artifact,
@@ -35,11 +35,11 @@ def check(name: str, cond: bool) -> None:
 
 def open_mission(workspace: Path, mission_id: str, instruction: str,
                   required_tier: str = "declared-role-separation",
-                  actor: str = "agent:worker") -> Mission:
+                  actor: str = "agent:worker", **kwargs) -> Mission:
     return Mission.open(
         workspace, mission_id=mission_id, instruction=instruction,
         operator_ref="operator:zach", steward_ref="agent:worker",
-        required_tier=required_tier, actor=actor)
+        required_tier=required_tier, actor=actor, **kwargs)
 
 
 def test_open_creates_draft_r1(workspace: Path) -> None:
@@ -866,6 +866,58 @@ def test_operator_tier(workspace: Path) -> None:
     check("tier-operator-accept-completes", st["status"] == "completed")
 
 
+def test_open_with_guards_roundtrip(workspace: Path) -> None:
+    # open a mission with guards + mode; checkpoint r1 must validate and carry them
+    guards = [{"name": "g", "tool_names": ["Bash"],
+               "command_regexes": ["rm"], "path_globs": []}]
+    m = open_mission(workspace, "guard-open", "do the thing",
+                     guard_mode="audit", actuator_guards=guards)
+    auth = m.status()["manifest"]["authority"]
+    check("open-guards-roundtrip",
+          auth["guard_mode"] == "audit" and auth["actuator_guards"] == guards)
+
+
+def test_open_without_guards_omits_fields(workspace: Path) -> None:
+    m = open_mission(workspace, "guard-less", "do the thing")
+    auth = m.status()["manifest"]["authority"]
+    check("open-guardless-omits-fields",
+          "guard_mode" not in auth and "actuator_guards" not in auth)
+
+
+def test_amend_changes_guards(workspace: Path) -> None:
+    m = open_mission(workspace, "guard-amend", "i")
+    m.approve()
+    rev = m.amend_authority(
+        "operator: arm the hook in audit mode",
+        guard_mode="audit",
+        actuator_guards=[{"name": "g", "tool_names": ["Bash"],
+                          "command_regexes": ["rm"], "path_globs": []}])
+    latest = m.status()
+    check("amend-guards-landed",
+          latest["manifest"]["authority"]["guard_mode"] == "audit"
+          and latest["revision"] == rev)
+
+
+def test_tail_guard_tamper_without_amendment_detected(workspace: Path) -> None:
+    m = open_mission(workspace, "guard-tamper", "i")
+    m.approve()
+    # Forge a tail checkpoint: same chain, guards added by hand, no amendment.
+    latest, path = m.store.load_latest()
+    forged = json.loads(json.dumps(latest))
+    forged["revision"] = latest["revision"] + 1
+    forged["prev_checkpoint_sha256"] = sha256_file(path)
+    forged["manifest"]["authority"]["actuator_guards"] = [
+        {"name": "x", "tool_names": ["Bash"], "command_regexes": ["a"],
+         "path_globs": []}]
+    forged["manifest"]["authority"]["guard_mode"] = "audit"
+    m.store.write_checkpoint(forged)
+    try:
+        m.note("probe")
+        check("tail-guard-tamper-detected", False)
+    except CustodyError:
+        check("tail-guard-tamper-detected", True)
+
+
 TESTS = [
     test_open_creates_draft_r1,
     test_pathless_load_single_active,
@@ -896,6 +948,10 @@ TESTS = [
     test_accept_requires_verifying_and_separation,
     test_fail_is_clearable,
     test_operator_tier,
+    test_open_with_guards_roundtrip,
+    test_open_without_guards_omits_fields,
+    test_amend_changes_guards,
+    test_tail_guard_tamper_without_amendment_detected,
 ]
 
 

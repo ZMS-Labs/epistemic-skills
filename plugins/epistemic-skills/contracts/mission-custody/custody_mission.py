@@ -18,6 +18,8 @@ from verify_mission_custody import TIERS, VERDICTS, validate_record
 _OPEN_STATES = {"draft", "active", "reopened", "verifying"}
 _EFFECT_STATES = {"draft", "active", "reopened"}
 _TIER_RANK = {"declared-role-separation": 1, "operator-accepted": 2}
+_UNSET = object()  # amend sentinel: distinguishes "leave alone" from "clear"
+_GUARD_AUTHORITY_KEYS = ("actuator_guards", "guard_mode")
 assert set(_TIER_RANK) == TIERS, "tier rank table out of sync with verify_mission_custody.TIERS"
 
 _ABS_DRIVE_RE = re.compile(r"^[A-Za-z]:")
@@ -133,7 +135,9 @@ class Mission:
               protected_state: list[str] | None = None,
               hold_if: list[str] | None = None, stop_if: list[str] | None = None,
               escalate_if: list[str] | None = None,
-              acceptable_costs: list[str] | None = None) -> "Mission":
+              acceptable_costs: list[str] | None = None,
+              guard_mode: str | None = None,
+              actuator_guards: list | None = None) -> "Mission":
         workspace = Path(workspace)
         store = MissionStore(workspace / "missions" / mission_id)
         created = now_utc()
@@ -148,6 +152,9 @@ class Mission:
                 "permissions": list(permissions or []),
                 "protected_state": list(protected_state or []),
                 "acceptable_costs": list(acceptable_costs or []),
+                **({"actuator_guards": actuator_guards}
+                   if actuator_guards is not None else {}),
+                **({"guard_mode": guard_mode} if guard_mode is not None else {}),
             },
             "scope": {"in": list(scope_in or []), "out": list(scope_out or [])},
             "acceptance": {"required_tier": required_tier, "acceptor_ref": None},
@@ -256,6 +263,20 @@ class Mission:
         latest_rest = json.loads(json.dumps(latest_manifest))
         origin_rest["authority"]["amendments"] = []
         latest_rest["authority"]["amendments"] = []
+        # Guard fields are authority too: they may change only via amend, and
+        # amend always appends the operator's verbatim grant -- so a guard
+        # difference without any recorded amendment is tampering. (A forged
+        # amendment stays possible on the unsealed tail; that is the es#118
+        # residue, disclosed in SECURITY.md, not something this check invents
+        # coverage for.)
+        origin_guards = {k: origin_rest["authority"].pop(k, None)
+                         for k in _GUARD_AUTHORITY_KEYS}
+        latest_guards = {k: latest_rest["authority"].pop(k, None)
+                         for k in _GUARD_AUTHORITY_KEYS}
+        if origin_guards != latest_guards and not latest_amendments:
+            raise CustodyError(
+                "actuator guards changed with no authority amendment "
+                "recorded (tampered)")
         if origin_rest != latest_rest:
             differing = sorted(
                 key for key in set(origin_rest) | set(latest_rest)
@@ -492,7 +513,8 @@ class Mission:
                           note=f"effect: {artifact_relpath}")
         return receipt
 
-    def amend_authority(self, text: str) -> int:
+    def amend_authority(self, text: str, *, guard_mode=_UNSET,
+                        actuator_guards=_UNSET) -> int:
         """Record a VERBATIM operator grant that changes the mission's
         authority, appended to authority.amendments.
 
@@ -519,6 +541,10 @@ class Mission:
         manifest = json.loads(json.dumps(latest["manifest"]))
         manifest["authority"]["amendments"].append(
             {"utc": now_utc(), "text": text})
+        if actuator_guards is not _UNSET:
+            manifest["authority"]["actuator_guards"] = actuator_guards
+        if guard_mode is not _UNSET:
+            manifest["authority"]["guard_mode"] = guard_mode
         new = self._write_next(latest, path, status=latest["status"],
                                 manifest=manifest,
                                 note=f"authority amended: {text}")
