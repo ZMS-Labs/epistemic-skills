@@ -1101,6 +1101,18 @@ def test_scope_entry_classification_table(workspace: Path) -> None:
         ("indexer changes", False),
         ("media acquisition, arr/Plex/NAS operations", False),
         ("VPN configuration", False),
+        # BARE FILENAMES. The first version required a slash or a wildcard, so
+        # `scope.out=["secrets.env"]` -- the most natural exclusion an operator
+        # can write -- was silently discarded and PASS succeeded after writing
+        # the one file the mission was told not to touch. The asymmetry that
+        # justified "ambiguous -> prose" was reasoned about scope.IN; for
+        # scope.OUT, dropping an entry is the FALSE-CLEAN direction.
+        ("secrets.env", True), ("README.md", True), ("config.yaml", True),
+        (".env", True), (".gitignore", True),
+        # a single bare word with no extension stays prose: `notes` could be a
+        # directory or a noun and nothing in the string decides which. This
+        # residue is REPORTED (uncompared_scope_entries), never silent.
+        ("reconciliation", False), ("notes", False),
         # ambiguous -> prose, deliberately
         ("docs and/or specs", False), ("TCP/IP tuning", False),
         ("", False),
@@ -1108,6 +1120,50 @@ def test_scope_entry_classification_table(workspace: Path) -> None:
     for entry, want in cases:
         check(f"scope-classify-{entry[:26] or 'empty'}",
               _is_path_pattern(entry) == want)
+
+
+def test_uncompared_scope_entries_are_reported(workspace: Path) -> None:
+    """Every entry the comparison declines has a surface.
+
+    A comparison that silently ignores half a declaration is this estate's
+    keystone failure in miniature: the boundary reads as enforced and checks
+    nothing. Naming the blind spot is what keeps "scope is compared" from
+    being read as "all of scope is compared"."""
+    from custody_mission import uncompared_scope_entries
+    m = open_mission(workspace, "m-uncompared", "Mixed scope.",
+                     scope_in=["docs/**", "indexer changes"],
+                     scope_out=["secrets.env", "VPN configuration"])
+    latest, _ = m.store.load_latest()
+    uncompared = uncompared_scope_entries(latest["manifest"])
+    check("uncompared-reports-prose-in", uncompared["in"] == ["indexer changes"])
+    check("uncompared-reports-prose-out",
+          uncompared["out"] == ["VPN configuration"])
+    check("uncompared-omits-real-patterns",
+          "docs/**" not in uncompared["in"] and "secrets.env" not in uncompared["out"])
+
+
+def test_bare_filename_exclusion_is_enforced(workspace: Path) -> None:
+    """The defect this predicate change exists for, end to end.
+
+    Before: scope.out=["secrets.env"] classified as prose, excludes empty,
+    scope_consistency() clean, PASS accepted -- the mission asserts a boundary
+    it demonstrably crossed."""
+    m = open_mission(workspace, "m-bare", "Bare-filename exclusion.",
+                     scope_out=["secrets.env"])
+    m.approve()
+    m.record_effect("secrets.env", "KEY=value", "bf-1")
+    findings = m.scope_consistency()
+    check("bare-filename-exclusion-flagged",
+          [f["artifact_path"] for f in findings] == ["secrets.env"])
+    m.begin_verification()
+    acceptor = Mission.load(workspace, actor="agent:acceptor")
+    try:
+        acceptor.record_verdict("PASS", acceptor_id="agent:acceptor",
+                                 assurance_tier="declared-role-separation",
+                                 reason="done")
+        check("bare-filename-pass-refused", False)
+    except AcceptanceRefused as exc:
+        check("bare-filename-pass-refused", "outside the declared scope" in str(exc))
 
 
 def test_prose_scope_does_not_refuse_acceptance(workspace: Path) -> None:
@@ -1154,6 +1210,88 @@ def test_discharging_amendment_must_follow_the_drift(workspace: Path) -> None:
               "outside the declared scope" in str(exc))
 
 
+def test_later_amendment_must_name_the_drift_it_discharges(workspace: Path) -> None:
+    """Ordering is necessary but NOT sufficient, which the first fix missed.
+
+    "Some amendment was recorded after the drift" makes every later grant a
+    universal key: a cost allowance mentioning no boundary would discharge an
+    out-of-scope write it never named. A gate whose key is any key is not a
+    gate. The amendment must NAME the artifact -- literally, by glob, or by
+    directory prefix.
+
+    The error direction is chosen: a false BLOCK is discharged by re-running
+    `amend` with the path named, leaving the record strictly better; a false
+    ALLOW writes "the chain is clean" over work no grant covers."""
+    m = open_mission(workspace, "m-attrib", "Attributed.", scope_in=["docs/**"])
+    m.approve()
+    m.record_effect("src/late.py", "drift", "att-1")          # drift FIRST
+    m.amend_authority("operator: budget raised to 50 dollars")  # later, unrelated
+    m.begin_verification()
+    acceptor = Mission.load(workspace, actor="agent:acceptor")
+    try:
+        acceptor.record_verdict("PASS", acceptor_id="agent:acceptor",
+                                 assurance_tier="declared-role-separation",
+                                 reason="done")
+        check("unrelated-later-amendment-does-not-discharge", False)
+    except AcceptanceRefused as exc:
+        check("unrelated-later-amendment-does-not-discharge",
+              "outside the declared scope" in str(exc))
+
+    # naming the path IS the discharge, and the refusal said exactly this
+    Mission.load(workspace, actor="agent:worker").amend_authority(
+        "operator: src/late.py was authorized")
+    acceptor = Mission.load(workspace, actor="agent:acceptor")
+    check("naming-amendment-discharges",
+          isinstance(acceptor.record_verdict(
+              "PASS", acceptor_id="agent:acceptor",
+              assurance_tier="declared-role-separation", reason="done"), int))
+
+
+def test_amendment_naming_is_token_wise_not_substring(workspace: Path) -> None:
+    """`data.py` must not discharge drift on `a.py`.
+
+    A raw substring test is the false-ALLOW direction: unrelated prose that
+    happens to contain the path as a fragment would answer for it."""
+    from custody_mission import _amendment_names
+    check("names-exact-token", _amendment_names("operator: src/a.py ok", "src/a.py"))
+    check("names-glob-token", _amendment_names("operator: src/*.py ok", "src/a.py"))
+    check("names-dir-prefix", _amendment_names("operator: the src/ work", "src/a.py"))
+    check("names-trailing-punctuation",
+          _amendment_names("authorized src/a.py.", "src/a.py"))
+    check("substring-fragment-does-not-name",
+          not _amendment_names("operator: src/data.py ok", "src/a.py"))
+    check("unrelated-prose-does-not-name",
+          not _amendment_names("operator: budget raised", "src/a.py"))
+    check("dir-prefix-does-not-overreach",
+          not _amendment_names("operator: the src/ work", "srcx/a.py"))
+
+
+def test_symlinked_path_cannot_dodge_an_exclusion(workspace: Path) -> None:
+    """A lexical path test alone lets a symlink walk around scope.out.
+
+    With scope.out=["secrets/**"], a receipt for `docs/alias/k.env` -- where
+    `docs/alias` links into `secrets/` -- passes a lexical check while the
+    write landed exactly where it was forbidden. Both the chained declared
+    path and the resolved target are tested, because neither is sound alone:
+    the declared path is tamper-evident but lexical, and a link resolved at
+    acceptance time is the true target but re-pointable afterwards."""
+    m = open_mission(workspace, "m-link", "Linked.", scope_out=["secrets/**"])
+    m.approve()
+    (workspace / "secrets").mkdir(parents=True, exist_ok=True)
+    try:
+        (workspace / "docs").mkdir(exist_ok=True)
+        (workspace / "docs" / "alias").symlink_to(workspace / "secrets",
+                                                   target_is_directory=True)
+    except (OSError, NotImplementedError):
+        # Windows needs Developer Mode or admin to create links; CI is Linux
+        # and does exercise this. Reported, never silently counted as passing.
+        print("skip symlinked-exclusion (symlinks unavailable on this host)")
+        return
+    m.record_effect("docs/alias/k.env", "KEY=v", "ln-1")
+    flagged = [f["artifact_path"] for f in m.scope_consistency()]
+    check("symlinked-exclusion-flagged", flagged == ["docs/alias/k.env"])
+
+
 def test_forged_receipt_path_cannot_dodge_scope(workspace: Path) -> None:
     """Scope classification reads the CHAINED effect note, not the mutable
     receipt file. A schema-valid receipt keeping the same request_id but
@@ -1190,8 +1328,13 @@ def test_empty_scope_declares_nothing_and_flags_nothing(workspace: Path) -> None
 
 TESTS = [
     test_scope_entry_classification_table,
+    test_uncompared_scope_entries_are_reported,
+    test_bare_filename_exclusion_is_enforced,
     test_prose_scope_does_not_refuse_acceptance,
     test_discharging_amendment_must_follow_the_drift,
+    test_later_amendment_must_name_the_drift_it_discharges,
+    test_amendment_naming_is_token_wise_not_substring,
+    test_symlinked_path_cannot_dodge_an_exclusion,
     test_forged_receipt_path_cannot_dodge_scope,
     test_scope_consistency_and_acceptance_boundary,
     test_empty_scope_declares_nothing_and_flags_nothing,
@@ -1237,7 +1380,24 @@ TESTS = [
 ]
 
 
+def _check_registry_is_complete() -> None:
+    """Every test_* defined here must be in TESTS.
+
+    This suite runs an explicit registry, so a test that is written but never
+    registered passes silently forever -- worse than no test, because the
+    suite's green is read as covering it. Four tests were added unregistered
+    during this change and the run went green without executing one of them."""
+    registered = {fn.__name__ for fn in TESTS}
+    defined = {name for name, value in globals().items()
+               if name.startswith("test_") and callable(value)}
+    orphans = sorted(defined - registered)
+    if orphans:
+        FAILURES.append("unregistered")
+        print(f"FAIL registry-complete: defined but never run: {orphans}")
+
+
 def main() -> int:
+    _check_registry_is_complete()
     for fn in TESTS:
         with tempfile.TemporaryDirectory() as td:
             fn(Path(td))

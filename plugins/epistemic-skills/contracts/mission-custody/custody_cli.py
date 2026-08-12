@@ -26,7 +26,7 @@ import json
 import sys
 from pathlib import Path
 
-from custody_mission import CustodyError, Mission
+from custody_mission import CustodyError, Mission, uncompared_scope_entries
 from custody_store import StoreError
 
 
@@ -241,14 +241,21 @@ def _print_envelope(checkpoint: dict, file=sys.stdout) -> None:
     rows = [
         ("scope.in", manifest["scope"]["in"]),
         ("scope.out", manifest["scope"]["out"]),
+        ("permissions", manifest["authority"]["permissions"]),
         ("protected_state", manifest["authority"]["protected_state"]),
         ("hold_if", manifest["stop_rules"]["hold_if"]),
         ("stop_if", manifest["stop_rules"]["stop_if"]),
         ("escalate_if", manifest["stop_rules"]["escalate_if"]),
         ("acceptable_costs", manifest["authority"]["acceptable_costs"]),
     ]
-    print("envelope (ADVISORY -- read by you, enforced by nothing; machine "
-          "enforcement lives in authority.actuator_guards):", file=file)
+    # This header used to read "enforced by nothing", which stopped being true
+    # in the same change that added the comparison: scope path patterns are
+    # machine-compared at acceptance and can refuse a PASS. A display whose
+    # own honesty label is stale is the failure this display exists to fix.
+    print("envelope (ADVISORY at run time -- nothing blocks a tool call on "
+          "it. Pre-tool enforcement lives in authority.actuator_guards; "
+          "scope path patterns ARE compared at acceptance and can refuse a "
+          "PASS):", file=file)
     for name, values in rows:
         if values:
             for value in values:
@@ -256,6 +263,13 @@ def _print_envelope(checkpoint: dict, file=sys.stdout) -> None:
         else:
             print(f"  {name}: (unset -- UNBOUNDED, not safely defaulted)",
                   file=file)
+    uncompared = uncompared_scope_entries(manifest)
+    for direction in ("in", "out"):
+        for entry in uncompared[direction]:
+            # Naming what is NOT compared, so "scope is checked now" never
+            # gets read as "all of scope is checked".
+            print(f"  scope.{direction}: {_ascii_safe(entry)} "
+                  "(prose -- NOT machine-compared)", file=file)
 
 
 def _checkpoints_since_last_amendment(mission, latest: dict) -> int | None:
@@ -305,6 +319,7 @@ def _brief(checkpoint: dict, mission=None) -> dict:
     brief["envelope_advisory"] = {
         "scope_in": manifest["scope"]["in"],
         "scope_out": manifest["scope"]["out"],
+        "permissions": manifest["authority"]["permissions"],
         "protected_state": manifest["authority"]["protected_state"],
         "hold_if": manifest["stop_rules"]["hold_if"],
         "stop_if": manifest["stop_rules"]["stop_if"],
@@ -317,6 +332,12 @@ def _brief(checkpoint: dict, mission=None) -> dict:
         # An empty envelope field is UNBOUNDED, not safely defaulted, and
         # `_str_list` accepts [] forever with no surface ever saying so.
         brief["envelope_unset"] = empty
+    uncompared = uncompared_scope_entries(manifest)
+    if uncompared["in"] or uncompared["out"]:
+        # Which scope entries the acceptance comparison does NOT range over.
+        # Reporting the comparison without reporting its blind spot would let
+        # "scope is checked" be read as "all of scope is checked".
+        brief["scope_not_compared"] = uncompared
     return brief
 
 

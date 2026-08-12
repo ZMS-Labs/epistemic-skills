@@ -316,9 +316,13 @@ def test_success_output_confirms_the_write() -> None:
         # it a declaration read by the steward AND the acceptor, so omitting it
         # let a resumed steward see the advisory header and every other field
         # while still missing the mission's cost boundary.
+        # permissions belongs here for the same reason acceptable_costs does:
+        # the manifest skill treats it as part of the envelope the operator
+        # confirms, so a steward reading the newly-advertised envelope would
+        # otherwise still miss the mission's allowed-action boundary.
         check("status-brief-envelope-keys",
               set(st["envelope_advisory"]) == {
-                  "scope_in", "scope_out", "protected_state",
+                  "scope_in", "scope_out", "permissions", "protected_state",
                   "hold_if", "stop_if", "escalate_if", "acceptable_costs"})
         # this fixture opens with no envelope flags at all, so every field is
         # unset -- silence must not be allowed to imply boundedness

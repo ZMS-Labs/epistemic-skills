@@ -132,17 +132,89 @@ def _is_path_pattern(entry: str) -> bool:
     prose declaration remains exactly what it always was -- advisory text a
     human reads.
 
-    The two error directions are not symmetric, so the tie-break is not close.
-    Mistaking a GLOB for prose loses one comparison: the status quo, benign.
-    Mistaking PROSE for a glob makes a scope.in that matches nothing, which
-    flags every receipt and wedges an honest mission's close. So anything
-    ambiguous is prose. Whitespace and commas are the discriminator, because
-    real declarations read like sentences -- "media acquisition, arr/Plex/NAS
+    Whitespace and commas are the first discriminator, because real
+    declarations read like sentences -- "media acquisition, arr/Plex/NAS
     operations" contains slashes and is unmistakably prose, and it appeared in
-    a real manifest written during this very change."""
+    a real manifest written during this very change.
+
+    The first version of this predicate stopped there, and required a slash or
+    a wildcard. That silently discarded `scope.out=["secrets.env"]` -- a bare
+    filename, the most natural exclusion an operator can write -- so the
+    comparison ran with an empty exclude list and PASS succeeded after writing
+    the one file the mission was told not to touch.
+
+    The asymmetry argument that justified "anything ambiguous is prose" was
+    reasoned about scope.IN only, where an over-eager pattern matches nothing
+    and wedges an honest close. It does not carry to scope.OUT, where dropping
+    an entry is the FALSE-CLEAN direction: the boundary reads as enforced and
+    compares nothing. Same predicate, opposite error costs.
+
+    The case table this is written against -- the enumeration is the spec:
+
+      docs/**, src/*.py, *.env        pattern (glob)
+      secrets.env, README.md          pattern (bare filename + extension)
+      .env, .gitignore                pattern (dotfile)
+      reconciliation                  prose  (single bare word, no extension)
+      monitored-missing reconc...     prose  (whitespace)
+      media acquisition, arr/Plex     prose  (comma + whitespace)
+      "" (empty)                      prose
+
+    A single bare word with no extension stays prose: `notes` could be a
+    directory or a noun, and nothing in the string decides which. That residue
+    is real and is not silently absorbed -- `uncompared_scope_entries` reports
+    every entry this predicate declines, so an operator sees which of their
+    declarations no machine is checking instead of assuming all of them are."""
     if not entry or any(c.isspace() for c in entry) or "," in entry:
         return False
-    return "/" in entry or "*" in entry or "?" in entry or entry.endswith("\\")
+    if "/" in entry or "*" in entry or "?" in entry or entry.endswith("\\"):
+        return True
+    name = entry[1:] if entry.startswith(".") else entry
+    stem, dot, ext = name.rpartition(".")
+    if entry.startswith(".") and not dot:
+        return bool(name) and name.isalnum()      # .env, .gitignore
+    return bool(stem) and bool(dot) and ext.isalnum()
+
+
+def uncompared_scope_entries(manifest: dict) -> dict:
+    """Scope entries that `_is_path_pattern` declines, per direction.
+
+    An unenforced boundary the reader believes is enforced is this estate's
+    keystone failure. The comparison silently ignoring half a declaration is
+    that failure in miniature, so the ignored half gets a surface."""
+    scope = manifest["scope"]
+    return {direction: [e for e in scope[direction] if not _is_path_pattern(e)]
+            for direction in ("in", "out")}
+
+
+_TOKEN_TRIM = "\"'`,;:()[]{}<>"
+
+
+def _amendment_names(text: str, rel_path: str) -> bool:
+    """Does this verbatim operator grant name `rel_path`?
+
+    Token-wise, never as a raw substring: a substring test would let an
+    amendment mentioning `data.py` discharge drift on `a.py`, which is the
+    false-ALLOW direction. Operator prose is data here, never a pattern
+    language -- only tokens that already pass `_is_path_pattern` are compiled,
+    and they go through the same `_glob_regex` the scope entries use."""
+    from custody_gate import _glob_regex, _norm_path
+    target = _norm_path(rel_path)
+    for raw in text.replace("\\", "/").split():
+        token = raw.strip(_TOKEN_TRIM).rstrip(".")
+        if not token or not _is_path_pattern(token):
+            continue
+        if token.endswith("/"):
+            # "the src/ work was authorized" grants a DIRECTORY, and operators
+            # write it that way. A trailing slash covers what is under it --
+            # still a scoped grant naming a specific subtree, not a universal
+            # key, which is the property that matters here.
+            prefix = _norm_path(token.rstrip("/"))
+            if prefix and (target == prefix or target.startswith(prefix + "/")):
+                return True
+            continue
+        if _glob_regex(_norm_path(token)).match(target):
+            return True
+    return False
 
 
 class Mission:
@@ -876,33 +948,66 @@ class Mission:
         new = self._write_next(latest, path, status="verifying", note="verification started")
         return new["revision"]
 
-    def _amended_after(self, request_id: str) -> bool:
-        """Was an authority amendment recorded AFTER this receipt id entered
-        the chain?
+    def _discharged_by_amendment(self, request_id: str, rel_path: str) -> bool:
+        """Does a later authority amendment actually NAME this artifact?
 
         Ordering is read from the hash-chained checkpoints, never from
         timestamps: `written_utc` is self-reported by the writer, so a record
         that could be back-dated must not be what decides whether a grant
         covers a drift. The revision that first admitted the id is a chain
-        fact; so is the revision whose amendments list grew."""
+        fact; so is the revision whose amendments list grew.
+
+        Ordering ALONE is not enough, and the previous version stopped there.
+        "Some amendment was recorded after the drift" makes every later grant a
+        universal key: a cost allowance or a guard-mode change, saying nothing
+        about any boundary, would discharge an out-of-scope write it never
+        mentioned. A gate whose key is any key is not a gate -- which is the
+        precise weakness this method's own comment warned about one layer up
+        and then reproduced one layer down.
+
+        So the amendment must NAME the artifact: as a standalone token, or
+        through a path pattern that covers it. Operator text is never compiled
+        as a regex -- only tokens `_is_path_pattern` accepts become globs.
+
+        The error direction is chosen, not accidental. A false BLOCK is
+        discharged by re-running `amend` with the path named, which leaves the
+        record strictly better than before. A false ALLOW writes "the chain is
+        clean" over work no grant covers, and nothing downstream can tell."""
         admitted_at = None
         prev_count = 0
-        amended_revisions: list[int] = []
+        later: list[tuple[int, str]] = []
         prev_ids: list[str] = []
         for cp_path in self.store.checkpoint_paths():
             record = json.loads(cp_path.read_text(encoding="utf-8"))
             ids = [e if isinstance(e, str) else e.get("request_id")
                    for e in record["receipt_ids"]]
-            count = len(record["manifest"]["authority"]["amendments"])
+            amendments = record["manifest"]["authority"]["amendments"]
             if admitted_at is None and request_id in ids \
                     and request_id not in prev_ids:
                 admitted_at = record["revision"]
-            if count > prev_count:
-                amended_revisions.append(record["revision"])
-            prev_count, prev_ids = count, ids
+            if len(amendments) > prev_count:
+                later.extend((record["revision"], a.get("text", ""))
+                             for a in amendments[prev_count:])
+            prev_count, prev_ids = len(amendments), ids
         if admitted_at is None:
             return False
-        return any(rev > admitted_at for rev in amended_revisions)
+        return any(revision > admitted_at and _amendment_names(text, rel_path)
+                   for revision, text in later)
+
+    def _resolved_relpath(self, rel: str) -> str | None:
+        """Where `rel` actually lands inside the workspace, or None.
+
+        None covers every case where the question has no answer right now: the
+        artifact is gone, the link dangles, the target escapes the workspace,
+        or the filesystem refuses. None never weakens the comparison -- the
+        lexical path is still tested -- so an unresolvable path is simply not
+        an extra chance to catch an escape."""
+        from custody_gate import _norm_path
+        try:
+            target = (self.workspace / rel).resolve()
+            return _norm_path(str(target.relative_to(self.workspace.resolve())))
+        except (OSError, ValueError, RuntimeError):
+            return None
 
     def scope_consistency(self) -> list[dict]:
         """Receipted artifacts falling OUTSIDE declared scope.in, or INSIDE
@@ -950,7 +1055,24 @@ class Mission:
             if rel is None:
                 continue
             target = _norm_path(rel)
-            if any(rx.match(target) for rx in excludes):
+            # An EXCLUSION is also tested against where the path actually
+            # lands. With scope.out=["secrets/**"], a receipt for `docs/alias`
+            # -- a symlink into `secrets/` -- passes a lexical test while the
+            # write went exactly where it was forbidden to go.
+            #
+            # Both representations are checked rather than one replacing the
+            # other, because neither is sound alone: the chained declared path
+            # is tamper-evident but lexical, and a link resolved at acceptance
+            # time is the true target but re-pointable after the fact. Either
+            # matching scope.out is a finding, so defeating the comparison
+            # requires defeating both. Recording the resolved path in the
+            # effect note at WRITE time is the real fix and is a contract
+            # change -- filed as es#147, not smuggled in here.
+            candidates = [target]
+            resolved = self._resolved_relpath(rel)
+            if resolved is not None and resolved != target:
+                candidates.append(resolved)
+            if any(rx.match(c) for rx in excludes for c in candidates):
                 findings.append({"artifact_path": rel, "request_id": request_id,
                                  "reason": "matches scope.out"})
             elif includes and not any(rx.match(target) for rx in includes):
@@ -1025,18 +1147,21 @@ class Mission:
                 # guard-change rule already carries (custody_mission.py's
                 # amendments-grew test), and repeating it here would build a
                 # gate whose key is any key.
-                undischarged = [f for f in drifted
-                                if not self._amended_after(f["request_id"])]
+                undischarged = [
+                    f for f in drifted
+                    if not self._discharged_by_amendment(f["request_id"],
+                                                         f["artifact_path"])]
                 if undischarged:
                     paths = ", ".join(sorted({f["artifact_path"]
                                               for f in undischarged}))
                     raise AcceptanceRefused(
                         f"{len(undischarged)} receipted artifact(s) fall "
                         f"outside the declared scope with no authority "
-                        f"amendment recorded AFTER them: {paths}. Record the "
-                        "operator's grant with `amend` (verbatim), or accept "
-                        "with FAIL/INCONCLUSIVE -- a PASS would assert a "
-                        "boundary the record contradicts")
+                        f"amendment naming them recorded AFTER them: {paths}. "
+                        "Record the operator's grant with `amend` (verbatim), "
+                        "naming the path(s) it covers, or accept with "
+                        "FAIL/INCONCLUSIVE -- a PASS would assert a boundary "
+                        "the record contradicts")
             self._store_verdict(new_revision, verdict, verdict_record)
             self._write_next(latest, path, status="completed", note=f"PASS: {reason}")
         elif verdict == "FAIL":
