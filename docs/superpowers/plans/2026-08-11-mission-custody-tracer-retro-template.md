@@ -67,3 +67,18 @@ Do not close this retro until each is true or explicitly N/A:
 - [ ] Scrub before publishing: mission records sweep up whatever sits beside
       them. Harness session data (`.host-context/`) has carried verbatim
       operator prompts from unrelated sessions.
+- [ ] The closing verdict — which box, and why — is delivered explicitly to
+      whoever ratifies it, and never inferred from the steward going idle,
+      available, or quiet. A ruling that exists only as a state nobody
+      confirmed receiving is the same failure as a ruling on an unpushed
+      branch nobody pointed at, one layer up. (Lived, not imagined: during
+      the review that produced this checklist, a reviewer's verdict failed
+      to deliver and was followed by an idle signal; reading that silence as
+      approval would have merged unreviewed work.)
+
+This checklist is convention-held. Nothing here mechanically stops a steward
+from ticking the first box, intending the second "shortly," and closing
+anyway — the same honesty dependency as the custody layer it governs, and it
+should not be described as more. The mechanical version, if it is ever worth
+building, is a CI check that greps `SKILL.md` for gate language contradicted
+by a linked, closed retro ruling.
