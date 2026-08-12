@@ -397,12 +397,17 @@ class Mission:
             raise CustodyError(
                 f"receipt already exists for request_id {request_id!r}; "
                 "effects are idempotent by request id -- use a fresh id")
-        if request_id in self._retired_receipt_ids(latest):
+        retired_kind = self._retired_receipt_ids(latest).get(request_id)
+        if retired_kind is not None:
             # Reuse would make one id mean two different artifacts across the
             # record, forcing an auditor to walk revisions to disambiguate.
+            # T3-4b: name WHICH kind was retired -- calling a
+            # tamper-retirement a 'loss' misdescribes the distinction T3-1
+            # made real.
             raise CustodyError(
                 f"request_id {request_id!r} was retired by an acknowledged "
-                "receipt loss and can never be reused -- use a fresh id")
+                f"receipt {retired_kind} and can never be reused -- use a "
+                "fresh id")
         if request_id in set(self._all_receipt_ids_ever()):
             # An id whose receipt file merely vanished is NOT free for reuse
             # either: the chain still remembers what it was minted against,
@@ -476,7 +481,8 @@ class Mission:
         return record
 
     def _covered_by_other_id(self, recorded_path: str, excluding: str,
-                              entries: list[tuple[str, str | None]]) -> bool:
+                              entries: list[tuple[str, str | None]],
+                              expected_shas: dict[str, str]) -> bool:
         """True iff recorded_path is CURRENTLY covered by a loadable receipt
         belonging to an id OTHER than `excluding`, using resume()'s own
         last-id-wins-by-append-order rule over the FULL `entries` list --
@@ -496,12 +502,23 @@ class Mission:
         so resume compares live content against stale ground truth). Only
         an id that comes AFTER `excluding` in append order -- one that had
         ALREADY superseded it before this retirement -- can count; an id
-        that comes before, or `excluding` itself, cannot."""
+        that comes before, or `excluding` itself, cannot.
+
+        expected_shas MUST be the chain-wide latest attestation per id (see
+        _expected_sha_map), NOT each entry's own embedded sha (T3-4a, fix
+        round 2): on the @1-tail chain shape -- the only shape _write_next
+        can produce today -- every entry in `entries` carries sha=None
+        regardless of whether an EARLIER checkpoint attested one. Passing
+        that embedded None through to _load_receipt silently skips the
+        tamper check inside this walk entirely, and can credit a TAMPERED
+        id as 'coverage' -- the exact suppression direction T3-3 exists to
+        get right, not merely to exist."""
         current_id: str | None = None
         current_receipt: dict | None = None
-        for other_id, other_sha in entries:
+        for other_id, _entry_sha in entries:
             try:
-                other_receipt = self._load_receipt(other_id, other_sha)
+                other_receipt = self._load_receipt(
+                    other_id, expected_shas.get(other_id))
             except _ReceiptTampered:
                 other_receipt = None
             other_rel = (other_receipt["artifact_path"] if other_receipt is not None
@@ -554,19 +571,27 @@ class Mission:
                     seen.append(request_id)
         return seen
 
-    def _retired_receipt_ids(self, latest: dict) -> set[str]:
-        """Ids whose loss OR tamper was acknowledged -- unioning both note
-        prefixes. Retirement is permanent and lives in the append-only notes
-        (checkpoint state is exact-field-closed in @1, so a retired_ids field
-        would break the schema), so a retired id can never be silently
-        recycled for a different artifact once the file that once occupied
-        its path is gone. Permanent non-reusability is correct either way: a
-        tampered id that could not be byte-provably restored is exactly as
-        untrustworthy to recycle as a lost one (T3-1)."""
-        retired: set[str] = set()
+    def _retired_receipt_ids(self, latest: dict) -> dict[str, str]:
+        """Ids whose loss OR tamper was acknowledged, mapped to WHICH
+        ('loss' or 'tamper') -- unioning both note prefixes into one
+        lookup. Retirement is permanent and lives in the append-only notes
+        (checkpoint state is exact-field-closed in @1, so a retired_ids
+        field would break the schema), so a retired id can never be
+        silently recycled for a different artifact once the file that once
+        occupied its path is gone. Permanent non-reusability is correct
+        either way: a tampered id that could not be byte-provably restored
+        is exactly as untrustworthy to recycle as a lost one (T3-1).
+
+        A dict, not a set: every existing `in` check against this method's
+        result still answers identically (membership tests a dict's keys),
+        but the reuse-refusal message can now name WHICH kind was retired
+        (T3-4b, fix round 2) -- a message that calls a tamper-retirement a
+        'loss' misdescribes exactly the distinction T3-1 made real."""
+        retired: dict[str, str] = {}
         decoder = json.JSONDecoder()
         for note in latest["state"]["notes"]:
-            for prefix in (_RETIRED_NOTE, _RETIRED_TAMPERED_NOTE):
+            for prefix, kind in ((_RETIRED_NOTE, "loss"),
+                                  (_RETIRED_TAMPERED_NOTE, "tamper")):
                 if not note.startswith(prefix):
                     continue
                 # The id is JSON-encoded, so it is read back exactly
@@ -579,7 +604,7 @@ class Mission:
                 except ValueError:
                     continue
                 if isinstance(value, str):
-                    retired.add(value)
+                    retired[value] = kind
                 break
         return retired
 
@@ -1038,9 +1063,12 @@ class Mission:
         # Walks the FULL pre-retirement entries (latest, not the filtered
         # receipt_ids local) so append order -- and request_id's own
         # chronological position in it -- is preserved; see
-        # _covered_by_other_id for why that ordering is load-bearing.
+        # _covered_by_other_id for why that ordering is load-bearing, and
+        # for why it needs the chain-wide _expected_sha_map (T3-4a), not
+        # each entry's own embedded sha.
         if recorded_path is not None and not self._covered_by_other_id(
-                recorded_path, request_id, self._receipt_entries(latest)):
+                recorded_path, request_id, self._receipt_entries(latest),
+                self._expected_sha_map()):
             # Losing coverage is an OBLIGATION, not a footnote: the mission
             # stays reopened, naming the artifact that must be re-covered, so
             # an uncovered artifact can never sit quietly in an active

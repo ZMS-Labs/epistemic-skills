@@ -293,8 +293,12 @@ def test_resume_missing_receipt_is_drift(workspace: Path) -> None:
     try:
         m.record_effect("notes/unrelated.md", "other", "req-1")
         check("retired-id-reuse-refused", False)
-    except CustodyError:
+    except CustodyError as exc:
         check("retired-id-reuse-refused", True)
+        # T3-4b: an honest-loss retirement still says 'loss', not 'tamper'
+        # -- the message differentiates in both directions, not just one.
+        check("retired-id-reuse-names-loss-not-tamper",
+              "retired by an acknowledged receipt loss" in str(exc))
     check("retired-id-reuse-no-artifact",
           not (workspace / "notes" / "unrelated.md").exists())
 
@@ -355,8 +359,10 @@ def test_retirement_survives_hostile_request_ids(workspace: Path) -> None:
     m.acknowledge_receipt_loss(tricky)
 
     st = m.status()
+    # _retired_receipt_ids returns {id: kind} since T3-4b (fix round 2) --
+    # an honest loss (this scenario), so kind == "loss".
     check("tricky-id-retired-exactly",
-          m._retired_receipt_ids(st) == {tricky})
+          m._retired_receipt_ids(st) == {tricky: "loss"})
     try:
         m.record_effect("notes/hijacked.md", "attacker content", tricky)
         check("tricky-id-reuse-refused", False)
@@ -1339,17 +1345,23 @@ def test_tampered_receipt_not_byte_restored_retires_id(workspace: Path) -> None:
 
 def test_tampered_retired_id_reuse_message_names_retirement(workspace: Path) -> None:
     """_retired_receipt_ids must recognize a TAMPER-retired id, not merely
-    an honest-loss-retired one (T3-1). While the receipt file for p6-1
-    still exists, reuse is refused before _retired_receipt_ids is ever
-    consulted (an earlier, unrelated 'receipt already exists' check fires
-    first) -- so this test deletes the file first to reach the actual
-    retired-id check. And while ANY previously-used id is refused via
-    _all_receipt_ids_ever as a safety net regardless of retirement
-    bookkeeping, that fallback produces a DIFFERENT, generic message --
-    only the SPECIFIC 'retired by an acknowledged receipt loss' message
-    proves _retired_receipt_ids itself recognized the tamper-retired id,
-    rather than silently missing it and relying on the fallback to still
-    (accidentally) refuse the reuse."""
+    an honest-loss-retired one (T3-1), AND the reuse-refusal message must
+    say so specifically -- 'receipt tamper', not 'receipt loss' (T3-4b,
+    fix round 2): the two are now a distinct, machine-actionable state, and
+    a message that calls a tamper-retirement a 'loss' misdescribes exactly
+    the thing this task made distinguishable.
+
+    While the receipt file for p6-1 still exists, reuse is refused before
+    _retired_receipt_ids is ever consulted (an earlier, unrelated 'receipt
+    already exists' check fires first) -- so this test deletes the file
+    first to reach the actual retired-id check. And while ANY
+    previously-used id is refused via _all_receipt_ids_ever as a safety
+    net regardless of retirement bookkeeping, that fallback produces a
+    DIFFERENT, generic message -- only the SPECIFIC 'retired by an
+    acknowledged receipt tamper' message proves _retired_receipt_ids
+    itself recognized the tamper-retired id AND its kind, rather than
+    silently missing it (or misreporting it as a loss) and relying on the
+    fallback to still (accidentally) refuse the reuse."""
     m, _original = _setup_p6_tampered(workspace)
     m.resume()
     m.acknowledge_receipt_loss("p6-1")
@@ -1359,8 +1371,8 @@ def test_tampered_retired_id_reuse_message_names_retirement(workspace: Path) -> 
         check("tamper-retired-reuse-refused", False)
     except CustodyError as exc:
         check("tamper-retired-reuse-refused", True)
-        check("tamper-retired-reuse-names-retirement",
-              "retired by an acknowledged receipt loss" in str(exc))
+        check("tamper-retired-reuse-names-tamper-not-loss",
+              "retired by an acknowledged receipt tamper" in str(exc))
 
 
 def _setup_tampered_then_superseded(workspace: Path) -> Mission:
@@ -1452,6 +1464,77 @@ def test_acknowledge_tampered_superseded_id_no_spurious_recover(
     # id-B's coverage is real, not merely assumed: a follow-up resume() must
     # stay clean.
     check("spurious-recover-resume-still-clean", m.resume() == [])
+
+
+def test_covered_by_other_id_rejects_tampered_covering_receipt(
+        workspace: Path) -> None:
+    """T3-4a (fix round 2): _covered_by_other_id must source shas from
+    _expected_sha_map -- the chain-wide latest attestation per id -- not
+    each entry's OWN embedded sha. On the @1-tail chain shape (the only
+    shape _write_next can produce today) every entry in receipt_ids carries
+    sha=None regardless of whether an EARLIER checkpoint attested one, so
+    using the embedded value skips the tamper check inside the coverage
+    walk entirely and can credit a TAMPERED id as 'coverage'.
+
+    Two ids, id-A and id-B, both attested and both later tampered, id-B
+    superseding id-A for the same path. Retiring id-A must still raise
+    RECOVER: id-B nominally 'wins' the path by append order, but id-B does
+    NOT genuinely load either -- crediting it as coverage would suppress
+    the obligation even though nothing currently, honestly covers the
+    path. (This is a deferred obligation, not a full false-clean: id-B's
+    own RECEIPT-TAMPERED marker stays open regardless, so the mission
+    stays reopened either way -- the RECOVER marker specifically is the
+    discriminating signal, not overall status.)"""
+    m = open_mission(workspace, "m-t34a", "Both tampered.")
+    m.approve()
+    m.record_effect("notes/a.md", "v1", "id-A")
+    m.record_effect("notes/a.md", "v2", "id-B")
+    sha_a = sha256_file(m.store.receipt_path("id-A"))
+    sha_b = sha256_file(m.store.receipt_path("id-B"))
+
+    # One @2 checkpoint attesting BOTH ids, then one @1-shaped continuation
+    # -- same _write_next-hazard dance _setup_p6_tampered uses, extended to
+    # two entries instead of one.
+    latest, path = m.store.load_latest()
+    attested = json.loads(json.dumps(latest))
+    attested["record"] = "checkpoint@2"
+    attested["revision"] = latest["revision"] + 1
+    attested["prev_checkpoint_sha256"] = sha256_file(path)
+    attested["receipt_ids"] = [
+        {"request_id": "id-A", "receipt_sha256": sha_a},
+        {"request_id": "id-B", "receipt_sha256": sha_b},
+    ]
+    attested["written_utc"] = now_utc()
+    m.store.write_checkpoint(attested)
+    attested_latest, attested_path = m.store.load_latest()
+    continued = json.loads(json.dumps(attested_latest))
+    continued["record"] = "checkpoint@1"
+    continued["revision"] = attested_latest["revision"] + 1
+    continued["prev_checkpoint_sha256"] = sha256_file(attested_path)
+    continued["receipt_ids"] = ["id-A", "id-B"]
+    continued["written_utc"] = now_utc()
+    m.store.write_checkpoint(continued)
+
+    for rid, forged in (("id-A", b"forged-a"), ("id-B", b"forged-b")):
+        rp = m.store.receipt_path(rid)
+        record = json.loads(rp.read_bytes().decode("utf-8"))
+        record["after_sha256"] = sha256_bytes(forged)
+        rp.write_bytes(
+            (json.dumps(record, indent=1, sort_keys=True) + "\n").encode("utf-8"))
+
+    findings = m.resume()
+    check("t34a-both-tampered-caught",
+          sorted(findings) == ["RECEIPT-TAMPERED:id-A", "RECEIPT-TAMPERED:id-B"])
+
+    m.acknowledge_receipt_loss("id-A")
+    st = m.status()
+    check("t34a-id-a-retired", "id-A" not in st["receipt_ids"])
+    check("t34a-id-b-tampered-marker-still-open",
+          "RECEIPT-TAMPERED:id-B" in st["state"]["unresolved_verdicts"])
+    # The discriminating check: id-B does not genuinely cover the path
+    # (it is itself tampered), so RECOVER must be raised, not suppressed.
+    check("t34a-recover-raised-despite-non-covering-later-id",
+          "RECOVER:notes/a.md" in st["state"]["unresolved_verdicts"])
 
 
 _RAW_RECEIPT_IDS_TOKEN_RE = re.compile(r"""["']receipt_ids["']""")
@@ -1551,6 +1634,7 @@ TESTS = [
     test_tampered_retired_id_reuse_message_names_retirement,
     test_tamper_reported_despite_supersession,
     test_acknowledge_tampered_superseded_id_no_spurious_recover,
+    test_covered_by_other_id_rejects_tampered_covering_receipt,
 ]
 
 
