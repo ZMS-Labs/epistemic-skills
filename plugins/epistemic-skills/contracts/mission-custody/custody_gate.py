@@ -198,7 +198,14 @@ def evaluate(authority: dict, tool_call: dict) -> dict:
                             "`amend --guard-mode audit` to retire the whole "
                             "guard set, or stop. Both amend forms are "
                             "recorded, chained and comparable; narrating a "
-                            "grant is not.")}
+                            "grant is not. NOTE: if this rule covers the "
+                            "shell itself, the amend command is blocked by "
+                            "the same rule -- run it OUT OF BAND (a session "
+                            "or terminal this hook does not gate). The gate "
+                            "deliberately has no self-repair exemption: a "
+                            "rule that exempted its own discharge command "
+                            "would be a hole shaped exactly like the thing "
+                            "it guards.")}
             return {"decision": "allow", "matched": True, "rule": rule["name"],
                     "mode": mode,
                     "reason": f"custody guard '{rule['name']}' matched (audit mode)"}
