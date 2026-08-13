@@ -33,12 +33,14 @@ acceptance-table research (`2026-08-13-acceptance-table-research.md`) lists as
 uncovered by A1–A8. The re-derivation should use it: the hazard is real,
 attacker-free, and produced by normal worktree hygiene.
 
-**F3 — a pre-@1 format generation is live.** `practical-agency` stores use
+**F3 — a second store format is live.** ~~a pre-@1 format generation~~
+**CORRECTED in §F9a: it is not an older generation of this format, it is a
+different design (`mission-manifest@1`).** `practical-agency` stores use
 `<mission-id>.r<NNNNNNNN>.json` with interleaved `.r<NNNNNNNN>.receipt.json`
-files inside `checkpoints/` — the store's `r????????.json` glob does not even
-enumerate them. Task 7 (`migrate`) and any manifest claim about resumability
-have a second migration distance to speak to, or must explicitly scope these
-out as a retired generation.
+files inside `checkpoints/` — the store's `r????????.json` glob enumerates
+**0 of 48** files. Task 7 (`migrate`) must scope these OUT explicitly rather
+than treat them as a source format; see §F9a–c for what the design holds that
+this one does not.
 
 **F4 — other agents leave evidence through normal use.** The 89/9 and 90/9
 chains were written by the media-library-rebuild effort, not by this program.
@@ -136,6 +138,117 @@ Of 61 notes on the final record: **49 free text**, 7 `effect:`, 2
 machine-readable verbs are 12 of 61. The instrument's dominant real use is
 durable narrative that survives interruption — which is what the frontier and
 notes deliver, and which needs no envelope at all.
+
+### F9a — CORRECTION to F3: practical-agency is not an older generation, it is a DIFFERENT DESIGN
+
+F3 called the `practical-agency` stores "a pre-@1 format generation". **That is
+wrong and I am correcting it in place rather than leaving it to be
+rediscovered.** Their records carry `"schema": "mission-manifest@1"` and a
+top-level shape with no ancestor relationship to `checkpoint@1`:
+
+```
+mission-custody checkpoint@1 : record mission_id revision prev_checkpoint_sha256
+                               status manifest state receipt_ids written_by written_utc
+practical-agency  mm@1       : schema mission_id revision
+                               authority capabilities continuity integrity outcome state truth
+```
+
+It is a **parallel design of the same problem**, live for 24 checkpoints
+(r19–r42) on mission `climb-pa-0-1`, and it is not a migration target — it is
+prior art with a different decomposition. `migrate` (Task 7) should scope it
+OUT explicitly rather than treat it as a source format.
+
+### F9b — that design structurally holds four things mission-custody has open as issues
+
+This is the single most useful thing in the survey, because these are not
+proposals — they are fields that existed in a running record.
+
+**1. Self-acceptance is a declared invariant, not a convention.**
+
+```json
+"integrity": {
+  "actor_may_self_accept": false,
+  "completion_acceptor": "agent:confirmer-independent",
+  "required_gates": ["gate:p2-harness-load-closed-or-waived",
+                     "gate:p2-independent-accept-closed-or-waived",
+                     "gate:manifest-teeth-definition-recorded"],
+  "unresolved_verdicts": []
+}
+```
+
+es#148 (*the party that did the work can accept it — `worker_id` is the static
+`steward_ref`, not the actual actor*) is **open** against mission-custody. Here
+it is a field on the record, plus **named gates as completion preconditions** —
+and `integrity` was byte-identical across all 24 checkpoints, i.e. it behaved
+as an invariant, not as mutable state. Compare mission-custody's
+`acceptance: {acceptor_ref: null, required_tier: "declared-role-separation"}` —
+a tier name and a null.
+
+**2. There is an epistemic block. Mission-custody has none.**
+
+```json
+"truth": {
+  "assumptions":   [{"claim": "...", "load_bearing": true}],
+  "unknowns":      [{"claim": "...", "load_bearing": true}, ...],
+  "contradictions": [], "verified_facts": [...],
+  "subject_refs": ["repo:ZMS-Labs/practical-agency@a2258539…", "pr:4", "branch:…"]
+}
+```
+
+Every claim carries `load_bearing`. Subjects are pinned by SHA. And the
+recorded `unknowns` on this live mission are, verbatim, the questions this
+program is still asking:
+
+> *"whether an operator mission with manifest is more defensible after
+> interruption than the same work without it"* (load_bearing: true)
+> *"whether operators will invoke manifest rather than bypass it when
+> consequential work appears"* (load_bearing: true)
+
+A design that writes its own efficacy question into the record as a
+load-bearing unknown is doing something mission-custody's `notes` cannot: it
+distinguishes *what is known* from *what is being assumed* from *what nobody
+has checked* — which is precisely the distinction an acceptor needs and
+currently has to infer from prose.
+
+**3. Capability state is a first-class axis.**
+
+```json
+"capabilities": {"available": [], "degraded": [], "unavailable": [],
+                 "invoked": [], "discovered_at": null}
+```
+
+Empty on this mission — so this is a schema observation, not a usage one. But
+the acceptance-table research's largest uncovered failure mode is **permission
+is not authority, because effects happen indirectly**, and `degraded` /
+`unavailable` / `invoked` is a place to say what the agent could actually
+*reach*, which a path-set envelope cannot express (§F7).
+
+**4. The completion contract lives on the record.**
+
+```json
+"outcome": {"desired_state": "...", "completion_proof": [gates + docs],
+            "integrity_guards": ["actor_may_self_accept is false",
+                                 "no tag created by the steward", ...],
+            "scope_proof": ["diff confined to …"],
+            "stop_conditions": ["operator revokes", "independent acceptor
+                                 returns FAIL", "release notes over-claim …"]}
+```
+
+`completion_proof` names the artifacts that constitute done, and
+`stop_conditions` are conditions on *outcomes* ("release notes over-claim
+production adapters"), not path sets — the shape §F7 found stewards reaching
+for and having nowhere to put.
+
+### F9c — what this does NOT establish
+
+Prior art is prior art, not a verdict. Unmeasured here: whether any of these
+fields were ever *read* by an enforcement path (mission-custody's honest
+baseline is that the runtime gate reads exactly `guard_mode` and
+`actuator_guards`; the equivalent measurement has not been taken on this
+design). `capabilities` was empty throughout. And the PA→custodian fold is
+already parked under ADR-184, so this is a design decision that has been made
+— the value here is the **decomposition**, which the acceptance-table
+re-derivation should weigh on merit, not the artifact.
 
 ### F9 — the verbatim-grant instruction is being followed, which validates the #30 ruling
 
