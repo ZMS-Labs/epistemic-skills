@@ -72,7 +72,7 @@ ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 
 from custody_mission import (  # noqa: E402
-    Mission, _ascii_case_fold, _normalize_relpath,
+    CustodyError, Mission, _ascii_case_fold, _normalize_relpath,
 )
 from custody_store import MissionStore, StoreError  # noqa: E402
 
@@ -258,11 +258,27 @@ def census(root: Path) -> dict:
     root = root.resolve()
     missions_root = root / "missions"
     report: dict = {"root": str(root), "missions": [], "unreadable": [],
-                    "environmental": []}
-    if not missions_root.is_dir():
-        report["note"] = "no missions/ directory"
+                    "environmental": [], "integrity": []}
+    # DISCOVERY ITSELF CAN FAIL. A missions/ directory that cannot be statted
+    # or enumerated raised out of census() entirely -- aborting the whole
+    # multi-root walk with a traceback and no report, so every LATER root
+    # went uninspected because an earlier one was unreadable. That is also a
+    # workspace where `Mission.load` raises and the hook fails open, which
+    # makes it a finding to report, not a reason to stop reporting.
+    try:
+        if not missions_root.is_dir():
+            report["note"] = "no missions/ directory"
+            return report
+        mission_dirs = sorted(p for p in missions_root.iterdir() if p.is_dir())
+    except OSError as exc:
+        report["environmental"].append({
+            "mission": "<missions/ not enumerable>",
+            "reason": f"{type(exc).__name__}: {exc}",
+            "fails_open": True,
+        })
+        report["discovery_failed"] = True
         return report
-    for md in sorted(p for p in missions_root.iterdir() if p.is_dir()):
+    for md in mission_dirs:
         store = MissionStore(md)
         try:
             latest, _ = store.load_latest()
@@ -307,6 +323,34 @@ def census(root: Path) -> dict:
                 "mission": md.name,
                 "reason": f"unconstructable: {type(exc).__name__}: {exc}",
                 "counts_toward_ambiguity": False,
+            })
+            continue
+        # INTEGRITY. Loadability is not the gate's last word: `run_gate` goes
+        # on to call `mission.status()`, which runs `_verify_manifest`. A
+        # schema-valid, chain-valid tail carrying an unsanctioned manifest
+        # edit therefore raises INSIDE the gate, and `custody_hook` catches
+        # CustodyError and FAILS OPEN for that mission -- while a census that
+        # stopped at load_latest reported it as armed and enforcing. Verified
+        # live: an enforce-mode guard whose tail path_globs were rewritten
+        # makes run_gate raise "actuator guards changed with no new authority
+        # amendment recorded (tampered)". Reporting a tampered ARMED mission
+        # as healthy is the worst false-healthy this instrument can produce.
+        try:
+            mission._verify_manifest(latest)
+        except CustodyError as exc:
+            report["integrity"].append({
+                "mission": md.name, "kind": "tamper",
+                "reason": f"{type(exc).__name__}: {exc}",
+                "fails_open": True,
+            })
+            continue
+        except Exception as exc:  # noqa: BLE001
+            # The hook's own handler is equally broad and equally fail-open,
+            # so anything that stops the check stops enforcement too.
+            report["integrity"].append({
+                "mission": md.name, "kind": "unverifiable",
+                "reason": f"{type(exc).__name__}: {exc}",
+                "fails_open": True,
             })
             continue
         manifest = _dget(latest, "manifest")
@@ -401,8 +445,11 @@ def summarize(reports: list[dict]) -> dict:
             # only". (Caught by reading this instrument's own output: the
             # environmental fixture was being described as terminal-only on
             # the strength of a checkpoint nobody could open.)
-            unread = len(r["unreadable"]) + len(r.get("environmental", []))
-            if r.get("note"):
+            unread = (len(r["unreadable"]) + len(r.get("environmental", []))
+                      + len(r.get("integrity", [])))
+            if r.get("discovery_failed"):
+                cause = "missions/ could not be enumerated"
+            elif r.get("note"):
                 cause = "no missions/ directory"
             elif not r["missions"] and unread:
                 cause = f"no readable mission ({unread} store(s) uninspected)"
@@ -416,6 +463,10 @@ def summarize(reports: list[dict]) -> dict:
             fail_open.append({"root": r["root"],
                               "cause": f"unreadable store ({e['reason']})",
                               "missions": [e["mission"]]})
+        for t in r.get("integrity", []):
+            fail_open.append({"root": r["root"],
+                              "cause": f"manifest {t['kind']} ({t['reason']})",
+                              "missions": [t["mission"]]})
     # OVERLAP: a live hazard needs TWO LIVE MISSIONS. A completed mission and
     # its successor both receipting one project file is the ordinary
     # sequential case -- the terminal one cannot resume or reconcile, so
@@ -469,6 +520,9 @@ def summarize(reports: list[dict]) -> dict:
         for e in r.get("environmental", []):
             because.append(f"{r['root']}/{e['mission']}: store uninspected "
                            "(environmental) -- absent from Q2-Q6 entirely")
+        for t in r.get("integrity", []):
+            because.append(f"{r['root']}/{t['mission']}: manifest {t['kind']} "
+                           "-- guards NOT enforced, absent from Q2-Q6")
     return {
         "q1_fail_open_roots": fail_open,
         "q1_no_active_mission_roots": no_active,
@@ -592,6 +646,15 @@ def main(argv: list[str]) -> int:
         for root, u in unreadable:
             tag = "partial" if u.get("partial_answer") else "skipped-by-gate"
             print(f"  ?? [{tag}] {root}/{u['mission']}: {u['reason']}")
+    integrity = [(r["root"], t) for r in reports
+                 for t in r.get("integrity", [])]
+    if integrity:
+        print("\nMANIFEST INTEGRITY (the GATE FAILS OPEN on these):")
+        for root, t in integrity:
+            print(f"  !! [{t['kind']}] {root}/{t['mission']}: {t['reason']}")
+        print("  -> run_gate calls status() -> _verify_manifest; the hook")
+        print("     catches the error and allows the call. An ARMED mission")
+        print("     here is NOT enforcing, however its guards read.")
     environmental = [(r["root"], e) for r in reports
                      for e in r.get("environmental", [])]
     if environmental:

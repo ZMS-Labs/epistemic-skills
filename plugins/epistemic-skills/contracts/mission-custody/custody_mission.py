@@ -860,6 +860,10 @@ class Mission:
         self.store = store
         self.workspace = Path(workspace)
         self.actor = actor
+        # Filled lazily by _own_mission_id() from the chain-protected origin;
+        # immutable for the mission's life, so reading it once is sound and
+        # keeps receipt loading off a per-call chain read.
+        self._mission_id: str | None = None
 
     # -- construction -----------------------------------------------------
 
@@ -1151,11 +1155,29 @@ class Mission:
         self.store.write_receipt(receipt)
         return receipt
 
+    def _own_mission_id(self) -> str | None:
+        """This mission's id, from the ORIGIN checkpoint, read once.
+
+        The origin is the right source: it is chain-protected (every later
+        checkpoint hashes back to it) and mission_id is immutable from open
+        to close, so a forged tail cannot move it. None when underivable,
+        which downgrades the check rather than inventing an answer."""
+        if self._mission_id is None:
+            try:
+                paths = self.store.checkpoint_paths()
+                origin = json.loads(paths[0].read_text(encoding="utf-8"))
+                value = origin.get("mission_id")
+                self._mission_id = value if isinstance(value, str) else None
+            except (OSError, ValueError, IndexError, AttributeError):
+                self._mission_id = None
+        return self._mission_id
+
     def _load_receipt(self, request_id: str) -> dict | None:
-        """None means UNLOADABLE -- absent, corrupt, or schema-invalid alike.
-        A corrupt receipt must degrade to drift (RECEIPT-MISSING), never crash
-        resume: crashing the recovery path on a mangled receipt is a denial of
-        service by exactly the tampering drift detection exists to catch."""
+        """None means UNLOADABLE -- absent, corrupt, schema-invalid, or
+        BELONGING TO ANOTHER MISSION alike. A corrupt receipt must degrade to
+        drift (RECEIPT-MISSING), never crash resume: crashing the recovery
+        path on a mangled receipt is a denial of service by exactly the
+        tampering drift detection exists to catch."""
         path = self.store.receipt_path(request_id)
         try:
             record = json.loads(path.read_text(encoding="utf-8"))
@@ -1168,7 +1190,21 @@ class Mission:
         # A receipt whose own request_id disagrees with the content-addressed
         # name it is stored under is malformed by construction -- never a
         # trustworthy source for a claim about that id.
-        return record if record.get("request_id") == request_id else None
+        if record.get("request_id") != request_id:
+            return None
+        # ... and neither is a receipt that says it belongs to a DIFFERENT
+        # mission. request_id uniqueness is per-mission, so two missions can
+        # legitimately mint the same id; the receipt path is content-addressed
+        # on the id alone, so a foreign receipt dropped in this mission's
+        # receipts dir sits exactly where this mission looks. Schema validity
+        # and id agreement were both satisfied by such a copy, and
+        # `acknowledge_receipt_loss` would then read it as RESTORED coverage
+        # -- affirming continuity from a record that documents someone else's
+        # write. The record names its own mission; believe it.
+        own = self._own_mission_id()
+        if own is not None and record.get("mission_id") != own:
+            return None
+        return record
 
     def _historical_effect_path(self, request_id: str, kind: bool = False) -> str | None:
         """The artifact path this request id was minted against, read from the

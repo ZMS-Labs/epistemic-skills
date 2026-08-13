@@ -421,6 +421,44 @@ def test_receipt_ids_always_carry_a_derivable_path(workspace: Path) -> None:
               m._historical_effect_path(request_id) == "notes/a.md")
 
 
+def test_foreign_mission_receipt_is_not_this_missions_receipt(
+        workspace: Path) -> None:
+    """A schema-valid receipt from ANOTHER mission, carrying the same
+    request_id, must not be loadable here.
+
+    request_id uniqueness is per-mission, so two missions can legitimately
+    mint the same id, and receipt_path is content-addressed on the id alone
+    -- so a foreign receipt dropped in this mission's receipts dir sits
+    exactly where this mission looks for its own. It passes validate_record
+    and agrees about its request_id, so both prior checks let it through, and
+    acknowledge_receipt_loss would then read someone else's write as RESTORED
+    coverage. It must degrade to the loss it is."""
+    donor_ws = workspace / "donor"
+    victim_ws = workspace / "victim"
+    donor = open_mission(donor_ws, "m-donor", "Donate a receipt.")
+    donor.approve()
+    donor.record_effect("shared.txt", "donor bytes", "req-same")
+    victim = open_mission(victim_ws, "m-victim", "Receive a foreign receipt.")
+    victim.approve()
+    victim.record_effect("shared.txt", "victim bytes", "req-same")
+
+    foreign = json.loads(donor.store.receipt_path("req-same")
+                         .read_text(encoding="utf-8"))
+    check("foreign-receipt-is-schema-valid-and-id-agreeing",
+          foreign["request_id"] == "req-same" and foreign["mission_id"] == "m-donor")
+    victim.store.receipt_path("req-same").write_text(
+        json.dumps(foreign, sort_keys=True), encoding="utf-8")
+
+    check("foreign-receipt-refused", victim._load_receipt("req-same") is None)
+    # and the refusal surfaces as the drift it is, not as silence
+    check("foreign-receipt-reads-as-receipt-missing",
+          "RECEIPT-MISSING:req-same" in victim.resume())
+    # the mission's OWN receipt still loads (the check refuses foreigners only)
+    own = donor._load_receipt("req-same")
+    check("own-receipt-still-loads",
+          own is not None and own["mission_id"] == "m-donor")
+
+
 def test_effect_path_index_matches_per_id(workspace: Path) -> None:
     """The whole-chain index and the per-id lookup must agree on EVERY id,
     including the ones with no derivable path.
@@ -3339,6 +3377,7 @@ TESTS = [
     test_note_cannot_forge_machine_state,
     test_receipt_ids_always_carry_a_derivable_path,
     test_effect_path_index_matches_per_id,
+    test_foreign_mission_receipt_is_not_this_missions_receipt,
     test_forged_restored_receipt_is_not_trusted,
     test_distinct_files_never_share_an_obligation,
     test_obligations_match_by_artifact_not_by_string,
