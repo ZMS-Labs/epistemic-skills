@@ -132,6 +132,16 @@ def _guard_glob_regex(glob: str) -> "re.Pattern[str]":
     disclosed in SECURITY.md rather than slipped in."""
     norm = _fold(_normalize_relpath(glob))
     if glob.replace("\\", "/").endswith("/") and norm:
+        # The FILESYSTEM ROOT is the one spelling normalization leaves with
+        # its separator attached ('/' stays '/'), so appending the marker
+        # built '//**' -- which compiles to a regex matching the root and
+        # NOTHING under it: a guard of '/' (block all absolute writes)
+        # silently allowed every descendant. Drive roots are unaffected
+        # ('C:/' normalizes to 'C:'). Compile the root as the bare-subtree
+        # form instead, which matches every absolute target and no
+        # relative one.
+        if norm == "/":
+            return _glob_regex("/**")
         return _glob_regex(norm + "/**")
     return _glob_regex(norm)
 

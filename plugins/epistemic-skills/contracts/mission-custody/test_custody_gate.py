@@ -149,6 +149,26 @@ def test_trailing_slash_guard_glob_binds_the_subtree() -> None:
             "file_path": "M:/Media/deep/file.mkv"}
     check("guard-dir-marker-windows-spelling",
           evaluate(auth("enforce", win), call)["matched"])
+    # THE ROOT is the one spelling normalization leaves with its separator
+    # attached, so the naive marker append built '//**' -- matching the
+    # root and nothing under it. A guard of '/' means 'block all absolute
+    # writes' and must cover every descendant; drive roots ('C:/') were
+    # never affected.
+    root = [{"name": "abs", "tool_names": ["Write"], "command_regexes": [],
+             "path_globs": ["/"]}]
+    for label, path, expect in (
+            ("descendant-blocked", "/etc/passwd", True),
+            ("deep-descendant-blocked", "/var/lib/x/y.db", True),
+            ("relative-path-not-matched", "docs/x.md", False)):
+        call = {"tool_name": "Write", "command": None, "file_path": path}
+        check(f"guard-root-marker-{label}",
+              evaluate(auth("enforce", root), call)["matched"] is expect)
+    drive = [{"name": "drv", "tool_names": ["Write"], "command_regexes": [],
+              "path_globs": ["C:/"]}]
+    call = {"tool_name": "Write", "command": None,
+            "file_path": "C:/Windows/System32/cfg.sys"}
+    check("guard-drive-root-marker-covers-subtree",
+          evaluate(auth("enforce", drive), call)["matched"])
 
 
 def test_glob_anchor_is_Z_not_dollar() -> None:
