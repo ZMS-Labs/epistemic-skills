@@ -30,6 +30,44 @@
   scope; this entry names the asymmetry so it is a known property rather than
   a rediscovery.
 
+## Scope comparison: hard links are DETECTED, never RESOLVED
+
+`scope_consistency()` compares two spellings of each receipted artifact: the
+path recorded in the chain, and where that path resolves. Resolution follows
+symlinks. **A hard link is not a link to a path — it is a second name for one
+inode — and `realpath` cannot see it.** Measured: `docs/alias.txt` hard-linked
+to `secrets/data.txt`, an effect on the alias, `scope.out=["secrets/**"]` — the
+comparison returned clean while `secrets/data.txt` held the new bytes.
+
+What the contract now does is prove the *condition*: a receipted artifact whose
+`st_nlink > 1` is reported as `multiply linked -- other names are not compared`,
+and a PASS is refused until an acceptor acknowledges it. What it does **not**
+do is find the other name, so it cannot tell you whether that name sits inside
+`scope.out`. A file does not know its own aliases; locating them means walking
+the workspace and grouping by `(st_dev, st_ino)`.
+
+That walk is deliberately not taken, on a measurement rather than a preference.
+Per call on the reference box:
+
+| receipts | workspace files | `st_nlink` probe | full walk | `scope_consistency()` |
+|---|---|---|---|---|
+| 100 | 2,302 | 1.9 ms | 63 ms | 699 ms |
+| 400 | 9,202 | 9.2 ms | 294 ms | 10,783 ms |
+| 800 | 22,402 | 24.8 ms | 817 ms | 41,487 ms |
+
+The probe costs 0.06 % of the call it lives in, so nothing argues against
+detection. The walk's cost scales with the **workspace**, which is unrelated to
+the mission's size: at ~100k files and 20 receipts it is seconds against a
+`scope_consistency()` of milliseconds. Precise resolution is therefore a
+contract change with its own cost profile, not something to smuggle into the
+acceptance path — the same call es#147 made for recording the resolved path at
+write time.
+
+**Operator consequence:** when acceptance reports MULTIPLY LINKED, the other
+name has not been checked against any boundary. Find it (`fsutil hardlink list`
+on NTFS, `find -samefile` on POSIX) before acknowledging. An acknowledgement
+here records that a human looked, which is the only thing that is true.
+
 ## Stage-C hook: fail-open and guard-tamper residue
 
 The PreToolUse custody hook is an enforcement layer over convention, not a

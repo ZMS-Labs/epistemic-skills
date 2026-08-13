@@ -1774,6 +1774,110 @@ def test_a_denial_is_not_a_grant(workspace: Path) -> None:
               "crossed the declared scope" in str(exc))
 
 
+def test_hard_link_is_reported_not_silent(workspace: Path) -> None:
+    """A hard link defeats path resolution, so the exposure must be DISCLOSED.
+
+    Resolution follows symlinks. A hard link is not a link to a path -- it is a
+    second name for one inode -- and `realpath` cannot see it. Measured against
+    the shipped code: docs/alias.txt hard-linked to secrets/data.txt, an effect
+    on the alias, scope.out=["secrets/**"] -> scope_consistency() returned []
+    while secrets/data.txt read 'changed'.
+
+    What is closed here is the SILENCE, not the boundary. `st_nlink` proves
+    another name exists and cannot say where; naming it needs a workspace walk
+    whose cost scales with the workspace rather than the mission (see
+    _link_count). So the finding exists, has teeth (it must be acknowledged),
+    and says plainly what it did not check."""
+    from custody_mission import _MULTIPLY_LINKED
+    m = open_mission(workspace, "m-hard", "Hard-linked.",
+                     scope_in=["docs/**"], scope_out=["secrets/**"])
+    m.approve()
+    (workspace / "docs").mkdir(parents=True, exist_ok=True)
+    (workspace / "secrets").mkdir(exist_ok=True)
+    (workspace / "secrets" / "data.txt").write_text("orig", encoding="utf-8")
+    try:
+        os.link(workspace / "secrets" / "data.txt",
+                workspace / "docs" / "alias.txt")
+    except (OSError, NotImplementedError, AttributeError):
+        print("skip hard-link (hard links unavailable on this host)")
+        return
+    m.record_effect("docs/alias.txt", "changed", "hl-1")
+    check("hard-link-write-really-landed-in-secrets",
+          (workspace / "secrets" / "data.txt").read_text(encoding="utf-8")
+          == "changed")
+    findings = m.scope_consistency()
+    check("hard-link-is-not-silent",
+          [(f["artifact_path"], f["reason"]) for f in findings]
+          == [("docs/alias.txt", _MULTIPLY_LINKED)])
+    # Indexing findings[0] unguarded would raise on the very mutation this
+    # test exists to catch, aborting main() mid-registry -- so the checks
+    # below would read ABSENT, and absent cannot be told from passing.
+    check("hard-link-count-recorded",
+          bool(findings) and findings[0].get("link_count") == 2)
+
+    # teeth: a PASS is refused, and the refusal says what was NOT checked
+    m.begin_verification()
+    acceptor = Mission.load(workspace, actor="agent:acceptor")
+    refusal = None
+    try:
+        acceptor.record_verdict("PASS", acceptor_id="agent:acceptor",
+                                 assurance_tier="declared-role-separation",
+                                 reason="done")
+    except AcceptanceRefused as exc:
+        refusal = str(exc)
+    check("hard-link-refuses-pass",
+          refusal is not None and "docs/alias.txt" in refusal)
+    check("hard-link-refusal-discloses-the-limit",
+          refusal is not None
+          and "MULTIPLY LINKED" in refusal and "CANNOT see" in refusal)
+    try:
+        landed = acceptor.record_verdict(
+            "PASS", acceptor_id="agent:acceptor",
+            assurance_tier="declared-role-separation", reason="done",
+            scope_ack=["docs/alias.txt"])
+    except (AcceptanceRefused, IllegalTransition):
+        landed = None
+    check("hard-link-is-dischargeable-by-ack", isinstance(landed, int))
+
+
+def test_ordinary_artifact_is_not_multiply_linked(workspace: Path) -> None:
+    """Positive control for the absence claim the check above rests on.
+
+    "Ordinary receipted artifacts do not trip this" is an absence claim, and
+    its control has to match the class: an artifact written by record_effect,
+    on the same filesystem, stat'ed the same way, must report st_nlink == 1 --
+    otherwise the hard-link finding fires on every mission and the suite above
+    proves only that SOMETHING was reported. A symlinked spelling is included
+    because os.stat follows links, so it is the shape most likely to produce a
+    false positive."""
+    m = open_mission(workspace, "m-plain", "Plain.", scope_in=["docs/**"])
+    m.approve()
+    m.record_effect("docs/plain.md", "x", "pl-1")
+    check("ordinary-artifact-nlink-is-1",
+          os.stat(workspace / "docs" / "plain.md").st_nlink == 1)
+    check("ordinary-artifact-flags-nothing", m.scope_consistency() == [])
+    try:
+        (workspace / "docs" / "alias").symlink_to(workspace / "docs",
+                                                   target_is_directory=True)
+    except (OSError, NotImplementedError):
+        print("skip nlink-symlink-control (symlinks unavailable on this host)")
+        return
+    check("symlinked-spelling-nlink-is-1",
+          os.stat(workspace / "docs" / "alias" / "plain.md").st_nlink == 1)
+
+
+def test_link_count_is_none_when_the_artifact_is_gone(workspace: Path) -> None:
+    """Unknown is never reported as one. A deleted or unreadable artifact must
+    answer None and produce no finding, rather than crashing the read-only
+    surface that acceptance depends on."""
+    m = open_mission(workspace, "m-gone", "Gone.", scope_out=["secrets/**"])
+    m.approve()
+    m.record_effect("docs/gone.md", "x", "gn-1")
+    (workspace / "docs" / "gone.md").unlink()
+    check("link-count-none-when-absent", m._link_count("docs/gone.md") is None)
+    check("absent-artifact-flags-nothing", m.scope_consistency() == [])
+
+
 def test_exclusion_match_does_not_shadow_the_inclusion_check(
         workspace: Path) -> None:
     """An exclusion match on ONE representation must not skip the inclusion
@@ -1966,8 +2070,16 @@ TESTS = [
     test_amendment_must_name_the_path_that_actually_violated,
     test_symlinked_path_cannot_dodge_an_exclusion,
     test_forged_receipt_path_cannot_dodge_scope,
+    # BEFORE the scope tests on purpose. A mutation that makes the hard-link
+    # check fire on every artifact makes those tests raise an unexpected
+    # AcceptanceRefused, which aborts main() mid-registry -- so a positive
+    # control registered after them would read ABSENT, and absent cannot be
+    # told from passing. Order is part of this control, not cosmetics.
+    test_ordinary_artifact_is_not_multiply_linked,
     test_scope_consistency_and_acceptance_boundary,
     test_exclusion_match_does_not_shadow_the_inclusion_check,
+    test_hard_link_is_reported_not_silent,
+    test_link_count_is_none_when_the_artifact_is_gone,
     test_empty_scope_declares_nothing_and_flags_nothing,
     test_open_creates_draft_r1,
     test_pathless_load_single_active,

@@ -24,6 +24,11 @@ _GUARD_AUTHORITY_KEYS = ("actuator_guards", "guard_mode")
 assert set(_TIER_RANK) == TIERS, "tier rank table out of sync with verify_mission_custody.TIERS"
 
 _ABS_DRIVE_RE = re.compile(r"^[A-Za-z]:")
+# The scope comparison can prove a receipted artifact has ANOTHER NAME, and it
+# cannot prove where that name is. Both halves live in the reason string,
+# because a finding naming only the half it proved reads as a boundary it
+# checked.
+_MULTIPLY_LINKED = "multiply linked -- other names are not compared"
 _RETIRED_NOTE = "receipt loss acknowledged: "
 # Notes are the mission's append-only, hash-chained narrative AND the carrier
 # for retirement (checkpoint state is exact-field-closed in @1, so a
@@ -1123,6 +1128,45 @@ class Mission:
         except (OSError, ValueError, RuntimeError):
             return None
 
+    def _link_count(self, rel: str) -> int | None:
+        """How many names this artifact has on disk, or None if unknowable.
+
+        A hard link is not a link to a path -- it is a second name for one
+        inode -- so `_resolved_relpath`, which follows symlinks, is blind to it.
+        Measured against the shipped code: `docs/alias.txt` hard-linked to
+        `secrets/data.txt`, an effect on the alias, `scope.out=["secrets/**"]`
+        -> `scope_consistency()` returned [] while `secrets/data.txt` read
+        'changed'. Silent, which is the one outcome that is not allowed.
+
+        `st_nlink` is the whole signal, and it is deliberately half an answer:
+        it proves ANOTHER NAME EXISTS and cannot say where. Locating the other
+        names means walking the workspace and grouping by (st_dev, st_ino),
+        because a file does not know its own aliases.
+
+        That walk is NOT taken here, and the reason is a measurement rather
+        than a preference. On this box, per call:
+
+            receipts  ws files   st_nlink probe   full walk   scope_consistency()
+               100      2,302          1.9 ms        63 ms          699 ms
+               400      9,202          9.2 ms       294 ms       10,783 ms
+               800     22,402         24.8 ms       817 ms       41,487 ms
+
+        The probe is 0.06% of the call it lives in, so nothing argues against
+        detecting the condition. The walk's cost scales with the WORKSPACE,
+        which is unrelated to the mission's size: at ~100k files and 20
+        receipts it would be seconds against a `scope_consistency()` of
+        milliseconds. So the cheap half is taken and the expensive half is
+        disclosed (SECURITY.md), not silently skipped.
+
+        `os.stat` follows symlinks deliberately: the question is how many names
+        the BYTES have, and a symlinked spelling of a hard-linked file is the
+        same exposure. A vanished or unreadable artifact answers None -- unknown
+        is never reported as one."""
+        try:
+            return os.stat(self.workspace / rel).st_nlink
+        except (OSError, ValueError):
+            return None
+
     def scope_consistency(self) -> list[dict]:
         """Receipted artifacts falling OUTSIDE declared scope.in, or INSIDE
         scope.out. Read-only; raises nothing.
@@ -1251,6 +1295,19 @@ class Mission:
                                      "request_id": request_id,
                                      "violating_paths": outside,
                                      "reason": "outside scope.in"})
+            # Independent of BOTH checks above, and that is the point: the
+            # dangerous hard-link case is the one where the receipted path is
+            # squarely inside scope.in and matches no exclusion, so neither
+            # comparison has anything to say while the bytes it wrote also
+            # answer to a name in scope.out. `violating_paths` carries the
+            # receipted spelling, which is the name an acceptor can actually
+            # acknowledge; the other names are exactly what this cannot supply.
+            links = self._link_count(rel)
+            if links is not None and links > 1:
+                findings.append({"artifact_path": rel, "request_id": request_id,
+                                 "violating_paths": [target],
+                                 "reason": _MULTIPLY_LINKED,
+                                 "link_count": links})
         findings.sort(key=lambda f: (f["artifact_path"], f["request_id"]))
         return findings
 
@@ -1362,10 +1419,30 @@ class Mission:
                     hint = (f" Amendments MENTION {', '.join(mentioned)} -- "
                             "read them and decide; a mention is not a grant."
                             if mentioned else "")
+                    # A multiply-linked artifact reaches this message under the
+                    # same "crossed the declared scope" lead as a genuine
+                    # boundary crossing, and it is not the same claim: the
+                    # comparison found ANOTHER NAME, not a violation. Saying so
+                    # here is the whole disclosure -- the finding is otherwise
+                    # indistinguishable from an exclusion match, and an acceptor
+                    # would acknowledge it without ever learning what to look at.
+                    linked = sorted({p for f in drifted
+                                     if f["reason"] == _MULTIPLY_LINKED
+                                     for p in f["violating_paths"]
+                                     if p in outstanding})
+                    link_note = (
+                        f" {', '.join(linked)} "
+                        + ("is" if len(linked) == 1 else "are")
+                        + " MULTIPLY LINKED: the same bytes answer to another "
+                        "name in the filesystem. Resolution follows symlinks, "
+                        "and a hard link is not a link to a path, so this "
+                        "comparison CANNOT see the other name or tell you "
+                        "whether it is inside scope.out -- find it before "
+                        "acknowledging." if linked else "")
                     raise AcceptanceRefused(
                         f"{len(outstanding)} path(s) crossed the declared "
                         f"scope and are not acknowledged: "
-                        f"{', '.join(outstanding)}.{hint} Re-record the "
+                        f"{', '.join(outstanding)}.{hint}{link_note} Re-record the "
                         "verdict acknowledging each path you have judged "
                         "covered -- CLI: `accept ... "
                         + " ".join(f"--scope-ack {p}" for p in outstanding)
