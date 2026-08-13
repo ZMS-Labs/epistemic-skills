@@ -235,8 +235,18 @@ def _classify_guard(rule) -> str:
     return "effort?"
 
 
-def _identity(abs_path: str) -> tuple:
-    """Filesystem identity for overlap comparison.
+def _identity(abs_path: str) -> tuple[tuple, str | None]:
+    """(identity, problem) for overlap comparison.
+
+    ABSENCE AND UNREADABILITY ARE DIFFERENT ANSWERS. A path that is not
+    there yields a spelling-keyed identity and that is the whole truth about
+    it. A path whose stat FAILS for any other reason -- traversal denied on
+    a parent, a transient filesystem error -- yields the same fallback while
+    being a measurement that did not happen: two hard-linked names then read
+    as disjoint and Q4 prints "none", the one answer that hides the hazard
+    Q4 exists to find. Verified: two missions receipting one inode under a
+    traversal-denied parent were reported as non-overlapping AND as zero
+    coverage, with no partial-data warning anywhere.
 
     Resolved path STRINGS do not identify hard links: two names for one
     inode stay distinct after resolve(), yet a write through either changes
@@ -249,9 +259,13 @@ def _identity(abs_path: str) -> tuple:
     """
     try:
         st = os.stat(abs_path)
-    except (OSError, ValueError):
-        return ("path", _fold(abs_path))
-    return ("inode", st.st_dev, st.st_ino)
+    except FileNotFoundError:
+        return ("path", _fold(abs_path)), None
+    except (OSError, ValueError) as exc:
+        return ("path", _fold(abs_path)), (
+            f"{abs_path}: identity probe failed ({type(exc).__name__}) -- "
+            "a hard-link overlap on this artifact CANNOT be detected")
+    return ("inode", st.st_dev, st.st_ino), None
 
 
 def census(root: Path) -> dict:
@@ -335,6 +349,7 @@ def census(root: Path) -> dict:
         # makes run_gate raise "actuator guards changed with no new authority
         # amendment recorded (tampered)". Reporting a tampered ARMED mission
         # as healthy is the worst false-healthy this instrument can produce.
+        integrity_ok = True
         try:
             mission._verify_manifest(latest)
         except CustodyError as exc:
@@ -343,7 +358,7 @@ def census(root: Path) -> dict:
                 "reason": f"{type(exc).__name__}: {exc}",
                 "fails_open": True,
             })
-            continue
+            integrity_ok = False
         except Exception as exc:  # noqa: BLE001
             # The hook's own handler is equally broad and equally fail-open,
             # so anything that stops the check stops enforcement too.
@@ -352,6 +367,31 @@ def census(root: Path) -> dict:
                 "reason": f"{type(exc).__name__}: {exc}",
                 "fails_open": True,
             })
+            integrity_ok = False
+        if not integrity_ok:
+            # IT STILL COUNTS TOWARD AMBIGUITY. `Mission.load` raises
+            # MultipleActiveMissions during DISCOVERY -- before it ever calls
+            # status(), so before any manifest is verified. With a duplicate
+            # present, ambiguity is the LIVE cause and the tamper is never
+            # reached. Dropping this mission from the roster printed tamper
+            # as the sole cause and hid the still-active duplicate, so
+            # repairing the manifest would leave the gate inert for a reason
+            # this census never named. It stays counted, and stays out of
+            # every enforcement metric below.
+            report["missions"].append({
+                "mission": md.name,
+                "status": latest.get("status"),
+                "active": latest.get("status") not in TERMINAL,
+                "revision": latest.get("revision"),
+                "integrity_ok": False,
+                "guard_mode": None, "guard_count": 0,
+                "guard_classes": [], "guard_names": [],
+                "scope_in": [], "scope_out": [],
+                "receipt_count": 0, "receipt_paths": [], "absolute_paths": [],
+                "identities": [], "artifacts_present_under_root": 0,
+                "escaped_targets": [], "recover_obligations": [],
+                "receipt_problems": [], "coverage_probe_failures": 0,
+            })
             continue
         manifest = _dget(latest, "manifest")
         auth = _dget(manifest, "authority")
@@ -359,7 +399,10 @@ def census(root: Path) -> dict:
         guards = _lget(auth, "actuator_guards")
         paths, problems = _receipts(mission, store, latest)
         abs_paths = [str((root / p).resolve()) for p in paths]
-        identities = [_identity(a) for a in abs_paths]
+        probed = [_identity(a) for a in abs_paths]
+        identities = [i for i, _ in probed]
+        identity_failures = sum(1 for _, p in probed if p)
+        problems.extend(p for _, p in probed if p)
         # COVERAGE counts DISTINCT ARTIFACTS, not receipt events: a second
         # effect or a reconciliation on one path leaves both ids in
         # receipt_ids, and counting each would report two present artifacts
@@ -369,15 +412,27 @@ def census(root: Path) -> dict:
         # ROOT (an escaped symlink target exists, but not here).
         present_ids: set = set()
         escaped: list[str] = []
+        probe_failures = 0
         for rel, ap, ident in zip(paths, abs_paths, identities):
             if not _under(root, ap):
                 escaped.append(f"{rel} -> {ap}")
                 continue
             try:
-                if stat.S_ISREG(os.stat(ap).st_mode):
-                    present_ids.add(ident)
-            except (OSError, ValueError):
-                pass
+                st = os.stat(ap)
+            except FileNotFoundError:
+                # Definitely absent: a real zero-coverage signal.
+                continue
+            except (OSError, ValueError) as exc:
+                # NOT absence -- a probe that failed. Counting it as absent
+                # manufactures a ZERO COVERAGE finding out of a file nobody
+                # could look at.
+                problems.append(
+                    f"{ap}: coverage probe failed ({type(exc).__name__}) -- "
+                    "presence UNKNOWN, not absent")
+                probe_failures += 1
+                continue
+            if stat.S_ISREG(st.st_mode):
+                present_ids.add(ident)
         present = len(present_ids)
         # LOST COVERAGE is not silence. acknowledge_receipt_loss retires the
         # id and records RECOVER:<path> -- an artifact known to be uncovered.
@@ -401,6 +456,9 @@ def census(root: Path) -> dict:
             "status": latest.get("status"),
             "active": latest.get("status") not in TERMINAL,
             "revision": latest.get("revision"),
+            "integrity_ok": True,
+            "coverage_probe_failures": probe_failures,
+            "identity_probe_failures": identity_failures,
             "guard_mode": auth.get("guard_mode"),
             "guard_count": len(guards),
             "guard_classes": [_classify_guard(g) for g in guards],
@@ -421,9 +479,15 @@ def census(root: Path) -> dict:
 
 
 def summarize(reports: list[dict]) -> dict:
+    # Q1 counts every GATE-LOADABLE active mission, integrity-failing ones
+    # included: discovery ambiguity is decided before any manifest is read.
+    # Every other question is about ENFORCEMENT, and a mission whose manifest
+    # the gate will refuse enforces nothing -- so those questions run over
+    # `sound` only, and the exclusion is disclosed as partial data.
     all_missions = [(r, m) for r in reports for m in r["missions"]]
     active = [(r, m) for r, m in all_missions if m["active"]]
-    armed = [(r, m) for r, m in active
+    sound = [(r, m) for r, m in active if m.get("integrity_ok", True)]
+    armed = [(r, m) for r, m in sound
              if m["guard_count"] > 0 and m["guard_mode"]]
     enforce = [(r, m) for r, m in armed if m["guard_mode"] == "enforce"]
     fail_open = []
@@ -489,19 +553,29 @@ def summarize(reports: list[dict]) -> dict:
                 row["terminal"] = [m["mission"] for m in (a, b)
                                    if not m["active"]]
                 historical.append(row)
-    zero_cov = [f"{r['root']}::{m['mission']}" for r, m in active
+    # ZERO COVERAGE is an assertion about files that were LOOKED AT. A
+    # mission none of whose artifacts could be statted has unknown coverage,
+    # and printing it as zero manufactures a detached-store finding out of a
+    # directory nobody could read.
+    zero_cov = [f"{r['root']}::{m['mission']}" for r, m in sound
                 if m["receipt_count"] > 0
-                and m["artifacts_present_under_root"] == 0]
+                and m["artifacts_present_under_root"] == 0
+                and not m.get("coverage_probe_failures")]
+    unknown_cov = [{"mission": f"{r['root']}::{m['mission']}",
+                    "unreadable_artifacts": m["coverage_probe_failures"]}
+                   for r, m in sound
+                   if m.get("coverage_probe_failures")
+                   and m["artifacts_present_under_root"] == 0]
     lost = [{"mission": f"{r['root']}::{m['mission']}",
              "artifacts": m.get("recover_obligations", [])}
-            for r, m in active if m.get("recover_obligations")]
+            for r, m in sound if m.get("recover_obligations")]
     # VACUITY: a mission with no receipts cannot fail the coverage test, and
     # printing "none" for it reads as a pass. Silence that means "not yet
     # testable" must be labelled, or this instrument commits the vacuous-
     # green error it exists to detect. (Found by USE, not review: the
     # freshly-opened attribution mission reported clean coverage while being
     # structurally incapable of receipting anything it governed.)
-    untested = [f"{r['root']}::{m['mission']}" for r, m in active
+    untested = [f"{r['root']}::{m['mission']}" for r, m in sound
                 if m["receipt_count"] == 0 and not m.get("recover_obligations")]
     # PARTIAL is about what was NOT inspected, whatever the cause. An
     # environmental failure leaves a store entirely unread while the gate
@@ -531,6 +605,9 @@ def summarize(reports: list[dict]) -> dict:
         "q3_audit_mode": len(armed) - len(enforce),
         "q4_artifact_overlaps": overlaps,
         "q4_historical_overlaps": historical,
+        # An unqualified "none" is a claim the probe failures cannot support.
+        "q4_unprobed_artifacts": sum(m.get("identity_probe_failures", 0)
+                                     for _, m in all_missions),
         "q5_guard_classes": [
             {"mission": f"{r['root']}::{m['mission']}",
              "classes": m["guard_classes"], "names": m["guard_names"]}
@@ -538,7 +615,9 @@ def summarize(reports: list[dict]) -> dict:
         "q6_zero_coverage_missions": zero_cov,
         "q6_coverage_untested_no_receipts": untested,
         "q6_coverage_lost": lost,
+        "q6_coverage_unknown": unknown_cov,
         "active_total": len(active),
+        "active_sound_total": len(sound),
         "mission_total": len(all_missions),
         "answers_are_partial": bool(because),
         "partial_because": because,
@@ -594,8 +673,11 @@ def main(argv: list[str]) -> int:
         print("  (gate INERT, nothing to enforce — no active mission:)")
         for n in summary["q1_no_active_mission_roots"]:
             print(f"     -  {n['root']}  [{n['cause']}]")
+    excluded = summary["active_total"] - summary["active_sound_total"]
     print(f"\nQ2 ARMED: {summary['q2_armed_active_missions']} of "
-          f"{summary['active_total']} active missions carry guards")
+          f"{summary['active_sound_total']} active missions carry guards"
+          + (f"  ({excluded} excluded: manifest integrity — see below)"
+             if excluded else ""))
     print(f"Q3 POLARITY: {summary['q3_enforce_mode']} enforce, "
           f"{summary['q3_audit_mode']} audit "
           "(audit-mode guards already allow)")
@@ -605,6 +687,11 @@ def main(argv: list[str]) -> int:
             print(f"  !! {o['a']}\n     <-> {o['b']}  {o['shared']}")
         print("  -> each mission reads the other's writes as drift; the")
         print("     discharge (reconcile) OVERWRITES the artifact.")
+    elif summary["q4_unprobed_artifacts"]:
+        print("  none FOUND — but "
+              f"{summary['q4_unprobed_artifacts']} artifact(s) could not be")
+        print("  identified, and a hard link through one of those is exactly")
+        print("  what this question would otherwise catch. NOT a clean bill.")
     else:
         print("  none — no two ACTIVE missions receipt the same bytes")
     if summary["q4_historical_overlaps"]:
@@ -630,6 +717,13 @@ def main(argv: list[str]) -> int:
         print("  -> a receipt was retired and the artifact is KNOWN")
         print("     uncovered (RECOVER obligation). Not 'never written':")
         print("     re-cover each artifact with a fresh effect.")
+    if summary["q6_coverage_unknown"]:
+        for m in summary["q6_coverage_unknown"]:
+            print(f"  ?  COVERAGE UNKNOWN {m['mission']}: "
+                  f"{m['unreadable_artifacts']} artifact(s) could not be read")
+        print("  -> NOT zero coverage: the probe failed (traversal denied or")
+        print("     a filesystem error). Re-run where the artifacts are")
+        print("     readable before concluding anything about this store.")
     if summary["q6_coverage_untested_no_receipts"]:
         for m in summary["q6_coverage_untested_no_receipts"]:
             print(f"  ?  UNTESTED (0 receipts) {m}")
@@ -638,7 +732,8 @@ def main(argv: list[str]) -> int:
         print("     artifacts this mission governs BEFORE work starts.")
     if not (summary["q6_zero_coverage_missions"]
             or summary["q6_coverage_untested_no_receipts"]
-            or summary["q6_coverage_lost"]):
+            or summary["q6_coverage_lost"]
+            or summary["q6_coverage_unknown"]):
         print("  all active missions have receipted artifacts present here")
     unreadable = [(r["root"], u) for r in reports for u in r["unreadable"]]
     if unreadable:
