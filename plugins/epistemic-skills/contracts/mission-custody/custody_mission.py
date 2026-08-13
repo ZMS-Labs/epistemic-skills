@@ -78,10 +78,24 @@ scope-ack by agent:acceptor: secrets.env" passed.
         candidate = flat.strip().casefold()
         for prefix in _RESERVED_NOTE_PREFIXES:
             if candidate.startswith(prefix.casefold()):
+                # A refusal with no stated discharge is a dead end, and this
+                # one refuses text the operator was INSTRUCTED to supply:
+                # SKILL.md says record the grant verbatim, and a grant may
+                # legitimately begin 'effect: ...'. The guard stays; the exit
+                # must be printed here, because it is printed nowhere else.
+                # The repr of the line is load-bearing for the invisible-
+                # character class: the caller who typed what LOOKS benign can
+                # only see the refused byte in an escaped rendering.
                 raise CustodyError(
                     f"text may not contain a line beginning with {prefix!r}: "
                     "machine-written notes carry mission state and narrative "
-                    "must not be able to imitate them, on any line")
+                    "must not be able to imitate them, on any line. To record "
+                    "this text anyway (a verbatim operator grant, a "
+                    "quotation), prefix the offending line with '> ' -- the "
+                    "quote marker keeps the words exact while making the line "
+                    "unmistakably narrative. Indentation does NOT work: "
+                    "leading whitespace is stripped before this comparison. "
+                    f"Offending line: {line!r}")
 
 
 def now_utc() -> str:

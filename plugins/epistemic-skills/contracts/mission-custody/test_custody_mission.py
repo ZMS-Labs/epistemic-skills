@@ -1403,6 +1403,76 @@ def test_scope_ack_note_cannot_be_forged_by_narrative(workspace: Path) -> None:
           isinstance(m.note("I read the scope-ack by the acceptor"), int))
 
 
+def test_reserved_note_refusal_names_a_working_discharge(workspace: Path) -> None:
+    """A refusal with no stated discharge is a dead end -- the #25 class,
+    second member.
+
+    SKILL.md instructs the steward to record an operator grant VERBATIM, and
+    a grant may legitimately begin with a reserved machine-note prefix
+    ('effect: allow ...'). The guard must stay -- narrative must not be able
+    to imitate machine state -- so the refusal message is the only exit, and
+    it must name a discharge that actually works. The obvious one does NOT:
+    the guard strips leading whitespace before comparing, so indentation
+    discharges nothing. The one that works is a '> ' quote marker, and both
+    facts are pinned here so the message can never drift into suggesting the
+    dead one and a later 'tidy-up' that strips the quote marker before the
+    comparison has to argue with a red suite, not a comment."""
+    m = open_mission(workspace, "m-disch", "Discharge.", scope_in=["docs/**"])
+    m.approve()
+    grant = "effect: allow writes outside docs/ for this mission"
+    msg = None
+    try:
+        m.amend_authority(grant)
+    except CustodyError as exc:
+        msg = str(exc)
+    check("reserved-refusal-fires", msg is not None)
+    check("reserved-refusal-names-the-discharge",
+          msg is not None and "'> '" in msg)
+    check("reserved-refusal-shows-the-offending-line",
+          msg is not None and repr(grant) in msg)
+
+    # the named discharge WORKS: the quoted grant is recorded, word for word
+    # behind the marker, on the single-line and the multi-line shape alike.
+    # Caught, not bare: under the mutation this exists to catch (a 'tidy-up'
+    # that strips the quote marker before the comparison), the call refuses,
+    # and an escaping CustodyError would abort main() mid-registry -- every
+    # later check would read ABSENT, which cannot be told from passing.
+    try:
+        rev = m.amend_authority("> " + grant)
+    except CustodyError:
+        rev = None
+    check("quoted-grant-is-recorded", isinstance(rev, int))
+    latest, _ = m.store.load_latest()
+    amendments = latest["manifest"]["authority"]["amendments"]
+    recorded = amendments[-1]["text"] if amendments else None
+    check("quoted-grant-text-is-exact", recorded == "> " + grant)
+    try:
+        rev2 = m.amend_authority("operator said:\n> effect: also this one")
+    except CustodyError:
+        rev2 = None
+    check("quoted-line-inside-multiline-is-recorded", isinstance(rev2, int))
+
+    # indentation is NOT a discharge: leading whitespace is stripped before
+    # the comparison, deliberately (the forge test's leading-space row is the
+    # same strip seen from the attacker's side)
+    try:
+        m.amend_authority("    " + grant)
+        check("indentation-is-not-a-discharge", False)
+    except CustodyError:
+        check("indentation-is-not-a-discharge", True)
+
+    # an invisible character inside the prefix is still refused, and the
+    # refusal's repr of the line is what makes the invisible visible -- the
+    # caller who typed what LOOKS benign can see why it refused
+    try:
+        m.note("eff" + chr(0x200B) + "ect: x")
+        check("invisible-prefix-still-refused", False)
+    except CustodyError as exc:
+        check("invisible-prefix-still-refused", True)
+        check("invisible-char-is-visible-in-the-refusal",
+              "\\u200b" in str(exc))
+
+
 def test_disabled_scope_in_comparison_is_disclosed_as_such(
         workspace: Path) -> None:
     """One prose entry disables the include comparison ENTIRELY, and the
@@ -2243,6 +2313,7 @@ TESTS = [
     test_every_violating_representation_must_be_acknowledged,
     test_scope_ack_is_normalised_like_the_findings,
     test_scope_ack_note_cannot_be_forged_by_narrative,
+    test_reserved_note_refusal_names_a_working_discharge,
     test_disabled_scope_in_comparison_is_disclosed_as_such,
     test_unmatchable_patterns_are_disclosed_not_silently_inert,
     test_every_caller_text_surface_refuses_a_forged_note_line,
