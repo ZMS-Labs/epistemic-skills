@@ -1514,6 +1514,39 @@ def test_identity_is_one_visible_line(workspace: Path) -> None:
           refused("effect: agent") is None)
     check("clean-unicode-identity-is-legal", refused("agent:josé") is None)
 
+    # The predicate is splitlines+isprintable on the RAW value, not a category
+    # list -- these rows are exactly the ones the Cc+Cf enumeration missed. A
+    # full-range census puts the splitlines boundary set at
+    # {0A,0B,0C,0D,1C,1D,1E,85,2028,2029}; 8 of 10 are Cc, and U+2028/U+2029
+    # are the two Z ones the enumeration walked past.
+    check("identity-line-separator-refused",
+          refused("agent\u2028second") is not None)
+    check("identity-paragraph-separator-refused",
+          refused("agent\u2029second") is not None)
+    check("identity-nbsp-refused", refused("agent\xa0acceptor") is not None)
+    check("identity-lone-surrogate-refused",
+          refused("agent\ud800x") is not None)
+    # Edge whitespace is its own refusal, and the forcing row is pure ASCII:
+    # 'agent:worker-1 ' vs 'agent:worker-1' is display-identical and
+    # byte-distinct, which defeats the acceptor != worker separation check.
+    check("identity-trailing-space-refused",
+          refused("agent:worker-1 ") is not None)
+    check("identity-leading-space-refused",
+          refused(" agent:worker-1") is not None)
+    # Interior ASCII spaces stay legal (spaced human names), as do composed
+    # AND decomposed accents -- the battery the predicate was measured on.
+    check("identity-interior-space-is-legal",
+          refused("operator:John Smith") is None)
+    check("identity-decomposed-accent-is-legal",
+          refused("agent:Jose\u0301") is None)
+    # The claim is scoped: NOT display-uniqueness. CGJ is invisible AND
+    # printable -- the same category granularity that admits the combining
+    # acute above -- so it passes, disclosed in the docstring and deferred to
+    # es#150's structured record. Deleting this row would let the docstring
+    # claim drift back to 'display-unique' unchallenged.
+    check("identity-invisible-but-printable-residual-is-disclosed-not-caught",
+          refused("agent:x\u034fy") is None)
+
     for field, kwargs in (
             ("steward", {"steward_ref": "a\nb", "operator_ref": "op"}),
             ("operator", {"steward_ref": "st", "operator_ref": "a\nb"})):
@@ -2159,14 +2192,37 @@ def test_hard_link_is_reported_not_silent(workspace: Path) -> None:
     check("hard-link-refusal-discloses-the-limit",
           refusal is not None
           and "MULTIPLY LINKED" in refusal and "CANNOT see" in refusal)
+    # the refusal names the QUALIFIED spelling: this obligation is not the
+    # boundary judgement, and its ack must not look like one
+    check("hard-link-refusal-names-the-linked-token",
+          refusal is not None and "linked:docs/alias.txt" in refusal)
+    # A BARE ack no longer discharges a link obligation: 'the operator
+    # authorised this path' and 'I found the other name and checked where it
+    # points' are different judgements, and the cheaper one used to absorb
+    # the dearer one under the shared path key. This assertion changed
+    # DELIBERATELY (it pinned the bare-ack discharge when the two kinds
+    # shared a key); the surface is #143's own unreleased one.
+    try:
+        acceptor.record_verdict(
+            "PASS", acceptor_id="agent:acceptor",
+            assurance_tier="declared-role-separation", reason="done",
+            scope_ack=["docs/alias.txt"])
+        check("hard-link-bare-ack-does-not-discharge", False)
+    except AcceptanceRefused:
+        check("hard-link-bare-ack-does-not-discharge", True)
     try:
         landed = acceptor.record_verdict(
             "PASS", acceptor_id="agent:acceptor",
             assurance_tier="declared-role-separation", reason="done",
-            scope_ack=["docs/alias.txt"])
+            scope_ack=["linked:docs/alias.txt"])
     except (AcceptanceRefused, IllegalTransition):
         landed = None
-    check("hard-link-is-dischargeable-by-ack", isinstance(landed, int))
+    check("hard-link-is-dischargeable-by-linked-ack", isinstance(landed, int))
+    final, _ = acceptor.store.load_latest()
+    check("hard-link-ack-recorded-in-qualified-spelling",
+          any(n.startswith("scope-ack by agent:acceptor: ")
+              and "linked:docs/alias.txt" in n
+              for n in final["state"]["notes"]))
 
 
 def test_ordinary_artifact_is_not_multiply_linked(workspace: Path) -> None:
@@ -2374,6 +2430,342 @@ def test_empty_scope_declares_nothing_and_flags_nothing(workspace: Path) -> None
     check("empty-scope-pass-accepted", isinstance(revision, int))
 
 
+def test_normalize_relpath_dot_segment_case_table(workspace: Path) -> None:
+    """'.' SEGMENTS collapse to a fixed point; '..' and in-name dots do not.
+
+    The terminal-'/.'  rows are the change; the untouched rows are the
+    boundary that keeps NT-only trailing-dot filename semantics out of a
+    cross-platform lexical normaliser. 'docs/.//' is the fixed-point row:
+    the terminal-dot rule exposes a spelling the separator rule must see
+    again."""
+    from custody_mission import _normalize_relpath
+    cases = [
+        ("docs/x.txt/.", "docs/x.txt"),
+        ("docs/.", "docs"),
+        ("docs/./.", "docs"),
+        ("docs/.//", "docs"),
+        ("./docs/x.txt", "docs/x.txt"),
+        ("docs/./x.txt", "docs/x.txt"),
+        ("././docs", "docs"),
+        (".", ""),
+        ("./", ""),
+        ("./.", ""),
+        # untouched: a dot INSIDE a final segment name is a legal character
+        ("weird.", "weird."),
+        ("docs/weird.", "docs/weird."),
+        ("a..b/x", "a..b/x"),
+        ("docs/.../x", "docs/.../x"),
+        # '..' is never collapsed -- the resolver refuses it, the pattern
+        # side discloses it, and folding it here would be resolution
+        ("docs/../x", "docs/../x"),
+    ]
+    for raw, expected in cases:
+        check(f"normrel-{raw!r}", _normalize_relpath(raw) == expected)
+
+
+def test_terminal_dot_spelling_agrees_with_the_resolver(
+        workspace: Path) -> None:
+    """Lexical and resolver disagreed on a terminal '/.', in both directions.
+
+    Receipt side (the reported row, false FLAG -- safe, but noise): a receipt
+    spelled 'docs/x.txt/.' names the file 'docs/x.txt' to the resolver while
+    the old normaliser kept the dot, so scope.in=['docs/*.txt'] read its own
+    in-scope write as outside the boundary.
+
+    Pattern side (the mirror row the derivation hunted down, false CLEAN --
+    the priority flip): a scope.out entry carrying one '/.' spelling
+    compiled to a regex no normalized receipt path can ever match, silently
+    disabling a boundary the operator wrote -- and
+    `uncompared_scope_entries` did not list it, so nothing disclosed the
+    nothing."""
+    m = open_mission(workspace, "m-dot", "Dotted.",
+                     scope_in=["docs/*.txt"], scope_out=["secrets/**/."])
+    m.approve()
+    m.record_effect("docs/x.txt/.", "in scope", "dot-1")
+    m.record_effect("secrets/leak.env", "excluded", "dot-2")
+    findings = [(f["artifact_path"], f["reason"])
+                for f in m.scope_consistency()]
+    check("terminal-dot-receipt-is-not-false-flagged",
+          ("docs/x.txt/.", "outside scope.in") not in findings)
+    check("terminal-dot-exclusion-is-not-silently-disabled",
+          ("secrets/leak.env", "matches scope.out") in findings)
+
+
+def test_whole_workspace_include_is_disclosed_not_wedged(
+        workspace: Path) -> None:
+    """scope.in=['./'] is a natural spelling of 'the whole workspace is in
+    scope' -- the include-side twin of the terminal-dot exclusion row, and
+    stronger against the 'no honest manifest contains that' objection. It
+    normalizes to the EMPTY path, which no receipt ever spells, so compiling
+    it wedges every close behind a boundary that permits everything. Demoted
+    to uncompared instead: the declared meaning (nothing is outside) and the
+    disclosure (no machine checked it) are both delivered."""
+    from custody_mission import uncompared_scope_entries
+    m = open_mission(workspace, "m-dotslash", "Everything in scope.",
+                     scope_in=["./"])
+    m.approve()
+    m.record_effect("anything/x.py", "work", "ds-1")
+    check("dot-slash-include-flags-nothing", m.scope_consistency() == [])
+    latest, _ = m.store.load_latest()
+    disclosed = uncompared_scope_entries(latest["manifest"])
+    check("dot-slash-include-is-disclosed",
+          disclosed["in"] == ["./"] and disclosed["in_comparison_disabled"])
+    m.begin_verification()
+    acceptor = Mission.load(workspace, actor="agent:acceptor")
+    # a regression here must read as FAIL, not abort the registry mid-run
+    try:
+        revision = acceptor.record_verdict(
+            "PASS", acceptor_id="agent:acceptor",
+            assurance_tier="declared-role-separation", reason="done")
+    except AcceptanceRefused:
+        revision = None
+    check("dot-slash-include-does-not-wedge-the-close",
+          isinstance(revision, int))
+
+
+def test_trailing_newline_path_is_flagged_and_dischargeable(
+        workspace: Path) -> None:
+    """The '$' anchor matched one character too many, and the fix must bring
+    its own discharge recipe.
+
+    'safe.txt\\n' is a different file from 'safe.txt', and '$' matches just
+    before a trailing newline, so the glob said the undeclared file was
+    inside scope.in -- a false CLEAN one byte past the declaration. With \\Z
+    the receipt is flagged; the refusal shows the path JSON-quoted; and the
+    recipe it prints must WORK, including after a shell eats the outer
+    quotes and delivers backslash-n as two literal characters -- a refusal
+    whose printed exit does not discharge is the dead-end class this PR
+    already paid for twice."""
+    if os.name == "nt":
+        print("skip trailing-newline path (NT filenames cannot carry one)")
+        return
+    m = open_mission(workspace, "m-nl", "Anchored.", scope_in=["*.txt"])
+    m.approve()
+    m.record_effect("safe.txt\n", "x", "nl-1")
+    findings = [(f["artifact_path"], f["reason"])
+                for f in m.scope_consistency()]
+    check("trailing-newline-path-is-outside-scope-in",
+          findings == [("safe.txt\n", "outside scope.in")])
+    m.begin_verification()
+    acceptor = Mission.load(workspace, actor="agent:acceptor")
+    refusal = None
+    try:
+        acceptor.record_verdict("PASS", acceptor_id="agent:acceptor",
+                                 assurance_tier="declared-role-separation",
+                                 reason="done")
+    except AcceptanceRefused as exc:
+        refusal = str(exc)
+    check("trailing-newline-refusal-shows-json-quoting",
+          refusal is not None and json.dumps("safe.txt\n") in refusal)
+    check("trailing-newline-refusal-says-the-quoting-works",
+          refusal is not None and "itself accepted" in refusal)
+    # what the shell actually delivers from the printed recipe: outer quotes
+    # eaten, backslash-n as TWO literal characters
+    try:
+        landed = acceptor.record_verdict(
+            "PASS", acceptor_id="agent:acceptor",
+            assurance_tier="declared-role-separation", reason="done",
+            scope_ack=["safe.txt\\n"])
+    except (AcceptanceRefused, IllegalTransition):
+        # IllegalTransition is the regression shape where the FIRST verdict
+        # wrongly landed: it must read as FAIL here, not abort the registry
+        landed = None
+    check("printed-recipe-discharges-after-shell-mangling",
+          isinstance(landed, int))
+
+
+def test_scope_ack_json_spelling_case_table(workspace: Path) -> None:
+    """The JSON spelling is a LAST candidate, never a first: exact-path-first
+    is the settled tie-break, so a file literally named with a backslash-n
+    (legal on POSIX) keeps priority over the escape reading of the same
+    keystrokes. The collision row is the one that separates the rules."""
+    from custody_mission import _acknowledged_paths
+    nl = "safe.txt\n"
+    cases = [
+        # (label, outstanding, ack list, expected matched set)
+        ("bare-escape-decodes", {nl}, ["safe.txt\\n"], {nl}),
+        ("quoted-verbatim-decodes", {nl}, ['"safe.txt\\n"'], {nl}),
+        ("exact-first-backslash-collision", {"safe.txt/n", nl},
+         ["safe.txt\\n"], {"safe.txt/n"}),
+        ("real-newline-ack-still-exact", {nl}, [nl], {nl}),
+        ("decode-that-names-nothing-is-inert", {"other.txt"},
+         ["safe.txt\\n"], set()),
+        ("embedded-quote-is-never-wrapped", {"a\nb"}, ['a"b\\n'], set()),
+        ("plain-acks-unchanged", {"secrets.env"}, ["secrets.env"],
+         {"secrets.env"}),
+    ]
+    for label, outstanding, ack, expected in cases:
+        got = _acknowledged_paths(ack, set(outstanding))
+        check(f"json-ack-{label}", got == expected)
+
+
+def test_link_count_probes_only_inside_the_workspace(
+        workspace: Path) -> None:
+    """The raw stat probed wherever a forged receipt pointed.
+
+    `self.workspace / rel` with an ABSOLUTE rel ignores the workspace
+    entirely (Path join semantics), so acceptance stat-probed arbitrary
+    filesystem paths named by a mutable receipt file -- an information-probe
+    surface -- and could report MULTIPLY LINKED about bytes that were never
+    the receipted artifact. And a forged rel of '.' resolves to the
+    workspace root, whose st_nlink >= 2 on POSIX by construction: a false
+    claim about a directory, which is what the S_ISREG gate refuses."""
+    m = open_mission(workspace, "m-probe", "Probed.", scope_in=["docs/**"])
+    m.approve()
+    m.record_effect("docs/real.md", "x", "pr-1")
+    receipt_path = m.store.receipt_path("pr-1")
+    record = json.loads(receipt_path.read_text(encoding="utf-8"))
+
+    def forge(path):
+        record["artifact_path"] = path
+        receipt_path.write_text(
+            json.dumps(record, indent=1, sort_keys=True) + "\n",
+            encoding="utf-8")
+
+    # the chained note still says docs/real.md, so scope comparison is
+    # unaffected; the link probe is what the forged spelling reaches
+    check("workspace-root-is-not-multiply-linked",
+          m._link_count(".") is None)
+    check("absolute-path-is-not-probed",
+          m._link_count("/etc/passwd") is None)
+    check("escaping-path-is-not-probed",
+          m._link_count("../outside.txt") is None)
+    forge("/etc/passwd")
+    check("forged-absolute-receipt-yields-no-link-finding",
+          all(f["reason"] != _MULTIPLY_LINKED_REASON()
+              for f in m.scope_consistency()))
+
+
+def _MULTIPLY_LINKED_REASON():
+    from custody_mission import _MULTIPLY_LINKED
+    return _MULTIPLY_LINKED
+
+
+def test_symlink_loop_cannot_crash_acceptance(workspace: Path) -> None:
+    """A symlink loop is attacker-influenceable filesystem state, and
+    `Path.resolve` raises RuntimeError on one (CPython 3.11: 'RuntimeError:
+    Symlink loop') -- an uncaught raise on the acceptance path is a denial
+    of service by exactly the tampering the comparison exists to catch.
+    RuntimeError therefore joins the caught set; the mission still refuses
+    or completes on the merits, it never crashes."""
+    m = open_mission(workspace, "m-loop", "Looped.", scope_in=["docs/**"])
+    m.approve()
+    m.record_effect("docs/x.txt", "x", "lp-1")
+    # replace docs/ with half of a docs <-> other loop AFTER the write
+    shutil.rmtree(workspace / "docs")
+    try:
+        os.symlink("other", workspace / "docs")
+        os.symlink("docs", workspace / "other")
+    except (OSError, NotImplementedError, AttributeError):
+        print("skip symlink-loop (symlinks unavailable on this host)")
+        return
+    check("loop-link-count-is-unknowable", m._link_count("docs/x.txt") is None)
+    try:
+        findings = m.scope_consistency()
+        check("loop-scope-consistency-does-not-crash", True)
+    except Exception:
+        check("loop-scope-consistency-does-not-crash", False)
+        return
+    m.begin_verification()
+    acceptor = Mission.load(workspace, actor="agent:acceptor")
+    try:
+        acceptor.record_verdict("PASS", acceptor_id="agent:acceptor",
+                                 assurance_tier="declared-role-separation",
+                                 reason="done",
+                                 scope_ack=[p for f in findings
+                                            for p in f["violating_paths"]])
+        check("loop-acceptance-does-not-crash", True)
+    except AcceptanceRefused:
+        # refusing on the merits is a legal outcome; crashing is not
+        check("loop-acceptance-does-not-crash", True)
+    except Exception:
+        check("loop-acceptance-does-not-crash", False)
+
+
+def test_link_ack_is_categorical(workspace: Path) -> None:
+    """The link ack acknowledges the CONDITION -- another name exists and the
+    acceptor went and looked -- not a particular st_nlink value. Settled
+    explicitly rather than left implied: a third name (count 2 -> 3) does
+    not create a new obligation, because the judgement recorded is about the
+    condition, and the finding never keyed on the number."""
+    m = open_mission(workspace, "m-cat", "Counted.",
+                     scope_in=["docs/**"])
+    m.approve()
+    (workspace / "docs").mkdir(parents=True, exist_ok=True)
+    (workspace / "elsewhere").mkdir(exist_ok=True)
+    (workspace / "docs" / "a.txt").write_text("x", encoding="utf-8")
+    try:
+        os.link(workspace / "docs" / "a.txt",
+                workspace / "elsewhere" / "b.txt")
+        os.link(workspace / "docs" / "a.txt",
+                workspace / "elsewhere" / "c.txt")
+    except (OSError, NotImplementedError, AttributeError):
+        print("skip categorical-link (hard links unavailable on this host)")
+        return
+    m.record_effect("docs/a.txt", "y", "cat-1")
+    findings = m.scope_consistency()
+    check("three-name-artifact-has-one-link-obligation",
+          [f.get("link_count") for f in findings] == [3])
+    m.begin_verification()
+    acceptor = Mission.load(workspace, actor="agent:acceptor")
+    try:
+        landed = acceptor.record_verdict(
+            "PASS", acceptor_id="agent:acceptor",
+            assurance_tier="declared-role-separation", reason="done",
+            scope_ack=["linked:docs/a.txt"])
+    except AcceptanceRefused:
+        landed = None
+    check("one-linked-ack-discharges-regardless-of-count",
+          isinstance(landed, int))
+
+
+def test_same_path_boundary_and_link_are_two_obligations(
+        workspace: Path) -> None:
+    """One path, two findings, two judgements, two acks. The bare ack alone
+    used to discharge both; now each kind must be acknowledged in its own
+    spelling, in either order, in one accept."""
+    m = open_mission(workspace, "m-two", "Doubled.",
+                     scope_out=["docs/**"])
+    m.approve()
+    (workspace / "docs").mkdir(parents=True, exist_ok=True)
+    (workspace / "keep").mkdir(exist_ok=True)
+    (workspace / "docs" / "a.txt").write_text("x", encoding="utf-8")
+    try:
+        os.link(workspace / "docs" / "a.txt", workspace / "keep" / "b.txt")
+    except (OSError, NotImplementedError, AttributeError):
+        print("skip two-obligation (hard links unavailable on this host)")
+        return
+    m.record_effect("docs/a.txt", "y", "two-1")
+    reasons = sorted(f["reason"] for f in m.scope_consistency())
+    check("both-findings-exist",
+          reasons == sorted(["matches scope.out", _MULTIPLY_LINKED_REASON()]))
+    m.begin_verification()
+    acceptor = Mission.load(workspace, actor="agent:acceptor")
+    for label, acks in (
+            ("bare-only", ["docs/a.txt"]),
+            ("linked-only", ["linked:docs/a.txt"])):
+        try:
+            acceptor.record_verdict(
+                "PASS", acceptor_id="agent:acceptor",
+                assurance_tier="declared-role-separation", reason="done",
+                scope_ack=acks)
+            check(f"two-obligation-{label}-is-not-enough", False)
+        except AcceptanceRefused:
+            check(f"two-obligation-{label}-is-not-enough", True)
+        except IllegalTransition:
+            # the regression shape where an EARLIER attempt wrongly landed:
+            # FAIL, but never abort the registry
+            check(f"two-obligation-{label}-is-not-enough", False)
+    try:
+        landed = acceptor.record_verdict(
+            "PASS", acceptor_id="agent:acceptor",
+            assurance_tier="declared-role-separation", reason="done",
+            scope_ack=["docs/a.txt", "linked:docs/a.txt"])
+    except (AcceptanceRefused, IllegalTransition):
+        landed = None
+    check("two-obligation-both-acks-discharge", isinstance(landed, int))
+
+
 TESTS = [
     test_scope_entry_classification_table,
     test_uncompared_scope_entries_are_reported,
@@ -2416,6 +2808,15 @@ TESTS = [
     test_whitespace_bearing_path_can_be_acknowledged,
     test_scope_ack_whitespace_case_table,
     test_empty_scope_declares_nothing_and_flags_nothing,
+    test_normalize_relpath_dot_segment_case_table,
+    test_terminal_dot_spelling_agrees_with_the_resolver,
+    test_whole_workspace_include_is_disclosed_not_wedged,
+    test_trailing_newline_path_is_flagged_and_dischargeable,
+    test_scope_ack_json_spelling_case_table,
+    test_link_count_probes_only_inside_the_workspace,
+    test_symlink_loop_cannot_crash_acceptance,
+    test_link_ack_is_categorical,
+    test_same_path_boundary_and_link_are_two_obligations,
     test_open_creates_draft_r1,
     test_pathless_load_single_active,
     test_load_refuses_zero_and_multiple,

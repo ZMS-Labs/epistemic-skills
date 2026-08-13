@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import stat
 import sys
 import unicodedata
 from datetime import datetime, timezone
@@ -108,30 +109,66 @@ def _refuse_unprintable_identity(value, field: str) -> None:
     live). `_refuse_reserved_note` exists precisely so an auditor can trust
     those lines, and the identity field walked around it.
 
-    The guard refuses the CLASS -- Cc (controls: newline, CR, tab, ESC, DEL)
-    and Cf (invisible format characters) -- not reserved content. Routing
-    identities through the reserved-note check instead would still admit a
-    harmless-looking newline (which breaks the one-line note structure) and
-    an ANSI escape (which rewrites the terminal on every resume), while
-    falsely refusing an identity that merely CONTAINS reserved-looking text,
-    which is safe because interpolation is mid-line. Cf is refused because
-    two identities differing only by an invisible character are
-    display-identical -- 'WHO took responsibility' must not depend on bytes a
-    reader cannot see. Non-strings and empties are left to their existing
-    failure modes; this guard owns exactly the character class."""
+    The first guard enumerated categories -- Cc and Cf -- and enumeration is
+    the defect's own shape: a full-range census found the `splitlines`
+    boundary set is {0A,0B,0C,0D,1C,1D,1E,85,2028,2029}, and 8 of the 10 are
+    Cc, which is why the enumerated rule caught most of them and missed
+    exactly the two Z ones (U+2028, U+2029 -- line structure the category
+    list never named). Extending the list by the two categories the last
+    reviewer happened to find would be the same failure again. So the rule is
+    now a PREDICATE that fails closed on the unenumerated class:
+
+        len(value.splitlines()) > 1  or  not value.isprintable()
+
+    on the RAW value -- never NFKC first, which maps NBSP to a plain space
+    and launders the confusable before the check. `isprintable()` refuses
+    Cc, Cf, the Z line/paragraph separators, every non-ASCII space, lone
+    surrogates (which persist to disk via ensure_ascii and then crash any
+    utf-8-strict reader), private-use and unassigned -- with zero false
+    refusals across the realistic battery: ASCII, composed AND decomposed
+    accents, CJK, emoji, spaced human names. Both clauses are load-bearing
+    and each looks redundant next to the other: 'a\\n' (trailing) leaves
+    splitlines() at length 1 and is caught only by isprintable; 'a\\tb' and
+    an ANSI escape do not split at all.
+
+    EDGE WHITESPACE is refused separately, and the row that forces it is
+    pure ASCII: 'agent:worker-1 ' (trailing space) versus 'agent:worker-1'
+    is a display-identical, byte-distinct pair that defeats the casefolded
+    acceptor != worker self-certification check, and both clauses above
+    accept it. Interior spaces stay legal -- 'John Smith' is an identity;
+    an identity that starts or ends with one is either a paste error or
+    that pair.
+
+    What this guard now CLAIMS: no line structure, no control effects, no
+    Cf-class invisibles, no invisible edge whitespace. It does NOT claim
+    display-uniqueness: invisible-but-printable characters -- CGJ (U+034F),
+    variation selectors, Hangul fillers -- pass every candidate rule at this
+    granularity, because the same category holds the combining acute in
+    'José'. That residual is real, disclosed, and filed (es#167, riding
+    es#150's structured-record direction), exactly as the reserved-note
+    guard already defers homoglyphs. Non-strings and empties are left to
+    their existing failure modes; this guard owns exactly the character
+    class."""
     if not isinstance(value, str):
         return
-    bad = sorted({c for c in value
-                  if unicodedata.category(c) in ("Cc", "Cf")})
-    if bad:
+    bad = sorted({c for c in value if not c.isprintable()})
+    if bad or len(value.splitlines()) > 1:
         raise CustodyError(
-            f"{field} may not contain control or invisible format "
-            "characters: an identity is one visible line, interpolated into "
-            "machine-written notes and display surfaces, where an embedded "
-            "newline forges a machine-note line and an escape sequence "
-            "rewrites the terminal. Supply the identity without them. "
+            f"{field} may not contain control, separator, or invisible "
+            "format characters: an identity is one visible line, "
+            "interpolated into machine-written notes and display surfaces, "
+            "where an embedded newline forges a machine-note line and an "
+            "escape sequence rewrites the terminal. Supply the identity "
+            "without them. "
             "Offending: " + ", ".join(repr(c) for c in bad)
             + f" in {value!r}")
+    if value != value.strip():
+        raise CustodyError(
+            f"{field} may not begin or end with whitespace: "
+            f"{value!r} and {value.strip()!r} are display-identical but "
+            "byte-distinct, so an edge space forges a second identity that "
+            "reads as the first -- including past the acceptor/worker "
+            "separation check. Supply the identity without edge whitespace.")
 
 
 def now_utc() -> str:
@@ -162,15 +199,44 @@ def _ascii_case_fold(text: str) -> str:
 
 def _normalize_relpath(path: str) -> str:
     """Spelling differences that cannot denote two different files:
-    separator flavor, repeated separators, a leading './', a trailing '/'.
-    ('..' never appears -- _resolve_artifact_path rejects it at the door.)"""
+    separator flavor, repeated separators, '.' SEGMENTS (leading './',
+    interior '/./', terminal '/.', and iterated mixes of them), a trailing
+    '/'. ('..' never appears in receipted paths -- _resolve_artifact_path
+    rejects it at the door; on the pattern side a '..' segment is demoted to
+    uncompared by `_is_matchable_pattern`.)
+
+    '.' segments ONLY: a trailing dot inside a final segment NAME ('weird.')
+    is a legal filename character everywhere this runs, and NT-only
+    filesystem semantics must not leak into a cross-platform lexical
+    normaliser. The collapse runs to a fixed point because each rule can
+    expose another's pattern ('docs/.//' needs the doubled-separator rule
+    again after the terminal-dot rule fires).
+
+    The terminal '/.' rule earns its place twice over. On the receipt side
+    the resolver treats 'docs/x.txt/.' and 'docs/x.txt' as one path while
+    the lexical normaliser kept them distinct -- a false FLAG, dischargeable,
+    the safe direction. The row that flips the priority is its MIRROR on the
+    pattern side: a scope.out entry carrying one '/.' spelling compiled to a
+    regex no normalized receipt path can ever match, silently disabling a
+    boundary the operator wrote, with `uncompared_scope_entries` not listing
+    it -- silent-inert, the exact class that surface exists to end. A bare
+    '.' (or './', or './.') normalizes to the EMPTY path, which names the
+    workspace itself, not any receiptable artifact -- `_is_matchable_pattern`
+    demotes those to disclosed."""
     norm = path.replace("\\", "/")
-    while "//" in norm:
-        norm = norm.replace("//", "/")
-    while "/./" in norm:
-        norm = norm.replace("/./", "/")
-    while norm.startswith("./"):
-        norm = norm[2:]
+    prev = None
+    while norm != prev:
+        prev = norm
+        while "//" in norm:
+            norm = norm.replace("//", "/")
+        while "/./" in norm:
+            norm = norm.replace("/./", "/")
+        while norm.startswith("./"):
+            norm = norm[2:]
+        if norm.endswith("/."):
+            norm = norm[:-1]
+    if norm == ".":
+        return ""
     return norm.rstrip("/") or norm
 
 
@@ -346,17 +412,27 @@ def _is_matchable_pattern(entry: str) -> bool:
     if any(c in norm for c in "{}[]"):
         return False
     # A `..` SEGMENT survives normalization -- `_normalize_relpath` collapses
-    # `./` and `//` but not `..` -- while every receipted artifact path is
-    # normalized before comparison. So `docs/../secrets/**` compiles to a regex
-    # that can only match the literal spelling `docs/../secrets/...`, which no
-    # normalized path ever produces: it is a boundary an operator wrote as a
-    # traversal, and it binds nothing.
+    # `.` segments and `//` but not `..` -- while every receipted artifact
+    # path is normalized before comparison. So `docs/../secrets/**` compiles
+    # to a regex that can only match the literal spelling
+    # `docs/../secrets/...`, which no normalized path ever produces: it is a
+    # boundary an operator wrote as a traversal, and it binds nothing.
     #
     # SEGMENT, not substring: `a..b/**` and `docs/.../x` are legal names whose
     # dots are inside a segment, and they match normally. A substring test
     # demotes both -- checked against the case table, where it is the only
     # difference between the two candidates.
-    return ".." not in _norm_scope_segments(norm)
+    segments = _norm_scope_segments(norm)
+    if segments == [""]:
+        # './' (and '.', './.') normalize to the EMPTY path: the workspace
+        # itself, which no receipt path ever spells. 'the whole workspace is
+        # in scope' is a natural thing to DECLARE and an impossible thing to
+        # match against per-artifact paths, so the entry is disclosed as
+        # uncompared -- for scope.in this disables the absence inference
+        # entirely (everything is inside a declared-universal include), which
+        # is both the declared meaning and the safe direction.
+        return False
+    return ".." not in segments
 
 
 def _norm_scope_segments(norm: str) -> list[str]:
@@ -477,7 +553,20 @@ def _acknowledged_paths(scope_ack, violating: set[str]) -> set[str]:
     Paste tolerance survives for the case it was written for -- an acceptor
     copying `secrets.env` out of a handoff note with a stray trailing space is
     still matched -- because the stripped form is tried when the exact one
-    misses. An ack naming nothing at all matches nothing and is inert."""
+    misses. An ack naming nothing at all matches nothing and is inert.
+
+    THE PRINTED RECIPE MUST WORK, so the displayed spelling is also an ack.
+    `_display_path` shows a whitespace-bearing path JSON-quoted --
+    `"safe.txt\\n"` -- and every shell delivers that argument with the outer
+    quotes eaten and the backslash-n as two literal characters, which
+    `_norm_path` then folds into `safe.txt/n`: an ack that discharges
+    nothing, printed by the very refusal that demands it (the defect-#25
+    shape, reproduced in the fix for the `$` anchor). So a JSON decode of the
+    ack -- quoted verbatim, or bare with the quotes the shell ate restored --
+    is tried LAST, only after the exact and stripped spellings named nothing:
+    a file literally named with a backslash-n keeps priority, per the
+    exact-first tie-break above. An ack that is not valid JSON when so read
+    simply contributes no extra candidate."""
     from custody_gate import _norm_path as _np
     matched: set[str] = set()
     for raw in scope_ack or ():
@@ -487,10 +576,121 @@ def _acknowledged_paths(scope_ack, violating: set[str]) -> set[str]:
         # A whitespace-ONLY ack is not dropped: `"   "` is a legal filename,
         # and dropping it would recreate this very dead end for exactly the
         # path least likely to be noticed.
-        for candidate in (_np(raw), _np(stripped) if stripped else None):
+        for candidate in (_np(raw), _np(stripped) if stripped else None,
+                          _json_decoded_ack(raw)):
             if candidate is not None and candidate in violating:
                 matched.add(candidate)
                 break
+    return matched
+
+
+def _json_decoded_ack(raw: str) -> str | None:
+    """The JSON reading of an ack normalised like every other candidate, or
+    None when it has none."""
+    from custody_gate import _norm_path as _np
+    decoded = _json_decoded_ack_text(raw)
+    return _np(decoded) if decoded is not None else None
+
+
+def _json_decoded_ack_text(raw: str) -> str | None:
+    """The JSON reading of an ack as TEXT, or None when it has none.
+
+    Quoted verbatim ('"safe.txt\\n"') decodes directly; the bare form
+    ('safe.txt\\n', outer quotes eaten by the shell) decodes after the quotes
+    are restored -- refused when the raw text contains an unescaped '"',
+    because restoring quotes around it would silently truncate at the
+    embedded one."""
+    text = raw
+    if not (len(text) >= 2 and text.startswith('"') and text.endswith('"')):
+        if '"' in text:
+            return None
+        text = f'"{text}"'
+    try:
+        decoded = json.loads(text)
+    except ValueError:
+        return None
+    return decoded if isinstance(decoded, str) else None
+
+
+# Obligation kinds: what an acknowledgement is FOR. A boundary crossing and a
+# multiply-linked disclosure are different judgements -- "I checked the
+# operator authorised this path" versus "I found the other name and checked
+# where it points" -- and one ack used to discharge both at once, so the
+# cheaper judgement silently absorbed the dearer one.
+_KIND_BOUNDARY = "boundary"
+_KIND_LINKED = "linked"
+_LINKED_ACK_PREFIX = "linked:"
+
+
+def _obligation_kind(reason: str) -> str:
+    """Map a finding's reason to the obligation kind an ack must name.
+
+    Unknown reasons map to THEMSELVES, and no token form ever discharges
+    them: a new finding kind added without its ack shape fails CLOSED (the
+    PASS stays refused) instead of failing open through the bare path key --
+    which is also why a per-kind bespoke flag (--link-ack) was rejected: a
+    noun list of flags cannot terminate, and each new kind would ship
+    without its flag and discharge through the path."""
+    if reason in ("matches scope.out", "outside scope.in"):
+        return _KIND_BOUNDARY
+    if reason == _MULTIPLY_LINKED:
+        return _KIND_LINKED
+    return reason
+
+
+def _ack_token(path: str, kind: str) -> str | None:
+    """The --scope-ack spelling that discharges this obligation, display-
+    quoted, or None for a kind no token form can discharge."""
+    if kind == _KIND_BOUNDARY:
+        return _display_path(path)
+    if kind == _KIND_LINKED:
+        return _display_path(_LINKED_ACK_PREFIX + path)
+    return None
+
+
+def _acknowledged_obligations(scope_ack,
+                              obligations: set[tuple[str, str]]
+                              ) -> set[tuple[str, str]]:
+    """Which (path, kind) obligations the acceptor's acks actually discharge.
+
+    A bare ack discharges only BOUNDARY obligations; a link obligation needs
+    the qualified 'linked:PATH' spelling. The qualifier is read only after
+    the raw text failed as a literal boundary path, because 'linked:name' is
+    a creatable filename (NTFS alternate-data-stream syntax) and
+    exact-path-first is the tie-break `_acknowledged_paths` already settled.
+    That same collision makes the RECORD half ('scope-ack by X: linked:p')
+    permanently ambiguous between a qualifier and a literal path -- the
+    record cannot be made unambiguous by token syntax at all; that is
+    es#150's structured {path, kind} field, deliberately not invented here.
+
+    The link ack is CATEGORICAL: it acknowledges that another name exists
+    and the acceptor went and looked, not a particular st_nlink value -- a
+    count change between the finding and the ack creates no new obligation,
+    because the judgement acknowledged ('I found the other names and checked
+    where they point') is about the condition, not the number."""
+    boundary = {p for p, k in obligations if k == _KIND_BOUNDARY}
+    linked = {p for p, k in obligations if k == _KIND_LINKED}
+    matched: set[tuple[str, str]] = set()
+    for raw in scope_ack or ():
+        if not raw:
+            continue
+        hit = _acknowledged_paths([raw], boundary)
+        if hit:
+            matched |= {(p, _KIND_BOUNDARY) for p in hit}
+            continue
+        qualified = None
+        if raw.startswith(_LINKED_ACK_PREFIX):
+            qualified = raw[len(_LINKED_ACK_PREFIX):]
+        else:
+            # the displayed token for a whitespace-bearing linked path is
+            # JSON-quoted WHOLE ('"linked:a b.txt"'), so the qualifier can
+            # arrive inside the quoting
+            decoded = _json_decoded_ack_text(raw)
+            if decoded is not None and decoded.startswith(_LINKED_ACK_PREFIX):
+                qualified = decoded[len(_LINKED_ACK_PREFIX):]
+        if qualified is not None:
+            hit = _acknowledged_paths([qualified], linked)
+            matched |= {(p, _KIND_LINKED) for p in hit}
     return matched
 
 
@@ -1284,11 +1484,39 @@ class Mission:
         `os.stat` follows symlinks deliberately: the question is how many names
         the BYTES have, and a symlinked spelling of a hard-linked file is the
         same exposure. A vanished or unreadable artifact answers None -- unknown
-        is never reported as one."""
+        is never reported as one.
+
+        The probe stats the target of the SAME `_resolve_artifact_path` the
+        writer used -- not the raw spelling, and not `_norm_path`, which
+        case-folds on NT and would name a nonexistent spelling on a
+        case-sensitive directory. The raw stat had two holes, both measured: a
+        forged receipt carrying an absolute `artifact_path` made
+        `self.workspace / rel` IGNORE the workspace entirely (Path join with
+        an absolute right side replaces the base), so acceptance stat-probed
+        arbitrary paths outside the workspace -- an information-probe surface
+        -- and could report a multiply-linked claim about bytes that were
+        never the receipted artifact. `_resolve_artifact_path` refuses both
+        the absolute and the escaping spelling at the door.
+
+        `RuntimeError` is in the caught set because `Path.resolve` raises it
+        on a symlink loop (verified on CPython 3.11: 'RuntimeError: Symlink
+        loop'), and a loop is attacker-influenceable filesystem state -- an
+        uncaught raise here is a crash on the acceptance path, the
+        denial-of-service class `_load_receipt`'s doctrine already forbids.
+        The `S_ISREG` gate exists for the forged `artifact_path` of '.': it
+        resolves to the workspace root, whose `st_nlink >= 2` on POSIX by
+        construction, and reporting the workspace root as MULTIPLY LINKED is
+        a false claim about a directory, not a disclosure about an artifact.
+        Every legitimately receipted artifact is a regular file (the writer
+        only ever `write_bytes`), so None for anything else is 'unknowable',
+        never a suppressed finding."""
         try:
-            return os.stat(self.workspace / rel).st_nlink
-        except (OSError, ValueError):
+            st = os.stat(self._resolve_artifact_path(rel))
+        except (CustodyError, OSError, ValueError, RuntimeError):
             return None
+        if not stat.S_ISREG(st.st_mode):
+            return None
+        return st.st_nlink
 
     def scope_consistency(self) -> list[dict]:
         """Receipted artifacts falling OUTSIDE declared scope.in, or INSIDE
@@ -1532,10 +1760,20 @@ class Mission:
                 # ack, with the strip as a named fallback rather than a blanket
                 # rule (see its docstring for the row that refutes both the
                 # strip-everything and the strip-nothing repairs).
-                violating = {p for f in drifted for p in f["violating_paths"]}
-                acknowledged = _acknowledged_paths(scope_ack, violating)
-                outstanding = sorted(violating - acknowledged)
-                if outstanding:
+                # Obligations are keyed by (path, KIND), not by path alone. A
+                # boundary crossing and a multiply-linked disclosure demand
+                # different judgements from the acceptor, and under a bare
+                # path key one ack discharged both at once -- acknowledging
+                # the lexical crossing silently absorbed 'I found the other
+                # name and checked where it points', the dearer of the two.
+                obligations: set[tuple[str, str]] = set()
+                for f in drifted:
+                    kind = _obligation_kind(f["reason"])
+                    obligations |= {(p, kind) for p in f["violating_paths"]}
+                acknowledged = _acknowledged_obligations(scope_ack, obligations)
+                outstanding_obl = sorted(obligations - acknowledged)
+                if outstanding_obl:
+                    outstanding = sorted({p for p, _ in outstanding_obl})
                     mentioned = sorted(
                         p for p in outstanding
                         if any(_amendment_names(a.get("text", ""), p)
@@ -1550,11 +1788,11 @@ class Mission:
                     # comparison found ANOTHER NAME, not a violation. Saying so
                     # here is the whole disclosure -- the finding is otherwise
                     # indistinguishable from an exclusion match, and an acceptor
-                    # would acknowledge it without ever learning what to look at.
-                    linked = sorted({p for f in drifted
-                                     if f["reason"] == _MULTIPLY_LINKED
-                                     for p in f["violating_paths"]
-                                     if p in outstanding})
+                    # would acknowledge it without ever learning what to look
+                    # at. Its ack is the QUALIFIED spelling, so the cheaper
+                    # boundary judgement can never stand in for it.
+                    linked = sorted({p for p, k in outstanding_obl
+                                     if k == _KIND_LINKED})
                     link_note = (
                         " " + ", ".join(_display_path(p) for p in linked) + " "
                         + ("is" if len(linked) == 1 else "are")
@@ -1563,45 +1801,71 @@ class Mission:
                         "and a hard link is not a link to a path, so this "
                         "comparison CANNOT see the other name or tell you "
                         "whether it is inside scope.out -- find it before "
-                        "acknowledging." if linked else "")
+                        "acknowledging, and acknowledge it as linked:PATH."
+                        if linked else "")
                     # An ack must be typed to match EXACTLY, so a path whose
                     # whitespace the message hides is a path the acceptor
                     # cannot supply. Quoting is per path and only where it
                     # carries information, so the ordinary case -- and the
                     # `--scope-ack secrets.env` line callers assert on -- is
                     # unchanged.
-                    shown = [_display_path(p) for p in outstanding]
+                    rows = [(p, k, _ack_token(p, k))
+                            for p, k in outstanding_obl]
+                    tokens = [t for _, _, t in rows if t is not None]
+                    unackable = [(p, k) for p, k, t in rows if t is None]
+                    unackable_note = (
+                        " No acknowledgement form exists for: "
+                        + ", ".join(f"{_display_path(p)} ({k})"
+                                    for p, k in unackable)
+                        + " -- this finding kind fails closed; record FAIL or "
+                        "INCONCLUSIVE." if unackable else "")
+                    # the quoting note fires only when quoting actually
+                    # changed a token's spelling -- the linked: qualifier
+                    # alone is not quoting
+                    quoted = any(
+                        t is not None and t != (
+                            p if k == _KIND_BOUNDARY
+                            else _LINKED_ACK_PREFIX + p)
+                        for p, k, t in rows)
                     ws_note = (
                         " Paths shown in quotes carry whitespace that is part "
                         "of the NAME, not padding: supply them to --scope-ack "
-                        "exactly, whitespace included. (The quoting is JSON, "
-                        "shown to make the bytes visible -- it is not a shell "
-                        "quoting recipe.)"
-                        if any(s != p for s, p in zip(shown, outstanding))
-                        else "")
+                        "exactly, whitespace included. The quoting is JSON, "
+                        "shown to make the bytes visible -- and the quoted "
+                        "spelling is itself accepted, with or without its "
+                        "outer quotes, decoded only when the exact spelling "
+                        "names nothing."
+                        if quoted else "")
                     raise AcceptanceRefused(
-                        f"{len(outstanding)} path(s) crossed the declared "
-                        f"scope and are not acknowledged: "
-                        f"{', '.join(shown)}.{hint}{link_note}{ws_note} "
+                        f"{len(outstanding_obl)} finding(s) crossed the "
+                        f"declared scope and are not acknowledged: "
+                        f"{', '.join(tokens)}.{hint}{link_note}{ws_note}"
+                        f"{unackable_note} "
                         "Re-record the "
-                        "verdict acknowledging each path you have judged "
+                        "verdict acknowledging each finding you have judged "
                         "covered -- CLI: `accept ... "
-                        + " ".join(f"--scope-ack {s}" for s in shown)
+                        + " ".join(f"--scope-ack {t}" for t in tokens)
                         + "` -- or accept with FAIL/INCONCLUSIVE. A PASS would "
                         "assert a boundary the record contradicts.")
                 # The acknowledgement is a first-class chain fact, not a
                 # side effect: it names who judged what, so an auditor can see
                 # that the boundary was crossed AND that a distinct acceptor
                 # took responsibility for it.
-                # Only paths that were ACTUALLY outstanding are recorded. An
-                # ack naming something that was never a finding used to be
-                # written verbatim into the permanent note -- inert for the
-                # gate, but it pollutes the one record that says what the
-                # acceptor judged, which is the record's entire purpose.
-                # `_acknowledged_paths` only ever returns paths that WERE
-                # violating, so the intersection that used to filter this list
-                # now lives at the point of matching instead of here.
-                covered = sorted(acknowledged)
+                # Only obligations that were ACTUALLY outstanding are
+                # recorded. An ack naming something that was never a finding
+                # used to be written verbatim into the permanent note -- inert
+                # for the gate, but it pollutes the one record that says what
+                # the acceptor judged, which is the record's entire purpose.
+                # `_acknowledged_obligations` only ever returns obligations
+                # that WERE found, so the intersection that used to filter
+                # this list now lives at the point of matching instead of
+                # here. A linked discharge is recorded in its qualified
+                # spelling -- which a file named 'linked:...' makes
+                # permanently ambiguous as a RECORD; that ambiguity cannot be
+                # cured by token syntax and belongs to es#150's structured
+                # {path, kind} field.
+                covered = sorted(_ack_token(p, k) or p
+                                 for p, k in acknowledged)
                 scope_note = (f"scope-ack by {acceptor_id}: "
                               f"{', '.join(covered)}")
                 acked = self._write_next(latest, path,

@@ -201,9 +201,13 @@ def build_parser() -> argparse.ArgumentParser:
     # of the control itself.
     p_accept.add_argument("--scope-ack", action="append", default=[],
                           metavar="PATH",
-                          help="acknowledge one path that crossed the declared "
-                               "scope; repeatable. Each path in the refusal "
-                               "message needs its own --scope-ack.")
+                          help="acknowledge one finding that crossed the "
+                               "declared scope; repeatable. Each token in the "
+                               "refusal message needs its own --scope-ack: a "
+                               "bare PATH acknowledges a boundary crossing, "
+                               "linked:PATH acknowledges a multiply-linked "
+                               "disclosure (they are different judgements and "
+                               "neither discharges the other).")
     _add_text_flags(p_accept, "reason")
 
     p_clear = sub.add_parser("clear-fail", parents=[common])

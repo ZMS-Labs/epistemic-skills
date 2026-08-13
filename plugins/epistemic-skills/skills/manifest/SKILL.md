@@ -78,8 +78,13 @@ else.
 5. **Verify / Close** — `verify`, then acceptance by a DIFFERENT actor: a
    distinct session runs `accept` as itself (`--actor` must equal
    `--acceptor`). **If receipted work crossed the declared scope, a PASS is
-   refused until the acceptor acknowledges each crossing path explicitly:
-   `accept ... --scope-ack <path>` (repeatable).** An amendment MENTIONING the
+   refused until the acceptor acknowledges each finding explicitly:
+   `accept ... --scope-ack <path>` (repeatable).** Findings are acknowledged
+   BY KIND: a bare path acknowledges a boundary crossing, and a
+   MULTIPLY LINKED disclosure needs the qualified `--scope-ack linked:<path>`
+   — "the operator authorised this path" and "I found the other name and
+   checked where it points" are different judgements, and neither spelling
+   discharges the other. An amendment MENTIONING the
    path is a hint, not a discharge — a substring cannot tell a grant from a
    prohibition, so the judgement is the acceptor's and is recorded as theirs.
    The refusal message prints the exact flags to paste. Never accept work you

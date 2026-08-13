@@ -203,7 +203,74 @@ obligation. Worth settling explicitly rather than leaving implied.
 | E | FIX_HERE (semantics) → es#150 (record schema) | make the record half unambiguous by construction, not by token syntax |
 
 **Not riding along, to be filed:** control-character rejection at
-`record_effect` (a contract change, es#147 precedent) · the invisible-but-
-printable identity residual · the `command_regexes` `$` twin · the
-`PermissionError`/parent-mkdir adjacency · the NT pattern-side trailing-dot
-seam.
+`record_effect` (a contract change, es#147 precedent — already on file as
+es#153) · the invisible-but-printable identity residual (**filed: es#167**) ·
+the `command_regexes` `$` twin (**filed: es#168**) · the
+`PermissionError`/parent-mkdir adjacency (**filed: es#169**) · the NT
+pattern-side trailing-dot seam (**filed: es#170**).
+
+---
+
+## Implementation record — all five landed, blockers resolved as ruled
+
+Written after the fact; everything above is the point-in-time verdict and is
+left as written. Each blocker's resolution, with the check that pins it:
+
+**A** — predicate adopted verbatim on the raw value. The trailing-ASCII-space
+boundary is resolved by DECISION, not by scoping the claim down: edge
+whitespace is refused separately (`identity-trailing-space-refused`,
+`identity-leading-space-refused`), because `'agent:worker-1 '` defeats the
+acceptor≠worker check from pure ASCII and interior spaces ('John Smith')
+stay legal. The `repr` message shape is preserved
+(`identity-refusal-makes-the-invisible-visible` still pins `​`). The
+docstring claim is re-scoped to "no line structure, no control effects, no
+Cf-class invisibles, no invisible edge whitespace" — never display-unique —
+and the residual is pinned as ACCEPTED by
+`identity-invisible-but-printable-residual-is-disclosed-not-caught`, so the
+claim cannot drift back unchallenged. Residual filed as es#167.
+
+**B** — one token at the one compile site, `re.DOTALL` kept. The discharge
+recipe was proven BEFORE the anchor landed, as ruled: the JSON spelling the
+refusal prints is now itself a legal ack — quoted verbatim, or bare with the
+quotes the shell ate restored — tried strictly after the exact and stripped
+spellings, so a file literally named with a backslash-n keeps priority
+(`json-ack-exact-first-backslash-collision` is the separating row).
+End-to-end on a real newline-bearing receipt:
+`printed-recipe-discharges-after-shell-mangling`. The `command_regexes`
+twin is disclosed in SECURITY.md (operator-authored regexes keep the
+author's semantics). The suites were blind, so the change brought its own
+pins: 3 gate rows + 3 mission rows red against the pre-fix source.
+
+**C** — stats the target of the same `_resolve_artifact_path` the writer
+used. `RuntimeError` joined the caught set (the 3.11 'Symlink loop' raise,
+reproduced live on this host before writing the fix) and `S_ISREG` gates the
+probe. The absolute-path join hole (`workspace / '/etc/passwd'` discards the
+workspace) is what the negative control caught: `absolute-path-is-not-probed`
+and `workspace-root-is-not-multiply-linked` red pre-fix.
+
+**D** — '.' segments collapse to a fixed point in `_normalize_relpath`;
+'..' and in-name dots untouched (`normrel-'weird.'`, `normrel-'a..b/x'`).
+The ruled include-side row is in: `scope.in=['./']` normalizes to the empty
+path, is demoted to DISCLOSED by `_is_matchable_pattern`, and neither wedges
+the close nor goes silent (`dot-slash-include-*`, three rows).
+
+**E** — obligations keyed by `(path, kind)`: bare ack → boundary only,
+`linked:PATH` → link obligations, unknown kinds fail closed with the dead-end
+named in the message (no silent unreachable PASS). Exact-path-first survives:
+the qualifier is read only after the raw failed as a literal boundary path.
+The record half stays token-syntax and therefore stays ambiguous against a
+file named `linked:…` — deliberately NOT solved here; that is es#150's
+structured `{path, kind}` field, stated in the code. The second refuter's
+question is settled explicitly: the link ack is CATEGORICAL
+(`one-linked-ack-discharges-regardless-of-count`, st_nlink 3 under one ack).
+One shipped assertion changed deliberately: the bare-ack discharge of a link
+finding was the defect, so `hard-link-is-dischargeable-by-ack` became
+`hard-link-bare-ack-does-not-discharge` + `…-by-linked-ack`, reason recorded
+at the assertion.
+
+**Verification:** all 7 suites green (mission suite 388 checks). Negative
+control: pre-fix source with the new tests kept in place — 32 mission-suite
+rows + 3 gate rows red, spanning all five defects, and the registry runs to
+completion in BOTH states (two tests were hardened mid-control because the
+first pre-fix run ABORTED at an uncaught refusal, which would have read as
+absent — the exact trap the registry's own comments name).

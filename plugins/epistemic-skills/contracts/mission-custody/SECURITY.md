@@ -68,6 +68,24 @@ name has not been checked against any boundary. Find it (`fsutil hardlink list`
 on NTFS, `find -samefile` on POSIX) before acknowledging. An acknowledgement
 here records that a human looked, which is the only thing that is true.
 
+## Glob anchoring: `\Z` in the compiler, `$` residue in operator regexes
+
+Every glob this contract compiles (`scope.in`/`scope.out` comparison, guard
+`path_globs`, amendment discharge tokens) is anchored with `\Z`, never `$`:
+`$` also matches just before a trailing newline, so the glob `safe.txt`
+matched the distinct file `safe.txt\n` — a path one byte outside a
+declaration reading as inside it.
+
+`command_regexes` are the residue: they are **operator-authored Python
+regexes**, applied verbatim with `re.search`. A rule author who writes a
+trailing `$` gets Python's semantics, including the one-newline tolerance —
+rewriting an author's pattern would trade a documented seam for a silent
+divergence between what the author wrote and what runs. If a single trailing
+newline matters to a command guard, write `\Z` in the rule. This tolerance is
+disclosed here rather than patched because the pattern language belongs to
+the author; the globs are this contract's own language, so their compiler is
+where the guarantee lives.
+
 ## Stage-C hook: fail-open and guard-tamper residue
 
 The PreToolUse custody hook is an enforcement layer over convention, not a
