@@ -132,14 +132,27 @@ def _guard_glob_regex(glob: str) -> "re.Pattern[str]":
     disclosed in SECURITY.md rather than slipped in."""
     norm = _fold(_normalize_relpath(glob))
     if not norm:
-        # '', '.', './', '.\': normalization yields the EMPTY path -- the
-        # workspace itself -- and compiling '' produces a regex matching
-        # nothing, silently: an ARMED guard the operator believes covers
-        # everything, covering nothing at all. The workspace marker
-        # compiles to match every target -- the over-match direction (a
-        # false block names its rule and discharges by amend), and the one
-        # that also catches absolute respellings of workspace files.
-        return _glob_regex("**")
+        # '.', './', '.\', './.': normalization yields the EMPTY path --
+        # the workspace itself -- and compiling '' produces a regex
+        # matching nothing, silently: an ARMED guard the operator believes
+        # covers everything, covering nothing at all. The DOT spellings
+        # express that intent, so they compile to match every target --
+        # the over-match direction (a false block names its rule and
+        # discharges by amend), and the one that also catches absolute
+        # respellings of workspace files.
+        #
+        # The literal EMPTY STRING is not one of them: it expresses no
+        # directory intent (a placeholder, most plausibly), it passes the
+        # manifest validator today, and it has always been inert --
+        # flipping it to block-everything would be an enforcement change
+        # on armed fleets that the SECURITY.md notice (scoped to
+        # trailing-separator markers) never disclosed. It keeps its
+        # historical behavior: matches nothing real.
+        segments = glob.replace("\\", "/").split("/")
+        if any(seg == "." for seg in segments) \
+                and all(seg in ("", ".") for seg in segments):
+            return _glob_regex("**")
+        return _glob_regex(norm)
     if glob.replace("\\", "/").endswith("/"):
         # The FILESYSTEM ROOT is the one spelling normalization leaves with
         # its separator attached ('/' stays '/'), so appending the marker

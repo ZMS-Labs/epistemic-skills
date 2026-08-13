@@ -196,6 +196,16 @@ def test_workspace_and_suffixed_directory_markers() -> None:
     call = {"tool_name": "Write", "command": None, "file_path": "/etc/passwd"}
     check("guard-workspace-marker-catches-absolute-respellings",
           evaluate(auth("enforce", g), call)["matched"])
+    # The literal EMPTY STRING is NOT a workspace marker: it expresses no
+    # directory intent, passes the validator, and has always been inert --
+    # flipping it to block-everything would be an undisclosed enforcement
+    # change on armed fleets. It keeps its historical nothing-matches
+    # behavior, deliberately.
+    empty = [{"name": "ph", "tool_names": ["Write"], "command_regexes": [],
+              "path_globs": [""]}]
+    call = {"tool_name": "Write", "command": None, "file_path": "docs/x.txt"}
+    check("guard-empty-string-placeholder-stays-inert",
+          not evaluate(auth("enforce", empty), call)["matched"])
     suffixed = [{"name": "sub", "tool_names": ["Write"],
                  "command_regexes": [], "path_globs": ["foo/**/"]}]
     for label, path, expect in (
