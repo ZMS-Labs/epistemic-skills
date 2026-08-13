@@ -1822,6 +1822,62 @@ def _attested_effect(m: Mission, request_id: str, artifact: str) -> bytes:
     return original
 
 
+def test_corrupt_restore_under_a_missing_marker_alone_names_tamper(
+        workspace: Path) -> None:
+    """R4-1, row M/corrupt-attested: the SECOND row where `still_tampered` is
+    the only limb that fires. `t34e-i-` pins the first (M/forged-attested);
+    this one is not a duplicate of it, because the bytes here do NOT parse.
+
+    Reachable without any adversary: receipt deleted, `resume` raises
+    RECEIPT-MISSING, then a truncated or partially-written restore leaves
+    unparseable bytes at the id's path, and the loss is acknowledged with no
+    intervening `resume`. No tamper marker is ever recorded, so membership is
+    silent; the id is attested, so the raw-bytes hash still fails and the
+    live re-check calls it what it is.
+
+    The shipped answer is already correct -- this is coverage, not a defect.
+    It earns a test because a plausible tightening (count `still_tampered`
+    only when the bytes also parse, on the theory that unparseable means
+    unloadable) flips this row from tamper to loss and, before this test,
+    killed NOTHING across the whole suite. A single reachable edit silently
+    changing a row is the condition this round was convened to fix; here it
+    is one row over.
+
+    Why it is not `t34e-i-` twice: the tightening kills this test and leaves
+    `t34e-i-` green, because a forged receipt is still valid JSON. The two
+    rows are separated by exactly the predicate a future edit is most likely
+    to add."""
+    m = open_mission(workspace, "m-t34e-mcorrupt", "Corrupt restore, M only.")
+    m.approve()
+    _attested_effect(m, "x-1", "notes/a.md")
+
+    receipt_path = m.store.receipt_path("x-1")
+    receipt_path.unlink()
+    check("t34e-mc-resume-missing", m.resume() == ["RECEIPT-MISSING:x-1"])
+
+    # A truncated restore: bytes are present at the id's path but do not parse.
+    receipt_path.write_bytes(b"{not json")
+    # Deliberately NO second resume: no RECEIPT-TAMPERED marker is recorded,
+    # so membership cannot see this and only the live re-check can.
+    check("t34e-mc-no-tamper-marker-recorded",
+          m.status()["state"]["unresolved_verdicts"] == ["RECEIPT-MISSING:x-1"])
+
+    m.acknowledge_receipt_loss("x-1")
+    st = m.status()
+    check("t34e-mc-kind-reads-tamper",
+          m._retired_receipt_ids(st).get("x-1") == "tamper")
+    check("t34e-mc-note-uses-tamper-prefix",
+          any(n.startswith('receipt tamper acknowledged: "x-1"')
+              for n in st["state"]["notes"]))
+    check("t34e-mc-note-does-not-use-loss-prefix",
+          not any(n.startswith('receipt loss acknowledged: "x-1"')
+                  for n in st["state"]["notes"]))
+    check("t34e-mc-why-clause-names-the-hash-mismatch",
+          any("bytes do not match the chain-attested hash" in n
+              for n in st["state"]["notes"]))
+    check("t34e-mc-id-retired", "x-1" not in st["receipt_ids"])
+
+
 def test_corrupt_attested_receipt_is_tamper_not_loss(workspace: Path) -> None:
     """Row T/corrupt: the receipt file for an ATTESTED id is replaced with
     bytes that do not parse at all. Unparseable is not unloadable here --
@@ -2067,6 +2123,7 @@ TESTS = [
     test_tamper_marker_survives_deleting_the_receipt,
     test_double_marker_deleted_receipt_still_names_tamper,
     test_live_tamper_under_a_missing_marker_alone_names_tamper,
+    test_corrupt_restore_under_a_missing_marker_alone_names_tamper,
     test_corrupt_attested_receipt_is_tamper_not_loss,
     test_corrupt_receipt_under_an_open_tamper_marker_stays_tamper,
     test_double_marker_restore_clears_only_the_missing_marker,
