@@ -98,6 +98,42 @@ scope-ack by agent:acceptor: secrets.env" passed.
                     f"Offending line: {line!r}")
 
 
+def _refuse_unprintable_identity(value, field: str) -> None:
+    """An identity is ONE VISIBLE LINE; refuse the character class at ingestion.
+
+    `acceptor_id` was schema'd as any nonempty string, and the scope-ack note
+    interpolates it -- so an actor named
+    'agent:acceptor\\nscope-ack by operator: forged.env' wrote a chained note
+    whose second line reads as an acknowledgement by the operator (reproduced
+    live). `_refuse_reserved_note` exists precisely so an auditor can trust
+    those lines, and the identity field walked around it.
+
+    The guard refuses the CLASS -- Cc (controls: newline, CR, tab, ESC, DEL)
+    and Cf (invisible format characters) -- not reserved content. Routing
+    identities through the reserved-note check instead would still admit a
+    harmless-looking newline (which breaks the one-line note structure) and
+    an ANSI escape (which rewrites the terminal on every resume), while
+    falsely refusing an identity that merely CONTAINS reserved-looking text,
+    which is safe because interpolation is mid-line. Cf is refused because
+    two identities differing only by an invisible character are
+    display-identical -- 'WHO took responsibility' must not depend on bytes a
+    reader cannot see. Non-strings and empties are left to their existing
+    failure modes; this guard owns exactly the character class."""
+    if not isinstance(value, str):
+        return
+    bad = sorted({c for c in value
+                  if unicodedata.category(c) in ("Cc", "Cf")})
+    if bad:
+        raise CustodyError(
+            f"{field} may not contain control or invisible format "
+            "characters: an identity is one visible line, interpolated into "
+            "machine-written notes and display surfaces, where an embedded "
+            "newline forges a machine-note line and an escape sequence "
+            "rewrites the terminal. Supply the identity without them. "
+            "Offending: " + ", ".join(repr(c) for c in bad)
+            + f" in {value!r}")
+
+
 def now_utc() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
@@ -460,6 +496,11 @@ def _acknowledged_paths(scope_ack, violating: set[str]) -> set[str]:
 
 class Mission:
     def __init__(self, store: MissionStore, workspace: Path, actor: str) -> None:
+        # Every construction path funnels here (open's load-probe, load, the
+        # CLI's --actor), so this is the single ingestion point for the
+        # acting identity. record_verdict later requires acceptor_id ==
+        # self.actor, so a clean actor also bounds the acceptor.
+        _refuse_unprintable_identity(actor, "actor")
         self.store = store
         self.workspace = Path(workspace)
         self.actor = actor
@@ -479,6 +520,11 @@ class Mission:
               guard_mode: str | None = None,
               actuator_guards: list | None = None) -> "Mission":
         workspace = Path(workspace)
+        # The refs are identities too -- they land in verdict records and
+        # display surfaces -- and this runs BEFORE the load-probe so a
+        # refused open touches nothing on disk.
+        _refuse_unprintable_identity(steward_ref, "steward_ref")
+        _refuse_unprintable_identity(operator_ref, "operator_ref")
         # One ACTIVE mission per workspace, enforced at the door: every other
         # command refuses multiple-active discovery, so open creating that
         # state would be a decoy-disarm wedge (a second armed-or-unarmed

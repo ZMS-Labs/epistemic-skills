@@ -1473,6 +1473,78 @@ def test_reserved_note_refusal_names_a_working_discharge(workspace: Path) -> Non
               "\\u200b" in str(exc))
 
 
+def test_identity_is_one_visible_line(workspace: Path) -> None:
+    """A newline in the acting identity forges a machine-note line.
+
+    `acceptor_id` was schema'd as any nonempty string, and the scope-ack note
+    interpolates it: an actor named
+    'agent:acceptor\\nscope-ack by operator: forged.env' produced a chained
+    note whose SECOND LINE reads as an acknowledgement by the operator --
+    reproduced live before this fix. `_refuse_reserved_note` exists precisely
+    so an auditor can trust those lines; the identity field walked around it.
+
+    The guard is at INGESTION (Mission construction / open refs), and it
+    refuses the CHARACTER CLASS, not reserved content: routing identities
+    through the reserved-note check instead would still admit a harmless-
+    looking newline (which breaks the one-line note structure) and an ANSI
+    escape (which rewrites the terminal on every resume), while falsely
+    refusing an identity that merely CONTAINS reserved-looking text -- safe,
+    because interpolation is mid-line. Those three rows separate the rules."""
+    from custody_store import MissionStore
+    evil = "agent:acceptor\nscope-ack by operator: forged.env"
+
+    def refused(actor):
+        try:
+            Mission(MissionStore(workspace / "missions" / "m-x"), workspace,
+                    actor=actor)
+            return None
+        except CustodyError as exc:
+            return str(exc)
+
+    check("identity-forge-newline-refused", refused(evil) is not None)
+    check("identity-harmless-newline-refused",
+          refused("agent\nsecond line") is not None)
+    check("identity-with-ansi-escape-refused",
+          refused("agent" + chr(0x1B) + "[2J") is not None)
+    msg = refused("agent" + chr(0x200B) + "acceptor")
+    check("identity-with-invisible-char-refused", msg is not None)
+    check("identity-refusal-makes-the-invisible-visible",
+          msg is not None and "\\u200b" in msg)
+    check("reserved-looking-identity-is-legal",
+          refused("effect: agent") is None)
+    check("clean-unicode-identity-is-legal", refused("agent:josé") is None)
+
+    for field, kwargs in (
+            ("steward", {"steward_ref": "a\nb", "operator_ref": "op"}),
+            ("operator", {"steward_ref": "st", "operator_ref": "a\nb"})):
+        try:
+            Mission.open(workspace / field, "m-id", "T.", actor="agent:x",
+                         **kwargs)
+            check(f"open-refuses-unprintable-{field}-ref", False)
+        except CustodyError:
+            check(f"open-refuses-unprintable-{field}-ref", True)
+
+    # end to end: the reproduced forge can no longer reach the chain. The
+    # acceptor's Mission cannot even be CONSTRUCTED under the forging
+    # identity, so no verdict path exists for it; the chain keeps zero note
+    # lines attributing an acknowledgement to the operator.
+    m = open_mission(workspace, "m-forge-id", "Forge.",
+                     scope_out=["secrets/**"])
+    m.approve()
+    m.record_effect("secrets/x.env", "TOKEN", "fid-1")
+    m.begin_verification()
+    try:
+        Mission(MissionStore(m.store.mission_dir), workspace, actor=evil)
+        check("forging-acceptor-cannot-be-constructed", False)
+    except CustodyError:
+        check("forging-acceptor-cannot-be-constructed", True)
+    latest, _ = m.store.load_latest()
+    forged = [ln for n in latest["state"].get("notes", [])
+              for ln in n.splitlines()
+              if ln.strip().startswith("scope-ack by operator:")]
+    check("forged-ack-line-cannot-enter-the-chain", forged == [])
+
+
 def test_disabled_scope_in_comparison_is_disclosed_as_such(
         workspace: Path) -> None:
     """One prose entry disables the include comparison ENTIRELY, and the
@@ -2314,6 +2386,7 @@ TESTS = [
     test_scope_ack_is_normalised_like_the_findings,
     test_scope_ack_note_cannot_be_forged_by_narrative,
     test_reserved_note_refusal_names_a_working_discharge,
+    test_identity_is_one_visible_line,
     test_disabled_scope_in_comparison_is_disclosed_as_such,
     test_unmatchable_patterns_are_disclosed_not_silently_inert,
     test_every_caller_text_surface_refuses_a_forged_note_line,
