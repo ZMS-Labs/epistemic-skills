@@ -128,6 +128,59 @@ by a FORGED amendment on the unsealed tail checkpoint is the same residue
 class as amendment fabrication today; the structural fix (tail anchor) is
 tracked as es#118.
 
+## Discovery ambiguity DISARMS the gate — an unarmed decoy is enough
+
+**Verified live (es#173 adjudication, 2026-08-13):** an armed mission with
+`guard_mode: enforce` and a `secrets/**` rule blocks a matching call. Add a
+**second, entirely unarmed** mission directory under the same workspace root
+and the identical call returns `allow` / `mode: inert`. `run_gate` catches
+`MultipleActiveMissions` and fails open by design — a hook must never brick
+the tool loop on discovery ambiguity — but the consequence is that **any
+second active mission, carrying no guards at all, silently retires every
+guard in that workspace.**
+
+`Mission.open` refuses to create the second one, so this is not reachable
+through the supported surface; it is reachable by a filesystem write, a
+sync, a restored backup, or a copied mission dir. Two further properties
+make it worth naming rather than assuming:
+
+- **"Active" is broad.** A mission counts as active unless its status is
+  `completed` or `cancelled` — so a mission parked in `verifying`
+  indefinitely both holds the workspace's only slot and, if duplicated,
+  disarms it.
+- **There is no supported repair.** Every CLI verb except `open` and `gate`
+  sits below a single `Mission.load` call, which raises on ambiguity. Once a
+  workspace holds two active missions, no verb can resolve it; the fix is a
+  filesystem action outside the contract.
+
+**Operator consequence:** treat "how many active missions are under this
+root?" as a security question, not housekeeping. A guard set that reads as
+armed is only armed while that answer is exactly one.
+
+## An acceptance PASS certifies the mission's receipts, not the workspace
+
+`scope_consistency()` compares the artifacts THIS mission receipted against
+THIS mission's declared scope. It says nothing about writes made by another
+mission, by a session acting outside custody, or by a human — and with
+concurrent missions under nested roots (which the contract permits today,
+one per root) each mission's PASS is silent about every artifact the other
+one touched. "This mission declared its scope and nothing crossed it" is the
+claim; "nothing crossed this boundary in this workspace" is not.
+
+## Effect-phrased boundaries are UNENFORCED
+
+Only `authority.actuator_guards` (with `guard_mode`) reaches the runtime
+chokepoint. `stop_rules` (`hold_if` / `stop_if` / `escalate_if`),
+`protected_state`, and `permissions` are **declarations a human reads**:
+nothing evaluates them, at any point, ever. This matters most for the
+missions whose real boundaries are conditions on effects — "do not expose
+secret material", "do not merge pull requests", "do not improvise platform
+privileges" — because those cannot be expressed as the path/tool/command
+patterns `evaluate()` matches on. A mission whose genuine constraints live in
+`stop_rules` has a record that makes a violation **attributable**, not one
+that makes it **impossible**. Closing that gap is tracked as es#166 and is
+explicitly NOT what concurrent-mission work (es#173) addresses.
+
 ## Stage-C hook: discovery scope, log sensitivity, mixed-fleet hazard
 
 Mission discovery walks up from the payload's cwd to the nearest ancestor
