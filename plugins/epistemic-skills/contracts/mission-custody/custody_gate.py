@@ -131,7 +131,16 @@ def _guard_glob_regex(glob: str) -> "re.Pattern[str]":
     by an amend), but it is a behavior change on an enforcement surface,
     disclosed in SECURITY.md rather than slipped in."""
     norm = _fold(_normalize_relpath(glob))
-    if glob.replace("\\", "/").endswith("/") and norm:
+    if not norm:
+        # '', '.', './', '.\': normalization yields the EMPTY path -- the
+        # workspace itself -- and compiling '' produces a regex matching
+        # nothing, silently: an ARMED guard the operator believes covers
+        # everything, covering nothing at all. The workspace marker
+        # compiles to match every target -- the over-match direction (a
+        # false block names its rule and discharges by amend), and the one
+        # that also catches absolute respellings of workspace files.
+        return _glob_regex("**")
+    if glob.replace("\\", "/").endswith("/"):
         # The FILESYSTEM ROOT is the one spelling normalization leaves with
         # its separator attached ('/' stays '/'), so appending the marker
         # built '//**' -- which compiles to a regex matching the root and
@@ -142,6 +151,13 @@ def _guard_glob_regex(glob: str) -> "re.Pattern[str]":
         # relative one.
         if norm == "/":
             return _glob_regex("/**")
+        if norm == "**" or norm.endswith("/**"):
+            # 'foo/**/' already carries subtree semantics INCLUDING the
+            # base; appending another '/**' compiled to 'foo/.*(?:/.*)?',
+            # which requires a separator after 'foo' -- a write to the
+            # base itself was silently allowed where the plain 'foo/**'
+            # spelling matches it.
+            return _glob_regex(norm)
         return _glob_regex(norm + "/**")
     return _glob_regex(norm)
 

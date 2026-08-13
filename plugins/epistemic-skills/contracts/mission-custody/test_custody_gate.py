@@ -171,6 +171,51 @@ def test_trailing_slash_guard_glob_binds_the_subtree() -> None:
           evaluate(auth("enforce", drive), call)["matched"])
 
 
+def test_workspace_and_suffixed_directory_markers() -> None:
+    """The marker's other two edges, found on its second review round.
+
+    './' (and '.\\', and bare '.') normalize to the EMPTY path, which
+    compiled to a match-nothing regex: an armed workspace guard covering
+    nothing, silently. It now covers everything -- the over-match
+    direction, and the one that also catches absolute respellings.
+
+    'foo/**/' already carries subtree semantics including the BASE;
+    appending another '/**' required a separator after 'foo', so a write
+    to the base itself was silently allowed where plain 'foo/**' matches
+    it."""
+    for label, globs in (("dot-slash", ["./"]), ("dot-backslash", [".\\"]),
+                         ("bare-dot", ["."])):
+        g = [{"name": "ws", "tool_names": ["Write"], "command_regexes": [],
+              "path_globs": globs}]
+        call = {"tool_name": "Write", "command": None,
+                "file_path": "docs/x.txt"}
+        check(f"guard-workspace-marker-{label}-covers-relative-writes",
+              evaluate(auth("enforce", g), call)["matched"])
+    g = [{"name": "ws", "tool_names": ["Write"], "command_regexes": [],
+          "path_globs": ["./"]}]
+    call = {"tool_name": "Write", "command": None, "file_path": "/etc/passwd"}
+    check("guard-workspace-marker-catches-absolute-respellings",
+          evaluate(auth("enforce", g), call)["matched"])
+    suffixed = [{"name": "sub", "tool_names": ["Write"],
+                 "command_regexes": [], "path_globs": ["foo/**/"]}]
+    for label, path, expect in (
+            ("base-still-matched", "foo", True),
+            ("descendant-matched", "foo/a/b.txt", True),
+            ("sibling-not-matched", "foobar", False)):
+        call = {"tool_name": "Write", "command": None, "file_path": path}
+        check(f"guard-doublestar-slash-{label}",
+              evaluate(auth("enforce", suffixed), call)["matched"] is expect)
+    # 'foo/*/' keeps its narrower meaning: subtrees one level down, not foo
+    starred = [{"name": "star", "tool_names": ["Write"],
+                "command_regexes": [], "path_globs": ["foo/*/"]}]
+    for label, path, expect in (
+            ("child-subtree-matched", "foo/x/y.txt", True),
+            ("base-not-matched", "foo", False)):
+        call = {"tool_name": "Write", "command": None, "file_path": path}
+        check(f"guard-single-star-slash-{label}",
+              evaluate(auth("enforce", starred), call)["matched"] is expect)
+
+
 def test_glob_anchor_is_Z_not_dollar() -> None:
     """'$' matches just before a trailing newline, so the glob 'safe.txt'
     matched the distinct file 'safe.txt\\n' -- one byte outside the
