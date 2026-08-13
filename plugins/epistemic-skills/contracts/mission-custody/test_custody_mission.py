@@ -459,6 +459,47 @@ def test_foreign_mission_receipt_is_not_this_missions_receipt(
           own is not None and own["mission_id"] == "m-donor")
 
 
+def test_cross_workspace_receipt_cannot_silence_drift(workspace: Path) -> None:
+    """The sharpest form of the planted-receipt attack, and the one the
+    mission_id check alone does NOT stop.
+
+    mission_id is unique only WITHIN a workspace, so two roots can each run a
+    mission called `deploy` -- an ordinary collision, not an exotic one. A
+    receipt copied between them passes schema, request_id and mission_id
+    checks alike. If it names a decoy path whose bytes also exist in the
+    victim workspace, resume() checks the DECOY's hash, finds it unchanged,
+    and reports clean -- while the victim's real artifact has drifted.
+    Measured before the fix: resume() returned [] with the real file reading
+    "TAMPERED". The chain is the authority on which path an id was minted
+    against, so a receipt disagreeing with it is not this id's receipt."""
+    donor_ws, victim_ws = workspace / "donor", workspace / "victim"
+    donor = open_mission(donor_ws, "deploy", "Donor workspace.")
+    donor.approve()
+    victim = open_mission(victim_ws, "deploy", "Victim workspace.")
+    victim.approve()
+    victim.record_effect("real.txt", "victim real bytes", "req-1")
+    donor.record_effect("decoy.txt", "shared decoy bytes", "req-1")
+    (victim_ws / "decoy.txt").write_text("shared decoy bytes", encoding="utf-8")
+
+    foreign = json.loads(
+        donor.store.receipt_path("req-1").read_text(encoding="utf-8"))
+    check("cross-ws-receipt-passes-mission-id",
+          foreign["mission_id"] == "deploy" and foreign["request_id"] == "req-1")
+    victim.store.receipt_path("req-1").write_text(
+        json.dumps(foreign, sort_keys=True), encoding="utf-8")
+    (victim_ws / "real.txt").write_text("TAMPERED", encoding="utf-8")
+
+    check("cross-ws-receipt-refused",
+          victim._load_receipt("req-1") is None)
+    # the drift is REPORTED, not silently absorbed: an unloadable receipt
+    # degrades to RECEIPT-MISSING, which carries its own obligation.
+    check("cross-ws-drift-not-silenced",
+          "RECEIPT-MISSING:req-1" in victim.resume())
+    # and the honest case is untouched: the donor's own receipt still loads
+    check("cross-ws-donor-own-receipt-loads",
+          (donor._load_receipt("req-1") or {}).get("artifact_path") == "decoy.txt")
+
+
 def test_effect_path_index_matches_per_id(workspace: Path) -> None:
     """The whole-chain index and the per-id lookup must agree on EVERY id,
     including the ones with no derivable path.
@@ -3378,6 +3419,7 @@ TESTS = [
     test_receipt_ids_always_carry_a_derivable_path,
     test_effect_path_index_matches_per_id,
     test_foreign_mission_receipt_is_not_this_missions_receipt,
+    test_cross_workspace_receipt_cannot_silence_drift,
     test_forged_restored_receipt_is_not_trusted,
     test_distinct_files_never_share_an_obligation,
     test_obligations_match_by_artifact_not_by_string,

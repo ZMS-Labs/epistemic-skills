@@ -90,6 +90,35 @@ def _fold(text: str) -> str:
     return _ascii_case_fold(text) if os.name == "nt" else text
 
 
+def _safe(value) -> str:
+    """Render an untrusted string for a TERMINAL, never raw.
+
+    A guard `name` only has to be a non-empty string -- validation says
+    nothing about newlines or escape sequences -- and mission directory
+    names come from the filesystem, which allows both. Interpolated raw into
+    this report, such a name FORGES ROWS: a name containing
+    "\\n  !! ZERO COVERAGE /etc::forged" printed exactly that line under Q5,
+    indistinguishable from a finding, and an ANSI sequence recolored
+    everything after it. An instrument whose output can be authored by the
+    thing it measures is not an instrument.
+
+    Escaping here rather than refusing at ingestion is deliberate for this
+    change: refusing would reject manifests that already exist on armed
+    fleets, which is an enforcement-surface change. Ingestion-side refusal
+    belongs with the contract@2 batch (es#118)."""
+    text = value if isinstance(value, str) else repr(value)
+    out = []
+    for ch in text:
+        if ch == "\\":
+            out.append("\\\\")
+        elif ch.isprintable():
+            out.append(ch)
+        else:
+            out.append(f"\\x{ord(ch):02x}" if ord(ch) < 256
+                       else f"\\u{ord(ch):04x}")
+    return "".join(out)
+
+
 def _under(root: Path, abs_path: str) -> bool:
     """Is this resolved target inside `root`?
 
@@ -715,15 +744,15 @@ def main(argv: list[str]) -> int:
     print("Q1 FAIL-OPEN REACHABILITY (roots whose gate is inert RIGHT NOW):")
     if summary["q1_fail_open_roots"]:
         for a in summary["q1_fail_open_roots"]:
-            print(f"  !! {a['root']}  [{a['cause']}]: "
-                  f"{', '.join(a['missions'])}")
+            print(f"  !! {_safe(a['root'])}  [{_safe(a['cause'])}]: "
+                  f"{', '.join(_safe(x) for x in a['missions'])}")
         print("  -> guards under these roots are retired until resolved.")
     else:
         print("  none — no root holds >= 2 gate-loadable active missions")
     if summary["q1_no_active_mission_roots"]:
         print("  (gate INERT, nothing to enforce — no active mission:)")
         for n in summary["q1_no_active_mission_roots"]:
-            print(f"     -  {n['root']}  [{n['cause']}]")
+            print(f"     -  {_safe(n['root'])}  [{_safe(n['cause'])}]")
     excluded = summary["active_total"] - summary["active_sound_total"]
     print(f"\nQ2 ARMED: {summary['q2_armed_active_missions']} of "
           f"{summary['active_sound_total']} active missions carry guards"
@@ -735,7 +764,8 @@ def main(argv: list[str]) -> int:
     print("\nQ4 ARTIFACT OVERLAP (by filesystem identity, hard links included):")
     if summary["q4_artifact_overlaps"]:
         for o in summary["q4_artifact_overlaps"]:
-            print(f"  !! {o['a']}\n     <-> {o['b']}  {o['shared']}")
+            print(f"  !! {_safe(o['a'])}\n     <-> {_safe(o['b'])}  "
+                  f"{[_safe(x) for x in o['shared']]}")
         print("  -> each mission reads the other's writes as drift; the")
         print("     discharge (reconcile) OVERWRITES the artifact.")
     elif summary["q4_unprobed_artifacts"]:
@@ -749,35 +779,38 @@ def main(argv: list[str]) -> int:
         print("  historical (>= 1 mission terminal — the ordinary sequential")
         print("  case; a terminal mission cannot resume or reconcile):")
         for o in summary["q4_historical_overlaps"]:
-            print(f"     ~  {o['a']}\n        <-> {o['b']}  {o['shared']}")
+            print(f"     ~  {_safe(o['a'])}\n        <-> {_safe(o['b'])}  "
+                  f"{[_safe(x) for x in o['shared']]}")
     print("\nQ5 GUARD CLASSIFICATION (heuristic — verify by eye):")
     for g in summary["q5_guard_classes"] or []:
-        print(f"  {g['mission']}: " + ", ".join(
-            f"{n} [{c}]" for n, c in zip(g["names"], g["classes"])))
+        print(f"  {_safe(g['mission'])}: " + ", ".join(
+            f"{_safe(n)} [{_safe(c)}]"
+            for n, c in zip(g["names"], g["classes"])))
     if not summary["q5_guard_classes"]:
         print("  (no armed missions)")
     print("\nQ6 COVERAGE:")
     if summary["q6_zero_coverage_missions"]:
         for m in summary["q6_zero_coverage_missions"]:
-            print(f"  !! ZERO COVERAGE {m}")
+            print(f"  !! ZERO COVERAGE {_safe(m)}")
         print("  -> detached store: receipted artifacts are not under this")
         print("     root as regular files (es#173 P10).")
     if summary["q6_coverage_lost"]:
         for m in summary["q6_coverage_lost"]:
-            print(f"  !! COVERAGE LOST {m['mission']}: {m['artifacts']}")
+            print(f"  !! COVERAGE LOST {_safe(m['mission'])}: "
+                  f"{[_safe(a) for a in m['artifacts']]}")
         print("  -> a receipt was retired and the artifact is KNOWN")
         print("     uncovered (RECOVER obligation). Not 'never written':")
         print("     re-cover each artifact with a fresh effect.")
     if summary["q6_coverage_unknown"]:
         for m in summary["q6_coverage_unknown"]:
-            print(f"  ?  COVERAGE UNKNOWN {m['mission']}: "
+            print(f"  ?  COVERAGE UNKNOWN {_safe(m['mission'])}: "
                   f"{m['unreadable_artifacts']} artifact(s) could not be read")
         print("  -> NOT zero coverage: the probe failed (traversal denied or")
         print("     a filesystem error). Re-run where the artifacts are")
         print("     readable before concluding anything about this store.")
     if summary["q6_coverage_untested_no_receipts"]:
         for m in summary["q6_coverage_untested_no_receipts"]:
-            print(f"  ?  UNTESTED (0 receipts) {m}")
+            print(f"  ?  UNTESTED (0 receipts) {_safe(m)}")
         print("  -> NOT a pass: nothing has been written yet, so coverage")
         print("     cannot be checked. Verify the root contains the")
         print("     artifacts this mission governs BEFORE work starts.")
@@ -791,7 +824,8 @@ def main(argv: list[str]) -> int:
         print("\nUNREADABLE / PARTIAL (reported, never silently dropped):")
         for root, u in unreadable:
             tag = "partial" if u.get("partial_answer") else "skipped-by-gate"
-            print(f"  ?? [{tag}] {root}/{u['mission']}: {u['reason']}")
+            print(f"  ?? [{tag}] {_safe(root)}/{_safe(u['mission'])}: "
+                  f"{_safe(u['reason'])}")
     integrity = [(r["root"], t) for r in reports
                  for t in r.get("integrity", [])]
     live_int = [(r, t) for r, t in integrity if t.get("fails_open")]
@@ -799,7 +833,8 @@ def main(argv: list[str]) -> int:
     if live_int:
         print("\nMANIFEST INTEGRITY (the GATE FAILS OPEN on these):")
         for root, t in live_int:
-            print(f"  !! [{t['kind']}] {root}/{t['mission']}: {t['reason']}")
+            print(f"  !! [{_safe(t['kind'])}] {_safe(root)}/"
+                  f"{_safe(t['mission'])}: {_safe(t['reason'])}")
         print("  -> run_gate calls status() -> _verify_manifest; the hook")
         print("     catches the error and allows the call. An ARMED mission")
         print("     here is NOT enforcing, however its guards read.")
@@ -807,8 +842,9 @@ def main(argv: list[str]) -> int:
         print("\nMANIFEST INTEGRITY, HISTORICAL (terminal missions — the gate")
         print("never loads these, so enforcement is UNAFFECTED):")
         for root, t in past_int:
-            print(f"  ~  [{t['kind']}] {root}/{t['mission']} "
-                  f"({t.get('status')}): {t['reason']}")
+            print(f"  ~  [{_safe(t['kind'])}] {_safe(root)}/"
+                  f"{_safe(t['mission'])} ({_safe(t.get('status'))}): "
+                  f"{_safe(t['reason'])}")
         print("  -> the record is damaged and an auditor should know; the")
         print("     live gate is not.")
     environmental = [(r["root"], e) for r in reports
@@ -816,13 +852,14 @@ def main(argv: list[str]) -> int:
     if environmental:
         print("\nENVIRONMENTAL (store unreadable — the GATE FAILS OPEN here):")
         for root, e in environmental:
-            print(f"  !! {root}/{e['mission']}: {e['reason']}")
+            print(f"  !! {_safe(root)}/{_safe(e['mission'])}: "
+                  f"{_safe(e['reason'])}")
         print("  -> Mission.load propagates OSError rather than skipping, so")
         print("     the hook allows every call under this workspace.")
     if summary["answers_are_partial"]:
         print("\n!! Some answers above are INCOMPLETE:")
         for why in summary["partial_because"]:
-            print(f"     - {why}")
+            print(f"     - {_safe(why)}")
     return 0
 
 

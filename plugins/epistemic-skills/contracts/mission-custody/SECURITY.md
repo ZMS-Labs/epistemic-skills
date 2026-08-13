@@ -139,10 +139,25 @@ the tool loop on discovery ambiguity — but the consequence is that **any
 second active mission, carrying no guards at all, silently retires every
 guard in that workspace.**
 
-`Mission.open` refuses to create the second one, so this is not reachable
-through the supported surface; it is reachable by a filesystem write, a
-sync, a restored backup, or a copied mission dir. Two further properties
-make it worth naming rather than assuming:
+`Mission.open` refuses to create the second one **sequentially** — but that
+refusal is a check-then-write with no lock between the two steps, so it does
+NOT hold under concurrency. Verified live: two `Mission.open` calls racing on
+an empty workspace (each completing the `Mission.load` preflight before
+either wrote revision 1) both returned successfully, leaving `m-1` and `m-2`
+active, after which `Mission.load` raises `MultipleActiveMissions` and every
+guard in that workspace is retired. **Concurrent opens are therefore a
+reachable ambiguity path through the supported surface**, alongside the
+out-of-band routes (a filesystem write, a sync, a restored backup, a copied
+mission dir, or a symlinked duplicate of one store).
+
+Serializing open is not attempted here: the obvious lock file introduces a
+stale-lock wedge that bricks every future open in the workspace after a
+crash — a new dead-end recipe of exactly the class this document already
+tracks — and the es#173 adjudication ruled NO-GO on adopting any concurrency
+design this cycle. It is named, not fixed, and the census reports the
+resulting state (`Q1 FAIL-OPEN REACHABILITY`) wherever it has already
+happened. Three further properties make this worth naming rather than
+assuming:
 
 - **"Active" is broad.** A mission counts as active unless its status is
   `completed` or `cancelled` — so a mission parked in `verifying`

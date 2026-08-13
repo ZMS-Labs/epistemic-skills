@@ -864,6 +864,7 @@ class Mission:
         # immutable for the mission's life, so reading it once is sound and
         # keeps receipt loading off a per-call chain read.
         self._mission_id: str | None = None
+        self._effect_index_cache: tuple[int, dict[str, str]] | None = None
 
     # -- construction -----------------------------------------------------
 
@@ -1178,20 +1179,33 @@ class Mission:
         drift (RECEIPT-MISSING), never crash resume: crashing the recovery
         path on a mangled receipt is a denial of service by exactly the
         tampering drift detection exists to catch."""
+        return self._load_receipt_checked(request_id)[0]
+
+    def _load_receipt_checked(self, request_id: str) -> tuple[dict | None, str | None]:
+        """(record, refusal reason). ONE implementation of the trust rule,
+        two callers: `_load_receipt` wants only the verdict, while
+        `acknowledge_receipt_loss` must also tell the operator WHY -- and
+        "a receipt claiming decoy.md where the chain records the real path"
+        is a different incident from "no receipt at all". Splitting these
+        into two readers would be a fifth paraphrase of this rule; splitting
+        the RETURN VALUE is not."""
         path = self.store.receipt_path(request_id)
         try:
             record = json.loads(path.read_text(encoding="utf-8"))
         except FileNotFoundError:
-            return None
-        except ValueError:
-            return None
-        if validate_record(record):
-            return None
+            return None, "no receipt file at the id's content-addressed path"
+        except ValueError as exc:
+            return None, f"receipt is not parseable JSON ({type(exc).__name__})"
+        errors = validate_record(record)
+        if errors:
+            return None, f"receipt fails receipt@1 validation: {errors[:2]}"
         # A receipt whose own request_id disagrees with the content-addressed
         # name it is stored under is malformed by construction -- never a
         # trustworthy source for a claim about that id.
         if record.get("request_id") != request_id:
-            return None
+            return None, (
+                f"receipt names request_id {record.get('request_id')!r}, but it "
+                f"is stored under the content-addressed name for {request_id!r}")
         # ... and neither is a receipt that says it belongs to a DIFFERENT
         # mission. request_id uniqueness is per-mission, so two missions can
         # legitimately mint the same id; the receipt path is content-addressed
@@ -1203,8 +1217,29 @@ class Mission:
         # write. The record names its own mission; believe it.
         own = self._own_mission_id()
         if own is not None and record.get("mission_id") != own:
-            return None
-        return record
+            return None, (
+                f"receipt belongs to mission {record.get('mission_id')!r}, not "
+                f"{own!r} -- NOT trusted")
+        # ... and mission_id is unique only WITHIN a workspace, so that check
+        # alone still admits a receipt copied between two workspaces that
+        # both happen to run a mission of the same name -- an ordinary
+        # collision (`deploy`, `main`), not an exotic one. Measured: with the
+        # donor's receipt naming a decoy path whose bytes also exist in the
+        # victim workspace, `resume()` returned CLEAN while the victim's real
+        # artifact sat on disk reading "TAMPERED". Drift detection silenced
+        # by a file copy is the worst outcome this contract has.
+        #
+        # The chain is the authority on WHICH PATH (the same doctrine
+        # scope_consistency and the census already apply), so a receipt that
+        # disagrees with the chained effect note is not this id's receipt,
+        # whoever wrote it. When the chain cannot derive a path the check is
+        # skipped rather than guessed -- underivable is not disagreement.
+        chained = self._effect_path_index().get(request_id)
+        if chained is not None and record.get("artifact_path") != chained:
+            return None, (
+                f"present receipt claims {record.get('artifact_path')!r}, "
+                f"chain records {chained!r} -- NOT trusted")
+        return record, None
 
     def _historical_effect_path(self, request_id: str, kind: bool = False) -> str | None:
         """The artifact path this request id was minted against, read from the
@@ -1245,10 +1280,19 @@ class Mission:
         millions of JSON parses. Callers that want ALL the paths ask once.
         Ids with no derivable path are ABSENT (never mapped to a guess), so
         `.get(rid)` returns None exactly where the per-id method does."""
+        # CACHED against the checkpoint COUNT, not time: the chain is
+        # append-only, so a count that has not moved cannot have new ids in
+        # it, and a count that has moved rebuilds. Without this, binding
+        # `_load_receipt` to the chain (round 7) would have reintroduced the
+        # quadratic walk round 3 removed -- resume() loads every receipt.
+        paths = self.store.checkpoint_paths()
+        if self._effect_index_cache is not None \
+                and self._effect_index_cache[0] == len(paths):
+            return self._effect_index_cache[1]
         index: dict[str, str] = {}
         prev_ids: list[str] = []
         prev_notes: list[str] = []
-        for cp_path in self.store.checkpoint_paths():
+        for cp_path in paths:
             record = json.loads(cp_path.read_text(encoding="utf-8"))
             ids = record["receipt_ids"]
             notes = record["state"]["notes"]
@@ -1259,6 +1303,7 @@ class Mission:
                     for rid in fresh:
                         index.setdefault(rid, path)
             prev_ids, prev_notes = ids, notes
+        self._effect_index_cache = (len(paths), index)
         return index
 
     def _all_receipt_ids_ever(self) -> list[str]:
@@ -1619,7 +1664,7 @@ class Mission:
         remaining = [m for m in unresolved if m != marker]
         next_status = "active" if not remaining else "reopened"
 
-        receipt = self._load_receipt(request_id)  # already request_id-checked
+        receipt, refusal = self._load_receipt_checked(request_id)
         recorded_path = self._historical_effect_path(request_id)
         # Deliberately raw equality, NOT _same_artifact: everywhere else the
         # question is "does this write satisfy that obligation", where two
@@ -1639,7 +1684,13 @@ class Mission:
         covered = (f" (covered {json.dumps(recorded_path)})"
                    if recorded_path else "")
         if receipt is None:
-            why = "receipt unloadable"
+            # The loader already decided WHY, and it is the only place that
+            # rule lives -- recomputing the explanation here is how the two
+            # would eventually disagree. "Receipt unloadable" alone would
+            # also flatten a planted decoy into a missing file, losing the
+            # one sentence that tells an operator this was an ATTACK and not
+            # a crash.
+            why = refusal or "receipt unloadable"
         elif recorded_path is None:
             why = "no recorded effect in the chain to check the receipt against"
         else:
