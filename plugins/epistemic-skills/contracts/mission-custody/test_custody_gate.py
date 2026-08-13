@@ -127,6 +127,30 @@ def test_glob_overmatch_still_held() -> None:
           evaluate(auth("enforce", guards), call)["matched"])
 
 
+def test_trailing_slash_guard_glob_binds_the_subtree() -> None:
+    """es#155's gate half: 'M:/Media/' compiled to an exact 'M:/Media' and
+    an armed guard silently allowed every write UNDER the directory the
+    operator evidently declared. The trailing separator now reads as the
+    directory marker scope entries and amendment tokens already use. This
+    makes an armed guard MORE restrictive -- the disclosed, over-match-safe
+    direction (a false block names its rule)."""
+    guards = [{"name": "dir", "tool_names": ["Write"], "command_regexes": [],
+               "path_globs": ["M:/Media/"]}]
+    for label, path, expect in (
+            ("subtree-write-blocked", "M:/Media/a/b.mkv", True),
+            ("base-itself-matched", "M:/Media", True),
+            ("prefix-sibling-not-matched", "M:/Mediaevil/x", False)):
+        call = {"tool_name": "Write", "command": None, "file_path": path}
+        check(f"guard-dir-marker-{label}",
+              evaluate(auth("enforce", guards), call)["matched"] is expect)
+    win = [{"name": "dirwin", "tool_names": ["Write"], "command_regexes": [],
+            "path_globs": ["M:\\Media\\"]}]
+    call = {"tool_name": "Write", "command": None,
+            "file_path": "M:/Media/deep/file.mkv"}
+    check("guard-dir-marker-windows-spelling",
+          evaluate(auth("enforce", win), call)["matched"])
+
+
 def test_glob_anchor_is_Z_not_dollar() -> None:
     """'$' matches just before a trailing newline, so the glob 'safe.txt'
     matched the distinct file 'safe.txt\\n' -- one byte outside the

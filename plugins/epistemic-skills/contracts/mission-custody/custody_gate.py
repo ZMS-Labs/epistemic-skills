@@ -108,9 +108,32 @@ def _patterns_match(rule: dict, tool_call: dict) -> bool:
     if file_path:
         target = _norm_path(file_path)
         for glob in rule["path_globs"]:
-            if _glob_regex(_fold(_normalize_relpath(glob))).match(target):
+            if _guard_glob_regex(glob).match(target):
                 return True
     return False
+
+
+def _guard_glob_regex(glob: str) -> "re.Pattern[str]":
+    """Compile a guard path glob, honouring the trailing-separator
+    directory marker (es#155, gate half).
+
+    'M:/Media/' normalized to an exact 'M:/Media' and bound NOTHING under
+    the directory -- for an ARMED guard that is a silent false-allow on the
+    entire subtree the operator evidently meant. Expanded to the compiler's
+    trailing-base form, the same directory-marker reading scope entries and
+    amendment tokens already use; forward and Windows separators alike.
+
+    OPERATOR NOTICE (mandatory, per the es#150 adjudication): an armed
+    guard whose path_globs carry a trailing separator becomes MORE
+    RESTRICTIVE on upgrade -- it now matches the directory and everything
+    under it where it previously matched almost nothing. That is the
+    over-match direction (a false block names its rule and is discharged
+    by an amend), but it is a behavior change on an enforcement surface,
+    disclosed in SECURITY.md rather than slipped in."""
+    norm = _fold(_normalize_relpath(glob))
+    if glob.replace("\\", "/").endswith("/") and norm:
+        return _glob_regex(norm + "/**")
+    return _glob_regex(norm)
 
 
 def evaluate(authority: dict, tool_call: dict) -> dict:
