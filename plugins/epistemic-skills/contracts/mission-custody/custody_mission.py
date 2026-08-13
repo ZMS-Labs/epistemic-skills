@@ -1217,14 +1217,35 @@ class Mission:
                 findings.append({"artifact_path": rel, "request_id": request_id,
                                  "violating_paths": violating,
                                  "reason": "matches scope.out"})
-            elif includes:
+            # `if`, NOT `elif`. An exclusion match on ONE representation used to
+            # skip the inclusion test for ALL of them, so with
+            # scope.in=["docs/**"], scope.out=["alias/**"] and alias -> src, the
+            # finding named only `alias/x.py` -- the resolved target `src/x.py`
+            # was outside scope.in and was reported NOWHERE. An acceptor acking
+            # the one path the finding named permitted a write whose real
+            # destination the record never mentioned.
+            #
+            # The invariant this restores: EVERY candidate representation that
+            # crosses ANY boundary appears in exactly one finding's
+            # violating_paths. Hence `c not in violating` -- a representation
+            # already reported as forbidden is not reported a second time as
+            # merely unpermitted. Dropping that clause is the rejected
+            # alternative, and it is not equivalent: it emits a second finding
+            # for a path that both matches scope.out and sits outside scope.in
+            # (secrets/c.env under scope.in=["docs/**"]), which the callers that
+            # key findings by artifact_path silently collapse -- turning the
+            # specific reason into the vaguer one. The two rules agree on the
+            # UNION of violating paths in every row, so the acceptance gate
+            # cannot distinguish them; only the disclosure can.
+            if includes:
                 # INCLUSION is tested against every representation too. The
                 # exclusion side checked both while this one stayed lexical, so
                 # `scope.in=["docs/**"]` with `docs/alias -> src/` accepted a
                 # write to `src/a.py`. "Where it was not permitted to go" is
                 # the same defect as "where it was forbidden to go".
                 outside = [c for c in candidates
-                           if not any(rx.match(c) for rx in includes)]
+                           if c not in violating
+                           and not any(rx.match(c) for rx in includes)]
                 if outside:
                     findings.append({"artifact_path": rel,
                                      "request_id": request_id,

@@ -1774,6 +1774,54 @@ def test_a_denial_is_not_a_grant(workspace: Path) -> None:
               "crossed the declared scope" in str(exc))
 
 
+def test_exclusion_match_does_not_shadow_the_inclusion_check(
+        workspace: Path) -> None:
+    """An exclusion match on ONE representation must not skip the inclusion
+    test for the OTHERS.
+
+    `elif includes:` meant the first exclusion hit ended the comparison for the
+    whole effect. With scope.in=["docs/**"], scope.out=["alias/**"] and
+    alias -> src, the finding named `alias/x.py` and nothing anywhere named
+    `src/x.py` -- the path the write actually landed on, outside scope.in. An
+    acceptor acking the only path the record showed them permitted a write to
+    a destination the record never mentioned.
+
+    Row 4 of the case table is pinned by the sibling assertion below: a path
+    that both matches scope.out AND sits outside scope.in stays ONE finding
+    under the specific reason. That is the row that separates this fix from
+    "run both checks independently", which the two rules' identical union of
+    violating paths cannot distinguish."""
+    m = open_mission(workspace, "m-shadow", "Both boundaries.",
+                     scope_in=["docs/**"], scope_out=["alias/**"])
+    m.approve()
+    (workspace / "src").mkdir(parents=True, exist_ok=True)
+    try:
+        (workspace / "alias").symlink_to(workspace / "src",
+                                          target_is_directory=True)
+    except (OSError, NotImplementedError):
+        print("skip exclusion-shadow (symlinks unavailable on this host)")
+        return
+    m.record_effect("alias/x.py", "lands in src/", "sh-1")
+    findings = m.scope_consistency()
+    covered = {p for f in findings for p in f["violating_paths"]}
+    check("resolved-target-outside-scope-in-is-reported",
+          covered == {"alias/x.py", "src/x.py"})
+    check("both-reasons-reported",
+          {f["reason"] for f in findings}
+          == {"matches scope.out", "outside scope.in"})
+    # ROW 4, and it looks redundant next to the assertions above: one path that
+    # violates BOTH ways is reported once, under the exclusion. Deleting this
+    # assertion is what makes "just run both checks" look correct.
+    m2 = open_mission(workspace / "ws4", "m-row4", "One path, both ways.",
+                      scope_in=["docs/**"], scope_out=["secrets/**"])
+    m2.approve()
+    m2.record_effect("secrets/c.env", "TOKEN=x", "r4-1")
+    row4 = m2.scope_consistency()
+    check("path-violating-both-ways-reported-once",
+          [(f["reason"], f["violating_paths"]) for f in row4]
+          == [("matches scope.out", ["secrets/c.env"])])
+
+
 def test_symlinked_path_must_satisfy_scope_in_too(workspace: Path) -> None:
     """Inclusion is tested against where the write LANDS, like exclusion.
 
@@ -1919,6 +1967,7 @@ TESTS = [
     test_symlinked_path_cannot_dodge_an_exclusion,
     test_forged_receipt_path_cannot_dodge_scope,
     test_scope_consistency_and_acceptance_boundary,
+    test_exclusion_match_does_not_shadow_the_inclusion_check,
     test_empty_scope_declares_nothing_and_flags_nothing,
     test_open_creates_draft_r1,
     test_pathless_load_single_active,
