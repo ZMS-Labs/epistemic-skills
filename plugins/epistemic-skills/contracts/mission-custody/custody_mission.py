@@ -1462,9 +1462,46 @@ class Mission:
                                  & acknowledged)
                 scope_note = (f"scope-ack by {acceptor_id}: "
                               f"{', '.join(covered)}")
-                self._write_next(latest, path, status=latest["status"],
-                                 note=scope_note)
+                acked = self._write_next(latest, path,
+                                          status=latest["status"],
+                                          note=scope_note)
                 latest, path = self.store.load_latest()
+                # A write is a window. This one was inserted ahead of a
+                # `_write_next(status="completed")` that predates it and
+                # validates nothing, so the status checked at entry is stale by
+                # the time it is used. Measured against the shipped code, both
+                # shapes ended the same way:
+                #   racer cancel() -> FINAL status 'completed', notes reading
+                #     'cancelled: operator pulled the plug', 'PASS: looks fine'
+                #   racer FAIL     -> FINAL status 'completed' while
+                #     unresolved_verdicts still held 'FAIL:no good'
+                # A cancelled mission and a failed mission both closed PASSED.
+                #
+                # Re-validating `status` is not one check among several -- it is
+                # the COMPLETE discriminator, which is why nothing stronger is
+                # done here. Every verb that can change the drift set
+                # (record_effect, reconcile, acknowledge_receipt_loss, resume,
+                # FAIL, cancel) also moves status off 'verifying'; every verb
+                # that leaves status 'verifying' (note, set_frontier,
+                # amend_authority) cannot change it -- scope is immutable under
+                # _verify_manifest, and receipt_ids cannot grow outside
+                # _EFFECT_STATES or 'reopened'. So requiring the reloaded
+                # checkpoint to be the exact one just written would buy no
+                # safety and would refuse a benign concurrent `note`. That row
+                # is pinned by a test, so tightening this later has to argue
+                # with a red suite rather than with a comment.
+                #
+                # BEFORE _store_verdict: refusing after it would strand an
+                # orphan verdicts/<rev>-PASS.json describing a PASS the chain
+                # never recorded.
+                if latest["status"] != "verifying":
+                    raise IllegalTransition(
+                        f"cannot record PASS: the mission moved to "
+                        f"{latest['status']!r} while this verdict was being "
+                        f"recorded (the scope acknowledgement landed at "
+                        f"revision {acked['revision']} and stands); re-read the "
+                        "mission and record the verdict against its current "
+                        "state")
                 new_revision = latest["revision"] + 1
                 verdict_record["revision"] = new_revision
             self._store_verdict(new_revision, verdict, verdict_record)

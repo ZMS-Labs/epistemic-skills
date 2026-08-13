@@ -1774,6 +1774,108 @@ def test_a_denial_is_not_a_grant(workspace: Path) -> None:
               "crossed the declared scope" in str(exc))
 
 
+def _pass_with_racer(workspace: Path, label: str, racer_action):
+    """Drive a PASS-with-drift, letting `racer_action` write inside the window
+    between the scope-ack checkpoint and the `completed` checkpoint.
+
+    The racer fires on the first load that OBSERVES the scope-ack note, not on
+    the Nth call: a count-based injection silently stops testing the window the
+    moment anyone adds or removes a `load_latest`, and it would still go green.
+    The racer uses its own MissionStore so it does not recurse through this
+    wrapper."""
+    from custody_store import MissionStore
+    m = open_mission(workspace, f"m-{label}", "Raced.",
+                     scope_out=["secrets.env"])
+    m.approve()
+    m.record_effect("secrets.env", "leak", f"{label}-1")
+    m.begin_verification()
+
+    store = m.store
+    real_load = store.load_latest
+    fired: list[bool] = []
+
+    def racing_load():
+        latest, path = real_load()
+        if not fired and any(n.startswith("scope-ack by ")
+                             for n in latest["state"]["notes"]):
+            fired.append(True)
+            racer_action(Mission(MissionStore(store.mission_dir), workspace,
+                                 actor="agent:other"))
+            return real_load()
+        return latest, path
+
+    store.load_latest = racing_load
+    acceptor = Mission(store, workspace, actor="agent:acceptor")
+    try:
+        outcome = acceptor.record_verdict(
+            "PASS", acceptor_id="agent:acceptor",
+            assurance_tier="declared-role-separation", reason="looks fine",
+            scope_ack=["secrets.env"])
+    except CustodyError as exc:
+        outcome = exc
+    finally:
+        store.load_latest = real_load
+    final, _ = MissionStore(store.mission_dir).load_latest()
+    verdicts_dir = store.mission_dir / "verdicts"
+    written = (sorted(p.name for p in verdicts_dir.glob("*.json"))
+               if verdicts_dir.is_dir() else [])
+    return fired, outcome, final, written
+
+
+def test_status_is_revalidated_after_the_scope_ack_checkpoint(
+        workspace: Path) -> None:
+    """The scope-ack write opened a window that the `completed` write ignored.
+
+    `_write_next(scope_note)` -> `load_latest()` -> `_write_next("completed")`.
+    The status validated at entry is stale by the time it is used, and the line
+    it races into predates this change -- the pre-existing line is the victim,
+    not the cause. Measured against the shipped code: a concurrent `cancel`
+    produced a FINAL status of 'completed' with notes reading 'cancelled:
+    operator pulled the plug' then 'PASS: looks fine'; a concurrent FAIL
+    produced 'completed' while unresolved_verdicts still held 'FAIL:no good'.
+    A cancelled mission and a failed mission both closed as PASSED."""
+    rows = [
+        ("cancel", lambda r: r.cancel("operator pulled the plug"), "cancelled"),
+        ("fail", lambda r: r.record_verdict(
+            "FAIL", acceptor_id="agent:other",
+            assurance_tier="declared-role-separation", reason="no good"),
+         "reopened"),
+    ]
+    for label, action, expected in rows:
+        fired, outcome, final, written = _pass_with_racer(
+            workspace / f"ws-{label}", label, action)
+        check(f"race-{label}-window-was-entered", bool(fired))
+        check(f"race-{label}-pass-refused",
+              isinstance(outcome, IllegalTransition))
+        check(f"race-{label}-status-not-overwritten",
+              final["status"] == expected)
+        check(f"race-{label}-no-pass-note",
+              not any(n.startswith("PASS: ") for n in final["state"]["notes"]))
+        # the refusal must land BEFORE _store_verdict, or the mission keeps a
+        # verdict record for a PASS that never entered the chain
+        check(f"race-{label}-no-orphan-pass-verdict",
+              not any(n.endswith("-PASS.json") for n in written))
+
+
+def test_benign_write_in_the_window_does_not_block_the_pass(
+        workspace: Path) -> None:
+    """The row that distinguishes the adopted rule from the stricter one.
+
+    Re-validating `status` allows a concurrent `note`; requiring the reloaded
+    checkpoint to be the exact one just written would refuse it. Nothing that
+    leaves status 'verifying' can change the drift set -- scope is immutable
+    under _verify_manifest and receipt_ids cannot grow outside _EFFECT_STATES
+    or 'reopened' -- so the stricter rule buys no safety and costs a false
+    block. Deleting this test is what makes the stricter rule look free."""
+    fired, outcome, final, _written = _pass_with_racer(
+        workspace / "ws-note", "note", lambda r: r.note("just looking"))
+    check("race-note-window-was-entered", bool(fired))
+    check("benign-note-in-window-still-passes", isinstance(outcome, int))
+    check("benign-note-in-window-preserved",
+          "just looking" in final["state"]["notes"])
+    check("benign-note-in-window-completes", final["status"] == "completed")
+
+
 def test_hard_link_is_reported_not_silent(workspace: Path) -> None:
     """A hard link defeats path resolution, so the exposure must be DISCLOSED.
 
@@ -2080,6 +2182,8 @@ TESTS = [
     test_exclusion_match_does_not_shadow_the_inclusion_check,
     test_hard_link_is_reported_not_silent,
     test_link_count_is_none_when_the_artifact_is_gone,
+    test_status_is_revalidated_after_the_scope_ack_checkpoint,
+    test_benign_write_in_the_window_does_not_block_the_pass,
     test_empty_scope_declares_nothing_and_flags_nothing,
     test_open_creates_draft_r1,
     test_pathless_load_single_active,
