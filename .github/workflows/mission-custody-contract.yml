@@ -51,5 +51,7 @@ jobs:
         run: python plugins/epistemic-skills/contracts/mission-custody/test_custody_mission.py
       - name: Custody CLI black-box tests
         run: python plugins/epistemic-skills/contracts/mission-custody/test_custody_cli.py
+      - name: Custody anchor identity and state machine
+        run: python plugins/epistemic-skills/contracts/mission-custody/test_custody_anchor.py
       - name: Three-subprocess kill/resume/repair continuity proof
         run: python plugins/epistemic-skills/contracts/mission-custody/test_custody_process_proof.py
