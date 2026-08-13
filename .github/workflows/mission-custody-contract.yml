@@ -65,3 +65,46 @@ jobs:
         run: python plugins/epistemic-skills/contracts/mission-custody/test_custody_hook.py
       - name: Three-subprocess kill/resume/repair continuity proof
         run: python plugins/epistemic-skills/contracts/mission-custody/test_custody_process_proof.py
+
+  contract-macos:
+    # es#162 diagnostic: scope matching folds case only on NT, and macOS's
+    # default APFS is case-insensitive -- a claim the round-2 disposition
+    # ruled undecidable from a Linux host ("one macOS CI run settles it").
+    # Dispatch-only: macOS minutes bill at 10x (es#95), and this job exists
+    # to SETTLE a filed claim, not to gate merges. The probe reports its
+    # verdict in the log and exits 0 on any measured outcome; the suites
+    # after it report whether the contract's green survives an
+    # case-insensitive filesystem at all.
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: macos-14
+    timeout-minutes: 30
+    steps:
+      - name: Check out the tested revision without stored credentials
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Record the exact tested revision
+        run: |
+          echo "candidate_sha=$(git rev-parse HEAD)"
+          git status --short
+      - name: es#162 probe -- does the comparison agree with this filesystem about case?
+        run: python plugins/epistemic-skills/contracts/mission-custody/probe_case_insensitivity.py
+      - name: Mission custody semantic and schema contract
+        run: python plugins/epistemic-skills/contracts/mission-custody/test_mission_custody.py
+      - name: Custody store unit tests
+        run: python plugins/epistemic-skills/contracts/mission-custody/test_custody_store.py
+      - name: Custody mission lifecycle unit tests
+        run: python plugins/epistemic-skills/contracts/mission-custody/test_custody_mission.py
+      - name: Custody CLI black-box tests
+        run: python plugins/epistemic-skills/contracts/mission-custody/test_custody_cli.py
+      - name: Custody gate unit tests
+        run: python plugins/epistemic-skills/contracts/mission-custody/test_custody_gate.py
+      - name: Custody enforcement hook tests
+        run: python plugins/epistemic-skills/contracts/mission-custody/test_custody_hook.py
+      - name: Three-subprocess kill/resume/repair continuity proof
+        run: python plugins/epistemic-skills/contracts/mission-custody/test_custody_process_proof.py
