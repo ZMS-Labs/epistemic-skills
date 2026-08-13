@@ -180,6 +180,51 @@ def _refuse_unprintable_identity(value, field: str) -> None:
             "separation check. Supply the identity without edge whitespace.")
 
 
+def _refuse_unrecordable_artifact_path(relpath) -> None:
+    """Refuse line structure and control effects in NEW artifact paths, at
+    the one verb that mints them.
+
+    es#153, in exactly the narrow form the gauntlet adjudication ruled
+    (es#150 adjudication, 2026-08-13): the `effect:` note carries the path
+    verbatim because `_historical_effect_path` reads it back out -- the note
+    IS the tamper-evident record of the path -- so a newline in a filename
+    wrote a chained note whose second line read as a machine acknowledgement
+    (executed on the issue). Quoting the note is a contract change; refusing
+    the class at ingestion is not.
+
+    NARROW means narrow: the refusal set is Cc (controls: newline, CR, tab,
+    ESC, DEL), Zl and Zp (the Unicode line/paragraph separators
+    `splitlines` honors) -- the characters that can forge note structure or
+    rewrite a terminal. Spaces, quotes, NBSP, and every printable Unicode
+    name stay LEGAL: the discharge machinery for awkward-but-printable
+    names survives intact, and the adjudication's freeze forbids widening
+    it. Cf (printable-invisible format characters, including BiDi
+    overrides) is deliberately NOT refused here -- it breaks no line
+    structure and rewrites no terminal; that display-spoofing residue is
+    the same class es#167 already tracks for identities.
+
+    INGESTION ONLY, at `record_effect`: `reconcile` re-covers artifacts
+    that already exist in the record, and refusing there would wedge the
+    recovery of exactly the historical missions this guard cannot reach --
+    records written before it shipped remain readable, comparable, and
+    dischargeable forever. Non-strings are left to their existing failure
+    modes; this guard owns exactly the character class."""
+    if not isinstance(relpath, str):
+        return
+    bad = sorted({c for c in relpath
+                  if unicodedata.category(c) in ("Cc", "Zl", "Zp")})
+    if bad:
+        raise CustodyError(
+            "artifact path may not contain control characters or line "
+            "separators: the chained effect note carries the path verbatim "
+            "(the note is the record), so an embedded line boundary forges "
+            "a machine-note line and a control character rewrites the "
+            "terminal that displays it. Record the artifact under a name "
+            "without them. "
+            "Offending: " + ", ".join(repr(c) for c in bad)
+            + f" in {relpath!r}")
+
+
 def now_utc() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
@@ -1206,6 +1251,10 @@ class Mission:
 
     def record_effect(self, artifact_relpath: str, content: str,
                        request_id: str) -> dict:
+        # BEFORE any read or write: a refused mint must be side-effect free
+        # (the opening-actor lesson, same shape -- validation on the wrong
+        # side of the first write leaves state a refused caller owns).
+        _refuse_unrecordable_artifact_path(artifact_relpath)
         latest, path = self.store.load_latest()
         self._verify_manifest(latest)
         if latest["status"] not in _EFFECT_STATES:
