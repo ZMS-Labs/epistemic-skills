@@ -421,6 +421,43 @@ def test_receipt_ids_always_carry_a_derivable_path(workspace: Path) -> None:
               m._historical_effect_path(request_id) == "notes/a.md")
 
 
+def test_effect_path_index_matches_per_id(workspace: Path) -> None:
+    """The whole-chain index and the per-id lookup must agree on EVERY id,
+    including the ones with no derivable path.
+
+    `_effect_path_index` exists only because asking `_historical_effect_path`
+    about every id rescans the chain from revision 1 each time (quadratic on
+    long missions -- an estate census over thousands of revisions becomes
+    millions of parses). A faster second implementation of a rule is a second
+    rule unless something pins them together: they share `_first_effect_note`,
+    and this test is the pin. Exercised across ordinary effects, a
+    reconciliation, a retired id, and an id admitted with no parseable note."""
+    m = open_mission(workspace, "m-index", "Index equals per-id lookup.")
+    m.approve()
+    m.record_effect("notes/a.md", "aa", "req-a")
+    m.record_effect("notes/b.md", "bb", "req-b")
+    (workspace / "notes" / "a.md").write_text("tampered", encoding="utf-8")
+    m.resume()
+    m.reconcile("notes/a.md", "aa", "req-a-again")
+    # an id admitted by a revision whose notes carry no effect marker: the
+    # underivable case, where both must answer None rather than guessing.
+    latest, path = m.store.load_latest()
+    m._write_next(latest, path, status=latest["status"],
+                  add_receipt_id="req-noteless",
+                  unresolved_verdicts=latest["state"]["unresolved_verdicts"],
+                  note="bare progress note with no effect marker")
+
+    index = m._effect_path_index()
+    ids = m._all_receipt_ids_ever() + ["req-never-existed"]
+    disagreements = [rid for rid in ids
+                     if index.get(rid) != m._historical_effect_path(rid)]
+    check("index-matches-per-id", not disagreements)
+    check("index-answers-none-for-noteless",
+          index.get("req-noteless") is None
+          and m._historical_effect_path("req-noteless") is None)
+    check("index-covers-reconciled-id", index.get("req-a-again") == "notes/a.md")
+
+
 def test_forged_restored_receipt_is_not_trusted(workspace: Path) -> None:
     """Round-3 finding: a schema-valid receipt planted at the lost id's path
     must not buy continuity. The chain records which artifact the id was
@@ -3301,6 +3338,7 @@ TESTS = [
     test_retirement_survives_hostile_request_ids,
     test_note_cannot_forge_machine_state,
     test_receipt_ids_always_carry_a_derivable_path,
+    test_effect_path_index_matches_per_id,
     test_forged_restored_receipt_is_not_trusted,
     test_distinct_files_never_share_an_obligation,
     test_obligations_match_by_artifact_not_by_string,

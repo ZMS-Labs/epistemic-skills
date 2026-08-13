@@ -307,6 +307,21 @@ def _same_artifact(left: str, right: str) -> bool:
     return left == right
 
 
+def _first_effect_note(notes: list[str], kind: bool = False) -> str | None:
+    """The path (or with kind=True, the mint kind) recorded by the first
+    'effect: ' / 'reconciled: ' note in this slice of newly-appended notes.
+
+    The ONE place that rule is written. `_historical_effect_path` and
+    `_effect_path_index` both call it, so the single-id answer and the
+    whole-chain index cannot disagree -- a differential test pins that
+    (test_effect_path_index_matches_per_id)."""
+    for note in notes:
+        for prefix in ("effect: ", "reconciled: "):
+            if note.startswith(prefix):
+                return note[len(prefix):] if not kind else prefix.rstrip(": ")
+    return None
+
+
 def _find_marker(unresolved: list[str], prefix: str, artifact_relpath: str) -> str | None:
     """The marker in `unresolved` naming this artifact, or None. Matching is
     by artifact identity, never by string equality of the whole marker."""
@@ -1174,14 +1189,41 @@ class Mission:
             ids = record["receipt_ids"]
             notes = record["state"]["notes"]
             if request_id in ids and request_id not in prev_ids:
-                for note in notes[len(prev_notes):]:
-                    for prefix in ("effect: ", "reconciled: "):
-                        if note.startswith(prefix):
-                            return note[len(prefix):] if not kind \
-                                else prefix.rstrip(": ")
-                return None
+                return _first_effect_note(notes[len(prev_notes):], kind)
             prev_ids, prev_notes = ids, notes
         return None
+
+    def _effect_path_index(self) -> dict[str, str]:
+        """Every chain-bound request id -> the path its admitting revision
+        recorded, built in ONE pass over the chain.
+
+        Same rule as `_historical_effect_path`, and deliberately sharing
+        `_first_effect_note` with it so the two cannot drift: a reader that
+        paraphrases this rule is a reader that will eventually disagree with
+        it, and every disagreement is a defect (sixteen of them on the
+        census, merge-gate rounds 1-2).
+
+        Why it exists: the per-id method rescans from checkpoint 1 each time,
+        so asking it about every id in a mission is quadratic -- an estate
+        walk over long-running missions with thousands of revisions becomes
+        millions of JSON parses. Callers that want ALL the paths ask once.
+        Ids with no derivable path are ABSENT (never mapped to a guess), so
+        `.get(rid)` returns None exactly where the per-id method does."""
+        index: dict[str, str] = {}
+        prev_ids: list[str] = []
+        prev_notes: list[str] = []
+        for cp_path in self.store.checkpoint_paths():
+            record = json.loads(cp_path.read_text(encoding="utf-8"))
+            ids = record["receipt_ids"]
+            notes = record["state"]["notes"]
+            fresh = [rid for rid in ids if rid not in prev_ids]
+            if fresh:
+                path = _first_effect_note(notes[len(prev_notes):])
+                if path is not None:
+                    for rid in fresh:
+                        index.setdefault(rid, path)
+            prev_ids, prev_notes = ids, notes
+        return index
 
     def _all_receipt_ids_ever(self) -> list[str]:
         """Every request id ever admitted to receipt_ids, in the order the
