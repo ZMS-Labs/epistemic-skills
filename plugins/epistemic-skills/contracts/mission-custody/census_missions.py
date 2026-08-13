@@ -63,14 +63,17 @@ gate). 2 = invalid invocation.
 from __future__ import annotations
 
 import json
+import os
+import stat
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 
-from custody_mission import _normalize_relpath  # noqa: E402
+from custody_mission import Mission, _normalize_relpath  # noqa: E402
 from custody_store import MissionStore, StoreError  # noqa: E402
+from verify_mission_custody import validate_record  # noqa: E402
 
 TERMINAL = ("completed", "cancelled")
 
@@ -120,13 +123,23 @@ def _lget(record: dict, key: str) -> list:
     return value if isinstance(value, list) else []
 
 
-def _receipts(store: MissionStore, latest: dict) -> tuple[list[str], list[str]]:
+def _receipts(mission: Mission, store: MissionStore,
+              latest: dict) -> tuple[list[str], list[str]]:
     """(normalized artifact paths, problems) for CHAIN-BOUND receipt ids.
 
-    Ids come from the checkpoint, and each receipt must be findable at its
-    content-addressed path AND agree about its own request_id -- the rule
-    `_load_receipt` already applies. An orphaned or copied receipt file is
-    therefore invisible to this count, which is the point: it is not custody.
+    THE CHAIN IS THE AUTHORITY ON WHICH PATH, not just on which ids.
+    `scope_consistency()` already refuses to trust the receipt file for this
+    exact reason -- a schema-valid replacement can keep the chained
+    request_id while naming a different artifact_path, which would
+    manufacture or hide an overlap and move coverage. So the path comes from
+    `_historical_effect_path` (the effect note appended by the revision that
+    put the id into receipt_ids, inside the tamper-evident chain), and the
+    receipt file is consulted only when the chain has nothing to say.
+
+    The receipt is additionally put through `validate_record`, the rule
+    `_load_receipt` applies: a parseable but schema-invalid record is NOT a
+    receipt. An empty artifact_path, for instance, normalizes to "" and
+    would make the workspace root itself count as a covered artifact.
     """
     paths: list[str] = []
     problems: list[str] = []
@@ -134,11 +147,20 @@ def _receipts(store: MissionStore, latest: dict) -> tuple[list[str], list[str]]:
         if not isinstance(rid, str):
             problems.append(f"receipt id {rid!r} is not a string")
             continue
+        chained = None
+        try:
+            chained = mission._historical_effect_path(rid)
+        except (OSError, ValueError, KeyError, TypeError) as exc:
+            problems.append(f"{rid}: chain unreadable: {type(exc).__name__}")
+        if isinstance(chained, str) and chained:
+            paths.append(_norm(chained))
+            continue
+        # chain silent -- fall back to the receipt file, and say so
         rp = store.receipt_path(rid)
         try:
             rec = json.loads(rp.read_text(encoding="utf-8"))
         except FileNotFoundError:
-            problems.append(f"{rid}: receipt missing (chain-bound)")
+            problems.append(f"{rid}: no chained effect note and receipt missing")
             continue
         except (OSError, ValueError) as exc:
             problems.append(f"{rid}: {type(exc).__name__}: {exc}")
@@ -146,13 +168,18 @@ def _receipts(store: MissionStore, latest: dict) -> tuple[list[str], list[str]]:
         if not isinstance(rec, dict):
             problems.append(f"{rid}: receipt is {type(rec).__name__}")
             continue
+        errors = validate_record(rec)
+        if errors:
+            problems.append(f"{rid}: receipt fails schema: {errors[:2]}")
+            continue
         if rec.get("request_id") != rid:
             problems.append(f"{rid}: receipt disagrees about its request_id")
             continue
         ap = rec.get("artifact_path")
-        if not isinstance(ap, str):
-            problems.append(f"{rid}: artifact_path is not a string")
+        if not isinstance(ap, str) or not ap:
+            problems.append(f"{rid}: artifact_path missing or empty")
             continue
+        problems.append(f"{rid}: path from RECEIPT FILE (chain silent)")
         paths.append(_norm(ap))
     return paths, problems
 
@@ -171,10 +198,28 @@ def _classify_guard(rule) -> str:
     return "effort?"
 
 
+def _identity(abs_path: str) -> tuple:
+    """Filesystem identity for overlap comparison.
+
+    Resolved path STRINGS do not identify hard links: two names for one
+    inode stay distinct after resolve(), yet a write through either changes
+    the same bytes -- exactly the cross-mission drift hazard Q4 exists to
+    find, and the hazard this contract already tracks as MULTIPLY LINKED.
+    For paths that exist, identity is (st_dev, st_ino); for paths that do
+    not, the normalized spelling is the best available key.
+    """
+    try:
+        st = os.stat(abs_path)
+    except (OSError, ValueError):
+        return ("path", abs_path)
+    return ("inode", st.st_dev, st.st_ino)
+
+
 def census(root: Path) -> dict:
     root = root.resolve()
     missions_root = root / "missions"
-    report: dict = {"root": str(root), "missions": [], "unreadable": []}
+    report: dict = {"root": str(root), "missions": [], "unreadable": [],
+                    "environmental": []}
     if not missions_root.is_dir():
         report["note"] = "no missions/ directory"
         return report
@@ -182,10 +227,10 @@ def census(root: Path) -> dict:
         store = MissionStore(md)
         try:
             latest, _ = store.load_latest()
-            gate_loadable = True
-        except (StoreError, ValueError, OSError) as exc:
-            # The gate SKIPS this store, so it cannot contribute ambiguity.
-            # Describe it from the raw tail for visibility only.
+        except (StoreError, ValueError) as exc:
+            # CORRUPTION: Mission.load catches exactly this pair and SKIPS
+            # the store, so the gate resolves the healthy sibling and keeps
+            # enforcing. Visible, but never counted toward ambiguity.
             raw, why = _raw_tail(md)
             report["unreadable"].append({
                 "mission": md.name,
@@ -195,6 +240,20 @@ def census(root: Path) -> dict:
                 "counts_toward_ambiguity": False,
             })
             continue
+        except OSError as exc:
+            # ENVIRONMENTAL: Mission.load deliberately does NOT catch OSError
+            # -- it propagates, because skipping a merely-busy store would
+            # reroute discovery around it and invite a duplicate open. The
+            # hook therefore FAILS OPEN for this workspace. Reporting it as
+            # "skipped" would print the root as healthy while the live gate
+            # allows everything: the one answer a safety instrument must
+            # never give.
+            report["environmental"].append({
+                "mission": md.name,
+                "reason": f"{type(exc).__name__}: {exc}",
+                "fails_open": True,
+            })
+            continue
         if not isinstance(latest, dict):
             report["unreadable"].append({
                 "mission": md.name,
@@ -202,12 +261,32 @@ def census(root: Path) -> dict:
                 "counts_toward_ambiguity": False,
             })
             continue
+        try:
+            mission = Mission(store, root, "census:read-only")
+        except Exception as exc:
+            report["unreadable"].append({
+                "mission": md.name,
+                "reason": f"unconstructable: {type(exc).__name__}: {exc}",
+                "counts_toward_ambiguity": False,
+            })
+            continue
         manifest = _dget(latest, "manifest")
         auth = _dget(manifest, "authority")
         scope = _dget(manifest, "scope")
         guards = _lget(auth, "actuator_guards")
-        paths, problems = _receipts(store, latest)
-        present = sum(1 for p in paths if (root / p).exists())
+        paths, problems = _receipts(mission, store, latest)
+        abs_paths = [str((root / p).resolve()) for p in paths]
+        # COVERAGE counts only REGULAR FILES: the effect writer only ever
+        # write_bytes()es a regular file, so a receipted path that is now a
+        # directory or socket is not the artifact and must not read as
+        # coverage.
+        present = 0
+        for ap in abs_paths:
+            try:
+                if stat.S_ISREG(os.stat(ap).st_mode):
+                    present += 1
+            except (OSError, ValueError):
+                pass
         if problems:
             report["unreadable"].append({
                 "mission": md.name,
@@ -217,7 +296,6 @@ def census(root: Path) -> dict:
             })
         report["missions"].append({
             "mission": md.name,
-            "gate_loadable": gate_loadable,
             "status": latest.get("status"),
             "active": latest.get("status") not in TERMINAL,
             "revision": latest.get("revision"),
@@ -230,7 +308,8 @@ def census(root: Path) -> dict:
             "scope_out": _lget(scope, "out"),
             "receipt_count": len(paths),
             "receipt_paths": paths,
-            "absolute_paths": [str((root / p).resolve()) for p in paths],
+            "absolute_paths": abs_paths,
+            "identities": [list(_identity(a)) for a in abs_paths],
             "artifacts_present_under_root": present,
             "receipt_problems": problems,
         })
@@ -243,39 +322,52 @@ def summarize(reports: list[dict]) -> dict:
     armed = [(r, m) for r, m in active
              if m["guard_count"] > 0 and m["guard_mode"]]
     enforce = [(r, m) for r, m in armed if m["guard_mode"] == "enforce"]
-    # Q1: only GATE-LOADABLE active missions create ambiguity, because only
-    # those are what Mission.load counts.
-    ambiguous = []
+    fail_open = []
     for r in reports:
         act = [m["mission"] for m in r["missions"] if m["active"]]
         if len(act) > 1:
-            ambiguous.append({"root": r["root"], "missions": act})
-    # Q4: compare RESOLVED ABSOLUTE paths, so different roots spelling the
-    # same relative path are not conflated and nested roots are not missed.
+            fail_open.append({"root": r["root"], "cause": "multiple active",
+                              "missions": act})
+        for e in r.get("environmental", []):
+            fail_open.append({"root": r["root"],
+                              "cause": f"unreadable store ({e['reason']})",
+                              "missions": [e["mission"]]})
     overlaps = []
     for i, (ra, a) in enumerate(all_missions):
+        ida = {tuple(x) for x in a["identities"]}
         for rb, b in all_missions[i + 1:]:
-            shared = sorted(set(a["absolute_paths"]) & set(b["absolute_paths"]))
+            idb = {tuple(x) for x in b["identities"]}
+            shared = sorted(str(s) for s in (ida & idb))
             if shared:
                 overlaps.append({
                     "a": f"{ra['root']}::{a['mission']}",
                     "b": f"{rb['root']}::{b['mission']}",
-                    "shared_paths": shared})
+                    "shared": shared})
     zero_cov = [f"{r['root']}::{m['mission']}" for r, m in active
                 if m["receipt_count"] > 0
                 and m["artifacts_present_under_root"] == 0]
+    # VACUITY: a mission with no receipts cannot fail the coverage test, and
+    # printing "none" for it reads as a pass. Silence that means "not yet
+    # testable" must be labelled, or this instrument commits the vacuous-
+    # green error it exists to detect. (Found by USE, not review: the
+    # freshly-opened attribution mission reported clean coverage while being
+    # structurally incapable of receipting anything it governed.)
+    untested = [f"{r['root']}::{m['mission']}" for r, m in active
+                if m["receipt_count"] == 0]
     partial = any(u.get("partial_answer") for r in reports
                   for u in r["unreadable"])
     return {
-        "q1_fail_open_roots": ambiguous,
+        "q1_fail_open_roots": fail_open,
         "q2_armed_active_missions": len(armed),
         "q3_enforce_mode": len(enforce),
         "q3_audit_mode": len(armed) - len(enforce),
         "q4_artifact_overlaps": overlaps,
         "q5_guard_classes": [
-            {"mission": m["mission"], "classes": m["guard_classes"],
-             "names": m["guard_names"]} for _, m in armed],
+            {"mission": f"{r['root']}::{m['mission']}",
+             "classes": m["guard_classes"], "names": m["guard_names"]}
+            for r, m in armed],
         "q6_zero_coverage_missions": zero_cov,
+        "q6_coverage_untested_no_receipts": untested,
         "active_total": len(active),
         "mission_total": len(all_missions),
         "answers_are_partial": partial,
@@ -283,8 +375,29 @@ def summarize(reports: list[dict]) -> dict:
 
 
 def main(argv: list[str]) -> int:
-    as_json = "--json" in argv
-    roots = [Path(a) for a in argv if not a.startswith("--")]
+    # Unknown options are REFUSED, not ignored: silently discarding `--jsno`
+    # would emit human output where a caller asked for JSON and exit 0,
+    # corrupting an automated consumer while the docstring promises exit 2.
+    as_json = False
+    raw_roots: list[str] = []
+    for arg in argv:
+        if arg == "--json":
+            as_json = True
+        elif arg.startswith("-"):
+            print(f"unknown option: {arg}", file=sys.stderr)
+            return 2
+        else:
+            raw_roots.append(arg)
+    # DEDUPE by resolved identity: the same root passed twice (or once via a
+    # symlink alias) would double every count and compare each mission with
+    # its own copy, manufacturing an overlap.
+    roots: list[Path] = []
+    seen: set[str] = set()
+    for r in raw_roots:
+        rp = Path(r).resolve()
+        if str(rp) not in seen:
+            seen.add(str(rp))
+            roots.append(rp)
     if not roots:
         print(__doc__.split("Usage:")[1].strip(), file=sys.stderr)
         return 2
@@ -301,42 +414,45 @@ def main(argv: list[str]) -> int:
     print("Q1 FAIL-OPEN REACHABILITY (roots whose gate is inert RIGHT NOW):")
     if summary["q1_fail_open_roots"]:
         for a in summary["q1_fail_open_roots"]:
-            print(f"  !! {a['root']}: {', '.join(a['missions'])}")
-        print("  -> every guard under these roots is retired until exactly")
-        print("     one mission is active. No CLI verb can repair this.")
+            print(f"  !! {a['root']}  [{a['cause']}]: "
+                  f"{', '.join(a['missions'])}")
+        print("  -> guards under these roots are retired until resolved.")
     else:
-        print("  none — every root holds at most one gate-loadable active")
-        print("  mission (stores the gate cannot load are listed below and")
-        print("  do NOT disarm it: Mission.load skips them)")
+        print("  none — every root resolves exactly one active mission")
     print(f"\nQ2 ARMED: {summary['q2_armed_active_missions']} of "
           f"{summary['active_total']} active missions carry guards")
     print(f"Q3 POLARITY: {summary['q3_enforce_mode']} enforce, "
           f"{summary['q3_audit_mode']} audit "
           "(audit-mode guards already allow)")
-    print("\nQ4 ARTIFACT OVERLAP (cross-mission drift hazard, absolute paths):")
+    print("\nQ4 ARTIFACT OVERLAP (by filesystem identity, hard links included):")
     if summary["q4_artifact_overlaps"]:
         for o in summary["q4_artifact_overlaps"]:
-            print(f"  !! {o['a']}\n     <-> {o['b']}")
-            for p in o["shared_paths"]:
-                print(f"       {p}")
+            print(f"  !! {o['a']}\n     <-> {o['b']}  {o['shared']}")
         print("  -> each mission reads the other's writes as drift; the")
         print("     discharge (reconcile) OVERWRITES the artifact.")
     else:
-        print("  none — no two missions receipt the same file")
+        print("  none — no two missions receipt the same bytes")
     print("\nQ5 GUARD CLASSIFICATION (heuristic — verify by eye):")
     for g in summary["q5_guard_classes"] or []:
         print(f"  {g['mission']}: " + ", ".join(
             f"{n} [{c}]" for n, c in zip(g["names"], g["classes"])))
     if not summary["q5_guard_classes"]:
         print("  (no armed missions)")
-    print("\nQ6 ZERO-COVERAGE MISSIONS (receipts exist, none present here):")
+    print("\nQ6 COVERAGE:")
     if summary["q6_zero_coverage_missions"]:
         for m in summary["q6_zero_coverage_missions"]:
-            print(f"  !! {m}")
-        print("  -> detached store: the record names artifacts this")
-        print("     workspace does not contain (es#173 P10).")
-    else:
-        print("  none")
+            print(f"  !! ZERO COVERAGE {m}")
+        print("  -> detached store: receipted artifacts are not under this")
+        print("     root as regular files (es#173 P10).")
+    if summary["q6_coverage_untested_no_receipts"]:
+        for m in summary["q6_coverage_untested_no_receipts"]:
+            print(f"  ?  UNTESTED (0 receipts) {m}")
+        print("  -> NOT a pass: nothing has been written yet, so coverage")
+        print("     cannot be checked. Verify the root contains the")
+        print("     artifacts this mission governs BEFORE work starts.")
+    if not (summary["q6_zero_coverage_missions"]
+            or summary["q6_coverage_untested_no_receipts"]):
+        print("  all active missions have receipted artifacts present here")
     unreadable = [(r["root"], u) for r in reports for u in r["unreadable"]]
     if unreadable:
         print("\nUNREADABLE / PARTIAL (reported, never silently dropped):")
