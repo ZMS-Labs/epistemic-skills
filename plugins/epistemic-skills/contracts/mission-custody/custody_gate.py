@@ -108,9 +108,71 @@ def _patterns_match(rule: dict, tool_call: dict) -> bool:
     if file_path:
         target = _norm_path(file_path)
         for glob in rule["path_globs"]:
-            if _glob_regex(_fold(_normalize_relpath(glob))).match(target):
+            if _guard_glob_regex(glob).match(target):
                 return True
     return False
+
+
+def _guard_glob_regex(glob: str) -> "re.Pattern[str]":
+    """Compile a guard path glob, honouring the trailing-separator
+    directory marker (es#155, gate half).
+
+    'M:/Media/' normalized to an exact 'M:/Media' and bound NOTHING under
+    the directory -- for an ARMED guard that is a silent false-allow on the
+    entire subtree the operator evidently meant. Expanded to the compiler's
+    trailing-base form, the same directory-marker reading scope entries and
+    amendment tokens already use; forward and Windows separators alike.
+
+    OPERATOR NOTICE (mandatory, per the es#150 adjudication): an armed
+    guard whose path_globs carry a trailing separator becomes MORE
+    RESTRICTIVE on upgrade -- it now matches the directory and everything
+    under it where it previously matched almost nothing. That is the
+    over-match direction (a false block names its rule and is discharged
+    by an amend), but it is a behavior change on an enforcement surface,
+    disclosed in SECURITY.md rather than slipped in."""
+    norm = _fold(_normalize_relpath(glob))
+    if not norm:
+        # '.', './', '.\', './.': normalization yields the EMPTY path --
+        # the workspace itself -- and compiling '' produces a regex
+        # matching nothing, silently: an ARMED guard the operator believes
+        # covers everything, covering nothing at all. The DOT spellings
+        # express that intent, so they compile to match every target --
+        # the over-match direction (a false block names its rule and
+        # discharges by amend), and the one that also catches absolute
+        # respellings of workspace files.
+        #
+        # The literal EMPTY STRING is not one of them: it expresses no
+        # directory intent (a placeholder, most plausibly), it passes the
+        # manifest validator today, and it has always been inert --
+        # flipping it to block-everything would be an enforcement change
+        # on armed fleets that the SECURITY.md notice (scoped to
+        # trailing-separator markers) never disclosed. It keeps its
+        # historical behavior: matches nothing real.
+        segments = glob.replace("\\", "/").split("/")
+        if any(seg == "." for seg in segments) \
+                and all(seg in ("", ".") for seg in segments):
+            return _glob_regex("**")
+        return _glob_regex(norm)
+    if glob.replace("\\", "/").endswith("/"):
+        # The FILESYSTEM ROOT is the one spelling normalization leaves with
+        # its separator attached ('/' stays '/'), so appending the marker
+        # built '//**' -- which compiles to a regex matching the root and
+        # NOTHING under it: a guard of '/' (block all absolute writes)
+        # silently allowed every descendant. Drive roots are unaffected
+        # ('C:/' normalizes to 'C:'). Compile the root as the bare-subtree
+        # form instead, which matches every absolute target and no
+        # relative one.
+        if norm == "/":
+            return _glob_regex("/**")
+        if norm == "**" or norm.endswith("/**"):
+            # 'foo/**/' already carries subtree semantics INCLUDING the
+            # base; appending another '/**' compiled to 'foo/.*(?:/.*)?',
+            # which requires a separator after 'foo' -- a write to the
+            # base itself was silently allowed where the plain 'foo/**'
+            # spelling matches it.
+            return _glob_regex(norm)
+        return _glob_regex(norm + "/**")
+    return _glob_regex(norm)
 
 
 def evaluate(authority: dict, tool_call: dict) -> dict:

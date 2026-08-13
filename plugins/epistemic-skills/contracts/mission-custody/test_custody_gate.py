@@ -127,6 +127,105 @@ def test_glob_overmatch_still_held() -> None:
           evaluate(auth("enforce", guards), call)["matched"])
 
 
+def test_trailing_slash_guard_glob_binds_the_subtree() -> None:
+    """es#155's gate half: 'M:/Media/' compiled to an exact 'M:/Media' and
+    an armed guard silently allowed every write UNDER the directory the
+    operator evidently declared. The trailing separator now reads as the
+    directory marker scope entries and amendment tokens already use. This
+    makes an armed guard MORE restrictive -- the disclosed, over-match-safe
+    direction (a false block names its rule)."""
+    guards = [{"name": "dir", "tool_names": ["Write"], "command_regexes": [],
+               "path_globs": ["M:/Media/"]}]
+    for label, path, expect in (
+            ("subtree-write-blocked", "M:/Media/a/b.mkv", True),
+            ("base-itself-matched", "M:/Media", True),
+            ("prefix-sibling-not-matched", "M:/Mediaevil/x", False)):
+        call = {"tool_name": "Write", "command": None, "file_path": path}
+        check(f"guard-dir-marker-{label}",
+              evaluate(auth("enforce", guards), call)["matched"] is expect)
+    win = [{"name": "dirwin", "tool_names": ["Write"], "command_regexes": [],
+            "path_globs": ["M:\\Media\\"]}]
+    call = {"tool_name": "Write", "command": None,
+            "file_path": "M:/Media/deep/file.mkv"}
+    check("guard-dir-marker-windows-spelling",
+          evaluate(auth("enforce", win), call)["matched"])
+    # THE ROOT is the one spelling normalization leaves with its separator
+    # attached, so the naive marker append built '//**' -- matching the
+    # root and nothing under it. A guard of '/' means 'block all absolute
+    # writes' and must cover every descendant; drive roots ('C:/') were
+    # never affected.
+    root = [{"name": "abs", "tool_names": ["Write"], "command_regexes": [],
+             "path_globs": ["/"]}]
+    for label, path, expect in (
+            ("descendant-blocked", "/etc/passwd", True),
+            ("deep-descendant-blocked", "/var/lib/x/y.db", True),
+            ("relative-path-not-matched", "docs/x.md", False)):
+        call = {"tool_name": "Write", "command": None, "file_path": path}
+        check(f"guard-root-marker-{label}",
+              evaluate(auth("enforce", root), call)["matched"] is expect)
+    drive = [{"name": "drv", "tool_names": ["Write"], "command_regexes": [],
+              "path_globs": ["C:/"]}]
+    call = {"tool_name": "Write", "command": None,
+            "file_path": "C:/Windows/System32/cfg.sys"}
+    check("guard-drive-root-marker-covers-subtree",
+          evaluate(auth("enforce", drive), call)["matched"])
+
+
+def test_workspace_and_suffixed_directory_markers() -> None:
+    """The marker's other two edges, found on its second review round.
+
+    './' (and '.\\', and bare '.') normalize to the EMPTY path, which
+    compiled to a match-nothing regex: an armed workspace guard covering
+    nothing, silently. It now covers everything -- the over-match
+    direction, and the one that also catches absolute respellings.
+
+    'foo/**/' already carries subtree semantics including the BASE;
+    appending another '/**' required a separator after 'foo', so a write
+    to the base itself was silently allowed where plain 'foo/**' matches
+    it."""
+    for label, globs in (("dot-slash", ["./"]), ("dot-backslash", [".\\"]),
+                         ("bare-dot", ["."])):
+        g = [{"name": "ws", "tool_names": ["Write"], "command_regexes": [],
+              "path_globs": globs}]
+        call = {"tool_name": "Write", "command": None,
+                "file_path": "docs/x.txt"}
+        check(f"guard-workspace-marker-{label}-covers-relative-writes",
+              evaluate(auth("enforce", g), call)["matched"])
+    g = [{"name": "ws", "tool_names": ["Write"], "command_regexes": [],
+          "path_globs": ["./"]}]
+    call = {"tool_name": "Write", "command": None, "file_path": "/etc/passwd"}
+    check("guard-workspace-marker-catches-absolute-respellings",
+          evaluate(auth("enforce", g), call)["matched"])
+    # The literal EMPTY STRING is NOT a workspace marker: it expresses no
+    # directory intent, passes the validator, and has always been inert --
+    # flipping it to block-everything would be an undisclosed enforcement
+    # change on armed fleets. It keeps its historical nothing-matches
+    # behavior, deliberately.
+    empty = [{"name": "ph", "tool_names": ["Write"], "command_regexes": [],
+              "path_globs": [""]}]
+    call = {"tool_name": "Write", "command": None, "file_path": "docs/x.txt"}
+    check("guard-empty-string-placeholder-stays-inert",
+          not evaluate(auth("enforce", empty), call)["matched"])
+    suffixed = [{"name": "sub", "tool_names": ["Write"],
+                 "command_regexes": [], "path_globs": ["foo/**/"]}]
+    for label, path, expect in (
+            ("base-still-matched", "foo", True),
+            ("descendant-matched", "foo/a/b.txt", True),
+            ("sibling-not-matched", "foobar", False)):
+        call = {"tool_name": "Write", "command": None, "file_path": path}
+        check(f"guard-doublestar-slash-{label}",
+              evaluate(auth("enforce", suffixed), call)["matched"] is expect)
+    # 'foo/*/' keeps its narrower meaning: subtrees one level down, not foo
+    starred = [{"name": "star", "tool_names": ["Write"],
+                "command_regexes": [], "path_globs": ["foo/*/"]}]
+    for label, path, expect in (
+            ("child-subtree-matched", "foo/x/y.txt", True),
+            ("base-not-matched", "foo", False)):
+        call = {"tool_name": "Write", "command": None, "file_path": path}
+        check(f"guard-single-star-slash-{label}",
+              evaluate(auth("enforce", starred), call)["matched"] is expect)
+
+
 def test_glob_anchor_is_Z_not_dollar() -> None:
     """'$' matches just before a trailing newline, so the glob 'safe.txt'
     matched the distinct file 'safe.txt\\n' -- one byte outside the

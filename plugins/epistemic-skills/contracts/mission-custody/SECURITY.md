@@ -90,6 +90,24 @@ disclosed here rather than patched because the pattern language belongs to
 the author; the globs are this contract's own language, so their compiler is
 where the guarantee lives.
 
+## OPERATOR NOTICE — trailing-slash guard globs now bind the subtree
+
+A `path_globs` entry ending in `/` (or `\`) is a **directory marker**: it now
+matches the directory and everything under it. It previously normalized to an
+exact name and matched almost nothing — an armed guard declaring `M:/Media/`
+silently allowed every write under `M:/Media/`. The same reading covers the
+**workspace and root spellings**: `.`, `./`, `.\` and `./.` (previously inert
+— they normalized to the empty path and matched nothing) now match every
+target, and `/` (previously root-only) now matches every absolute target. A
+literal empty-string entry is a placeholder, not a marker, and stays inert as
+before. **On upgrade, an armed guard with any of these spellings becomes MORE
+restrictive.** If a guard starts blocking calls it previously allowed, that
+is this change working; the block names its rule, and the discharge is an
+ordinary `amend`. This is the same
+directory-marker reading `scope.in`/`scope.out` entries and amendment
+discharge tokens already use. (es#155, landed per the es#150 adjudication —
+which mandated this distinct notice rather than a silent landing.)
+
 ## Stage-C hook: fail-open and guard-tamper residue
 
 The PreToolUse custody hook is an enforcement layer over convention, not a
