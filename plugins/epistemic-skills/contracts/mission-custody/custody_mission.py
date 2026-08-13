@@ -1251,21 +1251,28 @@ class Mission:
 
     def record_effect(self, artifact_relpath: str, content: str,
                        request_id: str) -> dict:
-        # BEFORE any read or write: a refused mint must be side-effect free
-        # (the opening-actor lesson, same shape -- validation on the wrong
-        # side of the first write leaves state a refused caller owns).
-        _refuse_unrecordable_artifact_path(artifact_relpath)
         latest, path = self.store.load_latest()
         self._verify_manifest(latest)
         if latest["status"] not in _EFFECT_STATES:
             raise IllegalTransition(f"cannot record_effect: status is {latest['status']!r}")
-        receipt = self._write_effect(latest, artifact_relpath, content, request_id)
         # A fresh effect on an artifact awaiting re-coverage discharges that
         # obligation -- that is exactly what RECOVER asks for.
         unresolved = latest["state"]["unresolved_verdicts"]
         status = latest["status"]
         remaining = None
         recover = _find_marker(unresolved, "RECOVER:", artifact_relpath)
+        # BEFORE any write, a refused mint must be side-effect free (the
+        # opening-actor lesson -- reads are fine, writes are not). And the
+        # guard yields to an outstanding RECOVER obligation: a historical
+        # control-char record whose receipt was lost leaves a RECOVER
+        # marker whose ONLY exit is a fresh effect on that same artifact --
+        # refusing it here would strand the mission 'reopened' forever, a
+        # block with no legal discharge, the RECOVER-UNKNOWN wedge this
+        # contract already rejected once. Recovery re-covers an artifact
+        # the record ALREADY carries; only genuinely NEW paths are refused.
+        if recover is None:
+            _refuse_unrecordable_artifact_path(artifact_relpath)
+        receipt = self._write_effect(latest, artifact_relpath, content, request_id)
         if recover is not None:
             remaining = [m for m in unresolved if m != recover]
             if status == "reopened" and not remaining:

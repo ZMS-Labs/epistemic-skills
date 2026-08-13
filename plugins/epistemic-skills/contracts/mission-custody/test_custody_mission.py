@@ -3135,16 +3135,65 @@ def test_effect_refuses_line_structure_in_artifact_paths(
     forged = [ln for n in latest["state"]["notes"] for ln in n.splitlines()
               if ln.strip().startswith("scope-ack by ")]
     check("effect-note-can-no-longer-be-forged-via-path", forged == [])
-    # the legal battery: awkward but printable names still mint
-    for label, fine in (("spaces", "My Documents/release notes.txt"),
-                        ("quotes", 'linked:"foo".txt'),
-                        ("nbsp", "a\xa0b.txt"),
-                        ("accents", "docs/José.md")):
+    # the legal battery: awkward but printable names still mint. The
+    # quotes row is skipped on NT -- ':' and '"' are illegal in NTFS
+    # names, so record_effect would reach the filesystem and raise
+    # OSError there: a host limitation, not this guard's refusal.
+    battery = [("spaces", "My Documents/release notes.txt"),
+               ("nbsp", "a\xa0b.txt"),
+               ("accents", "docs/José.md")]
+    if os.name != "nt":
+        battery.append(("quotes", 'linked:"foo".txt'))
+    else:
+        print("skip ingest-accepts-quotes (':'/'\"' illegal in NTFS names)")
+    for label, fine in battery:
         try:
             m.record_effect(fine, "x", f"ok-{label}")
             check(f"ingest-accepts-{label}", True)
         except CustodyError:
             check(f"ingest-accepts-{label}", False)
+
+
+def test_recover_obligation_overrides_the_ingestion_guard(
+        workspace: Path) -> None:
+    """A historical control-char record whose receipt is lost leaves a
+    RECOVER marker whose ONLY exit is a fresh effect on that same artifact
+    -- and the ingestion guard, checked unconditionally, refused it: the
+    mission stranded 'reopened' forever, a block with no legal discharge
+    (the RECOVER-UNKNOWN wedge, reproduced by review on this very PR). The
+    guard now yields to an outstanding RECOVER obligation and refuses only
+    genuinely NEW control-char paths."""
+    if os.name == "nt":
+        print("skip recover-override (NT filenames cannot carry a newline)")
+        return
+    m = open_mission(workspace, "m-recover-guard", "Recovered.")
+    m.approve()
+    evil = "legacy\nname.txt"
+    record_effect_as_historical(m, evil, "v1", "rg-1")
+    m.store.receipt_path("rg-1").unlink()
+    m.resume()
+    m.acknowledge_receipt_loss("rg-1")
+    st = m.status()
+    check("recover-marker-outstanding",
+          any(mk.startswith("RECOVER:")
+              for mk in st["state"]["unresolved_verdicts"])
+          and st["status"] == "reopened")
+    try:
+        m.record_effect(evil, "v2", "rg-2")
+        check("recover-effect-passes-the-guard", True)
+    except CustodyError:
+        check("recover-effect-passes-the-guard", False)
+    st = m.status()
+    check("recover-obligation-discharged",
+          st["state"]["unresolved_verdicts"] == []
+          and st["status"] == "active")
+    # the exemption is the OBLIGATION's, not the mission's: a genuinely new
+    # control-char path in the same mission still refuses
+    try:
+        m.record_effect("another\nnew.txt", "x", "rg-3")
+        check("new-control-char-path-still-refused", False)
+    except CustodyError:
+        check("new-control-char-path-still-refused", True)
 
 
 def test_trailing_slash_scope_entry_binds_the_subtree(
@@ -3235,6 +3284,7 @@ TESTS = [
     test_slash_twin_cannot_be_discharged_by_the_newline_files_recipe,
     test_unknown_finding_kind_fails_closed_and_says_so,
     test_effect_refuses_line_structure_in_artifact_paths,
+    test_recover_obligation_overrides_the_ingestion_guard,
     test_trailing_slash_scope_entry_binds_the_subtree,
     test_open_creates_draft_r1,
     test_pathless_load_single_active,
