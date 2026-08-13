@@ -1463,6 +1463,33 @@ def test_unmatchable_patterns_are_disclosed_not_silently_inert(
     check("real-exclude-still-fires",
           [f["artifact_path"] for f in m.scope_consistency()] == ["docs/inside.md"])
 
+    # A `..` SEGMENT is the shape this predicate's first case table did not
+    # enumerate, and it is the worst one it missed: `_normalize_relpath`
+    # collapses `./` and `//` but NOT `..`, while every receipted path IS
+    # normalized before comparison. So `docs/../secrets/**` can only match the
+    # literal spelling `docs/../secrets/...`, which no normalized path ever
+    # produces -- an operator writes a traversal, gets a COMPARED boundary, and
+    # it binds nothing while appearing in no disclosure.
+    # `workspace / "ws2"`, NEVER `workspace.parent` -- the harness hands each
+    # test a `TemporaryDirectory`, whose parent is the SYSTEM temp root. A
+    # sibling there escapes the per-test sandbox, persists across runs (the
+    # second run fails "an active mission already exists"), and writes durable
+    # state outside the permitted scratchpad. Verified by doing it: the first
+    # draft of this test left a mission under the system temp root.
+    m2 = open_mission(workspace / "ws2", "m-dotdot",
+                      "Traversal excludes.",
+                      scope_out=["docs/../secrets/**", "../outside/**",
+                                 "a..b/**", "secrets/**"])
+    latest2, _ = m2.store.load_latest()
+    rep2 = uncompared_scope_entries(latest2["manifest"])
+    check("dotdot-traversal-disclosed", "docs/../secrets/**" in rep2["out"])
+    check("dotdot-leading-disclosed", "../outside/**" in rep2["out"])
+    # SEGMENT, not substring: dots INSIDE a segment are a legal filename and
+    # must still compare. This is the ONLY row separating the correct fix from
+    # the plausible one -- a substring test demotes it.
+    check("dots-inside-a-segment-still-compared", "a..b/**" not in rep2["out"])
+    check("plain-glob-still-compared-2", "secrets/**" not in rep2["out"])
+
 
 def test_every_caller_text_surface_refuses_a_forged_note_line(
         workspace: Path) -> None:

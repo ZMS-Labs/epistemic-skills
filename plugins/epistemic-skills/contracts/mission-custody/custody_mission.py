@@ -288,7 +288,27 @@ def _is_matchable_pattern(entry: str) -> bool:
         return False
     if re.match(r"^[A-Za-z]:", norm):
         return False
-    return not any(c in norm for c in "{}[]")
+    if any(c in norm for c in "{}[]"):
+        return False
+    # A `..` SEGMENT survives normalization -- `_normalize_relpath` collapses
+    # `./` and `//` but not `..` -- while every receipted artifact path is
+    # normalized before comparison. So `docs/../secrets/**` compiles to a regex
+    # that can only match the literal spelling `docs/../secrets/...`, which no
+    # normalized path ever produces: it is a boundary an operator wrote as a
+    # traversal, and it binds nothing.
+    #
+    # SEGMENT, not substring: `a..b/**` and `docs/.../x` are legal names whose
+    # dots are inside a segment, and they match normally. A substring test
+    # demotes both -- checked against the case table, where it is the only
+    # difference between the two candidates.
+    return ".." not in _norm_scope_segments(norm)
+
+
+def _norm_scope_segments(norm: str) -> list[str]:
+    """Segments of an entry as the comparison will see them, so the matchability
+    question is asked against the same normalization the matcher uses."""
+    from custody_gate import _norm_path
+    return _norm_path(norm).split("/")
 
 
 def _is_compared_entry(entry: str) -> bool:
