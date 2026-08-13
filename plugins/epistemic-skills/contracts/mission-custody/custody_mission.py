@@ -1076,20 +1076,71 @@ class Mission:
             if _find_marker(remaining, "RECOVER:", recorded_path) is None:
                 remaining = remaining + [f"RECOVER:{recorded_path}"]
             next_status = "reopened"
-        # T3-4d (fix round 3): the prefix is taken from still_tampered --
-        # the LIVE evidence re-checked above -- not from which marker won
-        # priority. In the double-marker window (both RECEIPT-MISSING and
-        # RECEIPT-TAMPERED open for one id: an earlier loss followed by a
-        # forged receipt reappearing), MISSING wins priority regardless of
-        # what the live receipt now shows, so keying the prefix on `marker`
-        # let a proven-tampered id retire under the 'loss' prefix while its
-        # own note's "why" clause said otherwise -- a prefix that
-        # contradicts the evidence written beside it in the SAME note.
-        # still_tampered is exactly "the receipt file present right now
-        # fails the chain-attested hash", which is the only live signal
-        # that actually means tamper; everything else (unloadable, no
-        # recorded path, or an @1-heuristic path mismatch) is loss-shaped.
-        retired_note = _RETIRED_TAMPERED_NOTE if still_tampered else _RETIRED_NOTE
+        # T3-4e (fix round 4): tamper-taint is monotone ALONG THE FILE AXIS --
+        # a recorded tamper for this id is never downgraded by the later
+        # ABSENCE or UNPARSEABILITY of the file. Those are the two ways the
+        # live re-check can go quiet without anything having been cleared,
+        # and both arrive here with the marker still open, so both are a
+        # tamper.
+        #
+        # Read that scope literally; it is not shorthand for a general
+        # guarantee, and widening it would assert a property this system does
+        # NOT have. Monotonicity does not hold along the ATTESTATION axis:
+        # with a RECEIPT-TAMPERED marker open, appending an @2 checkpoint
+        # that attests the FORGED bytes retires the id as "receipt restored
+        # ... coverage continues" -- no prefix at all, id kept, unresolved
+        # empty, status active. No rule written HERE can reach that; it
+        # returns from the `restored` branch before a prefix is ever chosen.
+        # That is the unsealed-tail residue, owned by the tail-anchor task,
+        # and it is left KNOWN-UNCOVERED here rather than papered over. What
+        # this line guarantees is narrow and worth stating exactly: nobody
+        # launders a recorded tamper by deleting or mangling the receipt.
+        # Someone who can append to the chain still can.
+        #
+        # (Round 3's comment asserted the unqualified version -- "everything
+        # else ... is loss-shaped" -- and that sentence is what produced the
+        # defect this round fixes. An over-wide guarantee in a comment is a
+        # false one handed to the next reader.)
+        #
+        # Both limbs are load-bearing; each was confirmed necessary by
+        # deleting it and re-running the discharge case table:
+        #
+        #   still_tampered -- the file is present RIGHT NOW and its bytes
+        #     fail the chain-attested hash. The only limb that fires when
+        #     live evidence proves a tamper the chain never recorded a
+        #     marker for: a forged receipt placed back under an already-open
+        #     RECEIPT-MISSING, with no intervening resume to raise
+        #     RECEIPT-TAMPERED. Membership alone reports that as a loss.
+        #     Note this limb also covers UNPARSEABLE-but-attested bytes,
+        #     because _load_receipt hashes the RAW bytes BEFORE parsing --
+        #     corrupt bytes raise _ReceiptTampered rather than returning the
+        #     unloadable None. That ordering is load-bearing and pinned by a
+        #     test; membership holds the row at 'tamper' even if it changes.
+        #
+        #   tampered_marker in unresolved -- the chain DID record a tamper
+        #     for this id and it is still undischarged. The only limb that
+        #     fires once the file is gone: deleting the forged receipt after
+        #     being caught makes still_tampered False, so keying the prefix
+        #     on live evidence alone let one extra step (get caught, delete
+        #     the receipt) retire a proven tamper under the honest-'loss'
+        #     prefix -- fix round 3's defect, and the reason this is not
+        #     `still_tampered` alone.
+        #
+        # MEMBERSHIP, not `marker == tampered_marker`: in the double-marker
+        # window (both RECEIPT-MISSING and RECEIPT-TAMPERED open for one id)
+        # MISSING wins the priority selection above, so the marker being
+        # discharged is not the tampered one even though the chain holds an
+        # undischarged RECEIPT-TAMPERED for that id. Equality reports which
+        # marker the discharge order happened to pick; membership reports
+        # what the chain recorded, which is what the prefix is FOR.
+        #
+        # `unresolved` is the pre-filter list of WHOLE markers, so `in` is
+        # exact element equality -- an id that is a substring of another id
+        # cannot bleed a tamper across ids. It must stay a list, not be
+        # joined into a string, for that to hold.
+        retired_note = (_RETIRED_TAMPERED_NOTE
+                        if still_tampered or tampered_marker in unresolved
+                        else _RETIRED_NOTE)
         new = self._write_next(
             latest, path, status=next_status, unresolved_verdicts=remaining,
             receipt_ids=receipt_ids,

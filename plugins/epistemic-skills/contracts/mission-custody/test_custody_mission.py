@@ -1624,6 +1624,347 @@ def test_double_marker_window_kind_agrees_with_evidence(workspace: Path) -> None
         check("t34d-verification-refused-while-open", True)
 
 
+def test_tamper_marker_survives_deleting_the_receipt(workspace: Path) -> None:
+    """Case A of the discharge case table: a RECEIPT-TAMPERED marker is
+    open and the forged receipt file is DELETED before discharge. The
+    retirement must still be recorded as a tamper.
+
+    This is the cheapest possible downgrade attack -- one extra step on an
+    ordinary tamper: get caught, then delete the receipt. Deleting it makes
+    the live re-check (still_tampered) False, because there is no longer a
+    file whose bytes can fail the chain-attested hash. Keying the prefix on
+    that live signal ALONE therefore rewrote a tamper the chain had already
+    recorded into an honest 'loss' -- and nothing downstream brakes it: the
+    id retires, RECOVER is raised, a fresh effect re-covers the artifact
+    honestly, and the mission returns to active carrying a durable record
+    that says 'loss'. The prose 'why' clause still reads loss-shaped
+    (correctly -- the file really is gone); it is the machine-readable
+    kind, the exact artifact this feature exists to produce, that must not
+    lie. Tamper-taint is monotone: only a byte-provable restoration clears
+    it, and that path returns before the prefix is ever selected."""
+    m, _original_receipt = _setup_p6_tampered(workspace)
+    findings = m.resume()
+    check("t34e-a-precondition-tampered", findings == ["RECEIPT-TAMPERED:p6-1"])
+
+    receipt_path = m.store.receipt_path("p6-1")
+    receipt_path.unlink()
+    check("t34e-a-receipt-really-gone", not receipt_path.exists())
+    st_before = m.status()
+    check("t34e-a-only-tampered-marker-open",
+          st_before["state"]["unresolved_verdicts"] == ["RECEIPT-TAMPERED:p6-1"])
+
+    m.acknowledge_receipt_loss("p6-1")
+    st = m.status()
+    # The load-bearing check: the chain recorded a tamper, so the kind stays
+    # 'tamper' even though the file is now absent and the live re-check is
+    # silent.
+    check("t34e-a-kind-stays-tamper",
+          m._retired_receipt_ids(st).get("p6-1") == "tamper")
+    check("t34e-a-note-uses-tamper-prefix",
+          any(n.startswith('receipt tamper acknowledged: "p6-1"')
+              for n in st["state"]["notes"]))
+    check("t34e-a-note-does-not-use-loss-prefix",
+          not any(n.startswith('receipt loss acknowledged: "p6-1"')
+                  for n in st["state"]["notes"]))
+    # The scenario really does run to completion -- there is no downstream
+    # brake that would have caught the mislabel anyway. Asserted, not
+    # assumed: the marker clears, the id retires, and the only thing left
+    # open is the honest re-cover obligation.
+    check("t34e-a-marker-cleared",
+          "RECEIPT-TAMPERED:p6-1" not in st["state"]["unresolved_verdicts"])
+    check("t34e-a-id-retired", "p6-1" not in st["receipt_ids"])
+    check("t34e-a-recover-obligation-raised",
+          st["state"]["unresolved_verdicts"] == ["RECOVER:notes/a.md"])
+
+
+def test_double_marker_deleted_receipt_still_names_tamper(workspace: Path) -> None:
+    """Case E of the discharge case table: BOTH RECEIPT-MISSING and
+    RECEIPT-TAMPERED are open for one id, and the receipt is DELETED again
+    before discharge. The retirement must still be recorded as a tamper.
+
+    This is the row that decides MEMBERSHIP over EQUALITY. MISSING wins the
+    priority selection, so `marker` is the MISSING one; and the file is
+    gone, so the live re-check is silent. Both `still_tampered` alone and
+    `still_tampered or marker == tampered_marker` therefore report 'loss'
+    for an id the chain holds an undischarged RECEIPT-TAMPERED for. Only
+    reading that marker's MEMBERSHIP in the open set -- what the chain
+    recorded, rather than which marker the discharge order happened to
+    pick -- gets it right.
+
+    Distinct from test_double_marker_window_kind_agrees_with_evidence,
+    which leaves the forged receipt in place: there the live evidence
+    still fires, so that test cannot discriminate equality from
+    membership. The delete is the whole point."""
+    m = open_mission(workspace, "m-t34e-e", "Double marker, then deleted.")
+    m.approve()
+    m.record_effect("notes/a.md", "v1", "x-1")
+    receipt_path = m.store.receipt_path("x-1")
+    original_receipt = receipt_path.read_bytes()
+    _write_reattestation(m, "x-1", sha256_file(receipt_path))
+    attested, attested_path = m.store.load_latest()
+    continued = json.loads(json.dumps(attested))
+    continued["record"] = "checkpoint@1"
+    continued["revision"] = attested["revision"] + 1
+    continued["prev_checkpoint_sha256"] = sha256_file(attested_path)
+    continued["receipt_ids"] = ["x-1"]
+    continued["written_utc"] = now_utc()
+    m.store.write_checkpoint(continued)
+
+    receipt_path.unlink()
+    check("t34e-e-first-resume-missing", m.resume() == ["RECEIPT-MISSING:x-1"])
+    forged = json.loads(original_receipt.decode("utf-8"))
+    forged["after_sha256"] = sha256_bytes(b"forged")
+    receipt_path.write_bytes(
+        (json.dumps(forged, indent=1, sort_keys=True) + "\n").encode("utf-8"))
+    check("t34e-e-second-resume-tampered", m.resume() == ["RECEIPT-TAMPERED:x-1"])
+    st_before = m.status()
+    check("t34e-e-double-marker-window",
+          "RECEIPT-MISSING:x-1" in st_before["state"]["unresolved_verdicts"]
+          and "RECEIPT-TAMPERED:x-1" in st_before["state"]["unresolved_verdicts"])
+
+    # ...and now the receipt goes away again, silencing the live re-check
+    # while the chain's tamper record stays open.
+    receipt_path.unlink()
+    check("t34e-e-receipt-really-gone", not receipt_path.exists())
+
+    m.acknowledge_receipt_loss("x-1")
+    st = m.status()
+    check("t34e-e-missing-marker-cleared-by-priority",
+          "RECEIPT-MISSING:x-1" not in st["state"]["unresolved_verdicts"])
+    check("t34e-e-tampered-marker-left-open",
+          "RECEIPT-TAMPERED:x-1" in st["state"]["unresolved_verdicts"])
+    check("t34e-e-kind-stays-tamper",
+          m._retired_receipt_ids(st).get("x-1") == "tamper")
+    check("t34e-e-note-uses-tamper-prefix",
+          any(n.startswith('receipt tamper acknowledged: "x-1"')
+              for n in st["state"]["notes"]))
+    check("t34e-e-note-does-not-use-loss-prefix",
+          not any(n.startswith('receipt loss acknowledged: "x-1"')
+                  for n in st["state"]["notes"]))
+
+
+def test_live_tamper_under_a_missing_marker_alone_names_tamper(
+        workspace: Path) -> None:
+    """The row that keeps the still_tampered limb honest: ONLY
+    RECEIPT-MISSING is open, and a forged receipt is placed back at the id's
+    path with NO intervening resume to raise RECEIPT-TAMPERED. The chain
+    therefore holds no tamper marker at all, and the marker being discharged
+    is the MISSING one -- so every marker-derived limb is silent. Only the
+    LIVE re-check sees it, and the retirement must still read 'tamper'.
+
+    Written because a mutation found the hole: dropping still_tampered and
+    keying the prefix on marker membership alone left the ENTIRE suite green
+    (0 of 250 checks failing). Membership covers the tamper the chain
+    recorded; still_tampered covers the tamper the chain has not caught up
+    with yet. Neither limb subsumes the other, and until this test existed
+    only one of them was defended -- the same unenumerated-case mechanism
+    that produced rounds 1, 3 and this one."""
+    m = open_mission(workspace, "m-t34e-i", "Live tamper, missing marker only.")
+    m.approve()
+    m.record_effect("notes/a.md", "v1", "x-1")
+    receipt_path = m.store.receipt_path("x-1")
+    original_receipt = receipt_path.read_bytes()
+    _write_reattestation(m, "x-1", sha256_file(receipt_path))
+    attested, attested_path = m.store.load_latest()
+    continued = json.loads(json.dumps(attested))
+    continued["record"] = "checkpoint@1"
+    continued["revision"] = attested["revision"] + 1
+    continued["prev_checkpoint_sha256"] = sha256_file(attested_path)
+    continued["receipt_ids"] = ["x-1"]
+    continued["written_utc"] = now_utc()
+    m.store.write_checkpoint(continued)
+
+    receipt_path.unlink()
+    check("t34e-i-resume-missing", m.resume() == ["RECEIPT-MISSING:x-1"])
+    forged = json.loads(original_receipt.decode("utf-8"))
+    forged["after_sha256"] = sha256_bytes(b"forged")
+    receipt_path.write_bytes(
+        (json.dumps(forged, indent=1, sort_keys=True) + "\n").encode("utf-8"))
+    # Deliberately NO second resume: the chain never learns about the forgery,
+    # so no RECEIPT-TAMPERED marker is ever written.
+    st_before = m.status()
+    check("t34e-i-no-tamper-marker-recorded",
+          st_before["state"]["unresolved_verdicts"] == ["RECEIPT-MISSING:x-1"])
+
+    m.acknowledge_receipt_loss("x-1")
+    st = m.status()
+    check("t34e-i-kind-reads-tamper",
+          m._retired_receipt_ids(st).get("x-1") == "tamper")
+    check("t34e-i-note-uses-tamper-prefix",
+          any(n.startswith('receipt tamper acknowledged: "x-1"')
+              for n in st["state"]["notes"]))
+    check("t34e-i-note-does-not-use-loss-prefix",
+          not any(n.startswith('receipt loss acknowledged: "x-1"')
+                  for n in st["state"]["notes"]))
+    check("t34e-i-why-clause-names-the-hash-mismatch",
+          any("bytes do not match the chain-attested hash" in n
+              for n in st["state"]["notes"]))
+
+
+def _attested_effect(m: Mission, request_id: str, artifact: str) -> bytes:
+    """record_effect + chain its receipt sha + continue the chain back to @1
+    shape. Returns the receipt's ORIGINAL bytes. The two-write dance is
+    _setup_p6_tampered's, for the reason documented there: _write_next cannot
+    emit checkpoint@2 yet, so a mission left tail-@2 bricks on the next state
+    change."""
+    m.record_effect(artifact, "v1", request_id)
+    receipt_path = m.store.receipt_path(request_id)
+    original = receipt_path.read_bytes()
+    _write_reattestation(m, request_id, sha256_file(receipt_path))
+    attested, attested_path = m.store.load_latest()
+    continued = json.loads(json.dumps(attested))
+    continued["record"] = "checkpoint@1"
+    continued["revision"] = attested["revision"] + 1
+    continued["prev_checkpoint_sha256"] = sha256_file(attested_path)
+    continued["receipt_ids"] = [request_id]
+    continued["written_utc"] = now_utc()
+    m.store.write_checkpoint(continued)
+    return original
+
+
+def test_corrupt_attested_receipt_is_tamper_not_loss(workspace: Path) -> None:
+    """Row T/corrupt: the receipt file for an ATTESTED id is replaced with
+    bytes that do not parse at all. Unparseable is not unloadable here --
+    the chain attests specific bytes for this id and these are not them,
+    whether or not they happen to be valid JSON.
+
+    Looks redundant against the forged-receipt rows and is not. It pins an
+    ORDERING everything above silently rests on: _load_receipt hashes the
+    RAW bytes BEFORE it parses them, so corrupt-but-attested bytes raise
+    _ReceiptTampered instead of returning the unloadable None. Move the hash
+    check below the json.loads -- an entirely plausible tidy-up, since every
+    other check in that function runs on the parsed record -- and this
+    receipt becomes an honest 'loss' under any live-evidence rule.
+
+    The first assertion is the actual pin: resume must classify a corrupt
+    attested receipt as RECEIPT-TAMPERED, not RECEIPT-MISSING. Under
+    hash-after-parse it reports MISSING and this test dies there, before the
+    prefix is ever reached."""
+    m = open_mission(workspace, "m-t34e-corrupt", "Corrupt attested receipt.")
+    m.approve()
+    _attested_effect(m, "x-1", "notes/a.md")
+
+    receipt_path = m.store.receipt_path("x-1")
+    receipt_path.write_bytes(b"{not json at all\x00\xff")
+    check("t34e-c-corrupt-is-tampered-not-missing",
+          m.resume() == ["RECEIPT-TAMPERED:x-1"])
+
+    m.acknowledge_receipt_loss("x-1")
+    st = m.status()
+    check("t34e-c-kind-reads-tamper",
+          m._retired_receipt_ids(st).get("x-1") == "tamper")
+    check("t34e-c-note-uses-tamper-prefix",
+          any(n.startswith('receipt tamper acknowledged: "x-1"')
+              for n in st["state"]["notes"]))
+    check("t34e-c-note-does-not-use-loss-prefix",
+          not any(n.startswith('receipt loss acknowledged: "x-1"')
+                  for n in st["state"]["notes"]))
+
+
+def test_corrupt_receipt_under_an_open_tamper_marker_stays_tamper(
+        workspace: Path) -> None:
+    """Row T/corrupt, second construction: the RECEIPT-TAMPERED marker is
+    already open from an earlier forgery, and THEN the file is corrupted.
+
+    The pair matters because the two constructions diverge under exactly the
+    refactor the sibling test guards. Measured, with the hash check moved
+    below the parse:
+
+      marker sourced from the corrupt file   -- resume reports MISSING, so
+        no tamper marker is ever recorded and BOTH rules retire it 'loss'.
+        Membership has nothing to read; the damage is upstream in resume's
+        classification, where no prefix rule can reach it.
+      marker already open (this test)        -- membership holds the kind at
+        'tamper'; the live-evidence-only rule flips it to 'loss'.
+
+    So membership removes the ordering dependency only when the marker came
+    from somewhere else. That is a narrower guarantee than 'R3 is robust to
+    the ordering', and the two tests together are what keep the difference
+    honest instead of leaving one of them standing for both."""
+    m = open_mission(workspace, "m-t34e-corrupt2", "Open marker, then corrupt.")
+    m.approve()
+    original_receipt = _attested_effect(m, "x-1", "notes/a.md")
+
+    receipt_path = m.store.receipt_path("x-1")
+    forged = json.loads(original_receipt.decode("utf-8"))
+    forged["after_sha256"] = sha256_bytes(b"forged")
+    receipt_path.write_bytes(
+        (json.dumps(forged, indent=1, sort_keys=True) + "\n").encode("utf-8"))
+    check("t34e-c2-resume-tampered", m.resume() == ["RECEIPT-TAMPERED:x-1"])
+
+    receipt_path.write_bytes(b"{not json at all\x00\xff")
+    check("t34e-c2-marker-open-before-discharge",
+          m.status()["state"]["unresolved_verdicts"] == ["RECEIPT-TAMPERED:x-1"])
+
+    m.acknowledge_receipt_loss("x-1")
+    st = m.status()
+    check("t34e-c2-kind-reads-tamper",
+          m._retired_receipt_ids(st).get("x-1") == "tamper")
+    check("t34e-c2-note-uses-tamper-prefix",
+          any(n.startswith('receipt tamper acknowledged: "x-1"')
+              for n in st["state"]["notes"]))
+    check("t34e-c2-note-does-not-use-loss-prefix",
+          not any(n.startswith('receipt loss acknowledged: "x-1"')
+                  for n in st["state"]["notes"]))
+
+
+def test_double_marker_restore_clears_only_the_missing_marker(
+        workspace: Path) -> None:
+    """Row BOTH/original: both markers open and the ORIGINAL receipt bytes
+    are back. This row never reaches the prefix at all -- it takes the
+    byte-provable `restored` early return -- and nothing else in the suite
+    covers a restored row.
+
+    Pinned because discharge is PER-MARKER, not per-evidence: the call
+    clears only RECEIPT-MISSING (which won priority) and leaves
+    RECEIPT-TAMPERED open, so the mission stays reopened and a SECOND call
+    is required. That is self-healing rather than broken -- the second call
+    takes the same restored path and clears the rest -- but it is exactly
+    the shape a later round would 'simplify' into a single-marker clear
+    without noticing the marker it dropped. It also demonstrates the one
+    thing that legitimately clears tamper-taint along the file axis: the id
+    survives, no retirement note is written, and coverage continues."""
+    m = open_mission(workspace, "m-t34e-both-orig", "Both markers, restored.")
+    m.approve()
+    original_receipt = _attested_effect(m, "x-1", "notes/a.md")
+
+    receipt_path = m.store.receipt_path("x-1")
+    receipt_path.unlink()
+    check("t34e-r-first-resume-missing", m.resume() == ["RECEIPT-MISSING:x-1"])
+    forged = json.loads(original_receipt.decode("utf-8"))
+    forged["after_sha256"] = sha256_bytes(b"forged")
+    receipt_path.write_bytes(
+        (json.dumps(forged, indent=1, sort_keys=True) + "\n").encode("utf-8"))
+    check("t34e-r-second-resume-tampered", m.resume() == ["RECEIPT-TAMPERED:x-1"])
+
+    # The genuine article is back, byte for byte.
+    receipt_path.write_bytes(original_receipt)
+    m.acknowledge_receipt_loss("x-1")
+    st = m.status()
+    check("t34e-r-missing-cleared",
+          "RECEIPT-MISSING:x-1" not in st["state"]["unresolved_verdicts"])
+    check("t34e-r-tampered-still-open",
+          "RECEIPT-TAMPERED:x-1" in st["state"]["unresolved_verdicts"])
+    check("t34e-r-no-retirement-note",
+          m._retired_receipt_ids(st).get("x-1") is None)
+    check("t34e-r-id-kept", "x-1" in st["receipt_ids"])
+    check("t34e-r-restored-note-written",
+          any(n.startswith("receipt restored: x-1") for n in st["state"]["notes"]))
+    check("t34e-r-no-spurious-recover",
+          not any(v.startswith("RECOVER:")
+                  for v in st["state"]["unresolved_verdicts"]))
+    check("t34e-r-still-reopened", st["status"] == "reopened")
+
+    # Second call, same restored path, clears the leftover marker.
+    m.acknowledge_receipt_loss("x-1")
+    st2 = m.status()
+    check("t34e-r-second-call-clears-tampered",
+          st2["state"]["unresolved_verdicts"] == [])
+    check("t34e-r-second-call-still-no-retirement",
+          m._retired_receipt_ids(st2).get("x-1") is None)
+    check("t34e-r-second-call-active", st2["status"] == "active")
+
+
 _RAW_RECEIPT_IDS_TOKEN_RE = re.compile(r"""["']receipt_ids["']""")
 _RECEIPT_IDS_DICT_KEY_RE = re.compile(r"""["']receipt_ids["']\s*:""")
 
@@ -1723,6 +2064,12 @@ TESTS = [
     test_acknowledge_tampered_superseded_id_no_spurious_recover,
     test_covered_by_other_id_rejects_tampered_covering_receipt,
     test_double_marker_window_kind_agrees_with_evidence,
+    test_tamper_marker_survives_deleting_the_receipt,
+    test_double_marker_deleted_receipt_still_names_tamper,
+    test_live_tamper_under_a_missing_marker_alone_names_tamper,
+    test_corrupt_attested_receipt_is_tamper_not_loss,
+    test_corrupt_receipt_under_an_open_tamper_marker_stays_tamper,
+    test_double_marker_restore_clears_only_the_missing_marker,
 ]
 
 
