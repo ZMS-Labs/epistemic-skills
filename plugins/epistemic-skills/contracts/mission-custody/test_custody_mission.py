@@ -2607,18 +2607,34 @@ def test_trailing_newline_path_is_flagged_and_dischargeable(
 
 
 def test_scope_ack_json_spelling_case_table(workspace: Path) -> None:
-    """The JSON spelling is a LAST candidate, never a first: exact-path-first
-    is the settled tie-break, so a file literally named with a backslash-n
-    (legal on POSIX) keeps priority over the escape reading of the same
-    keystrokes. The collision row is the one that separates the rules."""
+    """A backslash-bearing ack has TWO readings -- separator-folded and
+    JSON-decoded -- and neither is exact: both are interpretations of
+    keystrokes a shell already rewrote. An ack discharges only when its
+    readings agree on ONE outstanding path; naming two distinct outstanding
+    paths is AMBIGUOUS and discharges nothing, because over-matching
+    silently retires custody of a path nobody named. The collision row
+    changed DELIBERATELY: it used to pin the folded reading as 'exact
+    first', and the round-3 refutation executed that rule discharging a
+    slash-twin the acceptor never named -- the pinned row was the defect.
+    The fixpoint rows are the cure's other half: discharging the twin by
+    its own unambiguous spelling makes the mangled spelling unambiguous, so
+    the full printed recipe converges in one call, in either order."""
     from custody_mission import _acknowledged_paths
     nl = "safe.txt\n"
     cases = [
         # (label, outstanding, ack list, expected matched set)
         ("bare-escape-decodes", {nl}, ["safe.txt\\n"], {nl}),
         ("quoted-verbatim-decodes", {nl}, ['"safe.txt\\n"'], {nl}),
-        ("exact-first-backslash-collision", {"safe.txt/n", nl},
-         ["safe.txt\\n"], {"safe.txt/n"}),
+        ("backslash-collision-is-ambiguous-and-inert", {"safe.txt/n", nl},
+         ["safe.txt\\n"], set()),
+        ("fixpoint-slash-first", {"safe.txt/n", nl},
+         ["safe.txt/n", "safe.txt\\n"], {"safe.txt/n", nl}),
+        ("fixpoint-mangled-first", {"safe.txt/n", nl},
+         ["safe.txt\\n", "safe.txt/n"], {"safe.txt/n", nl}),
+        ("duplicated-ambiguous-ack-stays-inert", {"safe.txt/n", nl},
+         ["safe.txt\\n", "safe.txt\\n"], set()),
+        ("one-ack-never-discharges-two", {"secret.env", "secret.env "},
+         ["secret.env "], {"secret.env "}),
         ("real-newline-ack-still-exact", {nl}, [nl], {nl}),
         ("decode-that-names-nothing-is-inert", {"other.txt"},
          ["safe.txt\\n"], set()),
@@ -2629,6 +2645,99 @@ def test_scope_ack_json_spelling_case_table(workspace: Path) -> None:
     for label, outstanding, ack, expected in cases:
         got = _acknowledged_paths(ack, set(outstanding))
         check(f"json-ack-{label}", got == expected)
+
+
+def test_slash_twin_cannot_be_discharged_by_the_newline_files_recipe(
+        workspace: Path) -> None:
+    """The round-3 P1, end to end: with BOTH 'safe.txt/n' (a real nested
+    path) and 'safe.txt\\n' (a newline-bearing filename) outstanding, the
+    newline file's shell-mangled recipe used to silently discharge the
+    slash-twin -- a PASS closed with a path the acceptor never judged, and
+    the permanent note attributed it to them. Now the ambiguous ack is
+    inert on its own, and the full recipe discharges each path under its
+    own spelling."""
+    if os.name == "nt":
+        print("skip slash-twin (NT filenames cannot carry a newline)")
+        return
+    m = open_mission(workspace, "m-twin", "Twinned.", scope_in=["docs/**"])
+    m.approve()
+    m.record_effect("safe.txt/n", "nested", "tw-1")
+    m.record_effect("safe.txt\n", "newline", "tw-2")
+    m.begin_verification()
+    acceptor = Mission.load(workspace, actor="agent:acceptor")
+    # the mangled spelling alone: ambiguous, discharges NOTHING -- before
+    # the fix it silently discharged the slash-twin
+    try:
+        acceptor.record_verdict(
+            "PASS", acceptor_id="agent:acceptor",
+            assurance_tier="declared-role-separation", reason="done",
+            scope_ack=["safe.txt\\n", "safe.txt\\n"])
+        check("ambiguous-recipe-discharges-nothing", False)
+    except AcceptanceRefused as exc:
+        # both paths still outstanding: the refusal names both
+        check("ambiguous-recipe-discharges-nothing",
+              "safe.txt/n" in str(exc) and json.dumps("safe.txt\n") in str(exc))
+    except IllegalTransition:
+        check("ambiguous-recipe-discharges-nothing", False)
+    # the full printed recipe: each path under its own spelling, one call
+    try:
+        landed = acceptor.record_verdict(
+            "PASS", acceptor_id="agent:acceptor",
+            assurance_tier="declared-role-separation", reason="done",
+            scope_ack=["safe.txt\\n", "safe.txt/n"])
+    except (AcceptanceRefused, IllegalTransition):
+        landed = None
+    check("full-twin-recipe-discharges-both", isinstance(landed, int))
+    final, _ = acceptor.store.load_latest()
+    ack_notes = [n for n in final["state"]["notes"]
+                 if n.startswith("scope-ack by ")]
+    check("twin-note-attributes-both-paths-correctly",
+          len(ack_notes) == 1
+          and "safe.txt/n" in ack_notes[0]
+          and json.dumps("safe.txt\n") in ack_notes[0])
+
+
+def test_unknown_finding_kind_fails_closed_and_says_so(
+        workspace: Path) -> None:
+    """The unknown-kind branch is defensive against a FUTURE finding kind
+    shipped without its ack shape, so no real mission can reach it -- and
+    an unexercised guarantee is exactly the unpinned-claim shape round 3
+    flagged. Driven here by substituting the finding source: the PASS must
+    refuse, no token form may discharge it, and the message must name the
+    dead end rather than advertising a recipe that does not exist."""
+    m = open_mission(workspace, "m-unk", "Future kind.",
+                     scope_out=["secrets.env"])
+    m.approve()
+    m.record_effect("secrets.env", "leak", "unk-1")
+    m.begin_verification()
+    acceptor = Mission.load(workspace, actor="agent:acceptor")
+    real = acceptor.scope_consistency
+
+    def with_unknown_kind():
+        findings = real()
+        return findings + [{"artifact_path": "secrets.env",
+                            "request_id": "unk-1",
+                            "violating_paths": ["secrets.env"],
+                            "reason": "quantum drift"}]
+
+    acceptor.scope_consistency = with_unknown_kind
+    try:
+        refusal = None
+        try:
+            acceptor.record_verdict(
+                "PASS", acceptor_id="agent:acceptor",
+                assurance_tier="declared-role-separation", reason="done",
+                scope_ack=["secrets.env", "linked:secrets.env",
+                           "quantum drift:secrets.env"])
+        except AcceptanceRefused as exc:
+            refusal = str(exc)
+        check("unknown-kind-refuses-every-token-form", refusal is not None)
+        check("unknown-kind-names-the-dead-end",
+              refusal is not None
+              and "No acknowledgement form exists" in refusal
+              and "fails closed" in refusal)
+    finally:
+        acceptor.scope_consistency = real
 
 
 def test_link_count_probes_only_inside_the_workspace(
@@ -2914,6 +3023,63 @@ def test_shadowed_linked_token_quoted_spelling_still_works(
               isinstance(landed, int))
 
 
+def test_quote_bearing_boundary_path_recipe_survives_the_shell(
+        workspace: Path) -> None:
+    """The shadow fix's own residue, found on its second round: a boundary
+    file literally named 'linked:"foo.txt"' (quotes in the NAME, legal
+    POSIX) printed bare, and bash ate exactly those quotes on the way back
+    -- both pasted flags arrived as 'linked:foo.txt', the first discharged
+    the link obligation, and the literal boundary path was unreachable
+    through the printed recipe. `_display_path` now JSON-quotes
+    quote-bearing names, and the escaped spelling is the one bash's
+    double-quote context and CommandLineToArgvW both deliver back
+    byte-exact; a verbatim (API) arrival decodes through the parser's JSON
+    candidate onto the same path."""
+    quoted_name = 'linked:"foo.txt"'
+    for channel, acks in (
+            # what bash delivers from the printed recipe: the bare linked
+            # token unchanged, the JSON-escaped boundary token unwrapped to
+            # the literal quote-bearing name
+            ("shell-argv", ["linked:foo.txt", quoted_name]),
+            # what an API caller delivers: both tokens verbatim as printed
+            ("verbatim", ["linked:foo.txt", json.dumps(quoted_name)])):
+        ws = workspace / channel
+        ws.mkdir(parents=True, exist_ok=True)
+        m = open_mission(ws, f"m-quote-{channel}", "Quoted.",
+                         scope_out=["linked:*"])
+        m.approve()
+        (ws / "keep").mkdir(exist_ok=True)
+        (ws / "foo.txt").write_text("x", encoding="utf-8")
+        try:
+            os.link(ws / "foo.txt", ws / "keep" / "other.txt")
+        except (OSError, NotImplementedError, AttributeError):
+            print("skip quote-bearing (hard links unavailable on this host)")
+            return
+        m.record_effect(quoted_name, "crossing", f"qb-{channel}-1")
+        m.record_effect("foo.txt", "linked bytes", f"qb-{channel}-2")
+        m.begin_verification()
+        acceptor = Mission.load(ws, actor="agent:acceptor")
+        if channel == "shell-argv":
+            refusal = None
+            try:
+                acceptor.record_verdict(
+                    "PASS", acceptor_id="agent:acceptor",
+                    assurance_tier="declared-role-separation", reason="done")
+            except AcceptanceRefused as exc:
+                refusal = str(exc)
+            check("quote-bearing-refusal-prints-the-escaped-spelling",
+                  refusal is not None and json.dumps(quoted_name) in refusal)
+        try:
+            landed = acceptor.record_verdict(
+                "PASS", acceptor_id="agent:acceptor",
+                assurance_tier="declared-role-separation", reason="done",
+                scope_ack=acks)
+        except (AcceptanceRefused, IllegalTransition):
+            landed = None
+        check(f"quote-bearing-recipe-{channel}-discharges-both",
+              isinstance(landed, int))
+
+
 TESTS = [
     test_scope_entry_classification_table,
     test_uncompared_scope_entries_are_reported,
@@ -2967,6 +3133,9 @@ TESTS = [
     test_same_path_boundary_and_link_are_two_obligations,
     test_shadowed_linked_token_prints_a_working_recipe,
     test_shadowed_linked_token_quoted_spelling_still_works,
+    test_quote_bearing_boundary_path_recipe_survives_the_shell,
+    test_slash_twin_cannot_be_discharged_by_the_newline_files_recipe,
+    test_unknown_finding_kind_fails_closed_and_says_so,
     test_open_creates_draft_r1,
     test_pathless_load_single_active,
     test_load_refuses_zero_and_multiple,

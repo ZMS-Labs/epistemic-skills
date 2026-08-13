@@ -274,3 +274,60 @@ rows + 3 gate rows red, spanning all five defects, and the registry runs to
 completion in BOTH states (two tests were hardened mid-control because the
 first pre-fix run ABORTED at an uncaught refusal, which would have read as
 absent — the exact trap the registry's own comments name).
+
+---
+
+## Round 3 — the implementation refuted, twice over
+
+The implementation above was then attacked from two directions: five Codex
+review rounds on the pushed commits, and a 26-agent adversarial workflow
+(one executing refuter per defect + completeness critic, two independent
+skeptics per finding, refute-by-default). Ten workflow findings; the panel
+killed five and confirmed five. Everything confirmed is fixed or pinned:
+
+**Codex rounds (each confirmed by execution before fixing):** the shadowed
+`linked:` token printed an unworkable recipe → display quoting; then the
+quoting itself died in every shell → parser fallthrough on an exhausted
+boundary reading; a quote-bearing filename reopened it once more →
+`_display_path` quotes quote-bearing names. `amend_authority` inside the
+scope-ack window completed a PASS against authority the acceptor never
+evaluated — "status is the COMPLETE discriminator" refuted; the reloaded
+manifest must equal the evaluated one. And the opening ACTOR validated on
+the wrong side of the first write, so a refused open left an active draft
+that wedged the workspace.
+
+**Workflow panel (confirmed):**
+- **P1 — the slash-twin hijack.** `_np(raw)` folds backslashes, so calling
+  it "exact" was false precision: the newline file's mangled recipe
+  discharged an outstanding `safe.txt/n` the acceptor never named, closing
+  PASS with a false attribution. The pinned row
+  `json-ack-exact-first-backslash-collision` had enshrined the defect as
+  spec. Cure: per ack, ALL readings are computed and the ack discharges
+  only when they agree on one unmatched path; two readings on two
+  outstanding paths is ambiguous and inert; matching runs to a fixpoint so
+  the full printed recipe still converges in one accept, and each typed ack
+  discharges at most one obligation ever.
+- **P2 — the whitespace note lied about shadow quoting** (quotes from
+  disambiguation, not from the name); the note now states all three
+  quoting reasons and claims none it cannot know.
+- **P2 — SECURITY.md never named the `linked:` spelling** its own
+  MULTIPLY LINKED section now requires; it does.
+- **P3 — "both clauses are load-bearing" was false**, transcribed from this
+  very document without execution: the full-range census shows isprintable
+  subsumes splitlines. The clause stays as a deliberate fail-closed
+  restatement of the one-line property; the docstring now says so.
+- **P3 — the unknown-kind fail-closed branch was unreachable and
+  unpinned**; it is now driven directly by a substituted finding source
+  (`unknown-kind-*` rows).
+
+**Panel-refuted (recorded, no action):** the C-fix TOCTOU claim, the
+resolvability-asymmetry claim (already es#147/es#164 territory), the
+silenced-disclosure claim (every divergence is a forged-input false
+positive), the edge-whitespace message claim, and the attack on the
+fallthrough itself (a repeated bare path provably widens nothing).
+
+Also settled out-of-band: es#162 CONFIRMED by the macOS diagnostic run
+(the comparison and the filesystem disagree about case; a respelled write
+dodges a declared exclusion), and es#153's forge is now TESTED — the ack
+note is quoted since the E fix, the `effect:` note still forges, evidence
+on the issue.

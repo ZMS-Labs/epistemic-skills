@@ -126,10 +126,19 @@ def _refuse_unprintable_identity(value, field: str) -> None:
     surrogates (which persist to disk via ensure_ascii and then crash any
     utf-8-strict reader), private-use and unassigned -- with zero false
     refusals across the realistic battery: ASCII, composed AND decomposed
-    accents, CJK, emoji, spaced human names. Both clauses are load-bearing
-    and each looks redundant next to the other: 'a\\n' (trailing) leaves
-    splitlines() at length 1 and is caught only by isprintable; 'a\\tb' and
-    an ANSI escape do not split at all.
+    accents, CJK, emoji, spaced human names.
+
+    The splitlines clause is REDUNDANT TODAY, on purpose, and an earlier
+    revision of this docstring falsely called both clauses load-bearing
+    (round-3 refutation, executed): the full-range census shows every
+    splitlines boundary character is itself unprintable, so isprintable
+    subsumes it -- 'a\\n', 'a\\tb' and an ANSI escape are all caught by
+    isprintable alone, and no codepoint exists that splits a line while
+    printing. The clause stays because it restates the PROPERTY this guard
+    exists for (one line) directly, so if printability and line-splitting
+    ever diverge in a future Unicode database the guard widens its refusal
+    instead of silently admitting the new line boundary. It can only ever
+    refuse more, never less.
 
     EDGE WHITESPACE is refused separately, and the row that forces it is
     pure ASCII: 'agent:worker-1 ' (trailing space) versus 'agent:worker-1'
@@ -508,17 +517,34 @@ def _amendment_names(text: str, rel_path: str) -> bool:
 
 
 def _display_path(path: str) -> str:
-    """A path the acceptor can SEE.
+    """A path the acceptor can SEE, in a spelling that survives being typed.
 
     `', '.join(outstanding)` renders `secret.env ` and `secret.env`
     identically, so matching the ack exactly would be unusable even once it is
     correct: an acceptor cannot type a spelling the message never shows them.
-    Quoting is applied ONLY to paths carrying whitespace, so ordinary paths --
-    and the `--scope-ack <path>` line the CLI surface is asserted on -- still
-    render bare. The quoting is JSON, because it is unambiguous about spaces
-    and tabs; it is deliberately NOT offered as a shell recipe, since cmd,
-    PowerShell and sh disagree and a wrong recipe is worse than none."""
-    return json.dumps(path) if any(c.isspace() for c in path) else path
+    Quoting is applied ONLY to paths carrying whitespace or a literal
+    double-quote, so ordinary paths -- and the `--scope-ack <path>` line the
+    CLI surface is asserted on -- still render bare.
+
+    The double-quote row is the fix's own residue, found on its second
+    round: a filename literally containing quotes (`linked:"foo.txt"`, legal
+    POSIX) printed bare, and bash ate exactly those quotes on the way back,
+    so the token that arrived named a different string and the obligation
+    was unreachable through the printed recipe. JSON-escaping the quote
+    (`"linked:\\"foo.txt\\""`) is the one spelling bash's double-quote
+    context AND CommandLineToArgvW both deliver back byte-exact -- and a
+    verbatim (API) arrival decodes through the parser's JSON candidate, so
+    both channels land on the same path.
+
+    The quoting is JSON, because it is unambiguous about spaces, tabs and
+    quotes; it is deliberately NOT offered as a shell recipe, since cmd,
+    PowerShell and sh disagree and a wrong recipe is worse than none. Paths
+    carrying OTHER shell-special characters ($, backtick, !) still print
+    bare and are still not paste-safe in every shell -- that residue is
+    es#163's, unchanged by this rule."""
+    if any(c.isspace() for c in path) or '"' in path:
+        return json.dumps(path)
+    return path
 
 
 def _acknowledged_paths(scope_ack, violating: set[str]) -> set[str]:
@@ -558,29 +584,66 @@ def _acknowledged_paths(scope_ack, violating: set[str]) -> set[str]:
     THE PRINTED RECIPE MUST WORK, so the displayed spelling is also an ack.
     `_display_path` shows a whitespace-bearing path JSON-quoted --
     `"safe.txt\\n"` -- and every shell delivers that argument with the outer
-    quotes eaten and the backslash-n as two literal characters, which
-    `_norm_path` then folds into `safe.txt/n`: an ack that discharges
-    nothing, printed by the very refusal that demands it (the defect-#25
-    shape, reproduced in the fix for the `$` anchor). So a JSON decode of the
-    ack -- quoted verbatim, or bare with the quotes the shell ate restored --
-    is tried LAST, only after the exact and stripped spellings named nothing:
-    a file literally named with a backslash-n keeps priority, per the
-    exact-first tie-break above. An ack that is not valid JSON when so read
-    simply contributes no extra candidate."""
+    quotes eaten and the backslash-n as two literal characters. The mangled
+    arrival therefore has TWO READINGS: `_norm_path` folds the backslash to
+    `safe.txt/n` (the Windows-separator tolerance), and the JSON decode
+    restores `safe.txt` + newline. Neither reading is 'exact' -- both are
+    interpretations of keystrokes the shell already rewrote -- and the first
+    shipped rule called the folded reading exact and took it first, so when
+    a genuinely different path `safe.txt/n` was ALSO outstanding, the
+    newline file's own printed recipe silently discharged the slash-twin
+    the acceptor never named (round-3 refutation, executed: a PASS closed
+    with the twin unjudged and the note attributing it to the acceptor).
+    Over-matching silently retires custody of a path nobody is watching --
+    the direction this module's tie-breaks always refuse.
+
+    So: per ack, ALL readings are computed, and the ack discharges only
+    when they agree on ONE unmatched violating path. Two readings naming
+    two distinct outstanding paths is AMBIGUOUS and discharges NOTHING --
+    under-matched, visible, recoverable. The stripped reading stays a
+    fallback tried only when the unstripped readings named nothing (the
+    exact-vs-stripped tie-break already settled below stands: for an
+    unstripped raw the folded and JSON readings agree, so `'secret.env '`
+    still names the spaced twin exactly). Matching runs to a FIXPOINT over
+    the whole ack list: discharging the slash-twin by its own unambiguous
+    spelling removes it from the outstanding set, after which the mangled
+    spelling names only the newline file -- so the full printed recipe
+    discharges both in one accept, in either order. An ack that is not
+    valid JSON when so read simply contributes no reading from that tier."""
     from custody_gate import _norm_path as _np
     matched: set[str] = set()
-    for raw in scope_ack or ():
-        if not raw:
-            continue
-        stripped = raw.strip()
-        # A whitespace-ONLY ack is not dropped: `"   "` is a legal filename,
-        # and dropping it would recreate this very dead end for exactly the
-        # path least likely to be noticed.
-        for candidate in (_np(raw), _np(stripped) if stripped else None,
-                          _json_decoded_ack(raw)):
-            if candidate is not None and candidate in violating:
-                matched.add(candidate)
-                break
+    consumed: set[int] = set()
+    acks = [raw for raw in (scope_ack or ()) if raw]
+    progress = True
+    while progress:
+        progress = False
+        for i, raw in enumerate(acks):
+            # ONE DISCHARGE PER TYPED ACK, ever: without the consumed set,
+            # an ack of 'secret.env ' would name the spaced twin on one
+            # pass and then its STRIPPED reading would name the bare twin
+            # on the next -- the union rule the exact-vs-stripped tie-break
+            # already refused, resurrected through the fixpoint.
+            if i in consumed:
+                continue
+            outstanding = violating - matched
+            readings = {r for r in (_np(raw), _json_decoded_ack(raw))
+                        if r is not None and r in outstanding}
+            if not readings:
+                stripped = raw.strip()
+                # A whitespace-ONLY ack is not dropped: `"   "` is a legal
+                # filename, and dropping it would recreate this very dead
+                # end for exactly the path least likely to be noticed.
+                if stripped:
+                    readings = {r for r in (_np(stripped),
+                                            _json_decoded_ack(stripped))
+                                if r is not None and r in outstanding}
+            if len(readings) == 1:
+                matched.add(readings.pop())
+                consumed.add(i)
+                progress = True
+            # len > 1: ambiguous -- this raw discharges nothing on this
+            # pass; a later pass retries it once other acks have thinned
+            # the outstanding set
     return matched
 
 
@@ -671,43 +734,59 @@ def _acknowledged_obligations(scope_ack,
     boundary = {p for p, k in obligations if k == _KIND_BOUNDARY}
     linked = {p for p, k in obligations if k == _KIND_LINKED}
     matched: set[tuple[str, str]] = set()
-    for raw in scope_ack or ():
-        if not raw:
-            continue
-        # Each ack discharges at most ONE obligation, and the boundary
-        # reading wins only while it still names something NEW. Without
-        # that second clause the shadow case is a dead end no spelling can
-        # exit through a shell: the quoted qualifier ('linked:"foo.txt"')
-        # loses its interior quotes to bash, PowerShell AND
-        # CommandLineToArgvW alike, so every pasted token arrives as the
-        # bare 'linked:foo.txt' and the exact-first reading consumed all of
-        # them as the same literal path -- the printed recipe discharged one
-        # obligation no matter how many flags were pasted (measured against
-        # real shell argv, not a preconstructed argument). Falling through
-        # once the boundary reading is exhausted makes the SECOND arrival of
-        # the same token mean the qualifier -- so the printed recipe works
-        # on every channel, quotes surviving or not, in either order. A
-        # duplicated BARE path (no qualifier reading) still discharges
-        # nothing extra: the fallthrough only reaches tokens that parse as
-        # qualifiers, so repetition never silently widens a judgement.
-        hit = _acknowledged_paths([raw], boundary)
-        new_hit = {p for p in hit if (p, _KIND_BOUNDARY) not in matched}
-        if new_hit:
-            matched |= {(p, _KIND_BOUNDARY) for p in new_hit}
-            continue
-        qualified = None
-        if raw.startswith(_LINKED_ACK_PREFIX):
-            qualified = raw[len(_LINKED_ACK_PREFIX):]
-        else:
-            # the displayed token for a whitespace-bearing linked path is
-            # JSON-quoted WHOLE ('"linked:a b.txt"'), so the qualifier can
-            # arrive inside the quoting
-            decoded = _json_decoded_ack_text(raw)
-            if decoded is not None and decoded.startswith(_LINKED_ACK_PREFIX):
-                qualified = decoded[len(_LINKED_ACK_PREFIX):]
-        if qualified is not None:
-            hit = _acknowledged_paths([qualified], linked)
-            matched |= {(p, _KIND_LINKED) for p in hit}
+    consumed: set[int] = set()
+    acks = [raw for raw in (scope_ack or ()) if raw]
+    progress = True
+    while progress:
+        progress = False
+        for i, raw in enumerate(acks):
+            if i in consumed:
+                continue
+            # Each typed ack discharges at most ONE obligation EVER (the
+            # consumed set), and the boundary reading wins only while it
+            # still names something new. Without the fallthrough the shadow
+            # case is a dead end no spelling can exit through a shell: the
+            # quoted qualifier ('linked:"foo.txt"') loses its interior
+            # quotes to bash, PowerShell AND CommandLineToArgvW alike, so
+            # every pasted token arrives as the bare 'linked:foo.txt' and
+            # the boundary reading consumed all of them as the same literal
+            # path -- the printed recipe discharged one obligation no matter
+            # how many flags were pasted (measured against real shell argv,
+            # not a preconstructed argument). The SECOND arrival of the same
+            # token therefore means the qualifier. A duplicated BARE path
+            # still widens nothing: the fallthrough only reaches tokens
+            # that parse as qualifiers. The outer FIXPOINT exists for the
+            # ambiguity rule in _acknowledged_paths: an ack whose readings
+            # named two outstanding paths discharges nothing on that pass,
+            # and is retried once other acks have thinned the set -- so the
+            # printed recipe converges in one accept, in either order.
+            b_out = {p for p in boundary
+                     if (p, _KIND_BOUNDARY) not in matched}
+            hit = _acknowledged_paths([raw], b_out)
+            if hit:
+                matched |= {(p, _KIND_BOUNDARY) for p in hit}
+                consumed.add(i)
+                progress = True
+                continue
+            qualified = None
+            if raw.startswith(_LINKED_ACK_PREFIX):
+                qualified = raw[len(_LINKED_ACK_PREFIX):]
+            else:
+                # the displayed token for a whitespace-bearing linked path
+                # is JSON-quoted WHOLE ('"linked:a b.txt"'), so the
+                # qualifier can arrive inside the quoting
+                decoded = _json_decoded_ack_text(raw)
+                if decoded is not None \
+                        and decoded.startswith(_LINKED_ACK_PREFIX):
+                    qualified = decoded[len(_LINKED_ACK_PREFIX):]
+            if qualified is not None:
+                l_out = {p for p in linked
+                         if (p, _KIND_LINKED) not in matched}
+                hit = _acknowledged_paths([qualified], l_out)
+                if hit:
+                    matched |= {(p, _KIND_LINKED) for p in hit}
+                    consumed.add(i)
+                    progress = True
     return matched
 
 
@@ -1878,14 +1957,20 @@ class Mission:
                             p if k == _KIND_BOUNDARY
                             else _LINKED_ACK_PREFIX + p)
                         for p, k, t in rows)
+                    # the note must not claim a REASON for the quoting it
+                    # cannot know: shadow disambiguation quotes a path that
+                    # carries no whitespace at all, and telling the acceptor
+                    # to look for whitespace there is a false instruction
+                    # (round-3 refutation, executed)
                     ws_note = (
-                        " Paths shown in quotes carry whitespace that is part "
-                        "of the NAME, not padding: supply them to --scope-ack "
-                        "exactly, whitespace included. The quoting is JSON, "
-                        "shown to make the bytes visible -- and the quoted "
-                        "spelling is itself accepted, with or without its "
-                        "outer quotes, decoded only when the exact spelling "
-                        "names nothing."
+                        " Quoted spellings are JSON, shown to make the "
+                        "exact bytes unambiguous: the quoting marks "
+                        "whitespace or quote characters that are part of "
+                        "the NAME, or separates a linked: acknowledgement "
+                        "from a file literally named with that prefix. "
+                        "Supply quoted tokens to --scope-ack exactly as "
+                        "shown -- the quoted spelling is itself accepted, "
+                        "with or without its outer quotes."
                         if quoted else "")
                     raise AcceptanceRefused(
                         f"{len(outstanding_obl)} finding(s) crossed the "

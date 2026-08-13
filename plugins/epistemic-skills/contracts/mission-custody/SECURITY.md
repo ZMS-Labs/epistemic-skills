@@ -65,8 +65,12 @@ write time.
 
 **Operator consequence:** when acceptance reports MULTIPLY LINKED, the other
 name has not been checked against any boundary. Find it (`fsutil hardlink list`
-on NTFS, `find -samefile` on POSIX) before acknowledging. An acknowledgement
-here records that a human looked, which is the only thing that is true.
+on NTFS, `find -samefile` on POSIX) before acknowledging, and acknowledge it
+in the QUALIFIED spelling — `accept … --scope-ack linked:<path>` — never the
+bare path: a boundary crossing and a link disclosure are different
+judgements, and the bare spelling discharges only the former. An
+acknowledgement here records that a human looked, which is the only thing
+that is true.
 
 ## Glob anchoring: `\Z` in the compiler, `$` residue in operator regexes
 
