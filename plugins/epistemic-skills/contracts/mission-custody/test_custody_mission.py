@@ -2100,6 +2100,16 @@ def test_status_is_revalidated_after_the_scope_ack_checkpoint(
             "FAIL", acceptor_id="agent:other",
             assurance_tier="declared-role-separation", reason="no good"),
          "reopened"),
+        # The row that refuted "status is the COMPLETE discriminator":
+        # amend_authority leaves status 'verifying' while changing the
+        # AUTHORITY the PASS asserts against. Reproduced pre-fix as a chain
+        # ending scope-ack -> 'authority amended: operator now also requires
+        # B' -> 'PASS: looks fine' -- an acceptance recorded against a
+        # manifest the acceptor never evaluated. Unchanged drift does not
+        # make an authority change benign, so the reloaded manifest must BE
+        # the evaluated one.
+        ("amend", lambda r: r.amend_authority("operator now also requires B"),
+         "verifying"),
     ]
     for label, action, expected in rows:
         fired, outcome, final, written = _pass_with_racer(
@@ -2756,6 +2766,20 @@ def test_same_path_boundary_and_link_are_two_obligations(
             # the regression shape where an EARLIER attempt wrongly landed:
             # FAIL, but never abort the registry
             check(f"two-obligation-{label}-is-not-enough", False)
+    # A duplicated BARE path never widens: the exhausted-boundary
+    # fallthrough only reaches tokens that parse as qualifiers, so repeating
+    # 'docs/a.txt' cannot quietly discharge the link obligation the way a
+    # repeated 'linked:...' token deliberately can in the shadow case.
+    try:
+        acceptor.record_verdict(
+            "PASS", acceptor_id="agent:acceptor",
+            assurance_tier="declared-role-separation", reason="done",
+            scope_ack=["docs/a.txt", "docs/a.txt"])
+        check("two-obligation-duplicated-bare-path-does-not-widen", False)
+    except AcceptanceRefused:
+        check("two-obligation-duplicated-bare-path-does-not-widen", True)
+    except IllegalTransition:
+        check("two-obligation-duplicated-bare-path-does-not-widen", False)
     try:
         landed = acceptor.record_verdict(
             "PASS", acceptor_id="agent:acceptor",
@@ -2804,28 +2828,68 @@ def test_shadowed_linked_token_prints_a_working_recipe(
     check("shadow-refusal-still-names-the-literal-path",
           refusal is not None
           and "--scope-ack linked:foo.txt" in refusal)
-    # the OLD recipe -- the same bare token twice -- must still refuse: both
-    # occurrences are consumed by the literal boundary path
+    # ONE bare token is one judgement: it discharges the literal boundary
+    # path only, and the link obligation stays outstanding
     try:
         acceptor.record_verdict(
             "PASS", acceptor_id="agent:acceptor",
             assurance_tier="declared-role-separation", reason="done",
-            scope_ack=["linked:foo.txt", "linked:foo.txt"])
-        check("shadow-duplicate-bare-token-is-not-enough", False)
+            scope_ack=["linked:foo.txt"])
+        check("shadow-single-bare-token-is-not-enough", False)
     except AcceptanceRefused:
-        check("shadow-duplicate-bare-token-is-not-enough", True)
+        check("shadow-single-bare-token-is-not-enough", True)
     except IllegalTransition:
-        check("shadow-duplicate-bare-token-is-not-enough", False)
-    # the PRINTED recipe works: bare token for the literal path, quoted
-    # spelling for the link obligation, one accept
+        check("shadow-single-bare-token-is-not-enough", False)
+    # SHELL TRUTH: bash, PowerShell and CommandLineToArgvW all strip the
+    # interior quotes from `linked:"foo.txt"`, so BOTH printed flags arrive
+    # as the same bare token. This assertion previously pinned the opposite
+    # (duplicate bare token refused) -- inverted DELIBERATELY when the
+    # parser gained the exhausted-boundary fallthrough, because a recipe
+    # that only works when quotes survive the shell is a dead end on the
+    # one channel the refusal text addresses.
     try:
         landed = acceptor.record_verdict(
             "PASS", acceptor_id="agent:acceptor",
             assurance_tier="declared-role-separation", reason="done",
-            scope_ack=["linked:foo.txt", 'linked:"foo.txt"'])
+            scope_ack=["linked:foo.txt", "linked:foo.txt"])
     except (AcceptanceRefused, IllegalTransition):
         landed = None
-    check("shadow-printed-recipe-discharges-both", isinstance(landed, int))
+    check("shadow-shell-argv-recipe-discharges-both", isinstance(landed, int))
+
+
+def test_shadowed_linked_token_quoted_spelling_still_works(
+        workspace: Path) -> None:
+    """The API channel keeps the quotes the shell eats: both printed tokens
+    arriving verbatim must discharge both obligations too, in either
+    order."""
+    for order, acks in (("bare-first", ["linked:foo.txt", 'linked:"foo.txt"']),
+                        ("quoted-first",
+                         ['linked:"foo.txt"', "linked:foo.txt"])):
+        ws = workspace / order
+        ws.mkdir(parents=True, exist_ok=True)
+        m = open_mission(ws, f"m-shadow-{order}", "Shadowed.",
+                         scope_out=["linked:foo.txt"])
+        m.approve()
+        (ws / "keep").mkdir(exist_ok=True)
+        (ws / "foo.txt").write_text("x", encoding="utf-8")
+        try:
+            os.link(ws / "foo.txt", ws / "keep" / "other.txt")
+        except (OSError, NotImplementedError, AttributeError):
+            print("skip shadow-quoted (hard links unavailable on this host)")
+            return
+        m.record_effect("linked:foo.txt", "crossing", f"sq-{order}-1")
+        m.record_effect("foo.txt", "linked bytes", f"sq-{order}-2")
+        m.begin_verification()
+        acceptor = Mission.load(ws, actor="agent:acceptor")
+        try:
+            landed = acceptor.record_verdict(
+                "PASS", acceptor_id="agent:acceptor",
+                assurance_tier="declared-role-separation", reason="done",
+                scope_ack=acks)
+        except (AcceptanceRefused, IllegalTransition):
+            landed = None
+        check(f"shadow-quoted-recipe-{order}-discharges-both",
+              isinstance(landed, int))
 
 
 TESTS = [
@@ -2880,6 +2944,7 @@ TESTS = [
     test_link_ack_is_categorical,
     test_same_path_boundary_and_link_are_two_obligations,
     test_shadowed_linked_token_prints_a_working_recipe,
+    test_shadowed_linked_token_quoted_spelling_still_works,
     test_open_creates_draft_r1,
     test_pathless_load_single_active,
     test_load_refuses_zero_and_multiple,

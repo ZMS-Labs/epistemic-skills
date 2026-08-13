@@ -674,9 +674,26 @@ def _acknowledged_obligations(scope_ack,
     for raw in scope_ack or ():
         if not raw:
             continue
+        # Each ack discharges at most ONE obligation, and the boundary
+        # reading wins only while it still names something NEW. Without
+        # that second clause the shadow case is a dead end no spelling can
+        # exit through a shell: the quoted qualifier ('linked:"foo.txt"')
+        # loses its interior quotes to bash, PowerShell AND
+        # CommandLineToArgvW alike, so every pasted token arrives as the
+        # bare 'linked:foo.txt' and the exact-first reading consumed all of
+        # them as the same literal path -- the printed recipe discharged one
+        # obligation no matter how many flags were pasted (measured against
+        # real shell argv, not a preconstructed argument). Falling through
+        # once the boundary reading is exhausted makes the SECOND arrival of
+        # the same token mean the qualifier -- so the printed recipe works
+        # on every channel, quotes surviving or not, in either order. A
+        # duplicated BARE path (no qualifier reading) still discharges
+        # nothing extra: the fallthrough only reaches tokens that parse as
+        # qualifiers, so repetition never silently widens a judgement.
         hit = _acknowledged_paths([raw], boundary)
-        if hit:
-            matched |= {(p, _KIND_BOUNDARY) for p in hit}
+        new_hit = {p for p in hit if (p, _KIND_BOUNDARY) not in matched}
+        if new_hit:
+            matched |= {(p, _KIND_BOUNDARY) for p in new_hit}
             continue
         qualified = None
         if raw.startswith(_LINKED_ACK_PREFIX):
@@ -1909,19 +1926,24 @@ class Mission:
                 #     unresolved_verdicts still held 'FAIL:no good'
                 # A cancelled mission and a failed mission both closed PASSED.
                 #
-                # Re-validating `status` is not one check among several -- it is
-                # the COMPLETE discriminator, which is why nothing stronger is
-                # done here. Every verb that can change the drift set
-                # (record_effect, reconcile, acknowledge_receipt_loss, resume,
-                # FAIL, cancel) also moves status off 'verifying'; every verb
-                # that leaves status 'verifying' (note, set_frontier,
-                # amend_authority) cannot change it -- scope is immutable under
+                # Re-validating `status` covers the DRIFT set completely:
+                # every verb that can change it (record_effect, reconcile,
+                # acknowledge_receipt_loss, resume, FAIL, cancel) also moves
+                # status off 'verifying' -- scope is immutable under
                 # _verify_manifest, and receipt_ids cannot grow outside
-                # _EFFECT_STATES or 'reopened'. So requiring the reloaded
-                # checkpoint to be the exact one just written would buy no
-                # safety and would refuse a benign concurrent `note`. That row
-                # is pinned by a test, so tightening this later has to argue
-                # with a red suite rather than with a comment.
+                # _EFFECT_STATES or 'reopened'. But an earlier revision of
+                # this comment called status the COMPLETE discriminator, and
+                # that was refuted by a reproduced chain: `amend_authority`
+                # leaves status 'verifying' while changing the AUTHORITY the
+                # PASS asserts against -- scope-ack, then 'authority amended:
+                # operator now also requires B', then a completed PASS the
+                # acceptor recorded against the old manifest. Unchanged drift
+                # does not make an authority change benign, so the reloaded
+                # manifest must BE the manifest that was evaluated. A benign
+                # concurrent `note` still passes (notes live in state, not
+                # the manifest) -- that row stays pinned, so tightening this
+                # to exact-checkpoint identity still has to argue with a red
+                # suite.
                 #
                 # BEFORE _store_verdict: refusing after it would strand an
                 # orphan verdicts/<rev>-PASS.json describing a PASS the chain
@@ -1934,6 +1956,16 @@ class Mission:
                         f"revision {acked['revision']} and stands); re-read the "
                         "mission and record the verdict against its current "
                         "state")
+                if latest["manifest"] != manifest:
+                    raise IllegalTransition(
+                        "cannot record PASS: the mission's manifest changed "
+                        "while this verdict was being recorded -- the "
+                        "acceptance was evaluated against authority the "
+                        "record no longer carries (the scope acknowledgement "
+                        f"landed at revision {acked['revision']} and stands); "
+                        "re-read the mission, evaluate the amended "
+                        "authority, and record the verdict against its "
+                        "current state")
                 new_revision = latest["revision"] + 1
                 verdict_record["revision"] = new_revision
             self._store_verdict(new_revision, verdict, verdict_record)
