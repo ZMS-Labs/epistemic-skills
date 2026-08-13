@@ -1557,6 +1557,28 @@ def test_identity_is_one_visible_line(workspace: Path) -> None:
         except CustodyError:
             check(f"open-refuses-unprintable-{field}-ref", True)
 
+    # The ACTOR validates before the load-probe and before any write. The
+    # constructor's guard sat on the wrong side of the first write: on an
+    # empty workspace the load-probe raises NoActiveMission before any
+    # Mission is constructed, so revision 1 landed on disk carrying the
+    # rejected written_by and only then did open() refuse -- an active
+    # draft nobody legitimate could have opened, wedging every subsequent
+    # open in the workspace (reproduced live pre-fix).
+    ws_actor = workspace / "actor-first"
+    try:
+        Mission.open(ws_actor, "m-evil-actor", "T.",
+                     operator_ref="op", steward_ref="st", actor=evil)
+        check("open-refuses-unprintable-actor", False)
+    except CustodyError:
+        check("open-refuses-unprintable-actor", True)
+    check("refused-open-leaves-no-residue",
+          not (ws_actor / "missions").exists())
+    relegit = Mission.open(ws_actor, "m-legit", "T.",
+                           operator_ref="op", steward_ref="st",
+                           actor="agent:x")
+    check("workspace-not-wedged-after-refused-open",
+          relegit.status()["revision"] == 1)
+
     # end to end: the reproduced forge can no longer reach the chain. The
     # acceptor's Mission cannot even be CONSTRUCTED under the forging
     # identity, so no verdict path exists for it; the chain keeps zero note

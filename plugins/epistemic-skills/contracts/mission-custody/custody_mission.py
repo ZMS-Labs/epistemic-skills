@@ -737,9 +737,17 @@ class Mission:
               guard_mode: str | None = None,
               actuator_guards: list | None = None) -> "Mission":
         workspace = Path(workspace)
-        # The refs are identities too -- they land in verdict records and
-        # display surfaces -- and this runs BEFORE the load-probe so a
-        # refused open touches nothing on disk.
+        # ALL THREE identities validate BEFORE the load-probe, so a refused
+        # open touches nothing on disk. The actor was missing from this
+        # list, and the constructor's guard sat on the wrong side of the
+        # first write: on an empty workspace the load-probe raises
+        # NoActiveMission before any Mission is constructed, so revision 1
+        # was written carrying the rejected `written_by` -- and only THEN
+        # did `cls(...)` refuse, leaving an active draft that wedged every
+        # subsequent open (reproduced live). The constructor still guards
+        # every other construction path; this line guards the one path that
+        # writes first.
+        _refuse_unprintable_identity(actor, "actor")
         _refuse_unprintable_identity(steward_ref, "steward_ref")
         _refuse_unprintable_identity(operator_ref, "operator_ref")
         # One ACTIVE mission per workspace, enforced at the door: every other
