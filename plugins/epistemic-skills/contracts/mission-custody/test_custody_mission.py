@@ -3080,6 +3080,37 @@ def test_quote_bearing_boundary_path_recipe_survives_the_shell(
               isinstance(landed, int))
 
 
+def test_trailing_slash_scope_entry_binds_the_subtree(
+        workspace: Path) -> None:
+    """scope.out=["secrets/"] used to compile to an exact `secrets` regex --
+    the trailing slash erased by normalization -- so a write under the
+    directory yielded no finding and PASS closed silently (es#155, found a
+    third time on this PR). The semantics were already settled by
+    `_amendment_names`: a trailing-slash token names the directory AND what
+    is under it. The base itself stays matched deliberately: a FILE named
+    `secrets` flags too, which is the dischargeable over-match direction."""
+    m = open_mission(workspace, "m-dirslash", "Dir marker.",
+                     scope_in=["docs/"], scope_out=["secrets/", "keys\\"])
+    m.approve()
+    m.record_effect("docs/inside.txt", "fine", "ds2-1")
+    m.record_effect("secrets/a.txt", "leak", "ds2-2")
+    m.record_effect("keys/k.pem", "leak", "ds2-3")
+    m.record_effect("secretsfile.txt", "adjacent", "ds2-4")
+    findings = [(f["artifact_path"], f["reason"])
+                for f in m.scope_consistency()]
+    check("dir-marker-subtree-write-is-flagged",
+          ("secrets/a.txt", "matches scope.out") in findings)
+    check("dir-marker-windows-spelling-is-flagged",
+          ("keys/k.pem", "matches scope.out") in findings)
+    check("dir-marker-include-covers-its-subtree",
+          not any(p == "docs/inside.txt" for p, _ in findings))
+    # `secretsfile.txt` shares a prefix, not the directory: outside
+    # scope.in, but NOT a scope.out match -- the marker is not a substring
+    check("dir-marker-is-not-a-prefix-substring",
+          ("secretsfile.txt", "outside scope.in") in findings
+          and ("secretsfile.txt", "matches scope.out") not in findings)
+
+
 TESTS = [
     test_scope_entry_classification_table,
     test_uncompared_scope_entries_are_reported,
@@ -3136,6 +3167,7 @@ TESTS = [
     test_quote_bearing_boundary_path_recipe_survives_the_shell,
     test_slash_twin_cannot_be_discharged_by_the_newline_files_recipe,
     test_unknown_finding_kind_fails_closed_and_says_so,
+    test_trailing_slash_scope_entry_binds_the_subtree,
     test_open_creates_draft_r1,
     test_pathless_load_single_active,
     test_load_refuses_zero_and_multiple,

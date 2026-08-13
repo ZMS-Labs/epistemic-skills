@@ -1647,9 +1647,28 @@ class Mission:
         from custody_gate import _glob_regex, _norm_path
         latest, _ = self.store.load_latest()
         scope = latest["manifest"]["scope"]
-        includes = [_glob_regex(_norm_path(g)) for g in scope["in"]
+        # A TRAILING SLASH is a directory marker, and _norm_path erases it
+        # before compilation -- so scope.out=["secrets/"] compiled to an
+        # exact `secrets` regex and an effect on secrets/a.txt yielded no
+        # finding, undisclosed: the silent false-CLEAN class again (es#155,
+        # found a third time by review on this PR). The semantics are not
+        # invented here: `_amendment_names` already settled that a
+        # trailing-slash token names the directory AND what is under it,
+        # so a scope entry gets the identical reading via the same
+        # compiler's trailing-base form. The base itself stays matched on
+        # purpose -- a FILE named `secrets` under scope.out=["secrets/"]
+        # flags, which is the dischargeable over-match direction, not the
+        # silent one. (The gate's operator-authored `path_globs` keep
+        # their own surface; that half stays with es#155.)
+        def _scope_regex(entry: str):
+            norm = _norm_path(entry)
+            if entry.replace("\\", "/").endswith("/") and norm:
+                return _glob_regex(norm + "/**")
+            return _glob_regex(norm)
+
+        includes = [_scope_regex(g) for g in scope["in"]
                     if _is_compared_entry(g)]
-        excludes = [_glob_regex(_norm_path(g)) for g in scope["out"]
+        excludes = [_scope_regex(g) for g in scope["out"]
                     if _is_compared_entry(g)]
         # "outside scope.in" is an ABSENCE inference: it concludes from a
         # receipt matching NO include that it is out of bounds. That is only
