@@ -1809,7 +1809,33 @@ class Mission:
                     # carries information, so the ordinary case -- and the
                     # `--scope-ack secrets.env` line callers assert on -- is
                     # unchanged.
-                    rows = [(p, k, _ack_token(p, k))
+                    # TOKEN COLLISION: a receipted file literally named
+                    # 'linked:<p>' (legal everywhere, NTFS ADS syntax aside)
+                    # that crossed the boundary shares its ack spelling with
+                    # the link obligation on <p> -- and exact-path-first
+                    # consumes every bare 'linked:<p>' as the literal path,
+                    # so the printed recipe would name the same token twice
+                    # and discharge only one obligation no matter how often
+                    # it is repeated: a refusal whose printed exit does not
+                    # work, the dead-end class this PR has now paid for three
+                    # times. The parser already reads 'linked:"<p>"' as a
+                    # qualifier (the JSON spelling misses the boundary set,
+                    # then decodes inside the qualifier branch), so the
+                    # message prints THAT spelling exactly when the bare one
+                    # is shadowed. Collision is tested against ALL boundary
+                    # obligations, not just outstanding ones: a same-call ack
+                    # of the literal path leaves it in the parse set, still
+                    # shadowing.
+                    boundary_all = {p for p, k in obligations
+                                    if k == _KIND_BOUNDARY}
+
+                    def _shown_token(p: str, k: str) -> str | None:
+                        if (k == _KIND_LINKED
+                                and _LINKED_ACK_PREFIX + p in boundary_all):
+                            return _LINKED_ACK_PREFIX + json.dumps(p)
+                        return _ack_token(p, k)
+
+                    rows = [(p, k, _shown_token(p, k))
                             for p, k in outstanding_obl]
                     tokens = [t for _, _, t in rows if t is not None]
                     unackable = [(p, k) for p, k, t in rows if t is None]

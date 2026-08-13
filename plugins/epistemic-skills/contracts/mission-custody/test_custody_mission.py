@@ -2766,6 +2766,68 @@ def test_same_path_boundary_and_link_are_two_obligations(
     check("two-obligation-both-acks-discharge", isinstance(landed, int))
 
 
+def test_shadowed_linked_token_prints_a_working_recipe(
+        workspace: Path) -> None:
+    """A receipted file literally named 'linked:foo.txt' that crossed the
+    boundary shares its bare ack spelling with the link obligation on
+    foo.txt -- and exact-path-first consumes every bare 'linked:foo.txt' as
+    the literal path, so a refusal printing that token for BOTH obligations
+    is a recipe that cannot work no matter how often it is repeated (the
+    dead-end class, third occurrence). The parser has always read
+    'linked:"foo.txt"' as a qualifier; the message must print that spelling
+    exactly when the bare one is shadowed, and the printed recipe must
+    discharge both obligations in one accept."""
+    m = open_mission(workspace, "m-shadow", "Shadowed.",
+                     scope_out=["linked:foo.txt"])
+    m.approve()
+    (workspace / "keep").mkdir(exist_ok=True)
+    (workspace / "foo.txt").write_text("x", encoding="utf-8")
+    try:
+        os.link(workspace / "foo.txt", workspace / "keep" / "other.txt")
+    except (OSError, NotImplementedError, AttributeError):
+        print("skip shadowed-token (hard links unavailable on this host)")
+        return
+    m.record_effect("linked:foo.txt", "crossing", "sh-1")
+    m.record_effect("foo.txt", "linked bytes", "sh-2")
+    m.begin_verification()
+    acceptor = Mission.load(workspace, actor="agent:acceptor")
+    refusal = None
+    try:
+        acceptor.record_verdict("PASS", acceptor_id="agent:acceptor",
+                                 assurance_tier="declared-role-separation",
+                                 reason="done")
+    except AcceptanceRefused as exc:
+        refusal = str(exc)
+    check("shadow-refusal-exists", refusal is not None)
+    check("shadow-refusal-prints-the-quoted-spelling",
+          refusal is not None and 'linked:"foo.txt"' in refusal)
+    check("shadow-refusal-still-names-the-literal-path",
+          refusal is not None
+          and "--scope-ack linked:foo.txt" in refusal)
+    # the OLD recipe -- the same bare token twice -- must still refuse: both
+    # occurrences are consumed by the literal boundary path
+    try:
+        acceptor.record_verdict(
+            "PASS", acceptor_id="agent:acceptor",
+            assurance_tier="declared-role-separation", reason="done",
+            scope_ack=["linked:foo.txt", "linked:foo.txt"])
+        check("shadow-duplicate-bare-token-is-not-enough", False)
+    except AcceptanceRefused:
+        check("shadow-duplicate-bare-token-is-not-enough", True)
+    except IllegalTransition:
+        check("shadow-duplicate-bare-token-is-not-enough", False)
+    # the PRINTED recipe works: bare token for the literal path, quoted
+    # spelling for the link obligation, one accept
+    try:
+        landed = acceptor.record_verdict(
+            "PASS", acceptor_id="agent:acceptor",
+            assurance_tier="declared-role-separation", reason="done",
+            scope_ack=["linked:foo.txt", 'linked:"foo.txt"'])
+    except (AcceptanceRefused, IllegalTransition):
+        landed = None
+    check("shadow-printed-recipe-discharges-both", isinstance(landed, int))
+
+
 TESTS = [
     test_scope_entry_classification_table,
     test_uncompared_scope_entries_are_reported,
@@ -2817,6 +2879,7 @@ TESTS = [
     test_symlink_loop_cannot_crash_acceptance,
     test_link_ack_is_categorical,
     test_same_path_boundary_and_link_are_two_obligations,
+    test_shadowed_linked_token_prints_a_working_recipe,
     test_open_creates_draft_r1,
     test_pathless_load_single_active,
     test_load_refuses_zero_and_multiple,
