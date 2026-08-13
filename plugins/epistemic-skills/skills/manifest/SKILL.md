@@ -23,10 +23,26 @@ else.
    <kebab> --instruction-file <file> --operator <ref> --steward <your actor>
    --scope-in ... --scope-out ... --permission ... --protected ...
    [--tier declared-role-separation] [--hold-if RULE ...] [--stop-if RULE ...]
-   [--escalate-if RULE ...] [--cost COST ...]`. An empty authority field is
-   unbounded, not safely defaulted — fill all four envelope flags or `note` why
-   the operator left one empty. Then `approve` only after the operator confirms
-   the whole envelope (scope in/out, permissions, protected state, stop rules).
+   [--escalate-if RULE ...] [--cost COST ...]`. An empty envelope field is
+   unbounded, not safely defaulted — fill all four or `note` why the operator
+   left one empty. Then `approve` only after the operator confirms the whole
+   envelope (scope in/out, permissions, protected state, stop rules).
+   **The envelope is ADVISORY AT RUN TIME: nothing blocks a tool call on it.**
+   No envelope field reaches the runtime chokepoint, which is only ever handed
+   `authority` itself — so only `authority.actuator_guards` can refuse an
+   action. **But `scope` is not inert at ACCEPTANCE:** path-pattern entries in
+   `scope.in`/`scope.out` are machine-compared against the receipted artifacts,
+   and a PASS is refused when work crossed the declared boundary until the
+   ACCEPTOR acknowledges each crossing path (`--scope-ack`, see Verify/Close).
+   Prose entries cannot be compared and are reported as such rather than
+   silently dropped — and a `scope.in` that mixes prose with patterns disables
+   the include comparison entirely and says so. Advisory-at-run-time,
+   compared-at-acceptance — collapsing that distinction in either direction
+   misleads, and "nothing refuses on it" was this file's own stale honesty
+   label. Declare the envelope anyway: it is immutable, so it is
+   the fixed reference an acceptor and an auditor compare the finished work
+   against, and it cannot be retro-fitted later to match whatever the mission
+   drifted into.
 2. **Resume** — `resume` (pathless = no mission id or path; `--workspace` is
    still required). Treat chat and memory as untrusted until it exits 0. It
    hash-checks ONLY receipted artifacts — with zero receipts a clean exit is
@@ -61,7 +77,18 @@ else.
    live: a word was silently deleted from a recorded note, exit 0.
 5. **Verify / Close** — `verify`, then acceptance by a DIFFERENT actor: a
    distinct session runs `accept` as itself (`--actor` must equal
-   `--acceptor`). Never accept work you performed; the core refuses it
+   `--acceptor`). **If receipted work crossed the declared scope, a PASS is
+   refused until the acceptor acknowledges each finding explicitly:
+   `accept ... --scope-ack <path>` (repeatable).** Findings are acknowledged
+   BY KIND: a bare path acknowledges a boundary crossing, and a
+   MULTIPLY LINKED disclosure needs the qualified `--scope-ack linked:<path>`
+   — "the operator authorised this path" and "I found the other name and
+   checked where it points" are different judgements, and neither spelling
+   discharges the other. An amendment MENTIONING the
+   path is a hint, not a discharge — a substring cannot tell a grant from a
+   prohibition, so the judgement is the acceptor's and is recorded as theirs.
+   The refusal message prints the exact flags to paste. Never accept work you
+   performed; the core refuses it
    (AcceptanceRefused) — do not work around the refusal.
 
 ## Boundaries

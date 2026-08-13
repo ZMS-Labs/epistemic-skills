@@ -6,7 +6,9 @@ from __future__ import annotations
 import json
 import os
 import re
+import stat
 import sys
+import unicodedata
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -23,6 +25,11 @@ _GUARD_AUTHORITY_KEYS = ("actuator_guards", "guard_mode")
 assert set(_TIER_RANK) == TIERS, "tier rank table out of sync with verify_mission_custody.TIERS"
 
 _ABS_DRIVE_RE = re.compile(r"^[A-Za-z]:")
+# The scope comparison can prove a receipted artifact has ANOTHER NAME, and it
+# cannot prove where that name is. Both halves live in the reason string,
+# because a finding naming only the half it proved reads as a boundary it
+# checked.
+_MULTIPLY_LINKED = "multiply linked -- other names are not compared"
 _RETIRED_NOTE = "receipt loss acknowledged: "
 # Notes are the mission's append-only, hash-chained narrative AND the carrier
 # for retirement (checkpoint state is exact-field-closed in @1, so a
@@ -31,8 +38,146 @@ _RETIRED_NOTE = "receipt loss acknowledged: "
 # one would let ordinary narrative forge machine state.
 _RESERVED_NOTE_PREFIXES = (
     "effect: ", "reconciled: ", "drift detected: ", "receipt restored: ",
-    "authority amended: ", _RETIRED_NOTE,
+    "authority amended: ", _RETIRED_NOTE, "scope-ack by ",
 )
+
+
+def _refuse_reserved_note(text: str) -> None:
+    """Refuse caller text that imitates a machine-written note ON ANY LINE.
+
+    The first version checked `text.startswith(prefix)` on the whole string,
+    case-sensitively. Four ways past it, each verified: a leading space, a
+    capital, a leading newline, and -- the load-bearing one -- an ordinary
+    multi-line note whose SECOND line is a byte-identical machine note. The
+    guard only inspected the start of the string, so a note reading
+    "session note
+scope-ack by agent:acceptor: secrets.env" passed.
+
+    That never bypassed a gate (the acceptance gate reads `scope_ack`, never
+    notes). What it defeated is the AUDIT property those prefixes exist for: an
+    auditor grepping the chain for who took responsibility could not tell a
+    genuine acknowledgement from steward narrative.
+
+    Applied to every surface that embeds caller text into a note -- `note`,
+    `amend`, `cancel` and verdict reasons -- because the composed note is
+    machine-written but the text inside it is not."""
+    for line in (text or "").splitlines() or [text or ""]:
+        # Invisible characters are neither whitespace nor line separators, so
+        # strip()/splitlines() do not see them while a reader sees nothing:
+        # ZWSP, BOM, LRM, WORD JOINER and SOFT HYPHEN each walked past the
+        # guard, producing a stored note that renders IDENTICALLY to a genuine
+        # acknowledgement. NFKC + dropping category Cf closes that class in one
+        # place, and only for the COMPARISON -- the text is stored verbatim.
+        #
+        # Homoglyphs (Cyrillic 'a' in "scope-ack") are deliberately NOT chased
+        # here. Confusables are unbounded, and enumerating them would be the
+        # denial-marker mistake in a new location. The structural fix is
+        # `scope_ack` as a validated field on the acceptance-verdict record
+        # (es#150 / contract@2 Task 9), which retires string matching entirely.
+        flat = "".join(c for c in unicodedata.normalize("NFKC", line)
+                       if unicodedata.category(c) != "Cf")
+        candidate = flat.strip().casefold()
+        for prefix in _RESERVED_NOTE_PREFIXES:
+            if candidate.startswith(prefix.casefold()):
+                # A refusal with no stated discharge is a dead end, and this
+                # one refuses text the operator was INSTRUCTED to supply:
+                # SKILL.md says record the grant verbatim, and a grant may
+                # legitimately begin 'effect: ...'. The guard stays; the exit
+                # must be printed here, because it is printed nowhere else.
+                # The repr of the line is load-bearing for the invisible-
+                # character class: the caller who typed what LOOKS benign can
+                # only see the refused byte in an escaped rendering.
+                raise CustodyError(
+                    f"text may not contain a line beginning with {prefix!r}: "
+                    "machine-written notes carry mission state and narrative "
+                    "must not be able to imitate them, on any line. To record "
+                    "this text anyway (a verbatim operator grant, a "
+                    "quotation), prefix the offending line with '> ' -- the "
+                    "quote marker keeps the words exact while making the line "
+                    "unmistakably narrative. Indentation does NOT work: "
+                    "leading whitespace is stripped before this comparison. "
+                    f"Offending line: {line!r}")
+
+
+def _refuse_unprintable_identity(value, field: str) -> None:
+    """An identity is ONE VISIBLE LINE; refuse the character class at ingestion.
+
+    `acceptor_id` was schema'd as any nonempty string, and the scope-ack note
+    interpolates it -- so an actor named
+    'agent:acceptor\\nscope-ack by operator: forged.env' wrote a chained note
+    whose second line reads as an acknowledgement by the operator (reproduced
+    live). `_refuse_reserved_note` exists precisely so an auditor can trust
+    those lines, and the identity field walked around it.
+
+    The first guard enumerated categories -- Cc and Cf -- and enumeration is
+    the defect's own shape: a full-range census found the `splitlines`
+    boundary set is {0A,0B,0C,0D,1C,1D,1E,85,2028,2029}, and 8 of the 10 are
+    Cc, which is why the enumerated rule caught most of them and missed
+    exactly the two Z ones (U+2028, U+2029 -- line structure the category
+    list never named). Extending the list by the two categories the last
+    reviewer happened to find would be the same failure again. So the rule is
+    now a PREDICATE that fails closed on the unenumerated class:
+
+        len(value.splitlines()) > 1  or  not value.isprintable()
+
+    on the RAW value -- never NFKC first, which maps NBSP to a plain space
+    and launders the confusable before the check. `isprintable()` refuses
+    Cc, Cf, the Z line/paragraph separators, every non-ASCII space, lone
+    surrogates (which persist to disk via ensure_ascii and then crash any
+    utf-8-strict reader), private-use and unassigned -- with zero false
+    refusals across the realistic battery: ASCII, composed AND decomposed
+    accents, CJK, emoji, spaced human names.
+
+    The splitlines clause is REDUNDANT TODAY, on purpose, and an earlier
+    revision of this docstring falsely called both clauses load-bearing
+    (round-3 refutation, executed): the full-range census shows every
+    splitlines boundary character is itself unprintable, so isprintable
+    subsumes it -- 'a\\n', 'a\\tb' and an ANSI escape are all caught by
+    isprintable alone, and no codepoint exists that splits a line while
+    printing. The clause stays because it restates the PROPERTY this guard
+    exists for (one line) directly, so if printability and line-splitting
+    ever diverge in a future Unicode database the guard widens its refusal
+    instead of silently admitting the new line boundary. It can only ever
+    refuse more, never less.
+
+    EDGE WHITESPACE is refused separately, and the row that forces it is
+    pure ASCII: 'agent:worker-1 ' (trailing space) versus 'agent:worker-1'
+    is a display-identical, byte-distinct pair that defeats the casefolded
+    acceptor != worker self-certification check, and both clauses above
+    accept it. Interior spaces stay legal -- 'John Smith' is an identity;
+    an identity that starts or ends with one is either a paste error or
+    that pair.
+
+    What this guard now CLAIMS: no line structure, no control effects, no
+    Cf-class invisibles, no invisible edge whitespace. It does NOT claim
+    display-uniqueness: invisible-but-printable characters -- CGJ (U+034F),
+    variation selectors, Hangul fillers -- pass every candidate rule at this
+    granularity, because the same category holds the combining acute in
+    'José'. That residual is real, disclosed, and filed (es#167, riding
+    es#150's structured-record direction), exactly as the reserved-note
+    guard already defers homoglyphs. Non-strings and empties are left to
+    their existing failure modes; this guard owns exactly the character
+    class."""
+    if not isinstance(value, str):
+        return
+    bad = sorted({c for c in value if not c.isprintable()})
+    if bad or len(value.splitlines()) > 1:
+        raise CustodyError(
+            f"{field} may not contain control, separator, or invisible "
+            "format characters: an identity is one visible line, "
+            "interpolated into machine-written notes and display surfaces, "
+            "where an embedded newline forges a machine-note line and an "
+            "escape sequence rewrites the terminal. Supply the identity "
+            "without them. "
+            "Offending: " + ", ".join(repr(c) for c in bad)
+            + f" in {value!r}")
+    if value != value.strip():
+        raise CustodyError(
+            f"{field} may not begin or end with whitespace: "
+            f"{value!r} and {value.strip()!r} are display-identical but "
+            "byte-distinct, so an edge space forges a second identity that "
+            "reads as the first -- including past the acceptor/worker "
+            "separation check. Supply the identity without edge whitespace.")
 
 
 def now_utc() -> str:
@@ -63,15 +208,44 @@ def _ascii_case_fold(text: str) -> str:
 
 def _normalize_relpath(path: str) -> str:
     """Spelling differences that cannot denote two different files:
-    separator flavor, repeated separators, a leading './', a trailing '/'.
-    ('..' never appears -- _resolve_artifact_path rejects it at the door.)"""
+    separator flavor, repeated separators, '.' SEGMENTS (leading './',
+    interior '/./', terminal '/.', and iterated mixes of them), a trailing
+    '/'. ('..' never appears in receipted paths -- _resolve_artifact_path
+    rejects it at the door; on the pattern side a '..' segment is demoted to
+    uncompared by `_is_matchable_pattern`.)
+
+    '.' segments ONLY: a trailing dot inside a final segment NAME ('weird.')
+    is a legal filename character everywhere this runs, and NT-only
+    filesystem semantics must not leak into a cross-platform lexical
+    normaliser. The collapse runs to a fixed point because each rule can
+    expose another's pattern ('docs/.//' needs the doubled-separator rule
+    again after the terminal-dot rule fires).
+
+    The terminal '/.' rule earns its place twice over. On the receipt side
+    the resolver treats 'docs/x.txt/.' and 'docs/x.txt' as one path while
+    the lexical normaliser kept them distinct -- a false FLAG, dischargeable,
+    the safe direction. The row that flips the priority is its MIRROR on the
+    pattern side: a scope.out entry carrying one '/.' spelling compiled to a
+    regex no normalized receipt path can ever match, silently disabling a
+    boundary the operator wrote, with `uncompared_scope_entries` not listing
+    it -- silent-inert, the exact class that surface exists to end. A bare
+    '.' (or './', or './.') normalizes to the EMPTY path, which names the
+    workspace itself, not any receiptable artifact -- `_is_matchable_pattern`
+    demotes those to disclosed."""
     norm = path.replace("\\", "/")
-    while "//" in norm:
-        norm = norm.replace("//", "/")
-    while "/./" in norm:
-        norm = norm.replace("/./", "/")
-    while norm.startswith("./"):
-        norm = norm[2:]
+    prev = None
+    while norm != prev:
+        prev = norm
+        while "//" in norm:
+            norm = norm.replace("//", "/")
+        while "/./" in norm:
+            norm = norm.replace("/./", "/")
+        while norm.startswith("./"):
+            norm = norm[2:]
+        if norm.endswith("/."):
+            norm = norm[:-1]
+    if norm == ".":
+        return ""
     return norm.rstrip("/") or norm
 
 
@@ -118,8 +292,511 @@ class AcceptanceRefused(CustodyError):
     pass
 
 
+def _is_path_pattern(entry: str) -> bool:
+    """Is this scope entry a PATH pattern, or prose?
+
+    `scope` has always been free text, and real manifests declare boundaries in
+    English -- the bundled examples carry entries like
+    "monitored-missing reconciliation" and "indexer changes". Treating those as
+    globs would classify every ordinary receipt as out-of-scope and refuse a
+    legitimate PASS on every mission with a populated prose scope: a silent
+    compatibility break dressed as a security check.
+
+    So only entries that LOOK like path patterns take part in the comparison; a
+    prose declaration remains exactly what it always was -- advisory text a
+    human reads.
+
+    Whitespace and commas are the first discriminator, because real
+    declarations read like sentences -- "media acquisition, arr/Plex/NAS
+    operations" contains slashes and is unmistakably prose, and it appeared in
+    a real manifest written during this very change.
+
+    The first version of this predicate stopped there, and required a slash or
+    a wildcard. That silently discarded `scope.out=["secrets.env"]` -- a bare
+    filename, the most natural exclusion an operator can write -- so the
+    comparison ran with an empty exclude list and PASS succeeded after writing
+    the one file the mission was told not to touch.
+
+    The asymmetry argument that justified "anything ambiguous is prose" was
+    reasoned about scope.IN only, where an over-eager pattern matches nothing
+    and wedges an honest close. It does not carry to scope.OUT, where dropping
+    an entry is the FALSE-CLEAN direction: the boundary reads as enforced and
+    compares nothing. Same predicate, opposite error costs.
+
+    The case table this is written against -- the enumeration is the spec:
+
+      docs/**, src/*.py, *.env        pattern (glob)
+      secrets.env, README.md          pattern (bare filename + extension)
+      .env, .gitignore                pattern (dotfile)
+      reconciliation                  prose  (single bare word, no extension)
+      monitored-missing reconc...     prose  (whitespace)
+      media acquisition, arr/Plex     prose  (comma + whitespace)
+      "" (empty)                      prose
+
+    A single bare word with no extension stays prose: `notes` could be a
+    directory or a noun, and nothing in the string decides which. That residue
+    is real and is not silently absorbed -- `uncompared_scope_entries` reports
+    every entry this predicate declines, so an operator sees which of their
+    declarations no machine is checking instead of assuming all of them are."""
+    if not entry or "," in entry:
+        return False
+    if any(c.isspace() for c in entry):
+        # A SPACE ALONE NO LONGER MEANS PROSE. Testing whitespace before the
+        # slash test made every path containing a space invisible:
+        # "My Documents/secrets.env" and "docs/release notes/**" were dropped
+        # from the comparison entirely, so PASS succeeded after writing them.
+        #
+        # A spaced entry is a path only when it both contains a separator and
+        # ENDS like a path -- a wildcard, a trailing slash, or a final segment
+        # with an extension. That keeps real prose out: "TCP/IP tuning" and
+        # "arr/Plex/NAS operations" carry slashes but end in a bare word, and
+        # "What now?" has no separator at all.
+        if "/" not in entry:
+            return False
+        last = entry.rstrip("/").rpartition("/")[2]
+        if entry.endswith("/") or "*" in entry or "?" in entry:
+            return True
+        stem, dot, ext = last.rpartition(".")
+        return bool(stem) and bool(dot) and ext.isalnum()
+    if "/" in entry or "*" in entry or "?" in entry or entry.endswith("\\"):
+        return True
+    name = entry[1:] if entry.startswith(".") else entry
+    stem, dot, ext = name.rpartition(".")
+    if entry.startswith(".") and not dot:
+        return bool(name) and name.isalnum()      # .env, .gitignore
+    return bool(stem) and bool(dot) and ext.isalnum()
+
+
+def _names_a_specific_path(token: str) -> bool:
+    """Does this token name SOMETHING, rather than everything?
+
+    `_is_path_pattern` accepts `*` and `**`, which is right for a scope
+    declaration (an operator may legitimately exclude everything) and
+    catastrophic for a discharge token: `_glob_regex("*")` is `[^/]*$` and
+    `_glob_regex("**")` is `.*$`, so a bare wildcard in an amendment matches
+    every drifted artifact.
+
+    That is not a hypothetical shape. `amend` carries the operator's words
+    VERBATIM, and a multi-part grant is most naturally written as a markdown
+    bullet list -- whose bullets are bare `*` tokens. A genuine, unrelated
+    two-line grant was demonstrated discharging an out-of-scope write to
+    `secrets.env`, with no surface anywhere reporting that the key was `*`.
+
+    So a discharge token must retain at least one literal character after its
+    wildcards and separators are removed."""
+    return bool(token.strip("*?/\\"))
+
+
+def _is_matchable_pattern(entry: str) -> bool:
+    """Can this pattern EVER match a workspace-relative receipt path?
+
+    `_is_path_pattern` decides whether an entry looks like a path. It does not
+    ask whether the compiler can do anything with it, and `custody_gate.
+    _glob_regex` implements only `*`, `**` and `?` -- everything else is
+    `re.escape`d into a literal. So entries that classify as patterns can
+    compile to regexes that match NOTHING, verified against the live compiler:
+
+        !secrets/**     negation is not a syntax this compiler has
+        /etc/passwd     absolute; receipts are workspace-relative
+        ~/.ssh/id_rsa   home-relative, same reason
+        C:/Windows      drive-absolute
+        docs/[abc].md   character classes are escaped literals
+
+    That is WORSE than being called prose, and the difference is disclosure. A
+    prose entry is reported by `uncompared_scope_entries`, so an operator can
+    see their boundary is not machine-checked. An unmatchable PATTERN is
+    reported nowhere: the declaration reads as enforced, compares nothing, and
+    says nothing. Silent-inert instead of disclosed-inert.
+
+    Demoting these to uncompared does not weaken any comparison -- they were
+    already matching nothing -- it only makes the nothing visible. Where a real
+    file could plausibly bear such a name (`[Mm]akefile` is a legal filename),
+    disclosure is still the safe direction: the operator is told, rather than
+    believing in an exclusion that never fires."""
+    norm = (entry or "").replace("\\", "/")
+    if norm.startswith(("/", "~", "!")):
+        return False
+    if re.match(r"^[A-Za-z]:", norm):
+        return False
+    if any(c in norm for c in "{}[]"):
+        return False
+    # A `..` SEGMENT survives normalization -- `_normalize_relpath` collapses
+    # `.` segments and `//` but not `..` -- while every receipted artifact
+    # path is normalized before comparison. So `docs/../secrets/**` compiles
+    # to a regex that can only match the literal spelling
+    # `docs/../secrets/...`, which no normalized path ever produces: it is a
+    # boundary an operator wrote as a traversal, and it binds nothing.
+    #
+    # SEGMENT, not substring: `a..b/**` and `docs/.../x` are legal names whose
+    # dots are inside a segment, and they match normally. A substring test
+    # demotes both -- checked against the case table, where it is the only
+    # difference between the two candidates.
+    segments = _norm_scope_segments(norm)
+    if segments == [""]:
+        # './' (and '.', './.') normalize to the EMPTY path: the workspace
+        # itself, which no receipt path ever spells. 'the whole workspace is
+        # in scope' is a natural thing to DECLARE and an impossible thing to
+        # match against per-artifact paths, so the entry is disclosed as
+        # uncompared -- for scope.in this disables the absence inference
+        # entirely (everything is inside a declared-universal include), which
+        # is both the declared meaning and the safe direction.
+        return False
+    return ".." not in segments
+
+
+def _norm_scope_segments(norm: str) -> list[str]:
+    """Segments of an entry as the comparison will see them, so the matchability
+    question is asked against the same normalization the matcher uses."""
+    from custody_gate import _norm_path
+    return _norm_path(norm).split("/")
+
+
+def _is_compared_entry(entry: str) -> bool:
+    """The single question both the comparison and the disclosure must ask, so
+    they cannot drift apart and report different sets."""
+    return _is_path_pattern(entry) and _is_matchable_pattern(entry)
+
+
+def uncompared_scope_entries(manifest: dict) -> dict:
+    """Scope entries that `_is_path_pattern` declines, per direction.
+
+    An unenforced boundary the reader believes is enforced is this estate's
+    keystone failure. The comparison silently ignoring half a declaration is
+    that failure in miniature, so the ignored half gets a surface."""
+    scope = manifest["scope"]
+    uncompared = {direction: [e for e in scope[direction]
+                              if not _is_compared_entry(e)]
+                  for direction in ("in", "out")}
+    # One prose entry disables the scope.in comparison ENTIRELY -- "outside
+    # scope.in" is an absence inference and is unsound on a partial include
+    # set. Listing only the prose entry let a reader conclude the OTHER entries
+    # were compared. They were not; nothing was.
+    uncompared["in_comparison_disabled"] = bool(uncompared["in"])
+    return uncompared
+
+
+_TOKEN_TRIM = "\"'`,;:()[]{}<>"
+
+def _amendment_names(text: str, rel_path: str) -> bool:
+    """Does this amendment MENTION `rel_path`? A hint for the acceptor.
+
+    This was a gate and is now a hint, which is the honest reading of what a
+    substring test can establish. It says the operator's text mentions a path.
+    It cannot say the operator granted it -- "secrets.env remains forbidden"
+    mentions secrets.env and authorises nothing. Discharge now requires an
+    explicit acceptor acknowledgement (`scope_ack`); this only tells the
+    acceptor WHERE TO LOOK.
+
+    Token-wise, never as a raw substring: a substring test would let an
+    amendment mentioning `data.py` discharge drift on `a.py`, which is the
+    false-ALLOW direction. Operator prose is data here, never a pattern
+    language -- only tokens that already pass `_is_path_pattern` are compiled,
+    and they go through the same `_glob_regex` the scope entries use."""
+    from custody_gate import _glob_regex, _norm_path
+    target = _norm_path(rel_path)
+    for segment in text.replace("\\", "/").splitlines():
+        for raw in segment.split():
+            token = raw.strip(_TOKEN_TRIM).rstrip(".")
+            if not token or not _is_path_pattern(token):
+                continue
+            if not _names_a_specific_path(token):
+                continue      # a bare wildcard names everything: not a name
+            if token.endswith("/"):
+                # "the src/ work was authorized" grants a DIRECTORY, and
+                # operators write it that way. A trailing slash covers what is
+                # under it -- still a scoped grant naming a specific subtree,
+                # not a universal key, which is the property that matters here.
+                prefix = _norm_path(token.rstrip("/"))
+                if prefix and (target == prefix
+                               or target.startswith(prefix + "/")):
+                    return True
+                continue
+            if _glob_regex(_norm_path(token)).match(target):
+                return True
+    return False
+
+
+def _display_path(path: str) -> str:
+    """A path the acceptor can SEE, in a spelling that survives being typed.
+
+    `', '.join(outstanding)` renders `secret.env ` and `secret.env`
+    identically, so matching the ack exactly would be unusable even once it is
+    correct: an acceptor cannot type a spelling the message never shows them.
+    Quoting is applied ONLY to paths carrying whitespace or a literal
+    double-quote, so ordinary paths -- and the `--scope-ack <path>` line the
+    CLI surface is asserted on -- still render bare.
+
+    The double-quote row is the fix's own residue, found on its second
+    round: a filename literally containing quotes (`linked:"foo.txt"`, legal
+    POSIX) printed bare, and bash ate exactly those quotes on the way back,
+    so the token that arrived named a different string and the obligation
+    was unreachable through the printed recipe. JSON-escaping the quote
+    (`"linked:\\"foo.txt\\""`) is the one spelling bash's double-quote
+    context AND CommandLineToArgvW both deliver back byte-exact -- and a
+    verbatim (API) arrival decodes through the parser's JSON candidate, so
+    both channels land on the same path.
+
+    The quoting is JSON, because it is unambiguous about spaces, tabs and
+    quotes; it is deliberately NOT offered as a shell recipe, since cmd,
+    PowerShell and sh disagree and a wrong recipe is worse than none. Paths
+    carrying OTHER shell-special characters ($, backtick, !) still print
+    bare and are still not paste-safe in every shell -- that residue is
+    es#163's, unchanged by this rule."""
+    if any(c.isspace() for c in path) or '"' in path:
+        return json.dumps(path)
+    return path
+
+
+def _acknowledged_paths(scope_ack, violating: set[str]) -> set[str]:
+    """Which violating paths the acceptor's `--scope-ack` values actually name.
+
+    The ack was normalised `_np(p.strip())` while the finding was normalised
+    `_np(p)` -- two different functions on the two sides of one comparison. A
+    path whose real name carries leading or trailing whitespace could therefore
+    not be named by any spelling an acceptor could reach. (Not literally none:
+    the strip runs BEFORE `_normalize_relpath`, so `'secret.env /'` and
+    `'./ secret.env'` survive it and do discharge. Those are incantations
+    produced by an implementation detail, printed in no message, in no receipt
+    and in no document -- an exit nobody can find is not an exit.)
+
+    The naive repair -- strip the finding too -- is refused, and this is the
+    case that refuses it: a name ending in a space is a legal POSIX filename,
+    so equating it with the stripped name creates a NEW collision class, in
+    which acknowledging the ordinary `secret.env` silently retires custody of a
+    different file named `secret.env `. This module has already settled that
+    tie-break (see `_ascii_case_fold`): under-matching leaves an obligation
+    outstanding with the exact path named -- visible, recoverable -- while
+    over-matching silently retires custody of a file nobody is watching.
+
+    So: EXACT FIRST, PER ACK. `_np(raw)` is tried against the violating set,
+    and `_np(raw.strip())` only when the exact form named nothing. A union of
+    the two normalisations is NOT this rule and is wrong on one row: with both
+    `secret.env` and `secret.env ` outstanding, an ack of `'secret.env '`
+    matches exactly here and discharges BOTH under a union. That row looks
+    redundant beside the ack of `'secret.env'`, and it is the only row that
+    separates the two rules.
+
+    Paste tolerance survives for the case it was written for -- an acceptor
+    copying `secrets.env` out of a handoff note with a stray trailing space is
+    still matched -- because the stripped form is tried when the exact one
+    misses. An ack naming nothing at all matches nothing and is inert.
+
+    THE PRINTED RECIPE MUST WORK, so the displayed spelling is also an ack.
+    `_display_path` shows a whitespace-bearing path JSON-quoted --
+    `"safe.txt\\n"` -- and every shell delivers that argument with the outer
+    quotes eaten and the backslash-n as two literal characters. The mangled
+    arrival therefore has TWO READINGS: `_norm_path` folds the backslash to
+    `safe.txt/n` (the Windows-separator tolerance), and the JSON decode
+    restores `safe.txt` + newline. Neither reading is 'exact' -- both are
+    interpretations of keystrokes the shell already rewrote -- and the first
+    shipped rule called the folded reading exact and took it first, so when
+    a genuinely different path `safe.txt/n` was ALSO outstanding, the
+    newline file's own printed recipe silently discharged the slash-twin
+    the acceptor never named (round-3 refutation, executed: a PASS closed
+    with the twin unjudged and the note attributing it to the acceptor).
+    Over-matching silently retires custody of a path nobody is watching --
+    the direction this module's tie-breaks always refuse.
+
+    So: per ack, ALL readings are computed, and the ack discharges only
+    when they agree on ONE unmatched violating path. Two readings naming
+    two distinct outstanding paths is AMBIGUOUS and discharges NOTHING --
+    under-matched, visible, recoverable. The stripped reading stays a
+    fallback tried only when the unstripped readings named nothing (the
+    exact-vs-stripped tie-break already settled below stands: for an
+    unstripped raw the folded and JSON readings agree, so `'secret.env '`
+    still names the spaced twin exactly). Matching runs to a FIXPOINT over
+    the whole ack list: discharging the slash-twin by its own unambiguous
+    spelling removes it from the outstanding set, after which the mangled
+    spelling names only the newline file -- so the full printed recipe
+    discharges both in one accept, in either order. An ack that is not
+    valid JSON when so read simply contributes no reading from that tier."""
+    from custody_gate import _norm_path as _np
+    matched: set[str] = set()
+    consumed: set[int] = set()
+    acks = [raw for raw in (scope_ack or ()) if raw]
+    progress = True
+    while progress:
+        progress = False
+        for i, raw in enumerate(acks):
+            # ONE DISCHARGE PER TYPED ACK, ever: without the consumed set,
+            # an ack of 'secret.env ' would name the spaced twin on one
+            # pass and then its STRIPPED reading would name the bare twin
+            # on the next -- the union rule the exact-vs-stripped tie-break
+            # already refused, resurrected through the fixpoint.
+            if i in consumed:
+                continue
+            outstanding = violating - matched
+            readings = {r for r in (_np(raw), _json_decoded_ack(raw))
+                        if r is not None and r in outstanding}
+            if not readings:
+                stripped = raw.strip()
+                # A whitespace-ONLY ack is not dropped: `"   "` is a legal
+                # filename, and dropping it would recreate this very dead
+                # end for exactly the path least likely to be noticed.
+                if stripped:
+                    readings = {r for r in (_np(stripped),
+                                            _json_decoded_ack(stripped))
+                                if r is not None and r in outstanding}
+            if len(readings) == 1:
+                matched.add(readings.pop())
+                consumed.add(i)
+                progress = True
+            # len > 1: ambiguous -- this raw discharges nothing on this
+            # pass; a later pass retries it once other acks have thinned
+            # the outstanding set
+    return matched
+
+
+def _json_decoded_ack(raw: str) -> str | None:
+    """The JSON reading of an ack normalised like every other candidate, or
+    None when it has none."""
+    from custody_gate import _norm_path as _np
+    decoded = _json_decoded_ack_text(raw)
+    return _np(decoded) if decoded is not None else None
+
+
+def _json_decoded_ack_text(raw: str) -> str | None:
+    """The JSON reading of an ack as TEXT, or None when it has none.
+
+    Quoted verbatim ('"safe.txt\\n"') decodes directly; the bare form
+    ('safe.txt\\n', outer quotes eaten by the shell) decodes after the quotes
+    are restored -- refused when the raw text contains an unescaped '"',
+    because restoring quotes around it would silently truncate at the
+    embedded one."""
+    text = raw
+    if not (len(text) >= 2 and text.startswith('"') and text.endswith('"')):
+        if '"' in text:
+            return None
+        text = f'"{text}"'
+    try:
+        decoded = json.loads(text)
+    except ValueError:
+        return None
+    return decoded if isinstance(decoded, str) else None
+
+
+# Obligation kinds: what an acknowledgement is FOR. A boundary crossing and a
+# multiply-linked disclosure are different judgements -- "I checked the
+# operator authorised this path" versus "I found the other name and checked
+# where it points" -- and one ack used to discharge both at once, so the
+# cheaper judgement silently absorbed the dearer one.
+_KIND_BOUNDARY = "boundary"
+_KIND_LINKED = "linked"
+_LINKED_ACK_PREFIX = "linked:"
+
+
+def _obligation_kind(reason: str) -> str:
+    """Map a finding's reason to the obligation kind an ack must name.
+
+    Unknown reasons map to THEMSELVES, and no token form ever discharges
+    them: a new finding kind added without its ack shape fails CLOSED (the
+    PASS stays refused) instead of failing open through the bare path key --
+    which is also why a per-kind bespoke flag (--link-ack) was rejected: a
+    noun list of flags cannot terminate, and each new kind would ship
+    without its flag and discharge through the path."""
+    if reason in ("matches scope.out", "outside scope.in"):
+        return _KIND_BOUNDARY
+    if reason == _MULTIPLY_LINKED:
+        return _KIND_LINKED
+    return reason
+
+
+def _ack_token(path: str, kind: str) -> str | None:
+    """The --scope-ack spelling that discharges this obligation, display-
+    quoted, or None for a kind no token form can discharge."""
+    if kind == _KIND_BOUNDARY:
+        return _display_path(path)
+    if kind == _KIND_LINKED:
+        return _display_path(_LINKED_ACK_PREFIX + path)
+    return None
+
+
+def _acknowledged_obligations(scope_ack,
+                              obligations: set[tuple[str, str]]
+                              ) -> set[tuple[str, str]]:
+    """Which (path, kind) obligations the acceptor's acks actually discharge.
+
+    A bare ack discharges only BOUNDARY obligations; a link obligation needs
+    the qualified 'linked:PATH' spelling. The qualifier is read only after
+    the raw text failed as a literal boundary path, because 'linked:name' is
+    a creatable filename (NTFS alternate-data-stream syntax) and
+    exact-path-first is the tie-break `_acknowledged_paths` already settled.
+    That same collision makes the RECORD half ('scope-ack by X: linked:p')
+    permanently ambiguous between a qualifier and a literal path -- the
+    record cannot be made unambiguous by token syntax at all; that is
+    es#150's structured {path, kind} field, deliberately not invented here.
+
+    The link ack is CATEGORICAL: it acknowledges that another name exists
+    and the acceptor went and looked, not a particular st_nlink value -- a
+    count change between the finding and the ack creates no new obligation,
+    because the judgement acknowledged ('I found the other names and checked
+    where they point') is about the condition, not the number."""
+    boundary = {p for p, k in obligations if k == _KIND_BOUNDARY}
+    linked = {p for p, k in obligations if k == _KIND_LINKED}
+    matched: set[tuple[str, str]] = set()
+    consumed: set[int] = set()
+    acks = [raw for raw in (scope_ack or ()) if raw]
+    progress = True
+    while progress:
+        progress = False
+        for i, raw in enumerate(acks):
+            if i in consumed:
+                continue
+            # Each typed ack discharges at most ONE obligation EVER (the
+            # consumed set), and the boundary reading wins only while it
+            # still names something new. Without the fallthrough the shadow
+            # case is a dead end no spelling can exit through a shell: the
+            # quoted qualifier ('linked:"foo.txt"') loses its interior
+            # quotes to bash, PowerShell AND CommandLineToArgvW alike, so
+            # every pasted token arrives as the bare 'linked:foo.txt' and
+            # the boundary reading consumed all of them as the same literal
+            # path -- the printed recipe discharged one obligation no matter
+            # how many flags were pasted (measured against real shell argv,
+            # not a preconstructed argument). The SECOND arrival of the same
+            # token therefore means the qualifier. A duplicated BARE path
+            # still widens nothing: the fallthrough only reaches tokens
+            # that parse as qualifiers. The outer FIXPOINT exists for the
+            # ambiguity rule in _acknowledged_paths: an ack whose readings
+            # named two outstanding paths discharges nothing on that pass,
+            # and is retried once other acks have thinned the set -- so the
+            # printed recipe converges in one accept, in either order.
+            b_out = {p for p in boundary
+                     if (p, _KIND_BOUNDARY) not in matched}
+            hit = _acknowledged_paths([raw], b_out)
+            if hit:
+                matched |= {(p, _KIND_BOUNDARY) for p in hit}
+                consumed.add(i)
+                progress = True
+                continue
+            qualified = None
+            if raw.startswith(_LINKED_ACK_PREFIX):
+                qualified = raw[len(_LINKED_ACK_PREFIX):]
+            else:
+                # the displayed token for a whitespace-bearing linked path
+                # is JSON-quoted WHOLE ('"linked:a b.txt"'), so the
+                # qualifier can arrive inside the quoting
+                decoded = _json_decoded_ack_text(raw)
+                if decoded is not None \
+                        and decoded.startswith(_LINKED_ACK_PREFIX):
+                    qualified = decoded[len(_LINKED_ACK_PREFIX):]
+            if qualified is not None:
+                l_out = {p for p in linked
+                         if (p, _KIND_LINKED) not in matched}
+                hit = _acknowledged_paths([qualified], l_out)
+                if hit:
+                    matched |= {(p, _KIND_LINKED) for p in hit}
+                    consumed.add(i)
+                    progress = True
+    return matched
+
+
 class Mission:
     def __init__(self, store: MissionStore, workspace: Path, actor: str) -> None:
+        # Every construction path funnels here (open's load-probe, load, the
+        # CLI's --actor), so this is the single ingestion point for the
+        # acting identity. record_verdict later requires acceptor_id ==
+        # self.actor, so a clean actor also bounds the acceptor.
+        _refuse_unprintable_identity(actor, "actor")
         self.store = store
         self.workspace = Path(workspace)
         self.actor = actor
@@ -139,6 +816,19 @@ class Mission:
               guard_mode: str | None = None,
               actuator_guards: list | None = None) -> "Mission":
         workspace = Path(workspace)
+        # ALL THREE identities validate BEFORE the load-probe, so a refused
+        # open touches nothing on disk. The actor was missing from this
+        # list, and the constructor's guard sat on the wrong side of the
+        # first write: on an empty workspace the load-probe raises
+        # NoActiveMission before any Mission is constructed, so revision 1
+        # was written carrying the rejected `written_by` -- and only THEN
+        # did `cls(...)` refuse, leaving an active draft that wedged every
+        # subsequent open (reproduced live). The constructor still guards
+        # every other construction path; this line guards the one path that
+        # writes first.
+        _refuse_unprintable_identity(actor, "actor")
+        _refuse_unprintable_identity(steward_ref, "steward_ref")
+        _refuse_unprintable_identity(operator_ref, "operator_ref")
         # One ACTIVE mission per workspace, enforced at the door: every other
         # command refuses multiple-active discovery, so open creating that
         # state would be a decoy-disarm wedge (a second armed-or-unarmed
@@ -562,6 +1252,7 @@ class Mission:
         if not isinstance(text, str) or not text.strip():
             raise CustodyError("amendment text required (verbatim operator grant)")
         manifest = json.loads(json.dumps(latest["manifest"]))
+        _refuse_reserved_note(text)
         manifest["authority"]["amendments"].append(
             {"utc": now_utc(), "text": text})
         if actuator_guards is not _UNSET:
@@ -587,12 +1278,7 @@ class Mission:
         self._verify_manifest(latest)
         if latest["status"] not in _OPEN_STATES:
             raise IllegalTransition(f"cannot note: status is {latest['status']!r}")
-        for prefix in _RESERVED_NOTE_PREFIXES:
-            if text.startswith(prefix):
-                raise CustodyError(
-                    f"note text may not begin with {prefix!r}: machine-written "
-                    "notes carry mission state and narrative must not be able "
-                    "to imitate them")
+        _refuse_reserved_note(text)
         new = self._write_next(latest, path, status=latest["status"], note=text)
         return new["revision"]
 
@@ -601,6 +1287,11 @@ class Mission:
         self._verify_manifest(latest)
         if latest["status"] not in _OPEN_STATES:
             raise IllegalTransition(f"cannot set_frontier: status is {latest['status']!r}")
+        # A frontier is not a note, so it forges no note -- but it is displayed
+        # by `status`/`resume` and lives in the same checkpoint JSON, so an
+        # auditor grepping the chain for a machine-note prefix hits it just the
+        # same. Same guard, same reason.
+        _refuse_reserved_note(text)
         new = self._write_next(latest, path, status=latest["status"], frontier=text)
         return new["revision"]
 
@@ -849,12 +1540,259 @@ class Mission:
         new = self._write_next(latest, path, status="verifying", note="verification started")
         return new["revision"]
 
+    def _resolved_relpath(self, rel: str) -> str | None:
+        """Where `rel` actually lands inside the workspace, or None.
+
+        None covers every case where the question has no answer right now: the
+        artifact is gone, the link dangles, the target escapes the workspace,
+        or the filesystem refuses. None never weakens the comparison -- the
+        lexical path is still tested -- so an unresolvable path is simply not
+        an extra chance to catch an escape."""
+        from custody_gate import _norm_path
+        try:
+            target = (self.workspace / rel).resolve()
+            return _norm_path(str(target.relative_to(self.workspace.resolve())))
+        except (OSError, ValueError, RuntimeError):
+            return None
+
+    def _link_count(self, rel: str) -> int | None:
+        """How many names this artifact has on disk, or None if unknowable.
+
+        A hard link is not a link to a path -- it is a second name for one
+        inode -- so `_resolved_relpath`, which follows symlinks, is blind to it.
+        Measured against the shipped code: `docs/alias.txt` hard-linked to
+        `secrets/data.txt`, an effect on the alias, `scope.out=["secrets/**"]`
+        -> `scope_consistency()` returned [] while `secrets/data.txt` read
+        'changed'. Silent, which is the one outcome that is not allowed.
+
+        `st_nlink` is the whole signal, and it is deliberately half an answer:
+        it proves ANOTHER NAME EXISTS and cannot say where. Locating the other
+        names means walking the workspace and grouping by (st_dev, st_ino),
+        because a file does not know its own aliases.
+
+        That walk is NOT taken here, and the reason is a measurement rather
+        than a preference. On this box, per call:
+
+            receipts  ws files   st_nlink probe   full walk   scope_consistency()
+               100      2,302          1.9 ms        63 ms          699 ms
+               400      9,202          9.2 ms       294 ms       10,783 ms
+               800     22,402         24.8 ms       817 ms       41,487 ms
+
+        The probe is 0.06% of the call it lives in, so nothing argues against
+        detecting the condition. The walk's cost scales with the WORKSPACE,
+        which is unrelated to the mission's size: at ~100k files and 20
+        receipts it would be seconds against a `scope_consistency()` of
+        milliseconds. So the cheap half is taken and the expensive half is
+        disclosed (SECURITY.md), not silently skipped.
+
+        `os.stat` follows symlinks deliberately: the question is how many names
+        the BYTES have, and a symlinked spelling of a hard-linked file is the
+        same exposure. A vanished or unreadable artifact answers None -- unknown
+        is never reported as one.
+
+        The probe stats the target of the SAME `_resolve_artifact_path` the
+        writer used -- not the raw spelling, and not `_norm_path`, which
+        case-folds on NT and would name a nonexistent spelling on a
+        case-sensitive directory. The raw stat had two holes, both measured: a
+        forged receipt carrying an absolute `artifact_path` made
+        `self.workspace / rel` IGNORE the workspace entirely (Path join with
+        an absolute right side replaces the base), so acceptance stat-probed
+        arbitrary paths outside the workspace -- an information-probe surface
+        -- and could report a multiply-linked claim about bytes that were
+        never the receipted artifact. `_resolve_artifact_path` refuses both
+        the absolute and the escaping spelling at the door.
+
+        `RuntimeError` is in the caught set because `Path.resolve` raises it
+        on a symlink loop (verified on CPython 3.11: 'RuntimeError: Symlink
+        loop'), and a loop is attacker-influenceable filesystem state -- an
+        uncaught raise here is a crash on the acceptance path, the
+        denial-of-service class `_load_receipt`'s doctrine already forbids.
+        The `S_ISREG` gate exists for the forged `artifact_path` of '.': it
+        resolves to the workspace root, whose `st_nlink >= 2` on POSIX by
+        construction, and reporting the workspace root as MULTIPLY LINKED is
+        a false claim about a directory, not a disclosure about an artifact.
+        Every legitimately receipted artifact is a regular file (the writer
+        only ever `write_bytes`), so None for anything else is 'unknowable',
+        never a suppressed finding."""
+        try:
+            st = os.stat(self._resolve_artifact_path(rel))
+        except (CustodyError, OSError, ValueError, RuntimeError):
+            return None
+        if not stat.S_ISREG(st.st_mode):
+            return None
+        return st.st_nlink
+
+    def scope_consistency(self) -> list[dict]:
+        """Receipted artifacts falling OUTSIDE declared scope.in, or INSIDE
+        scope.out. Read-only; raises nothing.
+
+        This is the one machine job `scope` earns, and the placement is the
+        whole point. Teeth on the ACTION would be prevention, and prevention
+        was never available: the measured contamination was mostly `note` text
+        (which no path predicate ranges over) plus work whose cwd sat in a
+        different repo, where the gate is structurally inert. A mint-time
+        refusal would also have fired during a stretch when the work was
+        operator-AUTHORIZED but the `amend` verb did not yet exist -- a block
+        with no legal discharge, the RECOVER-UNKNOWN wedge already rejected.
+
+        Teeth on the CLAIM is different. It refuses only the assertion that the
+        chain is clean, never the work: every artifact already exists when this
+        runs, so it cannot wedge. And unlike a guard, the actor it constrains
+        cannot disarm it -- `scope` sits inside the manifest tamper-compare and
+        is NOT one of _GUARD_AUTHORITY_KEYS, so it cannot be amended away the
+        way `amend --guard-mode audit` retires a guard.
+
+        An empty scope declares nothing and flags nothing: unbounded, exactly
+        as an empty envelope field means everywhere else."""
+        from custody_gate import _glob_regex, _norm_path
+        latest, _ = self.store.load_latest()
+        scope = latest["manifest"]["scope"]
+        # A TRAILING SLASH is a directory marker, and _norm_path erases it
+        # before compilation -- so scope.out=["secrets/"] compiled to an
+        # exact `secrets` regex and an effect on secrets/a.txt yielded no
+        # finding, undisclosed: the silent false-CLEAN class again (es#155,
+        # found a third time by review on this PR). The semantics are not
+        # invented here: `_amendment_names` already settled that a
+        # trailing-slash token names the directory AND what is under it,
+        # so a scope entry gets the identical reading via the same
+        # compiler's trailing-base form. The base itself stays matched on
+        # purpose -- a FILE named `secrets` under scope.out=["secrets/"]
+        # flags, which is the dischargeable over-match direction, not the
+        # silent one. (The gate's operator-authored `path_globs` keep
+        # their own surface; that half stays with es#155.)
+        def _scope_regex(entry: str):
+            norm = _norm_path(entry)
+            if entry.replace("\\", "/").endswith("/") and norm:
+                return _glob_regex(norm + "/**")
+            return _glob_regex(norm)
+
+        includes = [_scope_regex(g) for g in scope["in"]
+                    if _is_compared_entry(g)]
+        excludes = [_scope_regex(g) for g in scope["out"]
+                    if _is_compared_entry(g)]
+        # "outside scope.in" is an ABSENCE inference: it concludes from a
+        # receipt matching NO include that it is out of bounds. That is only
+        # sound when the whole include set is comparable. With a mixed
+        # declaration -- one path pattern plus a prose entry -- the prose is
+        # dropped, `includes` is non-empty, and every artifact the prose
+        # covered is reported outside a boundary that in fact permits it,
+        # wedging an honest close.
+        #
+        # "matches scope.out" is a PRESENCE inference: one pattern matching is
+        # positive evidence on its own, so a partially-prose exclusion list
+        # still contributes everything it can. Same data, opposite soundness
+        # conditions -- which is why only one side is gated here.
+        if any(not _is_compared_entry(g) for g in scope["in"]):
+            includes = []
+        if not includes and not excludes:
+            return []
+        findings: list[dict] = []
+        for request_id in self._all_receipt_ids_ever():
+            # The CHAINED effect note, not the receipt file, decides which
+            # artifact an id covers. A receipt is a mutable file: a schema-valid
+            # replacement keeping the same request_id but claiming a different
+            # artifact_path would move an out-of-scope write into scope and let
+            # PASS through. The chain is tamper-evident and is already treated
+            # as the sounder authority everywhere else in this module.
+            rel = self._historical_effect_path(request_id)
+            if rel is None:
+                receipt = self._load_receipt(request_id)
+                rel = receipt["artifact_path"] if receipt is not None else None
+            if rel is None:
+                continue
+            target = _norm_path(rel)
+            # An EXCLUSION is also tested against where the path actually
+            # lands. With scope.out=["secrets/**"], a receipt for `docs/alias`
+            # -- a symlink into `secrets/` -- passes a lexical test while the
+            # write went exactly where it was forbidden to go.
+            #
+            # Both representations are checked rather than one replacing the
+            # other, because neither is sound alone: the chained declared path
+            # is tamper-evident but lexical, and a link resolved at acceptance
+            # time is the true target but re-pointable after the fact. Either
+            # matching scope.out is a finding, so defeating the comparison
+            # requires defeating both. Recording the resolved path in the
+            # effect note at WRITE time is the real fix and is a contract
+            # change -- filed as es#147, not smuggled in here.
+            candidates = [target]
+            resolved = self._resolved_relpath(rel)
+            if resolved is not None and resolved != target:
+                candidates.append(resolved)
+            # WHICH representation violated is recorded, not just that one did.
+            # The finding used to carry only the lexical path, so an amendment
+            # naming `docs/**` discharged a write that -- through a link --
+            # landed in `secrets/`. The operator authorised `docs/`; nothing
+            # authorised `secrets/x`; the PASS was accepted anyway.
+            # ALL violating representations, not the first. `next()` recorded
+            # only one, so when two exclusions both fired -- secrets/alias ->
+            # keys/, with scope.out=["secrets/**","keys/**"] -- discharging the
+            # lexical one was enough, and a private key landed in keys/ under
+            # an amendment that named only secrets/alias/. Every path that
+            # crossed a boundary has to be covered.
+            violating = [c for c in candidates
+                         if any(rx.match(c) for rx in excludes)]
+            if violating:
+                findings.append({"artifact_path": rel, "request_id": request_id,
+                                 "violating_paths": violating,
+                                 "reason": "matches scope.out"})
+            # `if`, NOT `elif`. An exclusion match on ONE representation used to
+            # skip the inclusion test for ALL of them, so with
+            # scope.in=["docs/**"], scope.out=["alias/**"] and alias -> src, the
+            # finding named only `alias/x.py` -- the resolved target `src/x.py`
+            # was outside scope.in and was reported NOWHERE. An acceptor acking
+            # the one path the finding named permitted a write whose real
+            # destination the record never mentioned.
+            #
+            # The invariant this restores: EVERY candidate representation that
+            # crosses ANY boundary appears in exactly one finding's
+            # violating_paths. Hence `c not in violating` -- a representation
+            # already reported as forbidden is not reported a second time as
+            # merely unpermitted. Dropping that clause is the rejected
+            # alternative, and it is not equivalent: it emits a second finding
+            # for a path that both matches scope.out and sits outside scope.in
+            # (secrets/c.env under scope.in=["docs/**"]), which the callers that
+            # key findings by artifact_path silently collapse -- turning the
+            # specific reason into the vaguer one. The two rules agree on the
+            # UNION of violating paths in every row, so the acceptance gate
+            # cannot distinguish them; only the disclosure can.
+            if includes:
+                # INCLUSION is tested against every representation too. The
+                # exclusion side checked both while this one stayed lexical, so
+                # `scope.in=["docs/**"]` with `docs/alias -> src/` accepted a
+                # write to `src/a.py`. "Where it was not permitted to go" is
+                # the same defect as "where it was forbidden to go".
+                outside = [c for c in candidates
+                           if c not in violating
+                           and not any(rx.match(c) for rx in includes)]
+                if outside:
+                    findings.append({"artifact_path": rel,
+                                     "request_id": request_id,
+                                     "violating_paths": outside,
+                                     "reason": "outside scope.in"})
+            # Independent of BOTH checks above, and that is the point: the
+            # dangerous hard-link case is the one where the receipted path is
+            # squarely inside scope.in and matches no exclusion, so neither
+            # comparison has anything to say while the bytes it wrote also
+            # answer to a name in scope.out. `violating_paths` carries the
+            # receipted spelling, which is the name an acceptor can actually
+            # acknowledge; the other names are exactly what this cannot supply.
+            links = self._link_count(rel)
+            if links is not None and links > 1:
+                findings.append({"artifact_path": rel, "request_id": request_id,
+                                 "violating_paths": [target],
+                                 "reason": _MULTIPLY_LINKED,
+                                 "link_count": links})
+        findings.sort(key=lambda f: (f["artifact_path"], f["request_id"]))
+        return findings
+
     def record_verdict(self, verdict: str, acceptor_id: str, assurance_tier: str,
-                        reason: str) -> int:
+                        reason: str,
+                        scope_ack: list[str] | None = None) -> int:
         latest, path = self.store.load_latest()
         self._verify_manifest(latest)
         if verdict not in VERDICTS:
             raise CustodyError(f"unknown verdict {verdict!r}")
+        _refuse_reserved_note(reason)
         if verdict in ("PASS", "FAIL"):
             if latest["status"] != "verifying":
                 raise IllegalTransition(
@@ -899,6 +1837,249 @@ class Mission:
                 raise AcceptanceRefused(
                     f"assurance_tier {assurance_tier!r} does not meet "
                     f"required {required_tier!r}")
+            # A PASS asserts the chain is clean. If receipted work fell outside
+            # the declared boundary, that assertion needs an answer.
+            #
+            # PROSE IS NO LONGER THE ANSWER. Three rounds tried to read the
+            # operator's verbatim amendment and decide whether it AUTHORISED a
+            # path: first any-amendment, then name-the-path, then
+            # name-it-without-a-denial-marker. Each closed a real hole and each
+            # opened the next, because the decision procedure was "pattern-match
+            # English" and the input space is unbounded. Measured at the end of
+            # that line: the denial-marker list caught 1 of 14 denial shapes,
+            # and two of the misses -- a denial header with paths listed
+            # beneath it, and a grant and a prohibition in one clause -- cannot
+            # be fixed by adding vocabulary. A substring test establishes that
+            # an amendment MENTIONS a path. It cannot establish that the
+            # operator granted it, and "secrets.env remains forbidden"
+            # discharging a write to secrets.env is what that difference costs.
+            #
+            # So the parse is demoted to a HINT and the judgement moves to a
+            # party who can actually make it: the ACCEPTOR, who is already
+            # required to be distinct from the steward. `scope_ack` is an
+            # explicit, per-path acknowledgement. The record then asserts "an
+            # acceptor judged these covered", which is true and attributable,
+            # instead of "an amendment covers these", which the parser
+            # demonstrably cannot establish.
+            #
+            # es#150 replaces this with a structured `--grants-path` populated
+            # by an affirmative act; a denial never populates it, and all 14
+            # shapes collapse to one case.
+            drifted = self.scope_consistency()
+            if drifted:
+                # NORMALISE the ack the same way the findings were normalised.
+                # `violating_paths` hold `_norm_path` output, and exact string
+                # equality meant the acceptor had to supply a spelling that
+                # appears nowhere except the refusal message: not the path the
+                # operator wrote, not the path in the receipt. "Secrets.ENV",
+                # "./secrets.env" and a trailing space all refused. Worse,
+                # `_norm_path` folds case only on NT, so an ack captured in a
+                # runbook was platform-specific.
+                #
+                # The repair for that stripped the ack and not the finding, so
+                # the two sides ran through DIFFERENT functions and a path whose
+                # real name carries whitespace became unnameable. `_acknowledged_
+                # paths` restores one function on both sides -- exact first, per
+                # ack, with the strip as a named fallback rather than a blanket
+                # rule (see its docstring for the row that refutes both the
+                # strip-everything and the strip-nothing repairs).
+                # Obligations are keyed by (path, KIND), not by path alone. A
+                # boundary crossing and a multiply-linked disclosure demand
+                # different judgements from the acceptor, and under a bare
+                # path key one ack discharged both at once -- acknowledging
+                # the lexical crossing silently absorbed 'I found the other
+                # name and checked where it points', the dearer of the two.
+                obligations: set[tuple[str, str]] = set()
+                for f in drifted:
+                    kind = _obligation_kind(f["reason"])
+                    obligations |= {(p, kind) for p in f["violating_paths"]}
+                acknowledged = _acknowledged_obligations(scope_ack, obligations)
+                outstanding_obl = sorted(obligations - acknowledged)
+                if outstanding_obl:
+                    outstanding = sorted({p for p, _ in outstanding_obl})
+                    mentioned = sorted(
+                        p for p in outstanding
+                        if any(_amendment_names(a.get("text", ""), p)
+                               for a in manifest["authority"]["amendments"]))
+                    hint = (" Amendments MENTION "
+                            + ", ".join(_display_path(p) for p in mentioned)
+                            + " -- read them and decide; a mention is not a "
+                              "grant." if mentioned else "")
+                    # A multiply-linked artifact reaches this message under the
+                    # same "crossed the declared scope" lead as a genuine
+                    # boundary crossing, and it is not the same claim: the
+                    # comparison found ANOTHER NAME, not a violation. Saying so
+                    # here is the whole disclosure -- the finding is otherwise
+                    # indistinguishable from an exclusion match, and an acceptor
+                    # would acknowledge it without ever learning what to look
+                    # at. Its ack is the QUALIFIED spelling, so the cheaper
+                    # boundary judgement can never stand in for it.
+                    linked = sorted({p for p, k in outstanding_obl
+                                     if k == _KIND_LINKED})
+                    link_note = (
+                        " " + ", ".join(_display_path(p) for p in linked) + " "
+                        + ("is" if len(linked) == 1 else "are")
+                        + " MULTIPLY LINKED: the same bytes answer to another "
+                        "name in the filesystem. Resolution follows symlinks, "
+                        "and a hard link is not a link to a path, so this "
+                        "comparison CANNOT see the other name or tell you "
+                        "whether it is inside scope.out -- find it before "
+                        "acknowledging, and acknowledge it as linked:PATH."
+                        if linked else "")
+                    # An ack must be typed to match EXACTLY, so a path whose
+                    # whitespace the message hides is a path the acceptor
+                    # cannot supply. Quoting is per path and only where it
+                    # carries information, so the ordinary case -- and the
+                    # `--scope-ack secrets.env` line callers assert on -- is
+                    # unchanged.
+                    # TOKEN COLLISION: a receipted file literally named
+                    # 'linked:<p>' (legal everywhere, NTFS ADS syntax aside)
+                    # that crossed the boundary shares its ack spelling with
+                    # the link obligation on <p> -- and exact-path-first
+                    # consumes every bare 'linked:<p>' as the literal path,
+                    # so the printed recipe would name the same token twice
+                    # and discharge only one obligation no matter how often
+                    # it is repeated: a refusal whose printed exit does not
+                    # work, the dead-end class this PR has now paid for three
+                    # times. The parser already reads 'linked:"<p>"' as a
+                    # qualifier (the JSON spelling misses the boundary set,
+                    # then decodes inside the qualifier branch), so the
+                    # message prints THAT spelling exactly when the bare one
+                    # is shadowed. Collision is tested against ALL boundary
+                    # obligations, not just outstanding ones: a same-call ack
+                    # of the literal path leaves it in the parse set, still
+                    # shadowing.
+                    boundary_all = {p for p, k in obligations
+                                    if k == _KIND_BOUNDARY}
+
+                    def _shown_token(p: str, k: str) -> str | None:
+                        if (k == _KIND_LINKED
+                                and _LINKED_ACK_PREFIX + p in boundary_all):
+                            return _LINKED_ACK_PREFIX + json.dumps(p)
+                        return _ack_token(p, k)
+
+                    rows = [(p, k, _shown_token(p, k))
+                            for p, k in outstanding_obl]
+                    tokens = [t for _, _, t in rows if t is not None]
+                    unackable = [(p, k) for p, k, t in rows if t is None]
+                    unackable_note = (
+                        " No acknowledgement form exists for: "
+                        + ", ".join(f"{_display_path(p)} ({k})"
+                                    for p, k in unackable)
+                        + " -- this finding kind fails closed; record FAIL or "
+                        "INCONCLUSIVE." if unackable else "")
+                    # the quoting note fires only when quoting actually
+                    # changed a token's spelling -- the linked: qualifier
+                    # alone is not quoting
+                    quoted = any(
+                        t is not None and t != (
+                            p if k == _KIND_BOUNDARY
+                            else _LINKED_ACK_PREFIX + p)
+                        for p, k, t in rows)
+                    # the note must not claim a REASON for the quoting it
+                    # cannot know: shadow disambiguation quotes a path that
+                    # carries no whitespace at all, and telling the acceptor
+                    # to look for whitespace there is a false instruction
+                    # (round-3 refutation, executed)
+                    ws_note = (
+                        " Quoted spellings are JSON, shown to make the "
+                        "exact bytes unambiguous: the quoting marks "
+                        "whitespace or quote characters that are part of "
+                        "the NAME, or separates a linked: acknowledgement "
+                        "from a file literally named with that prefix. "
+                        "Supply quoted tokens to --scope-ack exactly as "
+                        "shown -- the quoted spelling is itself accepted, "
+                        "with or without its outer quotes."
+                        if quoted else "")
+                    raise AcceptanceRefused(
+                        f"{len(outstanding_obl)} finding(s) crossed the "
+                        f"declared scope and are not acknowledged: "
+                        f"{', '.join(tokens)}.{hint}{link_note}{ws_note}"
+                        f"{unackable_note} "
+                        "Re-record the "
+                        "verdict acknowledging each finding you have judged "
+                        "covered -- CLI: `accept ... "
+                        + " ".join(f"--scope-ack {t}" for t in tokens)
+                        + "` -- or accept with FAIL/INCONCLUSIVE. A PASS would "
+                        "assert a boundary the record contradicts.")
+                # The acknowledgement is a first-class chain fact, not a
+                # side effect: it names who judged what, so an auditor can see
+                # that the boundary was crossed AND that a distinct acceptor
+                # took responsibility for it.
+                # Only obligations that were ACTUALLY outstanding are
+                # recorded. An ack naming something that was never a finding
+                # used to be written verbatim into the permanent note -- inert
+                # for the gate, but it pollutes the one record that says what
+                # the acceptor judged, which is the record's entire purpose.
+                # `_acknowledged_obligations` only ever returns obligations
+                # that WERE found, so the intersection that used to filter
+                # this list now lives at the point of matching instead of
+                # here. A linked discharge is recorded in its qualified
+                # spelling -- which a file named 'linked:...' makes
+                # permanently ambiguous as a RECORD; that ambiguity cannot be
+                # cured by token syntax and belongs to es#150's structured
+                # {path, kind} field.
+                covered = sorted(_ack_token(p, k) or p
+                                 for p, k in acknowledged)
+                scope_note = (f"scope-ack by {acceptor_id}: "
+                              f"{', '.join(covered)}")
+                acked = self._write_next(latest, path,
+                                          status=latest["status"],
+                                          note=scope_note)
+                latest, path = self.store.load_latest()
+                # A write is a window. This one was inserted ahead of a
+                # `_write_next(status="completed")` that predates it and
+                # validates nothing, so the status checked at entry is stale by
+                # the time it is used. Measured against the shipped code, both
+                # shapes ended the same way:
+                #   racer cancel() -> FINAL status 'completed', notes reading
+                #     'cancelled: operator pulled the plug', 'PASS: looks fine'
+                #   racer FAIL     -> FINAL status 'completed' while
+                #     unresolved_verdicts still held 'FAIL:no good'
+                # A cancelled mission and a failed mission both closed PASSED.
+                #
+                # Re-validating `status` covers the DRIFT set completely:
+                # every verb that can change it (record_effect, reconcile,
+                # acknowledge_receipt_loss, resume, FAIL, cancel) also moves
+                # status off 'verifying' -- scope is immutable under
+                # _verify_manifest, and receipt_ids cannot grow outside
+                # _EFFECT_STATES or 'reopened'. But an earlier revision of
+                # this comment called status the COMPLETE discriminator, and
+                # that was refuted by a reproduced chain: `amend_authority`
+                # leaves status 'verifying' while changing the AUTHORITY the
+                # PASS asserts against -- scope-ack, then 'authority amended:
+                # operator now also requires B', then a completed PASS the
+                # acceptor recorded against the old manifest. Unchanged drift
+                # does not make an authority change benign, so the reloaded
+                # manifest must BE the manifest that was evaluated. A benign
+                # concurrent `note` still passes (notes live in state, not
+                # the manifest) -- that row stays pinned, so tightening this
+                # to exact-checkpoint identity still has to argue with a red
+                # suite.
+                #
+                # BEFORE _store_verdict: refusing after it would strand an
+                # orphan verdicts/<rev>-PASS.json describing a PASS the chain
+                # never recorded.
+                if latest["status"] != "verifying":
+                    raise IllegalTransition(
+                        f"cannot record PASS: the mission moved to "
+                        f"{latest['status']!r} while this verdict was being "
+                        f"recorded (the scope acknowledgement landed at "
+                        f"revision {acked['revision']} and stands); re-read the "
+                        "mission and record the verdict against its current "
+                        "state")
+                if latest["manifest"] != manifest:
+                    raise IllegalTransition(
+                        "cannot record PASS: the mission's manifest changed "
+                        "while this verdict was being recorded -- the "
+                        "acceptance was evaluated against authority the "
+                        "record no longer carries (the scope acknowledgement "
+                        f"landed at revision {acked['revision']} and stands); "
+                        "re-read the mission, evaluate the amended "
+                        "authority, and record the verdict against its "
+                        "current state")
+                new_revision = latest["revision"] + 1
+                verdict_record["revision"] = new_revision
             self._store_verdict(new_revision, verdict, verdict_record)
             self._write_next(latest, path, status="completed", note=f"PASS: {reason}")
         elif verdict == "FAIL":
@@ -944,6 +2125,7 @@ class Mission:
         self._verify_manifest(latest)
         if latest["status"] not in ("draft", "active", "reopened", "verifying"):
             raise IllegalTransition(f"cannot cancel: status is {latest['status']!r}")
+        _refuse_reserved_note(reason)
         new = self._write_next(latest, path, status="cancelled", note=f"cancelled: {reason}")
         return new["revision"]
 

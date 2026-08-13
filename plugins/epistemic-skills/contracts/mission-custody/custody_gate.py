@@ -38,7 +38,18 @@ def _glob_regex(glob: str) -> "re.Pattern[str]":
     more segments; a trailing '/**' also matches the base path itself),
     '*'/'?' stay in-segment. Paths are normalized ('\\' -> '/', no './', no
     trailing '/') before match; on NT both sides fold A-Z only
-    (_ascii_case_fold -- never str.casefold)."""
+    (_ascii_case_fold -- never str.casefold).
+
+    Anchored with \\Z, never '$': '$' also matches just before a TRAILING
+    NEWLINE, so the glob 'safe.txt' matched the distinct file 'safe.txt\\n'
+    -- a false CLEAN on the scope.in side, where a path one byte outside the
+    declaration read as inside it. re.DOTALL stays: '*' and '**' must still
+    span a newline INSIDE a name; only the one-character terminal tolerance
+    dies. (re.fullmatch at every call site was measured observably identical
+    in every grid cell -- it buys nothing while moving the guarantee from one
+    compiler to four call sites.) The same '$' tolerance survives verbatim in
+    operator-authored `command_regexes`, whose semantics belong to the
+    author, not this compiler -- disclosed in SECURITY.md."""
     trailing_base = glob.endswith("/**")
     if trailing_base:
         glob = glob[:-3]
@@ -63,7 +74,7 @@ def _glob_regex(glob: str) -> "re.Pattern[str]":
             i += 1
     if trailing_base:
         out.append("(?:/.*)?")
-    return re.compile("".join(out) + "$", re.DOTALL)
+    return re.compile("".join(out) + r"\Z", re.DOTALL)
 
 
 def _fold(text: str) -> str:

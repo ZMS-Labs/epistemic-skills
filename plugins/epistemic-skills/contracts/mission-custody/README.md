@@ -18,6 +18,30 @@ epoch with a documented migration. Acceptance tiers are closed:
 `operator-accepted`, `declared-role-separation` — no `externally-proven` tier
 exists until evidence could support one.
 
+## ENFORCEMENT STATUS -- what actually refuses, and what only informs
+
+Every field below is either a CONTROL (a machine evaluates it and refuses) or a
+DECLARATION (a human reads it; the record preserves it for later comparison).
+Both are legitimate. "Unenforced" is not a defect. The defects are: a field
+whose class you must INFER, a declaration nobody is ever SHOWN, and a
+declaration nothing ever COMPARES.
+
+| field | who reads it | what happens on violation |
+|---|---|---|
+| `authority.actuator_guards` + `guard_mode` | `custody_gate.evaluate()` at the PreToolUse hook | **CONTROL.** enforce mode blocks the tool call (exit 2) naming the rule; audit mode logs to `guard-log.jsonl` and allows |
+| `authority.instruction` / `.amendments` | steward, acceptor, auditor | **DECLARATION.** Append-only and inside the tamper-compare. Nothing refuses; a guard change without a new amendment IS detected as tampering |
+| `scope.in` / `scope.out` | steward (shown by `status --brief` and `resume`); path-pattern entries compared against the receipt set at acceptance | **DECLARATION at run time, COMPARED at acceptance.** No runtime gate consumes it -- it is a top-level sibling of `authority` and the gate is only ever handed `authority`. At acceptance a crossing refuses PASS until the acceptor acknowledges each finding BY KIND (`accept --scope-ack <path>` for a boundary crossing, `--scope-ack linked:<path>` for a MULTIPLY LINKED disclosure -- different judgements, neither spelling discharges the other); an amendment mentioning a path is a HINT, never a discharge. Prose entries cannot be compared and are reported as uncompared -- a scope.in mixing prose with patterns disables the include comparison entirely and says so. Immutable, so it cannot be retro-fitted to match the drift |
+| `authority.protected_state` | steward | **DECLARATION.** Nothing refuses |
+| `stop_rules.hold_if` / `stop_if` / `escalate_if` | steward, at the moment the condition arises | **DECLARATION.** Nothing refuses. These have demonstrably changed outcomes anyway -- because each names a MOMENT a steward recognises, not a category |
+| `authority.acceptable_costs` | steward, acceptor | **DECLARATION.** Nothing refuses |
+| `acceptance.required_tier` | `record_verdict` | **CONTROL.** A PASS below the required tier, or self-certification, is refused |
+| receipts / `prev_checkpoint_sha256` | `resume`, `load_latest` | **CONTROL.** Drift and chain breaks are reported; `load_latest` refuses a broken chain |
+
+An **empty** declaration is UNBOUNDED, not safely defaulted. Validation accepts
+`[]` forever (`all()` over an empty list is True), so `status --brief` reports
+which envelope fields are unset rather than leaving silence to imply
+boundedness.
+
 ## Harness bindings
 
 - Skill: `manifest`

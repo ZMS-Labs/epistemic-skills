@@ -301,10 +301,35 @@ def test_success_output_confirms_the_write() -> None:
         r = run("status", "--workspace", str(ws), "--actor", "agent:worker",
                  "--brief")
         st = json.loads(r.stdout)
+        # Shape deliberately widened: the envelope previously had NO read
+        # surface anywhere -- _brief omitted it and resume printed no manifest
+        # content -- so every "the steward should read scope/stop_rules"
+        # argument was about text nothing ever displayed. Updated as an
+        # intended change, not patched to chase a red.
         check("status-brief-shape",
               set(st) == {"mission_id", "status", "revision", "amendments_count",
                           "frontier", "unresolved_verdicts", "notes_count",
-                          "receipt_ids_count", "written_utc", "written_by"})
+                          "receipt_ids_count", "written_utc", "written_by",
+                          "checkpoints_since_last_amendment",
+                          "envelope_advisory", "envelope_unset"})
+        # acceptable_costs belongs here too: the ENFORCEMENT STATUS table names
+        # it a declaration read by the steward AND the acceptor, so omitting it
+        # let a resumed steward see the advisory header and every other field
+        # while still missing the mission's cost boundary.
+        # permissions belongs here for the same reason acceptable_costs does:
+        # the manifest skill treats it as part of the envelope the operator
+        # confirms, so a steward reading the newly-advertised envelope would
+        # otherwise still miss the mission's allowed-action boundary.
+        check("status-brief-envelope-keys",
+              set(st["envelope_advisory"]) == {
+                  "scope_in", "scope_out", "permissions", "protected_state",
+                  "hold_if", "stop_if", "escalate_if", "acceptable_costs"})
+        # this fixture opens with no envelope flags at all, so every field is
+        # unset -- silence must not be allowed to imply boundedness
+        check("status-brief-names-unset-envelope-fields",
+              set(st["envelope_unset"]) == set(st["envelope_advisory"]))
+        check("status-brief-amendment-latency-none-when-never-amended",
+              st["checkpoints_since_last_amendment"] is None)
         check("status-brief-revision", st["revision"] == 5)
 
         # clean resume: stdout stays empty by contract; the summary (with the
@@ -640,7 +665,42 @@ def test_text_and_text_file_are_mutually_exclusive() -> None:
                   "--actor", "agent:worker").returncode == 2)
 
 
+def test_scope_ack_has_a_cli_door() -> None:
+    """A gate with no door is not a gate, it is a wedge.
+
+    `scope_ack` shipped as a Python parameter only: `accept` had no
+    --scope-ack and never passed one, so through the ONLY supported surface a
+    legitimate, operator-granted piece of drift was permanently un-PASSable --
+    and the refusal message named a remedy that did not exist. Writing a
+    control without installing it, in the refusal text of the control itself."""
+    with tempfile.TemporaryDirectory() as td:
+        ws = Path(td)
+        run("open", "--mission-id", "m-door", "--instruction", "w",
+            "--operator", "op", "--steward", "agent:worker",
+            "--actor", "agent:worker", "--scope-out", "secrets.env",
+            "--workspace", str(ws))
+        run("approve", "--actor", "agent:worker", "--workspace", str(ws))
+        run("effect", "--path", "secrets.env", "--content", "TOKEN=x",
+            "--request-id", "r1", "--actor", "agent:worker",
+            "--workspace", str(ws))
+        run("verify", "--actor", "agent:worker", "--workspace", str(ws))
+
+        accept = ["accept", "--verdict", "PASS", "--actor", "agent:acceptor",
+                  "--acceptor", "agent:acceptor",
+                  "--tier", "declared-role-separation", "--reason", "done",
+                  "--workspace", str(ws)]
+        refused = run(*accept)
+        check("cli-accept-refuses-unacknowledged-drift", refused.returncode == 2)
+        # the refusal must name the flag an acceptor can actually type
+        check("cli-refusal-names-the-real-flag",
+              "--scope-ack secrets.env" in (refused.stdout + refused.stderr))
+
+        ok = run(*accept, "--scope-ack", "secrets.env")
+        check("cli-scope-ack-discharges", ok.returncode == 0)
+
+
 TESTS = [
+    test_scope_ack_has_a_cli_door,
     test_open_approve_effect_status_roundtrip,
     test_resume_detects_drift_exit_3,
     test_accept_self_cert_refused_exit_2,
@@ -670,6 +730,7 @@ def main() -> int:
         fn()
     print(f"\n{len(FAILURES)} failures")
     return 1 if FAILURES else 0
+
 
 
 if __name__ == "__main__":

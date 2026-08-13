@@ -30,6 +30,66 @@
   scope; this entry names the asymmetry so it is a known property rather than
   a rediscovery.
 
+## Scope comparison: hard links are DETECTED, never RESOLVED
+
+`scope_consistency()` compares two spellings of each receipted artifact: the
+path recorded in the chain, and where that path resolves. Resolution follows
+symlinks. **A hard link is not a link to a path — it is a second name for one
+inode — and `realpath` cannot see it.** Measured: `docs/alias.txt` hard-linked
+to `secrets/data.txt`, an effect on the alias, `scope.out=["secrets/**"]` — the
+comparison returned clean while `secrets/data.txt` held the new bytes.
+
+What the contract now does is prove the *condition*: a receipted artifact whose
+`st_nlink > 1` is reported as `multiply linked -- other names are not compared`,
+and a PASS is refused until an acceptor acknowledges it. What it does **not**
+do is find the other name, so it cannot tell you whether that name sits inside
+`scope.out`. A file does not know its own aliases; locating them means walking
+the workspace and grouping by `(st_dev, st_ino)`.
+
+That walk is deliberately not taken, on a measurement rather than a preference.
+Per call on the reference box:
+
+| receipts | workspace files | `st_nlink` probe | full walk | `scope_consistency()` |
+|---|---|---|---|---|
+| 100 | 2,302 | 1.9 ms | 63 ms | 699 ms |
+| 400 | 9,202 | 9.2 ms | 294 ms | 10,783 ms |
+| 800 | 22,402 | 24.8 ms | 817 ms | 41,487 ms |
+
+The probe costs 0.06 % of the call it lives in, so nothing argues against
+detection. The walk's cost scales with the **workspace**, which is unrelated to
+the mission's size: at ~100k files and 20 receipts it is seconds against a
+`scope_consistency()` of milliseconds. Precise resolution is therefore a
+contract change with its own cost profile, not something to smuggle into the
+acceptance path — the same call es#147 made for recording the resolved path at
+write time.
+
+**Operator consequence:** when acceptance reports MULTIPLY LINKED, the other
+name has not been checked against any boundary. Find it (`fsutil hardlink list`
+on NTFS, `find -samefile` on POSIX) before acknowledging, and acknowledge it
+in the QUALIFIED spelling — `accept … --scope-ack linked:<path>` — never the
+bare path: a boundary crossing and a link disclosure are different
+judgements, and the bare spelling discharges only the former. An
+acknowledgement here records that a human looked, which is the only thing
+that is true.
+
+## Glob anchoring: `\Z` in the compiler, `$` residue in operator regexes
+
+Every glob this contract compiles (`scope.in`/`scope.out` comparison, guard
+`path_globs`, amendment discharge tokens) is anchored with `\Z`, never `$`:
+`$` also matches just before a trailing newline, so the glob `safe.txt`
+matched the distinct file `safe.txt\n` — a path one byte outside a
+declaration reading as inside it.
+
+`command_regexes` are the residue: they are **operator-authored Python
+regexes**, applied verbatim with `re.search`. A rule author who writes a
+trailing `$` gets Python's semantics, including the one-newline tolerance —
+rewriting an author's pattern would trade a documented seam for a silent
+divergence between what the author wrote and what runs. If a single trailing
+newline matters to a command guard, write `\Z` in the rule. This tolerance is
+disclosed here rather than patched because the pattern language belongs to
+the author; the globs are this contract's own language, so their compiler is
+where the guarantee lives.
+
 ## Stage-C hook: fail-open and guard-tamper residue
 
 The PreToolUse custody hook is an enforcement layer over convention, not a

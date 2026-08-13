@@ -127,6 +127,28 @@ def test_glob_overmatch_still_held() -> None:
           evaluate(auth("enforce", guards), call)["matched"])
 
 
+def test_glob_anchor_is_Z_not_dollar() -> None:
+    """'$' matches just before a trailing newline, so the glob 'safe.txt'
+    matched the distinct file 'safe.txt\\n' -- one byte outside the
+    declaration reading as inside it. The seven suites were provably blind
+    to the anchor (they passed byte-identically either way), so this change
+    brings its own pins. DOTALL stays: wildcards must still span a newline
+    INSIDE a name; only the terminal one-character tolerance dies."""
+    from custody_gate import _glob_regex
+    check("glob-anchor-literal-refuses-trailing-newline",
+          _glob_regex("safe.txt").match("safe.txt\n") is None)
+    check("glob-anchor-star-refuses-trailing-newline",
+          _glob_regex("docs/*.txt").match("docs/a.txt\n") is None)
+    check("glob-anchor-doublestar-base-refuses-trailing-newline",
+          _glob_regex("secrets/**").match("secrets\n") is None)
+    check("glob-anchor-exact-still-matches",
+          _glob_regex("safe.txt").match("safe.txt") is not None)
+    check("glob-star-still-spans-interior-newline",
+          _glob_regex("docs/*.txt").match("docs/a\nb.txt") is not None)
+    check("glob-doublestar-still-spans-interior-newline",
+          _glob_regex("secrets/**").match("secrets/a\nb/c") is not None)
+
+
 def test_mcp_tool_input_serialized_match() -> None:
     guards = [{"name": "arr-mcp", "tool_names": ["mcp__sonarr__post"],
                "command_regexes": ["7878"], "path_globs": []}]
