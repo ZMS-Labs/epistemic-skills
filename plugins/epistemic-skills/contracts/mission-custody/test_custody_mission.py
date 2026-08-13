@@ -1427,6 +1427,43 @@ def test_disabled_scope_in_comparison_is_disclosed_as_such(
           .get("in_comparison_disabled") is False)
 
 
+def test_unmatchable_patterns_are_disclosed_not_silently_inert(
+        workspace: Path) -> None:
+    """A pattern that can never match must be REPORTED, not silently dropped.
+
+    `_is_path_pattern` asks whether an entry looks like a path. It does not ask
+    whether the compiler can use it, and `_glob_regex` implements only
+    `* ** ?` -- everything else becomes an escaped literal. Verified against the
+    live compiler: `!secrets/**`, `/etc/passwd`, `~/.ssh/id_rsa` and
+    `C:/Windows` all classify as patterns and match NOTHING.
+
+    That is worse than being called prose, and the difference is disclosure: a
+    prose entry appears in `uncompared_scope_entries`, so the operator learns
+    their boundary is unchecked. An unmatchable pattern appeared nowhere -- the
+    declaration read as enforced, compared nothing, and said nothing.
+
+    Demoting them weakens no comparison; they matched nothing already. It only
+    makes the nothing visible."""
+    from custody_mission import uncompared_scope_entries
+    m = open_mission(workspace, "m-inert", "Inert excludes.",
+                     scope_out=["!secrets/**", "/etc/passwd", "docs/**"])
+    latest, _ = m.store.load_latest()
+    report = uncompared_scope_entries(latest["manifest"])
+    check("unmatchable-negation-disclosed", "!secrets/**" in report["out"])
+    check("unmatchable-absolute-disclosed", "/etc/passwd" in report["out"])
+    check("real-glob-still-compared", "docs/**" not in report["out"])
+
+    # The comparison and the disclosure ask ONE question, so they cannot drift.
+    # The unmatchable excludes fire on nothing (they always did); the real glob
+    # still fires. Writing to the excluded path must still be caught.
+    m.approve()
+    m.record_effect("notes/ok.md", "not excluded by anything", "in-1")
+    check("unmatchable-excludes-flag-nothing", m.scope_consistency() == [])
+    m.record_effect("docs/inside.md", "matches the real exclude", "in-2")
+    check("real-exclude-still-fires",
+          [f["artifact_path"] for f in m.scope_consistency()] == ["docs/inside.md"])
+
+
 def test_every_caller_text_surface_refuses_a_forged_note_line(
         workspace: Path) -> None:
     """All five surfaces that embed caller text, not just the two with tests.
@@ -1841,6 +1878,7 @@ TESTS = [
     test_scope_ack_is_normalised_like_the_findings,
     test_scope_ack_note_cannot_be_forged_by_narrative,
     test_disabled_scope_in_comparison_is_disclosed_as_such,
+    test_unmatchable_patterns_are_disclosed_not_silently_inert,
     test_every_caller_text_surface_refuses_a_forged_note_line,
     test_invisible_characters_cannot_disguise_a_forged_note_line,
     test_scope_ack_note_records_only_outstanding_paths,

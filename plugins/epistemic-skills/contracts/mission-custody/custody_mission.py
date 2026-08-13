@@ -257,6 +257,46 @@ def _names_a_specific_path(token: str) -> bool:
     return bool(token.strip("*?/\\"))
 
 
+def _is_matchable_pattern(entry: str) -> bool:
+    """Can this pattern EVER match a workspace-relative receipt path?
+
+    `_is_path_pattern` decides whether an entry looks like a path. It does not
+    ask whether the compiler can do anything with it, and `custody_gate.
+    _glob_regex` implements only `*`, `**` and `?` -- everything else is
+    `re.escape`d into a literal. So entries that classify as patterns can
+    compile to regexes that match NOTHING, verified against the live compiler:
+
+        !secrets/**     negation is not a syntax this compiler has
+        /etc/passwd     absolute; receipts are workspace-relative
+        ~/.ssh/id_rsa   home-relative, same reason
+        C:/Windows      drive-absolute
+        docs/[abc].md   character classes are escaped literals
+
+    That is WORSE than being called prose, and the difference is disclosure. A
+    prose entry is reported by `uncompared_scope_entries`, so an operator can
+    see their boundary is not machine-checked. An unmatchable PATTERN is
+    reported nowhere: the declaration reads as enforced, compares nothing, and
+    says nothing. Silent-inert instead of disclosed-inert.
+
+    Demoting these to uncompared does not weaken any comparison -- they were
+    already matching nothing -- it only makes the nothing visible. Where a real
+    file could plausibly bear such a name (`[Mm]akefile` is a legal filename),
+    disclosure is still the safe direction: the operator is told, rather than
+    believing in an exclusion that never fires."""
+    norm = (entry or "").replace("\\", "/")
+    if norm.startswith(("/", "~", "!")):
+        return False
+    if re.match(r"^[A-Za-z]:", norm):
+        return False
+    return not any(c in norm for c in "{}[]")
+
+
+def _is_compared_entry(entry: str) -> bool:
+    """The single question both the comparison and the disclosure must ask, so
+    they cannot drift apart and report different sets."""
+    return _is_path_pattern(entry) and _is_matchable_pattern(entry)
+
+
 def uncompared_scope_entries(manifest: dict) -> dict:
     """Scope entries that `_is_path_pattern` declines, per direction.
 
@@ -265,7 +305,7 @@ def uncompared_scope_entries(manifest: dict) -> dict:
     that failure in miniature, so the ignored half gets a surface."""
     scope = manifest["scope"]
     uncompared = {direction: [e for e in scope[direction]
-                              if not _is_path_pattern(e)]
+                              if not _is_compared_entry(e)]
                   for direction in ("in", "out")}
     # One prose entry disables the scope.in comparison ENTIRELY -- "outside
     # scope.in" is an absence inference and is unsound on a partial include
@@ -1089,9 +1129,9 @@ class Mission:
         latest, _ = self.store.load_latest()
         scope = latest["manifest"]["scope"]
         includes = [_glob_regex(_norm_path(g)) for g in scope["in"]
-                    if _is_path_pattern(g)]
+                    if _is_compared_entry(g)]
         excludes = [_glob_regex(_norm_path(g)) for g in scope["out"]
-                    if _is_path_pattern(g)]
+                    if _is_compared_entry(g)]
         # "outside scope.in" is an ABSENCE inference: it concludes from a
         # receipt matching NO include that it is out of bounds. That is only
         # sound when the whole include set is comparable. With a mixed
@@ -1104,7 +1144,7 @@ class Mission:
         # positive evidence on its own, so a partially-prose exclusion list
         # still contributes everything it can. Same data, opposite soundness
         # conditions -- which is why only one side is gated here.
-        if any(not _is_path_pattern(g) for g in scope["in"]):
+        if any(not _is_compared_entry(g) for g in scope["in"]):
             includes = []
         if not includes and not excludes:
             return []
