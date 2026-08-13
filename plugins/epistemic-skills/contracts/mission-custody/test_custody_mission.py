@@ -1774,6 +1774,91 @@ def test_a_denial_is_not_a_grant(workspace: Path) -> None:
               "crossed the declared scope" in str(exc))
 
 
+def test_whitespace_bearing_path_can_be_acknowledged(workspace: Path) -> None:
+    """A finding on a name that really ends in a space had no operator exit.
+
+    The ack was `_np(p.strip())`, the finding was `_np(p)`: two different
+    functions on the two sides of one comparison. Measured against the shipped
+    code, a receipted `'secret.env '` refused every ack an acceptor could
+    reach -- `'secret.env '`, `'secret.env'`, `'  secret.env  '`,
+    `'./secret.env '`. (The strip runs before `_normalize_relpath`, so
+    `'secret.env /'` did discharge it; an exit produced by an implementation
+    detail and printed nowhere is not an exit.)
+
+    The fix is NOT to strip the finding too: a name ending in a space is a
+    legal POSIX filename, and equating it with the stripped name would let an
+    ack for `secret.env` silently retire custody of `secret.env `."""
+    from custody_store import MissionStore
+    m = open_mission(workspace, "m-ws", "Whitespace.", scope_in=["docs/**"])
+    m.approve()
+    m.record_effect("secret.env ", "leak", "ws-1")
+    m.begin_verification()
+    violating = {p for f in m.scope_consistency() for p in f["violating_paths"]}
+    check("whitespace-finding-keeps-the-real-name", "secret.env " in violating)
+
+    acceptor = Mission(MissionStore(m.store.mission_dir), workspace,
+                       actor="agent:acceptor")
+    shown = None
+    try:
+        acceptor.record_verdict("PASS", acceptor_id="agent:acceptor",
+                                 assurance_tier="declared-role-separation",
+                                 reason="done")
+    except AcceptanceRefused as exc:
+        shown = str(exc)
+    # the acceptor cannot type a spelling the message hides
+    check("whitespace-path-is-visible-in-the-refusal",
+          shown is not None and '"secret.env "' in shown)
+    check("whitespace-refusal-explains-the-quoting",
+          shown is not None and "part of the NAME" in shown)
+
+    # Every representation must be acked; on NT resolve() drops the trailing
+    # space, so the finding legitimately carries both spellings. Catching the
+    # refusal matters: under the mutation this test exists to catch, the ack
+    # does NOT discharge, and an escaping AcceptanceRefused would abort main()
+    # mid-registry -- so every later check would read ABSENT, which cannot be
+    # told from passing.
+    try:
+        landed = acceptor.record_verdict(
+            "PASS", acceptor_id="agent:acceptor",
+            assurance_tier="declared-role-separation", reason="done",
+            scope_ack=sorted(violating))
+    except (AcceptanceRefused, IllegalTransition):
+        landed = None
+    check("whitespace-path-is-acknowledgeable", isinstance(landed, int))
+
+
+def test_scope_ack_whitespace_case_table(workspace: Path) -> None:
+    """The ack rule is a case table, not one example -- and the row that looks
+    redundant is the one that decides it.
+
+    Rows 3 and 4 differ only in which of two colliding paths the acceptor
+    typed. Row 3 alone is satisfied by stripping both sides, by exact matching,
+    and by a union of the two; only row 4 separates exact-first from the union,
+    because only there does the stripped form of the ack ALSO name the other
+    outstanding path."""
+    from custody_mission import _acknowledged_paths
+    pair = {"secret.env", "secret.env "}
+    cases = [
+        # (label, outstanding, ack, expected matched set)
+        ("paste-tolerance", {"secrets.env"}, ["secrets.env "], {"secrets.env"}),
+        ("exact-trailing-space", {"secret.env "}, ["secret.env "],
+         {"secret.env "}),
+        ("collision-bare-ack", pair, ["secret.env"], {"secret.env"}),
+        ("collision-spaced-ack", pair, ["secret.env "], {"secret.env "}),
+        ("stripped-ack-does-not-reach-spaced-path", {"secret.env "},
+         ["secret.env"], set()),
+        ("interior-whitespace", {"a  b.env"}, ["a  b.env"], {"a  b.env"}),
+        ("leading-space", {" secret.env"}, [" secret.env"], {" secret.env"}),
+        ("trailing-tab", {"secret.env\t"}, ["secret.env\t"], {"secret.env\t"}),
+        ("all-whitespace-name", {"   "}, ["   "], {"   "}),
+        ("ack-naming-nothing", {"secrets.env"}, ["never-a-finding.txt"], set()),
+        ("empty-ack-is-inert", {"secrets.env"}, [""], set()),
+    ]
+    for label, outstanding, ack, expected in cases:
+        got = _acknowledged_paths(ack, set(outstanding))
+        check(f"ack-table-{label}", got == expected)
+
+
 def _pass_with_racer(workspace: Path, label: str, racer_action):
     """Drive a PASS-with-drift, letting `racer_action` write inside the window
     between the scope-ack checkpoint and the `completed` checkpoint.
@@ -2184,6 +2269,8 @@ TESTS = [
     test_link_count_is_none_when_the_artifact_is_gone,
     test_status_is_revalidated_after_the_scope_ack_checkpoint,
     test_benign_write_in_the_window_does_not_block_the_pass,
+    test_whitespace_bearing_path_can_be_acknowledged,
+    test_scope_ack_whitespace_case_table,
     test_empty_scope_declares_nothing_and_flags_nothing,
     test_open_creates_draft_r1,
     test_pathless_load_single_active,

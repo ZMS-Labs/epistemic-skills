@@ -381,6 +381,69 @@ def _amendment_names(text: str, rel_path: str) -> bool:
     return False
 
 
+def _display_path(path: str) -> str:
+    """A path the acceptor can SEE.
+
+    `', '.join(outstanding)` renders `secret.env ` and `secret.env`
+    identically, so matching the ack exactly would be unusable even once it is
+    correct: an acceptor cannot type a spelling the message never shows them.
+    Quoting is applied ONLY to paths carrying whitespace, so ordinary paths --
+    and the `--scope-ack <path>` line the CLI surface is asserted on -- still
+    render bare. The quoting is JSON, because it is unambiguous about spaces
+    and tabs; it is deliberately NOT offered as a shell recipe, since cmd,
+    PowerShell and sh disagree and a wrong recipe is worse than none."""
+    return json.dumps(path) if any(c.isspace() for c in path) else path
+
+
+def _acknowledged_paths(scope_ack, violating: set[str]) -> set[str]:
+    """Which violating paths the acceptor's `--scope-ack` values actually name.
+
+    The ack was normalised `_np(p.strip())` while the finding was normalised
+    `_np(p)` -- two different functions on the two sides of one comparison. A
+    path whose real name carries leading or trailing whitespace could therefore
+    not be named by any spelling an acceptor could reach. (Not literally none:
+    the strip runs BEFORE `_normalize_relpath`, so `'secret.env /'` and
+    `'./ secret.env'` survive it and do discharge. Those are incantations
+    produced by an implementation detail, printed in no message, in no receipt
+    and in no document -- an exit nobody can find is not an exit.)
+
+    The naive repair -- strip the finding too -- is refused, and this is the
+    case that refuses it: a name ending in a space is a legal POSIX filename,
+    so equating it with the stripped name creates a NEW collision class, in
+    which acknowledging the ordinary `secret.env` silently retires custody of a
+    different file named `secret.env `. This module has already settled that
+    tie-break (see `_ascii_case_fold`): under-matching leaves an obligation
+    outstanding with the exact path named -- visible, recoverable -- while
+    over-matching silently retires custody of a file nobody is watching.
+
+    So: EXACT FIRST, PER ACK. `_np(raw)` is tried against the violating set,
+    and `_np(raw.strip())` only when the exact form named nothing. A union of
+    the two normalisations is NOT this rule and is wrong on one row: with both
+    `secret.env` and `secret.env ` outstanding, an ack of `'secret.env '`
+    matches exactly here and discharges BOTH under a union. That row looks
+    redundant beside the ack of `'secret.env'`, and it is the only row that
+    separates the two rules.
+
+    Paste tolerance survives for the case it was written for -- an acceptor
+    copying `secrets.env` out of a handoff note with a stray trailing space is
+    still matched -- because the stripped form is tried when the exact one
+    misses. An ack naming nothing at all matches nothing and is inert."""
+    from custody_gate import _norm_path as _np
+    matched: set[str] = set()
+    for raw in scope_ack or ():
+        if not raw:
+            continue
+        stripped = raw.strip()
+        # A whitespace-ONLY ack is not dropped: `"   "` is a legal filename,
+        # and dropping it would recreate this very dead end for exactly the
+        # path least likely to be noticed.
+        for candidate in (_np(raw), _np(stripped) if stripped else None):
+            if candidate is not None and candidate in violating:
+                matched.add(candidate)
+                break
+    return matched
+
+
 class Mission:
     def __init__(self, store: MissionStore, workspace: Path, actor: str) -> None:
         self.store = store
@@ -1401,24 +1464,26 @@ class Mission:
                 # "./secrets.env" and a trailing space all refused. Worse,
                 # `_norm_path` folds case only on NT, so an ack captured in a
                 # runbook was platform-specific.
-                # Surrounding whitespace is stripped before normalising: an
-                # acceptor pastes these out of the refusal message or a handoff
-                # note, and refusing over a trailing space is a false block
-                # with no diagnostic value.
-                from custody_gate import _norm_path as _np
-                acknowledged = {_np(p.strip()) for p in (scope_ack or ())
-                                if p and p.strip()}
-                outstanding = sorted({p for f in drifted
-                                      for p in f["violating_paths"]
-                                      if p not in acknowledged})
+                #
+                # The repair for that stripped the ack and not the finding, so
+                # the two sides ran through DIFFERENT functions and a path whose
+                # real name carries whitespace became unnameable. `_acknowledged_
+                # paths` restores one function on both sides -- exact first, per
+                # ack, with the strip as a named fallback rather than a blanket
+                # rule (see its docstring for the row that refutes both the
+                # strip-everything and the strip-nothing repairs).
+                violating = {p for f in drifted for p in f["violating_paths"]}
+                acknowledged = _acknowledged_paths(scope_ack, violating)
+                outstanding = sorted(violating - acknowledged)
                 if outstanding:
                     mentioned = sorted(
                         p for p in outstanding
                         if any(_amendment_names(a.get("text", ""), p)
                                for a in manifest["authority"]["amendments"]))
-                    hint = (f" Amendments MENTION {', '.join(mentioned)} -- "
-                            "read them and decide; a mention is not a grant."
-                            if mentioned else "")
+                    hint = (" Amendments MENTION "
+                            + ", ".join(_display_path(p) for p in mentioned)
+                            + " -- read them and decide; a mention is not a "
+                              "grant." if mentioned else "")
                     # A multiply-linked artifact reaches this message under the
                     # same "crossed the declared scope" lead as a genuine
                     # boundary crossing, and it is not the same claim: the
@@ -1431,7 +1496,7 @@ class Mission:
                                      for p in f["violating_paths"]
                                      if p in outstanding})
                     link_note = (
-                        f" {', '.join(linked)} "
+                        " " + ", ".join(_display_path(p) for p in linked) + " "
                         + ("is" if len(linked) == 1 else "are")
                         + " MULTIPLY LINKED: the same bytes answer to another "
                         "name in the filesystem. Resolution follows symlinks, "
@@ -1439,13 +1504,29 @@ class Mission:
                         "comparison CANNOT see the other name or tell you "
                         "whether it is inside scope.out -- find it before "
                         "acknowledging." if linked else "")
+                    # An ack must be typed to match EXACTLY, so a path whose
+                    # whitespace the message hides is a path the acceptor
+                    # cannot supply. Quoting is per path and only where it
+                    # carries information, so the ordinary case -- and the
+                    # `--scope-ack secrets.env` line callers assert on -- is
+                    # unchanged.
+                    shown = [_display_path(p) for p in outstanding]
+                    ws_note = (
+                        " Paths shown in quotes carry whitespace that is part "
+                        "of the NAME, not padding: supply them to --scope-ack "
+                        "exactly, whitespace included. (The quoting is JSON, "
+                        "shown to make the bytes visible -- it is not a shell "
+                        "quoting recipe.)"
+                        if any(s != p for s, p in zip(shown, outstanding))
+                        else "")
                     raise AcceptanceRefused(
                         f"{len(outstanding)} path(s) crossed the declared "
                         f"scope and are not acknowledged: "
-                        f"{', '.join(outstanding)}.{hint}{link_note} Re-record the "
+                        f"{', '.join(shown)}.{hint}{link_note}{ws_note} "
+                        "Re-record the "
                         "verdict acknowledging each path you have judged "
                         "covered -- CLI: `accept ... "
-                        + " ".join(f"--scope-ack {p}" for p in outstanding)
+                        + " ".join(f"--scope-ack {s}" for s in shown)
                         + "` -- or accept with FAIL/INCONCLUSIVE. A PASS would "
                         "assert a boundary the record contradicts.")
                 # The acknowledgement is a first-class chain fact, not a
@@ -1457,9 +1538,10 @@ class Mission:
                 # written verbatim into the permanent note -- inert for the
                 # gate, but it pollutes the one record that says what the
                 # acceptor judged, which is the record's entire purpose.
-                covered = sorted({p for f in drifted
-                                  for p in f["violating_paths"]}
-                                 & acknowledged)
+                # `_acknowledged_paths` only ever returns paths that WERE
+                # violating, so the intersection that used to filter this list
+                # now lives at the point of matching instead of here.
+                covered = sorted(acknowledged)
                 scope_note = (f"scope-ack by {acceptor_id}: "
                               f"{', '.join(covered)}")
                 acked = self._write_next(latest, path,
