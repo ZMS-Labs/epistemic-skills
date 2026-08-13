@@ -293,6 +293,17 @@ def census(root: Path) -> dict:
         report["discovery_failed"] = True
         return report
     for md in mission_dirs:
+        # ONE STORE, POSSIBLY SEVERAL NAMES. `missions/alias -> missions/real`
+        # is two entries over one store: the gate sees two active missions and
+        # is genuinely disarmed (verified -- Mission.load raises
+        # MultipleActiveMissions), so Q1 must keep both. Every other question
+        # is about the STORE, and counting it twice doubled the armed total
+        # and reported the mission as overlapping ITSELF.
+        try:
+            st = os.stat(md)
+            store_identity = f"inode:{st.st_dev}:{st.st_ino}"
+        except OSError:
+            store_identity = f"path:{md.resolve()}"
         store = MissionStore(md)
         try:
             latest, _ = store.load_latest()
@@ -350,22 +361,32 @@ def census(root: Path) -> dict:
         # amendment recorded (tampered)". Reporting a tampered ARMED mission
         # as healthy is the worst false-healthy this instrument can produce.
         integrity_ok = True
+        # A TERMINAL mission's manifest never reaches the gate: discovery
+        # skips completed and cancelled stores, so `Mission.load` resolves the
+        # healthy active sibling and enforcement CONTINUES. Verified -- with a
+        # tampered completed mission beside a healthy armed one, run_gate
+        # returns decision='block'. Calling that a live fail-open is the same
+        # "cry fail-open" defect this reader was corrected for in round 2:
+        # it sends the operator hunting a hole while the guard is holding.
+        # The damage is still disclosed, as history.
+        is_active = latest.get("status") not in TERMINAL
+        except_kwargs = {"mission": md.name, "active": is_active,
+                         "status": latest.get("status"),
+                         "fails_open": is_active}
         try:
             mission._verify_manifest(latest)
         except CustodyError as exc:
             report["integrity"].append({
-                "mission": md.name, "kind": "tamper",
+                **except_kwargs, "kind": "tamper",
                 "reason": f"{type(exc).__name__}: {exc}",
-                "fails_open": True,
             })
             integrity_ok = False
         except Exception as exc:  # noqa: BLE001
             # The hook's own handler is equally broad and equally fail-open,
             # so anything that stops the check stops enforcement too.
             report["integrity"].append({
-                "mission": md.name, "kind": "unverifiable",
+                **except_kwargs, "kind": "unverifiable",
                 "reason": f"{type(exc).__name__}: {exc}",
-                "fails_open": True,
             })
             integrity_ok = False
         if not integrity_ok:
@@ -380,6 +401,7 @@ def census(root: Path) -> dict:
             # every enforcement metric below.
             report["missions"].append({
                 "mission": md.name,
+                "store_identity": store_identity,
                 "status": latest.get("status"),
                 "active": latest.get("status") not in TERMINAL,
                 "revision": latest.get("revision"),
@@ -453,6 +475,7 @@ def census(root: Path) -> dict:
             })
         report["missions"].append({
             "mission": md.name,
+            "store_identity": store_identity,
             "status": latest.get("status"),
             "active": latest.get("status") not in TERMINAL,
             "revision": latest.get("revision"),
@@ -484,7 +507,22 @@ def summarize(reports: list[dict]) -> dict:
     # Every other question is about ENFORCEMENT, and a mission whose manifest
     # the gate will refuse enforces nothing -- so those questions run over
     # `sound` only, and the exclusion is disclosed as partial data.
-    all_missions = [(r, m) for r in reports for m in r["missions"]]
+    # ALIAS COLLAPSE. Two entries over one store (`missions/alias -> real`)
+    # are two missions to DISCOVERY -- the gate is genuinely disarmed, so Q1
+    # below reads the raw per-root roster and keeps both names. Every other
+    # question is about the store itself, and counting it twice doubled the
+    # armed total and reported the mission as overlapping ITSELF in Q4.
+    seen_stores: set = set()
+    all_missions = []
+    aliases = 0
+    for r in reports:
+        for m in r["missions"]:
+            key = (r["root"], m.get("store_identity") or m["mission"])
+            if key in seen_stores:
+                aliases += 1
+                continue
+            seen_stores.add(key)
+            all_missions.append((r, m))
     active = [(r, m) for r, m in all_missions if m["active"]]
     sound = [(r, m) for r, m in active if m.get("integrity_ok", True)]
     armed = [(r, m) for r, m in sound
@@ -528,6 +566,8 @@ def summarize(reports: list[dict]) -> dict:
                               "cause": f"unreadable store ({e['reason']})",
                               "missions": [e["mission"]]})
         for t in r.get("integrity", []):
+            if not t.get("fails_open"):
+                continue  # terminal: the gate never loads it (see census())
             fail_open.append({"root": r["root"],
                               "cause": f"manifest {t['kind']} ({t['reason']})",
                               "missions": [t["mission"]]})
@@ -595,8 +635,12 @@ def summarize(reports: list[dict]) -> dict:
             because.append(f"{r['root']}/{e['mission']}: store uninspected "
                            "(environmental) -- absent from Q2-Q6 entirely")
         for t in r.get("integrity", []):
-            because.append(f"{r['root']}/{t['mission']}: manifest {t['kind']} "
-                           "-- guards NOT enforced, absent from Q2-Q6")
+            because.append(
+                f"{r['root']}/{t['mission']}: manifest {t['kind']} -- "
+                + ("guards NOT enforced, absent from Q2-Q6"
+                   if t.get("fails_open") else
+                   f"terminal ({t.get('status')}), historical damage only; "
+                   "absent from Q2-Q6, live enforcement unaffected"))
     return {
         "q1_fail_open_roots": fail_open,
         "q1_no_active_mission_roots": no_active,
@@ -618,6 +662,7 @@ def summarize(reports: list[dict]) -> dict:
         "q6_coverage_unknown": unknown_cov,
         "active_total": len(active),
         "active_sound_total": len(sound),
+        "alias_entries_collapsed": aliases,
         "mission_total": len(all_missions),
         "answers_are_partial": bool(because),
         "partial_because": because,
@@ -660,7 +705,13 @@ def main(argv: list[str]) -> int:
 
     print(f"# mission census — {len(roots)} root(s), "
           f"{summary['mission_total']} gate-loadable mission(s), "
-          f"{summary['active_total']} active\n")
+          f"{summary['active_total']} active")
+    if summary["alias_entries_collapsed"]:
+        print(f"  ({summary['alias_entries_collapsed']} extra directory "
+              "entr(y/ies) resolve to a store already counted — collapsed "
+              "here, but STILL COUNTED BY Q1, because discovery sees them "
+              "as separate missions and the gate is disarmed by that)")
+    print()
     print("Q1 FAIL-OPEN REACHABILITY (roots whose gate is inert RIGHT NOW):")
     if summary["q1_fail_open_roots"]:
         for a in summary["q1_fail_open_roots"]:
@@ -743,13 +794,23 @@ def main(argv: list[str]) -> int:
             print(f"  ?? [{tag}] {root}/{u['mission']}: {u['reason']}")
     integrity = [(r["root"], t) for r in reports
                  for t in r.get("integrity", [])]
-    if integrity:
+    live_int = [(r, t) for r, t in integrity if t.get("fails_open")]
+    past_int = [(r, t) for r, t in integrity if not t.get("fails_open")]
+    if live_int:
         print("\nMANIFEST INTEGRITY (the GATE FAILS OPEN on these):")
-        for root, t in integrity:
+        for root, t in live_int:
             print(f"  !! [{t['kind']}] {root}/{t['mission']}: {t['reason']}")
         print("  -> run_gate calls status() -> _verify_manifest; the hook")
         print("     catches the error and allows the call. An ARMED mission")
         print("     here is NOT enforcing, however its guards read.")
+    if past_int:
+        print("\nMANIFEST INTEGRITY, HISTORICAL (terminal missions — the gate")
+        print("never loads these, so enforcement is UNAFFECTED):")
+        for root, t in past_int:
+            print(f"  ~  [{t['kind']}] {root}/{t['mission']} "
+                  f"({t.get('status')}): {t['reason']}")
+        print("  -> the record is damaged and an auditor should know; the")
+        print("     live gate is not.")
     environmental = [(r["root"], e) for r in reports
                      for e in r.get("environmental", [])]
     if environmental:
