@@ -23,6 +23,57 @@ RECORD_KINDS = {
     "acceptance-verdict@1",
 }
 
+# The epoch this reader implements, per record family. RECORD_KINDS above is a
+# CLOSED set, so a record from a newer epoch is not "degraded" by this reader --
+# it is refused, exactly like corruption. That refusal is correct and stays.
+# What was missing is the ability to TELL THE TWO APART downstream.
+#
+# Measured on an armed enforce-mode mission: rewriting its tail `record` to
+# `checkpoint@2` flips the live gate from `block` to `allow`, because the store
+# fails validation, `Mission.load` skips it, and the workspace then reports
+# NoActiveMission. The stderr line names the cause, but the verdict handed back
+# to the harness says `gate inert: NoActiveMission` -- which is false. The
+# mission is there and active; the READER is old. On an allow path that stderr
+# is also the channel least likely to reach anyone.
+#
+# This matters most at exactly one moment: the first contract@2 write on a fleet
+# whose readers have not been updated (es#118, and the es#150 ruling's
+# "version-aware degraded reader fleet-wide" precondition). The upgrade itself
+# would silently retire every guard in every stale workspace.
+SUPPORTED_EPOCHS = {
+    "mission-manifest": 1,
+    "checkpoint": 1,
+    "receipt": 1,
+    "acceptance-verdict": 1,
+}
+
+
+def epoch_skew(record) -> str | None:
+    """A human-readable reason when `record` is a KNOWN family from a NEWER
+    epoch than this reader implements; None otherwise.
+
+    None covers every other case deliberately -- an unknown family, a
+    malformed kind, an older epoch, or a non-record -- because this function
+    answers one question ("is this too new for me?") and must not become a
+    second opinion about validity. `validate_record` remains the only
+    authority on whether a record is acceptable.
+    """
+    if not isinstance(record, dict):
+        return None
+    kind = record.get("record")
+    if not isinstance(kind, str) or kind in RECORD_KINDS or "@" not in kind:
+        return None
+    family, _, epoch = kind.rpartition("@")
+    supported = SUPPORTED_EPOCHS.get(family)
+    if supported is None or not epoch.isdigit():
+        return None
+    if int(epoch) <= supported:
+        return None
+    return (f"record {kind!r} is from a NEWER epoch than this reader "
+            f"implements ({family}@{supported}); the store is readable by an "
+            "updated consumer, not corrupt -- update this consumer rather "
+            "than repairing the mission")
+
 _ISO_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
 _SHA_RE = re.compile(r"^[0-9a-f]{64}$")
 _ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")

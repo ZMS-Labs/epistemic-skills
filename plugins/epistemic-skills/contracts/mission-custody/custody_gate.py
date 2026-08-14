@@ -225,6 +225,30 @@ def run_gate(workspace: Path, tool_call: dict, *, actor: str,
     try:
         mission = Mission.load(workspace, actor=actor)
     except NoActiveMission as exc:
+        # VERSION SKEW IS NOT AN EMPTY WORKSPACE. A store from a newer contract
+        # epoch fails validation, gets skipped, and leaves the workspace looking
+        # missionless -- so an armed mission that BLOCKED reports `allow` with
+        # reason `NoActiveMission` the moment its epoch moves ahead of this
+        # reader (measured). That reason is false and points the operator at the
+        # wrong repair: the mission is fine, the READER is old.
+        #
+        # This is the failure mode the first contract@2 write would hit fleet-
+        # wide (es#118), so it is named on the verdict itself and on stderr,
+        # where the MultipleActiveMissions decoy warning already lives. The
+        # posture is unchanged -- still allow, still inert -- because inverting
+        # it would strand the workspace with no verb to resolve it.
+        detail = str(exc)
+        if "NEWER epoch" in detail:
+            print(f"custody gate: MISSION STORE IS NEWER THAN THIS READER under "
+                  f"{workspace} -- gate inert and guards NOT enforced; this is "
+                  f"a stale consumer, not a broken mission. Update the custody "
+                  f"plugin/CLI on this host. Detail: {detail}", file=sys.stderr)
+            return {"decision": "allow", "matched": False, "rule": None,
+                    "mode": "inert",
+                    "reason": ("gate inert: mission store is from a NEWER "
+                               "contract epoch than this reader -- guards are "
+                               "NOT enforced here until this consumer is "
+                               f"updated ({detail})")}
         return {"decision": "allow", "matched": False, "rule": None,
                 "mode": "inert", "reason": f"gate inert: {type(exc).__name__}"}
     except MultipleActiveMissions as exc:

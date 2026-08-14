@@ -11,8 +11,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 
-from custody_store import StoreError, sha256_bytes, sha256_file  # noqa: E402
+from custody_store import (  # noqa: E402
+    ChainBroken, EpochSkew, MissionStore, StoreError, sha256_bytes, sha256_file,
+)
 from verify_mission_custody import is_iso_utc  # noqa: E402
+from custody_gate import run_gate  # noqa: E402
 from custody_mission import (  # noqa: E402
     _same_artifact,
     AcceptanceRefused,
@@ -457,6 +460,69 @@ def test_foreign_mission_receipt_is_not_this_missions_receipt(
     own = donor._load_receipt("req-same")
     check("own-receipt-still-loads",
           own is not None and own["mission_id"] == "m-donor")
+
+
+def test_newer_epoch_store_is_named_not_mistaken_for_an_empty_workspace(
+        workspace: Path) -> None:
+    """The first contract@2 write on a stale-reader fleet must not read as
+    'no mission here'.
+
+    RECORD_KINDS is a closed set, so a @2 record is refused exactly like
+    corruption: the store fails validation, Mission.load skips it, and the
+    workspace reports NoActiveMission. Measured before this fix: an armed
+    enforce-mode mission that BLOCKED a guarded call returned `allow` with
+    reason `gate inert: NoActiveMission` the moment its epoch moved ahead of
+    the reader -- a false statement that points the operator at repairing a
+    mission that is not broken.
+
+    The posture is deliberately NOT inverted to fail-closed. Refusing to run
+    would strand every workspace the skew applies to with no verb to resolve
+    it -- es#173 kernel 3's objection to shipping the fail-open inversion
+    without a duplicate-resolution verb in the same change. Disclose the
+    skew; do not invert underneath it."""
+    guards = [{"name": "no-secrets", "tool_names": ["Bash"],
+               "command_regexes": ["cat .env"], "path_globs": ["secrets/**"]}]
+    m = open_mission(workspace, "m-epoch", "Epoch skew disclosure.",
+                     guard_mode="enforce", actuator_guards=guards)
+    m.approve()
+    m.record_effect("a.txt", "aa", "req-epoch")
+    call = {"tool_name": "Bash", "command": "cat .env"}
+    check("epoch-armed-blocks-before",
+          run_gate(workspace, call, actor="probe")["decision"] == "block")
+
+    tail = sorted((workspace / "missions" / "m-epoch"
+                   / "checkpoints").glob("*.json"))[-1]
+    record = json.loads(tail.read_text(encoding="utf-8"))
+    record["record"] = "checkpoint@2"
+    tail.write_text(json.dumps(record, indent=1, sort_keys=True),
+                    encoding="utf-8")
+
+    verdict = run_gate(workspace, call, actor="probe")
+    # posture unchanged...
+    check("epoch-still-inert-not-bricked", verdict["decision"] == "allow")
+    # ...but the reason must name the real cause, not an empty workspace
+    check("epoch-reason-names-the-reader",
+          "NEWER contract epoch" in verdict["reason"]
+          and "NoActiveMission" not in verdict["reason"])
+    # and the distinction must be available to callers that want it
+    store = MissionStore(workspace / "missions" / "m-epoch")
+    try:
+        store.load_latest()
+        check("epoch-store-raises", False)
+    except EpochSkew as exc:
+        check("epoch-store-raises", "NEWER epoch" in str(exc))
+    # a genuinely corrupt store must NOT be relabelled as epoch skew
+    record["record"] = "checkpoint@1"
+    record["status"] = "not-a-status"
+    tail.write_text(json.dumps(record, indent=1, sort_keys=True),
+                    encoding="utf-8")
+    try:
+        MissionStore(workspace / "missions" / "m-epoch").load_latest()
+        check("corrupt-not-relabelled-as-skew", False)
+    except EpochSkew:
+        check("corrupt-not-relabelled-as-skew", False)
+    except ChainBroken:
+        check("corrupt-not-relabelled-as-skew", True)
 
 
 def test_backslash_effect_path_still_loads_its_own_receipt(
@@ -3447,6 +3513,7 @@ TESTS = [
     test_foreign_mission_receipt_is_not_this_missions_receipt,
     test_cross_workspace_receipt_cannot_silence_drift,
     test_backslash_effect_path_still_loads_its_own_receipt,
+    test_newer_epoch_store_is_named_not_mistaken_for_an_empty_workspace,
     test_forged_restored_receipt_is_not_trusted,
     test_distinct_files_never_share_an_obligation,
     test_obligations_match_by_artifact_not_by_string,

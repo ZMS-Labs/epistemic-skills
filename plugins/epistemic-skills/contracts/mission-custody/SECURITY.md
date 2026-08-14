@@ -175,6 +175,43 @@ hashes as trustworthy exactly as far as they trust write access to the
 mission directory** — which is the same boundary the guard-log and the
 unsealed tail already sit behind.
 
+## A NEWER EPOCH DISARMS A STALE READER — the migration's own first write
+
+`RECORD_KINDS` is a **closed** set: a record from a newer contract epoch is not
+degraded by this reader, it is refused, exactly like corruption. That refusal is
+correct and stays. The consequence downstream is not.
+
+**Measured.** An armed `enforce` mission blocks a guarded call. Rewrite its tail
+`record` to `checkpoint@2`, leave everything else byte-identical, and the same
+call returns `allow` — the store fails validation, `Mission.load` skips it, and
+the workspace reports `NoActiveMission`. Before this was named, the verdict
+handed back to the harness said `gate inert: NoActiveMission`, which is false:
+the mission is present and active, and the READER is old. On an allow path, the
+stderr line carrying the real cause is also the channel least likely to reach
+anyone.
+
+**Why it matters more than an ordinary skip.** This is not an exotic corruption
+case; it is the expected steady state during a contract@2 rollout (es#118). At
+the first `@2` write, every workspace whose consumer is stale silently retires
+every guard it holds — the upgrade itself is the disarm. That is why the es#150
+ruling makes a **version-aware degraded reader, fleet-wide** an engineering
+precondition of the first `@2` write, not a nicety to follow it.
+
+**What now happens.** `MissionStore.load_latest` raises `EpochSkew` (a
+`ChainBroken` subclass, so every existing handler keeps its behavior byte for
+byte); `run_gate` names the skew on the verdict and on stderr instead of
+reporting an empty workspace; the census reports these roots as **FAIL-OPEN**
+with cause `STALE READER (newer contract epoch)` and marks the run partial.
+
+**What deliberately does NOT happen.** The posture is not inverted. Refusing to
+run on skew would strand every workspace it applies to with no verb to resolve
+it — the same objection es#173's kernel 3 raises against shipping the fail-open
+inversion without a duplicate-resolution verb in the same change. The skew is
+disclosed; the fail-open underneath it is unchanged and still owed a fix.
+
+**Operator response is the opposite of the corruption case.** Nothing under
+these roots needs repairing. Update the custody plugin/CLI on that host.
+
 ## Discovery ambiguity DISARMS the gate — an unarmed decoy is enough
 
 **Verified live (es#173 adjudication, 2026-08-13):** an armed mission with

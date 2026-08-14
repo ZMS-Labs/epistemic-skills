@@ -8,7 +8,7 @@ import os
 import tempfile
 from pathlib import Path
 
-from verify_mission_custody import validate_record
+from verify_mission_custody import epoch_skew, validate_record
 
 
 class StoreError(Exception):
@@ -17,6 +17,24 @@ class StoreError(Exception):
 
 class ChainBroken(StoreError):
     pass
+
+
+class EpochSkew(ChainBroken):
+    """This store is from a NEWER contract epoch than this reader implements.
+
+    Deliberately a ChainBroken SUBCLASS, so every existing handler keeps its
+    current behavior byte for byte: `Mission.load` still skips the store, the
+    gate still degrades to inert rather than bricking the tool loop, and no
+    caller has to learn a new exception to stay correct. The only thing that
+    changes is that a caller who WANTS to distinguish "too new" from "corrupt"
+    now can -- and the message says which.
+
+    Not fail-closed, on purpose. Flipping an unreadable store to a hard refusal
+    would strand every workspace it applies to with no verb to resolve it,
+    which is the same objection es#173's kernel 3 raises against shipping the
+    fail-open inversion without a duplicate-resolution verb in the same change.
+    Disclose the skew; do not invert the posture underneath it.
+    """
 
 
 def sha256_bytes(data: bytes) -> str:
@@ -126,6 +144,9 @@ class MissionStore:
             record = json.loads(path.read_text(encoding="utf-8"))
             errors = validate_record(record)
             if errors:
+                skew = epoch_skew(record)
+                if skew:
+                    raise EpochSkew(f"{path.name}: {skew}")
                 raise ChainBroken(f"{path.name}: invalid: {errors[:3]}")
             if record["prev_checkpoint_sha256"] != prev_sha:
                 raise ChainBroken(f"{path.name}: chain mismatch")

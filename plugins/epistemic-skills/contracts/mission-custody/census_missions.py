@@ -74,7 +74,7 @@ sys.path.insert(0, str(ROOT))
 from custody_mission import (  # noqa: E402
     CustodyError, Mission, _ascii_case_fold, _normalize_relpath,
 )
-from custody_store import MissionStore, StoreError  # noqa: E402
+from custody_store import EpochSkew, MissionStore, StoreError  # noqa: E402
 
 TERMINAL = ("completed", "cancelled")
 
@@ -301,7 +301,8 @@ def census(root: Path) -> dict:
     root = root.resolve()
     missions_root = root / "missions"
     report: dict = {"root": str(root), "missions": [], "unreadable": [],
-                    "environmental": [], "integrity": []}
+                    "environmental": [], "integrity": [],
+                    "epoch_skew": []}
     # DISCOVERY ITSELF CAN FAIL. A missions/ directory that cannot be statted
     # or enumerated raised out of census() entirely -- aborting the whole
     # multi-root walk with a traceback and no report, so every LATER root
@@ -376,6 +377,21 @@ def census(root: Path) -> dict:
             continue
         try:
             latest, _ = store.load_latest()
+        except EpochSkew as exc:
+            # NEWER EPOCH, not corruption. The gate skips this store exactly as
+            # it skips a corrupt one, but the OPERATOR RESPONSE is opposite:
+            # nothing here needs repairing, the reader needs updating. And
+            # unlike corruption, this is the expected steady state during a
+            # contract@2 rollout, when it will be true of every workspace whose
+            # consumer is stale -- measured to flip an armed enforce-mission
+            # from `block` to `allow`. So it counts as FAIL-OPEN, with its own
+            # cause, rather than hiding among skipped-by-gate stores.
+            report["epoch_skew"].append({
+                "mission": md.name,
+                "reason": f"{type(exc).__name__}: {exc}",
+                "fails_open": True,
+            })
+            continue
         except (StoreError, ValueError) as exc:
             # CORRUPTION: Mission.load catches exactly this pair and SKIPS
             # the store, so the gate resolves the healthy sibling and keeps
@@ -617,7 +633,8 @@ def summarize(reports: list[dict]) -> dict:
             # environmental fixture was being described as terminal-only on
             # the strength of a checkpoint nobody could open.)
             unread = (len(r["unreadable"]) + len(r.get("environmental", []))
-                      + len(r.get("integrity", [])))
+                      + len(r.get("integrity", []))
+                      + len(r.get("epoch_skew", [])))
             if r.get("discovery_failed"):
                 cause = "missions/ could not be enumerated"
             elif r.get("note"):
@@ -633,6 +650,10 @@ def summarize(reports: list[dict]) -> dict:
         for e in r.get("environmental", []):
             fail_open.append({"root": r["root"],
                               "cause": f"unreadable store ({e['reason']})",
+                              "missions": [e["mission"]]})
+        for e in r.get("epoch_skew", []):
+            fail_open.append({"root": r["root"],
+                              "cause": "STALE READER (newer contract epoch)",
                               "missions": [e["mission"]]})
         for t in r.get("integrity", []):
             if not t.get("fails_open"):
@@ -703,6 +724,10 @@ def summarize(reports: list[dict]) -> dict:
         for e in r.get("environmental", []):
             because.append(f"{r['root']}/{e['mission']}: store uninspected "
                            "(environmental) -- absent from Q2-Q6 entirely")
+        for e in r.get("epoch_skew", []):
+            because.append(f"{r['root']}/{e['mission']}: NEWER contract epoch "
+                           "than this reader -- update this consumer; absent "
+                           "from Q2-Q6 and its guards are NOT enforced here")
         for t in r.get("integrity", []):
             because.append(
                 f"{r['root']}/{t['mission']}: manifest {t['kind']} -- "
@@ -887,6 +912,15 @@ def main(argv: list[str]) -> int:
                   f"{_safe(t['reason'])}")
         print("  -> the record is damaged and an auditor should know; the")
         print("     live gate is not.")
+    skewed = [(r["root"], e) for r in reports for e in r.get("epoch_skew", [])]
+    if skewed:
+        print("\nSTALE READER (store is from a NEWER contract epoch — the GATE")
+        print("FAILS OPEN here, and the fix is on THIS host, not the mission):")
+        for root, e in skewed:
+            print(f"  !! {_safe(root)}/{_safe(e['mission'])}: "
+                  f"{_safe(e['reason'])}")
+        print("  -> update the custody plugin/CLI on this consumer. Nothing")
+        print("     under these roots is enforced until you do.")
     environmental = [(r["root"], e) for r in reports
                      for e in r.get("environmental", [])]
     if environmental:
