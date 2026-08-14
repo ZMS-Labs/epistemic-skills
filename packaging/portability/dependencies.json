@@ -1,0 +1,19 @@
+{
+  "defaults": {
+    "standalone": {
+      "state": "unverified"
+    }
+  },
+  "schema": "zms-skill-dependencies@1",
+  "skills": {
+    "manifest": {
+      "dependency_roots": [
+        "plugins/epistemic-skills/contracts/mission-custody"
+      ],
+      "standalone": {
+        "refusal_code": "PACKAGE_BOUND_NO_APPROVED_SKILL_LOCAL_LAUNCHER",
+        "state": "suite_only"
+      }
+    }
+  }
+}

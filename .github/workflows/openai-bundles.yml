@@ -7,22 +7,34 @@ name: openai-bundles
       - ".agents/plugins/marketplace.json"
       - "plugins/epistemic-skills/**"
       - "packaging/openai/**"
+      - "packaging/portability/**"
       - ".github/scripts/build_openai_bundles.py"
+      - ".github/scripts/skill_artifact_lib.py"
       - ".github/scripts/test_build_openai_bundles.py"
+      - ".github/scripts/test_skill_artifact_lib.py"
+      - ".github/scripts/build_portable_skill_projection.py"
+      - ".github/scripts/test_build_portable_skill_projection.py"
       - ".github/scripts/test_openai_bundle_workflow.py"
       - ".github/workflows/openai-bundles.yml"
       - "docs/CHATGPT-AND-OPENAI-PACKAGING.md"
+      - "docs/PORTABLE-SKILL-PROJECTIONS.md"
   push:
     branches: [main]
     paths:
       - ".agents/plugins/marketplace.json"
       - "plugins/epistemic-skills/**"
       - "packaging/openai/**"
+      - "packaging/portability/**"
       - ".github/scripts/build_openai_bundles.py"
+      - ".github/scripts/skill_artifact_lib.py"
       - ".github/scripts/test_build_openai_bundles.py"
+      - ".github/scripts/test_skill_artifact_lib.py"
+      - ".github/scripts/build_portable_skill_projection.py"
+      - ".github/scripts/test_build_portable_skill_projection.py"
       - ".github/scripts/test_openai_bundle_workflow.py"
       - ".github/workflows/openai-bundles.yml"
       - "docs/CHATGPT-AND-OPENAI-PACKAGING.md"
+      - "docs/PORTABLE-SKILL-PROJECTIONS.md"
   release:
     types: [published]
 
@@ -53,7 +65,9 @@ jobs:
           python-version: "3.12"
       - name: Packaging unit tests
         run: |
+          python .github/scripts/test_skill_artifact_lib.py
           python .github/scripts/test_build_openai_bundles.py
+          python .github/scripts/test_build_portable_skill_projection.py
           python .github/scripts/test_openai_bundle_workflow.py
       - name: Validate the live canonical package
         run: python .github/scripts/build_openai_bundles.py --check --source-revision "$SOURCE_REVISION"

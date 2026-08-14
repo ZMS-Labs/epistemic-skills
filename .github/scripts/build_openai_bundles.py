@@ -10,15 +10,21 @@ ChatGPT upload bridge.
 from __future__ import annotations
 
 import argparse
-import ast
-import hashlib
 import json
 import os
-import re
 import tempfile
 import zipfile
 from pathlib import Path
 from typing import Iterable, NamedTuple
+
+from skill_artifact_lib import (
+    ArtifactError,
+    SkillRecord,
+    discover_skills,
+    parse_skill_frontmatter,
+    regular_files,
+    sha256_bytes,
+)
 
 CANONICAL_PACKAGE = Path("plugins/epistemic-skills")
 MARKETPLACE_PATH = Path(".agents/plugins/marketplace.json")
@@ -26,20 +32,7 @@ CHATGPT_TEMPLATE = Path("packaging/openai/chatgpt-skill/SKILL.md")
 PLUGIN_ARCHIVE_ROOT = Path("epistemic-skills-openai")
 CHATGPT_ARCHIVE_ROOT = Path("epistemic-skills")
 FIXED_ZIP_TIME = (1980, 1, 1, 0, 0, 0)
-FRONTMATTER = re.compile(r"\A---\r?\n(.*?)\r?\n---(?:\r?\n|$)", re.S)
-IGNORED_PARTS = {"__pycache__", ".DS_Store"}
-
-
-class BundleError(ValueError):
-    """A named fail-closed package validation error."""
-
-
-class SkillRecord(NamedTuple):
-    name: str
-    description: str
-    canonical_path: str
-    skill_md_sha256: str
-    tree_sha256: str
+BundleError = ArtifactError
 
 
 class BuildResult(NamedTuple):
@@ -49,10 +42,6 @@ class BuildResult(NamedTuple):
     skill_count: int
 
 
-def sha256_bytes(data: bytes) -> str:
-    return hashlib.sha256(data).hexdigest()
-
-
 def load_json(path: Path) -> object:
     try:
         return json.loads(path.read_text(encoding="utf-8"))
@@ -60,106 +49,6 @@ def load_json(path: Path) -> object:
         raise BundleError(f"MISSING_REQUIRED_FILE: {path}") from error
     except (OSError, json.JSONDecodeError) as error:
         raise BundleError(f"MALFORMED_JSON: {path}: {error}") from error
-
-
-def yaml_scalar(raw: str, path: Path, key: str) -> str:
-    value = raw.strip()
-    if not value:
-        raise BundleError(f"EMPTY_FRONTMATTER_VALUE: {path}: {key}")
-    if value[0] == "'":
-        if len(value) < 2 or value[-1] != "'":
-            raise BundleError(f"MALFORMED_FRONTMATTER_VALUE: {path}: {key}")
-        parsed = value[1:-1].replace("''", "'").strip()
-        if not parsed:
-            raise BundleError(f"MALFORMED_FRONTMATTER_VALUE: {path}: {key}")
-        return parsed
-    if value[0] == '"':
-        try:
-            parsed = ast.literal_eval(value)
-        except (SyntaxError, ValueError) as error:
-            raise BundleError(f"MALFORMED_FRONTMATTER_VALUE: {path}: {key}") from error
-        if not isinstance(parsed, str) or not parsed.strip():
-            raise BundleError(f"MALFORMED_FRONTMATTER_VALUE: {path}: {key}")
-        return parsed.strip()
-    if value in {">", "|", ">-", "|-", ">+", "|+"}:
-        raise BundleError(f"UNSUPPORTED_MULTILINE_FRONTMATTER: {path}: {key}")
-    return value
-
-
-def parse_skill_frontmatter(path: Path) -> tuple[str, str]:
-    try:
-        text = path.read_text(encoding="utf-8")
-    except (OSError, UnicodeError) as error:
-        raise BundleError(f"UNREADABLE_SKILL: {path}: {error}") from error
-    match = FRONTMATTER.match(text)
-    if not match:
-        raise BundleError(f"MISSING_FRONTMATTER: {path}")
-    values: dict[str, str] = {}
-    for line in match.group(1).splitlines():
-        key, separator, raw = line.partition(":")
-        if separator and key.strip() in {"name", "description"}:
-            values[key.strip()] = yaml_scalar(raw, path, key.strip())
-    missing = {"name", "description"} - values.keys()
-    if missing:
-        raise BundleError(f"MISSING_FRONTMATTER_KEYS: {path}: {sorted(missing)}")
-    return values["name"], values["description"]
-
-
-def regular_files(root: Path) -> list[Path]:
-    if not root.is_dir():
-        raise BundleError(f"MISSING_DIRECTORY: {root}")
-    files: list[Path] = []
-    for path in sorted(root.rglob("*"), key=lambda item: item.relative_to(root).as_posix()):
-        relative = path.relative_to(root)
-        if any(part in IGNORED_PARTS for part in relative.parts) or path.suffix == ".pyc":
-            continue
-        if path.is_symlink():
-            raise BundleError(f"SYMLINK_NOT_PORTABLE: {path}")
-        if path.is_file():
-            files.append(path)
-    return files
-
-
-def tree_sha256(root: Path) -> str:
-    digest = hashlib.sha256()
-    for path in regular_files(root):
-        relative = path.relative_to(root).as_posix().encode("utf-8")
-        content = path.read_bytes()
-        digest.update(relative)
-        digest.update(b"\0")
-        digest.update(hashlib.sha256(content).digest())
-        digest.update(b"\n")
-    return digest.hexdigest()
-
-
-def discover_skills(package_root: Path) -> list[SkillRecord]:
-    skills_root = package_root / "skills"
-    if not skills_root.is_dir():
-        raise BundleError(f"MISSING_SKILLS_DIRECTORY: {skills_root}")
-    records: list[SkillRecord] = []
-    for directory in sorted(skills_root.iterdir(), key=lambda item: item.name):
-        skill_md = directory / "SKILL.md"
-        if not directory.is_dir() or not skill_md.is_file():
-            continue
-        name, description = parse_skill_frontmatter(skill_md)
-        if name != directory.name:
-            raise BundleError(
-                "FRONTMATTER_NAME_MISMATCH: "
-                f"{skill_md} declares {name!r}, directory is {directory.name!r}"
-            )
-        records.append(SkillRecord(
-            name=name,
-            description=description,
-            canonical_path=(Path("skills") / name / "SKILL.md").as_posix(),
-            skill_md_sha256=sha256_bytes(skill_md.read_bytes()),
-            tree_sha256=tree_sha256(directory),
-        ))
-    if not records:
-        raise BundleError(f"EMPTY_SKILL_GLOB: {skills_root}")
-    names = [record.name for record in records]
-    if len(names) != len(set(names)):
-        raise BundleError(f"DUPLICATE_SKILL_NAME: {names}")
-    return records
 
 
 def validate_marketplace(repo_root: Path) -> None:

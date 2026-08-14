@@ -18,6 +18,21 @@ class OpenAIBundleWorkflowTests(unittest.TestCase):
         self.assertIn("python .github/scripts/test_openai_bundle_workflow.py", text)
         self.assertEqual(3, text.count(".github/scripts/test_openai_bundle_workflow.py"))
 
+    def test_portable_projection_changes_trigger_and_run_their_tests(self) -> None:
+        text = WORKFLOW.read_text(encoding="utf-8")
+        expected_paths = (
+            "packaging/portability/**",
+            ".github/scripts/skill_artifact_lib.py",
+            ".github/scripts/test_skill_artifact_lib.py",
+            ".github/scripts/build_portable_skill_projection.py",
+            ".github/scripts/test_build_portable_skill_projection.py",
+            "docs/PORTABLE-SKILL-PROJECTIONS.md",
+        )
+        for path in expected_paths:
+            self.assertEqual(2, text.count(f'- "{path}"'), path)
+        self.assertIn("python .github/scripts/test_skill_artifact_lib.py", text)
+        self.assertIn("python .github/scripts/test_build_portable_skill_projection.py", text)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
