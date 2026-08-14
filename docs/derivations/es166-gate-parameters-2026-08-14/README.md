@@ -16,10 +16,12 @@ and
 [es#166 comment](https://github.com/ZMS-Labs/epistemic-skills/issues/166#issuecomment-5288171588)
 cite them.
 
-> **Round 2 of PR #175 found four defects in these records, all upheld.** The
-> files here are corrected; see [`CORRECTIONS.md`](CORRECTIONS.md) for what was
-> wrong and why it matters. Two of the four were defects the records were
-> written to guard against.
+> **Rounds 2 and 3 of PR #175 found seven defects in these records, all
+> upheld.** The files here are corrected; see
+> [`CORRECTIONS.md`](CORRECTIONS.md) for what was wrong and why it matters.
+> Two of round 2's four were defects the records were written to guard
+> against, and two of round 3's three were **incomplete round-2 fixes** —
+> corrected text left contradicting itself elsewhere in the same file.
 
 | file | question | outcome |
 |---|---|---|
@@ -77,5 +79,8 @@ adjudication itself, so there is **no cross-family independence** on this
 question. Neither record discharges any externally-enforced safety gate.
 
 `valid_while` voids each record on a change to the pinned subject revision, and
-`predicate.json` additionally voids if the census's computable field set changes
-or the estate's armed count moves off zero.
+`predicate.json` additionally voids if the census's computable field set
+changes. It deliberately does **not** void when a mission arms: arming is a
+positive adoption event this window exists to measure, and a rule that expires
+on its own first interesting datapoint governs nothing (round 3, see
+[`CORRECTIONS.md`](CORRECTIONS.md)).

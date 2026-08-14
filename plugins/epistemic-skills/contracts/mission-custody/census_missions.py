@@ -932,23 +932,51 @@ def main(argv: list[str]) -> int:
     # summarize() was corrected for this; the prose here was not, and kept
     # telling operators nothing under the root was enforced while the gate was
     # enforcing. Fixing the data and leaving the sentence is not a fix.
-    still_resolving = {r["root"] for r in reports
-                       if any(m["active"] for m in r["missions"])}
+    #
+    # "ITS GATE STILL ENFORCES" IS A CLAIM ABOUT THE GATE, so it is read off
+    # the same fail-open set Q1 prints rather than re-derived from "the root
+    # has an active mission", which is a strictly weaker fact: two active
+    # missions raise MultipleActiveMissions during discovery, and a tampered
+    # manifest raises inside status(). In both, an active mission resolves and
+    # the gate does NOT enforce. Measured -- a skewed store beside two active
+    # missions printed `[multiple active]` under Q1 and "its gate still
+    # enforces" four lines below it, while the live gate returned `allow`;
+    # with a tampered sole active mission the same report carried "the GATE
+    # FAILS OPEN on these" and "still enforces" in adjacent sections.
+    #
+    # That is the FOURTH instance of the mis-stated-enforcement class in this
+    # file and the third fix that re-derived the condition by hand -- the
+    # first three all held for the case in front of me and broke on the next
+    # one. Deriving from the computed set is the part that generalizes: any
+    # future fail-open cause added to summarize() reaches this prose with no
+    # second edit.
+    inert_because: dict[str, str] = {}
+    for a in summary["q1_fail_open_roots"]:
+        inert_because.setdefault(a["root"], a["cause"])
+    has_active = {r["root"] for r in reports
+                  if any(m["active"] for m in r["missions"])}
     skewed = [(r["root"], e) for r in reports for e in r.get("epoch_skew", [])]
     if skewed:
         print("\nSTALE READER (store CLAIMS a newer contract epoch — this")
         print("reader cannot validate it, and its guards are NOT enforced):")
         for root, e in skewed:
-            scope = ("this MISSION only; the root still resolves another "
-                     "active mission and its gate still enforces"
-                     if root in still_resolving else
-                     "the WHOLE ROOT: no other active mission resolves here, "
-                     "so the gate is inert")
-            print(f"  !! {_safe(root)}/{_safe(e['mission'])}  [{scope}]")
+            if root not in has_active:
+                scope = ("the WHOLE ROOT: no other active mission resolves "
+                         "here, so the gate is inert")
+            elif root in inert_because:
+                scope = ("the root's gate is inert for a SEPARATE reason "
+                         f"[{inert_because[root]}] — see above")
+            else:
+                scope = ("this MISSION only; the root still resolves another "
+                         "active mission and its gate still enforces")
+            print(f"  !! {_safe(root)}/{_safe(e['mission'])}  [{_safe(scope)}]")
             print(f"     {_safe(e['reason'])}")
         print("  -> read these stores with an updated custody plugin/CLI. It")
         print("     is not established that they are healthy — only that this")
         print("     reader cannot check them.")
+        print("  -> 'still enforces' is relative to THIS reader, which skips")
+        print("     the skewed store. An updated reader may find an ACTIVE")
+        print("     mission inside it and go inert on ambiguity instead.")
     environmental = [(r["root"], e) for r in reports
                      for e in r.get("environmental", [])]
     if environmental:

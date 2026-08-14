@@ -6,13 +6,14 @@
  },
  "valid_while": [
   "subject-revision-unchanged",
-  "census-computable-field-set-unchanged",
-  "estate-armed-count-remains-zero"
+  "census-computable-field-set-unchanged"
  ],
  "coverage_limits": [
   "The live estate is not reachable from this session; the non-emptiness premise is preregistered, not observed.",
   "P3/P4 unmapped is not claimed: no concurrent or replicated property bears load inside the declared boundary.",
-  "SUPERSEDES the 2026-08-14 first issue, which defined option A as a 'non-scratch root' without saying what makes a root non-scratch. The census emits only the path string, so two readers could produce different denominators from identical output -- the predicate was not in fact census-computable, which is the constraint it was selected for. Fixed by requiring an explicit admitted-root set fixed before observation."
+  "SUPERSEDES the 2026-08-14 first issue, which defined option A as a 'non-scratch root' without saying what makes a root non-scratch. The census emits only the path string, so two readers could produce different denominators from identical output -- the predicate was not in fact census-computable, which is the constraint it was selected for. Fixed by requiring an explicit admitted-root set fixed before observation.",
+  "SUPERSEDES the 2026-08-14 second issue, which carried 'estate-armed-count-remains-zero' as a validity condition. Option A references receipts and admitted-root membership only; the zero-armed count is DATED EVIDENCE (census run 2026-08-13) bearing on option D via d3, not a standing condition on the selected option. As a validity condition it would void the governing record the moment a mission armed -- and arming is a positive envelope-adoption event this window exists to measure, so the first interesting datapoint would have destroyed the rule it arrived under.",
+  "A nonzero armed count during the window retires d3's SECOND line of evidence against option D ('guard-referencing predicates are already empty'), but not d1's refutation of D, which is structural (selection on the dependent variable) and does not depend on any estate observation. The selection of A therefore stands under a nonzero armed count."
  ],
  "rigor": {
   "tier": "standard",
@@ -276,10 +277,10 @@
   "state": "pending",
   "tests": [
    {
-    "belief": "Candidate A (>=1 chain-bound receipt AND non-scratch root) selects a non-empty set of missions on the live estate.",
-    "prediction": "census_missions.py --json over the operator's estate roots reports at least one active mission with receipt_count >= 1 whose root is a real repository checkout rather than a scratch/ path.",
-    "disconfirming_observation": "Zero such missions, or all receipt-bearing missions sit under scratch-style roots.",
-    "test": "Run the merged census over the operator's estate roots and count missions satisfying A.",
+    "belief": "Candidate A (>=1 chain-bound receipt AND a root drawn from the recorded admitted-root set) selects a non-empty set of missions on the live estate.",
+    "prediction": "census_missions.py --json over the operator's estate roots reports at least one active mission with receipt_count >= 1 whose root string equals a member of the admitted-root set recorded before this run.",
+    "disconfirming_observation": "Zero such missions: every receipt-bearing active mission sits under a root absent from the recorded set, or no active mission carries a chain-bound receipt at all.",
+    "test": "Record the admitted-root set, THEN run the merged census over the operator's estate roots and count missions satisfying A by string membership in that set.",
     "prediction_recorded_before_result": true
    }
   ]

@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import contextlib
+import io
 import json
 import os
 import shutil
@@ -584,6 +586,121 @@ def test_epoch_skew_does_not_disarm_a_root_that_still_resolves(
     check("mixed-epoch-skew-still-reported",
           any(e["mission"] == "m-legacy" for e in report["epoch_skew"]))
     check("mixed-epoch-run-marked-partial", summary["answers_are_partial"])
+
+
+def _skew_a_store_into(workspace: Path, name: str) -> None:
+    """Move a mission opened elsewhere in beside an existing one and relabel
+    its tail `checkpoint@2`, so the root holds a store this reader must skip.
+
+    Built by MOVING a store opened in its own workspace, never by editing a
+    copy's `mission_id`: that edit breaks the hash chain, the sibling is
+    skipped as ChainBroken instead, and the epoch case is never exercised
+    (measured while building the round-5 census fixtures on #174)."""
+    staging = workspace / "staging"
+    legacy = open_mission(staging, name, "Will be skewed.")
+    legacy.approve()
+    legacy.record_effect("b.txt", "bb", f"req-{name}")
+    shutil.move(str(staging / "missions" / name),
+                str(workspace / "missions" / name))
+    shutil.rmtree(staging, ignore_errors=True)
+    tail = sorted((workspace / "missions" / name
+                   / "checkpoints").glob("*.json"))[-1]
+    record = json.loads(tail.read_text(encoding="utf-8"))
+    record["record"] = "checkpoint@2"
+    tail.write_text(json.dumps(record, indent=1, sort_keys=True),
+                    encoding="utf-8")
+
+
+def _stale_reader_scope(workspace: Path, mission: str) -> str:
+    """The bracketed scope the human report prints for a skewed store."""
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        census_missions.main([str(workspace)])
+    for line in buf.getvalue().splitlines():
+        if line.startswith("  !! ") and line.rstrip().endswith("]") \
+                and f"/{mission}  [" in line:
+            return line.split("  [", 1)[1].rstrip()[:-1]
+    return "<no stale-reader row>"
+
+
+def test_stale_reader_scope_never_claims_enforcement_the_gate_lacks(
+        workspace: Path) -> None:
+    """"The root still enforces" must be read off the computed fail-open set,
+    not from "the root has an active mission".
+
+    An active mission resolving is strictly weaker than the gate enforcing:
+    two active missions raise MultipleActiveMissions during DISCOVERY, and a
+    tampered manifest raises inside status() -- in both, a mission is active
+    and the gate allows. Measured before the fix: with a skewed store beside
+    two active missions the same report printed `[multiple active]` under Q1
+    and "its gate still enforces" four lines later, while the live gate
+    returned `allow`.
+
+    This is the fourth instance of the mis-stated-enforcement class in the
+    census and the third fix that re-derived the condition by hand, so the
+    control case is pinned beside the two defects: the honest "still
+    enforces" line must SURVIVE, or the fix is just silence."""
+    guards = [{"name": "no-secrets", "tool_names": ["Bash"],
+               "command_regexes": ["cat .env"], "path_globs": ["secrets/**"]}]
+    call = {"tool_name": "Bash", "command": "cat .env"}
+
+    # CONTROL: one healthy active mission -- the gate really does enforce.
+    healthy = workspace / "healthy"
+    live = open_mission(healthy, "m-live", "Healthy.",
+                        guard_mode="enforce", actuator_guards=guards)
+    live.approve()
+    live.record_effect("a.txt", "aa", "req-live")
+    _skew_a_store_into(healthy, "m-legacy")
+    check("stale-scope-control-gate-blocks",
+          run_gate(healthy, call, actor="probe")["decision"] == "block")
+    check("stale-scope-control-says-enforces",
+          "still enforces" in _stale_reader_scope(healthy, "m-legacy"))
+
+    # DEFECT 1: a duplicate active mission -- Mission.load refuses, gate allows.
+    dupe = workspace / "dupe"
+    one = open_mission(dupe, "m-one", "First.",
+                       guard_mode="enforce", actuator_guards=guards)
+    one.approve()
+    one.record_effect("a.txt", "aa", "req-one")
+    shutil.copytree(one.store.mission_dir, dupe / "missions" / "m-two")
+    _skew_a_store_into(dupe, "m-legacy")
+    check("stale-scope-duplicate-gate-allows",
+          run_gate(dupe, call, actor="probe")["decision"] == "allow")
+    dupe_scope = _stale_reader_scope(dupe, "m-legacy")
+    check("stale-scope-duplicate-claims-no-enforcement",
+          "still enforces" not in dupe_scope)
+    check("stale-scope-duplicate-names-the-cause",
+          "multiple active" in dupe_scope)
+
+    # DEFECT 2: a tampered sole active mission -- status() raises, hook allows.
+    tampered = workspace / "tampered"
+    solo = open_mission(tampered, "m-solo", "Sole.",
+                        guard_mode="enforce", actuator_guards=guards)
+    solo.approve()
+    solo.record_effect("a.txt", "aa", "req-solo")
+    _skew_a_store_into(tampered, "m-legacy")
+    tail = sorted((tampered / "missions" / "m-solo"
+                   / "checkpoints").glob("*.json"))[-1]
+    record = json.loads(tail.read_text(encoding="utf-8"))
+    record["manifest"]["authority"]["actuator_guards"][0]["path_globs"] = \
+        ["nothing/**"]
+    tail.write_text(json.dumps(record, indent=1, sort_keys=True) + "\n",
+                    encoding="utf-8")
+    try:
+        run_gate(tampered, call, actor="probe")
+        check("stale-scope-tamper-gate-does-not-enforce", False)
+    except CustodyError:
+        # run_gate propagates; custody_hook catches CustodyError and ALLOWS.
+        check("stale-scope-tamper-gate-does-not-enforce", True)
+    check("stale-scope-tamper-claims-no-enforcement",
+          "still enforces" not in _stale_reader_scope(tampered, "m-legacy"))
+
+    # A root with no active mission at all is still called wholly inert.
+    alone = workspace / "alone"
+    (alone / "missions").mkdir(parents=True)
+    _skew_a_store_into(alone, "m-legacy")
+    check("stale-scope-skew-alone-is-whole-root",
+          "WHOLE ROOT" in _stale_reader_scope(alone, "m-legacy"))
 
 
 def test_backslash_effect_path_still_loads_its_own_receipt(
@@ -3576,6 +3693,7 @@ TESTS = [
     test_backslash_effect_path_still_loads_its_own_receipt,
     test_newer_epoch_store_is_named_not_mistaken_for_an_empty_workspace,
     test_epoch_skew_does_not_disarm_a_root_that_still_resolves,
+    test_stale_reader_scope_never_claims_enforcement_the_gate_lacks,
     test_forged_restored_receipt_is_not_trusted,
     test_distinct_files_never_share_an_obligation,
     test_obligations_match_by_artifact_not_by_string,

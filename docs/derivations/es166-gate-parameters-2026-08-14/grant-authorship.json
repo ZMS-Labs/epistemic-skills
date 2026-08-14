@@ -258,7 +258,7 @@
   "basis": [
    "d1 refutes option B against a hard constraint: a steward-authored grant is a declaration, and grants_paths is proposed precisely to be more than a declaration.",
    "d2 shows the refutation of B does not establish A: A satisfies the authority objective but its satisfaction of the boundary objective turns on unobserved adoption behavior.",
-   "The two open questions are therefore coupled \u2014 the grant-authorship decision cannot be closed before the es#166 window returns adoption evidence, which is the same window r1's predicate governs."
+   "The authorship question therefore stays OPEN, and not pending on the es#166 window: that window measures envelope adoption generally and cannot observe a mechanism that does not exist, so waiting on it would repeat the vacuity this record was corrected for. Closing it requires a bounded pilot (see recovery_moves), which is a separate authorization."
   ],
   "conditions": [
    "B may still be used as a disclosure mechanism; it may not be called a control."
