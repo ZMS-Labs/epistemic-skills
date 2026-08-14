@@ -396,8 +396,15 @@ def dispatch(args: argparse.Namespace) -> int:
         latest = mission.status()
         _print_status(_brief(latest, mission) if args.brief else latest)
     elif args.command == "audit":
-        breaks = mission.continuity_breaks()
+        # ORPHANS FIRST. The orphan check is existence-based and cheap; the
+        # continuity scan READS every historical receipt. Running the scan
+        # first meant one unreadable receipt took the whole command down
+        # before the orphan report -- the thing this path exists to make
+        # findable -- ever printed. The read failure is handled at its source
+        # now, but the ordering stays: a report about files EXISTING should
+        # not depend on a pass that opens them.
         orphans = mission.orphaned_retired_receipts()
+        breaks = mission.continuity_breaks()
         _print_status({"record": "continuity-report@1",
                         "continuity_breaks": breaks,
                         "orphaned_retired_receipts": orphans})

@@ -217,24 +217,30 @@ def _receipts(mission: Mission, store: MissionStore,
         if not isinstance(rid, str):
             problems.append(f"receipt id {rid!r} is not a string")
             continue
-        skew = None
+        opaque = None
         try:
             # The CHECKED loader, not `_load_receipt`: the thin wrapper drops
-            # the skew signal, and this instrument would then print
+            # the opaque signal, and this instrument would then print
             # RECEIPT-MISSING for a receipt that is present, intact and merely
             # newer -- telling the operator the opposite of what `resume` now
             # says about the same file.
-            receipt, _refusal, skew = mission._load_receipt_checked(rid)
+            receipt, _refusal, opaque = mission._load_receipt_checked(rid)
         except (OSError, ValueError) as exc:
             receipt = None
             problems.append(f"{rid}: receipt unreadable: {type(exc).__name__}")
         chained = index.get(rid)
-        if skew:
+        if opaque:
+            # Both opaque kinds mean PRESENT AND UNVERIFIABLE, never lost.
+            # Naming the kind keeps the remedy honest: an updated reader
+            # answers NEWER-EPOCH and does nothing at all for UNREADABLE.
+            kind, detail = opaque
+            remedy = ("Read this mission with an updated custody plugin/CLI"
+                      if kind == "NEWER-EPOCH"
+                      else "Restore read access to the receipt file")
             problems.append(
-                f"{rid}: RECEIPT-NEWER-EPOCH -- the receipt CLAIMS a contract "
-                "epoch newer than this reader; it is NOT reported as lost and "
-                "must NOT be retired. Read this mission with an updated "
-                "custody plugin/CLI")
+                f"{rid}: RECEIPT-{kind} -- the receipt is present and this "
+                f"reader cannot verify it; it is NOT reported as lost and "
+                f"must NOT be retired. {remedy}. Detail: {detail}")
         elif receipt is None:
             problems.append(
                 f"{rid}: RECEIPT-MISSING (absent, corrupt or schema-invalid) "

@@ -1225,14 +1225,25 @@ class Mission:
         return self._load_receipt_checked(request_id)[0]
 
     def _load_receipt_checked(
-            self, request_id: str) -> tuple[dict | None, str | None, str | None]:
-        """(record, refusal reason). ONE implementation of the trust rule,
+            self, request_id: str
+    ) -> tuple[dict | None, str | None, tuple[str, str] | None]:
+        """(record, refusal reason, OPAQUE). ONE implementation of the trust rule,
         two callers: `_load_receipt` wants only the verdict, while
         `acknowledge_receipt_loss` must also tell the operator WHY -- and
         "a receipt claiming decoy.md where the chain records the real path"
         is a different incident from "no receipt at all". Splitting these
         into two readers would be a fifth paraphrase of this rule; splitting
-        the RETURN VALUE is not."""
+        the RETURN VALUE is not.
+
+        THE THIRD SLOT IS "OPAQUE", not "skewed": `(KIND, message)` for a
+        receipt that is PRESENT and that this reader cannot verify. Two kinds
+        share that state exactly -- `NEWER-EPOCH` (no validator for it) and
+        `UNREADABLE` (I/O refused it) -- and both must stay out of the loss
+        bucket, whose only exit destroys the id. The kind is carried rather
+        than inferred so the marker and the operator message can name the real
+        condition; routing an I/O failure through the epoch wording would be
+        mis-stated enforcement, which this contract has had to correct five
+        times already."""
         path = self.store.receipt_path(request_id)
         try:
             record = json.loads(path.read_text(encoding="utf-8"))
@@ -1240,6 +1251,27 @@ class Mission:
             return None, "no receipt file at the id's content-addressed path", None
         except ValueError as exc:
             return None, f"receipt is not parseable JSON ({type(exc).__name__})", None
+        except OSError as exc:
+            # PRESENT BUT UNREADABLE IS NOT LOST. Only FileNotFoundError was
+            # caught, so a receipt that exists and cannot be read -- wrong
+            # permissions, a directory planted at its path, a failing disk --
+            # escaped as an uncaught OSError and crashed `resume()` and
+            # `continuity_breaks()` outright (measured: IsADirectoryError).
+            # That is the denial of service this method's own docstring
+            # forbids: the recovery path must not be killable by the tampering
+            # drift detection exists to catch.
+            #
+            # It is reported OPAQUE, never as loss. The loss marker's only
+            # exit permanently retires the id, and an I/O failure is not
+            # evidence the receipt is gone -- retiring on a transient
+            # permission error would destroy live coverage exactly as the
+            # newer-epoch case would (round 10).
+            return None, None, (
+                "UNREADABLE",
+                f"receipt file is present but could not be read "
+                f"({type(exc).__name__}: {exc.strerror or exc}). This reader "
+                f"cannot verify the artifact and cannot conclude the receipt "
+                f"is lost -- repair access and re-run resume")
         errors = validate_record(record)
         if errors:
             # A NEWER-EPOCH RECEIPT IS NOT A LOST ONE. During a rollout a
@@ -1253,7 +1285,7 @@ class Mission:
             # because this reader is old is the worst outcome available here.
             skew = epoch_skew_anywhere(record, "receipt")
             if skew:
-                return None, None, skew
+                return None, None, ("NEWER-EPOCH", skew)
             return None, f"receipt fails receipt@1 validation: {errors[:2]}", None
         # A receipt whose own request_id disagrees with the content-addressed
         # name it is stored under is malformed by construction -- never a
@@ -1679,12 +1711,15 @@ class Mission:
         # authority again -- comparing live content against stale ground truth
         # and reporting a mismatch that never happened, while the real loss of
         # the current receipt went unreported.
-        current_by_key: dict[str, tuple[str, dict | None, bool]] = {}
+        current_by_key: dict[str, tuple[str, dict | None, str | None]] = {}
         missing: list[str] = []
-        skewed: list[str] = []
-        unplaceable_skew: list[str] = []
+        unplaceable_opaque: list[tuple[str, str]] = []
         for request_id in latest["receipt_ids"]:
-            receipt, _refusal, skew = self._load_receipt_checked(request_id)
+            receipt, _refusal, opaque = self._load_receipt_checked(request_id)
+            # KIND, not a boolean. Both opaque kinds behave identically here
+            # (present, unverifiable, never "lost"), and differ only in the
+            # marker and message the operator is handed.
+            kind = opaque[0] if opaque else None
             # NOT missing, and NOT clean: this reader cannot read the receipt,
             # so it cannot verify the artifact -- but the receipt is present
             # and may be perfectly good. Which skewed ids get a MARKER is
@@ -1701,12 +1736,12 @@ class Mission:
             rel = (receipt["artifact_path"] if receipt is not None
                    else self._historical_effect_path(request_id))
             if rel is None:
-                if skew:
+                if kind:
                     # Unattributable but NOT lost: a receipt that is merely
                     # too new must never fall into the loss bucket, whose
                     # only exit destroys the id.
-                    if request_id not in unplaceable_skew:
-                        unplaceable_skew.append(request_id)
+                    if request_id not in [r for r, _k in unplaceable_opaque]:
+                        unplaceable_opaque.append((request_id, kind))
                     continue
                 # Unloadable AND unattributable: it can only be reported as
                 # the lost receipt it is (see _historical_effect_path).
@@ -1722,7 +1757,7 @@ class Mission:
             key = _normalize_relpath(rel)
             if os.name == "nt":
                 key = _ascii_case_fold(key)
-            current_by_key[key] = (request_id, receipt, bool(skew))
+            current_by_key[key] = (request_id, receipt, kind)
         # ONLY THE AUTHORITATIVE RECEIPT FOR AN ARTIFACT GETS A MARKER. Marking
         # every skewed id in receipt_ids meant a SUPERSEDED historical receipt
         # -- one the chain has already replaced with a readable successor --
@@ -1733,11 +1768,11 @@ class Mission:
         # RECEIPT-NEWER-EPOCH:req-old). Historical skew stays visible in the
         # census, which reports every id in receipt_ids; `resume` speaks only
         # about what currently governs an artifact.
-        skewed = [rid for rid, _r, is_skewed in current_by_key.values()
-                  if is_skewed] + unplaceable_skew
+        opaque_ids = [(rid, k) for rid, _r, k in current_by_key.values()
+                      if k] + unplaceable_opaque
         mismatched: list[str] = []
-        for request_id, receipt, is_skewed in current_by_key.values():
-            if is_skewed:
+        for request_id, receipt, kind in current_by_key.values():
+            if kind:
                 # Unverifiable, and honestly so: without the receipt's hash
                 # this reader cannot say the artifact drifted OR that it is
                 # clean. RECEIPT-NEWER-EPOCH already carries that, and NOT
@@ -1758,10 +1793,10 @@ class Mission:
                 mismatched.append(rel)
         mismatched.sort()
         missing.sort()
-        skewed.sort()
+        opaque_ids.sort()
         findings = (mismatched
                     + [f"RECEIPT-MISSING:{rid}" for rid in missing]
-                    + [f"RECEIPT-NEWER-EPOCH:{rid}" for rid in skewed])
+                    + [f"RECEIPT-{k}:{rid}" for rid, k in opaque_ids])
         # THE SKEW MARKER'S EXIT LIVES HERE. Its remedy is "update the reader
         # (or repair a false relabel) and re-run resume" -- no new verb, since
         # `reconcile` clears drift and `acknowledge_receipt_loss` retires an
@@ -1770,9 +1805,11 @@ class Mission:
         # with nothing able to clear it (measured) -- a workspace stranded
         # with no verb to resolve it, which is the exact objection this
         # contract raises against inverting the gate's fail-open posture.
+        live_opaque = {f"RECEIPT-{k}:{rid}" for rid, k in opaque_ids}
         stale_skew = [m for m in latest["state"]["unresolved_verdicts"]
-                      if m.startswith("RECEIPT-NEWER-EPOCH:")
-                      and m.split(":", 1)[1] not in skewed]
+                      if (m.startswith("RECEIPT-NEWER-EPOCH:")
+                          or m.startswith("RECEIPT-UNREADABLE:"))
+                      and m not in live_opaque]
         if not findings and not stale_skew:
             return []
         unresolved = [m for m in latest["state"]["unresolved_verdicts"]
@@ -1785,11 +1822,12 @@ class Mission:
             marker = f"RECEIPT-MISSING:{rid}"
             if marker not in unresolved:
                 unresolved.append(marker)
-        for rid in skewed:
+        for rid, kind in opaque_ids:
             # Deliberately NOT a RECEIPT-MISSING marker: that marker's only
             # exit is acknowledge_receipt_loss, which retires the id forever.
-            # The exit for this one is updating the reader.
-            marker = f"RECEIPT-NEWER-EPOCH:{rid}"
+            # The exit for these is repairing what made the receipt opaque --
+            # update the reader, or restore access to the file.
+            marker = f"RECEIPT-{kind}:{rid}"
             if marker not in unresolved:
                 unresolved.append(marker)
         # A run that ONLY cleared stale skew markers is not drift: if nothing
@@ -1800,7 +1838,7 @@ class Mission:
         else:
             status = ("reopened" if unresolved
                       else self._resumption_status())
-            note = ("newer-epoch receipt(s) now readable: "
+            note = ("previously unverifiable receipt(s) now readable: "
                     + ", ".join(m.split(":", 1)[1] for m in stale_skew))
         self._write_next(latest, path, status=status,
                           unresolved_verdicts=unresolved, note=note)
@@ -1865,14 +1903,17 @@ class Mission:
         # than "no receipt-loss marker". Retiring the id would discard
         # coverage an updated reader can still verify, and this verb has no
         # inverse.
-        receipt, refusal, skew = self._load_receipt_checked(request_id)
-        if skew:
+        receipt, refusal, opaque = self._load_receipt_checked(request_id)
+        if opaque:
+            # PRESENT BUT UNVERIFIABLE IS NOT LOST, whichever kind. Retiring
+            # discards coverage that a newer reader -- or a repaired
+            # permission -- can still verify, and this verb has no inverse.
+            kind, detail = opaque
             raise CustodyError(
-                f"refusing to retire {request_id!r}: its receipt CLAIMS a "
-                f"newer contract epoch, so this reader cannot tell a live "
-                f"future-format receipt from a corrupt one. Read this mission "
-                f"with an updated custody plugin/CLI before acknowledging any "
-                f"loss. Detail: {skew}")
+                f"refusing to retire {request_id!r}: its receipt is present "
+                f"and this reader cannot verify it ({kind}), so it cannot be "
+                f"concluded lost. Resolve that first, then re-run `resume`. "
+                f"Detail: {detail}")
         marker = f"RECEIPT-MISSING:{request_id}"
         unresolved = latest["state"]["unresolved_verdicts"]
         if marker not in unresolved:
@@ -1902,14 +1943,14 @@ class Mission:
         # the recheck. Any difference at all REFUSES, so the observation can
         # only cost this verb its write, never redirect it. Retirement is
         # permanent and has no inverse; declining a racy one costs a re-run.
-        recheck, _, recheck_skew = self._load_receipt_checked(request_id)
-        if recheck_skew is not None or recheck != receipt:
+        recheck, _, recheck_opaque = self._load_receipt_checked(request_id)
+        if recheck_opaque is not None or recheck != receipt:
             raise CustodyError(
                 f"refusing to retire {request_id!r}: its receipt changed "
                 f"between the check and the write, so this retirement would "
                 f"decide from an observation that is already stale. Nothing "
                 f"was retired; re-run `resume` and try again."
-                + (f" Detail: {recheck_skew}" if recheck_skew else ""))
+                + (f" Detail: {recheck_opaque[1]}" if recheck_opaque else ""))
         if receipt is not None and recorded_path is not None \
                 and receipt["artifact_path"] == recorded_path:
             new = self._write_next(

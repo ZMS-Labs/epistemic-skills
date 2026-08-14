@@ -591,6 +591,91 @@ def test_epoch_skew_does_not_disarm_a_root_that_still_resolves(
     check("mixed-epoch-run-marked-partial", summary["answers_are_partial"])
 
 
+def test_unreadable_receipt_never_crashes_and_is_never_called_lost(
+        workspace: Path) -> None:
+    """A receipt that is PRESENT and cannot be read must degrade, not crash,
+    and must never be reported as lost.
+
+    Only `FileNotFoundError` was caught, so a receipt whose path exists and
+    refuses to be read -- wrong permissions, a directory planted there, a
+    failing disk -- escaped as an uncaught `OSError`. Measured: `resume()` and
+    `continuity_breaks()` both died with `IsADirectoryError`, which is the
+    denial of service `_load_receipt`'s own docstring forbids in as many
+    words: the recovery path must not be killable by the tampering drift
+    detection exists to catch.
+
+    And it must NOT fall into the loss bucket. `RECEIPT-MISSING`'s only exit
+    permanently retires the id, and an I/O failure is not evidence a receipt
+    is gone -- retiring on a transient permission error destroys live coverage
+    exactly as the newer-epoch case would (round 10)."""
+    root = workspace / "unreadable"
+    m = open_mission(root, "m", "Work.")
+    m.approve()
+    m.record_effect("a.txt", "aa", "req-1")
+    receipt_path = next((root / "missions" / "m" / "receipts").glob("*.json"))
+    receipt_path.unlink()
+    receipt_path.mkdir()          # present, and unreadable as a file
+
+    for verb in ("resume", "continuity_breaks", "orphaned_retired_receipts"):
+        try:
+            getattr(Mission.load(root, actor="agent:worker"), verb)()
+            check(f"unreadable-receipt-does-not-crash-{verb}", True)
+        except Exception as exc:                      # noqa: BLE001
+            check(f"unreadable-receipt-crashed-{verb}:{type(exc).__name__}",
+                  False)
+
+    findings = Mission.load(root, actor="agent:worker").resume()
+    check("unreadable-receipt-not-called-lost",
+          not any(f.startswith("RECEIPT-MISSING") for f in findings))
+    check("unreadable-receipt-gets-its-own-marker",
+          "RECEIPT-UNREADABLE:req-1" in findings)
+    try:
+        Mission.load(root, actor="agent:worker").acknowledge_receipt_loss(
+            "req-1")
+        check("unreadable-receipt-retirement-refused", False)
+    except CustodyError as exc:
+        check("unreadable-receipt-retirement-refused",
+              "UNREADABLE" in str(exc))
+
+    # THE MARKER MUST HAVE AN EXIT: restore the file and it clears, or this
+    # has traded a crash for a wedge.
+    receipt_path.rmdir()
+    m2 = open_mission(workspace / "donor", "m", "Work.")
+    m2.approve()
+    m2.record_effect("a.txt", "aa", "req-1")
+    donor = next((workspace / "donor" / "missions" / "m"
+                  / "receipts").glob("*.json"))
+    receipt_path.write_text(donor.read_text(encoding="utf-8"),
+                            encoding="utf-8")
+    repaired = Mission.load(root, actor="agent:worker")
+    repaired.resume()
+    state = Mission.load(root, actor="agent:worker").status()
+    check("unreadable-marker-clears-when-readable",
+          not any("UNREADABLE" in v
+                  for v in state["state"]["unresolved_verdicts"]))
+
+    # The audit path must survive it too: the orphan report is existence-based
+    # and must not be preempted by the receipt-reading scan that precedes it.
+    broken = workspace / "audit-order"
+    n = open_mission(broken, "m", "Work.")
+    n.approve()
+    n.record_effect("a.txt", "aa", "req-1")
+    rp = next((broken / "missions" / "m" / "receipts").glob("*.json"))
+    rp.unlink()
+    Mission.load(broken, actor="agent:worker").resume()
+    Mission.load(broken, actor="agent:worker").acknowledge_receipt_loss(
+        "req-1")
+    rp.mkdir()                    # orphan present AND unreadable
+    out = subprocess.run(
+        [sys.executable, str(Path(__file__).parent / "custody_cli.py"),
+         "audit", "--workspace", str(broken), "--actor", "agent:worker"],
+        capture_output=True, text=True)
+    check("audit-survives-an-unreadable-receipt",
+          "Traceback" not in out.stderr)
+    check("audit-still-reports-the-orphan",
+          "orphaned_retired_receipts" in out.stdout and "req-1" in out.stdout)
+
+
 def test_retirement_refuses_a_receipt_that_appears_mid_method(
         workspace: Path) -> None:
     """The destructive verb must not decide from an observation that went
@@ -1079,7 +1164,11 @@ def test_newer_epoch_receipt_is_not_reported_as_loss(workspace: Path) -> None:
         reloaded.acknowledge_receipt_loss("req-1")
         check("newer-receipt-retirement-refused", False)
     except CustodyError as exc:
-        check("newer-receipt-retirement-refused", "CLAIMS a newer" in str(exc))
+        # The refusal must name the KIND, not merely refuse: "present and
+        # unverifiable" has two causes with different remedies, and an
+        # updated reader answers only one of them.
+        check("newer-receipt-retirement-refused",
+              "NEWER-EPOCH" in str(exc) and "CLAIMS an epoch newer" in str(exc))
 
     # THE MARKER MUST HAVE AN EXIT. Introducing one with none strands the
     # workspace `reopened` forever -- the objection this contract raises
@@ -4473,6 +4562,7 @@ TESTS = [
     test_backslash_effect_path_still_loads_its_own_receipt,
     test_newer_epoch_store_is_named_not_mistaken_for_an_empty_workspace,
     test_epoch_skew_does_not_disarm_a_root_that_still_resolves,
+    test_unreadable_receipt_never_crashes_and_is_never_called_lost,
     test_retirement_refuses_a_receipt_that_appears_mid_method,
     test_orphaned_retired_receipt_is_not_silent,
     test_no_census_surface_asserts_a_newer_epoch_as_fact,

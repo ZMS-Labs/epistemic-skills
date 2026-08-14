@@ -316,6 +316,29 @@ assuming:
 root?" as a security question, not housekeeping. A guard set that reads as
 armed is only armed while that answer is exactly one.
 
+## A receipt that cannot be READ is not a receipt that is GONE
+
+Only `FileNotFoundError` was caught when loading a receipt, so a receipt whose
+path exists and refuses to be read — wrong permissions, a directory planted at
+its path, a failing disk — escaped as an uncaught `OSError`. Measured:
+`resume()` and `continuity_breaks()` both died with `IsADirectoryError`, and
+`audit` terminated with a traceback before printing anything. That is the
+denial of service `_load_receipt`'s own docstring forbids in as many words —
+the recovery path must not be killable by the tampering drift detection exists
+to catch.
+
+Degrading it to `RECEIPT-MISSING` would have been the second half of the same
+mistake. That marker's only exit permanently retires the id, and an I/O
+failure is not evidence a receipt is gone: retiring on a transient permission
+error destroys live coverage exactly as retiring a newer-epoch receipt would.
+
+Both conditions are therefore **OPAQUE** — present, and unverifiable by this
+reader — and are carried with their KIND (`NEWER-EPOCH`, `UNREADABLE`) rather
+than flattened, because the remedies differ and an updated reader answers only
+one of them. Each gets its own marker with its own exit (update the reader; or
+restore access), neither enters the loss bucket, and `acknowledge_receipt_loss`
+refuses both.
+
 ## Retirement races a publisher — NARROWED, NOT CLOSED
 
 `acknowledge_receipt_loss` permanently removes an id from `receipt_ids`, and
