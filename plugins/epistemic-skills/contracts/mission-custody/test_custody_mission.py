@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import contextlib
+import io
 import json
 import os
 import shutil
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -11,8 +14,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 
-from custody_store import StoreError, sha256_bytes, sha256_file  # noqa: E402
-from verify_mission_custody import is_iso_utc  # noqa: E402
+from custody_store import (  # noqa: E402
+    ChainBroken, EpochSkew, MissionStore, StoreError, sha256_bytes, sha256_file,
+)
+from verify_mission_custody import (  # noqa: E402
+    EMBEDDED_RECORD_PATHS, epoch_skew, epoch_skew_anywhere, is_iso_utc,
+)
+from custody_gate import run_gate  # noqa: E402
+import census_missions  # noqa: E402
 from custody_mission import (  # noqa: E402
     _same_artifact,
     AcceptanceRefused,
@@ -457,6 +466,1242 @@ def test_foreign_mission_receipt_is_not_this_missions_receipt(
     own = donor._load_receipt("req-same")
     check("own-receipt-still-loads",
           own is not None and own["mission_id"] == "m-donor")
+
+
+def test_newer_epoch_store_is_named_not_mistaken_for_an_empty_workspace(
+        workspace: Path) -> None:
+    """The first contract@2 write on a stale-reader fleet must not read as
+    'no mission here'.
+
+    RECORD_KINDS is a closed set, so a @2 record is refused exactly like
+    corruption: the store fails validation, Mission.load skips it, and the
+    workspace reports NoActiveMission. Measured before this fix: an armed
+    enforce-mode mission that BLOCKED a guarded call returned `allow` with
+    reason `gate inert: NoActiveMission` the moment its epoch moved ahead of
+    the reader -- a false statement that points the operator at repairing a
+    mission that is not broken.
+
+    The posture is deliberately NOT inverted to fail-closed. Refusing to run
+    would strand every workspace the skew applies to with no verb to resolve
+    it -- es#173 kernel 3's objection to shipping the fail-open inversion
+    without a duplicate-resolution verb in the same change. Disclose the
+    skew; do not invert underneath it."""
+    guards = [{"name": "no-secrets", "tool_names": ["Bash"],
+               "command_regexes": ["cat .env"], "path_globs": ["secrets/**"]}]
+    m = open_mission(workspace, "m-epoch", "Epoch skew disclosure.",
+                     guard_mode="enforce", actuator_guards=guards)
+    m.approve()
+    m.record_effect("a.txt", "aa", "req-epoch")
+    call = {"tool_name": "Bash", "command": "cat .env"}
+    check("epoch-armed-blocks-before",
+          run_gate(workspace, call, actor="probe")["decision"] == "block")
+
+    tail = sorted((workspace / "missions" / "m-epoch"
+                   / "checkpoints").glob("*.json"))[-1]
+    record = json.loads(tail.read_text(encoding="utf-8"))
+    record["record"] = "checkpoint@2"
+    tail.write_text(json.dumps(record, indent=1, sort_keys=True),
+                    encoding="utf-8")
+
+    verdict = run_gate(workspace, call, actor="probe")
+    # posture unchanged...
+    check("epoch-still-inert-not-bricked", verdict["decision"] == "allow")
+    # ...but the reason must name the real cause, not an empty workspace
+    check("epoch-reason-names-the-reader",
+          "CLAIMS a contract epoch newer" in verdict["reason"]
+          and "NoActiveMission" not in verdict["reason"])
+    # and the distinction must be available to callers that want it
+    store = MissionStore(workspace / "missions" / "m-epoch")
+    try:
+        store.load_latest()
+        check("epoch-store-raises", False)
+    except EpochSkew as exc:
+        # Assert on the RECORD KIND, not the prose. The first version of this
+        # test matched the phrase "NEWER epoch", and correcting the message to
+        # stop over-claiming ("claims a newer epoch" rather than "is newer,
+        # not corrupt") broke it -- a test pinned to wording obstructs the
+        # honesty fixes it should be protecting.
+        check("epoch-store-raises", "checkpoint@2" in str(exc))
+    # a genuinely corrupt store must NOT be relabelled as epoch skew
+    record["record"] = "checkpoint@1"
+    record["status"] = "not-a-status"
+    tail.write_text(json.dumps(record, indent=1, sort_keys=True),
+                    encoding="utf-8")
+    try:
+        MissionStore(workspace / "missions" / "m-epoch").load_latest()
+        check("corrupt-not-relabelled-as-skew", False)
+    except EpochSkew:
+        check("corrupt-not-relabelled-as-skew", False)
+    except ChainBroken:
+        check("corrupt-not-relabelled-as-skew", True)
+
+    # The skew signal must be TYPED, not grepped out of the error message.
+    # NoActiveMission's text contains the workspace path, so a directory named
+    # `.../NEWER epoch migration` made a substring test report a newer-epoch
+    # store in a workspace holding no stores at all.
+    trap = workspace / "NEWER epoch migration"
+    (trap / "missions").mkdir(parents=True)
+    trap_verdict = run_gate(trap, call, actor="probe")
+    check("epoch-phrase-in-path-is-not-skew",
+          "CLAIMS a contract epoch newer" not in trap_verdict["reason"])
+
+
+def test_epoch_skew_does_not_disarm_a_root_that_still_resolves(
+        workspace: Path) -> None:
+    """A skewed store beside a readable active mission must not be reported
+    as a disarmed root.
+
+    `Mission.load` skips the skewed store and continues, so the gate still
+    BLOCKS there -- measured. Reporting that root fail-open is the
+    cry-fail-open defect a third time (chain-broken siblings, terminal
+    tamper, now epoch skew), and a mixed-version rollout is precisely when
+    the census must not misreport which roots lost enforcement."""
+    guards = [{"name": "no-secrets", "tool_names": ["Bash"],
+               "command_regexes": ["cat .env"], "path_globs": ["secrets/**"]}]
+    live = open_mission(workspace, "m-live", "Readable and armed.",
+                        guard_mode="enforce", actuator_guards=guards)
+    live.approve()
+    live.record_effect("a.txt", "aa", "req-live")
+
+    staging = workspace / "staging"
+    legacy = open_mission(staging, "m-legacy", "Will be skewed.")
+    legacy.approve()
+    legacy.record_effect("b.txt", "bb", "req-legacy")
+    shutil.move(str(staging / "missions" / "m-legacy"),
+                str(workspace / "missions" / "m-legacy"))
+    tail = sorted((workspace / "missions" / "m-legacy"
+                   / "checkpoints").glob("*.json"))[-1]
+    record = json.loads(tail.read_text(encoding="utf-8"))
+    record["record"] = "checkpoint@2"
+    tail.write_text(json.dumps(record, indent=1, sort_keys=True),
+                    encoding="utf-8")
+
+    call = {"tool_name": "Bash", "command": "cat .env"}
+    check("mixed-epoch-root-still-blocks",
+          run_gate(workspace, call, actor="probe")["decision"] == "block")
+
+    report = census_missions.census(workspace)
+    summary = census_missions.summarize([report])
+    check("mixed-epoch-root-not-called-fail-open",
+          not summary["q1_fail_open_roots"])
+    # ...but the skewed store is still disclosed, because ITS guards are not
+    # enforced even though the root's gate is not inert.
+    check("mixed-epoch-skew-still-reported",
+          any(e["mission"] == "m-legacy" for e in report["epoch_skew"]))
+    check("mixed-epoch-run-marked-partial", summary["answers_are_partial"])
+
+
+def test_a_proven_chain_break_outranks_an_epoch_claim(
+        workspace: Path) -> None:
+    """A newer-epoch label must not conceal a demonstrated alteration.
+
+    `EpochSkew` says "this reader cannot tell a genuine newer record from a
+    relabelled corrupt one" -- true only while nothing else settles it. The
+    SUCCESSOR settles it: its `prev_checkpoint_sha256` was computed over the
+    predecessor's ORIGINAL bytes, so a mismatch proves those bytes changed
+    after it was written, whatever epoch they now claim.
+
+    Measured before the fix on a three-revision chain with the INTERIOR
+    checkpoint edited: `load_latest()` raised `EpochSkew` and never looked at
+    revision 3, whose pointer already disproved the story. That is the
+    corruption-suppression failure the epoch signal exists to prevent, reached
+    through the one link that cannot be argued with."""
+    def skew_revision(name: str, which: int) -> Path:
+        root = workspace / name
+        m = open_mission(root, "m", "Work.")
+        m.approve()
+        m.record_effect("a.txt", "aa", "req-1")
+        checkpoints = sorted((root / "missions" / "m"
+                              / "checkpoints").glob("*.json"))
+        target = checkpoints[which]
+        record = json.loads(target.read_text(encoding="utf-8"))
+        record["manifest"]["record"] = "mission-manifest@2"
+        target.write_text(json.dumps(record, indent=1, sort_keys=True),
+                          encoding="utf-8")
+        return root
+
+    interior = skew_revision("interior", 1)
+    try:
+        MissionStore(interior / "missions" / "m").load_latest()
+        check("interior-skew-is-reported-as-a-proven-break", False)
+    except EpochSkew:
+        check("interior-skew-is-reported-as-a-proven-break", False)
+    except ChainBroken as exc:
+        check("interior-skew-is-reported-as-a-proven-break",
+              "CHAIN BREAK PROVEN" in str(exc))
+
+    # CONTROL: the TAIL has no successor, so nothing settles it and EpochSkew
+    # remains the honest answer -- the unsealed-tail boundary this contract
+    # already documents. A fix that reported every skew as tampering would be
+    # the mirror-image defect.
+    tail = skew_revision("tail", -1)
+    try:
+        MissionStore(tail / "missions" / "m").load_latest()
+        check("tail-skew-still-reported-as-skew", False)
+    except EpochSkew as exc:
+        check("tail-skew-still-reported-as-skew", "CLAIMS an epoch" in str(exc))
+    except ChainBroken:
+        check("tail-skew-still-reported-as-skew", False)
+
+
+def test_orphan_residue_is_reportable_after_the_mission_ends(
+        workspace: Path) -> None:
+    """The orphan residue must be reachable once the mission is terminal.
+
+    `Mission.load` resolves the single ACTIVE mission and skips terminal
+    stores by design, so the mission-scoped `audit` raises `NoActiveMission`
+    on a completed mission (measured: rc 2, empty stdout). A receipt that
+    reappears LATE is exactly the retirement-race residue this reporting
+    exists to surface, and late usually means after the work has finished --
+    so a mission-scoped report is structurally blind to its own worst case.
+
+    The CENSUS is the workspace-level instrument and already walks every
+    store under every root, terminal ones included, so the residue is
+    reported there. Deliberately NOT by giving the CLI a mission selector:
+    discovery is pathless by contract, `test_no_mission_flags_outside_open`
+    enforces that structurally, and relaxing it -- or changing `audit`'s
+    scope and record shape -- is a design decision about the discovery
+    contract, not a repair. That decision is not this fix's to make."""
+    root = workspace / "finished"
+    m = open_mission(root, "m", "Work.")
+    m.approve()
+    m.record_effect("a.txt", "aa", "req-1")
+    receipt_path = next((root / "missions" / "m" / "receipts").glob("*.json"))
+    saved = receipt_path.read_text(encoding="utf-8")
+    receipt_path.unlink()
+    Mission.load(root, actor="agent:worker").resume()
+    Mission.load(root, actor="agent:worker").acknowledge_receipt_loss("req-1")
+    Mission.load(root, actor="agent:worker").record_effect("a.txt", "aa", "r9")
+    Mission.load(root, actor="agent:worker").begin_verification()
+    Mission.load(root, actor="operator:zach").record_verdict(
+        "PASS", "operator:zach", "operator-accepted", "done")
+    receipt_path.write_text(saved, encoding="utf-8")   # residue, after the end
+
+    report = census_missions.census(root)
+    entry = [m_ for m_ in report["missions"] if m_["mission"] == "m"]
+    check("census-walks-the-terminal-store", len(entry) == 1
+          and not entry[0]["active"])
+    found = " ".join(entry[0].get("orphaned_retired_receipts", []))
+    check("census-reports-the-orphan-after-completion",
+          "ORPHANED-RETIRED-RECEIPT" in found and "req-1" in found)
+
+    out = subprocess.run(
+        [sys.executable, str(Path(__file__).parent / "census_missions.py"),
+         str(root)], capture_output=True, text=True).stdout
+    check("orphan-reaches-the-human-census", "ORPHANED-RETIRED-RECEIPT" in out)
+
+    # A DEFINITE FINDING IS NOT AN INCOMPLETE ANSWER. Filing the orphan as a
+    # receipt "problem" marked the whole run partial, and the es#166
+    # procedure requires answers_are_partial == false of EVERY governing run
+    # -- so one historical residue would have blocked that window forever.
+    # Nothing here is uninspected: the orphan is known, and says so.
+    summary = census_missions.summarize([report])
+    check("orphan-does-not-make-the-run-partial",
+          summary["answers_are_partial"] is False)
+    check("orphan-is-not-filed-as-a-receipt-problem",
+          not any("ORPHANED-RETIRED-RECEIPT" in p
+                  for p in entry[0].get("receipt_problems", [])))
+
+    # CONTROL: a mission that retired an id and got NO receipt back must not
+    # be reported -- an always-on warning is not a signal.
+    clean = workspace / "clean"
+    n = open_mission(clean, "m", "Work.")
+    n.approve()
+    n.record_effect("a.txt", "aa", "req-1")
+    next((clean / "missions" / "m" / "receipts").glob("*.json")).unlink()
+    Mission.load(clean, actor="agent:worker").resume()
+    Mission.load(clean, actor="agent:worker").acknowledge_receipt_loss("req-1")
+    clean_report = census_missions.census(clean)
+    check("no-orphan-reported-without-one",
+          not any(m_.get("orphaned_retired_receipts")
+                  for m_ in clean_report["missions"]))
+
+    # ...and the discovery contract is untouched by this fix.
+    check("pathless-discovery-invariant-intact",
+          subprocess.run(
+              [sys.executable, str(Path(__file__).parent / "test_custody_cli.py")],
+              capture_output=True, text=True).returncode == 0)
+
+
+def test_unreadable_receipt_never_crashes_and_is_never_called_lost(
+        workspace: Path) -> None:
+    """A receipt that is PRESENT and cannot be read must degrade, not crash,
+    and must never be reported as lost.
+
+    Only `FileNotFoundError` was caught, so a receipt whose path exists and
+    refuses to be read -- wrong permissions, a directory planted there, a
+    failing disk -- escaped as an uncaught `OSError`. Measured: `resume()` and
+    `continuity_breaks()` both died with `IsADirectoryError`, which is the
+    denial of service `_load_receipt`'s own docstring forbids in as many
+    words: the recovery path must not be killable by the tampering drift
+    detection exists to catch.
+
+    And it must NOT fall into the loss bucket. `RECEIPT-MISSING`'s only exit
+    permanently retires the id, and an I/O failure is not evidence a receipt
+    is gone -- retiring on a transient permission error destroys live coverage
+    exactly as the newer-epoch case would (round 10)."""
+    root = workspace / "unreadable"
+    m = open_mission(root, "m", "Work.")
+    m.approve()
+    m.record_effect("a.txt", "aa", "req-1")
+    receipt_path = next((root / "missions" / "m" / "receipts").glob("*.json"))
+    receipt_path.unlink()
+    receipt_path.mkdir()          # present, and unreadable as a file
+
+    for verb in ("resume", "continuity_breaks", "orphaned_retired_receipts"):
+        try:
+            getattr(Mission.load(root, actor="agent:worker"), verb)()
+            check(f"unreadable-receipt-does-not-crash-{verb}", True)
+        except Exception as exc:                      # noqa: BLE001
+            check(f"unreadable-receipt-crashed-{verb}:{type(exc).__name__}",
+                  False)
+
+    findings = Mission.load(root, actor="agent:worker").resume()
+    check("unreadable-receipt-not-called-lost",
+          not any(f.startswith("RECEIPT-MISSING") for f in findings))
+    check("unreadable-receipt-gets-its-own-marker",
+          "RECEIPT-UNREADABLE:req-1" in findings)
+    try:
+        Mission.load(root, actor="agent:worker").acknowledge_receipt_loss(
+            "req-1")
+        check("unreadable-receipt-retirement-refused", False)
+    except CustodyError as exc:
+        check("unreadable-receipt-retirement-refused",
+              "UNREADABLE" in str(exc))
+
+    # THE MARKER MUST HAVE AN EXIT: restore the file and it clears, or this
+    # has traded a crash for a wedge.
+    receipt_path.rmdir()
+    m2 = open_mission(workspace / "donor", "m", "Work.")
+    m2.approve()
+    m2.record_effect("a.txt", "aa", "req-1")
+    donor = next((workspace / "donor" / "missions" / "m"
+                  / "receipts").glob("*.json"))
+    receipt_path.write_text(donor.read_text(encoding="utf-8"),
+                            encoding="utf-8")
+    repaired = Mission.load(root, actor="agent:worker")
+    repaired.resume()
+    state = Mission.load(root, actor="agent:worker").status()
+    check("unreadable-marker-clears-when-readable",
+          not any("UNREADABLE" in v
+                  for v in state["state"]["unresolved_verdicts"]))
+
+    # The audit path must survive it too: the orphan report is existence-based
+    # and must not be preempted by the receipt-reading scan that precedes it.
+    broken = workspace / "audit-order"
+    n = open_mission(broken, "m", "Work.")
+    n.approve()
+    n.record_effect("a.txt", "aa", "req-1")
+    rp = next((broken / "missions" / "m" / "receipts").glob("*.json"))
+    rp.unlink()
+    Mission.load(broken, actor="agent:worker").resume()
+    Mission.load(broken, actor="agent:worker").acknowledge_receipt_loss(
+        "req-1")
+    rp.mkdir()                    # orphan present AND unreadable
+    out = subprocess.run(
+        [sys.executable, str(Path(__file__).parent / "custody_cli.py"),
+         "audit", "--workspace", str(broken), "--actor", "agent:worker"],
+        capture_output=True, text=True)
+    check("audit-survives-an-unreadable-receipt",
+          "Traceback" not in out.stderr)
+    check("audit-still-reports-the-orphan",
+          "orphaned_retired_receipts" in out.stdout and "req-1" in out.stdout)
+
+
+def test_retirement_refuses_a_receipt_that_appears_mid_method(
+        workspace: Path) -> None:
+    """The destructive verb must not decide from an observation that went
+    stale while it worked.
+
+    One snapshot fixed the earlier two-read defect but does not close the
+    window between the snapshot and the commit -- and this method spends that
+    window walking the whole chain TWICE (`_historical_effect_path`, and
+    `_resumption_status` added while fixing the draft promotion, which
+    measurably widened it). A receipt published in there was retired anyway,
+    and retirement has no inverse.
+
+    The recheck is not a return to deciding from two reads: nothing reads the
+    recheck's value. Any difference REFUSES, so a second observation can cost
+    this verb its write but never redirect it."""
+    root = workspace / "racy"
+    m = open_mission(root, "m", "Work.")
+    m.approve()
+    m.record_effect("a.txt", "aa", "req-1")
+    receipt_path = next((root / "missions" / "m" / "receipts").glob("*.json"))
+    saved = receipt_path.read_text(encoding="utf-8")
+    receipt_path.unlink()
+    Mission.load(root, actor="agent:worker").resume()
+
+    victim = Mission.load(root, actor="agent:worker")
+    original = victim._historical_effect_path
+
+    def publish_mid_method(request_id, kind=False):
+        receipt_path.write_text(saved, encoding="utf-8")   # publisher lands
+        return original(request_id, kind)
+
+    victim._historical_effect_path = publish_mid_method
+    try:
+        victim.acknowledge_receipt_loss("req-1")
+        check("mid-method-publication-refused", False)
+    except CustodyError as exc:
+        check("mid-method-publication-refused",
+              "changed between the check and the write" in str(exc))
+    check("racy-retirement-left-the-id-covered",
+          "req-1" in Mission.load(root, actor="agent:worker")
+          .status()["receipt_ids"])
+
+    # CONTROL: a genuinely absent receipt must still retire, or the recheck
+    # has simply disabled the only exit RECEIPT-MISSING has.
+    calm = workspace / "calm"
+    n = open_mission(calm, "m", "Work.")
+    n.approve()
+    n.record_effect("a.txt", "aa", "req-1")
+    next((calm / "missions" / "m" / "receipts").glob("*.json")).unlink()
+    Mission.load(calm, actor="agent:worker").resume()
+    check("uncontended-retirement-still-works",
+          Mission.load(calm, actor="agent:worker")
+          .acknowledge_receipt_loss("req-1") > 0)
+
+
+def test_orphaned_retired_receipt_is_not_silent(workspace: Path) -> None:
+    """A receipt file at a retired id's path must be reported somewhere.
+
+    Retirement is permanent and `_write_effect` refuses to reuse a retired id,
+    so such a receipt is coverage nothing will ever read. Measured before this
+    existed: `resume()` returned `[]` and `status` said nothing -- the
+    condition was ENTIRELY SILENT, which is what made the retirement race
+    destructive rather than merely racy. The window cannot be closed without
+    cross-process locking this contract does not have; that landing in it
+    leaves a findable mark CAN be guaranteed."""
+    root = workspace / "orphan"
+    m = open_mission(root, "m", "Work.")
+    m.approve()
+    m.record_effect("a.txt", "aa", "req-1")
+    receipt_path = next((root / "missions" / "m" / "receipts").glob("*.json"))
+    saved = receipt_path.read_text(encoding="utf-8")
+    receipt_path.unlink()
+    Mission.load(root, actor="agent:worker").resume()
+    Mission.load(root, actor="agent:worker").acknowledge_receipt_loss("req-1")
+
+    clean = Mission.load(root, actor="agent:worker")
+    check("no-orphan-before-the-receipt-returns",
+          clean.orphaned_retired_receipts() == [])
+
+    receipt_path.write_text(saved, encoding="utf-8")      # the race's residue
+    found = Mission.load(root, actor="agent:worker").orphaned_retired_receipts()
+    check("orphaned-retired-receipt-reported",
+          [f["request_id"] for f in found] == ["req-1"])
+
+    # It must reach an operator, not merely exist on an object.
+    out = subprocess.run(
+        [sys.executable, str(Path(__file__).parent / "custody_cli.py"),
+         "audit", "--workspace", str(root), "--actor", "agent:worker"],
+        capture_output=True, text=True)
+    check("orphan-surfaced-by-audit", "orphaned_retired_receipts" in out.stdout
+          and "req-1" in out.stdout)
+    check("orphan-makes-audit-nonzero", out.returncode == 3)
+
+    # ...and it raises NOTHING: an unretractable condition must not become an
+    # obligation with no exit, the wedge this contract has rejected twice.
+    live = Mission.load(root, actor="agent:worker")
+    check("orphan-does-not-wedge-the-mission", live.resume() == []
+          or all("ORPHAN" not in f for f in live.resume()))
+
+
+def test_no_census_surface_asserts_a_newer_epoch_as_fact(
+        workspace: Path) -> None:
+    """Every place the census mentions a newer epoch must say CLAIMS.
+
+    This reader has no `@2` validator, so a tampered store relabelled
+    `checkpoint@2` is indistinguishable here from a genuine newer one. A
+    surface that states the epoch as fact tells the operator to upgrade a
+    reader when the store may simply be damaged -- the corruption-suppression
+    failure the whole signal exists to prevent.
+
+    Written as an INVARIANT OVER EVERY SURFACE rather than a check on the one
+    that was reported. Three separate surfaces have carried the categorical
+    wording and been corrected one at a time -- the gate verdicts, the README
+    CONTROL row, and then `q1_fail_open_roots[].cause`, which is the
+    machine-readable one a JSON consumer reads first. A per-surface assertion
+    would have passed on each of the two rounds before this one."""
+    _skew_a_store_into(workspace, "m-only")
+    report = census_missions.census(workspace)
+    summary = census_missions.summarize([report])
+    human = subprocess.run(
+        [sys.executable, str(Path(__file__).parent / "census_missions.py"),
+         str(workspace)], capture_output=True, text=True).stdout
+    machine = subprocess.run(
+        [sys.executable, str(Path(__file__).parent / "census_missions.py"),
+         "--json", str(workspace)], capture_output=True, text=True).stdout
+
+    def offenders(text: str) -> list[str]:
+        """Lines mentioning a newer epoch without naming it as a claim."""
+        return [ln.strip() for ln in text.splitlines()
+                if "newer contract epoch" in ln
+                and "CLAIM" not in ln.upper()]
+
+    for label, text in (("summary", json.dumps(summary, indent=1)),
+                        ("report", json.dumps(report, indent=1)),
+                        ("human", human),
+                        ("json-cli", machine)):
+        bad = offenders(text)
+        check(f"{label}-never-asserts-newer-epoch-as-fact: {bad[:1]}", not bad)
+
+    # The Q1 cause is called out by name because it is the authoritative
+    # machine-readable field and the one a consumer may read alone.
+    causes = [a["cause"] for a in summary["q1_fail_open_roots"]]
+    check(f"q1-cause-names-the-claim: {causes}",
+          causes and all("CLAIMS" in c for c in causes))
+
+    # CONTROL: the skew must still be REPORTED. Satisfying the invariant by
+    # falling silent about newer epochs would pass every check above.
+    check("skew-still-reported-at-all",
+          bool(report["epoch_skew"]) and bool(summary["q1_fail_open_roots"])
+          and "epoch" in human)
+
+
+def test_reopening_a_draft_never_approves_it(workspace: Path) -> None:
+    """No path back from `reopened` may promote a mission that was never
+    approved.
+
+    `record_effect` is legal in `draft`, so a draft mission can reopen --
+    tampered artifact, lost receipt, or a receipt relabelled to a newer epoch.
+    Every exit then wrote the constant "active", crossing the draft-to-active
+    approval transition without an approval. Measured on all four: afterwards
+    `approve()` refuses ("status is 'active', expected 'draft'") while
+    `begin_verification()` proceeds -- the gate is not merely skipped, it
+    becomes unreachable, and the crossing is triggered by damaging a file.
+
+    The reported case was the epoch-skew exit; the same constant sat on the
+    reconcile, receipt-loss and recovery exits, and reconcile needs no
+    relabelled record at all. Fixing only the reported surface would have been
+    this PR's own recurring defect committed inside the fix for a report of
+    it."""
+    def drafted(name: str) -> Path:
+        root = workspace / name
+        m = open_mission(root, "m", "Work.")
+        m.record_effect("a.txt", "aa", "req-1")   # legal in draft
+        check(f"{name}-starts-draft", m.status()["status"] == "draft")
+        return root
+
+    def status_of(root: Path) -> str:
+        return Mission.load(root, actor="agent:worker").status()["status"]
+
+    # (1) epoch-skew exit -- the reported case.
+    skew = drafted("skew")
+    path = next((skew / "missions" / "m" / "receipts").glob("*.json"))
+    record = json.loads(path.read_text(encoding="utf-8"))
+    for kind in ("receipt@2", "receipt@1"):
+        path.write_text(json.dumps({**record, "record": kind}, indent=1,
+                                   sort_keys=True), encoding="utf-8")
+        Mission.load(skew, actor="agent:worker").resume()
+    check("skew-exit-stays-draft", status_of(skew) == "draft")
+
+    # (2) reconcile exit -- reachable with no epoch claim at all.
+    drift = drafted("drift")
+    (drift / "a.txt").write_text("TAMPERED", encoding="utf-8")
+    Mission.load(drift, actor="agent:worker").resume()
+    Mission.load(drift, actor="agent:worker").reconcile("a.txt", "aa", "req-2")
+    check("reconcile-exit-stays-draft", status_of(drift) == "draft")
+
+    # (3) receipt-loss then recovery exit.
+    lost = drafted("lost")
+    next((lost / "missions" / "m" / "receipts").glob("*.json")).unlink()
+    Mission.load(lost, actor="agent:worker").resume()
+    Mission.load(lost, actor="agent:worker").acknowledge_receipt_loss("req-1")
+    Mission.load(lost, actor="agent:worker").record_effect(
+        "a.txt", "aa", "req-9")
+    check("recovery-exit-stays-draft", status_of(lost) == "draft")
+
+    # The transition must still be AVAILABLE, not merely uncrossed: a fix that
+    # left the mission unable to approve would strand it exactly as the
+    # promotion did, in the other direction.
+    for root in (skew, drift, lost):
+        Mission.load(root, actor="agent:worker").approve()
+        check(f"{root.name}-approves-after-repair", status_of(root) == "active")
+
+    # CONTROL: an APPROVED mission must still return to `active`, or this has
+    # been fixed by pinning every exit to draft.
+    live = workspace / "approved"
+    m = open_mission(live, "m", "Work.")
+    m.approve()
+    m.record_effect("a.txt", "aa", "req-1")
+    (live / "a.txt").write_text("TAMPERED", encoding="utf-8")
+    Mission.load(live, actor="agent:worker").resume()
+    Mission.load(live, actor="agent:worker").reconcile("a.txt", "aa", "req-2")
+    check("approved-mission-still-returns-active", status_of(live) == "active")
+
+
+def test_unreadable_root_is_never_reported_as_nothing_to_enforce(
+        workspace: Path) -> None:
+    """A root whose stores could not all be opened must not print under an
+    all-clear header.
+
+    The per-root CAUSE was accurate throughout ("no readable mission (1
+    store(s) uninspected)"), but it printed under
+    "gate INERT, nothing to enforce -- no active mission", while the SAME
+    report listed that mission's guards as unenforced further down: one run
+    asserting both that there is nothing here and that something here is
+    disarmed. Headers are what an operator scans, and "nothing to enforce" is
+    a claim about the estate this reader cannot make about a store it could
+    not open."""
+    _skew_a_store_into(workspace, "m-only")
+    out = subprocess.run(
+        [sys.executable, str(Path(__file__).parent / "census_missions.py"),
+         str(workspace)], capture_output=True, text=True).stdout
+    check("skewed-only-root-not-called-nothing-to-enforce",
+          "nothing to enforce" not in out)
+    check("skewed-only-root-says-not-established-empty",
+          "NOT established as empty" in out)
+    summary = census_missions.summarize([census_missions.census(workspace)])
+    check("skewed-only-root-carries-uninspected-count",
+          all(n["uninspected"] > 0
+              for n in summary["q1_no_active_mission_roots"]))
+
+    # CONTROL: a genuinely terminal root has nothing uninspected and must
+    # still get the plain wording, or this has replaced one inaccurate header
+    # with another.
+    done = workspace / "finished"
+    m = open_mission(done, "m-done", "Work.")
+    m.approve()
+    m.record_effect("a.txt", "aa", "req-1")
+    m.begin_verification()
+    Mission.load(done, actor="operator:zach").record_verdict(
+        "PASS", "operator:zach", "operator-accepted", "done")
+    out_done = subprocess.run(
+        [sys.executable, str(Path(__file__).parent / "census_missions.py"),
+         str(done)], capture_output=True, text=True).stdout
+    check("terminal-only-root-still-nothing-to-enforce",
+          "nothing to enforce" in out_done
+          and "NOT established as empty" not in out_done)
+
+
+def _skew_a_store_into(workspace: Path, name: str) -> None:
+    """Move a mission opened elsewhere in beside an existing one and relabel
+    its tail `checkpoint@2`, so the root holds a store this reader must skip.
+
+    Built by MOVING a store opened in its own workspace, never by editing a
+    copy's `mission_id`: that edit breaks the hash chain, the sibling is
+    skipped as ChainBroken instead, and the epoch case is never exercised
+    (measured while building the round-5 census fixtures on #174)."""
+    staging = workspace / "staging"
+    legacy = open_mission(staging, name, "Will be skewed.")
+    legacy.approve()
+    legacy.record_effect("b.txt", "bb", f"req-{name}")
+    shutil.move(str(staging / "missions" / name),
+                str(workspace / "missions" / name))
+    shutil.rmtree(staging, ignore_errors=True)
+    tail = sorted((workspace / "missions" / name
+                   / "checkpoints").glob("*.json"))[-1]
+    record = json.loads(tail.read_text(encoding="utf-8"))
+    record["record"] = "checkpoint@2"
+    tail.write_text(json.dumps(record, indent=1, sort_keys=True),
+                    encoding="utf-8")
+
+
+def _stale_reader_scope(workspace: Path, mission: str) -> str:
+    """The bracketed scope the human report prints for a skewed store."""
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        census_missions.main([str(workspace)])
+    for line in buf.getvalue().splitlines():
+        if line.startswith("  !! ") and line.rstrip().endswith("]") \
+                and f"/{mission}  [" in line:
+            return line.split("  [", 1)[1].rstrip()[:-1]
+    return "<no stale-reader row>"
+
+
+def test_stale_reader_scope_never_claims_enforcement_the_gate_lacks(
+        workspace: Path) -> None:
+    """"The root still enforces" must be read off the computed fail-open set,
+    not from "the root has an active mission".
+
+    An active mission resolving is strictly weaker than the gate enforcing:
+    two active missions raise MultipleActiveMissions during DISCOVERY, and a
+    tampered manifest raises inside status() -- in both, a mission is active
+    and the gate allows. Measured before the fix: with a skewed store beside
+    two active missions the same report printed `[multiple active]` under Q1
+    and "its gate still enforces" four lines later, while the live gate
+    returned `allow`.
+
+    This is the fourth instance of the mis-stated-enforcement class in the
+    census and the third fix that re-derived the condition by hand, so the
+    control case is pinned beside the two defects: the honest "still
+    enforces" line must SURVIVE, or the fix is just silence."""
+    guards = [{"name": "no-secrets", "tool_names": ["Bash"],
+               "command_regexes": ["cat .env"], "path_globs": ["secrets/**"]}]
+    call = {"tool_name": "Bash", "command": "cat .env"}
+
+    # CONTROL: one healthy active mission -- the gate really does enforce.
+    healthy = workspace / "healthy"
+    live = open_mission(healthy, "m-live", "Healthy.",
+                        guard_mode="enforce", actuator_guards=guards)
+    live.approve()
+    live.record_effect("a.txt", "aa", "req-live")
+    _skew_a_store_into(healthy, "m-legacy")
+    check("stale-scope-control-gate-blocks",
+          run_gate(healthy, call, actor="probe")["decision"] == "block")
+    check("stale-scope-control-says-enforces",
+          "still enforce" in _stale_reader_scope(healthy, "m-legacy"))
+
+    # DEFECT 1: a duplicate active mission -- Mission.load refuses, gate allows.
+    dupe = workspace / "dupe"
+    one = open_mission(dupe, "m-one", "First.",
+                       guard_mode="enforce", actuator_guards=guards)
+    one.approve()
+    one.record_effect("a.txt", "aa", "req-one")
+    shutil.copytree(one.store.mission_dir, dupe / "missions" / "m-two")
+    _skew_a_store_into(dupe, "m-legacy")
+    check("stale-scope-duplicate-gate-allows",
+          run_gate(dupe, call, actor="probe")["decision"] == "allow")
+    dupe_scope = _stale_reader_scope(dupe, "m-legacy")
+    check("stale-scope-duplicate-claims-no-enforcement",
+          "still enforce" not in dupe_scope)
+    check("stale-scope-duplicate-names-the-cause",
+          "multiple active" in dupe_scope)
+
+    # DEFECT 2: a tampered sole active mission -- status() raises, hook allows.
+    tampered = workspace / "tampered"
+    solo = open_mission(tampered, "m-solo", "Sole.",
+                        guard_mode="enforce", actuator_guards=guards)
+    solo.approve()
+    solo.record_effect("a.txt", "aa", "req-solo")
+    _skew_a_store_into(tampered, "m-legacy")
+    tail = sorted((tampered / "missions" / "m-solo"
+                   / "checkpoints").glob("*.json"))[-1]
+    record = json.loads(tail.read_text(encoding="utf-8"))
+    record["manifest"]["authority"]["actuator_guards"][0]["path_globs"] = \
+        ["nothing/**"]
+    tail.write_text(json.dumps(record, indent=1, sort_keys=True) + "\n",
+                    encoding="utf-8")
+    try:
+        run_gate(tampered, call, actor="probe")
+        check("stale-scope-tamper-gate-does-not-enforce", False)
+    except CustodyError:
+        # run_gate propagates; custody_hook catches CustodyError and ALLOWS.
+        check("stale-scope-tamper-gate-does-not-enforce", True)
+    check("stale-scope-tamper-claims-no-enforcement",
+          "still enforce" not in _stale_reader_scope(tampered, "m-legacy"))
+
+    # A root with no active mission at all is still called wholly inert.
+    alone = workspace / "alone"
+    (alone / "missions").mkdir(parents=True)
+    _skew_a_store_into(alone, "m-legacy")
+    check("stale-scope-skew-alone-is-whole-root",
+          "WHOLE ROOT" in _stale_reader_scope(alone, "m-legacy"))
+
+    # DEFECT 3: absence from the fail-open set is STILL not enforcement. A
+    # root whose sole active mission is unarmed, or armed in `audit` mode,
+    # raises no Q1 row -- nothing was holding, so there is no hole to report
+    # -- yet the gate allows every call. Measured: both said "still enforces".
+    for label, kwargs in (("unarmed", {}),
+                          ("audit", {"guard_mode": "audit",
+                                     "actuator_guards": guards})):
+        root = workspace / label
+        sib = open_mission(root, "m-sib", "Sibling.", **kwargs)
+        sib.approve()
+        sib.record_effect("a.txt", "aa", f"req-{label}")
+        _skew_a_store_into(root, "m-legacy")
+        check(f"stale-scope-{label}-gate-allows",
+              run_gate(root, call, actor="probe")["decision"] == "allow")
+        check(f"stale-scope-{label}-claims-no-enforcement",
+              "still enforce" not in _stale_reader_scope(root, "m-legacy"))
+
+
+def test_embedded_newer_manifest_is_diagnosed_as_skew_not_corruption(
+        workspace: Path) -> None:
+    """A `checkpoint@1` embedding a `mission-manifest@2` is a stale-reader
+    case, not a broken chain.
+
+    Records embed records, so a store can be too new for this reader while
+    its OUTER kind is perfectly familiar: validate_record returns
+    'manifest: embedded mission-manifest@1 required' and an epoch check that
+    looks only at the outer record returns None. Measured before the fix: an
+    armed enforce mission reported ChainBroken and `run_gate` allowed with
+    `gate inert: NoActiveMission` -- the exact silent diagnosis this signal
+    exists to replace, reached through the one nesting the schema mandates."""
+    guards = [{"name": "no-secrets", "tool_names": ["Bash"],
+               "command_regexes": ["cat .env"], "path_globs": ["secrets/**"]}]
+    m = open_mission(workspace, "m-armed", "Armed.",
+                     guard_mode="enforce", actuator_guards=guards)
+    m.approve()
+    m.record_effect("a.txt", "aa", "req-1")
+    tail = sorted((workspace / "missions" / "m-armed"
+                   / "checkpoints").glob("*.json"))[-1]
+    record = json.loads(tail.read_text(encoding="utf-8"))
+    record["manifest"]["record"] = "mission-manifest@2"
+    tail.write_text(json.dumps(record, indent=1, sort_keys=True),
+                    encoding="utf-8")
+
+    # The outer-record predicate is unchanged and still answers only its own
+    # question; the WALK is what the store consults.
+    check("embedded-skew-outer-predicate-silent",
+          epoch_skew(record, "checkpoint") is None)
+    check("embedded-skew-walk-finds-it",
+          epoch_skew_anywhere(record, "checkpoint") is not None)
+    try:
+        MissionStore(workspace / "missions" / "m-armed").load_latest()
+        check("embedded-skew-store-raises-epochskew", False)
+    except EpochSkew as exc:
+        check("embedded-skew-store-raises-epochskew",
+              "mission-manifest@2" in str(exc))
+    except ChainBroken:
+        check("embedded-skew-store-raises-epochskew", False)
+    verdict = run_gate(workspace, {"tool_name": "Bash",
+                                   "command": "cat .env"}, actor="probe")
+    check("embedded-skew-gate-names-stale-reader",
+          "CLAIMS a contract epoch newer" in verdict.get("reason", ""))
+    # A store that is merely CORRUPT must not be relabelled as skew.
+    other = workspace / "corrupt"
+    c = open_mission(other, "m-c", "Corrupt me.")
+    c.approve()
+    ctail = sorted((other / "missions" / "m-c"
+                    / "checkpoints").glob("*.json"))[-1]
+    ctail.write_text("{ not json", encoding="utf-8")
+    check("embedded-skew-corrupt-still-reads-corrupt",
+          "CLAIMS a contract epoch newer" not in run_gate(
+              other, {"tool_name": "Bash", "command": "cat .env"},
+              actor="probe").get("reason", ""))
+
+
+def test_newer_epoch_receipt_is_not_reported_as_loss(workspace: Path) -> None:
+    """A `receipt@2` under a `checkpoint@1` chain must never reach the
+    retirement verb.
+
+    During a rollout a newer-format receipt can sit beside a checkpoint this
+    reader still handles, so the checkpoint path never consults the epoch
+    table and the receipt fails validation as an unknown kind. Measured
+    before the fix: `resume()` emitted `RECEIPT-MISSING:req-1` for a receipt
+    that was present and intact. That marker's ONLY exit is
+    `acknowledge_receipt_loss`, which permanently retires the id -- so a
+    stale reader could destroy live coverage by following its own
+    diagnosis."""
+    m = open_mission(workspace, "m-r", "Work.")
+    m.approve()
+    m.record_effect("a.txt", "aa", "req-1")
+    receipt_path = next((workspace / "missions" / "m-r"
+                         / "receipts").glob("*.json"))
+    record = json.loads(receipt_path.read_text(encoding="utf-8"))
+    record["record"] = "receipt@2"
+    receipt_path.write_text(json.dumps(record, indent=1, sort_keys=True),
+                            encoding="utf-8")
+
+    reloaded = Mission.load(workspace, actor="agent:worker")
+    findings = reloaded.resume()
+    check("newer-receipt-not-called-missing",
+          not any(f.startswith("RECEIPT-MISSING") for f in findings))
+    check("newer-receipt-gets-its-own-marker",
+          "RECEIPT-NEWER-EPOCH:req-1" in findings)
+    try:
+        reloaded.acknowledge_receipt_loss("req-1")
+        check("newer-receipt-retirement-refused", False)
+    except CustodyError as exc:
+        # The refusal must name the KIND, not merely refuse: "present and
+        # unverifiable" has two causes with different remedies, and an
+        # updated reader answers only one of them.
+        check("newer-receipt-retirement-refused",
+              "NEWER-EPOCH" in str(exc) and "CLAIMS an epoch newer" in str(exc))
+
+    # THE MARKER MUST HAVE AN EXIT. Introducing one with none strands the
+    # workspace `reopened` forever -- the objection this contract raises
+    # against inverting the gate's fail-open posture, committed inside a fix
+    # for a different stranding. The exit is "repair or update, then re-run
+    # resume"; no new verb, because reconcile clears drift and
+    # acknowledge_receipt_loss retires an id, and a receipt that was never
+    # lost needs neither.
+    receipt_path.write_text(json.dumps(
+        {**record, "record": "receipt@1"}, indent=1, sort_keys=True),
+        encoding="utf-8")
+    repaired = Mission.load(workspace, actor="agent:worker")
+    check("newer-receipt-marker-clears-when-readable", repaired.resume() == [])
+    state = repaired.status()
+    check("newer-receipt-mission-returns-active",
+          state["status"] == "active")
+    check("newer-receipt-marker-gone",
+          not state["state"]["unresolved_verdicts"])
+
+    # CONTROL: a genuinely absent receipt must STILL be reported as loss and
+    # still be retirable, or this fix has simply disabled the recovery path.
+    other = workspace / "genuine-loss"
+    n = open_mission(other, "m-c", "Work.")
+    n.approve()
+    n.record_effect("a.txt", "aa", "req-1")
+    next((other / "missions" / "m-c" / "receipts").glob("*.json")).unlink()
+    reloaded_n = Mission.load(other, actor="agent:worker")
+    check("genuine-loss-still-reported",
+          "RECEIPT-MISSING:req-1" in reloaded_n.resume())
+    check("genuine-loss-still-retirable",
+          reloaded_n.acknowledge_receipt_loss("req-1") > 0)
+
+
+def test_newer_receipt_supersedes_its_stale_predecessor(
+        workspace: Path) -> None:
+    """A skewed receipt must claim its artifact's slot, not vacate it.
+
+    Skipping the skewed receipt left the SUPERSEDED older receipt
+    authoritative for the same artifact, so resume compared live content
+    against an obsolete hash and reported RECONCILIATION. Measured: the
+    artifact on disk read "NEW" -- exactly what the newer receipt governs --
+    while resume called it drift. The remedy for that marker is `reconcile`,
+    which writes: an operator following the diagnosis would have OVERWRITTEN
+    valid content on the strength of a stale record."""
+    m = open_mission(workspace, "m", "Work.")
+    m.approve()
+    m.record_effect("a.txt", "OLD", "req-old")
+    m.record_effect("a.txt", "NEW", "req-new")
+    newer = (workspace / "missions" / "m" / "receipts"
+             / (sha256_bytes(b"req-new") + ".json"))
+    record = json.loads(newer.read_text(encoding="utf-8"))
+    record["record"] = "receipt@2"
+    newer.write_text(json.dumps(record, indent=1, sort_keys=True),
+                     encoding="utf-8")
+
+    reloaded = Mission.load(workspace, actor="agent:worker")
+    findings = reloaded.resume()
+    check("newer-receipt-no-false-drift",
+          not any(f == "a.txt" or f.startswith("RECONCILIATION")
+                  for f in findings))
+    check("newer-receipt-still-disclosed",
+          "RECEIPT-NEWER-EPOCH:req-new" in findings)
+    # No RECONCILIATION marker means `reconcile` has no door for this path,
+    # which is the property that protects the bytes.
+    try:
+        reloaded.reconcile("a.txt", "CLOBBERED", "req-fix")
+        check("newer-receipt-reconcile-refused", False)
+    except CustodyError:
+        check("newer-receipt-reconcile-refused", True)
+    check("newer-receipt-artifact-untouched",
+          (workspace / "a.txt").read_text(encoding="utf-8") == "NEW")
+
+    # A SUPERSEDED skewed receipt must NOT reopen the mission. The chain has
+    # already replaced it with a readable successor that verifies the artifact,
+    # so nothing is wrong -- and the marker could never clear, because the old
+    # file stays relabelled. `resume` speaks about what currently governs an
+    # artifact; historical skew stays visible in the census, which reports
+    # every id in receipt_ids.
+    superseded = workspace / "superseded"
+    sm = open_mission(superseded, "m-s", "Work.")
+    sm.approve()
+    sm.record_effect("a.txt", "OLD", "req-old")
+    sm.record_effect("a.txt", "NEW", "req-new")
+    stale = (superseded / "missions" / "m-s" / "receipts"
+             / (sha256_bytes(b"req-old") + ".json"))
+    stale_record = json.loads(stale.read_text(encoding="utf-8"))
+    stale_record["record"] = "receipt@2"
+    stale.write_text(json.dumps(stale_record, indent=1, sort_keys=True),
+                     encoding="utf-8")
+    reloaded_s = Mission.load(superseded, actor="agent:worker")
+    check("superseded-skew-does-not-reopen", reloaded_s.resume() == [])
+    check("superseded-skew-leaves-mission-active",
+          reloaded_s.status()["status"] == "active")
+
+    # CONTROL: genuine drift on a path with NO skewed receipt must still be
+    # reported and still be reconcilable, or this fix has bought its safety
+    # by disabling drift detection.
+    other = workspace / "genuine-drift"
+    n = open_mission(other, "m-d", "Work.")
+    n.approve()
+    n.record_effect("b.txt", "GOOD", "req-b")
+    (other / "b.txt").write_text("TAMPERED", encoding="utf-8")
+    reloaded_n = Mission.load(other, actor="agent:worker")
+    check("genuine-drift-still-reported", "b.txt" in reloaded_n.resume())
+    reloaded_n.reconcile("b.txt", "GOOD", "req-b-fix")
+    check("genuine-drift-still-reconcilable",
+          (other / "b.txt").read_text(encoding="utf-8") == "GOOD")
+
+
+def test_embedded_record_paths_match_the_schemas(workspace: Path) -> None:
+    """`EMBEDDED_RECORD_PATHS` must list every schema `$ref` position, and no
+    others.
+
+    The epoch walk was first written to visit every nested dict, on the
+    reasoning that a hand-written list would go stale. That reasoning was
+    right about the risk and wrong about the remedy: the permissive version
+    let a decoy planted in `state` convert a corruption diagnosis into
+    "upgrade your reader". This test is the remedy that keeps the narrow
+    version honest -- add an embedded record to a schema without listing it
+    here and this fails, so staleness is caught by CI rather than by an
+    operator reading a wrong verdict."""
+    here = Path(__file__).resolve().parent
+    for schema_path in sorted(here.glob("*.schema.json")):
+        schema = json.loads(schema_path.read_text(encoding="utf-8"))
+        kind = schema.get("properties", {}).get("record", {}).get("const", "")
+        family, _, _ = str(kind).rpartition("@")
+        # position -> family the $ref target actually declares, so the table's
+        # FAMILY column is pinned too: listing the key alone let a decoy of a
+        # different family be honoured in that slot (round 11).
+        refs = {}
+        for name, spec in schema.get("properties", {}).items():
+            if not isinstance(spec, dict) or "$ref" not in spec:
+                continue
+            target = json.loads((here / spec["$ref"]).read_text(encoding="utf-8"))
+            refs[name] = str(target.get("properties", {})
+                             .get("record", {}).get("const", "")).rpartition("@")[0]
+        listed = dict(EMBEDDED_RECORD_PATHS.get(family, {}))
+        check(f"embedded-paths-match-{family or schema_path.stem}",
+              refs == listed)
+    # And nothing is listed for a family no schema declares.
+    families = set()
+    for schema_path in here.glob("*.schema.json"):
+        schema = json.loads(schema_path.read_text(encoding="utf-8"))
+        kind = schema.get("properties", {}).get("record", {}).get("const", "")
+        families.add(str(kind).rpartition("@")[0])
+    check("embedded-paths-no-unknown-families",
+          set(EMBEDDED_RECORD_PATHS) <= families)
+
+
+def test_epoch_decoy_outside_a_record_position_is_not_skew(
+        workspace: Path) -> None:
+    """A decoy in a non-record position must NOT suppress the corruption
+    diagnosis.
+
+    `state` is a plain object under the checkpoint schema and cannot hold a
+    record, so `{"record": "checkpoint@2"}` there is tampering, not a newer
+    store. Measured against the permissive walk: a checkpoint with a
+    corrupted `written_by` AND that decoy was reported as a stale reader and
+    the operator told to upgrade -- the corruption-suppression attack
+    `epoch_skew`'s docstring exists to prevent, handed every key in the file
+    rather than just the top-level one."""
+    guards = [{"name": "no-secrets", "tool_names": ["Bash"],
+               "command_regexes": ["cat .env"], "path_globs": ["secrets/**"]}]
+    call = {"tool_name": "Bash", "command": "cat .env"}
+
+    def diagnosis(root: Path, mutate) -> str:
+        m = open_mission(root, "m-armed", "Armed.",
+                         guard_mode="enforce", actuator_guards=guards)
+        m.approve()
+        m.record_effect("a.txt", "aa", "req-1")
+        tail = sorted((root / "missions" / "m-armed"
+                       / "checkpoints").glob("*.json"))[-1]
+        record = json.loads(tail.read_text(encoding="utf-8"))
+        mutate(record)
+        tail.write_text(json.dumps(record, indent=1, sort_keys=True),
+                        encoding="utf-8")
+        return run_gate(root, call, actor="probe").get("reason", "")
+
+    def decoy_in_state(rec: dict) -> None:
+        rec["state"]["record"] = "checkpoint@2"
+        rec["written_by"] = 12345  # ordinary corruption alongside the decoy
+
+    def decoy_deep_in_manifest(rec: dict) -> None:
+        # Inside an embedded record, but not AT a record position.
+        rec["manifest"]["authority"]["record"] = "checkpoint@2"
+        rec["written_by"] = 12345
+
+    def genuine_embedded(rec: dict) -> None:
+        rec["manifest"]["record"] = "mission-manifest@2"
+
+    # An UNSUPPORTED outer kind must not activate EMBEDDED_RECORD_PATHS: this
+    # reader has no schema saying `checkpoint@0` embeds anything, so honouring
+    # a nested claim on the strength of the family string alone is the decoy
+    # suppression again, one level up. `checkpoint@0` is ordinary corruption
+    # (validate_record: "unknown kind"), not a stale reader.
+    check("unsupported-outer-kind-not-traversed",
+          epoch_skew_anywhere(
+              {"record": "checkpoint@0",
+               "manifest": {"record": "mission-manifest@2"}},
+              "checkpoint") is None)
+    check("garbage-outer-kind-not-traversed",
+          epoch_skew_anywhere(
+              {"record": "nonsense",
+               "manifest": {"record": "mission-manifest@2"}},
+              "checkpoint") is None)
+    # ...while a NEWER outer kind still reports, from the outer record itself.
+    # A record of the WRONG FAMILY in an embedded position is corruption, not
+    # a newer store: the schema fixes that slot, so no epoch of another family
+    # can ever be valid there.
+    check("wrong-family-in-embedded-slot-not-skew",
+          epoch_skew_anywhere(
+              {"record": "checkpoint@1",
+               "manifest": {"record": "receipt@2"}},
+              "checkpoint") is None)
+    check("newer-outer-kind-still-skew",
+          epoch_skew_anywhere(
+              {"record": "checkpoint@2",
+               "manifest": {"record": "mission-manifest@1"}},
+              "checkpoint") is not None)
+    check("decoy-in-state-not-called-skew",
+          "CLAIMS a contract epoch newer" not in
+          diagnosis(workspace / "state-decoy", decoy_in_state))
+    check("decoy-deep-in-manifest-not-called-skew",
+          "CLAIMS a contract epoch newer" not in
+          diagnosis(workspace / "deep-decoy", decoy_deep_in_manifest))
+    # CONTROL: the round-4 case must survive this narrowing, or the fix has
+    # simply reverted the defect it was built for.
+    check("genuine-embedded-manifest-still-skew",
+          "CLAIMS a contract epoch newer" in
+          diagnosis(workspace / "genuine", genuine_embedded))
+
+
+def test_epoch_parsing_survives_hostile_digits(workspace: Path) -> None:
+    """The epoch comparison must never raise, whatever the kind string says.
+
+    `str.isdigit()` and `int()` disagree in two directions, and the caller
+    that consults this predicate is ITSELF an error path with no except
+    clause: `_load_receipt_checked` reaches it only after validation has
+    already failed. Measured before the fix, with a receipt whose kind was
+    `receipt@` plus 4301 digits: `resume()` died with an uncaught ValueError
+    from `int()`'s conversion limit -- not a degraded diagnosis, an
+    unreachable recovery flow, triggered by a string in a file."""
+    # MALFORMED -> None. Not a well-formed claim about any epoch, so
+    # `validate_record`'s unknown-kind error is the accurate diagnosis.
+    malformed = ["receipt@²",          # isdigit() True, int() raises
+                 "receipt@٣",          # Arabic-Indic: not our numerals
+                 "receipt@01",              # non-canonical
+                 "receipt@",
+                 "receipt@-2",
+                 "receipt@2.0"]
+    # WELL-FORMED -> skew. A 4301-digit epoch is absurd but it is a genuine
+    # claim to be newer, and the honest answer is the one every other newer
+    # claim gets. The defect was never the verdict; it was that reaching the
+    # verdict raised. Its exit is the same as any skew: repair or update.
+    huge = "receipt@" + "9" * 4301
+    for kind, want_skew in [(k, False) for k in malformed] + [(huge, True)]:
+        label = kind[8:16] or "<empty>"
+        try:
+            check(f"hostile-epoch-classified:{label!r}",
+                  (epoch_skew({"record": kind}, "receipt") is not None)
+                  == want_skew)
+        except Exception as exc:                      # noqa: BLE001
+            check(f"hostile-epoch-raised:{label!r} {type(exc).__name__}",
+                  False)
+
+    # ... and through the verb that actually crashed. The finding it lands on
+    # matters less than that resume() RETURNS: an uncaught ValueError here
+    # took the whole recovery flow out, not just this receipt's diagnosis.
+    m = open_mission(workspace, "m-h", "Work.")
+    m.approve()
+    m.record_effect("a.txt", "aa", "req-1")
+    path = next((workspace / "missions" / "m-h" / "receipts").glob("*.json"))
+    record = json.loads(path.read_text(encoding="utf-8"))
+    path.write_text(json.dumps({**record, "record": huge},
+                               indent=1, sort_keys=True), encoding="utf-8")
+    try:
+        findings = Mission.load(workspace, actor="agent:worker").resume()
+        check("hostile-epoch-resume-returns", True)
+        check("hostile-epoch-receipt-diagnosed",
+              "RECEIPT-NEWER-EPOCH:req-1" in findings)
+    except Exception as exc:                          # noqa: BLE001
+        check(f"hostile-epoch-resume-raised:{type(exc).__name__}", False)
+
+    # CONTROL: a genuine newer epoch must still be recognised, or this has
+    # been fixed by making the predicate answer None to everything. Both a
+    # single digit and a multi-digit epoch, since the comparison is now over
+    # strings and "10" < "9" lexicographically.
+    for kind in ("receipt@2", "receipt@10", "receipt@4300"):
+        check(f"genuine-newer-epoch-still-skew:{kind}",
+              epoch_skew({"record": kind}, "receipt") is not None)
+    check("older-epoch-still-not-skew",
+          epoch_skew({"record": "receipt@0"}, "receipt") is None)
+
+
+def test_wrong_family_in_a_slot_is_corruption_not_skew(
+        workspace: Path) -> None:
+    """A record of the wrong family for its slot is corruption, whatever
+    epoch it claims.
+
+    The schema fixes what each slot holds, so a `checkpoint@2` in a receipt
+    file cannot be a store this reader is merely too old for. Measured before
+    the fix: `resume()` reported `RECEIPT-NEWER-EPOCH`,
+    `acknowledge_receipt_loss` refused the id as too new, and the mission was
+    left `reopened` WITH NO EXIT -- the stranding
+    `test_newer_epoch_receipt_is_not_reported_as_loss` exists to forbid,
+    reached through the family check that fix did not make.
+
+    Round 11 applied exactly this rule to EMBEDDED positions while standing
+    on the top-level one it left open: the fourth round in which a fix
+    narrowed WHERE a claim is honoured and left WHAT may claim it unchecked
+    one level out."""
+    for kind in ("checkpoint@2", "mission-manifest@2", "acceptance-verdict@2"):
+        check(f"foreign-family-in-receipt-slot-not-skew:{kind}",
+              epoch_skew({"record": kind}, "receipt") is None)
+    check("foreign-family-in-checkpoint-slot-not-skew",
+          epoch_skew({"record": "receipt@2"}, "checkpoint") is None)
+    # A whole misfiled record must not be TRAVERSED either: its own kind is
+    # current, so only the outer family check can stop the walk reporting the
+    # skew of a manifest planted inside it.
+    check("misfiled-record-not-traversed",
+          epoch_skew_anywhere(
+              {"record": "checkpoint@1",
+               "manifest": {"record": "mission-manifest@2"}},
+              "receipt") is None)
+    # A typo in the caller's slot would silence the signal everywhere; it
+    # must fail loudly instead.
+    try:
+        epoch_skew({"record": "receipt@2"}, "reciept")
+        check("unknown-expected-family-raises", False)
+    except ValueError:
+        check("unknown-expected-family-raises", True)
+
+    # ... and end to end: the mission must NOT wedge.
+    m = open_mission(workspace, "m-f", "Work.")
+    m.approve()
+    m.record_effect("a.txt", "aa", "req-1")
+    path = next((workspace / "missions" / "m-f" / "receipts").glob("*.json"))
+    record = json.loads(path.read_text(encoding="utf-8"))
+    path.write_text(json.dumps({**record, "record": "checkpoint@2"},
+                               indent=1, sort_keys=True), encoding="utf-8")
+    reloaded = Mission.load(workspace, actor="agent:worker")
+    findings = reloaded.resume()
+    check("foreign-family-receipt-is-ordinary-loss",
+          "RECEIPT-MISSING:req-1" in findings
+          and not any(f.startswith("RECEIPT-NEWER-EPOCH") for f in findings))
+    check("foreign-family-receipt-is-retirable",
+          reloaded.acknowledge_receipt_loss("req-1") > 0)
+
+    # CONTROL: the round-10 case must survive. A receipt@2 in a receipt slot
+    # is still a stale reader, still not retirable, and still not a loss.
+    other = workspace / "same-family"
+    n = open_mission(other, "m-s", "Work.")
+    n.approve()
+    n.record_effect("a.txt", "aa", "req-1")
+    npath = next((other / "missions" / "m-s" / "receipts").glob("*.json"))
+    nrec = json.loads(npath.read_text(encoding="utf-8"))
+    npath.write_text(json.dumps({**nrec, "record": "receipt@2"}, indent=1,
+                                sort_keys=True), encoding="utf-8")
+    reloaded_n = Mission.load(other, actor="agent:worker")
+    check("same-family-newer-receipt-still-skew",
+          "RECEIPT-NEWER-EPOCH:req-1" in reloaded_n.resume())
+    try:
+        reloaded_n.acknowledge_receipt_loss("req-1")
+        check("same-family-newer-receipt-still-refused", False)
+    except CustodyError:
+        check("same-family-newer-receipt-still-refused", True)
+
+
+def test_open_refuses_beside_an_epoch_skewed_store(workspace: Path) -> None:
+    """`open` must not treat "I could not read it" as "nothing is active".
+
+    A skipped skewed store may hold an ACTIVE mission -- an updated reader is
+    the only thing that can say. Opening beside it wrote a second @1 mission
+    (reproduced: the workspace ended holding both), and the moment the reader
+    is upgraded discovery sees two active missions and the gate goes inert --
+    a state no verb in this contract can clear, because there is no
+    duplicate-resolution command. Refusing costs one reader upgrade; allowing
+    it wedges the workspace for whoever comes next."""
+    m = open_mission(workspace, "old", "First.")
+    m.approve()
+    m.record_effect("a.txt", "aa", "req-1")
+    tail = sorted((workspace / "missions" / "old"
+                   / "checkpoints").glob("*.json"))[-1]
+    record = json.loads(tail.read_text(encoding="utf-8"))
+    record["record"] = "checkpoint@2"
+    tail.write_text(json.dumps(record, indent=1, sort_keys=True),
+                    encoding="utf-8")
+    try:
+        open_mission(workspace, "new", "Second.")
+        check("open-refuses-beside-skew", False)
+    except CustodyError:
+        check("open-refuses-beside-skew", True)
+    # A REFUSED open leaves nothing behind, same as every other refused open.
+    check("open-refused-beside-skew-writes-nothing",
+          sorted(p.name for p in (workspace / "missions").iterdir()) == ["old"])
+    # CONTROL: a genuinely empty workspace still opens, or this is just a
+    # lock rather than a guard.
+    fresh = workspace / "fresh"
+    open_mission(fresh, "brand-new", "Fresh.")
+    check("open-still-works-on-empty-workspace",
+          (fresh / "missions" / "brand-new").is_dir())
 
 
 def test_backslash_effect_path_still_loads_its_own_receipt(
@@ -3447,6 +4692,25 @@ TESTS = [
     test_foreign_mission_receipt_is_not_this_missions_receipt,
     test_cross_workspace_receipt_cannot_silence_drift,
     test_backslash_effect_path_still_loads_its_own_receipt,
+    test_newer_epoch_store_is_named_not_mistaken_for_an_empty_workspace,
+    test_epoch_skew_does_not_disarm_a_root_that_still_resolves,
+    test_a_proven_chain_break_outranks_an_epoch_claim,
+    test_orphan_residue_is_reportable_after_the_mission_ends,
+    test_unreadable_receipt_never_crashes_and_is_never_called_lost,
+    test_retirement_refuses_a_receipt_that_appears_mid_method,
+    test_orphaned_retired_receipt_is_not_silent,
+    test_no_census_surface_asserts_a_newer_epoch_as_fact,
+    test_reopening_a_draft_never_approves_it,
+    test_unreadable_root_is_never_reported_as_nothing_to_enforce,
+    test_stale_reader_scope_never_claims_enforcement_the_gate_lacks,
+    test_embedded_newer_manifest_is_diagnosed_as_skew_not_corruption,
+    test_newer_epoch_receipt_is_not_reported_as_loss,
+    test_newer_receipt_supersedes_its_stale_predecessor,
+    test_embedded_record_paths_match_the_schemas,
+    test_epoch_decoy_outside_a_record_position_is_not_skew,
+    test_epoch_parsing_survives_hostile_digits,
+    test_wrong_family_in_a_slot_is_corruption_not_skew,
+    test_open_refuses_beside_an_epoch_skewed_store,
     test_forged_restored_receipt_is_not_trusted,
     test_distinct_files_never_share_an_obligation,
     test_obligations_match_by_artifact_not_by_string,

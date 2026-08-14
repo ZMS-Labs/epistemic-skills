@@ -74,7 +74,7 @@ sys.path.insert(0, str(ROOT))
 from custody_mission import (  # noqa: E402
     CustodyError, Mission, _ascii_case_fold, _normalize_relpath,
 )
-from custody_store import MissionStore, StoreError  # noqa: E402
+from custody_store import EpochSkew, MissionStore, StoreError  # noqa: E402
 
 TERMINAL = ("completed", "cancelled")
 
@@ -178,8 +178,15 @@ def _lget(record: dict, key: str) -> list:
 
 
 def _receipts(mission: Mission, store: MissionStore,
-              latest: dict) -> tuple[list[str], list[str]]:
-    """(normalized artifact paths, problems) for CHAIN-BOUND receipt ids.
+              latest: dict) -> tuple[list[str], list[str], list[str]]:
+    """(normalized artifact paths, problems, orphaned retired receipts) for
+    CHAIN-BOUND receipt ids.
+
+    PROBLEMS AND ORPHANS ARE DIFFERENT CLAIMS. A problem means the census
+    could not inspect something and does not know what it holds -- that is
+    what makes an answer PARTIAL. An orphan is fully known and definitively
+    reported. Conflating them made one historical residue mark every later
+    run incomplete forever.
 
     THE CHAIN IS THE AUTHORITY ON WHICH PATH, not just on which ids.
     `scope_consistency()` already refuses to trust the receipt file for this
@@ -217,13 +224,31 @@ def _receipts(mission: Mission, store: MissionStore,
         if not isinstance(rid, str):
             problems.append(f"receipt id {rid!r} is not a string")
             continue
+        opaque = None
         try:
-            receipt = mission._load_receipt(rid)
+            # The CHECKED loader, not `_load_receipt`: the thin wrapper drops
+            # the opaque signal, and this instrument would then print
+            # RECEIPT-MISSING for a receipt that is present, intact and merely
+            # newer -- telling the operator the opposite of what `resume` now
+            # says about the same file.
+            receipt, _refusal, opaque = mission._load_receipt_checked(rid)
         except (OSError, ValueError) as exc:
             receipt = None
             problems.append(f"{rid}: receipt unreadable: {type(exc).__name__}")
         chained = index.get(rid)
-        if receipt is None:
+        if opaque:
+            # Both opaque kinds mean PRESENT AND UNVERIFIABLE, never lost.
+            # Naming the kind keeps the remedy honest: an updated reader
+            # answers NEWER-EPOCH and does nothing at all for UNREADABLE.
+            kind, detail = opaque
+            remedy = ("Read this mission with an updated custody plugin/CLI"
+                      if kind == "NEWER-EPOCH"
+                      else "Restore read access to the receipt file")
+            problems.append(
+                f"{rid}: RECEIPT-{kind} -- the receipt is present and this "
+                f"reader cannot verify it; it is NOT reported as lost and "
+                f"must NOT be retired. {remedy}. Detail: {detail}")
+        elif receipt is None:
             problems.append(
                 f"{rid}: RECEIPT-MISSING (absent, corrupt or schema-invalid) "
                 "-- `resume` reports this id as drift")
@@ -247,7 +272,43 @@ def _receipts(mission: Mission, store: MissionStore,
             continue
         problems.append(f"{rid}: path from RECEIPT FILE (chain silent)")
         paths.append(_norm(ap))
-    return paths, problems
+    # RETIRED IDS ARE NOT IN receipt_ids, so the loop above structurally
+    # cannot see them. A receipt file sitting at a retired id's path is
+    # coverage nothing will ever read -- the chain says the id is gone and
+    # `_write_effect` refuses to reuse it -- and it is the residue a
+    # retirement that raced a publisher leaves behind.
+    #
+    # IT IS REPORTED HERE because the census is the workspace-level
+    # instrument: it walks every store under every root INCLUDING TERMINAL
+    # ONES, while `Mission.load` resolves only the single active mission. A
+    # receipt that reappears late most often reappears after the work is
+    # finished, so the mission-scoped `audit` cannot reach exactly the case
+    # this residue occupies. Nothing about discovery changes to say so.
+    #
+    # REPORTED SEPARATELY FROM `problems`, and this is the whole point of the
+    # distinction: `problems` marks an answer PARTIAL, meaning a store or a
+    # receipt could not be inspected and the census does not know what it
+    # holds. An orphan is the opposite -- fully known, definitively reported,
+    # and covering nothing. Filing it as partial made every later run
+    # incomplete forever over a historical residue, and the es#166 measurement
+    # procedure requires answers_are_partial == false of EVERY governing run,
+    # so one old orphan would have blocked that window permanently. "Something
+    # is wrong" and "I could not look" are different claims.
+    orphans: list[str] = []
+    try:
+        for rid in sorted(mission._retired_receipt_ids(latest)):
+            if mission.store.receipt_path(rid).exists():
+                orphans.append(
+                    f"{rid}: ORPHANED-RETIRED-RECEIPT -- a receipt file is "
+                    "present for an id this mission RETIRED. It covers "
+                    "nothing, the id can never be reused, and a retirement "
+                    "that raced a publisher leaves exactly this residue")
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        # The SCAN failing IS an inspection failure, so it belongs in
+        # `problems`: here the census genuinely does not know.
+        problems.append(
+            f"retired-id scan unreadable: {type(exc).__name__}: {exc}")
+    return paths, problems, orphans
 
 
 def _classify_guard(rule) -> str:
@@ -301,7 +362,8 @@ def census(root: Path) -> dict:
     root = root.resolve()
     missions_root = root / "missions"
     report: dict = {"root": str(root), "missions": [], "unreadable": [],
-                    "environmental": [], "integrity": []}
+                    "environmental": [], "integrity": [],
+                    "epoch_skew": []}
     # DISCOVERY ITSELF CAN FAIL. A missions/ directory that cannot be statted
     # or enumerated raised out of census() entirely -- aborting the whole
     # multi-root walk with a traceback and no report, so every LATER root
@@ -376,6 +438,21 @@ def census(root: Path) -> dict:
             continue
         try:
             latest, _ = store.load_latest()
+        except EpochSkew as exc:
+            # NEWER EPOCH, not corruption. The gate skips this store exactly as
+            # it skips a corrupt one, but the OPERATOR RESPONSE is opposite:
+            # nothing here needs repairing, the reader needs updating. And
+            # unlike corruption, this is the expected steady state during a
+            # contract@2 rollout, when it will be true of every workspace whose
+            # consumer is stale -- measured to flip an armed enforce-mission
+            # from `block` to `allow`. So it counts as FAIL-OPEN, with its own
+            # cause, rather than hiding among skipped-by-gate stores.
+            report["epoch_skew"].append({
+                "mission": md.name,
+                "reason": f"{type(exc).__name__}: {exc}",
+                "fails_open": True,
+            })
+            continue
         except (StoreError, ValueError) as exc:
             # CORRUPTION: Mission.load catches exactly this pair and SKIPS
             # the store, so the gate resolves the healthy sibling and keeps
@@ -488,7 +565,7 @@ def census(root: Path) -> dict:
         auth = _dget(manifest, "authority")
         scope = _dget(manifest, "scope")
         guards = _lget(auth, "actuator_guards")
-        paths, problems = _receipts(mission, store, latest)
+        paths, problems, orphans = _receipts(mission, store, latest)
         abs_paths = [str((root / p).resolve()) for p in paths]
         probed = [_identity(a) for a in abs_paths]
         identities = [i for i, _ in probed]
@@ -566,6 +643,7 @@ def census(root: Path) -> dict:
             "escaped_targets": escaped,
             "recover_obligations": recover,
             "receipt_problems": problems,
+            "orphaned_retired_receipts": orphans,
         })
     return report
 
@@ -617,7 +695,8 @@ def summarize(reports: list[dict]) -> dict:
             # environmental fixture was being described as terminal-only on
             # the strength of a checkpoint nobody could open.)
             unread = (len(r["unreadable"]) + len(r.get("environmental", []))
-                      + len(r.get("integrity", [])))
+                      + len(r.get("integrity", []))
+                      + len(r.get("epoch_skew", [])))
             if r.get("discovery_failed"):
                 cause = "missions/ could not be enumerated"
             elif r.get("note"):
@@ -629,11 +708,57 @@ def summarize(reports: list[dict]) -> dict:
                          f"({unread} uninspected)")
             else:
                 cause = "no active mission (terminal only)"
-            no_active.append({"root": r["root"], "cause": cause})
+            # "NOTHING TO ENFORCE" IS A STRONGER CLAIM THAN "NOTHING I COULD
+            # READ", and only the second is established when a store was
+            # skipped. A root whose sole store CLAIMS a newer epoch went into
+            # this bucket under a header reading "nothing to enforce -- no
+            # active mission", while the SAME report listed that mission's
+            # guards as unenforced further down: one run asserting both that
+            # there is nothing here and that something here is disarmed. An
+            # operator scanning headers reads the all-clear. The per-entry
+            # cause was accurate throughout; the bucket it was printed under
+            # was not, which is why this is recorded as a reporting defect
+            # rather than a computation one.
+            no_active.append({"root": r["root"], "cause": cause,
+                              "uninspected": unread})
         for e in r.get("environmental", []):
             fail_open.append({"root": r["root"],
                               "cause": f"unreadable store ({e['reason']})",
                               "missions": [e["mission"]]})
+        # A SKEWED STORE DOES NOT DISARM A ROOT THAT STILL RESOLVES ONE.
+        # `Mission.load` skips the skewed store and continues, so a root
+        # holding one readable active mission beside a `checkpoint@2` store
+        # still ENFORCES -- measured: the gate returns `block` on a guarded
+        # call there while this loop was reporting the root fail-open. That is
+        # the cry-fail-open defect for the THIRD time in this file's history
+        # (chain-broken siblings, then terminal tamper, now epoch skew), and
+        # this instance was committed inside the fix for a different
+        # fail-open. The mixed-version rollout is exactly when the census
+        # must not lie about which roots lost enforcement.
+        #
+        # The skew is still reported in its own section either way: the
+        # SKEWED MISSION's guards are genuinely unenforced even when the
+        # root's gate is not inert.
+        if not act:
+            for e in r.get("epoch_skew", []):
+                # CLAIMS, matching epoch_skew() and every other surface. The
+                # earlier cause, "STALE READER (newer contract epoch)",
+                # asserted as fact the one thing this reader cannot establish:
+                # with no @2 validator, a tampered store relabelled
+                # `checkpoint@2` is indistinguishable here from a genuine
+                # newer one. This is the MACHINE-READABLE field, so a JSON
+                # consumer reading Q1 causes alone -- the authoritative
+                # fail-open list -- was told to upgrade a reader when the
+                # store may simply be damaged, even though partial_because
+                # qualified the same evidence correctly further down. Naming
+                # the claim is the whole point of the signal; asserting the
+                # diagnosis is the corruption-suppression failure it exists
+                # to prevent.
+                fail_open.append({"root": r["root"],
+                                  "cause": "store CLAIMS a newer contract "
+                                           "epoch (UNVALIDATED — may be "
+                                           "corruption relabelled)",
+                                  "missions": [e["mission"]]})
         for t in r.get("integrity", []):
             if not t.get("fails_open"):
                 continue  # terminal: the gate never loads it (see census())
@@ -703,6 +828,15 @@ def summarize(reports: list[dict]) -> dict:
         for e in r.get("environmental", []):
             because.append(f"{r['root']}/{e['mission']}: store uninspected "
                            "(environmental) -- absent from Q2-Q6 entirely")
+        for e in r.get("epoch_skew", []):
+            # CLAIMS, matching epoch_skew(): this reader cannot tell a
+            # genuine newer store from a corrupt or relabelled one, so
+            # "update this consumer" must not be stated as the remedy.
+            because.append(f"{r['root']}/{e['mission']}: CLAIMS a contract "
+                           "epoch newer than this reader -- read it with an "
+                           "updated consumer to find out whether it is "
+                           "genuinely newer or corrupt; absent from Q2-Q6 and "
+                           "its guards are NOT enforced here")
         for t in r.get("integrity", []):
             because.append(
                 f"{r['root']}/{t['mission']}: manifest {t['kind']} -- "
@@ -710,8 +844,17 @@ def summarize(reports: list[dict]) -> dict:
                    if t.get("fails_open") else
                    f"terminal ({t.get('status')}), historical damage only; "
                    "absent from Q2-Q6, live enforcement unaffected"))
+    # ROOTS WHERE A GUARDED CALL WOULD ACTUALLY BE BLOCKED. Derived from the
+    # same `enforce` list Q3 counts and the same fail-open set Q1 prints, so
+    # no third place re-states what "enforcing" means. Exported because the
+    # human report needs it and a JSON consumer asking "is anything actually
+    # holding here?" had no field to read.
+    fail_open_roots = {a["root"] for a in fail_open}
+    enforcing_roots = sorted({r["root"] for r, _ in enforce}
+                             - fail_open_roots)
     return {
         "q1_fail_open_roots": fail_open,
+        "q1_enforcing_roots": enforcing_roots,
         "q1_no_active_mission_roots": no_active,
         "q2_armed_active_missions": len(armed),
         "q3_enforce_mode": len(enforce),
@@ -789,9 +932,21 @@ def main(argv: list[str]) -> int:
         print("  -> guards under these roots are retired until resolved.")
     else:
         print("  none — no root holds >= 2 gate-loadable active missions")
-    if summary["q1_no_active_mission_roots"]:
+    inert = summary["q1_no_active_mission_roots"]
+    empty = [n for n in inert if not n.get("uninspected")]
+    partial = [n for n in inert if n.get("uninspected")]
+    if empty:
         print("  (gate INERT, nothing to enforce — no active mission:)")
-        for n in summary["q1_no_active_mission_roots"]:
+        for n in empty:
+            print(f"     -  {_safe(n['root'])}  [{_safe(n['cause'])}]")
+    if partial:
+        # NOT "nothing to enforce": this reader could not open every store,
+        # and an unopened store may hold an active mission whose guards are
+        # unenforced right now. The gate is inert either way; what is NOT
+        # established is that there was nothing here to enforce.
+        print("  (gate INERT, but NOT established as empty — this reader "
+              "could not open every store here:)")
+        for n in partial:
             print(f"     -  {_safe(n['root'])}  [{_safe(n['cause'])}]")
     excluded = summary["active_total"] - summary["active_sound_total"]
     print(f"\nQ2 ARMED: {summary['q2_armed_active_missions']} of "
@@ -887,6 +1042,89 @@ def main(argv: list[str]) -> int:
                   f"{_safe(t['reason'])}")
         print("  -> the record is damaged and an auditor should know; the")
         print("     live gate is not.")
+    # PER ROOT, because a skewed store beside a readable active mission does
+    # NOT disarm the root -- the gate resolves that mission and still blocks.
+    # summarize() was corrected for this; the prose here was not, and kept
+    # telling operators nothing under the root was enforced while the gate was
+    # enforcing. Fixing the data and leaving the sentence is not a fix.
+    #
+    # "ITS GATE STILL ENFORCES" IS A CLAIM ABOUT THE GATE, so it is read off
+    # the same fail-open set Q1 prints rather than re-derived from "the root
+    # has an active mission", which is a strictly weaker fact: two active
+    # missions raise MultipleActiveMissions during discovery, and a tampered
+    # manifest raises inside status(). In both, an active mission resolves and
+    # the gate does NOT enforce. Measured -- a skewed store beside two active
+    # missions printed `[multiple active]` under Q1 and "its gate still
+    # enforces" four lines below it, while the live gate returned `allow`;
+    # with a tampered sole active mission the same report carried "the GATE
+    # FAILS OPEN on these" and "still enforces" in adjacent sections.
+    #
+    # That is the FOURTH instance of the mis-stated-enforcement class in this
+    # file and the third fix that re-derived the condition by hand -- the
+    # first three all held for the case in front of me and broke on the next
+    # one. Deriving from the computed set is the part that generalizes: any
+    # future fail-open cause added to summarize() reaches this prose with no
+    # second edit.
+    #
+    # AND ABSENCE FROM THE FAIL-OPEN SET IS STILL NOT ENFORCEMENT (the FIFTH
+    # instance, found immediately after the fourth was fixed). A root whose
+    # sole active mission is unarmed, or armed in `audit` mode, appears in no
+    # Q1 row -- there is no hole to report, because nothing was ever holding.
+    # `run_gate` allows every call there. Measured: both an unarmed and an
+    # audit-mode sibling produced `allow` while this line said "still
+    # enforces". Enforcement is now read from `q1_enforcing_roots`, which
+    # summarize() derives from the same `enforce` list Q3 counts, so the
+    # meaning of "enforcing" is stated once in this file rather than five
+    # times.
+    inert_because: dict[str, str] = {}
+    for a in summary["q1_fail_open_roots"]:
+        inert_because.setdefault(a["root"], a["cause"])
+    has_active = {r["root"] for r in reports
+                  if any(m["active"] for m in r["missions"])}
+    enforcing = set(summary["q1_enforcing_roots"])
+    # ORPHANED RETIRED RECEIPTS. Printed in their own section rather than as
+    # "receipt problems", because they are DEFINITE findings and problems are
+    # what make a run partial. Visible either way -- a report moved out of the
+    # partial bucket must not be a report moved out of sight.
+    orphans = [(r["root"], m["mission"], line)
+               for r in reports for m in r["missions"]
+               for line in m.get("orphaned_retired_receipts", [])]
+    if orphans:
+        print("\nORPHANED RETIRED RECEIPTS (a receipt file exists for an id")
+        print("the chain RETIRED — it covers nothing and cannot be reused):")
+        for root, mission_name, line in orphans:
+            print(f"  ?? {_safe(root)}/{_safe(mission_name)}: {_safe(line)}")
+        print("  -> this is what a retirement that raced a publisher leaves.")
+        print("     It does NOT make this run partial: the residue is known,")
+        print("     not uninspected.")
+
+    skewed = [(r["root"], e) for r in reports for e in r.get("epoch_skew", [])]
+    if skewed:
+        print("\nSTALE READER (store CLAIMS a newer contract epoch — this")
+        print("reader cannot validate it, and its guards are NOT enforced):")
+        for root, e in skewed:
+            if root not in has_active:
+                scope = ("the WHOLE ROOT: no other active mission resolves "
+                         "here, so the gate is inert")
+            elif root in inert_because:
+                scope = ("the root's gate is inert for a SEPARATE reason "
+                         f"[{inert_because[root]}] — see above")
+            elif root in enforcing:
+                scope = ("this MISSION only; the root still resolves an "
+                         "active mission with enforce-mode guards, and those "
+                         "still enforce")
+            else:
+                scope = ("this MISSION only; the root still resolves an "
+                         "active mission, but it carries no enforce-mode "
+                         "guards, so nothing was being enforced here anyway")
+            print(f"  !! {_safe(root)}/{_safe(e['mission'])}  [{_safe(scope)}]")
+            print(f"     {_safe(e['reason'])}")
+        print("  -> read these stores with an updated custody plugin/CLI. It")
+        print("     is not established that they are healthy — only that this")
+        print("     reader cannot check them.")
+        print("  -> 'still enforces' is relative to THIS reader, which skips")
+        print("     the skewed store. An updated reader may find an ACTIVE")
+        print("     mission inside it and go inert on ambiguity instead.")
     environmental = [(r["root"], e) for r in reports
                      for e in r.get("environmental", [])]
     if environmental:

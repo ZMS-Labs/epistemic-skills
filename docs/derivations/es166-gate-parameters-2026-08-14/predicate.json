@@ -1,0 +1,343 @@
+{
+ "coverage": [
+  {
+   "family": "P1",
+   "modules": [],
+   "reason": "The predicate governs measurement selection; no contract behavior or invariant changes inside the boundary.",
+   "status": "not-applicable"
+  },
+  {
+   "family": "P2",
+   "modules": [],
+   "reason": "No schema, key, or representation changes; the predicate reads fields the census already computes.",
+   "status": "not-applicable"
+  },
+  {
+   "family": "P3",
+   "modules": [],
+   "reason": "OWED, NOT PERFORMED. The reason previously recorded here ('the census is a read-only single-pass walk') was true of the procedure this record was written for and is FALSE of the procedure it now governs: the measurement requires ordered cadence observations, durable persistence of each one, and recovery from members disappearing between them. Marking this family not-applicable would exclude by construction the exact properties the reconstructed cohort depends on. The analysis has NOT been done -- see coverage_limits.",
+   "status": "unmapped"
+  },
+  {
+   "family": "P4",
+   "modules": [],
+   "reason": "No replicated or distributed state inside the declared boundary.",
+   "status": "not-applicable"
+  },
+  {
+   "family": "P5",
+   "modules": [],
+   "reason": "OWED, NOT PERFORMED. The reason previously recorded here ('the census is a read-only single-pass walk') was true of the procedure this record was written for and is FALSE of the procedure it now governs: the measurement requires ordered cadence observations, durable persistence of each one, and recovery from members disappearing between them. Marking this family not-applicable would exclude by construction the exact properties the reconstructed cohort depends on. The analysis has NOT been done -- see coverage_limits.",
+   "status": "unmapped"
+  },
+  {
+   "family": "P6",
+   "modules": [
+    "security-information-flow-privacy"
+   ],
+   "reason": "The measured party (steward) controls inputs to every candidate predicate; this is an authority/adversary question, not a statistics question alone.",
+   "status": "fired"
+  },
+  {
+   "family": "P7",
+   "modules": [],
+   "reason": "No capacity, latency, or resource bound bears load on the predicate choice.",
+   "status": "not-applicable"
+  },
+  {
+   "family": "P8",
+   "modules": [
+    "probability-statistics-randomization"
+   ],
+   "reason": "Measurement validity: a predicate referencing the measured variable selects on the dependent variable.",
+   "status": "fired"
+  },
+  {
+   "family": "P9",
+   "modules": [
+    "decision-theory-multiobjective"
+   ],
+   "reason": "The gate governs a lifecycle decision (whether grants_paths may ship) under an authorized constraint rule and a time-box.",
+   "status": "fired"
+  }
+ ],
+ "coverage_limits": [
+  "The live estate is not reachable from this session; the non-emptiness premise is preregistered, not observed.",
+  "P4 unmapped is not claimed: no replicated or distributed property bears load inside the declared boundary. P3 and P5 ARE now unmapped and load-bearing -- see the ninth-issue limit below.",
+  "SUPERSEDES the 2026-08-14 first issue, which defined option A as a 'non-scratch root' without saying what makes a root non-scratch. The census emits only the path string, so two readers could produce different denominators from identical output -- the predicate was not in fact census-computable, which is the constraint it was selected for. Fixed by requiring an explicit admitted-root set fixed before observation.",
+  "SUPERSEDES the 2026-08-14 second issue, which carried 'estate-armed-count-remains-zero' as a validity condition. Option A references receipts and admitted-root membership only; the zero-armed count is DATED EVIDENCE (census run 2026-08-13) bearing on option D via d3, not a standing condition on the selected option. As a validity condition it would void the governing record the moment a mission armed -- and arming is a positive envelope-adoption event this window exists to measure, so the first interesting datapoint would have destroyed the rule it arrived under.",
+  "A nonzero armed count during the window retires d3's SECOND line of evidence against option D ('guard-referencing predicates are already empty'), but not d1's refutation of D, which is structural (selection on the dependent variable) and does not depend on any estate observation. The selection of A therefore stands under a nonzero armed count.",
+  "SUPERSEDES the 2026-08-14 third issue on two counts. (a) valid_while carried 'census-computable-field-set-unchanged', which the very commit publishing this record falsified: it adds epoch_skew to every census report relative to the pinned revision, so the record voided the moment it landed and before its window could open. Narrowed to the fields option A and the numerator actually read. (b) The numerator was left as the unglossed phrase 'a populated envelope' while the denominator was specified to the field -- the same defect as the original 'non-scratch root', on the other half of the ratio.",
+  "SUPERSEDES the 2026-08-14 fourth issue on two counts. (a) The denominator was restricted to ACTIVE missions, so ordinary completion during the 60-day interval removed missions from both numerator and denominator -- the closing ratio would have been computed over long-lived survivors, and could have been empty while many qualifying missions adopted the envelope and finished. Survivorship selection, in a record whose P8 coverage exists to catch exactly that. (b) The prerequisite test passed on a census reporting answers_are_partial == true, so the window could open on a selectively incomplete estate whose skipped stores are precisely the ones whose contribution is unknown.",
+  "SUPERSEDES the 2026-08-14 fifth issue on three counts. (a) empirical_premises asserted the non-emptiness result flatly while coverage_limits said the estate was unreachable and empirical_closure said pending -- a consumer reading premises as established would treat the prerequisite as already satisfied. (b) The close was fixed at 2026-10-13 while the opening became 'planned', so a late open silently shortened the observation with no rule governing it. (c) The round-4 cohort fix handled TOTAL attrition (empty closing denominator) and not PARTIAL: with two members and one disappearance the recovery never fires, and because the opening record kept only identity, an adopted mission could vanish and move the reported ratio from 1/2 to 0/1. The opening record now captures adoption state, and partial attrition has its own rule.",
+  "SUPERSEDES the 2026-08-14 sixth issue. The round-5 partial-attrition rule said a disappeared member's adoption counts 'on the strength of the opening-cohort record' -- but a member that adopts AFTER opening and then disappears is recorded pre-adoption in that snapshot and is gone from the closing census, and no observation cadence was required anywhere. The rule therefore asserted an observation capability that did not exist. Interval re-observation is now required and must be persisted, and the cadence's resolution limit is recorded as a concession rather than glossed.",
+  "SUPERSEDES the 2026-08-14 seventh issue on two counts. (a) The cadence re-observed only the OPENING cohort, so a mission created during the interval -- or one gaining its first chain-bound receipt -- had no admission rule and could be omitted entirely, biasing the ratio toward the opening population while the model said the cohort is every qualifying mission observed at any point. (b) The partial-attrition rule counted a vanished member's later-observed adoption while the reporting rule computed the full-cohort ratio from opening state, so one observation history yielded two different numerators depending on which rule the reader followed.",
+  "SUPERSEDES the 2026-08-14 eighth issue on three counts. (a) The reporting rule folded UNRESOLVED ATTRITION into the full-cohort ratio at its latest non-adoption state, presenting a lower bound as the ratio -- the record called the member's numerator unknown and then used a known value for it. Bounds are now reported and the judgement is INCONCLUSIVE where p_low and p_high disagree. (b) The persisted observation fields omitted receipt_count, so cohort membership itself could not be reproduced from the durable record after a store vanished. (c) valid_while enumerated six census fields while the procedure also depends on answers_are_partial (required for every governing run) and on mission identity and lifecycle status (required to construct and re-observe the cohort), so the record could declare itself valid while its own measurement had become unexecutable.",
+  "SUPERSEDES the 2026-08-14 ninth issue. THE COVERAGE ANALYSIS IS STALE RELATIVE TO THE PROCEDURE. P3 (ordering/history) and P5 (durability/ recovery) were recorded not-applicable on the strength of 'the census is a read-only single-pass walk' -- accurate for the procedure of 2026-08-14, and false for the one that emerged from six rounds of review, which depends on ordered cadence observations, their durable persistence, and recovery when a member vanishes between them. Both families are now marked FIRED WITH THE ANALYSIS OWED rather than silently not-applicable. What a lost, reordered, duplicated or non-durable observation does to the cohort reconstruction is NOT analyzed anywhere in this record, and this record does not support a judgement that it is safe. A standard-tier re-derivation of the FINAL procedure is required before the window governs anything; that is a separate authorization and is not discharged by this correction.",
+  "KNOWN-OPEN DEFECTS IN THE MEASUREMENT PROCEDURE (2026-08-14 tenth issue, upheld and DELIBERATELY NOT PATCHED HERE). Round 12 established that this record's coverage analysis no longer describes the procedure it governs and that a re-derivation of the FINAL procedure is owed. Three further defects were then found in that same procedure, and are recorded as INPUTS TO THAT RE-DERIVATION rather than corrected in place, because twelve rounds of in-place patching is what produced the drift the re-derivation exists to repair. (a) RETRY DOES NOT RECOVER A VANISHED STORE: 'a partial cadence run is retried until complete' does not help when a qualifying store skipped by the partial run disappears before the retry -- the retry is complete, the mission is absent, and it is never admitted. (b) MISSION IDENTITY IS NOT INCARNATION IDENTITY: cohort members are keyed by (mission id, root), so a mission directory that disappears and is recreated under the same id merges two incarnations into one member -- an adopted mission followed by an empty-envelope replacement reports as one non-adopter (1/2 becomes 0/1). (c) THE CLOSE JUDGEMENT IS UNDEFINED: p_low and p_high are specified, but no threshold or decision rule turns either into 'the judgement', so the condition 'close INCONCLUSIVE if the judgement would differ between them' cannot be applied reproducibly -- and an undefined close rule is exactly the channel through which a standard gets chosen after the result is seen, which this record elsewhere forbids. UNTIL THE RE-DERIVATION LANDS, THIS PROCEDURE MUST NOT BE RUN AS THE es#166 WINDOW: (c) alone means it cannot produce a reproducible verdict.",
+  "SUPERSEDES the 2026-08-14 eleventh issue, TWO STALE SIBLING SURFACES of rules already decided in earlier rounds. (a) decision_frame.hard_constraints enumerated the runs that must be complete as 'the prerequisite and the close', while synthesis.conditions had been broadened in round 12 to every run including each cadence observation -- and hard_constraints is the authoritative list, so a consumer applying it could advance past a partial cadence run and permanently omit a mission that vanished before the next one. (b) synthesis.conditions stated the opening-cohort record TWICE, once as 'mission id, root, lifecycle state' (the pre-round-5 version) and once with the full five-field list that round 5 replaced it with, so the record specified its own opening record two incompatible ways and the weaker reading loses exactly the numerator state round 5 added it to preserve. NEITHER IS A NEW MECHANISM: both rules were decided in earlier rounds and written to one surface and not its sibling -- the SEVENTH consecutive round of that pattern, and the reason these two are repaired here while the round-13 findings are not. Repairing a contradiction between two recorded statements of one rule decides nothing; the round-13 items would each require deciding something the derivation has not analyzed."
+ ],
+ "decision_frame": {
+  "actors": [
+   "operator (human, operator_ref 'operator:zach') -- GATE OWNER: runs or commissions the non-emptiness check and judges adoption at close",
+   "steward (agent, steward_ref)",
+   "census reader (agent, prepares the readout; does not judge)"
+  ],
+  "alternatives": [
+   {
+    "description": "No predicate; judge substantiveness case by case at window close.",
+    "id": "null",
+    "kind": "null-option"
+   },
+   {
+    "description": ">=1 chain-bound receipt AND a root drawn from the ADMITTED-ROOT SET recorded at window open (an explicit list of repository checkouts, fixed before observation begins).",
+    "id": "A",
+    "kind": "option"
+   },
+   {
+    "description": ">=10 checkpoints, any root.",
+    "id": "B",
+    "kind": "option"
+   },
+   {
+    "description": ">=1 chain-bound receipt, any root.",
+    "id": "C",
+    "kind": "option"
+   },
+   {
+    "description": "Envelope-referencing predicate (e.g. armed missions, or missions with non-empty scope).",
+    "id": "D",
+    "kind": "option"
+   }
+  ],
+  "assumptions": [
+   "The gate owner judges adoption from census output rather than by inspection of each mission."
+  ],
+  "authorized_objectives": [
+   "Make the es#166 adoption question measurable rather than unmeasurable (es#150 ruling).",
+   "Prevent the freeze becoming null-by-drift at window close (es#150 ruling time-box)."
+  ],
+  "empirical_premises": [
+   "PENDING OBSERVATION, not established: candidate A selects a non-empty set of missions on the live estate. The live estate is unreachable from the session that produced this record; this is the hypothesis the preregistered test in empirical_closure exists to check, and the window does not open until that test passes on a complete census run. A consumer must NOT read this list as a set of verified facts."
+  ],
+  "hard_constraints": [
+   "Computable by the census from fields it already reports.",
+   "The predicate must not be defined in terms of the variable whose adoption it measures.",
+   "The predicate must select a non-empty set on the live estate, or the window is vacuous by construction.",
+   "Membership must be reproducible from census output plus the recorded admitted-root set, with no per-reader judgement about what a root 'is'.",
+   "The NUMERATOR predicate ('populated envelope') is fixed and recorded before observation begins, exactly as the denominator is; a ratio with a reproducible denominator and a reader-chosen numerator is not reproducible.",
+   "The cohort is fixed by OBSERVATION over the interval, not by lifecycle state at the closing read: a mission satisfying the predicate counts whether it is active or terminal when observed.",
+   "Every census run bearing on this measurement -- the prerequisite, EACH CADENCE OBSERVATION, and the close -- must report answers_are_partial == false. A partial run has silently omitted stores from both numerator and denominator. Cadence runs are named here because they ADMIT members: this constraint enumerated only the endpoints while synthesis.conditions required every run, so a consumer applying the decision frame's authoritative constraints could advance past a partial observation and permanently omit a mission that disappeared before the next one."
+  ],
+  "priority_rule": {
+   "authority_ref": "https://github.com/ZMS-Labs/epistemic-skills/issues/150#issuecomment-5285714717",
+   "kind": "constraint-satisfaction"
+  },
+  "question": "Which census-computable predicate defines a 'substantive mission' for the es#166 adoption window such that envelope adoption is actually measurable and the measurement is not controlled by the party being measured?",
+  "system_boundary": "mission-custody@1 stores discoverable by census_missions.py under operator-named roots. The es#166 adoption window is PLANNED, opening only when the non-emptiness precondition passes, and closing 2026-10-13. THE CLOSE DOES NOT MOVE: it is the calendar deadline the es#150 ruling requires, and sliding it to preserve a 60-day interval is the null-by-drift that ruling forbids. A late open therefore SHORTENS the observation rather than delaying the judgement, and the interval is governed explicitly in synthesis.conditions.",
+  "uncertainty_posture": "worst-case"
+ },
+ "derivations": [
+  {
+   "construct": "selection on the dependent variable invalidates the estimate",
+   "counterexample": "Under D with predicate 'guard_mode is not null', an estate that goes from 1 armed mission to 1 armed mission and 40 unarmed empty-envelope missions reports p = 1 both before and after, while adoption has measurably worsened.",
+   "fact_mapping": [
+    {
+     "anchor": "plugins/epistemic-skills/contracts/mission-custody/census_missions.py@0fee7a0f59bdc5aac9ab6b4b2ee581d8e6c8b232 (reports scope_in, scope_out, guard_mode, guard_count alongside receipt_count and root)",
+     "claim_class": "observation",
+     "precondition_id": "p1"
+    }
+   ],
+   "id": "d1",
+   "model": "The window estimates p = NUMERATOR / DENOMINATOR over the WINDOW COHORT: every mission satisfying the selected predicate that is OBSERVED at any point in the interval, whether active or terminal when observed. The cohort is deliberately NOT 'missions active at the closing read': a mission that adopted the envelope and then completed would leave both numerator and denominator, so ordinary completion could empty the denominator or bias it toward long-lived survivors -- survivorship selection, on the same P8 family this record fired on. DENOMINATOR = missions satisfying the selected predicate (option A). NUMERATOR = those denominator missions with a POPULATED ENVELOPE, defined exactly as: scope_in non-empty OR scope_out non-empty OR guard_count > 0 -- the three envelope fields the census actually reports. 'Populated envelope' was previously left to the reader, which let identical census output yield different values of p (an admitted mission with populated scope and no guards reads as adoption under one gloss and non-adoption under another); es#166's own finding concerns declaration fields going empty, and permissions/protected_state are NOT census-reported, so they cannot enter a census-computable numerator.",
+   "module": "probability-statistics-randomization",
+   "preconditions": [
+    {
+     "id": "p1",
+     "statement": "The predicate's inputs are disjoint from the envelope fields whose population is being estimated.",
+     "status": "violated-by-option-D"
+    }
+   ],
+   "residual_mismatch": [
+    "The model treats adoption as a single ratio; a richer per-field measure would need its own derivation."
+   ],
+   "result": {
+    "state": "refuted",
+    "statement": "Any envelope-referencing predicate (option D) makes the adoption window vacuous by construction, independent of estate state."
+   },
+   "sources": {
+    "official_product_docs": [],
+    "primary_theory": [
+     "Rosenbaum-2002-Observational-Studies"
+    ]
+   },
+   "steps": [
+    "Option D defines membership using envelope fields (guard_mode non-null, or scope non-empty).",
+    "Under D, every member satisfies the adoption criterion by construction, so p == 1 identically.",
+    "An estimator whose value is fixed by its own selection rule carries no information about the quantity it names.",
+    "Therefore D cannot distinguish an estate where adoption improved from one where it did not."
+   ]
+  },
+  {
+   "construct": "adversary control of the measurement input under a self-interested measured party",
+   "counterexample": null,
+   "fact_mapping": [
+    {
+     "anchor": "plugins/epistemic-skills/contracts/mission-custody/examples/valid-manifest-minimal.json@0fee7a0f59bdc5aac9ab6b4b2ee581d8e6c8b232 (steward_ref = 'agent:claude-code-session'); verify_mission_custody.py:341 binds acceptor_id == operator_ref only for the operator-accepted tier",
+     "claim_class": "observation",
+     "precondition_id": "p1"
+    },
+    {
+     "anchor": "custody_mission.py@0fee7a0f59bdc5aac9ab6b4b2ee581d8e6c8b232 (record_effect mints receipts; _write_next appends checkpoints; Mission.open takes the workspace root as a caller argument)",
+     "claim_class": "observation",
+     "precondition_id": "p2"
+    }
+   ],
+   "id": "d2",
+   "model": "Adversary = the steward (an agent, per steward_ref) whose envelope-population behavior the window judges. Capability = authoring missions and effects through the ordinary contract surface.",
+   "module": "security-information-flow-privacy",
+   "preconditions": [
+    {
+     "id": "p1",
+     "statement": "steward_ref denotes an agent, not the human operator.",
+     "status": "verified"
+    },
+    {
+     "id": "p2",
+     "statement": "Receipt count, checkpoint count and workspace root are all determined by steward actions.",
+     "status": "verified"
+    }
+   ],
+   "residual_mismatch": [
+    "Detectability assumes the gate owner reads the root column rather than the ratio alone.",
+    "A steward that renames a scratch root to look like a repo root defeats the signature; the model does not cover deliberate root-name mimicry."
+   ],
+   "result": {
+    "state": "established",
+    "statement": "No fully non-gameable predicate exists among census-computable properties; the achievable property is detectable gaming, which only the root-path condition supplies."
+   },
+   "sources": {
+    "official_product_docs": [],
+    "primary_theory": [
+     "Saltzer-Schroeder-1975"
+    ]
+   },
+   "steps": [
+    "Every census-computable candidate input (receipt_count, checkpoint count, root path) is produced by steward action.",
+    "Therefore no candidate predicate is strictly non-gameable by the measured party.",
+    "Options are distinguished not by immunity but by whether gaming leaves a detectable signature.",
+    "Root path carries such a signature: es#173 records the scratch-workspace detachment as a named, already-observed evasion pattern, and the census reports the root of every mission it counts.",
+    "Receipt count and checkpoint count carry no comparable signature: suppressing an effect or padding revisions is indistinguishable from ordinary work in census output."
+   ]
+  },
+  {
+   "construct": "vacuity of a time-boxed gate whose predicate selects the empty set",
+   "counterexample": null,
+   "fact_mapping": [
+    {
+     "anchor": "census run 2026-08-13 over the operator estate reported Q2 = 0 armed active missions; receipt-bearing mission count was not separately recorded",
+     "claim_class": "assumption",
+     "precondition_id": "p1"
+    }
+   ],
+   "id": "d3",
+   "model": "The window closes 2026-10-13; the es#150 ruling requires a fresh standalone-vs-null ruling if es#118 shows no trajectory, and forbids the freeze becoming null-by-drift.",
+   "module": "decision-theory-multiobjective",
+   "preconditions": [
+    {
+     "id": "p1",
+     "statement": "The predicate selects at least one mission on the live estate.",
+     "status": "pending-observation"
+    }
+   ],
+   "residual_mismatch": [
+    "Non-emptiness at window open does not guarantee non-emptiness at close; a shrinking estate could still empty the denominator."
+   ],
+   "result": {
+    "state": "conditional",
+    "statement": "Any predicate is admissible only if verified non-empty on the live estate BEFORE the window opens; on current evidence guard-referencing predicates are already empty."
+   },
+   "sources": {
+    "official_product_docs": [],
+    "primary_theory": [
+     "Keeney-Raiffa-1976"
+    ]
+   },
+   "steps": [
+    "A predicate selecting the empty set yields no adoption observation at window close.",
+    "No observation is indistinguishable from 'no trajectory', which triggers the fresh ruling.",
+    "A gate that triggers its own escalation regardless of estate behavior decides by construction, not by evidence \u2014 precisely the null-by-drift the ruling forbids.",
+    "The measured Q2 = 0 makes every guard_mode-referencing predicate select the empty set today, so option D fails this constraint on current evidence as well as on d1."
+   ]
+  }
+ ],
+ "empirical_closure": {
+  "state": "pending",
+  "tests": [
+   {
+    "belief": "Candidate A (>=1 chain-bound receipt AND a root drawn from the recorded admitted-root set) selects a non-empty set of missions on the live estate, counting terminal missions as well as active ones.",
+    "disconfirming_observation": "Zero such missions: every receipt-bearing mission sits under a root absent from the recorded set, or no mission carries a chain-bound receipt at all. A run reporting answers_are_partial == true is NOT a result either way -- it is a refusal to answer until the skipped stores are resolved.",
+    "prediction": "census_missions.py --json over the operator's estate roots reports at least one mission -- ACTIVE OR TERMINAL -- with receipt_count >= 1 whose root string equals a member of the admitted-root set recorded before this run, on a run whose summary reports answers_are_partial == false.",
+    "prediction_recorded_before_result": true,
+    "test": "Record the admitted-root set, THEN run the merged census over the operator's estate roots. Refuse the run if answers_are_partial is true. Otherwise count missions satisfying A by string membership in that set, without filtering on lifecycle state."
+   }
+  ]
+ },
+ "never_attests": [
+  "derivation-correctness-by-envelope",
+  "empirical-fact-without-observation",
+  "gauntlet-independence"
+ ],
+ "record": "formal-rigor-record@2",
+ "rigor": {
+  "tier": "standard",
+  "tier_reason": "the conclusion mandates a persistent operational gate predicate, which the focused tier forbids",
+  "trigger": "material alternatives differ on measurable properties"
+ },
+ "subject": {
+  "ref": "https://github.com/ZMS-Labs/epistemic-skills/issues/150#issuecomment-5285714717",
+  "revision": "0fee7a0f59bdc5aac9ab6b4b2ee581d8e6c8b232"
+ },
+ "synthesis": {
+  "basis": [
+   "D is refuted outright by d1 (selection on the dependent variable) and independently fails d3 on current evidence.",
+   "B and C satisfy computability but fail d2's detectability property: neither constrains root, so the already-observed scratch-workspace evasion is invisible to the measurement.",
+   "A is the only candidate satisfying all three hard constraints, and is the only one whose gaming leaves a signature the census already prints.",
+   "The null option leaves the adoption question unmeasurable, which is the defect es#150 named as the single most important next action."
+  ],
+  "concessions": [
+   "A is not non-gameable; d2 establishes that no census-computable predicate is.",
+   "A deliberate scratch-root rename defeats A's signature and is outside the model.",
+   "An admitted-root set is itself operator-authored, so it moves the judgement from 'what is a scratch root' to 'which roots count' -- a smaller and auditable judgement, made once and on the record, but not the elimination of judgement.",
+   "The numerator field set (scope_in, scope_out, guard_count) is a judgement about which fields count as envelope adoption, made once and recorded, exactly like the admitted-root set. It is bounded by what the census reports: permissions and protected_state are named in es#166's finding but are not census-computable, so this numerator understates adoption of the envelope as a whole and measures only the reported subset.",
+   "Cadence bounds resolution, and the record does not pretend otherwise: an adoption and a disappearance that both fall between two observations are indistinguishable from no adoption at all. That residue is reported as unresolved attrition rather than silently absorbed into the numerator or the denominator."
+  ],
+  "conditions": [
+   "The admitted-root set is recorded BEFORE observation begins, and the window does not open until it is.",
+   "The numerator predicate (scope_in non-empty OR scope_out non-empty OR guard_count > 0) is the one recorded here, and is not renegotiated after observation begins.",
+   "The non-emptiness test in empirical_closure passes against that recorded set.",
+   "The gate owner reads the per-mission root column, not only the aggregate ratio.",
+   "EVERY census run the measurement relies on -- the prerequisite, each cadence observation, and the close -- reports answers_are_partial == false. A partial cadence run does not advance the schedule; it is retried until complete. Requiring completeness only at the ends was insufficient once cadence runs became responsible for ADMITTING members: a partial run that skips a newly qualifying mission which then disappears means that mission is never admitted at all, and no later complete run can reconstruct it.",
+   "The readout states the ACTUAL observed interval (open date to close date), never the nominal 60 days. The 60-day figure describes the interval planned on 2026-08-14, not the interval observed.",
+   "If opening slips, the gate owner records BEFORE opening whether the shortened interval still supports a judgement, and on what reasoning. Deciding that after seeing the ratio is choosing the standard to fit the result.",
+   "If the prerequisite has still not passed at 2026-10-13, the window does not open retroactively and does not silently extend: non-passage is itself reported to es#166 as the direction-1 finding (no substantive missions to measure), which is the same recovery the empty-predicate case already carries.",
+   "The OPENING COHORT record captures each member's DENOMINATOR AND NUMERATOR state (mission id, root, lifecycle state, scope_in/scope_out non-emptiness, guard_count), not identity alone -- otherwise a member that disappears takes its adoption state with it and the surviving-subset ratio silently replaces the cohort ratio. This is the SINGLE opening-record field list; an earlier condition here still said 'mission id, root, lifecycle state' alone, so the record specified its own opening record two incompatible ways.",
+   "The cohort is RE-OBSERVED on a cadence fixed and recorded before observation begins, and every observation is persisted (per member: lifecycle state, scope_in/scope_out non-emptiness, guard_count). Each cadence observation also DISCOVERS AND ADMITS newly qualifying missions -- a mission created during the interval, or one that gains its first chain-bound receipt, enters the cohort at the observation that first sees it qualify. Re-observing only the opening members would contradict the model (the cohort is every qualifying mission observed at ANY point in the interval) and bias the ratio toward the opening population, which is the same survivorship error as closing on survivors, taken at the other end.",
+   "Every observation that ADMITS a member persists the qualifying evidence itself -- receipt_count (or the >=1 chain-bound-receipt boolean) and the root as matched against the admitted-root set -- not only its envelope state. Without it the cohort cannot be reproduced from the durable record once a store vanishes, and a disputed or erroneous admission is indistinguishable from a valid one."
+  ],
+  "outcome": "conditional",
+  "recovery_moves": [
+   "If the non-emptiness test fails, the correct move is not a looser predicate but a finding that the estate has no substantive missions to measure \u2014 which is itself the answer to es#166 direction 1 (manifest is a file-shaped-work instrument).",
+   "Record the root list observed at window open, so a root-name change during the window is visible at close.",
+   "If the CLOSING denominator is empty despite a non-empty opening cohort, that is attrition, not absence: report the opening cohort and its fate rather than a ratio over zero. An undefined p is not evidence of non-adoption, and reporting it as one would be the vacuous-green defect this record has already committed once.",
+   "If a census run bearing on the measurement is partial, resolve or admit the skipped stores before re-running. Do NOT compute a ratio over the readable subset: the skipped stores are exactly the ones whose state is unknown, so the resulting p would be selectively incomplete in an unmeasurable direction.",
+   "ADOPTION IS A LATEST-OBSERVED PROPERTY, not an ever-observed one, and the same rule applies to survivors and to vanished members alike. A member's numerator state is the one its LATEST persisted observation records. Two rules previously disagreed: one counted a member adopted because adoption was seen at ANY cadence, the other read its latest state -- so a member that armed guards, cleared them by ordinary amendment, then disappeared was simultaneously adopted and unresolved. Latest-observed is chosen because ever-observed cannot be falsified by the estate: once any mission arms once, it counts forever, and the ratio ratchets upward regardless of subsequent behavior -- which is the vacuity d1 refutes option D for, arriving through the time axis.",
+   "PARTIAL attrition is governed, not only total. A member whose latest persisted observation shows a populated envelope counts in the numerator even if it later disappears. A member whose latest observation shows an EMPTY envelope and which then disappears is UNRESOLVED ATTRITION -- it may have adopted in the gap -- and its numerator state is UNKNOWN, never folded in as non-adoption. Whenever any member has disappeared the readout reports BOUNDS: p_low (unresolved counted as non-adopting), p_high (counted as adopting), the survivor-only ratio, and the count of unresolved members. If the judgement would differ between p_low and p_high the window closes INCONCLUSIVE on that question rather than picking the convenient end. Reporting one number where an interval is defensible hides exactly the attrition this cohort record exists to expose."
+  ],
+  "selected_option": "A"
+ },
+ "valid_while": [
+  "subject-revision-unchanged",
+  "census-still-reports-root-active-status-mission-id-receipt_count-scope_in-scope_out-guard_count-and-answers_are_partial"
+ ]
+}

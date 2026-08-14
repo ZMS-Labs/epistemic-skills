@@ -175,6 +175,103 @@ hashes as trustworthy exactly as far as they trust write access to the
 mission directory** — which is the same boundary the guard-log and the
 unsealed tail already sit behind.
 
+## A NEWER EPOCH DISARMS A STALE READER — the migration's own first write
+
+`RECORD_KINDS` is a **closed** set: a record from a newer contract epoch is not
+degraded by this reader, it is refused, exactly like corruption. That refusal is
+correct and stays. The consequence downstream is not.
+
+**Measured.** An armed `enforce` mission blocks a guarded call. Rewrite its tail
+`record` to `checkpoint@2`, leave everything else byte-identical, and the same
+call returns `allow` — the store fails validation, `Mission.load` skips it, and
+the workspace reports `NoActiveMission`. Before this was named, the verdict
+handed back to the harness said `gate inert: NoActiveMission`, which is false:
+the mission is present and active, and the READER is old. On an allow path, the
+stderr line carrying the real cause is also the channel least likely to reach
+anyone.
+
+**Why it matters more than an ordinary skip.** This is not an exotic corruption
+case; it is the expected steady state during a contract@2 rollout (es#118). At
+the first `@2` write, every workspace whose consumer is stale silently retires
+every guard it holds — the upgrade itself is the disarm. That is why the es#150
+ruling makes a **version-aware degraded reader, fleet-wide** an engineering
+precondition of the first `@2` write, not a nicety to follow it.
+
+**What now happens.** `MissionStore.load_latest` raises `EpochSkew` (a
+`ChainBroken` subclass, so every existing handler keeps its behavior byte for
+byte); `run_gate` names the skew on the verdict and on stderr instead of
+reporting an empty workspace; the census discloses every skewed store and marks
+the run partial. It reports the **ROOT** as fail-open with cause
+`store CLAIMS a newer contract epoch (UNVALIDATED — may be corruption
+relabelled)` **only when no other active mission
+resolves there** — a skewed store beside a readable active mission does not
+disarm the root, since `Mission.load` skips the skewed store and the gate still
+blocks (measured). The skewed mission's own guards are unenforced either way;
+see "Scope is per MISSION, not per root" below, which is the authority on what
+the census prints for a given root.
+
+**What deliberately does NOT happen.** The posture is not inverted. Refusing to
+run on skew would strand every workspace it applies to with no verb to resolve
+it — the same objection es#173's kernel 3 raises against shipping the fail-open
+inversion without a duplicate-resolution verb in the same change. The skew is
+disclosed; the fail-open underneath it is unchanged and still owed a fix.
+
+**What the skew signal does NOT establish.** This reader has no validator for
+a newer epoch, and `validate_record` short-circuits on the unknown kind — so
+when the skew fires, *nothing else about the record has been checked*. A
+`{"record": "checkpoint@2"}` with every required field absent is
+indistinguishable here from a genuine future record. An earlier version of this
+disclosure told the operator the store was "not corrupt … repair nothing",
+which is an assertion this reader cannot make and an attacker can exploit:
+relabel a corrupt or tampered tail as a newer epoch and the corruption
+diagnosis is replaced by advice to leave it alone. The signal means the record
+**claims** a newer epoch. Read it with an updated consumer to learn whether that
+claim is true.
+
+**Where the claim is honoured, and why the position matters.** Records embed
+records: a `checkpoint@1` carries a `mission-manifest` the schema requires to
+be `@1`, so a store can be too new while its outer kind looks familiar — an
+armed mission whose embedded manifest says `@2` was reported `ChainBroken` and
+went inert as `NoActiveMission`, the silent diagnosis this signal exists to
+replace. The fix for that first walked **every** nested dictionary, which
+widened the attack above rather than closing it: planting
+`{"record": "checkpoint@2"}` in `state` — a plain object that cannot hold a
+record — made a tampered checkpoint report as a stale reader and sent the
+operator to upgrade instead of to look at the damage (measured, with
+`written_by` corrupted alongside). The epoch claim is therefore honoured
+**only at schema-declared record positions** (`EMBEDDED_RECORD_PATHS`), and a
+test reads the `.schema.json` files and fails if a `$ref` position is not
+listed — staleness is caught in CI rather than by an operator acting on a
+wrong verdict. A `record` key anywhere else is data, and data does not get to
+say what this reader may skip.
+
+**And the position fixes the FAMILY, at the top level too.** Honouring the
+position while leaving the family unchecked is the same defect one level out,
+and it recurred four times: the nested walk, the unsupported outer kind, the
+embedded family, and finally the top-level slot the embedded fix was standing
+on. A `checkpoint@2` in a **receipt** file is not a store this reader is too
+old for — no epoch of that family can ever be valid there — yet it was
+reported `RECEIPT-NEWER-EPOCH`, `acknowledge_receipt_loss` refused the id as
+too new, and the mission was left `reopened` **with no exit** (measured): the
+stranding this contract's own tests forbid, reached through the one door still
+open. Callers now pass the family their slot holds, and a mismatch is ordinary
+corruption with the ordinary diagnosis.
+
+**The epoch is compared as a canonical decimal string, never `int()`.**
+`str.isdigit()` and `int()` disagree in both directions — `'²'.isdigit()` is
+true and converts to nothing, and Python 3.11+ refuses conversions over
+`sys.get_int_max_str_digits()` (4300 by default). The predicate is consulted
+from inside an error path with no except clause for either, so a receipt whose
+kind was `receipt@` plus 4301 digits crashed `resume()` with an uncaught
+`ValueError` (measured) — the recovery flow was not degraded but **unreachable**,
+from a string in a file. Comparison is now by length then lexicographic order
+over ASCII digits with no leading zeros: same verdicts, no conversion, no bound.
+
+**Scope is per MISSION, not per root.** A skewed store beside a readable active
+mission does not disarm the root — `Mission.load` skips the skewed store and the
+gate still blocks (measured). The skewed mission's own guards are unenforced
+either way; the census now says which of the two situations a given root is in.
+
 ## Discovery ambiguity DISARMS the gate — an unarmed decoy is enough
 
 **Verified live (es#173 adjudication, 2026-08-13):** an armed mission with
@@ -218,6 +315,117 @@ assuming:
 **Operator consequence:** treat "how many active missions are under this
 root?" as a security question, not housekeeping. A guard set that reads as
 armed is only armed while that answer is exactly one.
+
+## A PROVEN chain break outranks an epoch CLAIM
+
+`EpochSkew` says this reader cannot tell a genuine newer record from a
+relabelled corrupt one. That is true only while nothing else settles it — and
+for any checkpoint but the last, the **successor settles it**. Its
+`prev_checkpoint_sha256` was computed over the predecessor's original bytes,
+so a mismatch proves those bytes changed after it was written, whatever epoch
+they now claim.
+
+Measured on a three-revision chain with the **interior** checkpoint edited to
+claim `mission-manifest@2`: `load_latest()` raised `EpochSkew` and never
+looked at revision 3, whose pointer already disproved the story. A relabel
+therefore concealed a demonstrated alteration and sent the operator to upgrade
+a reader instead of to the damage — the corruption-suppression failure the
+epoch signal exists to prevent, reached through the one link that cannot be
+argued with. The link is checked first now.
+
+**The tail is the honest exception.** It has no successor, so nothing settles
+it and `EpochSkew` remains correct there — the same unsealed-tail boundary
+documented above, and the reason a fix that reported every skew as tampering
+would be the mirror-image defect.
+
+## A receipt that cannot be READ is not a receipt that is GONE
+
+Only `FileNotFoundError` was caught when loading a receipt, so a receipt whose
+path exists and refuses to be read — wrong permissions, a directory planted at
+its path, a failing disk — escaped as an uncaught `OSError`. Measured:
+`resume()` and `continuity_breaks()` both died with `IsADirectoryError`, and
+`audit` terminated with a traceback before printing anything. That is the
+denial of service `_load_receipt`'s own docstring forbids in as many words —
+the recovery path must not be killable by the tampering drift detection exists
+to catch.
+
+Degrading it to `RECEIPT-MISSING` would have been the second half of the same
+mistake. That marker's only exit permanently retires the id, and an I/O
+failure is not evidence a receipt is gone: retiring on a transient permission
+error destroys live coverage exactly as retiring a newer-epoch receipt would.
+
+Both conditions are therefore **OPAQUE** — present, and unverifiable by this
+reader — and are carried with their KIND (`NEWER-EPOCH`, `UNREADABLE`) rather
+than flattened, because the remedies differ and an updated reader answers only
+one of them. Each gets its own marker with its own exit (update the reader; or
+restore access), neither enters the loss bucket, and `acknowledge_receipt_loss`
+refuses both.
+
+## Retirement races a publisher — NARROWED, NOT CLOSED
+
+`acknowledge_receipt_loss` permanently removes an id from `receipt_ids`, and
+it has no inverse. It decides from a snapshot and commits later, so a receipt
+published in between was retired anyway. An earlier round reduced two reads to
+one, which fixed *deciding from inconsistent observations* and did **not**
+close the window — the method then spent that window walking the whole chain
+twice (`_historical_effect_path`, and `_resumption_status` added while fixing
+the draft promotion, which measurably widened it).
+
+**What is now true.** A compare-and-swap immediately before the write refuses
+if the receipt changed at all. Nothing reads the recheck's value, so a second
+observation can cost this verb its write but never redirect it — declining a
+racy retirement costs a re-run, completing one costs coverage forever.
+
+**What is NOT true: the race is not eliminated.** There is no cross-process
+lock here. A residual window remains between the recheck and the commit, and
+it is only honest to state its shape:
+
+- A competing writer that appends a **checkpoint** collides and fails loudly —
+  checkpoint publication is exclusive-create at revision N+1 with a
+  `prev_checkpoint_sha256` chain check (measured: `revision 4 out of order;
+  expected 5`). Contract-path writers are therefore serialized.
+- The exposure is a **receipt file installed without a chain append** during
+  the window — including the sub-window inside `record_effect` itself, which
+  writes the receipt before its checkpoint.
+
+**Why that residual is survivable.** Landing in it is no longer silent.
+Reported in two places, deliberately: `audit` covers the mission you are
+working on, and the **census** covers every store under every root INCLUDING
+TERMINAL ONES. The second is not redundancy. `Mission.load` resolves the
+single active mission, so a mission-scoped report is structurally blind to a
+receipt that reappears after the work has finished — which is when a late one
+usually reappears. The census is the instrument that can see it.
+`orphaned_retired_receipts()` reports any receipt file sitting at a retired
+id's path, and `audit` prints it and exits non-zero. Before that existed the
+condition was invisible — `resume()` returned `[]` and `status` said nothing
+(measured) — which is what made this race destructive rather than merely racy:
+the coverage was gone and nobody would ever learn. Like `continuity_breaks`,
+it raises nothing and creates no obligation, because a retirement cannot be
+undone and a marker with no exit is the wedge this contract has rejected
+twice.
+
+## Reopening a DRAFT must not approve it
+
+`record_effect` is legal in `draft`, so a mission can reach `reopened` before
+it has ever been approved — by a tampered artifact, a lost receipt, or a
+receipt relabelled to a newer epoch. Every path back from `reopened` wrote the
+constant `"active"`, which silently assumes the mission was active before it
+reopened. It therefore crossed the draft-to-active approval transition
+**without an approval**, and the crossing is triggered by damaging a file.
+
+Measured on all four exits (epoch-skew clearing, `reconcile`,
+`acknowledge_receipt_loss`, and the recovery effect): afterwards `approve()`
+refuses with "status is 'active', expected 'draft'" while
+`begin_verification()` proceeds. The gate is not merely skipped — it becomes
+**unreachable**, so there is no way to put the mission back on the approved
+path. An authority transition that a file edit can cross is not a gate.
+
+The exits now restore the state the chain shows the mission was in: `draft`
+when no checkpoint has ever carried a status other than `draft` or `reopened`,
+`active` otherwise. The chain is the authority, as everywhere else here, and
+nothing is read from a caller-supplied string. Note the reachability
+difference when reasoning about this: the epoch-skew route needs a relabelled
+record, but the `reconcile` route needs only an edited artifact.
 
 ## An acceptance PASS certifies the mission's receipts, not the workspace
 
