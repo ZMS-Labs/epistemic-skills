@@ -1565,6 +1565,37 @@ class Mission:
         new = self._write_next(latest, path, status=latest["status"], frontier=text)
         return new["revision"]
 
+    def orphaned_retired_receipts(self) -> list[dict]:
+        """Ids whose loss was acknowledged but whose receipt file is present.
+
+        Retirement is permanent and `_write_effect` refuses to reuse a retired
+        id, so a receipt sitting at a retired id's path is coverage nothing
+        will ever read: the chain says the id is gone, the filesystem says the
+        receipt is there. Until this existed the condition was ENTIRELY
+        SILENT -- `resume()` returned `[]` and `status` said nothing, measured.
+
+        That silence is what made the retirement race destructive rather than
+        merely racy. The window itself cannot be closed without cross-process
+        locking this contract does not have (see SECURITY.md); what CAN be
+        guaranteed is that landing in it leaves a mark somebody can find.
+
+        Read-only, and it raises NOTHING, for the same reason
+        `continuity_breaks` does not: a retirement cannot be undone, so an
+        obligation here would be a marker with no exit. Surfaced, not
+        enforced.
+        """
+        latest, _ = self.store.load_latest()
+        found = []
+        for request_id in sorted(self._retired_receipt_ids(latest)):
+            path = self.store.receipt_path(request_id)
+            if path.exists():
+                found.append({"request_id": request_id,
+                              "receipt_path": str(path),
+                              "note": ("receipt present for an id the chain "
+                                       "retired; it covers nothing and the "
+                                       "id can never be reused")})
+        return found
+
     def continuity_breaks(self) -> list[dict]:
         """Where an artifact changed between two receipted events without a
         receipted event of its own.
@@ -1858,6 +1889,27 @@ class Mission:
         # is not provably the original -- the safe answer is to retire the id
         # and let a fresh effect re-establish coverage honestly. Strictness
         # here is intentional, not an oversight.
+        # COMPARE AND SWAP, IMMEDIATELY BEFORE THE DESTRUCTIVE WRITE. One
+        # snapshot fixed an earlier defect -- deciding the guard from one read
+        # and the restoration from another -- but it does not close the window
+        # between the snapshot and the commit, and this method spends that
+        # window walking the whole chain TWICE (`_historical_effect_path` and
+        # `_resumption_status`, the latter added while fixing the draft
+        # promotion, which measurably widened it). A receipt published in
+        # there was retired anyway.
+        #
+        # This is NOT a return to deciding from two reads: nothing below reads
+        # the recheck. Any difference at all REFUSES, so the observation can
+        # only cost this verb its write, never redirect it. Retirement is
+        # permanent and has no inverse; declining a racy one costs a re-run.
+        recheck, _, recheck_skew = self._load_receipt_checked(request_id)
+        if recheck_skew is not None or recheck != receipt:
+            raise CustodyError(
+                f"refusing to retire {request_id!r}: its receipt changed "
+                f"between the check and the write, so this retirement would "
+                f"decide from an observation that is already stale. Nothing "
+                f"was retired; re-run `resume` and try again."
+                + (f" Detail: {recheck_skew}" if recheck_skew else ""))
         if receipt is not None and recorded_path is not None \
                 and receipt["artifact_path"] == recorded_path:
             new = self._write_next(

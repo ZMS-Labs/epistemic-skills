@@ -397,9 +397,11 @@ def dispatch(args: argparse.Namespace) -> int:
         _print_status(_brief(latest, mission) if args.brief else latest)
     elif args.command == "audit":
         breaks = mission.continuity_breaks()
+        orphans = mission.orphaned_retired_receipts()
         _print_status({"record": "continuity-report@1",
-                        "continuity_breaks": breaks})
-        return 3 if breaks else 0
+                        "continuity_breaks": breaks,
+                        "orphaned_retired_receipts": orphans})
+        return 3 if (breaks or orphans) else 0
     elif args.command == "amend":
         kwargs: dict = {}
         if args.guards_file:

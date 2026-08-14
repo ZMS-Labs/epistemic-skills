@@ -591,6 +591,106 @@ def test_epoch_skew_does_not_disarm_a_root_that_still_resolves(
     check("mixed-epoch-run-marked-partial", summary["answers_are_partial"])
 
 
+def test_retirement_refuses_a_receipt_that_appears_mid_method(
+        workspace: Path) -> None:
+    """The destructive verb must not decide from an observation that went
+    stale while it worked.
+
+    One snapshot fixed the earlier two-read defect but does not close the
+    window between the snapshot and the commit -- and this method spends that
+    window walking the whole chain TWICE (`_historical_effect_path`, and
+    `_resumption_status` added while fixing the draft promotion, which
+    measurably widened it). A receipt published in there was retired anyway,
+    and retirement has no inverse.
+
+    The recheck is not a return to deciding from two reads: nothing reads the
+    recheck's value. Any difference REFUSES, so a second observation can cost
+    this verb its write but never redirect it."""
+    root = workspace / "racy"
+    m = open_mission(root, "m", "Work.")
+    m.approve()
+    m.record_effect("a.txt", "aa", "req-1")
+    receipt_path = next((root / "missions" / "m" / "receipts").glob("*.json"))
+    saved = receipt_path.read_text(encoding="utf-8")
+    receipt_path.unlink()
+    Mission.load(root, actor="agent:worker").resume()
+
+    victim = Mission.load(root, actor="agent:worker")
+    original = victim._historical_effect_path
+
+    def publish_mid_method(request_id, kind=False):
+        receipt_path.write_text(saved, encoding="utf-8")   # publisher lands
+        return original(request_id, kind)
+
+    victim._historical_effect_path = publish_mid_method
+    try:
+        victim.acknowledge_receipt_loss("req-1")
+        check("mid-method-publication-refused", False)
+    except CustodyError as exc:
+        check("mid-method-publication-refused",
+              "changed between the check and the write" in str(exc))
+    check("racy-retirement-left-the-id-covered",
+          "req-1" in Mission.load(root, actor="agent:worker")
+          .status()["receipt_ids"])
+
+    # CONTROL: a genuinely absent receipt must still retire, or the recheck
+    # has simply disabled the only exit RECEIPT-MISSING has.
+    calm = workspace / "calm"
+    n = open_mission(calm, "m", "Work.")
+    n.approve()
+    n.record_effect("a.txt", "aa", "req-1")
+    next((calm / "missions" / "m" / "receipts").glob("*.json")).unlink()
+    Mission.load(calm, actor="agent:worker").resume()
+    check("uncontended-retirement-still-works",
+          Mission.load(calm, actor="agent:worker")
+          .acknowledge_receipt_loss("req-1") > 0)
+
+
+def test_orphaned_retired_receipt_is_not_silent(workspace: Path) -> None:
+    """A receipt file at a retired id's path must be reported somewhere.
+
+    Retirement is permanent and `_write_effect` refuses to reuse a retired id,
+    so such a receipt is coverage nothing will ever read. Measured before this
+    existed: `resume()` returned `[]` and `status` said nothing -- the
+    condition was ENTIRELY SILENT, which is what made the retirement race
+    destructive rather than merely racy. The window cannot be closed without
+    cross-process locking this contract does not have; that landing in it
+    leaves a findable mark CAN be guaranteed."""
+    root = workspace / "orphan"
+    m = open_mission(root, "m", "Work.")
+    m.approve()
+    m.record_effect("a.txt", "aa", "req-1")
+    receipt_path = next((root / "missions" / "m" / "receipts").glob("*.json"))
+    saved = receipt_path.read_text(encoding="utf-8")
+    receipt_path.unlink()
+    Mission.load(root, actor="agent:worker").resume()
+    Mission.load(root, actor="agent:worker").acknowledge_receipt_loss("req-1")
+
+    clean = Mission.load(root, actor="agent:worker")
+    check("no-orphan-before-the-receipt-returns",
+          clean.orphaned_retired_receipts() == [])
+
+    receipt_path.write_text(saved, encoding="utf-8")      # the race's residue
+    found = Mission.load(root, actor="agent:worker").orphaned_retired_receipts()
+    check("orphaned-retired-receipt-reported",
+          [f["request_id"] for f in found] == ["req-1"])
+
+    # It must reach an operator, not merely exist on an object.
+    out = subprocess.run(
+        [sys.executable, str(Path(__file__).parent / "custody_cli.py"),
+         "audit", "--workspace", str(root), "--actor", "agent:worker"],
+        capture_output=True, text=True)
+    check("orphan-surfaced-by-audit", "orphaned_retired_receipts" in out.stdout
+          and "req-1" in out.stdout)
+    check("orphan-makes-audit-nonzero", out.returncode == 3)
+
+    # ...and it raises NOTHING: an unretractable condition must not become an
+    # obligation with no exit, the wedge this contract has rejected twice.
+    live = Mission.load(root, actor="agent:worker")
+    check("orphan-does-not-wedge-the-mission", live.resume() == []
+          or all("ORPHAN" not in f for f in live.resume()))
+
+
 def test_no_census_surface_asserts_a_newer_epoch_as_fact(
         workspace: Path) -> None:
     """Every place the census mentions a newer epoch must say CLAIMS.
@@ -4373,6 +4473,8 @@ TESTS = [
     test_backslash_effect_path_still_loads_its_own_receipt,
     test_newer_epoch_store_is_named_not_mistaken_for_an_empty_workspace,
     test_epoch_skew_does_not_disarm_a_root_that_still_resolves,
+    test_retirement_refuses_a_receipt_that_appears_mid_method,
+    test_orphaned_retired_receipt_is_not_silent,
     test_no_census_surface_asserts_a_newer_epoch_as_fact,
     test_reopening_a_draft_never_approves_it,
     test_unreadable_root_is_never_reported_as_nothing_to_enforce,

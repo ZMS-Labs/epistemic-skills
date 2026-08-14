@@ -316,6 +316,43 @@ assuming:
 root?" as a security question, not housekeeping. A guard set that reads as
 armed is only armed while that answer is exactly one.
 
+## Retirement races a publisher — NARROWED, NOT CLOSED
+
+`acknowledge_receipt_loss` permanently removes an id from `receipt_ids`, and
+it has no inverse. It decides from a snapshot and commits later, so a receipt
+published in between was retired anyway. An earlier round reduced two reads to
+one, which fixed *deciding from inconsistent observations* and did **not**
+close the window — the method then spent that window walking the whole chain
+twice (`_historical_effect_path`, and `_resumption_status` added while fixing
+the draft promotion, which measurably widened it).
+
+**What is now true.** A compare-and-swap immediately before the write refuses
+if the receipt changed at all. Nothing reads the recheck's value, so a second
+observation can cost this verb its write but never redirect it — declining a
+racy retirement costs a re-run, completing one costs coverage forever.
+
+**What is NOT true: the race is not eliminated.** There is no cross-process
+lock here. A residual window remains between the recheck and the commit, and
+it is only honest to state its shape:
+
+- A competing writer that appends a **checkpoint** collides and fails loudly —
+  checkpoint publication is exclusive-create at revision N+1 with a
+  `prev_checkpoint_sha256` chain check (measured: `revision 4 out of order;
+  expected 5`). Contract-path writers are therefore serialized.
+- The exposure is a **receipt file installed without a chain append** during
+  the window — including the sub-window inside `record_effect` itself, which
+  writes the receipt before its checkpoint.
+
+**Why that residual is survivable.** Landing in it is no longer silent.
+`orphaned_retired_receipts()` reports any receipt file sitting at a retired
+id's path, and `audit` prints it and exits non-zero. Before that existed the
+condition was invisible — `resume()` returned `[]` and `status` said nothing
+(measured) — which is what made this race destructive rather than merely racy:
+the coverage was gone and nobody would ever learn. Like `continuity_breaks`,
+it raises nothing and creates no obligation, because a retirement cannot be
+undone and a marker with no exit is the wedge this contract has rejected
+twice.
+
 ## Reopening a DRAFT must not approve it
 
 `record_effect` is legal in `draft`, so a mission can reach `reopened` before
