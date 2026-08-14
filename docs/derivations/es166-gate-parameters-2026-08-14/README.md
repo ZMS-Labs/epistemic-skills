@@ -16,14 +16,24 @@ and
 [es#166 comment](https://github.com/ZMS-Labs/epistemic-skills/issues/166#issuecomment-5288171588)
 cite them.
 
-> **Rounds 2–11 of PR #175 found twenty-three defects in these records,
+> **STATUS: this record's coverage analysis does not cover the procedure it
+> now governs.** Round 12 established that P3 (ordering/history) and P5
+> (durability/recovery) were recorded not-applicable on a justification that
+> was true of the 2026-08-14 procedure and false of the one six rounds of
+> review produced. Both are now **unmapped with the analysis owed**. What a
+> lost, reordered or non-durable observation does to the cohort
+> reconstruction is analyzed **nowhere**. A standard-tier re-derivation of the
+> FINAL procedure is required before the window governs anything — it is a
+> separate authorization and is **not** discharged by the corrections here.
+>
+> **Rounds 2–12 of PR #175 found twenty-seven defects in these records,
 > all upheld.** The files here are corrected; see
 > [`CORRECTIONS.md`](CORRECTIONS.md) for what was wrong and why it matters.
 > Several were defects the records were written to guard against — a vacuous
 > preregistration, a declaration naming no principal, selection on survival in
 > a record whose P8 coverage exists to catch selection — and **five
 > consecutive rounds** found a correction applied to one field and not its
-> sibling, and the cohort rule alone needed correcting in FIVE consecutive
+> sibling, and the cohort rule alone needed correcting in SIX consecutive
 > rounds — each fix sound about the case in front of it and silently assuming
 > the next one away. Read that trend as what it is: these records have needed
 > a correction every single round they have been reviewed, and no round has
@@ -75,7 +85,9 @@ derivation and is not yet evaluated.
    missions to measure, which is itself an answer to es#166 direction 1.
    The check counts **terminal missions as well as active ones**, and the
    census run must report `answers_are_partial == false` — a partial run is a
-   refusal to answer, not a result (round 6).
+   refusal to answer, not a result (round 6). **Every** run the measurement
+   relies on carries that requirement, cadence observations included: a
+   partial cadence run does not advance the schedule (round 12).
 1b. **Record the opening cohort** when the window opens — per member: mission
    id, root, lifecycle state, **`scope_in`/`scope_out` non-emptiness, and
    `guard_count`**. Identity alone is not enough: a member that disappears

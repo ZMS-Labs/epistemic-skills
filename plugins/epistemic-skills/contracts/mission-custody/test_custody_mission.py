@@ -883,6 +883,28 @@ def test_newer_receipt_supersedes_its_stale_predecessor(
     check("newer-receipt-artifact-untouched",
           (workspace / "a.txt").read_text(encoding="utf-8") == "NEW")
 
+    # A SUPERSEDED skewed receipt must NOT reopen the mission. The chain has
+    # already replaced it with a readable successor that verifies the artifact,
+    # so nothing is wrong -- and the marker could never clear, because the old
+    # file stays relabelled. `resume` speaks about what currently governs an
+    # artifact; historical skew stays visible in the census, which reports
+    # every id in receipt_ids.
+    superseded = workspace / "superseded"
+    sm = open_mission(superseded, "m-s", "Work.")
+    sm.approve()
+    sm.record_effect("a.txt", "OLD", "req-old")
+    sm.record_effect("a.txt", "NEW", "req-new")
+    stale = (superseded / "missions" / "m-s" / "receipts"
+             / (sha256_bytes(b"req-old") + ".json"))
+    stale_record = json.loads(stale.read_text(encoding="utf-8"))
+    stale_record["record"] = "receipt@2"
+    stale.write_text(json.dumps(stale_record, indent=1, sort_keys=True),
+                     encoding="utf-8")
+    reloaded_s = Mission.load(superseded, actor="agent:worker")
+    check("superseded-skew-does-not-reopen", reloaded_s.resume() == [])
+    check("superseded-skew-leaves-mission-active",
+          reloaded_s.status()["status"] == "active")
+
     # CONTROL: genuine drift on a path with NO skewed receipt must still be
     # reported and still be reconcilable, or this fix has bought its safety
     # by disabling drift detection.

@@ -1625,14 +1625,14 @@ class Mission:
         current_by_key: dict[str, tuple[str, dict | None, bool]] = {}
         missing: list[str] = []
         skewed: list[str] = []
+        unplaceable_skew: list[str] = []
         for request_id in latest["receipt_ids"]:
             receipt, _refusal, skew = self._load_receipt_checked(request_id)
-            if skew and request_id not in skewed:
-                # NOT missing, and NOT clean. This reader cannot read the
-                # receipt, so it cannot verify the artifact -- but the receipt
-                # is present and may be perfectly good. It gets its own marker
-                # so the operator is never offered the loss verb for it.
-                skewed.append(request_id)
+            # NOT missing, and NOT clean: this reader cannot read the receipt,
+            # so it cannot verify the artifact -- but the receipt is present
+            # and may be perfectly good. Which skewed ids get a MARKER is
+            # decided AFTER the per-artifact winners are known (see below).
+            #
             # A SKEWED RECEIPT STILL TAKES ITS SLOT. Skipping it here left the
             # SUPERSEDED older receipt authoritative for the same artifact, so
             # resume compared live content against an obsolete hash and
@@ -1644,6 +1644,13 @@ class Mission:
             rel = (receipt["artifact_path"] if receipt is not None
                    else self._historical_effect_path(request_id))
             if rel is None:
+                if skew:
+                    # Unattributable but NOT lost: a receipt that is merely
+                    # too new must never fall into the loss bucket, whose
+                    # only exit destroys the id.
+                    if request_id not in unplaceable_skew:
+                        unplaceable_skew.append(request_id)
+                    continue
                 # Unloadable AND unattributable: it can only be reported as
                 # the lost receipt it is (see _historical_effect_path).
                 if request_id not in missing:
@@ -1659,6 +1666,18 @@ class Mission:
             if os.name == "nt":
                 key = _ascii_case_fold(key)
             current_by_key[key] = (request_id, receipt, bool(skew))
+        # ONLY THE AUTHORITATIVE RECEIPT FOR AN ARTIFACT GETS A MARKER. Marking
+        # every skewed id in receipt_ids meant a SUPERSEDED historical receipt
+        # -- one the chain has already replaced with a readable successor --
+        # reopened the mission and wedged it there: the current receipt
+        # verifies the artifact, nothing is wrong, and the marker can never
+        # clear because the old file is still relabelled (measured: `old@2`
+        # followed by a readable `new@1` left the mission reopened with
+        # RECEIPT-NEWER-EPOCH:req-old). Historical skew stays visible in the
+        # census, which reports every id in receipt_ids; `resume` speaks only
+        # about what currently governs an artifact.
+        skewed = [rid for rid, _r, is_skewed in current_by_key.values()
+                  if is_skewed] + unplaceable_skew
         mismatched: list[str] = []
         for request_id, receipt, is_skewed in current_by_key.values():
             if is_skewed:

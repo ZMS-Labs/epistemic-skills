@@ -1,8 +1,8 @@
 # Corrections — PR #175
 
 The records in this directory were reviewed on the PR that committed them.
-**Twenty-three findings landed across rounds 2, 3, 4, 6, 7, 8, 9 and 11** —
-every round that reviewed them — and all twenty-three were upheld. The records now in place are
+**Twenty-seven findings landed across rounds 2, 3, 4, 6, 7, 8, 9, 11 and 12** —
+every round that reviewed them — and all twenty-seven were upheld. The records now in place are
 the corrected versions; the originals are in git history at `9fbfea4` and are
 worth reading beside this file, because three of round 2's four defects are
 ones the records themselves were written to guard against.
@@ -397,6 +397,53 @@ own measurement had become unexecutable. Now enumerates all nine.
 **This is the fix-one-surface pattern again, and this time it accumulated
 across four rounds rather than one.** Each round added a dependency; none
 updated the field that tracks dependencies.
+
+## Round 12
+
+### The finding that matters most: the coverage analysis stopped describing the procedure
+
+`P3` (ordering/history) and `P5` (durability/recovery) were recorded
+**not-applicable**, justified by *"the census is a read-only single-pass
+walk."* That was true of the procedure this record was written for on
+2026-08-14. It is **false** of the procedure six rounds of review produced,
+which depends on ordered cadence observations, their durable persistence, and
+recovery when a member vanishes between them.
+
+So the record excluded by construction the exact properties its reconstructed
+cohort now rests on. Both families are now **unmapped with the analysis
+owed** — not quietly re-justified — and the limit says plainly that what a
+lost, reordered, duplicated or non-durable observation does to the cohort is
+analyzed nowhere in this record.
+
+**This is the cost of eleven rounds of incremental patching, stated as a
+fact rather than a feeling.** Each round's fix was locally correct. Together
+they grew a measurement procedure that the surrounding derivation was never
+written for, and no round re-fired coverage against the thing being built. A
+standard-tier re-derivation of the final procedure is required before the
+window governs anything, and this correction does not perform it.
+
+### P1 — cadence runs could be partial
+
+Round 6 required `answers_are_partial == false` for the prerequisite and the
+close. Round 9 made cadence observations responsible for **admitting**
+members. Nobody extended the completeness requirement to them — so a partial
+cadence run could skip a newly qualifying mission that then disappeared, and
+no later complete run could reconstruct it. Now every run the measurement
+relies on must be complete, and a partial cadence run does not advance the
+schedule.
+
+### P1 — two temporal rules for one property
+
+One rule counted a member adopted because adoption was seen at **any**
+cadence; the next read its **latest** state. A member that armed guards,
+cleared them by ordinary amendment, then disappeared was simultaneously
+adopted and unresolved.
+
+Resolved to **latest-observed**, applied to survivors and vanished members
+alike — and the choice is on the record rather than assumed: *ever-observed*
+cannot be falsified by the estate, since one arming counts forever and the
+ratio ratchets upward regardless of subsequent behaviour. That is the vacuity
+`d1` refutes option D for, arriving through the time axis.
 
 ## Standing limit
 
