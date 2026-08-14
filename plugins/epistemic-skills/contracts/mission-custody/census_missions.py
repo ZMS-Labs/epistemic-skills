@@ -343,6 +343,35 @@ def census(root: Path) -> dict:
         # asserting that its receipts were "invisible to Q4/Q6" when no chain
         # exists to bind any receipt to. A partial warning that fires on
         # every ordinary tree is a partial warning operators learn to ignore.
+        #
+        # But "no checkpoints" and "I could not look" are different answers,
+        # and `checkpoint_paths()` cannot tell them apart: it guards with
+        # `is_dir()` and globs, both of which SUPPRESS permission errors and
+        # return []. So the round-9 precheck, left alone, silently skipped an
+        # unreadable store -- and the census then reported
+        # `answers_are_partial: false`, zero armed missions, and (worse) a
+        # positive claim of "no active mission (terminal only)" about a
+        # directory nobody could open. Fixing an over-eager partial flag by
+        # creating a silent blind spot trades a false alarm for a false
+        # all-clear, which is the strictly worse direction.
+        #
+        # The accessibility probe is ours; WHAT COUNTS as a checkpoint stays
+        # `checkpoint_paths()`'s rule, unparaphrased.
+        try:
+            with os.scandir(md / "checkpoints"):
+                pass
+        except (FileNotFoundError, NotADirectoryError):
+            continue  # genuinely not a store -- Mission.load skips it too
+        except OSError as exc:
+            report["unreadable"].append({
+                "mission": md.name,
+                "reason": (f"checkpoints/ could not be listed "
+                           f"({type(exc).__name__}) -- cannot tell whether "
+                           "this store holds an active mission"),
+                "counts_toward_ambiguity": False,
+                "partial_answer": True,
+            })
+            continue
         if not store.checkpoint_paths():
             continue
         try:
