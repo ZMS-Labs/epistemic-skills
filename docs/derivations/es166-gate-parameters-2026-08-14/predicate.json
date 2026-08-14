@@ -1,0 +1,313 @@
+{
+ "record": "formal-rigor-record@2",
+ "subject": {
+  "ref": "https://github.com/ZMS-Labs/epistemic-skills/issues/150#issuecomment-5285714717",
+  "revision": "0fee7a0f59bdc5aac9ab6b4b2ee581d8e6c8b232"
+ },
+ "valid_while": [
+  "subject-revision-unchanged",
+  "census-computable-field-set-unchanged",
+  "estate-armed-count-remains-zero"
+ ],
+ "coverage_limits": [
+  "The live estate is not reachable from this session; the non-emptiness premise is preregistered, not observed.",
+  "P3/P4 unmapped is not claimed: no concurrent or replicated property bears load inside the declared boundary."
+ ],
+ "rigor": {
+  "tier": "standard",
+  "trigger": "material alternatives differ on measurable properties",
+  "tier_reason": "the conclusion mandates a persistent operational gate predicate, which the focused tier forbids"
+ },
+ "decision_frame": {
+  "question": "Which census-computable predicate defines a 'substantive mission' for the es#166 adoption window such that envelope adoption is actually measurable and the measurement is not controlled by the party being measured?",
+  "system_boundary": "mission-custody@1 stores discoverable by census_missions.py under operator-named roots; the es#166 adoption window opened now and closing 2026-10-13.",
+  "actors": [
+   "operator (human, operator_ref)",
+   "steward (agent, steward_ref)",
+   "census reader",
+   "gate owner"
+  ],
+  "alternatives": [
+   {
+    "id": "null",
+    "kind": "null-option",
+    "description": "No predicate; judge substantiveness case by case at window close."
+   },
+   {
+    "id": "A",
+    "kind": "option",
+    "description": ">=1 chain-bound receipt AND a non-scratch workspace root."
+   },
+   {
+    "id": "B",
+    "kind": "option",
+    "description": ">=10 checkpoints, any root."
+   },
+   {
+    "id": "C",
+    "kind": "option",
+    "description": ">=1 chain-bound receipt, any root."
+   },
+   {
+    "id": "D",
+    "kind": "option",
+    "description": "Envelope-referencing predicate (e.g. armed missions, or missions with non-empty scope)."
+   }
+  ],
+  "hard_constraints": [
+   "Computable by the census from fields it already reports.",
+   "The predicate must not be defined in terms of the variable whose adoption it measures.",
+   "The predicate must select a non-empty set on the live estate, or the window is vacuous by construction."
+  ],
+  "authorized_objectives": [
+   "Make the es#166 adoption question measurable rather than unmeasurable (es#150 ruling).",
+   "Prevent the freeze becoming null-by-drift at window close (es#150 ruling time-box)."
+  ],
+  "priority_rule": {
+   "kind": "constraint-satisfaction",
+   "authority_ref": "https://github.com/ZMS-Labs/epistemic-skills/issues/150#issuecomment-5285714717"
+  },
+  "assumptions": [
+   "The gate owner judges adoption from census output rather than by inspection of each mission."
+  ],
+  "empirical_premises": [
+   "Candidate A selects a non-empty set of missions on the live estate today."
+  ],
+  "uncertainty_posture": "worst-case"
+ },
+ "coverage": [
+  {
+   "family": "P1",
+   "status": "not-applicable",
+   "modules": [],
+   "reason": "The predicate governs measurement selection; no contract behavior or invariant changes inside the boundary."
+  },
+  {
+   "family": "P2",
+   "status": "not-applicable",
+   "modules": [],
+   "reason": "No schema, key, or representation changes; the predicate reads fields the census already computes."
+  },
+  {
+   "family": "P3",
+   "status": "not-applicable",
+   "modules": [],
+   "reason": "The census is a read-only single-pass walk; no history, ordering, or isolation property bears load."
+  },
+  {
+   "family": "P4",
+   "status": "not-applicable",
+   "modules": [],
+   "reason": "No replicated or distributed state inside the declared boundary."
+  },
+  {
+   "family": "P5",
+   "status": "not-applicable",
+   "modules": [],
+   "reason": "No fault, recovery, or durability property bears load on predicate selection."
+  },
+  {
+   "family": "P6",
+   "status": "fired",
+   "modules": [
+    "security-information-flow-privacy"
+   ],
+   "reason": "The measured party (steward) controls inputs to every candidate predicate; this is an authority/adversary question, not a statistics question alone."
+  },
+  {
+   "family": "P7",
+   "status": "not-applicable",
+   "modules": [],
+   "reason": "No capacity, latency, or resource bound bears load on the predicate choice."
+  },
+  {
+   "family": "P8",
+   "status": "fired",
+   "modules": [
+    "probability-statistics-randomization"
+   ],
+   "reason": "Measurement validity: a predicate referencing the measured variable selects on the dependent variable."
+  },
+  {
+   "family": "P9",
+   "status": "fired",
+   "modules": [
+    "decision-theory-multiobjective"
+   ],
+   "reason": "The gate governs a lifecycle decision (whether grants_paths may ship) under an authorized constraint rule and a time-box."
+  }
+ ],
+ "derivations": [
+  {
+   "id": "d1",
+   "module": "probability-statistics-randomization",
+   "construct": "selection on the dependent variable invalidates the estimate",
+   "sources": {
+    "primary_theory": [
+     "Rosenbaum-2002-Observational-Studies"
+    ],
+    "official_product_docs": []
+   },
+   "model": "The window estimates p = (substantive missions with a populated envelope) / (substantive missions). The predicate defines the denominator.",
+   "preconditions": [
+    {
+     "id": "p1",
+     "statement": "The predicate's inputs are disjoint from the envelope fields whose population is being estimated.",
+     "status": "violated-by-option-D"
+    }
+   ],
+   "fact_mapping": [
+    {
+     "precondition_id": "p1",
+     "claim_class": "observation",
+     "anchor": "plugins/epistemic-skills/contracts/mission-custody/census_missions.py@0fee7a0f59bdc5aac9ab6b4b2ee581d8e6c8b232 (reports scope_in, scope_out, guard_mode, guard_count alongside receipt_count and root)"
+    }
+   ],
+   "steps": [
+    "Option D defines membership using envelope fields (guard_mode non-null, or scope non-empty).",
+    "Under D, every member satisfies the adoption criterion by construction, so p == 1 identically.",
+    "An estimator whose value is fixed by its own selection rule carries no information about the quantity it names.",
+    "Therefore D cannot distinguish an estate where adoption improved from one where it did not."
+   ],
+   "result": {
+    "state": "refuted",
+    "statement": "Any envelope-referencing predicate (option D) makes the adoption window vacuous by construction, independent of estate state."
+   },
+   "counterexample": "Under D with predicate 'guard_mode is not null', an estate that goes from 1 armed mission to 1 armed mission and 40 unarmed empty-envelope missions reports p = 1 both before and after, while adoption has measurably worsened.",
+   "residual_mismatch": [
+    "The model treats adoption as a single ratio; a richer per-field measure would need its own derivation."
+   ]
+  },
+  {
+   "id": "d2",
+   "module": "security-information-flow-privacy",
+   "construct": "adversary control of the measurement input under a self-interested measured party",
+   "sources": {
+    "primary_theory": [
+     "Saltzer-Schroeder-1975"
+    ],
+    "official_product_docs": []
+   },
+   "model": "Adversary = the steward (an agent, per steward_ref) whose envelope-population behavior the window judges. Capability = authoring missions and effects through the ordinary contract surface.",
+   "preconditions": [
+    {
+     "id": "p1",
+     "statement": "steward_ref denotes an agent, not the human operator.",
+     "status": "verified"
+    },
+    {
+     "id": "p2",
+     "statement": "Receipt count, checkpoint count and workspace root are all determined by steward actions.",
+     "status": "verified"
+    }
+   ],
+   "fact_mapping": [
+    {
+     "precondition_id": "p1",
+     "claim_class": "observation",
+     "anchor": "plugins/epistemic-skills/contracts/mission-custody/examples/valid-manifest-minimal.json@0fee7a0f59bdc5aac9ab6b4b2ee581d8e6c8b232 (steward_ref = 'agent:claude-code-session'); verify_mission_custody.py:341 binds acceptor_id == operator_ref only for the operator-accepted tier"
+    },
+    {
+     "precondition_id": "p2",
+     "claim_class": "observation",
+     "anchor": "custody_mission.py@0fee7a0f59bdc5aac9ab6b4b2ee581d8e6c8b232 (record_effect mints receipts; _write_next appends checkpoints; Mission.open takes the workspace root as a caller argument)"
+    }
+   ],
+   "steps": [
+    "Every census-computable candidate input (receipt_count, checkpoint count, root path) is produced by steward action.",
+    "Therefore no candidate predicate is strictly non-gameable by the measured party.",
+    "Options are distinguished not by immunity but by whether gaming leaves a detectable signature.",
+    "Root path carries such a signature: es#173 records the scratch-workspace detachment as a named, already-observed evasion pattern, and the census reports the root of every mission it counts.",
+    "Receipt count and checkpoint count carry no comparable signature: suppressing an effect or padding revisions is indistinguishable from ordinary work in census output."
+   ],
+   "result": {
+    "state": "established",
+    "statement": "No fully non-gameable predicate exists among census-computable properties; the achievable property is detectable gaming, which only the root-path condition supplies."
+   },
+   "counterexample": null,
+   "residual_mismatch": [
+    "Detectability assumes the gate owner reads the root column rather than the ratio alone.",
+    "A steward that renames a scratch root to look like a repo root defeats the signature; the model does not cover deliberate root-name mimicry."
+   ]
+  },
+  {
+   "id": "d3",
+   "module": "decision-theory-multiobjective",
+   "construct": "vacuity of a time-boxed gate whose predicate selects the empty set",
+   "sources": {
+    "primary_theory": [
+     "Keeney-Raiffa-1976"
+    ],
+    "official_product_docs": []
+   },
+   "model": "The window closes 2026-10-13; the es#150 ruling requires a fresh standalone-vs-null ruling if es#118 shows no trajectory, and forbids the freeze becoming null-by-drift.",
+   "preconditions": [
+    {
+     "id": "p1",
+     "statement": "The predicate selects at least one mission on the live estate.",
+     "status": "pending-observation"
+    }
+   ],
+   "fact_mapping": [
+    {
+     "precondition_id": "p1",
+     "claim_class": "assumption",
+     "anchor": "census run 2026-08-13 over the operator estate reported Q2 = 0 armed active missions; receipt-bearing mission count was not separately recorded"
+    }
+   ],
+   "steps": [
+    "A predicate selecting the empty set yields no adoption observation at window close.",
+    "No observation is indistinguishable from 'no trajectory', which triggers the fresh ruling.",
+    "A gate that triggers its own escalation regardless of estate behavior decides by construction, not by evidence \u2014 precisely the null-by-drift the ruling forbids.",
+    "The measured Q2 = 0 makes every guard_mode-referencing predicate select the empty set today, so option D fails this constraint on current evidence as well as on d1."
+   ],
+   "result": {
+    "state": "conditional",
+    "statement": "Any predicate is admissible only if verified non-empty on the live estate BEFORE the window opens; on current evidence guard-referencing predicates are already empty."
+   },
+   "counterexample": null,
+   "residual_mismatch": [
+    "Non-emptiness at window open does not guarantee non-emptiness at close; a shrinking estate could still empty the denominator."
+   ]
+  }
+ ],
+ "empirical_closure": {
+  "state": "pending",
+  "tests": [
+   {
+    "belief": "Candidate A (>=1 chain-bound receipt AND non-scratch root) selects a non-empty set of missions on the live estate.",
+    "prediction": "census_missions.py --json over the operator's estate roots reports at least one active mission with receipt_count >= 1 whose root is a real repository checkout rather than a scratch/ path.",
+    "disconfirming_observation": "Zero such missions, or all receipt-bearing missions sit under scratch-style roots.",
+    "test": "Run the merged census over the operator's estate roots and count missions satisfying A.",
+    "prediction_recorded_before_result": true
+   }
+  ]
+ },
+ "synthesis": {
+  "outcome": "conditional",
+  "selected_option": "A",
+  "basis": [
+   "D is refuted outright by d1 (selection on the dependent variable) and independently fails d3 on current evidence.",
+   "B and C satisfy computability but fail d2's detectability property: neither constrains root, so the already-observed scratch-workspace evasion is invisible to the measurement.",
+   "A is the only candidate satisfying all three hard constraints, and is the only one whose gaming leaves a signature the census already prints.",
+   "The null option leaves the adoption question unmeasurable, which is the defect es#150 named as the single most important next action."
+  ],
+  "conditions": [
+   "The non-emptiness test in empirical_closure passes before the window opens.",
+   "The gate owner reads the per-mission root column, not only the aggregate ratio."
+  ],
+  "concessions": [
+   "A is not non-gameable; d2 establishes that no census-computable predicate is.",
+   "A deliberate scratch-root rename defeats A's signature and is outside the model."
+  ],
+  "recovery_moves": [
+   "If the non-emptiness test fails, the correct move is not a looser predicate but a finding that the estate has no substantive missions to measure \u2014 which is itself the answer to es#166 direction 1 (manifest is a file-shaped-work instrument).",
+   "Record the root list observed at window open, so a root-name change during the window is visible at close."
+  ]
+ },
+ "never_attests": [
+  "derivation-correctness-by-envelope",
+  "empirical-fact-without-observation",
+  "gauntlet-independence"
+ ]
+}

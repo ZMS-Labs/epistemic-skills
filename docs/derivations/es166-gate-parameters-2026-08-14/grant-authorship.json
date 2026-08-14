@@ -1,0 +1,280 @@
+{
+ "record": "formal-rigor-record@2",
+ "subject": {
+  "ref": "https://github.com/ZMS-Labs/epistemic-skills/issues/150#issuecomment-5285714717",
+  "revision": "0fee7a0f59bdc5aac9ab6b4b2ee581d8e6c8b232"
+ },
+ "valid_while": [
+  "subject-revision-unchanged",
+  "steward_ref-continues-to-denote-an-agent",
+  "grants_paths-remains-unshipped"
+ ],
+ "coverage_limits": [
+  "Adoption behavior under an operator-confirmation requirement is unobserved; the es#166 window is the instrument that would observe it.",
+  "Principal binding is outside the contract (SECURITY.md): the contract cannot verify that a human rather than an agent authored an operator-confirmed grant. This limit bounds every option here equally."
+ ],
+ "rigor": {
+  "tier": "standard",
+  "trigger": "a single proposed design needs correctness confirmation or reversal",
+  "tier_reason": "the conclusion mandates a persistent authority model on a security boundary; focused forbids selection or reversal of a persistent design"
+ },
+ "decision_frame": {
+  "question": "Under which authorship model can grants_paths deliver the property it is proposed for: operator-confirmed, or steward-authored with operator visibility?",
+  "system_boundary": "mission-custody grants_paths as proposed in es#150, prior to any implementation; the authority relation between steward_ref (agent) and operator_ref (human).",
+  "actors": [
+   "operator (human, operator_ref)",
+   "steward (agent, steward_ref)",
+   "acceptor",
+   "auditor"
+  ],
+  "alternatives": [
+   {
+    "id": "null",
+    "kind": "null-option",
+    "description": "Defer the authorship decision; grants_paths stays blocked."
+   },
+   {
+    "id": "A",
+    "kind": "option",
+    "description": "Operator-confirmed: a grant is not live until the operator confirms it."
+   },
+   {
+    "id": "B",
+    "kind": "option",
+    "description": "Steward-authored, operator-visible: the steward writes grants; they are recorded and surfaced but not blocked on the operator."
+   }
+  ],
+  "hard_constraints": [
+   "grants_paths must be a CONTROL in the README's own taxonomy, not a DECLARATION — that is the stated reason for proposing it.",
+   "No actor certifies its own acceptance (contract acceptance-tier doctrine)."
+  ],
+  "authorized_objectives": [
+   "Give effect-shaped missions a machine-checkable boundary (es#166 finding).",
+   "Do not widen what a steward may do without the operator's authority (acceptance-table re-derivation: permission is not authority because effects happen indirectly)."
+  ],
+  "priority_rule": {
+   "kind": "constraint-satisfaction",
+   "authority_ref": "https://github.com/ZMS-Labs/epistemic-skills/issues/150#issuecomment-5285714717"
+  },
+  "assumptions": [],
+  "empirical_premises": [
+   "Stewards populate envelope fields when doing so fits the work shape, and leave them empty when it does not (es#166 measured finding)."
+  ],
+  "uncertainty_posture": "worst-case"
+ },
+ "coverage": [
+  {
+   "family": "P1",
+   "status": "fired",
+   "modules": [
+    "security-information-flow-privacy"
+   ],
+   "reason": "Whether a grant bounds the granted party is a safety property of the authority relation, not only an access-control detail."
+  },
+  {
+   "family": "P2",
+   "status": "not-applicable",
+   "modules": [],
+   "reason": "No representation or dependency question bears load; the field shape is not at issue here."
+  },
+  {
+   "family": "P3",
+   "status": "not-applicable",
+   "modules": [],
+   "reason": "No ordering, isolation or concurrency property bears load on authorship."
+  },
+  {
+   "family": "P4",
+   "status": "not-applicable",
+   "modules": [],
+   "reason": "No replicated or distributed state inside the declared boundary."
+  },
+  {
+   "family": "P5",
+   "status": "not-applicable",
+   "modules": [],
+   "reason": "No fault or recovery property bears load on who authors a grant."
+  },
+  {
+   "family": "P6",
+   "status": "fired",
+   "modules": [
+    "security-information-flow-privacy"
+   ],
+   "reason": "This is the authority question directly: whether the constrained party may author its own constraint."
+  },
+  {
+   "family": "P7",
+   "status": "not-applicable",
+   "modules": [],
+   "reason": "No resource or capacity bound bears load."
+  },
+  {
+   "family": "P8",
+   "status": "not-applicable",
+   "modules": [],
+   "reason": "No probabilistic or measurement claim bears load on the authorship relation itself; the adoption premise is handled as empirical closure."
+  },
+  {
+   "family": "P9",
+   "status": "fired",
+   "modules": [
+    "decision-theory-multiobjective"
+   ],
+   "reason": "The choice governs a lifecycle precondition for shipping grants_paths under an authorized constraint rule."
+  }
+ ],
+ "derivations": [
+  {
+   "id": "d1",
+   "module": "security-information-flow-privacy",
+   "construct": "a constraint authored by the constrained party is not a constraint on it",
+   "sources": {
+    "primary_theory": [
+     "Saltzer-Schroeder-1975",
+     "Lampson-1974-Protection"
+    ],
+    "official_product_docs": []
+   },
+   "model": "Authority relation between principal O (operator, human) and principal S (steward, agent). A grant G bounds which paths S may affect. Ask whether G constrains S.",
+   "preconditions": [
+    {
+     "id": "p1",
+     "statement": "steward_ref denotes an agent, and it is the steward that performs effects.",
+     "status": "verified"
+    },
+    {
+     "id": "p2",
+     "statement": "Under option B, S is the author of G and no other principal's assent is required for G to be live.",
+     "status": "verified"
+    },
+    {
+     "id": "p3",
+     "statement": "grants_paths is proposed in order to be a CONTROL rather than a DECLARATION.",
+     "status": "verified"
+    }
+   ],
+   "fact_mapping": [
+    {
+     "precondition_id": "p1",
+     "claim_class": "observation",
+     "anchor": "plugins/epistemic-skills/contracts/mission-custody/examples/valid-manifest-minimal.json@0fee7a0f59bdc5aac9ab6b4b2ee581d8e6c8b232 (steward_ref = 'agent:claude-code-session')"
+    },
+    {
+     "precondition_id": "p2",
+     "claim_class": "interpretation",
+     "anchor": "option B as stated in this frame"
+    },
+    {
+     "precondition_id": "p3",
+     "claim_class": "observation",
+     "anchor": "plugins/epistemic-skills/contracts/mission-custody/README.md@0fee7a0f59bdc5aac9ab6b4b2ee581d8e6c8b232 CONTROL/DECLARATION table; the scope row records that the existing control is 'a control against FORGETTING, not against intent'"
+    }
+   ],
+   "steps": [
+    "Under B, S may at any time author a grant that widens the paths S may affect, with no assent from O required for it to take effect.",
+    "A bound that the bounded party may unilaterally rewrite restricts that party only insofar as it chooses to be restricted.",
+    "That is precisely the property the README already ascribes to the existing scope machinery: a control against forgetting, not against intent.",
+    "grants_paths is proposed to be stronger than the existing machinery (p3); under B it is not stronger, it is the same class re-spelled.",
+    "Therefore B cannot satisfy the hard constraint that grants_paths be a CONTROL."
+   ],
+   "result": {
+    "state": "refuted",
+    "statement": "Steward-authored grants_paths (option B) cannot deliver the property for which grants_paths is proposed; it reduces to a DECLARATION in the contract's own taxonomy."
+   },
+   "counterexample": "A steward whose instruction forbids writing outside src/ authors grants_paths: ['**'] in the same session and proceeds; every subsequent write is inside the declared grant, the record is self-consistent, and an auditor reading the manifest alone sees no crossing.",
+   "residual_mismatch": [
+    "B retains audit value: the grant is recorded and comparable after the fact. The derivation refutes B as a control, not as a disclosure."
+   ]
+  },
+  {
+   "id": "d2",
+   "module": "decision-theory-multiobjective",
+   "construct": "a refutation of one option does not establish its complement",
+   "sources": {
+    "primary_theory": [
+     "Keeney-Raiffa-1976"
+    ],
+    "official_product_docs": []
+   },
+   "model": "Two authorized objectives: give effect-shaped missions a machine-checkable boundary; do not widen steward authority without operator authority. Option A satisfies the second by construction. Ask whether it satisfies the first.",
+   "preconditions": [
+    {
+     "id": "p1",
+     "statement": "Envelope fields are populated when doing so fits the work shape and left empty when it does not.",
+     "status": "measured"
+    },
+    {
+     "id": "p2",
+     "statement": "A per-grant operator confirmation imposes strictly more steward-side friction than leaving a field empty.",
+     "status": "verified"
+    }
+   ],
+   "fact_mapping": [
+    {
+     "precondition_id": "p1",
+     "claim_class": "observation",
+     "anchor": "https://github.com/ZMS-Labs/epistemic-skills/issues/166 — scope.in, scope.out, permissions, protected_state all empty on media-library-rebuild (90 checkpoints, 9 receipts), populated on the file-shaped custody-instrument mission"
+    },
+    {
+     "precondition_id": "p2",
+     "claim_class": "interpretation",
+     "anchor": "option A as stated in this frame"
+    }
+   ],
+   "steps": [
+    "es#166 measured that the envelope is abandoned exactly where using it is inconvenient for the work shape.",
+    "Option A raises the cost of using the mechanism above that of the fields already measured as abandoned.",
+    "So the predicted outcome under A is non-adoption: grants_paths present in the schema and empty in practice, reproducing es#166 one field further on.",
+    "Non-adoption satisfies the authority objective vacuously while failing the boundary objective.",
+    "Whether A actually fails this way is an adoption question about human and agent behavior, which no derivation settles."
+   ],
+   "result": {
+    "state": "incomplete",
+    "statement": "Option A satisfies the authority objective but its satisfaction of the boundary objective is unresolved and depends on adoption behavior that has not been observed."
+   },
+   "counterexample": null,
+   "residual_mismatch": [
+    "A batching or standing-grant form of A (operator confirms a class of grants once, not each grant) is a third alternative this frame did not enumerate and which may dominate A on friction; it is not evaluated here."
+   ]
+  }
+ ],
+ "empirical_closure": {
+  "state": "pending",
+  "tests": [
+   {
+    "belief": "An operator-confirmation requirement suppresses use of the mechanism, reproducing the es#166 abandonment pattern.",
+    "prediction": "At the close of the es#166 window (2026-10-13), substantive missions under the agreed predicate show envelope population unchanged or lower for the highest-friction fields, and no mission adopts a confirmation-gated field.",
+    "disconfirming_observation": "Substantive missions populate high-friction declarations at a materially higher rate than the 2026-08-13 baseline.",
+    "test": "The es#166 adoption window itself, measured by census under the r1 predicate.",
+    "prediction_recorded_before_result": true
+   }
+  ]
+ },
+ "synthesis": {
+  "outcome": "reversal",
+  "selected_option": null,
+  "basis": [
+   "d1 refutes option B against a hard constraint: a steward-authored grant is a declaration, and grants_paths is proposed precisely to be more than a declaration.",
+   "d2 shows the refutation of B does not establish A: A satisfies the authority objective but its satisfaction of the boundary objective turns on unobserved adoption behavior.",
+   "The two open questions are therefore coupled — the grant-authorship decision cannot be closed before the es#166 window returns adoption evidence, which is the same window r1's predicate governs."
+  ],
+  "conditions": [
+   "B may still be used as a disclosure mechanism; it may not be called a control."
+  ],
+  "concessions": [
+   "Principal binding is outside the contract, so even option A cannot verify a human authored the confirmation; A improves the authority relation without closing it.",
+   "A batching/standing-grant variant was not evaluated and may dominate A."
+  ],
+  "recovery_moves": [
+   "Record the reversal on B now, on the es#150 record, so the authorship precondition is partially discharged rather than wholly open.",
+   "Enumerate the batching variant as a third alternative before the window closes, so the window's evidence can discriminate three options rather than two.",
+   "Re-fire this derivation at window close against the observed adoption data."
+  ]
+ },
+ "never_attests": [
+  "derivation-correctness-by-envelope",
+  "empirical-fact-without-observation",
+  "gauntlet-independence"
+ ]
+}
