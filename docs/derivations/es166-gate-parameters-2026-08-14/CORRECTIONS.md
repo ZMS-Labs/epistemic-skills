@@ -1,8 +1,8 @@
 # Corrections — PR #175
 
 The records in this directory were reviewed on the PR that committed them.
-**Twenty findings landed across rounds 2, 3, 4, 6, 7, 8 and 9** — every round
-that reviewed them — and all twenty were upheld. The records now in place are
+**Twenty-three findings landed across rounds 2, 3, 4, 6, 7, 8, 9 and 11** —
+every round that reviewed them — and all twenty-three were upheld. The records now in place are
 the corrected versions; the originals are in git history at `9fbfea4` and are
 worth reading beside this file, because three of round 2's four defects are
 ones the records themselves were written to guard against.
@@ -19,7 +19,9 @@ individual entry:
   survivorship selection (6), then total-but-not-partial attrition (7), then a
   partial-attrition rule depending on an observation nobody takes (8), then
   new entrants with no admission rule and two rules disagreeing on which
-  snapshot a missing member contributes (9).
+  snapshot a missing member contributes (9), then unresolved attrition folded
+  in as non-adoption and admissions with no persisted qualifying evidence
+  (11).
 
 The same lesson landed on the code side of this PR twice over: fixing the
 structure and leaving the prose is not a fix.
@@ -357,6 +359,44 @@ The correct reading is not that the rule is now finally right. It is that a
 measurement design has been rewritten four times under review without an
 independent derivation, and that the next round has found something every
 time.
+
+## Round 11
+
+### P1 — a lower bound reported as the ratio
+
+The round-9 rule had a missing member contribute its **latest persisted
+observation**. For a member last seen with an empty envelope that adopts and
+then disappears, that observation says *non-adopting* — and the same record
+classifies it as **unresolved attrition**, i.e. numerator unknown. So the
+readout would state a lower bound as if it were the adoption ratio, and could
+drive the gate toward rejection on a value the record itself calls unknown.
+
+Corrected to bounds: `p_low` (unresolved counted as non-adopting), `p_high`
+(counted as adopting), the survivor-only ratio, and the unresolved count —
+with the window closing **inconclusive** on any question where `p_low` and
+`p_high` would answer differently. Picking either end and calling it the ratio
+is choosing a result the evidence does not determine.
+
+### P2 — admissions with no persisted evidence of qualifying
+
+Option A's denominator requires `receipt_count >= 1`, and the persisted
+observation fields recorded envelope state only. Once a store vanished,
+nothing durable established that the member had ever qualified — so the cohort
+could not be reproduced, and an erroneous or disputed admission was
+indistinguishable from a valid one. The qualifying evidence is now persisted
+at the admitting observation.
+
+### P2 — the validity condition named six fields and depended on nine
+
+Round 4 narrowed `valid_while` to the six fields then in use. Rounds 6–9 added
+requirements on `answers_are_partial` (every governing run) and on mission
+identity and lifecycle status (to construct and re-observe the cohort) without
+extending the list. The record could therefore declare itself valid while its
+own measurement had become unexecutable. Now enumerates all nine.
+
+**This is the fix-one-surface pattern again, and this time it accumulated
+across four rounds rather than one.** Each round added a dependency; none
+updated the field that tracks dependencies.
 
 ## Standing limit
 

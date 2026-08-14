@@ -915,9 +915,17 @@ def test_embedded_record_paths_match_the_schemas(workspace: Path) -> None:
         schema = json.loads(schema_path.read_text(encoding="utf-8"))
         kind = schema.get("properties", {}).get("record", {}).get("const", "")
         family, _, _ = str(kind).rpartition("@")
-        refs = {name for name, spec in schema.get("properties", {}).items()
-                if isinstance(spec, dict) and "$ref" in spec}
-        listed = set(EMBEDDED_RECORD_PATHS.get(family, ()))
+        # position -> family the $ref target actually declares, so the table's
+        # FAMILY column is pinned too: listing the key alone let a decoy of a
+        # different family be honoured in that slot (round 11).
+        refs = {}
+        for name, spec in schema.get("properties", {}).items():
+            if not isinstance(spec, dict) or "$ref" not in spec:
+                continue
+            target = json.loads((here / spec["$ref"]).read_text(encoding="utf-8"))
+            refs[name] = str(target.get("properties", {})
+                             .get("record", {}).get("const", "")).rpartition("@")[0]
+        listed = dict(EMBEDDED_RECORD_PATHS.get(family, {}))
         check(f"embedded-paths-match-{family or schema_path.stem}",
               refs == listed)
     # And nothing is listed for a family no schema declares.
@@ -985,6 +993,13 @@ def test_epoch_decoy_outside_a_record_position_is_not_skew(
               {"record": "nonsense",
                "manifest": {"record": "mission-manifest@2"}}) is None)
     # ...while a NEWER outer kind still reports, from the outer record itself.
+    # A record of the WRONG FAMILY in an embedded position is corruption, not
+    # a newer store: the schema fixes that slot, so no epoch of another family
+    # can ever be valid there.
+    check("wrong-family-in-embedded-slot-not-skew",
+          epoch_skew_anywhere(
+              {"record": "checkpoint@1",
+               "manifest": {"record": "receipt@2"}}) is None)
     check("newer-outer-kind-still-skew",
           epoch_skew_anywhere(
               {"record": "checkpoint@2",

@@ -110,8 +110,17 @@ def epoch_skew(record) -> str | None:
 # The staleness objection is answered by pinning rather than by permissiveness:
 # `test_embedded_record_paths_match_the_schemas` reads the .schema.json files
 # and fails if a `$ref` position appears that is not listed here.
+# POSITION -> EXPECTED FAMILY, not just position. The schema fixes a
+# checkpoint's `manifest` slot to the mission-manifest family, so a record
+# claiming `receipt@2` there cannot be a genuine newer store at any epoch --
+# it is corruption wearing a newer label. Listing the key alone honoured that
+# claim and replaced the definitive embedded-manifest error with EpochSkew
+# (measured), sending the operator to upgrade a reader instead of looking at
+# the damage. That is the SAME decoy suppression as the nested walk (round 5)
+# and the unsupported outer kind (round 6), one level further in: each fix
+# narrowed WHERE a claim is honoured and left WHAT may claim it unchecked.
 EMBEDDED_RECORD_PATHS = {
-    "checkpoint": ("manifest",),
+    "checkpoint": {"manifest": "mission-manifest"},
 }
 
 
@@ -144,12 +153,19 @@ def epoch_skew_anywhere(record) -> str | None:
     if kind not in RECORD_KINDS:
         return None
     family, _, _ = kind.rpartition("@")
-    for key in EMBEDDED_RECORD_PATHS.get(family, ()):
+    for key, expected_family in EMBEDDED_RECORD_PATHS.get(family, {}).items():
         nested = record.get(key)
-        if isinstance(nested, dict):
-            skew = epoch_skew(nested)
-            if skew:
-                return skew
+        if not isinstance(nested, dict):
+            continue
+        nested_kind = nested.get("record")
+        if not isinstance(nested_kind, str) \
+                or nested_kind.rpartition("@")[0] != expected_family:
+            # Wrong family for this position: validate_record's error is the
+            # accurate diagnosis and must not be replaced.
+            continue
+        skew = epoch_skew(nested)
+        if skew:
+            return skew
     return None
 
 

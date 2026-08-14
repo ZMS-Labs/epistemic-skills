@@ -16,14 +16,14 @@ and
 [es#166 comment](https://github.com/ZMS-Labs/epistemic-skills/issues/166#issuecomment-5288171588)
 cite them.
 
-> **Rounds 2–9 of PR #175 found twenty defects in these records, all
-> upheld.** The files here are corrected; see
+> **Rounds 2–11 of PR #175 found twenty-three defects in these records,
+> all upheld.** The files here are corrected; see
 > [`CORRECTIONS.md`](CORRECTIONS.md) for what was wrong and why it matters.
 > Several were defects the records were written to guard against — a vacuous
 > preregistration, a declaration naming no principal, selection on survival in
 > a record whose P8 coverage exists to catch selection — and **five
 > consecutive rounds** found a correction applied to one field and not its
-> sibling, and the cohort rule alone needed correcting in FOUR consecutive
+> sibling, and the cohort rule alone needed correcting in FIVE consecutive
 > rounds — each fix sound about the case in front of it and silently assuming
 > the next one away. Read that trend as what it is: these records have needed
 > a correction every single round they have been reviewed, and no round has
@@ -94,8 +94,16 @@ derivation and is not yet evaluated.
    during the interval, or one gaining its first chain-bound receipt, joins
    the cohort at the observation that first sees it qualify; re-observing only
    the opening members biases the ratio toward the opening population (round
-   9). A missing member contributes its **latest persisted observation** to
-   the full-cohort ratio, never its opening snapshot.
+   9). Each admitting observation also persists the **qualifying evidence**
+   (`receipt_count`, and the root as matched against the admitted-root set),
+   or the cohort cannot be reproduced once a store vanishes.
+1d. **Report bounds, not a point value, whenever a member has disappeared.**
+   A member last seen without a populated envelope and gone before the next
+   observation has an **unknown** numerator state; folding it in as
+   non-adoption reports a lower bound as if it were the ratio. Report
+   `p_low`, `p_high` and the survivor-only ratio with the unresolved count,
+   and close **inconclusive** on any question where `p_low` and `p_high`
+   would give different answers (round 11).
 2. **A bounded pilot, if the authorship question must close.** The es#166
    window cannot settle it: with `grants_paths` unshipped, no observation can
    discriminate the alternatives, so re-firing against window data would repeat
@@ -113,8 +121,11 @@ question. Neither record discharges any externally-enforced safety gate.
 
 `valid_while` voids each record on a change to the pinned subject revision, and
 `predicate.json` additionally voids only if the census **stops reporting** one
-of the six fields the measurement actually reads — `root`, `active`,
-`receipt_count`, `scope_in`, `scope_out`, `guard_count`. A census that gains an
+of the fields the measurement actually reads — `root`, `active`, `status`,
+`mission_id`, `receipt_count`, `scope_in`, `scope_out`, `guard_count`, and
+`answers_are_partial`. The earlier list named six and omitted three the
+procedure depends on, so the record could have declared itself valid while its
+own measurement had become unexecutable (round 11). A census that gains an
 unrelated field does **not** void it; the earlier, broader wording
 ("computable field set changes") was self-refuting, since the commit
 publishing these records added one (round 4).
