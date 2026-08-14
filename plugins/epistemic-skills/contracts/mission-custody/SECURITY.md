@@ -316,6 +316,28 @@ assuming:
 root?" as a security question, not housekeeping. A guard set that reads as
 armed is only armed while that answer is exactly one.
 
+## A PROVEN chain break outranks an epoch CLAIM
+
+`EpochSkew` says this reader cannot tell a genuine newer record from a
+relabelled corrupt one. That is true only while nothing else settles it — and
+for any checkpoint but the last, the **successor settles it**. Its
+`prev_checkpoint_sha256` was computed over the predecessor's original bytes,
+so a mismatch proves those bytes changed after it was written, whatever epoch
+they now claim.
+
+Measured on a three-revision chain with the **interior** checkpoint edited to
+claim `mission-manifest@2`: `load_latest()` raised `EpochSkew` and never
+looked at revision 3, whose pointer already disproved the story. A relabel
+therefore concealed a demonstrated alteration and sent the operator to upgrade
+a reader instead of to the damage — the corruption-suppression failure the
+epoch signal exists to prevent, reached through the one link that cannot be
+argued with. The link is checked first now.
+
+**The tail is the honest exception.** It has no successor, so nothing settles
+it and `EpochSkew` remains correct there — the same unsealed-tail boundary
+documented above, and the reason a fix that reported every skew as tampering
+would be the mirror-image defect.
+
 ## A receipt that cannot be READ is not a receipt that is GONE
 
 Only `FileNotFoundError` was caught when loading a receipt, so a receipt whose

@@ -178,8 +178,15 @@ def _lget(record: dict, key: str) -> list:
 
 
 def _receipts(mission: Mission, store: MissionStore,
-              latest: dict) -> tuple[list[str], list[str]]:
-    """(normalized artifact paths, problems) for CHAIN-BOUND receipt ids.
+              latest: dict) -> tuple[list[str], list[str], list[str]]:
+    """(normalized artifact paths, problems, orphaned retired receipts) for
+    CHAIN-BOUND receipt ids.
+
+    PROBLEMS AND ORPHANS ARE DIFFERENT CLAIMS. A problem means the census
+    could not inspect something and does not know what it holds -- that is
+    what makes an answer PARTIAL. An orphan is fully known and definitively
+    reported. Conflating them made one historical residue mark every later
+    run incomplete forever.
 
     THE CHAIN IS THE AUTHORITY ON WHICH PATH, not just on which ids.
     `scope_consistency()` already refuses to trust the receipt file for this
@@ -277,18 +284,31 @@ def _receipts(mission: Mission, store: MissionStore,
     # receipt that reappears late most often reappears after the work is
     # finished, so the mission-scoped `audit` cannot reach exactly the case
     # this residue occupies. Nothing about discovery changes to say so.
+    #
+    # REPORTED SEPARATELY FROM `problems`, and this is the whole point of the
+    # distinction: `problems` marks an answer PARTIAL, meaning a store or a
+    # receipt could not be inspected and the census does not know what it
+    # holds. An orphan is the opposite -- fully known, definitively reported,
+    # and covering nothing. Filing it as partial made every later run
+    # incomplete forever over a historical residue, and the es#166 measurement
+    # procedure requires answers_are_partial == false of EVERY governing run,
+    # so one old orphan would have blocked that window permanently. "Something
+    # is wrong" and "I could not look" are different claims.
+    orphans: list[str] = []
     try:
         for rid in sorted(mission._retired_receipt_ids(latest)):
             if mission.store.receipt_path(rid).exists():
-                problems.append(
+                orphans.append(
                     f"{rid}: ORPHANED-RETIRED-RECEIPT -- a receipt file is "
                     "present for an id this mission RETIRED. It covers "
                     "nothing, the id can never be reused, and a retirement "
                     "that raced a publisher leaves exactly this residue")
     except (OSError, ValueError, KeyError, TypeError) as exc:
+        # The SCAN failing IS an inspection failure, so it belongs in
+        # `problems`: here the census genuinely does not know.
         problems.append(
             f"retired-id scan unreadable: {type(exc).__name__}: {exc}")
-    return paths, problems
+    return paths, problems, orphans
 
 
 def _classify_guard(rule) -> str:
@@ -545,7 +565,7 @@ def census(root: Path) -> dict:
         auth = _dget(manifest, "authority")
         scope = _dget(manifest, "scope")
         guards = _lget(auth, "actuator_guards")
-        paths, problems = _receipts(mission, store, latest)
+        paths, problems, orphans = _receipts(mission, store, latest)
         abs_paths = [str((root / p).resolve()) for p in paths]
         probed = [_identity(a) for a in abs_paths]
         identities = [i for i, _ in probed]
@@ -623,6 +643,7 @@ def census(root: Path) -> dict:
             "escaped_targets": escaped,
             "recover_obligations": recover,
             "receipt_problems": problems,
+            "orphaned_retired_receipts": orphans,
         })
     return report
 
@@ -1061,6 +1082,22 @@ def main(argv: list[str]) -> int:
     has_active = {r["root"] for r in reports
                   if any(m["active"] for m in r["missions"])}
     enforcing = set(summary["q1_enforcing_roots"])
+    # ORPHANED RETIRED RECEIPTS. Printed in their own section rather than as
+    # "receipt problems", because they are DEFINITE findings and problems are
+    # what make a run partial. Visible either way -- a report moved out of the
+    # partial bucket must not be a report moved out of sight.
+    orphans = [(r["root"], m["mission"], line)
+               for r in reports for m in r["missions"]
+               for line in m.get("orphaned_retired_receipts", [])]
+    if orphans:
+        print("\nORPHANED RETIRED RECEIPTS (a receipt file exists for an id")
+        print("the chain RETIRED — it covers nothing and cannot be reused):")
+        for root, mission_name, line in orphans:
+            print(f"  ?? {_safe(root)}/{_safe(mission_name)}: {_safe(line)}")
+        print("  -> this is what a retirement that raced a publisher leaves.")
+        print("     It does NOT make this run partial: the residue is known,")
+        print("     not uninspected.")
+
     skewed = [(r["root"], e) for r in reports for e in r.get("epoch_skew", [])]
     if skewed:
         print("\nSTALE READER (store CLAIMS a newer contract epoch — this")

@@ -591,6 +591,59 @@ def test_epoch_skew_does_not_disarm_a_root_that_still_resolves(
     check("mixed-epoch-run-marked-partial", summary["answers_are_partial"])
 
 
+def test_a_proven_chain_break_outranks_an_epoch_claim(
+        workspace: Path) -> None:
+    """A newer-epoch label must not conceal a demonstrated alteration.
+
+    `EpochSkew` says "this reader cannot tell a genuine newer record from a
+    relabelled corrupt one" -- true only while nothing else settles it. The
+    SUCCESSOR settles it: its `prev_checkpoint_sha256` was computed over the
+    predecessor's ORIGINAL bytes, so a mismatch proves those bytes changed
+    after it was written, whatever epoch they now claim.
+
+    Measured before the fix on a three-revision chain with the INTERIOR
+    checkpoint edited: `load_latest()` raised `EpochSkew` and never looked at
+    revision 3, whose pointer already disproved the story. That is the
+    corruption-suppression failure the epoch signal exists to prevent, reached
+    through the one link that cannot be argued with."""
+    def skew_revision(name: str, which: int) -> Path:
+        root = workspace / name
+        m = open_mission(root, "m", "Work.")
+        m.approve()
+        m.record_effect("a.txt", "aa", "req-1")
+        checkpoints = sorted((root / "missions" / "m"
+                              / "checkpoints").glob("*.json"))
+        target = checkpoints[which]
+        record = json.loads(target.read_text(encoding="utf-8"))
+        record["manifest"]["record"] = "mission-manifest@2"
+        target.write_text(json.dumps(record, indent=1, sort_keys=True),
+                          encoding="utf-8")
+        return root
+
+    interior = skew_revision("interior", 1)
+    try:
+        MissionStore(interior / "missions" / "m").load_latest()
+        check("interior-skew-is-reported-as-a-proven-break", False)
+    except EpochSkew:
+        check("interior-skew-is-reported-as-a-proven-break", False)
+    except ChainBroken as exc:
+        check("interior-skew-is-reported-as-a-proven-break",
+              "CHAIN BREAK PROVEN" in str(exc))
+
+    # CONTROL: the TAIL has no successor, so nothing settles it and EpochSkew
+    # remains the honest answer -- the unsealed-tail boundary this contract
+    # already documents. A fix that reported every skew as tampering would be
+    # the mirror-image defect.
+    tail = skew_revision("tail", -1)
+    try:
+        MissionStore(tail / "missions" / "m").load_latest()
+        check("tail-skew-still-reported-as-skew", False)
+    except EpochSkew as exc:
+        check("tail-skew-still-reported-as-skew", "CLAIMS an epoch" in str(exc))
+    except ChainBroken:
+        check("tail-skew-still-reported-as-skew", False)
+
+
 def test_orphan_residue_is_reportable_after_the_mission_ends(
         workspace: Path) -> None:
     """The orphan residue must be reachable once the mission is terminal.
@@ -628,14 +681,26 @@ def test_orphan_residue_is_reportable_after_the_mission_ends(
     entry = [m_ for m_ in report["missions"] if m_["mission"] == "m"]
     check("census-walks-the-terminal-store", len(entry) == 1
           and not entry[0]["active"])
-    problems = " ".join(entry[0].get("receipt_problems", []))
+    found = " ".join(entry[0].get("orphaned_retired_receipts", []))
     check("census-reports-the-orphan-after-completion",
-          "ORPHANED-RETIRED-RECEIPT" in problems and "req-1" in problems)
+          "ORPHANED-RETIRED-RECEIPT" in found and "req-1" in found)
 
     out = subprocess.run(
         [sys.executable, str(Path(__file__).parent / "census_missions.py"),
          str(root)], capture_output=True, text=True).stdout
     check("orphan-reaches-the-human-census", "ORPHANED-RETIRED-RECEIPT" in out)
+
+    # A DEFINITE FINDING IS NOT AN INCOMPLETE ANSWER. Filing the orphan as a
+    # receipt "problem" marked the whole run partial, and the es#166
+    # procedure requires answers_are_partial == false of EVERY governing run
+    # -- so one historical residue would have blocked that window forever.
+    # Nothing here is uninspected: the orphan is known, and says so.
+    summary = census_missions.summarize([report])
+    check("orphan-does-not-make-the-run-partial",
+          summary["answers_are_partial"] is False)
+    check("orphan-is-not-filed-as-a-receipt-problem",
+          not any("ORPHANED-RETIRED-RECEIPT" in p
+                  for p in entry[0].get("receipt_problems", [])))
 
     # CONTROL: a mission that retired an id and got NO receipt back must not
     # be reported -- an always-on warning is not a signal.
@@ -648,9 +713,8 @@ def test_orphan_residue_is_reportable_after_the_mission_ends(
     Mission.load(clean, actor="agent:worker").acknowledge_receipt_loss("req-1")
     clean_report = census_missions.census(clean)
     check("no-orphan-reported-without-one",
-          not any("ORPHANED-RETIRED-RECEIPT" in p
-                  for m_ in clean_report["missions"]
-                  for p in m_.get("receipt_problems", [])))
+          not any(m_.get("orphaned_retired_receipts")
+                  for m_ in clean_report["missions"]))
 
     # ...and the discovery contract is untouched by this fix.
     check("pathless-discovery-invariant-intact",
@@ -4630,6 +4694,7 @@ TESTS = [
     test_backslash_effect_path_still_loads_its_own_receipt,
     test_newer_epoch_store_is_named_not_mistaken_for_an_empty_workspace,
     test_epoch_skew_does_not_disarm_a_root_that_still_resolves,
+    test_a_proven_chain_break_outranks_an_epoch_claim,
     test_orphan_residue_is_reportable_after_the_mission_ends,
     test_unreadable_receipt_never_crashes_and_is_never_called_lost,
     test_retirement_refuses_a_receipt_that_appears_mid_method,
