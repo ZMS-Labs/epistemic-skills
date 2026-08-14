@@ -591,6 +591,78 @@ def test_epoch_skew_does_not_disarm_a_root_that_still_resolves(
     check("mixed-epoch-run-marked-partial", summary["answers_are_partial"])
 
 
+def test_reopening_a_draft_never_approves_it(workspace: Path) -> None:
+    """No path back from `reopened` may promote a mission that was never
+    approved.
+
+    `record_effect` is legal in `draft`, so a draft mission can reopen --
+    tampered artifact, lost receipt, or a receipt relabelled to a newer epoch.
+    Every exit then wrote the constant "active", crossing the draft-to-active
+    approval transition without an approval. Measured on all four: afterwards
+    `approve()` refuses ("status is 'active', expected 'draft'") while
+    `begin_verification()` proceeds -- the gate is not merely skipped, it
+    becomes unreachable, and the crossing is triggered by damaging a file.
+
+    The reported case was the epoch-skew exit; the same constant sat on the
+    reconcile, receipt-loss and recovery exits, and reconcile needs no
+    relabelled record at all. Fixing only the reported surface would have been
+    this PR's own recurring defect committed inside the fix for a report of
+    it."""
+    def drafted(name: str) -> Path:
+        root = workspace / name
+        m = open_mission(root, "m", "Work.")
+        m.record_effect("a.txt", "aa", "req-1")   # legal in draft
+        check(f"{name}-starts-draft", m.status()["status"] == "draft")
+        return root
+
+    def status_of(root: Path) -> str:
+        return Mission.load(root, actor="agent:worker").status()["status"]
+
+    # (1) epoch-skew exit -- the reported case.
+    skew = drafted("skew")
+    path = next((skew / "missions" / "m" / "receipts").glob("*.json"))
+    record = json.loads(path.read_text(encoding="utf-8"))
+    for kind in ("receipt@2", "receipt@1"):
+        path.write_text(json.dumps({**record, "record": kind}, indent=1,
+                                   sort_keys=True), encoding="utf-8")
+        Mission.load(skew, actor="agent:worker").resume()
+    check("skew-exit-stays-draft", status_of(skew) == "draft")
+
+    # (2) reconcile exit -- reachable with no epoch claim at all.
+    drift = drafted("drift")
+    (drift / "a.txt").write_text("TAMPERED", encoding="utf-8")
+    Mission.load(drift, actor="agent:worker").resume()
+    Mission.load(drift, actor="agent:worker").reconcile("a.txt", "aa", "req-2")
+    check("reconcile-exit-stays-draft", status_of(drift) == "draft")
+
+    # (3) receipt-loss then recovery exit.
+    lost = drafted("lost")
+    next((lost / "missions" / "m" / "receipts").glob("*.json")).unlink()
+    Mission.load(lost, actor="agent:worker").resume()
+    Mission.load(lost, actor="agent:worker").acknowledge_receipt_loss("req-1")
+    Mission.load(lost, actor="agent:worker").record_effect(
+        "a.txt", "aa", "req-9")
+    check("recovery-exit-stays-draft", status_of(lost) == "draft")
+
+    # The transition must still be AVAILABLE, not merely uncrossed: a fix that
+    # left the mission unable to approve would strand it exactly as the
+    # promotion did, in the other direction.
+    for root in (skew, drift, lost):
+        Mission.load(root, actor="agent:worker").approve()
+        check(f"{root.name}-approves-after-repair", status_of(root) == "active")
+
+    # CONTROL: an APPROVED mission must still return to `active`, or this has
+    # been fixed by pinning every exit to draft.
+    live = workspace / "approved"
+    m = open_mission(live, "m", "Work.")
+    m.approve()
+    m.record_effect("a.txt", "aa", "req-1")
+    (live / "a.txt").write_text("TAMPERED", encoding="utf-8")
+    Mission.load(live, actor="agent:worker").resume()
+    Mission.load(live, actor="agent:worker").reconcile("a.txt", "aa", "req-2")
+    check("approved-mission-still-returns-active", status_of(live) == "active")
+
+
 def test_unreadable_root_is_never_reported_as_nothing_to_enforce(
         workspace: Path) -> None:
     """A root whose stores could not all be opened must not print under an
@@ -4249,6 +4321,7 @@ TESTS = [
     test_backslash_effect_path_still_loads_its_own_receipt,
     test_newer_epoch_store_is_named_not_mistaken_for_an_empty_workspace,
     test_epoch_skew_does_not_disarm_a_root_that_still_resolves,
+    test_reopening_a_draft_never_approves_it,
     test_unreadable_root_is_never_reported_as_nothing_to_enforce,
     test_stale_reader_scope_never_claims_enforcement_the_gate_lacks,
     test_embedded_newer_manifest_is_diagnosed_as_skew_not_corruption,

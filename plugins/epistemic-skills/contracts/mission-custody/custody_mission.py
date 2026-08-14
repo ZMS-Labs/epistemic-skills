@@ -1386,6 +1386,32 @@ class Mission:
                     seen.append(request_id)
         return seen
 
+    def _resumption_status(self) -> str:
+        """The lifecycle state a mission returns to once nothing is left
+        unresolved -- `draft` if it has never been approved, else `active`.
+
+        NOT the constant "active". Every path back from `reopened` used that
+        constant, which silently assumes the mission was active before it
+        reopened. A DRAFT mission can reopen -- `record_effect` is legal in
+        draft, so a tampered artifact, a lost receipt or a receipt relabelled
+        to a newer epoch all reach `resume()` before approval -- and each exit
+        then promoted it to `active` WITHOUT THE APPROVAL TRANSITION. Measured
+        on all four exits: afterwards `approve()` refuses ("status is
+        'active', expected 'draft'") while `begin_verification()` proceeds, so
+        the draft-to-active gate is not merely skipped but rendered
+        unreachable. An authority transition that can be crossed by damaging a
+        file is not a gate.
+
+        The chain is the authority, as everywhere else here: a mission that
+        has never been approved has no checkpoint whose status is anything but
+        `draft` or `reopened`. Nothing is read from a caller-supplied string.
+        """
+        for cp_path in self.store.checkpoint_paths():
+            record = json.loads(cp_path.read_text(encoding="utf-8"))
+            if record["status"] not in ("draft", "reopened"):
+                return "active"
+        return "draft"
+
     def _retired_receipt_ids(self, latest: dict) -> set[str]:
         """Ids whose loss was acknowledged. Retirement is permanent and lives
         in the append-only notes (checkpoint state is exact-field-closed in
@@ -1464,7 +1490,7 @@ class Mission:
         if recover is not None:
             remaining = [m for m in unresolved if m != recover]
             if status == "reopened" and not remaining:
-                status = "active"
+                status = self._resumption_status()
         self._write_next(latest, path, status=status, add_receipt_id=request_id,
                           unresolved_verdicts=remaining,
                           note=f"effect: {artifact_relpath}")
@@ -1741,7 +1767,8 @@ class Mission:
         if findings:
             status, note = "reopened", f"drift detected: {', '.join(findings)}"
         else:
-            status = "reopened" if unresolved else "active"
+            status = ("reopened" if unresolved
+                      else self._resumption_status())
             note = ("newer-epoch receipt(s) now readable: "
                     + ", ".join(m.split(":", 1)[1] for m in stale_skew))
         self._write_next(latest, path, status=status,
@@ -1770,7 +1797,8 @@ class Mission:
                 "acknowledge the loss and reconcile under a fresh id")
         receipt = self._write_effect(latest, artifact_relpath, content, request_id)
         remaining = [m for m in unresolved if m != marker]
-        next_status = "active" if not remaining else "reopened"
+        next_status = (self._resumption_status() if not remaining
+                       else "reopened")
         add_id = request_id if request_id not in latest["receipt_ids"] else None
         self._write_next(latest, path, status=next_status, add_receipt_id=add_id,
                           unresolved_verdicts=remaining,
@@ -1819,7 +1847,8 @@ class Mission:
         if marker not in unresolved:
             raise CustodyError(f"no receipt-loss marker for {request_id!r}")
         remaining = [m for m in unresolved if m != marker]
-        next_status = "active" if not remaining else "reopened"
+        next_status = (self._resumption_status() if not remaining
+                       else "reopened")
 
         recorded_path = self._historical_effect_path(request_id)
         # Deliberately raw equality, NOT _same_artifact: everywhere else the
@@ -2456,7 +2485,8 @@ class Mission:
             raise CustodyError(
                 f"receipt {receipt_request_id!r} predates the FAIL verdict; remediate first")
         remaining = [m for m in unresolved if m != marker]
-        next_status = "active" if not remaining else "reopened"
+        next_status = (self._resumption_status() if not remaining
+                       else "reopened")
         new = self._write_next(latest, path, status=next_status, unresolved_verdicts=remaining,
                                 note=f"cleared: {marker}")
         return new["revision"]

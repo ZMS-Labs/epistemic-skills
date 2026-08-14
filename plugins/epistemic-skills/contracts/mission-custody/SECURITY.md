@@ -315,6 +315,29 @@ assuming:
 root?" as a security question, not housekeeping. A guard set that reads as
 armed is only armed while that answer is exactly one.
 
+## Reopening a DRAFT must not approve it
+
+`record_effect` is legal in `draft`, so a mission can reach `reopened` before
+it has ever been approved — by a tampered artifact, a lost receipt, or a
+receipt relabelled to a newer epoch. Every path back from `reopened` wrote the
+constant `"active"`, which silently assumes the mission was active before it
+reopened. It therefore crossed the draft-to-active approval transition
+**without an approval**, and the crossing is triggered by damaging a file.
+
+Measured on all four exits (epoch-skew clearing, `reconcile`,
+`acknowledge_receipt_loss`, and the recovery effect): afterwards `approve()`
+refuses with "status is 'active', expected 'draft'" while
+`begin_verification()` proceeds. The gate is not merely skipped — it becomes
+**unreachable**, so there is no way to put the mission back on the approved
+path. An authority transition that a file edit can cross is not a gate.
+
+The exits now restore the state the chain shows the mission was in: `draft`
+when no checkpoint has ever carried a status other than `draft` or `reopened`,
+`active` otherwise. The chain is the authority, as everywhere else here, and
+nothing is read from a caller-supplied string. Note the reachability
+difference when reasoning about this: the epoch-skew route needs a relabelled
+record, but the `reconcile` route needs only an edited artifact.
+
 ## An acceptance PASS certifies the mission's receipts, not the workspace
 
 `scope_consistency()` compares the artifacts THIS mission receipted against
