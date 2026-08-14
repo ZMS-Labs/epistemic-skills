@@ -1,8 +1,8 @@
 # Corrections — PR #175
 
 The records in this directory were reviewed on the PR that committed them.
-**Eighteen findings landed across rounds 2, 3, 4, 6, 7 and 8** — every round
-that reviewed them — and all eighteen were upheld. The records now in place are
+**Twenty findings landed across rounds 2, 3, 4, 6, 7, 8 and 9** — every round
+that reviewed them — and all twenty were upheld. The records now in place are
 the corrected versions; the originals are in git history at `9fbfea4` and are
 worth reading beside this file, because three of round 2's four defects are
 ones the records themselves were written to guard against.
@@ -15,9 +15,11 @@ individual entry:
   remove from one short record, because each time I corrected the field I was
   pointed at and did not grep the file for the claim.
 - **A fix sound about the case in front of it that silently assumed the next
-  one away.** The cohort rule needed correcting in three consecutive rounds:
+  one away.** The cohort rule needed correcting in FOUR consecutive rounds:
   survivorship selection (6), then total-but-not-partial attrition (7), then a
-  partial-attrition rule depending on an observation nobody takes (8).
+  partial-attrition rule depending on an observation nobody takes (8), then
+  new entrants with no admission rule and two rules disagreeing on which
+  snapshot a missing member contributes (9).
 
 The same lesson landed on the code side of this PR twice over: fixing the
 structure and leaving the prose is not a fix.
@@ -320,6 +322,41 @@ satisfying it disagreed.
 
 **Sixth consecutive round** in which a correction landed in one surface and
 not its sibling.
+
+## Round 9
+
+### P1 — new entrants had no admission rule
+
+`d1`'s model says the cohort is *every qualifying mission observed at any
+point in the interval*. The cadence procedure re-observed **only the opening
+members**. A mission created during the 60 days, or one gaining its first
+chain-bound receipt, therefore had no admission rule and could be omitted
+entirely — biasing the ratio toward the opening population.
+
+That is the same survivorship error as closing on survivors, taken at the
+other end of the interval, and it appeared in the fix for the first one.
+Corrected: each cadence observation now discovers and admits newly qualifying
+missions.
+
+### P2 — two rules disagreed on which snapshot a missing member contributes
+
+The partial-attrition rule counts a vanished member's **later-observed**
+adoption. The reporting rule computed the full-cohort ratio from the member's
+**opening** state. One observation history, two numerators, depending on which
+rule the reader happened to follow. Corrected: a missing member contributes
+its *latest persisted observation*, never its opening snapshot.
+
+### Where this leaves the record
+
+**Four consecutive rounds on the cohort rule** — survivorship (6),
+total-but-not-partial attrition (7), an observation nobody takes (8), and now
+admission plus snapshot conflict (9). Each fix was sound about the case in
+front of it. None of them was sound about the next one.
+
+The correct reading is not that the rule is now finally right. It is that a
+measurement design has been rewritten four times under review without an
+independent derivation, and that the next round has found something every
+time.
 
 ## Standing limit
 

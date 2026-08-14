@@ -1673,9 +1673,21 @@ class Mission:
         findings = (mismatched
                     + [f"RECEIPT-MISSING:{rid}" for rid in missing]
                     + [f"RECEIPT-NEWER-EPOCH:{rid}" for rid in skewed])
-        if not findings:
+        # THE SKEW MARKER'S EXIT LIVES HERE. Its remedy is "update the reader
+        # (or repair a false relabel) and re-run resume" -- no new verb, since
+        # `reconcile` clears drift and `acknowledge_receipt_loss` retires an
+        # id, and neither is right for a receipt that was never lost. Without
+        # this, the marker persisted forever and the mission stayed `reopened`
+        # with nothing able to clear it (measured) -- a workspace stranded
+        # with no verb to resolve it, which is the exact objection this
+        # contract raises against inverting the gate's fail-open posture.
+        stale_skew = [m for m in latest["state"]["unresolved_verdicts"]
+                      if m.startswith("RECEIPT-NEWER-EPOCH:")
+                      and m.split(":", 1)[1] not in skewed]
+        if not findings and not stale_skew:
             return []
-        unresolved = list(latest["state"]["unresolved_verdicts"])
+        unresolved = [m for m in latest["state"]["unresolved_verdicts"]
+                      if m not in stale_skew]
         for rel in mismatched:
             marker = f"RECONCILIATION:{rel}"
             if marker not in unresolved:
@@ -1691,8 +1703,17 @@ class Mission:
             marker = f"RECEIPT-NEWER-EPOCH:{rid}"
             if marker not in unresolved:
                 unresolved.append(marker)
-        self._write_next(latest, path, status="reopened", unresolved_verdicts=unresolved,
-                          note=f"drift detected: {', '.join(findings)}")
+        # A run that ONLY cleared stale skew markers is not drift: if nothing
+        # is left unresolved the mission returns to `active`, or the reader
+        # update that fixed the receipt would leave it reopened forever.
+        if findings:
+            status, note = "reopened", f"drift detected: {', '.join(findings)}"
+        else:
+            status = "reopened" if unresolved else "active"
+            note = ("newer-epoch receipt(s) now readable: "
+                    + ", ".join(m.split(":", 1)[1] for m in stale_skew))
+        self._write_next(latest, path, status=status,
+                          unresolved_verdicts=unresolved, note=note)
         return findings
 
     def reconcile(self, artifact_relpath: str, content: str, request_id: str) -> dict:
@@ -1741,12 +1762,19 @@ class Mission:
             raise IllegalTransition(
                 f"cannot acknowledge_receipt_loss: status is "
                 f"{latest['status']!r}, expected 'reopened'")
+        # ONE SNAPSHOT, read once and used for every decision below. The
+        # first version of this guard read the receipt here and AGAIN for the
+        # restoration check, discarding the second read's skew -- so a
+        # future-format receipt published between the two reads passed the
+        # guard and was then retired anyway. A destructive verb must not
+        # decide from two different observations of the same file.
+        #
         # REFUSE THE DESTRUCTIVE VERB ON A SKEWED RECEIPT, and refuse it
         # BEFORE the marker check so the operator gets the real reason rather
         # than "no receipt-loss marker". Retiring the id would discard
         # coverage an updated reader can still verify, and this verb has no
         # inverse.
-        _r, _why, skew = self._load_receipt_checked(request_id)
+        receipt, refusal, skew = self._load_receipt_checked(request_id)
         if skew:
             raise CustodyError(
                 f"refusing to retire {request_id!r}: its receipt CLAIMS a "
@@ -1761,7 +1789,6 @@ class Mission:
         remaining = [m for m in unresolved if m != marker]
         next_status = "active" if not remaining else "reopened"
 
-        receipt, refusal, _skew = self._load_receipt_checked(request_id)
         recorded_path = self._historical_effect_path(request_id)
         # Deliberately raw equality, NOT _same_artifact: everywhere else the
         # question is "does this write satisfy that obligation", where two

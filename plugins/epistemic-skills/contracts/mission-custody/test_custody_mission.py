@@ -812,6 +812,24 @@ def test_newer_epoch_receipt_is_not_reported_as_loss(workspace: Path) -> None:
     except CustodyError as exc:
         check("newer-receipt-retirement-refused", "CLAIMS a newer" in str(exc))
 
+    # THE MARKER MUST HAVE AN EXIT. Introducing one with none strands the
+    # workspace `reopened` forever -- the objection this contract raises
+    # against inverting the gate's fail-open posture, committed inside a fix
+    # for a different stranding. The exit is "repair or update, then re-run
+    # resume"; no new verb, because reconcile clears drift and
+    # acknowledge_receipt_loss retires an id, and a receipt that was never
+    # lost needs neither.
+    receipt_path.write_text(json.dumps(
+        {**record, "record": "receipt@1"}, indent=1, sort_keys=True),
+        encoding="utf-8")
+    repaired = Mission.load(workspace, actor="agent:worker")
+    check("newer-receipt-marker-clears-when-readable", repaired.resume() == [])
+    state = repaired.status()
+    check("newer-receipt-mission-returns-active",
+          state["status"] == "active")
+    check("newer-receipt-marker-gone",
+          not state["state"]["unresolved_verdicts"])
+
     # CONTROL: a genuinely absent receipt must STILL be reported as loss and
     # still be retirable, or this fix has simply disabled the recovery path.
     other = workspace / "genuine-loss"

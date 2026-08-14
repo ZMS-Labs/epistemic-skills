@@ -217,13 +217,25 @@ def _receipts(mission: Mission, store: MissionStore,
         if not isinstance(rid, str):
             problems.append(f"receipt id {rid!r} is not a string")
             continue
+        skew = None
         try:
-            receipt = mission._load_receipt(rid)
+            # The CHECKED loader, not `_load_receipt`: the thin wrapper drops
+            # the skew signal, and this instrument would then print
+            # RECEIPT-MISSING for a receipt that is present, intact and merely
+            # newer -- telling the operator the opposite of what `resume` now
+            # says about the same file.
+            receipt, _refusal, skew = mission._load_receipt_checked(rid)
         except (OSError, ValueError) as exc:
             receipt = None
             problems.append(f"{rid}: receipt unreadable: {type(exc).__name__}")
         chained = index.get(rid)
-        if receipt is None:
+        if skew:
+            problems.append(
+                f"{rid}: RECEIPT-NEWER-EPOCH -- the receipt CLAIMS a contract "
+                "epoch newer than this reader; it is NOT reported as lost and "
+                "must NOT be retired. Read this mission with an updated "
+                "custody plugin/CLI")
+        elif receipt is None:
             problems.append(
                 f"{rid}: RECEIPT-MISSING (absent, corrupt or schema-invalid) "
                 "-- `resume` reports this id as drift")

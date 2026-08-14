@@ -16,14 +16,14 @@ and
 [es#166 comment](https://github.com/ZMS-Labs/epistemic-skills/issues/166#issuecomment-5288171588)
 cite them.
 
-> **Rounds 2–8 of PR #175 found eighteen defects in these records, all
+> **Rounds 2–9 of PR #175 found twenty defects in these records, all
 > upheld.** The files here are corrected; see
 > [`CORRECTIONS.md`](CORRECTIONS.md) for what was wrong and why it matters.
 > Several were defects the records were written to guard against — a vacuous
 > preregistration, a declaration naming no principal, selection on survival in
 > a record whose P8 coverage exists to catch selection — and **five
 > consecutive rounds** found a correction applied to one field and not its
-> sibling, and the cohort rule alone needed correcting in three consecutive
+> sibling, and the cohort rule alone needed correcting in FOUR consecutive
 > rounds — each fix sound about the case in front of it and silently assuming
 > the next one away. Read that trend as what it is: these records have needed
 > a correction every single round they have been reviewed, and no round has
@@ -89,7 +89,13 @@ derivation and is not yet evaluated.
    invisible to both the opening record and the closing census, so without
    intermediate observations the full-cohort numerator is unknowable in
    exactly the case the cohort record exists to cover (round 8). The cadence
-   is fixed before observation begins, like everything else here.
+   is fixed before observation begins, like everything else here. Each
+   observation also **admits newly qualifying missions** — a mission created
+   during the interval, or one gaining its first chain-bound receipt, joins
+   the cohort at the observation that first sees it qualify; re-observing only
+   the opening members biases the ratio toward the opening population (round
+   9). A missing member contributes its **latest persisted observation** to
+   the full-cohort ratio, never its opening snapshot.
 2. **A bounded pilot, if the authorship question must close.** The es#166
    window cannot settle it: with `grants_paths` unshipped, no observation can
    discriminate the alternatives, so re-firing against window data would repeat
