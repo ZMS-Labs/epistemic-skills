@@ -691,8 +691,23 @@ def summarize(reports: list[dict]) -> dict:
         # root's gate is not inert.
         if not act:
             for e in r.get("epoch_skew", []):
+                # CLAIMS, matching epoch_skew() and every other surface. The
+                # earlier cause, "STALE READER (newer contract epoch)",
+                # asserted as fact the one thing this reader cannot establish:
+                # with no @2 validator, a tampered store relabelled
+                # `checkpoint@2` is indistinguishable here from a genuine
+                # newer one. This is the MACHINE-READABLE field, so a JSON
+                # consumer reading Q1 causes alone -- the authoritative
+                # fail-open list -- was told to upgrade a reader when the
+                # store may simply be damaged, even though partial_because
+                # qualified the same evidence correctly further down. Naming
+                # the claim is the whole point of the signal; asserting the
+                # diagnosis is the corruption-suppression failure it exists
+                # to prevent.
                 fail_open.append({"root": r["root"],
-                                  "cause": "STALE READER (newer contract epoch)",
+                                  "cause": "store CLAIMS a newer contract "
+                                           "epoch (UNVALIDATED — may be "
+                                           "corruption relabelled)",
                                   "missions": [e["mission"]]})
         for t in r.get("integrity", []):
             if not t.get("fails_open"):

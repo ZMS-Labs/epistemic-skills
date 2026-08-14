@@ -202,7 +202,8 @@ precondition of the first `@2` write, not a nicety to follow it.
 byte); `run_gate` names the skew on the verdict and on stderr instead of
 reporting an empty workspace; the census discloses every skewed store and marks
 the run partial. It reports the **ROOT** as fail-open with cause
-`STALE READER (newer contract epoch)` **only when no other active mission
+`store CLAIMS a newer contract epoch (UNVALIDATED — may be corruption
+relabelled)` **only when no other active mission
 resolves there** — a skewed store beside a readable active mission does not
 disarm the root, since `Mission.load` skips the skewed store and the gate still
 blocks (measured). The skewed mission's own guards are unenforced either way;

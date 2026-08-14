@@ -591,6 +591,58 @@ def test_epoch_skew_does_not_disarm_a_root_that_still_resolves(
     check("mixed-epoch-run-marked-partial", summary["answers_are_partial"])
 
 
+def test_no_census_surface_asserts_a_newer_epoch_as_fact(
+        workspace: Path) -> None:
+    """Every place the census mentions a newer epoch must say CLAIMS.
+
+    This reader has no `@2` validator, so a tampered store relabelled
+    `checkpoint@2` is indistinguishable here from a genuine newer one. A
+    surface that states the epoch as fact tells the operator to upgrade a
+    reader when the store may simply be damaged -- the corruption-suppression
+    failure the whole signal exists to prevent.
+
+    Written as an INVARIANT OVER EVERY SURFACE rather than a check on the one
+    that was reported. Three separate surfaces have carried the categorical
+    wording and been corrected one at a time -- the gate verdicts, the README
+    CONTROL row, and then `q1_fail_open_roots[].cause`, which is the
+    machine-readable one a JSON consumer reads first. A per-surface assertion
+    would have passed on each of the two rounds before this one."""
+    _skew_a_store_into(workspace, "m-only")
+    report = census_missions.census(workspace)
+    summary = census_missions.summarize([report])
+    human = subprocess.run(
+        [sys.executable, str(Path(__file__).parent / "census_missions.py"),
+         str(workspace)], capture_output=True, text=True).stdout
+    machine = subprocess.run(
+        [sys.executable, str(Path(__file__).parent / "census_missions.py"),
+         "--json", str(workspace)], capture_output=True, text=True).stdout
+
+    def offenders(text: str) -> list[str]:
+        """Lines mentioning a newer epoch without naming it as a claim."""
+        return [ln.strip() for ln in text.splitlines()
+                if "newer contract epoch" in ln
+                and "CLAIM" not in ln.upper()]
+
+    for label, text in (("summary", json.dumps(summary, indent=1)),
+                        ("report", json.dumps(report, indent=1)),
+                        ("human", human),
+                        ("json-cli", machine)):
+        bad = offenders(text)
+        check(f"{label}-never-asserts-newer-epoch-as-fact: {bad[:1]}", not bad)
+
+    # The Q1 cause is called out by name because it is the authoritative
+    # machine-readable field and the one a consumer may read alone.
+    causes = [a["cause"] for a in summary["q1_fail_open_roots"]]
+    check(f"q1-cause-names-the-claim: {causes}",
+          causes and all("CLAIMS" in c for c in causes))
+
+    # CONTROL: the skew must still be REPORTED. Satisfying the invariant by
+    # falling silent about newer epochs would pass every check above.
+    check("skew-still-reported-at-all",
+          bool(report["epoch_skew"]) and bool(summary["q1_fail_open_roots"])
+          and "epoch" in human)
+
+
 def test_reopening_a_draft_never_approves_it(workspace: Path) -> None:
     """No path back from `reopened` may promote a mission that was never
     approved.
@@ -4321,6 +4373,7 @@ TESTS = [
     test_backslash_effect_path_still_loads_its_own_receipt,
     test_newer_epoch_store_is_named_not_mistaken_for_an_empty_workspace,
     test_epoch_skew_does_not_disarm_a_root_that_still_resolves,
+    test_no_census_surface_asserts_a_newer_epoch_as_fact,
     test_reopening_a_draft_never_approves_it,
     test_unreadable_root_is_never_reported_as_nothing_to_enforce,
     test_stale_reader_scope_never_claims_enforcement_the_gate_lacks,
