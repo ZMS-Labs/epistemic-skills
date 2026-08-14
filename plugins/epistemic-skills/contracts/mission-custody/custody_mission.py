@@ -314,11 +314,24 @@ def _first_effect_note(notes: list[str], kind: bool = False) -> str | None:
     The ONE place that rule is written. `_historical_effect_path` and
     `_effect_path_index` both call it, so the single-id answer and the
     whole-chain index cannot disagree -- a differential test pins that
-    (test_effect_path_index_matches_per_id)."""
+    (test_effect_path_index_matches_per_id).
+
+    SEPARATORS ARE NORMALIZED HERE, exactly as `_write_effect` normalizes
+    them when it writes the receipt (`.replace("\\\\", "/")`). The note keeps
+    whatever spelling the caller passed, so `dir\\file.txt` -- the native
+    spelling on Windows -- was recorded as a receipt saying `dir/file.txt`
+    and a note saying `dir\\file.txt`. Any comparison of the two rejected
+    the contract's OWN valid receipt: `resume()` then reported
+    RECEIPT-MISSING for honest work, and `acknowledge_receipt_loss` would
+    retire a perfectly good id and demand re-coverage. Comparing spellings
+    that one writer deliberately produces in two forms is a defect in the
+    comparison, not in the record."""
     for note in notes:
         for prefix in ("effect: ", "reconciled: "):
             if note.startswith(prefix):
-                return note[len(prefix):] if not kind else prefix.rstrip(": ")
+                if kind:
+                    return prefix.rstrip(": ")
+                return note[len(prefix):].replace("\\", "/")
     return None
 
 
@@ -1234,6 +1247,15 @@ class Mission:
         # disagrees with the chained effect note is not this id's receipt,
         # whoever wrote it. When the chain cannot derive a path the check is
         # skipped rather than guessed -- underivable is not disagreement.
+        #
+        # HOW FAR THIS ACTUALLY REACHES, measured both ways: an INTERIOR note
+        # cannot be rewritten (the hash chain breaks and the store is skipped
+        # entirely), but the TAIL checkpoint is unsealed, so for an id
+        # introduced by the LATEST revision a writer who can replace the
+        # receipt can also rewrite that note to match the decoy. The binding
+        # raises the bar without closing that case; it is the es#118 residue,
+        # and the tail anchor closes it. Disclosed in SECURITY.md rather than
+        # papered over here.
         chained = self._effect_path_index().get(request_id)
         if chained is not None and record.get("artifact_path") != chained:
             return None, (

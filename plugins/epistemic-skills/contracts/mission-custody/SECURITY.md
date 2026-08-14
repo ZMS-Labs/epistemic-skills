@@ -128,6 +128,25 @@ by a FORGED amendment on the unsealed tail checkpoint is the same residue
 class as amendment fabrication today; the structural fix (tail anchor) is
 tracked as es#118.
 
+**The unsealed tail also bounds receipt binding.** `_load_receipt` refuses a
+receipt whose `artifact_path` disagrees with the `effect:` note the chain
+recorded for that request id, which is what stops a receipt copied from
+another workspace from silencing drift detection. That binding is only as
+trustworthy as the note. Both facts are measured, not assumed:
+
+- An **interior** note cannot be rewritten. Editing one breaks the hash
+  chain, `load_latest()` raises `ChainBroken`, and discovery skips the store
+  entirely — verified.
+- A **tail** note can. For an id introduced by the LATEST checkpoint, a
+  writer who can replace the receipt can also rewrite that note to match the
+  decoy, and `resume()` returns clean over a drifted artifact — verified.
+
+So the binding raises the bar (the attacker must now write the checkpoint
+too, not just drop a file in `receipts/`) without closing the hole for
+tail-introduced ids. It is the same es#118 residue as forged amendments, and
+the same tail anchor closes both. Ids introduced by any earlier revision are
+fully protected.
+
 ## Discovery ambiguity DISARMS the gate — an unarmed decoy is enough
 
 **Verified live (es#173 adjudication, 2026-08-13):** an armed mission with

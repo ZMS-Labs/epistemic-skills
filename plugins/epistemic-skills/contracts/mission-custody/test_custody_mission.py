@@ -459,6 +459,32 @@ def test_foreign_mission_receipt_is_not_this_missions_receipt(
           own is not None and own["mission_id"] == "m-donor")
 
 
+def test_backslash_effect_path_still_loads_its_own_receipt(
+        workspace: Path) -> None:
+    """The contract must never reject its OWN receipt over a spelling it
+    chose itself.
+
+    `_write_effect` normalizes separators into the receipt (`dir\\file.txt`
+    -> `dir/file.txt`) while the chained note keeps the caller's spelling, so
+    any raw comparison of the two refuses a perfectly good record. Measured
+    when receipt binding was first added: `resume()` reported
+    RECEIPT-MISSING for honest work on a Windows-spelled path, and
+    `acknowledge_receipt_loss` would have retired a valid id and demanded
+    re-coverage. A false drift alarm is not a safe direction -- it spends the
+    operator's trust on nothing."""
+    m = open_mission(workspace, "m-backslash", "Windows-spelled path.")
+    m.approve()
+    m.record_effect("dir\\file.txt", "hello", "req-bs")
+
+    check("backslash-receipt-loads", m._load_receipt("req-bs") is not None)
+    check("backslash-no-false-drift", m.resume() == [])
+    check("backslash-chained-path-normalized",
+          m._historical_effect_path("req-bs") == "dir/file.txt")
+    # and real drift on that artifact is still caught
+    (workspace / "dir" / "file.txt").write_text("changed", encoding="utf-8")
+    check("backslash-real-drift-still-caught", m.resume() == ["dir/file.txt"])
+
+
 def test_cross_workspace_receipt_cannot_silence_drift(workspace: Path) -> None:
     """The sharpest form of the planted-receipt attack, and the one the
     mission_id check alone does NOT stop.
@@ -3420,6 +3446,7 @@ TESTS = [
     test_effect_path_index_matches_per_id,
     test_foreign_mission_receipt_is_not_this_missions_receipt,
     test_cross_workspace_receipt_cannot_silence_drift,
+    test_backslash_effect_path_still_loads_its_own_receipt,
     test_forged_restored_receipt_is_not_trusted,
     test_distinct_files_never_share_an_obligation,
     test_obligations_match_by_artifact_not_by_string,
