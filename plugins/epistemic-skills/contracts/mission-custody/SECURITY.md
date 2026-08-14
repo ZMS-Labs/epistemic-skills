@@ -221,6 +221,23 @@ diagnosis is replaced by advice to leave it alone. The signal means the record
 **claims** a newer epoch. Read it with an updated consumer to learn whether that
 claim is true.
 
+**Where the claim is honoured, and why the position matters.** Records embed
+records: a `checkpoint@1` carries a `mission-manifest` the schema requires to
+be `@1`, so a store can be too new while its outer kind looks familiar — an
+armed mission whose embedded manifest says `@2` was reported `ChainBroken` and
+went inert as `NoActiveMission`, the silent diagnosis this signal exists to
+replace. The fix for that first walked **every** nested dictionary, which
+widened the attack above rather than closing it: planting
+`{"record": "checkpoint@2"}` in `state` — a plain object that cannot hold a
+record — made a tampered checkpoint report as a stale reader and sent the
+operator to upgrade instead of to look at the damage (measured, with
+`written_by` corrupted alongside). The epoch claim is therefore honoured
+**only at schema-declared record positions** (`EMBEDDED_RECORD_PATHS`), and a
+test reads the `.schema.json` files and fails if a `$ref` position is not
+listed — staleness is caught in CI rather than by an operator acting on a
+wrong verdict. A `record` key anywhere else is data, and data does not get to
+say what this reader may skip.
+
 **Scope is per MISSION, not per root.** A skewed store beside a readable active
 mission does not disarm the root — `Mission.load` skips the skewed store and the
 gate still blocks (measured). The skewed mission's own guards are unenforced

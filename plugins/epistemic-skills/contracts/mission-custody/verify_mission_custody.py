@@ -96,35 +96,53 @@ def epoch_skew(record) -> str | None:
 # mission: `run_gate` allowed with `gate inert: NoActiveMission`, which is
 # exactly the silent stale-reader diagnosis this signal exists to replace.
 #
-# WALKED, not hand-listed. Naming `record["manifest"]` here would fix the one
-# nesting that exists today and miss the next one -- the same case-by-case
-# habit that produced four separate mis-classification defects in the census.
-# A walk covers any future embedded family for free.
-_SKEW_WALK_LIMIT = 4096
+# ONLY AT SCHEMA-DECLARED POSITIONS. The first fix for the above walked every
+# nested dict, on the reasoning that a hand-written list would go stale. That
+# widened the round-2 attack surface instead of closing it: planting
+# `{"record": "checkpoint@2"}` in `state` -- a plain object under the schema,
+# which cannot hold a record -- made a tampered checkpoint report as a stale
+# reader and told the operator to upgrade rather than to look at the damage
+# (measured, with `written_by` corrupted alongside). Suppressing a corruption
+# diagnosis is the exact failure epoch_skew's docstring was rewritten to
+# prevent, and a permissive walk hands the attacker every key in the file
+# instead of just the top-level one.
+#
+# The staleness objection is answered by pinning rather than by permissiveness:
+# `test_embedded_record_paths_match_the_schemas` reads the .schema.json files
+# and fails if a `$ref` position appears that is not listed here.
+EMBEDDED_RECORD_PATHS = {
+    "checkpoint": ("manifest",),
+}
 
 
 def epoch_skew_anywhere(record) -> str | None:
-    """`epoch_skew` for the record OR anything nested inside it.
+    """`epoch_skew` for the record, then for each record the SCHEMA says it
+    embeds -- and nowhere else.
 
     Returns the outermost skew first, so the message names the biggest thing
     known to be too new. `epoch_skew` stays the single-record predicate; this
     is the one callers deciding "can I read this file at all?" should use.
+
+    An unknown or malformed outer kind yields None: this reader cannot know
+    what such a record embeds, and guessing would be the permissive walk
+    again. `validate_record` reports the unknown kind, which is the accurate
+    diagnosis.
     """
-    queue = [record]
-    seen = 0
-    while queue and seen < _SKEW_WALK_LIMIT:
-        node = queue.pop(0)
-        seen += 1
-        if isinstance(node, dict):
-            skew = epoch_skew(node)
+    if not isinstance(record, dict):
+        return None
+    skew = epoch_skew(record)
+    if skew:
+        return skew
+    kind = record.get("record")
+    if not isinstance(kind, str):
+        return None
+    family, _, _ = kind.rpartition("@")
+    for key in EMBEDDED_RECORD_PATHS.get(family, ()):
+        nested = record.get(key)
+        if isinstance(nested, dict):
+            skew = epoch_skew(nested)
             if skew:
                 return skew
-            queue.extend(node.values())
-        elif isinstance(node, list):
-            # A bounded extend: a hostile record cannot make this walk
-            # unbounded, because _SKEW_WALK_LIMIT caps nodes visited and the
-            # caller has already read the whole file into memory anyway.
-            queue.extend(node)
     return None
 
 

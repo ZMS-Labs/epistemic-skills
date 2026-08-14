@@ -17,7 +17,7 @@ from custody_store import (  # noqa: E402
     ChainBroken, EpochSkew, MissionStore, StoreError, sha256_bytes, sha256_file,
 )
 from verify_mission_custody import (  # noqa: E402
-    epoch_skew, epoch_skew_anywhere, is_iso_utc,
+    EMBEDDED_RECORD_PATHS, epoch_skew, epoch_skew_anywhere, is_iso_utc,
 )
 from custody_gate import run_gate  # noqa: E402
 import census_missions  # noqa: E402
@@ -776,6 +776,92 @@ def test_embedded_newer_manifest_is_diagnosed_as_skew_not_corruption(
           "NEWER contract epoch" not in run_gate(
               other, {"tool_name": "Bash", "command": "cat .env"},
               actor="probe").get("reason", ""))
+
+
+def test_embedded_record_paths_match_the_schemas(workspace: Path) -> None:
+    """`EMBEDDED_RECORD_PATHS` must list every schema `$ref` position, and no
+    others.
+
+    The epoch walk was first written to visit every nested dict, on the
+    reasoning that a hand-written list would go stale. That reasoning was
+    right about the risk and wrong about the remedy: the permissive version
+    let a decoy planted in `state` convert a corruption diagnosis into
+    "upgrade your reader". This test is the remedy that keeps the narrow
+    version honest -- add an embedded record to a schema without listing it
+    here and this fails, so staleness is caught by CI rather than by an
+    operator reading a wrong verdict."""
+    here = Path(__file__).resolve().parent
+    for schema_path in sorted(here.glob("*.schema.json")):
+        schema = json.loads(schema_path.read_text(encoding="utf-8"))
+        kind = schema.get("properties", {}).get("record", {}).get("const", "")
+        family, _, _ = str(kind).rpartition("@")
+        refs = {name for name, spec in schema.get("properties", {}).items()
+                if isinstance(spec, dict) and "$ref" in spec}
+        listed = set(EMBEDDED_RECORD_PATHS.get(family, ()))
+        check(f"embedded-paths-match-{family or schema_path.stem}",
+              refs == listed)
+    # And nothing is listed for a family no schema declares.
+    families = set()
+    for schema_path in here.glob("*.schema.json"):
+        schema = json.loads(schema_path.read_text(encoding="utf-8"))
+        kind = schema.get("properties", {}).get("record", {}).get("const", "")
+        families.add(str(kind).rpartition("@")[0])
+    check("embedded-paths-no-unknown-families",
+          set(EMBEDDED_RECORD_PATHS) <= families)
+
+
+def test_epoch_decoy_outside_a_record_position_is_not_skew(
+        workspace: Path) -> None:
+    """A decoy in a non-record position must NOT suppress the corruption
+    diagnosis.
+
+    `state` is a plain object under the checkpoint schema and cannot hold a
+    record, so `{"record": "checkpoint@2"}` there is tampering, not a newer
+    store. Measured against the permissive walk: a checkpoint with a
+    corrupted `written_by` AND that decoy was reported as a stale reader and
+    the operator told to upgrade -- the corruption-suppression attack
+    `epoch_skew`'s docstring exists to prevent, handed every key in the file
+    rather than just the top-level one."""
+    guards = [{"name": "no-secrets", "tool_names": ["Bash"],
+               "command_regexes": ["cat .env"], "path_globs": ["secrets/**"]}]
+    call = {"tool_name": "Bash", "command": "cat .env"}
+
+    def diagnosis(root: Path, mutate) -> str:
+        m = open_mission(root, "m-armed", "Armed.",
+                         guard_mode="enforce", actuator_guards=guards)
+        m.approve()
+        m.record_effect("a.txt", "aa", "req-1")
+        tail = sorted((root / "missions" / "m-armed"
+                       / "checkpoints").glob("*.json"))[-1]
+        record = json.loads(tail.read_text(encoding="utf-8"))
+        mutate(record)
+        tail.write_text(json.dumps(record, indent=1, sort_keys=True),
+                        encoding="utf-8")
+        return run_gate(root, call, actor="probe").get("reason", "")
+
+    def decoy_in_state(rec: dict) -> None:
+        rec["state"]["record"] = "checkpoint@2"
+        rec["written_by"] = 12345  # ordinary corruption alongside the decoy
+
+    def decoy_deep_in_manifest(rec: dict) -> None:
+        # Inside an embedded record, but not AT a record position.
+        rec["manifest"]["authority"]["record"] = "checkpoint@2"
+        rec["written_by"] = 12345
+
+    def genuine_embedded(rec: dict) -> None:
+        rec["manifest"]["record"] = "mission-manifest@2"
+
+    check("decoy-in-state-not-called-skew",
+          "NEWER contract epoch" not in
+          diagnosis(workspace / "state-decoy", decoy_in_state))
+    check("decoy-deep-in-manifest-not-called-skew",
+          "NEWER contract epoch" not in
+          diagnosis(workspace / "deep-decoy", decoy_deep_in_manifest))
+    # CONTROL: the round-4 case must survive this narrowing, or the fix has
+    # simply reverted the defect it was built for.
+    check("genuine-embedded-manifest-still-skew",
+          "NEWER contract epoch" in
+          diagnosis(workspace / "genuine", genuine_embedded))
 
 
 def test_open_refuses_beside_an_epoch_skewed_store(workspace: Path) -> None:
@@ -3805,6 +3891,8 @@ TESTS = [
     test_epoch_skew_does_not_disarm_a_root_that_still_resolves,
     test_stale_reader_scope_never_claims_enforcement_the_gate_lacks,
     test_embedded_newer_manifest_is_diagnosed_as_skew_not_corruption,
+    test_embedded_record_paths_match_the_schemas,
+    test_epoch_decoy_outside_a_record_position_is_not_skew,
     test_open_refuses_beside_an_epoch_skewed_store,
     test_forged_restored_receipt_is_not_trusted,
     test_distinct_files_never_share_an_obligation,
