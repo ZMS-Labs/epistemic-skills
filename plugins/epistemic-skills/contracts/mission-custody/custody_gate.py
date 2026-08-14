@@ -189,8 +189,23 @@ def evaluate(authority: dict, tool_call: dict) -> dict:
                         "rule": rule["name"], "mode": mode,
                         "reason": (
                             f"custody guard '{rule['name']}' matched this call; "
-                            "the mission envelope does not discharge it -- record "
-                            "an operator grant via `amend` or stop")}
+                            "the mission envelope does not discharge it. This "
+                            "gate reads ONLY guard_mode and actuator_guards -- "
+                            "recording amendment TEXT does not discharge a "
+                            "block, however clearly it grants the work. The "
+                            "exits are: change the rule that matched "
+                            f"('{rule['name']}') via `amend --guards-file`, or "
+                            "`amend --guard-mode audit` to retire the whole "
+                            "guard set, or stop. Both amend forms are "
+                            "recorded, chained and comparable; narrating a "
+                            "grant is not. NOTE: if this rule covers the "
+                            "shell itself, the amend command is blocked by "
+                            "the same rule -- run it OUT OF BAND (a session "
+                            "or terminal this hook does not gate). The gate "
+                            "deliberately has no self-repair exemption: a "
+                            "rule that exempted its own discharge command "
+                            "would be a hole shaped exactly like the thing "
+                            "it guards.")}
             return {"decision": "allow", "matched": True, "rule": rule["name"],
                     "mode": mode,
                     "reason": f"custody guard '{rule['name']}' matched (audit mode)"}

@@ -127,6 +127,31 @@ def test_glob_overmatch_still_held() -> None:
           evaluate(auth("enforce", guards), call)["matched"])
 
 
+def test_block_reason_names_only_exits_that_work() -> None:
+    """The refusal used to say "record an operator grant via `amend`" --
+    but `evaluate` reads ONLY guard_mode and actuator_guards, never
+    `amendments`, so amendment TEXT discharges nothing however clearly it
+    grants the work. That is the dead-end-recipe class this contract has
+    now paid for four times: a refusal whose printed exit does not work.
+    The message must name only exits that change what the gate reads."""
+    guards = [{"name": "no-secrets", "tool_names": ["Write"],
+               "command_regexes": [], "path_globs": ["secrets/**"]}]
+    call = {"tool_name": "Write", "command": None,
+            "file_path": "secrets/x.env"}
+    v = evaluate(auth("enforce", guards), call)
+    check("block-reason-blocks", v["decision"] == "block")
+    reason = v["reason"]
+    check("block-reason-names-the-rule", "no-secrets" in reason)
+    check("block-reason-says-text-does-not-discharge",
+          "does not discharge" in reason)
+    check("block-reason-names-the-guards-file-exit",
+          "--guards-file" in reason)
+    check("block-reason-names-the-audit-exit", "--guard-mode audit" in reason)
+    # the negative: it must not advertise bare `amend` as sufficient
+    check("block-reason-does-not-advertise-bare-amend",
+          "via `amend` or stop" not in reason)
+
+
 def test_trailing_slash_guard_glob_binds_the_subtree() -> None:
     """es#155's gate half: 'M:/Media/' compiled to an exact 'M:/Media' and
     an armed guard silently allowed every write UNDER the directory the

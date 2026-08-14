@@ -421,6 +421,148 @@ def test_receipt_ids_always_carry_a_derivable_path(workspace: Path) -> None:
               m._historical_effect_path(request_id) == "notes/a.md")
 
 
+def test_foreign_mission_receipt_is_not_this_missions_receipt(
+        workspace: Path) -> None:
+    """A schema-valid receipt from ANOTHER mission, carrying the same
+    request_id, must not be loadable here.
+
+    request_id uniqueness is per-mission, so two missions can legitimately
+    mint the same id, and receipt_path is content-addressed on the id alone
+    -- so a foreign receipt dropped in this mission's receipts dir sits
+    exactly where this mission looks for its own. It passes validate_record
+    and agrees about its request_id, so both prior checks let it through, and
+    acknowledge_receipt_loss would then read someone else's write as RESTORED
+    coverage. It must degrade to the loss it is."""
+    donor_ws = workspace / "donor"
+    victim_ws = workspace / "victim"
+    donor = open_mission(donor_ws, "m-donor", "Donate a receipt.")
+    donor.approve()
+    donor.record_effect("shared.txt", "donor bytes", "req-same")
+    victim = open_mission(victim_ws, "m-victim", "Receive a foreign receipt.")
+    victim.approve()
+    victim.record_effect("shared.txt", "victim bytes", "req-same")
+
+    foreign = json.loads(donor.store.receipt_path("req-same")
+                         .read_text(encoding="utf-8"))
+    check("foreign-receipt-is-schema-valid-and-id-agreeing",
+          foreign["request_id"] == "req-same" and foreign["mission_id"] == "m-donor")
+    victim.store.receipt_path("req-same").write_text(
+        json.dumps(foreign, sort_keys=True), encoding="utf-8")
+
+    check("foreign-receipt-refused", victim._load_receipt("req-same") is None)
+    # and the refusal surfaces as the drift it is, not as silence
+    check("foreign-receipt-reads-as-receipt-missing",
+          "RECEIPT-MISSING:req-same" in victim.resume())
+    # the mission's OWN receipt still loads (the check refuses foreigners only)
+    own = donor._load_receipt("req-same")
+    check("own-receipt-still-loads",
+          own is not None and own["mission_id"] == "m-donor")
+
+
+def test_backslash_effect_path_still_loads_its_own_receipt(
+        workspace: Path) -> None:
+    """The contract must never reject its OWN receipt over a spelling it
+    chose itself.
+
+    `_write_effect` normalizes separators into the receipt (`dir\\file.txt`
+    -> `dir/file.txt`) while the chained note keeps the caller's spelling, so
+    any raw comparison of the two refuses a perfectly good record. Measured
+    when receipt binding was first added: `resume()` reported
+    RECEIPT-MISSING for honest work on a Windows-spelled path, and
+    `acknowledge_receipt_loss` would have retired a valid id and demanded
+    re-coverage. A false drift alarm is not a safe direction -- it spends the
+    operator's trust on nothing."""
+    m = open_mission(workspace, "m-backslash", "Windows-spelled path.")
+    m.approve()
+    m.record_effect("dir\\file.txt", "hello", "req-bs")
+
+    check("backslash-receipt-loads", m._load_receipt("req-bs") is not None)
+    check("backslash-no-false-drift", m.resume() == [])
+    check("backslash-chained-path-normalized",
+          m._historical_effect_path("req-bs") == "dir/file.txt")
+    # and real drift on that artifact is still caught
+    (workspace / "dir" / "file.txt").write_text("changed", encoding="utf-8")
+    check("backslash-real-drift-still-caught", m.resume() == ["dir/file.txt"])
+
+
+def test_cross_workspace_receipt_cannot_silence_drift(workspace: Path) -> None:
+    """The sharpest form of the planted-receipt attack, and the one the
+    mission_id check alone does NOT stop.
+
+    mission_id is unique only WITHIN a workspace, so two roots can each run a
+    mission called `deploy` -- an ordinary collision, not an exotic one. A
+    receipt copied between them passes schema, request_id and mission_id
+    checks alike. If it names a decoy path whose bytes also exist in the
+    victim workspace, resume() checks the DECOY's hash, finds it unchanged,
+    and reports clean -- while the victim's real artifact has drifted.
+    Measured before the fix: resume() returned [] with the real file reading
+    "TAMPERED". The chain is the authority on which path an id was minted
+    against, so a receipt disagreeing with it is not this id's receipt."""
+    donor_ws, victim_ws = workspace / "donor", workspace / "victim"
+    donor = open_mission(donor_ws, "deploy", "Donor workspace.")
+    donor.approve()
+    victim = open_mission(victim_ws, "deploy", "Victim workspace.")
+    victim.approve()
+    victim.record_effect("real.txt", "victim real bytes", "req-1")
+    donor.record_effect("decoy.txt", "shared decoy bytes", "req-1")
+    (victim_ws / "decoy.txt").write_text("shared decoy bytes", encoding="utf-8")
+
+    foreign = json.loads(
+        donor.store.receipt_path("req-1").read_text(encoding="utf-8"))
+    check("cross-ws-receipt-passes-mission-id",
+          foreign["mission_id"] == "deploy" and foreign["request_id"] == "req-1")
+    victim.store.receipt_path("req-1").write_text(
+        json.dumps(foreign, sort_keys=True), encoding="utf-8")
+    (victim_ws / "real.txt").write_text("TAMPERED", encoding="utf-8")
+
+    check("cross-ws-receipt-refused",
+          victim._load_receipt("req-1") is None)
+    # the drift is REPORTED, not silently absorbed: an unloadable receipt
+    # degrades to RECEIPT-MISSING, which carries its own obligation.
+    check("cross-ws-drift-not-silenced",
+          "RECEIPT-MISSING:req-1" in victim.resume())
+    # and the honest case is untouched: the donor's own receipt still loads
+    check("cross-ws-donor-own-receipt-loads",
+          (donor._load_receipt("req-1") or {}).get("artifact_path") == "decoy.txt")
+
+
+def test_effect_path_index_matches_per_id(workspace: Path) -> None:
+    """The whole-chain index and the per-id lookup must agree on EVERY id,
+    including the ones with no derivable path.
+
+    `_effect_path_index` exists only because asking `_historical_effect_path`
+    about every id rescans the chain from revision 1 each time (quadratic on
+    long missions -- an estate census over thousands of revisions becomes
+    millions of parses). A faster second implementation of a rule is a second
+    rule unless something pins them together: they share `_first_effect_note`,
+    and this test is the pin. Exercised across ordinary effects, a
+    reconciliation, a retired id, and an id admitted with no parseable note."""
+    m = open_mission(workspace, "m-index", "Index equals per-id lookup.")
+    m.approve()
+    m.record_effect("notes/a.md", "aa", "req-a")
+    m.record_effect("notes/b.md", "bb", "req-b")
+    (workspace / "notes" / "a.md").write_text("tampered", encoding="utf-8")
+    m.resume()
+    m.reconcile("notes/a.md", "aa", "req-a-again")
+    # an id admitted by a revision whose notes carry no effect marker: the
+    # underivable case, where both must answer None rather than guessing.
+    latest, path = m.store.load_latest()
+    m._write_next(latest, path, status=latest["status"],
+                  add_receipt_id="req-noteless",
+                  unresolved_verdicts=latest["state"]["unresolved_verdicts"],
+                  note="bare progress note with no effect marker")
+
+    index = m._effect_path_index()
+    ids = m._all_receipt_ids_ever() + ["req-never-existed"]
+    disagreements = [rid for rid in ids
+                     if index.get(rid) != m._historical_effect_path(rid)]
+    check("index-matches-per-id", not disagreements)
+    check("index-answers-none-for-noteless",
+          index.get("req-noteless") is None
+          and m._historical_effect_path("req-noteless") is None)
+    check("index-covers-reconciled-id", index.get("req-a-again") == "notes/a.md")
+
+
 def test_forged_restored_receipt_is_not_trusted(workspace: Path) -> None:
     """Round-3 finding: a schema-valid receipt planted at the lost id's path
     must not buy continuity. The chain records which artifact the id was
@@ -3301,6 +3443,10 @@ TESTS = [
     test_retirement_survives_hostile_request_ids,
     test_note_cannot_forge_machine_state,
     test_receipt_ids_always_carry_a_derivable_path,
+    test_effect_path_index_matches_per_id,
+    test_foreign_mission_receipt_is_not_this_missions_receipt,
+    test_cross_workspace_receipt_cannot_silence_drift,
+    test_backslash_effect_path_still_loads_its_own_receipt,
     test_forged_restored_receipt_is_not_trusted,
     test_distinct_files_never_share_an_obligation,
     test_obligations_match_by_artifact_not_by_string,

@@ -128,6 +128,121 @@ by a FORGED amendment on the unsealed tail checkpoint is the same residue
 class as amendment fabrication today; the structural fix (tail anchor) is
 tracked as es#118.
 
+**The unsealed tail also bounds receipt binding.** `_load_receipt` refuses a
+receipt whose `artifact_path` disagrees with the `effect:` note the chain
+recorded for that request id, which is what stops a receipt copied from
+another workspace from silencing drift detection. That binding is only as
+trustworthy as the note. Both facts are measured, not assumed:
+
+- An **interior** note cannot be rewritten. Editing one breaks the hash
+  chain, `load_latest()` raises `ChainBroken`, and discovery skips the store
+  entirely — verified.
+- A **tail** note can. For an id introduced by the LATEST checkpoint, a
+  writer who can replace the receipt can also rewrite that note to match the
+  decoy, and `resume()` returns clean over a drifted artifact — verified.
+
+So the binding raises the bar (the attacker must now write the checkpoint
+too, not just drop a file in `receipts/`) without closing the hole for
+tail-introduced ids. It is the same es#118 residue as forged amendments, and
+the same tail anchor closes both. Ids introduced by any earlier revision are
+fully protected — **for the PATH. Not for the BYTES.**
+
+### RECEIPT FILES ARE UNAUTHENTICATED DATA
+
+The chain records which artifact an id was minted against. It records
+nothing about the artifact's CONTENT, so nothing binds `after_sha256` to
+history. Measured, with no second workspace involved and no checkpoint
+touched: an attacker who can write `receipts/` edits `after_sha256` in place
+to the hash of the tampered bytes, and `resume()` returns clean over the
+tampered artifact.
+
+That is worth stating plainly because the narrower framings understate it —
+this needs no donor mission, no matching mission_id, no copied file. **Write
+access to `receipts/` is write access to what drift detection believes.**
+Everything `_load_receipt` checks (schema, content-addressed id, mission id,
+chained path) constrains WHICH RECORD may speak for an id; none of it
+constrains what that record says about bytes, because the record is
+unsigned and the chain never hashed it.
+
+The fix is structural and belongs to es#118: bind receipt digests into the
+checkpoint chain, so the hash an auditor checks against is one the attacker
+cannot rewrite without breaking the chain. It is deliberately NOT attempted
+as another `_load_receipt` refinement — no check inside that function can
+authenticate data the chain never covered, and four consecutive rounds of
+tightening it produced one regression that falsely reported drift on honest
+work (see the round-8 backslash defect). **Consumers should treat receipt
+hashes as trustworthy exactly as far as they trust write access to the
+mission directory** — which is the same boundary the guard-log and the
+unsealed tail already sit behind.
+
+## Discovery ambiguity DISARMS the gate — an unarmed decoy is enough
+
+**Verified live (es#173 adjudication, 2026-08-13):** an armed mission with
+`guard_mode: enforce` and a `secrets/**` rule blocks a matching call. Add a
+**second, entirely unarmed** mission directory under the same workspace root
+and the identical call returns `allow` / `mode: inert`. `run_gate` catches
+`MultipleActiveMissions` and fails open by design — a hook must never brick
+the tool loop on discovery ambiguity — but the consequence is that **any
+second active mission, carrying no guards at all, silently retires every
+guard in that workspace.**
+
+`Mission.open` refuses to create the second one **sequentially** — but that
+refusal is a check-then-write with no lock between the two steps, so it does
+NOT hold under concurrency. Verified live: two `Mission.open` calls racing on
+an empty workspace (each completing the `Mission.load` preflight before
+either wrote revision 1) both returned successfully, leaving `m-1` and `m-2`
+active, after which `Mission.load` raises `MultipleActiveMissions` and every
+guard in that workspace is retired. **Concurrent opens are therefore a
+reachable ambiguity path through the supported surface**, alongside the
+out-of-band routes (a filesystem write, a sync, a restored backup, a copied
+mission dir, or a symlinked duplicate of one store).
+
+Serializing open is not attempted here: the obvious lock file introduces a
+stale-lock wedge that bricks every future open in the workspace after a
+crash — a new dead-end recipe of exactly the class this document already
+tracks — and the es#173 adjudication ruled NO-GO on adopting any concurrency
+design this cycle. It is named, not fixed, and the census reports the
+resulting state (`Q1 FAIL-OPEN REACHABILITY`) wherever it has already
+happened. Three further properties make this worth naming rather than
+assuming:
+
+- **"Active" is broad.** A mission counts as active unless its status is
+  `completed` or `cancelled` — so a mission parked in `verifying`
+  indefinitely both holds the workspace's only slot and, if duplicated,
+  disarms it.
+- **There is no supported repair.** Every CLI verb except `open` and `gate`
+  sits below a single `Mission.load` call, which raises on ambiguity. Once a
+  workspace holds two active missions, no verb can resolve it; the fix is a
+  filesystem action outside the contract.
+
+**Operator consequence:** treat "how many active missions are under this
+root?" as a security question, not housekeeping. A guard set that reads as
+armed is only armed while that answer is exactly one.
+
+## An acceptance PASS certifies the mission's receipts, not the workspace
+
+`scope_consistency()` compares the artifacts THIS mission receipted against
+THIS mission's declared scope. It says nothing about writes made by another
+mission, by a session acting outside custody, or by a human — and with
+concurrent missions under nested roots (which the contract permits today,
+one per root) each mission's PASS is silent about every artifact the other
+one touched. "This mission declared its scope and nothing crossed it" is the
+claim; "nothing crossed this boundary in this workspace" is not.
+
+## Effect-phrased boundaries are UNENFORCED
+
+Only `authority.actuator_guards` (with `guard_mode`) reaches the runtime
+chokepoint. `stop_rules` (`hold_if` / `stop_if` / `escalate_if`),
+`protected_state`, and `permissions` are **declarations a human reads**:
+nothing evaluates them, at any point, ever. This matters most for the
+missions whose real boundaries are conditions on effects — "do not expose
+secret material", "do not merge pull requests", "do not improvise platform
+privileges" — because those cannot be expressed as the path/tool/command
+patterns `evaluate()` matches on. A mission whose genuine constraints live in
+`stop_rules` has a record that makes a violation **attributable**, not one
+that makes it **impossible**. Closing that gap is tracked as es#166 and is
+explicitly NOT what concurrent-mission work (es#173) addresses.
+
 ## Stage-C hook: discovery scope, log sensitivity, mixed-fleet hazard
 
 Mission discovery walks up from the payload's cwd to the nearest ancestor
