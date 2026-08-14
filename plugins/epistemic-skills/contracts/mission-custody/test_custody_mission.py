@@ -591,6 +591,74 @@ def test_epoch_skew_does_not_disarm_a_root_that_still_resolves(
     check("mixed-epoch-run-marked-partial", summary["answers_are_partial"])
 
 
+def test_orphan_residue_is_reportable_after_the_mission_ends(
+        workspace: Path) -> None:
+    """The orphan residue must be reachable once the mission is terminal.
+
+    `Mission.load` resolves the single ACTIVE mission and skips terminal
+    stores by design, so the mission-scoped `audit` raises `NoActiveMission`
+    on a completed mission (measured: rc 2, empty stdout). A receipt that
+    reappears LATE is exactly the retirement-race residue this reporting
+    exists to surface, and late usually means after the work has finished --
+    so a mission-scoped report is structurally blind to its own worst case.
+
+    The CENSUS is the workspace-level instrument and already walks every
+    store under every root, terminal ones included, so the residue is
+    reported there. Deliberately NOT by giving the CLI a mission selector:
+    discovery is pathless by contract, `test_no_mission_flags_outside_open`
+    enforces that structurally, and relaxing it -- or changing `audit`'s
+    scope and record shape -- is a design decision about the discovery
+    contract, not a repair. That decision is not this fix's to make."""
+    root = workspace / "finished"
+    m = open_mission(root, "m", "Work.")
+    m.approve()
+    m.record_effect("a.txt", "aa", "req-1")
+    receipt_path = next((root / "missions" / "m" / "receipts").glob("*.json"))
+    saved = receipt_path.read_text(encoding="utf-8")
+    receipt_path.unlink()
+    Mission.load(root, actor="agent:worker").resume()
+    Mission.load(root, actor="agent:worker").acknowledge_receipt_loss("req-1")
+    Mission.load(root, actor="agent:worker").record_effect("a.txt", "aa", "r9")
+    Mission.load(root, actor="agent:worker").begin_verification()
+    Mission.load(root, actor="operator:zach").record_verdict(
+        "PASS", "operator:zach", "operator-accepted", "done")
+    receipt_path.write_text(saved, encoding="utf-8")   # residue, after the end
+
+    report = census_missions.census(root)
+    entry = [m_ for m_ in report["missions"] if m_["mission"] == "m"]
+    check("census-walks-the-terminal-store", len(entry) == 1
+          and not entry[0]["active"])
+    problems = " ".join(entry[0].get("receipt_problems", []))
+    check("census-reports-the-orphan-after-completion",
+          "ORPHANED-RETIRED-RECEIPT" in problems and "req-1" in problems)
+
+    out = subprocess.run(
+        [sys.executable, str(Path(__file__).parent / "census_missions.py"),
+         str(root)], capture_output=True, text=True).stdout
+    check("orphan-reaches-the-human-census", "ORPHANED-RETIRED-RECEIPT" in out)
+
+    # CONTROL: a mission that retired an id and got NO receipt back must not
+    # be reported -- an always-on warning is not a signal.
+    clean = workspace / "clean"
+    n = open_mission(clean, "m", "Work.")
+    n.approve()
+    n.record_effect("a.txt", "aa", "req-1")
+    next((clean / "missions" / "m" / "receipts").glob("*.json")).unlink()
+    Mission.load(clean, actor="agent:worker").resume()
+    Mission.load(clean, actor="agent:worker").acknowledge_receipt_loss("req-1")
+    clean_report = census_missions.census(clean)
+    check("no-orphan-reported-without-one",
+          not any("ORPHANED-RETIRED-RECEIPT" in p
+                  for m_ in clean_report["missions"]
+                  for p in m_.get("receipt_problems", [])))
+
+    # ...and the discovery contract is untouched by this fix.
+    check("pathless-discovery-invariant-intact",
+          subprocess.run(
+              [sys.executable, str(Path(__file__).parent / "test_custody_cli.py")],
+              capture_output=True, text=True).returncode == 0)
+
+
 def test_unreadable_receipt_never_crashes_and_is_never_called_lost(
         workspace: Path) -> None:
     """A receipt that is PRESENT and cannot be read must degrade, not crash,
@@ -4562,6 +4630,7 @@ TESTS = [
     test_backslash_effect_path_still_loads_its_own_receipt,
     test_newer_epoch_store_is_named_not_mistaken_for_an_empty_workspace,
     test_epoch_skew_does_not_disarm_a_root_that_still_resolves,
+    test_orphan_residue_is_reportable_after_the_mission_ends,
     test_unreadable_receipt_never_crashes_and_is_never_called_lost,
     test_retirement_refuses_a_receipt_that_appears_mid_method,
     test_orphaned_retired_receipt_is_not_silent,

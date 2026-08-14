@@ -367,6 +367,12 @@ it is only honest to state its shape:
   writes the receipt before its checkpoint.
 
 **Why that residual is survivable.** Landing in it is no longer silent.
+Reported in two places, deliberately: `audit` covers the mission you are
+working on, and the **census** covers every store under every root INCLUDING
+TERMINAL ONES. The second is not redundancy. `Mission.load` resolves the
+single active mission, so a mission-scoped report is structurally blind to a
+receipt that reappears after the work has finished — which is when a late one
+usually reappears. The census is the instrument that can see it.
 `orphaned_retired_receipts()` reports any receipt file sitting at a retired
 id's path, and `audit` prints it and exits non-zero. Before that existed the
 condition was invisible — `resume()` returned `[]` and `status` said nothing

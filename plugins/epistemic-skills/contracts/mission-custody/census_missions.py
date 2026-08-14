@@ -265,6 +265,29 @@ def _receipts(mission: Mission, store: MissionStore,
             continue
         problems.append(f"{rid}: path from RECEIPT FILE (chain silent)")
         paths.append(_norm(ap))
+    # RETIRED IDS ARE NOT IN receipt_ids, so the loop above structurally
+    # cannot see them. A receipt file sitting at a retired id's path is
+    # coverage nothing will ever read -- the chain says the id is gone and
+    # `_write_effect` refuses to reuse it -- and it is the residue a
+    # retirement that raced a publisher leaves behind.
+    #
+    # IT IS REPORTED HERE because the census is the workspace-level
+    # instrument: it walks every store under every root INCLUDING TERMINAL
+    # ONES, while `Mission.load` resolves only the single active mission. A
+    # receipt that reappears late most often reappears after the work is
+    # finished, so the mission-scoped `audit` cannot reach exactly the case
+    # this residue occupies. Nothing about discovery changes to say so.
+    try:
+        for rid in sorted(mission._retired_receipt_ids(latest)):
+            if mission.store.receipt_path(rid).exists():
+                problems.append(
+                    f"{rid}: ORPHANED-RETIRED-RECEIPT -- a receipt file is "
+                    "present for an id this mission RETIRED. It covers "
+                    "nothing, the id can never be reused, and a retirement "
+                    "that raced a publisher leaves exactly this residue")
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        problems.append(
+            f"retired-id scan unreadable: {type(exc).__name__}: {exc}")
     return paths, problems
 
 
