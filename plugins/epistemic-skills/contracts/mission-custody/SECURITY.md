@@ -145,7 +145,35 @@ So the binding raises the bar (the attacker must now write the checkpoint
 too, not just drop a file in `receipts/`) without closing the hole for
 tail-introduced ids. It is the same es#118 residue as forged amendments, and
 the same tail anchor closes both. Ids introduced by any earlier revision are
-fully protected.
+fully protected — **for the PATH. Not for the BYTES.**
+
+### RECEIPT FILES ARE UNAUTHENTICATED DATA
+
+The chain records which artifact an id was minted against. It records
+nothing about the artifact's CONTENT, so nothing binds `after_sha256` to
+history. Measured, with no second workspace involved and no checkpoint
+touched: an attacker who can write `receipts/` edits `after_sha256` in place
+to the hash of the tampered bytes, and `resume()` returns clean over the
+tampered artifact.
+
+That is worth stating plainly because the narrower framings understate it —
+this needs no donor mission, no matching mission_id, no copied file. **Write
+access to `receipts/` is write access to what drift detection believes.**
+Everything `_load_receipt` checks (schema, content-addressed id, mission id,
+chained path) constrains WHICH RECORD may speak for an id; none of it
+constrains what that record says about bytes, because the record is
+unsigned and the chain never hashed it.
+
+The fix is structural and belongs to es#118: bind receipt digests into the
+checkpoint chain, so the hash an auditor checks against is one the attacker
+cannot rewrite without breaking the chain. It is deliberately NOT attempted
+as another `_load_receipt` refinement — no check inside that function can
+authenticate data the chain never covered, and four consecutive rounds of
+tightening it produced one regression that falsely reported drift on honest
+work (see the round-8 backslash defect). **Consumers should treat receipt
+hashes as trustworthy exactly as far as they trust write access to the
+mission directory** — which is the same boundary the guard-log and the
+unsealed tail already sit behind.
 
 ## Discovery ambiguity DISARMS the gate — an unarmed decoy is enough
 

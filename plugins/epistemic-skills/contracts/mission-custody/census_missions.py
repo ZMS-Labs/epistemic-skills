@@ -334,6 +334,17 @@ def census(root: Path) -> dict:
         except OSError:
             store_identity = f"path:{md.resolve()}"
         store = MissionStore(md)
+        # NOT A STORE AT ALL. `Mission.load` skips a directory with no
+        # checkpoints BEFORE calling load_latest, silently -- it is not a
+        # mission, so there is nothing to report about it. The census called
+        # load_latest unconditionally and filed the resulting StoreError as
+        # an uninspected store, which made a root holding one stray
+        # `missions/scratch/` permanently `answers_are_partial: true`,
+        # asserting that its receipts were "invisible to Q4/Q6" when no chain
+        # exists to bind any receipt to. A partial warning that fires on
+        # every ordinary tree is a partial warning operators learn to ignore.
+        if not store.checkpoint_paths():
+            continue
         try:
             latest, _ = store.load_latest()
         except (StoreError, ValueError) as exc:
