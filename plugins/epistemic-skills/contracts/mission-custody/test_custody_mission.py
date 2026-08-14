@@ -750,9 +750,9 @@ def test_embedded_newer_manifest_is_diagnosed_as_skew_not_corruption(
     # The outer-record predicate is unchanged and still answers only its own
     # question; the WALK is what the store consults.
     check("embedded-skew-outer-predicate-silent",
-          epoch_skew(record) is None)
+          epoch_skew(record, "checkpoint") is None)
     check("embedded-skew-walk-finds-it",
-          epoch_skew_anywhere(record) is not None)
+          epoch_skew_anywhere(record, "checkpoint") is not None)
     try:
         MissionStore(workspace / "missions" / "m-armed").load_latest()
         check("embedded-skew-store-raises-epochskew", False)
@@ -1009,11 +1009,13 @@ def test_epoch_decoy_outside_a_record_position_is_not_skew(
     check("unsupported-outer-kind-not-traversed",
           epoch_skew_anywhere(
               {"record": "checkpoint@0",
-               "manifest": {"record": "mission-manifest@2"}}) is None)
+               "manifest": {"record": "mission-manifest@2"}},
+              "checkpoint") is None)
     check("garbage-outer-kind-not-traversed",
           epoch_skew_anywhere(
               {"record": "nonsense",
-               "manifest": {"record": "mission-manifest@2"}}) is None)
+               "manifest": {"record": "mission-manifest@2"}},
+              "checkpoint") is None)
     # ...while a NEWER outer kind still reports, from the outer record itself.
     # A record of the WRONG FAMILY in an embedded position is corruption, not
     # a newer store: the schema fixes that slot, so no epoch of another family
@@ -1021,11 +1023,13 @@ def test_epoch_decoy_outside_a_record_position_is_not_skew(
     check("wrong-family-in-embedded-slot-not-skew",
           epoch_skew_anywhere(
               {"record": "checkpoint@1",
-               "manifest": {"record": "receipt@2"}}) is None)
+               "manifest": {"record": "receipt@2"}},
+              "checkpoint") is None)
     check("newer-outer-kind-still-skew",
           epoch_skew_anywhere(
               {"record": "checkpoint@2",
-               "manifest": {"record": "mission-manifest@1"}}) is not None)
+               "manifest": {"record": "mission-manifest@1"}},
+              "checkpoint") is not None)
     check("decoy-in-state-not-called-skew",
           "CLAIMS a contract epoch newer" not in
           diagnosis(workspace / "state-decoy", decoy_in_state))
@@ -1037,6 +1041,142 @@ def test_epoch_decoy_outside_a_record_position_is_not_skew(
     check("genuine-embedded-manifest-still-skew",
           "CLAIMS a contract epoch newer" in
           diagnosis(workspace / "genuine", genuine_embedded))
+
+
+def test_epoch_parsing_survives_hostile_digits(workspace: Path) -> None:
+    """The epoch comparison must never raise, whatever the kind string says.
+
+    `str.isdigit()` and `int()` disagree in two directions, and the caller
+    that consults this predicate is ITSELF an error path with no except
+    clause: `_load_receipt_checked` reaches it only after validation has
+    already failed. Measured before the fix, with a receipt whose kind was
+    `receipt@` plus 4301 digits: `resume()` died with an uncaught ValueError
+    from `int()`'s conversion limit -- not a degraded diagnosis, an
+    unreachable recovery flow, triggered by a string in a file."""
+    # MALFORMED -> None. Not a well-formed claim about any epoch, so
+    # `validate_record`'s unknown-kind error is the accurate diagnosis.
+    malformed = ["receipt@²",          # isdigit() True, int() raises
+                 "receipt@٣",          # Arabic-Indic: not our numerals
+                 "receipt@01",              # non-canonical
+                 "receipt@",
+                 "receipt@-2",
+                 "receipt@2.0"]
+    # WELL-FORMED -> skew. A 4301-digit epoch is absurd but it is a genuine
+    # claim to be newer, and the honest answer is the one every other newer
+    # claim gets. The defect was never the verdict; it was that reaching the
+    # verdict raised. Its exit is the same as any skew: repair or update.
+    huge = "receipt@" + "9" * 4301
+    for kind, want_skew in [(k, False) for k in malformed] + [(huge, True)]:
+        label = kind[8:16] or "<empty>"
+        try:
+            check(f"hostile-epoch-classified:{label!r}",
+                  (epoch_skew({"record": kind}, "receipt") is not None)
+                  == want_skew)
+        except Exception as exc:                      # noqa: BLE001
+            check(f"hostile-epoch-raised:{label!r} {type(exc).__name__}",
+                  False)
+
+    # ... and through the verb that actually crashed. The finding it lands on
+    # matters less than that resume() RETURNS: an uncaught ValueError here
+    # took the whole recovery flow out, not just this receipt's diagnosis.
+    m = open_mission(workspace, "m-h", "Work.")
+    m.approve()
+    m.record_effect("a.txt", "aa", "req-1")
+    path = next((workspace / "missions" / "m-h" / "receipts").glob("*.json"))
+    record = json.loads(path.read_text(encoding="utf-8"))
+    path.write_text(json.dumps({**record, "record": huge},
+                               indent=1, sort_keys=True), encoding="utf-8")
+    try:
+        findings = Mission.load(workspace, actor="agent:worker").resume()
+        check("hostile-epoch-resume-returns", True)
+        check("hostile-epoch-receipt-diagnosed",
+              "RECEIPT-NEWER-EPOCH:req-1" in findings)
+    except Exception as exc:                          # noqa: BLE001
+        check(f"hostile-epoch-resume-raised:{type(exc).__name__}", False)
+
+    # CONTROL: a genuine newer epoch must still be recognised, or this has
+    # been fixed by making the predicate answer None to everything. Both a
+    # single digit and a multi-digit epoch, since the comparison is now over
+    # strings and "10" < "9" lexicographically.
+    for kind in ("receipt@2", "receipt@10", "receipt@4300"):
+        check(f"genuine-newer-epoch-still-skew:{kind}",
+              epoch_skew({"record": kind}, "receipt") is not None)
+    check("older-epoch-still-not-skew",
+          epoch_skew({"record": "receipt@0"}, "receipt") is None)
+
+
+def test_wrong_family_in_a_slot_is_corruption_not_skew(
+        workspace: Path) -> None:
+    """A record of the wrong family for its slot is corruption, whatever
+    epoch it claims.
+
+    The schema fixes what each slot holds, so a `checkpoint@2` in a receipt
+    file cannot be a store this reader is merely too old for. Measured before
+    the fix: `resume()` reported `RECEIPT-NEWER-EPOCH`,
+    `acknowledge_receipt_loss` refused the id as too new, and the mission was
+    left `reopened` WITH NO EXIT -- the stranding
+    `test_newer_epoch_receipt_is_not_reported_as_loss` exists to forbid,
+    reached through the family check that fix did not make.
+
+    Round 11 applied exactly this rule to EMBEDDED positions while standing
+    on the top-level one it left open: the fourth round in which a fix
+    narrowed WHERE a claim is honoured and left WHAT may claim it unchecked
+    one level out."""
+    for kind in ("checkpoint@2", "mission-manifest@2", "acceptance-verdict@2"):
+        check(f"foreign-family-in-receipt-slot-not-skew:{kind}",
+              epoch_skew({"record": kind}, "receipt") is None)
+    check("foreign-family-in-checkpoint-slot-not-skew",
+          epoch_skew({"record": "receipt@2"}, "checkpoint") is None)
+    # A whole misfiled record must not be TRAVERSED either: its own kind is
+    # current, so only the outer family check can stop the walk reporting the
+    # skew of a manifest planted inside it.
+    check("misfiled-record-not-traversed",
+          epoch_skew_anywhere(
+              {"record": "checkpoint@1",
+               "manifest": {"record": "mission-manifest@2"}},
+              "receipt") is None)
+    # A typo in the caller's slot would silence the signal everywhere; it
+    # must fail loudly instead.
+    try:
+        epoch_skew({"record": "receipt@2"}, "reciept")
+        check("unknown-expected-family-raises", False)
+    except ValueError:
+        check("unknown-expected-family-raises", True)
+
+    # ... and end to end: the mission must NOT wedge.
+    m = open_mission(workspace, "m-f", "Work.")
+    m.approve()
+    m.record_effect("a.txt", "aa", "req-1")
+    path = next((workspace / "missions" / "m-f" / "receipts").glob("*.json"))
+    record = json.loads(path.read_text(encoding="utf-8"))
+    path.write_text(json.dumps({**record, "record": "checkpoint@2"},
+                               indent=1, sort_keys=True), encoding="utf-8")
+    reloaded = Mission.load(workspace, actor="agent:worker")
+    findings = reloaded.resume()
+    check("foreign-family-receipt-is-ordinary-loss",
+          "RECEIPT-MISSING:req-1" in findings
+          and not any(f.startswith("RECEIPT-NEWER-EPOCH") for f in findings))
+    check("foreign-family-receipt-is-retirable",
+          reloaded.acknowledge_receipt_loss("req-1") > 0)
+
+    # CONTROL: the round-10 case must survive. A receipt@2 in a receipt slot
+    # is still a stale reader, still not retirable, and still not a loss.
+    other = workspace / "same-family"
+    n = open_mission(other, "m-s", "Work.")
+    n.approve()
+    n.record_effect("a.txt", "aa", "req-1")
+    npath = next((other / "missions" / "m-s" / "receipts").glob("*.json"))
+    nrec = json.loads(npath.read_text(encoding="utf-8"))
+    npath.write_text(json.dumps({**nrec, "record": "receipt@2"}, indent=1,
+                                sort_keys=True), encoding="utf-8")
+    reloaded_n = Mission.load(other, actor="agent:worker")
+    check("same-family-newer-receipt-still-skew",
+          "RECEIPT-NEWER-EPOCH:req-1" in reloaded_n.resume())
+    try:
+        reloaded_n.acknowledge_receipt_loss("req-1")
+        check("same-family-newer-receipt-still-refused", False)
+    except CustodyError:
+        check("same-family-newer-receipt-still-refused", True)
 
 
 def test_open_refuses_beside_an_epoch_skewed_store(workspace: Path) -> None:
@@ -4070,6 +4210,8 @@ TESTS = [
     test_newer_receipt_supersedes_its_stale_predecessor,
     test_embedded_record_paths_match_the_schemas,
     test_epoch_decoy_outside_a_record_position_is_not_skew,
+    test_epoch_parsing_survives_hostile_digits,
+    test_wrong_family_in_a_slot_is_corruption_not_skew,
     test_open_refuses_beside_an_epoch_skewed_store,
     test_forged_restored_receipt_is_not_trusted,
     test_distinct_files_never_share_an_obligation,

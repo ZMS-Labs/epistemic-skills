@@ -244,6 +244,28 @@ listed — staleness is caught in CI rather than by an operator acting on a
 wrong verdict. A `record` key anywhere else is data, and data does not get to
 say what this reader may skip.
 
+**And the position fixes the FAMILY, at the top level too.** Honouring the
+position while leaving the family unchecked is the same defect one level out,
+and it recurred four times: the nested walk, the unsupported outer kind, the
+embedded family, and finally the top-level slot the embedded fix was standing
+on. A `checkpoint@2` in a **receipt** file is not a store this reader is too
+old for — no epoch of that family can ever be valid there — yet it was
+reported `RECEIPT-NEWER-EPOCH`, `acknowledge_receipt_loss` refused the id as
+too new, and the mission was left `reopened` **with no exit** (measured): the
+stranding this contract's own tests forbid, reached through the one door still
+open. Callers now pass the family their slot holds, and a mismatch is ordinary
+corruption with the ordinary diagnosis.
+
+**The epoch is compared as a canonical decimal string, never `int()`.**
+`str.isdigit()` and `int()` disagree in both directions — `'²'.isdigit()` is
+true and converts to nothing, and Python 3.11+ refuses conversions over
+`sys.get_int_max_str_digits()` (4300 by default). The predicate is consulted
+from inside an error path with no except clause for either, so a receipt whose
+kind was `receipt@` plus 4301 digits crashed `resume()` with an uncaught
+`ValueError` (measured) — the recovery flow was not degraded but **unreachable**,
+from a string in a file. Comparison is now by length then lexicographic order
+over ASCII digits with no leading zeros: same verdicts, no conversion, no bound.
+
 **Scope is per MISSION, not per root.** A skewed store beside a readable active
 mission does not disarm the root — `Mission.load` skips the skewed store and the
 gate still blocks (measured). The skewed mission's own guards are unenforced

@@ -48,9 +48,40 @@ SUPPORTED_EPOCHS = {
 }
 
 
-def epoch_skew(record) -> str | None:
-    """A human-readable reason when `record` CLAIMS a KNOWN family from a
-    NEWER epoch than this reader implements; None otherwise.
+def _canonical_epoch(epoch: str) -> str | None:
+    """`epoch` when it is a canonical decimal epoch string; None otherwise.
+
+    NOT `int(epoch)`. `str.isdigit()` and `int()` do not agree on what a digit
+    is, in two directions, and BOTH raise from inside an error-handling path
+    that has no except clause for them:
+
+      * `'2'.isdigit()` is True and `int('2')` raises -- superscripts and
+        other Unicode digit forms pass the test and fail the conversion;
+      * on Python 3.11+ `int()` refuses strings over `sys.get_int_max_str_digits()`
+        (4300 by default), so `receipt@` followed by 4301 digits passes
+        `isdigit()` and raises `ValueError` on conversion.
+
+    Measured before this function existed: a receipt with the long-digit kind
+    crashed `resume()` outright with an uncaught ValueError -- the recovery
+    flow was not degraded, it was unreachable, from a filename an attacker
+    controls. Comparing canonical decimal strings answers the same question
+    with no conversion and no bound.
+
+    Canonical means ASCII digits with no leading zeros, so `@01` is malformed
+    rather than a claim about epoch 1 -- consistent with the rest of this
+    predicate, which returns None for anything it cannot read as a
+    well-formed claim and leaves `validate_record` to report it.
+    """
+    if not (epoch.isascii() and epoch.isdigit()):
+        return None
+    if len(epoch) > 1 and epoch.startswith("0"):
+        return None
+    return epoch
+
+
+def epoch_skew(record, expected_family: str) -> str | None:
+    """A human-readable reason when `record` CLAIMS the family EXPECTED IN
+    THIS SLOT from a NEWER epoch than this reader implements; None otherwise.
 
     CLAIMS, not is. This reader has no @2 validator, and `validate_record`
     short-circuits on the unknown kind, so NOTHING about the rest of the
@@ -63,22 +94,48 @@ def epoch_skew(record) -> str | None:
     tampered tail as a newer epoch and the corruption diagnosis is replaced
     by advice to leave it alone.
 
-    None covers every other case deliberately -- an unknown family, a
-    malformed kind, an older epoch, or a non-record -- because this function
-    answers one question ("is this too new for me?") and must not become a
-    second opinion about validity. `validate_record` remains the only
-    authority on whether a record is acceptable.
+    EXPECTED_FAMILY IS REQUIRED, and a mismatch is None. Every record sits in
+    a slot some schema fixes: a checkpoint file holds a checkpoint, a receipt
+    file holds a receipt. A `checkpoint@2` in a receipt slot is therefore not
+    a store this reader is too old for -- no epoch of that family can ever be
+    valid there -- it is corruption wearing a newer label, and honouring the
+    claim replaces the accurate diagnosis with advice to upgrade. Measured
+    with the family unchecked: such a receipt was reported
+    `RECEIPT-NEWER-EPOCH`, `acknowledge_receipt_loss` refused it as too new,
+    and the mission was left `reopened` with NO EXIT -- the stranding this
+    contract's own tests forbid, reached through the one door still open.
+
+    That is the fourth appearance of one defect: the nested walk (round 5),
+    the unsupported outer kind (round 6) and the embedded family (round 11)
+    each narrowed WHERE a claim is honoured and left WHAT may claim it
+    unchecked one level out. Round 11 fixed exactly this for embedded
+    positions and not for the top-level one it was standing on.
+
+    None covers every other case deliberately -- an unknown or unexpected
+    family, a malformed kind, an older epoch, or a non-record -- because this
+    function answers one question ("is this too new for me?") and must not
+    become a second opinion about validity. `validate_record` remains the
+    only authority on whether a record is acceptable.
     """
+    if expected_family not in SUPPORTED_EPOCHS:
+        # A caller-side literal, never data: a typo here would silence the
+        # skew signal everywhere it is consulted rather than fail visibly.
+        raise ValueError(f"unknown expected family {expected_family!r}")
     if not isinstance(record, dict):
         return None
     kind = record.get("record")
     if not isinstance(kind, str) or kind in RECORD_KINDS or "@" not in kind:
         return None
     family, _, epoch = kind.rpartition("@")
-    supported = SUPPORTED_EPOCHS.get(family)
-    if supported is None or not epoch.isdigit():
+    if family != expected_family:
         return None
-    if int(epoch) <= supported:
+    supported = SUPPORTED_EPOCHS.get(family)
+    canonical = _canonical_epoch(epoch)
+    if supported is None or canonical is None:
+        return None
+    # Numeric order over canonical decimal strings: longer is larger, equal
+    # lengths compare lexicographically. No int(), so no conversion limit.
+    if (len(canonical), canonical) <= (len(str(supported)), str(supported)):
         return None
     return (f"record {kind!r} CLAIMS an epoch newer than this reader "
             f"implements ({family}@{supported}). This reader cannot tell a "
@@ -124,22 +181,24 @@ EMBEDDED_RECORD_PATHS = {
 }
 
 
-def epoch_skew_anywhere(record) -> str | None:
+def epoch_skew_anywhere(record, expected_family: str) -> str | None:
     """`epoch_skew` for the record, then for each record the SCHEMA says it
     embeds -- and nowhere else.
 
     Returns the outermost skew first, so the message names the biggest thing
     known to be too new. `epoch_skew` stays the single-record predicate; this
     is the one callers deciding "can I read this file at all?" should use.
+    `expected_family` is the family the CALLER'S slot fixes -- "checkpoint"
+    for a file from the chain, "receipt" for one from the receipts dir.
 
-    An unknown or malformed outer kind yields None: this reader cannot know
-    what such a record embeds, and guessing would be the permissive walk
-    again. `validate_record` reports the unknown kind, which is the accurate
-    diagnosis.
+    An unknown, malformed or unexpected outer kind yields None: this reader
+    cannot know what such a record embeds, and guessing would be the
+    permissive walk again. `validate_record` reports it, which is the
+    accurate diagnosis.
     """
     if not isinstance(record, dict):
         return None
-    skew = epoch_skew(record)
+    skew = epoch_skew(record, expected_family)
     if skew:
         return skew
     kind = record.get("record")
@@ -153,17 +212,19 @@ def epoch_skew_anywhere(record) -> str | None:
     if kind not in RECORD_KINDS:
         return None
     family, _, _ = kind.rpartition("@")
-    for key, expected_family in EMBEDDED_RECORD_PATHS.get(family, {}).items():
+    # ... AND IT MUST BE THE FAMILY THIS SLOT HOLDS. A whole checkpoint@1
+    # dropped into a receipt file is corruption, and traversing it would
+    # report the skew of ITS embedded manifest -- so a manifest@2 planted
+    # inside a misfiled record would send the operator to upgrade a reader
+    # while a foreign record sat in the receipts dir. The outer epoch_skew
+    # above cannot catch this one: the misfiled record's own kind is current.
+    if family != expected_family:
+        return None
+    for key, nested_family in EMBEDDED_RECORD_PATHS.get(family, {}).items():
         nested = record.get(key)
         if not isinstance(nested, dict):
             continue
-        nested_kind = nested.get("record")
-        if not isinstance(nested_kind, str) \
-                or nested_kind.rpartition("@")[0] != expected_family:
-            # Wrong family for this position: validate_record's error is the
-            # accurate diagnosis and must not be replaced.
-            continue
-        skew = epoch_skew(nested)
+        skew = epoch_skew(nested, nested_family)
         if skew:
             return skew
     return None

@@ -148,7 +148,7 @@ class MissionStore:
                 # checkpoint@1 fails validation with a familiar outer
                 # kind, and reporting that as ChainBroken sends the
                 # operator to repair a store that is merely too new.
-                skew = epoch_skew_anywhere(record)
+                skew = epoch_skew_anywhere(record, "checkpoint")
                 if skew:
                     raise EpochSkew(f"{path.name}: {skew}")
                 raise ChainBroken(f"{path.name}: invalid: {errors[:3]}")

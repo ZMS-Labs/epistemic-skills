@@ -1251,7 +1251,7 @@ class Mission:
             # `resume()` emitted `RECEIPT-MISSING:req-1` for a receipt that was
             # present, intact and merely newer. Destroying live coverage
             # because this reader is old is the worst outcome available here.
-            skew = epoch_skew_anywhere(record)
+            skew = epoch_skew_anywhere(record, "receipt")
             if skew:
                 return None, None, skew
             return None, f"receipt fails receipt@1 validation: {errors[:2]}", None
