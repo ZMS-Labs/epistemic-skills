@@ -16,6 +16,7 @@ from custody_store import (  # noqa: E402
 )
 from verify_mission_custody import is_iso_utc  # noqa: E402
 from custody_gate import run_gate  # noqa: E402
+import census_missions  # noqa: E402
 from custody_mission import (  # noqa: E402
     _same_artifact,
     AcceptanceRefused,
@@ -523,6 +524,61 @@ def test_newer_epoch_store_is_named_not_mistaken_for_an_empty_workspace(
         check("corrupt-not-relabelled-as-skew", False)
     except ChainBroken:
         check("corrupt-not-relabelled-as-skew", True)
+
+    # The skew signal must be TYPED, not grepped out of the error message.
+    # NoActiveMission's text contains the workspace path, so a directory named
+    # `.../NEWER epoch migration` made a substring test report a newer-epoch
+    # store in a workspace holding no stores at all.
+    trap = workspace / "NEWER epoch migration"
+    (trap / "missions").mkdir(parents=True)
+    trap_verdict = run_gate(trap, call, actor="probe")
+    check("epoch-phrase-in-path-is-not-skew",
+          "NEWER contract epoch" not in trap_verdict["reason"])
+
+
+def test_epoch_skew_does_not_disarm_a_root_that_still_resolves(
+        workspace: Path) -> None:
+    """A skewed store beside a readable active mission must not be reported
+    as a disarmed root.
+
+    `Mission.load` skips the skewed store and continues, so the gate still
+    BLOCKS there -- measured. Reporting that root fail-open is the
+    cry-fail-open defect a third time (chain-broken siblings, terminal
+    tamper, now epoch skew), and a mixed-version rollout is precisely when
+    the census must not misreport which roots lost enforcement."""
+    guards = [{"name": "no-secrets", "tool_names": ["Bash"],
+               "command_regexes": ["cat .env"], "path_globs": ["secrets/**"]}]
+    live = open_mission(workspace, "m-live", "Readable and armed.",
+                        guard_mode="enforce", actuator_guards=guards)
+    live.approve()
+    live.record_effect("a.txt", "aa", "req-live")
+
+    staging = workspace / "staging"
+    legacy = open_mission(staging, "m-legacy", "Will be skewed.")
+    legacy.approve()
+    legacy.record_effect("b.txt", "bb", "req-legacy")
+    shutil.move(str(staging / "missions" / "m-legacy"),
+                str(workspace / "missions" / "m-legacy"))
+    tail = sorted((workspace / "missions" / "m-legacy"
+                   / "checkpoints").glob("*.json"))[-1]
+    record = json.loads(tail.read_text(encoding="utf-8"))
+    record["record"] = "checkpoint@2"
+    tail.write_text(json.dumps(record, indent=1, sort_keys=True),
+                    encoding="utf-8")
+
+    call = {"tool_name": "Bash", "command": "cat .env"}
+    check("mixed-epoch-root-still-blocks",
+          run_gate(workspace, call, actor="probe")["decision"] == "block")
+
+    report = census_missions.census(workspace)
+    summary = census_missions.summarize([report])
+    check("mixed-epoch-root-not-called-fail-open",
+          not summary["q1_fail_open_roots"])
+    # ...but the skewed store is still disclosed, because ITS guards are not
+    # enforced even though the root's gate is not inert.
+    check("mixed-epoch-skew-still-reported",
+          any(e["mission"] == "m-legacy" for e in report["epoch_skew"]))
+    check("mixed-epoch-run-marked-partial", summary["answers_are_partial"])
 
 
 def test_backslash_effect_path_still_loads_its_own_receipt(
@@ -3514,6 +3570,7 @@ TESTS = [
     test_cross_workspace_receipt_cannot_silence_drift,
     test_backslash_effect_path_still_loads_its_own_receipt,
     test_newer_epoch_store_is_named_not_mistaken_for_an_empty_workspace,
+    test_epoch_skew_does_not_disarm_a_root_that_still_resolves,
     test_forged_restored_receipt_is_not_trusted,
     test_distinct_files_never_share_an_obligation,
     test_obligations_match_by_artifact_not_by_string,

@@ -20,6 +20,7 @@ import re
 import sys
 from pathlib import Path
 
+from custody_store import EpochSkew
 from custody_mission import (
     Mission,
     MultipleActiveMissions,
@@ -238,7 +239,7 @@ def run_gate(workspace: Path, tool_call: dict, *, actor: str,
         # posture is unchanged -- still allow, still inert -- because inverting
         # it would strand the workspace with no verb to resolve it.
         detail = str(exc)
-        if "NEWER epoch" in detail:
+        if "EpochSkew" in getattr(exc, "skipped_kinds", ()):
             print(f"custody gate: MISSION STORE IS NEWER THAN THIS READER under "
                   f"{workspace} -- gate inert and guards NOT enforced; this is "
                   f"a stale consumer, not a broken mission. Update the custody "
@@ -261,7 +262,25 @@ def run_gate(workspace: Path, tool_call: dict, *, actor: str,
               file=sys.stderr)
         return {"decision": "allow", "matched": False, "rule": None,
                 "mode": "inert", "reason": f"gate inert: {type(exc).__name__}"}
-    latest = mission.status()
+    try:
+        latest = mission.status()
+    except EpochSkew as exc:
+        # THE CHAIN IS READ TWICE. `Mission.load` resolves the mission, then
+        # status() re-reads it -- so a writer publishing the first @2 between
+        # those two reads makes the skew surface HERE, where the handler above
+        # never sees it. Before this, a direct caller got a raw exception and
+        # the hook fell through to its generic error path, both of them missing
+        # the stale-reader verdict this change exists to deliver. That window is
+        # narrow but it is exactly the contract@2 rollout moment.
+        print(f"custody gate: MISSION STORE BECAME NEWER THAN THIS READER "
+              f"mid-evaluation under {workspace} -- gate inert and guards NOT "
+              f"enforced; update the custody plugin/CLI on this host. "
+              f"Detail: {exc}", file=sys.stderr)
+        return {"decision": "allow", "matched": False, "rule": None,
+                "mode": "inert",
+                "reason": ("gate inert: mission store is from a NEWER contract "
+                           "epoch than this reader -- guards are NOT enforced "
+                           f"here until this consumer is updated ({exc})")}
     verdict = evaluate(latest["manifest"]["authority"], tool_call)
     if verdict["matched"]:
         command = tool_call.get("command") or ""

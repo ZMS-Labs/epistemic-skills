@@ -651,10 +651,25 @@ def summarize(reports: list[dict]) -> dict:
             fail_open.append({"root": r["root"],
                               "cause": f"unreadable store ({e['reason']})",
                               "missions": [e["mission"]]})
-        for e in r.get("epoch_skew", []):
-            fail_open.append({"root": r["root"],
-                              "cause": "STALE READER (newer contract epoch)",
-                              "missions": [e["mission"]]})
+        # A SKEWED STORE DOES NOT DISARM A ROOT THAT STILL RESOLVES ONE.
+        # `Mission.load` skips the skewed store and continues, so a root
+        # holding one readable active mission beside a `checkpoint@2` store
+        # still ENFORCES -- measured: the gate returns `block` on a guarded
+        # call there while this loop was reporting the root fail-open. That is
+        # the cry-fail-open defect for the THIRD time in this file's history
+        # (chain-broken siblings, then terminal tamper, now epoch skew), and
+        # this instance was committed inside the fix for a different
+        # fail-open. The mixed-version rollout is exactly when the census
+        # must not lie about which roots lost enforcement.
+        #
+        # The skew is still reported in its own section either way: the
+        # SKEWED MISSION's guards are genuinely unenforced even when the
+        # root's gate is not inert.
+        if not act:
+            for e in r.get("epoch_skew", []):
+                fail_open.append({"root": r["root"],
+                                  "cause": "STALE READER (newer contract epoch)",
+                                  "missions": [e["mission"]]})
         for t in r.get("integrity", []):
             if not t.get("fails_open"):
                 continue  # terminal: the gate never loads it (see census())

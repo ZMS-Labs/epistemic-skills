@@ -971,6 +971,7 @@ class Mission:
         missions_root = workspace / "missions"
         active: list[Path] = []
         skipped: list[str] = []
+        skipped_kinds: list[str] = []
         if missions_root.is_dir():
             for mission_dir in sorted(missions_root.iterdir()):
                 if not mission_dir.is_dir():
@@ -989,6 +990,7 @@ class Mission:
                     # that is merely busy, inviting a duplicate open.
                     reason = f"{mission_dir.name}: {type(exc).__name__}: {exc}"
                     skipped.append(reason)
+                    skipped_kinds.append(type(exc).__name__)
                     print(("custody: skipping unreadable mission dir " + reason)
                           .encode("ascii", "backslashreplace").decode("ascii"),
                           file=sys.stderr)
@@ -997,7 +999,15 @@ class Mission:
                     active.append(mission_dir)
         if not active:
             detail = f"; skipped unreadable: {'; '.join(skipped)}" if skipped else ""
-            raise NoActiveMission(f"no active mission under {missions_root}{detail}")
+            exc = NoActiveMission(f"no active mission under {missions_root}{detail}")
+            # STRUCTURED, not prose. A caller that needs to know WHY discovery
+            # came up empty must not have to grep the message: the message
+            # contains the workspace path, so a directory literally named
+            # `/work/NEWER epoch migration` made a substring test report a
+            # newer-epoch store in a workspace holding no stores at all
+            # (measured). Callers read this attribute instead.
+            exc.skipped_kinds = tuple(skipped_kinds)
+            raise exc
         if len(active) > 1:
             names = ", ".join(p.name for p in active)
             raise MultipleActiveMissions(f"multiple active missions: {names}")
