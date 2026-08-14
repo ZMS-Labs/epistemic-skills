@@ -209,8 +209,22 @@ it — the same objection es#173's kernel 3 raises against shipping the fail-ope
 inversion without a duplicate-resolution verb in the same change. The skew is
 disclosed; the fail-open underneath it is unchanged and still owed a fix.
 
-**Operator response is the opposite of the corruption case.** Nothing under
-these roots needs repairing. Update the custody plugin/CLI on that host.
+**What the skew signal does NOT establish.** This reader has no validator for
+a newer epoch, and `validate_record` short-circuits on the unknown kind — so
+when the skew fires, *nothing else about the record has been checked*. A
+`{"record": "checkpoint@2"}` with every required field absent is
+indistinguishable here from a genuine future record. An earlier version of this
+disclosure told the operator the store was "not corrupt … repair nothing",
+which is an assertion this reader cannot make and an attacker can exploit:
+relabel a corrupt or tampered tail as a newer epoch and the corruption
+diagnosis is replaced by advice to leave it alone. The signal means the record
+**claims** a newer epoch. Read it with an updated consumer to learn whether that
+claim is true.
+
+**Scope is per MISSION, not per root.** A skewed store beside a readable active
+mission does not disarm the root — `Mission.load` skips the skewed store and the
+gate still blocks (measured). The skewed mission's own guards are unenforced
+either way; the census now says which of the two situations a given root is in.
 
 ## Discovery ambiguity DISARMS the gate — an unarmed decoy is enough
 

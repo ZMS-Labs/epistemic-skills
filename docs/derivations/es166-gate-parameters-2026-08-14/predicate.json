@@ -11,7 +11,8 @@
  ],
  "coverage_limits": [
   "The live estate is not reachable from this session; the non-emptiness premise is preregistered, not observed.",
-  "P3/P4 unmapped is not claimed: no concurrent or replicated property bears load inside the declared boundary."
+  "P3/P4 unmapped is not claimed: no concurrent or replicated property bears load inside the declared boundary.",
+  "SUPERSEDES the 2026-08-14 first issue, which defined option A as a 'non-scratch root' without saying what makes a root non-scratch. The census emits only the path string, so two readers could produce different denominators from identical output -- the predicate was not in fact census-computable, which is the constraint it was selected for. Fixed by requiring an explicit admitted-root set fixed before observation."
  ],
  "rigor": {
   "tier": "standard",
@@ -20,12 +21,11 @@
  },
  "decision_frame": {
   "question": "Which census-computable predicate defines a 'substantive mission' for the es#166 adoption window such that envelope adoption is actually measurable and the measurement is not controlled by the party being measured?",
-  "system_boundary": "mission-custody@1 stores discoverable by census_missions.py under operator-named roots; the es#166 adoption window opened now and closing 2026-10-13.",
+  "system_boundary": "mission-custody@1 stores discoverable by census_missions.py under operator-named roots; the es#166 adoption window is PLANNED, opening only when the non-emptiness precondition passes, and closing 2026-10-13.",
   "actors": [
-   "operator (human, operator_ref)",
+   "operator (human, operator_ref 'operator:zach') -- GATE OWNER: runs or commissions the non-emptiness check and judges adoption at close",
    "steward (agent, steward_ref)",
-   "census reader",
-   "gate owner"
+   "census reader (agent, prepares the readout; does not judge)"
   ],
   "alternatives": [
    {
@@ -36,7 +36,7 @@
    {
     "id": "A",
     "kind": "option",
-    "description": ">=1 chain-bound receipt AND a non-scratch workspace root."
+    "description": ">=1 chain-bound receipt AND a root drawn from the ADMITTED-ROOT SET recorded at window open (an explicit list of repository checkouts, fixed before observation begins)."
    },
    {
     "id": "B",
@@ -57,7 +57,8 @@
   "hard_constraints": [
    "Computable by the census from fields it already reports.",
    "The predicate must not be defined in terms of the variable whose adoption it measures.",
-   "The predicate must select a non-empty set on the live estate, or the window is vacuous by construction."
+   "The predicate must select a non-empty set on the live estate, or the window is vacuous by construction.",
+   "Membership must be reproducible from census output plus the recorded admitted-root set, with no per-reader judgement about what a root 'is'."
   ],
   "authorized_objectives": [
    "Make the es#166 adoption question measurable rather than unmeasurable (es#150 ruling).",
@@ -293,12 +294,14 @@
    "The null option leaves the adoption question unmeasurable, which is the defect es#150 named as the single most important next action."
   ],
   "conditions": [
-   "The non-emptiness test in empirical_closure passes before the window opens.",
+   "The admitted-root set is recorded BEFORE observation begins, and the window does not open until it is.",
+   "The non-emptiness test in empirical_closure passes against that recorded set.",
    "The gate owner reads the per-mission root column, not only the aggregate ratio."
   ],
   "concessions": [
    "A is not non-gameable; d2 establishes that no census-computable predicate is.",
-   "A deliberate scratch-root rename defeats A's signature and is outside the model."
+   "A deliberate scratch-root rename defeats A's signature and is outside the model.",
+   "An admitted-root set is itself operator-authored, so it moves the judgement from 'what is a scratch root' to 'which roots count' -- a smaller and auditable judgement, made once and on the record, but not the elimination of judgement."
   ],
   "recovery_moves": [
    "If the non-emptiness test fails, the correct move is not a looser predicate but a finding that the estate has no substantive missions to measure \u2014 which is itself the answer to es#166 direction 1 (manifest is a file-shaped-work instrument).",

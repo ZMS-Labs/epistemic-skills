@@ -927,15 +927,28 @@ def main(argv: list[str]) -> int:
                   f"{_safe(t['reason'])}")
         print("  -> the record is damaged and an auditor should know; the")
         print("     live gate is not.")
+    # PER ROOT, because a skewed store beside a readable active mission does
+    # NOT disarm the root -- the gate resolves that mission and still blocks.
+    # summarize() was corrected for this; the prose here was not, and kept
+    # telling operators nothing under the root was enforced while the gate was
+    # enforcing. Fixing the data and leaving the sentence is not a fix.
+    still_resolving = {r["root"] for r in reports
+                       if any(m["active"] for m in r["missions"])}
     skewed = [(r["root"], e) for r in reports for e in r.get("epoch_skew", [])]
     if skewed:
-        print("\nSTALE READER (store is from a NEWER contract epoch — the GATE")
-        print("FAILS OPEN here, and the fix is on THIS host, not the mission):")
+        print("\nSTALE READER (store CLAIMS a newer contract epoch — this")
+        print("reader cannot validate it, and its guards are NOT enforced):")
         for root, e in skewed:
-            print(f"  !! {_safe(root)}/{_safe(e['mission'])}: "
-                  f"{_safe(e['reason'])}")
-        print("  -> update the custody plugin/CLI on this consumer. Nothing")
-        print("     under these roots is enforced until you do.")
+            scope = ("this MISSION only; the root still resolves another "
+                     "active mission and its gate still enforces"
+                     if root in still_resolving else
+                     "the WHOLE ROOT: no other active mission resolves here, "
+                     "so the gate is inert")
+            print(f"  !! {_safe(root)}/{_safe(e['mission'])}  [{scope}]")
+            print(f"     {_safe(e['reason'])}")
+        print("  -> read these stores with an updated custody plugin/CLI. It")
+        print("     is not established that they are healthy — only that this")
+        print("     reader cannot check them.")
     environmental = [(r["root"], e) for r in reports
                      for e in r.get("environmental", [])]
     if environmental:

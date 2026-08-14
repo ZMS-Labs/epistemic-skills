@@ -16,10 +16,15 @@ and
 [es#166 comment](https://github.com/ZMS-Labs/epistemic-skills/issues/166#issuecomment-5288171588)
 cite them.
 
+> **Round 2 of PR #175 found four defects in these records, all upheld.** The
+> files here are corrected; see [`CORRECTIONS.md`](CORRECTIONS.md) for what was
+> wrong and why it matters. Two of the four were defects the records were
+> written to guard against.
+
 | file | question | outcome |
 |---|---|---|
-| `predicate.json` | Which census-computable predicate defines a "substantive mission" so that adoption is measurable and not controlled by the measured party? | `conditional` — option A (≥1 chain-bound receipt **and** a non-scratch root), pending one non-emptiness observation |
-| `grant-authorship.json` | Operator-confirmed or steward-authored grants? | `reversal` on steward-authored; **no option selected** |
+| `predicate.json` | Which census-computable predicate defines a "substantive mission" so that adoption is measurable and not controlled by the measured party? | `conditional` — option A (≥1 chain-bound receipt **and** a root from the recorded admitted-root set), pending one non-emptiness observation |
+| `grant-authorship.json` | Operator-confirmed or steward-authored grants? | `reversal` on steward-authored; **no option selected**; empirical closure **blocked** |
 
 ## What they establish
 
@@ -41,20 +46,26 @@ is proposed to be more than.
 **That refutation does not select operator-confirmed** (`d2`): es#166's measured
 finding is that envelope fields are abandoned where using them is inconvenient,
 and per-grant confirmation is higher friction than an empty field. Recorded
-`incomplete`, resolvable only by the window's own adoption evidence. A third
+`incomplete` — and **not** resolvable by the es#166 window, which cannot
+observe a mechanism that does not exist (see `CORRECTIONS.md`). A third
 alternative — operator confirms a *class* of grants once — was surfaced by the
 derivation and is not yet evaluated.
 
 ## Open obligations these records carry
 
+0. **Record the admitted-root set** before observation begins. Option A is
+   only reproducible against an explicit list of repository checkouts fixed in
+   advance; without it the predicate is not census-computable.
 1. **Non-emptiness check before the window opens.** `predicate.json`'s
    `empirical_closure` is `pending` with a preregistered prediction. If the
    predicate selects ∅ on the live estate, the recorded recovery move is *not* a
    looser predicate — it is a finding that the estate has no substantive
    missions to measure, which is itself an answer to es#166 direction 1.
-2. **Re-fire the authorship derivation at window close** against observed
-   adoption data, with the standing-grant variant enumerated as a third
-   alternative.
+2. **A bounded pilot, if the authorship question must close.** The es#166
+   window cannot settle it: with `grants_paths` unshipped, no observation can
+   discriminate the alternatives, so re-firing against window data would repeat
+   the vacuity `CORRECTIONS.md` records. The standing-grant variant should be
+   enumerated as a third alternative before any pilot is designed.
 
 ## Validity and limits
 

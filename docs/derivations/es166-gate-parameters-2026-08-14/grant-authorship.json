@@ -11,7 +11,8 @@
  ],
  "coverage_limits": [
   "Adoption behavior under an operator-confirmation requirement is unobserved; the es#166 window is the instrument that would observe it.",
-  "Principal binding is outside the contract (SECURITY.md): the contract cannot verify that a human rather than an agent authored an operator-confirmed grant. This limit bounds every option here equally."
+  "Principal binding is outside the contract (SECURITY.md): the contract cannot verify that a human rather than an agent authored an operator-confirmed grant. This limit bounds every option here equally.",
+  "SUPERSEDES the 2026-08-14 first issue, whose empirical closure was VACUOUS: it predicted that no mission would adopt a field that cannot exist under this record's own validity condition. A prediction true by construction is not evidence, and the synthesis had named that test as the route to closing the authorship question."
  ],
  "rigor": {
   "tier": "standard",
@@ -45,7 +46,7 @@
    }
   ],
   "hard_constraints": [
-   "grants_paths must be a CONTROL in the README's own taxonomy, not a DECLARATION — that is the stated reason for proposing it.",
+   "grants_paths must be a CONTROL in the README's own taxonomy, not a DECLARATION \u2014 that is the stated reason for proposing it.",
    "No actor certifies its own acceptance (contract acceptance-tier doctrine)."
   ],
   "authorized_objectives": [
@@ -214,7 +215,7 @@
     {
      "precondition_id": "p1",
      "claim_class": "observation",
-     "anchor": "https://github.com/ZMS-Labs/epistemic-skills/issues/166 — scope.in, scope.out, permissions, protected_state all empty on media-library-rebuild (90 checkpoints, 9 receipts), populated on the file-shaped custody-instrument mission"
+     "anchor": "https://github.com/ZMS-Labs/epistemic-skills/issues/166 \u2014 scope.in, scope.out, permissions, protected_state all empty on media-library-rebuild (90 checkpoints, 9 receipts), populated on the file-shaped custody-instrument mission"
     },
     {
      "precondition_id": "p2",
@@ -240,13 +241,13 @@
   }
  ],
  "empirical_closure": {
-  "state": "pending",
+  "state": "blocked",
   "tests": [
    {
-    "belief": "An operator-confirmation requirement suppresses use of the mechanism, reproducing the es#166 abandonment pattern.",
-    "prediction": "At the close of the es#166 window (2026-10-13), substantive missions under the agreed predicate show envelope population unchanged or lower for the highest-friction fields, and no mission adopts a confirmation-gated field.",
-    "disconfirming_observation": "Substantive missions populate high-friction declarations at a materially higher rate than the 2026-08-13 baseline.",
-    "test": "The es#166 adoption window itself, measured by census under the r1 predicate.",
+    "belief": "An operator-confirmation requirement suppresses use of the mechanism.",
+    "prediction": "UNOBTAINABLE while grants_paths is unshipped.",
+    "disconfirming_observation": "n/a -- the test cannot run.",
+    "test": "BLOCKED. This record's own validity condition is grants_paths-remains-unshipped, so no mission can adopt a confirmation-gated field and 'no mission adopts one' is true by construction. Adoption of unrelated high-friction declarations is a proxy that cannot separate rejection of operator-confirmed grants from ordinary envelope behavior. A discriminating observation requires the mechanism to exist: a bounded pilot on one mission, which is a separate authorization.",
     "prediction_recorded_before_result": true
    }
   ]
@@ -257,7 +258,7 @@
   "basis": [
    "d1 refutes option B against a hard constraint: a steward-authored grant is a declaration, and grants_paths is proposed precisely to be more than a declaration.",
    "d2 shows the refutation of B does not establish A: A satisfies the authority objective but its satisfaction of the boundary objective turns on unobserved adoption behavior.",
-   "The two open questions are therefore coupled — the grant-authorship decision cannot be closed before the es#166 window returns adoption evidence, which is the same window r1's predicate governs."
+   "The two open questions are therefore coupled \u2014 the grant-authorship decision cannot be closed before the es#166 window returns adoption evidence, which is the same window r1's predicate governs."
   ],
   "conditions": [
    "B may still be used as a disclosure mechanism; it may not be called a control."
@@ -267,9 +268,10 @@
    "A batching/standing-grant variant was not evaluated and may dominate A."
   ],
   "recovery_moves": [
-   "Record the reversal on B now, on the es#150 record, so the authorship precondition is partially discharged rather than wholly open.",
-   "Enumerate the batching variant as a third alternative before the window closes, so the window's evidence can discriminate three options rather than two.",
-   "Re-fire this derivation at window close against the observed adoption data."
+   "Record the reversal on B now, so the authorship precondition is partially discharged.",
+   "Enumerate the standing-grant variant (operator confirms a CLASS of grants once) as a third alternative before any authorship decision closes.",
+   "Authorize a BOUNDED PILOT of at least one authorship mechanism if the question must close: with grants_paths unshipped, no observation can discriminate the alternatives, so the question stays open by construction rather than by evidence.",
+   "Re-fire this derivation against pilot data, not against the es#166 window, which measures envelope adoption generally and cannot speak to a mechanism that does not exist."
   ]
  },
  "never_attests": [

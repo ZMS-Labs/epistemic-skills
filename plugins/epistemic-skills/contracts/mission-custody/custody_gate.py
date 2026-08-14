@@ -241,9 +241,10 @@ def run_gate(workspace: Path, tool_call: dict, *, actor: str,
         detail = str(exc)
         if "EpochSkew" in getattr(exc, "skipped_kinds", ()):
             print(f"custody gate: MISSION STORE IS NEWER THAN THIS READER under "
-                  f"{workspace} -- gate inert and guards NOT enforced; this is "
-                  f"a stale consumer, not a broken mission. Update the custody "
-                  f"plugin/CLI on this host. Detail: {detail}", file=sys.stderr)
+                  f"{workspace} -- gate inert and guards NOT enforced. Read it "
+                  f"with an updated custody plugin/CLI to find out whether the "
+                  f"store is genuinely newer or corrupt; this reader cannot "
+                  f"tell. Detail: {detail}", file=sys.stderr)
             return {"decision": "allow", "matched": False, "rule": None,
                     "mode": "inert",
                     "reason": ("gate inert: mission store is from a NEWER "

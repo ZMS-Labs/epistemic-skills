@@ -511,7 +511,12 @@ def test_newer_epoch_store_is_named_not_mistaken_for_an_empty_workspace(
         store.load_latest()
         check("epoch-store-raises", False)
     except EpochSkew as exc:
-        check("epoch-store-raises", "NEWER epoch" in str(exc))
+        # Assert on the RECORD KIND, not the prose. The first version of this
+        # test matched the phrase "NEWER epoch", and correcting the message to
+        # stop over-claiming ("claims a newer epoch" rather than "is newer,
+        # not corrupt") broke it -- a test pinned to wording obstructs the
+        # honesty fixes it should be protecting.
+        check("epoch-store-raises", "checkpoint@2" in str(exc))
     # a genuinely corrupt store must NOT be relabelled as epoch skew
     record["record"] = "checkpoint@1"
     record["status"] = "not-a-status"

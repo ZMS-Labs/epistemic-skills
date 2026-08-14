@@ -49,8 +49,19 @@ SUPPORTED_EPOCHS = {
 
 
 def epoch_skew(record) -> str | None:
-    """A human-readable reason when `record` is a KNOWN family from a NEWER
-    epoch than this reader implements; None otherwise.
+    """A human-readable reason when `record` CLAIMS a KNOWN family from a
+    NEWER epoch than this reader implements; None otherwise.
+
+    CLAIMS, not is. This reader has no @2 validator, and `validate_record`
+    short-circuits on the unknown kind, so NOTHING about the rest of the
+    record has been checked when this fires: `{"record": "checkpoint@2"}`
+    with every required field absent reaches here identically to a genuine
+    future record. The first version of this function told the operator the
+    store was "readable by an updated consumer, not corrupt -- update this
+    consumer rather than repairing the mission", which is an assertion this
+    reader cannot make and an attacker can exploit: relabel a corrupt or
+    tampered tail as a newer epoch and the corruption diagnosis is replaced
+    by advice to leave it alone.
 
     None covers every other case deliberately -- an unknown family, a
     malformed kind, an older epoch, or a non-record -- because this function
@@ -69,10 +80,12 @@ def epoch_skew(record) -> str | None:
         return None
     if int(epoch) <= supported:
         return None
-    return (f"record {kind!r} is from a NEWER epoch than this reader "
-            f"implements ({family}@{supported}); the store is readable by an "
-            "updated consumer, not corrupt -- update this consumer rather "
-            "than repairing the mission")
+    return (f"record {kind!r} CLAIMS an epoch newer than this reader "
+            f"implements ({family}@{supported}). This reader cannot tell a "
+            "genuine newer record from a corrupt or relabelled one -- it has "
+            "no validator for that epoch. Read it with an updated consumer "
+            "before concluding the store is healthy; do not treat this as "
+            "proof the mission is intact")
 
 _ISO_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
 _SHA_RE = re.compile(r"^[0-9a-f]{64}$")
