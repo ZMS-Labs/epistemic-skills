@@ -227,6 +227,52 @@ durable condition says still applies.
 its sibling.** Rounds 3 and 4 each found two; round 6 found one. That the count
 is falling is not evidence the habit is fixed.
 
+## Round 7
+
+### P1 — the cohort fix handled total attrition and not partial
+
+Round 6 added a rule for an **empty** closing denominator. With two cohort
+members and one disappearance the denominator is non-empty, so that rule never
+fires — and because the opening record preserved only mission id, root and
+lifecycle state, the disappeared member took its adoption state with it. An
+adopted mission vanishing moves the reported ratio from **1/2 to 0/1**, in a
+direction nobody chose and with nothing in the readout saying so.
+
+So the fix for survivorship bias reintroduced survivorship bias one case in.
+Corrected: the opening record now captures each member's denominator **and
+numerator** state; a member observed adopting counts in the numerator at close
+even if it later disappears; a member that vanishes having never been observed
+adopting is reported as unresolved attrition rather than dropped; and whenever
+any member is missing, the readout reports the full-cohort ratio **and** the
+survivor-only ratio and states the gap.
+
+### P2 — a premise the record itself called unobserved read as established
+
+`empirical_premises` said flatly that candidate A *"selects a non-empty set of
+missions on the live estate today"*, while `coverage_limits` said the estate
+was unreachable and `empirical_closure` said `pending`. A consumer treating
+listed premises as facts would take the prerequisite as already satisfied and
+skip the complete census run the window depends on.
+
+Corrected to state its own status in the field: pending observation, not
+established, with an explicit instruction not to read the list as verified
+facts.
+
+### P2 — a fixed close plus a floating open silently shortened the window
+
+Round 2 changed the opening to `planned`. The close stayed pinned at
+2026-10-13, so a prerequisite passing on, say, 24 August yields 50 days of
+observation with nothing saying whether that is acceptable.
+
+The close **does not move** — it is the calendar deadline es#150 requires, and
+sliding it to preserve a 60-day interval is the null-by-drift that ruling
+forbids. So a late open shortens the observation, and that is now governed: the
+readout states the actual interval rather than the nominal 60 days; the gate
+owner records *before* opening whether a shortened interval still supports a
+judgement (deciding that after seeing the ratio is choosing the standard to fit
+the result); and non-passage by the close date is reported as the es#166
+direction-1 finding rather than extending the window in silence.
+
 ## Standing limit
 
 These corrections came from an automated reviewer, not from a second

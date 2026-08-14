@@ -68,7 +68,8 @@
   "SUPERSEDES the 2026-08-14 second issue, which carried 'estate-armed-count-remains-zero' as a validity condition. Option A references receipts and admitted-root membership only; the zero-armed count is DATED EVIDENCE (census run 2026-08-13) bearing on option D via d3, not a standing condition on the selected option. As a validity condition it would void the governing record the moment a mission armed -- and arming is a positive envelope-adoption event this window exists to measure, so the first interesting datapoint would have destroyed the rule it arrived under.",
   "A nonzero armed count during the window retires d3's SECOND line of evidence against option D ('guard-referencing predicates are already empty'), but not d1's refutation of D, which is structural (selection on the dependent variable) and does not depend on any estate observation. The selection of A therefore stands under a nonzero armed count.",
   "SUPERSEDES the 2026-08-14 third issue on two counts. (a) valid_while carried 'census-computable-field-set-unchanged', which the very commit publishing this record falsified: it adds epoch_skew to every census report relative to the pinned revision, so the record voided the moment it landed and before its window could open. Narrowed to the fields option A and the numerator actually read. (b) The numerator was left as the unglossed phrase 'a populated envelope' while the denominator was specified to the field -- the same defect as the original 'non-scratch root', on the other half of the ratio.",
-  "SUPERSEDES the 2026-08-14 fourth issue on two counts. (a) The denominator was restricted to ACTIVE missions, so ordinary completion during the 60-day interval removed missions from both numerator and denominator -- the closing ratio would have been computed over long-lived survivors, and could have been empty while many qualifying missions adopted the envelope and finished. Survivorship selection, in a record whose P8 coverage exists to catch exactly that. (b) The prerequisite test passed on a census reporting answers_are_partial == true, so the window could open on a selectively incomplete estate whose skipped stores are precisely the ones whose contribution is unknown."
+  "SUPERSEDES the 2026-08-14 fourth issue on two counts. (a) The denominator was restricted to ACTIVE missions, so ordinary completion during the 60-day interval removed missions from both numerator and denominator -- the closing ratio would have been computed over long-lived survivors, and could have been empty while many qualifying missions adopted the envelope and finished. Survivorship selection, in a record whose P8 coverage exists to catch exactly that. (b) The prerequisite test passed on a census reporting answers_are_partial == true, so the window could open on a selectively incomplete estate whose skipped stores are precisely the ones whose contribution is unknown.",
+  "SUPERSEDES the 2026-08-14 fifth issue on three counts. (a) empirical_premises asserted the non-emptiness result flatly while coverage_limits said the estate was unreachable and empirical_closure said pending -- a consumer reading premises as established would treat the prerequisite as already satisfied. (b) The close was fixed at 2026-10-13 while the opening became 'planned', so a late open silently shortened the observation with no rule governing it. (c) The round-4 cohort fix handled TOTAL attrition (empty closing denominator) and not PARTIAL: with two members and one disappearance the recovery never fires, and because the opening record kept only identity, an adopted mission could vanish and move the reported ratio from 1/2 to 0/1. The opening record now captures adoption state, and partial attrition has its own rule."
  ],
  "decision_frame": {
   "actors": [
@@ -111,7 +112,7 @@
    "Prevent the freeze becoming null-by-drift at window close (es#150 ruling time-box)."
   ],
   "empirical_premises": [
-   "Candidate A selects a non-empty set of missions on the live estate today."
+   "PENDING OBSERVATION, not established: candidate A selects a non-empty set of missions on the live estate. The live estate is unreachable from the session that produced this record; this is the hypothesis the preregistered test in empirical_closure exists to check, and the window does not open until that test passes on a complete census run. A consumer must NOT read this list as a set of verified facts."
   ],
   "hard_constraints": [
    "Computable by the census from fields it already reports.",
@@ -127,7 +128,7 @@
    "kind": "constraint-satisfaction"
   },
   "question": "Which census-computable predicate defines a 'substantive mission' for the es#166 adoption window such that envelope adoption is actually measurable and the measurement is not controlled by the party being measured?",
-  "system_boundary": "mission-custody@1 stores discoverable by census_missions.py under operator-named roots; the es#166 adoption window is PLANNED, opening only when the non-emptiness precondition passes, and closing 2026-10-13.",
+  "system_boundary": "mission-custody@1 stores discoverable by census_missions.py under operator-named roots. The es#166 adoption window is PLANNED, opening only when the non-emptiness precondition passes, and closing 2026-10-13. THE CLOSE DOES NOT MOVE: it is the calendar deadline the es#150 ruling requires, and sliding it to preserve a 60-day interval is the null-by-drift that ruling forbids. A late open therefore SHORTENS the observation rather than delaying the judgement, and the interval is governed explicitly in synthesis.conditions.",
   "uncertainty_posture": "worst-case"
  },
  "derivations": [
@@ -310,14 +311,20 @@
    "The non-emptiness test in empirical_closure passes against that recorded set.",
    "The gate owner reads the per-mission root column, not only the aggregate ratio.",
    "The OPENING COHORT is recorded at window open (mission id, root, lifecycle state), so a mission that disappears during the interval is visible as attrition rather than silently leaving the denominator.",
-   "The prerequisite run and the closing run both report answers_are_partial == false, or the window does not open / does not close on that run."
+   "The prerequisite run and the closing run both report answers_are_partial == false, or the window does not open / does not close on that run.",
+   "The readout states the ACTUAL observed interval (open date to close date), never the nominal 60 days. The 60-day figure describes the interval planned on 2026-08-14, not the interval observed.",
+   "If opening slips, the gate owner records BEFORE opening whether the shortened interval still supports a judgement, and on what reasoning. Deciding that after seeing the ratio is choosing the standard to fit the result.",
+   "If the prerequisite has still not passed at 2026-10-13, the window does not open retroactively and does not silently extend: non-passage is itself reported to es#166 as the direction-1 finding (no substantive missions to measure), which is the same recovery the empty-predicate case already carries.",
+   "The OPENING COHORT record captures each member's DENOMINATOR AND NUMERATOR state (mission id, root, lifecycle state, scope_in/scope_out non-emptiness, guard_count), not identity alone -- otherwise a member that disappears takes its adoption state with it and the surviving-subset ratio silently replaces the cohort ratio."
   ],
   "outcome": "conditional",
   "recovery_moves": [
    "If the non-emptiness test fails, the correct move is not a looser predicate but a finding that the estate has no substantive missions to measure \u2014 which is itself the answer to es#166 direction 1 (manifest is a file-shaped-work instrument).",
    "Record the root list observed at window open, so a root-name change during the window is visible at close.",
    "If the CLOSING denominator is empty despite a non-empty opening cohort, that is attrition, not absence: report the opening cohort and its fate rather than a ratio over zero. An undefined p is not evidence of non-adoption, and reporting it as one would be the vacuous-green defect this record has already committed once.",
-   "If a census run bearing on the measurement is partial, resolve or admit the skipped stores before re-running. Do NOT compute a ratio over the readable subset: the skipped stores are exactly the ones whose state is unknown, so the resulting p would be selectively incomplete in an unmeasurable direction."
+   "If a census run bearing on the measurement is partial, resolve or admit the skipped stores before re-running. Do NOT compute a ratio over the readable subset: the skipped stores are exactly the ones whose state is unknown, so the resulting p would be selectively incomplete in an unmeasurable direction.",
+   "PARTIAL attrition is governed, not only total: a cohort member observed ADOPTING at any point counts in the numerator at close even if it later disappears, on the strength of the opening-cohort record. A member that disappears having never been observed adopting is reported as UNRESOLVED ATTRITION and is not silently dropped -- dropping it moves the ratio (2 members, 1 adopted, the adopter vanishes: 1/2 becomes 0/1) in a direction nobody chose.",
+   "Whenever any cohort member has disappeared, the readout reports BOTH the full-cohort ratio (using recorded opening state for the missing) and the survivor-only ratio, and states the gap. Reporting one number when two are defensible hides exactly the attrition this cohort record exists to expose."
   ],
   "selected_option": "A"
  },

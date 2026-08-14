@@ -200,8 +200,14 @@ precondition of the first `@2` write, not a nicety to follow it.
 **What now happens.** `MissionStore.load_latest` raises `EpochSkew` (a
 `ChainBroken` subclass, so every existing handler keeps its behavior byte for
 byte); `run_gate` names the skew on the verdict and on stderr instead of
-reporting an empty workspace; the census reports these roots as **FAIL-OPEN**
-with cause `STALE READER (newer contract epoch)` and marks the run partial.
+reporting an empty workspace; the census discloses every skewed store and marks
+the run partial. It reports the **ROOT** as fail-open with cause
+`STALE READER (newer contract epoch)` **only when no other active mission
+resolves there** — a skewed store beside a readable active mission does not
+disarm the root, since `Mission.load` skips the skewed store and the gate still
+blocks (measured). The skewed mission's own guards are unenforced either way;
+see "Scope is per MISSION, not per root" below, which is the authority on what
+the census prints for a given root.
 
 **What deliberately does NOT happen.** The posture is not inverted. Refusing to
 run on skew would strand every workspace it applies to with no verb to resolve
