@@ -16,14 +16,15 @@ and
 [es#166 comment](https://github.com/ZMS-Labs/epistemic-skills/issues/166#issuecomment-5288171588)
 cite them.
 
-> **Rounds 2–4 of PR #175 found ten defects in these records, all upheld.**
-> The files here are corrected; see [`CORRECTIONS.md`](CORRECTIONS.md) for
-> what was wrong and why it matters. Two of round 2's four were defects the
-> records were written to guard against; two of round 3's three were
-> **incomplete round-2 fixes**; and round 4 found a third incomplete carry-
-> through plus a validity condition the publishing commit itself falsified.
-> Read that trend as what it is — these records have needed a correction every
-> round they have been reviewed.
+> **Rounds 2–6 of PR #175 found thirteen defects in these records, all
+> upheld.** The files here are corrected; see
+> [`CORRECTIONS.md`](CORRECTIONS.md) for what was wrong and why it matters.
+> Several were defects the records were written to guard against — a vacuous
+> preregistration, a declaration naming no principal, selection on survival in
+> a record whose P8 coverage exists to catch selection — and **four
+> consecutive rounds** found a correction applied to one field and not its
+> sibling. Read that trend as what it is: these records have needed a
+> correction every single round they have been reviewed.
 
 | file | question | outcome |
 |---|---|---|
@@ -69,6 +70,14 @@ derivation and is not yet evaluated.
    predicate selects ∅ on the live estate, the recorded recovery move is *not* a
    looser predicate — it is a finding that the estate has no substantive
    missions to measure, which is itself an answer to es#166 direction 1.
+   The check counts **terminal missions as well as active ones**, and the
+   census run must report `answers_are_partial == false` — a partial run is a
+   refusal to answer, not a result (round 6).
+1b. **Record the opening cohort** (mission id, root, lifecycle state) when the
+   window opens, so a mission that finishes or disappears during the 60 days
+   shows up as attrition rather than silently leaving the denominator. An
+   empty denominator at close with a non-empty opening cohort is **not**
+   evidence of non-adoption, and the record now says so.
 2. **A bounded pilot, if the authorship question must close.** The es#166
    window cannot settle it: with `grants_paths` unshipped, no observation can
    discriminate the alternatives, so re-firing against window data would repeat
@@ -85,8 +94,14 @@ adjudication itself, so there is **no cross-family independence** on this
 question. Neither record discharges any externally-enforced safety gate.
 
 `valid_while` voids each record on a change to the pinned subject revision, and
-`predicate.json` additionally voids if the census's computable field set
-changes. It deliberately does **not** void when a mission arms: arming is a
+`predicate.json` additionally voids only if the census **stops reporting** one
+of the six fields the measurement actually reads — `root`, `active`,
+`receipt_count`, `scope_in`, `scope_out`, `guard_count`. A census that gains an
+unrelated field does **not** void it; the earlier, broader wording
+("computable field set changes") was self-refuting, since the commit
+publishing these records added one (round 4).
+
+It deliberately does **not** void when a mission arms either: arming is a
 positive adoption event this window exists to measure, and a rule that expires
-on its own first interesting datapoint governs nothing (round 3, see
-[`CORRECTIONS.md`](CORRECTIONS.md)).
+on its own first interesting datapoint governs nothing (round 3). Both are in
+[`CORRECTIONS.md`](CORRECTIONS.md).

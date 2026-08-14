@@ -134,7 +134,14 @@ def epoch_skew_anywhere(record) -> str | None:
     if skew:
         return skew
     kind = record.get("record")
-    if not isinstance(kind, str):
+    # THE OUTER KIND MUST BE ONE THIS READER IMPLEMENTS, not merely one whose
+    # family name is familiar. `checkpoint@0` has no schema here, so nothing
+    # establishes that it embeds a manifest at all -- traversing it on the
+    # strength of the family string let an unknown-kind record (ordinary
+    # corruption, per validate_record) be reported as EpochSkew, which is the
+    # decoy suppression again one level up. A newer outer kind never reaches
+    # this line: epoch_skew(record) above already returned for it.
+    if kind not in RECORD_KINDS:
         return None
     family, _, _ = kind.rpartition("@")
     for key in EMBEDDED_RECORD_PATHS.get(family, ()):

@@ -67,7 +67,8 @@
   "SUPERSEDES the 2026-08-14 first issue, which defined option A as a 'non-scratch root' without saying what makes a root non-scratch. The census emits only the path string, so two readers could produce different denominators from identical output -- the predicate was not in fact census-computable, which is the constraint it was selected for. Fixed by requiring an explicit admitted-root set fixed before observation.",
   "SUPERSEDES the 2026-08-14 second issue, which carried 'estate-armed-count-remains-zero' as a validity condition. Option A references receipts and admitted-root membership only; the zero-armed count is DATED EVIDENCE (census run 2026-08-13) bearing on option D via d3, not a standing condition on the selected option. As a validity condition it would void the governing record the moment a mission armed -- and arming is a positive envelope-adoption event this window exists to measure, so the first interesting datapoint would have destroyed the rule it arrived under.",
   "A nonzero armed count during the window retires d3's SECOND line of evidence against option D ('guard-referencing predicates are already empty'), but not d1's refutation of D, which is structural (selection on the dependent variable) and does not depend on any estate observation. The selection of A therefore stands under a nonzero armed count.",
-  "SUPERSEDES the 2026-08-14 third issue on two counts. (a) valid_while carried 'census-computable-field-set-unchanged', which the very commit publishing this record falsified: it adds epoch_skew to every census report relative to the pinned revision, so the record voided the moment it landed and before its window could open. Narrowed to the fields option A and the numerator actually read. (b) The numerator was left as the unglossed phrase 'a populated envelope' while the denominator was specified to the field -- the same defect as the original 'non-scratch root', on the other half of the ratio."
+  "SUPERSEDES the 2026-08-14 third issue on two counts. (a) valid_while carried 'census-computable-field-set-unchanged', which the very commit publishing this record falsified: it adds epoch_skew to every census report relative to the pinned revision, so the record voided the moment it landed and before its window could open. Narrowed to the fields option A and the numerator actually read. (b) The numerator was left as the unglossed phrase 'a populated envelope' while the denominator was specified to the field -- the same defect as the original 'non-scratch root', on the other half of the ratio.",
+  "SUPERSEDES the 2026-08-14 fourth issue on two counts. (a) The denominator was restricted to ACTIVE missions, so ordinary completion during the 60-day interval removed missions from both numerator and denominator -- the closing ratio would have been computed over long-lived survivors, and could have been empty while many qualifying missions adopted the envelope and finished. Survivorship selection, in a record whose P8 coverage exists to catch exactly that. (b) The prerequisite test passed on a census reporting answers_are_partial == true, so the window could open on a selectively incomplete estate whose skipped stores are precisely the ones whose contribution is unknown."
  ],
  "decision_frame": {
   "actors": [
@@ -117,7 +118,9 @@
    "The predicate must not be defined in terms of the variable whose adoption it measures.",
    "The predicate must select a non-empty set on the live estate, or the window is vacuous by construction.",
    "Membership must be reproducible from census output plus the recorded admitted-root set, with no per-reader judgement about what a root 'is'.",
-   "The NUMERATOR predicate ('populated envelope') is fixed and recorded before observation begins, exactly as the denominator is; a ratio with a reproducible denominator and a reader-chosen numerator is not reproducible."
+   "The NUMERATOR predicate ('populated envelope') is fixed and recorded before observation begins, exactly as the denominator is; a ratio with a reproducible denominator and a reader-chosen numerator is not reproducible.",
+   "The cohort is fixed by OBSERVATION over the interval, not by lifecycle state at the closing read: a mission satisfying the predicate counts whether it is active or terminal when observed.",
+   "Every census run bearing on this measurement -- the prerequisite and the close -- must report answers_are_partial == false. A partial run has silently omitted stores from both numerator and denominator."
   ],
   "priority_rule": {
    "authority_ref": "https://github.com/ZMS-Labs/epistemic-skills/issues/150#issuecomment-5285714717",
@@ -139,7 +142,7 @@
     }
    ],
    "id": "d1",
-   "model": "The window estimates p = NUMERATOR / DENOMINATOR over active missions. DENOMINATOR = missions satisfying the selected predicate (option A). NUMERATOR = those denominator missions with a POPULATED ENVELOPE, defined exactly as: scope_in non-empty OR scope_out non-empty OR guard_count > 0 -- the three envelope fields the census actually reports. 'Populated envelope' was previously left to the reader, which let identical census output yield different values of p (an admitted mission with populated scope and no guards reads as adoption under one gloss and non-adoption under another); es#166's own finding concerns declaration fields going empty, and permissions/protected_state are NOT census-reported, so they cannot enter a census-computable numerator.",
+   "model": "The window estimates p = NUMERATOR / DENOMINATOR over the WINDOW COHORT: every mission satisfying the selected predicate that is OBSERVED at any point in the interval, whether active or terminal when observed. The cohort is deliberately NOT 'missions active at the closing read': a mission that adopted the envelope and then completed would leave both numerator and denominator, so ordinary completion could empty the denominator or bias it toward long-lived survivors -- survivorship selection, on the same P8 family this record fired on. DENOMINATOR = missions satisfying the selected predicate (option A). NUMERATOR = those denominator missions with a POPULATED ENVELOPE, defined exactly as: scope_in non-empty OR scope_out non-empty OR guard_count > 0 -- the three envelope fields the census actually reports. 'Populated envelope' was previously left to the reader, which let identical census output yield different values of p (an admitted mission with populated scope and no guards reads as adoption under one gloss and non-adoption under another); es#166's own finding concerns declaration fields going empty, and permissions/protected_state are NOT census-reported, so they cannot enter a census-computable numerator.",
    "module": "probability-statistics-randomization",
    "preconditions": [
     {
@@ -265,11 +268,11 @@
   "state": "pending",
   "tests": [
    {
-    "belief": "Candidate A (>=1 chain-bound receipt AND a root drawn from the recorded admitted-root set) selects a non-empty set of missions on the live estate.",
-    "disconfirming_observation": "Zero such missions: every receipt-bearing active mission sits under a root absent from the recorded set, or no active mission carries a chain-bound receipt at all.",
-    "prediction": "census_missions.py --json over the operator's estate roots reports at least one active mission with receipt_count >= 1 whose root string equals a member of the admitted-root set recorded before this run.",
+    "belief": "Candidate A (>=1 chain-bound receipt AND a root drawn from the recorded admitted-root set) selects a non-empty set of missions on the live estate, counting terminal missions as well as active ones.",
+    "disconfirming_observation": "Zero such missions: every receipt-bearing mission sits under a root absent from the recorded set, or no mission carries a chain-bound receipt at all. A run reporting answers_are_partial == true is NOT a result either way -- it is a refusal to answer until the skipped stores are resolved.",
+    "prediction": "census_missions.py --json over the operator's estate roots reports at least one mission -- ACTIVE OR TERMINAL -- with receipt_count >= 1 whose root string equals a member of the admitted-root set recorded before this run, on a run whose summary reports answers_are_partial == false.",
     "prediction_recorded_before_result": true,
-    "test": "Record the admitted-root set, THEN run the merged census over the operator's estate roots and count missions satisfying A by string membership in that set."
+    "test": "Record the admitted-root set, THEN run the merged census over the operator's estate roots. Refuse the run if answers_are_partial is true. Otherwise count missions satisfying A by string membership in that set, without filtering on lifecycle state."
    }
   ]
  },
@@ -305,12 +308,16 @@
    "The admitted-root set is recorded BEFORE observation begins, and the window does not open until it is.",
    "The numerator predicate (scope_in non-empty OR scope_out non-empty OR guard_count > 0) is the one recorded here, and is not renegotiated after observation begins.",
    "The non-emptiness test in empirical_closure passes against that recorded set.",
-   "The gate owner reads the per-mission root column, not only the aggregate ratio."
+   "The gate owner reads the per-mission root column, not only the aggregate ratio.",
+   "The OPENING COHORT is recorded at window open (mission id, root, lifecycle state), so a mission that disappears during the interval is visible as attrition rather than silently leaving the denominator.",
+   "The prerequisite run and the closing run both report answers_are_partial == false, or the window does not open / does not close on that run."
   ],
   "outcome": "conditional",
   "recovery_moves": [
    "If the non-emptiness test fails, the correct move is not a looser predicate but a finding that the estate has no substantive missions to measure \u2014 which is itself the answer to es#166 direction 1 (manifest is a file-shaped-work instrument).",
-   "Record the root list observed at window open, so a root-name change during the window is visible at close."
+   "Record the root list observed at window open, so a root-name change during the window is visible at close.",
+   "If the CLOSING denominator is empty despite a non-empty opening cohort, that is attrition, not absence: report the opening cohort and its fate rather than a ratio over zero. An undefined p is not evidence of non-adoption, and reporting it as one would be the vacuous-green defect this record has already committed once.",
+   "If a census run bearing on the measurement is partial, resolve or admit the skipped stores before re-running. Do NOT compute a ratio over the readable subset: the skipped stores are exactly the ones whose state is unknown, so the resulting p would be selectively incomplete in an unmeasurable direction."
   ],
   "selected_option": "A"
  },

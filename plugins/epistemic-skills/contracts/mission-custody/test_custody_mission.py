@@ -851,6 +851,24 @@ def test_epoch_decoy_outside_a_record_position_is_not_skew(
     def genuine_embedded(rec: dict) -> None:
         rec["manifest"]["record"] = "mission-manifest@2"
 
+    # An UNSUPPORTED outer kind must not activate EMBEDDED_RECORD_PATHS: this
+    # reader has no schema saying `checkpoint@0` embeds anything, so honouring
+    # a nested claim on the strength of the family string alone is the decoy
+    # suppression again, one level up. `checkpoint@0` is ordinary corruption
+    # (validate_record: "unknown kind"), not a stale reader.
+    check("unsupported-outer-kind-not-traversed",
+          epoch_skew_anywhere(
+              {"record": "checkpoint@0",
+               "manifest": {"record": "mission-manifest@2"}}) is None)
+    check("garbage-outer-kind-not-traversed",
+          epoch_skew_anywhere(
+              {"record": "nonsense",
+               "manifest": {"record": "mission-manifest@2"}}) is None)
+    # ...while a NEWER outer kind still reports, from the outer record itself.
+    check("newer-outer-kind-still-skew",
+          epoch_skew_anywhere(
+              {"record": "checkpoint@2",
+               "manifest": {"record": "mission-manifest@1"}}) is not None)
     check("decoy-in-state-not-called-skew",
           "NEWER contract epoch" not in
           diagnosis(workspace / "state-decoy", decoy_in_state))

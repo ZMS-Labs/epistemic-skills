@@ -181,6 +181,52 @@ required.
 That this needed three rounds to remove from one short file is the honest
 headline of round 4.
 
+## Round 6
+
+### P1 — the denominator would have shrunk by ordinary success
+
+The cohort was *"active missions"*, read at the closing census. Over a 60-day
+window missions complete. A mission that satisfied the predicate, adopted the
+envelope, and then finished would leave **both** the numerator and the
+denominator — so the closing ratio was computed over long-lived survivors, and
+could have come back empty while a great deal of qualifying adoption happened
+and finished.
+
+That is survivorship selection, in a record whose P8 coverage exists to catch
+selection defects, and whose `d1` refutes option D for a sibling of the same
+error. I caught selection on the dependent variable and missed selection on
+*survival* in the same ratio.
+
+Corrected: the cohort is now fixed by **observation over the interval** — a
+mission counts whether it is active or terminal when observed — with the
+opening cohort recorded so attrition is visible, and an explicit closing rule:
+an empty denominator against a non-empty opening cohort is attrition, reported
+as such, never an adoption ratio over zero.
+
+### P2 — the prerequisite passed on a partial census
+
+The non-emptiness test said nothing about `answers_are_partial`. The census
+sets that flag precisely when it has skipped stores it could not read — for
+corruption, environmental failure, or epoch skew — and those stores are the
+ones whose contribution to the ratio is unknown. So the window could open, and
+later compute `p`, from a selectively incomplete estate.
+
+The instrument this record governs was built to make incompleteness loud, and
+the record consuming it ignored the flag. Corrected: both the prerequisite run
+and the closing run must report `answers_are_partial == false`, and computing
+a ratio over the readable subset is explicitly refused as a recovery move.
+
+### P2 — the README still described the old validity condition
+
+Round 4 narrowed `valid_while` to the six fields the measurement reads. The
+README kept telling operators the record voids whenever "the census's
+computable field set changes", which would have them discard a record its own
+durable condition says still applies.
+
+**Fourth consecutive round in which a correction landed in one surface and not
+its sibling.** Rounds 3 and 4 each found two; round 6 found one. That the count
+is falling is not evidence the habit is fixed.
+
 ## Standing limit
 
 These corrections came from an automated reviewer, not from a second
