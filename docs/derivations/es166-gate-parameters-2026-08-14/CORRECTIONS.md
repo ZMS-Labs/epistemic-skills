@@ -1,8 +1,9 @@
 # Corrections — PR #175
 
 The records in this directory were reviewed on the PR that committed them.
-**Twenty-seven findings landed across rounds 2, 3, 4, 6, 7, 8, 9, 11 and 12** —
-every round that reviewed them — and all twenty-seven were upheld. The records now in place are
+**Thirty findings landed across rounds 2, 3, 4, 6, 7, 8, 9, 11, 12 and 13** —
+every round that reviewed them — and all thirty were upheld. The last three are
+recorded as open rather than fixed; see round 13. The records now in place are
 the corrected versions; the originals are in git history at `9fbfea4` and are
 worth reading beside this file, because three of round 2's four defects are
 ones the records themselves were written to guard against.
@@ -444,6 +445,39 @@ alike — and the choice is on the record rather than assumed: *ever-observed*
 cannot be falsified by the estate, since one arming counts forever and the
 ratio ratchets upward regardless of subsequent behaviour. That is the vacuity
 `d1` refutes option D for, arriving through the time axis.
+
+## Round 13 — upheld, and deliberately not patched
+
+Three more defects in the measurement procedure, one round after round 12
+established that the procedure has outgrown its own coverage analysis and
+needs re-deriving:
+
+- **A retry cannot recover a vanished store.** *"A partial cadence run is
+  retried until complete"* does nothing for a qualifying store that the
+  partial run skipped and that disappears before the retry: the retry is
+  complete, the mission is absent, and it is never admitted.
+- **Mission identity is not incarnation identity.** Members are keyed by
+  `(mission id, root)`, so a directory that disappears and is recreated under
+  the same id merges two incarnations — an adopted mission followed by an
+  empty-envelope replacement reports as one non-adopter, 1/2 becoming 0/1.
+- **The close judgement is undefined.** `p_low` and `p_high` are specified;
+  no threshold turns either into a verdict. *"Close inconclusive if the
+  judgement would differ between them"* therefore cannot be applied
+  reproducibly — and an undefined close rule is precisely the channel through
+  which a standard gets chosen after the result is seen, which this record
+  forbids elsewhere in writing.
+
+**Why these are recorded rather than corrected.** Patching them would be the
+thirteenth in-place revision of a procedure whose drift is the exact problem
+round 12 identified. Each previous patch was locally correct and the sequence
+still produced a procedure its own derivation no longer describes. Three more
+defects found immediately after that diagnosis is confirming evidence for it,
+not a reason to reach for the same tool again.
+
+They are inputs to the owed re-derivation. Until it lands, defect (c) alone
+means this procedure cannot produce a reproducible verdict, so it must not be
+run as the es#166 window — stated in the record's own limits and in the README
+banner, not only here.
 
 ## Standing limit
 

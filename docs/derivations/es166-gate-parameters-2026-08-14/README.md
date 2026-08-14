@@ -16,7 +16,18 @@ and
 [es#166 comment](https://github.com/ZMS-Labs/epistemic-skills/issues/166#issuecomment-5288171588)
 cite them.
 
-> **STATUS: this record's coverage analysis does not cover the procedure it
+> **STATUS: DO NOT RUN THIS PROCEDURE AS THE es#166 WINDOW.** Round 13 found
+> that the close judgement is undefined — `p_low` and `p_high` are specified,
+> but no threshold turns either into a verdict, so *"close inconclusive if the
+> judgement would differ"* cannot be applied reproducibly. Two further open
+> defects are recorded beside it (a retry cannot recover a store that vanished
+> before it; mission identity is not incarnation identity, so a recreated
+> mission id merges two members into one). All three are upheld and
+> **deliberately not patched** — they are inputs to the re-derivation below,
+> because twelve rounds of in-place patching is what produced the drift that
+> re-derivation exists to repair.
+>
+> **This record's coverage analysis also does not cover the procedure it
 > now governs.** Round 12 established that P3 (ordering/history) and P5
 > (durability/recovery) were recorded not-applicable on a justification that
 > was true of the 2026-08-14 procedure and false of the one six rounds of
@@ -26,7 +37,7 @@ cite them.
 > FINAL procedure is required before the window governs anything — it is a
 > separate authorization and is **not** discharged by the corrections here.
 >
-> **Rounds 2–12 of PR #175 found twenty-seven defects in these records,
+> **Rounds 2–13 of PR #175 found thirty defects in these records,
 > all upheld.** The files here are corrected; see
 > [`CORRECTIONS.md`](CORRECTIONS.md) for what was wrong and why it matters.
 > Several were defects the records were written to guard against — a vacuous
