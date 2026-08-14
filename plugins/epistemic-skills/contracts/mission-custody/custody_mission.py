@@ -1622,19 +1622,25 @@ class Mission:
         # authority again -- comparing live content against stale ground truth
         # and reporting a mismatch that never happened, while the real loss of
         # the current receipt went unreported.
-        current_by_key: dict[str, tuple[str, dict | None]] = {}
+        current_by_key: dict[str, tuple[str, dict | None, bool]] = {}
         missing: list[str] = []
         skewed: list[str] = []
         for request_id in latest["receipt_ids"]:
             receipt, _refusal, skew = self._load_receipt_checked(request_id)
-            if skew:
+            if skew and request_id not in skewed:
                 # NOT missing, and NOT clean. This reader cannot read the
                 # receipt, so it cannot verify the artifact -- but the receipt
                 # is present and may be perfectly good. It gets its own marker
                 # so the operator is never offered the loss verb for it.
-                if request_id not in skewed:
-                    skewed.append(request_id)
-                continue
+                skewed.append(request_id)
+            # A SKEWED RECEIPT STILL TAKES ITS SLOT. Skipping it here left the
+            # SUPERSEDED older receipt authoritative for the same artifact, so
+            # resume compared live content against an obsolete hash and
+            # reported RECONCILIATION -- a false drift diagnosis whose remedy,
+            # `reconcile`, would OVERWRITE content the newer receipt governs
+            # (measured: artifact reading "NEW", resume reporting drift).
+            # Claiming the slot as an OPAQUE entry supersedes the stale
+            # receipt without asserting anything this reader cannot check.
             rel = (receipt["artifact_path"] if receipt is not None
                    else self._historical_effect_path(request_id))
             if rel is None:
@@ -1652,9 +1658,16 @@ class Mission:
             key = _normalize_relpath(rel)
             if os.name == "nt":
                 key = _ascii_case_fold(key)
-            current_by_key[key] = (request_id, receipt)
+            current_by_key[key] = (request_id, receipt, bool(skew))
         mismatched: list[str] = []
-        for request_id, receipt in current_by_key.values():
+        for request_id, receipt, is_skewed in current_by_key.values():
+            if is_skewed:
+                # Unverifiable, and honestly so: without the receipt's hash
+                # this reader cannot say the artifact drifted OR that it is
+                # clean. RECEIPT-NEWER-EPOCH already carries that, and NOT
+                # emitting RECONCILIATION here is what keeps `reconcile`
+                # unavailable for this path -- it refuses without a marker.
+                continue
             if receipt is None:
                 # An unloadable receipt is drift, not a skip: the artifact it
                 # covered can no longer be verified, and silence here is a

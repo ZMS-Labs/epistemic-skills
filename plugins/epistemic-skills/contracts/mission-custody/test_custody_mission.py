@@ -844,6 +844,60 @@ def test_newer_epoch_receipt_is_not_reported_as_loss(workspace: Path) -> None:
           reloaded_n.acknowledge_receipt_loss("req-1") > 0)
 
 
+def test_newer_receipt_supersedes_its_stale_predecessor(
+        workspace: Path) -> None:
+    """A skewed receipt must claim its artifact's slot, not vacate it.
+
+    Skipping the skewed receipt left the SUPERSEDED older receipt
+    authoritative for the same artifact, so resume compared live content
+    against an obsolete hash and reported RECONCILIATION. Measured: the
+    artifact on disk read "NEW" -- exactly what the newer receipt governs --
+    while resume called it drift. The remedy for that marker is `reconcile`,
+    which writes: an operator following the diagnosis would have OVERWRITTEN
+    valid content on the strength of a stale record."""
+    m = open_mission(workspace, "m", "Work.")
+    m.approve()
+    m.record_effect("a.txt", "OLD", "req-old")
+    m.record_effect("a.txt", "NEW", "req-new")
+    newer = (workspace / "missions" / "m" / "receipts"
+             / (sha256_bytes(b"req-new") + ".json"))
+    record = json.loads(newer.read_text(encoding="utf-8"))
+    record["record"] = "receipt@2"
+    newer.write_text(json.dumps(record, indent=1, sort_keys=True),
+                     encoding="utf-8")
+
+    reloaded = Mission.load(workspace, actor="agent:worker")
+    findings = reloaded.resume()
+    check("newer-receipt-no-false-drift",
+          not any(f == "a.txt" or f.startswith("RECONCILIATION")
+                  for f in findings))
+    check("newer-receipt-still-disclosed",
+          "RECEIPT-NEWER-EPOCH:req-new" in findings)
+    # No RECONCILIATION marker means `reconcile` has no door for this path,
+    # which is the property that protects the bytes.
+    try:
+        reloaded.reconcile("a.txt", "CLOBBERED", "req-fix")
+        check("newer-receipt-reconcile-refused", False)
+    except CustodyError:
+        check("newer-receipt-reconcile-refused", True)
+    check("newer-receipt-artifact-untouched",
+          (workspace / "a.txt").read_text(encoding="utf-8") == "NEW")
+
+    # CONTROL: genuine drift on a path with NO skewed receipt must still be
+    # reported and still be reconcilable, or this fix has bought its safety
+    # by disabling drift detection.
+    other = workspace / "genuine-drift"
+    n = open_mission(other, "m-d", "Work.")
+    n.approve()
+    n.record_effect("b.txt", "GOOD", "req-b")
+    (other / "b.txt").write_text("TAMPERED", encoding="utf-8")
+    reloaded_n = Mission.load(other, actor="agent:worker")
+    check("genuine-drift-still-reported", "b.txt" in reloaded_n.resume())
+    reloaded_n.reconcile("b.txt", "GOOD", "req-b-fix")
+    check("genuine-drift-still-reconcilable",
+          (other / "b.txt").read_text(encoding="utf-8") == "GOOD")
+
+
 def test_embedded_record_paths_match_the_schemas(workspace: Path) -> None:
     """`EMBEDDED_RECORD_PATHS` must list every schema `$ref` position, and no
     others.
@@ -3976,6 +4030,7 @@ TESTS = [
     test_stale_reader_scope_never_claims_enforcement_the_gate_lacks,
     test_embedded_newer_manifest_is_diagnosed_as_skew_not_corruption,
     test_newer_epoch_receipt_is_not_reported_as_loss,
+    test_newer_receipt_supersedes_its_stale_predecessor,
     test_embedded_record_paths_match_the_schemas,
     test_epoch_decoy_outside_a_record_position_is_not_skew,
     test_open_refuses_beside_an_epoch_skewed_store,
