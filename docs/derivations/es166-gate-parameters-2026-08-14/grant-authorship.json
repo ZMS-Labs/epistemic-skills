@@ -10,7 +10,7 @@
   "grants_paths-remains-unshipped"
  ],
  "coverage_limits": [
-  "Adoption behavior under an operator-confirmation requirement is unobserved; the es#166 window is the instrument that would observe it.",
+  "Adoption behavior under an operator-confirmation requirement is unobserved, and NO instrument currently planned can observe it: the es#166 window measures envelope adoption generally and cannot see a mechanism that does not exist. Observing it requires a bounded pilot in which the mechanism is actually available (see empirical_closure and recovery_moves).",
   "Principal binding is outside the contract (SECURITY.md): the contract cannot verify that a human rather than an agent authored an operator-confirmed grant. This limit bounds every option here equally.",
   "SUPERSEDES the 2026-08-14 first issue, whose empirical closure was VACUOUS: it predicted that no mission would adopt a field that cannot exist under this record's own validity condition. A prediction true by construction is not evidence, and the synthesis had named that test as the route to closing the authorship question."
  ],

@@ -16,12 +16,14 @@ and
 [es#166 comment](https://github.com/ZMS-Labs/epistemic-skills/issues/166#issuecomment-5288171588)
 cite them.
 
-> **Rounds 2 and 3 of PR #175 found seven defects in these records, all
-> upheld.** The files here are corrected; see
-> [`CORRECTIONS.md`](CORRECTIONS.md) for what was wrong and why it matters.
-> Two of round 2's four were defects the records were written to guard
-> against, and two of round 3's three were **incomplete round-2 fixes** —
-> corrected text left contradicting itself elsewhere in the same file.
+> **Rounds 2–4 of PR #175 found ten defects in these records, all upheld.**
+> The files here are corrected; see [`CORRECTIONS.md`](CORRECTIONS.md) for
+> what was wrong and why it matters. Two of round 2's four were defects the
+> records were written to guard against; two of round 3's three were
+> **incomplete round-2 fixes**; and round 4 found a third incomplete carry-
+> through plus a validity condition the publishing commit itself falsified.
+> Read that trend as what it is — these records have needed a correction every
+> round they have been reviewed.
 
 | file | question | outcome |
 |---|---|---|
@@ -57,7 +59,11 @@ derivation and is not yet evaluated.
 
 0. **Record the admitted-root set** before observation begins. Option A is
    only reproducible against an explicit list of repository checkouts fixed in
-   advance; without it the predicate is not census-computable.
+   advance; without it the predicate is not census-computable. The
+   **numerator** is now fixed in the record too (`scope_in` non-empty OR
+   `scope_out` non-empty OR `guard_count > 0`) and must not be renegotiated
+   once observation starts — a reproducible denominator with a reader-chosen
+   numerator is not a reproducible ratio.
 1. **Non-emptiness check before the window opens.** `predicate.json`'s
    `empirical_closure` is `pending` with a preregistered prediction. If the
    predicate selects ∅ on the live estate, the recorded recovery move is *not* a

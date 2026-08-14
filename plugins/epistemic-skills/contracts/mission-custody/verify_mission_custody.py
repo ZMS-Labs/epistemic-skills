@@ -87,6 +87,47 @@ def epoch_skew(record) -> str | None:
             "before concluding the store is healthy; do not treat this as "
             "proof the mission is intact")
 
+
+# Records EMBED records: a checkpoint@1 carries a mission-manifest, and the
+# schema requires that manifest to be @1. So a store can be too new for this
+# reader with a perfectly familiar OUTER kind -- validate_record returns
+# "manifest: embedded mission-manifest@1 required" while epoch_skew(outer)
+# returns None, and the mission is reported ChainBroken. Measured on an armed
+# mission: `run_gate` allowed with `gate inert: NoActiveMission`, which is
+# exactly the silent stale-reader diagnosis this signal exists to replace.
+#
+# WALKED, not hand-listed. Naming `record["manifest"]` here would fix the one
+# nesting that exists today and miss the next one -- the same case-by-case
+# habit that produced four separate mis-classification defects in the census.
+# A walk covers any future embedded family for free.
+_SKEW_WALK_LIMIT = 4096
+
+
+def epoch_skew_anywhere(record) -> str | None:
+    """`epoch_skew` for the record OR anything nested inside it.
+
+    Returns the outermost skew first, so the message names the biggest thing
+    known to be too new. `epoch_skew` stays the single-record predicate; this
+    is the one callers deciding "can I read this file at all?" should use.
+    """
+    queue = [record]
+    seen = 0
+    while queue and seen < _SKEW_WALK_LIMIT:
+        node = queue.pop(0)
+        seen += 1
+        if isinstance(node, dict):
+            skew = epoch_skew(node)
+            if skew:
+                return skew
+            queue.extend(node.values())
+        elif isinstance(node, list):
+            # A bounded extend: a hostile record cannot make this walk
+            # unbounded, because _SKEW_WALK_LIMIT caps nodes visited and the
+            # caller has already read the whole file into memory anyway.
+            queue.extend(node)
+    return None
+
+
 _ISO_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
 _SHA_RE = re.compile(r"^[0-9a-f]{64}$")
 _ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")

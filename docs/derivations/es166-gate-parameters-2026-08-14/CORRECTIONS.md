@@ -131,6 +131,56 @@ the consequence recorded: a nonzero armed count retires `d3`'s second line of
 evidence against D, but not `d1`'s refutation, which is structural and
 observation-independent. The selection of A stands either way.
 
+## Round 4
+
+### P2 — the record voided itself the moment its own commit landed
+
+`valid_while` carried `census-computable-field-set-unchanged`, and the README
+spelled out that this voids the record when the census's field set changes.
+**The very commit publishing these records adds `epoch_skew` to every census
+report** relative to the pinned `0fee7a0`. So the predicate was invalid on
+landing, before its window could open — a governing rule that expired on
+publication.
+
+Corrected by narrowing the condition to the fields option A and the numerator
+actually read (`root`, `active`, `receipt_count`, `scope_in`, `scope_out`,
+`guard_count`) rather than the whole reported surface. Re-pinning to the
+post-change census was the alternative and was rejected: the SHA does not
+exist until this commit lands, so the record would have had to name its own
+future.
+
+### P2 — the numerator was never defined
+
+The denominator was specified down to the field. The numerator was the phrase
+*"a populated envelope"*, unglossed, while the census reports `scope_in`,
+`scope_out`, `guard_mode` and `guard_count` as independent candidates. An
+admitted mission with populated scope and no guards is adoption under one
+reading and non-adoption under another, so two operators derive different
+values of `p` from identical output.
+
+**This is the same defect as the original "non-scratch root", on the other
+half of the ratio** — and it survived a round in which that exact defect was
+found, disposed, and written up. I fixed the denominator and did not look at
+the numerator beside it.
+
+Fixed: the numerator is now `scope_in` non-empty OR `scope_out` non-empty OR
+`guard_count > 0`, recorded as a hard constraint and a synthesis condition so
+it cannot be renegotiated after observation begins. The concession is recorded
+too: `permissions` and `protected_state` appear in es#166's finding but are
+not census-reported, so this numerator measures the reported subset and
+understates envelope adoption as a whole.
+
+### P2 — the window dependency, a third time
+
+`coverage_limits[0]` still read *"the es#166 window is the instrument that
+would observe it"* — after round 2 blocked the closure and round 3 fixed the
+synthesis basis. Same claim, third field, third round. Corrected to state that
+no currently planned instrument can observe it and that a bounded pilot is
+required.
+
+That this needed three rounds to remove from one short file is the honest
+headline of round 4.
+
 ## Standing limit
 
 These corrections came from an automated reviewer, not from a second

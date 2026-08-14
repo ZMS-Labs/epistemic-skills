@@ -16,7 +16,9 @@ sys.path.insert(0, str(ROOT))
 from custody_store import (  # noqa: E402
     ChainBroken, EpochSkew, MissionStore, StoreError, sha256_bytes, sha256_file,
 )
-from verify_mission_custody import is_iso_utc  # noqa: E402
+from verify_mission_custody import (  # noqa: E402
+    epoch_skew, epoch_skew_anywhere, is_iso_utc,
+)
 from custody_gate import run_gate  # noqa: E402
 import census_missions  # noqa: E402
 from custody_mission import (  # noqa: E402
@@ -654,7 +656,7 @@ def test_stale_reader_scope_never_claims_enforcement_the_gate_lacks(
     check("stale-scope-control-gate-blocks",
           run_gate(healthy, call, actor="probe")["decision"] == "block")
     check("stale-scope-control-says-enforces",
-          "still enforces" in _stale_reader_scope(healthy, "m-legacy"))
+          "still enforce" in _stale_reader_scope(healthy, "m-legacy"))
 
     # DEFECT 1: a duplicate active mission -- Mission.load refuses, gate allows.
     dupe = workspace / "dupe"
@@ -668,7 +670,7 @@ def test_stale_reader_scope_never_claims_enforcement_the_gate_lacks(
           run_gate(dupe, call, actor="probe")["decision"] == "allow")
     dupe_scope = _stale_reader_scope(dupe, "m-legacy")
     check("stale-scope-duplicate-claims-no-enforcement",
-          "still enforces" not in dupe_scope)
+          "still enforce" not in dupe_scope)
     check("stale-scope-duplicate-names-the-cause",
           "multiple active" in dupe_scope)
 
@@ -693,7 +695,7 @@ def test_stale_reader_scope_never_claims_enforcement_the_gate_lacks(
         # run_gate propagates; custody_hook catches CustodyError and ALLOWS.
         check("stale-scope-tamper-gate-does-not-enforce", True)
     check("stale-scope-tamper-claims-no-enforcement",
-          "still enforces" not in _stale_reader_scope(tampered, "m-legacy"))
+          "still enforce" not in _stale_reader_scope(tampered, "m-legacy"))
 
     # A root with no active mission at all is still called wholly inert.
     alone = workspace / "alone"
@@ -701,6 +703,114 @@ def test_stale_reader_scope_never_claims_enforcement_the_gate_lacks(
     _skew_a_store_into(alone, "m-legacy")
     check("stale-scope-skew-alone-is-whole-root",
           "WHOLE ROOT" in _stale_reader_scope(alone, "m-legacy"))
+
+    # DEFECT 3: absence from the fail-open set is STILL not enforcement. A
+    # root whose sole active mission is unarmed, or armed in `audit` mode,
+    # raises no Q1 row -- nothing was holding, so there is no hole to report
+    # -- yet the gate allows every call. Measured: both said "still enforces".
+    for label, kwargs in (("unarmed", {}),
+                          ("audit", {"guard_mode": "audit",
+                                     "actuator_guards": guards})):
+        root = workspace / label
+        sib = open_mission(root, "m-sib", "Sibling.", **kwargs)
+        sib.approve()
+        sib.record_effect("a.txt", "aa", f"req-{label}")
+        _skew_a_store_into(root, "m-legacy")
+        check(f"stale-scope-{label}-gate-allows",
+              run_gate(root, call, actor="probe")["decision"] == "allow")
+        check(f"stale-scope-{label}-claims-no-enforcement",
+              "still enforce" not in _stale_reader_scope(root, "m-legacy"))
+
+
+def test_embedded_newer_manifest_is_diagnosed_as_skew_not_corruption(
+        workspace: Path) -> None:
+    """A `checkpoint@1` embedding a `mission-manifest@2` is a stale-reader
+    case, not a broken chain.
+
+    Records embed records, so a store can be too new for this reader while
+    its OUTER kind is perfectly familiar: validate_record returns
+    'manifest: embedded mission-manifest@1 required' and an epoch check that
+    looks only at the outer record returns None. Measured before the fix: an
+    armed enforce mission reported ChainBroken and `run_gate` allowed with
+    `gate inert: NoActiveMission` -- the exact silent diagnosis this signal
+    exists to replace, reached through the one nesting the schema mandates."""
+    guards = [{"name": "no-secrets", "tool_names": ["Bash"],
+               "command_regexes": ["cat .env"], "path_globs": ["secrets/**"]}]
+    m = open_mission(workspace, "m-armed", "Armed.",
+                     guard_mode="enforce", actuator_guards=guards)
+    m.approve()
+    m.record_effect("a.txt", "aa", "req-1")
+    tail = sorted((workspace / "missions" / "m-armed"
+                   / "checkpoints").glob("*.json"))[-1]
+    record = json.loads(tail.read_text(encoding="utf-8"))
+    record["manifest"]["record"] = "mission-manifest@2"
+    tail.write_text(json.dumps(record, indent=1, sort_keys=True),
+                    encoding="utf-8")
+
+    # The outer-record predicate is unchanged and still answers only its own
+    # question; the WALK is what the store consults.
+    check("embedded-skew-outer-predicate-silent",
+          epoch_skew(record) is None)
+    check("embedded-skew-walk-finds-it",
+          epoch_skew_anywhere(record) is not None)
+    try:
+        MissionStore(workspace / "missions" / "m-armed").load_latest()
+        check("embedded-skew-store-raises-epochskew", False)
+    except EpochSkew as exc:
+        check("embedded-skew-store-raises-epochskew",
+              "mission-manifest@2" in str(exc))
+    except ChainBroken:
+        check("embedded-skew-store-raises-epochskew", False)
+    verdict = run_gate(workspace, {"tool_name": "Bash",
+                                   "command": "cat .env"}, actor="probe")
+    check("embedded-skew-gate-names-stale-reader",
+          "NEWER contract epoch" in verdict.get("reason", ""))
+    # A store that is merely CORRUPT must not be relabelled as skew.
+    other = workspace / "corrupt"
+    c = open_mission(other, "m-c", "Corrupt me.")
+    c.approve()
+    ctail = sorted((other / "missions" / "m-c"
+                    / "checkpoints").glob("*.json"))[-1]
+    ctail.write_text("{ not json", encoding="utf-8")
+    check("embedded-skew-corrupt-still-reads-corrupt",
+          "NEWER contract epoch" not in run_gate(
+              other, {"tool_name": "Bash", "command": "cat .env"},
+              actor="probe").get("reason", ""))
+
+
+def test_open_refuses_beside_an_epoch_skewed_store(workspace: Path) -> None:
+    """`open` must not treat "I could not read it" as "nothing is active".
+
+    A skipped skewed store may hold an ACTIVE mission -- an updated reader is
+    the only thing that can say. Opening beside it wrote a second @1 mission
+    (reproduced: the workspace ended holding both), and the moment the reader
+    is upgraded discovery sees two active missions and the gate goes inert --
+    a state no verb in this contract can clear, because there is no
+    duplicate-resolution command. Refusing costs one reader upgrade; allowing
+    it wedges the workspace for whoever comes next."""
+    m = open_mission(workspace, "old", "First.")
+    m.approve()
+    m.record_effect("a.txt", "aa", "req-1")
+    tail = sorted((workspace / "missions" / "old"
+                   / "checkpoints").glob("*.json"))[-1]
+    record = json.loads(tail.read_text(encoding="utf-8"))
+    record["record"] = "checkpoint@2"
+    tail.write_text(json.dumps(record, indent=1, sort_keys=True),
+                    encoding="utf-8")
+    try:
+        open_mission(workspace, "new", "Second.")
+        check("open-refuses-beside-skew", False)
+    except CustodyError:
+        check("open-refuses-beside-skew", True)
+    # A REFUSED open leaves nothing behind, same as every other refused open.
+    check("open-refused-beside-skew-writes-nothing",
+          sorted(p.name for p in (workspace / "missions").iterdir()) == ["old"])
+    # CONTROL: a genuinely empty workspace still opens, or this is just a
+    # lock rather than a guard.
+    fresh = workspace / "fresh"
+    open_mission(fresh, "brand-new", "Fresh.")
+    check("open-still-works-on-empty-workspace",
+          (fresh / "missions" / "brand-new").is_dir())
 
 
 def test_backslash_effect_path_still_loads_its_own_receipt(
@@ -3694,6 +3804,8 @@ TESTS = [
     test_newer_epoch_store_is_named_not_mistaken_for_an_empty_workspace,
     test_epoch_skew_does_not_disarm_a_root_that_still_resolves,
     test_stale_reader_scope_never_claims_enforcement_the_gate_lacks,
+    test_embedded_newer_manifest_is_diagnosed_as_skew_not_corruption,
+    test_open_refuses_beside_an_epoch_skewed_store,
     test_forged_restored_receipt_is_not_trusted,
     test_distinct_files_never_share_an_obligation,
     test_obligations_match_by_artifact_not_by_string,

@@ -8,7 +8,7 @@ import os
 import tempfile
 from pathlib import Path
 
-from verify_mission_custody import epoch_skew, validate_record
+from verify_mission_custody import epoch_skew_anywhere, validate_record
 
 
 class StoreError(Exception):
@@ -144,7 +144,11 @@ class MissionStore:
             record = json.loads(path.read_text(encoding="utf-8"))
             errors = validate_record(record)
             if errors:
-                skew = epoch_skew(record)
+                # ANYWHERE: an embedded mission-manifest@2 inside a
+                # checkpoint@1 fails validation with a familiar outer
+                # kind, and reporting that as ChainBroken sends the
+                # operator to repair a store that is merely too new.
+                skew = epoch_skew_anywhere(record)
                 if skew:
                     raise EpochSkew(f"{path.name}: {skew}")
                 raise ChainBroken(f"{path.name}: invalid: {errors[:3]}")

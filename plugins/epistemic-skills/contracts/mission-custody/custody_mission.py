@@ -914,7 +914,25 @@ class Mission:
         # written, so a refused open leaves no partial mission dir.
         try:
             cls.load(workspace, actor=actor)
-        except NoActiveMission:
+        except NoActiveMission as exc:
+            # "NOTHING ACTIVE" AND "I COULD NOT READ IT" ARE DIFFERENT ANSWERS.
+            # A store this reader must skip for epoch skew may hold an ACTIVE
+            # mission -- an updated reader is exactly the thing that would find
+            # out. Treating the skip as absence let open() write a second @1
+            # mission beside it (reproduced: the workspace ended with both),
+            # and the moment the reader is upgraded discovery sees two active
+            # missions, refuses, and the gate goes inert -- in a state no
+            # duplicate-resolution verb can clear, because this contract has
+            # none. Refusing costs an operator one upgrade; allowing it wedges
+            # the workspace for whoever comes next.
+            if "EpochSkew" in getattr(exc, "skipped_kinds", ()):
+                raise CustodyError(
+                    "a mission store here CLAIMS a newer contract epoch, so "
+                    "this reader cannot tell whether it holds an active "
+                    "mission. Opening beside it risks two active missions "
+                    "once the reader is updated, which wedges the gate. Read "
+                    "this workspace with an updated custody plugin/CLI first."
+                ) from exc
             pass  # the expected state: nothing active to conflict with
         else:
             raise CustodyError(

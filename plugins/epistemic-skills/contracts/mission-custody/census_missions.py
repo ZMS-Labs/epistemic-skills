@@ -750,8 +750,17 @@ def summarize(reports: list[dict]) -> dict:
                    if t.get("fails_open") else
                    f"terminal ({t.get('status')}), historical damage only; "
                    "absent from Q2-Q6, live enforcement unaffected"))
+    # ROOTS WHERE A GUARDED CALL WOULD ACTUALLY BE BLOCKED. Derived from the
+    # same `enforce` list Q3 counts and the same fail-open set Q1 prints, so
+    # no third place re-states what "enforcing" means. Exported because the
+    # human report needs it and a JSON consumer asking "is anything actually
+    # holding here?" had no field to read.
+    fail_open_roots = {a["root"] for a in fail_open}
+    enforcing_roots = sorted({r["root"] for r, _ in enforce}
+                             - fail_open_roots)
     return {
         "q1_fail_open_roots": fail_open,
+        "q1_enforcing_roots": enforcing_roots,
         "q1_no_active_mission_roots": no_active,
         "q2_armed_active_missions": len(armed),
         "q3_enforce_mode": len(enforce),
@@ -950,11 +959,23 @@ def main(argv: list[str]) -> int:
     # one. Deriving from the computed set is the part that generalizes: any
     # future fail-open cause added to summarize() reaches this prose with no
     # second edit.
+    #
+    # AND ABSENCE FROM THE FAIL-OPEN SET IS STILL NOT ENFORCEMENT (the FIFTH
+    # instance, found immediately after the fourth was fixed). A root whose
+    # sole active mission is unarmed, or armed in `audit` mode, appears in no
+    # Q1 row -- there is no hole to report, because nothing was ever holding.
+    # `run_gate` allows every call there. Measured: both an unarmed and an
+    # audit-mode sibling produced `allow` while this line said "still
+    # enforces". Enforcement is now read from `q1_enforcing_roots`, which
+    # summarize() derives from the same `enforce` list Q3 counts, so the
+    # meaning of "enforcing" is stated once in this file rather than five
+    # times.
     inert_because: dict[str, str] = {}
     for a in summary["q1_fail_open_roots"]:
         inert_because.setdefault(a["root"], a["cause"])
     has_active = {r["root"] for r in reports
                   if any(m["active"] for m in r["missions"])}
+    enforcing = set(summary["q1_enforcing_roots"])
     skewed = [(r["root"], e) for r in reports for e in r.get("epoch_skew", [])]
     if skewed:
         print("\nSTALE READER (store CLAIMS a newer contract epoch — this")
@@ -966,9 +987,14 @@ def main(argv: list[str]) -> int:
             elif root in inert_because:
                 scope = ("the root's gate is inert for a SEPARATE reason "
                          f"[{inert_because[root]}] — see above")
+            elif root in enforcing:
+                scope = ("this MISSION only; the root still resolves an "
+                         "active mission with enforce-mode guards, and those "
+                         "still enforce")
             else:
-                scope = ("this MISSION only; the root still resolves another "
-                         "active mission and its gate still enforces")
+                scope = ("this MISSION only; the root still resolves an "
+                         "active mission, but it carries no enforce-mode "
+                         "guards, so nothing was being enforced here anyway")
             print(f"  !! {_safe(root)}/{_safe(e['mission'])}  [{_safe(scope)}]")
             print(f"     {_safe(e['reason'])}")
         print("  -> read these stores with an updated custody plugin/CLI. It")
