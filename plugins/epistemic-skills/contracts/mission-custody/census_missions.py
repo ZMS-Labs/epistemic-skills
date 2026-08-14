@@ -658,7 +658,19 @@ def summarize(reports: list[dict]) -> dict:
                          f"({unread} uninspected)")
             else:
                 cause = "no active mission (terminal only)"
-            no_active.append({"root": r["root"], "cause": cause})
+            # "NOTHING TO ENFORCE" IS A STRONGER CLAIM THAN "NOTHING I COULD
+            # READ", and only the second is established when a store was
+            # skipped. A root whose sole store CLAIMS a newer epoch went into
+            # this bucket under a header reading "nothing to enforce -- no
+            # active mission", while the SAME report listed that mission's
+            # guards as unenforced further down: one run asserting both that
+            # there is nothing here and that something here is disarmed. An
+            # operator scanning headers reads the all-clear. The per-entry
+            # cause was accurate throughout; the bucket it was printed under
+            # was not, which is why this is recorded as a reporting defect
+            # rather than a computation one.
+            no_active.append({"root": r["root"], "cause": cause,
+                              "uninspected": unread})
         for e in r.get("environmental", []):
             fail_open.append({"root": r["root"],
                               "cause": f"unreadable store ({e['reason']})",
@@ -855,9 +867,21 @@ def main(argv: list[str]) -> int:
         print("  -> guards under these roots are retired until resolved.")
     else:
         print("  none — no root holds >= 2 gate-loadable active missions")
-    if summary["q1_no_active_mission_roots"]:
+    inert = summary["q1_no_active_mission_roots"]
+    empty = [n for n in inert if not n.get("uninspected")]
+    partial = [n for n in inert if n.get("uninspected")]
+    if empty:
         print("  (gate INERT, nothing to enforce — no active mission:)")
-        for n in summary["q1_no_active_mission_roots"]:
+        for n in empty:
+            print(f"     -  {_safe(n['root'])}  [{_safe(n['cause'])}]")
+    if partial:
+        # NOT "nothing to enforce": this reader could not open every store,
+        # and an unopened store may hold an active mission whose guards are
+        # unenforced right now. The gate is inert either way; what is NOT
+        # established is that there was nothing here to enforce.
+        print("  (gate INERT, but NOT established as empty — this reader "
+              "could not open every store here:)")
+        for n in partial:
             print(f"     -  {_safe(n['root'])}  [{_safe(n['cause'])}]")
     excluded = summary["active_total"] - summary["active_sound_total"]
     print(f"\nQ2 ARMED: {summary['q2_armed_active_missions']} of "

@@ -6,6 +6,7 @@ import io
 import json
 import os
 import shutil
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -588,6 +589,50 @@ def test_epoch_skew_does_not_disarm_a_root_that_still_resolves(
     check("mixed-epoch-skew-still-reported",
           any(e["mission"] == "m-legacy" for e in report["epoch_skew"]))
     check("mixed-epoch-run-marked-partial", summary["answers_are_partial"])
+
+
+def test_unreadable_root_is_never_reported_as_nothing_to_enforce(
+        workspace: Path) -> None:
+    """A root whose stores could not all be opened must not print under an
+    all-clear header.
+
+    The per-root CAUSE was accurate throughout ("no readable mission (1
+    store(s) uninspected)"), but it printed under
+    "gate INERT, nothing to enforce -- no active mission", while the SAME
+    report listed that mission's guards as unenforced further down: one run
+    asserting both that there is nothing here and that something here is
+    disarmed. Headers are what an operator scans, and "nothing to enforce" is
+    a claim about the estate this reader cannot make about a store it could
+    not open."""
+    _skew_a_store_into(workspace, "m-only")
+    out = subprocess.run(
+        [sys.executable, str(Path(__file__).parent / "census_missions.py"),
+         str(workspace)], capture_output=True, text=True).stdout
+    check("skewed-only-root-not-called-nothing-to-enforce",
+          "nothing to enforce" not in out)
+    check("skewed-only-root-says-not-established-empty",
+          "NOT established as empty" in out)
+    summary = census_missions.summarize([census_missions.census(workspace)])
+    check("skewed-only-root-carries-uninspected-count",
+          all(n["uninspected"] > 0
+              for n in summary["q1_no_active_mission_roots"]))
+
+    # CONTROL: a genuinely terminal root has nothing uninspected and must
+    # still get the plain wording, or this has replaced one inaccurate header
+    # with another.
+    done = workspace / "finished"
+    m = open_mission(done, "m-done", "Work.")
+    m.approve()
+    m.record_effect("a.txt", "aa", "req-1")
+    m.begin_verification()
+    Mission.load(done, actor="operator:zach").record_verdict(
+        "PASS", "operator:zach", "operator-accepted", "done")
+    out_done = subprocess.run(
+        [sys.executable, str(Path(__file__).parent / "census_missions.py"),
+         str(done)], capture_output=True, text=True).stdout
+    check("terminal-only-root-still-nothing-to-enforce",
+          "nothing to enforce" in out_done
+          and "NOT established as empty" not in out_done)
 
 
 def _skew_a_store_into(workspace: Path, name: str) -> None:
@@ -4204,6 +4249,7 @@ TESTS = [
     test_backslash_effect_path_still_loads_its_own_receipt,
     test_newer_epoch_store_is_named_not_mistaken_for_an_empty_workspace,
     test_epoch_skew_does_not_disarm_a_root_that_still_resolves,
+    test_unreadable_root_is_never_reported_as_nothing_to_enforce,
     test_stale_reader_scope_never_claims_enforcement_the_gate_lacks,
     test_embedded_newer_manifest_is_diagnosed_as_skew_not_corruption,
     test_newer_epoch_receipt_is_not_reported_as_loss,

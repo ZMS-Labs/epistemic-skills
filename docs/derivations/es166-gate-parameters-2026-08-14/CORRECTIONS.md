@@ -1,9 +1,10 @@
 # Corrections — PR #175
 
 The records in this directory were reviewed on the PR that committed them.
-**Thirty findings landed across rounds 2, 3, 4, 6, 7, 8, 9, 11, 12 and 13** —
-every round that reviewed them — and all thirty were upheld. The last three are
-recorded as open rather than fixed; see round 13. The records now in place are
+**Thirty-two findings landed across rounds 2, 3, 4, 6, 7, 8, 9, 11, 12, 13 and
+15** — every round that reviewed them — and all thirty-two were upheld. Round
+13's three are recorded as open rather than fixed; round 15's two are repaired,
+and the difference between those two dispositions is itself recorded below. The records now in place are
 the corrected versions; the originals are in git history at `9fbfea4` and are
 worth reading beside this file, because three of round 2's four defects are
 ones the records themselves were written to guard against.
@@ -11,8 +12,11 @@ ones the records themselves were written to guard against.
 Two patterns run through the whole list, and both are worth more than any
 individual entry:
 
-- **A correction applied to one field and not its sibling**, in five
-  consecutive rounds. The es#166-window dependency alone took three rounds to
+- **A correction applied to one field and not its sibling**, in SEVEN
+  rounds now, most recently round 15 — where the sibling was not a field but a
+  whole surface: `hard_constraints` and `synthesis.conditions` stating one
+  rule two incompatible ways, and the *authoritative* one carrying the
+  obsolete text. The es#166-window dependency alone took three rounds to
   remove from one short record, because each time I corrected the field I was
   pointed at and did not grep the file for the claim.
 - **A fix sound about the case in front of it that silently assumed the next
@@ -478,6 +482,41 @@ They are inputs to the owed re-derivation. Until it lands, defect (c) alone
 means this procedure cannot produce a reproducible verdict, so it must not be
 run as the es#166 window — stated in the record's own limits and in the README
 banner, not only here.
+
+## Round 15 — two stale sibling surfaces, repaired
+
+Both findings are contradictions between two statements of a rule this record
+had **already decided in an earlier round**, where the correction reached one
+surface and not the other.
+
+- **`hard_constraints` still named only the endpoints.** It required
+  `answers_are_partial == false` of "the prerequisite and the close", while
+  round 12 had broadened `synthesis.conditions` to every run, cadence
+  observations included. `hard_constraints` is the authoritative list in the
+  decision frame, so a consumer applying it could advance past a partial
+  cadence run — and because cadence runs now ADMIT members, a mission skipped
+  by that run and gone before the next is omitted permanently.
+- **The opening-cohort record was specified twice, incompatibly.** One
+  condition said `mission id, root, lifecycle state`; another, added in round
+  5 to replace it, said those plus `scope_in`/`scope_out` non-emptiness and
+  `guard_count`. The obsolete one survived the correction, and reading it
+  loses exactly the numerator state round 5 added to preserve. There is now
+  one field list.
+
+**Why these are repaired when round 13's are not.** Making two recorded
+statements of one rule agree decides nothing: the rule was chosen in rounds 5
+and 12, and the stricter reading was already in the record. Round 13's items
+are different in kind — each would require deciding something the derivation
+has never analyzed (a recovery rule under an owed P5 analysis, an incarnation
+identity the contract does not carry, a close threshold that belongs to the
+named gate owner). The test is not "is it small" but "does closing it require
+a judgement this record does not already contain".
+
+This is the seventh consecutive round in which a correction was found applied
+to one surface and not its sibling. Seven rounds is no longer a run of
+oversights; it is the shape of the artifact, and it is the argument for the
+owed re-derivation rather than an argument that the next patch will be the
+last one.
 
 ## Standing limit
 

@@ -37,18 +37,19 @@ cite them.
 > FINAL procedure is required before the window governs anything — it is a
 > separate authorization and is **not** discharged by the corrections here.
 >
-> **Rounds 2–13 of PR #175 found thirty defects in these records,
+> **Rounds 2–15 of PR #175 found thirty-two defects in these records,
 > all upheld.** The files here are corrected; see
 > [`CORRECTIONS.md`](CORRECTIONS.md) for what was wrong and why it matters.
 > Several were defects the records were written to guard against — a vacuous
 > preregistration, a declaration naming no principal, selection on survival in
-> a record whose P8 coverage exists to catch selection — and **five
-> consecutive rounds** found a correction applied to one field and not its
-> sibling, and the cohort rule alone needed correcting in SIX consecutive
-> rounds — each fix sound about the case in front of it and silently assuming
-> the next one away. Read that trend as what it is: these records have needed
-> a correction every single round they have been reviewed, and no round has
-> yet come back clean.
+> a record whose P8 coverage exists to catch selection. **Seven rounds** found
+> a correction applied to one field and not its sibling — round 15 finding it
+> between two whole surfaces, with the *authoritative* one carrying the
+> obsolete text — and the cohort rule alone needed correcting in SIX
+> consecutive rounds, each fix sound about the case in front of it and
+> silently assuming the next one away. Read that trend as what it is: these
+> records have needed a correction every single round they have been reviewed,
+> and no round has yet come back clean.
 
 | file | question | outcome |
 |---|---|---|
