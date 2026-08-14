@@ -1,16 +1,26 @@
 # Corrections — PR #175
 
 The records in this directory were reviewed on the PR that committed them.
-Seven findings landed across two rounds; all seven were upheld. The records now
-in place are the corrected versions; the originals are in git history at
-`9fbfea4` and are worth reading beside this file, because three of round 2's
-four defects are ones the records themselves were written to guard against.
+**Eighteen findings landed across rounds 2, 3, 4, 6, 7 and 8** — every round
+that reviewed them — and all eighteen were upheld. The records now in place are
+the corrected versions; the originals are in git history at `9fbfea4` and are
+worth reading beside this file, because three of round 2's four defects are
+ones the records themselves were written to guard against.
 
-The round-3 findings are recorded at the bottom. Two of the three were **the
-round-2 fixes not carried through the whole file** — a corrected claim in one
-field left standing in its contradicted form in another. That is its own
-lesson, and it is the same one the census learned twice on the code side of
-this PR: fixing the structure and leaving the prose is not a fix.
+Two patterns run through the whole list, and both are worth more than any
+individual entry:
+
+- **A correction applied to one field and not its sibling**, in five
+  consecutive rounds. The es#166-window dependency alone took three rounds to
+  remove from one short record, because each time I corrected the field I was
+  pointed at and did not grep the file for the claim.
+- **A fix sound about the case in front of it that silently assumed the next
+  one away.** The cohort rule needed correcting in three consecutive rounds:
+  survivorship selection (6), then total-but-not-partial attrition (7), then a
+  partial-attrition rule depending on an observation nobody takes (8).
+
+The same lesson landed on the code side of this PR twice over: fixing the
+structure and leaving the prose is not a fix.
 
 ## Round 2
 
@@ -272,6 +282,44 @@ owner records *before* opening whether a shortened interval still supports a
 judgement (deciding that after seeing the ratio is choosing the standard to fit
 the result); and non-passage by the close date is reported as the es#166
 direction-1 finding rather than extending the window in silence.
+
+## Round 8
+
+### P1 — the partial-attrition rule assumed an observation nobody takes
+
+Round 7 said a disappeared member's adoption counts *"on the strength of the
+opening-cohort record."* But a member that starts with an empty envelope,
+**adopts after opening**, and then disappears is recorded pre-adoption in that
+snapshot and is gone from the closing census — and no observation cadence was
+required anywhere in the record. So the rule asserted an observation
+capability that did not exist, and the full-cohort numerator is unknowable in
+exactly the case the cohort record was added to cover.
+
+Corrected: interval re-observation on a cadence fixed before observation
+begins, with every observation persisted; "observed adopting" now means a
+persisted observation, never an inference. The residue is recorded as a
+concession rather than glossed — an adoption and a disappearance that both
+fall between two observations are indistinguishable from no adoption, and
+that case is reported as unresolved attrition rather than absorbed into
+either side of the ratio.
+
+**Three consecutive rounds on one ratio.** Round 6 fixed survivorship
+selection; round 7 found the fix handled only total attrition; round 8 found
+the partial-attrition fix depended on an observation that never happens. Each
+correction was sound about the case in front of it and silently assumed the
+next one away.
+
+### P2 — the README cohort procedure kept the old three-field record
+
+`predicate.json` was corrected in round 7 to require each member's numerator
+state; the operator-facing procedure in the README still said *mission id,
+root, lifecycle state*. An operator following the README would leave no
+numerator state for a disappeared member, making the required full-cohort
+ratio unreconstructable — the durable condition and the instructions for
+satisfying it disagreed.
+
+**Sixth consecutive round** in which a correction landed in one surface and
+not its sibling.
 
 ## Standing limit
 

@@ -507,7 +507,7 @@ def test_newer_epoch_store_is_named_not_mistaken_for_an_empty_workspace(
     check("epoch-still-inert-not-bricked", verdict["decision"] == "allow")
     # ...but the reason must name the real cause, not an empty workspace
     check("epoch-reason-names-the-reader",
-          "NEWER contract epoch" in verdict["reason"]
+          "CLAIMS a contract epoch newer" in verdict["reason"]
           and "NoActiveMission" not in verdict["reason"])
     # and the distinction must be available to callers that want it
     store = MissionStore(workspace / "missions" / "m-epoch")
@@ -542,7 +542,7 @@ def test_newer_epoch_store_is_named_not_mistaken_for_an_empty_workspace(
     (trap / "missions").mkdir(parents=True)
     trap_verdict = run_gate(trap, call, actor="probe")
     check("epoch-phrase-in-path-is-not-skew",
-          "NEWER contract epoch" not in trap_verdict["reason"])
+          "CLAIMS a contract epoch newer" not in trap_verdict["reason"])
 
 
 def test_epoch_skew_does_not_disarm_a_root_that_still_resolves(
@@ -764,7 +764,7 @@ def test_embedded_newer_manifest_is_diagnosed_as_skew_not_corruption(
     verdict = run_gate(workspace, {"tool_name": "Bash",
                                    "command": "cat .env"}, actor="probe")
     check("embedded-skew-gate-names-stale-reader",
-          "NEWER contract epoch" in verdict.get("reason", ""))
+          "CLAIMS a contract epoch newer" in verdict.get("reason", ""))
     # A store that is merely CORRUPT must not be relabelled as skew.
     other = workspace / "corrupt"
     c = open_mission(other, "m-c", "Corrupt me.")
@@ -773,9 +773,57 @@ def test_embedded_newer_manifest_is_diagnosed_as_skew_not_corruption(
                     / "checkpoints").glob("*.json"))[-1]
     ctail.write_text("{ not json", encoding="utf-8")
     check("embedded-skew-corrupt-still-reads-corrupt",
-          "NEWER contract epoch" not in run_gate(
+          "CLAIMS a contract epoch newer" not in run_gate(
               other, {"tool_name": "Bash", "command": "cat .env"},
               actor="probe").get("reason", ""))
+
+
+def test_newer_epoch_receipt_is_not_reported_as_loss(workspace: Path) -> None:
+    """A `receipt@2` under a `checkpoint@1` chain must never reach the
+    retirement verb.
+
+    During a rollout a newer-format receipt can sit beside a checkpoint this
+    reader still handles, so the checkpoint path never consults the epoch
+    table and the receipt fails validation as an unknown kind. Measured
+    before the fix: `resume()` emitted `RECEIPT-MISSING:req-1` for a receipt
+    that was present and intact. That marker's ONLY exit is
+    `acknowledge_receipt_loss`, which permanently retires the id -- so a
+    stale reader could destroy live coverage by following its own
+    diagnosis."""
+    m = open_mission(workspace, "m-r", "Work.")
+    m.approve()
+    m.record_effect("a.txt", "aa", "req-1")
+    receipt_path = next((workspace / "missions" / "m-r"
+                         / "receipts").glob("*.json"))
+    record = json.loads(receipt_path.read_text(encoding="utf-8"))
+    record["record"] = "receipt@2"
+    receipt_path.write_text(json.dumps(record, indent=1, sort_keys=True),
+                            encoding="utf-8")
+
+    reloaded = Mission.load(workspace, actor="agent:worker")
+    findings = reloaded.resume()
+    check("newer-receipt-not-called-missing",
+          not any(f.startswith("RECEIPT-MISSING") for f in findings))
+    check("newer-receipt-gets-its-own-marker",
+          "RECEIPT-NEWER-EPOCH:req-1" in findings)
+    try:
+        reloaded.acknowledge_receipt_loss("req-1")
+        check("newer-receipt-retirement-refused", False)
+    except CustodyError as exc:
+        check("newer-receipt-retirement-refused", "CLAIMS a newer" in str(exc))
+
+    # CONTROL: a genuinely absent receipt must STILL be reported as loss and
+    # still be retirable, or this fix has simply disabled the recovery path.
+    other = workspace / "genuine-loss"
+    n = open_mission(other, "m-c", "Work.")
+    n.approve()
+    n.record_effect("a.txt", "aa", "req-1")
+    next((other / "missions" / "m-c" / "receipts").glob("*.json")).unlink()
+    reloaded_n = Mission.load(other, actor="agent:worker")
+    check("genuine-loss-still-reported",
+          "RECEIPT-MISSING:req-1" in reloaded_n.resume())
+    check("genuine-loss-still-retirable",
+          reloaded_n.acknowledge_receipt_loss("req-1") > 0)
 
 
 def test_embedded_record_paths_match_the_schemas(workspace: Path) -> None:
@@ -870,15 +918,15 @@ def test_epoch_decoy_outside_a_record_position_is_not_skew(
               {"record": "checkpoint@2",
                "manifest": {"record": "mission-manifest@1"}}) is not None)
     check("decoy-in-state-not-called-skew",
-          "NEWER contract epoch" not in
+          "CLAIMS a contract epoch newer" not in
           diagnosis(workspace / "state-decoy", decoy_in_state))
     check("decoy-deep-in-manifest-not-called-skew",
-          "NEWER contract epoch" not in
+          "CLAIMS a contract epoch newer" not in
           diagnosis(workspace / "deep-decoy", decoy_deep_in_manifest))
     # CONTROL: the round-4 case must survive this narrowing, or the fix has
     # simply reverted the defect it was built for.
     check("genuine-embedded-manifest-still-skew",
-          "NEWER contract epoch" in
+          "CLAIMS a contract epoch newer" in
           diagnosis(workspace / "genuine", genuine_embedded))
 
 
@@ -3909,6 +3957,7 @@ TESTS = [
     test_epoch_skew_does_not_disarm_a_root_that_still_resolves,
     test_stale_reader_scope_never_claims_enforcement_the_gate_lacks,
     test_embedded_newer_manifest_is_diagnosed_as_skew_not_corruption,
+    test_newer_epoch_receipt_is_not_reported_as_loss,
     test_embedded_record_paths_match_the_schemas,
     test_epoch_decoy_outside_a_record_position_is_not_skew,
     test_open_refuses_beside_an_epoch_skewed_store,

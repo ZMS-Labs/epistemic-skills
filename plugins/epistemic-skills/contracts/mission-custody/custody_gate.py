@@ -240,17 +240,23 @@ def run_gate(workspace: Path, tool_call: dict, *, actor: str,
         # it would strand the workspace with no verb to resolve it.
         detail = str(exc)
         if "EpochSkew" in getattr(exc, "skipped_kinds", ()):
-            print(f"custody gate: MISSION STORE IS NEWER THAN THIS READER under "
-                  f"{workspace} -- gate inert and guards NOT enforced. Read it "
-                  f"with an updated custody plugin/CLI to find out whether the "
-                  f"store is genuinely newer or corrupt; this reader cannot "
-                  f"tell. Detail: {detail}", file=sys.stderr)
+            print(f"custody gate: MISSION STORE CLAIMS A NEWER EPOCH THAN "
+                  f"THIS READER under {workspace} -- gate inert and guards NOT "
+                  f"enforced. Read it with an updated custody plugin/CLI to "
+                  f"find out whether the store is genuinely newer or corrupt; "
+                  f"this reader cannot tell. Detail: {detail}", file=sys.stderr)
+            # CLAIMS, matching epoch_skew(). A categorical "is from a newer
+            # epoch" sends the operator to upgrade when the store may in fact
+            # be tampered -- the same over-claim corrected in the helper and
+            # SECURITY.md, left standing in the one string a consumer actually
+            # branches on.
             return {"decision": "allow", "matched": False, "rule": None,
                     "mode": "inert",
-                    "reason": ("gate inert: mission store is from a NEWER "
-                               "contract epoch than this reader -- guards are "
-                               "NOT enforced here until this consumer is "
-                               f"updated ({detail})")}
+                    "reason": ("gate inert: mission store CLAIMS a contract "
+                               "epoch newer than this reader -- guards are NOT "
+                               "enforced here, and this reader cannot tell a "
+                               "genuine newer store from a corrupt or "
+                               f"relabelled one ({detail})")}
         return {"decision": "allow", "matched": False, "rule": None,
                 "mode": "inert", "reason": f"gate inert: {type(exc).__name__}"}
     except MultipleActiveMissions as exc:
@@ -273,15 +279,17 @@ def run_gate(workspace: Path, tool_call: dict, *, actor: str,
         # the hook fell through to its generic error path, both of them missing
         # the stale-reader verdict this change exists to deliver. That window is
         # narrow but it is exactly the contract@2 rollout moment.
-        print(f"custody gate: MISSION STORE BECAME NEWER THAN THIS READER "
+        print(f"custody gate: MISSION STORE BEGAN CLAIMING A NEWER EPOCH "
               f"mid-evaluation under {workspace} -- gate inert and guards NOT "
-              f"enforced; update the custody plugin/CLI on this host. "
+              f"enforced. Read it with an updated custody plugin/CLI; this "
+              f"reader cannot tell a genuine newer store from a corrupt one. "
               f"Detail: {exc}", file=sys.stderr)
         return {"decision": "allow", "matched": False, "rule": None,
                 "mode": "inert",
-                "reason": ("gate inert: mission store is from a NEWER contract "
-                           "epoch than this reader -- guards are NOT enforced "
-                           f"here until this consumer is updated ({exc})")}
+                "reason": ("gate inert: mission store CLAIMS a contract epoch "
+                           "newer than this reader -- guards are NOT enforced "
+                           "here, and this reader cannot tell a genuine newer "
+                           f"store from a corrupt or relabelled one ({exc})")}
     verdict = evaluate(latest["manifest"]["authority"], tool_call)
     if verdict["matched"]:
         command = tool_call.get("command") or ""

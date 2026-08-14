@@ -15,7 +15,9 @@ from pathlib import Path
 from custody_store import (
     MissionStore, StoreError, atomic_write_json, sha256_bytes, sha256_file,
 )
-from verify_mission_custody import TIERS, VERDICTS, validate_record
+from verify_mission_custody import (
+    TIERS, VERDICTS, epoch_skew_anywhere, validate_record,
+)
 
 _OPEN_STATES = {"draft", "active", "reopened", "verifying"}
 _EFFECT_STATES = {"draft", "active", "reopened"}
@@ -1222,7 +1224,8 @@ class Mission:
         tampering drift detection exists to catch."""
         return self._load_receipt_checked(request_id)[0]
 
-    def _load_receipt_checked(self, request_id: str) -> tuple[dict | None, str | None]:
+    def _load_receipt_checked(
+            self, request_id: str) -> tuple[dict | None, str | None, str | None]:
         """(record, refusal reason). ONE implementation of the trust rule,
         two callers: `_load_receipt` wants only the verdict, while
         `acknowledge_receipt_loss` must also tell the operator WHY -- and
@@ -1234,19 +1237,31 @@ class Mission:
         try:
             record = json.loads(path.read_text(encoding="utf-8"))
         except FileNotFoundError:
-            return None, "no receipt file at the id's content-addressed path"
+            return None, "no receipt file at the id's content-addressed path", None
         except ValueError as exc:
-            return None, f"receipt is not parseable JSON ({type(exc).__name__})"
+            return None, f"receipt is not parseable JSON ({type(exc).__name__})", None
         errors = validate_record(record)
         if errors:
-            return None, f"receipt fails receipt@1 validation: {errors[:2]}"
+            # A NEWER-EPOCH RECEIPT IS NOT A LOST ONE. During a rollout a
+            # `receipt@2` can sit under a `checkpoint@1` chain this reader
+            # still handles, so the checkpoint path never consults the epoch
+            # table and the receipt fails validation as an unknown kind.
+            # Reported as loss, that receipt reaches `acknowledge_receipt_loss`
+            # -- which PERMANENTLY RETIRES the id. Measured before this check:
+            # `resume()` emitted `RECEIPT-MISSING:req-1` for a receipt that was
+            # present, intact and merely newer. Destroying live coverage
+            # because this reader is old is the worst outcome available here.
+            skew = epoch_skew_anywhere(record)
+            if skew:
+                return None, None, skew
+            return None, f"receipt fails receipt@1 validation: {errors[:2]}", None
         # A receipt whose own request_id disagrees with the content-addressed
         # name it is stored under is malformed by construction -- never a
         # trustworthy source for a claim about that id.
         if record.get("request_id") != request_id:
             return None, (
                 f"receipt names request_id {record.get('request_id')!r}, but it "
-                f"is stored under the content-addressed name for {request_id!r}")
+                f"is stored under the content-addressed name for {request_id!r}"), None
         # ... and neither is a receipt that says it belongs to a DIFFERENT
         # mission. request_id uniqueness is per-mission, so two missions can
         # legitimately mint the same id; the receipt path is content-addressed
@@ -1260,7 +1275,7 @@ class Mission:
         if own is not None and record.get("mission_id") != own:
             return None, (
                 f"receipt belongs to mission {record.get('mission_id')!r}, not "
-                f"{own!r} -- NOT trusted")
+                f"{own!r} -- NOT trusted"), None
         # ... and mission_id is unique only WITHIN a workspace, so that check
         # alone still admits a receipt copied between two workspaces that
         # both happen to run a mission of the same name -- an ordinary
@@ -1288,8 +1303,8 @@ class Mission:
         if chained is not None and record.get("artifact_path") != chained:
             return None, (
                 f"present receipt claims {record.get('artifact_path')!r}, "
-                f"chain records {chained!r} -- NOT trusted")
-        return record, None
+                f"chain records {chained!r} -- NOT trusted"), None
+        return record, None, None
 
     def _historical_effect_path(self, request_id: str, kind: bool = False) -> str | None:
         """The artifact path this request id was minted against, read from the
@@ -1609,8 +1624,17 @@ class Mission:
         # the current receipt went unreported.
         current_by_key: dict[str, tuple[str, dict | None]] = {}
         missing: list[str] = []
+        skewed: list[str] = []
         for request_id in latest["receipt_ids"]:
-            receipt = self._load_receipt(request_id)
+            receipt, _refusal, skew = self._load_receipt_checked(request_id)
+            if skew:
+                # NOT missing, and NOT clean. This reader cannot read the
+                # receipt, so it cannot verify the artifact -- but the receipt
+                # is present and may be perfectly good. It gets its own marker
+                # so the operator is never offered the loss verb for it.
+                if request_id not in skewed:
+                    skewed.append(request_id)
+                continue
             rel = (receipt["artifact_path"] if receipt is not None
                    else self._historical_effect_path(request_id))
             if rel is None:
@@ -1645,7 +1669,10 @@ class Mission:
                 mismatched.append(rel)
         mismatched.sort()
         missing.sort()
-        findings = mismatched + [f"RECEIPT-MISSING:{rid}" for rid in missing]
+        skewed.sort()
+        findings = (mismatched
+                    + [f"RECEIPT-MISSING:{rid}" for rid in missing]
+                    + [f"RECEIPT-NEWER-EPOCH:{rid}" for rid in skewed])
         if not findings:
             return []
         unresolved = list(latest["state"]["unresolved_verdicts"])
@@ -1655,6 +1682,13 @@ class Mission:
                 unresolved.append(marker)
         for rid in missing:
             marker = f"RECEIPT-MISSING:{rid}"
+            if marker not in unresolved:
+                unresolved.append(marker)
+        for rid in skewed:
+            # Deliberately NOT a RECEIPT-MISSING marker: that marker's only
+            # exit is acknowledge_receipt_loss, which retires the id forever.
+            # The exit for this one is updating the reader.
+            marker = f"RECEIPT-NEWER-EPOCH:{rid}"
             if marker not in unresolved:
                 unresolved.append(marker)
         self._write_next(latest, path, status="reopened", unresolved_verdicts=unresolved,
@@ -1707,6 +1741,19 @@ class Mission:
             raise IllegalTransition(
                 f"cannot acknowledge_receipt_loss: status is "
                 f"{latest['status']!r}, expected 'reopened'")
+        # REFUSE THE DESTRUCTIVE VERB ON A SKEWED RECEIPT, and refuse it
+        # BEFORE the marker check so the operator gets the real reason rather
+        # than "no receipt-loss marker". Retiring the id would discard
+        # coverage an updated reader can still verify, and this verb has no
+        # inverse.
+        _r, _why, skew = self._load_receipt_checked(request_id)
+        if skew:
+            raise CustodyError(
+                f"refusing to retire {request_id!r}: its receipt CLAIMS a "
+                f"newer contract epoch, so this reader cannot tell a live "
+                f"future-format receipt from a corrupt one. Read this mission "
+                f"with an updated custody plugin/CLI before acknowledging any "
+                f"loss. Detail: {skew}")
         marker = f"RECEIPT-MISSING:{request_id}"
         unresolved = latest["state"]["unresolved_verdicts"]
         if marker not in unresolved:
@@ -1714,7 +1761,7 @@ class Mission:
         remaining = [m for m in unresolved if m != marker]
         next_status = "active" if not remaining else "reopened"
 
-        receipt, refusal = self._load_receipt_checked(request_id)
+        receipt, refusal, _skew = self._load_receipt_checked(request_id)
         recorded_path = self._historical_effect_path(request_id)
         # Deliberately raw equality, NOT _same_artifact: everywhere else the
         # question is "does this write satisfy that obligation", where two

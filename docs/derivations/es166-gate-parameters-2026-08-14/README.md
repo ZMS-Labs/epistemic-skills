@@ -16,17 +16,18 @@ and
 [es#166 comment](https://github.com/ZMS-Labs/epistemic-skills/issues/166#issuecomment-5288171588)
 cite them.
 
-> **Rounds 2–7 of PR #175 found sixteen defects in these records, all
+> **Rounds 2–8 of PR #175 found eighteen defects in these records, all
 > upheld.** The files here are corrected; see
 > [`CORRECTIONS.md`](CORRECTIONS.md) for what was wrong and why it matters.
 > Several were defects the records were written to guard against — a vacuous
 > preregistration, a declaration naming no principal, selection on survival in
 > a record whose P8 coverage exists to catch selection — and **five
 > consecutive rounds** found a correction applied to one field and not its
-> sibling, twice including a fix that reintroduced the defect it had just
-> closed, one case further out. Read that trend as what it is: these records
-> have needed a correction every single round they have been reviewed, and no
-> round has yet come back clean.
+> sibling, and the cohort rule alone needed correcting in three consecutive
+> rounds — each fix sound about the case in front of it and silently assuming
+> the next one away. Read that trend as what it is: these records have needed
+> a correction every single round they have been reviewed, and no round has
+> yet come back clean.
 
 | file | question | outcome |
 |---|---|---|
@@ -75,11 +76,20 @@ derivation and is not yet evaluated.
    The check counts **terminal missions as well as active ones**, and the
    census run must report `answers_are_partial == false` — a partial run is a
    refusal to answer, not a result (round 6).
-1b. **Record the opening cohort** (mission id, root, lifecycle state) when the
-   window opens, so a mission that finishes or disappears during the 60 days
-   shows up as attrition rather than silently leaving the denominator. An
-   empty denominator at close with a non-empty opening cohort is **not**
-   evidence of non-adoption, and the record now says so.
+1b. **Record the opening cohort** when the window opens — per member: mission
+   id, root, lifecycle state, **`scope_in`/`scope_out` non-emptiness, and
+   `guard_count`**. Identity alone is not enough: a member that disappears
+   takes its adoption state with it, and the full-cohort ratio can no longer
+   be reconstructed (round 7). An empty denominator at close against a
+   non-empty opening cohort is **not** evidence of non-adoption, and neither
+   is a shrunken one — when any member is missing, report the full-cohort
+   ratio and the survivor-only ratio and state the gap.
+1c. **Re-observe the cohort on a recorded cadence**, persisting each
+   observation. A member that adopts *after* opening and then disappears is
+   invisible to both the opening record and the closing census, so without
+   intermediate observations the full-cohort numerator is unknowable in
+   exactly the case the cohort record exists to cover (round 8). The cadence
+   is fixed before observation begins, like everything else here.
 2. **A bounded pilot, if the authorship question must close.** The es#166
    window cannot settle it: with `grants_paths` unshipped, no observation can
    discriminate the alternatives, so re-firing against window data would repeat

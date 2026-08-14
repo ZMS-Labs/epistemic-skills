@@ -740,9 +740,14 @@ def summarize(reports: list[dict]) -> dict:
             because.append(f"{r['root']}/{e['mission']}: store uninspected "
                            "(environmental) -- absent from Q2-Q6 entirely")
         for e in r.get("epoch_skew", []):
-            because.append(f"{r['root']}/{e['mission']}: NEWER contract epoch "
-                           "than this reader -- update this consumer; absent "
-                           "from Q2-Q6 and its guards are NOT enforced here")
+            # CLAIMS, matching epoch_skew(): this reader cannot tell a
+            # genuine newer store from a corrupt or relabelled one, so
+            # "update this consumer" must not be stated as the remedy.
+            because.append(f"{r['root']}/{e['mission']}: CLAIMS a contract "
+                           "epoch newer than this reader -- read it with an "
+                           "updated consumer to find out whether it is "
+                           "genuinely newer or corrupt; absent from Q2-Q6 and "
+                           "its guards are NOT enforced here")
         for t in r.get("integrity", []):
             because.append(
                 f"{r['root']}/{t['mission']}: manifest {t['kind']} -- "
