@@ -111,6 +111,17 @@ candidate.
    - A skipped step is acceptable only when its precondition is inapplicable and
      the reason is recorded; run-level green may not conceal a failed required
      step.
+   - Suite verdicts key on the **required job set** of each workflow on its
+     push/pull event, not on the run-level conclusion of a manual dispatch.
+     A workflow may carry dispatch-only diagnostic jobs (for example, a probe
+     built to settle a filed platform claim). Such a job's failure reddens the
+     run conclusion without falsifying any required-step claim, provided
+     (a) the job's non-gating purpose is documented in the workflow file,
+     (b) the failure is the diagnostic's designed output — a settled, disclosed
+     finding recorded on its issue — and (c) the release record names the exact
+     failing step and tests. Any other red, in any job of a suite dispatched at
+     the candidate, fails this gate. (Ruling lineage: the v5.1.0 publication
+     gauntlet, panel 2, CL-1/CL-2 — `docs/gauntlet-runs/es-v510-publication-2026-08-15/`.)
 6. **Security, public content, and provenance**
    - A redacted full-history secret scan passes on the exact candidate, including
      a positive control proving the scanner detects a planted secret.
