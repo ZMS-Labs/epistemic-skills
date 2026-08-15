@@ -1,0 +1,149 @@
+{
+  "$id": "https://zms-labs.example/portability/authoritative-evidence-source@1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "accepted_record_type": {
+      "enum": [
+        "actor-authority-separation@1",
+        "exact-candidate-conformance@1",
+        "exact-head-ci@1",
+        "failure-behavior-evidence@1",
+        "hook-configuration-evidence@1",
+        "independent-acceptance-evidence@1",
+        "independent-acceptance@1",
+        "independently-retained-audit@1",
+        "installed-package-launcher-evidence@1",
+        "interruption-evidence@1",
+        "matched-deny-evidence@1",
+        "native-boundary-identity@1",
+        "neighboring-allow-evidence@1",
+        "operator-promotion-decision@1",
+        "recovery-evidence@1",
+        "stage-c-principal-control@1"
+      ]
+    },
+    "accepted_statement_digest": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "content_digest": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "credential_class": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "credential_digest": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "decision_root": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "environment": {
+      "const": "non-production-authoritative-equivalence"
+    },
+    "id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "issuer_identity": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "principal_identity": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "rationale": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "readback_credential_class": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "readback_credential_digest": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "readback_digest": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "readback_method": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "readback_outcome": {
+      "const": "retained"
+    },
+    "readback_principal_identity": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "record": {
+      "const": "authoritative-evidence-source@1"
+    },
+    "retention_days": {
+      "minimum": 1,
+      "type": "integer"
+    },
+    "retention_policy": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "source_kind": {
+      "enum": [
+        "actor-authority-separation-observation",
+        "custody-interruption-observation",
+        "custody-recovery-observation",
+        "exact-candidate-conformance-run",
+        "exact-head-ci-run",
+        "failure-behavior-observation",
+        "hook-configuration-readback",
+        "independent-acceptance-decision",
+        "independent-audit-retention-readback",
+        "installed-package-launcher-observation",
+        "matched-deny-observation",
+        "native-boundary-attestation",
+        "native-stage-c-control",
+        "neighboring-allow-observation",
+        "operator-promotion-decision",
+        "tier-independent-acceptance-verdict"
+      ]
+    },
+    "transparency_root": {
+      "minLength": 1,
+      "type": "string"
+    }
+  },
+  "required": [
+    "record",
+    "id",
+    "environment",
+    "source_kind",
+    "accepted_record_type",
+    "issuer_identity",
+    "principal_identity",
+    "credential_class",
+    "credential_digest",
+    "decision_root",
+    "transparency_root",
+    "retention_policy",
+    "retention_days",
+    "readback_method",
+    "readback_principal_identity",
+    "readback_credential_class",
+    "readback_credential_digest",
+    "readback_outcome",
+    "readback_digest",
+    "accepted_statement_digest",
+    "rationale",
+    "content_digest"
+  ],
+  "type": "object"
+}

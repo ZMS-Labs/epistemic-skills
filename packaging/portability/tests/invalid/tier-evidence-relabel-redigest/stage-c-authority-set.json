@@ -1,0 +1,271 @@
+{
+  "content_digest": "412eed00365cbc8ee8b1bac59707d66e4a42ffeaab31ecd8569b7474d39be472",
+  "record": "stage-c-authority-set@1",
+  "records": [
+    {
+      "actor_identity": "fixture:conformance-actor",
+      "authority_scope": "fixture-only",
+      "capability_claims_digest": "3a2c2e054f7a3d3b31617b60ea25fc6b151819d0823b103b93482a14ad50fb14",
+      "claim_keys": [
+        "anthropic-claude-code|claude_code|fixture-build@1|manifest-custody-profile@1|U3|singleton-safe@1|fixture-verified-epoch@1",
+        "openai-codex|codex|fixture-build@1|manifest-custody-profile@1|U3|singleton-safe@1|fixture-verified-epoch@1"
+      ],
+      "conformance_results_digest": "5ae3427b045e87bf1757733026555dde30aa0c3f88c8cb6acdf059ef7fa069f4",
+      "content_digest": "3b6d47f9031945ef7426d5100894bfffa78bfbaf25cd31020b55797a86f8e629",
+      "credential_class": "fixture-disposable-credential",
+      "credential_digest": "b2ae87933537778f82ab4b24deeb30491c7254ba779c392d6e88c170eb2e000f",
+      "decision_digest": "a92e7da0ed481e0e4306c02829efa1bbbddb4b623a3382ba2d9da948b8897bc0",
+      "duties": [
+        "exact-conformance"
+      ],
+      "enforcement_point": "fixture-native-pre-mutation-boundary",
+      "enforcement_policy_digest": "e11a798757d44e7fc838c5b0c547a67efab31bf2095d71ebdbc828bd8a94c03c",
+      "evidence_epoch": "fixture-verified-epoch@1",
+      "exact_candidate_digest": "4bb2ce659e571e5c259311519b1516032ba453a72c758fb755d633df73d08817",
+      "id": "fixture-stage-c-exact-candidate-conformance",
+      "incompatible_duty_pairs": [
+        "exact-conformance|independent-acceptance",
+        "operator-promotion|independent-acceptance",
+        "governed-mutation|audit-retention"
+      ],
+      "independent_audit_record_id": "fixture-stage-c-independently-retained-audit",
+      "issuer_identity": "fixture-stage-c-authority:exact-candidate-conformance",
+      "outcome": "passed",
+      "principal_identity": "fixture:conformance-principal",
+      "rationale": "Synthetic typed Stage-C record; fixture-only and not authoritative.",
+      "record_type": "exact-candidate-conformance@1",
+      "referenced_record_ids": [
+        "fixture-tier-codex-launcher",
+        "fixture-tier-codex-interruption",
+        "fixture-tier-codex-recovery",
+        "fixture-tier-codex-separation",
+        "fixture-tier-codex-acceptance",
+        "fixture-tier-claude_code-launcher",
+        "fixture-tier-claude_code-interruption",
+        "fixture-tier-claude_code-recovery",
+        "fixture-tier-claude_code-separation",
+        "fixture-tier-claude_code-acceptance"
+      ],
+      "subject_digest": "da55ab2793f23070971daf1961d2faffce3c6a201563f2d5f78c522f577ad386",
+      "subject_id": "sha256:da55ab2793f23070971daf1961d2faffce3c6a201563f2d5f78c522f577ad386",
+      "subject_kind": "bounded-product-success@1",
+      "tier_evidence_set_digest": "a5efb6e8b6584caacf055dc5e9ab3ffb2f009b697a757b743b384269d988c0ba"
+    },
+    {
+      "actor_identity": "fixture:ci-actor",
+      "authority_scope": "fixture-only",
+      "capability_claims_digest": "3a2c2e054f7a3d3b31617b60ea25fc6b151819d0823b103b93482a14ad50fb14",
+      "ci_run_digest": "dacba9623ff0fa178a7d7809f1903e134708d7c35db7db1e51967b49d3e0d60e",
+      "claim_keys": [
+        "anthropic-claude-code|claude_code|fixture-build@1|manifest-custody-profile@1|U3|singleton-safe@1|fixture-verified-epoch@1",
+        "openai-codex|codex|fixture-build@1|manifest-custody-profile@1|U3|singleton-safe@1|fixture-verified-epoch@1"
+      ],
+      "conformance_results_digest": "5ae3427b045e87bf1757733026555dde30aa0c3f88c8cb6acdf059ef7fa069f4",
+      "content_digest": "e01687acb9c31d4aaa80b7307e150644314cc834a1f928c21d48a74dbd09e8de",
+      "credential_class": "fixture-disposable-credential",
+      "credential_digest": "a59dac972addd4034a205e5e4cf876c2d2b8a997046f1764df47d4bb5c1a5759",
+      "decision_digest": "5d32565b34a170cdfc241770906c21a872f628d3accf92681a636e70a7aef6b6",
+      "duties": [
+        "exact-head-ci"
+      ],
+      "enforcement_point": "fixture-native-pre-mutation-boundary",
+      "enforcement_policy_digest": "ba5a17b3531baa75f1269f541901134a7121f65560d920b12d5f67b925409baa",
+      "evidence_epoch": "fixture-verified-epoch@1",
+      "exact_head_commit": "fixture-exact-head-commit",
+      "id": "fixture-stage-c-exact-head-ci",
+      "incompatible_duty_pairs": [
+        "exact-conformance|independent-acceptance",
+        "operator-promotion|independent-acceptance",
+        "governed-mutation|audit-retention"
+      ],
+      "independent_audit_record_id": "fixture-stage-c-independently-retained-audit",
+      "issuer_identity": "fixture-stage-c-authority:exact-head-ci",
+      "outcome": "passed",
+      "principal_identity": "fixture:ci-principal",
+      "rationale": "Synthetic typed Stage-C record; fixture-only and not authoritative.",
+      "record_type": "exact-head-ci@1",
+      "referenced_record_ids": [
+        "fixture-stage-c-exact-candidate-conformance"
+      ],
+      "subject_digest": "da55ab2793f23070971daf1961d2faffce3c6a201563f2d5f78c522f577ad386",
+      "subject_id": "sha256:da55ab2793f23070971daf1961d2faffce3c6a201563f2d5f78c522f577ad386",
+      "subject_kind": "bounded-product-success@1",
+      "tier_evidence_set_digest": "a5efb6e8b6584caacf055dc5e9ab3ffb2f009b697a757b743b384269d988c0ba"
+    },
+    {
+      "acceptance_verdict_digest": "cc4291f1939e84e5b78ac097977a935102c622cbe11ef11b8d4ed387612eadb9",
+      "actor_identity": "fixture:acceptance-actor",
+      "authority_scope": "fixture-only",
+      "capability_claims_digest": "3a2c2e054f7a3d3b31617b60ea25fc6b151819d0823b103b93482a14ad50fb14",
+      "claim_keys": [
+        "anthropic-claude-code|claude_code|fixture-build@1|manifest-custody-profile@1|U3|singleton-safe@1|fixture-verified-epoch@1",
+        "openai-codex|codex|fixture-build@1|manifest-custody-profile@1|U3|singleton-safe@1|fixture-verified-epoch@1"
+      ],
+      "conformance_results_digest": "5ae3427b045e87bf1757733026555dde30aa0c3f88c8cb6acdf059ef7fa069f4",
+      "content_digest": "2460176b511b4631e6ee5c83436194cede7346325d6945da3be7fb6e3f88e378",
+      "credential_class": "fixture-disposable-credential",
+      "credential_digest": "66140cfaf9e9253ab5ca2cf579602ab68775f20d170907640361496c36cb1d55",
+      "decision_digest": "773a3037a549573d2ad44a3dfe6476ecca9aa45f05ef2b39c68133378713e661",
+      "duties": [
+        "independent-acceptance"
+      ],
+      "enforcement_point": "fixture-native-pre-mutation-boundary",
+      "enforcement_policy_digest": "2fa6f4a3c12d49eeded3c1647e5a3c80e77f97ab88c694a39a9f1ddeb92c0540",
+      "evidence_epoch": "fixture-verified-epoch@1",
+      "id": "fixture-stage-c-independent-acceptance",
+      "incompatible_duty_pairs": [
+        "exact-conformance|independent-acceptance",
+        "operator-promotion|independent-acceptance",
+        "governed-mutation|audit-retention"
+      ],
+      "independent_audit_record_id": "fixture-stage-c-independently-retained-audit",
+      "issuer_identity": "fixture-stage-c-authority:independent-acceptance",
+      "outcome": "accepted",
+      "principal_identity": "fixture:acceptance-principal",
+      "rationale": "Synthetic typed Stage-C record; fixture-only and not authoritative.",
+      "record_type": "independent-acceptance@1",
+      "referenced_record_ids": [
+        "fixture-stage-c-exact-candidate-conformance",
+        "fixture-stage-c-exact-head-ci",
+        "fixture-stage-c-stage-c-principal-control",
+        "fixture-stage-c-independently-retained-audit"
+      ],
+      "subject_digest": "da55ab2793f23070971daf1961d2faffce3c6a201563f2d5f78c522f577ad386",
+      "subject_id": "sha256:da55ab2793f23070971daf1961d2faffce3c6a201563f2d5f78c522f577ad386",
+      "subject_kind": "bounded-product-success@1",
+      "tier_evidence_set_digest": "a5efb6e8b6584caacf055dc5e9ab3ffb2f009b697a757b743b384269d988c0ba"
+    },
+    {
+      "actor_identity": "fixture:promotion-actor",
+      "authority_scope": "fixture-only",
+      "capability_claims_digest": "3a2c2e054f7a3d3b31617b60ea25fc6b151819d0823b103b93482a14ad50fb14",
+      "claim_keys": [
+        "anthropic-claude-code|claude_code|fixture-build@1|manifest-custody-profile@1|U3|singleton-safe@1|fixture-verified-epoch@1",
+        "openai-codex|codex|fixture-build@1|manifest-custody-profile@1|U3|singleton-safe@1|fixture-verified-epoch@1"
+      ],
+      "conformance_results_digest": "5ae3427b045e87bf1757733026555dde30aa0c3f88c8cb6acdf059ef7fa069f4",
+      "content_digest": "8e1adf21e5dee3c8ba8fb9fc5ef40788e217f4a211c5f5320983045fd1a86442",
+      "credential_class": "fixture-disposable-credential",
+      "credential_digest": "0964471d637160fcf9798d107bab5c306c15f6cccb85874c70b4966425b3664e",
+      "decision_digest": "a228f99681efb3dc5830516b44525f5de45aa1aeac7eafc61161f90625c8ea1f",
+      "duties": [
+        "operator-promotion"
+      ],
+      "enforcement_point": "fixture-native-pre-mutation-boundary",
+      "enforcement_policy_digest": "4ee4423ba7543650e087f0fc020b7867b02ef809948a64afddb270d1a200f032",
+      "evidence_epoch": "fixture-verified-epoch@1",
+      "id": "fixture-stage-c-operator-promotion-decision",
+      "incompatible_duty_pairs": [
+        "exact-conformance|independent-acceptance",
+        "operator-promotion|independent-acceptance",
+        "governed-mutation|audit-retention"
+      ],
+      "independent_audit_record_id": "fixture-stage-c-independently-retained-audit",
+      "issuer_identity": "fixture-stage-c-authority:operator-promotion-decision",
+      "operator_decision_digest": "8097f210f39a59fa5346363963d8eaf9f575a55ab4e17d9fe9c0dcf126a1830b",
+      "outcome": "approved",
+      "principal_identity": "fixture:promotion-principal",
+      "promotion_scope": "fixture-only-no-merge-release-publication-or-production",
+      "rationale": "Synthetic typed Stage-C record; fixture-only and not authoritative.",
+      "record_type": "operator-promotion-decision@1",
+      "referenced_record_ids": [
+        "fixture-stage-c-exact-candidate-conformance",
+        "fixture-stage-c-exact-head-ci",
+        "fixture-stage-c-independent-acceptance",
+        "fixture-stage-c-stage-c-principal-control",
+        "fixture-stage-c-independently-retained-audit"
+      ],
+      "subject_digest": "da55ab2793f23070971daf1961d2faffce3c6a201563f2d5f78c522f577ad386",
+      "subject_id": "sha256:da55ab2793f23070971daf1961d2faffce3c6a201563f2d5f78c522f577ad386",
+      "subject_kind": "bounded-product-success@1",
+      "tier_evidence_set_digest": "a5efb6e8b6584caacf055dc5e9ab3ffb2f009b697a757b743b384269d988c0ba"
+    },
+    {
+      "actor_identity": "fixture:identity-controller",
+      "authority_matrix_digest": "1225f6d3fc4c3bd94f12b8a82f71a30ee91982710116a2b6e95244f04d05035b",
+      "authority_scope": "fixture-only",
+      "capability_claims_digest": "3a2c2e054f7a3d3b31617b60ea25fc6b151819d0823b103b93482a14ad50fb14",
+      "claim_keys": [
+        "anthropic-claude-code|claude_code|fixture-build@1|manifest-custody-profile@1|U3|singleton-safe@1|fixture-verified-epoch@1",
+        "openai-codex|codex|fixture-build@1|manifest-custody-profile@1|U3|singleton-safe@1|fixture-verified-epoch@1"
+      ],
+      "conformance_results_digest": "5ae3427b045e87bf1757733026555dde30aa0c3f88c8cb6acdf059ef7fa069f4",
+      "content_digest": "7ab11b8890fe005f2178539de92ca0afcb88a179704a3e61335871b1547338f5",
+      "credential_class": "fixture-disposable-credential",
+      "credential_digest": "18a1ecb30f1a8e63f0bb02c5e857d46af5321834c3740339fc4ebfcba2a6825a",
+      "decision_digest": "60908387d69a24c2b4fbadada6c29f9aa57231ca57df4e5f64067cceb128e26a",
+      "duties": [
+        "governed-mutation",
+        "native-enforcement"
+      ],
+      "enforcement_point": "fixture-native-pre-mutation-boundary",
+      "enforcement_policy_digest": "fc3eafdb400184b068225175f117681773e8492ecd2107f39006afc7ce5a1305",
+      "evidence_epoch": "fixture-verified-epoch@1",
+      "id": "fixture-stage-c-stage-c-principal-control",
+      "incompatible_duty_pairs": [
+        "exact-conformance|independent-acceptance",
+        "operator-promotion|independent-acceptance",
+        "governed-mutation|audit-retention"
+      ],
+      "independent_audit_record_id": "fixture-stage-c-independently-retained-audit",
+      "issuer_identity": "fixture-stage-c-authority:stage-c-principal-control",
+      "outcome": "enforced",
+      "principal_identity": "fixture:governed-principal",
+      "rationale": "Synthetic typed Stage-C record; fixture-only and not authoritative.",
+      "record_type": "stage-c-principal-control@1",
+      "referenced_record_ids": [
+        "fixture-stage-c-independently-retained-audit"
+      ],
+      "subject_digest": "da55ab2793f23070971daf1961d2faffce3c6a201563f2d5f78c522f577ad386",
+      "subject_id": "sha256:da55ab2793f23070971daf1961d2faffce3c6a201563f2d5f78c522f577ad386",
+      "subject_kind": "bounded-product-success@1",
+      "tier_evidence_set_digest": "a5efb6e8b6584caacf055dc5e9ab3ffb2f009b697a757b743b384269d988c0ba"
+    },
+    {
+      "actor_identity": "fixture:audit-actor",
+      "audit_record_digest": "96915e8794a300c3e57b9183cb45c789c127380a51578be6da70a40dff71815c",
+      "audit_sink_identity": "fixture-independent-audit-sink",
+      "authority_scope": "fixture-only",
+      "capability_claims_digest": "3a2c2e054f7a3d3b31617b60ea25fc6b151819d0823b103b93482a14ad50fb14",
+      "claim_keys": [
+        "anthropic-claude-code|claude_code|fixture-build@1|manifest-custody-profile@1|U3|singleton-safe@1|fixture-verified-epoch@1",
+        "openai-codex|codex|fixture-build@1|manifest-custody-profile@1|U3|singleton-safe@1|fixture-verified-epoch@1"
+      ],
+      "conformance_results_digest": "5ae3427b045e87bf1757733026555dde30aa0c3f88c8cb6acdf059ef7fa069f4",
+      "content_digest": "f9ef01c364ef4f0219377cf0d44aef9da0383fbb885a080ddacf1199e2bd3257",
+      "credential_class": "fixture-disposable-credential",
+      "credential_digest": "5ab9e0c90a57b883a73a08cd54f2e6171d6193d48681aae79a6fb2c780d3e998",
+      "decision_digest": "f6e1c3807f7de7fd593add669ee7ffe1407823bfb821ce503e516916efd186dc",
+      "duties": [
+        "audit-retention"
+      ],
+      "enforcement_point": "fixture-native-pre-mutation-boundary",
+      "enforcement_policy_digest": "79940deac534157077fe34b66f55fd53cd60f50fb0931a70f1cb04fafcff6f17",
+      "evidence_epoch": "fixture-verified-epoch@1",
+      "id": "fixture-stage-c-independently-retained-audit",
+      "incompatible_duty_pairs": [
+        "exact-conformance|independent-acceptance",
+        "operator-promotion|independent-acceptance",
+        "governed-mutation|audit-retention"
+      ],
+      "independent_audit_record_id": "fixture-stage-c-independently-retained-audit",
+      "issuer_identity": "fixture-stage-c-authority:independently-retained-audit",
+      "outcome": "retained",
+      "principal_identity": "fixture:audit-principal",
+      "rationale": "Synthetic typed Stage-C record; fixture-only and not authoritative.",
+      "readback_credential_class": "fixture-readback-credential",
+      "readback_credential_digest": "8239e0f85dc4904af4f899b47da894e1c458d75eb21fce8eccf90970d598f790",
+      "readback_digest": "c30e4e29eb482984a1fe79f84cf93e0f2990391e0c8954aec2956fc5532485e2",
+      "readback_method": "fixture-independent-readback@1",
+      "readback_principal_identity": "fixture:audit-readback-principal",
+      "record_type": "independently-retained-audit@1",
+      "referenced_record_ids": [],
+      "retention_days": 30,
+      "retention_policy": "fixture-independent-retention@1",
+      "subject_digest": "da55ab2793f23070971daf1961d2faffce3c6a201563f2d5f78c522f577ad386",
+      "subject_id": "sha256:da55ab2793f23070971daf1961d2faffce3c6a201563f2d5f78c522f577ad386",
+      "subject_kind": "bounded-product-success@1",
+      "tier_evidence_set_digest": "a5efb6e8b6584caacf055dc5e9ab3ffb2f009b697a757b743b384269d988c0ba"
+    }
+  ]
+}

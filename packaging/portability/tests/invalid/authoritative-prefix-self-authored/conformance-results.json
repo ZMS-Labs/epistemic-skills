@@ -1,0 +1,41 @@
+[
+  {
+    "claim_digest": "fcfb19697166991c7d0dd63e18c06d86ec8d6545b6983d857853e51cc13f89c3",
+    "claim_key": "openai-codex|codex|fixture-build@1|manifest-custody-profile@1|U3|singleton-safe@1|fixture-verified-epoch@1",
+    "evidence_epoch": "fixture-verified-epoch@1",
+    "outcome": "passed",
+    "record": "conformance-result@1",
+    "success_terminal": "bounded-product-usable",
+    "tier_evidence_artifact_ids": [
+      "equivalence-tier-codex-launcher",
+      "equivalence-tier-codex-interruption",
+      "equivalence-tier-codex-recovery",
+      "equivalence-tier-codex-separation",
+      "equivalence-tier-codex-acceptance"
+    ],
+    "tier_evidence_set_digest": "9407d5fe42c4b65099d7bbcb31e8bae70688e8f7eb6468ae5683da2db4a60071",
+    "validity": "verified"
+  },
+  {
+    "claim_digest": "af8f1a752db765a6b84cc5cc610f6a3c493a826225a5499ddbf4f06f14f73ba3",
+    "claim_key": "anthropic-claude-code|claude_code|fixture-build@1|manifest-custody-profile@1|U4|singleton-safe@1|fixture-verified-epoch@1",
+    "evidence_epoch": "fixture-verified-epoch@1",
+    "outcome": "passed",
+    "record": "conformance-result@1",
+    "success_terminal": "bounded-product-usable",
+    "tier_evidence_artifact_ids": [
+      "equivalence-tier-claude_code-launcher",
+      "equivalence-tier-claude_code-interruption",
+      "equivalence-tier-claude_code-recovery",
+      "equivalence-tier-claude_code-separation",
+      "equivalence-tier-claude_code-acceptance",
+      "equivalence-tier-claude_code-native-boundary",
+      "equivalence-tier-claude_code-matched-deny",
+      "equivalence-tier-claude_code-neighboring-allow",
+      "equivalence-tier-claude_code-failure-behavior",
+      "equivalence-tier-claude_code-hook-configuration"
+    ],
+    "tier_evidence_set_digest": "9407d5fe42c4b65099d7bbcb31e8bae70688e8f7eb6468ae5683da2db4a60071",
+    "validity": "verified"
+  }
+]

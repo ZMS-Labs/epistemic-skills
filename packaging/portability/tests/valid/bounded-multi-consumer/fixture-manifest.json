@@ -1,0 +1,23 @@
+{
+  "base": "authoritative",
+  "base_digest": "6ab96741ed741907ad246d992dfd88b9b7ee7925081e815e89b91dec3d8ed648",
+  "context": "synthetic-positive-control",
+  "inherit": [
+    "evidence_sources",
+    "evidence_trust_root",
+    "fleet_census",
+    "requirements",
+    "vocabulary"
+  ],
+  "overrides": {
+    "authorities": "authority-artifacts.json",
+    "baseline": "support-baseline.json",
+    "capability_claims": "capability-claims.json",
+    "conformance_results": "conformance-results.json",
+    "planning_dag": "planning-dag.json",
+    "stage_c_records": "stage-c-authority-set.json",
+    "tier_evidence": "tier-evidence-set.json",
+    "transitions": "transition-artifacts.json"
+  },
+  "record": "portability-fixture@1"
+}

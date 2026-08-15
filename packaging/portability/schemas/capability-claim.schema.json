@@ -1,0 +1,101 @@
+{
+  "$id": "https://zms-labs.example/portability/capability-claim@1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "achieved_tier": {
+      "enum": [
+        "U0",
+        "U1",
+        "U2",
+        "U3",
+        "U4",
+        "U5"
+      ]
+    },
+    "capacity_policy": {
+      "enum": [
+        "singleton-safe@1",
+        "n-active-unverified"
+      ]
+    },
+    "claim_key": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "custody_capacity_policy_revision": {
+      "enum": [
+        "singleton-safe@1",
+        "n-active-unverified"
+      ]
+    },
+    "evidence_epoch": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "product": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "profile_revision": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "record": {
+      "const": "capability-claim@1"
+    },
+    "rendered_status": {
+      "enum": [
+        "current-usable",
+        "historical-only",
+        "not-usable"
+      ]
+    },
+    "resolved_release_or_build": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "surface": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "tier_evidence_artifact_ids": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "tier_evidence_set_digest": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "validity": {
+      "enum": [
+        "verified",
+        "unverified",
+        "invalidated",
+        "unsupported",
+        "not_applicable"
+      ]
+    }
+  },
+  "required": [
+    "record",
+    "claim_key",
+    "product",
+    "surface",
+    "resolved_release_or_build",
+    "profile_revision",
+    "achieved_tier",
+    "custody_capacity_policy_revision",
+    "evidence_epoch",
+    "validity",
+    "capacity_policy",
+    "rendered_status",
+    "tier_evidence_set_digest",
+    "tier_evidence_artifact_ids"
+  ],
+  "type": "object"
+}

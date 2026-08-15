@@ -1,0 +1,211 @@
+{
+  "$id": "https://zms-labs.example/portability/transition-artifact-set@1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "artifacts": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "authority": {
+            "enum": [
+              "planning-order-only",
+              "fixture-only",
+              "resolved-stage-c-authority"
+            ]
+          },
+          "authority_resolution": {
+            "additionalProperties": false,
+            "properties": {
+              "evidence_source_set_digest": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "evidence_trust_root_digest": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "record_ids": {
+                "items": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "minItems": 6,
+                "type": "array"
+              },
+              "stage_c_authority_set_digest": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "tier_evidence_set_digest": {
+                "minLength": 1,
+                "type": "string"
+              }
+            },
+            "required": [
+              "stage_c_authority_set_digest",
+              "tier_evidence_set_digest",
+              "record_ids",
+              "evidence_trust_root_digest",
+              "evidence_source_set_digest"
+            ],
+            "type": "object"
+          },
+          "content_digest": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "edge_kind": {
+            "enum": [
+              "authority",
+              "evidence",
+              "implementation",
+              "promotion"
+            ]
+          },
+          "from": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "issuer_identity": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "rationale": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "record_type": {
+            "enum": [
+              "authority-decision@1",
+              "evidence-plan@1",
+              "implementation-plan@1",
+              "promotion-decision@1"
+            ]
+          },
+          "referenced_record": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "resolution": {
+            "enum": [
+              "resolved",
+              "unresolved"
+            ]
+          },
+          "subject_digest": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "subject_id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "subject_kind": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "success_binding": {
+            "additionalProperties": false,
+            "properties": {
+              "capability_claims_digest": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "capacity_policy": {
+                "enum": [
+                  "singleton-safe@1",
+                  "n-active-unverified"
+                ]
+              },
+              "claim_keys": {
+                "items": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "minItems": 1,
+                "type": "array"
+              },
+              "conformance_results_digest": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "evidence_epoch": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "evidence_source_set_digest": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "evidence_trust_root_digest": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "stage_c_authority_set_digest": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "tier_evidence_set_digest": {
+                "minLength": 1,
+                "type": "string"
+              }
+            },
+            "required": [
+              "capacity_policy",
+              "claim_keys",
+              "evidence_epoch",
+              "capability_claims_digest",
+              "conformance_results_digest",
+              "tier_evidence_set_digest",
+              "stage_c_authority_set_digest",
+              "evidence_trust_root_digest",
+              "evidence_source_set_digest"
+            ],
+            "type": "object"
+          },
+          "to": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "issuer_identity",
+          "from",
+          "to",
+          "subject_kind",
+          "subject_id",
+          "subject_digest",
+          "rationale",
+          "referenced_record",
+          "content_digest",
+          "record_type",
+          "authority",
+          "edge_kind",
+          "resolution"
+        ],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "content_digest": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "record": {
+      "const": "transition-artifact-set@1"
+    }
+  },
+  "required": [
+    "record",
+    "artifacts",
+    "content_digest"
+  ],
+  "type": "object"
+}

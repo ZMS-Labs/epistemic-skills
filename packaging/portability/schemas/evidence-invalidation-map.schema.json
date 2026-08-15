@@ -1,0 +1,84 @@
+{
+  "$id": "https://zms-labs.example/portability/evidence-invalidation-map@1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "inventoried_targets": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "mappings": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "affected_claim_keys": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "degraded_behavior": {
+            "enum": [
+              "demote-unverified",
+              "fail-closed"
+            ]
+          },
+          "independent_record": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "maximum_detection_bound": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "probes": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "reaward_rule": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "successor_evidence_epoch": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "target": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "target",
+          "affected_claim_keys",
+          "probes",
+          "degraded_behavior",
+          "maximum_detection_bound",
+          "independent_record",
+          "successor_evidence_epoch",
+          "reaward_rule"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "record": {
+      "const": "evidence-invalidation-map@1"
+    }
+  },
+  "required": [
+    "record",
+    "inventoried_targets",
+    "mappings"
+  ],
+  "type": "object"
+}

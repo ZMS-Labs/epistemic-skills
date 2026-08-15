@@ -1,0 +1,68 @@
+{
+  "$id": "https://zms-labs.example/portability/conformance-result@1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "claim_digest": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "claim_key": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "evidence_epoch": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "outcome": {
+      "enum": [
+        "passed",
+        "failed",
+        "unverified"
+      ]
+    },
+    "record": {
+      "const": "conformance-result@1"
+    },
+    "success_terminal": {
+      "enum": [
+        "registry-disposition-complete",
+        "bounded-product-usable"
+      ]
+    },
+    "tier_evidence_artifact_ids": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "tier_evidence_set_digest": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "validity": {
+      "enum": [
+        "verified",
+        "unverified",
+        "invalidated",
+        "unsupported",
+        "not_applicable"
+      ]
+    }
+  },
+  "required": [
+    "record",
+    "claim_key",
+    "validity",
+    "outcome",
+    "success_terminal",
+    "evidence_epoch",
+    "claim_digest",
+    "tier_evidence_set_digest",
+    "tier_evidence_artifact_ids"
+  ],
+  "type": "object"
+}

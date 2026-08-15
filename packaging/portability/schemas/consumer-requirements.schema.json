@@ -1,0 +1,96 @@
+{
+  "$id": "https://zms-labs.example/portability/consumer-requirements@1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "authority_artifact_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "census_content_digest": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "content_digest": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "decision_digest": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "issuer_identity": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "publisher_consumers": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "minItems": 2,
+      "type": "array"
+    },
+    "record": {
+      "const": "consumer-requirements@1"
+    },
+    "required_consumers": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "minimum_tier": {
+            "enum": [
+              "U0",
+              "U1",
+              "U2",
+              "U3",
+              "U4",
+              "U5"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "minimum_tier"
+        ],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "revision": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "scope": {
+      "minLength": 1,
+      "type": "string"
+    }
+  },
+  "required": [
+    "record",
+    "issuer_identity",
+    "decision_digest",
+    "scope",
+    "revision",
+    "required_consumers",
+    "content_digest",
+    "census_content_digest",
+    "authority_artifact_id",
+    "publisher_consumers"
+  ],
+  "type": "object"
+}

@@ -1,0 +1,58 @@
+{
+  "$id": "https://zms-labs.example/portability/fleet-surface-census@1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "authority_artifact_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "content_digest": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "decision_digest": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "evidence_record": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "record": {
+      "const": "fleet-surface-census@1"
+    },
+    "repository": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "source_symbol": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "surface_kinds": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "tree": {
+      "minLength": 1,
+      "type": "string"
+    }
+  },
+  "required": [
+    "record",
+    "repository",
+    "tree",
+    "source_symbol",
+    "surface_kinds",
+    "evidence_record",
+    "content_digest",
+    "authority_artifact_id",
+    "decision_digest"
+  ],
+  "type": "object"
+}

@@ -1,0 +1,154 @@
+{
+  "$id": "https://zms-labs.example/portability/operation-fault-matrix@1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "cells": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "cut_class": {
+            "enum": [
+              "before-mutation",
+              "partial-mutation",
+              "after-mutation-before-durable-evidence",
+              "after-durable-evidence-before-ack"
+            ],
+            "type": "string"
+          },
+          "cut_id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "expected_neighbor_outcome": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "expected_protected_outcome": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "fault": {
+            "enum": [
+              "timeout",
+              "crash",
+              "malformed-output",
+              "interruption",
+              "denied-evidence-retention"
+            ],
+            "type": "string"
+          },
+          "forbidden_residue": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "maximum_timeout": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "operation": {
+            "enum": [
+              "effect",
+              "verification-start",
+              "close-accept",
+              "install",
+              "upgrade",
+              "rollback",
+              "uninstall",
+              "duplicate-resolution",
+              "guarded-action"
+            ],
+            "type": "string"
+          },
+          "permitted_durable_state": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "recovery_attempt_budget": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "recovery_procedure": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "recovery_time_budget": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "required_evidence": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "terminal": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "tier_consequence": {
+            "enum": [
+              "none",
+              "demote-unverified",
+              "fail-closed",
+              "block"
+            ]
+          }
+        },
+        "required": [
+          "cut_id",
+          "operation",
+          "fault",
+          "cut_class",
+          "expected_protected_outcome",
+          "expected_neighbor_outcome",
+          "maximum_timeout",
+          "permitted_durable_state",
+          "forbidden_residue",
+          "required_evidence",
+          "recovery_procedure",
+          "recovery_attempt_budget",
+          "recovery_time_budget",
+          "terminal",
+          "tier_consequence"
+        ],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "material_boundaries": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "class": {
+            "enum": [
+              "durable-mutation",
+              "external-effect",
+              "evidence-publication",
+              "acknowledgement"
+            ]
+          },
+          "cut_id": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "cut_id",
+          "class"
+        ],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "record": {
+      "const": "operation-fault-matrix@1"
+    }
+  },
+  "required": [
+    "record",
+    "material_boundaries",
+    "cells"
+  ],
+  "type": "object"
+}

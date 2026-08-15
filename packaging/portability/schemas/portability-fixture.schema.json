@@ -1,0 +1,111 @@
+{
+  "$id": "https://zms-labs.example/portability/portability-fixture@1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "base": {
+      "const": "authoritative"
+    },
+    "base_digest": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "context": {
+      "enum": [
+        "authoritative-equivalence",
+        "synthetic-positive-control",
+        "negative-control"
+      ]
+    },
+    "inherit": {
+      "items": {
+        "enum": [
+          "authorities",
+          "baseline",
+          "capability_claims",
+          "conformance_results",
+          "evidence_sources",
+          "evidence_trust_root",
+          "fleet_census",
+          "planning_dag",
+          "requirements",
+          "stage_c_records",
+          "tier_evidence",
+          "transitions",
+          "vocabulary"
+        ]
+      },
+      "type": "array"
+    },
+    "overrides": {
+      "additionalProperties": false,
+      "properties": {
+        "authorities": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "baseline": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "capability_claims": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "conformance_results": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "evidence_sources": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "evidence_trust_root": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "fleet_census": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "planning_dag": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "requirements": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "stage_c_records": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "tier_evidence": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "transitions": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "vocabulary": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "record": {
+      "const": "portability-fixture@1"
+    }
+  },
+  "required": [
+    "record",
+    "base",
+    "base_digest",
+    "context",
+    "inherit",
+    "overrides"
+  ],
+  "type": "object"
+}

@@ -1,0 +1,64 @@
+{
+  "capacity_compatibility": {
+    "n-active-unverified": {
+      "awardable_tiers": [],
+      "n_active_service": false
+    },
+    "singleton-safe@1": {
+      "awardable_tiers": [
+        "U0",
+        "U1",
+        "U2",
+        "U3",
+        "U4"
+      ],
+      "n_active_service": false
+    }
+  },
+  "claim_states": [
+    "verified",
+    "unverified",
+    "invalidated",
+    "unsupported",
+    "not_applicable"
+  ],
+  "cumulative_tiers": [
+    "U0",
+    "U1",
+    "U2",
+    "U3",
+    "U4",
+    "U5"
+  ],
+  "edge_kinds": [
+    "authority",
+    "evidence",
+    "implementation",
+    "promotion"
+  ],
+  "invalidation_consequences": [
+    "none",
+    "demote-unverified",
+    "fail-closed",
+    "block"
+  ],
+  "inventory_classes": [
+    "runtime-bindings",
+    "host-configuration",
+    "installed-artifacts",
+    "listeners-callbacks",
+    "credential-routes",
+    "external-components",
+    "effective-principals",
+    "public-artifacts",
+    "repositories",
+    "buckets",
+    "publication-destinations"
+  ],
+  "record": "claim-vocabulary@1",
+  "revision": "claim-vocabulary@1",
+  "success_terminals": [
+    "registry-disposition-complete",
+    "bounded-product-usable"
+  ]
+}

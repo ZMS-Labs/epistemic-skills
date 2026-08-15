@@ -1,0 +1,16 @@
+[
+  {
+    "claim_key": "openai-codex|codex|fixture-build@1|manifest-custody-profile@1|U3|singleton-safe@1|fixture-verified-epoch@1",
+    "outcome": "unverified",
+    "record": "conformance-result@1",
+    "success_terminal": "bounded-product-usable",
+    "validity": "unverified"
+  },
+  {
+    "claim_key": "anthropic-claude-code|claude_code|fixture-build@1|manifest-custody-profile@1|U3|singleton-safe@1|fixture-verified-epoch@1",
+    "outcome": "unverified",
+    "record": "conformance-result@1",
+    "success_terminal": "bounded-product-usable",
+    "validity": "unverified"
+  }
+]

@@ -1,0 +1,170 @@
+{
+  "$id": "https://zms-labs.example/portability/planning-dag@1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "bindings": {
+      "additionalProperties": false,
+      "properties": {
+        "authority_artifacts_digest": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "baseline_content_digest": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "capability_claims_digest": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "census_content_digest": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "conformance_results_digest": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "evidence_source_set_digest": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "evidence_trust_root_digest": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "requirements_content_digest": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "stage_c_authority_set_digest": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "tier_evidence_set_digest": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "transition_artifacts_digest": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "requirements_content_digest",
+        "baseline_content_digest",
+        "census_content_digest",
+        "authority_artifacts_digest",
+        "transition_artifacts_digest",
+        "tier_evidence_set_digest",
+        "stage_c_authority_set_digest",
+        "capability_claims_digest",
+        "conformance_results_digest",
+        "evidence_trust_root_digest",
+        "evidence_source_set_digest"
+      ],
+      "type": "object"
+    },
+    "content_digest": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "edges": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "from": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "authority",
+              "evidence",
+              "implementation",
+              "promotion"
+            ]
+          },
+          "mode": {
+            "enum": [
+              "live",
+              "template"
+            ]
+          },
+          "to": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "transition_artifact": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "kind",
+          "transition_artifact",
+          "mode"
+        ],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "nodes": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "stage-a-portability-spike",
+              "concurrency-prerequisites",
+              "frozen-successor-design",
+              "gauntlet-go",
+              "operator-decision",
+              "n-active-candidate",
+              "promotion",
+              "contract"
+            ]
+          },
+          "stage": {
+            "enum": [
+              "A",
+              "B",
+              "C"
+            ]
+          },
+          "terminal": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "stage",
+          "kind",
+          "terminal"
+        ],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "record": {
+      "const": "planning-dag@1"
+    }
+  },
+  "required": [
+    "record",
+    "nodes",
+    "edges",
+    "content_digest",
+    "bindings"
+  ],
+  "type": "object"
+}

@@ -1,0 +1,286 @@
+{
+  "$id": "https://zms-labs.example/portability/stage-c-authority-set@1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "content_digest": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "record": {
+      "const": "stage-c-authority-set@1"
+    },
+    "records": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "acceptance_verdict_digest": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "actor_identity": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "audit_record_digest": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "audit_sink_identity": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "authority_matrix_digest": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "authority_scope": {
+            "enum": [
+              "fixture-only",
+              "authoritative"
+            ]
+          },
+          "capability_claims_digest": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "ci_run_digest": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "claim_keys": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "conformance_results_digest": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "content_digest": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "credential_class": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "credential_digest": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "decision_digest": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "duties": {
+            "items": {
+              "enum": [
+                "exact-conformance",
+                "exact-head-ci",
+                "independent-acceptance",
+                "operator-promotion",
+                "governed-mutation",
+                "native-enforcement",
+                "audit-retention"
+              ]
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "enforcement_point": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "enforcement_policy_digest": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "evidence_epoch": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "exact_candidate_digest": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "exact_head_commit": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "incompatible_duty_pairs": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "minItems": 3,
+            "type": "array"
+          },
+          "independent_audit_record_id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "issuer_identity": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "operator_decision_digest": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "outcome": {
+            "enum": [
+              "accepted",
+              "approved",
+              "disabled",
+              "enforced",
+              "failed",
+              "missing",
+              "passed",
+              "rejected",
+              "retained"
+            ]
+          },
+          "principal_identity": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "promotion_scope": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "rationale": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "readback_credential_class": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "readback_credential_digest": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "readback_digest": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "readback_method": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "readback_principal_identity": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "record_type": {
+            "enum": [
+              "exact-candidate-conformance@1",
+              "exact-head-ci@1",
+              "independent-acceptance@1",
+              "operator-promotion-decision@1",
+              "stage-c-principal-control@1",
+              "independently-retained-audit@1"
+            ]
+          },
+          "referenced_record_ids": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "retention_days": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "retention_policy": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "source_id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "source_kind": {
+            "enum": [
+              "exact-candidate-conformance-run",
+              "exact-head-ci-run",
+              "independent-acceptance-decision",
+              "independent-audit-retention-readback",
+              "native-stage-c-control",
+              "operator-promotion-decision"
+            ]
+          },
+          "source_record_digest": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "source_statement_digest": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "subject_digest": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "subject_id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "subject_kind": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "tier_evidence_set_digest": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "issuer_identity",
+          "subject_kind",
+          "subject_id",
+          "subject_digest",
+          "evidence_epoch",
+          "capability_claims_digest",
+          "conformance_results_digest",
+          "tier_evidence_set_digest",
+          "actor_identity",
+          "principal_identity",
+          "credential_class",
+          "credential_digest",
+          "enforcement_point",
+          "enforcement_policy_digest",
+          "decision_digest",
+          "independent_audit_record_id",
+          "outcome",
+          "rationale",
+          "content_digest",
+          "record_type",
+          "authority_scope",
+          "claim_keys",
+          "duties",
+          "incompatible_duty_pairs",
+          "referenced_record_ids"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "record",
+    "records",
+    "content_digest"
+  ],
+  "type": "object"
+}

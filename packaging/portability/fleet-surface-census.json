@@ -1,0 +1,31 @@
+{
+  "authority_artifact_id": "fleet-census-freeze",
+  "content_digest": "8fbc2be02192ec519896e8d2b6ebc8dc833d29a710e742e30801fc2f5fe36e13",
+  "decision_digest": "d1774811238619c8291f6f6ee7f329ee42c2f0ca5a75210a2275f77717db7c99",
+  "evidence_record": "completion-contract@sha256:1f5cd2f3cb88dc875b1f55c5016ef55a98fadd7b3a1195887e56e6eb7dd03470",
+  "record": "fleet-surface-census@1",
+  "repository": "ZMS-Labs/fleet-orchestrator",
+  "source_symbol": "SURFACE_KINDS",
+  "surface_kinds": [
+    "codex",
+    "claude_code",
+    "cursor_agent",
+    "gemini",
+    "kimi_code",
+    "aider",
+    "litellm",
+    "hermes",
+    "ollama",
+    "openclaw_memory",
+    "openclaw_browser",
+    "openclaw_voice",
+    "openclaw_phone",
+    "acp_runtime",
+    "discord_gateway",
+    "signal_gateway",
+    "imessage_gateway",
+    "vllm",
+    "deepseek_harness"
+  ],
+  "tree": "61274d9297f61c4d42cff36e0fc97bc2126aec22"
+}

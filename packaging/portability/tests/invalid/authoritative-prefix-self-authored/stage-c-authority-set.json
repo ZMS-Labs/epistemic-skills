@@ -1,0 +1,300 @@
+{
+  "content_digest": "b26377488f07792c9e5e889a1cd693606c1979e3cdb14869cf548a8d67189318",
+  "record": "stage-c-authority-set@1",
+  "records": [
+    {
+      "actor_identity": "equivalence:stage-actor:exact-candidate-conformance",
+      "authority_scope": "authoritative",
+      "capability_claims_digest": "1e785d8bd5c15668a42826404a36d660240a92976bee74e106655e447920bafd",
+      "claim_keys": [
+        "anthropic-claude-code|claude_code|fixture-build@1|manifest-custody-profile@1|U4|singleton-safe@1|fixture-verified-epoch@1",
+        "openai-codex|codex|fixture-build@1|manifest-custody-profile@1|U3|singleton-safe@1|fixture-verified-epoch@1"
+      ],
+      "conformance_results_digest": "58dcf745664a11027a61fa425ccd5d91a8c6baf96ae891b3b6b326844a2a40b9",
+      "content_digest": "344665a2b31a97334cb72f39724785d8c36ac88086f6c4f3f1702f8c6b4c51dd",
+      "credential_class": "attacker-self-issued-stage",
+      "credential_digest": "c91d1a38c06c9db248a9c81019447398ad2c088735da4bf6df61c3269cd0e6f3",
+      "decision_digest": "51af881d17b7503f2cd033b4b434dd81edafa5996731127cbe480f45e30e1dad",
+      "duties": [
+        "exact-conformance"
+      ],
+      "enforcement_point": "fixture-native-pre-mutation-boundary",
+      "enforcement_policy_digest": "e11a798757d44e7fc838c5b0c547a67efab31bf2095d71ebdbc828bd8a94c03c",
+      "evidence_epoch": "fixture-verified-epoch@1",
+      "exact_candidate_digest": "4bb2ce659e571e5c259311519b1516032ba453a72c758fb755d633df73d08817",
+      "id": "equivalence-stage-c-exact-candidate-conformance",
+      "incompatible_duty_pairs": [
+        "exact-conformance|independent-acceptance",
+        "operator-promotion|independent-acceptance",
+        "governed-mutation|audit-retention"
+      ],
+      "independent_audit_record_id": "equivalence-stage-c-independently-retained-audit",
+      "issuer_identity": "authoritative-stage-c-authority:self-authored-attacker:exact-candidate-conformance",
+      "outcome": "passed",
+      "principal_identity": "attacker:stage-principal:equivalence-stage-c-exact-candidate-conformance",
+      "rationale": "Pinned non-production authoritative-equivalence Stage-C record; not live or production evidence.",
+      "record_type": "exact-candidate-conformance@1",
+      "referenced_record_ids": [
+        "equivalence-tier-claude_code-acceptance",
+        "equivalence-tier-claude_code-failure-behavior",
+        "equivalence-tier-claude_code-hook-configuration",
+        "equivalence-tier-claude_code-interruption",
+        "equivalence-tier-claude_code-launcher",
+        "equivalence-tier-claude_code-matched-deny",
+        "equivalence-tier-claude_code-native-boundary",
+        "equivalence-tier-claude_code-neighboring-allow",
+        "equivalence-tier-claude_code-recovery",
+        "equivalence-tier-claude_code-separation",
+        "equivalence-tier-codex-acceptance",
+        "equivalence-tier-codex-interruption",
+        "equivalence-tier-codex-launcher",
+        "equivalence-tier-codex-recovery",
+        "equivalence-tier-codex-separation"
+      ],
+      "source_id": "attacker-source:equivalence-stage-c-exact-candidate-conformance",
+      "source_kind": "exact-candidate-conformance-run",
+      "source_record_digest": "040274f0c6477b3a0cfd56479090294a77038994590676bd326b9aab07ce582b",
+      "source_statement_digest": "25ba594f8e6e6eedfc772cd22329ad05a6490405cf7b9e6a33a59821a9a7073f",
+      "subject_digest": "2294ca206b70d01cb3ddad13786fabd78eab953ec707f46e3a066c4417719700",
+      "subject_id": "sha256:2294ca206b70d01cb3ddad13786fabd78eab953ec707f46e3a066c4417719700",
+      "subject_kind": "bounded-product-success@1",
+      "tier_evidence_set_digest": "9407d5fe42c4b65099d7bbcb31e8bae70688e8f7eb6468ae5683da2db4a60071"
+    },
+    {
+      "actor_identity": "equivalence:stage-actor:exact-head-ci",
+      "authority_scope": "authoritative",
+      "capability_claims_digest": "1e785d8bd5c15668a42826404a36d660240a92976bee74e106655e447920bafd",
+      "ci_run_digest": "3f6ca370ee1904df68d868adcd4636f08409dcecc8f60bfc78c2720668125ff6",
+      "claim_keys": [
+        "anthropic-claude-code|claude_code|fixture-build@1|manifest-custody-profile@1|U4|singleton-safe@1|fixture-verified-epoch@1",
+        "openai-codex|codex|fixture-build@1|manifest-custody-profile@1|U3|singleton-safe@1|fixture-verified-epoch@1"
+      ],
+      "conformance_results_digest": "58dcf745664a11027a61fa425ccd5d91a8c6baf96ae891b3b6b326844a2a40b9",
+      "content_digest": "a584718efc135d40728aba17d0da15a6c53508039be6434f27b3e77772d429cf",
+      "credential_class": "attacker-self-issued-stage",
+      "credential_digest": "be6c376455fedef5563543e488c902a9f42d340eb406de50c8262a8cbfefc773",
+      "decision_digest": "0977d023f1c519185fffe243af22913a1133d7709b820e776b2fa25f84b84b73",
+      "duties": [
+        "exact-head-ci"
+      ],
+      "enforcement_point": "fixture-native-pre-mutation-boundary",
+      "enforcement_policy_digest": "ba5a17b3531baa75f1269f541901134a7121f65560d920b12d5f67b925409baa",
+      "evidence_epoch": "fixture-verified-epoch@1",
+      "exact_head_commit": "322e17a7cd0b33705f3b8c3b100d607187386aab",
+      "id": "equivalence-stage-c-exact-head-ci",
+      "incompatible_duty_pairs": [
+        "exact-conformance|independent-acceptance",
+        "operator-promotion|independent-acceptance",
+        "governed-mutation|audit-retention"
+      ],
+      "independent_audit_record_id": "equivalence-stage-c-independently-retained-audit",
+      "issuer_identity": "authoritative-stage-c-authority:self-authored-attacker:exact-head-ci",
+      "outcome": "passed",
+      "principal_identity": "attacker:stage-principal:equivalence-stage-c-exact-head-ci",
+      "rationale": "Pinned non-production authoritative-equivalence Stage-C record; not live or production evidence.",
+      "record_type": "exact-head-ci@1",
+      "referenced_record_ids": [
+        "equivalence-stage-c-exact-candidate-conformance"
+      ],
+      "source_id": "attacker-source:equivalence-stage-c-exact-head-ci",
+      "source_kind": "exact-head-ci-run",
+      "source_record_digest": "c558cb703b408257b35c356a9d955245ee9d1f5fd7ea923c39766fcfd449a0e3",
+      "source_statement_digest": "19395304bcddef56db967bd1c3038a3534a4becfa5fcc7e43f9637e5d8273b19",
+      "subject_digest": "2294ca206b70d01cb3ddad13786fabd78eab953ec707f46e3a066c4417719700",
+      "subject_id": "sha256:2294ca206b70d01cb3ddad13786fabd78eab953ec707f46e3a066c4417719700",
+      "subject_kind": "bounded-product-success@1",
+      "tier_evidence_set_digest": "9407d5fe42c4b65099d7bbcb31e8bae70688e8f7eb6468ae5683da2db4a60071"
+    },
+    {
+      "acceptance_verdict_digest": "cc4291f1939e84e5b78ac097977a935102c622cbe11ef11b8d4ed387612eadb9",
+      "actor_identity": "equivalence:stage-actor:independent-acceptance",
+      "authority_scope": "authoritative",
+      "capability_claims_digest": "1e785d8bd5c15668a42826404a36d660240a92976bee74e106655e447920bafd",
+      "claim_keys": [
+        "anthropic-claude-code|claude_code|fixture-build@1|manifest-custody-profile@1|U4|singleton-safe@1|fixture-verified-epoch@1",
+        "openai-codex|codex|fixture-build@1|manifest-custody-profile@1|U3|singleton-safe@1|fixture-verified-epoch@1"
+      ],
+      "conformance_results_digest": "58dcf745664a11027a61fa425ccd5d91a8c6baf96ae891b3b6b326844a2a40b9",
+      "content_digest": "fc62fa71c118468808d96159a16bd1cacb54eb305e8959afe03369174ec2e3fc",
+      "credential_class": "attacker-self-issued-stage",
+      "credential_digest": "396262e1aa9f5355065583f1d0dc1244f89955c6ffd4daf7c4b88c1dcf48f85c",
+      "decision_digest": "0c5c0c521730aa7a4c1b29be9a61196430a0278ce99559941922e72b203df369",
+      "duties": [
+        "independent-acceptance"
+      ],
+      "enforcement_point": "fixture-native-pre-mutation-boundary",
+      "enforcement_policy_digest": "2fa6f4a3c12d49eeded3c1647e5a3c80e77f97ab88c694a39a9f1ddeb92c0540",
+      "evidence_epoch": "fixture-verified-epoch@1",
+      "id": "equivalence-stage-c-independent-acceptance",
+      "incompatible_duty_pairs": [
+        "exact-conformance|independent-acceptance",
+        "operator-promotion|independent-acceptance",
+        "governed-mutation|audit-retention"
+      ],
+      "independent_audit_record_id": "equivalence-stage-c-independently-retained-audit",
+      "issuer_identity": "authoritative-stage-c-authority:self-authored-attacker:independent-acceptance",
+      "outcome": "accepted",
+      "principal_identity": "attacker:stage-principal:equivalence-stage-c-independent-acceptance",
+      "rationale": "Pinned non-production authoritative-equivalence Stage-C record; not live or production evidence.",
+      "record_type": "independent-acceptance@1",
+      "referenced_record_ids": [
+        "equivalence-stage-c-exact-candidate-conformance",
+        "equivalence-stage-c-exact-head-ci",
+        "equivalence-stage-c-independently-retained-audit",
+        "equivalence-stage-c-stage-c-principal-control"
+      ],
+      "source_id": "attacker-source:equivalence-stage-c-independent-acceptance",
+      "source_kind": "independent-acceptance-decision",
+      "source_record_digest": "65353d7d8245176f8edd17a7b76f7de7bd992dd8e072ea8917cceafed8aeeac2",
+      "source_statement_digest": "efeb19eca92b85bc9299992bd47af337f446ac3721b2fc225c7209970a59bed3",
+      "subject_digest": "2294ca206b70d01cb3ddad13786fabd78eab953ec707f46e3a066c4417719700",
+      "subject_id": "sha256:2294ca206b70d01cb3ddad13786fabd78eab953ec707f46e3a066c4417719700",
+      "subject_kind": "bounded-product-success@1",
+      "tier_evidence_set_digest": "9407d5fe42c4b65099d7bbcb31e8bae70688e8f7eb6468ae5683da2db4a60071"
+    },
+    {
+      "actor_identity": "equivalence:stage-actor:operator-promotion-decision",
+      "authority_scope": "authoritative",
+      "capability_claims_digest": "1e785d8bd5c15668a42826404a36d660240a92976bee74e106655e447920bafd",
+      "claim_keys": [
+        "anthropic-claude-code|claude_code|fixture-build@1|manifest-custody-profile@1|U4|singleton-safe@1|fixture-verified-epoch@1",
+        "openai-codex|codex|fixture-build@1|manifest-custody-profile@1|U3|singleton-safe@1|fixture-verified-epoch@1"
+      ],
+      "conformance_results_digest": "58dcf745664a11027a61fa425ccd5d91a8c6baf96ae891b3b6b326844a2a40b9",
+      "content_digest": "622cd1579e5016889a0aad1c3ea172ba5ca6455383589eaf6ab1876e60b5370c",
+      "credential_class": "attacker-self-issued-stage",
+      "credential_digest": "97b01583c8fda213bbc3dd203f644d16e9c0340d4ab5e4a40c7db7db09cb77e1",
+      "decision_digest": "87f68f2b65d1b870d8bdd24dc9ff8ed890ca6cee11abf8c10ce18d94f95a1bce",
+      "duties": [
+        "operator-promotion"
+      ],
+      "enforcement_point": "fixture-native-pre-mutation-boundary",
+      "enforcement_policy_digest": "4ee4423ba7543650e087f0fc020b7867b02ef809948a64afddb270d1a200f032",
+      "evidence_epoch": "fixture-verified-epoch@1",
+      "id": "equivalence-stage-c-operator-promotion-decision",
+      "incompatible_duty_pairs": [
+        "exact-conformance|independent-acceptance",
+        "operator-promotion|independent-acceptance",
+        "governed-mutation|audit-retention"
+      ],
+      "independent_audit_record_id": "equivalence-stage-c-independently-retained-audit",
+      "issuer_identity": "authoritative-stage-c-authority:self-authored-attacker:operator-promotion-decision",
+      "operator_decision_digest": "8097f210f39a59fa5346363963d8eaf9f575a55ab4e17d9fe9c0dcf126a1830b",
+      "outcome": "approved",
+      "principal_identity": "attacker:stage-principal:equivalence-stage-c-operator-promotion-decision",
+      "promotion_scope": "non-production-authoritative-equivalence-only; no merge release publication or production use",
+      "rationale": "Pinned non-production authoritative-equivalence Stage-C record; not live or production evidence.",
+      "record_type": "operator-promotion-decision@1",
+      "referenced_record_ids": [
+        "equivalence-stage-c-exact-candidate-conformance",
+        "equivalence-stage-c-exact-head-ci",
+        "equivalence-stage-c-independent-acceptance",
+        "equivalence-stage-c-independently-retained-audit",
+        "equivalence-stage-c-stage-c-principal-control"
+      ],
+      "source_id": "attacker-source:equivalence-stage-c-operator-promotion-decision",
+      "source_kind": "operator-promotion-decision",
+      "source_record_digest": "2cb1207ffc4705497fab492507cf32e15002aef9ecffbb49f04fccbab1690052",
+      "source_statement_digest": "b3f410bf3e91a81d414dd89dcd4fb5da9709efb034dfba15c5a98e328fe9e5d4",
+      "subject_digest": "2294ca206b70d01cb3ddad13786fabd78eab953ec707f46e3a066c4417719700",
+      "subject_id": "sha256:2294ca206b70d01cb3ddad13786fabd78eab953ec707f46e3a066c4417719700",
+      "subject_kind": "bounded-product-success@1",
+      "tier_evidence_set_digest": "9407d5fe42c4b65099d7bbcb31e8bae70688e8f7eb6468ae5683da2db4a60071"
+    },
+    {
+      "actor_identity": "equivalence:stage-actor:stage-c-principal-control",
+      "authority_matrix_digest": "1225f6d3fc4c3bd94f12b8a82f71a30ee91982710116a2b6e95244f04d05035b",
+      "authority_scope": "authoritative",
+      "capability_claims_digest": "1e785d8bd5c15668a42826404a36d660240a92976bee74e106655e447920bafd",
+      "claim_keys": [
+        "anthropic-claude-code|claude_code|fixture-build@1|manifest-custody-profile@1|U4|singleton-safe@1|fixture-verified-epoch@1",
+        "openai-codex|codex|fixture-build@1|manifest-custody-profile@1|U3|singleton-safe@1|fixture-verified-epoch@1"
+      ],
+      "conformance_results_digest": "58dcf745664a11027a61fa425ccd5d91a8c6baf96ae891b3b6b326844a2a40b9",
+      "content_digest": "9de58abeeb3440279d097367ca2b72353891cf9e535697379fcb4bd97dd6f350",
+      "credential_class": "attacker-self-issued-stage",
+      "credential_digest": "4c88a9462de404f5121253d2b557709d527adc78253b496954ce982a63226d7a",
+      "decision_digest": "6c570a93264d7c15215b2684b9061bc507a27ab0adbd0697d9e4edc2f2587f52",
+      "duties": [
+        "governed-mutation",
+        "native-enforcement"
+      ],
+      "enforcement_point": "fixture-native-pre-mutation-boundary",
+      "enforcement_policy_digest": "fc3eafdb400184b068225175f117681773e8492ecd2107f39006afc7ce5a1305",
+      "evidence_epoch": "fixture-verified-epoch@1",
+      "id": "equivalence-stage-c-stage-c-principal-control",
+      "incompatible_duty_pairs": [
+        "exact-conformance|independent-acceptance",
+        "operator-promotion|independent-acceptance",
+        "governed-mutation|audit-retention"
+      ],
+      "independent_audit_record_id": "equivalence-stage-c-independently-retained-audit",
+      "issuer_identity": "authoritative-stage-c-authority:self-authored-attacker:stage-c-principal-control",
+      "outcome": "enforced",
+      "principal_identity": "attacker:stage-principal:equivalence-stage-c-stage-c-principal-control",
+      "rationale": "Pinned non-production authoritative-equivalence Stage-C record; not live or production evidence.",
+      "record_type": "stage-c-principal-control@1",
+      "referenced_record_ids": [
+        "equivalence-stage-c-independently-retained-audit"
+      ],
+      "source_id": "attacker-source:equivalence-stage-c-stage-c-principal-control",
+      "source_kind": "native-stage-c-control",
+      "source_record_digest": "1bd6e4239a77a8e3bb7b1a8167ca1501f9403d80a2026368e1a634bb9e23f17d",
+      "source_statement_digest": "c8b359b3560bb14ae9e241bf2843b943f3eb407301dce40e4ea423645c7b53b8",
+      "subject_digest": "2294ca206b70d01cb3ddad13786fabd78eab953ec707f46e3a066c4417719700",
+      "subject_id": "sha256:2294ca206b70d01cb3ddad13786fabd78eab953ec707f46e3a066c4417719700",
+      "subject_kind": "bounded-product-success@1",
+      "tier_evidence_set_digest": "9407d5fe42c4b65099d7bbcb31e8bae70688e8f7eb6468ae5683da2db4a60071"
+    },
+    {
+      "actor_identity": "equivalence:stage-actor:independently-retained-audit",
+      "audit_record_digest": "96915e8794a300c3e57b9183cb45c789c127380a51578be6da70a40dff71815c",
+      "audit_sink_identity": "fixture-independent-audit-sink",
+      "authority_scope": "authoritative",
+      "capability_claims_digest": "1e785d8bd5c15668a42826404a36d660240a92976bee74e106655e447920bafd",
+      "claim_keys": [
+        "anthropic-claude-code|claude_code|fixture-build@1|manifest-custody-profile@1|U4|singleton-safe@1|fixture-verified-epoch@1",
+        "openai-codex|codex|fixture-build@1|manifest-custody-profile@1|U3|singleton-safe@1|fixture-verified-epoch@1"
+      ],
+      "conformance_results_digest": "58dcf745664a11027a61fa425ccd5d91a8c6baf96ae891b3b6b326844a2a40b9",
+      "content_digest": "4c1fada5ebb1c88099171dc46b3763093ad94bd307dc9bd7844c369e5b612bc0",
+      "credential_class": "attacker-self-issued-stage",
+      "credential_digest": "aa8c34950b044a8b0f2707bb4935883c201a570bc29845c980d7b3eb21437ab1",
+      "decision_digest": "e904737158612da1517a36a721d94543cfce10a4e33521413a46c8f1801b2ae1",
+      "duties": [
+        "audit-retention"
+      ],
+      "enforcement_point": "fixture-native-pre-mutation-boundary",
+      "enforcement_policy_digest": "79940deac534157077fe34b66f55fd53cd60f50fb0931a70f1cb04fafcff6f17",
+      "evidence_epoch": "fixture-verified-epoch@1",
+      "id": "equivalence-stage-c-independently-retained-audit",
+      "incompatible_duty_pairs": [
+        "exact-conformance|independent-acceptance",
+        "operator-promotion|independent-acceptance",
+        "governed-mutation|audit-retention"
+      ],
+      "independent_audit_record_id": "equivalence-stage-c-independently-retained-audit",
+      "issuer_identity": "authoritative-stage-c-authority:self-authored-attacker:independently-retained-audit",
+      "outcome": "retained",
+      "principal_identity": "attacker:stage-principal:equivalence-stage-c-independently-retained-audit",
+      "rationale": "Pinned non-production authoritative-equivalence Stage-C record; not live or production evidence.",
+      "readback_credential_class": "non-production-independent-readback",
+      "readback_credential_digest": "dd30c79ef3bc9657bb1bac91835dadcf74e84b8aab715cf72bc9fb069183070a",
+      "readback_digest": "ed40e2ec88331e9fe2c08602185cae67c40c7857bf2c6b0d3222d2360a983908",
+      "readback_method": "independent-record-readback@1",
+      "readback_principal_identity": "equivalence:stage-audit-readback-principal",
+      "record_type": "independently-retained-audit@1",
+      "referenced_record_ids": [],
+      "retention_days": 30,
+      "retention_policy": "non-production-equivalence-retention@1",
+      "source_id": "attacker-source:equivalence-stage-c-independently-retained-audit",
+      "source_kind": "independent-audit-retention-readback",
+      "source_record_digest": "c7e2a378e0921d25382ade25a93a2489053fd4f76fc4ec9de925adbb3ddeea16",
+      "source_statement_digest": "07596d89cc5a4333430a3864d1924db7416c04ca8a5a635ee4f261ff2270202b",
+      "subject_digest": "2294ca206b70d01cb3ddad13786fabd78eab953ec707f46e3a066c4417719700",
+      "subject_id": "sha256:2294ca206b70d01cb3ddad13786fabd78eab953ec707f46e3a066c4417719700",
+      "subject_kind": "bounded-product-success@1",
+      "tier_evidence_set_digest": "9407d5fe42c4b65099d7bbcb31e8bae70688e8f7eb6468ae5683da2db4a60071"
+    }
+  ]
+}

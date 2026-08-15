@@ -1,0 +1,46 @@
+{
+  "$id": "https://zms-labs.example/portability/harness-profile@1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "native_boundary": {
+      "enum": [
+        "present",
+        "absent",
+        "unverified"
+      ]
+    },
+    "observation_date": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "product": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "profile_revision": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "record": {
+      "const": "harness-profile@1"
+    },
+    "resolved_release_or_build": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "surface": {
+      "minLength": 1,
+      "type": "string"
+    }
+  },
+  "required": [
+    "record",
+    "product",
+    "surface",
+    "resolved_release_or_build",
+    "profile_revision",
+    "observation_date"
+  ],
+  "type": "object"
+}

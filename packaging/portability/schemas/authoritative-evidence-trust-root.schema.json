@@ -1,0 +1,100 @@
+{
+  "$id": "https://zms-labs.example/portability/authoritative-evidence-trust-root@1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "accepted_credential_classes": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "accepted_issuer_identities": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "accepted_source_ids": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "accepted_source_kinds": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "content_digest": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "decision_roots": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "environment": {
+      "const": "non-production-authoritative-equivalence"
+    },
+    "minimum_retention_days": {
+      "minimum": 1,
+      "type": "integer"
+    },
+    "rationale": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "record": {
+      "const": "authoritative-evidence-trust-root@1"
+    },
+    "required_readback_method": {
+      "const": "independent-record-readback@1"
+    },
+    "revision": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "source_set_digest": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "transparency_roots": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "trust_root_id": {
+      "minLength": 1,
+      "type": "string"
+    }
+  },
+  "required": [
+    "record",
+    "trust_root_id",
+    "revision",
+    "environment",
+    "source_set_digest",
+    "accepted_source_ids",
+    "accepted_issuer_identities",
+    "accepted_credential_classes",
+    "accepted_source_kinds",
+    "decision_roots",
+    "transparency_roots",
+    "minimum_retention_days",
+    "required_readback_method",
+    "rationale",
+    "content_digest"
+  ],
+  "type": "object"
+}

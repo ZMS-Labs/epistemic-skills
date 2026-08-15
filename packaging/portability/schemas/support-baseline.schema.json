@@ -1,0 +1,158 @@
+{
+  "$id": "https://zms-labs.example/portability/support-baseline@1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "authority_artifacts_digest": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "capability_claims_digest": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "census_content_digest": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "conformance_results_digest": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "consumers": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "claim_key": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "disposition": {
+            "enum": [
+              "applicable",
+              "not_applicable",
+              "unsupported",
+              "unverified"
+            ]
+          },
+          "id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "reason": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "disposition",
+          "reason",
+          "claim_key"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "content_digest": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "evidence_source_set_digest": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "evidence_trust_root_digest": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "record": {
+      "const": "support-baseline@1"
+    },
+    "requirements_content_digest": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "requirements_decision_digest": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "requirements_revision": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "revision": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "scope_reduction": {
+      "additionalProperties": false,
+      "properties": {
+        "approval_decision": {
+          "const": "operator-approved-scope-reduction"
+        },
+        "approval_digest": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "removed_consumers": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "requirements_decision_digest": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "requirements_revision": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "requirements_revision",
+        "requirements_decision_digest",
+        "approval_decision",
+        "approval_digest",
+        "removed_consumers"
+      ],
+      "type": "object"
+    },
+    "stage_c_authority_set_digest": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "success_terminal": {
+      "enum": [
+        "registry-disposition-complete",
+        "bounded-product-usable"
+      ]
+    },
+    "tier_evidence_set_digest": {
+      "minLength": 1,
+      "type": "string"
+    }
+  },
+  "required": [
+    "record",
+    "revision",
+    "requirements_revision",
+    "requirements_decision_digest",
+    "consumers",
+    "success_terminal",
+    "content_digest",
+    "requirements_content_digest",
+    "census_content_digest",
+    "authority_artifacts_digest",
+    "capability_claims_digest",
+    "conformance_results_digest",
+    "tier_evidence_set_digest",
+    "stage_c_authority_set_digest",
+    "evidence_trust_root_digest",
+    "evidence_source_set_digest"
+  ],
+  "type": "object"
+}

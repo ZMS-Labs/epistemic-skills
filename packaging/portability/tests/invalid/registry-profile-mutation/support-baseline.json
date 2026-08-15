@@ -1,0 +1,151 @@
+{
+  "authority_artifacts_digest": "9718aafa044ab16c444f3dfba9b18aaafaf4f9a5f5fde3c24a29dfb0b9e21e77",
+  "capability_claims_digest": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+  "census_content_digest": "8fbc2be02192ec519896e8d2b6ebc8dc833d29a710e742e30801fc2f5fe36e13",
+  "conformance_results_digest": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+  "consumers": [
+    {
+      "claim_key": "profile|openai-codex|codex|unresolved-build|manifest-custody-profile@1|singleton-safe@1|unverified-initial-epoch@1",
+      "disposition": "unverified",
+      "id": "fleet|openai-codex|codex|fleet-tree-61274d9297f61c4d42cff36e0fc97bc2126aec22|manifest-custody-profile@1",
+      "reason": "disposition-393f3d4041adbaec"
+    },
+    {
+      "claim_key": "profile|anthropic-claude-code|claude_code|unresolved-build|manifest-custody-profile@1|singleton-safe@1|unverified-initial-epoch@1",
+      "disposition": "unverified",
+      "id": "fleet|anthropic-claude-code|claude_code|fleet-tree-61274d9297f61c4d42cff36e0fc97bc2126aec22|manifest-custody-profile@1",
+      "reason": "disposition-266a3e82a633f50e"
+    },
+    {
+      "claim_key": "profile|cursor-agent|cursor_agent|unresolved-build|manifest-custody-profile@1|singleton-safe@1|unverified-initial-epoch@1",
+      "disposition": "unverified",
+      "id": "fleet|cursor-agent|cursor_agent|fleet-tree-61274d9297f61c4d42cff36e0fc97bc2126aec22|manifest-custody-profile@1",
+      "reason": "disposition-0627ad776d0cd4fa"
+    },
+    {
+      "claim_key": "profile|google-gemini-cli|gemini|unresolved-build|manifest-custody-profile@1|singleton-safe@1|unverified-initial-epoch@1",
+      "disposition": "unverified",
+      "id": "fleet|google-gemini-cli|gemini|fleet-tree-61274d9297f61c4d42cff36e0fc97bc2126aec22|manifest-custody-profile@1",
+      "reason": "disposition-cbfb2e464d370b45"
+    },
+    {
+      "claim_key": "profile|moonshot-kimi-code|kimi_code|unresolved-build|manifest-custody-profile@1|singleton-safe@1|unverified-initial-epoch@1",
+      "disposition": "unverified",
+      "id": "fleet|moonshot-kimi-code|kimi_code|fleet-tree-61274d9297f61c4d42cff36e0fc97bc2126aec22|manifest-custody-profile@1",
+      "reason": "disposition-6d9f04284eb8990d"
+    },
+    {
+      "claim_key": "profile|aider|aider|unresolved-build|manifest-custody-profile@1|singleton-safe@1|unverified-initial-epoch@1",
+      "disposition": "unverified",
+      "id": "fleet|aider|aider|fleet-tree-61274d9297f61c4d42cff36e0fc97bc2126aec22|manifest-custody-profile@1",
+      "reason": "disposition-8f327613e2e5dedb"
+    },
+    {
+      "claim_key": "profile|litellm|litellm|unresolved-build|manifest-custody-profile@1|singleton-safe@1|unverified-initial-epoch@1",
+      "disposition": "not_applicable",
+      "id": "fleet|litellm|litellm|fleet-tree-61274d9297f61c4d42cff36e0fc97bc2126aec22|manifest-custody-profile@1",
+      "reason": "disposition-b7b0962d819b4823"
+    },
+    {
+      "claim_key": "profile|hermes|hermes|unresolved-build|manifest-custody-profile@1|singleton-safe@1|unverified-initial-epoch@1",
+      "disposition": "unverified",
+      "id": "fleet|hermes|hermes|fleet-tree-61274d9297f61c4d42cff36e0fc97bc2126aec22|manifest-custody-profile@1",
+      "reason": "disposition-9e2084bddb7ac7a2"
+    },
+    {
+      "claim_key": "profile|ollama|ollama|unresolved-build|manifest-custody-profile@1|singleton-safe@1|unverified-initial-epoch@1",
+      "disposition": "not_applicable",
+      "id": "fleet|ollama|ollama|fleet-tree-61274d9297f61c4d42cff36e0fc97bc2126aec22|manifest-custody-profile@1",
+      "reason": "disposition-0519fce02b38e269"
+    },
+    {
+      "claim_key": "profile|openclaw-memory|openclaw_memory|unresolved-build|manifest-custody-profile@1|singleton-safe@1|unverified-initial-epoch@1",
+      "disposition": "not_applicable",
+      "id": "fleet|openclaw-memory|openclaw_memory|fleet-tree-61274d9297f61c4d42cff36e0fc97bc2126aec22|manifest-custody-profile@1",
+      "reason": "disposition-eb7a27e7305e494f"
+    },
+    {
+      "claim_key": "profile|openclaw-browser|openclaw_browser|unresolved-build|manifest-custody-profile@1|singleton-safe@1|unverified-initial-epoch@1",
+      "disposition": "not_applicable",
+      "id": "fleet|openclaw-browser|openclaw_browser|fleet-tree-61274d9297f61c4d42cff36e0fc97bc2126aec22|manifest-custody-profile@1",
+      "reason": "disposition-e77fde86d0e8e3cb"
+    },
+    {
+      "claim_key": "profile|openclaw-voice|openclaw_voice|unresolved-build|manifest-custody-profile@1|singleton-safe@1|unverified-initial-epoch@1",
+      "disposition": "not_applicable",
+      "id": "fleet|openclaw-voice|openclaw_voice|fleet-tree-61274d9297f61c4d42cff36e0fc97bc2126aec22|manifest-custody-profile@1",
+      "reason": "disposition-debadfb31c9aae96"
+    },
+    {
+      "claim_key": "profile|openclaw-phone|openclaw_phone|unresolved-build|manifest-custody-profile@1|singleton-safe@1|unverified-initial-epoch@1",
+      "disposition": "not_applicable",
+      "id": "fleet|openclaw-phone|openclaw_phone|fleet-tree-61274d9297f61c4d42cff36e0fc97bc2126aec22|manifest-custody-profile@1",
+      "reason": "disposition-3d059b80dc73fe7b"
+    },
+    {
+      "claim_key": "profile|acp-runtime|acp_runtime|unresolved-build|manifest-custody-profile@1|singleton-safe@1|unverified-initial-epoch@1",
+      "disposition": "unverified",
+      "id": "fleet|acp-runtime|acp_runtime|fleet-tree-61274d9297f61c4d42cff36e0fc97bc2126aec22|manifest-custody-profile@1",
+      "reason": "disposition-6eb710c6711708fe"
+    },
+    {
+      "claim_key": "profile|discord-gateway|discord_gateway|unresolved-build|manifest-custody-profile@1|singleton-safe@1|unverified-initial-epoch@1",
+      "disposition": "not_applicable",
+      "id": "fleet|discord-gateway|discord_gateway|fleet-tree-61274d9297f61c4d42cff36e0fc97bc2126aec22|manifest-custody-profile@1",
+      "reason": "disposition-90684ed34a6fd0d5"
+    },
+    {
+      "claim_key": "profile|signal-gateway|signal_gateway|unresolved-build|manifest-custody-profile@1|singleton-safe@1|unverified-initial-epoch@1",
+      "disposition": "not_applicable",
+      "id": "fleet|signal-gateway|signal_gateway|fleet-tree-61274d9297f61c4d42cff36e0fc97bc2126aec22|manifest-custody-profile@1",
+      "reason": "disposition-b563107d076a88c0"
+    },
+    {
+      "claim_key": "profile|imessage-gateway|imessage_gateway|unresolved-build|manifest-custody-profile@1|singleton-safe@1|unverified-initial-epoch@1",
+      "disposition": "not_applicable",
+      "id": "fleet|imessage-gateway|imessage_gateway|fleet-tree-61274d9297f61c4d42cff36e0fc97bc2126aec22|manifest-custody-profile@1",
+      "reason": "disposition-5b60c30d46c8e84a"
+    },
+    {
+      "claim_key": "profile|vllm|vllm|unresolved-build|manifest-custody-profile@1|singleton-safe@1|unverified-initial-epoch@1",
+      "disposition": "not_applicable",
+      "id": "fleet|vllm|vllm|fleet-tree-61274d9297f61c4d42cff36e0fc97bc2126aec22|manifest-custody-profile@1",
+      "reason": "disposition-363d300460874cba"
+    },
+    {
+      "claim_key": "profile|deepseek-harness|deepseek_harness|unresolved-build|manifest-custody-profile@1|singleton-safe@1|unverified-initial-epoch@1",
+      "disposition": "unverified",
+      "id": "fleet|deepseek-harness|deepseek_harness|fleet-tree-61274d9297f61c4d42cff36e0fc97bc2126aec22|manifest-custody-profile@1",
+      "reason": "disposition-d222adc95be2b281"
+    },
+    {
+      "claim_key": "profile|google-antigravity|antigravity|unresolved-build|manifest-custody-profile@1|singleton-safe@1|unverified-initial-epoch@1",
+      "disposition": "unverified",
+      "id": "external|google-antigravity|antigravity|external-channel-unresolved|manifest-custody-profile@1",
+      "reason": "disposition-c28ea20acd6e991f"
+    },
+    {
+      "claim_key": "profile|openai-chatgpt|chatgpt-plugin|unresolved-build|invented-profile@1|singleton-safe@1|unverified-initial-epoch@1",
+      "disposition": "unverified",
+      "id": "publisher|openai-chatgpt|chatgpt-plugin|publisher-channel-unresolved|invented-profile@1",
+      "reason": "disposition-31a914ef63df10e0"
+    },
+    {
+      "claim_key": "profile|github-copilot|github-copilot|unresolved-build|manifest-custody-profile@1|singleton-safe@1|unverified-initial-epoch@1",
+      "disposition": "unverified",
+      "id": "publisher|github-copilot|github-copilot|publisher-channel-unresolved|manifest-custody-profile@1",
+      "reason": "disposition-3cc957e4dedfb746"
+    }
+  ],
+  "content_digest": "7b7625b364a2316a1d57933fdd95ece5b5605ca13eaaac37f5e04a24cd914b0e",
+  "evidence_source_set_digest": "69fc589adc17a0476e93a68b4e707cf0f3661c5cf59aa62232bf8ac396c642da",
+  "evidence_trust_root_digest": "811ed4cd23a19d7d7d760aad435ac46d7d58f2f170bf30bed4c9b354af41213d",
+  "record": "support-baseline@1",
+  "requirements_content_digest": "84663dd874317b0f3313b1ed44dd59629535e37a625251c8a23dce540fb915f2",
+  "requirements_decision_digest": "35c7c9108ae4c4c07b5e5bd832bb993fed6dcce55c286ccbc2879143f7092b2a",
+  "requirements_revision": "support-denominator@1",
+  "revision": "support-baseline@1",
+  "stage_c_authority_set_digest": "6de6bb8c6a7e3688ea7f9410334c5f71b0cbb5b7de600eeb42f1d2a6a84d88e9",
+  "success_terminal": "registry-disposition-complete",
+  "tier_evidence_set_digest": "877234056a5cbc65bc2c2f04f4913918f8949899bb284bd2520a4219ec9f08df"
+}

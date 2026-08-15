@@ -1,0 +1,36 @@
+[
+  {
+    "claim_digest": "1bd43be6f1acc590e3d9f4c5754e22bf0372ca05937ebde113f2c8f4ce29731e",
+    "claim_key": "openai-codex|codex|fixture-build@1|manifest-custody-profile@1|U3|singleton-safe@1|fixture-verified-epoch@1",
+    "evidence_epoch": "fixture-verified-epoch@1",
+    "outcome": "passed",
+    "record": "conformance-result@1",
+    "success_terminal": "bounded-product-usable",
+    "tier_evidence_artifact_ids": [
+      "fixture-tier-codex-launcher",
+      "fixture-tier-codex-interruption",
+      "fixture-tier-codex-recovery",
+      "fixture-tier-codex-separation",
+      "fixture-tier-codex-acceptance"
+    ],
+    "tier_evidence_set_digest": "2cea0ecb6a9601b078de763960b087596ef20e7a03a3b0c3aef0dbfe674e4330",
+    "validity": "verified"
+  },
+  {
+    "claim_digest": "e97cb3e36ad10acedda6515302057d40df9ee3c413d671c8d388ec5976e12153",
+    "claim_key": "anthropic-claude-code|claude_code|fixture-build@1|manifest-custody-profile@1|U3|singleton-safe@1|fixture-verified-epoch@1",
+    "evidence_epoch": "fixture-verified-epoch@1",
+    "outcome": "passed",
+    "record": "conformance-result@1",
+    "success_terminal": "bounded-product-usable",
+    "tier_evidence_artifact_ids": [
+      "fixture-tier-claude_code-launcher",
+      "fixture-tier-claude_code-interruption",
+      "fixture-tier-claude_code-recovery",
+      "fixture-tier-claude_code-separation",
+      "fixture-tier-claude_code-acceptance"
+    ],
+    "tier_evidence_set_digest": "2cea0ecb6a9601b078de763960b087596ef20e7a03a3b0c3aef0dbfe674e4330",
+    "validity": "verified"
+  }
+]

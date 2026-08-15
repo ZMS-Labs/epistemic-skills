@@ -1,0 +1,139 @@
+{
+  "$id": "https://zms-labs.example/portability/inventory-completeness@1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "authored_inventory": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "class": {
+            "enum": [
+              "runtime-bindings",
+              "host-configuration",
+              "installed-artifacts",
+              "listeners-callbacks",
+              "credential-routes",
+              "external-components",
+              "effective-principals",
+              "public-artifacts",
+              "repositories",
+              "buckets",
+              "publication-destinations"
+            ]
+          },
+          "items": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "class",
+          "items"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "checkers": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "affected_claim_keys": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "consequence": {
+            "enum": [
+              "none",
+              "demote-unverified",
+              "fail-closed",
+              "block"
+            ]
+          },
+          "identity": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "available",
+              "unavailable",
+              "error"
+            ]
+          }
+        },
+        "required": [
+          "identity",
+          "status",
+          "consequence",
+          "affected_claim_keys"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "claim_set": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "enumeration": {
+      "additionalProperties": false,
+      "properties": {
+        "independent": {
+          "const": true
+        },
+        "items": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "class": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "item": {
+                "minLength": 1,
+                "type": "string"
+              }
+            },
+            "required": [
+              "class",
+              "item"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "status": {
+          "const": "available"
+        }
+      },
+      "required": [
+        "independent",
+        "status",
+        "items"
+      ],
+      "type": "object"
+    },
+    "record": {
+      "const": "inventory-completeness@1"
+    }
+  },
+  "required": [
+    "record",
+    "authored_inventory",
+    "enumeration",
+    "checkers"
+  ],
+  "type": "object"
+}

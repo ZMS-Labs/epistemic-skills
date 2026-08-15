@@ -1,0 +1,23 @@
+{
+  "base": "authoritative",
+  "base_digest": "6ab96741ed741907ad246d992dfd88b9b7ee7925081e815e89b91dec3d8ed648",
+  "context": "negative-control",
+  "inherit": [
+    "authorities",
+    "capability_claims",
+    "conformance_results",
+    "evidence_sources",
+    "evidence_trust_root",
+    "fleet_census",
+    "requirements",
+    "stage_c_records",
+    "tier_evidence",
+    "transitions",
+    "vocabulary"
+  ],
+  "overrides": {
+    "baseline": "support-baseline.json",
+    "planning_dag": "planning-dag.json"
+  },
+  "record": "portability-fixture@1"
+}

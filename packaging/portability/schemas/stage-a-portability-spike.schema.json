@@ -1,0 +1,125 @@
+{
+  "$id": "https://zms-labs.example/portability/stage-a-portability-spike@1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "record": {"const": "stage-a-portability-spike@1"},
+    "decision": {"enum": ["proceed", "pivot", "narrow"]},
+    "evidence_epoch": {"minLength": 1, "type": "string"},
+    "input_digests": {
+      "additionalProperties": false,
+      "properties": {
+        "artifact_library": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+        "authoritative_root": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+        "consumer": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+        "code_authority": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+        "contract_validator": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+        "dependency_contract": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+        "dynamic_dependencies": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+        "enumerator": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+        "epoch": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+        "generator": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+        "generator_executor": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+        "host": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+        "installed": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+        "installer": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+        "ir": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+        "planning_dag": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+        "profile": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+        "probe_tool": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+        "projection": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+        "source": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+        "runner": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+        "verifier": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+        "transform": {"pattern": "^[0-9a-f]{64}$", "type": "string"}
+      },
+      "required": ["artifact_library", "authoritative_root", "code_authority", "consumer", "contract_validator", "dependency_contract", "dynamic_dependencies", "enumerator", "epoch", "generator", "generator_executor", "host", "installed", "installer", "ir", "planning_dag", "probe_tool", "profile", "projection", "runner", "source", "transform", "verifier"],
+      "type": "object"
+    },
+    "input_kinds": {
+      "additionalProperties": false,
+      "properties": {
+        "artifact_library": {"const": "file"},
+        "authoritative_root": {"const": "tree"},
+        "consumer": {"const": "file"},
+        "code_authority": {"const": "file"},
+        "contract_validator": {"const": "file"},
+        "dependency_contract": {"const": "file"},
+        "dynamic_dependencies": {"const": "file"},
+        "enumerator": {"const": "file"},
+        "epoch": {"const": "file"},
+        "generator": {"const": "file"},
+        "generator_executor": {"const": "file"},
+        "host": {"const": "file"},
+        "installed": {"const": "tree"},
+        "installer": {"const": "file"},
+        "ir": {"const": "file"},
+        "planning_dag": {"const": "file"},
+        "profile": {"const": "file"},
+        "probe_tool": {"const": "file"},
+        "projection": {"const": "file"},
+        "source": {"const": "tree"},
+        "runner": {"const": "file"},
+        "verifier": {"const": "file"},
+        "transform": {"const": "file"}
+      },
+      "required": ["artifact_library", "authoritative_root", "code_authority", "consumer", "contract_validator", "dependency_contract", "dynamic_dependencies", "enumerator", "epoch", "generator", "generator_executor", "host", "installed", "installer", "ir", "planning_dag", "probe_tool", "profile", "projection", "runner", "source", "transform", "verifier"],
+      "type": "object"
+    },
+    "planning_dag_content_digest": {"minLength": 1, "type": "string"},
+    "affected_dag_edges": {"items": {"minLength": 1, "type": "string"}, "minItems": 1, "type": "array", "uniqueItems": true},
+    "edge_dispositions": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "edge_id": {"minLength": 1, "type": "string"},
+          "disposition": {"enum": ["eligible-for-next-gate", "blocked"]}
+        },
+        "required": ["edge_id", "disposition"],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "outcome_criteria": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {"minLength": 1, "type": "string"},
+          "status": {"enum": ["passed", "failed", "unverified"]},
+          "detail": {"minLength": 1, "type": "string"}
+        },
+        "required": ["id", "status", "detail"],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "probe_observations": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "product": {"minLength": 1, "type": "string"},
+          "surface": {"minLength": 1, "type": "string"},
+          "status": {"enum": ["observed", "unverified", "failed"]},
+          "executable_path": {"minLength": 1, "type": "string"},
+          "version": {"minLength": 1, "type": "string"},
+          "boundary": {"minLength": 1, "type": "string"},
+          "reason": {"minLength": 1, "type": "string"}
+        },
+        "required": ["product", "surface", "status", "executable_path", "version", "boundary", "reason"],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "supersession_rule": {"minLength": 1, "type": "string"},
+    "evidence_class": {"const": "non-causal-decision-support"},
+    "admissible_for": {"const": ["architecture-decision"], "type": "array"},
+    "not_evidence_for": {"const": ["exact-conformance", "promotion", "tier-award", "usability"], "type": "array"},
+    "decision_digest": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+    "content_digest": {"pattern": "^[0-9a-f]{64}$", "type": "string"}
+  },
+  "required": ["record", "decision", "evidence_epoch", "input_digests", "input_kinds", "planning_dag_content_digest", "affected_dag_edges", "edge_dispositions", "outcome_criteria", "probe_observations", "supersession_rule", "evidence_class", "admissible_for", "not_evidence_for", "decision_digest", "content_digest"],
+  "type": "object"
+}

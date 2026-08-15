@@ -1,0 +1,83 @@
+{
+  "$id": "https://zms-labs.example/portability/authority-artifact-set@1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "artifacts": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "authority": {
+            "const": "planning-only-no-promotion-no-n-active"
+          },
+          "content_digest": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "issuer_identity": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "rationale": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "record_type": {
+            "enum": [
+              "operator-decision@1",
+              "disposition-decision@1"
+            ]
+          },
+          "referenced_record": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "subject_digest": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "subject_id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "subject_kind": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "issuer_identity",
+          "subject_kind",
+          "subject_id",
+          "subject_digest",
+          "rationale",
+          "referenced_record",
+          "content_digest",
+          "record_type",
+          "authority"
+        ],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "content_digest": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "record": {
+      "const": "authority-artifact-set@1"
+    }
+  },
+  "required": [
+    "record",
+    "artifacts",
+    "content_digest"
+  ],
+  "type": "object"
+}

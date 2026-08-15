@@ -1,0 +1,93 @@
+{
+  "authority_artifact_id": "support-denominator-freeze",
+  "census_content_digest": "8fbc2be02192ec519896e8d2b6ebc8dc833d29a710e742e30801fc2f5fe36e13",
+  "content_digest": "6fc326652bb0669509cb98ce95b691d24596ad4ee2dc93970c61e08bd28e0d29",
+  "decision_digest": "duplicate-first",
+  "decision_digest": "e382e3ebd8b657053dde7de4f6fe1b460840ab9ad41771b5523b0b1aa664bcaf",
+  "issuer_identity": "operator-authority:ZMS-Labs/epistemic-skills:complete-manifest-mission-custody-usability",
+  "record": "consumer-requirements@1",
+  "required_consumers": [
+    {
+      "id": "fleet|openai-codex|codex|fleet-tree-61274d9297f61c4d42cff36e0fc97bc2126aec22|manifest-custody-profile@1",
+      "minimum_tier": "U3"
+    },
+    {
+      "id": "fleet|anthropic-claude-code|claude_code|fleet-tree-61274d9297f61c4d42cff36e0fc97bc2126aec22|manifest-custody-profile@1",
+      "minimum_tier": "U3"
+    },
+    {
+      "id": "fleet|cursor-agent|cursor_agent|fleet-tree-61274d9297f61c4d42cff36e0fc97bc2126aec22|manifest-custody-profile@1",
+      "minimum_tier": "U3"
+    },
+    {
+      "id": "fleet|google-gemini-cli|gemini|fleet-tree-61274d9297f61c4d42cff36e0fc97bc2126aec22|manifest-custody-profile@1",
+      "minimum_tier": "U3"
+    },
+    {
+      "id": "fleet|moonshot-kimi-code|kimi_code|fleet-tree-61274d9297f61c4d42cff36e0fc97bc2126aec22|manifest-custody-profile@1",
+      "minimum_tier": "U3"
+    },
+    {
+      "id": "fleet|aider|aider|fleet-tree-61274d9297f61c4d42cff36e0fc97bc2126aec22|manifest-custody-profile@1",
+      "minimum_tier": "U3"
+    },
+    {
+      "id": "fleet|litellm|litellm|fleet-tree-61274d9297f61c4d42cff36e0fc97bc2126aec22|manifest-custody-profile@1",
+      "minimum_tier": "U0"
+    },
+    {
+      "id": "fleet|hermes|hermes|fleet-tree-61274d9297f61c4d42cff36e0fc97bc2126aec22|manifest-custody-profile@1",
+      "minimum_tier": "U3"
+    },
+    {
+      "id": "fleet|ollama|ollama|fleet-tree-61274d9297f61c4d42cff36e0fc97bc2126aec22|manifest-custody-profile@1",
+      "minimum_tier": "U0"
+    },
+    {
+      "id": "fleet|openclaw-memory|openclaw_memory|fleet-tree-61274d9297f61c4d42cff36e0fc97bc2126aec22|manifest-custody-profile@1",
+      "minimum_tier": "U0"
+    },
+    {
+      "id": "fleet|openclaw-browser|openclaw_browser|fleet-tree-61274d9297f61c4d42cff36e0fc97bc2126aec22|manifest-custody-profile@1",
+      "minimum_tier": "U0"
+    },
+    {
+      "id": "fleet|openclaw-voice|openclaw_voice|fleet-tree-61274d9297f61c4d42cff36e0fc97bc2126aec22|manifest-custody-profile@1",
+      "minimum_tier": "U0"
+    },
+    {
+      "id": "fleet|openclaw-phone|openclaw_phone|fleet-tree-61274d9297f61c4d42cff36e0fc97bc2126aec22|manifest-custody-profile@1",
+      "minimum_tier": "U0"
+    },
+    {
+      "id": "fleet|acp-runtime|acp_runtime|fleet-tree-61274d9297f61c4d42cff36e0fc97bc2126aec22|manifest-custody-profile@1",
+      "minimum_tier": "U3"
+    },
+    {
+      "id": "fleet|discord-gateway|discord_gateway|fleet-tree-61274d9297f61c4d42cff36e0fc97bc2126aec22|manifest-custody-profile@1",
+      "minimum_tier": "U0"
+    },
+    {
+      "id": "fleet|signal-gateway|signal_gateway|fleet-tree-61274d9297f61c4d42cff36e0fc97bc2126aec22|manifest-custody-profile@1",
+      "minimum_tier": "U0"
+    },
+    {
+      "id": "fleet|imessage-gateway|imessage_gateway|fleet-tree-61274d9297f61c4d42cff36e0fc97bc2126aec22|manifest-custody-profile@1",
+      "minimum_tier": "U0"
+    },
+    {
+      "id": "fleet|vllm|vllm|fleet-tree-61274d9297f61c4d42cff36e0fc97bc2126aec22|manifest-custody-profile@1",
+      "minimum_tier": "U0"
+    },
+    {
+      "id": "fleet|deepseek-harness|deepseek_harness|fleet-tree-61274d9297f61c4d42cff36e0fc97bc2126aec22|manifest-custody-profile@1",
+      "minimum_tier": "U3"
+    },
+    {
+      "id": "external|google-antigravity|antigravity|external-channel-unresolved|manifest-custody-profile@1",
+      "minimum_tier": "U4"
+    }
+  ],
+  "revision": "support-denominator@1",
+  "scope": "19 Fleet SURFACE_KINDS at tree 61274d9297f61c4d42cff36e0fc97bc2126aec22, Antigravity external; publisher profiles tracked outside the bounded product denominator; unknown surfaces remain unverified."
+}

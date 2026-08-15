@@ -1,0 +1,46 @@
+[
+  {
+    "achieved_tier": "U3",
+    "capacity_policy": "n-active-unverified",
+    "claim_key": "openai-codex|codex|fixture-build@1|manifest-custody-profile@1|U3|singleton-safe@1|fixture-verified-epoch@1",
+    "custody_capacity_policy_revision": "n-active-unverified",
+    "evidence_epoch": "fixture-verified-epoch@1",
+    "product": "openai-codex",
+    "profile_revision": "manifest-custody-profile@1",
+    "record": "capability-claim@1",
+    "rendered_status": "current-usable",
+    "resolved_release_or_build": "fixture-build@1",
+    "surface": "codex",
+    "tier_evidence_artifact_ids": [
+      "fixture-tier-codex-launcher",
+      "fixture-tier-codex-interruption",
+      "fixture-tier-codex-recovery",
+      "fixture-tier-codex-separation",
+      "fixture-tier-codex-acceptance"
+    ],
+    "tier_evidence_set_digest": "4558deb15dea560518329cdbd3926681f1a41cfcb691b688bc834a87cc8d3318",
+    "validity": "verified"
+  },
+  {
+    "achieved_tier": "U3",
+    "capacity_policy": "singleton-safe@1",
+    "claim_key": "anthropic-claude-code|claude_code|fixture-build@1|manifest-custody-profile@1|U3|singleton-safe@1|fixture-verified-epoch@1",
+    "custody_capacity_policy_revision": "singleton-safe@1",
+    "evidence_epoch": "fixture-verified-epoch@1",
+    "product": "anthropic-claude-code",
+    "profile_revision": "manifest-custody-profile@1",
+    "record": "capability-claim@1",
+    "rendered_status": "current-usable",
+    "resolved_release_or_build": "fixture-build@1",
+    "surface": "claude_code",
+    "tier_evidence_artifact_ids": [
+      "fixture-tier-claude_code-launcher",
+      "fixture-tier-claude_code-interruption",
+      "fixture-tier-claude_code-recovery",
+      "fixture-tier-claude_code-separation",
+      "fixture-tier-claude_code-acceptance"
+    ],
+    "tier_evidence_set_digest": "4558deb15dea560518329cdbd3926681f1a41cfcb691b688bc834a87cc8d3318",
+    "validity": "verified"
+  }
+]

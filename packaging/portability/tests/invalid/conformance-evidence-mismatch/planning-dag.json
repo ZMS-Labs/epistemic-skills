@@ -1,0 +1,300 @@
+{
+  "bindings": {
+    "authority_artifacts_digest": "5a94bbeca51fbf069c594d76a84c95675c0c34b55b4bd18c0555fb03fbc24063",
+    "baseline_content_digest": "b7a134ebe039293fa509f4fee758ebb23545bf52059010ff86b29b50df615d0a",
+    "capability_claims_digest": "4dc1be781976cdb804836d0d8859ee88af6bbcddcc3416e78d5afa94d266a294",
+    "census_content_digest": "8fbc2be02192ec519896e8d2b6ebc8dc833d29a710e742e30801fc2f5fe36e13",
+    "conformance_results_digest": "063af649f4a224b10fb97cd77e3200233937ec009ae2faa9b7dd13d4f8f58437",
+    "evidence_source_set_digest": "69fc589adc17a0476e93a68b4e707cf0f3661c5cf59aa62232bf8ac396c642da",
+    "evidence_trust_root_digest": "811ed4cd23a19d7d7d760aad435ac46d7d58f2f170bf30bed4c9b354af41213d",
+    "requirements_content_digest": "84663dd874317b0f3313b1ed44dd59629535e37a625251c8a23dce540fb915f2",
+    "stage_c_authority_set_digest": "c4023252a592993b5f405eed6cf95f77025cb32da9d04eb57b16fff2daa30460",
+    "tier_evidence_set_digest": "4558deb15dea560518329cdbd3926681f1a41cfcb691b688bc834a87cc8d3318",
+    "transition_artifacts_digest": "6dd2c9d90c55a57be5553dbfd299e9401f7f00288889a01cd2211fec15ab8f6d"
+  },
+  "content_digest": "28bf1b54b48d0a4637b42def8c43c4b7f2b85811f3beb5579180bf88070c44fe",
+  "edges": [
+    {
+      "from": "reviewed-contract",
+      "kind": "authority",
+      "mode": "live",
+      "to": "finite-support-denominator",
+      "transition_artifact": "transition-01-reviewed-contract-to-finite-support-denominator"
+    },
+    {
+      "from": "finite-support-denominator",
+      "kind": "implementation",
+      "mode": "live",
+      "to": "stage-a-portability-spike",
+      "transition_artifact": "transition-02-finite-support-denominator-to-stage-a-portability-spike"
+    },
+    {
+      "from": "stage-a-portability-spike",
+      "kind": "evidence",
+      "mode": "live",
+      "to": "disposable-two-surface-result",
+      "transition_artifact": "transition-03-stage-a-portability-spike-to-disposable-two-surface-result"
+    },
+    {
+      "from": "disposable-two-surface-result",
+      "kind": "implementation",
+      "mode": "live",
+      "to": "core-lifecycle-and-integrity-safety",
+      "transition_artifact": "transition-04-disposable-two-surface-result-to-core-lifecycle-and-integrity-safety"
+    },
+    {
+      "from": "core-lifecycle-and-integrity-safety",
+      "kind": "implementation",
+      "mode": "live",
+      "to": "issue-173-cross-mission-drift-suppression",
+      "transition_artifact": "transition-05-core-lifecycle-and-integrity-safety-to-issue-173-cross-mission-drift-suppression"
+    },
+    {
+      "from": "issue-173-cross-mission-drift-suppression",
+      "kind": "implementation",
+      "mode": "live",
+      "to": "issue-173-bounded-regex-validation",
+      "transition_artifact": "transition-06-issue-173-cross-mission-drift-suppression-to-issue-173-bounded-regex-validation"
+    },
+    {
+      "from": "issue-173-bounded-regex-validation",
+      "kind": "implementation",
+      "mode": "live",
+      "to": "issue-173-fail-open-inversion-duplicate-resolution",
+      "transition_artifact": "transition-07-issue-173-bounded-regex-validation-to-issue-173-fail-open-inversion-duplicate-resolution"
+    },
+    {
+      "from": "issue-173-fail-open-inversion-duplicate-resolution",
+      "kind": "implementation",
+      "mode": "live",
+      "to": "issue-173-charter-conjoin-migration-refusal",
+      "transition_artifact": "transition-08-issue-173-fail-open-inversion-duplicate-resolution-to-issue-173-charter-conjoin-migration-refusal"
+    },
+    {
+      "from": "issue-173-charter-conjoin-migration-refusal",
+      "kind": "evidence",
+      "mode": "live",
+      "to": "stage-a-decision-ready-not-usable",
+      "transition_artifact": "transition-09-issue-173-charter-conjoin-migration-refusal-to-stage-a-decision-ready-not-usable"
+    },
+    {
+      "from": "stage-a-decision-ready-not-usable",
+      "kind": "evidence",
+      "mode": "live",
+      "to": "singleton-exact-conformance",
+      "transition_artifact": "transition-10-stage-a-decision-ready-not-usable-to-singleton-exact-conformance"
+    },
+    {
+      "from": "singleton-exact-conformance",
+      "kind": "evidence",
+      "mode": "live",
+      "to": "singleton-independent-acceptance",
+      "transition_artifact": "transition-11-singleton-exact-conformance-to-singleton-independent-acceptance"
+    },
+    {
+      "from": "singleton-independent-acceptance",
+      "kind": "authority",
+      "mode": "live",
+      "to": "singleton-promotion-operator-decision",
+      "transition_artifact": "transition-12-singleton-independent-acceptance-to-singleton-promotion-operator-decision"
+    },
+    {
+      "from": "singleton-promotion-operator-decision",
+      "kind": "promotion",
+      "mode": "live",
+      "to": "singleton-bounded-exact-claim",
+      "transition_artifact": "transition-13-singleton-promotion-operator-decision-to-singleton-bounded-exact-claim"
+    },
+    {
+      "from": "stage-a-decision-ready-not-usable",
+      "kind": "authority",
+      "mode": "template",
+      "to": "frozen-n-active-successor-design",
+      "transition_artifact": "transition-14-stage-a-decision-ready-not-usable-to-frozen-n-active-successor-design"
+    },
+    {
+      "from": "frozen-n-active-successor-design",
+      "kind": "authority",
+      "mode": "template",
+      "to": "separate-n-active-gauntlet-go",
+      "transition_artifact": "transition-15-frozen-n-active-successor-design-to-separate-n-active-gauntlet-go"
+    },
+    {
+      "from": "separate-n-active-gauntlet-go",
+      "kind": "authority",
+      "mode": "template",
+      "to": "explicit-n-active-operator-decision",
+      "transition_artifact": "transition-16-separate-n-active-gauntlet-go-to-explicit-n-active-operator-decision"
+    },
+    {
+      "from": "explicit-n-active-operator-decision",
+      "kind": "authority",
+      "mode": "template",
+      "to": "n-active-candidate",
+      "transition_artifact": "transition-17-explicit-n-active-operator-decision-to-n-active-candidate"
+    },
+    {
+      "from": "n-active-candidate",
+      "kind": "evidence",
+      "mode": "template",
+      "to": "n-active-exact-conformance",
+      "transition_artifact": "transition-18-n-active-candidate-to-n-active-exact-conformance"
+    },
+    {
+      "from": "n-active-exact-conformance",
+      "kind": "evidence",
+      "mode": "template",
+      "to": "n-active-independent-acceptance",
+      "transition_artifact": "transition-19-n-active-exact-conformance-to-n-active-independent-acceptance"
+    },
+    {
+      "from": "n-active-independent-acceptance",
+      "kind": "authority",
+      "mode": "template",
+      "to": "n-active-promotion-operator-decision",
+      "transition_artifact": "transition-20-n-active-independent-acceptance-to-n-active-promotion-operator-decision"
+    },
+    {
+      "from": "n-active-promotion-operator-decision",
+      "kind": "promotion",
+      "mode": "template",
+      "to": "n-active-bounded-exact-claim",
+      "transition_artifact": "transition-21-n-active-promotion-operator-decision-to-n-active-bounded-exact-claim"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "reviewed-contract",
+      "kind": "contract",
+      "stage": "A",
+      "terminal": false
+    },
+    {
+      "id": "finite-support-denominator",
+      "kind": "contract",
+      "stage": "A",
+      "terminal": false
+    },
+    {
+      "id": "stage-a-portability-spike",
+      "kind": "stage-a-portability-spike",
+      "stage": "A",
+      "terminal": false
+    },
+    {
+      "id": "disposable-two-surface-result",
+      "kind": "contract",
+      "stage": "A",
+      "terminal": false
+    },
+    {
+      "id": "core-lifecycle-and-integrity-safety",
+      "kind": "contract",
+      "stage": "A",
+      "terminal": false
+    },
+    {
+      "id": "issue-173-cross-mission-drift-suppression",
+      "kind": "concurrency-prerequisites",
+      "stage": "A",
+      "terminal": false
+    },
+    {
+      "id": "issue-173-bounded-regex-validation",
+      "kind": "concurrency-prerequisites",
+      "stage": "A",
+      "terminal": false
+    },
+    {
+      "id": "issue-173-fail-open-inversion-duplicate-resolution",
+      "kind": "concurrency-prerequisites",
+      "stage": "A",
+      "terminal": false
+    },
+    {
+      "id": "issue-173-charter-conjoin-migration-refusal",
+      "kind": "concurrency-prerequisites",
+      "stage": "A",
+      "terminal": false
+    },
+    {
+      "id": "stage-a-decision-ready-not-usable",
+      "kind": "contract",
+      "stage": "A",
+      "terminal": true
+    },
+    {
+      "id": "singleton-exact-conformance",
+      "kind": "contract",
+      "stage": "C",
+      "terminal": false
+    },
+    {
+      "id": "singleton-independent-acceptance",
+      "kind": "contract",
+      "stage": "C",
+      "terminal": false
+    },
+    {
+      "id": "singleton-promotion-operator-decision",
+      "kind": "operator-decision",
+      "stage": "C",
+      "terminal": false
+    },
+    {
+      "id": "singleton-bounded-exact-claim",
+      "kind": "promotion",
+      "stage": "C",
+      "terminal": true
+    },
+    {
+      "id": "frozen-n-active-successor-design",
+      "kind": "frozen-successor-design",
+      "stage": "B",
+      "terminal": false
+    },
+    {
+      "id": "separate-n-active-gauntlet-go",
+      "kind": "gauntlet-go",
+      "stage": "B",
+      "terminal": false
+    },
+    {
+      "id": "explicit-n-active-operator-decision",
+      "kind": "operator-decision",
+      "stage": "B",
+      "terminal": false
+    },
+    {
+      "id": "n-active-candidate",
+      "kind": "n-active-candidate",
+      "stage": "B",
+      "terminal": true
+    },
+    {
+      "id": "n-active-exact-conformance",
+      "kind": "contract",
+      "stage": "C",
+      "terminal": false
+    },
+    {
+      "id": "n-active-independent-acceptance",
+      "kind": "contract",
+      "stage": "C",
+      "terminal": false
+    },
+    {
+      "id": "n-active-promotion-operator-decision",
+      "kind": "operator-decision",
+      "stage": "C",
+      "terminal": false
+    },
+    {
+      "id": "n-active-bounded-exact-claim",
+      "kind": "promotion",
+      "stage": "C",
+      "terminal": true
+    }
+  ],
+  "record": "planning-dag@1"
+}
