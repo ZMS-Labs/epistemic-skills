@@ -228,7 +228,10 @@ Install with **exactly one mechanism per harness**. Native plugin **or** generic
 | Antigravity (`agy`) | Tagged native local plugin | Validate with `agy` | Choose native, Gemini link, or import—only one |
 | Kimi Code | Tagged repository plugin | `/reload` or new session | Plugin instructions map isolated-agent primitives |
 | ZCode | Tagged local checkout, junction-projected into `~/.zcode/skills` | Start a fresh session; verify the tag's full skill count (fifteen at v5.1.0) | Session bootstrap junctions `~/.claude/skills` only — skills riding as Claude *plugins* are not auto-imported; junction surface verified on one fleet device, plugin install untested |
+| ChatGPT / OpenAI | Generated bundle from the release (`packaging/openai/chatgpt-skill`) | Upload the generated zip per [the packaging guide](docs/CHATGPT-AND-OPENAI-PACKAGING.md) | Generated-artifact bridge: a snapshot of the released tree, not self-updating; no live execution in this release |
 | Generic Agent Skills host | Tagged canonical skills URL | Reload host and verify source | Host must supply any runtime primitive the selected skill requires |
+
+**Shared-budget boundary (every harness):** harnesses cap the total description bytes they load; over the harness cap, descriptions are dropped **silently** — the skill files exist and the count looks right while triggers never fire. This package consumes 8,636 bytes (its own recorded ceiling). If other skills share your harness's budget, verify triggers actually fire after install; a file count alone is not proof of loading.
 
 Full installation, migration, runtime-degradation, and troubleshooting guidance lives in the [installation handbook](https://github.com/ZMS-Labs/epistemic-skills/wiki/Installation-and-Harness-Compatibility).
 
