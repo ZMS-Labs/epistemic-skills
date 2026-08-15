@@ -176,7 +176,7 @@ def test_three_subprocess_kill_resume_repair_proof() -> None:
         # legitimate FAIL, remediate, clear it, re-verify, and accept
         # from a truly independent acceptor.
         # ---------------------------------------------------------------
-        r = run("verify", "--workspace", str(ws), "--actor", "agent:worker")
+        r = run("begin-verification", "--workspace", str(ws), "--actor", "agent:worker")
         check("c-verify-exit-0", r.returncode == 0)
 
         r = run("accept", "--workspace", str(ws), "--actor", "agent:worker",
@@ -212,7 +212,7 @@ def test_three_subprocess_kill_resume_repair_proof() -> None:
         st = status_json(ws, "agent:worker")
         check("c-active-after-clear-fail", st["status"] == "active")
 
-        r = run("verify", "--workspace", str(ws), "--actor", "agent:worker")
+        r = run("begin-verification", "--workspace", str(ws), "--actor", "agent:worker")
         check("c-reverify-exit-0", r.returncode == 0)
 
         r = run("accept", "--workspace", str(ws), "--actor", "agent:acceptor-2",
