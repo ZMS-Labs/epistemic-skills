@@ -1,0 +1,14 @@
+title = "epistemic-skills secret scanning"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Schema-bound SHA-256 authority digests are public identifiers, not credentials"
+targetRules = ["generic-api-key"]
+regexTarget = "line"
+regexes = [
+  '''^\s*"(readback_)?credential_digest"\s*:\s*"[0-9a-f]{64}",?\s*$''',
+  '''^\s*printf '%s\\n' '"credentia[l]_digest": "663a543d009ec261190a6ab8a8a45f02ac80ed052aceb90e924ec96a20d76ed8"' > "\$fixture/allowed\.json"$''',
+  '''^\s*printf '%s\\n' '"credentia[l]": "663a543d009ec261190a6ab8a8a45f02ac80ed052aceb90e924ec96a20d76ed8"' > "\$fixture/rejected\.json"$''',
+]

@@ -56,6 +56,25 @@ jobs:
             echo "gitleaks positive control failed with unexpected status $status" >&2
             exit "$status"
           fi
+      - name: Prove the digest allowlist is narrow
+        run: |
+          fixture="$(mktemp -d)"
+          digest="$(printf '%s%s' '663a543d009ec261190a6ab8a8a45f02a' 'c80ed052aceb90e924ec96a20d76ed8')"
+          printf '"%s": "%s"\n' 'credential_digest' "$digest" > "$fixture/allowed.json"
+          "$RUNNER_TEMP/bin/gitleaks" dir --config .gitleaks.toml --no-banner --redact "$fixture/allowed.json"
+          printf '"%s": "%s"\n' 'credential' "$digest" > "$fixture/rejected.json"
+          set +e
+          "$RUNNER_TEMP/bin/gitleaks" dir --config .gitleaks.toml --no-banner --redact "$fixture/rejected.json"
+          status=$?
+          set -e
+          if [ "$status" -eq 0 ]; then
+            echo "gitleaks digest allowlist accepted a neighboring credential field" >&2
+            exit 1
+          fi
+          if [ "$status" -ne 1 ]; then
+            echo "gitleaks narrowness control failed with unexpected status $status" >&2
+            exit "$status"
+          fi
       - name: Scan the complete repository history
         run: |
-          "$RUNNER_TEMP/bin/gitleaks" git --no-banner --redact --log-opts="--all" .
+          "$RUNNER_TEMP/bin/gitleaks" git --config .gitleaks.toml --no-banner --redact --log-opts="--all" .
