@@ -111,4 +111,37 @@ check_public_content RFC1918/UNC/email patterns with RED seeds · narrow
 `ALLOWLIST_PREFIXES` to line-scoped regexes · POSIX install guard mirroring
 the Windows one · mission custody in Kimi/plugin.json enumerations ·
 path-filter ⊇ input-space coverage guard · full v5.1.0 wiki packet ·
-v5.0.0 release-body amendment execution · es#162 filesystem-probe fix.
+v5.0.0 release-body amendment execution · es#162 filesystem-probe fix ·
+RELEASING.md required-job-semantics amendment for workflows carrying
+optional probe jobs (owner: operator, per panel-2 CL-4).
+
+## Publication receipt (appended post-tag, 2026-08-15)
+
+- **Panel-2 verdict (mirrored at `panel2/verdict.md`): GO, binding on
+  execution** — all P1/P2 discharged; the tag-message conditions
+  (final-SHA run IDs incl. the honest `contract-macos` run-level failure,
+  the CL-2 re-escalation clause, panel-2 coordinate, independence limits)
+  were executed in the annotated tag message as specified.
+- **Published:** annotated tag `v5.1.0` on
+  `5906464397305f50d36c59cce91bb397ec7dff27`; GitHub Release non-draft,
+  body = committed notes verbatim. Step-9 identity checks pass (tag object
+  annotated; peeled target = candidate; Release on tag; normalized body
+  equality; main contains the commit).
+- **Operational event, logged:** the tag push was initially rejected by the
+  `protect-version-tags` ruleset (creation restricted with **zero bypass
+  actors** — no one, including admin, could create a `v*` tag; prior tags
+  predate the ruleset's enforcement). Admin (SternOne) temporarily added
+  themselves as bypass actor, pushed the tag, and restored the ruleset to
+  its exact prior state (`bypass_actors: []`, verified) — a ~17-second
+  single-actor window. The ruleset's zero-bypass state likely deserves an
+  owner decision (allow-list the release actor or document the intended
+  tag-creation path).
+- **Junction receipt (item-7 / P2-F executed evidence):** canonical
+  checkout `Y:\dev\epistemic-skills` detached at the tag; installer add +
+  `-Verify`: **15 junctions present on both surfaces** (`~/.zcode/skills`,
+  `~/.agents/skills`), `manifest` linked, exit 0. The fresh-session skill
+  list remains the final oracle (session-bound discovery) — es#178 carries
+  the statement.
+- Panel-2 harness correction (judge P4): lens reports are now persisted at
+  seat completion (this directory, `panel2/reports/`), not only as
+  dispatcher-held agent messages.
