@@ -187,7 +187,16 @@ def build_parser() -> argparse.ArgumentParser:
     p_ack = sub.add_parser("acknowledge-loss", parents=[common])
     p_ack.add_argument("--request-id", required=True)
 
-    sub.add_parser("verify", parents=[common])
+    # es#138: `verify` was a lifecycle WRITE wearing a read verb's name -- a
+    # read-only auditor moved a live mission to 'verifying' through it. The
+    # name now belongs to the read-only chain audit; the transition is
+    # `begin-verification`. There is deliberately NO mutating alias: a hard
+    # error on old muscle memory is the loud warning; silent mutation was the
+    # failure mode being fixed.
+    sub.add_parser("verify", parents=[common],
+                   help="READ-ONLY chain integrity audit; mutates nothing")
+    sub.add_parser("begin-verification", parents=[common],
+                   help="lifecycle transition into 'verifying' (writes a checkpoint)")
 
     p_accept = sub.add_parser("accept", parents=[common])
     p_accept.add_argument("--verdict", required=True)
@@ -457,6 +466,12 @@ def dispatch(args: argparse.Namespace) -> int:
     elif args.command == "acknowledge-loss":
         print(mission.acknowledge_receipt_loss(args.request_id))
     elif args.command == "verify":
+        # READ-ONLY (es#138): never a lifecycle write. Exit 0 = chain intact,
+        # exit 4 = chain break reported. Either way nothing was written.
+        audit = mission.verify_chain()
+        print(json.dumps(audit, indent=2, sort_keys=True))
+        return 0 if audit["chain_ok"] else 4
+    elif args.command == "begin-verification":
         print(mission.begin_verification())
     elif args.command == "accept":
         print(mission.record_verdict(args.verdict, acceptor_id=args.acceptor,

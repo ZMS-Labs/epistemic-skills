@@ -75,7 +75,11 @@ else.
    record ends up intact and WRONG, and no downstream guarantee can catch it
    because the corruption happened upstream of every one of them. Observed
    live: a word was silently deleted from a recorded note, exit 0.
-5. **Verify / Close** — `verify`, then acceptance by a DIFFERENT actor: a
+5. **Verify / Close** — `verify` is a READ-ONLY chain-integrity audit (es#138:
+   it was once a lifecycle write wearing a read verb's name, and a read-only
+   auditor moved a live mission through it; it writes nothing now). The
+   lifecycle transition into acceptance review is `begin-verification`; then
+   acceptance by a DIFFERENT actor: a
    distinct session runs `accept` as itself (`--actor` must equal
    `--acceptor`). **If receipted work crossed the declared scope, a PASS is
    refused until the acceptor acknowledges each finding explicitly:

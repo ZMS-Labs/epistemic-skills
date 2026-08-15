@@ -2597,3 +2597,42 @@ class Mission:
         latest, _ = self.store.load_latest()
         self._verify_manifest(latest)
         return latest
+
+    def verify_chain(self) -> dict:
+        """READ-ONLY checkpoint-chain integrity audit (es#138).
+
+        Walks every checkpoint and checks the hash chain -- each record's
+        ``prev_checkpoint_sha256`` must equal the SHA-256 of the preceding
+        checkpoint file, and r1's must be null. Writes nothing, appends no
+        checkpoint, and never changes mission state. This is what the CLI's
+        ``verify`` verb runs; the lifecycle transition that used to wear that
+        name is ``begin-verification``. An auditor with read-only intent
+        cannot move the mission by calling this.
+        """
+        paths = self.store.checkpoint_paths()
+        breaks: list[dict] = []
+        prev_sha: str | None = None
+        revision: int | None = None
+        for path in paths:
+            try:
+                record = json.loads(path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError) as exc:
+                breaks.append({"checkpoint": path.name, "error": f"unreadable/invalid JSON: {exc}"})
+                break
+            observed_prev = record.get("prev_checkpoint_sha256", "")
+            if observed_prev != prev_sha:
+                breaks.append({
+                    "checkpoint": path.name,
+                    "expected_prev": prev_sha,
+                    "observed_prev": observed_prev,
+                })
+            prev_sha = sha256_file(path)
+            revision = record.get("revision", revision)
+        return {
+            "record": "chain-audit@1",
+            "read_only": True,
+            "checkpoints": len(paths),
+            "chain_ok": not breaks,
+            "breaks": breaks,
+            "latest_revision": revision,
+        }

@@ -93,7 +93,7 @@ def test_accept_self_cert_refused_exit_2() -> None:
         ws = Path(td)
         open_cli(ws, "m-cli-selfcert", "Finish task.")
         run("approve", "--workspace", str(ws), "--actor", "agent:worker")
-        run("verify", "--workspace", str(ws), "--actor", "agent:worker")
+        run("begin-verification", "--workspace", str(ws), "--actor", "agent:worker")
 
         r = run("accept", "--workspace", str(ws), "--actor", "agent:worker",
                  "--verdict", "PASS", "--acceptor", "agent:worker",
@@ -124,7 +124,7 @@ def test_full_lifecycle_via_cli() -> None:
         check("full-notes-recorded", "checking in" in st["state"]["notes"])
         check("full-frontier-set", st["state"]["frontier"] == "next: write the fix")
 
-        run("verify", "--workspace", str(ws), "--actor", "agent:worker")
+        run("begin-verification", "--workspace", str(ws), "--actor", "agent:worker")
 
         # a verdict is recorded by its acceptor: the worker session naming a
         # different acceptor is refused
@@ -146,7 +146,7 @@ def test_full_lifecycle_via_cli() -> None:
                  "--match", "missing case", "--request-id", "req-fix-1")
         check("full-clear-fail-exit-0", r.returncode == 0)
 
-        run("verify", "--workspace", str(ws), "--actor", "agent:worker")
+        run("begin-verification", "--workspace", str(ws), "--actor", "agent:worker")
         r = run("accept", "--workspace", str(ws), "--actor", "agent:acceptor",
                  "--verdict", "PASS", "--acceptor", "agent:acceptor",
                  "--tier", "declared-role-separation", "--reason", "fix verified")
@@ -198,7 +198,7 @@ def test_ascii_safe_drift_and_error_output() -> None:
         run("reconcile", "--workspace", str(ws), "--actor", "agent:worker",
             "--path", non_ascii_path, "--content", "hello",
             "--request-id", "req-ascii-2")
-        run("verify", "--workspace", str(ws), "--actor", "agent:worker")
+        run("begin-verification", "--workspace", str(ws), "--actor", "agent:worker")
         run("accept", "--workspace", str(ws), "--actor", "agent:acceptor",
             "--verdict", "FAIL", "--acceptor", "agent:acceptor",
             "--tier", "declared-role-separation", "--reason", "needs review")
@@ -602,7 +602,7 @@ def test_reason_file_on_accept_and_cancel() -> None:
         rf.write_text(reason + "\n", encoding="utf-8", newline="")
         open_cli(ws, "reasonfile", "instruction")
         run("approve", "--workspace", str(ws), "--actor", "agent:worker")
-        run("verify", "--workspace", str(ws), "--actor", "agent:worker")
+        run("begin-verification", "--workspace", str(ws), "--actor", "agent:worker")
         r = run("accept", "--workspace", str(ws), "--actor", "agent:acceptor",
                 "--verdict", "PASS", "--acceptor", "agent:acceptor",
                 "--tier", "declared-role-separation", "--reason-file", str(rf))
@@ -683,7 +683,7 @@ def test_scope_ack_has_a_cli_door() -> None:
         run("effect", "--path", "secrets.env", "--content", "TOKEN=x",
             "--request-id", "r1", "--actor", "agent:worker",
             "--workspace", str(ws))
-        run("verify", "--actor", "agent:worker", "--workspace", str(ws))
+        run("begin-verification", "--actor", "agent:worker", "--workspace", str(ws))
 
         accept = ["accept", "--verdict", "PASS", "--actor", "agent:acceptor",
                   "--acceptor", "agent:acceptor",
@@ -697,6 +697,61 @@ def test_scope_ack_has_a_cli_door() -> None:
 
         ok = run(*accept, "--scope-ack", "secrets.env")
         check("cli-scope-ack-discharges", ok.returncode == 0)
+
+
+def test_verify_is_read_only_and_reports_chain() -> None:
+    """es#138 oracle 1: `verify` mutates NOTHING -- no checkpoint appended,
+    status unchanged -- and reports chain_ok on a healthy chain."""
+    import shutil
+    with tempfile.TemporaryDirectory() as td:
+        ws = Path(td)
+        open_cli(ws, "m-ro", "instruction text", actor="agent:worker")
+        run("approve", "--workspace", str(ws), "--actor", "operator:SternOne")
+        run("effect", "--workspace", str(ws), "--actor", "agent:worker",
+            "--path", "a.txt", "--content", "x", "--request-id", "r1")
+        cps = ws / "missions" / "m-ro" / "checkpoints"
+        before = sorted(cps.iterdir())
+        st_before = json.loads(run("status", "--workspace", str(ws),
+                                   "--actor", "agent:worker").stdout)
+        r = run("verify", "--workspace", str(ws), "--actor", "agent:auditor")
+        audit = json.loads(r.stdout)
+        after = sorted(cps.iterdir())
+        st_after = json.loads(run("status", "--workspace", str(ws),
+                                  "--actor", "agent:worker").stdout)
+        check("verify-exit-0", r.returncode == 0)
+        check("verify-read-only-flag", audit["read_only"] is True)
+        check("verify-chain-ok", audit["chain_ok"] is True)
+        check("verify-no-checkpoint-appended", before == after)
+        check("verify-status-unchanged",
+              st_before["status"] == st_after["status"] == "active")
+        shutil.rmtree(ws, ignore_errors=True)
+
+
+def test_verify_detects_tampered_chain() -> None:
+    """es#138 oracle 2: a tampered checkpoint is REFUSED loudly at load
+    (nonzero exit, stderr names the checkpoint) -- and verify still writes
+    nothing. The store's load-time schema/hash validation is the detection;
+    the read-only requirement holds even on a broken chain."""
+    import shutil
+    with tempfile.TemporaryDirectory() as td:
+        ws = Path(td)
+        open_cli(ws, "m-tamper", "instruction text", actor="agent:worker")
+        run("approve", "--workspace", str(ws), "--actor", "operator:SternOne")
+        run("effect", "--workspace", str(ws), "--actor", "agent:worker",
+            "--path", "a.txt", "--content", "x", "--request-id", "r1")
+        cps = ws / "missions" / "m-tamper" / "checkpoints"
+        target = sorted(cps.glob("*.json"))[0]
+        rec = json.loads(target.read_text(encoding="utf-8"))
+        rec["note"] = "tampered: field altered after the fact"
+        target.write_text(json.dumps(rec, indent=2), encoding="utf-8")
+        before = sorted(cps.iterdir())
+        r = run("verify", "--workspace", str(ws), "--actor", "agent:auditor")
+        after = sorted(cps.iterdir())
+        check("tamper-nonzero-exit", r.returncode != 0)
+        check("tamper-names-checkpoint",
+              "r00000001.json" in (r.stdout + r.stderr))
+        check("tamper-still-no-writes", before == after)
+        shutil.rmtree(ws, ignore_errors=True)
 
 
 TESTS = [
@@ -722,6 +777,8 @@ TESTS = [
     test_text_file_invalid_utf8_refuses_not_crashes,
     test_reason_file_on_accept_and_cancel,
     test_text_file_mutual_exclusion_across_subcommands,
+    test_verify_is_read_only_and_reports_chain,
+    test_verify_detects_tampered_chain,
 ]
 
 
