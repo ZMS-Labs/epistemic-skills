@@ -1,0 +1,229 @@
+{
+ "selection": {
+  "evaluators": [
+   {
+    "id": "release-cutover-auditor",
+    "version": 1,
+    "stance": "adversarial",
+    "capability": "operability",
+    "status": "available"
+   },
+   {
+    "id": "minimalist-zen-master",
+    "version": 2,
+    "stance": "constructive",
+    "capability": "simplicity",
+    "status": "available"
+   },
+   {
+    "id": "decision-rights-auditor",
+    "version": 1,
+    "stance": "metatextual",
+    "capability": "governance-ethics",
+    "status": "available"
+   }
+  ],
+  "wildcards": [],
+  "generators": [],
+  "gates": [
+   "red-lines-arbitrator"
+  ],
+  "judge": "pragmatic-judge",
+  "synthesis": null,
+  "judge_note": "default evidence-weighted judge"
+ },
+ "constraint_violations": [],
+ "replay": {
+  "registry_version": "3.0.0",
+  "registry_sha256": "a71b7f30b937c433dc50c0c2a6b82212026161e2494398230c092fb156befa0d",
+  "subject_vector": {
+   "subject": "v5.1.0 panel-2 delta re-affirmation: discharge set execution + es#162 ruling, candidate fcf1f754553050a493e7f9ef25851ca0e91bed7e",
+   "axis": "fixed",
+   "depth": "quick",
+   "domains": [
+    "release",
+    "governance"
+   ],
+   "risk_classes": [
+    "irreversible",
+    "public-artifact"
+   ],
+   "stakeholders": [
+    "operator",
+    "public-users"
+   ],
+   "horizon": "short",
+   "capability_needs": [
+    "release-integrity",
+    "evidence-verification"
+   ],
+   "domain_confidence": "low",
+   "defensible_priors": false,
+   "operator_values_in_dossier": false,
+   "subject_sha256": "53b8efa83dc4aaf197daf8c8471872f24533fb5c101112bcbed3ad16ed9f5e1e"
+  },
+  "scores": {
+   "adjacent-possible-explorer": -0.125,
+   "adoption-realist": -0.125,
+   "analogical-historian": -0.125,
+   "angry-customer": 0.375,
+   "behavioral-economist": -0.125,
+   "black-swan-catalyst": 0.375,
+   "bus-factor-adversary": -0.125,
+   "business-continuity-auditor": -0.125,
+   "causal-identification-auditor": -0.125,
+   "century-horizon-architect": -0.125,
+   "chaos-monkey": -0.125,
+   "chesterton-gate": -0.125,
+   "cloud-native-purist": -0.125,
+   "cognitive-bias-auditor": -0.125,
+   "common-cause-dependency-auditor": -0.125,
+   "compliance-litigator": 0.625,
+   "concurrency-interleaving-auditor": -0.5,
+   "construct-validity-auditor": -0.125,
+   "contract-risk-allocation-auditor": -0.125,
+   "control-effectiveness-auditor": 0.25,
+   "data-provenance-auditor": -0.5,
+   "decision-rights-auditor": 0.875,
+   "digital-forensicist": -0.125,
+   "disgruntled-maintainer": -0.125,
+   "distributed-semantics-auditor": -0.125,
+   "distributive-justice-auditor": -0.125,
+   "dual-use-adversary": -0.125,
+   "ecological-systems-analyst": -0.125,
+   "effective-configuration-auditor": -0.125,
+   "entropy-demon": -0.125,
+   "epistemic-auditor": -0.125,
+   "ethicist": -0.125,
+   "execution-dependency-auditor": -0.125,
+   "explainability-steward": -0.125,
+   "fmea-analyst": -0.5,
+   "forensic-accountant": -0.125,
+   "game-theorist": -0.125,
+   "human-automation-handoff-auditor": 0.625,
+   "incident-command-auditor": -0.125,
+   "integration-weaver": -0.125,
+   "invariant-specification-auditor": -0.125,
+   "inversion-thinker": -0.125,
+   "ip-freedom-to-operate-auditor": -0.125,
+   "jurisdiction-conflicts-auditor": -0.125,
+   "lifecycle-impact-auditor": -0.125,
+   "liquidity-runway-auditor": -0.125,
+   "local-first-survivalist": -0.125,
+   "measurement-critic": -0.125,
+   "minimalist-zen-master": 0.375,
+   "network-effects-strategist": -0.125,
+   "observability-advocate": -0.125,
+   "on-call-realist": -0.125,
+   "opportunity-cost-accountant": -0.125,
+   "performance-alchemist": -0.125,
+   "polymath-inquisitor": -3.125,
+   "predatory-regulator": -0.125,
+   "preference-sensitivity-arbitrator": -0.125,
+   "premise-auditor": -0.125,
+   "privacy-surveillance-critic": -0.125,
+   "protocol-archeologist": 0.625,
+   "queue-stability-auditor": -0.125,
+   "recovery-integrity-auditor": -0.5,
+   "release-cutover-auditor": 0.875,
+   "requirements-traceability-auditor": -0.5,
+   "resilience-engineer": -0.125,
+   "reversibility-analyst": -0.125,
+   "robust-decision-auditor": 0.375,
+   "safety-hazard-auditor": -0.125,
+   "scalability-cliff-analyst": -0.125,
+   "scope-sentinel": -0.125,
+   "script-kiddie": -0.125,
+   "second-order-forecaster": -0.125,
+   "semantic-critic": -0.125,
+   "sociotechnical-topology-auditor": -0.125,
+   "state-migration-compatibility-auditor": 0.625,
+   "state-sponsored-actor": -0.125,
+   "statistical-validity-critic": -0.125,
+   "stride-security-modeler": -0.5,
+   "sunk-cost-liberator": -0.125,
+   "systemic-logician": -0.125,
+   "tech-debt-curator": -0.125,
+   "ui-ux-polisher": -0.125,
+   "unit-economics-adversary": -0.125,
+   "value-of-information-auditor": -0.125,
+   "wcag-accessibility-expert": -0.5,
+   "workforce-load-auditor": -0.125
+  },
+  "exclusions": [
+   [
+    "bayesian-adjudicator",
+    "role:adjudicate"
+   ],
+   [
+    "constraint-inverter",
+    "role:None"
+   ],
+   [
+    "constraint-negotiator",
+    "role:generate_options"
+   ],
+   [
+    "constraint-relaxer",
+    "role:None"
+   ],
+   [
+    "dialectical-synthesizer",
+    "role:adjudicate"
+   ],
+   [
+    "first-principles-engineer",
+    "role:None"
+   ],
+   [
+    "first-principles-rederiver",
+    "role:generate_options"
+   ],
+   [
+    "governance-lawyer",
+    "role:gate"
+   ],
+   [
+    "meta-epistemic-auditor",
+    "role:None"
+   ],
+   [
+    "null-hypothesis-advocate",
+    "role:generate_options"
+   ],
+   [
+    "opposite-steelman",
+    "role:generate_options"
+   ],
+   [
+    "pragmatic-judge",
+    "role:adjudicate"
+   ],
+   [
+    "premortem-facilitator",
+    "role:None"
+   ],
+   [
+    "red-lines-arbitrator",
+    "role:gate"
+   ],
+   [
+    "sovereign-ruler",
+    "role:adjudicate"
+   ],
+   [
+    "verification-oracle-auditor",
+    "role:None"
+   ]
+  ],
+  "selected_ids": [
+   "release-cutover-auditor@1",
+   "minimalist-zen-master@2",
+   "decision-rights-auditor@1"
+  ],
+  "wildcard_ids": [],
+  "subject_seed_sha256": "53b8efa83dc4aaf197daf8c8471872f24533fb5c101112bcbed3ad16ed9f5e1e",
+  "seed_source": "subject_sha256",
+  "wildcard_rank_sha256": "da2ae579c0fc9293d86c8e27e808797499619d10ba1de987209157aefbdd1d7f"
+ }
+}

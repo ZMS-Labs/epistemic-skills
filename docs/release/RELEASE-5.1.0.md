@@ -168,9 +168,11 @@ the panel record); findings and dispositions:
 - **es#162: case-insensitive filesystems (macOS default APFS) are not
   supported for case-distinct multi-file tracking in the custody CLI.**
   Settled by dispatch runs — first at `8aa4ffe` on 2026-08-13 (run
-  31723939498), re-confirmed at `2890ae6` and at the final candidate
-  (runs 31897018984, 31898055755; each time the required `contract` job
-  green, the probe job failing the same 2 lifecycle tests,
+  31723939498), re-confirmed at `2890ae6` and at the final tagged candidate
+  (runs 31897018984, 31898055755, and 31899154663 at `5906464` — the
+  true final-SHA dispatch, recorded in the annotated tag message; each time
+  the required `contract` job green, the probe job failing the same 2
+  lifecycle tests,
   `distinct-real-file-untouched` and `distinct-both-files-tracked-separately`);
   every other custody suite is green on the same tree, Linux included. The
   fix direction — probe the workspace filesystem's case behavior instead of
