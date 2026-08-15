@@ -50,24 +50,19 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
         r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b")),
 ]
 
-# Files that must remain able to name the scrub vocabulary so the review trail
-# stays intelligible. Hits elsewhere fail closed.
-ALLOWLIST_PREFIXES = (
-    "docs/release/PUBLIC-RELEASE-REVIEW-",
-    "docs/release/PUBLIC-CONTENT-POST-RELEASE-REVIEW-",
-    "docs/release/RELEASE-5.0.0-ERRATA-",
-    "docs/release/POST-RELEASE-INDEPENDENT-REVIEW-",
-    "docs/release/V5.0.0-DESIGN-CONFORMANCE-",
-    ".github/scripts/check_public_content.py",
-)
-
-# Exact-file exemptions for content that predates these pattern classes or is
-# itself the disposition record. EXACT files, never prefixes: a new file at a
-# different path still fails closed, and adding a file here is a visible,
-# reviewable act. Rationale per entry:
+# Allowlist: EXACT files only (es#186 / panel-1 SK-4 — the old whole-file
+# PREFIX exemptions meant any future file parked under a receipt-ish name
+# would ship uninspected for every class; exact files make every exemption
+# a visible, reviewable act). Files that must remain able to name the scrub
+# vocabulary so the review trail stays intelligible. Hits anywhere else
+# fail closed. Rationale per entry:
+#   - "review receipt": historical release-review records that intentionally
+#     document the scrub vocabulary (and, for the 2026-07-17 review, the
+#     operator DCO email — public git-history floor).
+#   - "self": this script quotes its own pattern vocabulary.
 #   - "disposition record": the v5.1.0 full-window review (RELEASE-5.1.0.md)
 #     and its committed gauntlet record name the disclosed strings — the same
-#     purpose the review-receipt prefixes serve.
+#     purpose the review receipts serve.
 #   - "dispositioned fixture": custody guard fixtures/tests exercising
 #     path-scoping rules with private-range literals; accepted in the v5.1.0
 #     record, no credential accompanies any occurrence.
@@ -77,6 +72,15 @@ ALLOWLIST_PREFIXES = (
 #     for this class; editing these files does NOT re-expose anything not
 #     already immutable in git history.
 ALLOWLIST_EXACT_FILES = {
+    # review receipts (formerly prefix-exempt)
+    "docs/release/POST-RELEASE-INDEPENDENT-REVIEW-5.0.0-2026-08-06.md": "review receipt",
+    "docs/release/PUBLIC-CONTENT-POST-RELEASE-REVIEW-5.0.0-2026-08-06.md": "review receipt",
+    "docs/release/PUBLIC-RELEASE-REVIEW-2026-07-17.md": "review receipt",
+    "docs/release/PUBLIC-RELEASE-REVIEW-ADDENDUM-2026-07-21.md": "review receipt",
+    "docs/release/RELEASE-5.0.0-ERRATA-2026-08-06.md": "review receipt",
+    "docs/release/V5.0.0-DESIGN-CONFORMANCE-2026-08-06.md": "review receipt",
+    # self
+    ".github/scripts/check_public_content.py": "self (quotes its own pattern vocabulary)",
     # disposition record
     "docs/release/RELEASE-5.1.0.md": "disposition record (names the disclosed strings)",
     "docs/gauntlet-runs/es-v510-publication-2026-08-15/arbitration.md": "disposition record",
@@ -126,9 +130,7 @@ def tracked_files() -> list[Path]:
 
 def is_allowlisted(path: Path) -> bool:
     rel = path.relative_to(REPO_ROOT).as_posix()
-    if rel in ALLOWLIST_EXACT_FILES:
-        return True
-    return any(rel.startswith(prefix) or rel == prefix for prefix in ALLOWLIST_PREFIXES)
+    return rel in ALLOWLIST_EXACT_FILES
 
 
 def scan_text(path: Path, text: str) -> list[str]:
@@ -167,8 +169,7 @@ def run_check() -> int:
         return 1
     print(
         "public-content gate ok: "
-        f"{len(PATTERNS)} patterns, {len(ALLOWLIST_PREFIXES)} allowlist prefixes, "
-        f"{len(ALLOWLIST_EXACT_FILES)} allowlisted exact files"
+        f"{len(PATTERNS)} patterns, {len(ALLOWLIST_EXACT_FILES)} allowlisted exact files"
     )
     return 0
 
@@ -199,6 +200,15 @@ def run_self_test() -> int:
     )
     if allowlisted:
         failures.append(f"allowlisted review text was rejected: {allowlisted}")
+
+    # Prefix-wedge control (SK-4): a NEW file under a formerly prefix-exempt
+    # name shape must be REJECTED — exemptions are exact-file, not by name shape.
+    wedge = scan_text(
+        REPO_ROOT / "docs/release/PUBLIC-RELEASE-REVIEW-2099-01-01.md",
+        "Patterns swept: private-repo name (`zms-homelab`)",
+    )
+    if not wedge:
+        failures.append("new file under a former prefix shape was NOT rejected (prefix wedge open)")
 
     # Allowlisted EXACT files (disposition records/fixtures) must pass; the
     # same content at a NON-allowlisted path must fail (exact-file semantics:
