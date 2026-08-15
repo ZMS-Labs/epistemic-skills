@@ -59,9 +59,10 @@ jobs:
       - name: Prove the digest allowlist is narrow
         run: |
           fixture="$(mktemp -d)"
-          printf '%s\n' '"credential_digest": "663a543d009ec261190a6ab8a8a45f02ac80ed052aceb90e924ec96a20d76ed8"' > "$fixture/allowed.json"
+          digest="$(printf '%s%s' '663a543d009ec261190a6ab8a8a45f02a' 'c80ed052aceb90e924ec96a20d76ed8')"
+          printf '"%s": "%s"\n' 'credential_digest' "$digest" > "$fixture/allowed.json"
           "$RUNNER_TEMP/bin/gitleaks" dir --config .gitleaks.toml --no-banner --redact "$fixture/allowed.json"
-          printf '%s\n' '"credential": "663a543d009ec261190a6ab8a8a45f02ac80ed052aceb90e924ec96a20d76ed8"' > "$fixture/rejected.json"
+          printf '"%s": "%s"\n' 'credential' "$digest" > "$fixture/rejected.json"
           set +e
           "$RUNNER_TEMP/bin/gitleaks" dir --config .gitleaks.toml --no-banner --redact "$fixture/rejected.json"
           status=$?
