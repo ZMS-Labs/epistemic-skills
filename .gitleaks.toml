@@ -1,0 +1,12 @@
+title = "epistemic-skills secret scanning"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Schema-bound SHA-256 authority digests are public identifiers, not credentials"
+targetRules = ["generic-api-key"]
+regexTarget = "line"
+regexes = [
+  '''^\s*"(readback_)?credential_digest"\s*:\s*"[0-9a-f]{64}",?\s*$''',
+]
