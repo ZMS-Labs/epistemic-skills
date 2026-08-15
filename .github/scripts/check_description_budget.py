@@ -57,7 +57,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SKILLS_ROOT = REPO_ROOT / "plugins" / "epistemic-skills" / "skills"
 
-# The recorded budget: the sum of the 14 packaged skill description
+# The recorded budget: the sum of the 15 packaged skill description
 # values, measured as the harness sees them -- YAML-resolved and then UTF-8
 # encoded, so a quoted scalar is charged for its content and not its
 # delimiters, while non-ASCII characters are charged for their real byte width.
