@@ -62,10 +62,14 @@ of this directory):
 
 ### es#162 settlement (new evidence produced by the P2-D dispatch)
 
-The first-ever `contract-macos` run failed 2 lifecycle tests
+The `contract-macos` probe job failed 2 lifecycle tests
 (`distinct-real-file-untouched`, `distinct-both-files-tracked-separately`) —
 case-distinct pathnames collapse to one object on default (case-insensitive)
-APFS. Evidence comment on es#162 (2026-08-15). Ruling D was written as
+APFS. Evidence comment on es#162 (2026-08-15). Correction (panel-2,
+release-cutover F#1): this was **not** the first such run — a dispatch at
+`8aa4ffe` on 2026-08-13 (run 31723939498) had already failed the same
+step; the settlement therefore predates the release cycle and the
+dispatch runs re-confirm it. Ruling D was written as
 "any red → P1, revert to iterate" without anticipating that the dispatch
 also fires the optional es#162 probe job. The bounded-reinstatement attack —
 *the red came from the optional probe job, whose failure is the es#162
