@@ -264,7 +264,7 @@ Windows local install:
 ```powershell
 git clone --depth 1 --branch v5.1.0 https://github.com/ZMS-Labs/epistemic-skills.git .\epistemic-skills-v5.1.0
 Set-Location .\epistemic-skills-v5.1.0
-if ((git describe --tags --exact-match) -ne 'v5.0.0') { throw 'expected v5.0.0' }
+if ((git describe --tags --exact-match) -ne 'v5.1.0') { throw 'expected v5.1.0' }
 New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.cursor\plugins\local" | Out-Null
 $src = (Resolve-Path .\plugins\epistemic-skills).Path
 $dest = Join-Path $env:USERPROFILE '.cursor\plugins\local\epistemic-skills'
@@ -277,7 +277,7 @@ macOS/Linux local install:
 ```bash
 git clone --depth 1 --branch v5.1.0 https://github.com/ZMS-Labs/epistemic-skills.git ./epistemic-skills-v5.1.0
 cd ./epistemic-skills-v5.1.0
-test "$(git describe --tags --exact-match)" = v5.0.0
+test "$(git describe --tags --exact-match)" = v5.1.0
 mkdir -p ~/.cursor/plugins/local
 ln -sfn "$(pwd)/plugins/epistemic-skills" ~/.cursor/plugins/local/epistemic-skills
 ```
@@ -307,7 +307,7 @@ Use one of native `agy plugin install`, Gemini extension link, or `agy plugin im
 ### Kimi Code
 
 ```text
-/plugins install https://github.com/ZMS-Labs/epistemic-skills/tree/v5.0.0
+/plugins install https://github.com/ZMS-Labs/epistemic-skills/tree/v5.1.0
 # Local development only, from a clone:
 /plugins install /path/to/epistemic-skills
 ```
@@ -384,7 +384,7 @@ contract into an accepted one.
 
 ## Trust, evidence, and known limits
 
-**Version 5.1.0** is the current immutable support point: fourteen skills, aligned package surfaces, deterministic checks, and a tagged source snapshot. It was **published with explicit gate honesty** — item 6 only PARTIALLY MET at publication, item 8 WAIVED / NOT MET — and a post-release independent review returned **NO-GO** for retrospective certification. Read the [errata](docs/release/RELEASE-5.0.0-ERRATA-2026-08-06.md), [post-release review](docs/release/POST-RELEASE-INDEPENDENT-REVIEW-5.0.0-2026-08-06.md), and [successor progress](docs/release/SUCCESSOR-PROGRESS-104-105-2026-08-07.md) before treating v5.0.0 as gate-complete. Corrective work for issues #104/#105 landed on `main` after the immutable tag; do not move the tag.
+**Version 5.1.0** is the current immutable support point: fifteen skills, aligned package surfaces, deterministic checks, and a tagged source snapshot; its gate record lives in [RELEASE-5.1.0.md](docs/release/RELEASE-5.1.0.md). Its predecessor **v5.0.0** was published with explicit gate honesty — item 6 only PARTIALLY MET at publication, item 8 WAIVED / NOT MET — and a post-release independent review returned **NO-GO** for retrospective certification. Read the [errata](docs/release/RELEASE-5.0.0-ERRATA-2026-08-06.md), [post-release review](docs/release/POST-RELEASE-INDEPENDENT-REVIEW-5.0.0-2026-08-06.md), and [successor progress](docs/release/SUCCESSOR-PROGRESS-104-105-2026-08-07.md) before treating v5.0.0 as gate-complete. Corrective work for issues #104/#105 landed on `main` after the immutable tag; do not move the tag.
 
 Earlier support points remain historically accurate for their own campaigns. Version 3.2.0 established the behavioral-evidence posture that later releases inherit unless a new campaign re-opens it: aligned surfaces and deterministic checks, with named behavioral limits that were never rewritten into passes.
 
