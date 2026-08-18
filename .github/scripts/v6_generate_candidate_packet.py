@@ -377,18 +377,18 @@ def class_claims(sha: str) -> list[dict]:
         },
         {
             "id": "CLM-MC-MACOS-CASE",
-            "statement": "Scope matching behaves correctly on case-insensitive APFS.",
+            "statement": "Custody artifact distinctness on case-insensitive APFS is DISCLOSED-DIVERGENT: the contract's deliberately ASCII-only fold keeps 'straße.txt'/'strasse.txt' distinct while APFS merges them under Unicode case folding — two contract-distinct artifacts, one physical file (measured).",
             "authority": "es#162; mission-custody-contract contract-macos job",
-            "subject": "custody scope case fold",
-            "oracle": "workflow_dispatch contract-macos probe_case_insensitivity.py measured outcome recorded.",
-            "falsifier": "PASS after writing secrets/ when scope.out lists Secrets/ on case-insensitive FS.",
+            "subject": "custody scope case fold + artifact distinctness on macos-14 APFS",
+            "oracle": "workflow_dispatch contract-macos: the es#162 ASCII probe passed, and the first full macOS lifecycle-suite execution measured the Unicode-fold instance — tests distinct-real-file-untouched and distinct-both-files-tracked-separately FAILED because writing the strasse.txt decoy clobbered straße.txt (run 32189655677, 2026-08-18).",
+            "falsifier": "The two named tests pass on a case-insensitive APFS runner without a disclosed contract change, or a PASS is recorded after writing secrets/ when scope.out lists Secrets/.",
             "environment": "macos-14 workflow_dispatch only",
             "independence": "dispatch-only diagnostic; not merge-gating per #190 lineage",
             "evidence_tier": "R3",
             "status": "LIMITED",
-            "release_consequence": "Disclosed limitation until probe + fix land",
+            "release_consequence": "Disclosed limitation; the ASCII-only fold is the chosen fail direction (folding ß→ss would cause silent custody loss on case-SENSITIVE systems); the platform-side merge is es#162's open work",
             "owner": "agent",
-            "closure_path": "es#162 remains open",
+            "closure_path": "es#162 remains open, now carrying the measured Unicode-fold instance",
             "linked_issues": [162, 186],
         },
         {
@@ -1047,8 +1047,19 @@ def build_promotion_packet(sha: str, ts: str, matrix: dict) -> dict:
             {
                 "id": "KL-MACOS-162",
                 "kind": "platform",
-                "statement": "es#162 case-insensitivity is disclosed; contract-macos is dispatch-only.",
-                "release_consequence": "Not a merge-gating required job; still a named v6 limit.",
+                "statement": (
+                    "es#162 case-insensitivity is disclosed and now MEASURED "
+                    "beyond the ASCII probe: on macos-14 APFS the first full "
+                    "lifecycle-suite dispatch showed straße.txt/strasse.txt "
+                    "— contract-distinct artifacts — are one physical file "
+                    "under the filesystem's Unicode case folding; a decoy "
+                    "write clobbered the real artifact (tests "
+                    "distinct-real-file-untouched, "
+                    "distinct-both-files-tracked-separately; run "
+                    "32189655677). contract-macos stays dispatch-only and "
+                    "non-gating."
+                ),
+                "release_consequence": "Not a merge-gating required job; custody distinctness claims exclude case-insensitive APFS until es#162 lands.",
                 "owner": "agent",
             },
             {
