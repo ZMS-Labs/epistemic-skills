@@ -581,3 +581,35 @@ frontmatter declared no `hands-to` at all — the generated `ROUTING.md`
 said *(none)* while the prose said otherwise. The frontmatter now
 declares `hands-to: [evidence-locked-uat, gauntlet]` and the prose
 column is demoted to "Downstream".
+
+## AMENDMENT 2026-08-18 — the D8 estate fork is resolved: owner retirement, hybrid form
+
+**Operator decision (open-questions interview, 2026-08-18, growth-assumed
+analysis; recorded in `.ledger/entries.jsonl` id
+`v6-description-budget-hybrid-path2-20260818-17`):** the estate-wide
+net-negative acceptance line is **retired as a release gate** — the
+explicit owner-amendment path the AMENDMENT 2026-08-07 fork demanded.
+This is that amendment; nothing is silently reinterpreted, because the
+reinterpretation is now explicit and owner-authorized.
+
+What remains binding, and is strengthened:
+
+1. **Package-local byte ceiling** — `check_description_budget.py` stays a
+   hard CI gate. It is currently EXACTLY full (8636/8636), so every
+   future skill already forces a visible act: a description trade-off or
+   a reviewed ceiling-raise diff. This is the enforceable brake; the
+   estate promise never was (no package can observe what else a user
+   installed, and the pre-v5 baseline denominator loses meaning as the
+   package grows).
+2. **Standing visibility obligation** — every release's notes report the
+   packaged-description byte DELTA against the prior release
+   (release-note evidence table, RELEASING.md). Citizenship stays
+   measured and public without an unmeasurable gate.
+3. **On-demand estate measurement** — `check_loaded_descriptions.py
+   --require-capture` remains available for any release where the
+   operator wants a real harness capture receipt.
+
+v5.0.0's +1,389-byte miss remains historical fact on the immutable tag.
+
+**Revisit trigger:** if the package ceiling must be raised in two
+consecutive releases, this decision re-opens (ledger `revisit_when`).

@@ -225,6 +225,7 @@ Every release note should contain a table with at least these columns:
 | version/link alignment | `MET` / `UNMET` | commit SHA | check or review path | coverage limits |
 | deterministic + CodeQL | `MET` / `UNMET` | commit SHA | workflow run IDs | skipped-step rationale |
 | security + public content | `MET` / `UNMET` | commit SHA and history range | scan and review artifact | patterns and exclusions |
+| description-byte delta | signed byte count vs prior release | commit SHA | `check_description_budget.py --report` outputs at both releases | package-local only; the estate gate is retired (v5 design AMENDMENT 2026-08-18, hybrid Path 2) — `check_loaded_descriptions.py --require-capture` remains available on demand |
 | harness evidence | tier per harness | tag/commit | live run or tier record | unavailable surfaces |
 | independent publication judgment | `GO` / `CONDITIONAL` / `NO-GO` / `WAIVED` | frozen commit | Gauntlet artifact or owner authorization | independence limits |
 | publication identity | `MET` / `UNMET` | tag + release | API identity receipt | normalization rules |
