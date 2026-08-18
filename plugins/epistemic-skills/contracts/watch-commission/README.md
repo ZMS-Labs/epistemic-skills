@@ -59,3 +59,5 @@ remains explicit/generic until a consumer publishes, verifies, and admits a
 versioned `watch-commission@1` intake contract. The carrier therefore rejects
 `manifest` or any other custody target in `handoff.on_crossing` and implies no
 automatic routing to Practical Agency or any other package.
+
+<!-- R8 ready-mark drill touch (throwaway branch; never merged). -->

@@ -90,3 +90,5 @@ boundedness.
   mission's checkpoints, which pre-#117 plugin caches cannot validate (the
   armed mission reads as ChainBroken/unreadable there). Update every custody
   consumer before arming guards on a shared mission.
+
+# R8 ready-mark drill touch (throwaway branch; never merged).
