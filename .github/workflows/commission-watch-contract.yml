@@ -21,6 +21,10 @@ name: commission-watch-contract
       - "docs/gauntlet-runs/commission-watch-pr110-2026-08-07/**"
       - ".github/workflows/commission-watch-contract.yml"
   pull_request:
+    # ready_for_review included so gating jobs actually dispatch when a
+    # draft PR is marked ready -- the takeover KL-DRAFT-CI promised.
+    # Mirrors dco.yml; gauntlet ruling R8 (es-v6-candidate-freeze-2026-08-18).
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - "plugins/epistemic-skills/contracts/watch-commission/**"
       - "plugins/epistemic-skills/contracts/epistemic-events/sentinels/watch-silence-read-as-healthy.json"
