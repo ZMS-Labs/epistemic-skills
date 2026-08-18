@@ -10,6 +10,12 @@ dropped or truncated relative to the packaged SKILL.md.
 Without a capture file the check exits 0 with an explicit LIVE_BLOCKED tier note.
 That is intentional: absence of a live capture must not silently become a pass
 claim about estate-wide headroom.
+
+``--require-capture`` is release-gate mode (v5 design AMENDMENT 2026-08-07, D8
+Path 1: "show estate headroom via a capture receipt"): there, a missing capture
+is a hard FAILURE, not a note — the mode a release pipeline must use if the
+operator elects Path 1 rather than publishing the Path-2 owner amendment. CI's
+default informational tier is unchanged without the flag.
 """
 from __future__ import annotations
 
@@ -108,6 +114,20 @@ def run_self_test() -> int:
     if compare(packaged, packaged):
         print("SELF-TEST FAILURE: aligned capture must pass", file=sys.stderr)
         return 1
+    # Release-gate mode: a missing capture must fail closed, and the default
+    # informational tier must keep exiting 0 (LIVE_BLOCKED note).
+    if main(["--require-capture"]) != 1:
+        print(
+            "SELF-TEST FAILURE: --require-capture without a capture must fail",
+            file=sys.stderr,
+        )
+        return 1
+    if main([]) != 0:
+        print(
+            "SELF-TEST FAILURE: default tier without a capture must stay exit 0",
+            file=sys.stderr,
+        )
+        return 1
     print("loaded-description self-test ok")
     return 0
 
@@ -120,11 +140,26 @@ def main(argv: list[str] | None = None) -> int:
         type=Path,
         help="harness listing file (tsv/| or JSON). Omit for LIVE_BLOCKED note.",
     )
+    parser.add_argument(
+        "--require-capture",
+        action="store_true",
+        help="release-gate mode (v5 D8 Path 1): a missing capture is a hard "
+        "failure instead of a LIVE_BLOCKED note.",
+    )
     args = parser.parse_args(argv)
     if args.self_test:
         return run_self_test()
     packaged = packaged_descriptions()
     if args.capture is None:
+        if args.require_capture:
+            print(
+                "CAPTURE_REQUIRED: release-gate mode (v5 design AMENDMENT "
+                "2026-08-07, D8 Path 1) demands a live harness capture receipt "
+                "and none was provided. Estate headroom cannot be claimed "
+                "without one; the alternative is the Path-2 owner amendment.",
+                file=sys.stderr,
+            )
+            return 1
         print(
             "loaded-description check LIVE_BLOCKED: no harness capture provided; "
             f"package has {len(packaged)} descriptions. "
