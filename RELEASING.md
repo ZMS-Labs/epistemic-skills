@@ -179,19 +179,39 @@ candidate.
    - Owner exception: record `WAIVED`/`UNMET` and the authorization in the
      committed release notes **before** tagging. Do not describe the result as a
      GO or conforming release.
-7. **Create and push the annotated tag.** Tag `v<version>` on the exact candidate
+7. **Authorize publication explicitly, then disarm the tag rule.** A verdict is
+   advice until an owner acts on it. Until 2026-08-13 nothing here recorded that
+   act, and nothing prevented it from being skipped.
+   - Record, in the committed release notes, a line naming **the verdict read,
+     the exact candidate SHA authorized, and the owner**. A verdict without a
+     resolvable subject authorizes nothing: a `GO` for one SHA is not a `GO` for
+     the SHA about to be tagged unless they are the same string.
+   - The ruleset `protect-version-tags` carries `creation` with **no bypass
+     actors**, so `refs/tags/v*` cannot be created by anyone — including an
+     owner, and including automation acting with an owner's credential. That is
+     deliberate: this repository is pushed with the same credential automation
+     runs under, so an admin bypass would have exempted exactly the actors the
+     rule exists to constrain.
+   - **Disarming the rule is therefore the authorization act.** Remove the
+     `creation` rule (or set the ruleset's enforcement to `disabled`), create and
+     push the tag, then **re-arm it in the same sitting**. Record the disarm and
+     re-arm alongside the authorization line.
+   - Verify the rule is armed again before closing the release, with a seeded
+     probe rather than by reading the config back. A release that ends with the
+     gate left open has removed the control it was meant to satisfy.
+8. **Create and push the annotated tag.** Tag `v<version>` on the exact candidate
    SHA. Never use a lightweight tag for a support point.
-8. **Create the GitHub Release.** Use the committed release-note file verbatim as
+9. **Create the GitHub Release.** Use the committed release-note file verbatim as
    the body. The Release must be non-draft and must target the annotated tag.
-9. **Verify publication identity.** Through the GitHub API, verify that:
-   - the tag exists and is annotated;
-   - the peeled tag target equals the candidate SHA;
-   - the GitHub Release targets the same tag or exact candidate;
-   - the committed release-note body and normalized GitHub Release body are
-     equal; and
-   - `main` contains the release commit or an explicitly documented fast-forward
-     successor.
-10. **Record any post-publication discovery honestly.** Correct documentation on
+10. **Verify publication identity.** Through the GitHub API, verify that:
+    - the tag exists and is annotated;
+    - the peeled tag target equals the candidate SHA;
+    - the GitHub Release targets the same tag or exact candidate;
+    - the committed release-note body and normalized GitHub Release body are
+      equal; and
+    - `main` contains the release commit or an explicitly documented fast-forward
+      successor.
+11. **Record any post-publication discovery honestly.** Correct documentation on
     `main`, add a clearly labeled erratum or post-release review, and ship artifact
     changes under a new semantic version. Never rewrite the immutable tag or imply
     a missing pre-publication event occurred.
