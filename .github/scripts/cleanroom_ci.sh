@@ -64,9 +64,71 @@ echo
 WF=".github/workflows/epistemic-flexibility.yml"
 [ -f "$WF" ] || { echo "FATAL: workflow not found: $WF"; exit 2; }
 
-# Steps are extracted from the workflow, never hardcoded here.
-mapfile -t STEPS < <(grep -oE '^        run: python [^ ]+\.py.*$' "$WF" | sed 's/^        run: //')
-echo "extracted ${#STEPS[@]} python steps from $WF"
+# Scope disclosure (R9): this harness replicates the python steps of ONE
+# workflow. The other workflows are separate CI surfaces and are NOT
+# replicated here — never read this script's green as covering them.
+OTHER_WFS="$(ls .github/workflows/*.yml 2>/dev/null | grep -v "$WF" | tr '\n' ' ')"
+[ -n "$OTHER_WFS" ] && { echo "out of scope (separate workflows, not replicated): $OTHER_WFS"; echo; }
+
+# Steps are extracted from the workflow, never hardcoded here. Both forms are
+# covered: single-line `run: python ...` steps AND python lines inside
+# `run: |` blocks (the original grep saw only the single-line form and
+# silently dropped every block line — including the public-content gate).
+# Each row is "<flag>\t<command>"; flag is:
+#   -      plain, executed;
+#   ctx    references CI event context ($RUNNER_TEMP/$GITHUB_*/${{ }}/env
+#          wired by the workflow) — named SKIP, cannot run standalone;
+#   pyyaml its block pip-installs PyYAML — executed only if yaml imports.
+mapfile -t ROWS < <(python3 - "$WF" <<'PYEOF'
+import re, sys
+lines = open(sys.argv[1], encoding="utf-8").read().splitlines()
+rows = []
+i = 0
+while i < len(lines):
+    line = lines[i]
+    single = re.match(r"^(\s*)run:\s+(python3? \S+\.py.*)$", line)
+    block = re.match(r"^(\s*)run:\s*[|>]-?\s*$", line)
+    if single:
+        rows.append(("-", single.group(2).strip()))
+    elif block:
+        indent = len(block.group(1))
+        body = []
+        j = i + 1
+        while j < len(lines):
+            nxt = lines[j]
+            if nxt.strip() and (len(nxt) - len(nxt.lstrip())) <= indent:
+                break
+            body.append(nxt.strip())
+            j += 1
+        has_pyyaml = any(b.startswith("pip install") and "yaml" in b for b in body)
+        for b in body:
+            if re.match(r"^python3? \S+\.py", b):
+                if re.search(r"\$RUNNER_TEMP|\$GITHUB_|\$\{\{|\$BASE_SHA", b):
+                    rows.append(("ctx", b))
+                elif has_pyyaml:
+                    rows.append(("pyyaml", b))
+                else:
+                    rows.append(("-", b))
+        i = j - 1
+    i += 1
+for flag, cmd in rows:
+    print(f"{flag}\t{cmd}")
+PYEOF
+)
+
+# Completeness assertion (R9): an INDEPENDENT broad net counts every
+# python-invoking line in the workflow; extraction must account for all of
+# them or this harness fails loudly instead of silently under-replicating.
+BROAD_COUNT="$(grep -cE '^[[:space:]]*(run: )?python3? [^ ]*\.py' "$WF")"
+if [ "${#ROWS[@]}" -ne "$BROAD_COUNT" ]; then
+  echo "FATAL: extraction divergence — workflow has $BROAD_COUNT python lines, extracted ${#ROWS[@]}"
+  echo "broad net:"
+  grep -nE '^[[:space:]]*(run: )?python3? [^ ]*\.py' "$WF" | sed 's/^/  /'
+  echo "extracted:"
+  printf '  %s\n' "${ROWS[@]}"
+  exit 2
+fi
+echo "extracted ${#ROWS[@]} python steps from $WF (completeness: ${#ROWS[@]}/$BROAD_COUNT lines accounted for)"
 echo
 
 export PYTHONIOENCODING=utf-8
@@ -85,11 +147,24 @@ if ! command -v python >/dev/null 2>&1; then
   echo
 fi
 
-pass=0; fail=0; usage=0
+pass=0; fail=0; usage=0; ctx=0; dep=0
 declare -a FAILED=()
-for step in "${STEPS[@]}"; do
-  out="$(eval "$step" 2>&1)"; rc=$?
+for row in "${ROWS[@]}"; do
+  flag="${row%%$'\t'*}"; step="${row#*$'\t'}"
   short="${step#python }"
+  if [ "$flag" = "ctx" ]; then
+    # Named exclusion, never a silent drop: the step reads CI event context
+    # (merge-base SHA, runner temp dir) that does not exist standalone.
+    ctx=$((ctx+1)); printf '  SKIP  %s  (ci-context: needs GitHub event env)\n' "$short"
+    continue
+  fi
+  if [ "$flag" = "pyyaml" ] && ! python -c 'import yaml' >/dev/null 2>&1; then
+    # CI pip-installs PyYAML for this block; installing on the operator's
+    # machine is a side effect this harness refuses. Named exclusion.
+    dep=$((dep+1)); printf '  SKIP  %s  (missing dep: PyYAML; CI installs it)\n' "$short"
+    continue
+  fi
+  out="$(eval "$step" 2>&1)"; rc=$?
   if [ "$rc" -eq 0 ]; then
     pass=$((pass+1)); printf '  PASS  %s\n' "$short"
   elif [ "$rc" -eq 2 ] && printf '%s' "$out" | grep -qi 'usage:'; then
@@ -103,7 +178,12 @@ for step in "${STEPS[@]}"; do
 done
 
 echo
-echo "clean-room CI: $pass passed, $fail failed, $usage skipped (need args)"
+total=${#ROWS[@]}
+echo "clean-room CI: replicated $pass of $total workflow python steps"
+echo "  pass=$pass fail=$fail need-args=$usage ci-context=$ctx missing-dep=$dep"
+if [ "$((pass + fail + usage + ctx + dep))" -ne "$total" ]; then
+  echo "FATAL: step accounting does not sum to $total — harness defect"; exit 2
+fi
 if [ "$fail" -gt 0 ]; then
   echo "failing:"; printf '  %s\n' "${FAILED[@]}"
   exit 1

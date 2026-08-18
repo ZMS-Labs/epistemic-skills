@@ -12,34 +12,20 @@ name: epistemic-flexibility
     # draft PR is marked ready -- the takeover KL-DRAFT-CI promised.
     # Mirrors dco.yml; gauntlet ruling R8 (es-v6-candidate-freeze-2026-08-18).
     types: [opened, synchronize, reopened, ready_for_review]
-    paths:
-      - "plugins/epistemic-skills/skills/**"
-      - "plugins/epistemic-skills/evals/**"
-      - "plugins/epistemic-skills/contracts/**"
-      - "docs/**"
-      - ".ledger/**"
-      - ".github/scripts/**"
-      - ".github/workflows/epistemic-flexibility.yml"
-      # sync_skill_surfaces.py asserts a required count phrasing IN README.md, so a
-      # README edit can break this gate. Without README.md here, that break does not
-      # trigger the workflow that would catch it -- which is exactly how it reached
-      # main on 2026-08-06. A check's inputs belong in its trigger.
-      - "README.md"
+    # NO paths filter, deliberately (gauntlet ruling R7, path A). This suite's
+    # checks are WHOLE-TREE readers: sync_skill_surfaces.py asserts count
+    # phrasing in README.md and in every harness manifest (plugin.json,
+    # gemini-extension.json, marketplace.json, ...), check_no_phantom_skills.py
+    # scans all markdown, check_public_content.py scans the whole tree. A
+    # paths: list here is a second hand-maintained projection of "what the
+    # checks read", and it drifted exactly that way on 2026-08-06: a README
+    # edit broke the gate without triggering it, because README.md was not
+    # listed. Adding README.md fixed one instance of the class; every other
+    # scanned-but-unlisted file kept the hole open. A check's inputs belong in
+    # its trigger — and when the input is the whole tree, the trigger filter
+    # must be empty. v6_audit_workflow_oracles.py enforces this.
   push:
     branches: [main]
-    paths:
-      - "plugins/epistemic-skills/skills/**"
-      - "plugins/epistemic-skills/evals/**"
-      - "plugins/epistemic-skills/contracts/**"
-      - "docs/**"
-      - ".ledger/**"
-      - ".github/scripts/**"
-      - ".github/workflows/epistemic-flexibility.yml"
-      # sync_skill_surfaces.py asserts a required count phrasing IN README.md, so a
-      # README edit can break this gate. Without README.md here, that break does not
-      # trigger the workflow that would catch it -- which is exactly how it reached
-      # main on 2026-08-06. A check's inputs belong in its trigger.
-      - "README.md"
 
 permissions:
   contents: read
