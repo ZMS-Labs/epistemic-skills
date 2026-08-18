@@ -116,6 +116,11 @@ ALLOWLIST_EXACT_FILES = {
     "docs/superpowers/plans/2026-08-11-mission-custody-contracts.md": "pre-gate historical record",
     "docs/superpowers/specs/2026-08-07-practical-agency-and-commission-watch-design.md": "pre-gate historical record",
     "docs/wiki-updates/v4.0.0/v4.0.0-wiki-update.patch": "pre-gate historical record",
+    # v6 program parent-tracker coordinate (GitHub issue pointer). The string
+    # is the durable program id, not a fleet overlay. Exact-file so a future
+    # doc cannot smuggle topology by sitting next to the packet.
+    "docs/v6/ES6-ZI-001/exact-start-receipt.json": "v6 program parent tracker coordinate",
+    ".github/scripts/v6_generate_baseline_claims.py": "v6 program parent tracker coordinate",
 }
 
 

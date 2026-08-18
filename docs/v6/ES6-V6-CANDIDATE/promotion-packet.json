@@ -1,0 +1,83 @@
+{
+  "schema": "v6-promotion-packet@1",
+  "program": "ES6-V6-CANDIDATE",
+  "issue": 191,
+  "candidate_sha": "e8a476c730750a9b3e51ac1001b96825996187cc",
+  "generated_at": "2026-08-18T14:34:53Z",
+  "readiness": "NOT_READY",
+  "self_certification": "refused",
+  "independent_gauntlet": "NOT_RUN",
+  "rollback": "Do not merge this branch to main. Abandon the branch. main remains the last PROMOTION-valid channel until an independent GO and a separate PROMOTION_RUN.",
+  "requested_irreversible_acts": [],
+  "blocking_claims": [
+    "CLM-INDEPENDENT-GAUNTLET",
+    "CLM-V5-DESIGN-COMMITMENTS",
+    "CLM-BEHAVIORAL-EPOCHS",
+    "CLM-HARNESS-LIVE",
+    "CLM-MC-MACOS-CASE",
+    "CLM-RELEASE-AUTH",
+    "CLM-MC-137",
+    "CLM-STDLIB-GATE",
+    "CLM-PUBLIC-CONTENT"
+  ],
+  "known_limits": [
+    {
+      "id": "KL-SELF-GO",
+      "kind": "independence",
+      "statement": "The implementer of this packet cannot record Gauntlet GO on it.",
+      "release_consequence": "V6_CANDIDATE_READY_FOR_OPERATOR_ACCEPTANCE is unreachable until an independent panel runs."
+    },
+    {
+      "id": "KL-OPERATOR-104",
+      "kind": "operator-hold",
+      "statement": "es#104 implement-vs-retire is unresolved.",
+      "release_consequence": "Blocks successor GO."
+    },
+    {
+      "id": "KL-OPERATOR-186",
+      "kind": "operator-hold",
+      "statement": "Tag-ruleset / ratification remainder of es#186 is unresolved.",
+      "release_consequence": "Publication authorization docs landed; tag creation still operator-owned."
+    },
+    {
+      "id": "KL-LIVE-ENV",
+      "kind": "live-environment",
+      "statement": "Behavioral epochs (#77/#39) and native harness live-fire (#136/#129/#142) were not run.",
+      "release_consequence": "Those claims are LIMITED, not PROVED."
+    },
+    {
+      "id": "KL-MACOS-162",
+      "kind": "platform",
+      "statement": "es#162 case-insensitivity is disclosed; contract-macos is dispatch-only.",
+      "release_consequence": "Not a merge-gating required job; still a named v6 limit."
+    },
+    {
+      "id": "KL-DRAFT-CI",
+      "kind": "integrity",
+      "statement": "Draft PRs skip required stdlib-checks and mission-custody-contract jobs.",
+      "release_consequence": "Local clean-room is the BUILD oracle until the PR is marked ready."
+    },
+    {
+      "id": "KL-MAIN-137",
+      "kind": "integrity",
+      "statement": "es#137 P1 false-allows are present on origin/main; closed only in this candidate tree.",
+      "release_consequence": "Merging this candidate is a PROMOTION act, not performed here."
+    },
+    {
+      "id": "KL-WINDOWS",
+      "kind": "platform",
+      "statement": "No native Windows requalification was run for this candidate.",
+      "release_consequence": "CLM-WINDOWS-FS stays LIMITED."
+    }
+  ],
+  "evidence_paths": [
+    "docs/v6/ES6-V6-CANDIDATE/claim-to-proof-matrix.json",
+    "docs/v6/ES6-V6-CANDIDATE/issue-pr-reconciliation.json",
+    "docs/v6/ES6-V6-CANDIDATE/source-inventory.json",
+    "docs/v6/ES6-V6-CANDIDATE/exact-candidate-receipt.json",
+    "docs/v6/ES6-V6-CANDIDATE/evidence/clean-baseline.json",
+    "docs/v6/ES6-V6-CANDIDATE/evidence/workflow-oracle-audit.json",
+    "docs/v6/ES6-V6-CANDIDATE/evidence/public-content.json",
+    "docs/v6/ES6-V6-CANDIDATE/evidence/custody-suite.json"
+  ]
+}
