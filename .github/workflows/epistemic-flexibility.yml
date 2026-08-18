@@ -255,6 +255,13 @@ jobs:
           python .github/scripts/check_ledger_append_only.py             --base "$RUNNER_TEMP/base-ledger.jsonl" --current .ledger/entries.jsonl
       - name: v6 workflow oracle audit (ES6-ORACLE-AUDIT)
         run: |
+          # PyYAML is this suite's one non-stdlib dependency (the audit parses
+          # workflow YAML; the script's own error text names pip install as the
+          # remedy). Installed here, scoped to this step, so the rest of the
+          # suite stays stdlib-only. This step had never executed in CI before
+          # 2026-08-18: on main it sat behind the fail-fast public-content
+          # failure PR #195 fixes, and draft PRs skipped the job entirely.
+          pip install --quiet pyyaml
           python .github/scripts/test_v6_audit_workflow_oracles.py
           python .github/scripts/v6_audit_workflow_oracles.py
       - name: v6 candidate packet generator self-test
