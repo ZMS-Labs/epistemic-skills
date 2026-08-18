@@ -1,0 +1,1616 @@
+[
+  {
+    "report_path": "/home/user/epistemic-skills/docs/gauntlet-runs/es-v6-candidate-freeze-2026-08-18/reports/chesterton-gate.md",
+    "total": 40,
+    "verified": 40,
+    "hallucinated": 0,
+    "accuracy_pct": 100.0,
+    "i_tags": 10,
+    "h_tags": 0,
+    "malformed_v": 0,
+    "tag_results": [
+      {
+        "raw": "[V RELEASING.md:126]",
+        "path": "RELEASING.md",
+        "line": 126,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/source-inventory.json:11]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/source-inventory.json",
+        "line": 11,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/workflows/release-security.yml:39]",
+        "path": ".github/workflows/release-security.yml",
+        "line": 39,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/workflows/release-security.yml:21]",
+        "path": ".github/workflows/release-security.yml",
+        "line": 21,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V evidence/github-live-state-2026-08-18.md:11]",
+        "path": "evidence/github-live-state-2026-08-18.md",
+        "line": 11,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/promotion-packet.json:10]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/promotion-packet.json",
+        "line": 10,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V evidence/git-topology-2026-08-18.txt:17]",
+        "path": "evidence/git-topology-2026-08-18.txt",
+        "line": 17,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/scripts/cleanroom_ci.sh:68]",
+        "path": ".github/scripts/cleanroom_ci.sh",
+        "line": 68,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/scripts/check_public_content.py:7]",
+        "path": ".github/scripts/check_public_content.py",
+        "line": 7,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/scripts/check_public_content.py:30]",
+        "path": ".github/scripts/check_public_content.py",
+        "line": 30,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/scripts/check_public_content.py:122]",
+        "path": ".github/scripts/check_public_content.py",
+        "line": 122,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/scripts/check_public_content.py:123]",
+        "path": ".github/scripts/check_public_content.py",
+        "line": 123,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/scripts/check_public_content.py:143]",
+        "path": ".github/scripts/check_public_content.py",
+        "line": 143,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/release/PUBLIC-RELEASE-REVIEW-ADDENDUM-2026-07-21.md:16]",
+        "path": "docs/release/PUBLIC-RELEASE-REVIEW-ADDENDUM-2026-07-21.md",
+        "line": 16,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/release/PUBLIC-RELEASE-REVIEW-ADDENDUM-2026-07-21.md:31]",
+        "path": "docs/release/PUBLIC-RELEASE-REVIEW-ADDENDUM-2026-07-21.md",
+        "line": 31,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/claim-to-proof-matrix.json:123]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/claim-to-proof-matrix.json",
+        "line": 123,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/exact-candidate-receipt.json:7]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/exact-candidate-receipt.json",
+        "line": 7,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V plugins/epistemic-skills/contracts/mission-custody/custody_gate.py:109]",
+        "path": "plugins/epistemic-skills/contracts/mission-custody/custody_gate.py",
+        "line": 109,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V plugins/epistemic-skills/contracts/mission-custody/custody_gate.py:88]",
+        "path": "plugins/epistemic-skills/contracts/mission-custody/custody_gate.py",
+        "line": 88,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V plugins/epistemic-skills/contracts/mission-custody/test_custody_gate.py:113]",
+        "path": "plugins/epistemic-skills/contracts/mission-custody/test_custody_gate.py",
+        "line": 113,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V plugins/epistemic-skills/contracts/mission-custody/test_custody_gate.py:130]",
+        "path": "plugins/epistemic-skills/contracts/mission-custody/test_custody_gate.py",
+        "line": 130,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/claim-to-proof-matrix.json:291]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/claim-to-proof-matrix.json",
+        "line": 291,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/README.md:24]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/README.md",
+        "line": 24,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/README.md:31]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/README.md",
+        "line": 31,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/scripts/v6_generate_candidate_packet.py:806]",
+        "path": ".github/scripts/v6_generate_candidate_packet.py",
+        "line": 806,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V plugins/epistemic-skills/contracts/v6-assurance/validate_v6_assurance.py:109]",
+        "path": "plugins/epistemic-skills/contracts/v6-assurance/validate_v6_assurance.py",
+        "line": 109,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/claim-to-proof-matrix.json:543]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/claim-to-proof-matrix.json",
+        "line": 543,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/issue-pr-reconciliation.json:142]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/issue-pr-reconciliation.json",
+        "line": 142,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/scripts/v6_generate_candidate_packet.py:201]",
+        "path": ".github/scripts/v6_generate_candidate_packet.py",
+        "line": 201,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V plugins/epistemic-skills/contracts/v6-assurance/validate_v6_assurance.py:123]",
+        "path": "plugins/epistemic-skills/contracts/v6-assurance/validate_v6_assurance.py",
+        "line": 123,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/claim-to-proof-matrix.json:42]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/claim-to-proof-matrix.json",
+        "line": 42,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/workflows/epistemic-flexibility.yml:46]",
+        "path": ".github/workflows/epistemic-flexibility.yml",
+        "line": 46,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/workflows/release-security.yml:21]",
+        "path": ".github/workflows/release-security.yml",
+        "line": 21,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V evidence/github-live-state-2026-08-18.md:11]",
+        "path": "evidence/github-live-state-2026-08-18.md",
+        "line": 11,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/gauntlet-request.md:16]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/gauntlet-request.md",
+        "line": 16,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/gauntlet-request.md:25]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/gauntlet-request.md",
+        "line": 25,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/gauntlet-request.md:31]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/gauntlet-request.md",
+        "line": 31,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/gauntlet-request.md:29]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/gauntlet-request.md",
+        "line": 29,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/README.md:31]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/README.md",
+        "line": 31,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/scripts/v6_generate_candidate_packet.py:806]",
+        "path": ".github/scripts/v6_generate_candidate_packet.py",
+        "line": 806,
+        "status": "V",
+        "reason": ""
+      }
+    ]
+  },
+  {
+    "report_path": "/home/user/epistemic-skills/docs/gauntlet-runs/es-v6-candidate-freeze-2026-08-18/reports/cloud-native-purist.md",
+    "total": 42,
+    "verified": 42,
+    "hallucinated": 0,
+    "accuracy_pct": 100.0,
+    "i_tags": 11,
+    "h_tags": 0,
+    "malformed_v": 0,
+    "tag_results": [
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/claim-to-proof-matrix.json:41]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/claim-to-proof-matrix.json",
+        "line": 41,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/claim-to-proof-matrix.json:33]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/claim-to-proof-matrix.json",
+        "line": 33,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/claim-to-proof-matrix.json:37]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/claim-to-proof-matrix.json",
+        "line": 37,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/scripts/check_public_content.py:129]",
+        "path": ".github/scripts/check_public_content.py",
+        "line": 129,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/workflows/epistemic-flexibility.yml:11]",
+        "path": ".github/workflows/epistemic-flexibility.yml",
+        "line": 11,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/scripts/v6_audit_workflow_oracles.py:68]",
+        "path": ".github/scripts/v6_audit_workflow_oracles.py",
+        "line": 68,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/scripts/v6_audit_workflow_oracles.py:24]",
+        "path": ".github/scripts/v6_audit_workflow_oracles.py",
+        "line": 24,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/workflows/release-security.yml:8]",
+        "path": ".github/workflows/release-security.yml",
+        "line": 8,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V RELEASING.md:126]",
+        "path": "RELEASING.md",
+        "line": 126,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V RELEASING.md:146]",
+        "path": "RELEASING.md",
+        "line": 146,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V evidence/github-live-state-2026-08-18.md:15]",
+        "path": "evidence/github-live-state-2026-08-18.md",
+        "line": 15,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V evidence/github-live-state-2026-08-18.md:30]",
+        "path": "evidence/github-live-state-2026-08-18.md",
+        "line": 30,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/promotion-packet.json:57]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/promotion-packet.json",
+        "line": 57,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/source-inventory.json:11]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/source-inventory.json",
+        "line": 11,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/workflows/release-security.yml:4]",
+        "path": ".github/workflows/release-security.yml",
+        "line": 4,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/scripts/cleanroom_ci.sh:68]",
+        "path": ".github/scripts/cleanroom_ci.sh",
+        "line": 68,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/scripts/cleanroom_ci.sh:22]",
+        "path": ".github/scripts/cleanroom_ci.sh",
+        "line": 22,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/promotion-packet.json:58]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/promotion-packet.json",
+        "line": 58,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/README.md:44]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/README.md",
+        "line": 44,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/workflows/epistemic-flexibility.yml:173]",
+        "path": ".github/workflows/epistemic-flexibility.yml",
+        "line": 173,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/scripts/v6_collect_candidate_evidence.py:44]",
+        "path": ".github/scripts/v6_collect_candidate_evidence.py",
+        "line": 44,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/scripts/v6_collect_candidate_evidence.py:118]",
+        "path": ".github/scripts/v6_collect_candidate_evidence.py",
+        "line": 118,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/workflows/epistemic-flexibility.yml:4]",
+        "path": ".github/workflows/epistemic-flexibility.yml",
+        "line": 4,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/workflows/release-security.yml:4]",
+        "path": ".github/workflows/release-security.yml",
+        "line": 4,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/workflows/epistemic-flexibility.yml:46]",
+        "path": ".github/workflows/epistemic-flexibility.yml",
+        "line": 46,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V RELEASING.md:114]",
+        "path": "RELEASING.md",
+        "line": 114,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V RELEASING.md:122]",
+        "path": "RELEASING.md",
+        "line": 122,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V evidence/actions-runs-freeze-branch-2026-08-18.md:5]",
+        "path": "evidence/actions-runs-freeze-branch-2026-08-18.md",
+        "line": 5,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V evidence/git-topology-2026-08-18.txt:4]",
+        "path": "evidence/git-topology-2026-08-18.txt",
+        "line": 4,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/promotion-packet.json:58]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/promotion-packet.json",
+        "line": 58,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/README.md:49]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/README.md",
+        "line": 49,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/scripts/v6_generate_candidate_packet.py:806]",
+        "path": ".github/scripts/v6_generate_candidate_packet.py",
+        "line": 806,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V plugins/epistemic-skills/contracts/v6-assurance/validate_v6_assurance.py:122]",
+        "path": "plugins/epistemic-skills/contracts/v6-assurance/validate_v6_assurance.py",
+        "line": 122,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/scripts/v6_generate_candidate_packet.py:521]",
+        "path": ".github/scripts/v6_generate_candidate_packet.py",
+        "line": 521,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/scripts/v6_generate_candidate_packet.py:522]",
+        "path": ".github/scripts/v6_generate_candidate_packet.py",
+        "line": 522,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/scripts/v6_generate_candidate_packet.py:547]",
+        "path": ".github/scripts/v6_generate_candidate_packet.py",
+        "line": 547,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/scripts/v6_generate_candidate_packet.py:201]",
+        "path": ".github/scripts/v6_generate_candidate_packet.py",
+        "line": 201,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/evidence/public-content.json:14]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/evidence/public-content.json",
+        "line": 14,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/evidence/public-content.json:4]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/evidence/public-content.json",
+        "line": 4,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/evidence/public-content.json:16]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/evidence/public-content.json",
+        "line": 16,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/scripts/v6_collect_candidate_evidence.py:142]",
+        "path": ".github/scripts/v6_collect_candidate_evidence.py",
+        "line": 142,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/scripts/cleanroom_ci.sh:11]",
+        "path": ".github/scripts/cleanroom_ci.sh",
+        "line": 11,
+        "status": "V",
+        "reason": ""
+      }
+    ]
+  },
+  {
+    "report_path": "/home/user/epistemic-skills/docs/gauntlet-runs/es-v6-candidate-freeze-2026-08-18/reports/entropy-demon.md",
+    "total": 44,
+    "verified": 44,
+    "hallucinated": 0,
+    "accuracy_pct": 100.0,
+    "i_tags": 22,
+    "h_tags": 0,
+    "malformed_v": 0,
+    "tag_results": [
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/README.md:24]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/README.md",
+        "line": 24,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/source-inventory.json:3]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/source-inventory.json",
+        "line": 3,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V RELEASING.md:126]",
+        "path": "RELEASING.md",
+        "line": 126,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V evidence/git-topology-2026-08-18.txt:62]",
+        "path": "evidence/git-topology-2026-08-18.txt",
+        "line": 62,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/promotion-packet.json:23]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/promotion-packet.json",
+        "line": 23,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/README.md:24]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/README.md",
+        "line": 24,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/source-inventory.json:3]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/source-inventory.json",
+        "line": 3,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V plugins/epistemic-skills/contracts/v6-assurance/validate_v6_assurance.py:135]",
+        "path": "plugins/epistemic-skills/contracts/v6-assurance/validate_v6_assurance.py",
+        "line": 135,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/promotion-packet.json:78]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/promotion-packet.json",
+        "line": 78,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/promotion-packet.json:23]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/promotion-packet.json",
+        "line": 23,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/scripts/check_pin_tags.py:11]",
+        "path": ".github/scripts/check_pin_tags.py",
+        "line": 11,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/scripts/check_pin_tags.py:25]",
+        "path": ".github/scripts/check_pin_tags.py",
+        "line": 25,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V RELEASING.md:232]",
+        "path": "RELEASING.md",
+        "line": 232,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V evidence/git-topology-2026-08-18.txt:20]",
+        "path": "evidence/git-topology-2026-08-18.txt",
+        "line": 20,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V RELEASING.md:126]",
+        "path": "RELEASING.md",
+        "line": 126,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/promotion-packet.json:23]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/promotion-packet.json",
+        "line": 23,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/workflows/release-security.yml:38]",
+        "path": ".github/workflows/release-security.yml",
+        "line": 38,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/workflows/release-security.yml:33]",
+        "path": ".github/workflows/release-security.yml",
+        "line": 33,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V evidence/github-live-state-2026-08-18.md:11]",
+        "path": "evidence/github-live-state-2026-08-18.md",
+        "line": 11,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V evidence/actions-runs-freeze-branch-2026-08-18.md:5]",
+        "path": "evidence/actions-runs-freeze-branch-2026-08-18.md",
+        "line": 5,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/scripts/check_public_content.py:143]",
+        "path": ".github/scripts/check_public_content.py",
+        "line": 143,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/scripts/check_public_content.py:122]",
+        "path": ".github/scripts/check_public_content.py",
+        "line": 122,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/scripts/check_public_content.py:123]",
+        "path": ".github/scripts/check_public_content.py",
+        "line": 123,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/claim-to-proof-matrix.json:111]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/claim-to-proof-matrix.json",
+        "line": 111,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/claim-to-proof-matrix.json:116]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/claim-to-proof-matrix.json",
+        "line": 116,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/evidence/public-content.json:16]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/evidence/public-content.json",
+        "line": 16,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/scripts/cleanroom_ci.sh:68]",
+        "path": ".github/scripts/cleanroom_ci.sh",
+        "line": 68,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/workflows/epistemic-flexibility.yml:61]",
+        "path": ".github/workflows/epistemic-flexibility.yml",
+        "line": 61,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/workflows/epistemic-flexibility.yml:165]",
+        "path": ".github/workflows/epistemic-flexibility.yml",
+        "line": 165,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/workflows/epistemic-flexibility.yml:254]",
+        "path": ".github/workflows/epistemic-flexibility.yml",
+        "line": 254,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/promotion-packet.json:23]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/promotion-packet.json",
+        "line": 23,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/evidence/clean-baseline.json:5]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/evidence/clean-baseline.json",
+        "line": 5,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/scripts/v6_generate_candidate_packet.py:538]",
+        "path": ".github/scripts/v6_generate_candidate_packet.py",
+        "line": 538,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/scripts/v6_generate_candidate_packet.py:205]",
+        "path": ".github/scripts/v6_generate_candidate_packet.py",
+        "line": 205,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/issue-pr-reconciliation.json:14]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/issue-pr-reconciliation.json",
+        "line": 14,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/issue-pr-reconciliation.json:139]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/issue-pr-reconciliation.json",
+        "line": 139,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/claim-to-proof-matrix.json:543]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/claim-to-proof-matrix.json",
+        "line": 543,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/scripts/check_public_content.py:143]",
+        "path": ".github/scripts/check_public_content.py",
+        "line": 143,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/workflows/mission-custody-contract.yml:78]",
+        "path": ".github/workflows/mission-custody-contract.yml",
+        "line": 78,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/workflows/release-security.yml:38]",
+        "path": ".github/workflows/release-security.yml",
+        "line": 38,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/workflows/release-security.yml:33]",
+        "path": ".github/workflows/release-security.yml",
+        "line": 33,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/scripts/check_pin_tags.py:11]",
+        "path": ".github/scripts/check_pin_tags.py",
+        "line": 11,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V plugins/epistemic-skills/contracts/v6-assurance/validate_v6_assurance.py:135]",
+        "path": "plugins/epistemic-skills/contracts/v6-assurance/validate_v6_assurance.py",
+        "line": 135,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/scripts/v6_generate_candidate_packet.py:538]",
+        "path": ".github/scripts/v6_generate_candidate_packet.py",
+        "line": 538,
+        "status": "V",
+        "reason": ""
+      }
+    ]
+  },
+  {
+    "report_path": "/home/user/epistemic-skills/docs/gauntlet-runs/es-v6-candidate-freeze-2026-08-18/reports/human-automation-handoff-auditor.md",
+    "total": 47,
+    "verified": 47,
+    "hallucinated": 0,
+    "accuracy_pct": 100.0,
+    "i_tags": 11,
+    "h_tags": 0,
+    "malformed_v": 0,
+    "tag_results": [
+      {
+        "raw": "[V .github/scripts/cleanroom_ci.sh:64]",
+        "path": ".github/scripts/cleanroom_ci.sh",
+        "line": 64,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/scripts/cleanroom_ci.sh:69]",
+        "path": ".github/scripts/cleanroom_ci.sh",
+        "line": 69,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/promotion-packet.json:58]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/promotion-packet.json",
+        "line": 58,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/workflows/epistemic-flexibility.yml:10]",
+        "path": ".github/workflows/epistemic-flexibility.yml",
+        "line": 10,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/workflows/mission-custody-contract.yml:14]",
+        "path": ".github/workflows/mission-custody-contract.yml",
+        "line": 14,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/workflows/release-security.yml:9]",
+        "path": ".github/workflows/release-security.yml",
+        "line": 9,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/workflows/dco.yml:5]",
+        "path": ".github/workflows/dco.yml",
+        "line": 5,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/README.md:40]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/README.md",
+        "line": 40,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/promotion-packet.json:58]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/promotion-packet.json",
+        "line": 58,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/workflows/epistemic-flexibility.yml:10]",
+        "path": ".github/workflows/epistemic-flexibility.yml",
+        "line": 10,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/workflows/epistemic-flexibility.yml:45]",
+        "path": ".github/workflows/epistemic-flexibility.yml",
+        "line": 45,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/workflows/mission-custody-contract.yml:14]",
+        "path": ".github/workflows/mission-custody-contract.yml",
+        "line": 14,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/workflows/mission-custody-contract.yml:26]",
+        "path": ".github/workflows/mission-custody-contract.yml",
+        "line": 26,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/workflows/release-security.yml:9]",
+        "path": ".github/workflows/release-security.yml",
+        "line": 9,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/workflows/release-security.yml:18]",
+        "path": ".github/workflows/release-security.yml",
+        "line": 18,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/workflows/dco.yml:5]",
+        "path": ".github/workflows/dco.yml",
+        "line": 5,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/workflows/dco.yml:7]",
+        "path": ".github/workflows/dco.yml",
+        "line": 7,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V evidence/actions-runs-freeze-branch-2026-08-18.md:5]",
+        "path": "evidence/actions-runs-freeze-branch-2026-08-18.md",
+        "line": 5,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V RELEASING.md:114]",
+        "path": "RELEASING.md",
+        "line": 114,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V plugins/epistemic-skills/contracts/v6-assurance/validate_v6_assurance.py:119]",
+        "path": "plugins/epistemic-skills/contracts/v6-assurance/validate_v6_assurance.py",
+        "line": 119,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V plugins/epistemic-skills/contracts/v6-assurance/promotion-packet.schema.json:43]",
+        "path": "plugins/epistemic-skills/contracts/v6-assurance/promotion-packet.schema.json",
+        "line": 43,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/scripts/v6_generate_candidate_packet.py:806]",
+        "path": ".github/scripts/v6_generate_candidate_packet.py",
+        "line": 806,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/promotion-packet.json:12]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/promotion-packet.json",
+        "line": 12,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/scripts/v6_generate_candidate_packet.py:674]",
+        "path": ".github/scripts/v6_generate_candidate_packet.py",
+        "line": 674,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/scripts/v6_generate_candidate_packet.py:706]",
+        "path": ".github/scripts/v6_generate_candidate_packet.py",
+        "line": 706,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/scripts/v6_generate_candidate_packet.py:538]",
+        "path": ".github/scripts/v6_generate_candidate_packet.py",
+        "line": 538,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/promotion-packet.json:12]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/promotion-packet.json",
+        "line": 12,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/README.md:40]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/README.md",
+        "line": 40,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/README.md:49]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/README.md",
+        "line": 49,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/scripts/v6_generate_candidate_packet.py:806]",
+        "path": ".github/scripts/v6_generate_candidate_packet.py",
+        "line": 806,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/scripts/v6_generate_candidate_packet.py:21]",
+        "path": ".github/scripts/v6_generate_candidate_packet.py",
+        "line": 21,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/scripts/cleanroom_ci.sh:64]",
+        "path": ".github/scripts/cleanroom_ci.sh",
+        "line": 64,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/scripts/cleanroom_ci.sh:68]",
+        "path": ".github/scripts/cleanroom_ci.sh",
+        "line": 68,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/scripts/cleanroom_ci.sh:69]",
+        "path": ".github/scripts/cleanroom_ci.sh",
+        "line": 69,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/promotion-packet.json:58]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/promotion-packet.json",
+        "line": 58,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/workflows/epistemic-flexibility.yml:165]",
+        "path": ".github/workflows/epistemic-flexibility.yml",
+        "line": 165,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V plugins/epistemic-skills/contracts/v6-assurance/promotion-packet.schema.json:43]",
+        "path": "plugins/epistemic-skills/contracts/v6-assurance/promotion-packet.schema.json",
+        "line": 43,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/README.md:11]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/README.md",
+        "line": 11,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V plugins/epistemic-skills/contracts/v6-assurance/validate_v6_assurance.py:119]",
+        "path": "plugins/epistemic-skills/contracts/v6-assurance/validate_v6_assurance.py",
+        "line": 119,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/exact-candidate-receipt.json:13]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/exact-candidate-receipt.json",
+        "line": 13,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/gauntlet-request.md:33]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/gauntlet-request.md",
+        "line": 33,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/promotion-packet.json:58]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/promotion-packet.json",
+        "line": 58,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V RELEASING.md:114]",
+        "path": "RELEASING.md",
+        "line": 114,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V evidence/actions-runs-freeze-branch-2026-08-18.md:5]",
+        "path": "evidence/actions-runs-freeze-branch-2026-08-18.md",
+        "line": 5,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/promotion-packet.json:40]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/promotion-packet.json",
+        "line": 40,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V RELEASING.md:195]",
+        "path": "RELEASING.md",
+        "line": 195,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V RELEASING.md:199]",
+        "path": "RELEASING.md",
+        "line": 199,
+        "status": "V",
+        "reason": ""
+      }
+    ]
+  },
+  {
+    "report_path": "/home/user/epistemic-skills/docs/gauntlet-runs/es-v6-candidate-freeze-2026-08-18/reports/requirements-traceability-auditor.md",
+    "total": 49,
+    "verified": 49,
+    "hallucinated": 0,
+    "accuracy_pct": 100.0,
+    "i_tags": 10,
+    "h_tags": 0,
+    "malformed_v": 0,
+    "tag_results": [
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/claim-to-proof-matrix.json:229]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/claim-to-proof-matrix.json",
+        "line": 229,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/claim-to-proof-matrix.json:232]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/claim-to-proof-matrix.json",
+        "line": 232,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/claim-to-proof-matrix.json:315]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/claim-to-proof-matrix.json",
+        "line": 315,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/claim-to-proof-matrix.json:321]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/claim-to-proof-matrix.json",
+        "line": 321,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/claim-to-proof-matrix.json:316]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/claim-to-proof-matrix.json",
+        "line": 316,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/issue-pr-reconciliation.json:139]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/issue-pr-reconciliation.json",
+        "line": 139,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/issue-pr-reconciliation.json:14]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/issue-pr-reconciliation.json",
+        "line": 14,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/scripts/v6_generate_candidate_packet.py:201]",
+        "path": ".github/scripts/v6_generate_candidate_packet.py",
+        "line": 201,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/claim-to-proof-matrix.json:251]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/claim-to-proof-matrix.json",
+        "line": 251,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/claim-to-proof-matrix.json:150]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/claim-to-proof-matrix.json",
+        "line": 150,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-ZI-001/exact-start-receipt.json:14]",
+        "path": "docs/v6/ES6-ZI-001/exact-start-receipt.json",
+        "line": 14,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/exact-candidate-receipt.json:14]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/exact-candidate-receipt.json",
+        "line": 14,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V evidence/github-live-state-2026-08-18.md:75]",
+        "path": "evidence/github-live-state-2026-08-18.md",
+        "line": 75,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V evidence/git-topology-2026-08-18.txt:17]",
+        "path": "evidence/git-topology-2026-08-18.txt",
+        "line": 17,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V RELEASING.md:126]",
+        "path": "RELEASING.md",
+        "line": 126,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V RELEASING.md:127]",
+        "path": "RELEASING.md",
+        "line": 127,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V RELEASING.md:109]",
+        "path": "RELEASING.md",
+        "line": 109,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V RELEASING.md:108]",
+        "path": "RELEASING.md",
+        "line": 108,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/scripts/cleanroom_ci.sh:64]",
+        "path": ".github/scripts/cleanroom_ci.sh",
+        "line": 64,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/source-inventory.json:11]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/source-inventory.json",
+        "line": 11,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V evidence/github-live-state-2026-08-18.md:15]",
+        "path": "evidence/github-live-state-2026-08-18.md",
+        "line": 15,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V evidence/github-live-state-2026-08-18.md:30]",
+        "path": "evidence/github-live-state-2026-08-18.md",
+        "line": 30,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V plugins/epistemic-skills/contracts/v6-assurance/validate_v6_assurance.py:119]",
+        "path": "plugins/epistemic-skills/contracts/v6-assurance/validate_v6_assurance.py",
+        "line": 119,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V plugins/epistemic-skills/contracts/v6-assurance/validate_v6_assurance.py:122]",
+        "path": "plugins/epistemic-skills/contracts/v6-assurance/validate_v6_assurance.py",
+        "line": 122,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/scripts/test_v6_candidate_packet.py:24]",
+        "path": ".github/scripts/test_v6_candidate_packet.py",
+        "line": 24,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/claim-to-proof-matrix.json:229]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/claim-to-proof-matrix.json",
+        "line": 229,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/README.md:18]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/README.md",
+        "line": 18,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/claim-to-proof-matrix.json:229]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/claim-to-proof-matrix.json",
+        "line": 229,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V plugins/epistemic-skills/contracts/v6-assurance/validate_v6_assurance.py:122]",
+        "path": "plugins/epistemic-skills/contracts/v6-assurance/validate_v6_assurance.py",
+        "line": 122,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/README.md:31]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/README.md",
+        "line": 31,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/gauntlet-request.md:10]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/gauntlet-request.md",
+        "line": 10,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/gauntlet-request.md:11]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/gauntlet-request.md",
+        "line": 11,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/exact-candidate-receipt.json:5]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/exact-candidate-receipt.json",
+        "line": 5,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V evidence/github-live-state-2026-08-18.md:55]",
+        "path": "evidence/github-live-state-2026-08-18.md",
+        "line": 55,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/promotion-packet.json:57]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/promotion-packet.json",
+        "line": 57,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/promotion-packet.json:58]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/promotion-packet.json",
+        "line": 58,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/README.md:44]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/README.md",
+        "line": 44,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/scripts/cleanroom_ci.sh:64]",
+        "path": ".github/scripts/cleanroom_ci.sh",
+        "line": 64,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/scripts/cleanroom_ci.sh:68]",
+        "path": ".github/scripts/cleanroom_ci.sh",
+        "line": 68,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/workflows/epistemic-flexibility.yml:165]",
+        "path": ".github/workflows/epistemic-flexibility.yml",
+        "line": 165,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/workflows/epistemic-flexibility.yml:173]",
+        "path": ".github/workflows/epistemic-flexibility.yml",
+        "line": 173,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/evidence/public-content.json:16]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/evidence/public-content.json",
+        "line": 16,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V evidence/github-live-state-2026-08-18.md:15]",
+        "path": "evidence/github-live-state-2026-08-18.md",
+        "line": 15,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V RELEASING.md:114]",
+        "path": "RELEASING.md",
+        "line": 114,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/claim-to-proof-matrix.json:251]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/claim-to-proof-matrix.json",
+        "line": 251,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/source-inventory.json:11]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/source-inventory.json",
+        "line": 11,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V plugins/epistemic-skills/contracts/v6-assurance/validate_v6_assurance.py:122]",
+        "path": "plugins/epistemic-skills/contracts/v6-assurance/validate_v6_assurance.py",
+        "line": 122,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V .github/scripts/v6_generate_candidate_packet.py:201]",
+        "path": ".github/scripts/v6_generate_candidate_packet.py",
+        "line": 201,
+        "status": "V",
+        "reason": ""
+      },
+      {
+        "raw": "[V docs/v6/ES6-V6-CANDIDATE/README.md:18]",
+        "path": "docs/v6/ES6-V6-CANDIDATE/README.md",
+        "line": 18,
+        "status": "V",
+        "reason": ""
+      }
+    ]
+  }
+]
