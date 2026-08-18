@@ -142,6 +142,18 @@ exhaustion; late-battery quality decay motivating triage order). See the
 design spec in the repository's `docs/superpowers/specs/` for the cited
 evidence run.
 
+## Evidence emission
+
+After each engagement, append one line to `runs/ledger.jsonl` under this skill:
+
+```json
+{"schema":"skill-run@1","ts":"<iso8601>","skill":"<this-skill>","decision":"fired|declined","discipline_engaged":"<name-or-null>","action_changed":true|false}
+```
+
+The append is part of this procedure. It is not a call to an external calibration
+service and it is not a `decision-ledger` entry. Schema:
+`plugins/epistemic-skills/contracts/skill-run-ledger.schema.json`.
+
 ## Local overlay
 
 If a `LOCAL.md` exists alongside this SKILL.md, read it after this file — it

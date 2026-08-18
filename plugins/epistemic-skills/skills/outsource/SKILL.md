@@ -201,6 +201,18 @@ Return `BLOCKED` rather than a ready prompt when any of these is true:
 | “The target said the tests pass.” | A relay is a claim. The originating agent re-verifies evidence before closure. |
 | “Complete enough.” | Unmet or unverified requirement IDs yield `PARTIAL`, `BLOCKED`, or `QUESTION`, never `COMPLETE`. |
 
+## Evidence emission
+
+After each engagement, append one line to `runs/ledger.jsonl` under this skill:
+
+```json
+{"schema":"skill-run@1","ts":"<iso8601>","skill":"<this-skill>","decision":"fired|declined","discipline_engaged":"<name-or-null>","action_changed":true|false}
+```
+
+The append is part of this procedure. It is not a call to an external calibration
+service and it is not a `decision-ledger` entry. Schema:
+`plugins/epistemic-skills/contracts/skill-run-ledger.schema.json`.
+
 ## Local overlay
 
 If a `LOCAL.md` exists alongside this file, read it after this skill. It may bind repository hosts,
