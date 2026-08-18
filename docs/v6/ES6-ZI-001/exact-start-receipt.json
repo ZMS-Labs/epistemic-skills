@@ -1,0 +1,23 @@
+{
+  "schema": "exact-start-receipt@1",
+  "program": "ES6-ZI-001",
+  "issue": 191,
+  "exact_start_sha": "9ca9735745466fb12eb6cbcf0ed7d966778d7a83",
+  "recorded_at": "2026-08-18T06:37:04Z",
+  "parent_program": "ZMS-Labs/zms-homelab#1601",
+  "authorized_packets": [
+    "ES6-BASELINE-CLAIMS",
+    "ES6-ORACLE-AUDIT",
+    "ES6-CLEAN-BASELINE"
+  ],
+  "forbidden_this_run": [
+    "merge",
+    "tag",
+    "close issues",
+    "close PRs",
+    "settings/ruleset changes",
+    "mission-custody implementation packets",
+    "behavioral epoch runs",
+    "promotion"
+  ]
+}

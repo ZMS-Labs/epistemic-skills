@@ -1,0 +1,619 @@
+{
+  "schema": "issue-pr-reconciliation@1",
+  "program": "ES6-ZI-001",
+  "exact_start_sha": "9ca9735745466fb12eb6cbcf0ed7d966778d7a83",
+  "generated_at": "2026-08-18T06:37:04Z",
+  "items": [
+    {
+      "kind": "issue",
+      "number": 39,
+      "title": "Phase 4 follow-up: valid full-schema four-arm superiority run",
+      "phase": "evidence-process",
+      "disposition": "close-when-evidence",
+      "owner": "agent",
+      "blocked_by": [],
+      "labels": [
+        "work:live-verification",
+        "gate:live-environment",
+        "assurance:R3"
+      ],
+      "evidence_note": "Four-arm superiority run.",
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/39"
+    },
+    {
+      "kind": "issue",
+      "number": 40,
+      "title": "Release gate: cross-family Step-7b adjudication before any v3 3.0.0",
+      "phase": "frontier-decision",
+      "disposition": "reconcile-in-matrix",
+      "owner": "operator",
+      "blocked_by": [],
+      "labels": [
+        "assurance:R3",
+        "gate:external",
+        "gate:operator",
+        "work:dependency",
+        "work:decision"
+      ],
+      "evidence_note": "Re-scope v3 Step-7b into v6 Gauntlet.",
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/40"
+    },
+    {
+      "kind": "issue",
+      "number": 77,
+      "title": "Behavioral epoch program: convert every BLOCKED/absent battery into dated live-epoch evidence (successor to #70)",
+      "phase": "evidence-process",
+      "disposition": "close-when-evidence",
+      "owner": "agent",
+      "blocked_by": [],
+      "labels": [
+        "work:live-verification",
+        "gate:live-environment",
+        "assurance:R3"
+      ],
+      "evidence_note": "Behavioral epoch program.",
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/77"
+    },
+    {
+      "kind": "issue",
+      "number": 84,
+      "title": "Paired proposal (charter step 1): exchange-protocol adoption, v4 event-contract re-pin, and field-pair ownership",
+      "phase": "frontier-decision",
+      "disposition": "reconcile-in-matrix",
+      "owner": "joint",
+      "blocked_by": [],
+      "labels": [
+        "gate:operator",
+        "work:dependency",
+        "work:decision",
+        "assurance:R2"
+      ],
+      "evidence_note": "Items 1\u20132 done; field-pair supply remains.",
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/84"
+    },
+    {
+      "kind": "issue",
+      "number": 89,
+      "title": "resolve/literature: no auth canary for the discovery engine \u2014 free-tier degradation is silent and grades as clean",
+      "phase": "custody-build-packet",
+      "disposition": "implement-when-unblocked",
+      "owner": "agent",
+      "blocked_by": [],
+      "labels": [
+        "bug",
+        "assurance:R1"
+      ],
+      "evidence_note": "Discovery-engine auth canary missing.",
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/89"
+    },
+    {
+      "kind": "issue",
+      "number": 95,
+      "title": "CI: durable local-cluster fallback, and prefer local CI over Actions minutes",
+      "phase": "evidence-process",
+      "disposition": "implement-when-unblocked",
+      "owner": "agent",
+      "blocked_by": [],
+      "labels": [
+        "assurance:R0",
+        "tech-debt"
+      ],
+      "evidence_note": "Local-cluster CI fallback.",
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/95"
+    },
+    {
+      "kind": "issue",
+      "number": 104,
+      "title": "Complete or explicitly retire the unimplemented v5 design commitments before successor GO",
+      "phase": "frontier-decision",
+      "disposition": "hold-operator",
+      "owner": "operator",
+      "blocked_by": [],
+      "labels": [
+        "gate:operator",
+        "work:decision",
+        "assurance:R0"
+      ],
+      "evidence_note": "Implement vs retire v5 design commitments.",
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/104"
+    },
+    {
+      "kind": "issue",
+      "number": 105,
+      "title": "P2: finish v5 public-content remediation and add an exact-candidate review gate",
+      "phase": "ES6-ZI-001",
+      "disposition": "reconcile-in-matrix",
+      "owner": "agent",
+      "blocked_by": [],
+      "labels": [
+        "bug",
+        "assurance:R1"
+      ],
+      "evidence_note": "Exact-candidate public-content gate.",
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/105"
+    },
+    {
+      "kind": "issue",
+      "number": 118,
+      "title": "mission-custody contract@2: bind receipt hashes and a tail anchor into the checkpoint chain",
+      "phase": "blocked-parent",
+      "disposition": "implement-when-unblocked",
+      "owner": "agent",
+      "blocked_by": [],
+      "labels": [
+        "bug",
+        "security",
+        "assurance:R1"
+      ],
+      "evidence_note": "contract@2 receipt hash + tail anchor.",
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/118"
+    },
+    {
+      "kind": "issue",
+      "number": 124,
+      "title": "mission-custody: receipt continuity check \u2014 surface unreceipted mutation between receipted events",
+      "phase": "blocked-parent",
+      "disposition": "implement-when-unblocked",
+      "owner": "agent",
+      "blocked_by": [],
+      "labels": [
+        "assurance:R1",
+        "work:dependency"
+      ],
+      "evidence_note": "Receipt continuity check design open.",
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/124"
+    },
+    {
+      "kind": "issue",
+      "number": 129,
+      "title": "custody hook: Antigravity (agy) adapter + install snippet \u2014 coverage currently NOT WIRED",
+      "phase": "custody-build-packet",
+      "disposition": "implement-when-unblocked",
+      "owner": "agent",
+      "blocked_by": [],
+      "labels": [
+        "bug",
+        "assurance:R1",
+        "work:live-verification",
+        "gate:live-environment"
+      ],
+      "evidence_note": "Antigravity adapter not wired.",
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/129"
+    },
+    {
+      "kind": "issue",
+      "number": 136,
+      "title": "custody hook: Cursor CLI workaround must use an installed plugin-root command",
+      "phase": "custody-build-packet",
+      "disposition": "implement-when-unblocked",
+      "owner": "agent",
+      "blocked_by": [],
+      "labels": [
+        "bug",
+        "assurance:R1",
+        "work:live-verification",
+        "gate:live-environment"
+      ],
+      "evidence_note": "Cursor CLI hook must use plugin-root path.",
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/136"
+    },
+    {
+      "kind": "issue",
+      "number": 137,
+      "title": "mission-custody Stage-C gate: close three false-allow bypasses and four contract/CLI gaps from PR #128",
+      "phase": "custody-build-packet",
+      "disposition": "implement-when-unblocked",
+      "owner": "agent",
+      "blocked_by": [],
+      "labels": [
+        "bug",
+        "security",
+        "assurance:R1",
+        "source:audit"
+      ],
+      "evidence_note": "P1 false-allow bypasses from PR #128 review.",
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/137"
+    },
+    {
+      "kind": "issue",
+      "number": 139,
+      "title": "cancel --reason \"\" silently erases the why on a terminal, irreversible verb",
+      "phase": "custody-build-packet",
+      "disposition": "implement-when-unblocked",
+      "owner": "agent",
+      "blocked_by": [],
+      "labels": [],
+      "evidence_note": "Mission-custody residue; deferred past ES6-ZI-001 per #191.",
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/139"
+    },
+    {
+      "kind": "issue",
+      "number": 140,
+      "title": "mission-custody test suite: intermittent flakes on Windows (subprocess/tempdir timing), not code regressions",
+      "phase": "custody-build-packet",
+      "disposition": "implement-when-unblocked",
+      "owner": "agent",
+      "blocked_by": [],
+      "labels": [],
+      "evidence_note": "Mission-custody residue; deferred past ES6-ZI-001 per #191.",
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/140"
+    },
+    {
+      "kind": "issue",
+      "number": 141,
+      "title": "custody_gate: path_globs matched against an unscoped file_path can false-block an unrelated workspace",
+      "phase": "custody-build-packet",
+      "disposition": "implement-when-unblocked",
+      "owner": "agent",
+      "blocked_by": [],
+      "labels": [],
+      "evidence_note": "Mission-custody residue; deferred past ES6-ZI-001 per #191.",
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/141"
+    },
+    {
+      "kind": "issue",
+      "number": 142,
+      "title": "Capture real harness hook payloads \u2014 two guard types now rest on docs prose, not observed wire format",
+      "phase": "custody-build-packet",
+      "disposition": "implement-when-unblocked",
+      "owner": "agent",
+      "blocked_by": [],
+      "labels": [],
+      "evidence_note": "Capture real harness hook payloads.",
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/142"
+    },
+    {
+      "kind": "issue",
+      "number": 145,
+      "title": "test fixtures carry a real operator name form into a public repo, and it is spreading",
+      "phase": "custody-build-packet",
+      "disposition": "implement-when-unblocked",
+      "owner": "agent",
+      "blocked_by": [],
+      "labels": [],
+      "evidence_note": "Synthetic fixture operator names spreading.",
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/145"
+    },
+    {
+      "kind": "issue",
+      "number": 147,
+      "title": "mission-custody: record the RESOLVED artifact path at write time (scope classification is lexical)",
+      "phase": "custody-build-packet",
+      "disposition": "implement-when-unblocked",
+      "owner": "agent",
+      "blocked_by": [],
+      "labels": [],
+      "evidence_note": "Mission-custody residue; deferred past ES6-ZI-001 per #191.",
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/147"
+    },
+    {
+      "kind": "issue",
+      "number": 148,
+      "title": "mission-custody: the party that did the work can accept it \u2014 worker_id is the static steward_ref, not the actual actor",
+      "phase": "blocked-parent",
+      "disposition": "implement-when-unblocked",
+      "owner": "agent",
+      "blocked_by": [],
+      "labels": [],
+      "evidence_note": "Tier-1 self-accept; derive worker from chain.",
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/148"
+    },
+    {
+      "kind": "issue",
+      "number": 149,
+      "title": "mission-custody: effects are permitted in draft, before the operator approves the mission",
+      "phase": "custody-build-packet",
+      "disposition": "implement-when-unblocked",
+      "owner": "agent",
+      "blocked_by": [],
+      "labels": [],
+      "evidence_note": "Mission-custody residue; deferred past ES6-ZI-001 per #191.",
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/149"
+    },
+    {
+      "kind": "issue",
+      "number": 150,
+      "title": "mission-custody: the discharge gate turns amend's verbatim field into a lock-pick \u2014 give the machine its own field",
+      "phase": "blocked-parent",
+      "disposition": "implement-when-unblocked",
+      "owner": "agent",
+      "blocked_by": [],
+      "labels": [],
+      "evidence_note": "Structured --grants-path for amend discharge.",
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/150"
+    },
+    {
+      "kind": "issue",
+      "number": 151,
+      "title": "mission-custody: scope.in symlink gap, unshown blind spot at acceptance, and three untested CLI surfaces",
+      "phase": "custody-build-packet",
+      "disposition": "implement-when-unblocked",
+      "owner": "agent",
+      "blocked_by": [],
+      "labels": [],
+      "evidence_note": "Mission-custody residue; deferred past ES6-ZI-001 per #191.",
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/151"
+    },
+    {
+      "kind": "issue",
+      "number": 154,
+      "title": "A mission store can be untracked-and-unignored: a third state with no recovery path",
+      "phase": "custody-build-packet",
+      "disposition": "implement-when-unblocked",
+      "owner": "agent",
+      "blocked_by": [],
+      "labels": [],
+      "evidence_note": "Mission-custody residue; deferred past ES6-ZI-001 per #191.",
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/154"
+    },
+    {
+      "kind": "issue",
+      "number": 157,
+      "title": "mission-custody: a backslash-separated scope entry with spaces is classified as prose (Windows paths)",
+      "phase": "custody-build-packet",
+      "disposition": "implement-when-unblocked",
+      "owner": "agent",
+      "blocked_by": [],
+      "labels": [],
+      "evidence_note": "Mission-custody residue; deferred past ES6-ZI-001 per #191.",
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/157"
+    },
+    {
+      "kind": "issue",
+      "number": 158,
+      "title": "custody_cli: control characters in envelope declarations render raw on resume -- a declaration can forge rows or rewrite the terminal",
+      "phase": "custody-build-packet",
+      "disposition": "implement-when-unblocked",
+      "owner": "agent",
+      "blocked_by": [],
+      "labels": [],
+      "evidence_note": "Mission-custody residue; deferred past ES6-ZI-001 per #191.",
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/158"
+    },
+    {
+      "kind": "issue",
+      "number": 159,
+      "title": "mission-custody: the scope-ack note's comma-join is ambiguous for comma-bearing paths",
+      "phase": "custody-build-packet",
+      "disposition": "implement-when-unblocked",
+      "owner": "agent",
+      "blocked_by": [],
+      "labels": [],
+      "evidence_note": "Mission-custody residue; deferred past ES6-ZI-001 per #191.",
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/159"
+    },
+    {
+      "kind": "issue",
+      "number": 160,
+      "title": "custody_cli: whitespace-only envelope lists count as set -- the unbounded-envelope warning is defeated",
+      "phase": "custody-build-packet",
+      "disposition": "implement-when-unblocked",
+      "owner": "agent",
+      "blocked_by": [],
+      "labels": [],
+      "evidence_note": "Mission-custody residue; deferred past ES6-ZI-001 per #191.",
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/160"
+    },
+    {
+      "kind": "issue",
+      "number": 161,
+      "title": "mission-custody: closing a mission is quadratic in receipts (41.5 s at 800) -- build the id-to-path map in one traversal",
+      "phase": "custody-build-packet",
+      "disposition": "implement-when-unblocked",
+      "owner": "agent",
+      "blocked_by": [],
+      "labels": [],
+      "evidence_note": "Mission-custody residue; deferred past ES6-ZI-001 per #191.",
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/161"
+    },
+    {
+      "kind": "issue",
+      "number": 162,
+      "title": "mission-custody: scope matching assumes every non-Windows filesystem is case-sensitive (macOS default is not)",
+      "phase": "custody-build-packet",
+      "disposition": "implement-when-unblocked",
+      "owner": "agent",
+      "blocked_by": [],
+      "labels": [],
+      "evidence_note": "Mission-custody residue; deferred past ES6-ZI-001 per #191.",
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/162"
+    },
+    {
+      "kind": "issue",
+      "number": 163,
+      "title": "mission-custody: the advertised --scope-ack command is not paste-safe for every legal path",
+      "phase": "custody-build-packet",
+      "disposition": "implement-when-unblocked",
+      "owner": "agent",
+      "blocked_by": [],
+      "labels": [],
+      "evidence_note": "Mission-custody residue; deferred past ES6-ZI-001 per #191.",
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/163"
+    },
+    {
+      "kind": "issue",
+      "number": 164,
+      "title": "mission-custody: deleting a hard-linked alias before acceptance erases the MULTIPLY LINKED finding -- bind st_nlink at write time (rides #147's record-kind revision)",
+      "phase": "custody-build-packet",
+      "disposition": "implement-when-unblocked",
+      "owner": "agent",
+      "blocked_by": [],
+      "labels": [],
+      "evidence_note": "Mission-custody residue; deferred past ES6-ZI-001 per #191.",
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/164"
+    },
+    {
+      "kind": "issue",
+      "number": 165,
+      "title": "codex-scan on PR #143: NULL RESULT \u2014 both scans hit the $15 cap before producing findings (and the scoped scan cost MORE than the diff)",
+      "phase": "evidence-process",
+      "disposition": "close-when-evidence",
+      "owner": "agent",
+      "blocked_by": [],
+      "labels": [
+        "codex",
+        "security"
+      ],
+      "evidence_note": "Codex scan null at cap; not clean coverage.",
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/165"
+    },
+    {
+      "kind": "issue",
+      "number": 166,
+      "title": "The envelope is used when the work is file-shaped and abandoned when it is not \u2014 scope is EMPTY on the estate's biggest live mission",
+      "phase": "blocked-parent",
+      "disposition": "implement-when-unblocked",
+      "owner": "agent",
+      "blocked_by": [],
+      "labels": [
+        "audit"
+      ],
+      "evidence_note": "Non-file envelope; scope empty on live mission.",
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/166"
+    },
+    {
+      "kind": "issue",
+      "number": 167,
+      "title": "mission-custody: invisible-but-printable characters in identities \u2014 the residual the ingestion guard cannot close",
+      "phase": "custody-build-packet",
+      "disposition": "implement-when-unblocked",
+      "owner": "agent",
+      "blocked_by": [],
+      "labels": [],
+      "evidence_note": "Mission-custody residue; deferred past ES6-ZI-001 per #191.",
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/167"
+    },
+    {
+      "kind": "issue",
+      "number": 168,
+      "title": "custody_gate: operator-authored command_regexes keep Python's `$` one-newline tolerance \u2014 the anchor fix's disclosed twin",
+      "phase": "custody-build-packet",
+      "disposition": "implement-when-unblocked",
+      "owner": "agent",
+      "blocked_by": [],
+      "labels": [],
+      "evidence_note": "Mission-custody residue; deferred past ES6-ZI-001 per #191.",
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/168"
+    },
+    {
+      "kind": "issue",
+      "number": 169,
+      "title": "mission-custody: parent-mkdir before a failing write leaves unreceipted directory mutation; permission failures on acceptance probes degrade to silent None",
+      "phase": "custody-build-packet",
+      "disposition": "implement-when-unblocked",
+      "owner": "agent",
+      "blocked_by": [],
+      "labels": [],
+      "evidence_note": "Mission-custody residue; deferred past ES6-ZI-001 per #191.",
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/169"
+    },
+    {
+      "kind": "issue",
+      "number": 170,
+      "title": "mission-custody: NT strips trailing dots from filenames \u2014 a pattern-side seam the cross-platform normaliser deliberately does not fold",
+      "phase": "custody-build-packet",
+      "disposition": "implement-when-unblocked",
+      "owner": "agent",
+      "blocked_by": [],
+      "labels": [],
+      "evidence_note": "Mission-custody residue; deferred past ES6-ZI-001 per #191.",
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/170"
+    },
+    {
+      "kind": "issue",
+      "number": 173,
+      "title": "mission-custody: one-active-mission-per-workspace is too strict \u2014 concurrent missions targeting the same repo must coexist, cohere, and coordinate",
+      "phase": "blocked-parent",
+      "disposition": "implement-when-unblocked",
+      "owner": "agent",
+      "blocked_by": [],
+      "labels": [],
+      "evidence_note": "Concurrent missions; naive relaxation fail-opens Stage-C.",
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/173"
+    },
+    {
+      "kind": "issue",
+      "number": 186,
+      "title": "v5.1.0 post-tag docket: content-gate patterns, allowlist narrowing, wiki packet, tag-ruleset decision, es#162",
+      "phase": "ES6-ZI-001",
+      "disposition": "reconcile-in-matrix",
+      "owner": "operator+agent",
+      "blocked_by": [],
+      "labels": [],
+      "evidence_note": "Post-tag docket; path-filter guard lands in oracle audit.",
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/186"
+    },
+    {
+      "kind": "issue",
+      "number": 191,
+      "title": "v6.0 assurance program: exact-candidate qualification and two-stage release gate",
+      "phase": "ES6-ZI-001",
+      "disposition": "reconcile-in-matrix",
+      "owner": "program",
+      "blocked_by": [],
+      "labels": [],
+      "evidence_note": "Parent v6 program; this run implements packet 1\u20133.",
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/191"
+    },
+    {
+      "kind": "pr",
+      "number": 100,
+      "title": "Explore leveraging Fudge DESIGN.md as visual craft doctrine",
+      "phase": "park",
+      "disposition": "park",
+      "owner": "agent",
+      "blocked_by": [],
+      "labels": [],
+      "evidence_note": "Exploratory Fudge/visual craft; not operator-approved. (draft PR).",
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/pull/100"
+    },
+    {
+      "kind": "pr",
+      "number": 103,
+      "title": "fix: record and address the v5.0.0 post-release audit",
+      "phase": "supersede",
+      "disposition": "harvest-supersede",
+      "owner": "agent",
+      "blocked_by": [],
+      "labels": [],
+      "evidence_note": "Draft conflicting; harvest unique errata then supersede. (draft PR).",
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/pull/103"
+    },
+    {
+      "kind": "pr",
+      "number": 156,
+      "title": "docs(release): add the missing publication-authorization step; tag creation is now gated",
+      "phase": "frontier-decision",
+      "disposition": "keep-sequence",
+      "owner": "operator",
+      "blocked_by": [],
+      "labels": [],
+      "evidence_note": "Publication authorization step; sequence with #190.",
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/pull/156"
+    },
+    {
+      "kind": "pr",
+      "number": 176,
+      "title": "feat: add manifest custody portability planning boundary",
+      "phase": "park",
+      "disposition": "do-not-merge",
+      "owner": "agent",
+      "blocked_by": [],
+      "labels": [],
+      "evidence_note": "94k-line planning boundary; DCO red; verdict narrow.",
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/pull/176"
+    },
+    {
+      "kind": "pr",
+      "number": 192,
+      "title": "feat(v6): ES6-ZI-001 baseline claims, oracle audit, and clean baseline",
+      "phase": "ES6-ZI-001",
+      "disposition": "reconcile-in-matrix",
+      "owner": "agent",
+      "blocked_by": [],
+      "labels": [],
+      "evidence_note": "ES6-ZI-001 baseline claims, oracle audit, clean baseline (draft). (draft PR).",
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/pull/192"
+    }
+  ]
+}
