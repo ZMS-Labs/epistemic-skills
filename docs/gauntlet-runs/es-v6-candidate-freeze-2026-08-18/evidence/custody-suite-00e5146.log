@@ -1,0 +1,38 @@
+== custody suite @ 00e5146e43ff9011153452b83fedda706723c52b py=Python 3.12.3 ==
+-- test_mission_custody --
+ok   corpus-invalid-verdict-self-certified.json
+
+0 failures
+rc=0
+-- test_custody_store --
+ok   fallback-retry-succeeds
+
+0 failures
+rc=0
+-- test_custody_mission --
+ok   tail-regex-narrow-after-unrelated-amend-detected
+
+0 failures
+rc=0
+-- test_custody_cli --
+ok   tamper-still-no-writes
+
+0 failures
+rc=0
+-- test_custody_gate --
+ok   run-gate-multi-active-allows
+ok   run-gate-multi-active-warns
+all green
+rc=0
+-- test_custody_hook --
+ok   poisoned-earlier-root-does-not-suppress-later-block
+ok   poisoned-root-failure-is-loud
+all green
+rc=0
+-- test_custody_process_proof --
+ok   no-tmp-files-anywhere-under-missions
+
+0 failures
+rc=0
+-- py_compile verify_mission_custody --
+rc=0

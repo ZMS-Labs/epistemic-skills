@@ -1,0 +1,46 @@
+clean-room CI
+  ref     : 00e5146e43ff9011153452b83fedda706723c52b
+  os      : Ubuntu 24.04.4 LTS
+  python  : Python 3.12.3
+  workdir : /tmp/tmp.UxO8da5A2O
+
+  commit  : 00e5146
+
+extracted 34 python steps from .github/workflows/epistemic-flexibility.yml
+
+  PASS  plugins/epistemic-skills/contracts/epistemic-events/test_epistemic_events.py
+  PASS  plugins/epistemic-skills/evals/epistemic-flexibility/run_tests.py
+  PASS  plugins/epistemic-skills/evals/epistemic-flexibility/behavioral/run_tests.py
+  PASS  plugins/epistemic-skills/evals/proportionality/run_tests.py
+  PASS  plugins/epistemic-skills/skills/resolve/derivation/evals/formal-rigor-v2-fixtures/tests/run_tests.py
+  PASS  plugins/epistemic-skills/skills/resolve/derivation/evals/formal-rigor-v2-fixtures/tests/test_focused.py
+  PASS  plugins/epistemic-skills/skills/resolve/derivation/evals/formal-rigor-v2-fixtures/tests/test_live_runner.py
+  PASS  plugins/epistemic-skills/skills/resolve/derivation/evals/formal-rigor-v2-fixtures/tests/test_posthoc_diagnostic.py
+  PASS  plugins/epistemic-skills/skills/evidence-locked-uat/evals/triage/tests/run_tests.py
+  PASS  plugins/epistemic-skills/skills/decision-ledger/evals/proportionality/tests/run_tests.py
+  PASS  plugins/epistemic-skills/skills/open-questions/evals/trigger-and-scope/tests/run_tests.py
+  PASS  plugins/epistemic-skills/skills/context-audit/evals/trigger-and-scope/tests/run_tests.py
+  PASS  plugins/epistemic-skills/skills/recon/evals/initiative-trigger-and-scope/tests/run_tests.py
+  PASS  plugins/epistemic-skills/skills/resolve/probe/evals/trigger-and-scope/tests/run_tests.py
+  PASS  plugins/epistemic-skills/skills/recon/evals/brief-trigger-and-scope/tests/run_tests.py
+  PASS  plugins/epistemic-skills/skills/recon/evals/candidate-trigger-and-scope/tests/run_tests.py
+  PASS  plugins/epistemic-skills/skills/resolve/literature/evals/trigger-and-scope/tests/run_tests.py
+  PASS  plugins/epistemic-skills/skills/write-goal/evals/trigger-and-scope/tests/run_tests.py
+  PASS  plugins/epistemic-skills/skills/outsource/evals/trigger-and-scope/tests/run_tests.py
+  PASS  plugins/epistemic-skills/skills/outsource/tests/run_tests.py
+  PASS  .github/scripts/check_pin_tags.py
+  PASS  .github/scripts/test_check_dco.py
+  PASS  .github/scripts/sync_skill_surfaces.py --check
+  PASS  .github/scripts/check_no_phantom_skills.py
+  PASS  .github/scripts/check_description_budget.py --self-test
+  PASS  .github/scripts/check_description_budget.py
+  PASS  .github/scripts/check_json_artifacts.py
+  PASS  plugins/epistemic-skills/skills/decision-ledger/reference/validate_examples.py
+  PASS  .github/scripts/test_v6_candidate_packet.py
+  PASS  plugins/epistemic-skills/contracts/v6-assurance/validate_v6_assurance.py
+  PASS  plugins/epistemic-skills/contracts/verify_receipt.py --self-test
+  PASS  plugins/epistemic-skills/contracts/verify_calibration.py --self-test
+  PASS  plugins/epistemic-skills/skills/evidence-locked-uat/scripts/judge.py --self-test
+  PASS  plugins/epistemic-skills/skills/gauntlet/tests/run_tests.py
+
+clean-room CI: 34 passed, 0 failed, 0 skipped (need args)
