@@ -1,8 +1,8 @@
 {
   "schema": "issue-pr-reconciliation@1",
   "program": "ES6-V6-CANDIDATE",
-  "exact_start_sha": "00e5146e43ff9011153452b83fedda706723c52b",
-  "generated_at": "2026-08-18T14:40:24Z",
+  "exact_start_sha": "6db8c50420b194aebbd09a2ea5f81c6a276897dc",
+  "generated_at": "2026-08-18T21:57:15Z",
   "items": [
     {
       "kind": "issue",
@@ -24,8 +24,8 @@
       "kind": "issue",
       "number": 40,
       "title": "Release gate: cross-family Step-7b adjudication before any v3 3.0.0",
-      "phase": "frontier-decision",
-      "disposition": "hold-operator",
+      "phase": "decided-2026-08-18",
+      "disposition": "decided-rescope",
       "owner": "operator",
       "blocked_by": [],
       "labels": [
@@ -35,7 +35,7 @@
         "work:dependency",
         "work:decision"
       ],
-      "evidence_note": "Re-scope v3 Step-7b into v6 Gauntlet.",
+      "evidence_note": "Operator decision D9: cross-family requirement re-scoped into v6-and-future publication gauntlets' Step 7b (first exercised at the next GO-posture verdict per D8). Closing #40 itself remains the operator's act.",
       "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/40"
     },
     {
@@ -58,8 +58,8 @@
       "kind": "issue",
       "number": 84,
       "title": "Paired proposal (charter step 1): exchange-protocol adoption, v4 event-contract re-pin, and field-pair ownership",
-      "phase": "frontier-decision",
-      "disposition": "hold-operator",
+      "phase": "decided-2026-08-18",
+      "disposition": "decided-ownership-split",
       "owner": "joint",
       "blocked_by": [],
       "labels": [
@@ -68,7 +68,7 @@
         "work:decision",
         "assurance:R2"
       ],
-      "evidence_note": "Items 1\u20132 done; field-pair supply remains.",
+      "evidence_note": "Operator decision D10: field-pair ownership split confirmed (epistemic-calibration owns the outcome store and resolution loop; epistemic-skills owns emission) and the outcome store is granted operator-visible status. Implementation of the store remains cross-repo work.",
       "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/84"
     },
     {
@@ -105,16 +105,16 @@
       "kind": "issue",
       "number": 104,
       "title": "Complete or explicitly retire the unimplemented v5 design commitments before successor GO",
-      "phase": "frontier-decision",
-      "disposition": "hold-operator",
-      "owner": "operator",
+      "phase": "decided-2026-08-18",
+      "disposition": "decided-implement-all",
+      "owner": "agent",
       "blocked_by": [],
       "labels": [
         "gate:operator",
         "work:decision",
         "assurance:R0"
       ],
-      "evidence_note": "Implement vs retire v5 design commitments.",
+      "evidence_note": "Operator decision D3: implement ALL v5 design commitments. Implemented on this candidate \u2014 see CLM-V5-ROUTING/LEDGERS/SENTINELS/MEMBERSHIP rows.",
       "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/104"
     },
     {
@@ -223,7 +223,7 @@
       "owner": "agent",
       "blocked_by": [],
       "labels": [],
-      "evidence_note": "Mission-custody residue; not implemented on this candidate.",
+      "evidence_note": "Mission-custody residue; disclosed seam/defect, not implemented on this candidate (2026-08-18 reconciliation sweep).",
       "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/139"
     },
     {
@@ -235,7 +235,7 @@
       "owner": "agent",
       "blocked_by": [],
       "labels": [],
-      "evidence_note": "Mission-custody residue; not implemented on this candidate.",
+      "evidence_note": "Mission-custody residue; disclosed seam/defect, not implemented on this candidate (2026-08-18 reconciliation sweep).",
       "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/140"
     },
     {
@@ -247,7 +247,7 @@
       "owner": "agent",
       "blocked_by": [],
       "labels": [],
-      "evidence_note": "Mission-custody residue; not implemented on this candidate.",
+      "evidence_note": "Mission-custody residue; disclosed seam/defect, not implemented on this candidate (2026-08-18 reconciliation sweep).",
       "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/141"
     },
     {
@@ -283,7 +283,7 @@
       "owner": "agent",
       "blocked_by": [],
       "labels": [],
-      "evidence_note": "Mission-custody residue; not implemented on this candidate.",
+      "evidence_note": "Mission-custody residue; disclosed seam/defect, not implemented on this candidate (2026-08-18 reconciliation sweep).",
       "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/147"
     },
     {
@@ -331,7 +331,7 @@
       "owner": "agent",
       "blocked_by": [],
       "labels": [],
-      "evidence_note": "Mission-custody residue; not implemented on this candidate.",
+      "evidence_note": "Mission-custody residue; disclosed seam/defect, not implemented on this candidate (2026-08-18 reconciliation sweep).",
       "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/151"
     },
     {
@@ -343,7 +343,7 @@
       "owner": "agent",
       "blocked_by": [],
       "labels": [],
-      "evidence_note": "Mission-custody residue; not implemented on this candidate.",
+      "evidence_note": "Mission-custody residue; disclosed seam/defect, not implemented on this candidate (2026-08-18 reconciliation sweep).",
       "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/154"
     },
     {
@@ -355,7 +355,7 @@
       "owner": "agent",
       "blocked_by": [],
       "labels": [],
-      "evidence_note": "Mission-custody residue; not implemented on this candidate.",
+      "evidence_note": "Mission-custody residue; disclosed seam/defect, not implemented on this candidate (2026-08-18 reconciliation sweep).",
       "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/157"
     },
     {
@@ -367,7 +367,7 @@
       "owner": "agent",
       "blocked_by": [],
       "labels": [],
-      "evidence_note": "Mission-custody residue; not implemented on this candidate.",
+      "evidence_note": "Mission-custody residue; disclosed seam/defect, not implemented on this candidate (2026-08-18 reconciliation sweep).",
       "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/158"
     },
     {
@@ -379,7 +379,7 @@
       "owner": "agent",
       "blocked_by": [],
       "labels": [],
-      "evidence_note": "Mission-custody residue; not implemented on this candidate.",
+      "evidence_note": "Mission-custody residue; disclosed seam/defect, not implemented on this candidate (2026-08-18 reconciliation sweep).",
       "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/159"
     },
     {
@@ -391,7 +391,7 @@
       "owner": "agent",
       "blocked_by": [],
       "labels": [],
-      "evidence_note": "Mission-custody residue; not implemented on this candidate.",
+      "evidence_note": "Mission-custody residue; disclosed seam/defect, not implemented on this candidate (2026-08-18 reconciliation sweep).",
       "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/160"
     },
     {
@@ -403,7 +403,7 @@
       "owner": "agent",
       "blocked_by": [],
       "labels": [],
-      "evidence_note": "Mission-custody residue; not implemented on this candidate.",
+      "evidence_note": "Mission-custody residue; disclosed seam/defect, not implemented on this candidate (2026-08-18 reconciliation sweep).",
       "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/161"
     },
     {
@@ -427,7 +427,7 @@
       "owner": "agent",
       "blocked_by": [],
       "labels": [],
-      "evidence_note": "Mission-custody residue; not implemented on this candidate.",
+      "evidence_note": "Mission-custody residue; disclosed seam/defect, not implemented on this candidate (2026-08-18 reconciliation sweep).",
       "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/163"
     },
     {
@@ -439,7 +439,7 @@
       "owner": "agent",
       "blocked_by": [],
       "labels": [],
-      "evidence_note": "Mission-custody residue; not implemented on this candidate.",
+      "evidence_note": "Mission-custody residue; disclosed seam/defect, not implemented on this candidate (2026-08-18 reconciliation sweep).",
       "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/164"
     },
     {
@@ -480,7 +480,7 @@
       "owner": "agent",
       "blocked_by": [],
       "labels": [],
-      "evidence_note": "Mission-custody residue; not implemented on this candidate.",
+      "evidence_note": "Mission-custody residue; disclosed seam/defect, not implemented on this candidate (2026-08-18 reconciliation sweep).",
       "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/167"
     },
     {
@@ -492,7 +492,7 @@
       "owner": "agent",
       "blocked_by": [],
       "labels": [],
-      "evidence_note": "Mission-custody residue; not implemented on this candidate.",
+      "evidence_note": "Mission-custody residue; disclosed seam/defect, not implemented on this candidate (2026-08-18 reconciliation sweep).",
       "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/168"
     },
     {
@@ -504,7 +504,7 @@
       "owner": "agent",
       "blocked_by": [],
       "labels": [],
-      "evidence_note": "Mission-custody residue; not implemented on this candidate.",
+      "evidence_note": "Mission-custody residue; disclosed seam/defect, not implemented on this candidate (2026-08-18 reconciliation sweep).",
       "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/169"
     },
     {
@@ -516,7 +516,7 @@
       "owner": "agent",
       "blocked_by": [],
       "labels": [],
-      "evidence_note": "Mission-custody residue; not implemented on this candidate.",
+      "evidence_note": "Mission-custody residue; disclosed seam/defect, not implemented on this candidate (2026-08-18 reconciliation sweep).",
       "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/170"
     },
     {
@@ -535,12 +535,12 @@
       "kind": "issue",
       "number": 186,
       "title": "v5.1.0 post-tag docket: content-gate patterns, allowlist narrowing, wiki packet, tag-ruleset decision, es#162",
-      "phase": "frontier-decision",
-      "disposition": "hold-operator",
+      "phase": "decided-2026-08-18",
+      "disposition": "decided-disarm-as-authorization",
       "owner": "operator+agent",
       "blocked_by": [],
       "labels": [],
-      "evidence_note": "Path-filter guard landed; tag-ruleset decision remains.",
+      "evidence_note": "Operator decision D6: disarm-as-authorization confirmed as the v6.0.0 regime (zero bypass actors; RELEASING.md step 7 procedure IS the authorization act). Remaining docket items (wiki packet) are PROMOTION-owned.",
       "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/186"
     },
     {
@@ -600,20 +600,32 @@
       "owner": "agent",
       "blocked_by": [],
       "labels": [],
-      "evidence_note": "es#137 P1+P2; included in this candidate tree; not merged to main. (draft PR).",
+      "evidence_note": "es#137 P1+P2; included in this candidate tree; stays open as the isolated custody PR per D12; not merged to main. (draft PR).",
       "url": "https://github.com/ZMS-Labs/epistemic-skills/pull/193"
     },
     {
       "kind": "pr",
       "number": 194,
       "title": "feat(v6): ES6-V6-CANDIDATE BUILD freeze (issue #191)",
-      "phase": "ES6-V6-CANDIDATE",
-      "disposition": "in-candidate-draft",
+      "phase": "superseded",
+      "disposition": "supersede-and-close",
       "owner": "agent",
       "blocked_by": [],
       "labels": [],
-      "evidence_note": "This BUILD freeze packet; draft; not a PROMOTION merge. (draft PR).",
+      "evidence_note": "Superseded by the rc2 successor freeze PR (operator decision D12); close authorized after the supersession comment carrying the NO-GO verdict pointer (D13). The dead candidate branch keeps its historical NOT_RUN stamp. (draft PR).",
       "url": "https://github.com/ZMS-Labs/epistemic-skills/pull/194"
+    },
+    {
+      "kind": "pr",
+      "number": 195,
+      "title": "fix(public-content): allowlist ES6-ZI-001 parent-tracker files and the gauntlet challenge record",
+      "phase": "main-repair",
+      "disposition": "operator-merge",
+      "owner": "operator",
+      "blocked_by": [],
+      "labels": [],
+      "evidence_note": "D11 minimal non-draft fix to main (three exact-file allowlist entries + oracle-audit PyYAML). Merging remains the operator's act; retires KL-MAIN-RED when landed green.",
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/pull/195"
     }
   ]
 }

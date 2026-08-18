@@ -1,60 +1,85 @@
-# ES6-V6-CANDIDATE — BUILD freeze (issue #191)
+# ES6-V6-CANDIDATE — BUILD freeze (issue #191), rc2
 
 This packet is the v6 **BUILD** freeze against an exact candidate SHA. It is
 not PROMOTION. It does not merge, tag, close tracker items, or record
-Gauntlet GO.
+Gauntlet GO. This is the **successor freeze** to the NO-GO'd predecessor
+(subject `00e5146e…`, run `docs/gauntlet-runs/es-v6-candidate-freeze-2026-08-18/`
+on the gauntlet-record branch): every acceptance criterion in that run's
+ruling-set, plus operator decisions D1–D15
+(`docs/v6/operator-decision-record-2026-08-18.md`, echo-certified), is
+implemented in this lineage.
 
 Parent: [epistemic-skills#191](https://github.com/ZMS-Labs/epistemic-skills/issues/191)
 
-## Terminal contract vs this packet
+## The C/C+1 layering (R4/R5)
 
-`#191` reaches `V6_CANDIDATE_READY_FOR_OPERATOR_ACCEPTANCE` only when an
-**independent** Gauntlet computes GO with no unresolved P1/P2 blockers.
-This actor produced the candidate, so `self_certification: refused` and
-`readiness: NOT_READY`.
+A packet cannot name the commit that contains it. This freeze therefore has
+two commits:
 
-What this packet *does* complete of the BUILD contract:
+- **C — the candidate**: the last code commit. Every artifact in this
+  directory names C as `candidate_sha`/`exact_start_sha`, carries per-file
+  sha256 digests of C's inventoried sources, and was generated AT C from a
+  clean tree (the generator refuses `--sha != HEAD` and any dirt outside
+  this directory).
+- **C+1 — the freeze commit**: adds/updates ONLY this directory. The
+  validator, running on C+1 or any descendant, recomputes every inventory
+  digest — a post-freeze edit to an inventoried file turns CI red
+  (`allowlist-stale`-style, see KL-RESTAMP).
 
-- a machine-readable claim-to-proof matrix covering every **class** claim
-  and every **open tracker item** at generation time
-- current issue/PR reconciliation with explicit dispositions
-- source inventory
-- requalification evidence that can run from this checkout (clean-room
-  stdlib steps, workflow oracle audit, public-content gate, custody suite)
-- an immutable promotion packet naming known limits, rollback, and
-  **zero** requested irreversible acts
+The exact C is `promotion-packet.json → candidate_sha`; C+1 is the commit
+whose diff introduced these artifacts (`git log -1 --format=%H --
+docs/v6/ES6-V6-CANDIDATE/promotion-packet.json`).
 
-## SHAs for this freeze
+## What this packet completes of the BUILD contract
 
-| Role | SHA |
-|---|---|
-| Packet `candidate_sha` / `exact_start_sha` | freeze commit that first contained this packet |
-| es#137 P1+P2 code (not on `main`) | `e8a476c730750a9b3e51ac1001b96825996187cc` |
-| Clean-room evidence subject | `evidence/clean-baseline.json` `exact_start_sha` |
-
-Committing JSON artifacts creates a child SHA. The follow-up evidence commit
-records clean-room of the freeze commit and is not itself a second candidate.
+- claim-to-proof matrix: 26 class claims (verdict-bound gauntlet row;
+  per-commitment v5 rows; secret-scan, compatibility, guard-lexical,
+  description-budget, and the three D1-ratified merge rows) + one census
+  row per open tracker item, each with structured `consequence_severity`
+- `blocking_claims` DERIVED from the matrix (`derive_blocking`, one home in
+  the validator) — never a hand list
+- issue/PR reconciliation with explicit human-read dispositions (an
+  unlisted open item fails generation closed)
+- source inventory with per-file digests + candidate tree hash
+- requalification evidence: GitHub `workflow_dispatch` runs of all five
+  gating workflows at C (`evidence/requalification.json` — the only
+  mechanism that flips a claim PARTIAL→PROVED), plus local clean-room,
+  workflow-oracle audit, public-content, and custody evidence at C
+- an immutable promotion packet (schema @2) naming known limits with
+  owners, a qualified rollback, and **zero** requested irreversible acts
 
 ## Honest gaps (do not read as GO)
 
-Operator holds: `#104`, `#186` tag-ruleset remainder, `#84` field-pair, `#40`.
-Live-environment LIMITED: `#77`, `#39`, `#136`, `#129`, `#142`.
-Platform LIMITED: `#162` (macOS) and `CLM-WINDOWS-FS`.
-Integrity: es#137 is closed in **this tree** and still open on `main`.
-Draft PRs skip required CI jobs; local clean-room is the BUILD oracle.
+- `CLM-INDEPENDENT-GAUNTLET` is UNPROVED by construction; a FRESH seat must
+  run it (the prior adjudicating seat took the repair role under D2).
+- Live-environment LIMITED: #77, #39, #136, #129, #142.
+- Platform LIMITED: #162 (now with the MEASURED APFS Unicode-fold
+  collision — see KL-MACOS-162) and CLM-WINDOWS-FS.
+- Integrity: es#137 closed in THIS tree, open on `main` (KL-MAIN-137);
+  `main` red at the Public-content step pending PR #195 (KL-MAIN-RED);
+  draft CI skips all five gating workflows until ready-mark (KL-DRAFT-CI).
+- The description-budget estate fork (Path 1 capture / Path 2 owner
+  amendment) is the operator's open decision (CLM-DESCRIPTION-BUDGET).
+- Pin tags: the session's git proxy refuses `refs/tags` pushes, so the
+  freeze pins are an operator one-liner (see the freeze PR body); PINS
+  registration follows at promotion (a post-freeze PINS edit would trip
+  the digest guard by design).
 
-## Regenerate
+## Regenerate (C/C+1 discipline)
 
 ```bash
-python .github/scripts/v6_generate_candidate_packet.py
+# at C, clean tree; the generator refuses anything else
 python .github/scripts/v6_audit_workflow_oracles.py --write docs/v6/ES6-V6-CANDIDATE/evidence/workflow-oracle-audit.json
 python .github/scripts/v6_collect_candidate_evidence.py \
   --public-content docs/v6/ES6-V6-CANDIDATE/evidence/public-content.json \
   --custody docs/v6/ES6-V6-CANDIDATE/evidence/custody-suite.json
-# After committing the freeze files, requalify that SHA:
-python .github/scripts/v6_run_clean_baseline.py \
-  --program ES6-V6-CANDIDATE \
-  --packet ES6-V6-CANDIDATE-REQUAL \
+python .github/scripts/v6_run_clean_baseline.py --ref HEAD \
+  --program ES6-V6-CANDIDATE --packet ES6-V6-CANDIDATE-REQUAL \
   --write docs/v6/ES6-V6-CANDIDATE/evidence/clean-baseline.json
+# dispatch the five gating workflows at C; record run URLs + job
+# conclusions in evidence/requalification.json (candidate_sha must be C)
+python .github/scripts/v6_generate_candidate_packet.py \
+  --tracker-json docs/v6/ES6-V6-CANDIDATE/evidence/tracker-capture.json
 python plugins/epistemic-skills/contracts/v6-assurance/validate_v6_assurance.py
+# commit ONLY docs/v6/ES6-V6-CANDIDATE/** as C+1
 ```
