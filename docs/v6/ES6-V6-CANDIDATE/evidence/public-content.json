@@ -1,0 +1,21 @@
+{
+  "schema": "public-content-evidence@1",
+  "program": "ES6-V6-CANDIDATE",
+  "exact_start_sha": "e8a476c730750a9b3e51ac1001b96825996187cc",
+  "generated_at": "2026-08-18T14:37:02Z",
+  "self_test": {
+    "command": "/usr/bin/python /agent/repos/epistemic-skills/.github/scripts/check_public_content.py --self-test",
+    "exit_code": 0,
+    "stdout": "public-content self-test ok: 7 seeded RED controls passed\n",
+    "stderr": "",
+    "passed": true
+  },
+  "live": {
+    "command": "/usr/bin/python /agent/repos/epistemic-skills/.github/scripts/check_public_content.py",
+    "exit_code": 0,
+    "stdout": "public-content gate ok: 7 patterns, 41 allowlisted exact files\n",
+    "stderr": "",
+    "passed": true
+  },
+  "passed": true
+}

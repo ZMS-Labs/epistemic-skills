@@ -230,8 +230,12 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def _read_guards_file(path: str) -> list:
-    with open(path, encoding="utf-8") as handle:
-        guards = json.load(handle)
+    try:
+        with open(path, encoding="utf-8") as handle:
+            guards = json.load(handle)
+    except json.JSONDecodeError as exc:
+        raise CustodyError(
+            f"guards file is not valid JSON: {exc}") from None
     if not isinstance(guards, list):
         raise CustodyError("guards file must contain a JSON list of rules")
     return guards

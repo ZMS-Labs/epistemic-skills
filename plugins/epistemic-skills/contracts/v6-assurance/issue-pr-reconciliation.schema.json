@@ -41,6 +41,7 @@
           "type": "string",
           "enum": [
             "ES6-ZI-001",
+            "ES6-V6-CANDIDATE",
             "frontier-decision",
             "blocked-parent",
             "custody-build-packet",
@@ -59,7 +60,8 @@
             "harvest-supersede",
             "park",
             "implement-when-unblocked",
-            "close-when-evidence"
+            "close-when-evidence",
+            "in-candidate-draft"
           ]
         },
         "owner": { "type": "string", "minLength": 1 },

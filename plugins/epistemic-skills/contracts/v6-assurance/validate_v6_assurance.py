@@ -10,6 +10,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[4]
 CONTRACT_ROOT = REPO_ROOT / "plugins/epistemic-skills/contracts/v6-assurance"
 V6_DOCS = REPO_ROOT / "docs/v6/ES6-ZI-001"
+CANDIDATE_DOCS = REPO_ROOT / "docs/v6/ES6-V6-CANDIDATE"
 
 
 def _load_json(path: Path) -> object:
@@ -89,6 +90,43 @@ def validate_source_inventory(doc: dict) -> None:
         raise AssertionError("unexpected source inventory schema")
 
 
+def validate_promotion_packet(doc: dict) -> None:
+    _require_keys(
+        doc,
+        (
+            "schema",
+            "program",
+            "issue",
+            "candidate_sha",
+            "generated_at",
+            "readiness",
+            "self_certification",
+            "independent_gauntlet",
+            "rollback",
+            "requested_irreversible_acts",
+            "blocking_claims",
+            "known_limits",
+            "evidence_paths",
+        ),
+        "promotion-packet",
+    )
+    if doc["schema"] != "v6-promotion-packet@1":
+        raise AssertionError("unexpected promotion packet schema")
+    if doc["self_certification"] != "refused":
+        raise AssertionError("promotion packet must refuse self-certification")
+    if doc["readiness"] == "V6_CANDIDATE_READY_FOR_OPERATOR_ACCEPTANCE":
+        if doc["independent_gauntlet"] != "GO":
+            raise AssertionError("cannot be operator-ready without independent Gauntlet GO")
+
+
+def validate_candidate_coverage(matrix: dict, recon: dict) -> None:
+    ids = {c["id"] for c in matrix["claims"]}
+    for item in recon["items"]:
+        expected = f"CLM-ISSUE-{item['number']}" if item["kind"] == "issue" else f"CLM-PR-{item['number']}"
+        if expected not in ids:
+            raise AssertionError(f"matrix missing tracker claim {expected}")
+
+
 def main() -> int:
     matrix_path = V6_DOCS / "claim-to-proof-matrix.json"
     recon_path = V6_DOCS / "issue-pr-reconciliation.json"
@@ -100,7 +138,23 @@ def main() -> int:
     validate_matrix(_load_json(matrix_path))
     validate_reconciliation(_load_json(recon_path))
     validate_source_inventory(_load_json(inventory_path))
-    print("v6 assurance artifacts: schema checks passed")
+
+    cand_matrix = CANDIDATE_DOCS / "claim-to-proof-matrix.json"
+    cand_recon = CANDIDATE_DOCS / "issue-pr-reconciliation.json"
+    cand_inventory = CANDIDATE_DOCS / "source-inventory.json"
+    cand_packet = CANDIDATE_DOCS / "promotion-packet.json"
+    cand_receipt = CANDIDATE_DOCS / "exact-candidate-receipt.json"
+    for path in (cand_matrix, cand_recon, cand_inventory, cand_packet, cand_receipt):
+        if not path.is_file():
+            raise SystemExit(f"missing required candidate artifact: {path}")
+    matrix = _load_json(cand_matrix)
+    recon = _load_json(cand_recon)
+    validate_matrix(matrix)
+    validate_reconciliation(recon)
+    validate_source_inventory(_load_json(cand_inventory))
+    validate_promotion_packet(_load_json(cand_packet))
+    validate_candidate_coverage(matrix, recon)
+    print("v6 assurance artifacts: schema checks passed (ZI-001 + candidate)")
     return 0
 
 
