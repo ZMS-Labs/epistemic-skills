@@ -380,6 +380,15 @@ def validate_manifest(rec: dict) -> list[str]:
                         patterns.extend(value)
                     if shape_bad:
                         continue
+                    for pattern in rule["path_globs"]:
+                        if pattern == "":
+                            errors.append(
+                                f"{where}.path_globs: empty string pattern is "
+                                "inert and not permitted")
+                            shape_bad = True
+                            break
+                    if shape_bad:
+                        continue
                     if not patterns:
                         # a patternless rule matches nothing -> inert by accident
                         errors.append(

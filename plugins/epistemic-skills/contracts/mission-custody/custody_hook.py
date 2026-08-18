@@ -25,14 +25,29 @@ from custody_mission import CustodyError
 
 
 def _find_workspace(cwd: str) -> Path | None:
+    """Nearest ancestor holding missions/ (legacy single answer)."""
+    workspaces = _find_workspaces(cwd)
+    return workspaces[0] if workspaces else None
+
+
+def _find_workspaces(cwd: str) -> list[Path]:
+    """Every ancestor holding missions/, nearest first.
+
+    Stopping at the first missions/ directory was a reproduced false allow
+    (es#137): a decoy empty ``<workspace>/subdir/missions/`` hid an armed
+    mission higher in the tree. The hook gates against every candidate, so
+    every ancestor with a missions/ store must be offered."""
     current = Path(cwd or ".")
+    found: list[Path] = []
     while True:
         if (current / "missions").is_dir():
-            return current
+            if current not in found:
+                found.append(current)
         parent = current.parent
         if parent == current:
-            return None
+            break
         current = parent
+    return found
 
 
 def _strip_leading_drive_slash(path: str) -> str:
@@ -137,9 +152,9 @@ def _candidate_workspaces(call: dict) -> list[Path]:
                 return
         except (OSError, ValueError):
             return
-        workspace = _find_workspace(location)
-        if workspace is not None and workspace not in candidates:
-            candidates.append(workspace)
+        for workspace in _find_workspaces(location):
+            if workspace not in candidates:
+                candidates.append(workspace)
 
     consider(call.get("cwd") or "")
     roots = call.get("workspace_roots")

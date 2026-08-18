@@ -216,6 +216,12 @@ def test_manifest_guard_inert_shapes_rejected() -> None:
         "command_regexes": [], "path_globs": ["M:/Media/**"]}]
     check("guard-mcp-only-globs-inert", validate_record(rec) != [])
 
+    rec = copy.deepcopy(valid_manifest())
+    rec["authority"]["actuator_guards"] = [{
+        "name": "g", "tool_names": ["Write"],
+        "command_regexes": [], "path_globs": [""]}]
+    check("guard-empty-path-glob-rejected", validate_record(rec) != [])
+
     # mixed or unknown tool names pass: one arm can still fire (mixed), and
     # unknown tools are the operator's responsibility
     rec = copy.deepcopy(valid_manifest())

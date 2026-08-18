@@ -110,7 +110,9 @@ def test_glob_doublestar_zero_segments() -> None:
           evaluate(auth("enforce", guards), call)["matched"])
 
 
-def test_glob_overmatch_still_held() -> None:
+def test_glob_parent_segment_resolves_for_guard_match() -> None:
+    """es#137: a guard on ``M:/Media/**`` must match a write whose lexical
+    path carries a parent segment that resolves under Media."""
     guards = [{"name": "g", "tool_names": ["Write"], "command_regexes": [],
                "path_globs": ["M:/Media/**"]}]
     call = {"tool_name": "Write", "command": None, "file_path": "M:/Mediaevil/x"}
@@ -119,12 +121,14 @@ def test_glob_overmatch_still_held() -> None:
     call = {"tool_name": "Write", "command": None, "file_path": "M:/Media/a/b/c.mkv"}
     check("glob-deep-still-matches",
           evaluate(auth("enforce", guards), call)["matched"])
-    # '..' is not collapsed by normalization, so it over-matches -- the safe
-    # direction (a false block names its rule; a false allow retires custody)
+    call = {"tool_name": "Write", "command": None,
+            "file_path": "M:/Other/../Media/x.mkv"}
+    check("glob-dotdot-resolves-into-guarded-tree",
+          evaluate(auth("enforce", guards), call)["matched"])
     call = {"tool_name": "Write", "command": None,
             "file_path": "M:/Media/../etc/passwd"}
-    check("glob-dotdot-overmatches",
-          evaluate(auth("enforce", guards), call)["matched"])
+    check("glob-dotdot-outside-guarded-tree-not-matched",
+          not evaluate(auth("enforce", guards), call)["matched"])
 
 
 def test_block_reason_names_only_exits_that_work() -> None:

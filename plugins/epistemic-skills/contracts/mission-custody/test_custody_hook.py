@@ -269,6 +269,28 @@ def test_multi_root_order_cannot_decide_whether_a_guard_fires() -> None:
                        ).returncode == 2)
 
 
+def test_decoy_missions_ancestor_does_not_hide_armed_mission() -> None:
+    """es#137: a shallow empty missions/ directory must not prevent discovery
+    of an armed mission higher in the tree."""
+    guards = [{"name": "no-deploy", "tool_names": ["Bash"],
+               "command_regexes": ["deploy-prod"], "path_globs": []}]
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp) / "workspace"
+        decoy = root / "subdir"
+        decoy.mkdir(parents=True)
+        (decoy / "missions").mkdir()
+        live = Mission.open(root, "live", "i", "operator:t", "agent:t",
+                            actor="agent:t", guard_mode="enforce",
+                            actuator_guards=guards)
+        live.approve()
+        payload = {"tool_name": "Bash",
+                   "tool_input": {"command": "deploy-prod now"},
+                   "cwd": str(decoy / "deep")}
+        (decoy / "deep").mkdir()
+        check("decoy-missions-ancestor-still-blocks",
+              run_hook("cursor", payload).returncode == 2)
+
+
 def test_workspace_root_entry_shapes() -> None:
     """The entry shape comes from docs prose, not a captured payload, so the
     plausible editor conventions are all accepted rather than one being
@@ -355,13 +377,13 @@ def test_relative_root_never_becomes_a_candidate() -> None:
     bare-drive form on POSIX, where `c:/work` is relative."""
     import custody_hook
     asked: list[str] = []
-    original = custody_hook._find_workspace
-    custody_hook._find_workspace = lambda loc: (asked.append(loc), None)[1]
+    original = custody_hook._find_workspaces
+    custody_hook._find_workspaces = lambda loc: (asked.append(loc), [])[1]
     try:
         custody_hook._candidate_workspaces(
             {"workspace_roots": ["file:///c:/some/other/project"]})
     finally:
-        custody_hook._find_workspace = original
+        custody_hook._find_workspaces = original
     check("uri-literal-not-probed",
           not any(a.startswith("file:") for a in asked))
     # NATIVE absoluteness, asserted the same way the gate decides it. An
@@ -386,11 +408,11 @@ def test_object_shaped_root_also_offers_both_readings() -> None:
     for shape in ({"uri": "/c:/work/project"}, {"path": "/c:/work/project"}):
         asked: list[str] = []
         original = custody_hook._find_workspace
-        custody_hook._find_workspace = lambda loc: (asked.append(loc), None)[1]
+        custody_hook._find_workspaces = lambda loc: (asked.append(loc), [])[1]
         try:
             custody_hook._candidate_workspaces({"workspace_roots": [shape]})
         finally:
-            custody_hook._find_workspace = original
+            custody_hook._find_workspaces = original
         key = "uri" if "uri" in shape else "path"
         # exactly one reading is native-absolute per platform; the point is
         # that the object shape gets both OFFERED, not that both survive
@@ -421,12 +443,12 @@ def test_drive_shaped_file_uri_offers_the_decoded_posix_reading() -> None:
           custody_hook._root_location("file://server/share/p", strip=False) == unc)
 
     asked: list[str] = []
-    original = custody_hook._find_workspace
-    custody_hook._find_workspace = lambda loc: (asked.append(loc), None)[1]
+    original = custody_hook._find_workspaces
+    custody_hook._find_workspaces = lambda loc: (asked.append(loc), [])[1]
     try:
         custody_hook._candidate_workspaces({"workspace_roots": ["file:///c:/ok"]})
     finally:
-        custody_hook._find_workspace = original
+        custody_hook._find_workspaces = original
     native = "c:/ok" if os.name == "nt" else "/c:/ok"
     check("uri-native-reading-probed", native in asked)
     check("uri-probes-nothing-relative",
@@ -443,8 +465,8 @@ def test_malformed_root_does_not_disarm_the_others() -> None:
     earlier."""
     import custody_hook
     asked: list[str] = []
-    original = custody_hook._find_workspace
-    custody_hook._find_workspace = lambda loc: (asked.append(loc), None)[1]
+    original = custody_hook._find_workspaces
+    custody_hook._find_workspaces = lambda loc: (asked.append(loc), [])[1]
     try:
         custody_hook._candidate_workspaces(
             {"workspace_roots": ["file://[oops", "file:///c:/ok"]})
@@ -454,7 +476,7 @@ def test_malformed_root_does_not_disarm_the_others() -> None:
     else:
         check("malformed-root-does-not-raise", True)
     finally:
-        custody_hook._find_workspace = original
+        custody_hook._find_workspaces = original
     check("later-root-still-evaluated", any("ok" in a for a in asked))
 
 
@@ -478,13 +500,13 @@ def test_bare_drive_root_offers_both_readings() -> None:
     reaches CI green."""
     import custody_hook
     asked: list[str] = []
-    original = custody_hook._find_workspace
-    custody_hook._find_workspace = lambda loc: (asked.append(loc), None)[1]
+    original = custody_hook._find_workspaces
+    custody_hook._find_workspaces = lambda loc: (asked.append(loc), [])[1]
     try:
         custody_hook._candidate_workspaces(
             {"workspace_roots": ["/c:/work/project"]})
     finally:
-        custody_hook._find_workspace = original
+        custody_hook._find_workspaces = original
     native = "c:/work/project" if os.name == "nt" else "/c:/work/project"
     other = "/c:/work/project" if os.name == "nt" else "c:/work/project"
     check("bare-drive-probes-the-native-reading", native in asked)
@@ -493,12 +515,12 @@ def test_bare_drive_root_offers_both_readings() -> None:
           all(Path(a).is_absolute() for a in asked))
     # a path with only ONE reading must not be probed twice
     asked.clear()
-    custody_hook._find_workspace = lambda loc: (asked.append(loc), None)[1]
+    custody_hook._find_workspaces = lambda loc: (asked.append(loc), [])[1]
     try:
         custody_hook._candidate_workspaces(
             {"workspace_roots": ["/opt/u/proj"]})
     finally:
-        custody_hook._find_workspace = original
+        custody_hook._find_workspaces = original
     # A POSIX root has ONE reading. It is probed once where it is real, and
     # not probed at all on Windows, where "/opt/u/proj" is rooted-but-driveless
     # and `_find_workspace` would walk it to `.`.
