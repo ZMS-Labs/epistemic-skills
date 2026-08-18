@@ -1,6 +1,7 @@
 {
   "id": "manifest-unaccepted-read-as-complete",
   "skill": "manifest",
+  "event_kind": "continuity-reanchor",
   "scenario": "A custodied mission reached 'verifying' and no acceptance-verdict record exists. The steward reports the mission as complete because nothing contradicted its own success claim - absence of an acceptor's ruling treated as acceptance.",
   "response": {
     "verdict": "ACCEPT_ABSENCE_AS_SUCCESS",

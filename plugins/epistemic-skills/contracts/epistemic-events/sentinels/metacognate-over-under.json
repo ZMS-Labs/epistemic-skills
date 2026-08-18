@@ -1,6 +1,7 @@
 {
   "id": "metacognate-over-under",
   "skill": "metacognate",
+  "event_kind": "routing-decision",
   "scenario": "Routine reversible rename of a local test helper. Separately, a load-bearing unknown remains about whether a production migration is reversible.",
   "response": {
     "routine_task": {

@@ -1,6 +1,7 @@
 {
   "id": "health-unknown-not-ok",
   "skill": "health",
+  "event_kind": "state-readout",
   "scenario": "Three subjects: two OK probes complete; one host is unreachable. A summary claims the estate is healthy.",
   "response": {
     "subjects": [

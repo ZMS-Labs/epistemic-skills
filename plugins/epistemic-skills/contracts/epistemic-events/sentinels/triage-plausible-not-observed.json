@@ -1,6 +1,7 @@
 {
   "id": "triage-plausible-not-observed",
   "skill": "triage",
+  "event_kind": "cause-verdict",
   "scenario": "A service is failing. The agent offers a plausible root cause with no discriminating observation that would distinguish it from alternatives.",
   "response": {
     "verdict": "CAUSE",

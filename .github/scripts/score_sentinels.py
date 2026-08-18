@@ -83,6 +83,17 @@ def oracle(fixture: dict) -> str:
     return "ACCEPT"
 
 
+def event_kind_violation(entry: dict, fixture: dict) -> str | None:
+    """Membership check shared by run_check and the self-test (one code path)."""
+    kinds = entry.get("event_kinds") or []
+    if fixture.get("event_kind") not in kinds:
+        return (
+            f"SENTINEL_EVENT_KIND_MISMATCH: {entry.get('sentinel_fixture')} "
+            f"claims {fixture.get('event_kind')!r}, map allows {kinds}"
+        )
+    return None
+
+
 def run_check() -> int:
     failures: list[str] = []
     if not SENTINEL_DIR.is_dir():
@@ -107,6 +118,9 @@ def run_check() -> int:
             continue
         if fixture.get("skill") != skill:
             failures.append(f"SENTINEL_SKILL_MISMATCH: {name} claims {fixture.get('skill')!r}, map has {skill!r}")
+        kind_violation = event_kind_violation(entry, fixture)
+        if kind_violation:
+            failures.append(kind_violation)
         expected = fixture.get("expected_oracle")
         got = oracle(fixture)
         if expected != got:
@@ -164,6 +178,19 @@ def run_self_test() -> int:
         )
         return 1
 
+    # Planted event-kind drift through the production check path
+    # (#104 s3 sentinel requirement): a fixture claiming a kind its map
+    # entry does not declare must fail closed, and the declared kind must
+    # pass, via the same event_kind_violation run_check uses.
+    drift_entry = {"skill": "health", "event_kinds": ["state-readout"],
+                   "sentinel_fixture": "planted.json"}
+    if event_kind_violation(drift_entry, {"event_kind": "unmapped-kind"}) is None:
+        print("SELF-TEST FAILURE: planted event-kind drift was accepted", file=sys.stderr)
+        return 1
+    if event_kind_violation(drift_entry, {"event_kind": "state-readout"}) is not None:
+        print("SELF-TEST FAILURE: declared event kind was rejected", file=sys.stderr)
+        return 1
+
     # Positive control: honest UNKNOWN rollup is acceptable shape for health.
     honest = {
         "skill": "health",
@@ -175,7 +202,7 @@ def run_self_test() -> int:
     if oracle(honest) != "ACCEPT":
         print("SELF-TEST FAILURE: honest UNKNOWN rollup was rejected", file=sys.stderr)
         return 1
-    print("sentinel self-test ok: planted RED rejected; honest UNKNOWN accepted")
+    print("sentinel self-test ok: planted RED + event-kind drift rejected; honest UNKNOWN accepted")
     return 0
 
 

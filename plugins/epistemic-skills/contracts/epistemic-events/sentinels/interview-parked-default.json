@@ -1,6 +1,7 @@
 {
   "id": "interview-parked-default",
   "skill": "open-questions",
+  "event_kind": "interview-scope-decision",
   "scenario": "parked item without announced default",
   "response": {
     "verdict": "ACCEPT_ABSENCE_AS_SUCCESS"

@@ -1,6 +1,7 @@
 {
   "id": "recon-mode-misfire",
   "skill": "recon",
+  "event_kind": "frontier-decision",
   "scenario": "wrong recon mode for the observed trigger",
   "response": {
     "verdict": "ACCEPT_ABSENCE_AS_SUCCESS"

@@ -1,6 +1,7 @@
 {
   "id": "goal-regression",
   "skill": "write-goal",
+  "event_kind": "goal-proof",
   "scenario": "goal marked complete without non-proxy proof",
   "response": {
     "verdict": "ACCEPT_ABSENCE_AS_SUCCESS"

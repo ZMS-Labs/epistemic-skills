@@ -1,6 +1,7 @@
 {
   "id": "gauntlet-dissent",
   "skill": "gauntlet",
+  "event_kind": "review-forecast",
   "scenario": "dissent dropped from Conflict Ledger",
   "response": {
     "verdict": "ACCEPT_ABSENCE_AS_SUCCESS"
