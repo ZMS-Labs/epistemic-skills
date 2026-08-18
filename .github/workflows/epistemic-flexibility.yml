@@ -10,6 +10,7 @@ name: epistemic-flexibility
   pull_request:
     paths:
       - "plugins/epistemic-skills/skills/**"
+      - "plugins/epistemic-skills/evals/**"
       - "plugins/epistemic-skills/contracts/**"
       - "docs/**"
       - ".ledger/**"
@@ -24,6 +25,7 @@ name: epistemic-flexibility
     branches: [main]
     paths:
       - "plugins/epistemic-skills/skills/**"
+      - "plugins/epistemic-skills/evals/**"
       - "plugins/epistemic-skills/contracts/**"
       - "docs/**"
       - ".ledger/**"
@@ -177,6 +179,11 @@ jobs:
             .github/scripts/check_description_budget.py \
             .github/scripts/check_public_content.py \
             .github/scripts/check_loaded_descriptions.py \
+            .github/scripts/v6_audit_workflow_oracles.py \
+            .github/scripts/v6_generate_baseline_claims.py \
+            .github/scripts/v6_run_clean_baseline.py \
+            .github/scripts/test_v6_audit_workflow_oracles.py \
+            plugins/epistemic-skills/contracts/v6-assurance/validate_v6_assurance.py \
             .github/scripts/score_sentinels.py \
             .github/scripts/sync_skill_surfaces.py \
             plugins/epistemic-skills/evals/epistemic-flexibility/validate_trace.py \
@@ -239,6 +246,12 @@ jobs:
             : > "$RUNNER_TEMP/base-ledger.jsonl"
           fi
           python .github/scripts/check_ledger_append_only.py             --base "$RUNNER_TEMP/base-ledger.jsonl" --current .ledger/entries.jsonl
+      - name: v6 workflow oracle audit (ES6-ORACLE-AUDIT)
+        run: |
+          python .github/scripts/test_v6_audit_workflow_oracles.py
+          python .github/scripts/v6_audit_workflow_oracles.py
+      - name: v6 assurance artifacts (ES6-BASELINE-CLAIMS)
+        run: python plugins/epistemic-skills/contracts/v6-assurance/validate_v6_assurance.py
       - name: Existing receipt verifier
         run: python plugins/epistemic-skills/contracts/verify_receipt.py --self-test
       - name: Cross-product calibration contract

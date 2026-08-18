@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://zms-labs.github.io/epistemic-skills/contracts/v6-assurance/issue-pr-reconciliation.schema.json",
+  "title": "v6 issue and PR reconciliation",
+  "description": "Current disposition of every open tracker item required by issue #191.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "program", "exact_start_sha", "generated_at", "items"],
+  "properties": {
+    "schema": { "const": "issue-pr-reconciliation@1" },
+    "program": { "type": "string", "minLength": 1 },
+    "exact_start_sha": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "generated_at": { "type": "string", "minLength": 1 },
+    "items": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/item" }
+    }
+  },
+  "$defs": {
+    "item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "number",
+        "title",
+        "phase",
+        "disposition",
+        "owner",
+        "evidence_note"
+      ],
+      "properties": {
+        "kind": { "type": "string", "enum": ["issue", "pr"] },
+        "number": { "type": "integer", "minimum": 1 },
+        "title": { "type": "string", "minLength": 1 },
+        "phase": {
+          "type": "string",
+          "enum": [
+            "ES6-ZI-001",
+            "frontier-decision",
+            "blocked-parent",
+            "custody-build-packet",
+            "evidence-process",
+            "park",
+            "supersede"
+          ]
+        },
+        "disposition": {
+          "type": "string",
+          "enum": [
+            "reconcile-in-matrix",
+            "hold-operator",
+            "keep-sequence",
+            "do-not-merge",
+            "harvest-supersede",
+            "park",
+            "implement-when-unblocked",
+            "close-when-evidence"
+          ]
+        },
+        "owner": { "type": "string", "minLength": 1 },
+        "blocked_by": {
+          "type": "array",
+          "items": { "type": "integer", "minimum": 1 }
+        },
+        "labels": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "evidence_note": { "type": "string", "minLength": 1 },
+        "url": { "type": "string", "format": "uri" }
+      }
+    }
+  }
+}

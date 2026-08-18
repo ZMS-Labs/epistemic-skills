@@ -1,0 +1,148 @@
+{
+  "schema": "claim-to-proof-matrix@1",
+  "program": "ES6-ZI-001",
+  "exact_start_sha": "e987c892cf0ac04b1bd3b942186754d5fe398d22",
+  "generated_at": "2026-08-18T06:32:04Z",
+  "claims": [
+    {
+      "id": "CLM-STDlib-GATE",
+      "statement": "The epistemic-flexibility stdlib-checks job exercises every packaged skill contract and integration surface on push/PR to main.",
+      "authority": "RELEASING.md gate 5; .github/workflows/epistemic-flexibility.yml",
+      "subject": "commit e987c892cf0ac04b1bd3b942186754d5fe398d22",
+      "oracle": "GitHub Actions stdlib-checks job green on candidate; local v6_run_clean_baseline.py reproduces extracted python steps.",
+      "falsifier": "A committed change to a gated surface passes push without triggering stdlib-checks or without failing a required step.",
+      "environment": "ubuntu-24.04 CI; clean-room Linux checkout",
+      "independence": "Workflow-declared steps; scorer/runner separation in eval harnesses",
+      "evidence_tier": "R1",
+      "status": "PARTIAL",
+      "release_consequence": "P1 \u2014 cannot tag without green stdlib-checks on exact candidate",
+      "owner": "agent",
+      "closure_path": "ES6-ORACLE-AUDIT path-filter coverage + ES6-CLEAN-BASELINE evidence",
+      "linked_issues": [
+        186,
+        191
+      ],
+      "evidence_paths": [
+        ".github/workflows/epistemic-flexibility.yml",
+        ".github/scripts/cleanroom_ci.sh"
+      ]
+    },
+    {
+      "id": "CLM-WF-PATH-COVERAGE",
+      "statement": "Each CI workflow's path filter is a superset of the files its steps read or execute.",
+      "authority": "es#186 docket path-filter guard; ES6-ORACLE-AUDIT",
+      "subject": "all .github/workflows/*.yml",
+      "oracle": "v6_audit_workflow_oracles.py exits 0 with no uncovered_paths findings.",
+      "falsifier": "A change confined to a test input outside the workflow path filter does not dispatch the workflow.",
+      "environment": "repository static analysis",
+      "independence": "script distinct from workflow authors",
+      "evidence_tier": "R1",
+      "status": "PROVED",
+      "release_consequence": "P2 \u2014 silent skip risk on release gate suites",
+      "owner": "agent",
+      "closure_path": "plugins/epistemic-skills/evals/** added to epistemic-flexibility path filters; oracle audit 0 findings",
+      "linked_issues": [
+        186,
+        191
+      ]
+    },
+    {
+      "id": "CLM-MC-HOOK-POSIX",
+      "statement": "mission-custody test_custody_hook.py POSIX branch runs in CI on ubuntu-24.04.",
+      "authority": ".github/workflows/mission-custody-contract.yml",
+      "subject": "plugins/epistemic-skills/contracts/mission-custody/test_custody_hook.py",
+      "oracle": "mission-custody-contract job step 'Custody enforcement hook tests' executes on push/PR.",
+      "falsifier": "Hook test file changes without mission-custody-contract workflow dispatch.",
+      "environment": "ubuntu-24.04",
+      "independence": "CI runner distinct from developer host",
+      "evidence_tier": "R1",
+      "status": "PROVED",
+      "release_consequence": "P1 for custody claims",
+      "owner": "agent",
+      "closure_path": "Already wired; retained in matrix for regression",
+      "linked_issues": [
+        136,
+        142
+      ]
+    },
+    {
+      "id": "CLM-MC-MACOS-CASE",
+      "statement": "Scope matching behaves correctly on case-insensitive APFS.",
+      "authority": "es#162; mission-custody-contract contract-macos job",
+      "subject": "custody scope case fold",
+      "oracle": "workflow_dispatch contract-macos probe_case_insensitivity.py measured outcome recorded.",
+      "falsifier": "PASS after writing secrets/ when scope.out lists Secrets/ on case-insensitive FS.",
+      "environment": "macos-14 workflow_dispatch only",
+      "independence": "dispatch-only diagnostic; not merge-gating per #190 lineage",
+      "evidence_tier": "R3",
+      "status": "LIMITED",
+      "release_consequence": "Disclosed limitation until probe + fix land",
+      "owner": "agent",
+      "closure_path": "Probe at open + es#162 fix in later custody packet",
+      "linked_issues": [
+        162,
+        186,
+        190
+      ]
+    },
+    {
+      "id": "CLM-PUBLIC-CONTENT",
+      "statement": "Exact candidate public tree contains no disallowed private identifiers or user-specific paths.",
+      "authority": "RELEASING.md; es#105; check_public_content.py",
+      "subject": "commit e987c892cf0ac04b1bd3b942186754d5fe398d22 public tree",
+      "oracle": "check_public_content.py green with seeded RED controls",
+      "falsifier": "Seeded private-repo id or user path pattern passes gate.",
+      "environment": "CI + exact-candidate review record",
+      "independence": "checker distinct from content author",
+      "evidence_tier": "R1",
+      "status": "PARTIAL",
+      "release_consequence": "P1 \u2014 item 6b not met for v5.0.0; required for v6",
+      "owner": "agent",
+      "closure_path": "Finish #105 remediation + exact-candidate review step in RELEASING.md",
+      "linked_issues": [
+        105,
+        145
+      ]
+    },
+    {
+      "id": "CLM-V5-DESIGN-COMMITMENTS",
+      "statement": "Each approved v5 design commitment is implemented, retired with amended public claims, or explicitly limited.",
+      "authority": "es#104; v5 design spec",
+      "subject": "ROUTING.md, intrinsic ledgers, sentinel corpora, structural membership",
+      "oracle": "Claim matrix row per commitment with PROVED/RETIRED/LIMITED status",
+      "falsifier": "Public doc promises artifact that does not exist and is not marked retired.",
+      "environment": "repository + operator decision record",
+      "independence": "operator decision for retire path",
+      "evidence_tier": "R0",
+      "status": "BLOCKED",
+      "release_consequence": "Blocks successor GO",
+      "owner": "operator",
+      "closure_path": "Operator interview on #104 implement vs retire",
+      "linked_issues": [
+        104
+      ]
+    },
+    {
+      "id": "CLM-RELEASE-AUTH",
+      "statement": "Publication requires explicit owner authorization recorded before tag creation.",
+      "authority": "PR #156; RELEASING.md step 7 (not yet on main)",
+      "subject": "refs/tags/v* creation",
+      "oracle": "Committed release notes name verdict, exact SHA, owner; ruleset creation rule armed except during authorized window.",
+      "falsifier": "Tag created without authorization line or with ruleset left disarmed.",
+      "environment": "GitHub ruleset + release notes",
+      "independence": "operator authorization",
+      "evidence_tier": "R0",
+      "status": "UNPROVED",
+      "release_consequence": "PROMOTION gate \u2014 merge #156/#190 only with operator word",
+      "owner": "operator",
+      "closure_path": "Operator approves #190 and #156; #186 tag-ruleset decision",
+      "linked_prs": [
+        156,
+        190
+      ],
+      "linked_issues": [
+        186
+      ]
+    }
+  ]
+}
