@@ -24,17 +24,22 @@ What this packet *does* complete of the BUILD contract:
 - an immutable promotion packet naming known limits, rollback, and
   **zero** requested irreversible acts
 
-`exact_start_sha` / `candidate_sha` are the commit the generator ran against.
-Committing the JSON artifacts creates a child SHA. That lag is disclosed: the
-packet describes the candidate tree **before** the artifact commit, matching
-the ES6-ZI-001 freeze pattern. Do not treat the artifact commit as independently
-requalified until clean-room evidence names it.
+## SHAs for this freeze
+
+| Role | SHA |
+|---|---|
+| Packet `candidate_sha` / `exact_start_sha` | freeze commit that first contained this packet |
+| es#137 P1+P2 code (not on `main`) | `e8a476c730750a9b3e51ac1001b96825996187cc` |
+| Clean-room evidence subject | `evidence/clean-baseline.json` `exact_start_sha` |
+
+Committing JSON artifacts creates a child SHA. The follow-up evidence commit
+records clean-room of the freeze commit and is not itself a second candidate.
 
 ## Honest gaps (do not read as GO)
 
 Operator holds: `#104`, `#186` tag-ruleset remainder, `#84` field-pair, `#40`.
 Live-environment LIMITED: `#77`, `#39`, `#136`, `#129`, `#142`.
-Platform LIMITED: `#162`.
+Platform LIMITED: `#162` (macOS) and `CLM-WINDOWS-FS`.
 Integrity: es#137 is closed in **this tree** and still open on `main`.
 Draft PRs skip required CI jobs; local clean-room is the BUILD oracle.
 
