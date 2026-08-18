@@ -164,10 +164,10 @@ ISSUE_DISPOSITIONS: dict[int, dict] = {
 
 PR_DISPOSITIONS: dict[int, dict] = {
     190: {
-        "phase": "frontier-decision",
-        "disposition": "hold-operator",
+        "phase": "ES6-ZI-001",
+        "disposition": "reconcile-in-matrix",
         "owner": "operator",
-        "evidence_note": "RELEASING.md required-job semantics; merge forbidden without @SternOne.",
+        "evidence_note": "Merged 2026-08-18 (dcf26f2): RELEASING.md required-job semantics for dispatch-only diagnostics.",
     },
     176: {
         "phase": "park",
@@ -193,6 +193,12 @@ PR_DISPOSITIONS: dict[int, dict] = {
         "owner": "agent",
         "evidence_note": "Exploratory Fudge/visual craft; not operator-approved.",
     },
+    192: {
+        "phase": "ES6-ZI-001",
+        "disposition": "reconcile-in-matrix",
+        "owner": "agent",
+        "evidence_note": "ES6-ZI-001 baseline claims, oracle audit, clean baseline (draft).",
+    },
 }
 
 DEFAULT_ISSUE = {
@@ -216,6 +222,8 @@ def build_reconciliation(sha: str, ts: str) -> dict:
             "number,title,labels,url",
         ]
     )
+    pr_numbers = {p["number"] for p in gh_json(["pr", "list", "--state", "open", "--limit", "100", "--json", "number"])}
+    issues = [i for i in issues if i["number"] not in pr_numbers]
     prs = gh_json(
         [
             "pr",
@@ -246,7 +254,15 @@ def build_reconciliation(sha: str, ts: str) -> dict:
             }
         )
     for pr in sorted(prs, key=lambda x: x["number"]):
-        meta = PR_DISPOSITIONS[pr["number"]]
+        meta = PR_DISPOSITIONS.get(
+            pr["number"],
+            {
+                "phase": "ES6-ZI-001",
+                "disposition": "reconcile-in-matrix",
+                "owner": "agent",
+                "evidence_note": "Open PR; disposition recorded at generation time.",
+            },
+        )
         note = meta["evidence_note"]
         if pr.get("isDraft"):
             note = f"{note} (draft PR)."

@@ -1,8 +1,8 @@
 {
   "schema": "issue-pr-reconciliation@1",
   "program": "ES6-ZI-001",
-  "exact_start_sha": "e987c892cf0ac04b1bd3b942186754d5fe398d22",
-  "generated_at": "2026-08-18T06:32:04Z",
+  "exact_start_sha": "9ca9735745466fb12eb6cbcf0ed7d966778d7a83",
+  "generated_at": "2026-08-18T06:37:04Z",
   "items": [
     {
       "kind": "issue",
@@ -605,15 +605,15 @@
     },
     {
       "kind": "pr",
-      "number": 190,
-      "title": "docs(releasing): required-job semantics for dispatch-only diagnostics (DRAFT \u2014 awaits operator approval)",
-      "phase": "frontier-decision",
-      "disposition": "hold-operator",
-      "owner": "operator",
+      "number": 192,
+      "title": "feat(v6): ES6-ZI-001 baseline claims, oracle audit, and clean baseline",
+      "phase": "ES6-ZI-001",
+      "disposition": "reconcile-in-matrix",
+      "owner": "agent",
       "blocked_by": [],
       "labels": [],
-      "evidence_note": "RELEASING.md required-job semantics; merge forbidden without @SternOne.",
-      "url": "https://github.com/ZMS-Labs/epistemic-skills/pull/190"
+      "evidence_note": "ES6-ZI-001 baseline claims, oracle audit, clean baseline (draft). (draft PR).",
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/pull/192"
     }
   ]
 }
