@@ -559,6 +559,30 @@ def test_missing_payload_cwd_is_inert_even_when_hook_process_runs_inside_armed_w
               r.returncode == 0)
         check("inert-path-emits-no-block", "BLOCKED" not in r.stderr)
 
+    # Residual hole: `_find_workspaces` itself used `cwd or "."` (and
+    # `Path("")` is `.`). Probe in a fresh interpreter so earlier in-process
+    # mocks of `_find_workspaces` cannot recurse into this assertion.
+    with tempfile.TemporaryDirectory() as tmp:
+        ws = Path(tmp)
+        m = Mission.open(ws, "hook-inert-walk", "i", "operator:t", "agent:t",
+                         actor="agent:t", guard_mode="enforce",
+                         actuator_guards=GUARDS)
+        m.approve()
+        probe = (
+            "import os, sys\n"
+            "from pathlib import Path\n"
+            "sys.path.insert(0, sys.argv[1])\n"
+            "import custody_hook\n"
+            "os.chdir(sys.argv[2])\n"
+            "print(repr([str(p) for p in custody_hook._find_workspaces('')]))\n"
+        )
+        r = subprocess.run(
+            [sys.executable, "-c", probe, str(ROOT), str(ws)],
+            capture_output=True, text=True)
+        check("empty-cwd-walk-probe-ran", r.returncode == 0)
+        check("empty-cwd-walk-does-not-use-process-dot",
+              r.stdout.strip() == "[]")
+
 
 def test_non_custody_error_on_one_root_does_not_suppress_a_later_block() -> None:
     """A non-CustodyError on an earlier candidate must not abort the loop.

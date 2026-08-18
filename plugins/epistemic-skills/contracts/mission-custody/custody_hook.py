@@ -36,8 +36,14 @@ def _find_workspaces(cwd: str) -> list[Path]:
     Stopping at the first missions/ directory was a reproduced false allow
     (es#137): a decoy empty ``<workspace>/subdir/missions/`` hid an armed
     mission higher in the tree. The hook gates against every candidate, so
-    every ancestor with a missions/ store must be offered."""
-    current = Path(cwd or ".")
+    every ancestor with a missions/ store must be offered.
+
+    An empty or missing location must not fall back to ``.``: ``Path("")``
+    is ``.``, so ``cwd or "."`` searched from the hook process directory
+    (es#137)."""
+    if not cwd:
+        return []
+    current = Path(cwd)
     found: list[Path] = []
     while True:
         if (current / "missions").is_dir():

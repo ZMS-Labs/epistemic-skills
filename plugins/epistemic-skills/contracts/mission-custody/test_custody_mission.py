@@ -2347,6 +2347,28 @@ def test_open_refuses_second_active_mission(workspace: Path) -> None:
           not (workspace / "missions" / "m-second").exists())
 
 
+def test_api_disarm_clears_guard_mode_with_guard_list(workspace: Path) -> None:
+    """es#137 P2: the documented disarm (`actuator_guards=None` only) must
+    also drop `guard_mode`. Leaving the mode behind made `_write_next`
+    reject a valid disarm as an incomplete authority record."""
+    guards = [{"name": "g", "tool_names": ["Bash"],
+               "command_regexes": ["rm"], "path_globs": []}]
+    m = open_mission(workspace, "guard-api-disarm", "i",
+                     guard_mode="enforce", actuator_guards=guards)
+    m.approve()
+    try:
+        m.amend_authority("operator: disarm the hook", actuator_guards=None)
+    except (CustodyError, StoreError) as exc:
+        check("api-disarm-does-not-raise", False)
+        check(f"api-disarm-unexpected-refusal:{type(exc).__name__}", False)
+        return
+    auth = m.status()["manifest"]["authority"]
+    check("api-disarm-does-not-raise", True)
+    check("api-disarm-clears-guard-list", "actuator_guards" not in auth)
+    check("api-disarm-clears-guard-mode-with-guard-list",
+          "guard_mode" not in auth)
+
+
 def test_amend_none_clears_guard_keys(workspace: Path) -> None:
     m = open_mission(workspace, "guard-clear", "i",
                      guard_mode="audit",
@@ -4730,6 +4752,7 @@ TESTS = [
     test_amend_changes_guards,
     test_tail_guard_tamper_without_amendment_detected,
     test_amend_arms_guards_legitimately,
+    test_api_disarm_clears_guard_mode_with_guard_list,
     test_amend_none_clears_guard_keys,
     test_open_refuses_second_active_mission,
     test_amend_empty_guards_list_refused,

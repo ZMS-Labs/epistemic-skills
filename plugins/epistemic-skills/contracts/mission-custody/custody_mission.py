@@ -1563,6 +1563,11 @@ class Mission:
             # by validation (minItems: 1), so clearing MUST go through None.
             if actuator_guards is None:
                 manifest["authority"].pop("actuator_guards", None)
+                # Documented disarm is actuator_guards=None alone
+                # (README / validator). Leaving guard_mode behind made
+                # _write_next reject the result (es#137).
+                if guard_mode is _UNSET:
+                    manifest["authority"].pop("guard_mode", None)
             else:
                 manifest["authority"]["actuator_guards"] = actuator_guards
         if guard_mode is not _UNSET:

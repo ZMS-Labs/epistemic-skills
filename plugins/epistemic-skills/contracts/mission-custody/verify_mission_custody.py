@@ -341,7 +341,7 @@ def validate_manifest(rec: dict) -> list[str]:
         mode = auth.get("guard_mode")
         guards = auth.get("actuator_guards")
         if mode is not None:
-            _require(errors, mode in GUARD_MODES,
+            _require(errors, isinstance(mode, str) and mode in GUARD_MODES,
                      "authority.guard_mode", "must be 'audit' or 'enforce'")
             _require(errors, isinstance(guards, list) and bool(guards),
                      "authority.guard_mode",
