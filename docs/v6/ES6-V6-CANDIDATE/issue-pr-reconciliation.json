@@ -2,7 +2,7 @@
   "schema": "issue-pr-reconciliation@1",
   "program": "ES6-V6-CANDIDATE",
   "exact_start_sha": "00e5146e43ff9011153452b83fedda706723c52b",
-  "generated_at": "2026-08-18T14:38:44Z",
+  "generated_at": "2026-08-18T14:40:24Z",
   "items": [
     {
       "kind": "issue",
@@ -602,6 +602,18 @@
       "labels": [],
       "evidence_note": "es#137 P1+P2; included in this candidate tree; not merged to main. (draft PR).",
       "url": "https://github.com/ZMS-Labs/epistemic-skills/pull/193"
+    },
+    {
+      "kind": "pr",
+      "number": 194,
+      "title": "feat(v6): ES6-V6-CANDIDATE BUILD freeze (issue #191)",
+      "phase": "ES6-V6-CANDIDATE",
+      "disposition": "in-candidate-draft",
+      "owner": "agent",
+      "blocked_by": [],
+      "labels": [],
+      "evidence_note": "This BUILD freeze packet; draft; not a PROMOTION merge. (draft PR).",
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/pull/194"
     }
   ]
 }

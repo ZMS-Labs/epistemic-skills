@@ -3,7 +3,7 @@
   "program": "ES6-V6-CANDIDATE",
   "issue": 191,
   "exact_start_sha": "00e5146e43ff9011153452b83fedda706723c52b",
-  "recorded_at": "2026-08-18T14:38:44Z",
+  "recorded_at": "2026-08-18T14:40:24Z",
   "parent_program": "ZMS-Labs/epistemic-skills#191",
   "authorized_packets": [
     "ES6-V6-CANDIDATE-MATRIX",

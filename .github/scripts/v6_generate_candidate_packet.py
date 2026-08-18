@@ -7,6 +7,7 @@ The same actor that produced the work refuses self-certification.
 
 from __future__ import annotations
 
+import argparse
 import json
 import subprocess
 from datetime import datetime, timezone
@@ -170,6 +171,12 @@ PR_DISPOSITIONS: dict[int, dict] = {
         "disposition": "in-candidate-draft",
         "owner": "agent",
         "evidence_note": "es#137 P1+P2; included in this candidate tree; not merged to main.",
+    },
+    194: {
+        "phase": "ES6-V6-CANDIDATE",
+        "disposition": "in-candidate-draft",
+        "owner": "agent",
+        "evidence_note": "This BUILD freeze packet; draft; not a PROMOTION merge.",
     },
     176: {
         "phase": "park",
@@ -790,7 +797,17 @@ def load_tracker() -> tuple[list[dict], list[dict]]:
 
 
 def main() -> int:
-    sha = git_head()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--sha",
+        help="Stamp this commit as the candidate (default: HEAD)",
+    )
+    args = parser.parse_args()
+    sha = args.sha or git_head()
+    if len(sha) != 40:
+        sha = subprocess.check_output(
+            ["git", "rev-parse", sha], cwd=REPO_ROOT, text=True
+        ).strip()
     ts = _now()
     issues, prs = load_tracker()
     OUT_DIR.mkdir(parents=True, exist_ok=True)

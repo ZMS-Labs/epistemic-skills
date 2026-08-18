@@ -2,7 +2,7 @@
   "schema": "claim-to-proof-matrix@1",
   "program": "ES6-V6-CANDIDATE",
   "exact_start_sha": "00e5146e43ff9011153452b83fedda706723c52b",
-  "generated_at": "2026-08-18T14:38:44Z",
+  "generated_at": "2026-08-18T14:40:24Z",
   "claims": [
     {
       "id": "CLM-STDLIB-GATE",
@@ -1085,6 +1085,25 @@
         39
       ],
       "linked_prs": []
+    },
+    {
+      "id": "CLM-PR-194",
+      "statement": "feat(v6): ES6-V6-CANDIDATE BUILD freeze (issue #191)",
+      "authority": "PR #194",
+      "subject": "pr 194",
+      "oracle": "This BUILD freeze packet; draft; not a PROMOTION merge.",
+      "falsifier": "Disposition is stale relative to the live tracker or the cited evidence does not exist.",
+      "environment": "GitHub tracker + candidate tree",
+      "independence": "disposition recorded separately from implementation",
+      "evidence_tier": "R1",
+      "status": "PARTIAL",
+      "release_consequence": "This BUILD freeze packet; draft; not a PROMOTION merge.",
+      "owner": "agent",
+      "closure_path": "in-candidate-draft",
+      "linked_issues": [],
+      "linked_prs": [
+        194
+      ]
     },
     {
       "id": "CLM-PR-193",
