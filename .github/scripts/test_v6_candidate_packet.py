@@ -93,7 +93,7 @@ def main() -> int:
         raise AssertionError("a decided disposition must read PARTIAL, not BLOCKED")
 
     # R12: an open tracker item with no explicit disposition fails generation.
-    from v6_generate_candidate_packet import require_dispositions
+    from v6_generate_candidate_packet import apply_requalification, require_dispositions
 
     try:
         require_dispositions([{"number": 424242}], [])
@@ -102,6 +102,48 @@ def main() -> int:
             raise AssertionError(f"wrong refusal message: {exc}")
     else:
         raise AssertionError("unknown open issue did NOT fail generation (R12)")
+
+    # Requalification flips are evidence-driven and fail closed.
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as tmp:
+        capture = Path(tmp) / "requalification.json"
+        capture.write_text(json.dumps({
+            "candidate_sha": sha,
+            "claims": {"CLM-SECRET-SCAN": {
+                "conclusion": "success",
+                "runs": ["https://github.com/example/example/actions/runs/1"],
+            }},
+        }), encoding="utf-8")
+        requal_claims = class_claims(sha)
+        notes = apply_requalification(requal_claims, sha, capture)
+        flipped = next(c for c in requal_claims if c["id"] == "CLM-SECRET-SCAN")
+        if flipped["status"] != "PROVED" or not notes:
+            raise AssertionError("green capture must flip PARTIAL to PROVED")
+        capture.write_text(json.dumps({
+            "candidate_sha": "b" * 40,
+            "claims": {},
+        }), encoding="utf-8")
+        try:
+            apply_requalification(class_claims(sha), sha, capture)
+        except SystemExit as exc:
+            if "REQUAL_SHA_MISMATCH" not in str(exc):
+                raise AssertionError(f"wrong requal refusal: {exc}")
+        else:
+            raise AssertionError("capture for another SHA was NOT refused")
+        capture.write_text(json.dumps({
+            "candidate_sha": sha,
+            "claims": {"CLM-COMPATIBILITY": {
+                "conclusion": "success", "runs": ["u"],
+            }},
+        }), encoding="utf-8")
+        try:
+            apply_requalification(class_claims(sha), sha, capture)
+        except SystemExit as exc:
+            if "REQUAL_BAD_FLIP" not in str(exc):
+                raise AssertionError(f"wrong bad-flip refusal: {exc}")
+        else:
+            raise AssertionError("flip of a non-PARTIAL claim was NOT refused")
 
     matrix = {"claims": claims}
     packet = build_promotion_packet(sha, "2026-08-18T00:00:00Z", matrix)

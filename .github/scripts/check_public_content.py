@@ -124,6 +124,12 @@ ALLOWLIST_EXACT_FILES: dict[str, tuple[str, str | None]] = {
     "docs/superpowers/plans/2026-08-11-mission-custody-contracts.md": ("pre-gate historical record", "ec4eea32e2e6448103b6c730dd6f7e0008618895f09a446fcfd79c214b6d760b"),
     "docs/superpowers/specs/2026-08-07-practical-agency-and-commission-watch-design.md": ("pre-gate historical record", "29c4601b17375a618821ab38b25c5449e6591e641f4dc1f14551eba4807b1db9"),
     "docs/wiki-updates/v4.0.0/v4.0.0-wiki-update.patch": ("pre-gate historical record", "5ce514bfbe9066e38ec606c202f57259061cbd804c6331e5cc868d512d01c548"),
+    # Independent-gauntlet run record that quotes the scrub vocabulary as
+    # review-trail evidence (operator decision D7: exact-file allowlist, no
+    # scrub — the dossier pin and seat-binding hash chain stay intact).
+    # Dormant on branches that do not carry the run record; the digest binds
+    # the moment the file lands (mirrors PR #195's entry on main).
+    "docs/gauntlet-runs/es-v6-candidate-freeze-2026-08-18/evidence/dossier-challenge-2026-08-18.json": ("gauntlet run review-trail record (D7)", "fad1989867fd02be331ed606d76a40ca018da2b4497688556ec2eec24d2474bf"),
     "docs/v6/ES6-ZI-001/exact-start-receipt.json": ("v6 program parent tracker coordinate", "8ce838da0f9a32756d2ea0d5a7fd2cdc65447562e16a6b122a9307d8038e8154"),
     ".github/scripts/v6_generate_baseline_claims.py": ("v6 program parent tracker coordinate", "7296a40a03985ddfe2a9c1c83759074daba50888cd6fc4165a515f2d300bee8b"),
 }

@@ -404,7 +404,10 @@ def class_claims(sha: str) -> list[dict]:
             "status": "PARTIAL",
             "release_consequence": "P1 — item 6b required for v6",
             "owner": "agent",
-            "closure_path": "Allowlist only the ES6-ZI-001 parent-tracker files; remaining #105/#145 residue still open",
+            # R11b: the honest blast radius — the allowlist exempts WHOLE
+            # FILES for every pattern class, now bounded by per-file digests;
+            # the #105/#145 fixture-name residue remains open work.
+            "closure_path": "Exact-file allowlist is digest-bound (allowlist-stale fails closed); entries for the ES6-ZI-001 coordinates and the D7 gauntlet record are reviewable acts; #105/#145 residue still open",
             "linked_issues": [105, 145],
         },
         {
@@ -882,8 +885,52 @@ def build_source_inventory(sha: str, ts: str) -> dict:
     }
 
 
+REQUAL_PATH = OUT_DIR / "evidence" / "requalification.json"
+
+
+def apply_requalification(claims: list[dict], sha: str, path: Path = REQUAL_PATH) -> list[str]:
+    """Evidence-driven PARTIAL->PROVED flips from recorded requalification runs.
+
+    A claim status is never hand-flipped: the only path from PARTIAL to
+    PROVED at freeze is a committed requalification capture naming THIS
+    candidate SHA with successful run records (GitHub run URLs). Anything
+    else refuses — unknown claim ids, non-PARTIAL flips, non-green runs,
+    or a capture for a different SHA (the restamp class again).
+    """
+    if not path.is_file():
+        return []
+    doc = json.loads(path.read_text(encoding="utf-8"))
+    if doc.get("candidate_sha") != sha:
+        raise SystemExit(
+            "REQUAL_SHA_MISMATCH: requalification evidence names "
+            f"{str(doc.get('candidate_sha', '?'))[:12]}, packet names {sha[:12]} "
+            "— regenerate the capture at the candidate."
+        )
+    notes: list[str] = []
+    by_id = {c["id"]: c for c in claims}
+    for cid, entry in doc.get("claims", {}).items():
+        claim = by_id.get(cid)
+        if claim is None:
+            raise SystemExit(f"REQUAL_UNKNOWN_CLAIM: {cid}")
+        if claim["status"] != "PARTIAL":
+            raise SystemExit(
+                f"REQUAL_BAD_FLIP: {cid} is {claim['status']}; only PARTIAL "
+                "claims may be requalified by run evidence"
+            )
+        if entry.get("conclusion") != "success" or not entry.get("runs"):
+            raise SystemExit(f"REQUAL_NOT_GREEN: {cid} capture is not a successful run set")
+        claim["status"] = "PROVED"
+        claim.setdefault("evidence_paths", []).append(
+            "docs/v6/ES6-V6-CANDIDATE/evidence/requalification.json"
+        )
+        notes.append(f"requalified {cid} via {len(entry['runs'])} recorded run(s)")
+    return notes
+
+
 def build_claim_matrix(sha: str, ts: str, issues: list[dict], prs: list[dict]) -> dict:
     claims = class_claims(sha)
+    for note in apply_requalification(claims, sha):
+        print(note)
     seen = {c["id"] for c in claims}
     for issue in issues:
         meta = ISSUE_DISPOSITIONS[issue["number"]]

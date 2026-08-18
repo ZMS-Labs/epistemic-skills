@@ -139,6 +139,26 @@ def main(argv: list[str] | None = None) -> int:
         return run_self_test()
     if not args.public_content and not args.custody:
         parser.error("provide --self-test, --public-content, and/or --custody")
+    # R11c: evidence stamped with HEAD's SHA must describe HEAD's tree. A
+    # dirty working tree (outside the packet output directory, which this
+    # collector is in the business of writing) makes the stamp a lie — the
+    # predecessor's public-content evidence was stamped at one SHA while the
+    # scanned tree matched another. Refuse instead.
+    status = subprocess.check_output(
+        ["git", "status", "--porcelain"], cwd=REPO_ROOT, text=True
+    )
+    dirt = [
+        line for line in status.splitlines()
+        if line.strip() and "docs/v6/ES6-V6-CANDIDATE/" not in line
+    ]
+    if dirt:
+        print(
+            "DIRTY_TREE_REFUSED: evidence must be collected on a clean tree "
+            f"({len(dirt)} entries differ from HEAD, e.g. {dirt[0]!r}). Commit "
+            "or stash first; stamped-SHA/tree divergence is the R5/R11c class.",
+            file=sys.stderr,
+        )
+        return 2
     sha = git_head()
     failed = False
     if args.public_content:
