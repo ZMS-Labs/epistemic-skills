@@ -8,8 +8,10 @@ The same actor that produced the work refuses self-certification.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import subprocess
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -17,7 +19,13 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 OUT_DIR = REPO_ROOT / "docs/v6/ES6-V6-CANDIDATE"
 PROGRAM = "ES6-V6-CANDIDATE"
 
-# Dispositions from the 2026-08-18 recon map, refreshed for this candidate.
+# Dispositions from the 2026-08-18 recon map, refreshed for this candidate and
+# for the ratified operator interview decisions D1-D15
+# (docs/v6/operator-decision-record-2026-08-18.md, echo-certified).
+#
+# EVERY open tracker item must have an EXPLICIT entry here (R12: a newly
+# opened issue must never inherit a disposition silently — generation fails
+# closed on any open item this map has never heard of).
 ISSUE_DISPOSITIONS: dict[int, dict] = {
     191: {
         "phase": "ES6-V6-CANDIDATE",
@@ -26,10 +34,10 @@ ISSUE_DISPOSITIONS: dict[int, dict] = {
         "evidence_note": "Parent v6 program; this packet is the BUILD freeze.",
     },
     186: {
-        "phase": "frontier-decision",
-        "disposition": "hold-operator",
+        "phase": "decided-2026-08-18",
+        "disposition": "decided-disarm-as-authorization",
         "owner": "operator+agent",
-        "evidence_note": "Path-filter guard landed; tag-ruleset decision remains.",
+        "evidence_note": "Operator decision D6: disarm-as-authorization confirmed as the v6.0.0 regime (zero bypass actors; RELEASING.md step 7 procedure IS the authorization act). Remaining docket items (wiki packet) are PROMOTION-owned.",
     },
     173: {
         "phase": "blocked-parent",
@@ -116,10 +124,10 @@ ISSUE_DISPOSITIONS: dict[int, dict] = {
         "evidence_note": "Exact-candidate public-content gate; ES6-ZI-001 parent-tracker hits allowlisted this packet.",
     },
     104: {
-        "phase": "frontier-decision",
-        "disposition": "hold-operator",
-        "owner": "operator",
-        "evidence_note": "Implement vs retire v5 design commitments.",
+        "phase": "decided-2026-08-18",
+        "disposition": "decided-implement-all",
+        "owner": "agent",
+        "evidence_note": "Operator decision D3: implement ALL v5 design commitments. Implemented on this candidate — see CLM-V5-ROUTING/LEDGERS/SENTINELS/MEMBERSHIP rows.",
     },
     95: {
         "phase": "evidence-process",
@@ -134,10 +142,10 @@ ISSUE_DISPOSITIONS: dict[int, dict] = {
         "evidence_note": "Discovery-engine auth canary missing.",
     },
     84: {
-        "phase": "frontier-decision",
-        "disposition": "hold-operator",
+        "phase": "decided-2026-08-18",
+        "disposition": "decided-ownership-split",
         "owner": "joint",
-        "evidence_note": "Items 1–2 done; field-pair supply remains.",
+        "evidence_note": "Operator decision D10: field-pair ownership split confirmed (epistemic-calibration owns the outcome store and resolution loop; epistemic-skills owns emission) and the outcome store is granted operator-visible status. Implementation of the store remains cross-repo work.",
     },
     77: {
         "phase": "evidence-process",
@@ -146,10 +154,10 @@ ISSUE_DISPOSITIONS: dict[int, dict] = {
         "evidence_note": "Behavioral epoch program; live environment required.",
     },
     40: {
-        "phase": "frontier-decision",
-        "disposition": "hold-operator",
+        "phase": "decided-2026-08-18",
+        "disposition": "decided-rescope",
         "owner": "operator",
-        "evidence_note": "Re-scope v3 Step-7b into v6 Gauntlet.",
+        "evidence_note": "Operator decision D9: cross-family requirement re-scoped into v6-and-future publication gauntlets' Step 7b (first exercised at the next GO-posture verdict per D8). Closing #40 itself remains the operator's act.",
     },
     39: {
         "phase": "evidence-process",
@@ -163,20 +171,43 @@ ISSUE_DISPOSITIONS: dict[int, dict] = {
         "owner": "agent",
         "evidence_note": "macOS default APFS case-insensitivity; dispatch-only probe.",
     },
+    # Mission-custody residue class, verified item-by-item in the 2026-08-18
+    # reconciliation sweep: named seams/defects behind the blocked custody
+    # parents (#118/#124/#173 lineage), none implemented on this candidate.
+    # Each number is listed EXPLICITLY so a newly opened issue can never ride
+    # this class silently (R12 hard-fail applies to anything not named here).
+    **{
+        number: {
+            "phase": "custody-build-packet",
+            "disposition": "implement-when-unblocked",
+            "owner": "agent",
+            "evidence_note": "Mission-custody residue; disclosed seam/defect, not implemented on this candidate (2026-08-18 reconciliation sweep).",
+        }
+        for number in (
+            139, 140, 141, 147, 151, 154, 157, 158, 159, 160,
+            161, 163, 164, 167, 168, 169, 170,
+        )
+    },
 }
 
 PR_DISPOSITIONS: dict[int, dict] = {
+    195: {
+        "phase": "main-repair",
+        "disposition": "operator-merge",
+        "owner": "operator",
+        "evidence_note": "D11 minimal non-draft fix to main (three exact-file allowlist entries + oracle-audit PyYAML). Merging remains the operator's act; retires KL-MAIN-RED when landed green.",
+    },
     193: {
         "phase": "ES6-V6-CANDIDATE",
         "disposition": "in-candidate-draft",
         "owner": "agent",
-        "evidence_note": "es#137 P1+P2; included in this candidate tree; not merged to main.",
+        "evidence_note": "es#137 P1+P2; included in this candidate tree; stays open as the isolated custody PR per D12; not merged to main.",
     },
     194: {
-        "phase": "ES6-V6-CANDIDATE",
-        "disposition": "in-candidate-draft",
+        "phase": "superseded",
+        "disposition": "supersede-and-close",
         "owner": "agent",
-        "evidence_note": "This BUILD freeze packet; draft; not a PROMOTION merge.",
+        "evidence_note": "Superseded by the rc2 successor freeze PR (operator decision D12); close authorized after the supersession comment carrying the NO-GO verdict pointer (D13). The dead candidate branch keeps its historical NOT_RUN stamp.",
     },
     176: {
         "phase": "park",
@@ -198,12 +229,10 @@ PR_DISPOSITIONS: dict[int, dict] = {
     },
 }
 
-DEFAULT_ISSUE = {
-    "phase": "custody-build-packet",
-    "disposition": "implement-when-unblocked",
-    "owner": "agent",
-    "evidence_note": "Mission-custody residue; not implemented on this candidate.",
-}
+# R12: there is deliberately NO default disposition. An open tracker item
+# absent from the maps above fails generation closed (see load_tracker's
+# unknown-item check) — a fresh issue must be dispositioned by a human-read
+# edit here, never by inheriting a silent class.
 
 LIVE_LABELS = {"work:live-verification", "gate:live-environment"}
 OPERATOR_LABELS = {"gate:operator", "work:decision"}
@@ -239,16 +268,48 @@ def _tier_from_labels(labels: list[str]) -> str:
     return "R1"
 
 
+# R12: release consequence is a STRUCTURED severity, not prose to be parsed.
+# P1 = release-deciding; P2 = must be disclosed/limited; P3 = tracked.
+CLAIM_SEVERITY: dict[str, str] = {
+    "CLM-STDLIB-GATE": "P1",
+    "CLM-WF-PATH-COVERAGE": "P2",
+    "CLM-ORACLE-REJECT": "P1",
+    "CLM-MC-HOOK-POSIX": "P1",
+    "CLM-MC-MACOS-CASE": "P3",
+    "CLM-PUBLIC-CONTENT": "P1",
+    "CLM-V5-DESIGN-COMMITMENTS": "P1",
+    "CLM-V5-ROUTING": "P2",
+    "CLM-V5-LEDGERS": "P2",
+    "CLM-V5-SENTINELS": "P2",
+    "CLM-V5-MEMBERSHIP": "P2",
+    "CLM-RELEASE-AUTH": "P1",
+    "CLM-BEHAVIORAL-EPOCHS": "P2",
+    "CLM-HARNESS-LIVE": "P2",
+    "CLM-INDEPENDENT-GAUNTLET": "P1",
+    "CLM-DISPOSITION-CENSUS": "P2",
+    "CLM-REQUIRED-JOB": "P2",
+    "CLM-WINDOWS-FS": "P3",
+    "CLM-MC-137": "P1",
+    "CLM-SECRET-SCAN": "P1",
+    "CLM-COMPATIBILITY": "P2",
+    "CLM-MC-GUARD-LEXICAL": "P3",
+    "CLM-DESCRIPTION-BUDGET": "P2",
+    "CLM-MERGE-190": "P1",
+    "CLM-MERGE-156": "P1",
+    "CLM-MERGE-192": "P1",
+}
+
+
 def class_claims(sha: str) -> list[dict]:
     """Material claim classes required by #191, independent of tracker rows."""
-    return [
+    claims = [
         {
             "id": "CLM-STDLIB-GATE",
             "statement": "The epistemic-flexibility stdlib-checks job exercises every packaged skill contract and integration surface on push/PR to main.",
             "authority": "RELEASING.md gate 5; .github/workflows/epistemic-flexibility.yml",
             "subject": f"commit {sha}",
-            "oracle": "cleanroom_ci.sh extracts workflow python steps and all pass; GitHub stdlib-checks on a non-draft candidate.",
-            "falsifier": "A committed change to a gated surface passes push without triggering stdlib-checks or without failing a required step.",
+            "oracle": "cleanroom_ci.sh extracts BOTH single-line and block python steps with a completeness assertion (extraction divergence is FATAL; every skip is named) and all executable steps pass; GitHub stdlib-checks on a non-draft candidate.",
+            "falsifier": "A committed change to a gated surface passes push without triggering stdlib-checks or without failing a required step; or the clean-room replicates fewer steps than the workflow declares without naming the difference.",
             "environment": "ubuntu-24.04 CI; clean-room Linux checkout",
             "independence": "Workflow-declared steps; scorer/runner separation in eval harnesses",
             "evidence_tier": "R1",
@@ -265,13 +326,13 @@ def class_claims(sha: str) -> list[dict]:
         },
         {
             "id": "CLM-WF-PATH-COVERAGE",
-            "statement": "Each CI workflow's path filter is a superset of the files its steps read or execute.",
-            "authority": "es#186 docket path-filter guard; ES6-ORACLE-AUDIT",
+            "statement": "Workflows running whole-tree readers carry NO pull_request/push paths filter (R7 path A); scoped workflows' filters are supersets of their steps' inputs.",
+            "authority": "es#186 docket path-filter guard; ES6-ORACLE-AUDIT; gauntlet ruling R7",
             "subject": "all .github/workflows/*.yml",
-            "oracle": "v6_audit_workflow_oracles.py exits 0 with no uncovered_paths findings.",
-            "falsifier": "A change confined to a test input outside the workflow path filter does not dispatch the workflow.",
+            "oracle": "v6_audit_workflow_oracles.py exits 0 — both the uncovered-path rules and the path_filtered_whole_tree_reader rule — with planted RED controls in its self-test.",
+            "falsifier": "A change confined to a scanned-but-unlisted file does not dispatch the gate that reads it, or a whole-tree reader reappears behind a paths: filter without a finding.",
             "environment": "repository static analysis",
-            "independence": "script distinct from workflow authors",
+            "independence": "script distinct from workflow authors; planted controls prove the rules fire",
             "evidence_tier": "R1",
             "status": "PROVED",
             "release_consequence": "P2 — silent skip risk on release gate suites",
@@ -284,18 +345,18 @@ def class_claims(sha: str) -> list[dict]:
         },
         {
             "id": "CLM-ORACLE-REJECT",
-            "statement": "The evidence system can reject a plausible wrong world (negative, positive, and mutation controls).",
+            "statement": "The evidence system can reject a plausible wrong world, bounded to the checkers' planted-control batteries (live-behavioral mutation stays under CLM-BEHAVIORAL-EPOCHS).",
             "authority": "#191 terminal contract",
-            "subject": f"commit {sha} eval harnesses + custody suites",
-            "oracle": "Existing RED seeds (public-content --self-test, custody positive controls) fail when the control is removed.",
-            "falsifier": "A seeded defect grades clean, or a mutation of a required assertion still passes.",
-            "environment": "local Linux + CI ubuntu-24.04",
-            "independence": "scorer/runner separation in eval harnesses; custody tests are not the production hook",
+            "subject": f"commit {sha} checker suites + custody suites",
+            "oracle": "Planted RED batteries across the gate: public-content (seeds + digest tamper), sync_skill_surfaces (7-case drift battery), check_no_phantom_skills (routing tables), check_skill_run_ledger, score_sentinels (both directions), workflow-oracle audit, ledger append-only, description budget, loaded-descriptions, v6 assurance validator — each fails closed on its planted case and clean on the honest control.",
+            "falsifier": "Any planted defect grades clean, or a checker's self-test passes with its rule inverted (e.g. the R15 scratch-patch RED-proof).",
+            "environment": "local Linux + CI ubuntu-24.04 + clean-room replication",
+            "independence": "scorer/runner separation; batteries run through the same code path as the live checks",
             "evidence_tier": "R1",
-            "status": "PARTIAL",
+            "status": "PROVED",
             "release_consequence": "P1 if oracles cannot fail",
             "owner": "agent",
-            "closure_path": "Public-content RED seeds + custody suite mutation notes; full mutation battery is later evidence-process",
+            "closure_path": "Self-test steps wired in CI ahead of each live check",
             "linked_issues": [191],
         },
         {
@@ -335,8 +396,8 @@ def class_claims(sha: str) -> list[dict]:
             "statement": "Exact candidate public tree contains no disallowed private identifiers or user-specific paths outside exact-file allowlist.",
             "authority": "RELEASING.md; es#105; check_public_content.py",
             "subject": f"commit {sha} public tree",
-            "oracle": "check_public_content.py --self-test and live run both exit 0",
-            "falsifier": "Seeded private-repo id or user path pattern passes gate; or live scan hits a non-allowlisted file.",
+            "oracle": "check_public_content.py --self-test and live run both exit 0; every allowlist exemption is digest-bound (R11: tampered bytes at an allowlisted path fail closed, planted control in the self-test).",
+            "falsifier": "Seeded private-repo id or user path pattern passes gate; a live scan hits a non-allowlisted file; or changed bytes at an allowlisted path pass without a digest review.",
             "environment": "CI + exact-candidate review record",
             "independence": "checker distinct from content author",
             "evidence_tier": "R1",
@@ -348,34 +409,98 @@ def class_claims(sha: str) -> list[dict]:
         },
         {
             "id": "CLM-V5-DESIGN-COMMITMENTS",
-            "statement": "Each approved v5 design commitment is implemented, retired with amended public claims, or explicitly limited.",
-            "authority": "es#104; v5 design spec",
+            "statement": "Every approved v5 design commitment is implemented on this candidate per operator decision D3 (implement all); the four per-commitment rows below carry the evidence.",
+            "authority": "es#104; v5 design spec; operator decision D3 (echo-certified)",
             "subject": "ROUTING.md, intrinsic ledgers, sentinel corpora, structural membership",
-            "oracle": "Claim matrix row per commitment with PROVED/RETIRED/LIMITED status after operator decision",
-            "falsifier": "Public doc promises artifact that does not exist and is not marked retired.",
+            "oracle": "CLM-V5-ROUTING, CLM-V5-LEDGERS, CLM-V5-SENTINELS, CLM-V5-MEMBERSHIP all PROVED; spec AMENDMENT 2026-08-18 reconciles residual wording.",
+            "falsifier": "Any per-commitment row is not PROVED, or a public doc promises an artifact that does not exist and is not marked retired.",
             "environment": "repository + operator decision record",
-            "independence": "operator decision for retire path",
-            "evidence_tier": "R0",
-            "status": "BLOCKED",
-            "release_consequence": "Blocks successor GO",
-            "owner": "operator",
-            "closure_path": "Operator interview on #104 implement vs retire",
+            "independence": "operator decided the path; CI checks verify the implementations",
+            "evidence_tier": "R1",
+            "status": "PROVED",
+            "release_consequence": "Was the successor-GO blocker until D3; discharged by implementation",
+            "owner": "agent",
+            "closure_path": "docs/v6/operator-decision-record-2026-08-18.md (D3) + the four child rows",
+            "linked_issues": [104],
+        },
+        {
+            "id": "CLM-V5-ROUTING",
+            "statement": "ROUTING.md is generated solely from metadata.hands-to, byte-verified in CI, and the hand-authored-routing-table ban is mechanically enforced.",
+            "authority": "v5 design spec (Routing is generated, never authored) + AMENDMENTS 2026-08-07/2026-08-18",
+            "subject": "plugins/epistemic-skills/ROUTING.md + all markdown surfaces",
+            "oracle": "sync_skill_surfaces.py --check byte-compares the rendering; check_no_phantom_skills.py rule 3 rejects routing-column tables outside ROUTING.md; both self-tests carry planted RED controls.",
+            "falsifier": "A hands-to edit does not surface as ROUTING_DRIFT, or a planted hand-authored routing table passes rule 3.",
+            "environment": "CI ubuntu-24.04 + clean-room replication",
+            "independence": "byte-equality re-rendering, not the generator's own green",
+            "evidence_tier": "R1",
+            "status": "PROVED",
+            "release_consequence": "Routing enumeration tax stays deleted",
+            "owner": "agent",
+            "closure_path": "Checks green this candidate; first live catch (write-goal two-home drift) fixed same day",
+            "linked_issues": [104],
+        },
+        {
+            "id": "CLM-V5-LEDGERS",
+            "statement": "Every packaged skill carries the intrinsic evidence-emission step (skill-run@1) with a schema-validated tracked exemplar; live ledgers are runtime-local by amended design.",
+            "authority": "v5 design spec (Evidence emission, intrinsic) + AMENDMENT 2026-08-18 (storage class)",
+            "subject": "all 15 SKILL.md files + contracts/skill-run-ledger.schema.json + runs/ledger.example.jsonl",
+            "oracle": "check_skill_run_ledger.py green (rules derived from the schema at run time; gauntlet's ledger@2 exception explicit) with planted RED self-tests.",
+            "falsifier": "A skill lacks the emission step or a valid exemplar and the check stays green.",
+            "environment": "CI ubuntu-24.04 + clean-room replication",
+            "independence": "checker derives rules from the schema; no second copy of the contract",
+            "evidence_tier": "R1",
+            "status": "PROVED",
+            "release_consequence": "Run evidence exists by construction of each skill's own procedure",
+            "owner": "agent",
+            "closure_path": "Checks green this candidate",
+            "linked_issues": [104],
+        },
+        {
+            "id": "CLM-V5-SENTINELS",
+            "statement": "Sentinel corpora exist for every skill with event_kind bound into each fixture and a scorer that fails closed in both directions.",
+            "authority": "v5 design spec (Verification: RED before green)",
+            "subject": "contracts/epistemic-events/sentinels/*.json + score_sentinels.py",
+            "oracle": "score_sentinels.py green; --self-test exercises the shared event_kind_violation rule in REJECT and ACCEPT directions.",
+            "falsifier": "A sentinel with a wrong event kind grades clean, or the self-test passes with the rule inverted.",
+            "environment": "CI ubuntu-24.04 + clean-room replication",
+            "independence": "scorer distinct from fixture authors; shared rule exercised from both sides",
+            "evidence_tier": "R1",
+            "status": "PROVED",
+            "release_consequence": "Sentinel oracles cannot pass vacuously",
+            "owner": "agent",
+            "closure_path": "Checks green this candidate",
+            "linked_issues": [104],
+        },
+        {
+            "id": "CLM-V5-MEMBERSHIP",
+            "statement": "Skill membership has one source of truth: per-skill frontmatter event metadata derives skill-event-map.json, its schema, the verifier inventory, and every count surface; membership drift fails closed.",
+            "authority": "v5 design spec (structural membership) — es#104 s4 Option A",
+            "subject": "15 SKILL.md frontmatters + contracts/epistemic-events/skill-event-map.json + derived surfaces",
+            "oracle": "sync_skill_surfaces.py --check green; --self-test plants MAP/SCHEMA/ROUTING/COUNT drift, EVENT_METADATA_MISSING, HANDS_TO_UNKNOWN, and an unregistered-new-skill case — all must fail closed.",
+            "falsifier": "A skill added without regeneration passes --check, or any planted battery case grades clean.",
+            "environment": "CI ubuntu-24.04 + clean-room replication",
+            "independence": "byte-equality re-rendering against the frontmatter source",
+            "evidence_tier": "R1",
+            "status": "PROVED",
+            "release_consequence": "A second hand-maintained membership home cannot drift",
+            "owner": "agent",
+            "closure_path": "Checks green this candidate",
             "linked_issues": [104],
         },
         {
             "id": "CLM-RELEASE-AUTH",
-            "statement": "Publication requires explicit owner authorization recorded before tag creation.",
-            "authority": "PR #156 (merged); RELEASING.md step 7",
+            "statement": "Publication requires explicit owner authorization recorded before tag creation; the authorization regime is decided (disarm-as-authorization, operator decision D6).",
+            "authority": "PR #156 (merged, D1-ratified); RELEASING.md step 7; operator decision D6 (echo-certified)",
             "subject": "refs/tags/v* creation",
-            "oracle": "Committed release notes name verdict, exact SHA, owner; ruleset creation rule armed except during authorized window.",
-            "falsifier": "Tag created without authorization line or with ruleset left disarmed.",
+            "oracle": "Committed release notes name verdict, exact SHA, owner; protect-version-tags keeps zero bypass actors; the documented disarm -> tag -> re-arm-with-seeded-probe procedure IS the authorization act (D6).",
+            "falsifier": "Tag created without the authorization procedure, or the ruleset carries a bypass actor, or is left disarmed outside an authorized window.",
             "environment": "GitHub ruleset + release notes",
-            "independence": "operator authorization",
+            "independence": "operator authorization; ruleset state live-verified",
             "evidence_tier": "R0",
-            "status": "PARTIAL",
-            "release_consequence": "PROMOTION gate — docs landed; #186 tag-ruleset decision remains",
+            "status": "PROVED",
+            "release_consequence": "PROMOTION remains a separate operator act; the mechanism question is closed",
             "owner": "operator",
-            "closure_path": "Operator #186 tag-ruleset; PROMOTION_RUN still required",
+            "closure_path": "D6 recorded; execution occurs only inside a PROMOTION_RUN",
             "linked_prs": [156, 190],
             "linked_issues": [186],
         },
@@ -416,8 +541,8 @@ def class_claims(sha: str) -> list[dict]:
             "statement": "An isolated independent Gauntlet computes GO on the exact candidate with no unresolved P1/P2 release blockers.",
             "authority": "#191 terminal contract; RELEASING.md independent judgment gate",
             "subject": f"commit {sha}",
-            "oracle": "Recorded GO by a seat that did not produce the candidate, against this SHA.",
-            "falsifier": "The implementer records GO, or GO is recorded against a different SHA.",
+            "oracle": "Recorded GO by a fresh seat that did not produce the candidate, BOUND to a run id, an on-disk verdict artifact, and this exact SHA (independent_gauntlet_ref). A bare enum flip in this packet is not a verdict (R1).",
+            "falsifier": "The implementer records GO; GO is recorded against a different SHA; or the enum says GO with no matching verdict artifact on disk.",
             "environment": "isolated independent panel",
             "independence": "No actor certifies its own acceptance",
             "evidence_tier": "R0",
@@ -428,17 +553,24 @@ def class_claims(sha: str) -> list[dict]:
             "linked_issues": [191, 40],
         },
         {
-            "id": "CLM-TRACKER-RECONCILED",
-            "statement": "Every current open issue and PR has an explicit evidence-backed disposition, not a citation-only mention.",
-            "authority": "#191 required reconciliation",
+            # R6: the predecessor row (CLM-TRACKER-RECONCILED) claimed
+            # evidence-backed reconciliation and was PROVED-but-false on
+            # #191's own strong reading. This row claims only what the
+            # artifact establishes: a complete DISPOSITION CENSUS. Whether
+            # each disposition satisfies #191's reconcile-not-merely-cite
+            # bar is carried per-item by the matrix rows and the decision
+            # record, never certified wholesale by this row.
+            "id": "CLM-DISPOSITION-CENSUS",
+            "statement": "Every currently open issue and PR carries an explicit, human-read disposition in the reconciliation artifact (a census claim; per-item substance lives in the individual rows).",
+            "authority": "#191 required reconciliation (census limb); gauntlet ruling R6",
             "subject": "open GitHub issues and PRs at generation time",
-            "oracle": "issue-pr-reconciliation.json item count equals live open tracker count; each item has phase+disposition+owner.",
-            "falsifier": "An open issue/PR is absent from the reconciliation, or present with no disposition.",
+            "oracle": "issue-pr-reconciliation.json item count equals the live open tracker count; each item has phase+disposition+owner; generation fails closed on any item without an explicit map entry.",
+            "falsifier": "An open issue/PR is absent from the reconciliation, present with no disposition, or generation succeeded despite an item missing from the disposition maps.",
             "environment": "GitHub Issues/PR API + committed JSON",
-            "independence": "generator reads live tracker, not a remembered list",
+            "independence": "generator reads the live tracker, not a remembered list",
             "evidence_tier": "R1",
             "status": "PROVED",
-            "release_consequence": "P2 if the freeze drifts from live tracker",
+            "release_consequence": "P2 if the freeze drifts from the live tracker",
             "owner": "agent",
             "closure_path": "Regenerate this packet if the open set changes",
             "linked_issues": [191],
@@ -448,18 +580,18 @@ def class_claims(sha: str) -> list[dict]:
         },
         {
             "id": "CLM-REQUIRED-JOB",
-            "statement": "Dispatch-only diagnostics are documented as non-gating; merge-gating jobs are named and skip on draft PRs.",
-            "authority": "RELEASING.md required-job semantics; PR #190",
-            "subject": "epistemic-flexibility.yml stdlib-checks; mission-custody-contract.yml contract vs contract-macos",
-            "oracle": "RELEASING.md names required vs dispatch-only jobs; workflow if: skips drafts; contract-macos is workflow_dispatch only.",
-            "falsifier": "A dispatch-only job is treated as a required check, or a required job runs on a draft PR.",
-            "environment": "repository workflows + RELEASING.md",
-            "independence": "docs distinct from Actions configuration",
+            "statement": "Across all six workflows, merge-gating jobs are named, skip on draft PRs, and DISPATCH when a draft is marked ready; dispatch-only diagnostics are documented as non-gating.",
+            "authority": "RELEASING.md required-job semantics; PR #190 (D1-ratified); gauntlet ruling R8",
+            "subject": "all six .github/workflows/*.yml: epistemic-flexibility stdlib-checks; mission-custody contract (+dispatch-only contract-macos); commission-watch contract; openai-bundles build; release-security full-history-secret-scan; dco",
+            "oracle": "Every gating workflow declares pull_request types [opened, synchronize, reopened, ready_for_review]; the R8 ready-mark drill dispatched all five gating workflows at an unchanged head; contract-macos remains workflow_dispatch only.",
+            "falsifier": "A ready-marked draft fails to dispatch any gating workflow at the same head, a dispatch-only job is treated as required, or a required job runs on a draft PR.",
+            "environment": "repository workflows + RELEASING.md + live drill",
+            "independence": "drill evidence from GitHub's own run records, not workflow prose",
             "evidence_tier": "R1",
             "status": "PROVED",
             "release_consequence": "P2 if required-job semantics drift",
             "owner": "agent",
-            "closure_path": "Retained from merged #190; re-audit if workflow if: changes",
+            "closure_path": "docs/v6/evidence/r8-ready-mark-drill-2026-08-18.md; re-audit if workflow if:/types change",
             "linked_issues": [186, 191],
             "linked_prs": [190],
         },
@@ -481,22 +613,137 @@ def class_claims(sha: str) -> list[dict]:
         },
         {
             "id": "CLM-MC-137",
-            "statement": "The three P1 false-allow bypasses and four P2 refusal gaps from es#137 are closed in the candidate tree.",
+            "statement": "The three P1 false-allow bypasses and four P2 refusal gaps from es#137 are closed in THIS CANDIDATE TREE (main's exposure is disclosed separately as KL-MAIN-137).",
             "authority": "es#137",
             "subject": "mission-custody hook/gate/validator/CLI/API on this candidate",
-            "oracle": "Named acceptance tests green in the full mission-custody-contract suite.",
-            "falsifier": "Any of the seven named tests fail, or main (without this candidate) still exhibits the bypass.",
+            "oracle": "Named acceptance tests green in the full mission-custody-contract suite on this tree.",
+            "falsifier": "Any of the seven named tests fail on this candidate tree.",
             "environment": "local Linux custody suite; CI ubuntu-24.04 when not draft",
             "independence": "suite is not the production hook process",
             "evidence_tier": "R1",
-            "status": "PARTIAL",
-            "release_consequence": "P1 false-allows remain on main until this candidate is merged",
+            "status": "PROVED",
+            "release_consequence": "P1 false-allows remain on main until an operator merge — carried as KL-MAIN-137, not hidden inside this row's status",
             "owner": "agent",
-            "closure_path": "Operator merge of this candidate or of #193 after required CI",
+            "closure_path": "Suite green this candidate; operator merge of this candidate or of #193 retires the main exposure",
             "linked_issues": [137],
             "linked_prs": [193],
         },
+        {
+            "id": "CLM-SECRET-SCAN",
+            "statement": "The full git history of the candidate contains no credential-shaped secrets (release-security full-history-secret-scan).",
+            "authority": "RELEASING.md gate 6; .github/workflows/release-security.yml",
+            "subject": f"commit {sha} full history",
+            "oracle": "release-security full-history-secret-scan job green on the candidate head (dispatches on ready PRs and pushes; verified dispatching by the R8 ready-mark drill).",
+            "falsifier": "A seeded credential in a historical commit passes the scan, or the job never executes on the candidate.",
+            "environment": "ubuntu-24.04 CI",
+            "independence": "scanner distinct from content authors",
+            "evidence_tier": "R1",
+            "status": "PARTIAL",
+            "release_consequence": "P1 — required security-class surface; unclaimed/unrun was gauntlet ruling R2",
+            "owner": "agent",
+            "closure_path": "Requalification run URLs on the exact candidate recorded in evidence at freeze",
+            "linked_issues": [191],
+        },
+        {
+            "id": "CLM-COMPATIBILITY",
+            "statement": "Every packaging surface (Claude/Cursor/Kimi/Codex/Gemini manifests, OpenAI bundles, count words, skill inventories) is generated-or-verified in sync with the packaged tree.",
+            "authority": "es#191 terminal contract (compatibility claims); gauntlet ruling R14 (compatibility class was unclaimed)",
+            "subject": f"commit {sha} manifests + bundles + inventory surfaces",
+            "oracle": "check_json_artifacts.py, sync_skill_surfaces.py --check, check_skill_inventory.py, and build_openai_bundles.py --check all exit 0.",
+            "falsifier": "A manifest names a skill count or member that the packaged tree does not carry, or a bundle build diverges from the packaged skills.",
+            "environment": "repository static analysis + CI",
+            "independence": "generators verified by byte-equality re-rendering, not by their own output",
+            "evidence_tier": "R1",
+            "status": "PROVED",
+            "release_consequence": "P2 — installers receive stale surfaces on drift",
+            "owner": "agent",
+            "closure_path": "Checks green this candidate; regenerate on any membership change",
+            "linked_issues": [191],
+        },
+        {
+            "id": "CLM-MC-GUARD-LEXICAL",
+            "statement": "Custody guard path matching is lexical and can diverge from filesystem resolution through symlinked parents; the divergence is disclosed, pinned by a characterization test, and unchanged this epoch.",
+            "authority": "Gauntlet ruling R15 (run es-v6-candidate-freeze-2026-08-18); PR #128 safe-direction analysis",
+            "subject": "custody_gate _guard_norm_path matching semantics",
+            "oracle": "test_guard_match_is_lexical_symlinked_parent_diverges green (RED-proven against a scratch resolution-aware patch); SECURITY.md section present.",
+            "falsifier": "The probe's divergence case stops reproducing without a disclosed semantics change, or the pin test is deleted/weakened.",
+            "environment": "POSIX symlink-capable checkout; NT skips loudly",
+            "independence": "characterization pin distinct from the production gate code",
+            "evidence_tier": "R1",
+            "status": "LIMITED",
+            "release_consequence": "Guard globs bound spellings, not filesystem effects — disclosed in SECURITY.md",
+            "owner": "agent",
+            "closure_path": "docs/v6/evidence/r15-guard-lexical-probe-2026-08-18.md; resolution-aware matching is a future contract-epoch decision",
+            "linked_issues": [137, 147],
+        },
+        {
+            "id": "CLM-DESCRIPTION-BUDGET",
+            "statement": "The packaged description byte ceiling is enforced (check_description_budget.py); the ESTATE net-negative acceptance line remains an open operator fork.",
+            "authority": "v5 design AMENDMENT 2026-08-07 (D8 dual scope)",
+            "subject": "packaged SKILL.md description frontmatter bytes; estate-wide harness budget",
+            "oracle": "check_description_budget.py green (package ceiling). Estate: check_loaded_descriptions.py --require-capture with a live capture receipt (Path 1), or the Path-2 owner amendment.",
+            "falsifier": "Package bytes exceed the ceiling; or a release claims estate headroom without a capture receipt and without the owner amendment.",
+            "environment": "CI (package ceiling); operator-supplied capture (estate)",
+            "independence": "budget checker distinct from description authors",
+            "evidence_tier": "R1",
+            "status": "LIMITED",
+            "release_consequence": "P2 — the operator must choose Path 1 (shrink below pre-v5 baseline AND show a capture receipt) or Path 2 (owner amendment retiring the estate release gate) before v6.0 publication",
+            "owner": "operator",
+            "closure_path": "Operator fork recorded; --require-capture makes Path 1 mechanically enforceable",
+            "linked_issues": [104, 191],
+        },
+        {
+            "id": "CLM-MERGE-190",
+            "statement": "The BUILD-window merge of PR #190 (required-job semantics) to main is an operator-ratified act.",
+            "authority": "Operator decision D1, echo-certified (docs/v6/operator-decision-record-2026-08-18.md; ratified object at commit d7c4178)",
+            "subject": "PR #190 merge to main, 2026-08-18",
+            "oracle": "The decision record is present in the tree with its certification section; D1 names #190 explicitly.",
+            "falsifier": "The record is absent, its certification fails re-verification, or the operator reverses the ratification.",
+            "environment": "repository record + live tracker",
+            "independence": "ratification is the operator's own echo-certified act, not agent-authored consent",
+            "evidence_tier": "R0",
+            "status": "PROVED",
+            "release_consequence": "P1 — unresolved merge consent was gauntlet ruling R3's cap on every acceptance path",
+            "owner": "operator",
+            "closure_path": "Discharged by D1 upon echo certification; packet-disclosure limb is this row",
+            "linked_prs": [190],
+        },
+        {
+            "id": "CLM-MERGE-156",
+            "statement": "The BUILD-window merge of PR #156 (publication-authorization step) to main is an operator-ratified act.",
+            "authority": "Operator decision D1, echo-certified (docs/v6/operator-decision-record-2026-08-18.md; ratified object at commit d7c4178)",
+            "subject": "PR #156 merge to main, 2026-08-18",
+            "oracle": "The decision record is present in the tree with its certification section; D1 names #156 explicitly.",
+            "falsifier": "The record is absent, its certification fails re-verification, or the operator reverses the ratification.",
+            "environment": "repository record + live tracker",
+            "independence": "ratification is the operator's own echo-certified act, not agent-authored consent",
+            "evidence_tier": "R0",
+            "status": "PROVED",
+            "release_consequence": "P1 — unresolved merge consent was gauntlet ruling R3's cap on every acceptance path",
+            "owner": "operator",
+            "closure_path": "Discharged by D1 upon echo certification; packet-disclosure limb is this row",
+            "linked_prs": [156],
+        },
+        {
+            "id": "CLM-MERGE-192",
+            "statement": "The BUILD-window merge of PR #192 (ES6-ZI-001 baseline; this candidate lineage's base) to main is an operator-ratified act.",
+            "authority": "Operator decision D1, echo-certified (docs/v6/operator-decision-record-2026-08-18.md; ratified object at commit d7c4178)",
+            "subject": "PR #192 merge to main, 2026-08-18",
+            "oracle": "The decision record is present in the tree with its certification section; D1 names #192 explicitly.",
+            "falsifier": "The record is absent, its certification fails re-verification, or the operator reverses the ratification.",
+            "environment": "repository record + live tracker",
+            "independence": "ratification is the operator's own echo-certified act, not agent-authored consent",
+            "evidence_tier": "R0",
+            "status": "PROVED",
+            "release_consequence": "P1 — unresolved merge consent was gauntlet ruling R3's cap on every acceptance path; #192 appeared in no packet artifact at the NO-GO subject",
+            "owner": "operator",
+            "closure_path": "Discharged by D1 upon echo certification; packet-disclosure limb is this row",
+            "linked_prs": [192],
+        },
     ]
+    for claim in claims:
+        claim["consequence_severity"] = CLAIM_SEVERITY[claim["id"]]
+    return claims
 
 
 def tracker_claim(kind: str, number: int, title: str, meta: dict, labels: list[str]) -> dict:
@@ -504,13 +751,18 @@ def tracker_claim(kind: str, number: int, title: str, meta: dict, labels: list[s
     status = "UNPROVED"
     if meta["disposition"] == "hold-operator" or meta["phase"] == "frontier-decision":
         status = "BLOCKED"
-    elif meta["disposition"] in {"park", "do-not-merge", "harvest-supersede"}:
+    elif meta["disposition"].startswith("decided-"):
+        # The operator decision is recorded (D-series, echo-certified);
+        # remaining execution is carried by the note and the class rows.
+        status = "PARTIAL"
+    elif meta["disposition"] in {"park", "do-not-merge", "harvest-supersede",
+                                 "supersede-and-close"}:
         status = "LIMITED"
     elif LIVE_LABELS & label_set or meta["disposition"] == "close-when-evidence":
         status = "LIMITED"
-    elif meta["disposition"] == "in-candidate-draft":
+    elif meta["disposition"] in {"in-candidate-draft", "operator-merge"}:
         status = "PARTIAL"
-    elif number in {104, 40, 84, 186} or OPERATOR_LABELS & label_set:
+    elif OPERATOR_LABELS & label_set:
         status = "BLOCKED"
     prefix = "ISSUE" if kind == "issue" else "PR"
     return {
@@ -525,6 +777,7 @@ def tracker_claim(kind: str, number: int, title: str, meta: dict, labels: list[s
         "evidence_tier": _tier_from_labels(labels),
         "status": status,
         "release_consequence": meta["evidence_note"],
+        "consequence_severity": "P3",
         "owner": meta["owner"],
         "closure_path": meta["disposition"],
         "linked_issues": [number] if kind == "issue" else [],
@@ -532,10 +785,24 @@ def tracker_claim(kind: str, number: int, title: str, meta: dict, labels: list[s
     }
 
 
+def require_dispositions(issues: list[dict], prs: list[dict]) -> None:
+    """R12: an open tracker item with no explicit disposition fails generation."""
+    unknown_issues = sorted(
+        i["number"] for i in issues if i["number"] not in ISSUE_DISPOSITIONS
+    )
+    unknown_prs = sorted(p["number"] for p in prs if p["number"] not in PR_DISPOSITIONS)
+    if unknown_issues or unknown_prs:
+        raise SystemExit(
+            "UNDISPOSITIONED_TRACKER_ITEMS: every open item needs an explicit "
+            f"entry (no silent default). issues={unknown_issues} prs={unknown_prs} "
+            "— add human-read dispositions to ISSUE_DISPOSITIONS/PR_DISPOSITIONS."
+        )
+
+
 def build_reconciliation(sha: str, ts: str, issues: list[dict], prs: list[dict]) -> dict:
     items: list[dict] = []
     for issue in sorted(issues, key=lambda x: x["number"]):
-        meta = ISSUE_DISPOSITIONS.get(issue["number"], DEFAULT_ISSUE)
+        meta = ISSUE_DISPOSITIONS[issue["number"]]
         items.append(
             {
                 "kind": "issue",
@@ -551,15 +818,7 @@ def build_reconciliation(sha: str, ts: str, issues: list[dict], prs: list[dict])
             }
         )
     for pr in sorted(prs, key=lambda x: x["number"]):
-        meta = PR_DISPOSITIONS.get(
-            pr["number"],
-            {
-                "phase": "ES6-V6-CANDIDATE",
-                "disposition": "reconcile-in-matrix",
-                "owner": "agent",
-                "evidence_note": "Open PR; disposition recorded at generation time.",
-            },
-        )
+        meta = PR_DISPOSITIONS[pr["number"]]
         note = meta["evidence_note"]
         if pr.get("isDraft"):
             note = f"{note} (draft PR)."
@@ -600,13 +859,26 @@ def build_source_inventory(sha: str, ts: str) -> dict:
         p.relative_to(REPO_ROOT).as_posix()
         for p in (REPO_ROOT / ".github/scripts").glob("*.py")
     )
+    # R5b/d: bind the inventory to CONTENT, not just a name. Per-file sha256
+    # digests plus the candidate's git tree hash make any post-freeze edit to
+    # an inventoried file detectable (the predecessor packet's artifacts were
+    # mutated after generation and nothing could tell).
+    digests = {
+        rel: hashlib.sha256((REPO_ROOT / rel).read_bytes()).hexdigest()
+        for rel in [*workflows, *contracts, *ci_scripts]
+    }
+    tree_hash = subprocess.check_output(
+        ["git", "rev-parse", f"{sha}^{{tree}}"], cwd=REPO_ROOT, text=True
+    ).strip()
     return {
-        "schema": "v6-source-inventory@1",
+        "schema": "v6-source-inventory@2",
         "exact_start_sha": sha,
+        "candidate_tree_hash": tree_hash,
         "generated_at": ts,
         "workflows": workflows,
         "contracts": contracts,
         "ci_scripts": ci_scripts,
+        "file_digests": digests,
     }
 
 
@@ -614,22 +886,14 @@ def build_claim_matrix(sha: str, ts: str, issues: list[dict], prs: list[dict]) -
     claims = class_claims(sha)
     seen = {c["id"] for c in claims}
     for issue in issues:
-        meta = ISSUE_DISPOSITIONS.get(issue["number"], DEFAULT_ISSUE)
+        meta = ISSUE_DISPOSITIONS[issue["number"]]
         labels = [l["name"] for l in issue.get("labels", [])]
         claim = tracker_claim("issue", issue["number"], issue["title"], meta, labels)
         if claim["id"] not in seen:
             claims.append(claim)
             seen.add(claim["id"])
     for pr in prs:
-        meta = PR_DISPOSITIONS.get(
-            pr["number"],
-            {
-                "phase": "ES6-V6-CANDIDATE",
-                "disposition": "reconcile-in-matrix",
-                "owner": "agent",
-                "evidence_note": "Open PR.",
-            },
-        )
+        meta = PR_DISPOSITIONS[pr["number"]]
         labels = [l["name"] for l in pr.get("labels", [])]
         claim = tracker_claim("pr", pr["number"], pr["title"], meta, labels)
         if claim["id"] not in seen:
@@ -669,30 +933,32 @@ def build_receipt(sha: str, ts: str) -> dict:
     }
 
 
+def _validator_module():
+    """The v6-assurance contract owns the blocking derivation (one home)."""
+    import importlib.util
+
+    path = REPO_ROOT / "plugins/epistemic-skills/contracts/v6-assurance/validate_v6_assurance.py"
+    spec = importlib.util.spec_from_file_location("validate_v6_assurance", path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
 def blocking_from_matrix(matrix: dict) -> list[str]:
-    by_id = {c["id"]: c for c in matrix["claims"]}
-    required = [
-        "CLM-INDEPENDENT-GAUNTLET",
-        "CLM-V5-DESIGN-COMMITMENTS",
-        "CLM-BEHAVIORAL-EPOCHS",
-        "CLM-HARNESS-LIVE",
-        "CLM-MC-MACOS-CASE",
-        "CLM-RELEASE-AUTH",
-        "CLM-MC-137",
-        "CLM-STDLIB-GATE",
-        "CLM-PUBLIC-CONTENT",
-    ]
-    block = []
-    for cid in required:
-        claim = by_id.get(cid)
-        if claim is None or claim["status"] != "PROVED":
-            block.append(cid)
-    return block
+    """R12: blocking_claims is DERIVED from the matrix, never a hand list.
+
+    The rule lives in validate_v6_assurance.derive_blocking — the validator
+    recomputes it on every run, so a hand-edited blocking list fails CI. The
+    predecessor's hand-maintained 9-id whitelist is exactly what let
+    arbitrary inclusion/omission drift in (gauntlet ruling R12).
+    """
+    return _validator_module().derive_blocking(matrix["claims"])
 
 
 def build_promotion_packet(sha: str, ts: str, matrix: dict) -> dict:
     return {
-        "schema": "v6-promotion-packet@1",
+        "schema": "v6-promotion-packet@2",
         "program": PROGRAM,
         "issue": 191,
         "candidate_sha": sha,
@@ -700,7 +966,20 @@ def build_promotion_packet(sha: str, ts: str, matrix: dict) -> dict:
         "readiness": "NOT_READY",
         "self_certification": "refused",
         "independent_gauntlet": "NOT_RUN",
-        "rollback": "Do not merge this branch to main. Abandon the branch. main remains the last PROMOTION-valid channel until an independent GO and a separate PROMOTION_RUN.",
+        # R1: the verdict is a bound artifact, never a bare enum. Populated
+        # only by the acceptance flow after a real run exists on disk.
+        "independent_gauntlet_ref": None,
+        # R10: the rollback premise is qualified — main's own live state is
+        # part of the truth, not an assumed-green backstop.
+        "rollback": (
+            "Do not merge this branch to main outside a PROMOTION_RUN. "
+            "Abandoning this branch reverts to main, whose own required "
+            "stdlib-checks were RED at the Public-content step when this "
+            "packet was generated (see KL-MAIN-RED; PR #195 is the in-flight "
+            "repair). main is the last PROMOTION-valid channel only once its "
+            "repair lands green; an independent GO and a separate "
+            "PROMOTION_RUN remain required either way."
+        ),
         "requested_irreversible_acts": [],
         "blocking_claims": blocking_from_matrix(matrix),
         "known_limits": [
@@ -708,49 +987,115 @@ def build_promotion_packet(sha: str, ts: str, matrix: dict) -> dict:
                 "id": "KL-SELF-GO",
                 "kind": "independence",
                 "statement": "The implementer of this packet cannot record Gauntlet GO on it.",
-                "release_consequence": "V6_CANDIDATE_READY_FOR_OPERATOR_ACCEPTANCE is unreachable until an independent panel runs.",
-            },
-            {
-                "id": "KL-OPERATOR-104",
-                "kind": "operator-hold",
-                "statement": "es#104 implement-vs-retire is unresolved.",
-                "release_consequence": "Blocks successor GO.",
-            },
-            {
-                "id": "KL-OPERATOR-186",
-                "kind": "operator-hold",
-                "statement": "Tag-ruleset / ratification remainder of es#186 is unresolved.",
-                "release_consequence": "Publication authorization docs landed; tag creation still operator-owned.",
+                "release_consequence": "V6_CANDIDATE_READY_FOR_OPERATOR_ACCEPTANCE is unreachable until an independent panel runs (fresh seat: the prior adjudicating seat took the repair role under D2).",
+                "owner": "independent-panel",
             },
             {
                 "id": "KL-LIVE-ENV",
                 "kind": "live-environment",
                 "statement": "Behavioral epochs (#77/#39) and native harness live-fire (#136/#129/#142) were not run.",
                 "release_consequence": "Those claims are LIMITED, not PROVED.",
+                "owner": "agent",
             },
             {
                 "id": "KL-MACOS-162",
                 "kind": "platform",
                 "statement": "es#162 case-insensitivity is disclosed; contract-macos is dispatch-only.",
                 "release_consequence": "Not a merge-gating required job; still a named v6 limit.",
+                "owner": "agent",
             },
             {
+                # KL-DRAFT-CI rewrite (gauntlet rulings R8/R9): the full
+                # shape of what draft state hides, with current numbers.
                 "id": "KL-DRAFT-CI",
                 "kind": "integrity",
-                "statement": "Draft PRs skip required stdlib-checks and mission-custody-contract jobs.",
-                "release_consequence": "Local clean-room is the BUILD oracle until the PR is marked ready.",
+                "statement": (
+                    "While the freeze PR is a draft, ALL FIVE gating "
+                    "workflows skip their jobs (stdlib-checks, mission-"
+                    "custody contract, commission-watch contract, "
+                    "openai-bundles build, full-history-secret-scan) plus "
+                    "DCO. Marking the PR ready dispatches every one of them "
+                    "at the unchanged head (ready_for_review trigger types; "
+                    "proven by the 2026-08-18 ready-mark drill). Until "
+                    "then the BUILD oracle is the local clean-room, which "
+                    "replicates 52 of the 53 workflow python steps of ONE "
+                    "workflow (epistemic-flexibility) with every skip "
+                    "named, and does NOT cover the other five workflows. "
+                    "A fail-fast CI failure also masks later steps: the "
+                    "oracle-audit step's missing-PyYAML defect was "
+                    "invisible on main behind the public-content failure "
+                    "until 2026-08-18."
+                ),
+                "release_consequence": (
+                    "Local clean-room green is not GitHub required-job "
+                    "green. Requalification requires the ready-mark (or "
+                    "workflow_dispatch, D4b) runs on the exact candidate."
+                ),
+                "owner": "agent",
             },
             {
                 "id": "KL-MAIN-137",
                 "kind": "integrity",
                 "statement": "es#137 P1 false-allows are present on origin/main; closed only in this candidate tree.",
                 "release_consequence": "Merging this candidate is a PROMOTION act, not performed here.",
+                "owner": "operator",
+            },
+            {
+                "id": "KL-MAIN-RED",
+                "kind": "integrity",
+                "statement": (
+                    "origin/main is RED on required stdlib-checks at the "
+                    "Public-content step (the exact defect this lineage's "
+                    "allowlist entries repair), with the downstream "
+                    "release-gate steps never executed on main's head. "
+                    "PR #195 (operator-merge, D11) is the in-flight fix; "
+                    "this candidate line carries the same repair."
+                ),
+                "release_consequence": (
+                    "The rollback channel is impaired until main is green; "
+                    "a green push to main retires this limit (re-checked "
+                    "live at operator acceptance per the acceptance "
+                    "procedure)."
+                ),
+                "owner": "operator",
             },
             {
                 "id": "KL-WINDOWS",
                 "kind": "platform",
                 "statement": "No native Windows requalification was run for this candidate.",
                 "release_consequence": "CLM-WINDOWS-FS stays LIMITED.",
+                "owner": "agent",
+            },
+            {
+                "id": "KL-RESTAMP",
+                "kind": "integrity",
+                "statement": (
+                    "The predecessor freeze's packet artifacts were "
+                    "generated at one commit and mutated at the freeze "
+                    "commit while still carrying the earlier stamp — "
+                    "self-falsifying evidence nothing detected (gauntlet "
+                    "ruling R5). This packet is generated under the C/C+1 "
+                    "discipline: generation refuses a dirty tree and "
+                    "refuses --sha != HEAD, the source inventory binds "
+                    "per-file sha256 digests plus the candidate tree hash, "
+                    "and the validator recomputes those digests."
+                ),
+                "release_consequence": "Any post-freeze edit to an inventoried file turns the validator red instead of shipping silently.",
+                "owner": "agent",
+            },
+            {
+                "id": "KL-GUARD-LEXICAL",
+                "kind": "integrity",
+                "statement": (
+                    "Custody guard path matching is lexical; a write "
+                    "spelled through a symlinked parent resolves inside a "
+                    "guarded tree while the guard does not match "
+                    "(measured probe; characterization-pinned; disclosed "
+                    "in mission-custody SECURITY.md). No matching-behavior "
+                    "change this epoch per gauntlet ruling R15."
+                ),
+                "release_consequence": "Guard globs bound spellings, not filesystem effects; CLM-MC-GUARD-LEXICAL stays LIMITED.",
+                "owner": "agent",
             },
         ],
         "evidence_paths": [
@@ -796,11 +1141,24 @@ def load_tracker() -> tuple[list[dict], list[dict]]:
     return issues, prs
 
 
+def dirty_tree() -> list[str]:
+    out = subprocess.check_output(
+        ["git", "status", "--porcelain"], cwd=REPO_ROOT, text=True
+    )
+    return [line for line in out.splitlines() if line.strip()]
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--sha",
-        help="Stamp this commit as the candidate (default: HEAD)",
+        help="Stamp this commit as the candidate (must equal HEAD; default: HEAD)",
+    )
+    parser.add_argument(
+        "--tracker-json",
+        type=Path,
+        help="Read {issues:[...], prs:[...]} from this file instead of the gh "
+        "CLI (for hosts without gh; the file must be a verbatim live capture).",
     )
     args = parser.parse_args()
     sha = args.sha or git_head()
@@ -808,8 +1166,41 @@ def main() -> int:
         sha = subprocess.check_output(
             ["git", "rev-parse", sha], cwd=REPO_ROOT, text=True
         ).strip()
+    # R5d (C/C+1 discipline): the packet must be generated AT the commit it
+    # names, from a clean tree. Anything else reproduces the predecessor's
+    # self-falsifying restamp (artifacts stamped with a SHA whose tree they
+    # do not describe). No override flag exists on purpose.
+    head = git_head()
+    if sha != head:
+        raise SystemExit(
+            f"RESTAMP_REFUSED: --sha {sha[:12]} != HEAD {head[:12]}. Check out "
+            "the candidate commit and regenerate; a packet may only describe "
+            "the tree it was generated from (C/C+1 layering)."
+        )
+    dirty = dirty_tree()
+    # The packet output directory itself is the one permitted difference: a
+    # regeneration overwrites docs/v6/ES6-V6-CANDIDATE/* in place before the
+    # C+1 commit records it.
+    blocking_dirt = [
+        line for line in dirty
+        if "docs/v6/ES6-V6-CANDIDATE/" not in line
+    ]
+    if blocking_dirt:
+        raise SystemExit(
+            "DIRTY_TREE_REFUSED: the working tree differs from HEAD outside "
+            f"the packet directory ({len(blocking_dirt)} entries, e.g. "
+            f"{blocking_dirt[0]!r}). Commit or stash first; evidence stamped "
+            "from a dirty tree is the R5 defect class."
+        )
     ts = _now()
-    issues, prs = load_tracker()
+    if args.tracker_json:
+        blob = json.loads(args.tracker_json.read_text(encoding="utf-8"))
+        issues, prs = blob["issues"], blob["prs"]
+        pr_numbers = {p["number"] for p in prs}
+        issues = [i for i in issues if i["number"] not in pr_numbers]
+    else:
+        issues, prs = load_tracker()
+    require_dispositions(issues, prs)
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     (OUT_DIR / "evidence").mkdir(parents=True, exist_ok=True)
     recon = build_reconciliation(sha, ts, issues, prs)

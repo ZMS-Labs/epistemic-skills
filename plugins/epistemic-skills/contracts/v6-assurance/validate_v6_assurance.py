@@ -1,8 +1,33 @@
 #!/usr/bin/env python3
-"""Validate v6 assurance JSON artifacts against committed schemas."""
+"""Validate v6 assurance JSON artifacts against committed schemas and rules.
+
+Beyond shape checks, this enforces the gauntlet fix-set semantics
+(run es-v6-candidate-freeze-2026-08-18):
+
+- R1  verdict binding: an `independent_gauntlet` enum other than NOT_RUN
+  requires `independent_gauntlet_ref` naming a run id, an ON-DISK verdict
+  artifact, and the exact candidate SHA; the artifact must itself name that
+  SHA. A bare enum flip is not a verdict. Terminal readiness additionally
+  requires GO, EMPTY blocking_claims, and a recorded operator acceptance
+  whose verdict_ref matches (R13).
+- R12 derived blocking: `blocking_claims` must equal `derive_blocking(...)`
+  recomputed from the matrix — a hand-edited blocking list fails.
+- R5  content binding: the source inventory's per-file sha256 digests are
+  recomputed from the tree; any divergence fails (the restamp class).
+- R14 requirement register: every registered requirement (es#191 claim and
+  evidence classes; RELEASING.md gates) maps to existing matrix claims or an
+  explicit disposition with a reason.
+
+Version gating: legacy @1 artifacts (the ES6-ZI-001 baseline and any
+pre-fix-set candidate packet) get the original shape checks plus an explicit
+LEGACY notice; the strong rules bind on @2 artifacts, which the generator
+now emits — and a packet may NEVER reach the terminal readiness state on @1.
+This file is the single home of `derive_blocking`; the generator imports it.
+"""
 
 from __future__ import annotations
 
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -11,6 +36,13 @@ REPO_ROOT = Path(__file__).resolve().parents[4]
 CONTRACT_ROOT = REPO_ROOT / "plugins/epistemic-skills/contracts/v6-assurance"
 V6_DOCS = REPO_ROOT / "docs/v6/ES6-ZI-001"
 CANDIDATE_DOCS = REPO_ROOT / "docs/v6/ES6-V6-CANDIDATE"
+REGISTER_PATH = CONTRACT_ROOT / "requirement-register.json"
+
+TERMINAL = "V6_CANDIDATE_READY_FOR_OPERATOR_ACCEPTANCE"
+
+# Owners whose non-PROVED claims gate readiness (mirrored by the generator,
+# which imports derive_blocking from here — one home, no drift).
+OPERATOR_CLASS_OWNERS = {"operator", "operator+agent", "joint", "independent-panel"}
 
 
 def _load_json(path: Path) -> object:
@@ -21,6 +53,26 @@ def _require_keys(obj: dict, keys: tuple[str, ...], label: str) -> None:
     missing = [k for k in keys if k not in obj]
     if missing:
         raise AssertionError(f"{label} missing keys: {missing}")
+
+
+def derive_blocking(claims: list[dict]) -> list[str]:
+    """R12: the one derivation of blocking_claims from matrix rows."""
+    block = []
+    for claim in claims:
+        severity = claim.get("consequence_severity", "P3")
+        status = claim["status"]
+        owner = claim["owner"]
+        if status == "BLOCKED":
+            block.append(claim["id"])
+        elif severity == "P1" and status != "PROVED":
+            block.append(claim["id"])
+        elif (
+            owner in OPERATOR_CLASS_OWNERS
+            and status not in {"PROVED", "LIMITED"}
+            and severity != "P3"
+        ):
+            block.append(claim["id"])
+    return sorted(set(block))
 
 
 def validate_matrix(doc: dict) -> None:
@@ -34,6 +86,7 @@ def validate_matrix(doc: dict) -> None:
     if not doc["claims"]:
         raise AssertionError("matrix must contain at least one claim")
     claim_ids: set[str] = set()
+    with_severity = 0
     for claim in doc["claims"]:
         _require_keys(
             claim,
@@ -57,6 +110,26 @@ def validate_matrix(doc: dict) -> None:
         if claim["id"] in claim_ids:
             raise AssertionError(f"duplicate claim id: {claim['id']}")
         claim_ids.add(claim["id"])
+        if "consequence_severity" in claim:
+            if claim["consequence_severity"] not in {"P1", "P2", "P3"}:
+                raise AssertionError(
+                    f"claim {claim['id']}: bad consequence_severity "
+                    f"{claim['consequence_severity']!r}"
+                )
+            with_severity += 1
+    # Severity is all-or-none: a matrix where only SOME rows are classified
+    # would make the blocking derivation silently partial.
+    if 0 < with_severity < len(doc["claims"]):
+        raise AssertionError(
+            f"consequence_severity on {with_severity} of {len(doc['claims'])} "
+            "claims — must be all or none"
+        )
+
+
+def matrix_has_severity(doc: dict) -> bool:
+    return bool(doc["claims"]) and all(
+        "consequence_severity" in c for c in doc["claims"]
+    )
 
 
 def validate_reconciliation(doc: dict) -> None:
@@ -80,17 +153,42 @@ def validate_reconciliation(doc: dict) -> None:
         seen.add(key)
 
 
-def validate_source_inventory(doc: dict) -> None:
+def validate_source_inventory(doc: dict, root: Path = REPO_ROOT) -> list[str]:
+    """Returns notices; raises on failure. @2 recomputes every digest (R5)."""
     _require_keys(
         doc,
         ("schema", "exact_start_sha", "generated_at", "workflows", "contracts", "ci_scripts"),
         "source-inventory",
     )
-    if doc["schema"] != "v6-source-inventory@1":
+    if doc["schema"] == "v6-source-inventory@1":
+        return ["LEGACY source-inventory@1: no content digests (R5 binding starts at @2)"]
+    if doc["schema"] != "v6-source-inventory@2":
         raise AssertionError("unexpected source inventory schema")
+    _require_keys(doc, ("candidate_tree_hash", "file_digests"), "source-inventory@2")
+    listed = [*doc["workflows"], *doc["contracts"], *doc["ci_scripts"]]
+    digests = doc["file_digests"]
+    missing = [rel for rel in listed if rel not in digests]
+    if missing:
+        raise AssertionError(f"source-inventory@2: files without digests: {missing[:5]}")
+    mismatched: list[str] = []
+    for rel, recorded in digests.items():
+        path = root / rel
+        if not path.is_file():
+            mismatched.append(f"{rel} (absent)")
+            continue
+        actual = hashlib.sha256(path.read_bytes()).hexdigest()
+        if actual != recorded:
+            mismatched.append(rel)
+    if mismatched:
+        raise AssertionError(
+            "R5 DIGEST MISMATCH: inventoried files changed after the packet "
+            f"was generated (restamp class): {mismatched[:10]}"
+        )
+    return []
 
 
-def validate_promotion_packet(doc: dict) -> None:
+def validate_promotion_packet(doc: dict, root: Path = REPO_ROOT) -> list[str]:
+    """Returns notices; raises on failure. R1/R13 bind on @2."""
     _require_keys(
         doc,
         (
@@ -110,24 +208,139 @@ def validate_promotion_packet(doc: dict) -> None:
         ),
         "promotion-packet",
     )
-    if doc["schema"] != "v6-promotion-packet@1":
+    notices: list[str] = []
+    version = doc["schema"]
+    if version not in {"v6-promotion-packet@1", "v6-promotion-packet@2"}:
         raise AssertionError("unexpected promotion packet schema")
     if doc["self_certification"] != "refused":
         raise AssertionError("promotion packet must refuse self-certification")
-    if doc["readiness"] == "V6_CANDIDATE_READY_FOR_OPERATOR_ACCEPTANCE":
-        if doc["independent_gauntlet"] != "GO":
+
+    if version == "v6-promotion-packet@1":
+        if doc["readiness"] == TERMINAL:
+            raise AssertionError(
+                "terminal readiness is REFUSED on a v1 packet: regenerate at "
+                "@2 so verdict binding and operator acceptance can be checked"
+            )
+        if doc["readiness"] != TERMINAL and doc["independent_gauntlet"] == "GO":
+            raise AssertionError("GO on a v1 packet cannot be verdict-bound; regenerate at @2")
+        notices.append("LEGACY promotion-packet@1: R1/R13 binding starts at @2")
+        return notices
+
+    _require_keys(doc, ("independent_gauntlet_ref",), "promotion-packet@2")
+    ref = doc["independent_gauntlet_ref"]
+    enum = doc["independent_gauntlet"]
+    if enum == "NOT_RUN":
+        if ref is not None:
+            raise AssertionError("independent_gauntlet_ref must be null while NOT_RUN")
+    else:
+        # R1: any recorded verdict must be bound to a real, on-disk run.
+        if not isinstance(ref, dict):
+            raise AssertionError(
+                f"independent_gauntlet={enum!r} requires independent_gauntlet_ref "
+                "(a bare enum is not a verdict)"
+            )
+        _require_keys(ref, ("gauntlet_run_id", "verdict_path", "subject_sha"), "independent_gauntlet_ref")
+        if ref["subject_sha"] != doc["candidate_sha"]:
+            raise AssertionError(
+                "verdict subject_sha != candidate_sha: a verdict against a "
+                "different SHA does not transfer"
+            )
+        verdict_file = root / ref["verdict_path"]
+        if not verdict_file.is_file():
+            raise AssertionError(
+                f"verdict artifact not on disk: {ref['verdict_path']} — the "
+                "enum does not constitute the verdict"
+            )
+        verdict_text = verdict_file.read_text(encoding="utf-8", errors="replace")
+        if doc["candidate_sha"] not in verdict_text:
+            raise AssertionError(
+                "verdict artifact does not name the candidate SHA — refusing "
+                "an unbound or recycled verdict"
+            )
+
+    for limit in doc["known_limits"]:
+        _require_keys(limit, ("id", "kind", "statement", "release_consequence", "owner"), f"known_limit {limit.get('id', '?')}")
+
+    acceptance = doc.get("operator_acceptance")
+    if acceptance is not None:
+        _require_keys(acceptance, ("accepted_by", "accepted_at", "verdict_ref"), "operator_acceptance")
+        if enum != "GO":
+            raise AssertionError("operator_acceptance recorded without a GO verdict")
+        if acceptance["verdict_ref"] != ref:
+            raise AssertionError("operator_acceptance.verdict_ref != independent_gauntlet_ref")
+
+    if doc["readiness"] == TERMINAL:
+        if enum != "GO":
             raise AssertionError("cannot be operator-ready without independent Gauntlet GO")
+        if doc["blocking_claims"]:
+            raise AssertionError(
+                f"terminal readiness with {len(doc['blocking_claims'])} open "
+                "blocking claims — the forgery-drill class (R1)"
+            )
+        if acceptance is None:
+            raise AssertionError(
+                "terminal readiness requires a recorded operator_acceptance "
+                "(R13; see docs/v6/OPERATOR-ACCEPTANCE-PROCEDURE.md)"
+            )
+    return notices
 
 
-def validate_candidate_coverage(matrix: dict, recon: dict) -> None:
-    ids = {c["id"] for c in matrix["claims"]}
-    for item in recon["items"]:
-        expected = f"CLM-ISSUE-{item['number']}" if item["kind"] == "issue" else f"CLM-PR-{item['number']}"
-        if expected not in ids:
-            raise AssertionError(f"matrix missing tracker claim {expected}")
+def validate_blocking_derivation(matrix: dict, packet: dict) -> list[str]:
+    """R12: the packet's blocking list must be the matrix derivation."""
+    if not matrix_has_severity(matrix):
+        return ["LEGACY matrix without consequence_severity: blocking derivation not checked"]
+    expected = derive_blocking(matrix["claims"])
+    actual = sorted(packet["blocking_claims"])
+    if actual != expected:
+        raise AssertionError(
+            "R12 BLOCKING DRIFT: packet blocking_claims is not the matrix "
+            f"derivation. expected={expected} actual={actual}"
+        )
+    return []
+
+
+def validate_register(register: dict, matrix: dict) -> None:
+    """R14: every registered requirement maps to claims or a disposition."""
+    _require_keys(register, ("schema", "source_clauses", "crosswalk"), "requirement-register")
+    if register["schema"] != "v6-requirement-register@1":
+        raise AssertionError("unexpected requirement register schema")
+    matrix_ids = {c["id"] for c in matrix["claims"]}
+    for section, clause in register["source_clauses"].items():
+        crosswalk = register["crosswalk"].get(section)
+        if crosswalk is None:
+            raise AssertionError(f"register section {section!r} has no crosswalk")
+        for item in clause["items"]:
+            entry = crosswalk.get(item)
+            if entry is None:
+                raise AssertionError(
+                    f"R14: registered requirement {section}/{item} has no "
+                    "crosswalk entry (neither claims nor disposition)"
+                )
+            claims = entry.get("claims", [])
+            disposition = entry.get("disposition")
+            if not claims and not disposition:
+                raise AssertionError(
+                    f"R14: {section}/{item} maps to neither claims nor an "
+                    "explicit disposition"
+                )
+            if disposition and not entry.get("reason"):
+                raise AssertionError(f"R14: {section}/{item} disposition lacks a reason")
+            missing = [c for c in claims if c not in matrix_ids]
+            if missing:
+                raise AssertionError(
+                    f"R14: {section}/{item} cites claims absent from the "
+                    f"matrix: {missing}"
+                )
+        extra = set(crosswalk) - set(clause["items"])
+        if extra:
+            raise AssertionError(
+                f"register section {section!r} has crosswalk entries for "
+                f"unregistered items: {sorted(extra)}"
+            )
 
 
 def main() -> int:
+    notices: list[str] = []
     matrix_path = V6_DOCS / "claim-to-proof-matrix.json"
     recon_path = V6_DOCS / "issue-pr-reconciliation.json"
     inventory_path = V6_DOCS / "source-inventory.json"
@@ -137,7 +350,7 @@ def main() -> int:
 
     validate_matrix(_load_json(matrix_path))
     validate_reconciliation(_load_json(recon_path))
-    validate_source_inventory(_load_json(inventory_path))
+    notices += validate_source_inventory(_load_json(inventory_path))
 
     cand_matrix = CANDIDATE_DOCS / "claim-to-proof-matrix.json"
     cand_recon = CANDIDATE_DOCS / "issue-pr-reconciliation.json"
@@ -149,13 +362,37 @@ def main() -> int:
             raise SystemExit(f"missing required candidate artifact: {path}")
     matrix = _load_json(cand_matrix)
     recon = _load_json(cand_recon)
+    packet = _load_json(cand_packet)
     validate_matrix(matrix)
     validate_reconciliation(recon)
-    validate_source_inventory(_load_json(cand_inventory))
-    validate_promotion_packet(_load_json(cand_packet))
+    notices += validate_source_inventory(_load_json(cand_inventory))
+    notices += validate_promotion_packet(packet)
+    notices += validate_blocking_derivation(matrix, packet)
     validate_candidate_coverage(matrix, recon)
-    print("v6 assurance artifacts: schema checks passed (ZI-001 + candidate)")
+
+    if not REGISTER_PATH.is_file():
+        raise SystemExit(f"missing requirement register: {REGISTER_PATH}")
+    register = _load_json(REGISTER_PATH)
+    if packet["schema"] == "v6-promotion-packet@2":
+        validate_register(register, matrix)
+    else:
+        notices.append(
+            "LEGACY packet@1: register crosswalk enforcement starts when the "
+            "freeze regenerates artifacts at @2"
+        )
+
+    for notice in notices:
+        print(f"note: {notice}")
+    print("v6 assurance artifacts: schema + rule checks passed (ZI-001 + candidate)")
     return 0
+
+
+def validate_candidate_coverage(matrix: dict, recon: dict) -> None:
+    ids = {c["id"] for c in matrix["claims"]}
+    for item in recon["items"]:
+        expected = f"CLM-ISSUE-{item['number']}" if item["kind"] == "issue" else f"CLM-PR-{item['number']}"
+        if expected not in ids:
+            raise AssertionError(f"matrix missing tracker claim {expected}")
 
 
 if __name__ == "__main__":

@@ -186,6 +186,7 @@ jobs:
             .github/scripts/test_v6_audit_workflow_oracles.py \
             .github/scripts/test_v6_candidate_packet.py \
             plugins/epistemic-skills/contracts/v6-assurance/validate_v6_assurance.py \
+            plugins/epistemic-skills/contracts/v6-assurance/test_v6_assurance_validator.py \
             .github/scripts/score_sentinels.py \
             .github/scripts/sync_skill_surfaces.py \
             plugins/epistemic-skills/evals/epistemic-flexibility/validate_trace.py \
@@ -261,6 +262,8 @@ jobs:
           python .github/scripts/v6_audit_workflow_oracles.py
       - name: v6 candidate packet generator self-test
         run: python .github/scripts/test_v6_candidate_packet.py
+      - name: v6 assurance validator planted RED controls
+        run: python plugins/epistemic-skills/contracts/v6-assurance/test_v6_assurance_validator.py
       - name: v6 assurance artifacts (ES6-BASELINE-CLAIMS)
         run: python plugins/epistemic-skills/contracts/v6-assurance/validate_v6_assurance.py
       - name: Existing receipt verifier

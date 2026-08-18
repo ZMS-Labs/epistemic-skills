@@ -29,13 +29,32 @@ def main() -> int:
     required = {
         "CLM-INDEPENDENT-GAUNTLET",
         "CLM-V5-DESIGN-COMMITMENTS",
-        "CLM-TRACKER-RECONCILED",
+        "CLM-V5-ROUTING",
+        "CLM-V5-LEDGERS",
+        "CLM-V5-SENTINELS",
+        "CLM-V5-MEMBERSHIP",
+        "CLM-DISPOSITION-CENSUS",
         "CLM-MC-137",
         "CLM-PUBLIC-CONTENT",
+        "CLM-SECRET-SCAN",
+        "CLM-COMPATIBILITY",
+        "CLM-MC-GUARD-LEXICAL",
+        "CLM-DESCRIPTION-BUDGET",
+        "CLM-MERGE-190",
+        "CLM-MERGE-156",
+        "CLM-MERGE-192",
     }
     missing = required - set(ids)
     if missing:
         raise AssertionError(f"missing class claims: {missing}")
+    if "CLM-TRACKER-RECONCILED" in ids:
+        raise AssertionError(
+            "CLM-TRACKER-RECONCILED must stay demoted (R6): the census row is "
+            "CLM-DISPOSITION-CENSUS"
+        )
+    for claim in claims:
+        if claim.get("consequence_severity") not in {"P1", "P2", "P3"}:
+            raise AssertionError(f"claim {claim['id']} lacks consequence_severity")
     go = next(c for c in claims if c["id"] == "CLM-INDEPENDENT-GAUNTLET")
     if go["status"] != "UNPROVED":
         raise AssertionError("independent Gauntlet must start UNPROVED")
@@ -44,8 +63,8 @@ def main() -> int:
 
     hold = tracker_claim(
         "issue",
-        104,
-        "Complete or retire v5 commitments",
+        999,
+        "Some future operator hold",
         {
             "phase": "frontier-decision",
             "disposition": "hold-operator",
@@ -56,19 +75,60 @@ def main() -> int:
     )
     if hold["status"] != "BLOCKED":
         raise AssertionError("operator hold must be BLOCKED")
-    if hold["id"] != "CLM-ISSUE-104":
+    if hold["id"] != "CLM-ISSUE-999":
         raise AssertionError(hold["id"])
+    decided = tracker_claim(
+        "issue",
+        104,
+        "Complete or retire v5 commitments",
+        {
+            "phase": "decided-2026-08-18",
+            "disposition": "decided-implement-all",
+            "owner": "agent",
+            "evidence_note": "D3",
+        },
+        [],
+    )
+    if decided["status"] != "PARTIAL":
+        raise AssertionError("a decided disposition must read PARTIAL, not BLOCKED")
+
+    # R12: an open tracker item with no explicit disposition fails generation.
+    from v6_generate_candidate_packet import require_dispositions
+
+    try:
+        require_dispositions([{"number": 424242}], [])
+    except SystemExit as exc:
+        if "UNDISPOSITIONED_TRACKER_ITEMS" not in str(exc):
+            raise AssertionError(f"wrong refusal message: {exc}")
+    else:
+        raise AssertionError("unknown open issue did NOT fail generation (R12)")
 
     matrix = {"claims": claims}
     packet = build_promotion_packet(sha, "2026-08-18T00:00:00Z", matrix)
+    if packet["schema"] != "v6-promotion-packet@2":
+        raise AssertionError("packet must be @2")
     if packet["self_certification"] != "refused":
         raise AssertionError("must refuse self-certification")
     if packet["readiness"] != "NOT_READY":
         raise AssertionError("packet must not self-declare operator-ready")
     if packet["requested_irreversible_acts"]:
         raise AssertionError("BUILD packet must request no irreversible acts")
-    if "CLM-INDEPENDENT-GAUNTLET" not in blocking_from_matrix(matrix):
+    if packet["independent_gauntlet_ref"] is not None:
+        raise AssertionError("NOT_RUN packet must carry a null verdict ref (R1)")
+    for limit in packet["known_limits"]:
+        if not limit.get("owner"):
+            raise AssertionError(f"known limit {limit['id']} lacks an owner (R12)")
+    kl_ids = {limit["id"] for limit in packet["known_limits"]}
+    for needed in ("KL-RESTAMP", "KL-MAIN-RED", "KL-GUARD-LEXICAL", "KL-DRAFT-CI"):
+        if needed not in kl_ids:
+            raise AssertionError(f"missing known limit {needed}")
+    derived = blocking_from_matrix(matrix)
+    if packet["blocking_claims"] != derived:
+        raise AssertionError("packet blocking_claims must be the matrix derivation (R12)")
+    if "CLM-INDEPENDENT-GAUNTLET" not in derived:
         raise AssertionError("independent Gauntlet must block readiness")
+    if "CLM-MC-MACOS-CASE" in derived:
+        raise AssertionError("a P3 LIMITED disclosure must not auto-block")
 
     receipt = build_receipt(sha, "2026-08-18T00:00:00Z")
     blob = json.dumps(receipt)
