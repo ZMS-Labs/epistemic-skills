@@ -5,6 +5,7 @@ from __future__ import annotations
 import contextlib
 import io
 import json
+import os
 import shutil
 import sys
 import tempfile
@@ -13,7 +14,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 
-from custody_gate import evaluate, run_gate  # noqa: E402
+from custody_gate import _guard_norm_path, evaluate, run_gate  # noqa: E402
 from custody_mission import Mission  # noqa: E402
 from custody_store import sha256_file  # noqa: E402
 
@@ -129,6 +130,43 @@ def test_glob_parent_segment_resolves_for_guard_match() -> None:
             "file_path": "M:/Media/../etc/passwd"}
     check("glob-dotdot-outside-guarded-tree-not-matched",
           not evaluate(auth("enforce", guards), call)["matched"])
+
+
+def test_guard_match_is_lexical_symlinked_parent_diverges() -> None:
+    """R15 / es#137 residual pin: guard matching collapses ``..`` LEXICALLY,
+    while the kernel resolves it only AFTER following symlinks, so a write
+    whose real landing site is inside a guarded tree can fail to match an
+    armed guard (false-allow direction). This CHARACTERIZATION test pins the
+    current invariant (KL-GUARD-LEXICAL / CLM-MC-GUARD-LEXICAL) so a future
+    resolution-aware change flips it loudly; it does not assert the
+    divergence is desirable."""
+    root = Path(tempfile.mkdtemp(prefix="custody-r15-"))
+    try:
+        (root / "guarded" / "sub").mkdir(parents=True)
+        link = root / "link"
+        try:
+            link.symlink_to(root / "guarded" / "sub", target_is_directory=True)
+        except OSError:
+            print("  skip guard-lexical pin (symlinks unavailable on this host)")
+            return
+        base = str(root).replace("\\", "/")
+        guards = [{"name": "g", "tool_names": ["Write"], "command_regexes": [],
+                   "path_globs": [f"{base}/guarded/**"]}]
+        lexical_path = f"{base}/link/../x.txt"
+        check("guard-lexical-realpath-lands-in-guarded-tree",
+              Path(os.path.realpath(lexical_path)) == root / "guarded" / "x.txt")
+        check("guard-lexical-symlinked-parent-not-matched",
+              not evaluate(auth("enforce", guards),
+                           {"tool_name": "Write", "command": None,
+                            "file_path": lexical_path})["matched"])
+        check("guard-lexical-collapse-stays-textual",
+              _guard_norm_path(lexical_path) == f"{base}/x.txt")
+        check("guard-lexical-direct-spelling-still-matched",
+              evaluate(auth("enforce", guards),
+                       {"tool_name": "Write", "command": None,
+                        "file_path": f"{base}/guarded/x.txt"})["matched"])
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
 
 
 def test_block_reason_names_only_exits_that_work() -> None:

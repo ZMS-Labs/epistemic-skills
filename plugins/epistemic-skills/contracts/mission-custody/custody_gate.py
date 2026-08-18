@@ -87,7 +87,21 @@ def _collapse_parent_segments(path: str) -> str:
 
     Scope comparison keeps ``..`` lexical (disclosed). Harness ``file_path``
     values may carry parent segments that resolve inside a guarded tree; matching
-    the raw spelling allowed a false allow (es#137)."""
+    the raw spelling allowed a false allow (es#137).
+
+    INHERITED REASONING (from test_glob_overmatch_still_held, deleted by the
+    es#137 fix): "'..' is not collapsed by normalization, so it over-matches --
+    the safe direction (a false block names its rule; a false allow retires
+    custody)". Collapsing retired that OVER-match protection for guard matching
+    and replaced it with textual resolution. The residual, in the false-allow
+    direction: this collapse is LEXICAL, while the kernel resolves ``..`` only
+    AFTER following symlinks -- a write spelled through a symlinked parent can
+    land inside a guarded tree without matching an armed guard (recorded as
+    KL-GUARD-LEXICAL / CLM-MC-GUARD-LEXICAL; pinned by
+    test_guard_match_is_lexical_symlinked_parent_diverges). Do not "fix" this
+    by resolving symlinks here without a fresh custody review: realpath calls
+    inside the gate change its failure modes on broken links and network
+    filesystems."""
     norm = path.replace("\\", "/")
     parts = norm.split("/")
     out: list[str] = []
