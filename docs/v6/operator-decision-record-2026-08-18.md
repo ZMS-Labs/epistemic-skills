@@ -101,3 +101,29 @@ operator-instructed-in-interview, agent-transcribed.
   #186 tag-ruleset (D6), #84 item 3 (D10), #40 (D9) are all
   dispositioned above. The operator holds ledger for v6 is, as of this
   record, empty pending execution.
+
+## Certification of the operator's ratification echo (D14 protocol — appended post-ratification)
+
+- **Issued string:** `RATIFY-V6-2026-08-18: …` naming commit
+  `d7c4178f28014431a86c3a5bfdff3ad0633e6c9f` and file sha256
+  `5298827ea96d4d7b6ade1a863741ceced6bd4166456500f1fa129bc7a1a9a971`;
+  canonical string sha256
+  `c92530ace4af53b714457035d437a51247ad28a6d1c1a2e45362c06c835cc74c`.
+- **Echo received:** 2026-08-18, from the operator in the live session,
+  as the next operator turn after issuance.
+- **Verification:** byte-identical to the issued string (diff empty;
+  sha256 match on both sides). The ratified object — this file as it
+  stood at `d7c4178` — was re-hashed at certification time and still
+  equals the sha256 the string names; that commit is immutable in
+  history. This appended section changes only the file's HEAD state, not
+  the ratified object.
+- **Effect:** decisions D1–D15 are RATIFIED. In particular the R3
+  acceptance criterion's operator limb (ratify-or-reverse of merges
+  #190/#156/#192 in a durable operator-authored-or-echo-certified
+  artifact) is discharged by this record; the packet-disclosure limb
+  remains rc2 BUILD work.
+- **Certified by:** the agent, executing the certification step of the
+  protocol the operator selected in D14. Upgrade path remains open: the
+  operator may additionally post the identical string on issue #191 from
+  their own account, which lifts the record from echo-certified to fully
+  operator-authored.
