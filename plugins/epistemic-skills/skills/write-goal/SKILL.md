@@ -2,6 +2,7 @@
 name: write-goal
 description: Use when the user explicitly asks to create, write, define, refine, or start a goal; asks "what would count as done"; or needs a durable objective, proof standard, scope boundary, blocker policy, stop rule, or optional token budget before extended work — e.g. "write a goal for", "what would count as done", "define a completion contract". Do not auto-create goals from ordinary tasks, and do not execute or certify the goal inside this skill.
 metadata:
+  hands-to: [evidence-locked-uat, gauntlet]
   event-kinds: [goal-proof]
   eligible-when: [independently-resolvable-verdict]
   outcome-sources: [field-observation, supersession-chain]
@@ -22,9 +23,9 @@ uncertainty handling, interruptibility, and cross-harness adapters.
 
 ## Epistemic boundary
 
-| Consumes | Produces | Does not do | Hands to |
+| Consumes | Produces | Does not do | Downstream |
 |---|---|---|---|
-| explicit user intent, de-risked context, and any evidence/design inputs | an approved, evidence-bound goal objective; optionally a started persistent goal | execute the work, judge its result, or call it complete | the runtime's goal executor, then independent verification (e.g. evidence-locked-uat for UI-facing work, gauntlet for irreversible commits) |
+| explicit user intent, de-risked context, and any evidence/design inputs | an approved, evidence-bound goal objective; optionally a started persistent goal | execute the work, judge its result, or call it complete | the runtime's goal executor, then independent verification (e.g. evidence-locked-uat for UI-facing work, gauntlet for irreversible commits; governing declaration: `metadata.hands-to`) |
 
 **Core invariant:** a goal is not complete merely because an easy-to-measure proxy
 moved. Completion requires the agreed proof bundle and its integrity guards.

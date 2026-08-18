@@ -9,7 +9,7 @@ working documentation.
 
 The defect this catches is narrower and entirely decidable: a retired name
 appearing in a surface that *routes*, where a reader or a router is told to go
-somewhere that no longer exists. Two rules, no judgment calls:
+somewhere that no longer exists. Three rules, no judgment calls:
 
 1. **Firing surfaces.** No ``description:`` frontmatter field, and no manifest
    ``description``, may contain a retired skill name. Descriptions are the only
@@ -19,9 +19,21 @@ somewhere that no longer exists. Two rules, no judgment calls:
    repo's markdown or manifests may point at a directory that does not exist.
    This rule needs no registry and catches retirements nobody remembered to
    list here.
+3. **Hand-authored routing tables.** The generated ``ROUTING.md`` is the ONLY
+   aggregate routing surface (v5 design, AMENDMENT 2026-08-07: "any central
+   member/pair table" is a forbidden hand-authored routing surface). A markdown
+   table row outside it whose cells carry a routing column (``hands-to`` and
+   variants) reintroduces the enumeration tax the v5 design deleted, and
+   drifts silently. Decidable: table-row syntax plus the column vocabulary;
+   prose may discuss hands-to freely.
 
 Rule 2 is self-maintaining. Rule 1 needs ``RETIRED`` kept current — one line per
-retirement, which is the same cadence as a release. Stdlib only.
+retirement, which is the same cadence as a release. Rule 3 needs no registry.
+Stdlib only.
+
+Usage:
+  python check_no_phantom_skills.py             # validate the tree
+  python check_no_phantom_skills.py --self-test # planted RED controls (rule 3)
 
 Exit 0 clean, 1 with a named defect per line.
 """
@@ -30,6 +42,7 @@ from __future__ import annotations
 import json
 import re
 import sys
+import tempfile
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
@@ -211,7 +224,112 @@ def check_path_references(defects: list[str]) -> None:
                 )
 
 
+# The one aggregate routing surface. Exact path: a second file by this name
+# elsewhere (e.g. inside a skill directory) is NOT exempt.
+ROUTING_MD = REPO / "plugins" / "epistemic-skills" / "ROUTING.md"
+
+# Routing-column vocabulary. 'hands-to' variants and 'routes to' are handoff
+# semantics; a bare 'Consumes'/'Skill' column is inventory, not routing, and
+# stays legal (the README catalog and sibling-placement tables use those).
+ROUTING_COLUMN_RE = re.compile(
+    r"\b(?:hands?[- ]to|hands?[- ]off[- ]to|routes?[- ]to|routed[- ]to)\b", re.I
+)
+# A markdown table header is the row immediately above a separator row.
+SEPARATOR_ROW_RE = re.compile(r"^\|(?:\s*:?-+:?\s*\|)+$")
+
+
+def check_no_hand_authored_routing_tables(defects: list[str], root: Path = REPO) -> None:
+    """Rule 3: the generated ROUTING.md is the only aggregate routing surface.
+
+    Header rows only: a routing COLUMN is what makes a table a routing table.
+    A data cell that cites the ``metadata.hands-to`` key name is documentation
+    of the convention, not a routing surface, and stays legal.
+    """
+    routing_md = root / "plugins" / "epistemic-skills" / "ROUTING.md"
+    for source in sorted(root.glob("**/*.md")):
+        if ARCHIVE_PARTS.intersection(source.relative_to(root).parts):
+            continue  # archives record the old hand-authored tables as evidence
+        if source == routing_md:
+            continue
+        try:
+            lines = source.read_text(encoding="utf-8").splitlines()
+        except (UnicodeDecodeError, OSError):
+            continue
+        for number, line in enumerate(lines, 1):
+            stripped = line.strip()
+            if not (stripped.startswith("|") and stripped.endswith("|")):
+                continue
+            following = lines[number].strip() if number < len(lines) else ""
+            if not SEPARATOR_ROW_RE.match(following):
+                continue  # not a header row; prose and data cells are free
+            if ROUTING_COLUMN_RE.search(stripped):
+                defects.append(
+                    f"{source.relative_to(root)}:{number}: hand-authored routing table "
+                    "(a hands-to/routes-to column outside the generated ROUTING.md) — "
+                    "declare metadata.hands-to in the skill's frontmatter and run "
+                    "sync_skill_surfaces.py --write"
+                )
+
+
+def self_test() -> int:
+    """Planted RED controls for rule 3 (the tree-independent rule)."""
+    failures = 0
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        (root / "plugins" / "epistemic-skills").mkdir(parents=True)
+        (root / "plugins" / "epistemic-skills" / "ROUTING.md").write_text(
+            "| Skill | hands-to |\n|---|---|\n| `a` | `b` |\n", encoding="utf-8")
+        (root / "NOTES.md").write_text(
+            "Prose that discusses the hands-to convention is fine.\n"
+            "| Skill | Purpose |\n|---|---|\n| `a` | inventory row |\n"
+            "| Key | Meaning |\n|---|---|\n"
+            "| `metadata.hands-to` | data cell citing the key name is fine |\n",
+            encoding="utf-8")
+        (root / "docs").mkdir()
+        (root / "docs" / "old.md").write_text(
+            "| Skill | Hands to |\n|---|---|\n| `a` | `b` |\n", encoding="utf-8")
+        defects: list[str] = []
+        check_no_hand_authored_routing_tables(defects, root)
+        if defects:
+            failures += 1
+            print(f"[FAIL] honest tree flagged: {defects}")
+        else:
+            print("[PASS] generated ROUTING.md, prose mention, inventory table, "
+                  "archived table all pass")
+        planted = [
+            ("hands-to-column", "| Skill | hands-to |\n|---|---|\n| `a` | `b` |\n"),
+            ("hands-off-spaced", "| Seat | Hands off to |\n|---|---|\n| `a` | `b` |\n"),
+            ("routes-to-column", "| From | routes to |\n|---|---|\n| `a` | `b` |\n"),
+        ]
+        for name, table in planted:
+            (root / "NOTES.md").write_text(table, encoding="utf-8")
+            defects = []
+            check_no_hand_authored_routing_tables(defects, root)
+            if any("hand-authored routing table" in d for d in defects):
+                print(f"[PASS] planted {name} table fails closed")
+            else:
+                failures += 1
+                print(f"[FAIL] planted {name} table not rejected: {defects}")
+        # A rogue second ROUTING.md inside a skill directory is NOT exempt.
+        (root / "NOTES.md").write_text("clean\n", encoding="utf-8")
+        rogue = root / "plugins" / "epistemic-skills" / "skills" / "x"
+        rogue.mkdir(parents=True)
+        (rogue / "ROUTING.md").write_text(
+            "| Skill | hands-to |\n|---|---|\n", encoding="utf-8")
+        defects = []
+        check_no_hand_authored_routing_tables(defects, root)
+        if any("hand-authored routing table" in d for d in defects):
+            print("[PASS] rogue second ROUTING.md fails closed")
+        else:
+            failures += 1
+            print(f"[FAIL] rogue second ROUTING.md not rejected: {defects}")
+    print(f"phantom-skill self-test: {'PASS' if not failures else 'FAIL'}")
+    return 0 if not failures else 1
+
+
 def main() -> int:
+    if "--self-test" in sys.argv[1:]:
+        return self_test()
     if not SKILLS_DIR.is_dir():
         print(f"skills directory not found: {SKILLS_DIR}", file=sys.stderr)
         return 2
@@ -219,6 +337,7 @@ def main() -> int:
     defects: list[str] = []
     check_firing_surfaces(defects)
     check_path_references(defects)
+    check_no_hand_authored_routing_tables(defects)
 
     if defects:
         for defect in defects:
@@ -227,7 +346,8 @@ def main() -> int:
         return 1
 
     print(f"no phantom skill references: {len(live_skills())} live skills; "
-          f"{len(RETIRED)} retired names allowed in prose, banned in routing surfaces")
+          f"{len(RETIRED)} retired names allowed in prose, banned in routing surfaces; "
+          f"generated ROUTING.md is the only routing table")
     return 0
 
 

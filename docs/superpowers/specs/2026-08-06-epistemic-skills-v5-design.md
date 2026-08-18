@@ -536,3 +536,48 @@ instructions):
 
 **Allowed:** per-skill `metadata.hands-to`; generated `ROUTING.md`; historical
 docs under version framing; craft doctrine read on demand (not a firing skill).
+
+## AMENDMENT 2026-08-18 — run ledgers are runtime-local; the routing-table ban is mechanized
+
+Recorded during the v6 candidate BUILD (operator decision D3, es#104
+implement-all; decision record
+`docs/v6/operator-decision-record-2026-08-18.md`). Two reconciliations
+between this spec's words and what ships, so the spec cannot be read as
+claiming something the tree does not do:
+
+**1. "tracked" run ledgers → runtime-local run ledgers.** The Evidence
+emission section above says each skill appends to its own
+`runs/ledger.jsonl`, "following the convention `gauntlet` already
+establishes (`skills/gauntlet/runs/ledger.jsonl`, tracked)". As
+implemented, live run ledgers are runtime-local state and are
+git-ignored (`**/runs/*.jsonl`): committing live telemetry would dirty
+the tree on every skill run, and the v6 freeze machinery refuses dirty
+trees. What IS tracked — and enforced by
+`check_skill_run_ledger.py` in CI — is the contract around them: the
+`## Evidence emission` step in every SKILL.md, the
+`contracts/skill-run-ledger.schema.json` schema, and a per-skill
+`runs/ledger.example.jsonl` exemplar validated against that schema
+(gauntlet's exemplar declares its richer `ledger@2` projection). The
+intrinsic-emission commitment stands unchanged; only the storage class
+of the LIVE file moved from tracked to runtime-local. ECS or any other
+consumer reads the local file when present, exactly as designed.
+
+**2. "hash-verified" = byte-equality re-rendering, and the ban has an
+enforcer.** "Hash-verified in CI" (Routing section above, and the
+generated header of `ROUTING.md` itself) is discharged by
+`sync_skill_surfaces.py --check` re-rendering `ROUTING.md` from
+`metadata.hands-to` and requiring byte-equality with the committed file
+— equivalent to comparing content hashes (byte-equality ⇔ hash
+equality) and strictly stronger than verifying against a *stored* hash,
+which could itself go stale. No separate stored hash exists or is
+needed. The AMENDMENT 2026-08-07 forbidden-surfaces list was prose
+until now; `check_no_phantom_skills.py` rule 3 now mechanically rejects
+any markdown table outside the generated `ROUTING.md` whose header row
+carries a routing column (`hands-to` / `hands off to` / `routes to`
+variants), with planted RED controls in its `--self-test`. First live
+catch on the day the rule landed: `write-goal`'s boundary table carried
+a "Hands to" column routing to verification skills while its
+frontmatter declared no `hands-to` at all — the generated `ROUTING.md`
+said *(none)* while the prose said otherwise. The frontmatter now
+declares `hands-to: [evidence-locked-uat, gauntlet]` and the prose
+column is demoted to "Downstream".

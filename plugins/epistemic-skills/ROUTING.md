@@ -31,4 +31,4 @@ regeneration that CI already requires.
 | `resolve` | _(none)_ |
 | `triage` | `decision-ledger` |
 | `watch` | `triage`, `decision-ledger` |
-| `write-goal` | _(none)_ |
+| `write-goal` | `evidence-locked-uat`, `gauntlet` |
