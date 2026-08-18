@@ -90,6 +90,45 @@ disclosed here rather than patched because the pattern language belongs to
 the author; the globs are this contract's own language, so their compiler is
 where the guarantee lives.
 
+## Guard path matching is LEXICAL — a symlinked-parent spelling evades it
+
+Guard `path_globs` are matched against a **textual normalization** of the
+target path: `_guard_norm_path` lowercases, unifies slashes, and collapses
+`..` segments lexically. It never consults the filesystem. That keeps armed
+guards deterministic on paths that do not exist yet and lets the synthetic-
+drive fixtures (`M:/Media/...`) run on hosts that have no such drive — and it
+opens a measured divergence between what the guard matches and where a write
+lands (gauntlet ruling R15, run `es-v6-candidate-freeze-2026-08-18`; probe
+evidence `docs/v6/evidence/r15-guard-lexical-probe-2026-08-18.md`):
+
+- Setup: guard `<T>/guarded/**` armed (`enforce`); symlink `<T>/link` →
+  `<T>/guarded/sub`; harness `file_path` = `<T>/link/../x.txt`.
+- Kernel resolution: `realpath` = `<T>/guarded/x.txt` — the write lands
+  **inside** the guarded tree.
+- Gate evaluation: `matched` = **False** (decision `allow`) — the textual
+  collapse turns `link/../x.txt` into `<T>/x.txt`, outside the glob. The
+  direct spelling `<T>/guarded/x.txt` still matches.
+
+**A guard glob is a boundary on SPELLINGS, not on filesystem effects.** An
+actor who can reach a guarded target through a symlinked parent evades the
+block; so does any alias the text does not contain (the hard-link section
+above is the same property one layer down). The residual is disclosed rather
+than patched in this contract epoch because resolution-aware matching is a
+**behavior change for every armed guard** — realpath cannot serve the
+synthetic-drive lexical fixtures, and PR #128's own safe-direction analysis
+(deleted by the es#137 fix, reinstated as INHERITED REASONING at
+`_collapse_parent_segments`) chose over-matching as the fail direction. The
+divergence is **pinned**, not just described:
+`test_guard_match_is_lexical_symlinked_parent_diverges` asserts all four
+facts above and was RED-proven against a scratch resolution-aware patch, so
+any future change to this semantics flips a named test rather than landing
+silently.
+
+**Operator consequence:** treat guard globs as spelling filters and pair them
+with the acceptance-time scope comparison, which DOES resolve symlinks. Where
+a boundary must hold against alias spellings today, guard the parent
+directories that contain the symlinks as well as the target tree.
+
 ## OPERATOR NOTICE — trailing-slash guard globs now bind the subtree
 
 A `path_globs` entry ending in `/` (or `\`) is a **directory marker**: it now
