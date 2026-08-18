@@ -8,13 +8,13 @@ against `00e5146e43ff9011153452b83fedda706723c52b`). Docket mode with
 cascade appends; 16 questions asked, 16 answered; zero parked, zero
 struck; closing probe returned nothing further.
 
-Status: **PENDING OPERATOR RATIFICATION ECHO.** Per D14, the operator
-directed the agent to post this record under explicit authority and to
-issue an exact SHA-bearing ratification string; the operator echoes that
-string back and the agent certifies the echo verbatim. A certification
-section is appended to this file (follow-up commit) once the echo is
-received. Until certification, every decision below is recorded
-operator-instructed-in-interview, agent-transcribed.
+Status: **RATIFIED — echo certified** (see "Certification of the
+operator's ratification echo" at the end of this file). Per D14, the
+agent posted this record under explicit authority and issued an exact
+SHA-bearing ratification string; the operator echoed it byte-identically
+and the echo was certified in the appended section. The ratified object
+is this file as it stood at commit `d7c4178` (sha256 `5298827e…`),
+immutable in history.
 
 ## Decisions
 
