@@ -3,6 +3,11 @@ name: metacognate
 description: Use when the approach itself is uncertain rather than just the answer — before an irreversible or high-blast-radius act, when a claim is about to bear load ("it works", "it is done", "it is deployed", "it is fine"), when an observation contradicts what a tool or document just asserted, or when resuming from a summary, handoff, or remembered state. Do NOT fire for routine reversible work you can check directly, for lookups or mechanical edits, for a call the operator has already made, or from inside a discipline this would hand to.
 metadata:
   hands-to: []
+  event-kinds: [routing-decision]
+  eligible-when: [evaluation-case, sampled-field-incident]
+  outcome-sources: [independent-adjudication]
+  collection-mode: observational
+  sentinel-fixture: metacognate-over-under.json
 ---
 
 # metacognate — decide how much process this deserves, and usually decide none

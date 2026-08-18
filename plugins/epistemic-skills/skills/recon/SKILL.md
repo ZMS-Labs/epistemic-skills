@@ -1,6 +1,12 @@
 ---
 name: recon
 description: 'Use when territory must be mapped before effort commits: a materially fuzzy or contradicted request after routine micro-recon cannot close it ("what am I missing", a brief naming things the first reads cannot find, hidden coupling, a pre-fan-out premise, an explicit recon request); a large foggy effort whose path holds unresolved decisions or a backlog encoding unmade decisions; or an external project overlapping something you already built where the question is adopt / replace / ignore ("should we use X instead", "does X make ours obsolete"). Three modes by subject: brief, initiative, external candidate. Do NOT fire on factual lookups, mechanical edits, bounded dispatches whose target and check are explicit, plans whose premises the first reads verified, choosing between candidates with no incumbent, or unfamiliarity alone — the two-read micro-recon retires that.'
+metadata:
+  event-kinds: [frontier-decision, harvest-decision, landmine-prediction]
+  eligible-when: [correction-or-supersession, evaluation-case, independently-resolvable-verdict, preregistered-prediction]
+  outcome-sources: [field-observation, supersession-chain]
+  collection-mode: conditional
+  sentinel-fixture: recon-mode-misfire.json
 ---
 
 # recon — map the territory before effort commits

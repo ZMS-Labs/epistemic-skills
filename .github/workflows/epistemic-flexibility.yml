@@ -152,6 +152,8 @@ jobs:
         run: |
           python .github/scripts/check_skill_inventory.py --self-test
           python .github/scripts/check_skill_inventory.py
+      - name: Skill surface generator self-test (planted-drift RED battery)
+        run: python .github/scripts/sync_skill_surfaces.py --self-test
       - name: Skill surface synchronization
         run: python .github/scripts/sync_skill_surfaces.py --check
       - name: Sentinel fixture corpus

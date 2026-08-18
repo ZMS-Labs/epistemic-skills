@@ -1,6 +1,12 @@
 ---
 name: resolve
 description: 'Use when a live question or material decision must be settled by evidence rather than assertion, and the choice of instrument matters: a bounded formal/correctness/complexity question, when a proposed design needs correctness confirmation or reversal, or a >=2-option design fork governed by theory (derivation); a premise resting on "the research says…", an imminent scholarly-connector call, or a citation-verification request (literature); or a question cheaper to answer by building a disposable probe than by more argument, derivation, or reading (probe). Do NOT fire when the routine bounded check already answers it, when the decision is pure preference with no measurable property, or to decorate a decision already made.'
+metadata:
+  event-kinds: [evidence-claim, formal-prediction, probe-episode]
+  eligible-when: [independently-resolvable-verdict, preregistered-prediction]
+  outcome-sources: [deterministic-fixture, field-observation, independent-adjudication]
+  collection-mode: conditional
+  sentinel-fixture: resolve-instrument-misfire.json
 ---
 
 # resolve — settle the question with the cheapest sufficient instrument

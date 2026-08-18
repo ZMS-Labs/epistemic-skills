@@ -1,6 +1,12 @@
 ---
 name: manifest
 description: Use when work is mission-shaped — multi-session, consequential, cross-agent, or interruption-expensive — or on the explicit phrase "manifest this" (also /manifest): open, resume, verify, or close a custodied mission with recorded authority, durable checkpoints, drift re-anchoring, and independent acceptance. Answers "will this survive interruption?", "who authorized this scope?", "what makes done defensible?". Do NOT fire for routine one-step work checkable in-session.
+metadata:
+  event-kinds: [continuity-reanchor]
+  eligible-when: [evaluation-case, sampled-field-incident]
+  outcome-sources: [deterministic-fixture, field-observation]
+  collection-mode: observational
+  sentinel-fixture: manifest-unaccepted-read-as-complete.json
 ---
 
 # manifest — mission custody (custodian)

@@ -1,6 +1,12 @@
 ---
 name: decision-ledger
 description: 'Use when a consequential decision, load-bearing assumption, or recurrent/operator correction was just made that later work will rely on, and no existing durable artifact already records it with resolvable provenance and a revisit condition. Observable anchors: a decision among ≥2 alternatives recorded in a plan, contract, or derivation artifact; an assumption about to bear load in a derivation, plan, or contract; an operator correction message that will guide future work. Do NOT fire for reversible self-contained choices, routine-work fast-path tasks, verdicts, consuming the ledger, or duplicating an adequate ADR/plan/issue/PR/goal/derivation record. Not gauntlet run telemetry — that is gauntlet''s runs/ledger.jsonl.'
+metadata:
+  event-kinds: [continuity-reanchor, ledger-revisit]
+  eligible-when: [evaluation-case, revisit-trigger-fired, sampled-field-incident]
+  outcome-sources: [deterministic-fixture, field-observation, supersession-chain]
+  collection-mode: observational
+  sentinel-fixture: ledger-revisit.json
 ---
 
 # Decision Ledger — persist the decision once, where its consumer can find it

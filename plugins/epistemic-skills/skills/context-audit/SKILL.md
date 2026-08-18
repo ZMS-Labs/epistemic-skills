@@ -1,6 +1,12 @@
 ---
 name: context-audit
 description: 'Use when auditing the instruction context an agent actually receives — on explicit request ("audit my context/CLAUDE.md/system prompt", "context audit", "prune my instructions"), when a cross-layer instruction conflict is detected mid-task (two active layers direct incompatible behavior), or after a model-generation upgrade invalidates guardrails written for a weaker model. Do NOT fire for auditing the prose quality of one document (ordinary editing), for designing NEW tool/agent interfaces (that is interface craft doctrine, not context hygiene), for pre-work recon on a task brief (recon owns the territory; this skill audits the map), or for tuning a prompt to improve the output of one specific task (that is prompt engineering, not context hygiene).'
+metadata:
+  event-kinds: [audit-cut-decision]
+  eligible-when: [preregistered-prediction, correction-or-supersession]
+  outcome-sources: [field-observation, supersession-chain]
+  collection-mode: conditional
+  sentinel-fixture: audit-cut-regression.json
 ---
 
 # context-audit — audit the assembled context, not a file

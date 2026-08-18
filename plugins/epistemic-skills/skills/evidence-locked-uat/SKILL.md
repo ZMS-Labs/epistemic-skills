@@ -1,6 +1,12 @@
 ---
 name: evidence-locked-uat
 description: Use when running or gating user-acceptance testing on a material UI-facing change — on explicit request ("run UAT on X", "/uat", "acceptance-test this") or before claiming a stateful, interaction-sensitive, accessibility-sensitive, persistent, or otherwise hard-to-observe user-facing surface complete. Do NOT fire for backend-only changes, docs, pure test refactors, or routine reversible/local/directly-checkable presentation changes whose bounded preview/test establishes the criterion without an acceptance packet.
+metadata:
+  event-kinds: [uat-verdict]
+  eligible-when: [independently-resolvable-verdict]
+  outcome-sources: [deterministic-fixture, field-observation]
+  collection-mode: calibratable
+  sentinel-fixture: uat-seeded-defect.json
 ---
 
 # Evidence-Locked UAT

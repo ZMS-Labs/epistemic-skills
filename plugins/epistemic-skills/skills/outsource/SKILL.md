@@ -1,6 +1,12 @@
 ---
 name: outsource
 description: Use when a workload should be handed to a different, superior, specialized, or operator-selected model, agent, or process; when the user asks to outsource, ask another model, prepare a copy/paste handoff, or create a repo-backed external relay. Do not use for ordinary same-harness subagent dispatch unless the user explicitly wants a durable GitHub handoff.
+metadata:
+  event-kinds: [handoff-verification]
+  eligible-when: [evaluation-case, sampled-field-incident]
+  outcome-sources: [deterministic-fixture, independent-adjudication]
+  collection-mode: observational
+  sentinel-fixture: outsource-relay.json
 ---
 
 # Outsource — the repo is the memory, the prompt is the pointer

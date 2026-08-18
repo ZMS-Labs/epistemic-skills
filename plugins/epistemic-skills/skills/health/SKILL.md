@@ -3,6 +3,11 @@ name: health
 description: Use when you need to know whether a running system is in the state it should be — "is everything OK", before a change with blast radius, after a restart or power event, or when a health claim is about to bear load and someone is about to act on "it is fine". Do NOT fire when a specific thing is already known broken and you want the cause, when one metric you could read directly would answer it, or when the question is about a change you are making rather than the state you are in.
 metadata:
   hands-to: [triage, decision-ledger]
+  event-kinds: [state-readout]
+  eligible-when: [evaluation-case, sampled-field-incident]
+  outcome-sources: [deterministic-fixture, independent-adjudication]
+  collection-mode: observational
+  sentinel-fixture: health-unknown-not-ok.json
 ---
 
 # health — the state of a running system, and the honesty of the answer

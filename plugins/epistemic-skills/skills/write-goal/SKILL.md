@@ -1,6 +1,12 @@
 ---
 name: write-goal
 description: Use when the user explicitly asks to create, write, define, refine, or start a goal; asks "what would count as done"; or needs a durable objective, proof standard, scope boundary, blocker policy, stop rule, or optional token budget before extended work — e.g. "write a goal for", "what would count as done", "define a completion contract". Do not auto-create goals from ordinary tasks, and do not execute or certify the goal inside this skill.
+metadata:
+  event-kinds: [goal-proof]
+  eligible-when: [independently-resolvable-verdict]
+  outcome-sources: [field-observation, supersession-chain]
+  collection-mode: conditional
+  sentinel-fixture: goal-regression.json
 ---
 
 # Write Goal

@@ -1,6 +1,12 @@
 ---
 name: open-questions
 description: 'Use when the operator asks to be interviewed about open questions or decisions — "ask me open questions one by one until none remain", "walk me through the open decisions", "interview me until nothing is left" — or when a load-bearing fork is irreversible or high-blast-radius, cannot be safely best-guessed, and the operator is interactively present. Do NOT fire for design-stage dialogue while a workflow design skill is running (that skill owns its own questioning), for producing the initial question list on a fuzzy brief (recon owns the territory; this skill consumes its Questions output), for goal-shaping (write-goal owns that), or when the operator is absent — park reversible forks on best-guess defaults and proceed, and HOLD (escalate, never default through) any irreversible fork that cannot be safely best-guessed.'
+metadata:
+  event-kinds: [interview-scope-decision]
+  eligible-when: [evaluation-case, correction-or-supersession]
+  outcome-sources: [independent-adjudication, field-observation]
+  collection-mode: observational
+  sentinel-fixture: interview-parked-default.json
 ---
 
 # open-questions — walk the ledger to empty

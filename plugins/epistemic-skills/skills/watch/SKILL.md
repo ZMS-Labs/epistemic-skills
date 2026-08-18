@@ -3,6 +3,11 @@ name: watch
 description: Use to commission or re-prove an external watch when a bound must be noticed between sessions. This skill specifies the bound, substrate, destination, kill switch, safe proof crossing, and alert receipt; it does not itself watch. Do NOT use for a current-state readout, diagnosis of a known crossing, auto-remediation, or a condition nobody will act on.
 metadata:
   hands-to: [triage, decision-ledger]
+  event-kinds: [bound-crossing]
+  eligible-when: [evaluation-case, sampled-field-incident]
+  outcome-sources: [deterministic-fixture, field-observation]
+  collection-mode: observational
+  sentinel-fixture: watch-silence-read-as-healthy.json
 ---
 
 # watch — commission and prove an external observer

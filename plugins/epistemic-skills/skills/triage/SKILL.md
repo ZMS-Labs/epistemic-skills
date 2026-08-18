@@ -3,6 +3,11 @@ name: triage
 description: Use when a specific thing is known broken or degraded and the cause is not yet established — a failed deploy, an unreachable service, a red check, a readout naming something wrong. Consumes an existing state readout rather than re-probing blind. Do NOT fire when you do not yet know whether anything is wrong (that is a health readout), when the cause is already established and you are applying the fix, or when the question is about a change you are making rather than a failure you are facing.
 metadata:
   hands-to: [decision-ledger]
+  event-kinds: [cause-verdict]
+  eligible-when: [evaluation-case, sampled-field-incident]
+  outcome-sources: [deterministic-fixture, field-observation]
+  collection-mode: observational
+  sentinel-fixture: triage-plausible-not-observed.json
 ---
 
 # triage — find the cause, and stop there
