@@ -23,6 +23,8 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.base.sha }}
           persist-credentials: false
+      - name: DCO checker self-test (planted RED controls)
+        run: python .github/scripts/check_dco.py --self-test
       - name: Require author-matching Signed-off-by lines
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
