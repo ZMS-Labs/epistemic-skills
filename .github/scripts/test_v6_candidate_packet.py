@@ -145,10 +145,41 @@ def main() -> int:
         else:
             raise AssertionError("flip of a non-PARTIAL claim was NOT refused")
 
+    # S1: the inventory enumerates git-tracked files only — never volatile
+    # host state like __pycache__ (the rc2 P1: 17 sealed .pyc digests).
+    from v6_generate_candidate_packet import build_source_inventory
+
+    head = subprocess.check_output(
+        ["git", "rev-parse", "HEAD"], cwd=REPO_ROOT, text=True
+    ).strip()
+    inventory = build_source_inventory(head, "2026-08-18T00:00:00Z")
+    volatile = [k for k in inventory["file_digests"] if "__pycache__" in k or k.endswith(".pyc")]
+    if volatile:
+        raise AssertionError(f"inventory seals volatile host state (S1): {volatile[:3]}")
+    tracked = set(
+        subprocess.check_output(["git", "ls-files", "-z"], cwd=REPO_ROOT)
+        .decode("utf-8").split("\0")
+    )
+    untracked = [k for k in inventory["file_digests"] if k not in tracked]
+    if untracked:
+        raise AssertionError(f"inventory names untracked paths (S1): {untracked[:3]}")
+
     matrix = {"claims": claims}
     packet = build_promotion_packet(sha, "2026-08-18T00:00:00Z", matrix)
     if packet["schema"] != "v6-promotion-packet@2":
         raise AssertionError("packet must be @2")
+    # S2: operator-owned LIMITED P1/P2 claims get DERIVED known_limits
+    # entries naming them (machine channel, operator ruling 2026-08-18).
+    derived = {kl.get("claim") for kl in packet["known_limits"] if kl.get("claim")}
+    for claim in claims:
+        if ("operator" in claim["owner"] and claim["status"] == "LIMITED"
+                and claim["consequence_severity"] in ("P1", "P2")):
+            if claim["id"] not in derived:
+                raise AssertionError(
+                    f"operator-owned LIMITED claim {claim['id']} has no derived "
+                    "known_limits entry (S2)")
+    if "CLM-DESCRIPTION-BUDGET" not in derived:
+        raise AssertionError("CLM-DESCRIPTION-BUDGET must be channel-derived (S2 exemplar)")
     if packet["self_certification"] != "refused":
         raise AssertionError("must refuse self-certification")
     if packet["readiness"] != "NOT_READY":

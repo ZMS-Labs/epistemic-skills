@@ -191,6 +191,12 @@ ISSUE_DISPOSITIONS: dict[int, dict] = {
 }
 
 PR_DISPOSITIONS: dict[int, dict] = {
+    197: {
+        "phase": "ES6-V6-CANDIDATE",
+        "disposition": "in-candidate-draft",
+        "owner": "agent",
+        "evidence_note": "The successor freeze PR itself (D12); draft until GO + recorded operator acceptance; merging it is PROMOTION.",
+    },
     195: {
         "phase": "main-repair",
         "disposition": "operator-merge",
@@ -848,20 +854,27 @@ def build_reconciliation(sha: str, ts: str, issues: list[dict], prs: list[dict])
     }
 
 
+def _tracked_files(pathspec: str) -> list[str]:
+    """Git-tracked files matching pathspec — the ONE tree model (S1).
+
+    The rc2 freeze walked the FILESYSTEM (rglob) while its clean-tree guard
+    used .gitignore-aware `git status --porcelain`: two tree models that
+    disagreed exactly on ignored host state, sealing 17 volatile
+    `__pycache__/*.pyc` digests and making the validator fail on every clean
+    checkout (kimi ruling S1, run es-v6-rc2-gauntlet-kimi-2026-08-18). Git's
+    index is now the single authority for what the inventory contains, the
+    same authority the dirt check consults.
+    """
+    out = subprocess.check_output(
+        ["git", "ls-files", "-z", "--", pathspec], cwd=REPO_ROOT
+    )
+    return sorted(p for p in out.decode("utf-8").split("\0") if p)
+
+
 def build_source_inventory(sha: str, ts: str) -> dict:
-    workflows = sorted(
-        p.relative_to(REPO_ROOT).as_posix()
-        for p in (REPO_ROOT / ".github/workflows").glob("*.yml")
-    )
-    contracts = sorted(
-        p.relative_to(REPO_ROOT).as_posix()
-        for p in (REPO_ROOT / "plugins/epistemic-skills/contracts").rglob("*")
-        if p.is_file()
-    )
-    ci_scripts = sorted(
-        p.relative_to(REPO_ROOT).as_posix()
-        for p in (REPO_ROOT / ".github/scripts").glob("*.py")
-    )
+    workflows = _tracked_files(".github/workflows/*.yml")
+    contracts = _tracked_files("plugins/epistemic-skills/contracts")
+    ci_scripts = _tracked_files(".github/scripts/*.py")
     # R5b/d: bind the inventory to CONTENT, not just a name. Per-file sha256
     # digests plus the candidate's git tree hash make any post-freeze edit to
     # an inventoried file detectable (the predecessor packet's artifacts were
@@ -1003,6 +1016,36 @@ def blocking_from_matrix(matrix: dict) -> list[str]:
     return _validator_module().derive_blocking(matrix["claims"])
 
 
+def operator_limited_limits(matrix: dict) -> list[dict]:
+    """S2 (operator ruling 2026-08-18, machine channel DERIVED): every
+    operator-owned LIMITED P1/P2 claim gets a known_limits entry naming it
+    via the `claim` field — derived here so it cannot be dropped by hand.
+    Non-PROVED non-LIMITED operator-owned P1/P2 claims already block via
+    derive_blocking; PROVED operator claims are completed acts (row-only);
+    P3 census rows are channeled by the reconciliation artifact. The full
+    law lives in requirement-register.json (operator_channel_law) and
+    validate_operator_channel enforces it."""
+    derived = []
+    for claim in matrix["claims"]:
+        if (
+            "operator" in claim["owner"]
+            and claim["status"] == "LIMITED"
+            and claim.get("consequence_severity") in ("P1", "P2")
+        ):
+            derived.append({
+                "id": f"KL-OPERATOR-{claim['id'][4:]}",
+                "kind": "operator-hold",
+                "claim": claim["id"],
+                "statement": (
+                    f"Operator-owned LIMITED claim {claim['id']}: "
+                    f"{claim['statement']}"
+                ),
+                "release_consequence": claim["release_consequence"],
+                "owner": claim["owner"],
+            })
+    return derived
+
+
 def build_promotion_packet(sha: str, ts: str, matrix: dict) -> dict:
     return {
         "schema": "v6-promotion-packet@2",
@@ -1076,10 +1119,15 @@ def build_promotion_packet(sha: str, ts: str, matrix: dict) -> dict:
                     "at the unchanged head (ready_for_review trigger types; "
                     "proven by the 2026-08-18 ready-mark drill). Until "
                     "then the BUILD oracle is the local clean-room, which "
-                    "replicates 52 of the 53 workflow python steps of ONE "
-                    "workflow (epistemic-flexibility) with every skip "
-                    "named, and does NOT cover the other five workflows. "
-                    "A fail-fast CI failure also masks later steps: the "
+                    "replicates the python steps of ONE workflow "
+                    "(epistemic-flexibility) with a completeness assertion "
+                    "and every non-replicated step NAMED with its reason — "
+                    "exact per-step counts live in "
+                    "evidence/clean-baseline.json, never in this prose "
+                    "(counts drift per commit; the rc2 packet's hand-"
+                    "written fraction did, kimi ruling S6). The other five "
+                    "workflows are NOT covered by the clean-room. A "
+                    "fail-fast CI failure also masks later steps: the "
                     "oracle-audit step's missing-PyYAML defect was "
                     "invisible on main behind the public-content failure "
                     "until 2026-08-18."
@@ -1132,13 +1180,24 @@ def build_promotion_packet(sha: str, ts: str, matrix: dict) -> dict:
                     "generated at one commit and mutated at the freeze "
                     "commit while still carrying the earlier stamp — "
                     "self-falsifying evidence nothing detected (gauntlet "
-                    "ruling R5). This packet is generated under the C/C+1 "
-                    "discipline: generation refuses a dirty tree and "
-                    "refuses --sha != HEAD, the source inventory binds "
-                    "per-file sha256 digests plus the candidate tree hash, "
-                    "and the validator recomputes those digests."
+                    "ruling R5). The two specific instances R5(c) named "
+                    "(kimi ruling S4 completed this disclosure): (1) "
+                    "clean-baseline.json was ADDED to the predecessor "
+                    "packet after its freeze while the packet claimed "
+                    "immutability; (2) the packet's original disclaimer — "
+                    "that a recorded candidate SHA is an OBSERVATION of "
+                    "the tree it was generated from, never a target to "
+                    "restamp — was deleted rather than preserved, and its "
+                    "substance is hereby re-erected as the governing "
+                    "invariant of this packet. This packet is generated "
+                    "under the C/C+1 discipline: generation refuses a "
+                    "dirty tree and refuses --sha != HEAD, the source "
+                    "inventory binds per-file sha256 digests of git-"
+                    "tracked sources plus the candidate tree hash, and "
+                    "the validator recomputes those digests and rejects "
+                    "untracked inventory paths (S1)."
                 ),
-                "release_consequence": "Any post-freeze edit to an inventoried file turns the validator red instead of shipping silently.",
+                "release_consequence": "Any post-freeze edit to an inventoried file turns the validator red instead of shipping silently; the SHA-is-an-observation invariant governs every artifact in this directory.",
                 "owner": "agent",
             },
             {
@@ -1155,7 +1214,7 @@ def build_promotion_packet(sha: str, ts: str, matrix: dict) -> dict:
                 "release_consequence": "Guard globs bound spellings, not filesystem effects; CLM-MC-GUARD-LEXICAL stays LIMITED.",
                 "owner": "agent",
             },
-        ],
+        ] + operator_limited_limits(matrix),
         "evidence_paths": [
             "docs/v6/ES6-V6-CANDIDATE/claim-to-proof-matrix.json",
             "docs/v6/ES6-V6-CANDIDATE/issue-pr-reconciliation.json",

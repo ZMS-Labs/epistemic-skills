@@ -239,15 +239,81 @@ def main() -> int:
                 "scripts/tool.py": hashlib.sha256(target.read_bytes()).hexdigest()
             },
         }
-        if MOD.validate_source_inventory(copy.deepcopy(inventory), root) == []:
-            print("[PASS] honest @2 inventory digest verifies")
+        inv_notes = MOD.validate_source_inventory(copy.deepcopy(inventory), root)
+        if all("not a git worktree" in n for n in inv_notes):
+            print("[PASS] honest @2 inventory digest verifies (synthetic-tree notice only)")
         else:
-            failures.append("honest inventory raised notices")
+            failures.append(f"honest inventory raised notices: {inv_notes}")
         target.write_text("print('mutated after freeze')\n", encoding="utf-8")
         expect_fail(
             "post-freeze-mutation", lambda: MOD.validate_source_inventory(copy.deepcopy(inventory), root),
             "digest mismatch", failures,
         )
+
+        # S1: an inventory sealing an UNTRACKED path (volatile host state)
+        # must fail closed in a real git worktree — the rc2 defect class.
+        import subprocess as sp
+        gitroot = root / "gitrepo"
+        (gitroot / "scripts").mkdir(parents=True)
+        tracked_file = gitroot / "scripts" / "tool.py"
+        tracked_file.write_text("print('frozen')\n", encoding="utf-8")
+        volatile = gitroot / "scripts" / "__pycache__"
+        volatile.mkdir()
+        pyc = volatile / "tool.cpython-311.pyc"
+        pyc.write_bytes(b"\x00volatile")
+        sp.run(["git", "init", "-q"], cwd=gitroot, check=True)
+        sp.run(["git", "add", "scripts/tool.py"], cwd=gitroot, check=True)
+        good_inv = {
+            "schema": "v6-source-inventory@2",
+            "exact_start_sha": SHA,
+            "candidate_tree_hash": "t" * 40,
+            "generated_at": "t",
+            "workflows": [],
+            "contracts": [],
+            "ci_scripts": ["scripts/tool.py"],
+            "file_digests": {
+                "scripts/tool.py": hashlib.sha256(tracked_file.read_bytes()).hexdigest()
+            },
+        }
+        if MOD.validate_source_inventory(copy.deepcopy(good_inv), gitroot) == []:
+            print("[PASS] tracked-only inventory verifies in a git worktree")
+        else:
+            failures.append("tracked-only inventory raised notices in git worktree")
+        sealed_pyc = copy.deepcopy(good_inv)
+        sealed_pyc["ci_scripts"].append("scripts/__pycache__/tool.cpython-311.pyc")
+        sealed_pyc["file_digests"]["scripts/__pycache__/tool.cpython-311.pyc"] = (
+            hashlib.sha256(pyc.read_bytes()).hexdigest()
+        )
+        expect_fail(
+            "inventory-seals-untracked-pyc",
+            lambda: MOD.validate_source_inventory(copy.deepcopy(sealed_pyc), gitroot),
+            "inventory_untracked", failures,
+        )
+
+        # S2: an operator-owned open claim outside both machine channels
+        # must fail closed; naming it via a known_limits claim field passes.
+        op_matrix = base_matrix()
+        op_matrix["claims"][2]["owner"] = "operator"
+        op_matrix["claims"][2]["consequence_severity"] = "P2"  # LIMITED already
+        dropped = copy.deepcopy(packet)
+        dropped["readiness"] = "NOT_READY"
+        dropped["blocking_claims"] = []
+        expect_fail(
+            "operator-limited-claim-dropped",
+            lambda: MOD.validate_operator_channel(op_matrix, dropped),
+            "channel drop", failures,
+        )
+        channeled = copy.deepcopy(dropped)
+        channeled["known_limits"].append({
+            "id": "KL-OPERATOR-GAMMA", "kind": "operator-hold",
+            "claim": "CLM-GAMMA", "statement": "s", "release_consequence": "c",
+            "owner": "operator",
+        })
+        try:
+            MOD.validate_operator_channel(op_matrix, channeled)
+            print("[PASS] derived known_limits entry satisfies the channel law")
+        except AssertionError as exc:
+            failures.append(f"channeled operator claim rejected: {exc}")
 
         # R14: register requirement with no covering claim.
         register = {

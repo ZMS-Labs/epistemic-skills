@@ -117,6 +117,11 @@
           "owner": {
             "type": "string",
             "minLength": 1
+          },
+          "claim": {
+            "description": "S2 machine channel: the matrix claim id this limit names (set on entries DERIVED for operator-owned LIMITED claims; validate_operator_channel checks the property).",
+            "type": "string",
+            "pattern": "^CLM-[A-Z0-9-]+$"
           }
         }
       }

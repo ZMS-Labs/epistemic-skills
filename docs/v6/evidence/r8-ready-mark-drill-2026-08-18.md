@@ -32,8 +32,8 @@ to dispatch at the identical head SHA.
 | Check | Conclusion | Run |
 |---|---|---|
 | stdlib-checks | **executed — failure** (see note) | 32184104218 |
-| contract (custody) | **success** | 32184104140 |
-| contract (commission-watch) | **success** | 32184104186 |
+| contract (custody) | **success** | 32184104186 |
+| contract (commission-watch) | **success** | 32184104140 |
 | build (openai-bundles) | **success** | 32184104194 |
 | full-history-secret-scan | **executed** (in progress at snapshot) | 32184104164 |
 | DCO | **success** | 32184105058 |

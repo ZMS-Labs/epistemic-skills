@@ -29,7 +29,11 @@ set -uo pipefail
 
 REF="${1:-main}"
 REMOTE="${2:-https://github.com/ZMS-Labs/epistemic-skills.git}"
-WORK="$(mktemp -d)"
+# CLEANROOM_TMPDIR: on Windows hosts the default temp dir lives inside the
+# user profile, which test_live_runner's sensitive-path guard deliberately
+# refuses (kimi ruling S10 — the guard working, not a defect). Set this to
+# any non-profile scratch path there; unset elsewhere.
+WORK="$(mktemp -d ${CLEANROOM_TMPDIR:+-p "$CLEANROOM_TMPDIR"})"
 trap 'rm -rf "$WORK"' EXIT
 
 echo "clean-room CI"

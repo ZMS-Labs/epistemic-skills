@@ -13,11 +13,19 @@ adjudication independence for this lineage. A **fresh seat** is required.
 - Candidate SHA (C): `promotion-packet.json → candidate_sha` — the freeze
   commit C+1's parent, per the C/C+1 layering in this directory's README
 - Packet: `promotion-packet.json` (schema @2, verdict-bound)
-- Predecessor verdict of record: NO-GO against
-  `00e5146e43ff9011153452b83fedda706723c52b`
-  (`docs/gauntlet-runs/es-v6-candidate-freeze-2026-08-18/arbitration.md`,
-  on the gauntlet-record branch `claude/epistemic-skills-v6-completion-nwptmc`;
-  ruling-set@1, 18 rulings, 15 acceptance criteria)
+- Predecessor verdicts of record (both stand as evidence; neither
+  transfers to this SHA):
+  1. NO-GO against `00e5146e43ff9011153452b83fedda706723c52b`
+     (`docs/gauntlet-runs/es-v6-candidate-freeze-2026-08-18/arbitration.md`
+     on `claude/epistemic-skills-v6-completion-nwptmc`; ruling-set@1,
+     18 rulings, 15 acceptance criteria)
+  2. NO-GO against `6db8c50420b194aebbd09a2ea5f81c6a276897dc`
+     (`docs/gauntlet-runs/es-v6-rc2-gauntlet-kimi-2026-08-18/arbitration.md`
+     on `kimi/es-v6-rc2-gauntlet-2026-08-18`; ruling-set@1, rulings
+     S1–S10, 14 of 15 predecessor criteria discharged or retired)
+- Review mode: **delta + blast radius by a fresh seat** (operator ruling
+  2026-08-18, ledger id `v6-successor-review-delta-mode-20260818-19`; see
+  KIMI-SEAT-HANDOFF.md "Review mode"). Three-panel lineage cap: two used.
 
 ## Step-0 truth gate
 

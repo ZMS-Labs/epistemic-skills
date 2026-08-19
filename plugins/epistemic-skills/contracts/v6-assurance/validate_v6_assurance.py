@@ -153,6 +153,21 @@ def validate_reconciliation(doc: dict) -> None:
         seen.add(key)
 
 
+def _tracked_set(root: Path) -> set[str] | None:
+    """Git-tracked paths under root, or None when root is not a git worktree
+    (synthetic test trees). Used by the S1 guard below."""
+    import subprocess
+
+    probe = subprocess.run(
+        ["git", "-C", str(root), "rev-parse", "--is-inside-work-tree"],
+        capture_output=True, text=True,
+    )
+    if probe.returncode != 0 or probe.stdout.strip() != "true":
+        return None
+    out = subprocess.check_output(["git", "-C", str(root), "ls-files", "-z"])
+    return {p for p in out.decode("utf-8").split("\0") if p}
+
+
 def validate_source_inventory(doc: dict, root: Path = REPO_ROOT) -> list[str]:
     """Returns notices; raises on failure. @2 recomputes every digest (R5)."""
     _require_keys(
@@ -170,6 +185,22 @@ def validate_source_inventory(doc: dict, root: Path = REPO_ROOT) -> list[str]:
     missing = [rel for rel in listed if rel not in digests]
     if missing:
         raise AssertionError(f"source-inventory@2: files without digests: {missing[:5]}")
+    notices: list[str] = []
+    # S1 (kimi run es-v6-rc2-gauntlet-kimi-2026-08-18): an inventory must
+    # never seal untracked host state — the rc2 freeze sealed 17 volatile
+    # __pycache__/*.pyc digests and failed on every clean checkout. Both
+    # sides now hold the line: the generator enumerates via git ls-files,
+    # and this guard rejects any inventoried path git does not track.
+    tracked = _tracked_set(root)
+    if tracked is None:
+        notices.append("root is not a git worktree: INVENTORY_UNTRACKED guard skipped (synthetic tree)")
+    else:
+        untracked = sorted(rel for rel in digests if rel not in tracked)
+        if untracked:
+            raise AssertionError(
+                "S1 INVENTORY_UNTRACKED: sealed digests name paths git does "
+                f"not track (volatile host state): {untracked[:10]}"
+            )
     mismatched: list[str] = []
     for rel, recorded in digests.items():
         path = root / rel
@@ -184,7 +215,7 @@ def validate_source_inventory(doc: dict, root: Path = REPO_ROOT) -> list[str]:
             "R5 DIGEST MISMATCH: inventoried files changed after the packet "
             f"was generated (restamp class): {mismatched[:10]}"
         )
-    return []
+    return notices
 
 
 def validate_promotion_packet(doc: dict, root: Path = REPO_ROOT) -> list[str]:
@@ -299,6 +330,42 @@ def validate_blocking_derivation(matrix: dict, packet: dict) -> list[str]:
     return []
 
 
+def validate_operator_channel(matrix: dict, packet: dict) -> list[str]:
+    """S2 channel law (operator ruling 2026-08-18; kimi run
+    es-v6-rc2-gauntlet-kimi-2026-08-18, CL-2 synthesis):
+
+    Every P1/P2 claim whose owner contains 'operator' must occupy a machine
+    channel while it is open — blocking_claims for non-PROVED non-LIMITED
+    statuses (the R12 derivation already puts it there), or a known_limits
+    entry naming it via its `claim` field for LIMITED (derived by the
+    generator, so it cannot be dropped by hand). PROVED operator claims are
+    completed acts (row-only); P3 tracker census rows are channeled by the
+    reconciliation artifact per acceptance-procedure item 3. The identical
+    law is codified in requirement-register.json (operator_channel_law) so
+    the register and this derivation agree.
+    """
+    if not matrix_has_severity(matrix):
+        return ["LEGACY matrix without consequence_severity: operator channel law not checked"]
+    blocking = set(packet["blocking_claims"])
+    named = {kl.get("claim") for kl in packet["known_limits"] if kl.get("claim")}
+    for claim in matrix["claims"]:
+        if "operator" not in claim["owner"]:
+            continue
+        if claim.get("consequence_severity", "P3") == "P3":
+            continue
+        if claim["status"] == "PROVED":
+            continue
+        cid = claim["id"]
+        if cid in blocking or cid in named:
+            continue
+        raise AssertionError(
+            f"S2 CHANNEL DROP: operator-owned {claim['status']} claim {cid} "
+            "appears in neither blocking_claims nor a known_limits entry "
+            "naming it (claim field)"
+        )
+    return []
+
+
 def validate_register(register: dict, matrix: dict) -> None:
     """R14: every registered requirement maps to claims or a disposition."""
     _require_keys(register, ("schema", "source_clauses", "crosswalk"), "requirement-register")
@@ -357,9 +424,26 @@ def main() -> int:
     cand_inventory = CANDIDATE_DOCS / "source-inventory.json"
     cand_packet = CANDIDATE_DOCS / "promotion-packet.json"
     cand_receipt = CANDIDATE_DOCS / "exact-candidate-receipt.json"
-    for path in (cand_matrix, cand_recon, cand_inventory, cand_packet, cand_receipt):
-        if not path.is_file():
-            raise SystemExit(f"missing required candidate artifact: {path}")
+    required = (cand_matrix, cand_recon, cand_inventory, cand_packet, cand_receipt)
+    present = [p for p in required if p.is_file()]
+    if not present:
+        # PRE-FREEZE state: the C/C+1 discipline means the code-final
+        # candidate commit C legitimately carries NO packet (the packet is
+        # generated AT C and committed as C+1; a superseded packet is
+        # deleted with its repair, immutable in history at its own freeze
+        # commit). A tree with no packet CLAIMS nothing — there is nothing
+        # to certify and nothing to counterfeit; the terminal state lives
+        # inside a packet, so it is unreachable from here.
+        print("note: PRE-FREEZE tree — no candidate packet present; ZI-001 checks only")
+        for notice in notices:
+            print(f"note: {notice}")
+        print("v6 assurance artifacts: schema + rule checks passed (ZI-001; no candidate packet)")
+        return 0
+    if len(present) != len(required):
+        # A TORN packet is never legitimate — partial artifacts are exactly
+        # how a half-regenerated or hand-pruned freeze would present.
+        missing = [str(p) for p in required if not p.is_file()]
+        raise SystemExit(f"TORN candidate packet — missing: {missing}")
     matrix = _load_json(cand_matrix)
     recon = _load_json(cand_recon)
     packet = _load_json(cand_packet)
@@ -368,7 +452,16 @@ def main() -> int:
     notices += validate_source_inventory(_load_json(cand_inventory))
     notices += validate_promotion_packet(packet)
     notices += validate_blocking_derivation(matrix, packet)
+    notices += validate_operator_channel(matrix, packet)
     validate_candidate_coverage(matrix, recon)
+    # S3: the packet README must name the subject SHA literally (R4's letter).
+    if packet["schema"] == "v6-promotion-packet@2":
+        readme = CANDIDATE_DOCS / "README.md"
+        if not readme.is_file() or packet["candidate_sha"] not in readme.read_text(encoding="utf-8"):
+            raise AssertionError(
+                "S3 README_SHA: the packet README must literally name the "
+                f"candidate SHA {packet['candidate_sha'][:12]}… (R4's letter)"
+            )
 
     if not REGISTER_PATH.is_file():
         raise SystemExit(f"missing requirement register: {REGISTER_PATH}")

@@ -100,7 +100,7 @@ ALLOWLIST_EXACT_FILES: dict[str, tuple[str, str | None]] = {
     "plugins/epistemic-skills/contracts/mission-custody/examples/invalid-manifest-guard-bad-regex.json": ("dispositioned fixture", "f2d2967ca8b12ab95816287f12b8bf0b84b9baabe75a2c751b06e02e4ba297db"),
     "plugins/epistemic-skills/contracts/mission-custody/examples/invalid-manifest-guard-empty-rule.json": ("dispositioned fixture", "80dcaaceac508adfb5c02fc0b83849d1e584f3892a1f510485d1ece395faee26"),
     "plugins/epistemic-skills/contracts/mission-custody/examples/invalid-manifest-guard-unknown-field.json": ("dispositioned fixture", "13769cffbccb9e4d49602938d01dd34b310772ab1d60d0a7ac23ccdc23e3316e"),
-    "plugins/epistemic-skills/contracts/mission-custody/test_custody_gate.py": ("dispositioned fixture", "72def57243eb33b997c7b1ec6cadf997b899e85ef52a33e331f3979673478782"),
+    "plugins/epistemic-skills/contracts/mission-custody/test_custody_gate.py": ("dispositioned fixture", "f87e8cf14256c5f332572545f9ded71602fb227544cb56769cc80766aec5f984"),
     "docs/superpowers/plans/2026-08-12-stage-c-custody-hook.md": ("pre-gate historical record", "c0e6b949fcc34e498dd3b1af25beb42c17e52f28c84a32f92beb35c04c438fe6"),
     "docs/superpowers/specs/2026-08-12-stage-c-custody-hook-design.md": ("pre-gate historical record", "cc6ba6f53b172178124e3fde706dd6fa0ce6231ef105e9e14130d174c5b2854c"),
     "docs/audits/2026-07-23-suite-stress-test/08-changes-and-verification.md": ("pre-gate historical record", "aa1ec0490d028a56a8376cb9176d7ef2b8687373d0e1be987206989f3c3fd05b"),

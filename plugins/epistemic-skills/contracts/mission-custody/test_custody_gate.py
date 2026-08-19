@@ -25,6 +25,11 @@ def check(name: str, cond: bool) -> None:
     if not cond:
         FAILURES.append(name)
         print(f"FAIL {name}")
+        # Under pytest the script-style exit-code discipline never runs, so a
+        # recorded failure would pass silently (kimi ruling S7): surface it as
+        # a real assertion there. Script execution keeps collect-then-exit.
+        if "PYTEST_CURRENT_TEST" in os.environ:
+            raise AssertionError(f"custody gate check failed: {name}")
     else:
         print(f"ok   {name}")
 
@@ -140,6 +145,15 @@ def test_guard_match_is_lexical_symlinked_parent_diverges() -> None:
     current invariant (KL-GUARD-LEXICAL / CLM-MC-GUARD-LEXICAL) so a future
     resolution-aware change flips it loudly; it does not assert the
     divergence is desirable."""
+    # POSIX-scoped by measurement (kimi ruling S7): on NT, os.path.realpath
+    # collapses `..` lexically too, so the write lands OUTSIDE the guarded
+    # tree — guard and filesystem AGREE and the pinned divergence does not
+    # exist. Running the pin there fails it for the wrong reason (it did,
+    # on a symlink-privileged NT host); the disclosure in KL-GUARD-LEXICAL
+    # remains POSIX-accurate.
+    if os.name == "nt":
+        print("  skip guard-lexical pin (POSIX-scoped: NT realpath collapses lexically; the divergence does not exist there)")
+        return
     root = Path(tempfile.mkdtemp(prefix="custody-r15-"))
     try:
         (root / "guarded" / "sub").mkdir(parents=True)

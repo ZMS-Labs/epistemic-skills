@@ -1,12 +1,36 @@
-# Independent Gauntlet seat handoff — Kimi Code CLI, local Windows checkout
+# Independent Gauntlet seat handoff — fresh seat, local checkout
 
 You are a **context-fresh independent Gauntlet seat** for the epistemic-skills
-v6 rc2 BUILD freeze. You did not author the candidate, and you are not the
-seat that adjudicated the predecessor (that seat took the repair role under
-operator decision D2 and is disqualified). You are additionally a different
-model family from the candidate's authors — state this in your run record;
-it strengthens seat independence but does NOT by itself discharge the D8
-Step-7b instruction (see "At GO posture" below).
+v6 successor BUILD freeze. You did not author the candidate, and you are not
+any prior adjudicating seat of this lineage (the Claude repair seat is
+disqualified under D2; the Kimi seat that adjudicated rc2 is now a prior
+adjudicator of this lineage). If you are a different model family from the
+candidate's authors, state it in your run record; it strengthens seat
+independence but does NOT by itself discharge the D8 Step-7b instruction
+(see "At GO posture" below).
+
+## Review mode: DELTA + BLAST RADIUS (operator ruling 2026-08-18)
+
+This lineage has had two full panels (predecessor NO-GO at `00e5146…`, run
+`es-v6-candidate-freeze-2026-08-18` on the gauntlet-record branch; rc2
+NO-GO at `6db8c50…`, run `es-v6-rc2-gauntlet-kimi-2026-08-18` on
+`kimi/es-v6-rc2-gauntlet-2026-08-18` — the protocol's three-panel lineage
+cap allows one more). Per revision-loop doctrine and the operator's
+recorded ruling, you review the REPAIR DELTA plus its blast radius:
+
+- Rulings on unchanged content STAND as evidence — do not re-litigate the
+  kimi run's discharged predecessor criteria; verify instead that each of
+  its ten rulings' repairs (S1–S10) satisfies its own acceptance criterion
+  or recorded qualification, on the new candidate SHA.
+- S1 is the load-bearing one: on a FRESH clone or pristine worktree of the
+  new freeze commit, `validate_v6_assurance.py` must exit 0; flip one byte
+  in an inventoried source and it must exit non-zero; the inventory must
+  name only git-tracked paths.
+- S2's operator ruling (machine channel, derived) is codified in
+  `requirement-register.json → operator_channel_law` — check the packet
+  satisfies it and that register text and derivation agree.
+- Anything OUTSIDE the delta you touch only where the delta's blast radius
+  reaches it, or where live state changed (main, tracker, tags).
 
 Your verdict optimizes assurance and truthfulness — never speed, closure
 counts, or a wish to be agreeable. NO-GO is a legitimate, useful outcome;
@@ -55,12 +79,14 @@ git worktree add ..\es-v6-subject 6db8c50420b194aebbd09a2ea5f81c6a276897dc   # C
   on your machine is a FINDING CANDIDATE, not a finding: re-run the exact
   file once; a repeat failure is real, a one-off matching the es#140
   signature is recorded as environment noise with the issue cited.
-- **Expected loud skips (not defects):** symlink-dependent tests — the R15
-  guard-lexical characterization pin and custody symlink probes — skip
-  loudly on NT without symlink privilege (`KL-WINDOWS` discloses that no
-  native-Windows requalification is claimed). A SKIP printed with its
-  reason is correct behavior; a silent pass of a symlink test on
-  unprivileged NT would itself be suspicious.
+- **Expected loud skips (not defects):** the R15 guard-lexical
+  characterization pin skips on ALL NT hosts — the pinned divergence is
+  POSIX-scoped: NT's realpath collapses `..` lexically too, so guard and
+  filesystem agree there (measured, kimi ruling S7). Other symlink-
+  dependent probes skip where symlink privilege is absent. A SKIP printed
+  with its reason is correct behavior; `KL-WINDOWS` discloses that no
+  native-Windows requalification is claimed. Under pytest, a recorded
+  custody-check failure now raises instead of passing silently (S7).
 - `cleanroom_ci.sh` is bash: run it from Git Bash / MSYS2
   (`bash .github/scripts/cleanroom_ci.sh 6db8c50420b194aebbd09a2ea5f81c6a276897dc`).
   The repo's clean-room header documents this exact host class.
