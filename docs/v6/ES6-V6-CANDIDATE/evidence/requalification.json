@@ -1,0 +1,64 @@
+{
+ "schema": "v6-requalification@1",
+ "candidate_sha": "7408a462b413d0ab41a08de1d37a10b9cdf2a6ea",
+ "captured_at": "2026-08-19T14:01:40Z",
+ "method": "workflow_dispatch of all five gating workflows on branch claude/v6-rc4-requal pinned at the candidate SHA (operator decision D4b); conclusions read from GitHub's own run/job records at job level, plus step-level verification that the R3-NF1 ledger append-only oracle EXECUTED against live origin/main.",
+ "claims": {
+  "CLM-STDLIB-GATE": {
+   "conclusion": "success",
+   "runs": [
+    "https://github.com/ZMS-Labs/epistemic-skills/actions/runs/32261089304"
+   ],
+   "note": "epistemic-flexibility stdlib-checks executed in full at the candidate SHA, including the assurance validator's PRE-FREEZE pass on the packet-less candidate tree AND the ledger append-only oracle EXECUTED (not skipped) against live origin/main \u2014 step 'Durable ledger append-only against merge base' conclusion=success (R3-NF1 pre-freeze surface)."
+  },
+  "CLM-PUBLIC-CONTENT": {
+   "conclusion": "success",
+   "runs": [
+    "https://github.com/ZMS-Labs/epistemic-skills/actions/runs/32261089304"
+   ],
+   "note": "Public-content gate step (digest-bound allowlist, self-test + live) green inside stdlib-checks at the candidate SHA; local evidence/public-content.json corroborates at the same SHA."
+  },
+  "CLM-SECRET-SCAN": {
+   "conclusion": "success",
+   "runs": [
+    "https://github.com/ZMS-Labs/epistemic-skills/actions/runs/32261103436"
+   ],
+   "note": "release-security full-history-secret-scan executed at the candidate SHA with pinned gitleaks v8.30.1; positive and narrowness controls green. The first rc4 dispatch round, at superseded candidate 74c8314, failed on ONE generic-api-key entropy false positive inside the immutable rc3 delta-review record branch; see non_flip_records for the full disclosure."
+  },
+  "CLM-MC-HOOK-POSIX": {
+   "conclusion": "success",
+   "runs": [
+    "https://github.com/ZMS-Labs/epistemic-skills/actions/runs/32261092986"
+   ],
+   "note": "The GATING Linux 'contract' job succeeded (all steps incl. the POSIX hook branch); the dispatch-only non-gating 'contract-macos' diagnostic failed on the KNOWN es#162 APFS Unicode-fold collision \u2014 see non_flip_records."
+  }
+ },
+ "non_flip_records": {
+  "commission-watch-contract": {
+   "conclusion": "success",
+   "runs": [
+    "https://github.com/ZMS-Labs/epistemic-skills/actions/runs/32261096852"
+   ]
+  },
+  "openai-bundles": {
+   "conclusion": "success",
+   "runs": [
+    "https://github.com/ZMS-Labs/epistemic-skills/actions/runs/32261100146"
+   ]
+  },
+  "mission-custody-contract-macos-diagnostic": {
+   "conclusion": "failure",
+   "runs": [
+    "https://github.com/ZMS-Labs/epistemic-skills/actions/runs/32261092986"
+   ],
+   "note": "Dispatch-only, non-gating (`if: github.event_name == 'workflow_dispatch'` \u2014 cannot gate a PR); the disclosed es#162 measured instance, deterministic across rc2, rc3 and rc4 (KL-MACOS-162). Recorded so the aggregate red is never silently dropped."
+  },
+  "superseded-first-round-secret-scan": {
+   "conclusion": "failure",
+   "runs": [
+    "https://github.com/ZMS-Labs/epistemic-skills/actions/runs/32260127759"
+   ],
+   "note": "First rc4 dispatch round at superseded candidate 74c8314: one generic-api-key entropy false positive at docs/gauntlet-runs/es-v6-rc3-delta-review-2026-08-18/reports/verify-blast.json line 2 in immutable record commit 2d835b9 (a verifier evidence_log naming run ids next to the word API). Reproduced locally with the same pinned gitleaks v8.30.1, the line read and confirmed to hold only public identifiers. The re-cut candidate adds a rule-scoped allowlist for docs/gauntlet-runs/ with a planted narrowness control (same token fires outside the path, suppressed inside). Recorded so the superseded red is part of the freeze record, not laundered."
+  }
+ }
+}

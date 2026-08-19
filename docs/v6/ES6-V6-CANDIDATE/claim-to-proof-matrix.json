@@ -1,0 +1,1467 @@
+{
+  "schema": "claim-to-proof-matrix@1",
+  "program": "ES6-V6-CANDIDATE",
+  "exact_start_sha": "7408a462b413d0ab41a08de1d37a10b9cdf2a6ea",
+  "generated_at": "2026-08-19T14:01:58Z",
+  "claims": [
+    {
+      "id": "CLM-STDLIB-GATE",
+      "statement": "The epistemic-flexibility stdlib-checks job exercises every packaged skill contract and integration surface on push/PR to main.",
+      "authority": "RELEASING.md gate 5; .github/workflows/epistemic-flexibility.yml",
+      "subject": "commit 7408a462b413d0ab41a08de1d37a10b9cdf2a6ea",
+      "oracle": "cleanroom_ci.sh extracts BOTH single-line and block python steps with a completeness assertion (extraction divergence is FATAL; every skip is named) and all executable steps pass; GitHub stdlib-checks on a non-draft candidate.",
+      "falsifier": "A committed change to a gated surface passes push without triggering stdlib-checks or without failing a required step; or the clean-room replicates fewer steps than the workflow declares without naming the difference.",
+      "environment": "ubuntu-24.04 CI; clean-room Linux checkout",
+      "independence": "Workflow-declared steps; scorer/runner separation in eval harnesses",
+      "evidence_tier": "R1",
+      "status": "PROVED",
+      "release_consequence": "P1 \u2014 cannot tag without green stdlib-checks on exact candidate",
+      "owner": "agent",
+      "closure_path": "Local clean-room evidence this packet; required CI on non-draft PR",
+      "linked_issues": [
+        186,
+        191
+      ],
+      "evidence_paths": [
+        ".github/workflows/epistemic-flexibility.yml",
+        ".github/scripts/cleanroom_ci.sh",
+        "docs/v6/ES6-V6-CANDIDATE/evidence/clean-baseline.json",
+        "docs/v6/ES6-V6-CANDIDATE/evidence/requalification.json"
+      ],
+      "consequence_severity": "P1"
+    },
+    {
+      "id": "CLM-WF-PATH-COVERAGE",
+      "statement": "Workflows running whole-tree readers carry NO pull_request/push paths filter (R7 path A); scoped workflows' filters are supersets of their steps' inputs.",
+      "authority": "es#186 docket path-filter guard; ES6-ORACLE-AUDIT; gauntlet ruling R7",
+      "subject": "all .github/workflows/*.yml",
+      "oracle": "v6_audit_workflow_oracles.py exits 0 \u2014 both the uncovered-path rules and the path_filtered_whole_tree_reader rule \u2014 with planted RED controls in its self-test.",
+      "falsifier": "A change confined to a scanned-but-unlisted file does not dispatch the gate that reads it, or a whole-tree reader reappears behind a paths: filter without a finding.",
+      "environment": "repository static analysis",
+      "independence": "script distinct from workflow authors; planted controls prove the rules fire",
+      "evidence_tier": "R1",
+      "status": "PROVED",
+      "release_consequence": "P2 \u2014 silent skip risk on release gate suites",
+      "owner": "agent",
+      "closure_path": "Oracle audit 0 findings retained this packet",
+      "linked_issues": [
+        186,
+        191
+      ],
+      "evidence_paths": [
+        "docs/v6/ES6-V6-CANDIDATE/evidence/workflow-oracle-audit.json"
+      ],
+      "consequence_severity": "P2"
+    },
+    {
+      "id": "CLM-ORACLE-REJECT",
+      "statement": "The evidence system can reject a plausible wrong world, bounded to the checkers' planted-control batteries (live-behavioral mutation stays under CLM-BEHAVIORAL-EPOCHS).",
+      "authority": "#191 terminal contract",
+      "subject": "commit 7408a462b413d0ab41a08de1d37a10b9cdf2a6ea checker suites + custody suites",
+      "oracle": "Planted RED batteries across the gate: public-content (seeds + digest tamper), sync_skill_surfaces (7-case drift battery), check_no_phantom_skills (routing tables), check_skill_run_ledger, score_sentinels (both directions), workflow-oracle audit, ledger append-only, description budget, loaded-descriptions, v6 assurance validator \u2014 each fails closed on its planted case and clean on the honest control.",
+      "falsifier": "Any planted defect grades clean, or a checker's self-test passes with its rule inverted (e.g. the R15 scratch-patch RED-proof).",
+      "environment": "local Linux + CI ubuntu-24.04 + clean-room replication",
+      "independence": "scorer/runner separation; batteries run through the same code path as the live checks",
+      "evidence_tier": "R1",
+      "status": "PROVED",
+      "release_consequence": "P1 if oracles cannot fail",
+      "owner": "agent",
+      "closure_path": "Self-test steps wired in CI ahead of each live check",
+      "linked_issues": [
+        191
+      ],
+      "consequence_severity": "P1"
+    },
+    {
+      "id": "CLM-MC-HOOK-POSIX",
+      "statement": "mission-custody test_custody_hook.py POSIX branch runs in CI on ubuntu-24.04.",
+      "authority": ".github/workflows/mission-custody-contract.yml",
+      "subject": "plugins/epistemic-skills/contracts/mission-custody/test_custody_hook.py",
+      "oracle": "mission-custody-contract required job on non-draft PR/push to main.",
+      "falsifier": "Hook test file changes without mission-custody-contract workflow dispatch.",
+      "environment": "ubuntu-24.04",
+      "independence": "CI runner distinct from developer host",
+      "evidence_tier": "R1",
+      "status": "PROVED",
+      "release_consequence": "P1 for custody claims while candidate remains draft (job skipped)",
+      "owner": "agent",
+      "closure_path": "Local POSIX suite this packet; required CI after PR is marked ready",
+      "linked_issues": [
+        136,
+        137,
+        142
+      ],
+      "consequence_severity": "P1",
+      "evidence_paths": [
+        "docs/v6/ES6-V6-CANDIDATE/evidence/requalification.json"
+      ]
+    },
+    {
+      "id": "CLM-MC-MACOS-CASE",
+      "statement": "Custody artifact distinctness on case-insensitive APFS is DISCLOSED-DIVERGENT: the contract's deliberately ASCII-only fold keeps 'stra\u00dfe.txt'/'strasse.txt' distinct while APFS merges them under Unicode case folding \u2014 two contract-distinct artifacts, one physical file (measured).",
+      "authority": "es#162; mission-custody-contract contract-macos job",
+      "subject": "custody scope case fold + artifact distinctness on macos-14 APFS",
+      "oracle": "workflow_dispatch contract-macos: the es#162 ASCII probe passed, and the first full macOS lifecycle-suite execution measured the Unicode-fold instance \u2014 tests distinct-real-file-untouched and distinct-both-files-tracked-separately FAILED because writing the strasse.txt decoy clobbered stra\u00dfe.txt (run 32189655677, 2026-08-18).",
+      "falsifier": "The two named tests pass on a case-insensitive APFS runner without a disclosed contract change, or a PASS is recorded after writing secrets/ when scope.out lists Secrets/.",
+      "environment": "macos-14 workflow_dispatch only",
+      "independence": "dispatch-only diagnostic; not merge-gating per #190 lineage",
+      "evidence_tier": "R3",
+      "status": "LIMITED",
+      "release_consequence": "Disclosed limitation; the ASCII-only fold is the chosen fail direction (folding \u00df\u2192ss would cause silent custody loss on case-SENSITIVE systems); the platform-side merge is es#162's open work",
+      "owner": "agent",
+      "closure_path": "es#162 remains open, now carrying the measured Unicode-fold instance",
+      "linked_issues": [
+        162,
+        186
+      ],
+      "consequence_severity": "P3"
+    },
+    {
+      "id": "CLM-PUBLIC-CONTENT",
+      "statement": "Exact candidate public tree contains no disallowed private identifiers or user-specific paths outside exact-file allowlist.",
+      "authority": "RELEASING.md; es#105; check_public_content.py",
+      "subject": "commit 7408a462b413d0ab41a08de1d37a10b9cdf2a6ea public tree",
+      "oracle": "check_public_content.py --self-test and live run both exit 0; every allowlist exemption is digest-bound (R11: tampered bytes at an allowlisted path fail closed, planted control in the self-test).",
+      "falsifier": "Seeded private-repo id or user path pattern passes gate; a live scan hits a non-allowlisted file; or changed bytes at an allowlisted path pass without a digest review.",
+      "environment": "CI + exact-candidate review record",
+      "independence": "checker distinct from content author",
+      "evidence_tier": "R1",
+      "status": "PROVED",
+      "release_consequence": "P1 \u2014 item 6b required for v6",
+      "owner": "agent",
+      "closure_path": "Exact-file allowlist is digest-bound (allowlist-stale fails closed); entries for the ES6-ZI-001 coordinates and the D7 gauntlet record are reviewable acts; #105/#145 residue still open",
+      "linked_issues": [
+        105,
+        145
+      ],
+      "consequence_severity": "P1",
+      "evidence_paths": [
+        "docs/v6/ES6-V6-CANDIDATE/evidence/requalification.json"
+      ]
+    },
+    {
+      "id": "CLM-V5-DESIGN-COMMITMENTS",
+      "statement": "Every approved v5 design commitment is implemented on this candidate per operator decision D3 (implement all); the four per-commitment rows below carry the evidence.",
+      "authority": "es#104; v5 design spec; operator decision D3 (echo-certified)",
+      "subject": "ROUTING.md, intrinsic ledgers, sentinel corpora, structural membership",
+      "oracle": "CLM-V5-ROUTING, CLM-V5-LEDGERS, CLM-V5-SENTINELS, CLM-V5-MEMBERSHIP all PROVED; spec AMENDMENT 2026-08-18 reconciles residual wording.",
+      "falsifier": "Any per-commitment row is not PROVED, or a public doc promises an artifact that does not exist and is not marked retired.",
+      "environment": "repository + operator decision record",
+      "independence": "operator decided the path; CI checks verify the implementations",
+      "evidence_tier": "R1",
+      "status": "PROVED",
+      "release_consequence": "Was the successor-GO blocker until D3; discharged by implementation",
+      "owner": "agent",
+      "closure_path": "docs/v6/operator-decision-record-2026-08-18.md (D3) + the four child rows",
+      "linked_issues": [
+        104
+      ],
+      "consequence_severity": "P1"
+    },
+    {
+      "id": "CLM-V5-ROUTING",
+      "statement": "ROUTING.md is generated solely from metadata.hands-to, byte-verified in CI, and the hand-authored-routing-table ban is mechanically enforced.",
+      "authority": "v5 design spec (Routing is generated, never authored) + AMENDMENTS 2026-08-07/2026-08-18",
+      "subject": "plugins/epistemic-skills/ROUTING.md + all markdown surfaces",
+      "oracle": "sync_skill_surfaces.py --check byte-compares the rendering; check_no_phantom_skills.py rule 3 rejects routing-column tables outside ROUTING.md; both self-tests carry planted RED controls.",
+      "falsifier": "A hands-to edit does not surface as ROUTING_DRIFT, or a planted hand-authored routing table passes rule 3.",
+      "environment": "CI ubuntu-24.04 + clean-room replication",
+      "independence": "byte-equality re-rendering, not the generator's own green",
+      "evidence_tier": "R1",
+      "status": "PROVED",
+      "release_consequence": "Routing enumeration tax stays deleted",
+      "owner": "agent",
+      "closure_path": "Checks green this candidate; first live catch (write-goal two-home drift) fixed same day",
+      "linked_issues": [
+        104
+      ],
+      "consequence_severity": "P2"
+    },
+    {
+      "id": "CLM-V5-LEDGERS",
+      "statement": "Every packaged skill carries the intrinsic evidence-emission step (skill-run@1) with a schema-validated tracked exemplar; live ledgers are runtime-local by amended design.",
+      "authority": "v5 design spec (Evidence emission, intrinsic) + AMENDMENT 2026-08-18 (storage class)",
+      "subject": "all 15 SKILL.md files + contracts/skill-run-ledger.schema.json + runs/ledger.example.jsonl",
+      "oracle": "check_skill_run_ledger.py green (rules derived from the schema at run time; gauntlet's ledger@2 exception explicit) with planted RED self-tests.",
+      "falsifier": "A skill lacks the emission step or a valid exemplar and the check stays green.",
+      "environment": "CI ubuntu-24.04 + clean-room replication",
+      "independence": "checker derives rules from the schema; no second copy of the contract",
+      "evidence_tier": "R1",
+      "status": "PROVED",
+      "release_consequence": "Run evidence exists by construction of each skill's own procedure",
+      "owner": "agent",
+      "closure_path": "Checks green this candidate",
+      "linked_issues": [
+        104
+      ],
+      "consequence_severity": "P2"
+    },
+    {
+      "id": "CLM-V5-SENTINELS",
+      "statement": "Sentinel corpora exist for every skill with event_kind bound into each fixture and a scorer that fails closed in both directions.",
+      "authority": "v5 design spec (Verification: RED before green)",
+      "subject": "contracts/epistemic-events/sentinels/*.json + score_sentinels.py",
+      "oracle": "score_sentinels.py green; --self-test exercises the shared event_kind_violation rule in REJECT and ACCEPT directions.",
+      "falsifier": "A sentinel with a wrong event kind grades clean, or the self-test passes with the rule inverted.",
+      "environment": "CI ubuntu-24.04 + clean-room replication",
+      "independence": "scorer distinct from fixture authors; shared rule exercised from both sides",
+      "evidence_tier": "R1",
+      "status": "PROVED",
+      "release_consequence": "Sentinel oracles cannot pass vacuously",
+      "owner": "agent",
+      "closure_path": "Checks green this candidate",
+      "linked_issues": [
+        104
+      ],
+      "consequence_severity": "P2"
+    },
+    {
+      "id": "CLM-V5-MEMBERSHIP",
+      "statement": "Skill membership has one source of truth: per-skill frontmatter event metadata derives skill-event-map.json, its schema, the verifier inventory, and every count surface; membership drift fails closed.",
+      "authority": "v5 design spec (structural membership) \u2014 es#104 s4 Option A",
+      "subject": "15 SKILL.md frontmatters + contracts/epistemic-events/skill-event-map.json + derived surfaces",
+      "oracle": "sync_skill_surfaces.py --check green; --self-test plants MAP/SCHEMA/ROUTING/COUNT drift, EVENT_METADATA_MISSING, HANDS_TO_UNKNOWN, and an unregistered-new-skill case \u2014 all must fail closed.",
+      "falsifier": "A skill added without regeneration passes --check, or any planted battery case grades clean.",
+      "environment": "CI ubuntu-24.04 + clean-room replication",
+      "independence": "byte-equality re-rendering against the frontmatter source",
+      "evidence_tier": "R1",
+      "status": "PROVED",
+      "release_consequence": "A second hand-maintained membership home cannot drift",
+      "owner": "agent",
+      "closure_path": "Checks green this candidate",
+      "linked_issues": [
+        104
+      ],
+      "consequence_severity": "P2"
+    },
+    {
+      "id": "CLM-RELEASE-AUTH",
+      "statement": "Publication requires explicit owner authorization recorded before tag creation; the authorization regime is decided (disarm-as-authorization, operator decision D6).",
+      "authority": "PR #156 (merged, D1-ratified); RELEASING.md step 7; operator decision D6 (echo-certified)",
+      "subject": "refs/tags/v* creation",
+      "oracle": "Committed release notes name verdict, exact SHA, owner; protect-version-tags keeps zero bypass actors; the documented disarm -> tag -> re-arm-with-seeded-probe procedure IS the authorization act (D6).",
+      "falsifier": "Tag created without the authorization procedure, or the ruleset carries a bypass actor, or is left disarmed outside an authorized window.",
+      "environment": "GitHub ruleset + release notes",
+      "independence": "operator authorization; ruleset state live-verified",
+      "evidence_tier": "R0",
+      "status": "PROVED",
+      "release_consequence": "PROMOTION remains a separate operator act; the mechanism question is closed",
+      "owner": "operator",
+      "closure_path": "D6 recorded; execution occurs only inside a PROMOTION_RUN",
+      "linked_prs": [
+        156,
+        190
+      ],
+      "linked_issues": [
+        186
+      ],
+      "consequence_severity": "P1"
+    },
+    {
+      "id": "CLM-BEHAVIORAL-EPOCHS",
+      "statement": "Every BLOCKED/absent behavioral battery has dated live-epoch evidence, including a valid four-arm superiority run.",
+      "authority": "es#77; es#39; EVIDENCE-POLICY.md",
+      "subject": "evals/**/results live epochs",
+      "oracle": "Dated epoch directories with independent scores, not fixture-only green.",
+      "falsifier": "A BLOCKED battery is cited as PASS, or a four-arm run is absent while claimed complete.",
+      "environment": "gate:live-environment",
+      "independence": "live harness distinct from fixture scorer self-tests",
+      "evidence_tier": "R3",
+      "status": "LIMITED",
+      "release_consequence": "Cannot claim behavioral completeness",
+      "owner": "agent",
+      "closure_path": "Later evidence-process packet in a live environment",
+      "linked_issues": [
+        77,
+        39
+      ],
+      "consequence_severity": "P2"
+    },
+    {
+      "id": "CLM-HARNESS-LIVE",
+      "statement": "Native harness bindings are verified from captured payloads or explicit verification tiers, not docs prose alone.",
+      "authority": "RELEASING.md harness-evidence gate; es#136/#129/#142",
+      "subject": "Claude/Cursor/Codex/Gemini/Antigravity hook adapters",
+      "oracle": "Captured payloads or recorded verification tier per harness in release notes.",
+      "falsifier": "A harness claimed verified while only docs-shaped fixtures exist.",
+      "environment": "native harness hosts",
+      "independence": "payloads from the running harness, not reconstructed",
+      "evidence_tier": "R3",
+      "status": "LIMITED",
+      "release_consequence": "Harness claims must degrade to named tiers",
+      "owner": "agent",
+      "closure_path": "Live-fire packet; until then disclose LIMIT",
+      "linked_issues": [
+        136,
+        129,
+        142
+      ],
+      "consequence_severity": "P2"
+    },
+    {
+      "id": "CLM-INDEPENDENT-GAUNTLET",
+      "statement": "An isolated independent Gauntlet computes GO on the exact candidate with no unresolved P1/P2 release blockers.",
+      "authority": "#191 terminal contract; RELEASING.md independent judgment gate",
+      "subject": "commit 7408a462b413d0ab41a08de1d37a10b9cdf2a6ea",
+      "oracle": "Recorded GO by a fresh seat that did not produce the candidate, BOUND to a run id, an on-disk verdict artifact, and this exact SHA (independent_gauntlet_ref). A bare enum flip in this packet is not a verdict (R1).",
+      "falsifier": "The implementer records GO; GO is recorded against a different SHA; or the enum says GO with no matching verdict artifact on disk.",
+      "environment": "isolated independent panel",
+      "independence": "No actor certifies its own acceptance",
+      "evidence_tier": "R0",
+      "status": "UNPROVED",
+      "release_consequence": "Blocks V6_CANDIDATE_READY_FOR_OPERATOR_ACCEPTANCE",
+      "owner": "independent-panel",
+      "closure_path": "Operator-dispatched independent Gauntlet on this packet's SHA",
+      "linked_issues": [
+        191,
+        40
+      ],
+      "consequence_severity": "P1"
+    },
+    {
+      "id": "CLM-DISPOSITION-CENSUS",
+      "statement": "Every currently open issue and PR carries an explicit, human-read disposition in the reconciliation artifact (a census claim; per-item substance lives in the individual rows).",
+      "authority": "#191 required reconciliation (census limb); gauntlet ruling R6",
+      "subject": "open GitHub issues and PRs at generation time",
+      "oracle": "issue-pr-reconciliation.json item count equals the live open tracker count; each item has phase+disposition+owner; generation fails closed on any item without an explicit map entry.",
+      "falsifier": "An open issue/PR is absent from the reconciliation, present with no disposition, or generation succeeded despite an item missing from the disposition maps.",
+      "environment": "GitHub Issues/PR API + committed JSON",
+      "independence": "generator reads the live tracker, not a remembered list",
+      "evidence_tier": "R1",
+      "status": "PROVED",
+      "release_consequence": "P2 if the freeze drifts from the live tracker",
+      "owner": "agent",
+      "closure_path": "Regenerate this packet if the open set changes",
+      "linked_issues": [
+        191
+      ],
+      "evidence_paths": [
+        "docs/v6/ES6-V6-CANDIDATE/issue-pr-reconciliation.json"
+      ],
+      "consequence_severity": "P2"
+    },
+    {
+      "id": "CLM-REQUIRED-JOB",
+      "statement": "Across all six workflows, merge-gating jobs are named, skip on draft PRs, and DISPATCH when a draft is marked ready; dispatch-only diagnostics are documented as non-gating.",
+      "authority": "RELEASING.md required-job semantics; PR #190 (D1-ratified); gauntlet ruling R8",
+      "subject": "all six .github/workflows/*.yml: epistemic-flexibility stdlib-checks; mission-custody contract (+dispatch-only contract-macos); commission-watch contract; openai-bundles build; release-security full-history-secret-scan; dco",
+      "oracle": "Every gating workflow declares pull_request types [opened, synchronize, reopened, ready_for_review]; the R8 ready-mark drill dispatched all five gating workflows at an unchanged head; contract-macos remains workflow_dispatch only.",
+      "falsifier": "A ready-marked draft fails to dispatch any gating workflow at the same head, a dispatch-only job is treated as required, or a required job runs on a draft PR.",
+      "environment": "repository workflows + RELEASING.md + live drill",
+      "independence": "drill evidence from GitHub's own run records, not workflow prose",
+      "evidence_tier": "R1",
+      "status": "PROVED",
+      "release_consequence": "P2 if required-job semantics drift",
+      "owner": "agent",
+      "closure_path": "docs/v6/evidence/r8-ready-mark-drill-2026-08-18.md; re-audit if workflow if:/types change",
+      "linked_issues": [
+        186,
+        191
+      ],
+      "linked_prs": [
+        190
+      ],
+      "consequence_severity": "P2"
+    },
+    {
+      "id": "CLM-WINDOWS-FS",
+      "statement": "Custody path-scope and hook behavior are verified on native Windows.",
+      "authority": "#191 terminal contract (Windows evidence)",
+      "subject": "mission-custody hook/gate path comparison on NT",
+      "oracle": "Native Windows run of test_custody_hook.py and related suites with recorded SHA.",
+      "falsifier": "A POSIX-only green is cited as Windows coverage.",
+      "environment": "native Windows (not this Linux BUILD host)",
+      "independence": "OS distinct from the Linux CI runner",
+      "evidence_tier": "R3",
+      "status": "LIMITED",
+      "release_consequence": "Windows claims remain disclosed-limited until a native run is retained",
+      "owner": "agent",
+      "closure_path": "Later evidence-process packet on a Windows host",
+      "linked_issues": [
+        162,
+        191
+      ],
+      "consequence_severity": "P3"
+    },
+    {
+      "id": "CLM-MC-137",
+      "statement": "The three P1 false-allow bypasses and four P2 refusal gaps from es#137 are closed in THIS CANDIDATE TREE (main's exposure is disclosed separately as KL-MAIN-137).",
+      "authority": "es#137",
+      "subject": "mission-custody hook/gate/validator/CLI/API on this candidate",
+      "oracle": "Named acceptance tests green in the full mission-custody-contract suite on this tree.",
+      "falsifier": "Any of the seven named tests fail on this candidate tree.",
+      "environment": "local Linux custody suite; CI ubuntu-24.04 when not draft",
+      "independence": "suite is not the production hook process",
+      "evidence_tier": "R1",
+      "status": "PROVED",
+      "release_consequence": "P1 false-allows remain on main until an operator merge \u2014 carried as KL-MAIN-137, not hidden inside this row's status",
+      "owner": "agent",
+      "closure_path": "Suite green this candidate; operator merge of this candidate or of #193 retires the main exposure",
+      "linked_issues": [
+        137
+      ],
+      "linked_prs": [
+        193
+      ],
+      "consequence_severity": "P1"
+    },
+    {
+      "id": "CLM-SECRET-SCAN",
+      "statement": "The full git history of the candidate contains no credential-shaped secrets (release-security full-history-secret-scan).",
+      "authority": "RELEASING.md gate 6; .github/workflows/release-security.yml",
+      "subject": "commit 7408a462b413d0ab41a08de1d37a10b9cdf2a6ea full history",
+      "oracle": "release-security full-history-secret-scan job green on the candidate head (dispatches on ready PRs and pushes; verified dispatching by the R8 ready-mark drill).",
+      "falsifier": "A seeded credential in a historical commit passes the scan, or the job never executes on the candidate.",
+      "environment": "ubuntu-24.04 CI",
+      "independence": "scanner distinct from content authors",
+      "evidence_tier": "R1",
+      "status": "PROVED",
+      "release_consequence": "P1 \u2014 required security-class surface; unclaimed/unrun was gauntlet ruling R2",
+      "owner": "agent",
+      "closure_path": "Requalification run URLs on the exact candidate recorded in evidence at freeze",
+      "linked_issues": [
+        191
+      ],
+      "consequence_severity": "P1",
+      "evidence_paths": [
+        "docs/v6/ES6-V6-CANDIDATE/evidence/requalification.json"
+      ]
+    },
+    {
+      "id": "CLM-COMPATIBILITY",
+      "statement": "Every packaging surface (Claude/Cursor/Kimi/Codex/Gemini manifests, OpenAI bundles, count words, skill inventories) is generated-or-verified in sync with the packaged tree.",
+      "authority": "es#191 terminal contract (compatibility claims); gauntlet ruling R14 (compatibility class was unclaimed)",
+      "subject": "commit 7408a462b413d0ab41a08de1d37a10b9cdf2a6ea manifests + bundles + inventory surfaces",
+      "oracle": "check_json_artifacts.py, sync_skill_surfaces.py --check, check_skill_inventory.py, and build_openai_bundles.py --check all exit 0.",
+      "falsifier": "A manifest names a skill count or member that the packaged tree does not carry, or a bundle build diverges from the packaged skills.",
+      "environment": "repository static analysis + CI",
+      "independence": "generators verified by byte-equality re-rendering, not by their own output",
+      "evidence_tier": "R1",
+      "status": "PROVED",
+      "release_consequence": "P2 \u2014 installers receive stale surfaces on drift",
+      "owner": "agent",
+      "closure_path": "Checks green this candidate; regenerate on any membership change",
+      "linked_issues": [
+        191
+      ],
+      "consequence_severity": "P2"
+    },
+    {
+      "id": "CLM-MC-GUARD-LEXICAL",
+      "statement": "Custody guard path matching is lexical and can diverge from filesystem resolution through symlinked parents; the divergence is disclosed, pinned by a characterization test, and unchanged this epoch.",
+      "authority": "Gauntlet ruling R15 (run es-v6-candidate-freeze-2026-08-18); PR #128 safe-direction analysis",
+      "subject": "custody_gate _guard_norm_path matching semantics",
+      "oracle": "test_guard_match_is_lexical_symlinked_parent_diverges green (RED-proven against a scratch resolution-aware patch); SECURITY.md section present.",
+      "falsifier": "The probe's divergence case stops reproducing without a disclosed semantics change, or the pin test is deleted/weakened.",
+      "environment": "POSIX symlink-capable checkout; NT skips loudly",
+      "independence": "characterization pin distinct from the production gate code",
+      "evidence_tier": "R1",
+      "status": "LIMITED",
+      "release_consequence": "Guard globs bound spellings, not filesystem effects \u2014 disclosed in SECURITY.md",
+      "owner": "agent",
+      "closure_path": "docs/v6/evidence/r15-guard-lexical-probe-2026-08-18.md; resolution-aware matching is a future contract-epoch decision",
+      "linked_issues": [
+        137,
+        147
+      ],
+      "consequence_severity": "P3"
+    },
+    {
+      "id": "CLM-DESCRIPTION-BUDGET",
+      "statement": "The packaged description byte ceiling is enforced (check_description_budget.py); the ESTATE net-negative release gate is RETIRED by recorded operator ruling (hybrid Path 2): the package-local ceiling stays a hard CI gate, every release's notes report the description-byte delta vs the prior release (RELEASING.md), and check_loaded_descriptions.py --require-capture remains available for on-demand estate measurement.",
+      "authority": "v5 design AMENDMENT 2026-08-07 (D8 dual scope) as resolved by the owner AMENDMENT 2026-08-18 (hybrid form) under the operator's recorded ruling, ledger id v6-description-budget-hybrid-path2-20260818-17",
+      "subject": "packaged SKILL.md description frontmatter bytes; estate release-gate status",
+      "oracle": "check_description_budget.py green (package ceiling); the 'AMENDMENT 2026-08-18 \u2014 the D8 estate fork is resolved' section present in docs/superpowers/specs/2026-08-06-epistemic-skills-v5-design.md; the RELEASING.md description-byte-delta row present; .ledger/entries.jsonl carries entry v6-description-budget-hybrid-path2-20260818-17.",
+      "falsifier": "Package bytes exceed the ceiling; or any of the amendment section, the RELEASING.md delta row, or the ledger ruling entry is absent from this tree; or a release ships without the delta report the amendment promises.",
+      "environment": "CI (package ceiling); repository record (amendment + RELEASING.md + ledger)",
+      "independence": "budget checker distinct from description authors; the ruling is the operator's own recorded act",
+      "evidence_tier": "R1",
+      "status": "PROVED",
+      "release_consequence": "The estate acceptance line no longer gates v6.0; the package ceiling still fails CI closed on any overrun; each release must carry the delta report per RELEASING.md",
+      "owner": "operator",
+      "closure_path": "Completed act: operator ruling recorded (ledger 17) and the Path-2 amendment landed in-tree; per-release delta reporting is a standing RELEASING.md procedure",
+      "linked_issues": [
+        104,
+        191
+      ],
+      "consequence_severity": "P2"
+    },
+    {
+      "id": "CLM-MERGE-190",
+      "statement": "The BUILD-window merge of PR #190 (required-job semantics) to main is an operator-ratified act.",
+      "authority": "Operator decision D1, echo-certified (docs/v6/operator-decision-record-2026-08-18.md; ratified object at commit d7c4178)",
+      "subject": "PR #190 merge to main, 2026-08-18",
+      "oracle": "The decision record is present in the tree with its certification section; D1 names #190 explicitly.",
+      "falsifier": "The record is absent, its certification fails re-verification, or the operator reverses the ratification.",
+      "environment": "repository record + live tracker",
+      "independence": "ratification is the operator's own echo-certified act, not agent-authored consent",
+      "evidence_tier": "R0",
+      "status": "PROVED",
+      "release_consequence": "P1 \u2014 unresolved merge consent was gauntlet ruling R3's cap on every acceptance path",
+      "owner": "operator",
+      "closure_path": "Discharged by D1 upon echo certification; packet-disclosure limb is this row",
+      "linked_prs": [
+        190
+      ],
+      "consequence_severity": "P1"
+    },
+    {
+      "id": "CLM-MERGE-156",
+      "statement": "The BUILD-window merge of PR #156 (publication-authorization step) to main is an operator-ratified act.",
+      "authority": "Operator decision D1, echo-certified (docs/v6/operator-decision-record-2026-08-18.md; ratified object at commit d7c4178)",
+      "subject": "PR #156 merge to main, 2026-08-18",
+      "oracle": "The decision record is present in the tree with its certification section; D1 names #156 explicitly.",
+      "falsifier": "The record is absent, its certification fails re-verification, or the operator reverses the ratification.",
+      "environment": "repository record + live tracker",
+      "independence": "ratification is the operator's own echo-certified act, not agent-authored consent",
+      "evidence_tier": "R0",
+      "status": "PROVED",
+      "release_consequence": "P1 \u2014 unresolved merge consent was gauntlet ruling R3's cap on every acceptance path",
+      "owner": "operator",
+      "closure_path": "Discharged by D1 upon echo certification; packet-disclosure limb is this row",
+      "linked_prs": [
+        156
+      ],
+      "consequence_severity": "P1"
+    },
+    {
+      "id": "CLM-MERGE-192",
+      "statement": "The BUILD-window merge of PR #192 (ES6-ZI-001 baseline; this candidate lineage's base) to main is an operator-ratified act.",
+      "authority": "Operator decision D1, echo-certified (docs/v6/operator-decision-record-2026-08-18.md; ratified object at commit d7c4178)",
+      "subject": "PR #192 merge to main, 2026-08-18",
+      "oracle": "The decision record is present in the tree with its certification section; D1 names #192 explicitly.",
+      "falsifier": "The record is absent, its certification fails re-verification, or the operator reverses the ratification.",
+      "environment": "repository record + live tracker",
+      "independence": "ratification is the operator's own echo-certified act, not agent-authored consent",
+      "evidence_tier": "R0",
+      "status": "PROVED",
+      "release_consequence": "P1 \u2014 unresolved merge consent was gauntlet ruling R3's cap on every acceptance path; #192 appeared in no packet artifact at the NO-GO subject",
+      "owner": "operator",
+      "closure_path": "Discharged by D1 upon echo certification; packet-disclosure limb is this row",
+      "linked_prs": [
+        192
+      ],
+      "consequence_severity": "P1"
+    },
+    {
+      "id": "CLM-ISSUE-191",
+      "statement": "v6.0 assurance program: exact-candidate qualification and two-stage release gate",
+      "authority": "es#191",
+      "subject": "issue 191",
+      "oracle": "Parent v6 program; this packet is the BUILD freeze.",
+      "falsifier": "Disposition is stale relative to the live tracker or the cited evidence does not exist.",
+      "environment": "GitHub tracker + candidate tree",
+      "independence": "disposition recorded separately from implementation",
+      "evidence_tier": "R1",
+      "status": "UNPROVED",
+      "release_consequence": "Parent v6 program; this packet is the BUILD freeze.",
+      "consequence_severity": "P3",
+      "owner": "program",
+      "closure_path": "reconcile-in-matrix",
+      "linked_issues": [
+        191
+      ],
+      "linked_prs": []
+    },
+    {
+      "id": "CLM-ISSUE-186",
+      "statement": "v5.1.0 post-tag docket: content-gate patterns, allowlist narrowing, wiki packet, tag-ruleset decision, es#162",
+      "authority": "es#186",
+      "subject": "issue 186",
+      "oracle": "Operator decision D6: disarm-as-authorization confirmed as the v6.0.0 regime (zero bypass actors; RELEASING.md step 7 procedure IS the authorization act). Remaining docket items (wiki packet) are PROMOTION-owned.",
+      "falsifier": "Disposition is stale relative to the live tracker or the cited evidence does not exist.",
+      "environment": "GitHub tracker + candidate tree",
+      "independence": "disposition recorded separately from implementation",
+      "evidence_tier": "R1",
+      "status": "PARTIAL",
+      "release_consequence": "Operator decision D6: disarm-as-authorization confirmed as the v6.0.0 regime (zero bypass actors; RELEASING.md step 7 procedure IS the authorization act). Remaining docket items (wiki packet) are PROMOTION-owned.",
+      "consequence_severity": "P3",
+      "owner": "operator+agent",
+      "closure_path": "decided-disarm-as-authorization",
+      "linked_issues": [
+        186
+      ],
+      "linked_prs": []
+    },
+    {
+      "id": "CLM-ISSUE-173",
+      "statement": "mission-custody: one-active-mission-per-workspace is too strict \u2014 concurrent missions targeting the same repo must coexist, cohere, and coordinate",
+      "authority": "es#173",
+      "subject": "issue 173",
+      "oracle": "Concurrent missions; naive relaxation fail-opens Stage-C.",
+      "falsifier": "Disposition is stale relative to the live tracker or the cited evidence does not exist.",
+      "environment": "GitHub tracker + candidate tree",
+      "independence": "disposition recorded separately from implementation",
+      "evidence_tier": "R1",
+      "status": "UNPROVED",
+      "release_consequence": "Concurrent missions; naive relaxation fail-opens Stage-C.",
+      "consequence_severity": "P3",
+      "owner": "agent",
+      "closure_path": "implement-when-unblocked",
+      "linked_issues": [
+        173
+      ],
+      "linked_prs": []
+    },
+    {
+      "id": "CLM-ISSUE-170",
+      "statement": "mission-custody: NT strips trailing dots from filenames \u2014 a pattern-side seam the cross-platform normaliser deliberately does not fold",
+      "authority": "es#170",
+      "subject": "issue 170",
+      "oracle": "Mission-custody residue; disclosed seam/defect, not implemented on this candidate (2026-08-18 reconciliation sweep).",
+      "falsifier": "Disposition is stale relative to the live tracker or the cited evidence does not exist.",
+      "environment": "GitHub tracker + candidate tree",
+      "independence": "disposition recorded separately from implementation",
+      "evidence_tier": "R1",
+      "status": "UNPROVED",
+      "release_consequence": "Mission-custody residue; disclosed seam/defect, not implemented on this candidate (2026-08-18 reconciliation sweep).",
+      "consequence_severity": "P3",
+      "owner": "agent",
+      "closure_path": "implement-when-unblocked",
+      "linked_issues": [
+        170
+      ],
+      "linked_prs": []
+    },
+    {
+      "id": "CLM-ISSUE-169",
+      "statement": "mission-custody: parent-mkdir before a failing write leaves unreceipted directory mutation; permission failures on acceptance probes degrade to silent None",
+      "authority": "es#169",
+      "subject": "issue 169",
+      "oracle": "Mission-custody residue; disclosed seam/defect, not implemented on this candidate (2026-08-18 reconciliation sweep).",
+      "falsifier": "Disposition is stale relative to the live tracker or the cited evidence does not exist.",
+      "environment": "GitHub tracker + candidate tree",
+      "independence": "disposition recorded separately from implementation",
+      "evidence_tier": "R1",
+      "status": "UNPROVED",
+      "release_consequence": "Mission-custody residue; disclosed seam/defect, not implemented on this candidate (2026-08-18 reconciliation sweep).",
+      "consequence_severity": "P3",
+      "owner": "agent",
+      "closure_path": "implement-when-unblocked",
+      "linked_issues": [
+        169
+      ],
+      "linked_prs": []
+    },
+    {
+      "id": "CLM-ISSUE-168",
+      "statement": "custody_gate: operator-authored command_regexes keep Python's `$` one-newline tolerance \u2014 the anchor fix's disclosed twin",
+      "authority": "es#168",
+      "subject": "issue 168",
+      "oracle": "Mission-custody residue; disclosed seam/defect, not implemented on this candidate (2026-08-18 reconciliation sweep).",
+      "falsifier": "Disposition is stale relative to the live tracker or the cited evidence does not exist.",
+      "environment": "GitHub tracker + candidate tree",
+      "independence": "disposition recorded separately from implementation",
+      "evidence_tier": "R1",
+      "status": "UNPROVED",
+      "release_consequence": "Mission-custody residue; disclosed seam/defect, not implemented on this candidate (2026-08-18 reconciliation sweep).",
+      "consequence_severity": "P3",
+      "owner": "agent",
+      "closure_path": "implement-when-unblocked",
+      "linked_issues": [
+        168
+      ],
+      "linked_prs": []
+    },
+    {
+      "id": "CLM-ISSUE-167",
+      "statement": "mission-custody: invisible-but-printable characters in identities \u2014 the residual the ingestion guard cannot close",
+      "authority": "es#167",
+      "subject": "issue 167",
+      "oracle": "Mission-custody residue; disclosed seam/defect, not implemented on this candidate (2026-08-18 reconciliation sweep).",
+      "falsifier": "Disposition is stale relative to the live tracker or the cited evidence does not exist.",
+      "environment": "GitHub tracker + candidate tree",
+      "independence": "disposition recorded separately from implementation",
+      "evidence_tier": "R1",
+      "status": "UNPROVED",
+      "release_consequence": "Mission-custody residue; disclosed seam/defect, not implemented on this candidate (2026-08-18 reconciliation sweep).",
+      "consequence_severity": "P3",
+      "owner": "agent",
+      "closure_path": "implement-when-unblocked",
+      "linked_issues": [
+        167
+      ],
+      "linked_prs": []
+    },
+    {
+      "id": "CLM-ISSUE-166",
+      "statement": "The envelope is used when the work is file-shaped and abandoned when it is not \u2014 scope is EMPTY on the estate's biggest live mission",
+      "authority": "es#166",
+      "subject": "issue 166",
+      "oracle": "Non-file envelope; scope empty on live mission.",
+      "falsifier": "Disposition is stale relative to the live tracker or the cited evidence does not exist.",
+      "environment": "GitHub tracker + candidate tree",
+      "independence": "disposition recorded separately from implementation",
+      "evidence_tier": "R1",
+      "status": "UNPROVED",
+      "release_consequence": "Non-file envelope; scope empty on live mission.",
+      "consequence_severity": "P3",
+      "owner": "agent",
+      "closure_path": "implement-when-unblocked",
+      "linked_issues": [
+        166
+      ],
+      "linked_prs": []
+    },
+    {
+      "id": "CLM-ISSUE-165",
+      "statement": "codex-scan on PR #143: NULL RESULT \u2014 both scans hit the $15 cap before producing findings (and the scoped scan cost MORE than the diff)",
+      "authority": "es#165",
+      "subject": "issue 165",
+      "oracle": "Codex scan null at cap; not clean coverage.",
+      "falsifier": "Disposition is stale relative to the live tracker or the cited evidence does not exist.",
+      "environment": "GitHub tracker + candidate tree",
+      "independence": "disposition recorded separately from implementation",
+      "evidence_tier": "R1",
+      "status": "LIMITED",
+      "release_consequence": "Codex scan null at cap; not clean coverage.",
+      "consequence_severity": "P3",
+      "owner": "agent",
+      "closure_path": "close-when-evidence",
+      "linked_issues": [
+        165
+      ],
+      "linked_prs": []
+    },
+    {
+      "id": "CLM-ISSUE-164",
+      "statement": "mission-custody: deleting a hard-linked alias before acceptance erases the MULTIPLY LINKED finding -- bind st_nlink at write time (rides #147's record-kind revision)",
+      "authority": "es#164",
+      "subject": "issue 164",
+      "oracle": "Mission-custody residue; disclosed seam/defect, not implemented on this candidate (2026-08-18 reconciliation sweep).",
+      "falsifier": "Disposition is stale relative to the live tracker or the cited evidence does not exist.",
+      "environment": "GitHub tracker + candidate tree",
+      "independence": "disposition recorded separately from implementation",
+      "evidence_tier": "R1",
+      "status": "UNPROVED",
+      "release_consequence": "Mission-custody residue; disclosed seam/defect, not implemented on this candidate (2026-08-18 reconciliation sweep).",
+      "consequence_severity": "P3",
+      "owner": "agent",
+      "closure_path": "implement-when-unblocked",
+      "linked_issues": [
+        164
+      ],
+      "linked_prs": []
+    },
+    {
+      "id": "CLM-ISSUE-163",
+      "statement": "mission-custody: the advertised --scope-ack command is not paste-safe for every legal path",
+      "authority": "es#163",
+      "subject": "issue 163",
+      "oracle": "Mission-custody residue; disclosed seam/defect, not implemented on this candidate (2026-08-18 reconciliation sweep).",
+      "falsifier": "Disposition is stale relative to the live tracker or the cited evidence does not exist.",
+      "environment": "GitHub tracker + candidate tree",
+      "independence": "disposition recorded separately from implementation",
+      "evidence_tier": "R1",
+      "status": "UNPROVED",
+      "release_consequence": "Mission-custody residue; disclosed seam/defect, not implemented on this candidate (2026-08-18 reconciliation sweep).",
+      "consequence_severity": "P3",
+      "owner": "agent",
+      "closure_path": "implement-when-unblocked",
+      "linked_issues": [
+        163
+      ],
+      "linked_prs": []
+    },
+    {
+      "id": "CLM-ISSUE-162",
+      "statement": "mission-custody: scope matching assumes every non-Windows filesystem is case-sensitive (macOS default is not)",
+      "authority": "es#162",
+      "subject": "issue 162",
+      "oracle": "macOS default APFS case-insensitivity; dispatch-only probe.",
+      "falsifier": "Disposition is stale relative to the live tracker or the cited evidence does not exist.",
+      "environment": "GitHub tracker + candidate tree",
+      "independence": "disposition recorded separately from implementation",
+      "evidence_tier": "R1",
+      "status": "UNPROVED",
+      "release_consequence": "macOS default APFS case-insensitivity; dispatch-only probe.",
+      "consequence_severity": "P3",
+      "owner": "agent",
+      "closure_path": "implement-when-unblocked",
+      "linked_issues": [
+        162
+      ],
+      "linked_prs": []
+    },
+    {
+      "id": "CLM-ISSUE-161",
+      "statement": "mission-custody: closing a mission is quadratic in receipts (41.5 s at 800) -- build the id-to-path map in one traversal",
+      "authority": "es#161",
+      "subject": "issue 161",
+      "oracle": "Mission-custody residue; disclosed seam/defect, not implemented on this candidate (2026-08-18 reconciliation sweep).",
+      "falsifier": "Disposition is stale relative to the live tracker or the cited evidence does not exist.",
+      "environment": "GitHub tracker + candidate tree",
+      "independence": "disposition recorded separately from implementation",
+      "evidence_tier": "R1",
+      "status": "UNPROVED",
+      "release_consequence": "Mission-custody residue; disclosed seam/defect, not implemented on this candidate (2026-08-18 reconciliation sweep).",
+      "consequence_severity": "P3",
+      "owner": "agent",
+      "closure_path": "implement-when-unblocked",
+      "linked_issues": [
+        161
+      ],
+      "linked_prs": []
+    },
+    {
+      "id": "CLM-ISSUE-160",
+      "statement": "custody_cli: whitespace-only envelope lists count as set -- the unbounded-envelope warning is defeated",
+      "authority": "es#160",
+      "subject": "issue 160",
+      "oracle": "Mission-custody residue; disclosed seam/defect, not implemented on this candidate (2026-08-18 reconciliation sweep).",
+      "falsifier": "Disposition is stale relative to the live tracker or the cited evidence does not exist.",
+      "environment": "GitHub tracker + candidate tree",
+      "independence": "disposition recorded separately from implementation",
+      "evidence_tier": "R1",
+      "status": "UNPROVED",
+      "release_consequence": "Mission-custody residue; disclosed seam/defect, not implemented on this candidate (2026-08-18 reconciliation sweep).",
+      "consequence_severity": "P3",
+      "owner": "agent",
+      "closure_path": "implement-when-unblocked",
+      "linked_issues": [
+        160
+      ],
+      "linked_prs": []
+    },
+    {
+      "id": "CLM-ISSUE-159",
+      "statement": "mission-custody: the scope-ack note's comma-join is ambiguous for comma-bearing paths",
+      "authority": "es#159",
+      "subject": "issue 159",
+      "oracle": "Mission-custody residue; disclosed seam/defect, not implemented on this candidate (2026-08-18 reconciliation sweep).",
+      "falsifier": "Disposition is stale relative to the live tracker or the cited evidence does not exist.",
+      "environment": "GitHub tracker + candidate tree",
+      "independence": "disposition recorded separately from implementation",
+      "evidence_tier": "R1",
+      "status": "UNPROVED",
+      "release_consequence": "Mission-custody residue; disclosed seam/defect, not implemented on this candidate (2026-08-18 reconciliation sweep).",
+      "consequence_severity": "P3",
+      "owner": "agent",
+      "closure_path": "implement-when-unblocked",
+      "linked_issues": [
+        159
+      ],
+      "linked_prs": []
+    },
+    {
+      "id": "CLM-ISSUE-158",
+      "statement": "custody_cli: control characters in envelope declarations render raw on resume -- a declaration can forge rows or rewrite the terminal",
+      "authority": "es#158",
+      "subject": "issue 158",
+      "oracle": "Mission-custody residue; disclosed seam/defect, not implemented on this candidate (2026-08-18 reconciliation sweep).",
+      "falsifier": "Disposition is stale relative to the live tracker or the cited evidence does not exist.",
+      "environment": "GitHub tracker + candidate tree",
+      "independence": "disposition recorded separately from implementation",
+      "evidence_tier": "R1",
+      "status": "UNPROVED",
+      "release_consequence": "Mission-custody residue; disclosed seam/defect, not implemented on this candidate (2026-08-18 reconciliation sweep).",
+      "consequence_severity": "P3",
+      "owner": "agent",
+      "closure_path": "implement-when-unblocked",
+      "linked_issues": [
+        158
+      ],
+      "linked_prs": []
+    },
+    {
+      "id": "CLM-ISSUE-157",
+      "statement": "mission-custody: a backslash-separated scope entry with spaces is classified as prose (Windows paths)",
+      "authority": "es#157",
+      "subject": "issue 157",
+      "oracle": "Mission-custody residue; disclosed seam/defect, not implemented on this candidate (2026-08-18 reconciliation sweep).",
+      "falsifier": "Disposition is stale relative to the live tracker or the cited evidence does not exist.",
+      "environment": "GitHub tracker + candidate tree",
+      "independence": "disposition recorded separately from implementation",
+      "evidence_tier": "R1",
+      "status": "UNPROVED",
+      "release_consequence": "Mission-custody residue; disclosed seam/defect, not implemented on this candidate (2026-08-18 reconciliation sweep).",
+      "consequence_severity": "P3",
+      "owner": "agent",
+      "closure_path": "implement-when-unblocked",
+      "linked_issues": [
+        157
+      ],
+      "linked_prs": []
+    },
+    {
+      "id": "CLM-ISSUE-154",
+      "statement": "A mission store can be untracked-and-unignored: a third state with no recovery path",
+      "authority": "es#154",
+      "subject": "issue 154",
+      "oracle": "Mission-custody residue; disclosed seam/defect, not implemented on this candidate (2026-08-18 reconciliation sweep).",
+      "falsifier": "Disposition is stale relative to the live tracker or the cited evidence does not exist.",
+      "environment": "GitHub tracker + candidate tree",
+      "independence": "disposition recorded separately from implementation",
+      "evidence_tier": "R1",
+      "status": "UNPROVED",
+      "release_consequence": "Mission-custody residue; disclosed seam/defect, not implemented on this candidate (2026-08-18 reconciliation sweep).",
+      "consequence_severity": "P3",
+      "owner": "agent",
+      "closure_path": "implement-when-unblocked",
+      "linked_issues": [
+        154
+      ],
+      "linked_prs": []
+    },
+    {
+      "id": "CLM-ISSUE-151",
+      "statement": "mission-custody: scope.in symlink gap, unshown blind spot at acceptance, and three untested CLI surfaces",
+      "authority": "es#151",
+      "subject": "issue 151",
+      "oracle": "Mission-custody residue; disclosed seam/defect, not implemented on this candidate (2026-08-18 reconciliation sweep).",
+      "falsifier": "Disposition is stale relative to the live tracker or the cited evidence does not exist.",
+      "environment": "GitHub tracker + candidate tree",
+      "independence": "disposition recorded separately from implementation",
+      "evidence_tier": "R1",
+      "status": "UNPROVED",
+      "release_consequence": "Mission-custody residue; disclosed seam/defect, not implemented on this candidate (2026-08-18 reconciliation sweep).",
+      "consequence_severity": "P3",
+      "owner": "agent",
+      "closure_path": "implement-when-unblocked",
+      "linked_issues": [
+        151
+      ],
+      "linked_prs": []
+    },
+    {
+      "id": "CLM-ISSUE-150",
+      "statement": "mission-custody: the discharge gate turns amend's verbatim field into a lock-pick \u2014 give the machine its own field",
+      "authority": "es#150",
+      "subject": "issue 150",
+      "oracle": "Structured --grants-path for amend discharge.",
+      "falsifier": "Disposition is stale relative to the live tracker or the cited evidence does not exist.",
+      "environment": "GitHub tracker + candidate tree",
+      "independence": "disposition recorded separately from implementation",
+      "evidence_tier": "R1",
+      "status": "UNPROVED",
+      "release_consequence": "Structured --grants-path for amend discharge.",
+      "consequence_severity": "P3",
+      "owner": "agent",
+      "closure_path": "implement-when-unblocked",
+      "linked_issues": [
+        150
+      ],
+      "linked_prs": []
+    },
+    {
+      "id": "CLM-ISSUE-149",
+      "statement": "mission-custody: effects are permitted in draft, before the operator approves the mission",
+      "authority": "es#149",
+      "subject": "issue 149",
+      "oracle": "Effects permitted in draft before operator approve.",
+      "falsifier": "Disposition is stale relative to the live tracker or the cited evidence does not exist.",
+      "environment": "GitHub tracker + candidate tree",
+      "independence": "disposition recorded separately from implementation",
+      "evidence_tier": "R1",
+      "status": "UNPROVED",
+      "release_consequence": "Effects permitted in draft before operator approve.",
+      "consequence_severity": "P3",
+      "owner": "agent",
+      "closure_path": "implement-when-unblocked",
+      "linked_issues": [
+        149
+      ],
+      "linked_prs": []
+    },
+    {
+      "id": "CLM-ISSUE-148",
+      "statement": "mission-custody: the party that did the work can accept it \u2014 worker_id is the static steward_ref, not the actual actor",
+      "authority": "es#148",
+      "subject": "issue 148",
+      "oracle": "Tier-1 self-accept; derive worker from chain.",
+      "falsifier": "Disposition is stale relative to the live tracker or the cited evidence does not exist.",
+      "environment": "GitHub tracker + candidate tree",
+      "independence": "disposition recorded separately from implementation",
+      "evidence_tier": "R1",
+      "status": "UNPROVED",
+      "release_consequence": "Tier-1 self-accept; derive worker from chain.",
+      "consequence_severity": "P3",
+      "owner": "agent",
+      "closure_path": "implement-when-unblocked",
+      "linked_issues": [
+        148
+      ],
+      "linked_prs": []
+    },
+    {
+      "id": "CLM-ISSUE-147",
+      "statement": "mission-custody: record the RESOLVED artifact path at write time (scope classification is lexical)",
+      "authority": "es#147",
+      "subject": "issue 147",
+      "oracle": "Mission-custody residue; disclosed seam/defect, not implemented on this candidate (2026-08-18 reconciliation sweep).",
+      "falsifier": "Disposition is stale relative to the live tracker or the cited evidence does not exist.",
+      "environment": "GitHub tracker + candidate tree",
+      "independence": "disposition recorded separately from implementation",
+      "evidence_tier": "R1",
+      "status": "UNPROVED",
+      "release_consequence": "Mission-custody residue; disclosed seam/defect, not implemented on this candidate (2026-08-18 reconciliation sweep).",
+      "consequence_severity": "P3",
+      "owner": "agent",
+      "closure_path": "implement-when-unblocked",
+      "linked_issues": [
+        147
+      ],
+      "linked_prs": []
+    },
+    {
+      "id": "CLM-ISSUE-145",
+      "statement": "test fixtures carry a real operator name form into a public repo, and it is spreading",
+      "authority": "es#145",
+      "subject": "issue 145",
+      "oracle": "Synthetic fixture operator names spreading.",
+      "falsifier": "Disposition is stale relative to the live tracker or the cited evidence does not exist.",
+      "environment": "GitHub tracker + candidate tree",
+      "independence": "disposition recorded separately from implementation",
+      "evidence_tier": "R1",
+      "status": "UNPROVED",
+      "release_consequence": "Synthetic fixture operator names spreading.",
+      "consequence_severity": "P3",
+      "owner": "agent",
+      "closure_path": "implement-when-unblocked",
+      "linked_issues": [
+        145
+      ],
+      "linked_prs": []
+    },
+    {
+      "id": "CLM-ISSUE-142",
+      "statement": "Capture real harness hook payloads \u2014 two guard types now rest on docs prose, not observed wire format",
+      "authority": "es#142",
+      "subject": "issue 142",
+      "oracle": "Capture real harness hook payloads; live wire required.",
+      "falsifier": "Disposition is stale relative to the live tracker or the cited evidence does not exist.",
+      "environment": "GitHub tracker + candidate tree",
+      "independence": "disposition recorded separately from implementation",
+      "evidence_tier": "R1",
+      "status": "UNPROVED",
+      "release_consequence": "Capture real harness hook payloads; live wire required.",
+      "consequence_severity": "P3",
+      "owner": "agent",
+      "closure_path": "implement-when-unblocked",
+      "linked_issues": [
+        142
+      ],
+      "linked_prs": []
+    },
+    {
+      "id": "CLM-ISSUE-141",
+      "statement": "custody_gate: path_globs matched against an unscoped file_path can false-block an unrelated workspace",
+      "authority": "es#141",
+      "subject": "issue 141",
+      "oracle": "Mission-custody residue; disclosed seam/defect, not implemented on this candidate (2026-08-18 reconciliation sweep).",
+      "falsifier": "Disposition is stale relative to the live tracker or the cited evidence does not exist.",
+      "environment": "GitHub tracker + candidate tree",
+      "independence": "disposition recorded separately from implementation",
+      "evidence_tier": "R1",
+      "status": "UNPROVED",
+      "release_consequence": "Mission-custody residue; disclosed seam/defect, not implemented on this candidate (2026-08-18 reconciliation sweep).",
+      "consequence_severity": "P3",
+      "owner": "agent",
+      "closure_path": "implement-when-unblocked",
+      "linked_issues": [
+        141
+      ],
+      "linked_prs": []
+    },
+    {
+      "id": "CLM-ISSUE-140",
+      "statement": "mission-custody test suite: intermittent flakes on Windows (subprocess/tempdir timing), not code regressions",
+      "authority": "es#140",
+      "subject": "issue 140",
+      "oracle": "Mission-custody residue; disclosed seam/defect, not implemented on this candidate (2026-08-18 reconciliation sweep).",
+      "falsifier": "Disposition is stale relative to the live tracker or the cited evidence does not exist.",
+      "environment": "GitHub tracker + candidate tree",
+      "independence": "disposition recorded separately from implementation",
+      "evidence_tier": "R1",
+      "status": "UNPROVED",
+      "release_consequence": "Mission-custody residue; disclosed seam/defect, not implemented on this candidate (2026-08-18 reconciliation sweep).",
+      "consequence_severity": "P3",
+      "owner": "agent",
+      "closure_path": "implement-when-unblocked",
+      "linked_issues": [
+        140
+      ],
+      "linked_prs": []
+    },
+    {
+      "id": "CLM-ISSUE-139",
+      "statement": "cancel --reason \"\" silently erases the why on a terminal, irreversible verb",
+      "authority": "es#139",
+      "subject": "issue 139",
+      "oracle": "Mission-custody residue; disclosed seam/defect, not implemented on this candidate (2026-08-18 reconciliation sweep).",
+      "falsifier": "Disposition is stale relative to the live tracker or the cited evidence does not exist.",
+      "environment": "GitHub tracker + candidate tree",
+      "independence": "disposition recorded separately from implementation",
+      "evidence_tier": "R1",
+      "status": "UNPROVED",
+      "release_consequence": "Mission-custody residue; disclosed seam/defect, not implemented on this candidate (2026-08-18 reconciliation sweep).",
+      "consequence_severity": "P3",
+      "owner": "agent",
+      "closure_path": "implement-when-unblocked",
+      "linked_issues": [
+        139
+      ],
+      "linked_prs": []
+    },
+    {
+      "id": "CLM-ISSUE-137",
+      "statement": "mission-custody Stage-C gate: close three false-allow bypasses and four contract/CLI gaps from PR #128",
+      "authority": "es#137",
+      "subject": "issue 137",
+      "oracle": "P1+P2 implemented on this candidate (not on main). Draft CI skips required jobs.",
+      "falsifier": "Disposition is stale relative to the live tracker or the cited evidence does not exist.",
+      "environment": "GitHub tracker + candidate tree",
+      "independence": "disposition recorded separately from implementation",
+      "evidence_tier": "R1",
+      "status": "PARTIAL",
+      "release_consequence": "P1+P2 implemented on this candidate (not on main). Draft CI skips required jobs.",
+      "consequence_severity": "P3",
+      "owner": "agent",
+      "closure_path": "in-candidate-draft",
+      "linked_issues": [
+        137
+      ],
+      "linked_prs": []
+    },
+    {
+      "id": "CLM-ISSUE-136",
+      "statement": "custody hook: Cursor CLI workaround must use an installed plugin-root command",
+      "authority": "es#136",
+      "subject": "issue 136",
+      "oracle": "Cursor CLI hook must use plugin-root path; live CLI required.",
+      "falsifier": "Disposition is stale relative to the live tracker or the cited evidence does not exist.",
+      "environment": "GitHub tracker + candidate tree",
+      "independence": "disposition recorded separately from implementation",
+      "evidence_tier": "R1",
+      "status": "LIMITED",
+      "release_consequence": "Cursor CLI hook must use plugin-root path; live CLI required.",
+      "consequence_severity": "P3",
+      "owner": "agent",
+      "closure_path": "implement-when-unblocked",
+      "linked_issues": [
+        136
+      ],
+      "linked_prs": []
+    },
+    {
+      "id": "CLM-ISSUE-129",
+      "statement": "custody hook: Antigravity (agy) adapter + install snippet \u2014 coverage currently NOT WIRED",
+      "authority": "es#129",
+      "subject": "issue 129",
+      "oracle": "Antigravity adapter not wired; live harness required.",
+      "falsifier": "Disposition is stale relative to the live tracker or the cited evidence does not exist.",
+      "environment": "GitHub tracker + candidate tree",
+      "independence": "disposition recorded separately from implementation",
+      "evidence_tier": "R1",
+      "status": "LIMITED",
+      "release_consequence": "Antigravity adapter not wired; live harness required.",
+      "consequence_severity": "P3",
+      "owner": "agent",
+      "closure_path": "implement-when-unblocked",
+      "linked_issues": [
+        129
+      ],
+      "linked_prs": []
+    },
+    {
+      "id": "CLM-ISSUE-124",
+      "statement": "mission-custody: receipt continuity check \u2014 surface unreceipted mutation between receipted events",
+      "authority": "es#124",
+      "subject": "issue 124",
+      "oracle": "Receipt continuity check design open.",
+      "falsifier": "Disposition is stale relative to the live tracker or the cited evidence does not exist.",
+      "environment": "GitHub tracker + candidate tree",
+      "independence": "disposition recorded separately from implementation",
+      "evidence_tier": "R1",
+      "status": "UNPROVED",
+      "release_consequence": "Receipt continuity check design open.",
+      "consequence_severity": "P3",
+      "owner": "agent",
+      "closure_path": "implement-when-unblocked",
+      "linked_issues": [
+        124
+      ],
+      "linked_prs": []
+    },
+    {
+      "id": "CLM-ISSUE-118",
+      "statement": "mission-custody contract@2: bind receipt hashes and a tail anchor into the checkpoint chain",
+      "authority": "es#118",
+      "subject": "issue 118",
+      "oracle": "contract@2 receipt hash + tail anchor.",
+      "falsifier": "Disposition is stale relative to the live tracker or the cited evidence does not exist.",
+      "environment": "GitHub tracker + candidate tree",
+      "independence": "disposition recorded separately from implementation",
+      "evidence_tier": "R1",
+      "status": "UNPROVED",
+      "release_consequence": "contract@2 receipt hash + tail anchor.",
+      "consequence_severity": "P3",
+      "owner": "agent",
+      "closure_path": "implement-when-unblocked",
+      "linked_issues": [
+        118
+      ],
+      "linked_prs": []
+    },
+    {
+      "id": "CLM-ISSUE-105",
+      "statement": "P2: finish v5 public-content remediation and add an exact-candidate review gate",
+      "authority": "es#105",
+      "subject": "issue 105",
+      "oracle": "Exact-candidate public-content gate; ES6-ZI-001 parent-tracker hits allowlisted this packet.",
+      "falsifier": "Disposition is stale relative to the live tracker or the cited evidence does not exist.",
+      "environment": "GitHub tracker + candidate tree",
+      "independence": "disposition recorded separately from implementation",
+      "evidence_tier": "R1",
+      "status": "UNPROVED",
+      "release_consequence": "Exact-candidate public-content gate; ES6-ZI-001 parent-tracker hits allowlisted this packet.",
+      "consequence_severity": "P3",
+      "owner": "agent",
+      "closure_path": "reconcile-in-matrix",
+      "linked_issues": [
+        105
+      ],
+      "linked_prs": []
+    },
+    {
+      "id": "CLM-ISSUE-104",
+      "statement": "Complete or explicitly retire the unimplemented v5 design commitments before successor GO",
+      "authority": "es#104",
+      "subject": "issue 104",
+      "oracle": "Operator decision D3: implement ALL v5 design commitments. Implemented on this candidate \u2014 see CLM-V5-ROUTING/LEDGERS/SENTINELS/MEMBERSHIP rows.",
+      "falsifier": "Disposition is stale relative to the live tracker or the cited evidence does not exist.",
+      "environment": "GitHub tracker + candidate tree",
+      "independence": "disposition recorded separately from implementation",
+      "evidence_tier": "R0",
+      "status": "PARTIAL",
+      "release_consequence": "Operator decision D3: implement ALL v5 design commitments. Implemented on this candidate \u2014 see CLM-V5-ROUTING/LEDGERS/SENTINELS/MEMBERSHIP rows.",
+      "consequence_severity": "P3",
+      "owner": "agent",
+      "closure_path": "decided-implement-all",
+      "linked_issues": [
+        104
+      ],
+      "linked_prs": []
+    },
+    {
+      "id": "CLM-ISSUE-95",
+      "statement": "CI: durable local-cluster fallback, and prefer local CI over Actions minutes",
+      "authority": "es#95",
+      "subject": "issue 95",
+      "oracle": "Local-cluster CI fallback.",
+      "falsifier": "Disposition is stale relative to the live tracker or the cited evidence does not exist.",
+      "environment": "GitHub tracker + candidate tree",
+      "independence": "disposition recorded separately from implementation",
+      "evidence_tier": "R0",
+      "status": "UNPROVED",
+      "release_consequence": "Local-cluster CI fallback.",
+      "consequence_severity": "P3",
+      "owner": "agent",
+      "closure_path": "implement-when-unblocked",
+      "linked_issues": [
+        95
+      ],
+      "linked_prs": []
+    },
+    {
+      "id": "CLM-ISSUE-89",
+      "statement": "resolve/literature: no auth canary for the discovery engine \u2014 free-tier degradation is silent and grades as clean",
+      "authority": "es#89",
+      "subject": "issue 89",
+      "oracle": "Discovery-engine auth canary missing.",
+      "falsifier": "Disposition is stale relative to the live tracker or the cited evidence does not exist.",
+      "environment": "GitHub tracker + candidate tree",
+      "independence": "disposition recorded separately from implementation",
+      "evidence_tier": "R1",
+      "status": "UNPROVED",
+      "release_consequence": "Discovery-engine auth canary missing.",
+      "consequence_severity": "P3",
+      "owner": "agent",
+      "closure_path": "implement-when-unblocked",
+      "linked_issues": [
+        89
+      ],
+      "linked_prs": []
+    },
+    {
+      "id": "CLM-ISSUE-84",
+      "statement": "Paired proposal (charter step 1): exchange-protocol adoption, v4 event-contract re-pin, and field-pair ownership",
+      "authority": "es#84",
+      "subject": "issue 84",
+      "oracle": "Operator decision D10: field-pair ownership split confirmed (epistemic-calibration owns the outcome store and resolution loop; epistemic-skills owns emission) and the outcome store is granted operator-visible status. Implementation of the store remains cross-repo work.",
+      "falsifier": "Disposition is stale relative to the live tracker or the cited evidence does not exist.",
+      "environment": "GitHub tracker + candidate tree",
+      "independence": "disposition recorded separately from implementation",
+      "evidence_tier": "R2",
+      "status": "PARTIAL",
+      "release_consequence": "Operator decision D10: field-pair ownership split confirmed (epistemic-calibration owns the outcome store and resolution loop; epistemic-skills owns emission) and the outcome store is granted operator-visible status. Implementation of the store remains cross-repo work.",
+      "consequence_severity": "P3",
+      "owner": "joint",
+      "closure_path": "decided-ownership-split",
+      "linked_issues": [
+        84
+      ],
+      "linked_prs": []
+    },
+    {
+      "id": "CLM-ISSUE-77",
+      "statement": "Behavioral epoch program: convert every BLOCKED/absent battery into dated live-epoch evidence (successor to #70)",
+      "authority": "es#77",
+      "subject": "issue 77",
+      "oracle": "Behavioral epoch program; live environment required.",
+      "falsifier": "Disposition is stale relative to the live tracker or the cited evidence does not exist.",
+      "environment": "GitHub tracker + candidate tree",
+      "independence": "disposition recorded separately from implementation",
+      "evidence_tier": "R3",
+      "status": "LIMITED",
+      "release_consequence": "Behavioral epoch program; live environment required.",
+      "consequence_severity": "P3",
+      "owner": "agent",
+      "closure_path": "close-when-evidence",
+      "linked_issues": [
+        77
+      ],
+      "linked_prs": []
+    },
+    {
+      "id": "CLM-ISSUE-40",
+      "statement": "Release gate: cross-family Step-7b adjudication before any v3 3.0.0",
+      "authority": "es#40",
+      "subject": "issue 40",
+      "oracle": "Operator decision D9: cross-family requirement re-scoped into v6-and-future publication gauntlets' Step 7b (first exercised at the next GO-posture verdict per D8). Closing #40 itself remains the operator's act.",
+      "falsifier": "Disposition is stale relative to the live tracker or the cited evidence does not exist.",
+      "environment": "GitHub tracker + candidate tree",
+      "independence": "disposition recorded separately from implementation",
+      "evidence_tier": "R3",
+      "status": "PARTIAL",
+      "release_consequence": "Operator decision D9: cross-family requirement re-scoped into v6-and-future publication gauntlets' Step 7b (first exercised at the next GO-posture verdict per D8). Closing #40 itself remains the operator's act.",
+      "consequence_severity": "P3",
+      "owner": "operator",
+      "closure_path": "decided-rescope",
+      "linked_issues": [
+        40
+      ],
+      "linked_prs": []
+    },
+    {
+      "id": "CLM-ISSUE-39",
+      "statement": "Phase 4 follow-up: valid full-schema four-arm superiority run",
+      "authority": "es#39",
+      "subject": "issue 39",
+      "oracle": "Four-arm superiority run; live environment required.",
+      "falsifier": "Disposition is stale relative to the live tracker or the cited evidence does not exist.",
+      "environment": "GitHub tracker + candidate tree",
+      "independence": "disposition recorded separately from implementation",
+      "evidence_tier": "R3",
+      "status": "LIMITED",
+      "release_consequence": "Four-arm superiority run; live environment required.",
+      "consequence_severity": "P3",
+      "owner": "agent",
+      "closure_path": "close-when-evidence",
+      "linked_issues": [
+        39
+      ],
+      "linked_prs": []
+    },
+    {
+      "id": "CLM-PR-197",
+      "statement": "ES6-V6-CANDIDATE rc4 BUILD freeze (draft until GO + operator acceptance): candidate 7408a46",
+      "authority": "PR #197",
+      "subject": "pr 197",
+      "oracle": "The successor freeze PR itself (D12); draft until GO + recorded operator acceptance; merging it is PROMOTION.",
+      "falsifier": "Disposition is stale relative to the live tracker or the cited evidence does not exist.",
+      "environment": "GitHub tracker + candidate tree",
+      "independence": "disposition recorded separately from implementation",
+      "evidence_tier": "R1",
+      "status": "PARTIAL",
+      "release_consequence": "The successor freeze PR itself (D12); draft until GO + recorded operator acceptance; merging it is PROMOTION.",
+      "consequence_severity": "P3",
+      "owner": "agent",
+      "closure_path": "in-candidate-draft",
+      "linked_issues": [],
+      "linked_prs": [
+        197
+      ]
+    },
+    {
+      "id": "CLM-PR-193",
+      "statement": "fix(custody): close es#137 P1 false-allows and P2 refusal gaps",
+      "authority": "PR #193",
+      "subject": "pr 193",
+      "oracle": "es#137 P1+P2; included in this candidate tree; stays open as the isolated custody PR per D12; not merged to main.",
+      "falsifier": "Disposition is stale relative to the live tracker or the cited evidence does not exist.",
+      "environment": "GitHub tracker + candidate tree",
+      "independence": "disposition recorded separately from implementation",
+      "evidence_tier": "R1",
+      "status": "PARTIAL",
+      "release_consequence": "es#137 P1+P2; included in this candidate tree; stays open as the isolated custody PR per D12; not merged to main.",
+      "consequence_severity": "P3",
+      "owner": "agent",
+      "closure_path": "in-candidate-draft",
+      "linked_issues": [],
+      "linked_prs": [
+        193
+      ]
+    },
+    {
+      "id": "CLM-PR-176",
+      "statement": "feat: add manifest custody portability planning boundary",
+      "authority": "PR #176",
+      "subject": "pr 176",
+      "oracle": "94k-line planning boundary; DCO red; verdict narrow.",
+      "falsifier": "Disposition is stale relative to the live tracker or the cited evidence does not exist.",
+      "environment": "GitHub tracker + candidate tree",
+      "independence": "disposition recorded separately from implementation",
+      "evidence_tier": "R1",
+      "status": "LIMITED",
+      "release_consequence": "94k-line planning boundary; DCO red; verdict narrow.",
+      "consequence_severity": "P3",
+      "owner": "agent",
+      "closure_path": "do-not-merge",
+      "linked_issues": [],
+      "linked_prs": [
+        176
+      ]
+    },
+    {
+      "id": "CLM-PR-103",
+      "statement": "fix: record and address the v5.0.0 post-release audit",
+      "authority": "PR #103",
+      "subject": "pr 103",
+      "oracle": "Draft conflicting; harvest unique errata then supersede.",
+      "falsifier": "Disposition is stale relative to the live tracker or the cited evidence does not exist.",
+      "environment": "GitHub tracker + candidate tree",
+      "independence": "disposition recorded separately from implementation",
+      "evidence_tier": "R1",
+      "status": "LIMITED",
+      "release_consequence": "Draft conflicting; harvest unique errata then supersede.",
+      "consequence_severity": "P3",
+      "owner": "agent",
+      "closure_path": "harvest-supersede",
+      "linked_issues": [],
+      "linked_prs": [
+        103
+      ]
+    },
+    {
+      "id": "CLM-PR-100",
+      "statement": "Explore leveraging Fudge DESIGN.md as visual craft doctrine",
+      "authority": "PR #100",
+      "subject": "pr 100",
+      "oracle": "Exploratory Fudge/visual craft; not operator-approved.",
+      "falsifier": "Disposition is stale relative to the live tracker or the cited evidence does not exist.",
+      "environment": "GitHub tracker + candidate tree",
+      "independence": "disposition recorded separately from implementation",
+      "evidence_tier": "R1",
+      "status": "LIMITED",
+      "release_consequence": "Exploratory Fudge/visual craft; not operator-approved.",
+      "consequence_severity": "P3",
+      "owner": "agent",
+      "closure_path": "park",
+      "linked_issues": [],
+      "linked_prs": [
+        100
+      ]
+    }
+  ]
+}
