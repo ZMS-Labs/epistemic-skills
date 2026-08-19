@@ -1,0 +1,24 @@
+{
+ "schema": "gauntlet-run-record@1",
+ "run": "es-v6-rc4-delta-review-2026-08-19",
+ "subject_sha": "7408a462b413d0ab41a08de1d37a10b9cdf2a6ea",
+ "freeze_commit": "e46c2486535cf847dde05562399fd534f49b85d1",
+ "computed_verdict": "NO-GO",
+ "mode": "delta-plus-blast-radius (operator ruling, ledger id v6-lineage-panel-cap-extension-20260819-21); panel 4 of 4 — the one-panel cap extension is SPENT by this verdict, and any further panel on this lineage requires a fresh explicit recorded operator ruling",
+ "seat_structure": "author-dispatched fresh context-free workflow seats under the operator's recorded cap-extension ruling ('same mode' as the rc3 panel). Dispatcher authored the rc4 repair under review — disclosed in every seat prompt, mitigated by five isolated verifier seats, an adversarial challenger briefed to treat dispatcher framing as self-serving, and an isolated judge who re-executed every pivotal claim from primary sources (fresh clones, live GitHub REST, the repo's own oracles). Single model family across these seats; the acceptance criteria applied were the rc3 panel's per-finding letters.",
+ "agents": {
+  "verifiers": 5,
+  "challenger": 1,
+  "judge": 1,
+  "workflow_run": "wf_4492c983-77e",
+  "subagent_tokens": 1230319,
+  "tool_uses": 358
+ },
+ "outcome_summary": "All eight rc3 findings R3-NF1..NF8 adjudicated CLOSED (three qualified) on their own acceptance letters; the R3-NF1 P1 ledger repair and both its pre-freeze oracle surfaces were judge-executed green. One NEW P1 (R4-NF1: six unsigned pre-delta lineage commits — five Cursor Agent originals plus merge 59587ee — make the DCO gating job deterministically red the moment PR #197 is marked ready; the oracle is structurally unexercisable pre-freeze because dco.yml is pull_request_target, skipped while draft, and out of clean-room scope) plus eight P4. Any open P1 => NO-GO. R4-NF1's repair is dischargeable WITHOUT new candidate commits: dco.yml checks out the PR BASE, so main's copy of check_dco.py is what executes.",
+ "dispatcher_disclosures": [
+  "The dispatcher authored the rc4 repair under review; all finding and judging was performed by isolated fresh seats per the operator's recorded authorization (structure recorded in seat_structure and in the arbitration's seat block).",
+  "The dispatcher independently reproduced the verdict-deciding finding (R4-NF1) before recording this run: the shipped check_dco.py logic, run over PR #197's live 28-commit API list, returns exactly the six commits the judge names.",
+  "Dispatcher post-judgment note, no content altered: the judge's markdown was written to arbitration.md with a two-line conversational preamble ('All re-verifications complete. Rendering the arbitration now.') removed so the file begins at its title heading. The ruling-set block validates unmodified (validate_ruling_set.py PASS).",
+  "Dispatcher finding NOT available to the panel, recorded here for the operator: because a squash-merge of PR #197 would replace main's tree with the candidate's, a DCO fix landed ONLY on main would be reverted by the eventual promotion merge unless the candidate lineage carries it too. This bears on which R4-NF1 repair shape the operator rules."
+ ]
+}

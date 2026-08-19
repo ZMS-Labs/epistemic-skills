@@ -1,0 +1,107 @@
+{
+ "seat": "nf6-nf7-code",
+ "findings": [
+  {
+   "id": "NF67-SEAT-F1",
+   "severity": "P4",
+   "claim": "Test-harness latent seam: run_main_in in test_v6_assurance_validator.py retargets mod.REPO_ROOT/V6_DOCS/CANDIDATE_DOCS/REGISTER_PATH after exec_module, but the `root` parameter DEFAULTS of validate_source_inventory and validate_promotion_packet were bound to the original REPO_ROOT at def time, and main() calls both without an explicit root \u2014 so main()-path controls exercising a @2 inventory or a verdict-bound packet in a scratch tree would silently resolve digests/verdict paths against the developer's real checkout. Latent only: every CURRENT control plants @1-legacy inventories and NOT_RUN packets, so root is never dereferenced and all 30 green PASSes measure what they claim; zero effect on the shipped validator (in CI, module global == default).",
+   "evidence": "Probe: loaded validate_v6_assurance.py exactly as run_main_in does, assigned mod.REPO_ROOT=/does/not/exist/scratch, then read mod.validate_source_inventory.__defaults__ -> (PosixPath('.../seat-nf67-YYiO9R/repo'),) \u2014 the original root, not the scratch root. main() lines 446/500/501 call validate_source_inventory/validate_promotion_packet with no root argument. Current controls' scratch artifacts (test_v6_assurance_validator.py lines 417-453) are all v6-source-inventory@1 and independent_gauntlet=NOT_RUN, which return/skip before touching root \u2014 confirmed by reading both function bodies. One-line fix: pass root=REPO_ROOT (the global) explicitly in main(), or rebind the defaults in run_main_in.",
+   "repair_dischargeable_on_this_sha": false
+  },
+  {
+   "id": "NF67-SEAT-F2",
+   "severity": "P4",
+   "claim": "Owner-vocabulary domain is unvalidated, and the register authority's phrase 'a strict superset of the ruling's operator-owned core' is exact only over the live/core vocabulary, not string-space: is_operator_class is now the single predicate (correct), but no schema check constrains claim['owner'] to a known vocabulary, so a typo'd or novel owner string (e.g. 'Operator', 'operator-delegate') on a future P1/P2 claim would silently fall outside the channel law \u2014 the same family as the recorded ledger-18 residual, whose revisit_when ('a claim class emerges that is operator-owned and open but fits neither channel') arguably covers it. Also the theoretical direction where the set NARROWS the rc2 falsifier's substring letter (owners containing 'operator' outside the set) has zero live instances and is the very fail-closed seam rc3 ordered removed.",
+   "evidence": "Census of the real C+1 artifacts: matrix owners {agent:62, operator:6, independent-panel:1, program:1, operator+agent:1, joint:1}; live owners matching substring = {operator, operator+agent} \u2014 both in the class set, so substring-but-not-set live owners = [] (no narrowing on any live claim). Executed the kimi S2 falsifier over the C+1 matrix+packet at BOTH letters (substring and class-set): zero unchanneled P1/P2 claims each way. validate_matrix (validate_v6_assurance.py lines 88-136) checks owner presence only, never vocabulary; is_operator_class('operater')/('Operator') would be False with no alarm. Zero live instances; hardening (a vocab assertion) would require a new commit.",
+   "repair_dischargeable_on_this_sha": false
+  }
+ ],
+ "checks_executed": [
+  {
+   "check": "Subject lock and delta shape",
+   "result": "PASS",
+   "detail": "Clone of https://github.com/ZMS-Labs/epistemic-skills.git; branch claude/v6-candidate-rc2 head = e46c2486535cf847dde05562399fd534f49b85d1 (C+1), parent chain 7408a462 (C) <- 74c8314 (R3 repair) <- 7ce03b90 (rc3 C+1) <- 16b80ac (rc3 candidate). git ls-tree at C: NO docs/v6/ES6-V6-CANDIDATE. git diff C..C+1: exactly 14 files, all under docs/v6/ES6-V6-CANDIDATE/ (+3472/-0). Live ls-remote re-confirmed both branch heads (e46c248..., and 2d835b9... = head of claude/es-v6-rc3-delta-review) at review time."
+  },
+  {
+   "check": "Acceptance criteria fetched from the verdict of record",
+   "result": "PASS",
+   "detail": "arbitration.md read from commit 2d835b96d5f31023ca4576d388ee3c111868516b; R3-NF6 and R3-NF7 letters extracted verbatim (lines 89, 91) plus Next-action item 5 (fold P4s into next freeze's sweep) and the ruling-set block."
+  },
+  {
+   "check": "1. NF6 predicate single-home (static)",
+   "result": "PASS",
+   "detail": "grep over validate_v6_assurance.py + v6_generate_candidate_packet.py at C: the ONLY owner comparison anywhere is `owner in OPERATOR_CLASS_OWNERS` inside is_operator_class (line 55); derive_blocking (line 80), validate_operator_channel (line 378) and the generator's operator_limited_limits (line 1039, imported via _validator_module().is_operator_class) all route through it; residual 'operator'-substring text appears only in docstrings/comments. blocking_from_matrix also imports derive_blocking from the validator (one home)."
+  },
+  {
+   "check": "1. NF6 mutation-execution (16/16 driver checks)",
+   "result": "PASS",
+   "detail": "Against the pristine C code: is_operator_class truth table \u2014 'operator'/'operator+agent'/'joint'/'independent-panel' True; 'operator-adjacent-tool'/'agent'/'operators'/'the-operator-of-record' False (set membership, not substring). Synthetic joint-owned LIMITED P1 claim + packet without its KL -> validate_operator_channel raises 'S2 CHANNEL DROP: operator-class LIMITED claim CLM-JOINT-LTD...'; with a known_limits entry naming it via `claim` -> passes ([]). Generator operator_limited_limits emits KL-OPERATOR-JOINT-LTD for that claim and the derived KL satisfies the enforcer. derive_blocking blocks joint-owned PARTIAL P2 and not agent PARTIAL P2. Fail-closed direction: 'operator-adjacent-tool' LIMITED P1 gets no generator KL and no enforcement on either side."
+  },
+  {
+   "check": "1. NF6 differential vs rc3 pre-repair code",
+   "result": "PASS",
+   "detail": "Same synthetic joint-owned LIMITED P2 claim run through BOTH lineages: at 7ce03b9 (pre-repair) derive_blocking=[], generator KLs=[], channel enforcer silent \u2014 the claim occupied NO machine channel (defect live-reproduced); at C the generator derives the KL naming it (covered), and hand-dropping the KL raises S2 CHANNEL DROP. The historically-dropped class is closed at both derivation and enforcement."
+  },
+  {
+   "check": "2. Severity gate on REAL artifacts",
+   "result": "PASS",
+   "detail": "git-archive copy of C+1: stripped consequence_severity from all 72 matrix claims with the real @2 packet in place -> main() raises AssertionError 'R3-NF6: a @2 candidate packet requires consequence_severity on every matrix claim...' exit 1 (loud FAIL, not notices). Partial strip (71/72) -> AssertionError 'consequence_severity on 71 of 72 claims \u2014 must be all or none' exit 1. Gate fires before any inventory/packet validation (main() line 493), keyed on packet schema @2; @1 lineage keeps the documented legacy-notice path where terminal/GO are separately refused."
+  },
+  {
+   "check": "3a. PRE-FREEZE at real C",
+   "result": "PASS",
+   "detail": "Real C tree has no docs/v6/ES6-V6-CANDIDATE (git ls-tree + filesystem); validator at pristine C checkout prints 'note: PRE-FREEZE tree \u2014 no candidate packet present; ZI-001 checks only' and exits 0. Battery control additionally requires the literal 'PRE-FREEZE' string in stdout. Empty-directory variant (dir exists, zero files) is also PRE-FREEZE exit 0 per the documented 'directory empty or absent' rule."
+  },
+  {
+   "check": "3b. TORN with leftovers (the NF7 full-deletion class)",
+   "result": "PASS",
+   "detail": "C+1 tree copy: deleted ALL FIVE core artifacts (matrix, reconciliation, inventory, packet, receipt), left README.md + SUCCESSOR-SEAT-HANDOFF.md + gauntlet-request.md + 6 evidence files -> SystemExit 'TORN candidate packet \u2014 no core artifacts but 9 file(s) remain under ES6-V6-CANDIDATE/ (R3-NF7: full-deletion with leftovers is not PRE-FREEZE): [...]' exit 1. The rc3 defect (exit 0 PRE-FREEZE) is closed."
+  },
+  {
+   "check": "3c. TORN partial",
+   "result": "PASS",
+   "detail": "C+1 copy with promotion-packet.json + exact-candidate-receipt.json deleted (2 of 5) -> SystemExit 'TORN candidate packet \u2014 missing: [...]' exit 1."
+  },
+  {
+   "check": "4. _tracked_set nested non-git copy",
+   "result": "PASS",
+   "detail": "Byte-exact C+1 tree copied (untracked) into a freshly-committed unrelated git repo; from the nested root `git rev-parse --is-inside-work-tree`=true and --show-toplevel=the OUTER repo. Validator run from the nested copy: 'note: root is not a git worktree: INVENTORY_UNTRACKED guard skipped (synthetic tree)' + exit 0 \u2014 no S1 false alarm. Counterfactual: removing the toplevel==root block from the nested copy's validator reproduces the rc3 false alarm exactly ('S1 INVENTORY_UNTRACKED: sealed digests name paths git does not track (volatile host state): [.github/scripts/...]' exit 1); file then restored byte-identical (cmp clean) and revalidated exit 0."
+  },
+  {
+   "check": "5. Planted-control battery: run + source census",
+   "result": "PASS",
+   "detail": "python3 plugins/epistemic-skills/contracts/v6-assurance/test_v6_assurance_validator.py at C: 30/30 [PASS], exit 0; also PASS at a pristine C+1 git worktree. Source census: 24 function-level controls (R1 x6, R13 x2, terminal-on-v1, R12 x2, R5 x2, S1 x2, S2 x2, R14 x3, all-or-none severity, NF6 joint-owner drop line 359, NF6 set-membership line 364, NF7 nested-copy line 374) + 6 main()-path controls (PRE-FREEZE line 456, TORN-with-leftovers line 465, TORN-partial line 477, honest-candidate-exit-0 line 488, S3 README_SHA line 497, NF6 severity gate line 506) = every control the brief names is present. Generator battery (.github/scripts/test_v6_candidate_packet.py) exits ok and carries its own NF6 synthetic exemplar (joint LIMITED P1 must derive; PROVED/P3 must not) using the validator's is_operator_class."
+  },
+  {
+   "check": "5. Mutation-sensitivity of the planted controls",
+   "result": "PASS",
+   "detail": "Four single-site mutants of the validator, battery rerun against each: M1 predicate->substring: joint-limited-claim-dropped + set-membership controls FAIL, exit 1. M2 toplevel check removed: nested-copy control raises the S1 false alarm as an uncaught AssertionError, exit 1 (fail-fast rather than graceful [FAIL] accumulate \u2014 still CI-red; cosmetic note only). M3 leftovers-TORN check removed: torn-leftovers control FAIL (code=0), exit 1. M4 @2 severity gate removed: candidate-nosev control FAIL (code=0), exit 1. All four mutants killed \u2014 no vacuous control among the NF6/NF7 plantings."
+  },
+  {
+   "check": "5. CI wiring of the battery",
+   "result": "PASS",
+   "detail": ".github/workflows/epistemic-flexibility.yml runs 'v6 assurance validator planted RED controls' (line 281), the generator self-test (line 279) and the validator (line 283) as named steps, and both files sit in the compile/stdlib gate list (lines 187-189) \u2014 the controls fire in CI, closing the NF7 'no planted controls' letter operationally."
+  },
+  {
+   "check": "6. Register operator_channel_law text",
+   "result": "PASS",
+   "detail": "At C: law limb 1 reads 'Every P1/P2 claim whose owner is in the operator class (is_operator_class)...' (set-membership stated, with the four-member set enumerated in authority). enforced_by attributes limbs 1-2 to validate_operator_channel + validate_blocking_derivation with severity hard-required at @2, and limb 3 to 'validate_candidate_coverage ... plus the acceptance-procedure item-3 walk \u2014 a human act, not this validator (the rc3 register over-attributed limb 3 to the channel check; R3-NF6)'. known_residual records the operator-class-P3-non-census gap against 'ledger entry v6-s2-operator-channel-law-20260818-18's revisit_when clause'. Ledger entry 18 exists at C with revisit_when = 'A claim class emerges that is operator-owned and open but fits neither blocking_claims nor a derivable known_limits entry' \u2014 the named clause is real and matches the residual class."
+  },
+  {
+   "check": "6. Register/code AGREEMENT (rc2 S2 criterion path (b))",
+   "result": "PASS",
+   "detail": "Executed per limb: limb 1 by the channel-drop mutations (raises/passes as the text says); limb 2 PROVED-skip verified (enforcer skips PROVED; generator exemplar CLM-C derives nothing); limb 3 by deleting census row CLM-ISSUE-84's matrix claim from a C+1 copy -> validate_candidate_coverage AssertionError 'matrix missing tracker claim CLM-ISSUE-84' exit 1, and OPERATOR-ACCEPTANCE-PROCEDURE.md item 3 exists as the human walk. Residual class executed (operator-owned PARTIAL P3 non-census claim): derive_blocking=[], channel check silent, coverage silent \u2014 occupies no machine channel, exactly as RECORDED, zero live instances (all 3 operator-class P3 matrix claims are census rows; the only joint-owned claim is CLM-ISSUE-84 PARTIAL P3, matching the arbitration's live census). The rc2 kimi S2 falsifier run at its own letter ('owner contains operator') AND at the class-set letter over the real C+1 matrix+packet: zero unchanneled P1/P2 claims both ways."
+  },
+  {
+   "check": "Blast radius on closed rulings the delta touches (S1/S2/S3 seams)",
+   "result": "PASS",
+   "detail": "S1 repairs intact at C: tracked-only-inventory + untracked-pyc controls PASS; validator at a pristine C+1 GIT worktree runs the LIVE tracked-guard path (toplevel==root, 141 inventoried digests, no synthetic notice) exit 0. S2: channel controls PASS; real packet blocking_claims=['CLM-INDEPENDENT-GAUNTLET'], readiness NOT_READY, gauntlet NOT_RUN, candidate_sha == C exactly. S3: README_SHA main()-path control PASS and the real C+1 README names C (validator would fail otherwise; it passed). Packet-dir and .ledger confirmed OUTSIDE the digest inventory (0 file_digests keys match either), as the arbitration recorded."
+  },
+  {
+   "check": "Workspace hygiene / no GitHub writes",
+   "result": "PASS",
+   "detail": "All work in a scratch clone + git-archive copies under the session scratchpad; every mutation confined to disposable copies and the one nested-copy mutation restored byte-identical; the subject checkout finished clean at C (git status empty, HEAD 7408a462); network use strictly read-only (clone, fetch, ls-remote x2); zero pushes/comments/API writes."
+  }
+ ],
+ "evidence_log": "Workspace: /tmp/claude-0/-home-user-epistemic-skills/d70e7b4d-f98a-5bc1-8e61-b1f949279334/scratchpad/seat-nf67-YYiO9R (clone at ./repo, scratch trees at ./trees/*, mutants at ./mutants/*, pre-repair extract at ./prerepair, nested-copy rig at ./outer-repo, drivers drive_nf6.py).\n\nVERDICT FOR THIS SEAT: the R3-NF6 and R3-NF7 repairs are REAL, EXECUTABLE, and MUTATION-HARD at C=7408a462b413d0ab41a08de1d37a10b9cdf2a6ea. Every letter-item of both findings is closed by verified code + planted controls; no P1-P3 defects found; two P4 latent/hardening notes (harness default-root binding; owner-vocabulary domain), both fold-into-next-sweep class per the arbitration's own Next-action 5, neither dischargeable without new commits.\n\nKey primary-source re-executions: (1) live ls-remote: claude/v6-candidate-rc2 = e46c2486535cf847dde05562399fd534f49b85d1, claude/es-v6-rc3-delta-review = 2d835b96d5f31023ca4576d388ee3c111868516b (arbitration commit IS the branch head). (2) C..C+1 diff = only the 14-file packet dir. (3) rc4 delta to my seat's files read in full: validate_v6_assurance.py (+82/-x: is_operator_class introduced and threaded through derive_blocking/validate_operator_channel; _tracked_set toplevel==root; PRE-FREEZE leftovers->TORN; @2 severity gate), v6_generate_candidate_packet.py (operator_limited_limits now imports the validator's predicate), test_v6_assurance_validator.py (+165: the six main()-path controls + NF6/NF7 function controls), requirement-register.json (law limb 1 set-membership; enforced_by re-attribution; known_residual added).\n\nExecuted outcomes (all against real artifacts unless marked synthetic): battery 30/30 PASS at C and at C+1 worktree; generator battery ok; validator PRE-FREEZE exit 0 at pristine C; pristine C+1 non-git copy exit 0 (R5 digests verified) and pristine C+1 git worktree exit 0 (live S1 guard); all-five-deleted-with-README/evidence -> TORN exit 1; partial-deletion -> TORN exit 1; empty-dir -> PRE-FREEZE exit 0; 72/72 severity strip under @2 packet -> R3-NF6 AssertionError exit 1; 71/72 -> all-or-none exit 1; nested byte-exact copy in unrelated repo -> synthetic-tree notice exit 0, and with the toplevel check removed -> the exact rc3 S1 false alarm (then restored, cmp-identical). NF6 driver 16/16 (incl. is_operator_class('operator-adjacent-tool') is False); differential: joint LIMITED P2 SILENTLY UNCOVERED at 7ce03b9, covered at C (generator KL) with enforcement on hand-drop. Four validator mutants (substring predicate, toplevel check, leftovers check, severity gate) each killed by the battery (exit 1). Register/code agreement executed limb-by-limb; kimi S2 falsifier zero violations at both its substring letter and the class-set letter; owner census: zero live substring-not-set owners; 3/3 operator-class P3 claims are census rows; census-row matrix-claim deletion -> validate_candidate_coverage exit 1; ledger entry 18 revisit_when text matches the register's known_residual reference.\n\nDispatcher-claims independently contradicted: none found in my scope \u2014 but note the two P4s are in the dispatcher-authored repair's test harness and register prose, found only by probing beyond the green battery (F1 by __defaults__ inspection, F2 by owner-space census), which is exactly the class of check the battery's own greenness would not surface."
+}
