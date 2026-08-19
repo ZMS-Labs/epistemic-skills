@@ -201,7 +201,7 @@ PR_DISPOSITIONS: dict[int, dict] = {
         "phase": "main-repair",
         "disposition": "operator-merge",
         "owner": "operator",
-        "evidence_note": "D11 minimal non-draft fix to main (three exact-file allowlist entries + oracle-audit PyYAML). Merging remains the operator's act; retires KL-MAIN-RED when landed green.",
+        "evidence_note": "D11 minimal non-draft fix to main (three exact-file allowlist entries + oracle-audit PyYAML). MERGED 2026-08-18 as squash 03b7724 under the operator's RATIFY-V6-2026-08-18 instruction; main's push runs green at that head — KL-MAIN-RED retired (R3-NF3). Entry kept for the census only if the PR reopens.",
     },
     193: {
         "phase": "ES6-V6-CANDIDATE",
@@ -686,19 +686,23 @@ def class_claims(sha: str) -> list[dict]:
             "linked_issues": [137, 147],
         },
         {
+            # R3-NF4: this row previously asserted the estate fork OPEN while
+            # the same tree's ledger entry 17 + the spec amendment recorded it
+            # resolved — the exact prose-vs-record class S2 exists to kill.
+            # Re-derived against the recorded ruling.
             "id": "CLM-DESCRIPTION-BUDGET",
-            "statement": "The packaged description byte ceiling is enforced (check_description_budget.py); the ESTATE net-negative acceptance line remains an open operator fork.",
-            "authority": "v5 design AMENDMENT 2026-08-07 (D8 dual scope)",
-            "subject": "packaged SKILL.md description frontmatter bytes; estate-wide harness budget",
-            "oracle": "check_description_budget.py green (package ceiling). Estate: check_loaded_descriptions.py --require-capture with a live capture receipt (Path 1), or the Path-2 owner amendment.",
-            "falsifier": "Package bytes exceed the ceiling; or a release claims estate headroom without a capture receipt and without the owner amendment.",
-            "environment": "CI (package ceiling); operator-supplied capture (estate)",
-            "independence": "budget checker distinct from description authors",
+            "statement": "The packaged description byte ceiling is enforced (check_description_budget.py); the ESTATE net-negative release gate is RETIRED by recorded operator ruling (hybrid Path 2): the package-local ceiling stays a hard CI gate, every release's notes report the description-byte delta vs the prior release (RELEASING.md), and check_loaded_descriptions.py --require-capture remains available for on-demand estate measurement.",
+            "authority": "v5 design AMENDMENT 2026-08-07 (D8 dual scope) as resolved by the owner AMENDMENT 2026-08-18 (hybrid form) under the operator's recorded ruling, ledger id v6-description-budget-hybrid-path2-20260818-17",
+            "subject": "packaged SKILL.md description frontmatter bytes; estate release-gate status",
+            "oracle": "check_description_budget.py green (package ceiling); the 'AMENDMENT 2026-08-18 — the D8 estate fork is resolved' section present in docs/superpowers/specs/2026-08-06-epistemic-skills-v5-design.md; the RELEASING.md description-byte-delta row present; .ledger/entries.jsonl carries entry v6-description-budget-hybrid-path2-20260818-17.",
+            "falsifier": "Package bytes exceed the ceiling; or any of the amendment section, the RELEASING.md delta row, or the ledger ruling entry is absent from this tree; or a release ships without the delta report the amendment promises.",
+            "environment": "CI (package ceiling); repository record (amendment + RELEASING.md + ledger)",
+            "independence": "budget checker distinct from description authors; the ruling is the operator's own recorded act",
             "evidence_tier": "R1",
-            "status": "LIMITED",
-            "release_consequence": "P2 — the operator must choose Path 1 (shrink below pre-v5 baseline AND show a capture receipt) or Path 2 (owner amendment retiring the estate release gate) before v6.0 publication",
+            "status": "PROVED",
+            "release_consequence": "The estate acceptance line no longer gates v6.0; the package ceiling still fails CI closed on any overrun; each release must carry the delta report per RELEASING.md",
             "owner": "operator",
-            "closure_path": "Operator fork recorded; --require-capture makes Path 1 mechanically enforceable",
+            "closure_path": "Completed act: operator ruling recorded (ledger 17) and the Path-2 amendment landed in-tree; per-release delta reporting is a standing RELEASING.md procedure",
             "linked_issues": [104, 191],
         },
         {
@@ -1018,17 +1022,21 @@ def blocking_from_matrix(matrix: dict) -> list[str]:
 
 def operator_limited_limits(matrix: dict) -> list[dict]:
     """S2 (operator ruling 2026-08-18, machine channel DERIVED): every
-    operator-owned LIMITED P1/P2 claim gets a known_limits entry naming it
+    operator-CLASS LIMITED P1/P2 claim gets a known_limits entry naming it
     via the `claim` field — derived here so it cannot be dropped by hand.
-    Non-PROVED non-LIMITED operator-owned P1/P2 claims already block via
+    Non-PROVED non-LIMITED operator-class P1/P2 claims already block via
     derive_blocking; PROVED operator claims are completed acts (row-only);
     P3 census rows are channeled by the reconciliation artifact. The full
     law lives in requirement-register.json (operator_channel_law) and
-    validate_operator_channel enforces it."""
+    validate_operator_channel enforces it. The owner test is the validator's
+    is_operator_class — the SAME predicate derive_blocking and the enforcer
+    use (R3-NF6: a substring test here vs the set test there let a
+    joint-owned LIMITED P1/P2 claim silently drop from every channel)."""
+    is_operator_class = _validator_module().is_operator_class
     derived = []
     for claim in matrix["claims"]:
         if (
-            "operator" in claim["owner"]
+            is_operator_class(claim["owner"])
             and claim["status"] == "LIMITED"
             and claim.get("consequence_severity") in ("P1", "P2")
         ):
@@ -1037,8 +1045,8 @@ def operator_limited_limits(matrix: dict) -> list[dict]:
                 "kind": "operator-hold",
                 "claim": claim["id"],
                 "statement": (
-                    f"Operator-owned LIMITED claim {claim['id']}: "
-                    f"{claim['statement']}"
+                    f"Operator-class LIMITED claim {claim['id']} "
+                    f"(owner: {claim['owner']}): {claim['statement']}"
                 ),
                 "release_consequence": claim["release_consequence"],
                 "owner": claim["owner"],
@@ -1059,15 +1067,20 @@ def build_promotion_packet(sha: str, ts: str, matrix: dict) -> dict:
         # R1: the verdict is a bound artifact, never a bare enum. Populated
         # only by the acceptance flow after a real run exists on disk.
         "independent_gauntlet_ref": None,
-        # R10: the rollback premise is qualified — main's own live state is
-        # part of the truth, not an assumed-green backstop.
+        # R10: the rollback premise names dated, immutable facts plus a live
+        # re-check obligation — never a decaying "main is currently X" claim
+        # (the rc3 packet shipped this field asserting main RED hours after
+        # #195 had landed green; R3-NF3).
         "rollback": (
             "Do not merge this branch to main outside a PROMOTION_RUN. "
-            "Abandoning this branch reverts to main, whose own required "
-            "stdlib-checks were RED at the Public-content step when this "
-            "packet was generated (see KL-MAIN-RED; PR #195 is the in-flight "
-            "repair). main is the last PROMOTION-valid channel only once its "
-            "repair lands green; an independent GO and a separate "
+            "Abandoning this branch reverts to origin/main, which merged "
+            "this lineage's Public-content repair (PR #195, squash 03b7724, "
+            "2026-08-18, operator-ratified D11/RATIFY) and ran its required "
+            "stdlib-checks green at that head. Main's live state is "
+            "re-checked at operator acceptance per the acceptance "
+            "procedure, never assumed from this dated record. One qualified "
+            "exposure remains: the es#137 custody fixes exist only in this "
+            "candidate tree (KL-MAIN-137). An independent GO and a separate "
             "PROMOTION_RUN remain required either way."
         ),
         "requested_irreversible_acts": [],
@@ -1146,25 +1159,12 @@ def build_promotion_packet(sha: str, ts: str, matrix: dict) -> dict:
                 "release_consequence": "Merging this candidate is a PROMOTION act, not performed here.",
                 "owner": "operator",
             },
-            {
-                "id": "KL-MAIN-RED",
-                "kind": "integrity",
-                "statement": (
-                    "origin/main is RED on required stdlib-checks at the "
-                    "Public-content step (the exact defect this lineage's "
-                    "allowlist entries repair), with the downstream "
-                    "release-gate steps never executed on main's head. "
-                    "PR #195 (operator-merge, D11) is the in-flight fix; "
-                    "this candidate line carries the same repair."
-                ),
-                "release_consequence": (
-                    "The rollback channel is impaired until main is green; "
-                    "a green push to main retires this limit (re-checked "
-                    "live at operator acceptance per the acceptance "
-                    "procedure)."
-                ),
-                "owner": "operator",
-            },
+            # KL-MAIN-RED retired (R3-NF3): its own self-retiring clause fired
+            # when PR #195 merged 2026-08-18 as 03b7724 and main's push runs
+            # went green at that head. The rc3 packet shipped the limit as if
+            # still live — prose asserting decayed state. Main's live state
+            # is re-checked at operator acceptance; the residual main
+            # exposure that remains true is KL-MAIN-137 above.
             {
                 "id": "KL-WINDOWS",
                 "kind": "platform",
@@ -1224,6 +1224,11 @@ def build_promotion_packet(sha: str, ts: str, matrix: dict) -> dict:
             "docs/v6/ES6-V6-CANDIDATE/evidence/workflow-oracle-audit.json",
             "docs/v6/ES6-V6-CANDIDATE/evidence/public-content.json",
             "docs/v6/ES6-V6-CANDIDATE/evidence/custody-suite.json",
+            # R3-NF8: the requalification and tracker captures ARE packet
+            # evidence — listing them only per-claim hid them from the
+            # packet-level index.
+            "docs/v6/ES6-V6-CANDIDATE/evidence/requalification.json",
+            "docs/v6/ES6-V6-CANDIDATE/evidence/tracker-capture.json",
         ],
     }
 

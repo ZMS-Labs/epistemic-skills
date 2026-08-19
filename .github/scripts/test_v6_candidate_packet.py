@@ -168,18 +168,55 @@ def main() -> int:
     packet = build_promotion_packet(sha, "2026-08-18T00:00:00Z", matrix)
     if packet["schema"] != "v6-promotion-packet@2":
         raise AssertionError("packet must be @2")
-    # S2: operator-owned LIMITED P1/P2 claims get DERIVED known_limits
+    # S2: operator-CLASS LIMITED P1/P2 claims get DERIVED known_limits
     # entries naming them (machine channel, operator ruling 2026-08-18).
+    # The owner predicate is the validator's is_operator_class — the SAME
+    # test derive_blocking uses (R3-NF6 unification; substring-vs-set let a
+    # joint-owned claim drop from every channel).
+    from v6_generate_candidate_packet import _validator_module, operator_limited_limits
+    is_operator_class = _validator_module().is_operator_class
     derived = {kl.get("claim") for kl in packet["known_limits"] if kl.get("claim")}
     for claim in claims:
-        if ("operator" in claim["owner"] and claim["status"] == "LIMITED"
+        if (is_operator_class(claim["owner"]) and claim["status"] == "LIMITED"
                 and claim["consequence_severity"] in ("P1", "P2")):
             if claim["id"] not in derived:
                 raise AssertionError(
-                    f"operator-owned LIMITED claim {claim['id']} has no derived "
+                    f"operator-class LIMITED claim {claim['id']} has no derived "
                     "known_limits entry (S2)")
-    if "CLM-DESCRIPTION-BUDGET" not in derived:
-        raise AssertionError("CLM-DESCRIPTION-BUDGET must be channel-derived (S2 exemplar)")
+    # R3-NF4: the description-budget fork is RESOLVED (ledger 17, hybrid
+    # Path 2) — the row must say so and its oracle's record facts must exist
+    # in this tree (the rc3 packet asserted the fork open against its own
+    # ledger).
+    budget = next(c for c in claims if c["id"] == "CLM-DESCRIPTION-BUDGET")
+    if budget["status"] != "PROVED":
+        raise AssertionError("CLM-DESCRIPTION-BUDGET must be PROVED per ledger entry 17 (R3-NF4)")
+    if "v6-description-budget-hybrid-path2-20260818-17" not in budget["authority"]:
+        raise AssertionError("budget row must cite the recorded ruling id (R3-NF4)")
+    spec_text = (REPO_ROOT / "docs/superpowers/specs/2026-08-06-epistemic-skills-v5-design.md").read_text(encoding="utf-8")
+    if "AMENDMENT 2026-08-18 — the D8 estate fork is resolved" not in spec_text:
+        raise AssertionError("the Path-2 owner amendment is missing from the v5 spec (R3-NF4 oracle)")
+    if "description-byte delta" not in (REPO_ROOT / "RELEASING.md").read_text(encoding="utf-8"):
+        raise AssertionError("RELEASING.md lacks the description-byte delta row (R3-NF4 oracle)")
+    if "v6-description-budget-hybrid-path2-20260818-17" not in (REPO_ROOT / ".ledger/entries.jsonl").read_text(encoding="utf-8"):
+        raise AssertionError("ledger entry 17 missing from the durable store (R3-NF4 oracle)")
+    # S2 derivation exemplar on a SYNTHETIC matrix (the live matrix carries
+    # no LIMITED operator-class P1/P2 row after R3-NF4): operator and
+    # joint-owned LIMITED P1/P2 derive; PROVED and P3 do not (R3-NF6).
+    synth = {"claims": [
+        {"id": "CLM-A", "statement": "s", "release_consequence": "rc",
+         "owner": "operator", "status": "LIMITED", "consequence_severity": "P2"},
+        {"id": "CLM-B", "statement": "s", "release_consequence": "rc",
+         "owner": "joint", "status": "LIMITED", "consequence_severity": "P1"},
+        {"id": "CLM-C", "statement": "s", "release_consequence": "rc",
+         "owner": "operator", "status": "PROVED", "consequence_severity": "P1"},
+        {"id": "CLM-D", "statement": "s", "release_consequence": "rc",
+         "owner": "operator", "status": "LIMITED", "consequence_severity": "P3"},
+    ]}
+    synth_derived = {kl["claim"] for kl in operator_limited_limits(synth)}
+    if synth_derived != {"CLM-A", "CLM-B"}:
+        raise AssertionError(
+            f"S2 derivation exemplar wrong: {sorted(synth_derived)} — joint-owned "
+            "LIMITED P1/P2 must derive (R3-NF6); PROVED/P3 must not")
     if packet["self_certification"] != "refused":
         raise AssertionError("must refuse self-certification")
     if packet["readiness"] != "NOT_READY":
@@ -192,9 +229,13 @@ def main() -> int:
         if not limit.get("owner"):
             raise AssertionError(f"known limit {limit['id']} lacks an owner (R12)")
     kl_ids = {limit["id"] for limit in packet["known_limits"]}
-    for needed in ("KL-RESTAMP", "KL-MAIN-RED", "KL-GUARD-LEXICAL", "KL-DRAFT-CI"):
+    for needed in ("KL-RESTAMP", "KL-GUARD-LEXICAL", "KL-DRAFT-CI", "KL-MAIN-137"):
         if needed not in kl_ids:
             raise AssertionError(f"missing known limit {needed}")
+    if "KL-MAIN-RED" in kl_ids:
+        raise AssertionError(
+            "KL-MAIN-RED is retired (R3-NF3: #195 merged green 2026-08-18 as "
+            "03b7724) — it must not reappear as a live limit")
     derived = blocking_from_matrix(matrix)
     if packet["blocking_claims"] != derived:
         raise AssertionError("packet blocking_claims must be the matrix derivation (R12)")

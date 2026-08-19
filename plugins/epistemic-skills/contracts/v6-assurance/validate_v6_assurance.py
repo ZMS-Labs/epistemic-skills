@@ -45,6 +45,16 @@ TERMINAL = "V6_CANDIDATE_READY_FOR_OPERATOR_ACCEPTANCE"
 OPERATOR_CLASS_OWNERS = {"operator", "operator+agent", "joint", "independent-panel"}
 
 
+def is_operator_class(owner: str) -> bool:
+    """The ONE owner predicate for the R12 derivation and the S2 channel
+    law. R3-NF6: derive_blocking tested membership in the set above while
+    the channel enforcer and the generator's derivation tested the
+    substring 'operator' — under that seam a joint-owned LIMITED P1/P2
+    claim silently dropped from every machine channel. Every owner test
+    routes through here now; matching is set membership, never substrings."""
+    return owner in OPERATOR_CLASS_OWNERS
+
+
 def _load_json(path: Path) -> object:
     return json.loads(path.read_text(encoding="utf-8"))
 
@@ -67,7 +77,7 @@ def derive_blocking(claims: list[dict]) -> list[str]:
         elif severity == "P1" and status != "PROVED":
             block.append(claim["id"])
         elif (
-            owner in OPERATOR_CLASS_OWNERS
+            is_operator_class(owner)
             and status not in {"PROVED", "LIMITED"}
             and severity != "P3"
         ):
@@ -155,7 +165,11 @@ def validate_reconciliation(doc: dict) -> None:
 
 def _tracked_set(root: Path) -> set[str] | None:
     """Git-tracked paths under root, or None when root is not a git worktree
-    (synthetic test trees). Used by the S1 guard below."""
+    (synthetic test trees). Used by the S1 guard below. R3-NF7: being inside
+    SOME work tree is not enough — a byte-exact non-git copy nested under an
+    unrelated repository would answer the enclosing repo's file list and
+    false-alarm every inventoried path as untracked; require the work tree's
+    toplevel to be root itself, else treat the tree as non-git."""
     import subprocess
 
     probe = subprocess.run(
@@ -163,6 +177,12 @@ def _tracked_set(root: Path) -> set[str] | None:
         capture_output=True, text=True,
     )
     if probe.returncode != 0 or probe.stdout.strip() != "true":
+        return None
+    top = subprocess.run(
+        ["git", "-C", str(root), "rev-parse", "--show-toplevel"],
+        capture_output=True, text=True,
+    )
+    if top.returncode != 0 or Path(top.stdout.strip()).resolve() != root.resolve():
         return None
     out = subprocess.check_output(["git", "-C", str(root), "ls-files", "-z"])
     return {p for p in out.decode("utf-8").split("\0") if p}
@@ -334,22 +354,28 @@ def validate_operator_channel(matrix: dict, packet: dict) -> list[str]:
     """S2 channel law (operator ruling 2026-08-18; kimi run
     es-v6-rc2-gauntlet-kimi-2026-08-18, CL-2 synthesis):
 
-    Every P1/P2 claim whose owner contains 'operator' must occupy a machine
-    channel while it is open — blocking_claims for non-PROVED non-LIMITED
-    statuses (the R12 derivation already puts it there), or a known_limits
-    entry naming it via its `claim` field for LIMITED (derived by the
-    generator, so it cannot be dropped by hand). PROVED operator claims are
-    completed acts (row-only); P3 tracker census rows are channeled by the
-    reconciliation artifact per acceptance-procedure item 3. The identical
-    law is codified in requirement-register.json (operator_channel_law) so
-    the register and this derivation agree.
+    Every P1/P2 claim whose owner is in the operator CLASS (is_operator_class
+    — the same predicate derive_blocking uses; R3-NF6 closed the
+    substring-vs-set seam that silently uncovered joint-owned claims) must
+    occupy a machine channel while it is open — blocking_claims for
+    non-PROVED non-LIMITED statuses (the R12 derivation already puts it
+    there), or a known_limits entry naming it via its `claim` field for
+    LIMITED (derived by the generator, so it cannot be dropped by hand).
+    PROVED operator claims are completed acts (row-only); P3 tracker census
+    rows are channeled by the reconciliation artifact per
+    acceptance-procedure item 3. The identical law is codified in
+    requirement-register.json (operator_channel_law) so the register and
+    this derivation agree. Known residual, recorded not hidden (R3-NF6 /
+    ledger entry 18 revisit_when): an operator-class P3 claim that is NOT a
+    census row occupies no machine channel; no such claim exists, and one
+    emerging triggers the ruling's revisit clause.
     """
     if not matrix_has_severity(matrix):
         return ["LEGACY matrix without consequence_severity: operator channel law not checked"]
     blocking = set(packet["blocking_claims"])
     named = {kl.get("claim") for kl in packet["known_limits"] if kl.get("claim")}
     for claim in matrix["claims"]:
-        if "operator" not in claim["owner"]:
+        if not is_operator_class(claim["owner"]):
             continue
         if claim.get("consequence_severity", "P3") == "P3":
             continue
@@ -359,7 +385,7 @@ def validate_operator_channel(matrix: dict, packet: dict) -> list[str]:
         if cid in blocking or cid in named:
             continue
         raise AssertionError(
-            f"S2 CHANNEL DROP: operator-owned {claim['status']} claim {cid} "
+            f"S2 CHANNEL DROP: operator-class {claim['status']} claim {cid} "
             "appears in neither blocking_claims nor a known_limits entry "
             "naming it (claim field)"
         )
@@ -430,10 +456,23 @@ def main() -> int:
         # PRE-FREEZE state: the C/C+1 discipline means the code-final
         # candidate commit C legitimately carries NO packet (the packet is
         # generated AT C and committed as C+1; a superseded packet is
-        # deleted with its repair, immutable in history at its own freeze
-        # commit). A tree with no packet CLAIMS nothing — there is nothing
-        # to certify and nothing to counterfeit; the terminal state lives
-        # inside a packet, so it is unreachable from here.
+        # deleted WHOLE with its repair, immutable in history at its own
+        # freeze commit). A tree with no packet CLAIMS nothing — there is
+        # nothing to certify and nothing to counterfeit; the terminal state
+        # lives inside a packet, so it is unreachable from here. R3-NF7:
+        # PRE-FREEZE requires the packet DIRECTORY empty or absent — core
+        # artifacts gone but README/evidence remaining is a hand-pruned
+        # seal, and that is TORN, not pre-freeze.
+        leftovers = (
+            sorted(str(p.relative_to(CANDIDATE_DOCS)) for p in CANDIDATE_DOCS.rglob("*") if p.is_file())
+            if CANDIDATE_DOCS.is_dir() else []
+        )
+        if leftovers:
+            raise SystemExit(
+                "TORN candidate packet — no core artifacts but "
+                f"{len(leftovers)} file(s) remain under {CANDIDATE_DOCS.name}/ "
+                f"(R3-NF7: full-deletion with leftovers is not PRE-FREEZE): {leftovers[:5]}"
+            )
         print("note: PRE-FREEZE tree — no candidate packet present; ZI-001 checks only")
         for notice in notices:
             print(f"note: {notice}")
@@ -448,6 +487,15 @@ def main() -> int:
     recon = _load_json(cand_recon)
     packet = _load_json(cand_packet)
     validate_matrix(matrix)
+    # R3-NF6: a wholly severity-less matrix would degrade BOTH the blocking
+    # derivation and the channel law to notices. Legitimate only for the
+    # legacy @1 lineage — a committed @2 candidate must be fully classified.
+    if packet.get("schema") == "v6-promotion-packet@2" and not matrix_has_severity(matrix):
+        raise AssertionError(
+            "R3-NF6: a @2 candidate packet requires consequence_severity on "
+            "every matrix claim — the channel and blocking laws must not "
+            "degrade to notices on a committed candidate"
+        )
     validate_reconciliation(recon)
     notices += validate_source_inventory(_load_json(cand_inventory))
     notices += validate_promotion_packet(packet)

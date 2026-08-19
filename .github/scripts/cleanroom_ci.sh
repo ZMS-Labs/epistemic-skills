@@ -33,6 +33,13 @@ REMOTE="${2:-https://github.com/ZMS-Labs/epistemic-skills.git}"
 # user profile, which test_live_runner's sensitive-path guard deliberately
 # refuses (kimi ruling S10 — the guard working, not a defect). Set this to
 # any non-profile scratch path there; unset elsewhere.
+# R3-NF8: validate the override EARLY with an attributed error — an invalid
+# path otherwise dies later under mktemp's own stderr followed by a FATAL
+# blaming the wrong step.
+if [ -n "${CLEANROOM_TMPDIR:-}" ] && [ ! -d "$CLEANROOM_TMPDIR" ]; then
+  echo "FATAL: CLEANROOM_TMPDIR='$CLEANROOM_TMPDIR' is not an existing directory" >&2
+  exit 1
+fi
 WORK="$(mktemp -d ${CLEANROOM_TMPDIR:+-p "$CLEANROOM_TMPDIR"})"
 trap 'rm -rf "$WORK"' EXIT
 
@@ -64,6 +71,15 @@ else
 fi
 echo "  commit  : $(git rev-parse --short HEAD)"
 echo
+
+# R3-NF1 pre-freeze surface: the workflow's dispatch path runs the ledger
+# append-only oracle against FETCH_HEAD = live origin/main; this harness
+# replicates that by fetching the same ref from the same remote so the
+# extracted step executes the REAL comparison here too. Fail closed — the
+# freeze discipline must not seal without it (the rc3 freeze did, and the
+# byte-rewrite it hid turned the freeze PR red on arrival).
+git fetch --quiet "$REMOTE" main || {
+  echo "FATAL: cannot fetch main from $REMOTE for the ledger append-only base"; exit 2; }
 
 WF=".github/workflows/epistemic-flexibility.yml"
 [ -f "$WF" ] || { echo "FATAL: workflow not found: $WF"; exit 2; }

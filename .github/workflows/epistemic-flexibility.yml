@@ -234,11 +234,26 @@ jobs:
       - name: Decision-ledger examples and durable store
         run: python plugins/epistemic-skills/skills/decision-ledger/reference/validate_examples.py
       - name: Durable ledger append-only against merge base
-        if: github.event_name == 'pull_request'
+        # R3-NF1: this oracle must have a PRE-FREEZE surface. On
+        # pull_request the base is the PR's base head (what ready-mark
+        # compares); on workflow_dispatch — the requalification runs at a
+        # candidate SHA — the base is live origin/main, the SAME comparison
+        # the eventual ready-mark makes. Before this, no surface ran the
+        # check pre-ready-mark and a byte-rewrite of published ledger lines
+        # shipped inside a sealed freeze (rc3 delta review, R3-NF1).
+        if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           python .github/scripts/check_ledger_append_only.py --self-test
+          if [ -z "$BASE_SHA" ]; then
+            git fetch --quiet --depth=1 origin main || {
+              echo "cannot fetch origin/main for the dispatch-mode base — failing closed" >&2
+              exit 1
+            }
+            python .github/scripts/check_ledger_append_only.py --base-git-ref FETCH_HEAD --current .ledger/entries.jsonl
+            exit $?
+          fi
           git fetch --quiet --depth=1 origin "$BASE_SHA" || {
             echo "cannot fetch merge base $BASE_SHA — failing closed" >&2
             exit 1

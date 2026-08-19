@@ -517,7 +517,14 @@ def main() -> int:
     )
     require(neutral_packet_root == expected_arm_packet_root.resolve(),
             "neutral output-adjacent packet root was not accepted and canonicalized")
-    neutral_tmp_root = Path("C:/tmp") if os.name == "nt" else Path(tempfile.gettempdir())
+    # R3-NF8: honor the same non-profile override the clean-room documents
+    # (CLEANROOM_TMPDIR, kimi ruling S10) before falling back to C:/tmp —
+    # the hardcoded fallback alone may not exist on an NT host.
+    if os.name == "nt":
+        _override = os.environ.get("CLEANROOM_TMPDIR")
+        neutral_tmp_root = Path(_override) if _override else Path("C:/tmp")
+    else:
+        neutral_tmp_root = Path(tempfile.gettempdir())
     with tempfile.TemporaryDirectory(dir=neutral_tmp_root) as guard_tmp:
         guard_root = Path(guard_tmp)
         original_run = runner.subprocess.run
