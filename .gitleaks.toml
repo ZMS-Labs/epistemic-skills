@@ -12,3 +12,21 @@ regexes = [
   '''^\s*printf '%s\\n' '"credentia[l]_digest": "663a543d009ec261190a6ab8a8a45f02ac80ed052aceb90e924ec96a20d76ed8"' > "\$fixture/allowed\.json"$''',
   '''^\s*printf '%s\\n' '"credentia[l]": "663a543d009ec261190a6ab8a8a45f02ac80ed052aceb90e924ec96a20d76ed8"' > "\$fixture/rejected\.json"$''',
 ]
+
+[[allowlists]]
+# Gauntlet verdict-record branches are immutable by design (a recorded
+# arbitration is never rewritten), and their machine reports are dense with
+# public identifiers — commit SHAs, Actions run ids, digest hex — that sit
+# next to words like "API" in verifier prose. gitleaks v8.30.1's
+# generic-api-key entropy heuristic fired on exactly that (run
+# es-v6-rc4 requalification: reports/verify-blast.json at 2d835b9,
+# evidence_log naming live-API run conclusions). Scope: ONLY the entropy
+# heuristic, ONLY under docs/gauntlet-runs/ — every other rule (private
+# keys, provider-specific tokens) still applies there, and the
+# public-content gate scans the same files for the repo's banned
+# vocabulary classes.
+description = "Immutable gauntlet-record reports carry public run/commit identifiers, not credentials"
+targetRules = ["generic-api-key"]
+paths = [
+  '''docs/gauntlet-runs/.*''',
+]
