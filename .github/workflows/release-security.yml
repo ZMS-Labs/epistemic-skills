@@ -79,6 +79,44 @@ jobs:
             echo "gitleaks narrowness control failed with unexpected status $status" >&2
             exit "$status"
           fi
+      - name: Gauntlet-record allowlist narrowness control
+        # R4-NF2 (rc4 delta-review panel): the record-path exemption in
+        # .gitleaks.toml suppresses the generic-api-key ENTROPY heuristic under
+        # docs/gauntlet-runs/ only, because verifier prose there quotes Actions
+        # run ids beside the word "API". This control proves the exemption is
+        # narrow: the SAME planted line must FIRE outside that directory and be
+        # suppressed inside it, and a provider-branded credential must fire even
+        # inside it. A widened exemption turns this step red.
+        run: |
+          fixture="$(mktemp -d)"
+          mkdir -p "$fixture/docs/gauntlet-runs/probe" "$fixture/src"
+          token="$(printf '%s%s' 'zk9x2m4qv7r8t1w3y5u6i9' 'o0p2a4s6d8f0g1h3j5kq')"
+          printf '"api_key": "%s"\n' "$token" > "$fixture/src/config.json"
+          printf '"api_key": "%s"\n' "$token" > "$fixture/docs/gauntlet-runs/probe/report.json"
+          set +e
+          "$RUNNER_TEMP/bin/gitleaks" dir --config .gitleaks.toml --no-banner --redact "$fixture/src"
+          outside=$?
+          "$RUNNER_TEMP/bin/gitleaks" dir --config .gitleaks.toml --no-banner --redact "$fixture/docs"
+          inside=$?
+          set -e
+          if [ "$outside" -ne 1 ]; then
+            echo "narrowness control: planted entropy token did NOT fire outside docs/gauntlet-runs (status $outside)" >&2
+            exit 1
+          fi
+          if [ "$inside" -ne 0 ]; then
+            echo "narrowness control: exemption did not apply inside docs/gauntlet-runs (status $inside)" >&2
+            exit 1
+          fi
+          printf '%s%s\n' 'ghp_' 'A1b2C3d4E5f6G7h8I9j0K1l2M3n4O5p6Q7r8' > "$fixture/docs/gauntlet-runs/probe/branded.txt"
+          set +e
+          "$RUNNER_TEMP/bin/gitleaks" dir --config .gitleaks.toml --no-banner --redact "$fixture/docs"
+          branded=$?
+          set -e
+          if [ "$branded" -ne 1 ]; then
+            echo "narrowness control: a provider-branded credential was suppressed inside docs/gauntlet-runs (status $branded)" >&2
+            exit 1
+          fi
+          echo "narrowness control: entropy exemption is record-path-scoped; branded credentials still fire"
       - name: Scan the complete repository history
         run: |
           "$RUNNER_TEMP/bin/gitleaks" git --config .gitleaks.toml --no-banner --redact --log-opts="--all" .
