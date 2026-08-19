@@ -1,0 +1,57 @@
+{
+  "schema": "v6-requalification@1",
+  "candidate_sha": "16b80ac6ada24a663e39b38ab06e8f2614d247f4",
+  "captured_at": "2026-08-19T04:48:32Z",
+  "method": "workflow_dispatch of all five gating workflows on branch claude/v6-rc2-requal pinned at the candidate SHA (operator decision D4b); conclusions read from GitHub's own run/job records.",
+  "claims": {
+    "CLM-STDLIB-GATE": {
+      "conclusion": "success",
+      "runs": [
+        "https://github.com/ZMS-Labs/epistemic-skills/actions/runs/32216973541"
+      ],
+      "note": "epistemic-flexibility stdlib-checks executed in full at the candidate SHA, including the assurance validator's PRE-FREEZE pass on the packet-less candidate tree."
+    },
+    "CLM-PUBLIC-CONTENT": {
+      "conclusion": "success",
+      "runs": [
+        "https://github.com/ZMS-Labs/epistemic-skills/actions/runs/32216973541"
+      ],
+      "note": "Public-content gate step (digest-bound allowlist, self-test + live) green inside stdlib-checks at the candidate SHA; local evidence/public-content.json corroborates at the same SHA."
+    },
+    "CLM-SECRET-SCAN": {
+      "conclusion": "success",
+      "runs": [
+        "https://github.com/ZMS-Labs/epistemic-skills/actions/runs/32216990700"
+      ],
+      "note": "release-security full-history-secret-scan executed at the candidate SHA."
+    },
+    "CLM-MC-HOOK-POSIX": {
+      "conclusion": "success",
+      "runs": [
+        "https://github.com/ZMS-Labs/epistemic-skills/actions/runs/32216975199"
+      ],
+      "note": "The GATING Linux 'contract' job succeeded (all steps incl. the POSIX hook branch and the three-subprocess continuity proof). The run's aggregate conclusion is 'failure' because the NON-GATING dispatch-only 'contract-macos' diagnostic failed at the lifecycle suite with the DISCLOSED es#162 APFS Unicode-fold instance \u2014 identical, deterministic recurrence of the rc2 measurement (see CLM-MC-MACOS-CASE, KL-MACOS-162). Job-level: contract=success; contract-macos=failure."
+    }
+  },
+  "non_flip_records": {
+    "commission-watch-contract": {
+      "conclusion": "success",
+      "runs": [
+        "https://github.com/ZMS-Labs/epistemic-skills/actions/runs/32216981399"
+      ]
+    },
+    "openai-bundles": {
+      "conclusion": "success",
+      "runs": [
+        "https://github.com/ZMS-Labs/epistemic-skills/actions/runs/32216983032"
+      ]
+    },
+    "mission-custody-contract-macos-diagnostic": {
+      "conclusion": "failure",
+      "runs": [
+        "https://github.com/ZMS-Labs/epistemic-skills/actions/runs/32216975199"
+      ],
+      "note": "Dispatch-only, non-gating; the disclosed es#162 measured instance, deterministic across rc2 and rc3. Recorded so the aggregate red is never silently dropped."
+    }
+  }
+}

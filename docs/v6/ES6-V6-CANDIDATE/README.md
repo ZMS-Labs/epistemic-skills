@@ -26,9 +26,12 @@ two commits:
   digest — a post-freeze edit to an inventoried file turns CI red
   (`allowlist-stale`-style, see KL-RESTAMP).
 
-The exact C is `promotion-packet.json → candidate_sha`; C+1 is the commit
-whose diff introduced these artifacts (`git log -1 --format=%H --
-docs/v6/ES6-V6-CANDIDATE/promotion-packet.json`).
+**Subject SHA (this freeze, R4's letter):** candidate
+**C = `16b80ac6ada24a663e39b38ab06e8f2614d247f4`** — cross-check it against
+`promotion-packet.json → candidate_sha` and the artifact stamps; on any
+disagreement the JSON artifacts govern and this README is stale. C+1 is
+the commit whose diff introduced these artifacts (`git log -1
+--format=%H -- docs/v6/ES6-V6-CANDIDATE/promotion-packet.json`).
 
 ## What this packet completes of the BUILD contract
 
