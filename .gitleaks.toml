@@ -27,6 +27,12 @@ regexes = [
 # vocabulary classes.
 description = "Immutable gauntlet-record reports carry public run/commit identifiers, not credentials"
 targetRules = ["generic-api-key"]
+# R4-NF2 (rc4 delta-review panel): ANCHORED. The rc4 form was
+# '''docs/gauntlet-runs/.*''', which gitleaks matches unanchored — so
+# 'notdocs/gauntlet-runs/x' and 'sub/docs/gauntlet-runs/x' were suppressed too.
+# ^ pins the match to a repository-root record path and nothing else. The
+# narrowness control in release-security.yml proves the exemption fires exactly
+# where intended, in CI, on every run.
 paths = [
-  '''docs/gauntlet-runs/.*''',
+  '''^docs/gauntlet-runs/.*''',
 ]

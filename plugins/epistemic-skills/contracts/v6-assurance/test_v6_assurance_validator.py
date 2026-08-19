@@ -350,6 +350,27 @@ def main() -> int:
             "all or none", failures,
         )
 
+        # R4-NF4: the owner VOCABULARY is closed, and the check found a real
+        # unclassified spelling ("program") on its first run against the
+        # shipped matrix. An owner outside the vocabulary must fail closed.
+        stray = base_matrix()
+        stray["claims"][0]["owner"] = "operator-team"
+        expect_fail(
+            "owner-outside-closed-vocabulary",
+            lambda: MOD.validate_matrix(stray),
+            "closed owner vocabulary", failures,
+        )
+        if MOD.is_operator_class("program") or "program" not in MOD.OWNER_VOCABULARY:
+            failures.append("'program' must be in the vocabulary and NOT operator-class")
+            print("[FAIL] 'program' must be in the vocabulary and NOT operator-class")
+        else:
+            print("[PASS] 'program' is vocabulary-known and deliberately not operator-class")
+        if not MOD.OPERATOR_CLASS_OWNERS <= MOD.OWNER_VOCABULARY:
+            failures.append("operator-class owners must be a subset of the vocabulary")
+            print("[FAIL] operator-class owners must be a subset of the vocabulary")
+        else:
+            print("[PASS] every operator-class owner is vocabulary-known")
+
         # R3-NF6: the owner predicate is CLASS membership — a JOINT-owned
         # LIMITED P1/P2 claim outside both channels must fail closed too
         # (the substring-era seam let it drop from every channel silently).

@@ -82,41 +82,52 @@ jobs:
       - name: Gauntlet-record allowlist narrowness control
         # R4-NF2 (rc4 delta-review panel): the record-path exemption in
         # .gitleaks.toml suppresses the generic-api-key ENTROPY heuristic under
-        # docs/gauntlet-runs/ only, because verifier prose there quotes Actions
-        # run ids beside the word "API". This control proves the exemption is
-        # narrow: the SAME planted line must FIRE outside that directory and be
-        # suppressed inside it, and a provider-branded credential must fire even
-        # inside it. A widened exemption turns this step red.
+        # ^docs/gauntlet-runs/ only, because verifier prose there quotes Actions
+        # run ids beside the word "API". This control plants one identical token
+        # in three places and asserts exactly which ones fire. It must run the
+        # SAME way the real scan does — from the repository root with relative
+        # paths — because gitleaks matches its path allowlist against the path
+        # it reports, and a scan of an absolute directory reports absolute
+        # paths that no repo-anchored pattern can match.
         run: |
-          fixture="$(mktemp -d)"
-          mkdir -p "$fixture/docs/gauntlet-runs/probe" "$fixture/src"
+          set -euo pipefail
+          probe_dirs="docs/gauntlet-runs/_narrowness-probe notdocs/gauntlet-runs/_narrowness-probe src/_narrowness-probe"
+          cleanup() { rm -rf docs/gauntlet-runs/_narrowness-probe notdocs src/_narrowness-probe "$RUNNER_TEMP/narrowness.json"; }
+          trap cleanup EXIT
+          for d in $probe_dirs; do mkdir -p "$d"; done
           token="$(printf '%s%s' 'zk9x2m4qv7r8t1w3y5u6i9' 'o0p2a4s6d8f0g1h3j5kq')"
-          printf '"api_key": "%s"\n' "$token" > "$fixture/src/config.json"
-          printf '"api_key": "%s"\n' "$token" > "$fixture/docs/gauntlet-runs/probe/report.json"
+          for d in $probe_dirs; do printf '"api_key": "%s"\n' "$token" > "$d/report.json"; done
+          printf '%s%s\n' 'ghp_' 'A1b2C3d4E5f6G7h8I9j0K1l2M3n4O5p6Q7r8' \
+            > docs/gauntlet-runs/_narrowness-probe/branded.txt
           set +e
-          "$RUNNER_TEMP/bin/gitleaks" dir --config .gitleaks.toml --no-banner --redact "$fixture/src"
-          outside=$?
-          "$RUNNER_TEMP/bin/gitleaks" dir --config .gitleaks.toml --no-banner --redact "$fixture/docs"
-          inside=$?
+          "$RUNNER_TEMP/bin/gitleaks" dir --config .gitleaks.toml --no-banner --redact \
+            --report-format json --report-path "$RUNNER_TEMP/narrowness.json" .
           set -e
-          if [ "$outside" -ne 1 ]; then
-            echo "narrowness control: planted entropy token did NOT fire outside docs/gauntlet-runs (status $outside)" >&2
-            exit 1
-          fi
-          if [ "$inside" -ne 0 ]; then
-            echo "narrowness control: exemption did not apply inside docs/gauntlet-runs (status $inside)" >&2
-            exit 1
-          fi
-          printf '%s%s\n' 'ghp_' 'A1b2C3d4E5f6G7h8I9j0K1l2M3n4O5p6Q7r8' > "$fixture/docs/gauntlet-runs/probe/branded.txt"
-          set +e
-          "$RUNNER_TEMP/bin/gitleaks" dir --config .gitleaks.toml --no-banner --redact "$fixture/docs"
-          branded=$?
-          set -e
-          if [ "$branded" -ne 1 ]; then
-            echo "narrowness control: a provider-branded credential was suppressed inside docs/gauntlet-runs (status $branded)" >&2
-            exit 1
-          fi
-          echo "narrowness control: entropy exemption is record-path-scoped; branded credentials still fire"
+          python - "$RUNNER_TEMP/narrowness.json" <<'PY'
+          import json, sys
+          findings = json.load(open(sys.argv[1]))
+          hits = {(f["File"], f["RuleID"]) for f in findings}
+          entropy = {path for path, rule in hits if rule == "generic-api-key"}
+          record = "docs/gauntlet-runs/_narrowness-probe/report.json"
+          outside = "src/_narrowness-probe/report.json"
+          lookalike = "notdocs/gauntlet-runs/_narrowness-probe/report.json"
+          branded = ("docs/gauntlet-runs/_narrowness-probe/branded.txt", "github-pat")
+          errors = []
+          if record in entropy:
+              errors.append("exemption did NOT apply inside docs/gauntlet-runs/")
+          if outside not in entropy:
+              errors.append("planted entropy token did NOT fire outside the record path")
+          if lookalike not in entropy:
+              errors.append("exemption leaked to a look-alike path (anchor lost): " + lookalike)
+          if branded not in hits:
+              errors.append("a provider-branded credential was suppressed inside the record path")
+          if errors:
+              for e in errors:
+                  print("narrowness control:", e, file=sys.stderr)
+              raise SystemExit(1)
+          print("narrowness control: entropy exemption is anchored to the record path; "
+                "look-alike paths and branded credentials still fire")
+          PY
       - name: Scan the complete repository history
         run: |
           "$RUNNER_TEMP/bin/gitleaks" git --config .gitleaks.toml --no-banner --redact --log-opts="--all" .

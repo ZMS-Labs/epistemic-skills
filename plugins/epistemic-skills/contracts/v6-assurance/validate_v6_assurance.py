@@ -44,6 +44,18 @@ TERMINAL = "V6_CANDIDATE_READY_FOR_OPERATOR_ACCEPTANCE"
 # which imports derive_blocking from here — one home, no drift).
 OPERATOR_CLASS_OWNERS = {"operator", "operator+agent", "joint", "independent-panel"}
 
+# The closed owner vocabulary (R4-NF4). Every matrix claim's owner must be one
+# of these; the operator-class subset above decides channel membership. Keeping
+# the vocabulary closed is what makes is_operator_class total rather than a
+# best-effort string test.
+# "program" owns exactly one row: the parent tracker issue (es#191) whose
+# census entry stays open until the program itself closes. It is deliberately
+# NOT operator-class — it is a P3 census row channeled by the reconciliation
+# artifact and walked at acceptance item 3, not a hold anyone can discharge.
+# The vocabulary check found it on its first run (R4-NF4), which is the point:
+# an owner spelling nobody classified was sitting in the shipped matrix.
+OWNER_VOCABULARY = OPERATOR_CLASS_OWNERS | {"agent", "program"}
+
 
 def is_operator_class(owner: str) -> bool:
     """The ONE owner predicate for the R12 derivation and the S2 channel
@@ -120,6 +132,19 @@ def validate_matrix(doc: dict) -> None:
         if claim["id"] in claim_ids:
             raise AssertionError(f"duplicate claim id: {claim['id']}")
         claim_ids.add(claim["id"])
+        # R4-NF4: owner presence was checked, but never its VOCABULARY. An
+        # out-of-vocabulary operator-ish spelling ("operator-team", "Operator")
+        # would sit outside is_operator_class and fall silently out of both
+        # machine channels. The vocabulary is closed and checked here, so a new
+        # owner class is a deliberate edit to OWNER_VOCABULARY plus a decision
+        # about whether it is operator-class.
+        if claim["owner"] not in OWNER_VOCABULARY:
+            raise AssertionError(
+                f"claim {claim['id']}: owner {claim['owner']!r} is outside the "
+                f"closed owner vocabulary {sorted(OWNER_VOCABULARY)} — add it "
+                "deliberately and decide whether it is operator-class "
+                "(is_operator_class), never by accident"
+            )
         if "consequence_severity" in claim:
             if claim["consequence_severity"] not in {"P1", "P2", "P3"}:
                 raise AssertionError(
@@ -443,7 +468,7 @@ def main() -> int:
 
     validate_matrix(_load_json(matrix_path))
     validate_reconciliation(_load_json(recon_path))
-    notices += validate_source_inventory(_load_json(inventory_path))
+    notices += validate_source_inventory(_load_json(inventory_path), REPO_ROOT)
 
     cand_matrix = CANDIDATE_DOCS / "claim-to-proof-matrix.json"
     cand_recon = CANDIDATE_DOCS / "issue-pr-reconciliation.json"
@@ -497,8 +522,8 @@ def main() -> int:
             "degrade to notices on a committed candidate"
         )
     validate_reconciliation(recon)
-    notices += validate_source_inventory(_load_json(cand_inventory))
-    notices += validate_promotion_packet(packet)
+    notices += validate_source_inventory(_load_json(cand_inventory), REPO_ROOT)
+    notices += validate_promotion_packet(packet, REPO_ROOT)
     notices += validate_blocking_derivation(matrix, packet)
     notices += validate_operator_channel(matrix, packet)
     validate_candidate_coverage(matrix, recon)

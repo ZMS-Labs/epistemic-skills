@@ -642,8 +642,8 @@ def class_claims(sha: str) -> list[dict]:
             "statement": "The full git history of the candidate contains no credential-shaped secrets (release-security full-history-secret-scan).",
             "authority": "RELEASING.md gate 6; .github/workflows/release-security.yml",
             "subject": f"commit {sha} full history",
-            "oracle": "release-security full-history-secret-scan job green on the candidate head (dispatches on ready PRs and pushes; verified dispatching by the R8 ready-mark drill).",
-            "falsifier": "A seeded credential in a historical commit passes the scan, or the job never executes on the candidate.",
+            "oracle": "release-security full-history-secret-scan job green on the candidate head (dispatches on ready PRs and pushes; verified dispatching by the R8 ready-mark drill), WITH the job's planted controls green: a seeded private key must be detected, the digest allowlist must reject a neighbouring credential field, and the record-path narrowness control must show the entropy exemption firing outside ^docs/gauntlet-runs/ and on a look-alike path while a branded credential inside it still fires.",
+            "falsifier": "A seeded credential in a historical commit passes the scan; or the job never executes on the candidate; or the ^docs/gauntlet-runs/ entropy exemption (added because verifier prose there quotes run ids beside the word API) suppresses a finding outside that anchored path, or suppresses any rule other than generic-api-key inside it. The exemption is scoped to one rule and one anchored path, and CI proves that scoping on every run rather than asserting it.",
             "environment": "ubuntu-24.04 CI",
             "independence": "scanner distinct from content authors",
             "evidence_tier": "R1",
@@ -1165,6 +1165,29 @@ def build_promotion_packet(sha: str, ts: str, matrix: dict) -> dict:
             # still live — prose asserting decayed state. Main's live state
             # is re-checked at operator acceptance; the residual main
             # exposure that remains true is KL-MAIN-137 above.
+            {
+                "id": "KL-SEAL-MAIN-COUPLING",
+                "kind": "integrity",
+                "statement": (
+                    "The digest seal binds inventoried sources as they stood "
+                    "at C. CI runs the freeze PR against its MERGE ref, so a "
+                    "change on main to ANY inventoried file makes that merge "
+                    "tree differ from C and the validator fails R5 DIGEST "
+                    "MISMATCH on the freeze PR — even though the candidate "
+                    "branch itself is untouched. Measured, not theorised: the "
+                    "rc4 candidate's own R4-NF1 repair landed on main "
+                    "(check_dco.py, dco.yml, release-security.yml) and forced "
+                    "the rc5 re-cut that absorbed it."
+                ),
+                "release_consequence": (
+                    "While a freeze is open, main must not change inventoried "
+                    "files, or the freeze must be re-cut to absorb them. The "
+                    "practical rule: land main-side policy repairs BEFORE "
+                    "cutting a candidate, and keep the window between freeze "
+                    "and ready-mark short."
+                ),
+                "owner": "operator",
+            },
             {
                 "id": "KL-WINDOWS",
                 "kind": "platform",
