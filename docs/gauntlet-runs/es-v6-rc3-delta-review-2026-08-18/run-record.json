@@ -1,0 +1,22 @@
+{
+ "schema": "gauntlet-run-record@1",
+ "run": "es-v6-rc3-delta-review-2026-08-18",
+ "subject_sha": "16b80ac6ada24a663e39b38ab06e8f2614d247f4",
+ "freeze_commit": "7ce03b905309d304e70524f1e9144cd9e3cb1259",
+ "computed_verdict": "NO-GO",
+ "mode": "delta-plus-blast-radius (operator ruling, ledger id v6-successor-review-delta-mode-20260818-19); panel 3 of 3 \u2014 lineage cap EXHAUSTED with this verdict",
+ "seat_structure": "author-dispatched fresh context-free workflow seats, operator-authorized verbatim: 'I approve both, you can run the delta review with fresh context free workflows' (2026-08-19). Dispatcher authored the repair under review \u2014 disclosed, mitigated by isolated seats doing all finding and judging, an adversarial challenger briefed against the dispatcher's framing, and a fresh judge; single model family across these seats (the rc2 adjudicator was cross-family and its criteria governed).",
+ "agents": {
+  "verifiers": 5,
+  "challenger": 1,
+  "judge": 1,
+  "workflow_run": "wf_1128e286-b58",
+  "subagent_tokens": 1271695,
+  "tool_uses": 343
+ },
+ "outcome_summary": "All ten kimi rulings S1-S10 CLOSED on their own acceptance criteria; one NEW P1 (R3-NF1: the candidate's ledger schema-fix commit re-serialized the published base prefix bytes, turning the required append-only gate red on CI's exact inputs), three P3, four P4. Any open P1 => NO-GO.",
+ "dispatcher_disclosures": [
+  "The dispatcher authored the repair under review; all finding and judging was performed by isolated fresh seats per the operator's authorization (structure recorded in seat_structure).",
+  "Post-judgment, the dispatcher added a conforming 'rulings' array to the arbitration's machine block, derived 1:1 from the judge's own predecessor_ruling_dispositions and new_findings, to satisfy validate_ruling_set.py; no substantive content was altered (dispatcher_format_note inside the block)."
+ ]
+}
