@@ -25,6 +25,24 @@ GLOBAL_ALLOW = {
     "README.md",
 }
 
+# Scripts that read the WHOLE tree: README plus every harness manifest
+# (sync_skill_surfaces count surfaces), all markdown/JSON (phantom guard,
+# JSON parse), or the entire checkout (public-content gate). A workflow that
+# runs one of these behind a pull_request/push `paths:` filter is defective
+# BY CONSTRUCTION: the filter is a second, hand-maintained projection of
+# "what the checks read", and any scanned-but-unlisted file can break the
+# gate without triggering it — the 2026-08-06 README incident, generalized.
+# Gauntlet ruling R7 (es-v6-candidate-freeze-2026-08-18), path A: the fix is
+# removing the filter, and this rule keeps it removed.
+WHOLE_TREE_READERS = {
+    ".github/scripts/sync_skill_surfaces.py",
+    ".github/scripts/check_no_phantom_skills.py",
+    ".github/scripts/check_public_content.py",
+    ".github/scripts/check_json_artifacts.py",
+    # Whole-tree by transitivity: replicates the entire main suite.
+    ".github/scripts/cleanroom_ci.sh",
+}
+
 PATH_TOKEN = re.compile(
     r"(?:^|[\s'\"])([\w./-]+\.(?:py|yml|yaml|json|md|sh|jsonl))(?:[\s'\"]|$)"
 )
@@ -100,6 +118,28 @@ def audit_workflow(path: Path) -> list[Finding]:
 
     findings: list[Finding] = []
     jobs = doc.get("jobs") or {}
+
+    # Rule: no whole-tree reader behind a paths: filter (R7 path A).
+    for job_name, job in jobs.items():
+        for step in job.get("steps") or []:
+            run = step.get("run")
+            if not isinstance(run, str):
+                continue
+            for reader in sorted(WHOLE_TREE_READERS):
+                if reader in run:
+                    findings.append(
+                        Finding(
+                            workflow=name,
+                            kind="path_filtered_whole_tree_reader",
+                            path=reader,
+                            detail=(
+                                f"job={job_name}; whole-tree reader runs behind a "
+                                "pull_request/push paths: filter — remove the filter "
+                                "(gauntlet ruling R7 path A)"
+                            ),
+                        )
+                    )
+
     for job_name, job in jobs.items():
         if job.get("if") and "workflow_dispatch" in str(job.get("if")):
             continue

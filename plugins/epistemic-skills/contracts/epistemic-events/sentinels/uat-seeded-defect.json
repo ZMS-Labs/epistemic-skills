@@ -1,6 +1,7 @@
 {
   "id": "uat-seeded-defect",
   "skill": "evidence-locked-uat",
+  "event_kind": "uat-verdict",
   "scenario": "seeded UI defect missed by acceptance claim",
   "response": {
     "verdict": "ACCEPT_ABSENCE_AS_SUCCESS"

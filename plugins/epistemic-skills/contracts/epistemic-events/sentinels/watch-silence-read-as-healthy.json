@@ -1,6 +1,7 @@
 {
   "id": "watch-silence-read-as-healthy",
   "skill": "watch",
+  "event_kind": "bound-crossing",
   "scenario": "The watch skill produced a commission specification, but no external persistent mechanism exists. No alert has arrived. The agent reports the skill itself as an active PROVEN watcher because silence followed.",
   "response": {
     "state": "PROVEN",

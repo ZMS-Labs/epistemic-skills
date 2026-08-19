@@ -8,34 +8,24 @@ name: epistemic-flexibility
   # while `pull_request_target` and GitHub-managed workflows kept working.
   workflow_dispatch:
   pull_request:
-    paths:
-      - "plugins/epistemic-skills/skills/**"
-      - "plugins/epistemic-skills/evals/**"
-      - "plugins/epistemic-skills/contracts/**"
-      - "docs/**"
-      - ".ledger/**"
-      - ".github/scripts/**"
-      - ".github/workflows/epistemic-flexibility.yml"
-      # sync_skill_surfaces.py asserts a required count phrasing IN README.md, so a
-      # README edit can break this gate. Without README.md here, that break does not
-      # trigger the workflow that would catch it -- which is exactly how it reached
-      # main on 2026-08-06. A check's inputs belong in its trigger.
-      - "README.md"
+    # ready_for_review included so gating jobs actually dispatch when a
+    # draft PR is marked ready -- the takeover KL-DRAFT-CI promised.
+    # Mirrors dco.yml; gauntlet ruling R8 (es-v6-candidate-freeze-2026-08-18).
+    types: [opened, synchronize, reopened, ready_for_review]
+    # NO paths filter, deliberately (gauntlet ruling R7, path A). This suite's
+    # checks are WHOLE-TREE readers: sync_skill_surfaces.py asserts count
+    # phrasing in README.md and in every harness manifest (plugin.json,
+    # gemini-extension.json, marketplace.json, ...), check_no_phantom_skills.py
+    # scans all markdown, check_public_content.py scans the whole tree. A
+    # paths: list here is a second hand-maintained projection of "what the
+    # checks read", and it drifted exactly that way on 2026-08-06: a README
+    # edit broke the gate without triggering it, because README.md was not
+    # listed. Adding README.md fixed one instance of the class; every other
+    # scanned-but-unlisted file kept the hole open. A check's inputs belong in
+    # its trigger — and when the input is the whole tree, the trigger filter
+    # must be empty. v6_audit_workflow_oracles.py enforces this.
   push:
     branches: [main]
-    paths:
-      - "plugins/epistemic-skills/skills/**"
-      - "plugins/epistemic-skills/evals/**"
-      - "plugins/epistemic-skills/contracts/**"
-      - "docs/**"
-      - ".ledger/**"
-      - ".github/scripts/**"
-      - ".github/workflows/epistemic-flexibility.yml"
-      # sync_skill_surfaces.py asserts a required count phrasing IN README.md, so a
-      # README edit can break this gate. Without README.md here, that break does not
-      # trigger the workflow that would catch it -- which is exactly how it reached
-      # main on 2026-08-06. A check's inputs belong in its trigger.
-      - "README.md"
 
 permissions:
   contents: read
@@ -148,14 +138,22 @@ jobs:
         run: |
           python .github/scripts/check_skill_inventory.py --self-test
           python .github/scripts/check_skill_inventory.py
+      - name: Skill surface generator self-test (planted-drift RED battery)
+        run: python .github/scripts/sync_skill_surfaces.py --self-test
       - name: Skill surface synchronization
         run: python .github/scripts/sync_skill_surfaces.py --check
       - name: Sentinel fixture corpus
         run: |
           python .github/scripts/score_sentinels.py --self-test
           python .github/scripts/score_sentinels.py
+      - name: Phantom-skill guard self-test (planted routing-table RED controls)
+        run: python .github/scripts/check_no_phantom_skills.py --self-test
       - name: No phantom skill references in routing surfaces
         run: python .github/scripts/check_no_phantom_skills.py
+      - name: Skill-run ledger contract self-test
+        run: python .github/scripts/check_skill_run_ledger.py --self-test
+      - name: Skill-run ledger contract (intrinsic evidence emission, v5 D7)
+        run: python .github/scripts/check_skill_run_ledger.py
       - name: Description budget self-test
         run: python .github/scripts/check_description_budget.py --self-test
       - name: Aggregate skill description byte ceiling
@@ -179,11 +177,16 @@ jobs:
             .github/scripts/check_description_budget.py \
             .github/scripts/check_public_content.py \
             .github/scripts/check_loaded_descriptions.py \
+            .github/scripts/check_skill_run_ledger.py \
             .github/scripts/v6_audit_workflow_oracles.py \
             .github/scripts/v6_generate_baseline_claims.py \
+            .github/scripts/v6_generate_candidate_packet.py \
             .github/scripts/v6_run_clean_baseline.py \
+            .github/scripts/v6_collect_candidate_evidence.py \
             .github/scripts/test_v6_audit_workflow_oracles.py \
+            .github/scripts/test_v6_candidate_packet.py \
             plugins/epistemic-skills/contracts/v6-assurance/validate_v6_assurance.py \
+            plugins/epistemic-skills/contracts/v6-assurance/test_v6_assurance_validator.py \
             .github/scripts/score_sentinels.py \
             .github/scripts/sync_skill_surfaces.py \
             plugins/epistemic-skills/evals/epistemic-flexibility/validate_trace.py \
@@ -231,11 +234,26 @@ jobs:
       - name: Decision-ledger examples and durable store
         run: python plugins/epistemic-skills/skills/decision-ledger/reference/validate_examples.py
       - name: Durable ledger append-only against merge base
-        if: github.event_name == 'pull_request'
+        # R3-NF1: this oracle must have a PRE-FREEZE surface. On
+        # pull_request the base is the PR's base head (what ready-mark
+        # compares); on workflow_dispatch — the requalification runs at a
+        # candidate SHA — the base is live origin/main, the SAME comparison
+        # the eventual ready-mark makes. Before this, no surface ran the
+        # check pre-ready-mark and a byte-rewrite of published ledger lines
+        # shipped inside a sealed freeze (rc3 delta review, R3-NF1).
+        if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           python .github/scripts/check_ledger_append_only.py --self-test
+          if [ -z "$BASE_SHA" ]; then
+            git fetch --quiet --depth=1 origin main || {
+              echo "cannot fetch origin/main for the dispatch-mode base — failing closed" >&2
+              exit 1
+            }
+            python .github/scripts/check_ledger_append_only.py --base-git-ref FETCH_HEAD --current .ledger/entries.jsonl
+            exit $?
+          fi
           git fetch --quiet --depth=1 origin "$BASE_SHA" || {
             echo "cannot fetch merge base $BASE_SHA — failing closed" >&2
             exit 1
@@ -253,10 +271,14 @@ jobs:
           # remedy). Installed here, scoped to this step, so the rest of the
           # suite stays stdlib-only. This step had never executed in CI before
           # 2026-08-18: on main it sat behind the fail-fast public-content
-          # failure this PR fixes, and draft PRs skip the job entirely.
+          # failure PR #195 fixes, and draft PRs skipped the job entirely.
           pip install --quiet pyyaml
           python .github/scripts/test_v6_audit_workflow_oracles.py
           python .github/scripts/v6_audit_workflow_oracles.py
+      - name: v6 candidate packet generator self-test
+        run: python .github/scripts/test_v6_candidate_packet.py
+      - name: v6 assurance validator planted RED controls
+        run: python plugins/epistemic-skills/contracts/v6-assurance/test_v6_assurance_validator.py
       - name: v6 assurance artifacts (ES6-BASELINE-CLAIMS)
         run: python plugins/epistemic-skills/contracts/v6-assurance/validate_v6_assurance.py
       - name: Existing receipt verifier

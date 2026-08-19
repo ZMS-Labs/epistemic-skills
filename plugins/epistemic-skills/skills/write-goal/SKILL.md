@@ -1,6 +1,13 @@
 ---
 name: write-goal
 description: Use when the user explicitly asks to create, write, define, refine, or start a goal; asks "what would count as done"; or needs a durable objective, proof standard, scope boundary, blocker policy, stop rule, or optional token budget before extended work — e.g. "write a goal for", "what would count as done", "define a completion contract". Do not auto-create goals from ordinary tasks, and do not execute or certify the goal inside this skill.
+metadata:
+  hands-to: [evidence-locked-uat, gauntlet]
+  event-kinds: [goal-proof]
+  eligible-when: [independently-resolvable-verdict]
+  outcome-sources: [field-observation, supersession-chain]
+  collection-mode: conditional
+  sentinel-fixture: goal-regression.json
 ---
 
 # Write Goal
@@ -16,9 +23,9 @@ uncertainty handling, interruptibility, and cross-harness adapters.
 
 ## Epistemic boundary
 
-| Consumes | Produces | Does not do | Hands to |
+| Consumes | Produces | Does not do | Downstream |
 |---|---|---|---|
-| explicit user intent, de-risked context, and any evidence/design inputs | an approved, evidence-bound goal objective; optionally a started persistent goal | execute the work, judge its result, or call it complete | the runtime's goal executor, then independent verification (e.g. evidence-locked-uat for UI-facing work, gauntlet for irreversible commits) |
+| explicit user intent, de-risked context, and any evidence/design inputs | an approved, evidence-bound goal objective; optionally a started persistent goal | execute the work, judge its result, or call it complete | the runtime's goal executor, then independent verification (e.g. evidence-locked-uat for UI-facing work, gauntlet for irreversible commits; governing declaration: `metadata.hands-to`) |
 
 **Core invariant:** a goal is not complete merely because an easy-to-measure proxy
 moved. Completion requires the agreed proof bundle and its integrity guards.
@@ -302,6 +309,18 @@ authority is required. Do not call uncertainty reduction the final product outco
 The design rationale, claim-evidence matrix, counterevidence, and tool-coverage limits are
 in [reference/evidence-basis.md](reference/evidence-basis.md). Evidence informs this method;
 it does not convert a context-sensitive contract into a universal formula.
+
+## Evidence emission
+
+After each engagement, append one line to `runs/ledger.jsonl` under this skill:
+
+```json
+{"schema":"skill-run@1","ts":"<iso8601>","skill":"<this-skill>","decision":"fired|declined","discipline_engaged":"<name-or-null>","action_changed":true|false}
+```
+
+The append is part of this procedure. It is not a call to an external calibration
+service and it is not a `decision-ledger` entry. Schema:
+`plugins/epistemic-skills/contracts/skill-run-ledger.schema.json`.
 
 ## Local overlay
 

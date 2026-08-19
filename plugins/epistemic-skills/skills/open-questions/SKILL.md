@@ -1,6 +1,12 @@
 ---
 name: open-questions
 description: 'Use when the operator asks to be interviewed about open questions or decisions — "ask me open questions one by one until none remain", "walk me through the open decisions", "interview me until nothing is left" — or when a load-bearing fork is irreversible or high-blast-radius, cannot be safely best-guessed, and the operator is interactively present. Do NOT fire for design-stage dialogue while a workflow design skill is running (that skill owns its own questioning), for producing the initial question list on a fuzzy brief (recon owns the territory; this skill consumes its Questions output), for goal-shaping (write-goal owns that), or when the operator is absent — park reversible forks on best-guess defaults and proceed, and HOLD (escalate, never default through) any irreversible fork that cannot be safely best-guessed.'
+metadata:
+  event-kinds: [interview-scope-decision]
+  eligible-when: [evaluation-case, correction-or-supersession]
+  outcome-sources: [independent-adjudication, field-observation]
+  collection-mode: observational
+  sentinel-fixture: interview-parked-default.json
 ---
 
 # open-questions — walk the ledger to empty
@@ -141,6 +147,18 @@ answer-begotten questions; run-length stopping criteria in place of naive
 exhaustion; late-battery quality decay motivating triage order). See the
 design spec in the repository's `docs/superpowers/specs/` for the cited
 evidence run.
+
+## Evidence emission
+
+After each engagement, append one line to `runs/ledger.jsonl` under this skill:
+
+```json
+{"schema":"skill-run@1","ts":"<iso8601>","skill":"<this-skill>","decision":"fired|declined","discipline_engaged":"<name-or-null>","action_changed":true|false}
+```
+
+The append is part of this procedure. It is not a call to an external calibration
+service and it is not a `decision-ledger` entry. Schema:
+`plugins/epistemic-skills/contracts/skill-run-ledger.schema.json`.
 
 ## Local overlay
 

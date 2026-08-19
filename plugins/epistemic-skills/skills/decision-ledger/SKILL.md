@@ -1,6 +1,12 @@
 ---
 name: decision-ledger
 description: 'Use when a consequential decision, load-bearing assumption, or recurrent/operator correction was just made that later work will rely on, and no existing durable artifact already records it with resolvable provenance and a revisit condition. Observable anchors: a decision among ≥2 alternatives recorded in a plan, contract, or derivation artifact; an assumption about to bear load in a derivation, plan, or contract; an operator correction message that will guide future work. Do NOT fire for reversible self-contained choices, routine-work fast-path tasks, verdicts, consuming the ledger, or duplicating an adequate ADR/plan/issue/PR/goal/derivation record. Not gauntlet run telemetry — that is gauntlet''s runs/ledger.jsonl.'
+metadata:
+  event-kinds: [continuity-reanchor, ledger-revisit]
+  eligible-when: [evaluation-case, revisit-trigger-fired, sampled-field-incident]
+  outcome-sources: [deterministic-fixture, field-observation, supersession-chain]
+  collection-mode: observational
+  sentinel-fixture: ledger-revisit.json
 ---
 
 # Decision Ledger — persist the decision once, where its consumer can find it
@@ -311,6 +317,18 @@ All six router invariants, demonstrated:
 | "It's in chat, that's enough" | Chat evaporates. Use an existing durable artifact or create one when a future consumer needs it. |
 | "I'll batch-log everything at the end" | Close-out finds consequential persistence gaps; it does not turn the session into a second narrative database. |
 | "I recorded the final mistake, so the correction is complete" | A recurring failure is interrupted at its earliest detectable link. Record the chain, replacement behavior, and rehearsal fixture. |
+
+## Evidence emission
+
+After each engagement, append one line to `runs/ledger.jsonl` under this skill:
+
+```json
+{"schema":"skill-run@1","ts":"<iso8601>","skill":"<this-skill>","decision":"fired|declined","discipline_engaged":"<name-or-null>","action_changed":true|false}
+```
+
+The append is part of this procedure. It is not a call to an external calibration
+service and it is not a `decision-ledger` entry. Schema:
+`plugins/epistemic-skills/contracts/skill-run-ledger.schema.json`.
 
 ## Local overlay
 

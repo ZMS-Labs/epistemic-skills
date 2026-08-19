@@ -26,6 +26,16 @@ def main() -> int:
         required=True,
         help="Output evidence JSON path",
     )
+    parser.add_argument(
+        "--program",
+        default="ES6-ZI-001",
+        help="Program id stamped into the evidence JSON (default: ES6-ZI-001)",
+    )
+    parser.add_argument(
+        "--packet",
+        default="ES6-CLEAN-BASELINE",
+        help="Packet id stamped into the evidence JSON",
+    )
     args = parser.parse_args()
 
     sha = subprocess.check_output(
@@ -39,8 +49,8 @@ def main() -> int:
     )
     report = {
         "schema": "clean-baseline@1",
-        "program": "ES6-ZI-001",
-        "packet": "ES6-CLEAN-BASELINE",
+        "program": args.program,
+        "packet": args.packet,
         "exact_start_sha": sha,
         "generated_at": datetime.now(timezone.utc)
         .replace(microsecond=0)

@@ -1,6 +1,12 @@
 ---
 name: gauntlet
 description: Use when approving architecture/design, before writing risky plan steps, at pre-merge for irreversible-infra or security changes, or as a verification escalation for high-stakes hard-to-verify claims. Auto-fires (triage-gated) at high-stakes, irreversible, one-way-door, or high-blast-radius decision points, and on explicit request ("gauntlet", "stress-test this", "sovereign gauntlet", "red-team-gauntlet", "deep-mode review", "GO/NO-GO review"). Do NOT use for reversible low-stakes work, lookups, ordinary code review, or deterministic/reproducible test-failure triage.
+metadata:
+  event-kinds: [review-forecast]
+  eligible-when: [preregistered-prediction, correction-or-supersession]
+  outcome-sources: [field-observation, supersession-chain]
+  collection-mode: conditional
+  sentinel-fixture: gauntlet-dissent.json
 ---
 
 # The Gauntlet — consolidated adversarial-review staple

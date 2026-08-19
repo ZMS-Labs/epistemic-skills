@@ -216,6 +216,29 @@ def test_manifest_guard_inert_shapes_rejected() -> None:
         "command_regexes": [], "path_globs": ["M:/Media/**"]}]
     check("guard-mcp-only-globs-inert", validate_record(rec) != [])
 
+    rec = copy.deepcopy(valid_manifest())
+    rec["authority"]["actuator_guards"] = [{
+        "name": "g", "tool_names": ["Write"],
+        "command_regexes": [], "path_globs": [""]}]
+    check("guard-empty-path-glob-rejected", validate_record(rec) != [])
+
+
+def test_unhashable_guard_mode_returns_validation_error() -> None:
+    """es#137 P2: a list/dict guard_mode must be a validation error, never
+    TypeError from set membership."""
+    rec = copy.deepcopy(valid_manifest())
+    rec["authority"]["guard_mode"] = ["enforce"]
+    rec["authority"]["actuator_guards"] = [{
+        "name": "g", "tool_names": ["Bash"],
+        "command_regexes": ["rm"], "path_globs": []}]
+    try:
+        errors = validate_record(rec)
+    except TypeError:
+        check("unhashable-guard-mode-no-typeerror", False)
+        return
+    check("unhashable-guard-mode-no-typeerror", True)
+    check("unhashable-guard-mode-returns-validation-error", errors != [])
+
     # mixed or unknown tool names pass: one arm can still fire (mixed), and
     # unknown tools are the operator's responsibility
     rec = copy.deepcopy(valid_manifest())
@@ -265,6 +288,7 @@ def main() -> int:
     test_manifest_guard_rules_shape()
     test_manifest_guard_empty_guards_list_invalid()
     test_manifest_guard_inert_shapes_rejected()
+    test_unhashable_guard_mode_returns_validation_error()
     test_examples_corpus()
     print(f"\n{len(FAILURES)} failures")
     return 1 if FAILURES else 0

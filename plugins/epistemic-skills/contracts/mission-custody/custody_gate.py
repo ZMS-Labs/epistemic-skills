@@ -82,8 +82,51 @@ def _fold(text: str) -> str:
     return _ascii_case_fold(text) if os.name == "nt" else text
 
 
+def _collapse_parent_segments(path: str) -> str:
+    """Collapse ``..`` segments for guard path matching only.
+
+    Scope comparison keeps ``..`` lexical (disclosed). Harness ``file_path``
+    values may carry parent segments that resolve inside a guarded tree; matching
+    the raw spelling allowed a false allow (es#137).
+
+    INHERITED REASONING (from test_glob_overmatch_still_held, deleted by the
+    es#137 fix): "'..' is not collapsed by normalization, so it over-matches --
+    the safe direction (a false block names its rule; a false allow retires
+    custody)". Collapsing retired that OVER-match protection for guard matching
+    and replaced it with textual resolution. The residual, in the false-allow
+    direction: this collapse is LEXICAL, while the kernel resolves ``..`` only
+    AFTER following symlinks -- a write spelled through a symlinked parent can
+    land inside a guarded tree without matching an armed guard (recorded as
+    KL-GUARD-LEXICAL / CLM-MC-GUARD-LEXICAL; pinned by
+    test_guard_match_is_lexical_symlinked_parent_diverges). Do not "fix" this
+    by resolving symlinks here without a fresh custody review: realpath calls
+    inside the gate change its failure modes on broken links and network
+    filesystems."""
+    norm = path.replace("\\", "/")
+    parts = norm.split("/")
+    out: list[str] = []
+    for part in parts:
+        if part == "..":
+            if out and out[-1] != ".." and not (len(out) == 1 and out[0].endswith(":")):
+                out.pop()
+            else:
+                out.append("..")
+        elif part != ".":
+            out.append(part)
+    return "/".join(out)
+
+
 def _norm_path(path: str) -> str:
     return _fold(_normalize_relpath(path.replace("\\", "/")))
+
+
+def _guard_norm_path(path: str) -> str:
+    """Normalize a harness file_path for guard glob matching (es#137).
+
+    Scope comparison keeps ``..`` lexical via ``_norm_path``; only guard
+    matching collapses parent segments so a resolved path cannot bypass an
+    armed rule."""
+    return _fold(_collapse_parent_segments(_normalize_relpath(path.replace("\\", "/"))))
 
 
 def _tool_in(rule: dict, tool_name: str) -> bool:
@@ -107,7 +150,7 @@ def _patterns_match(rule: dict, tool_call: dict) -> bool:
                 return True
     file_path = tool_call.get("file_path")
     if file_path:
-        target = _norm_path(file_path)
+        target = _guard_norm_path(file_path)
         for glob in rule["path_globs"]:
             if _guard_glob_regex(glob).match(target):
                 return True

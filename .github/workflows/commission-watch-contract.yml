@@ -6,35 +6,18 @@ name: commission-watch-contract
     # WIP branches are agent scratch; the gate runs on merge to main and on
     # non-draft PRs, not on every push to a development branch.
     branches: [main]
-    paths:
-      - "plugins/epistemic-skills/contracts/watch-commission/**"
-      - "plugins/epistemic-skills/contracts/epistemic-events/sentinels/watch-silence-read-as-healthy.json"
-      - "plugins/epistemic-skills/skills/watch/**"
-      - "plugins/epistemic-skills/skills/health/SKILL.md"
-      - "README.md"
-      - ".github/scripts/score_sentinels.py"
-      - ".github/scripts/check_description_budget.py"
-      - ".github/scripts/cleanroom_ci.sh"
-      - "docs/superpowers/specs/2026-08-07-practical-agency-and-commission-watch-design.md"
-      - "docs/superpowers/plans/2026-08-07-commission-watch-clarification.md"
-      - "docs/superpowers/plans/2026-08-07-practical-agency-bootstrap.md"
-      - "docs/gauntlet-runs/commission-watch-pr110-2026-08-07/**"
-      - ".github/workflows/commission-watch-contract.yml"
+    # NO paths filter (gauntlet ruling R7 path A, applied here after the
+    # whole-tree-reader rule in v6_audit_workflow_oracles.py flagged this
+    # workflow): the "Package structural invariants" step and the clean-room
+    # gate read the whole tree, so a paths: list was a second hand-maintained
+    # projection of the checks' inputs — the same silent-miss class as the
+    # 2026-08-06 README incident on the main suite.
   pull_request:
-    paths:
-      - "plugins/epistemic-skills/contracts/watch-commission/**"
-      - "plugins/epistemic-skills/contracts/epistemic-events/sentinels/watch-silence-read-as-healthy.json"
-      - "plugins/epistemic-skills/skills/watch/**"
-      - "plugins/epistemic-skills/skills/health/SKILL.md"
-      - "README.md"
-      - ".github/scripts/score_sentinels.py"
-      - ".github/scripts/check_description_budget.py"
-      - ".github/scripts/cleanroom_ci.sh"
-      - "docs/superpowers/specs/2026-08-07-practical-agency-and-commission-watch-design.md"
-      - "docs/superpowers/plans/2026-08-07-commission-watch-clarification.md"
-      - "docs/superpowers/plans/2026-08-07-practical-agency-bootstrap.md"
-      - "docs/gauntlet-runs/commission-watch-pr110-2026-08-07/**"
-      - ".github/workflows/commission-watch-contract.yml"
+    # ready_for_review included so gating jobs actually dispatch when a
+    # draft PR is marked ready -- the takeover KL-DRAFT-CI promised.
+    # Mirrors dco.yml; gauntlet ruling R8 (es-v6-candidate-freeze-2026-08-18).
+    types: [opened, synchronize, reopened, ready_for_review]
+    # NO paths filter — same R7 rationale as push above.
 
 permissions:
   contents: read

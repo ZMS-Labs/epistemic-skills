@@ -3,6 +3,10 @@ name: openai-bundles
 "on":
   workflow_dispatch:
   pull_request:
+    # ready_for_review included so gating jobs actually dispatch when a
+    # draft PR is marked ready -- the takeover KL-DRAFT-CI promised.
+    # Mirrors dco.yml; gauntlet ruling R8 (es-v6-candidate-freeze-2026-08-18).
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - ".agents/plugins/marketplace.json"
       - "plugins/epistemic-skills/**"

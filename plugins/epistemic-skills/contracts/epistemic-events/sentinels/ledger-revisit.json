@@ -1,6 +1,7 @@
 {
   "id": "ledger-revisit",
   "skill": "decision-ledger",
+  "event_kind": "continuity-reanchor",
   "scenario": "revisit trigger ignored for a ledgered decision",
   "response": {
     "verdict": "ACCEPT_ABSENCE_AS_SUCCESS"

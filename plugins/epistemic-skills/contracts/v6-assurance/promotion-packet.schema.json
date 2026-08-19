@@ -1,0 +1,212 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://zms-labs.github.io/epistemic-skills/contracts/v6-assurance/promotion-packet.schema.json",
+  "title": "v6 BUILD promotion packet",
+  "description": "Immutable BUILD packet identifying the candidate, evidence, known limits, rollback, and requested irreversible acts. Does not authorize PROMOTION. v2 adds R1 verdict binding (independent_gauntlet_ref), R13 operator acceptance recording, and per-limit owners (R12).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "program",
+    "issue",
+    "candidate_sha",
+    "generated_at",
+    "readiness",
+    "self_certification",
+    "independent_gauntlet",
+    "rollback",
+    "requested_irreversible_acts",
+    "blocking_claims",
+    "known_limits",
+    "evidence_paths",
+    "independent_gauntlet_ref"
+  ],
+  "properties": {
+    "schema": {
+      "const": "v6-promotion-packet@2"
+    },
+    "program": {
+      "type": "string",
+      "minLength": 1
+    },
+    "issue": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "candidate_sha": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "generated_at": {
+      "type": "string",
+      "minLength": 1
+    },
+    "readiness": {
+      "type": "string",
+      "enum": [
+        "NOT_READY",
+        "READY_FOR_INDEPENDENT_GAUNTLET",
+        "V6_CANDIDATE_READY_FOR_OPERATOR_ACCEPTANCE"
+      ]
+    },
+    "self_certification": {
+      "const": "refused"
+    },
+    "independent_gauntlet": {
+      "type": "string",
+      "enum": [
+        "NOT_RUN",
+        "GO",
+        "CONDITIONAL",
+        "NO-GO"
+      ]
+    },
+    "rollback": {
+      "type": "string",
+      "minLength": 1
+    },
+    "requested_irreversible_acts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "blocking_claims": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^CLM-[A-Z0-9-]+$"
+      }
+    },
+    "known_limits": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "kind",
+          "statement",
+          "release_consequence",
+          "owner"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "operator-hold",
+              "live-environment",
+              "platform",
+              "independence",
+              "integrity"
+            ]
+          },
+          "statement": {
+            "type": "string",
+            "minLength": 1
+          },
+          "release_consequence": {
+            "type": "string",
+            "minLength": 1
+          },
+          "owner": {
+            "type": "string",
+            "minLength": 1
+          },
+          "claim": {
+            "description": "S2 machine channel: the matrix claim id this limit names (set on entries DERIVED for operator-owned LIMITED claims; validate_operator_channel checks the property).",
+            "type": "string",
+            "pattern": "^CLM-[A-Z0-9-]+$"
+          }
+        }
+      }
+    },
+    "evidence_paths": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "independent_gauntlet_ref": {
+      "description": "R1 verdict binding: null until a real gauntlet run exists; then the run id, on-disk verdict artifact path, and the exact subject SHA. A bare independent_gauntlet enum is never a verdict.",
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "gauntlet_run_id",
+            "verdict_path",
+            "subject_sha"
+          ],
+          "properties": {
+            "gauntlet_run_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "verdict_path": {
+              "type": "string",
+              "minLength": 1
+            },
+            "subject_sha": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{40}$"
+            }
+          }
+        }
+      ]
+    },
+    "operator_acceptance": {
+      "description": "R13 recording artifact: present only after the operator accepts per docs/v6/OPERATOR-ACCEPTANCE-PROCEDURE.md. Requires a GO verdict bound via independent_gauntlet_ref.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "accepted_by",
+        "accepted_at",
+        "verdict_ref"
+      ],
+      "properties": {
+        "accepted_by": {
+          "type": "string",
+          "minLength": 1
+        },
+        "accepted_at": {
+          "type": "string",
+          "minLength": 1
+        },
+        "verdict_ref": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "gauntlet_run_id",
+            "verdict_path",
+            "subject_sha"
+          ],
+          "properties": {
+            "gauntlet_run_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "verdict_path": {
+              "type": "string",
+              "minLength": 1
+            },
+            "subject_sha": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{40}$"
+            }
+          }
+        }
+      }
+    }
+  },
+  "schema": null
+}

@@ -1,6 +1,12 @@
 ---
 name: evidence-locked-uat
 description: Use when running or gating user-acceptance testing on a material UI-facing change — on explicit request ("run UAT on X", "/uat", "acceptance-test this") or before claiming a stateful, interaction-sensitive, accessibility-sensitive, persistent, or otherwise hard-to-observe user-facing surface complete. Do NOT fire for backend-only changes, docs, pure test refactors, or routine reversible/local/directly-checkable presentation changes whose bounded preview/test establishes the criterion without an acceptance packet.
+metadata:
+  event-kinds: [uat-verdict]
+  eligible-when: [independently-resolvable-verdict]
+  outcome-sources: [deterministic-fixture, field-observation]
+  collection-mode: calibratable
+  sentinel-fixture: uat-seeded-defect.json
 ---
 
 # Evidence-Locked UAT
@@ -175,6 +181,18 @@ Full 26-row table: `references/standard.md` §61.
   (its embedded judge is a verified copy of `scripts/judge.py`).
 - `scripts/judge.py` — the canonical deterministic judge (stdlib Python, harness-agnostic;
   `--self-test` exercises the aggregation semantics the `.mjs` copy must match).
+
+## Evidence emission
+
+After each engagement, append one line to `runs/ledger.jsonl` under this skill:
+
+```json
+{"schema":"skill-run@1","ts":"<iso8601>","skill":"<this-skill>","decision":"fired|declined","discipline_engaged":"<name-or-null>","action_changed":true|false}
+```
+
+The append is part of this procedure. It is not a call to an external calibration
+service and it is not a `decision-ledger` entry. Schema:
+`plugins/epistemic-skills/contracts/skill-run-ledger.schema.json`.
 
 ## Local overlay
 

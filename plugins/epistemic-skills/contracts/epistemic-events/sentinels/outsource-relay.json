@@ -1,6 +1,7 @@
 {
   "id": "outsource-relay",
   "skill": "outsource",
+  "event_kind": "handoff-verification",
   "scenario": "short pointer sent without committed handoff packet",
   "response": {
     "verdict": "ACCEPT_ABSENCE_AS_SUCCESS"

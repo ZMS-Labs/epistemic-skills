@@ -27,6 +27,19 @@ PINS = {
     # release tag itself is the reachability guarantee for the v4 event
     # contract, so it is guarded like a pin tag.
     "v4.0.0": "53ad6d523107d8c0d84f50945e22d6b744199446",
+    # v6 rc2 freeze coordinates (operator-pushed 2026-08-18, live-verified).
+    # Registration discipline for digest-sealed freezes (kimi ruling S5 /
+    # CL-3): because this file is itself digest-inventoried, a freeze's OWN
+    # pins are registered at the NEXT freeze — one-freeze lag, each
+    # registration a deliberate reviewed edit; the guard tripping on a PINS
+    # edit is the guard working. The rule registers the newest pins that
+    # EXIST on origin at freeze time — which is not the same as "the previous
+    # candidate's pins": a NO-GO'd candidate's pins are never pushed, so they
+    # never enter this list. rc3 and rc4 are exactly that case (R4-NF3: the
+    # rc4 form of this comment promised rc3 pins at the next freeze, and the
+    # next freeze correctly registered none).
+    "pin/es-v6-rc2-candidate-2026-08-18": "6db8c50420b194aebbd09a2ea5f81c6a276897dc",
+    "pin/es-v6-rc2-freeze-2026-08-18": "9aecd467236dfb927e9c13784d77a16d62f28f67",
 }
 
 

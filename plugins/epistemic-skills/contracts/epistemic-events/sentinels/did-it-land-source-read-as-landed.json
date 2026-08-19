@@ -1,6 +1,7 @@
 {
   "id": "did-it-land-source-read-as-landed",
   "skill": "did-it-land",
+  "event_kind": "landing-verdict",
   "scenario": "A config change is claimed deployed. The only check read the repository source and a config file; the runtime was never observed.",
   "response": {
     "verdict": "LANDED",

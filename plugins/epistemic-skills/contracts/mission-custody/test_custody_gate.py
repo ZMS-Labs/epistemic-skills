@@ -5,6 +5,7 @@ from __future__ import annotations
 import contextlib
 import io
 import json
+import os
 import shutil
 import sys
 import tempfile
@@ -13,7 +14,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 
-from custody_gate import evaluate, run_gate  # noqa: E402
+from custody_gate import _guard_norm_path, evaluate, run_gate  # noqa: E402
 from custody_mission import Mission  # noqa: E402
 from custody_store import sha256_file  # noqa: E402
 
@@ -24,6 +25,11 @@ def check(name: str, cond: bool) -> None:
     if not cond:
         FAILURES.append(name)
         print(f"FAIL {name}")
+        # Under pytest the script-style exit-code discipline never runs, so a
+        # recorded failure would pass silently (kimi ruling S7): surface it as
+        # a real assertion there. Script execution keeps collect-then-exit.
+        if "PYTEST_CURRENT_TEST" in os.environ:
+            raise AssertionError(f"custody gate check failed: {name}")
     else:
         print(f"ok   {name}")
 
@@ -110,7 +116,9 @@ def test_glob_doublestar_zero_segments() -> None:
           evaluate(auth("enforce", guards), call)["matched"])
 
 
-def test_glob_overmatch_still_held() -> None:
+def test_glob_parent_segment_resolves_for_guard_match() -> None:
+    """es#137: a guard on ``M:/Media/**`` must match a write whose lexical
+    path carries a parent segment that resolves under Media."""
     guards = [{"name": "g", "tool_names": ["Write"], "command_regexes": [],
                "path_globs": ["M:/Media/**"]}]
     call = {"tool_name": "Write", "command": None, "file_path": "M:/Mediaevil/x"}
@@ -119,12 +127,60 @@ def test_glob_overmatch_still_held() -> None:
     call = {"tool_name": "Write", "command": None, "file_path": "M:/Media/a/b/c.mkv"}
     check("glob-deep-still-matches",
           evaluate(auth("enforce", guards), call)["matched"])
-    # '..' is not collapsed by normalization, so it over-matches -- the safe
-    # direction (a false block names its rule; a false allow retires custody)
+    call = {"tool_name": "Write", "command": None,
+            "file_path": "M:/Other/../Media/x.mkv"}
+    check("glob-dotdot-resolves-into-guarded-tree",
+          evaluate(auth("enforce", guards), call)["matched"])
     call = {"tool_name": "Write", "command": None,
             "file_path": "M:/Media/../etc/passwd"}
-    check("glob-dotdot-overmatches",
-          evaluate(auth("enforce", guards), call)["matched"])
+    check("glob-dotdot-outside-guarded-tree-not-matched",
+          not evaluate(auth("enforce", guards), call)["matched"])
+
+
+def test_guard_match_is_lexical_symlinked_parent_diverges() -> None:
+    """R15 / es#137 residual pin: guard matching collapses ``..`` LEXICALLY,
+    while the kernel resolves it only AFTER following symlinks, so a write
+    whose real landing site is inside a guarded tree can fail to match an
+    armed guard (false-allow direction). This CHARACTERIZATION test pins the
+    current invariant (KL-GUARD-LEXICAL / CLM-MC-GUARD-LEXICAL) so a future
+    resolution-aware change flips it loudly; it does not assert the
+    divergence is desirable."""
+    # POSIX-scoped by measurement (kimi ruling S7): on NT, os.path.realpath
+    # collapses `..` lexically too, so the write lands OUTSIDE the guarded
+    # tree — guard and filesystem AGREE and the pinned divergence does not
+    # exist. Running the pin there fails it for the wrong reason (it did,
+    # on a symlink-privileged NT host); the disclosure in KL-GUARD-LEXICAL
+    # remains POSIX-accurate.
+    if os.name == "nt":
+        print("  skip guard-lexical pin (POSIX-scoped: NT realpath collapses lexically; the divergence does not exist there)")
+        return
+    root = Path(tempfile.mkdtemp(prefix="custody-r15-"))
+    try:
+        (root / "guarded" / "sub").mkdir(parents=True)
+        link = root / "link"
+        try:
+            link.symlink_to(root / "guarded" / "sub", target_is_directory=True)
+        except OSError:
+            print("  skip guard-lexical pin (symlinks unavailable on this host)")
+            return
+        base = str(root).replace("\\", "/")
+        guards = [{"name": "g", "tool_names": ["Write"], "command_regexes": [],
+                   "path_globs": [f"{base}/guarded/**"]}]
+        lexical_path = f"{base}/link/../x.txt"
+        check("guard-lexical-realpath-lands-in-guarded-tree",
+              Path(os.path.realpath(lexical_path)) == root / "guarded" / "x.txt")
+        check("guard-lexical-symlinked-parent-not-matched",
+              not evaluate(auth("enforce", guards),
+                           {"tool_name": "Write", "command": None,
+                            "file_path": lexical_path})["matched"])
+        check("guard-lexical-collapse-stays-textual",
+              _guard_norm_path(lexical_path) == f"{base}/x.txt")
+        check("guard-lexical-direct-spelling-still-matched",
+              evaluate(auth("enforce", guards),
+                       {"tool_name": "Write", "command": None,
+                        "file_path": f"{base}/guarded/x.txt"})["matched"])
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
 
 
 def test_block_reason_names_only_exits_that_work() -> None:

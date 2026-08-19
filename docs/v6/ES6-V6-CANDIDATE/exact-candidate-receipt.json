@@ -1,0 +1,22 @@
+{
+  "schema": "exact-start-receipt@1",
+  "program": "ES6-V6-CANDIDATE",
+  "issue": 191,
+  "exact_start_sha": "03e972c5d427238033cb90d66846adabaf11928d",
+  "recorded_at": "2026-08-19T19:14:10Z",
+  "parent_program": "ZMS-Labs/epistemic-skills#191",
+  "authorized_packets": [
+    "ES6-V6-CANDIDATE-MATRIX",
+    "ES6-V6-CANDIDATE-REQUAL",
+    "ES6-V6-CANDIDATE-PACKET"
+  ],
+  "forbidden_this_run": [
+    "merge to main",
+    "tag",
+    "close issues",
+    "close PRs",
+    "settings/ruleset changes",
+    "self-certified Gauntlet GO",
+    "promotion"
+  ]
+}

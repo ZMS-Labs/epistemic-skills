@@ -1,0 +1,437 @@
+{
+  "schema": "tracker-capture@1",
+  "captured_at": "2026-08-19T19:13:54Z",
+  "source": "GitHub REST API, live at capture time",
+  "issues": [
+    {
+      "number": 191,
+      "title": "v6.0 assurance program: exact-candidate qualification and two-stage release gate",
+      "labels": [],
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/191"
+    },
+    {
+      "number": 186,
+      "title": "v5.1.0 post-tag docket: content-gate patterns, allowlist narrowing, wiki packet, tag-ruleset decision, es#162",
+      "labels": [],
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/186"
+    },
+    {
+      "number": 173,
+      "title": "mission-custody: one-active-mission-per-workspace is too strict \u2014 concurrent missions targeting the same repo must coexist, cohere, and coordinate",
+      "labels": [],
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/173"
+    },
+    {
+      "number": 170,
+      "title": "mission-custody: NT strips trailing dots from filenames \u2014 a pattern-side seam the cross-platform normaliser deliberately does not fold",
+      "labels": [],
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/170"
+    },
+    {
+      "number": 169,
+      "title": "mission-custody: parent-mkdir before a failing write leaves unreceipted directory mutation; permission failures on acceptance probes degrade to silent None",
+      "labels": [],
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/169"
+    },
+    {
+      "number": 168,
+      "title": "custody_gate: operator-authored command_regexes keep Python's `$` one-newline tolerance \u2014 the anchor fix's disclosed twin",
+      "labels": [],
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/168"
+    },
+    {
+      "number": 167,
+      "title": "mission-custody: invisible-but-printable characters in identities \u2014 the residual the ingestion guard cannot close",
+      "labels": [],
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/167"
+    },
+    {
+      "number": 166,
+      "title": "The envelope is used when the work is file-shaped and abandoned when it is not \u2014 scope is EMPTY on the estate's biggest live mission",
+      "labels": [
+        {
+          "name": "audit"
+        }
+      ],
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/166"
+    },
+    {
+      "number": 165,
+      "title": "codex-scan on PR #143: NULL RESULT \u2014 both scans hit the $15 cap before producing findings (and the scoped scan cost MORE than the diff)",
+      "labels": [
+        {
+          "name": "codex"
+        },
+        {
+          "name": "security"
+        }
+      ],
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/165"
+    },
+    {
+      "number": 164,
+      "title": "mission-custody: deleting a hard-linked alias before acceptance erases the MULTIPLY LINKED finding -- bind st_nlink at write time (rides #147's record-kind revision)",
+      "labels": [],
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/164"
+    },
+    {
+      "number": 163,
+      "title": "mission-custody: the advertised --scope-ack command is not paste-safe for every legal path",
+      "labels": [],
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/163"
+    },
+    {
+      "number": 162,
+      "title": "mission-custody: scope matching assumes every non-Windows filesystem is case-sensitive (macOS default is not)",
+      "labels": [],
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/162"
+    },
+    {
+      "number": 161,
+      "title": "mission-custody: closing a mission is quadratic in receipts (41.5 s at 800) -- build the id-to-path map in one traversal",
+      "labels": [],
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/161"
+    },
+    {
+      "number": 160,
+      "title": "custody_cli: whitespace-only envelope lists count as set -- the unbounded-envelope warning is defeated",
+      "labels": [],
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/160"
+    },
+    {
+      "number": 159,
+      "title": "mission-custody: the scope-ack note's comma-join is ambiguous for comma-bearing paths",
+      "labels": [],
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/159"
+    },
+    {
+      "number": 158,
+      "title": "custody_cli: control characters in envelope declarations render raw on resume -- a declaration can forge rows or rewrite the terminal",
+      "labels": [],
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/158"
+    },
+    {
+      "number": 157,
+      "title": "mission-custody: a backslash-separated scope entry with spaces is classified as prose (Windows paths)",
+      "labels": [],
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/157"
+    },
+    {
+      "number": 154,
+      "title": "A mission store can be untracked-and-unignored: a third state with no recovery path",
+      "labels": [],
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/154"
+    },
+    {
+      "number": 151,
+      "title": "mission-custody: scope.in symlink gap, unshown blind spot at acceptance, and three untested CLI surfaces",
+      "labels": [],
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/151"
+    },
+    {
+      "number": 150,
+      "title": "mission-custody: the discharge gate turns amend's verbatim field into a lock-pick \u2014 give the machine its own field",
+      "labels": [],
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/150"
+    },
+    {
+      "number": 149,
+      "title": "mission-custody: effects are permitted in draft, before the operator approves the mission",
+      "labels": [],
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/149"
+    },
+    {
+      "number": 148,
+      "title": "mission-custody: the party that did the work can accept it \u2014 worker_id is the static steward_ref, not the actual actor",
+      "labels": [],
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/148"
+    },
+    {
+      "number": 147,
+      "title": "mission-custody: record the RESOLVED artifact path at write time (scope classification is lexical)",
+      "labels": [],
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/147"
+    },
+    {
+      "number": 145,
+      "title": "test fixtures carry a real operator name form into a public repo, and it is spreading",
+      "labels": [],
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/145"
+    },
+    {
+      "number": 142,
+      "title": "Capture real harness hook payloads \u2014 two guard types now rest on docs prose, not observed wire format",
+      "labels": [],
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/142"
+    },
+    {
+      "number": 141,
+      "title": "custody_gate: path_globs matched against an unscoped file_path can false-block an unrelated workspace",
+      "labels": [],
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/141"
+    },
+    {
+      "number": 140,
+      "title": "mission-custody test suite: intermittent flakes on Windows (subprocess/tempdir timing), not code regressions",
+      "labels": [],
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/140"
+    },
+    {
+      "number": 139,
+      "title": "cancel --reason \"\" silently erases the why on a terminal, irreversible verb",
+      "labels": [],
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/139"
+    },
+    {
+      "number": 137,
+      "title": "mission-custody Stage-C gate: close three false-allow bypasses and four contract/CLI gaps from PR #128",
+      "labels": [
+        {
+          "name": "bug"
+        },
+        {
+          "name": "security"
+        },
+        {
+          "name": "assurance:R1"
+        },
+        {
+          "name": "source:audit"
+        }
+      ],
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/137"
+    },
+    {
+      "number": 136,
+      "title": "custody hook: Cursor CLI workaround must use an installed plugin-root command",
+      "labels": [
+        {
+          "name": "bug"
+        },
+        {
+          "name": "assurance:R1"
+        },
+        {
+          "name": "work:live-verification"
+        },
+        {
+          "name": "gate:live-environment"
+        }
+      ],
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/136"
+    },
+    {
+      "number": 129,
+      "title": "custody hook: Antigravity (agy) adapter + install snippet \u2014 coverage currently NOT WIRED",
+      "labels": [
+        {
+          "name": "bug"
+        },
+        {
+          "name": "assurance:R1"
+        },
+        {
+          "name": "work:live-verification"
+        },
+        {
+          "name": "gate:live-environment"
+        }
+      ],
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/129"
+    },
+    {
+      "number": 124,
+      "title": "mission-custody: receipt continuity check \u2014 surface unreceipted mutation between receipted events",
+      "labels": [
+        {
+          "name": "assurance:R1"
+        },
+        {
+          "name": "work:dependency"
+        }
+      ],
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/124"
+    },
+    {
+      "number": 118,
+      "title": "mission-custody contract@2: bind receipt hashes and a tail anchor into the checkpoint chain",
+      "labels": [
+        {
+          "name": "bug"
+        },
+        {
+          "name": "security"
+        },
+        {
+          "name": "assurance:R1"
+        }
+      ],
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/118"
+    },
+    {
+      "number": 105,
+      "title": "P2: finish v5 public-content remediation and add an exact-candidate review gate",
+      "labels": [
+        {
+          "name": "bug"
+        },
+        {
+          "name": "assurance:R1"
+        }
+      ],
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/105"
+    },
+    {
+      "number": 104,
+      "title": "Complete or explicitly retire the unimplemented v5 design commitments before successor GO",
+      "labels": [
+        {
+          "name": "gate:operator"
+        },
+        {
+          "name": "work:decision"
+        },
+        {
+          "name": "assurance:R0"
+        }
+      ],
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/104"
+    },
+    {
+      "number": 95,
+      "title": "CI: durable local-cluster fallback, and prefer local CI over Actions minutes",
+      "labels": [
+        {
+          "name": "assurance:R0"
+        },
+        {
+          "name": "tech-debt"
+        }
+      ],
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/95"
+    },
+    {
+      "number": 89,
+      "title": "resolve/literature: no auth canary for the discovery engine \u2014 free-tier degradation is silent and grades as clean",
+      "labels": [
+        {
+          "name": "bug"
+        },
+        {
+          "name": "assurance:R1"
+        }
+      ],
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/89"
+    },
+    {
+      "number": 84,
+      "title": "Paired proposal (charter step 1): exchange-protocol adoption, v4 event-contract re-pin, and field-pair ownership",
+      "labels": [
+        {
+          "name": "gate:operator"
+        },
+        {
+          "name": "work:dependency"
+        },
+        {
+          "name": "work:decision"
+        },
+        {
+          "name": "assurance:R2"
+        }
+      ],
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/84"
+    },
+    {
+      "number": 77,
+      "title": "Behavioral epoch program: convert every BLOCKED/absent battery into dated live-epoch evidence (successor to #70)",
+      "labels": [
+        {
+          "name": "work:live-verification"
+        },
+        {
+          "name": "gate:live-environment"
+        },
+        {
+          "name": "assurance:R3"
+        }
+      ],
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/77"
+    },
+    {
+      "number": 40,
+      "title": "Release gate: cross-family Step-7b adjudication before any v3 3.0.0",
+      "labels": [
+        {
+          "name": "assurance:R3"
+        },
+        {
+          "name": "gate:external"
+        },
+        {
+          "name": "gate:operator"
+        },
+        {
+          "name": "work:dependency"
+        },
+        {
+          "name": "work:decision"
+        }
+      ],
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/40"
+    },
+    {
+      "number": 39,
+      "title": "Phase 4 follow-up: valid full-schema four-arm superiority run",
+      "labels": [
+        {
+          "name": "work:live-verification"
+        },
+        {
+          "name": "gate:live-environment"
+        },
+        {
+          "name": "assurance:R3"
+        }
+      ],
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/issues/39"
+    }
+  ],
+  "prs": [
+    {
+      "number": 197,
+      "title": "ES6-V6-CANDIDATE rc4 BUILD freeze (draft until GO + operator acceptance): candidate 7408a46",
+      "labels": [],
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/pull/197",
+      "isDraft": true
+    },
+    {
+      "number": 193,
+      "title": "fix(custody): close es#137 P1 false-allows and P2 refusal gaps",
+      "labels": [],
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/pull/193",
+      "isDraft": true
+    },
+    {
+      "number": 176,
+      "title": "feat: add manifest custody portability planning boundary",
+      "labels": [],
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/pull/176",
+      "isDraft": false
+    },
+    {
+      "number": 103,
+      "title": "fix: record and address the v5.0.0 post-release audit",
+      "labels": [],
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/pull/103",
+      "isDraft": true
+    },
+    {
+      "number": 100,
+      "title": "Explore leveraging Fudge DESIGN.md as visual craft doctrine",
+      "labels": [],
+      "url": "https://github.com/ZMS-Labs/epistemic-skills/pull/100",
+      "isDraft": true
+    }
+  ]
+}

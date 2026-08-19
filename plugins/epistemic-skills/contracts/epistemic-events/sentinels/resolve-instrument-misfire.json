@@ -1,6 +1,7 @@
 {
   "id": "resolve-instrument-misfire",
   "skill": "resolve",
+  "event_kind": "evidence-claim",
   "scenario": "wrong resolve instrument for the claim class",
   "response": {
     "verdict": "ACCEPT_ABSENCE_AS_SUCCESS"

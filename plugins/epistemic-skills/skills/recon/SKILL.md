@@ -1,6 +1,12 @@
 ---
 name: recon
 description: 'Use when territory must be mapped before effort commits: a materially fuzzy or contradicted request after routine micro-recon cannot close it ("what am I missing", a brief naming things the first reads cannot find, hidden coupling, a pre-fan-out premise, an explicit recon request); a large foggy effort whose path holds unresolved decisions or a backlog encoding unmade decisions; or an external project overlapping something you already built where the question is adopt / replace / ignore ("should we use X instead", "does X make ours obsolete"). Three modes by subject: brief, initiative, external candidate. Do NOT fire on factual lookups, mechanical edits, bounded dispatches whose target and check are explicit, plans whose premises the first reads verified, choosing between candidates with no incumbent, or unfamiliarity alone — the two-read micro-recon retires that.'
+metadata:
+  event-kinds: [frontier-decision, harvest-decision, landmine-prediction]
+  eligible-when: [correction-or-supersession, evaluation-case, independently-resolvable-verdict, preregistered-prediction]
+  outcome-sources: [field-observation, supersession-chain]
+  collection-mode: conditional
+  sentinel-fixture: recon-mode-misfire.json
 ---
 
 # recon — map the territory before effort commits
@@ -58,3 +64,15 @@ skills (v4.0.0, 2026-08-04); their names survive as the mode names, and
 their full methods are the mode files unchanged. Their trigger-and-scope
 batteries live under `evals/` per mode; epoch results recorded there
 predate this consolidation and re-arm per `docs/policy/EVIDENCE-POLICY.md`.
+
+## Evidence emission
+
+After each engagement, append one line to `runs/ledger.jsonl` under this skill:
+
+```json
+{"schema":"skill-run@1","ts":"<iso8601>","skill":"<this-skill>","decision":"fired|declined","discipline_engaged":"<name-or-null>","action_changed":true|false}
+```
+
+The append is part of this procedure. It is not a call to an external calibration
+service and it is not a `decision-ledger` entry. Schema:
+`plugins/epistemic-skills/contracts/skill-run-ledger.schema.json`.

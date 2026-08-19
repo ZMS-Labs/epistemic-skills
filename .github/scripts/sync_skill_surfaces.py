@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
 """Single-source synchronization for every skill-inventory surface.
 
-The hand-edited sources of truth are exactly two:
+The hand-edited source of truth is exactly one:
 
 1. the filesystem — ``plugins/epistemic-skills/skills/<name>/`` defines which
-   skills exist; and
-2. ``contracts/epistemic-events/skill-event-map.json`` — per-skill collection
-   metadata (event kinds, eligibility, outcome sources, mode, sentinel).
+   skills exist, and each skill's OWN ``SKILL.md`` frontmatter ``metadata:``
+   block declares its event metadata (``event-kinds``, ``eligible-when``,
+   ``outcome-sources``, ``collection-mode``, ``sentinel-fixture``) alongside
+   ``hands-to``.
 
-Everything else is a derived surface. ``--check`` (the CI mode) verifies every
+``contracts/epistemic-events/skill-event-map.json`` is now a DERIVED surface,
+generated from those frontmatter declarations (v5 design "structural
+membership", es#104 s4 Option A: one generated source, so a second
+hand-maintained membership home cannot drift). Everything else derives too. ``--check`` (the CI mode) verifies every
 derived surface agrees with the sources and exits nonzero with a named error
 per drift. ``--write`` regenerates the derivable surfaces in place:
 
@@ -22,6 +26,13 @@ Python enumeration homes (verifier constants, test expectations) and the
 router's frontmatter skill list stay hand-edited by design — they are cheap,
 rare edits — but ``--check`` verifies them by import and reports exactly what
 is missing. Stdlib only.
+
+``--self-test`` is the planted-drift RED battery: on a scratch copy of the
+tree, each named detector (MAP_DRIFT, MAP_SCHEMA_DRIFT, ROUTING_DRIFT,
+COUNT_DRIFT, EVENT_METADATA_MISSING, HANDS_TO_UNKNOWN,
+VERIFIER_SKILL_NAMES_DRIFT) must fire on its deliberately tampered surface
+and stay silent on the honest copy — proof the checks watch rather than
+pass vacuously.
 """
 from __future__ import annotations
 
@@ -29,7 +40,9 @@ import argparse
 import importlib.util
 import json
 import re
+import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
@@ -157,6 +170,65 @@ def parse_hands_to(skill_md: Path) -> list[str]:
     if not match:
         return []
     return [part.strip().strip("'\"") for part in match.group(1).split(",") if part.strip()]
+
+
+EVENT_META_KEYS = {
+    "event-kinds": ("event_kinds", True),
+    "eligible-when": ("eligible_when", True),
+    "outcome-sources": ("outcome_sources", True),
+    "collection-mode": ("collection_mode", False),
+    "sentinel-fixture": ("sentinel_fixture", False),
+}
+
+
+def parse_event_metadata(skill_md: Path) -> dict | None:
+    """Read the frontmatter event-metadata declaration; None when incomplete."""
+    text = skill_md.read_text(encoding="utf-8")
+    front = FRONTMATTER.match(text)
+    if not front:
+        return None
+    block = front.group(1)
+    out: dict = {}
+    for key, (field, is_list) in EVENT_META_KEYS.items():
+        if is_list:
+            match = re.search(rf"{key}:\s*\[(.*?)\]", block)
+            if not match:
+                return None
+            out[field] = [p.strip().strip("'\"") for p in match.group(1).split(",") if p.strip()]
+        else:
+            match = re.search(rf"{key}:\s*(\S+)", block)
+            if not match:
+                return None
+            out[field] = match.group(1).strip().strip("'\"")
+    return out
+
+
+def hands_to_violations(skill: str, targets: list[str], known: set[str]) -> list[str]:
+    """Every hands-to target must be a real packaged skill (fail closed)."""
+    return [
+        f"HANDS_TO_UNKNOWN: {skill} hands-to names {t!r}, not in the skills/ glob"
+        for t in targets
+        if t not in known
+    ]
+
+
+def render_event_map(skills: set[str], failures: list[str], skills_dir: Path | None = None) -> list[dict]:
+    """Derive the skill-event-map entries from per-skill frontmatter."""
+    root = skills_dir or SKILLS_DIR
+    entries: list[dict] = []
+    for name in sorted(skills):
+        meta = parse_event_metadata(root / name / "SKILL.md")
+        if meta is None:
+            failures.append(
+                f"EVENT_METADATA_MISSING: {name}: SKILL.md frontmatter lacks a complete "
+                "event-kinds/eligible-when/outcome-sources/collection-mode/sentinel-fixture block")
+            continue
+        entries.append({"skill": name, **meta})
+    return entries
+
+
+def render_event_map_text(entries: list[dict]) -> str:
+    return json.dumps({"skills": entries}, indent=2) + "\n"
 
 
 def render_routing(skills: set[str]) -> str:
@@ -430,24 +502,176 @@ def apply_counts(write: bool, n_total: int, n_disc: int, failures: list[str]) ->
             print(f"wrote counts: {path.relative_to(REPO)}")
 
 
+def _selftest_copy(dst: Path) -> None:
+    """Materialize the minimal tree main() reads into a scratch repo root."""
+    rels = [Path(".github/scripts/sync_skill_surfaces.py")]
+    rels += [path.relative_to(REPO) for path, _ in count_surfaces()]
+    rels.append(ROUTING_PATH.relative_to(REPO))
+    for name in ("skill-event-map.json", "skill-event-map.schema.json",
+                 "verify_epistemic_event.py", "test_epistemic_events.py",
+                 "epistemic-event.schema.json"):
+        rels.append((EVENTS_DIR / name).relative_to(REPO))
+    for skill in sorted(discovered_skills()):
+        rels.append((SKILLS_DIR / skill / "SKILL.md").relative_to(REPO))
+    for rel in rels:
+        target = dst / rel
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes((REPO / rel).read_bytes())
+    # test_epistemic_events.py resolves the repo-root skills alias at import
+    # time; recreate it (symlink where possible, alias text file otherwise —
+    # the same two forms root_skills_reference() accepts).
+    # target_is_directory is load-bearing on NT: without it a privileged
+    # Windows host creates a FILE symlink to a directory and the self-test
+    # crashes deterministically (kimi ruling S8).
+    try:
+        (dst / "skills").symlink_to(
+            "plugins/epistemic-skills/skills", target_is_directory=True)
+    except OSError:
+        (dst / "skills").write_text(
+            "plugins/epistemic-skills/skills\n", encoding="utf-8")
+
+
+def _selftest_check(root: Path) -> tuple[int, str]:
+    proc = subprocess.run(
+        [sys.executable, str(root / ".github/scripts/sync_skill_surfaces.py"),
+         "--check"],
+        capture_output=True, text=True)
+    return proc.returncode, proc.stderr + proc.stdout
+
+
+def self_test() -> int:
+    skills = sorted(discovered_skills())
+    n = len(skills)
+    events_rel = EVENTS_DIR.relative_to(REPO)
+    skills_rel = SKILLS_DIR.relative_to(REPO)
+    routing_rel = ROUTING_PATH.relative_to(REPO)
+
+    def tamper_map(root: Path) -> None:
+        path = root / events_rel / "skill-event-map.json"
+        data = json.loads(path.read_text(encoding="utf-8"))
+        data["skills"][0]["collection_mode"] = "zz-planted"
+        path.write_text(render_event_map_text(data["skills"]), encoding="utf-8")
+
+    def tamper_schema(root: Path) -> None:
+        path = root / events_rel / "skill-event-map.schema.json"
+        text = path.read_text(encoding="utf-8")
+        tampered = text.replace(f'"minItems": {n},', f'"minItems": {n - 1},', 1)
+        assert tampered != text, "schema tamper anchor not found"
+        path.write_text(tampered, encoding="utf-8")
+
+    def tamper_routing(root: Path) -> None:
+        path = root / routing_rel
+        path.write_text(
+            path.read_text(encoding="utf-8") + "| `zz-hand-added` | `nobody` |\n",
+            encoding="utf-8")
+
+    def tamper_count(root: Path) -> None:
+        path = root / "GEMINI.md"
+        text = path.read_text(encoding="utf-8")
+        tampered = text.replace(f"{WORDS[n]} skills:", f"{WORDS[n - 1]} skills:", 1)
+        assert tampered != text, "count tamper anchor not found"
+        path.write_text(tampered, encoding="utf-8")
+
+    def tamper_metadata(root: Path) -> None:
+        path = root / skills_rel / skills[0] / "SKILL.md"
+        text = path.read_text(encoding="utf-8")
+        tampered = re.sub(r"\n[ \t]*event-kinds:[^\n]*", "", text, count=1)
+        assert tampered != text, "event-kinds tamper anchor not found"
+        path.write_text(tampered, encoding="utf-8")
+
+    def tamper_hands_to(root: Path) -> None:
+        for skill in skills:
+            path = root / skills_rel / skill / "SKILL.md"
+            text = path.read_text(encoding="utf-8")
+            tampered = re.sub(
+                r"hands-to:\s*\[[^\]]*\]", "hands-to: [zz-planted-phantom]",
+                text, count=1)
+            if tampered != text:
+                path.write_text(tampered, encoding="utf-8")
+                return
+        raise AssertionError("no skill carries a hands-to declaration to tamper")
+
+    def plant_new_skill(root: Path) -> None:
+        new = root / skills_rel / "zz-planted-skill"
+        new.mkdir(parents=True)
+        (new / "SKILL.md").write_text(
+            "---\n"
+            "name: zz-planted-skill\n"
+            "description: planted membership-drift control (self-test only)\n"
+            "metadata:\n"
+            "  hands-to: []\n"
+            "  event-kinds: [frontier-decision]\n"
+            "  eligible-when: [always]\n"
+            "  outcome-sources: [self-report]\n"
+            "  collection-mode: observational\n"
+            "  sentinel-fixture: zz-planted.json\n"
+            "---\n\n# planted\n", encoding="utf-8")
+
+    planted: list[tuple[str, object, list[str]]] = [
+        ("map-value-tamper", tamper_map, ["MAP_DRIFT"]),
+        ("map-schema-tamper", tamper_schema, ["MAP_SCHEMA_DRIFT"]),
+        ("routing-hand-edit", tamper_routing, ["ROUTING_DRIFT"]),
+        ("count-word-tamper", tamper_count, ["COUNT_DRIFT"]),
+        ("event-metadata-removal", tamper_metadata, ["EVENT_METADATA_MISSING"]),
+        ("hands-to-phantom", tamper_hands_to, ["HANDS_TO_UNKNOWN"]),
+        ("unregistered-new-skill", plant_new_skill,
+         ["MAP_DRIFT", "VERIFIER_SKILL_NAMES_DRIFT"]),
+    ]
+    failures = 0
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        _selftest_copy(root)
+        code, out = _selftest_check(root)
+        if code == 0:
+            print("[PASS] honest scratch copy checks clean")
+        else:
+            failures += 1
+            print(f"[FAIL] honest scratch copy rejected (exit {code}):\n{out}")
+    for name, mutate, expected in planted:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _selftest_copy(root)
+            mutate(root)
+            code, out = _selftest_check(root)
+            missing = [token for token in expected if token not in out]
+            if code != 0 and not missing:
+                print(f"[PASS] planted {name} fails closed ({', '.join(expected)})")
+            else:
+                failures += 1
+                print(f"[FAIL] planted {name}: exit={code} missing={missing}\n{out}")
+    print(f"skill-surface generator self-test: {'PASS' if not failures else 'FAIL'}")
+    return 0 if not failures else 1
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--check", action="store_true")
     mode.add_argument("--write", action="store_true")
+    mode.add_argument("--self-test", action="store_true")
     args = parser.parse_args(argv)
+    if args.self_test:
+        return self_test()
     failures: list[str] = []
 
     skills = discovered_skills()
     disciplines = skills - NON_DISCIPLINES
-    entries = load_map()
-    map_skills = {e["skill"] for e in entries}
 
-    # Source agreement: filesystem vs the map.
-    if map_skills != skills:
-        failures.append(
-            "MAP_GLOB_DRIFT: skill-event-map.json != skills/ glob "
-            f"(map-only={sorted(map_skills - skills)}, fs-only={sorted(skills - map_skills)})")
+    # Single source: entries derive from per-skill frontmatter (fail closed on
+    # any incomplete declaration). The committed map is a generated projection.
+    entries = render_event_map(skills, failures)
+    for name in sorted(skills):
+        failures.extend(
+            hands_to_violations(name, parse_hands_to(SKILLS_DIR / name / "SKILL.md"), skills))
+    rendered_map = render_event_map_text(entries)
+    if not MAP_PATH.is_file() or MAP_PATH.read_text(encoding="utf-8") != rendered_map:
+        if args.write:
+            MAP_PATH.write_text(rendered_map, encoding="utf-8")
+            print(f"wrote: {MAP_PATH.relative_to(REPO)}")
+        else:
+            failures.append(
+                "MAP_DRIFT: skill-event-map.json is not the rendering of the per-skill "
+                "frontmatter event metadata (run sync_skill_surfaces.py --write)")
 
     # Derived: map schema.
     rendered = render_map_schema(entries)

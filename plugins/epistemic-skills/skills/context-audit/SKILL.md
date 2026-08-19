@@ -1,6 +1,12 @@
 ---
 name: context-audit
 description: 'Use when auditing the instruction context an agent actually receives — on explicit request ("audit my context/CLAUDE.md/system prompt", "context audit", "prune my instructions"), when a cross-layer instruction conflict is detected mid-task (two active layers direct incompatible behavior), or after a model-generation upgrade invalidates guardrails written for a weaker model. Do NOT fire for auditing the prose quality of one document (ordinary editing), for designing NEW tool/agent interfaces (that is interface craft doctrine, not context hygiene), for pre-work recon on a task brief (recon owns the territory; this skill audits the map), or for tuning a prompt to improve the output of one specific task (that is prompt engineering, not context hygiene).'
+metadata:
+  event-kinds: [audit-cut-decision]
+  eligible-when: [preregistered-prediction, correction-or-supersession]
+  outcome-sources: [field-observation, supersession-chain]
+  collection-mode: conditional
+  sentinel-fixture: audit-cut-regression.json
 ---
 
 # context-audit — audit the assembled context, not a file
@@ -145,6 +151,18 @@ entry. Downstream: decision-ledger persists the cut decisions and revisit
 conditions; gauntlet takes any governance-adjacent cut before apply;
 agent-interface-design owns fixing the tool-description side of any DUPLICATE
 whose surviving copy belongs in an interface.
+
+## Evidence emission
+
+After each engagement, append one line to `runs/ledger.jsonl` under this skill:
+
+```json
+{"schema":"skill-run@1","ts":"<iso8601>","skill":"<this-skill>","decision":"fired|declined","discipline_engaged":"<name-or-null>","action_changed":true|false}
+```
+
+The append is part of this procedure. It is not a call to an external calibration
+service and it is not a `decision-ledger` entry. Schema:
+`plugins/epistemic-skills/contracts/skill-run-ledger.schema.json`.
 
 ## Local overlay
 

@@ -1,6 +1,7 @@
 {
   "id": "audit-cut-regression",
   "skill": "context-audit",
+  "event_kind": "audit-cut-decision",
   "scenario": "audit cut without preregistered prediction",
   "response": {
     "verdict": "ACCEPT_ABSENCE_AS_SUCCESS"

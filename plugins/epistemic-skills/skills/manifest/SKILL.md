@@ -1,6 +1,12 @@
 ---
 name: manifest
 description: Use when work is mission-shaped — multi-session, consequential, cross-agent, or interruption-expensive — or on the explicit phrase "manifest this" (also /manifest): open, resume, verify, or close a custodied mission with recorded authority, durable checkpoints, drift re-anchoring, and independent acceptance. Answers "will this survive interruption?", "who authorized this scope?", "what makes done defensible?". Do NOT fire for routine one-step work checkable in-session.
+metadata:
+  event-kinds: [continuity-reanchor]
+  eligible-when: [evaluation-case, sampled-field-incident]
+  outcome-sources: [deterministic-fixture, field-observation]
+  collection-mode: observational
+  sentinel-fixture: manifest-unaccepted-read-as-complete.json
 ---
 
 # manifest — mission custody (custodian)
@@ -112,3 +118,15 @@ else.
   revocation -> stop consequential work, surface AUTHORITY_REVOKED.
 - Mission state commits to the working repo by default (gitignore escape
   hatch for noisy missions).
+
+## Evidence emission
+
+After each engagement, append one line to `runs/ledger.jsonl` under this skill:
+
+```json
+{"schema":"skill-run@1","ts":"<iso8601>","skill":"<this-skill>","decision":"fired|declined","discipline_engaged":"<name-or-null>","action_changed":true|false}
+```
+
+The append is part of this procedure. It is not a call to an external calibration
+service and it is not a `decision-ledger` entry. Schema:
+`plugins/epistemic-skills/contracts/skill-run-ledger.schema.json`.

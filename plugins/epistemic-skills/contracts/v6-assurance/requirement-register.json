@@ -1,0 +1,257 @@
+{
+  "schema": "v6-requirement-register@1",
+  "purpose": "Crosswalk from the registered requirement taxonomies (es#191 terminal contract; RELEASING.md release gate) to the packet's claim ids, so the packet's own taxonomy can never silently substitute for the registered one (gauntlet ruling R14-taxonomy-substitution-no-register, run es-v6-candidate-freeze-2026-08-18). validate_v6_assurance.py fails on any registered requirement with neither covering claims nor an explicit disposition.",
+  "source_clauses": {
+    "claim_classes": {
+      "authority": "es#191 'Terminal contract', clause 1: 'every material current public, normative, compatibility, security, behavioral, mission-custody, harness, and release claim'",
+      "items": [
+        "public",
+        "normative",
+        "compatibility",
+        "security",
+        "behavioral",
+        "mission-custody",
+        "harness",
+        "release"
+      ]
+    },
+    "evidence_classes": {
+      "authority": "es#191 'Terminal contract', clause 4: 'deterministic, structural, hostile-input, lifecycle, crash/recovery, migration, concurrency, performance, stability, clean-clone/archive, behavioral, native-harness, Windows, Linux, macOS, and filesystem-dependent evidence is complete to the bounded claims'",
+      "items": [
+        "deterministic",
+        "structural",
+        "hostile-input",
+        "lifecycle",
+        "crash-recovery",
+        "migration",
+        "concurrency",
+        "performance",
+        "stability",
+        "clean-clone-archive",
+        "behavioral",
+        "native-harness",
+        "windows",
+        "linux",
+        "macos",
+        "filesystem-dependent"
+      ]
+    },
+    "releasing_gates": {
+      "authority": "RELEASING.md 'Release gate' items 1-9",
+      "items": [
+        "RG-1-candidate-identity-and-scope",
+        "RG-2-release-decisions-and-risk-acceptance",
+        "RG-3-evidence-retention",
+        "RG-4-version-and-link-alignment",
+        "RG-5-deterministic-and-static-analysis",
+        "RG-6-security-public-content-provenance",
+        "RG-7-supported-harness-evidence",
+        "RG-8-independent-publication-judgment",
+        "RG-9-publication-identity-plan"
+      ]
+    }
+  },
+  "crosswalk": {
+    "claim_classes": {
+      "public": {
+        "claims": [
+          "CLM-PUBLIC-CONTENT",
+          "CLM-DISPOSITION-CENSUS"
+        ]
+      },
+      "normative": {
+        "claims": [
+          "CLM-V5-DESIGN-COMMITMENTS",
+          "CLM-RELEASE-AUTH"
+        ]
+      },
+      "compatibility": {
+        "claims": [
+          "CLM-COMPATIBILITY",
+          "CLM-WINDOWS-FS"
+        ]
+      },
+      "security": {
+        "claims": [
+          "CLM-SECRET-SCAN",
+          "CLM-PUBLIC-CONTENT",
+          "CLM-MC-GUARD-LEXICAL"
+        ]
+      },
+      "behavioral": {
+        "claims": [
+          "CLM-BEHAVIORAL-EPOCHS"
+        ]
+      },
+      "mission-custody": {
+        "claims": [
+          "CLM-MC-HOOK-POSIX",
+          "CLM-MC-MACOS-CASE",
+          "CLM-MC-137",
+          "CLM-MC-GUARD-LEXICAL"
+        ]
+      },
+      "harness": {
+        "claims": [
+          "CLM-HARNESS-LIVE",
+          "CLM-DESCRIPTION-BUDGET"
+        ]
+      },
+      "release": {
+        "claims": [
+          "CLM-RELEASE-AUTH",
+          "CLM-REQUIRED-JOB",
+          "CLM-STDLIB-GATE",
+          "CLM-INDEPENDENT-GAUNTLET"
+        ]
+      }
+    },
+    "evidence_classes": {
+      "deterministic": {
+        "claims": [
+          "CLM-STDLIB-GATE",
+          "CLM-ORACLE-REJECT"
+        ]
+      },
+      "structural": {
+        "claims": [
+          "CLM-STDLIB-GATE",
+          "CLM-WF-PATH-COVERAGE"
+        ]
+      },
+      "hostile-input": {
+        "claims": [
+          "CLM-ORACLE-REJECT",
+          "CLM-MC-137"
+        ]
+      },
+      "lifecycle": {
+        "claims": [
+          "CLM-MC-137"
+        ]
+      },
+      "crash-recovery": {
+        "claims": [
+          "CLM-MC-137"
+        ]
+      },
+      "migration": {
+        "claims": [
+          "CLM-MC-137"
+        ]
+      },
+      "concurrency": {
+        "disposition": "LIMITED",
+        "reason": "The es#173 adjudication ruled NO-GO on adopting any custody concurrency design this cycle; the reachable concurrent-open ambiguity path is named and disclosed (mission-custody SECURITY.md, 'Discovery ambiguity DISARMS the gate') rather than claimed closed. Carried as a known limit, owner: mission-custody contract (es#173)."
+      },
+      "performance": {
+        "disposition": "NOT-APPLICABLE",
+        "reason": "v6.0 makes no performance claim. The package is documentation plus stdlib checking scripts; the only recorded measurements (custody scope_consistency scaling table in SECURITY.md) exist to justify a design refusal, not to claim a performance property."
+      },
+      "stability": {
+        "claims": [
+          "CLM-BEHAVIORAL-EPOCHS"
+        ]
+      },
+      "clean-clone-archive": {
+        "claims": [
+          "CLM-STDLIB-GATE"
+        ]
+      },
+      "behavioral": {
+        "claims": [
+          "CLM-BEHAVIORAL-EPOCHS"
+        ]
+      },
+      "native-harness": {
+        "claims": [
+          "CLM-HARNESS-LIVE"
+        ]
+      },
+      "windows": {
+        "claims": [
+          "CLM-WINDOWS-FS"
+        ]
+      },
+      "linux": {
+        "claims": [
+          "CLM-STDLIB-GATE"
+        ]
+      },
+      "macos": {
+        "claims": [
+          "CLM-MC-MACOS-CASE"
+        ]
+      },
+      "filesystem-dependent": {
+        "claims": [
+          "CLM-MC-HOOK-POSIX",
+          "CLM-MC-MACOS-CASE",
+          "CLM-WINDOWS-FS"
+        ]
+      }
+    },
+    "releasing_gates": {
+      "RG-1-candidate-identity-and-scope": {
+        "claims": [
+          "CLM-STDLIB-GATE"
+        ],
+        "note": "Exact-candidate identity is carried by the packet's candidate_sha plus the per-file digests and tree hash in source-inventory (R5)."
+      },
+      "RG-2-release-decisions-and-risk-acceptance": {
+        "disposition": "COVERED-BY-PROCEDURE",
+        "reason": "Operator decisions are recorded in docs/v6/operator-decision-record-2026-08-18.md (echo-certified) and acceptance follows docs/v6/OPERATOR-ACCEPTANCE-PROCEDURE.md; risk acceptance is the operator-acceptance act itself, not a packet claim."
+      },
+      "RG-3-evidence-retention": {
+        "claims": [
+          "CLM-STDLIB-GATE"
+        ],
+        "note": "evidence_paths in the packet plus docs/v6/evidence/ and the committed gauntlet run directory are the retained record."
+      },
+      "RG-4-version-and-link-alignment": {
+        "claims": [
+          "CLM-COMPATIBILITY"
+        ]
+      },
+      "RG-5-deterministic-and-static-analysis": {
+        "claims": [
+          "CLM-STDLIB-GATE"
+        ]
+      },
+      "RG-6-security-public-content-provenance": {
+        "claims": [
+          "CLM-SECRET-SCAN",
+          "CLM-PUBLIC-CONTENT"
+        ]
+      },
+      "RG-7-supported-harness-evidence": {
+        "claims": [
+          "CLM-HARNESS-LIVE"
+        ]
+      },
+      "RG-8-independent-publication-judgment": {
+        "claims": [
+          "CLM-INDEPENDENT-GAUNTLET"
+        ]
+      },
+      "RG-9-publication-identity-plan": {
+        "disposition": "DEFERRED-TO-PROMOTION",
+        "reason": "The BUILD packet publishes nothing; publication identity (tag, Release, wiki) is verified inside the separate PROMOTION_RUN per RELEASING.md steps 7-10 and the two-stage boundary es#191 approved."
+      }
+    }
+  },
+  "notes": [
+    "Claim ids referenced here that the matrix does not yet carry (CLM-COMPATIBILITY, CLM-SECRET-SCAN, CLM-MC-GUARD-LEXICAL, CLM-DESCRIPTION-BUDGET, CLM-DISPOSITION-CENSUS) are the R14/R2/R15/D3.5/R6 additions landing in the same candidate; validate_v6_assurance.py fails closed if any referenced claim id is absent from the matrix, so this register cannot cite claims that do not exist at freeze time.",
+    "The durable coordination program is named in es#191 itself; its coordinates are deliberately not repeated here (public-content gate, private-fleet class)."
+  ],
+  "operator_channel_law": {
+    "authority": "Operator ruling 2026-08-18 (S2, run es-v6-rc2-gauntlet-kimi-2026-08-18, CL-2 synthesis); amends the R12 criterion's letter so register and derivation agree per that ruling's path (b) mechanism. Owner matching amended per R3-NF6 (run es-v6-rc3-delta-review-2026-08-18): membership in the operator CLASS set (is_operator_class: operator, operator+agent, joint, independent-panel), the same predicate derive_blocking uses \u2014 a superset of the ruling's 'operator-owned' core for every owner in the closed vocabulary, so the amendment strengthens rather than narrows it. Precise limit (R4-NF4): set membership is not a superset of a substring test in general \u2014 a spelling like 'operator-team' would match a substring test and not the set \u2014 which is why the owner vocabulary is itself closed and validated (validate_matrix), leaving no spelling that can fall between the two.",
+    "law": [
+      "Every P1/P2 claim whose owner is in the operator class (is_operator_class) occupies a machine channel while open: blocking_claims for non-PROVED non-LIMITED statuses (derive_blocking), or a known_limits entry naming it via its `claim` field for LIMITED (derived by the generator, operator_limited_limits).",
+      "PROVED operator-class claims are completed acts and are row-only.",
+      "P3 tracker census rows are channeled by the reconciliation artifact and walked at acceptance-procedure item 3, not duplicated into known_limits."
+    ],
+    "enforced_by": "Limbs 1-2: validate_v6_assurance.validate_operator_channel + validate_blocking_derivation (fail closed on any drop or drift), with matrix severity coverage hard-required for @2 packets. Limb 3: validate_candidate_coverage (every census item must have a matrix row) plus the acceptance-procedure item-3 walk \u2014 a human act, not this validator (the rc3 register over-attributed limb 3 to the channel check; R3-NF6).",
+    "known_residual": "An operator-class P3 claim that is NOT a tracker census row would occupy no machine channel (limb 3 covers census rows only). Zero such claims exist at this freeze; one emerging triggers ledger entry v6-s2-operator-channel-law-20260818-18's revisit_when clause rather than a silent gap (R3-NF6, recorded)."
+  }
+}

@@ -3,6 +3,11 @@ name: did-it-land
 description: Use when a change is believed applied and something now depends on it being true — after a deploy, a config edit, a guard or hook installation, a merge, or a fix about to be called done. Also fires when a check is green but its oracle only read source. Do NOT fire when the change is local, reversible and directly observable in the same breath as making it, when nothing yet depends on it having landed, or when you are still deciding what to change.
 metadata:
   hands-to: [decision-ledger]
+  event-kinds: [landing-verdict]
+  eligible-when: [evaluation-case, sampled-field-incident]
+  outcome-sources: [deterministic-fixture, field-observation]
+  collection-mode: observational
+  sentinel-fixture: did-it-land-source-read-as-landed.json
 ---
 
 # did-it-land — the change is real on the runtime, or it is not real
