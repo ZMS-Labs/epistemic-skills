@@ -110,3 +110,47 @@ entries for D18 and D19 are appended after the freeze resolves, in the
 candidate lineage or after promotion, whichever comes first. D16 and D17
 are already in the candidate's ledger as entries 20 and 21 because they
 were recorded before the rc4 freeze was cut.
+
+## Addendum — the record-path secret-scan exemption on `main` (D18a)
+
+Opening the DCO repair PR surfaced a second live defect on `main`, found
+by CI rather than by reasoning: the required `full-history-secret-scan`
+job scans **all refs**, so the two pushed gauntlet-record branches put
+`main` in a state where every pull request goes red. Two findings, both
+the same non-credential class — verifier prose in record reports quoting
+an Actions run id beside the word "API"
+— the shape is the literal word "API", a colon, then a run id joined by
+`=` to a workflow name — which trips gitleaks' generic-api-key entropy
+heuristic. The shape is described rather than quoted here on purpose:
+quoting it verbatim reproduces the trigger, and this file sits outside
+the record-path exemption. That is not hypothetical — the first version
+of this document did quote it, and the scan caught it. Reproduced locally with the
+pinned scanner version and read in full: public identifiers, no
+credential. `main`'s own push runs were green because a push scans only
+the pushed ref; the exposure appears on pull-request runs.
+
+The rc4 candidate already carries a rule-scoped exemption for
+`docs/gauntlet-runs/`. `main` takes that file's text **byte-identically**
+rather than an improved variant, for a reason that was measured, not
+assumed: merging the frozen candidate into a `main` that carries a
+*different* allowlist block conflicts in `.gitleaks.toml` at promotion,
+while an identical block merges clean and yields exactly the candidate's
+file. A merge conflict on the promotion act is a landmine this program
+should not lay for the sake of a P4 improvement.
+
+The improvement itself is therefore **deferred, not dropped**: the fourth
+panel's R4-NF2 asks for an anchored path regex and a refreshed falsifier,
+and both copies of the file must change together, so that belongs to the
+next freeze's P4 sweep (the arbitration's own Next-action 5 class). What
+does land now is the part that needs no shared edit: an in-CI
+**narrowness control** in `release-security.yml`, which plants one
+high-entropy token inside and outside the record directory and fails the
+job unless the exemption fires exactly where intended, plus a branded
+credential inside the directory that must still be caught. Proven
+locally against the pinned scanner: fires outside (exit 1), suppressed
+inside (exit 0), branded credential still caught (exit 1), and the full
+`--all` history scan clean.
+
+`release-security.yml` is untouched by the rc4 delta, so this main-side
+change survives the promotion merge by the same mechanism verified for
+`check_dco.py`.
