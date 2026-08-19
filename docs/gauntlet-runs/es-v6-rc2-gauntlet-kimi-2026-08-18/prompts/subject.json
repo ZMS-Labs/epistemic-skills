@@ -1,0 +1,31 @@
+{
+ "subject": "ES6-V6-CANDIDATE rc2 BUILD freeze at 6db8c50420b194aebbd09a2ea5f81c6a276897dc: independent successor Gauntlet for issue #191 terminal state V6_CANDIDATE_READY_FOR_OPERATOR_ACCEPTANCE (C/C+1 freeze packet, exact-SHA requalification, 15 predecessor acceptance criteria, custody security, release-gate evidence)",
+ "axis": "fixed",
+ "depth": "standard",
+ "domains": [
+  "release",
+  "security",
+  "governance",
+  "ci",
+  "evidence",
+  "documentation"
+ ],
+ "risk_classes": [
+  "irreversible",
+  "security"
+ ],
+ "stakeholders": [
+  "operator",
+  "public-users"
+ ],
+ "horizon": "long",
+ "capability_needs": [
+  "release-integrity",
+  "evidence-verification",
+  "process-integrity"
+ ],
+ "domain_confidence": "high",
+ "defensible_priors": false,
+ "operator_values_in_dossier": false,
+ "subject_sha256": "d6634f88934a05c1e1f9e9ab456686d93e7f7dd17fdd9112593ee3cdbe69d198"
+}

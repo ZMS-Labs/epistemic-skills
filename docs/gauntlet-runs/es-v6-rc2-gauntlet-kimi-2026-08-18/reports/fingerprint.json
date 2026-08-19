@@ -1,0 +1,92 @@
+{
+ "schema": "sovereign-fingerprint (verify_evidence.py --json)",
+ "evidence_root": "C+1 worktree (packet tree)",
+ "run_note": "Format-limited run: lenses cited [V <tree> `path`] style; the strict verifier parsed 6 V-tags, 0 verified (format mismatch, not fabrication). Two spot-checked manually and accurate; every load-bearing claim was re-executed by the judge (arbitration.md dispatcher re-verification register). Method precedent: bind the strict [V path:line] token format in the dispatch contract.",
+ "reports": [
+  {
+   "report_path": "Y:\\dev\\es-v6-gauntlet-run\\docs\\gauntlet-runs\\es-v6-rc2-gauntlet-kimi-2026-08-18\\reports\\chesterton-gate.md",
+   "total": 4,
+   "verified": 0,
+   "hallucinated": 4,
+   "accuracy_pct": 0.0,
+   "i_tags": 1,
+   "h_tags": 0,
+   "malformed_v": 4,
+   "tag_results": []
+  },
+  {
+   "report_path": "Y:\\dev\\es-v6-gauntlet-run\\docs\\gauntlet-runs\\es-v6-rc2-gauntlet-kimi-2026-08-18\\reports\\cloud-native-purist.md",
+   "total": 0,
+   "verified": 0,
+   "hallucinated": 0,
+   "accuracy_pct": 0.0,
+   "i_tags": 3,
+   "h_tags": 0,
+   "malformed_v": 0,
+   "tag_results": []
+  },
+  {
+   "report_path": "Y:\\dev\\es-v6-gauntlet-run\\docs\\gauntlet-runs\\es-v6-rc2-gauntlet-kimi-2026-08-18\\reports\\human-automation-handoff-auditor-seat2.md",
+   "total": 1,
+   "verified": 0,
+   "hallucinated": 1,
+   "accuracy_pct": 0.0,
+   "i_tags": 1,
+   "h_tags": 0,
+   "malformed_v": 0,
+   "tag_results": [
+    {
+     "raw": "[V tip\n  handoff:58]",
+     "path": "tip\n  handoff",
+     "line": 58,
+     "status": "H",
+     "reason": "File Not Found"
+    }
+   ]
+  },
+  {
+   "report_path": "Y:\\dev\\es-v6-gauntlet-run\\docs\\gauntlet-runs\\es-v6-rc2-gauntlet-kimi-2026-08-18\\reports\\human-automation-handoff-auditor.md",
+   "total": 0,
+   "verified": 0,
+   "hallucinated": 0,
+   "accuracy_pct": 0.0,
+   "i_tags": 0,
+   "h_tags": 0,
+   "malformed_v": 0,
+   "tag_results": []
+  },
+  {
+   "report_path": "Y:\\dev\\es-v6-gauntlet-run\\docs\\gauntlet-runs\\es-v6-rc2-gauntlet-kimi-2026-08-18\\reports\\red-lines-gate.md",
+   "total": 0,
+   "verified": 0,
+   "hallucinated": 0,
+   "accuracy_pct": 0.0,
+   "i_tags": 2,
+   "h_tags": 0,
+   "malformed_v": 0,
+   "tag_results": []
+  },
+  {
+   "report_path": "Y:\\dev\\es-v6-gauntlet-run\\docs\\gauntlet-runs\\es-v6-rc2-gauntlet-kimi-2026-08-18\\reports\\requirements-traceability-auditor.md",
+   "total": 1,
+   "verified": 0,
+   "hallucinated": 1,
+   "accuracy_pct": 0.0,
+   "i_tags": 10,
+   "h_tags": 1,
+   "malformed_v": 1,
+   "tag_results": []
+  },
+  {
+   "report_path": "Y:\\dev\\es-v6-gauntlet-run\\docs\\gauntlet-runs\\es-v6-rc2-gauntlet-kimi-2026-08-18\\reports\\safety-hazard-auditor.md",
+   "total": 0,
+   "verified": 0,
+   "hallucinated": 0,
+   "accuracy_pct": 0.0,
+   "i_tags": 0,
+   "h_tags": 0,
+   "malformed_v": 0,
+   "tag_results": []
+  }
+ ]
+}

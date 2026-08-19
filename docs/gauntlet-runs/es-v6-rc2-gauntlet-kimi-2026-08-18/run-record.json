@@ -1,0 +1,109 @@
+{
+ "conditions": [
+  {
+   "condition": "Either (a) every operator-owned claim regardless of status appears in blocking_claims or a known_limits entry naming it (owner field present), or (b) a recorded operator ruling exempts LIMITED-status operator-owned claims from the machine channels, with the criterion's letter amended in the same artifact so the register and the derivation agree.",
+   "falsifier": {
+    "method": "Parse the successor packet and matrix; assert the channel property over every claim whose owner contains 'operator'; grep for the operator ruling if (b).",
+    "threshold": "Zero unlisted operator-owned claims, or the ruling artifact exists and the amended criterion text matches the derivation. Any unlisted operator-owned claim with no ruling leaves the defect standing.",
+    "timeframe": "At successor submission; one command against the committed artifacts."
+   },
+   "owner": "operator rules (a) vs (b); agent implements"
+  }
+ ],
+ "depth": "standard",
+ "docket_mode": "manual-docket",
+ "dossier": {
+  "frozen_at": "2026-08-18T23:10:00Z",
+  "path": "dossier.md",
+  "sha256": "d6634f88934a05c1e1f9e9ab456686d93e7f7dd17fdd9112593ee3cdbe69d198"
+ },
+ "evidence_root": {
+  "content_sha256": "6f32a18863b2c713b7142af2ff5a9c395a05b419f791e085c6f72de6d23026ca",
+  "path": "evidence"
+ },
+ "fingerprint": {
+  "path": "reports/fingerprint.json",
+  "sha256": "35934f974a47779b628848f7e8b2e43b6cefbedbbf823a1aae9a55053cf2cff9"
+ },
+ "generated_by": "scripts/finalize_run.py",
+ "independence_mode": "concurrent isolated materialized-role subagents behind a barrier (one lens executed twice due to a quota-killed first dispatch \u2014 treated as one correlated chain per CL-5)",
+ "reports": [
+  {
+   "lens": "chesterton-gate",
+   "path": "reports/chesterton-gate.md",
+   "sha256": "e3d6128522ce2e535f803c4484333efc6198abfde1a5b80f3b015da60beaddf2"
+  },
+  {
+   "lens": "cloud-native-purist",
+   "path": "reports/cloud-native-purist.md",
+   "sha256": "5e8c1e4c2c76732afcd52555f925454ba4f4ef4b7c73637df3c6c15b84e647ac"
+  },
+  {
+   "lens": "human-automation-handoff-auditor-seat2",
+   "path": "reports/human-automation-handoff-auditor-seat2.md",
+   "sha256": "008c16444386715a095a9fd5029bc2006c777dad879c1a9ca00b44f346376e61"
+  },
+  {
+   "lens": "human-automation-handoff-auditor",
+   "path": "reports/human-automation-handoff-auditor.md",
+   "sha256": "8d832aabada6c3f50dcf40852fd027521015681cfd5262af9c7e0f5253d5a40b"
+  },
+  {
+   "lens": "red-lines-gate",
+   "path": "reports/red-lines-gate.md",
+   "sha256": "2d363b8c671f8f7e583dd4d1b6ba5019808a5e362caccd24a3393a161371cc56"
+  },
+  {
+   "lens": "requirements-traceability-auditor",
+   "path": "reports/requirements-traceability-auditor.md",
+   "sha256": "31a6bf40a28cb0e3735c99a625547a3d65d9097f86c2155eb6ff0e09bf2aa4aa"
+  },
+  {
+   "lens": "safety-hazard-auditor",
+   "path": "reports/safety-hazard-auditor.md",
+   "sha256": "8816680e6c5d82a1d201aadf42eee628fca3681964deaeaf6712bc40be670ce3"
+  }
+ ],
+ "role_binding": {
+  "mode": "materialized-role",
+  "ref": null
+ },
+ "ruling_set": {
+  "path": "arbitration.md",
+  "sha256": "2aa3d0879d03dd02733c72dfbb9db9b43aff778a02790687705a6d1fef32d2ec"
+ },
+ "run_id": "es-v6-rc2-gauntlet-kimi-2026-08-18",
+ "run_record": "gauntlet-run-record@1",
+ "seats": [],
+ "selection": {
+  "path": "prompts/selection.json",
+  "registry_sha256": "a71b7f30b937c433dc50c0c2a6b82212026161e2494398230c092fb156befa0d",
+  "registry_version": "3.0.0",
+  "replay_sha256": "0c1d4ef01f832f553c0e0e427ea16130d865ac24cebc49311c8c3044246dbe39",
+  "seed_source": "subject_sha256",
+  "selected_ids": [
+   "human-automation-handoff-auditor@1",
+   "cloud-native-purist@2",
+   "requirements-traceability-auditor@1",
+   "safety-hazard-auditor@1",
+   "chesterton-gate@2"
+  ],
+  "subject_seed_sha256": "d6634f88934a05c1e1f9e9ab456686d93e7f7dd17fdd9112593ee3cdbe69d198",
+  "wildcard_ids": [
+   "safety-hazard-auditor@1"
+  ]
+ },
+ "subject": {
+  "path": "docs/v6/ES6-V6-CANDIDATE",
+  "revision": "6db8c50420b194aebbd09a2ea5f81c6a276897dc"
+ },
+ "summary": {
+  "path": "GAUNTLET-SUMMARY.md",
+  "sha256": "052be7e14e5e77ad782d8da64666de40b3c042a913d1d3fd5f4e26fbdf4c3e48"
+ },
+ "valid_while": {
+  "evidence_root_sha256": "6f32a18863b2c713b7142af2ff5a9c395a05b419f791e085c6f72de6d23026ca",
+  "subject_revision": "6db8c50420b194aebbd09a2ea5f81c6a276897dc"
+ },
+ "verdict": "NO-GO"
+}
