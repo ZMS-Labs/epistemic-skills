@@ -1,0 +1,78 @@
+{
+ "schema": "v6-requalification@1",
+ "candidate_sha": "03e972c5d427238033cb90d66846adabaf11928d",
+ "captured_at": "2026-08-19T19:12:22Z",
+ "method": "workflow_dispatch of all five gating workflows on branch claude/v6-rc4-requal pinned at the candidate SHA (operator decision D4b); conclusions read from GitHub's own run/job records at job level, plus step-level verification of the two oracles this lineage added because nothing exercised them before ready-mark: the ledger append-only check (R3-NF1) and the record-path narrowness control (R4-NF2).",
+ "claims": {
+  "CLM-STDLIB-GATE": {
+   "conclusion": "success",
+   "runs": [
+    "https://github.com/ZMS-Labs/epistemic-skills/actions/runs/32291432381"
+   ],
+   "note": "epistemic-flexibility stdlib-checks executed in full at the candidate SHA, including the assurance validator's PRE-FREEZE pass on the packet-less candidate tree AND the ledger append-only oracle EXECUTED (not skipped) against live origin/main \u2014 step 'Durable ledger append-only against merge base' conclusion=success."
+  },
+  "CLM-PUBLIC-CONTENT": {
+   "conclusion": "success",
+   "runs": [
+    "https://github.com/ZMS-Labs/epistemic-skills/actions/runs/32291432381"
+   ],
+   "note": "Public-content gate step (digest-bound allowlist, self-test + live) green inside stdlib-checks at the candidate SHA; local evidence/public-content.json corroborates at the same SHA."
+  },
+  "CLM-SECRET-SCAN": {
+   "conclusion": "success",
+   "runs": [
+    "https://github.com/ZMS-Labs/epistemic-skills/actions/runs/32291473397"
+   ],
+   "note": "release-security full-history-secret-scan green at the candidate SHA with pinned gitleaks v8.30.1. All four planted controls executed: seeded private key detected, digest allowlist narrowness, and the NEW record-path narrowness control (step 'Gauntlet-record allowlist narrowness control' conclusion=success) proving the ^docs/gauntlet-runs/ entropy exemption suppresses only inside that anchored path while a look-alike path and a branded credential inside it still fire."
+  },
+  "CLM-MC-HOOK-POSIX": {
+   "conclusion": "success",
+   "runs": [
+    "https://github.com/ZMS-Labs/epistemic-skills/actions/runs/32291435791"
+   ],
+   "note": "The GATING Linux 'contract' job succeeded (all steps incl. the POSIX hook branch); the dispatch-only non-gating 'contract-macos' diagnostic failed on the KNOWN es#162 APFS Unicode-fold collision \u2014 see non_flip_records."
+  }
+ },
+ "non_flip_records": {
+  "commission-watch-contract": {
+   "conclusion": "success",
+   "runs": [
+    "https://github.com/ZMS-Labs/epistemic-skills/actions/runs/32291447984"
+   ]
+  },
+  "openai-bundles": {
+   "conclusion": "success",
+   "runs": [
+    "https://github.com/ZMS-Labs/epistemic-skills/actions/runs/32291450918"
+   ]
+  },
+  "mission-custody-contract-macos-diagnostic": {
+   "conclusion": "failure",
+   "runs": [
+    "https://github.com/ZMS-Labs/epistemic-skills/actions/runs/32291435791"
+   ],
+   "note": "Dispatch-only, non-gating (`if: github.event_name == 'workflow_dispatch'` \u2014 cannot gate a PR); the disclosed es#162 measured instance, deterministic across rc2, rc3, rc4 and rc5 (KL-MACOS-162). Recorded so the aggregate red is never silently dropped."
+  }
+ },
+ "superseded_rounds": [
+  {
+   "candidate_sha": "74c8314e9b8891e8d3833326533042a0498a7d78",
+   "runs": [
+    "https://github.com/ZMS-Labs/epistemic-skills/actions/runs/32260127759",
+    "https://github.com/ZMS-Labs/epistemic-skills/actions/runs/32260118894"
+   ],
+   "why_superseded": "First rc4 round. full-history-secret-scan RED on one generic-api-key entropy false positive inside the immutable rc3 record branch (read in full: public identifiers, no credential); mission-custody aggregate RED on the same non-gating macOS diagnostic as every round. Superseded by the re-cut that added the record-path exemption. Both reds are itemized here rather than only the decisive one (R4-NF9)."
+  },
+  {
+   "candidate_sha": "7408a462b413d0ab41a08de1d37a10b9cdf2a6ea",
+   "runs": [
+    "https://github.com/ZMS-Labs/epistemic-skills/actions/runs/32261089304",
+    "https://github.com/ZMS-Labs/epistemic-skills/actions/runs/32261092986",
+    "https://github.com/ZMS-Labs/epistemic-skills/actions/runs/32261096852",
+    "https://github.com/ZMS-Labs/epistemic-skills/actions/runs/32261100146",
+    "https://github.com/ZMS-Labs/epistemic-skills/actions/runs/32261103436"
+   ],
+   "why_superseded": "The rc4 candidate: fully requalified (all five dispatched, gating jobs green, ledger step executed) and frozen as e46c2486, then superseded WITHOUT a defect in its own tree. Its R4-NF1 repair landed on main, and CI validates a PR against its merge ref, so three inventoried files diverged and the validator failed R5 DIGEST MISMATCH on the merge tree. Disclosed as KL-SEAL-MAIN-COUPLING; the rc5 re-cut absorbs main."
+  }
+ ]
+}
