@@ -477,6 +477,38 @@ def test_open_guard_mode_without_guards_refused() -> None:
         check("open-mode-without-guards-refused", res.returncode == 2)
 
 
+def test_malformed_guards_json_returns_exit_2_without_traceback() -> None:
+    """es#137 P2: malformed --guards-file JSON is a custody refusal (exit 2),
+    not a traceback / exit 1. Named to match the issue acceptance test; covers
+    both `open` and `amend`."""
+    with tempfile.TemporaryDirectory() as td:
+        tmp = Path(td)
+        bad = tmp / "guards.json"
+        bad.write_text("{not-json", encoding="utf-8")
+        opened = run("open", "--workspace", str(tmp), "--actor", "agent:t",
+                     "--mission-id", "bad-json-open", "--instruction", "i",
+                     "--operator", "operator:t", "--steward", "agent:t",
+                     "--guards-file", str(bad), "--guard-mode", "enforce")
+        check("open-malformed-guards-exit-2", opened.returncode == 2)
+        check("open-malformed-guards-no-traceback",
+              "Traceback" not in opened.stderr)
+        check("open-malformed-guards-names-refusal",
+              "CustodyError" in opened.stderr)
+
+        ok_open = open_cli(tmp, "bad-json-amend", "i")
+        check("amend-malformed-setup-open", ok_open.returncode == 0)
+        run("approve", "--workspace", str(tmp), "--actor", "agent:worker")
+        amended = run("amend", "--workspace", str(tmp),
+                      "--actor", "agent:worker",
+                      "--text", "operator: arm with bad json",
+                      "--guards-file", str(bad), "--guard-mode", "enforce")
+        check("amend-malformed-guards-exit-2", amended.returncode == 2)
+        check("amend-malformed-guards-no-traceback",
+              "Traceback" not in amended.stderr)
+        check("amend-malformed-guards-names-refusal",
+              "CustodyError" in amended.stderr)
+
+
 def test_amend_guard_mode_flag() -> None:
     with tempfile.TemporaryDirectory() as td:
         tmp = Path(td)
@@ -770,6 +802,7 @@ TESTS = [
     test_gate_verb,
     test_gate_no_mission_allows,
     test_open_guard_mode_without_guards_refused,
+    test_malformed_guards_json_returns_exit_2_without_traceback,
     test_amend_guard_mode_flag,
     test_text_file_preserves_bytes_exactly,
     test_text_and_text_file_are_mutually_exclusive,

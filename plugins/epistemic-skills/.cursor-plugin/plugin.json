@@ -2,7 +2,7 @@
   "name": "epistemic-skills",
   "displayName": "Epistemic Skills",
   "description": "The full epistemic-discipline collection in one package: an entry point plus fourteen disciplines including recon (territory mapping: brief, initiative, and external-candidate modes), resolve (question settling: derivation, literature, and probe instruments), goal authoring, outsource repo-backed external handoff, adversarial review, evidence-locked acceptance, decision persistence with resumption re-anchoring, open-questions clarification, and context-audit instruction hygiene, paired with a workflow-skill layer by metacognate's judgment rather than a fixed table.",
-  "version": "5.1.0",
+  "version": "5.1.1",
   "author": {
     "name": "ZMS Labs"
   },
