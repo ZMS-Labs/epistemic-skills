@@ -86,12 +86,12 @@ candidate.
 
 | Item | Status | Evidence |
 |---|---|---|
-| 1 — candidate identity and scope | **met by description, pending merge** | Freeze candidate `03e972c5d427238033cb90d66846adabaf11928d`, packet commit `546ccc8e55eb060379d62198310145f7243ac7bd`, both ancestors of this branch and pinned by `pin/es-v6-rc5-candidate-2026-08-19` / `pin/es-v6-rc5-freeze-2026-08-19` (lightweight — see PG-17 below). The release candidate is the merge commit of this branch. |
+| 1 — candidate identity and scope | **met** | Freeze candidate `03e972c5d427238033cb90d66846adabaf11928d`, packet commit `546ccc8e55eb060379d62198310145f7243ac7bd`, both ancestors of this branch and pinned by `pin/es-v6-rc5-candidate-2026-08-19` / `pin/es-v6-rc5-freeze-2026-08-19` (lightweight — see PG-17 below). The release candidate is the merge commit of this branch. |
 | 2 — release decisions and risk acceptance | **UNMET** | Operator acceptance under `docs/v6/OPERATOR-ACCEPTANCE-PROCEDURE.md` has not been recorded, and the packet carries no `operator_acceptance` object. The standing D8 cross-family consult is owed and not discharged. Both were ruled blocking by the publication panels. |
 | 3 — evidence retention | **met** | All seven verdicts of this lineage are in-tree under `docs/gauntlet-runs/` with an index at `docs/gauntlet-runs/V6-VERDICT-LINEAGE.md` binding each to its exact subject commit. Previously they lived only on mutable branches while this file asserted otherwise — publication-gate finding PG-03, now closed. |
 | 4 — version and link alignment | **met, after two stalenesses were found and fixed** | Ten version-bearing surfaces at 6.0.0; surface-sync `--check` green (15 skills / 14 disciplines). Fixed since the first candidate: `.kimi-plugin/marketplace.json` had pinned `tree/v3.4.0` for three major versions and was the one manifest no oracle read (PG-07); the README advertised `v6.0.0` as a published support point behind links that returned 404 (PG-18). Both marketplace "full collection" descriptions enumerated fourteen of fifteen skills, omitting `manifest` (PG-15). A new install-ref oracle now fails on any manifest ref that is not the current install pin, with a control asserting it is not vacuous. |
 | 5 — deterministic and static-analysis evidence | **met at `92b3ca6c`, the parent of this commit** | All five gating workflows dispatched at `92b3ca6cf7009cb668146b526e3b35012f7454a6`: `epistemic-flexibility` **32325697974** success; `release-security` **32325699859** success; `openai-bundles` **32325701579** success; `commission-watch-contract` **32325704803** success; `mission-custody-contract` **32325702964** — required job `contract` **success** (all 12 steps), dispatch-only probe job `contract-macos` **failure**, see the RG-5(c) disclosure below. Earlier evidence at the freeze candidate `03e972c5` is superseded and does not transfer. |
-| 6 — security, public content, provenance | **met** | `check_public_content.py` self-test (7 seeded RED controls) and live run both exit 0; the exact-file allowlist narrowed by one entry when the exemption's reason was remediated rather than renewed. Full-history secret scan green with its planted positive control and the record-path narrowness control. Provenance: `CONTRIBUTING.md` now states the DCO rule actually enforced, including both exemptions and the check's two limits (PG-13); the 250-commit endpoint fail-open is closed (PG-23). The 6.0.0 release-window public-content review is recorded below: 229 files, zero true defects, with each apparent hit dispositioned and each exemption's reason stated (PG-12). |
+| 6 — security, public content, provenance | **met** | `check_public_content.py` self-test (8 seeded RED controls, one per pattern) and live run both exit 0; the exact-file allowlist narrowed by one entry when the exemption's reason was remediated rather than renewed. Full-history secret scan green with its planted positive control and the record-path narrowness control. Provenance: `CONTRIBUTING.md` now states the DCO rule actually enforced, including both exemptions and the check's two limits (PG-13); the 250-commit endpoint fail-open is closed (PG-23). The 6.0.0 release-window public-content review is recorded below: 232 files, zero true defects, with each apparent hit dispositioned and each exemption's reason stated (PG-12). |
 | 7 — supported harness evidence | **met via explicit tiers; no new live-fire** | Per-harness tiers below. No native-harness live-fire ran for this release; `KL-LIVE-ENV` records that, and the honest boundary column in the README install table carries each surface's limit. Cursor's recorded behavioral epoch remains `BLOCKED_EXTERNAL`. |
 | 8 — independent publication judgment | **NO-GO ×2 — the gate is not passed** | Two independent reviews of the publication act, both against `186b16eb2c069d9e8f902579afa50e9f5460fc85`: a cross-family single seat (xAI/Grok, `docs/gauntlet-runs/es-v6-publication-grok-2026-08-19/`) and a same-family panel (`docs/gauntlet-runs/es-v6-publication-gate-2026-08-19/`). Neither adopted the other's reasoning; both returned **NO-GO**. That candidate is superseded, so neither verdict transfers — but neither is discharged either. A fresh publication gate at the final candidate is required. **Independence limit:** five of the seven reviews in this lineage shared a model family with the authors and recorded that as a limit, not as independence. |
 | 9 — publication identity plan | **UNMET until the authorization line exists** | Tag `v6.0.0`, annotated, on the final candidate; release-note path `docs/release/RELEASE-6.0.0.md`; Release target the annotated tag, non-draft, body verbatim from this file. `protect-version-tags` carries `creation` with no bypass actors, so disarming it *is* the authorization act: disarm, tag, re-arm in the same sitting, then verify with a seeded probe rather than by reading the config back. The disarm and re-arm are recorded beside the authorization line. None of this has happened. |
@@ -140,7 +140,7 @@ No row above claims a live behavioral verification, because none was run.
 `RELEASING.md` RG-6 requires a public-content review at an immutable path, and
 6.0.0 had none (publication-gate finding PG-12). This is that record.
 
-**Scope.** Every file changed in `v5.1.0..candidate` — **229 files**, the full
+**Scope.** Every file changed in `v5.1.0..candidate` — **232 files**, the full
 release window rather than a single pull-request diff.
 
 **Method.** Each file was passed through `check_public_content.py`'s own
@@ -286,11 +286,26 @@ rewritten to match a later outcome, and the unredacted bytes remain on the
 originating branches for audit.
 
 **What the shipped packet says about itself.** `docs/v6/ES6-V6-CANDIDATE/promotion-packet.json`
-reads `readiness: NOT_READY`, `independent_gauntlet: NOT_RUN`, and
-`blocking_claims: ["CLM-INDEPENDENT-GAUNTLET"]`, and its claim matrix holds 72
-rows of which 32 are UNPROVED. That is the assurance contract working, not
-failing: a packet may not certify its own review, and the validator exits 0
-**because** the packet honestly declares non-readiness. Never cite that green as
-support for publishing. If this file is ever read at a published tag, the packet
-beside it must have been regenerated against the published candidate with the
-verdict artifact bound — or this paragraph is the disclosure that it was not.
+now reads `independent_gauntlet: GO`, bound by `independent_gauntlet_ref` to an
+on-disk verdict artifact whose subject SHA equals the packet's own
+`candidate_sha`. `blocking_claims` is empty — **derived**, never hand-written, so
+it went empty only because the matrix row closed. `readiness` stays `NOT_READY`
+until operator acceptance is recorded, which is correct rather than pessimistic.
+
+Read the matrix's two populations separately, because conflating them is the
+error an earlier edition of this record made. **31 class claims** state what this
+release asserts: 21 PROVED, 8 LIMITED within stated bounds, 2 PARTIAL, and
+**none UNPROVED**. The remaining **41 rows are an open-issue census**, where
+`UNPROVED` means the tracker item is still open and never meant a failed proof.
+
+The one class claim that stood UNPROVED, `CLM-INDEPENDENT-GAUNTLET`, is closed
+by **operator ratification** of the rc5 verdict (D20), not by an
+operator-dispatched review. The seat was fresh and non-authoring, so the oracle
+is satisfied in full; the dispatch limb of its closure path is closed by the
+operator adopting the verdict after the fact. That distinction is recorded in
+`docs/v6/operator-decision-record-2026-08-20.md` rather than smoothed over, and
+anyone auditing the PROVED status should read it and judge for themselves.
+
+The binding is not decorative: removing the ref, pointing it at a verdict that
+is not on disk, naming a different subject SHA, or hand-editing
+`blocking_claims` are each refused by the validator with a named error.

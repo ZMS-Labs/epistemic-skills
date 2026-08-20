@@ -414,9 +414,20 @@ v6.0.0 is prepared and unpublished, for reasons this section states rather than 
 - It adds a **mission-custody contract** (the `manifest` seat) and a **v6 assurance contract**
   ([`validate_v6_assurance.py`](plugins/epistemic-skills/contracts/v6-assurance/validate_v6_assurance.py))
   that binds release claims to machine-checked proof.
-- The candidate freeze carries a **72-row claim-to-proof matrix**: 20 PROVED, 13 LIMITED,
-  7 PARTIAL, and **32 UNPROVED**. A matrix reporting two-fifths of its claims unproved is the
-  contract working, not failing.
+- The candidate freeze carries a **72-row claim-to-proof matrix**, and the two
+  populations in it must not be conflated. **31 class claims** state what this
+  release asserts: **21 PROVED, 8 LIMITED** (proven within stated bounds),
+  **2 PARTIAL, 0 UNPROVED**. The other **41 rows are an open-issue census**,
+  one per tracker item, where `UNPROVED` means "this issue is still open" and
+  never meant a failed proof. An earlier edition of this note reported the raw
+  total as though two-fifths of the release's claims were unproven; that was
+  the headline honesty number and it was wrong.
+- `CLM-INDEPENDENT-GAUNTLET`, the one class claim that stood UNPROVED, is
+  closed by **operator ratification** of the rc5 verdict (D20) — not by an
+  operator-dispatched review. The seat was fresh and non-authoring, satisfying
+  the oracle; the dispatch limb is closed by the operator adopting the verdict
+  after the fact. `docs/v6/operator-decision-record-2026-08-20.md` states this
+  so no reader has to reconstruct it.
 - The freeze seals **141 source files** by per-file digest against an exact candidate commit, so a
   post-freeze edit to any of them turns CI red.
 - Five independent panels reviewed successive build candidates: **four returned NO-GO**, the fifth
