@@ -1,0 +1,87 @@
+{
+ "seat": "nf1-ledger",
+ "findings": [
+  {
+   "id": "RC4NF1-SEAT-F1-commit-message-count-drift",
+   "severity": "P4",
+   "claim": "Repair commit 74c8314's message says the rc3 candidate 're-serialized 15 published lines'; the measured byte-different published-line count is 13 (of origin/main's 15 ledger lines; lines 12 and 14 survived byte-identical), and the verdict of record itself says 13. The message's load-bearing content \u2014 the contract statement ('the append-only contract binds bytes, not parsed content, so committed lines are never rewritten, only extended') and the naming of rc3's misstatement \u2014 is correct; only the collateral count is loose, in the overcounting (conservative) direction. Defensible only under the reading 'all 15 lines were passed through the re-serializer' (13 came out different).",
+   "evidence": "My recomputation: git show 03b7724:.ledger/entries.jsonl (15 lines) vs git show 7ce03b9:.ledger/entries.jsonl \u2014 byte-different lines among first 15 = 13, at [1,2,3,4,5,6,7,8,9,10,11,13,15]. rc3 candidate 16b80ac vs its parent 72aa6a6 rewrote 16 lines ([1-11,13,15,17,18,19]); neither count is 15. arbitration.md line 75 (at 2d835b9): '13 pre-existing, published .ledger/entries.jsonl lines'.",
+   "repair_dischargeable_on_this_sha": false
+  },
+  {
+   "id": "RC4NF1-SEAT-F2-ruling-provenance-dispatcher-recorded",
+   "severity": "P4",
+   "claim": "Ledger entries 20 and 21 \u2014 the two rulings this whole rc4 shape and this panel's own authorization rest on \u2014 cite operator ratification via a '2026-08-19 interview' ('rc4 full re-freeze', 'Extend cap by one'), but no independent in-tree operator artifact corroborates that interview (docs/v6/ has only operator-decision-record-2026-08-18.md; grep for '2026-08-19 interview' outside entries.jsonl returns nothing). The sole record is the dispatcher-committed ledger text, i.e. the author of the repair recorded the authorization for the review of its own repair. This satisfies the arbitration's letter ('explicit, recorded operator ruling' \u2014 the ledger IS the recording mechanism, and rc3's panel accepted entries 18/19 on the same model), and it is self-surfacing: the verdict binding and the packet cite the entry ids, so the operator sees and can repudiate them at the acceptance gate. Recorded as a trust-boundary note, not a repair demand.",
+   "evidence": "Entries read in full at C (.ledger/entries.jsonl lines 20-21): ids v6-rc4-repair-shape-full-refreeze-20260819-20 and v6-lineage-panel-cap-extension-20260819-21, schema-valid, type=decision, durable, revisit_when present. Grep census at C and C+1 packet: only references are the ledger itself plus citations of the entry id in README.md:81, SUCCESSOR-SEAT-HANDOFF.md:43, gauntlet-request.md:35. Discharged without new commits by the operator confirming the two rulings in the acceptance record.",
+   "repair_dischargeable_on_this_sha": true
+  }
+ ],
+ "checks_executed": [
+  {
+   "check": "Coordinates: C=7408a462, C+1=e46c2486 (branch head), rc3 pair 16b80ac/7ce03b9, delta = 3 commits (74c8314 repair, 7408a46 gitleaks re-cut = C, e46c248 packet); C's tree has NO docs/v6/ES6-V6-CANDIDATE; C..C+1 adds ONLY files under that dir (0 outside)",
+   "result": "PASS",
+   "detail": "git cat-file/rev-parse/diff --name-status in fresh clone; git ls-tree at C"
+  },
+  {
+   "check": "Verdict of record fetched from primary source: arbitration.md at 2d835b96 on claude/es-v6-rc3-delta-review; R3-NF1 letter and Next-action 1/2 extracted as acceptance criteria",
+   "result": "PASS",
+   "detail": "363-line artifact read in full; NO-GO on R3-NF1; Next-action 1 = byte-prefix restore + re-append in base serialization schema-conformant; Next-action 2 = dispatch-safe or locally-runnable pre-freeze surface against live origin/main"
+  },
+  {
+   "check": "CHECK 1a: fresh GitHub clone, detached at C, git fetch origin main (FETCH_HEAD=03b7724, cross-checked via ls-remote), python3 .github/scripts/check_ledger_append_only.py --base-git-ref FETCH_HEAD --current .ledger/entries.jsonl",
+   "result": "PASS",
+   "detail": "exit 0: 'ok ledger append-only: 6 line(s) appended over the merge base'; main is ancestor of C, merge-base = main head"
+  },
+  {
+   "check": "CHECK 1b: independent byte comparison (not the tool): sha256(git show FETCH_HEAD:.ledger/entries.jsonl, 17710 bytes, 15 lines) == sha256(first 17710 bytes of C's 25681-byte 21-line ledger); cmp clean; base ends with \\n (clean line boundary); C+1 ledger byte-identical to C's (sha256 75f79007...)",
+   "result": "PASS",
+   "detail": "both hashes 2624b672...; prefix survival holds at BOTH C and the freeze head C+1"
+  },
+  {
+   "check": "CHECK 1c extras: appended lines 16-21 all compact-serialization (json.dumps separators=(',',':'), ensure_ascii=False reproduces each byte-exactly); entries 16-19 parse-identical to rc3's schema-fixed versions; first 15 parse-identical to base; negative controls: rc3's REAL defective ledger vs base -> exit 1 'LEDGER-REWRITTEN: byte 9 (line 1)' (matches judge's reproduction verbatim), 1-byte tamper of rc4 ledger -> exit 1",
+   "result": "PASS",
+   "detail": "green is a meaningful pass of a working oracle, not a gamed one; ids at 16-21 exactly as specified including v6-rc4-repair-shape-full-refreeze-20260819-20 and v6-lineage-panel-cap-extension-20260819-21"
+  },
+  {
+   "check": "CHECK 2: --self-test executed at C: PASS (7/7 byte cases + 3 ref cases); source read: 'reserialize' case is the literal R3-NF1 class (same entries re-dumped with spaced separators, parse-identical byte-different, must FAIL); ref plumbing tested against a real scratch git repo (ref-without-ledger -> empty base born case; ref-with-ledger -> byte-exact base; unresolvable ref -> SystemExit(1) fail-closed); rc3->rc4 diff confirms both additions are new in this delta",
+   "result": "PASS",
+   "detail": "rc3's checker had 6 byte cases, no --base-git-ref, no reserialize case"
+  },
+  {
+   "check": "CHECK 3a: repo's own validator plugins/epistemic-skills/skills/decision-ledger/reference/validate_examples.py run at C",
+   "result": "PASS",
+   "detail": "'durable ledger ...: 21 valid entries', RESULT: PASS, exit 0 (unique ids, durable-only, non-dangling acyclic supersedes, one head per component); also green in my cleanroom run and in live CI step 44"
+  },
+  {
+   "check": "CHECK 3b: entries 20/21 content adjudication: entry 20 records the FULL C/C+1 re-freeze ruling (rc4), explicitly declining the sanctioned-repair-commit alternative with grounds, citing arbitration Next-action 1; entry 21 extends the exhausted cap BY EXACTLY ONE panel, delta-plus-blast-radius scope, same mode as entry 19, cap 4/used 3, extension spent when the fourth panel returns; no overreach: neither pre-judges a verdict, discharges D8, grants promotion authority, nor opens scope beyond what Next-actions 1/3 invited",
+   "result": "PASS",
+   "detail": "provenance caveat recorded as finding RC4NF1-SEAT-F2 (P4)"
+  },
+  {
+   "check": "CHECK 4a: .github/workflows/epistemic-flexibility.yml at C: ledger step if == pull_request || workflow_dispatch; dispatch path (BASE_SHA empty) does git fetch --depth=1 origin main with fail-closed exit 1 on fetch failure, then --base-git-ref FETCH_HEAD; pull_request path unchanged from rc3; ready_for_review trigger and draft gate intact (S9/R8 blast radius)",
+   "result": "PASS",
+   "detail": "read at C in fresh clone; checker itself also fails closed on unresolvable ref"
+  },
+  {
+   "check": "CHECK 4b: live GitHub REST, step level: run 32261089304 = workflow_dispatch, head_sha == C exactly, conclusion success; job stdlib-checks (id 96094264038) step 45 'Durable ledger append-only against merge base' status=completed conclusion=success (EXECUTED, not skipped); raw job log shows env 'BASE_SHA:' EMPTY (dispatch path taken) and output 'ledger append-only self-test: PASS (7/7 byte cases + 3 ref cases)' + 'ok ledger append-only: 6 line(s) appended over the merge base' at 2026-08-19T13:57:25Z",
+   "result": "PASS",
+   "detail": "conclusion verified at step level per instruction, then corroborated below step level via the job log (curl to the log blob host was proxy-blocked; retrieved via GitHub MCP get_job_logs)"
+  },
+  {
+   "check": "CHECK 4c: cleanroom_ci.sh at C: pre-fetches main from $REMOTE (live GitHub) fail-closed (exit 2) before extraction so FETCH_HEAD exists for the extracted row; extraction accounting recomputed MYSELF from the workflow at C: broad-net grep = 55, standalone re-run of the extractor parser = 55 rows (52 plain + 2 pyyaml + 1 ctx; ledger step yields --self-test and --base-git-ref rows as EXECUTABLE and the $RUNNER_TEMP row as the sole named ctx SKIP; python -m py_compile matches neither net, consistently); FULL harness executed at C: 'completeness: 55/55', '--base-git-ref FETCH_HEAD' row PASS, 54 pass / 0 fail / 1 ci-context skip, exit 0",
+   "result": "PASS",
+   "detail": "the extracted step executes the SAME comparison (real fetch of live main) pre-freeze, locally"
+  },
+  {
+   "check": "CHECK 5: rc4 delta commit messages: 74c8314 states the checker's contract CORRECTLY ('the append-only contract binds bytes, not parsed content, so committed lines are never rewritten, only extended') and explicitly names rc3's misstatement ('its commit message misstated the contract'); e46c248 and 7408a46 messages consistent with verified facts (C+1 adds only packet dir; re-cut touches ONLY .gitleaks.toml so the ledger repair rides intact into C)",
+   "result": "PASS",
+   "detail": "one P4 count nit (RC4NF1-SEAT-F1: '15 published lines' vs measured 13)"
+  },
+  {
+   "check": "Blast-radius spot checks in seat scope: PR #197 live (open, draft, base main@03b7724, head=e46c248=C+1, retitled rc4, mergeable clean) \u2014 the ready-mark comparison (base ledger vs C+1 ledger) is pre-proven green by my byte comparison, discharging the red-on-arrival consequence at these coordinates; S10's CLEANROOM_TMPDIR mechanism preserved (rc4 only ADDS early validation); requalification.json at C+1 truthfully names run 32261089304 and the step-level execution claim I independently confirmed",
+   "result": "PASS",
+   "detail": "standing design note: if main's ledger gains lines between freeze and ready-mark the PR check fails closed \u2014 liveness cost, correct polarity, inherent to the contract, not new in rc4"
+  }
+ ],
+ "evidence_log": "All work in fresh scratch clones under /tmp/claude-0/.../scratchpad/tmp.NdYlMc3OfM (epistemic-skills = full clone for git archaeology; clone-at-C = second fresh GitHub clone detached at C for execution). No GitHub writes; network use read-only (clones, fetches, ls-remote, REST GETs, one MCP log read). Today 2026-08-19.\n\nSEAT VERDICT ON R3-NF1: CLOSED at C=7408a462b413d0ab41a08de1d37a10b9cdf2a6ea / C+1=e46c2486535cf847dde05562399fd534f49b85d1, both Next-action limbs discharged, verified by execution from primary sources; two P4 notes, no P1-P3 findings.\n\nKey primary evidence: (1) live main = 03b7724d0b1d9fb02c7d92c4dd9e783c2b7ea635 (fetch + ls-remote, unchanged since rc3 review); its ledger = 17710 bytes / 15 lines, sha256 2624b672..., byte-equal (cmp + sha256) to the first 17710 bytes of C's 25681-byte / 21-line ledger, base ending on a newline; C+1 ledger byte-identical to C's (sha256 75f79007...). Prescribed invocation exits 0 ('6 line(s) appended'). (2) Appended lines 16-21: byte-exact compact json.dumps serialization matching base style; 16-19 parse-identical to rc3's schema-fixed content; ids include v6-rc4-repair-shape-full-refreeze-20260819-20 and v6-lineage-panel-cap-extension-20260819-21; repo's own validator: 21 valid entries, exit 0. (3) Oracle now plants the literal defect class: self-test 7/7+3 PASS including 'reserialize' (spaced-separator parse-identical case) and real-git-repo --base-git-ref cases (empty-base born / byte-exact / fail-closed unresolvable); negative controls on REAL bytes: rc3 ledger vs base -> exit 1 'LEDGER-REWRITTEN: byte 9 (line 1)' (verbatim match to the judge's reproduction), 1-byte tamper -> exit 1. (4) Pre-freeze surfaces BOTH exist and BOTH ran: workflow_dispatch run 32261089304 at head_sha C, job stdlib-checks 96094264038, step 45 completed/success with job-log proof BASE_SHA was empty and the dispatch-mode comparison against live origin/main executed ('ok ledger append-only: 6 line(s) appended'); cleanroom_ci.sh at C pre-fetches live main fail-closed, extraction accounting balances (broad 55 == extracted 55, recomputed independently), and my full harness run executed the --base-git-ref row PASS (54 pass / 0 fail / 1 named ctx skip, exit 0). (5) Commit 74c8314 states the byte-contract correctly and names rc3's misstatement, closing the rc3 verdict's commit-message aggravator; 7408a46 (re-cut) touches only .gitleaks.toml so the ledger repair rides intact into C; e46c248 adds only docs/v6/ES6-V6-CANDIDATE/** (verified 0 files outside). (6) PR #197 live: open, draft, base main@03b7724, head C+1, rc4 title \u2014 the ready-mark comparison is pre-proven green, so the red-on-arrival consequence that decided the rc3 NO-GO is discharged at these coordinates.\n\nDispatcher-framing discrepancies found and resolved against primaries: the prompt's '15 published lines re-serialized' is loose \u2014 measured 13 byte-different of main's 15 (arbitration also says 13); the prompt's 'entries 16-19 re-appended' is correct (main has 15 lines; entry 16 was branch-added pre-rc3, byte-rewritten by rc3 only in the sense of prefix displacement \u2014 rc3's own candidate commit rewrote lines [1-11,13,15] + its 3 new entries vs parent 72aa6a6). Findings RC4NF1-SEAT-F1/F2 (both P4) record the commit-message count drift and the dispatcher-recorded-only provenance of the two operator rulings (entries 20/21) that authorize the rc4 shape and this very panel \u2014 content of both rulings is within what Next-actions 1/3 invited, with no overreach (no verdict pre-judgment, no D8 discharge, no promotion authority; cap arithmetic 4/3 correct, extension self-spending on the fourth panel's verdict). BLOCKED checks: none \u2014 every prescribed check executed; the only degraded path was the raw REST log download (proxy 403 on the log blob host), replaced by the GitHub MCP log read which yielded the same step's full output."
+}

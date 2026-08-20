@@ -1,0 +1,10 @@
+== subject: wt-packet @ 7de88fab412e56268b73371e1cd44138987911ae ==
+-- public-content self-test --
+public-content self-test ok: 7 seeded RED controls passed
+rc=0
+-- public-content live --
+public-content gate ok: 7 patterns, 41 allowlisted exact files
+rc=0
+-- validate_v6_assurance --
+v6 assurance artifacts: schema checks passed (ZI-001 + candidate)
+rc=0

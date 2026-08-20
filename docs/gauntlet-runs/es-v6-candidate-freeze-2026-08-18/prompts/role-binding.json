@@ -1,0 +1,41 @@
+{
+ "schema": "gauntlet-role-binding-index@1",
+ "note": "Per-seat materialized bindings (exact-role adapter; canonical role + persona card + frozen dossier). Gate and judge seats use the gauntlet-arbitrator role with the persona card appended at dispatch per assets/gauntlet-workflow.template.js; their dispatch prompts are recorded under prompts/ after the run.",
+ "bindings": [
+  {
+   "persona": "chesterton-gate",
+   "role": "gauntlet-metatextual",
+   "path": "role-binding-chesterton-gate.json",
+   "prompt_sha256": "bccfc92ce1c685391339c7ced72e2496a850ceeb4ea71ee3ed57f341ecd71221",
+   "dossier_sha256": "8ba32c01de1c3499b63316db4cb56902b99d07ee42a64dfa423491ef60c02b89"
+  },
+  {
+   "persona": "cloud-native-purist",
+   "role": "gauntlet-constructive",
+   "path": "role-binding-cloud-native-purist.json",
+   "prompt_sha256": "359e8a563a5e85d9b25b84e00a2db7d495af2139d757aaac35816156ae2612c1",
+   "dossier_sha256": "8ba32c01de1c3499b63316db4cb56902b99d07ee42a64dfa423491ef60c02b89"
+  },
+  {
+   "persona": "entropy-demon",
+   "role": "gauntlet-adversary",
+   "path": "role-binding-entropy-demon.json",
+   "prompt_sha256": "4b2c0223e8abdff0dc1ea4b7e39352cb37c969b6da277e92c2ca9ac21c39d96d",
+   "dossier_sha256": "8ba32c01de1c3499b63316db4cb56902b99d07ee42a64dfa423491ef60c02b89"
+  },
+  {
+   "persona": "human-automation-handoff-auditor",
+   "role": "gauntlet-adversary",
+   "path": "role-binding-human-automation-handoff-auditor.json",
+   "prompt_sha256": "d4deb3d75cb6d384772f90763c5ef8f1cc79e54379d5a45db849de01b73d4ee7",
+   "dossier_sha256": "8ba32c01de1c3499b63316db4cb56902b99d07ee42a64dfa423491ef60c02b89"
+  },
+  {
+   "persona": "requirements-traceability-auditor",
+   "role": "gauntlet-metatextual",
+   "path": "role-binding-requirements-traceability-auditor.json",
+   "prompt_sha256": "ccc7f21beb88e17ea42f4ff386d9c37ce0538b50fe88c38da5cb1ca24a4c0b21",
+   "dossier_sha256": "8ba32c01de1c3499b63316db4cb56902b99d07ee42a64dfa423491ef60c02b89"
+  }
+ ]
+}

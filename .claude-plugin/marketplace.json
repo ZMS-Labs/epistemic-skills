@@ -11,7 +11,7 @@
     {
       "name": "epistemic-skills",
       "source": "./plugins/epistemic-skills",
-      "description": "The full collection in one install: metacognate (the entry point) + context-audit + decision-ledger + did-it-land + evidence-locked-uat + gauntlet + health + open-questions + outsource + recon + resolve + triage + watch + write-goal."
+      "description": "The full collection in one install: metacognate (the entry point) + context-audit + decision-ledger + did-it-land + evidence-locked-uat + gauntlet + health + manifest + open-questions + outsource + recon + resolve + triage + watch + write-goal."
     }
   ]
 }

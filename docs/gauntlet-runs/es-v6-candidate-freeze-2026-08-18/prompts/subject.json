@@ -1,0 +1,14 @@
+{
+  "subject": "ES6-V6-CANDIDATE BUILD freeze at 00e5146e43ff9011153452b83fedda706723c52b: independent publication-class Gauntlet for issue #191 terminal state V6_CANDIDATE_READY_FOR_OPERATOR_ACCEPTANCE (BUILD freeze packet, exact-SHA requalification, custody security fixes, release-gate evidence)",
+  "axis": "fixed",
+  "depth": "standard",
+  "domains": ["release", "security", "governance", "ci", "evidence", "documentation"],
+  "risk_classes": ["irreversible", "security"],
+  "stakeholders": ["operator", "public-users"],
+  "horizon": "long",
+  "capability_needs": ["release-integrity", "evidence-verification", "process-integrity"],
+  "domain_confidence": "high",
+  "defensible_priors": false,
+  "operator_values_in_dossier": false,
+  "subject_sha256": "8ba32c01de1c3499b63316db4cb56902b99d07ee42a64dfa423491ef60c02b89"
+}

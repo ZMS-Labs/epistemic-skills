@@ -1,0 +1,95 @@
+{
+ "seat": "nf2-handoff",
+ "findings": [
+  {
+   "id": "NF2-SEAT-01-artifact-sha-law-overbroad",
+   "severity": "P4",
+   "claim": "SUCCESSOR-SEAT-HANDOFF.md line 20 states 'Every packet artifact must name exactly that SHA', but 2 of the 14 packet artifacts (evidence/tracker-capture.json, evidence/workflow-oracle-audit.json) carry no candidate-SHA stamp at all (zero 40-hex strings in either file). The sentence is overbroad on its letter, not a misdirection: 12/14 artifacts name C = 7408a462b413d0ab41a08de1d37a10b9cdf2a6ea, zero artifacts name any other candidate SHA, so no cross-check a seat runs can be steered to a wrong subject; at worst a literal-minded seat momentarily finds two artifacts that cannot satisfy the universal check and resolves it from the artifacts themselves. Non-blocking; does not impair the R3-NF2 repair, whose acceptance letter (derive-not-copy, zero stale anchors, crib green at instructed checkout) is fully met.",
+   "evidence": "grep -oE '[0-9a-f]{40}' over each packet file at C+1: 7408a46 present in 12 files (promotion-packet.json candidate_sha, exact-candidate-receipt.json, source-inventory.json, claim-to-proof-matrix.json exact_start_sha, README.md, SUCCESSOR-SEAT-HANDOFF.md, issue-pr-reconciliation.json, evidence/{requalification,custody-suite,clean-baseline,public-content}.json); tracker-capture.json keys = [schema, captured_at, source, issues, prs] and workflow-oracle-audit.json keys = [schema, generated_at, finding_count, findings], both with zero 40-hex matches.",
+   "repair_dischargeable_on_this_sha": false
+  }
+ ],
+ "checks_executed": [
+  {
+   "check": "Subject topology: branch head, C+1 parent, rc4 delta shape",
+   "result": "PASS",
+   "detail": "origin/claude/v6-candidate-rc2 head = e46c2486535cf847dde05562399fd534f49b85d1 (C+1); its sole parent = 7408a462b413d0ab41a08de1d37a10b9cdf2a6ea (C); delta from rc3 C+1 7ce03b9 is exactly 3 commits: 74c8314 (R3 repair), 7408a46 (gitleaks re-cut), e46c248 (packet)"
+  },
+  {
+   "check": "C+1 diff confined to packet dir; C has no packet dir",
+   "result": "PASS",
+   "detail": "git diff-tree -r 7408a46..e46c248: 14 added files, all under docs/v6/ES6-V6-CANDIDATE/; git ls-tree of C shows no ES6-V6-CANDIDATE under docs/v6/"
+  },
+  {
+   "check": "Brief SHA census: every 40-hex and 6+/7+ hex occurrence classified",
+   "result": "PASS",
+   "detail": "Exactly one 40-hex (line 28, inside 'Convenience copy, verify before use (stale here = the JSON governs)') matching real C byte-for-byte; one 7-hex 03b7724 as a dated fact with an explicit 're-read today's truth' instruction; lines 43/46 are dates inside two verified ledger ids; ZERO occurrences of 9aecd46/6db8c50/16b80ac/7ce03b9 (grep exit 1); zero stale operational anchors in subject lock, checkout, crib, or recording instructions"
+  },
+  {
+   "check": "03b7724 dated fact live-verified",
+   "result": "PASS",
+   "detail": "REST /pulls/195: merged=True, merge_commit_sha=03b7724d0b1d9fb02c7d92c4dd9e783c2b7ea635, merged_at=2026-08-18T22:03:42Z; same SHA is current live origin/main head via fresh fetch"
+  },
+  {
+   "check": "Subject-lock derivation executed from a fresh clone",
+   "result": "PASS",
+   "detail": "promotion-packet.json -> candidate_sha = 7408a462b413d0ab41a08de1d37a10b9cdf2a6ea = C; git log -1 --format=%H -- docs/v6/ES6-V6-CANDIDATE/promotion-packet.json on origin/claude/v6-candidate-rc2 = e46c2486535cf847dde05562399fd534f49b85d1 = C+1 = branch head; C+1 parent = C; diff-tree unique toplevel = docs/v6/ES6-V6-CANDIDATE only"
+  },
+  {
+   "check": "Verification crib executed top-to-bottom in a worktree of C",
+   "result": "PASS",
+   "detail": "All 21 crib commands exit 0 (validator self-test; validator at C printing the documented PRE-FREEZE note; git fetch origin main; ledger self-test 7/7+3; ledger --base-git-ref FETCH_HEAD 'ok: 6 line(s) appended over the merge base'; public-content, sync, phantom, sentinels, run-ledger self-test+live pairs; test_v6_candidate_packet; workflow-oracle test+audit; 3 custody suites). Zero errors; only external dep exercised was PyYAML, exactly as the crib documents (host had 6.0.1). Annotated 'full at C+1' validator also run at the C+1 checkout: exit 0, 'ZI-001 + candidate'"
+  },
+  {
+   "check": "gauntlet-request: three predecessor verdicts exist at stated branches/paths with stated subject SHAs",
+   "result": "PASS",
+   "detail": "(1) es-v6-candidate-freeze-2026-08-18/arbitration.md on claude/epistemic-skills-v6-completion-nwptmc (head 852c0e7): NO-GO against 00e5146e43ff9011153452b83fedda706723c52b; (2) es-v6-rc2-gauntlet-kimi-2026-08-18/arbitration.md on kimi/es-v6-rc2-gauntlet-2026-08-18 (head 5a0d0ed): NO-GO against 6db8c50420b194aebbd09a2ea5f81c6a276897dc; (3) es-v6-rc3-delta-review-2026-08-18/arbitration.md on claude/es-v6-rc3-delta-review (head = the stated record commit 2d835b96): NO-GO against 16b80ac6ada24a663e39b38ab06e8f2614d247f4. All three match the request's listing exactly"
+  },
+  {
+   "check": "gauntlet-request: both operator rulings cited with correct ledger ids; cap state truthful",
+   "result": "PASS",
+   "detail": "Request cites v6-successor-review-delta-mode-20260818-19 and v6-lineage-panel-cap-extension-20260819-21; both present verbatim in .ledger/entries.jsonl at C (entries 19 and 21 of 21 lines). Entry 21: 'EXTENDED BY EXACTLY ONE panel... Cap after this ruling: 4; used: 3', spent when 'the fourth panel returns its verdict' \u2014 matches the request's 'extended by EXACTLY ONE... Your verdict SPENDS the one-panel cap extension (ledger entry 21)' and this panel's own dispatch disclosure"
+  },
+  {
+   "check": "Step-0 item 2 executed (ledger prefix vs live main; the two 2026-08-19 rulings)",
+   "result": "PASS",
+   "detail": "Entries 20 (v6-rc4-repair-shape-full-refreeze-20260819-20) and 21 (v6-lineage-panel-cap-extension-20260819-21) both at:2026-08-19 in the ledger at C; check_ledger_append_only.py --base-git-ref FETCH_HEAD --current .ledger/entries.jsonl against a fresh fetch of origin/main -> exit 0"
+  },
+  {
+   "check": "Step-0 item 5 executed (requalification runs via REST)",
+   "result": "PASS",
+   "detail": "requalification.json candidate_sha = C. All five current-round run IDs (32261089304 epistemic-flexibility, 32261103436 release-security, 32261092986 mission-custody-contract, 32261096852 commission-watch-contract, 32261100146 openai-bundles) resolve via REST as completed workflow_dispatch runs with head_sha = C on claude/v6-rc4-requal. Gating-job level green: custody run's gating 'contract' job success with the disclosed dispatch-only 'contract-macos' failure (aggregate red disclosed in non_flip_records, not hidden). Step-level REST on 32261089304: 'Durable ledger append-only against merge base' status=completed conclusion=success \u2014 EXECUTED, not skipped (R3-NF1 pre-freeze surface real; workflow at C fetches live origin/main in dispatch mode, fail-closed on fetch failure). Disclosed superseded first-round secret-scan 32260127759 confirmed: failure at intermediate commit 74c8314"
+  },
+  {
+   "check": "Step-0 item 6 executed (blocking_claims vs derive_blocking recomputation)",
+   "result": "PASS",
+   "detail": "Ran the validator's own derive_blocking against the shipped 72-row claim-to-proof-matrix.json AND an independent reimplementation of the R12 rule text: both yield ['CLM-INDEPENDENT-GAUNTLET'] == promotion-packet.json blocking_claims (readiness NOT_READY, independent_gauntlet NOT_RUN, ref null)"
+  },
+  {
+   "check": "Step-0 item 3 mechanical core (bonus, beyond assignment)",
+   "result": "PASS",
+   "detail": "Decision record's echo-certification: file at commit d7c4178f28014431a86c3a5bfdff3ad0633e6c9f hashes to sha256 5298827ea96d4d7b6ade1a863741ceced6bd4166456500f1fa129bc7a1a9a971, byte-exact to the certified value"
+  },
+  {
+   "check": "KIMI-SEAT-HANDOFF.md absent at C+1; no duplicate handoff",
+   "result": "PASS",
+   "detail": "git ls-tree -r of the full C+1 tree: no KIMI-SEAT-HANDOFF.md anywhere (case-insensitive 'kimi' hits only unrelated .kimi-plugin config); sole freeze-seat handoff is docs/v6/ES6-V6-CANDIDATE/SUCCESSOR-SEAT-HANDOFF.md; other *handoff* paths are pre-existing unrelated docs/templates/eval fixtures"
+  },
+  {
+   "check": "No packet file carries rc2/rc3 operational coordinates as instructions",
+   "result": "PASS",
+   "detail": "Packet-wide grep for 9aecd46/6db8c50/16b80ac/7ce03b9: hits only in README.md lines 13/16/32 (truthful NO-GO lineage history) and gauntlet-request.md lines 24/28 (the required predecessor-verdict listing, verified true). Zero occurrences in any subject-lock, checkout, crib, or verdict-recording instruction"
+  },
+  {
+   "check": "Brief's clean-room replication claim (R3-NF1 surface)",
+   "result": "PASS",
+   "detail": "clean-baseline.json (exact_start_sha = C, exit 0, 54/55 replicated): PASS on both check_ledger_append_only.py --self-test and the --base-git-ref FETCH_HEAD live-main comparison; the single ci-context SKIP is only the PR-event variant needing GitHub event env \u2014 the oracle itself is replicated, matching the brief's and README's claim"
+  },
+  {
+   "check": "Panel hygiene",
+   "result": "PASS",
+   "detail": "All work in self-created scratch clones/worktrees under mktemp -d; network use was read-only (git clone/fetch, REST GETs); zero GitHub writes; pre-existing local checkout never touched"
+  }
+ ],
+ "evidence_log": "All load-bearing claims re-executed from primary sources (fresh clones of https://github.com/ZMS-Labs/epistemic-skills, live GitHub REST, the repo's own oracles) on 2026-08-19; no dispatcher assertion adopted unverified.\n\nSUBJECT LOCK (re-derived, not copied): origin/claude/v6-candidate-rc2 head = e46c2486535cf847dde05562399fd534f49b85d1 (C+1), parent 7408a462b413d0ab41a08de1d37a10b9cdf2a6ea (C); diff-tree of C+1 adds exactly the 14 files of docs/v6/ES6-V6-CANDIDATE/ and nothing else; C's tree has no packet dir. rc4 delta 7ce03b9..7408a46 = commits 74c8314 (R3 repair) + 7408a46 (gitleaks re-cut). Verdict of record fetched at 2d835b96 (= head of claude/es-v6-rc3-delta-review) and used as the acceptance letter.\n\nR3-NF2 REPAIR \u2014 VERIFIED CLOSED at C+1. (1) SHA census of SUCCESSOR-SEAT-HANDOFF.md (grep 40-hex, 7+hex, and case-insensitive 6+hex): line 28 = 7408a462b413d0ab41a08de1d37a10b9cdf2a6ea inside an explicitly marked convenience copy ('verify before use', 'stale here = the JSON governs') matching real C byte-for-byte; line 126 = 03b7724, a dated fact verified live (REST PR #195 merged 2026-08-18T22:03:42Z, merge_commit_sha 03b7724d0b1d9fb02c7d92c4dd9e783c2b7ea635 = current live main head) accompanied by a 're-read today's truth' instruction; lines 43/46 hex runs are dates inside ledger ids v6-lineage-panel-cap-extension-20260819-21 and v6-successor-review-delta-mode-20260818-19, both verified present verbatim in .ledger/entries.jsonl at C. Zero occurrences of the spent coordinates 9aecd46/6db8c50/16b80ac/7ce03b9 \u2014 the rc3 defect (stale anchors in every operational instruction, zero occurrences of the real subject) is inverted: every operational instruction is a derivation, and the only literal candidate SHA is the marked, correct convenience copy. (2) Derivation executed from a fresh clone exactly as the brief instructs: candidate_sha -> C = 7408a462b413d0ab41a08de1d37a10b9cdf2a6ea; git log -1 --format=%H -- <packet path> -> C+1 = e46c2486535cf847dde05562399fd534f49b85d1 = branch head; parent check and diff-tree confinement both hold. A seat following this brief lands on the true subject with no external knowledge. (3) Crib executed top-to-bottom in a worktree of C: 21/21 commands exit 0; validator prints the documented PRE-FREEZE note at C and passes full at C+1; ledger append-only green against freshly fetched live origin/main ('6 line(s) appended over the merge base'); the only non-stdlib dep exercised was the documented PyYAML. Nothing red, nothing undocumented \u2014 the rc3 'crib red on arrival' defect is closed on the very checkout instructed. (Host note: crib spells 'python'; this host has a python alias so every command ran verbatim \u2014 on a POSIX host with only python3 the spelling needs mapping, and the brief's environment note addresses interpreter naming only for Windows. No command errored here; recorded as an observation, not a finding.)\n\nGAUNTLET-REQUEST HONESTY \u2014 VERIFIED. Three predecessor verdicts all exist at their stated branch/path with computed NO-GO against exactly the stated SHAs (00e5146e... freeze panel on claude/epistemic-skills-v6-completion-nwptmc; 6db8c504... kimi on kimi/es-v6-rc2-gauntlet-2026-08-18; 16b80ac6... delta review on claude/es-v6-rc3-delta-review whose head IS the stated record commit 2d835b96). Both operator rulings cited with correct ledger ids (entries 19 and 21); cap state stated truthfully against entry 21's own text (EXTENDED BY EXACTLY ONE delta-plus-blast-radius panel, same mode as entry 19, author-dispatched context-free seats expressly re-authorized, extension spent when the fourth panel returns its verdict \u2014 i.e., this panel spends it). Step-0 items are executable as written; I executed items 2, 5, 6 in full: (2) entries 20/21 both dated 2026-08-19 present at C, ledger = exact byte-prefix of live origin/main (exit 0); (5) all five requalification runs resolve via REST as completed workflow_dispatch runs with head_sha = C \u2014 gating jobs green, custody 'contract' success with the contract-macos diagnostic red disclosed, and the 'Durable ledger append-only against merge base' step in run 32261089304 status=completed conclusion=success (EXECUTED, not skipped \u2014 the R3-NF1 pre-freeze surface is real; workflow source at C shows the dispatch branch fetches live origin/main, fail-closed); the superseded first-round secret-scan failure at 74c8314 is disclosed in non_flip_records and REST-confirmed; (6) derive_blocking recomputed from the shipped 72-row matrix by the validator's function AND an independent reimplementation both = ['CLM-INDEPENDENT-GAUNTLET'] = packet blocking_claims. Bonus: item 3's hash chain re-executed (file@d7c4178 sha256 = certified 5298827e...). KIMI-SEAT-HANDOFF.md absent from the entire C+1 tree (renamed, not duplicated); packet-wide spent-coordinate grep hits only truthful lineage history (README) and the required predecessor listing (gauntlet-request) \u2014 never instructions.\n\nDISPATCHER-SKEPTICISM NOTE: the framing claims in this panel's own dispatch (coordinates, cap ruling, 'adds ONLY that directory') were each independently re-derived and all held; the one defect found in the dispatcher-authored delta within my scope is the P4 wording overbreadth reported (two SHA-less evidence artifacts vs the brief's universal 'every packet artifact must name exactly that SHA' law). Nothing in my scope misdirects a future seat, and no BLOCKED items: every assigned check was executable and executed. Seat verdict contribution: R3-NF2 repair CLOSED on its letter; gauntlet-request honest on every checked claim; one P4 observation, non-blocking, not dischargeable on this SHA (sealed packet text)."
+}

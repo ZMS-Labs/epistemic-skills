@@ -1,0 +1,63 @@
+Git topology snapshot — recorded 2026-08-18 (this session, via git fetch of origin)
+
+origin/main                              = a2b9c0d80ba11738b6375004a282a2cae09e4909
+origin/cursor/v6-candidate-build-5c03    = 7de88fab412e56268b73371e1cd44138987911ae
+candidate (freeze) SHA                   = 00e5146e43ff9011153452b83fedda706723c52b
+candidate tree (git rev-parse ^{tree})   = ee819f24635f950d653666b9d7cc65564ace2d69
+packet head tree                         = 26d0e9c5c9482582d0b9b6896232cd7b810e15d6
+
+freeze branch log (head..12):
+7de88fa docs(v6): include draft PR #194 in the ES6-V6-CANDIDATE tracker freeze
+36df665 docs(v6): restamp ES6-V6-CANDIDATE to freeze SHA and retain clean-room evidence
+00e5146 feat(v6): ES6-V6-CANDIDATE BUILD freeze packet (issue #191)
+e8a476c fix(custody): close es#137 P2 contract and refusal gaps
+dc33de2 fix(custody): close es#137 P1 false-allow bypasses
+a2b9c0d feat(v6): ES6-ZI-001 baseline claims, oracle audit, and clean baseline (#192)
+
+commits on freeze branch not on main: 5
+commits on main not on freeze branch: 0
+
+restamp delta 00e5146..7de88fa (name-status):
+M	.github/scripts/v6_generate_candidate_packet.py
+M	docs/v6/ES6-V6-CANDIDATE/README.md
+M	docs/v6/ES6-V6-CANDIDATE/claim-to-proof-matrix.json
+A	docs/v6/ES6-V6-CANDIDATE/evidence/clean-baseline.json
+M	docs/v6/ES6-V6-CANDIDATE/exact-candidate-receipt.json
+M	docs/v6/ES6-V6-CANDIDATE/issue-pr-reconciliation.json
+M	docs/v6/ES6-V6-CANDIDATE/promotion-packet.json
+M	docs/v6/ES6-V6-CANDIDATE/source-inventory.json
+
+candidate delta main..00e5146 (name-status):
+M	.github/scripts/check_public_content.py
+A	.github/scripts/test_v6_candidate_packet.py
+A	.github/scripts/v6_collect_candidate_evidence.py
+A	.github/scripts/v6_generate_candidate_packet.py
+M	.github/scripts/v6_run_clean_baseline.py
+M	.github/workflows/epistemic-flexibility.yml
+A	docs/v6/ES6-V6-CANDIDATE/README.md
+A	docs/v6/ES6-V6-CANDIDATE/claim-to-proof-matrix.json
+A	docs/v6/ES6-V6-CANDIDATE/evidence/custody-suite.json
+A	docs/v6/ES6-V6-CANDIDATE/evidence/public-content.json
+A	docs/v6/ES6-V6-CANDIDATE/evidence/workflow-oracle-audit.json
+A	docs/v6/ES6-V6-CANDIDATE/exact-candidate-receipt.json
+A	docs/v6/ES6-V6-CANDIDATE/gauntlet-request.md
+A	docs/v6/ES6-V6-CANDIDATE/issue-pr-reconciliation.json
+A	docs/v6/ES6-V6-CANDIDATE/promotion-packet.json
+A	docs/v6/ES6-V6-CANDIDATE/source-inventory.json
+M	plugins/epistemic-skills/contracts/mission-custody/custody_cli.py
+M	plugins/epistemic-skills/contracts/mission-custody/custody_gate.py
+M	plugins/epistemic-skills/contracts/mission-custody/custody_hook.py
+M	plugins/epistemic-skills/contracts/mission-custody/custody_mission.py
+M	plugins/epistemic-skills/contracts/mission-custody/test_custody_cli.py
+M	plugins/epistemic-skills/contracts/mission-custody/test_custody_gate.py
+M	plugins/epistemic-skills/contracts/mission-custody/test_custody_hook.py
+M	plugins/epistemic-skills/contracts/mission-custody/test_custody_mission.py
+M	plugins/epistemic-skills/contracts/mission-custody/test_mission_custody.py
+M	plugins/epistemic-skills/contracts/mission-custody/verify_mission_custody.py
+M	plugins/epistemic-skills/contracts/v6-assurance/issue-pr-reconciliation.schema.json
+A	plugins/epistemic-skills/contracts/v6-assurance/promotion-packet.schema.json
+M	plugins/epistemic-skills/contracts/v6-assurance/validate_v6_assurance.py
+
+es#137 fix symbol presence:
+  _guard_norm_path on main (a2b9c0d): ABSENT (git grep exit nonzero)
+  _guard_norm_path at candidate (00e5146): custody_gate.py x2 (lines 109, 139)
