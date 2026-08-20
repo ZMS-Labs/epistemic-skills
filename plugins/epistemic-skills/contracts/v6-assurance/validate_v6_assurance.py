@@ -213,6 +213,120 @@ def _tracked_set(root: Path) -> set[str] | None:
     return {p for p in out.decode("utf-8").split("\0") if p}
 
 
+FREEZE_ACTIVE = "ACTIVE"
+FREEZE_LANDED = "LANDED"
+
+
+def _git(root: Path, *args: str):
+    """Run git in root; return stdout on success, None on any failure."""
+    import subprocess
+
+    r = subprocess.run(["git", "-C", str(root), *args], capture_output=True, text=True)
+    return r.stdout.strip() if r.returncode == 0 else None
+
+
+def freeze_state(packet: dict) -> str:
+    """ACTIVE while the freeze is the live subject; LANDED once it has merged
+    and development continues past it.
+
+    Why this exists (measured, not theorised): merging a freeze packet to the
+    default branch made its digest seal PERMANENT there — every one of the
+    inventoried files became uneditable, because the validator recomputed
+    their digests against whatever tree it ran on. That is right for a live
+    freeze and wrong for a landed one. A landed packet is a historical
+    attestation about ONE commit; it should keep proving that claim and stop
+    constraining current work.
+
+    Unknown or absent state reads as ACTIVE: the conservative direction is to
+    keep enforcing, so a packet cannot escape the seal by omitting a field.
+    """
+    state = packet.get("freeze_state", FREEZE_ACTIVE)
+    if state not in (FREEZE_ACTIVE, FREEZE_LANDED):
+        raise AssertionError(
+            f"unknown freeze_state {state!r} — expected {FREEZE_ACTIVE} or {FREEZE_LANDED}"
+        )
+    return state
+
+
+def validate_candidate_lineage(packet: dict, root: Path = REPO_ROOT) -> list[str]:
+    """The packet must describe THIS line of history (R5-I, grok publication
+    panel): candidate_sha must be HEAD or an ancestor of it. Without this a
+    packet validates green against an unrelated tree, which is exactly the
+    confusion a reader of a tagged tree cannot resolve.
+
+    Degrades to a notice where git cannot answer (shallow clone, exported
+    tarball) — it says what it could not check rather than passing silently.
+    """
+    sha = packet.get("candidate_sha")
+    if not sha:
+        return []
+    head = _git(root, "rev-parse", "HEAD")
+    if head is None:
+        return ["candidate lineage unverifiable here: not a git worktree"]
+    if _git(root, "cat-file", "-e", f"{sha}^{{commit}}") is None:
+        return [
+            f"candidate lineage unverifiable here: commit {sha[:12]} is not present "
+            "(shallow clone?) — fetch it to check this claim"
+        ]
+    if head == sha:
+        return []
+    import subprocess
+
+    anc = subprocess.run(
+        ["git", "-C", str(root), "merge-base", "--is-ancestor", sha, "HEAD"],
+        capture_output=True,
+    )
+    if anc.returncode != 0:
+        raise AssertionError(
+            f"CANDIDATE OFF-LINEAGE: packet names candidate {sha[:12]} which is "
+            "neither HEAD nor an ancestor of it — this packet does not describe "
+            "this line of history"
+        )
+    return []
+
+
+def validate_landed_inventory(doc: dict, packet: dict, root: Path = REPO_ROOT) -> list[str]:
+    """A landed freeze's digests are recomputed against the commit the packet
+    NAMES, using git object reads — never against the working tree. A mismatch
+    means the recorded history changed under the attestation, which is a
+    tampering signal, not a development signal."""
+    if doc.get("schema") == "v6-source-inventory@1":
+        return ["LEGACY source-inventory@1: no content digests (R5 binding starts at @2)"]
+    sha = packet.get("candidate_sha")
+    digests = doc.get("file_digests") or {}
+    if not sha or not digests:
+        return ["landed packet carries no candidate_sha or no digests: nothing to verify"]
+    if _git(root, "rev-parse", "--is-inside-work-tree") != "true":
+        return [f"LANDED freeze {sha[:12]}: digests not verified (not a git worktree)"]
+    if _git(root, "cat-file", "-e", f"{sha}^{{commit}}") is None:
+        return [
+            f"LANDED freeze {sha[:12]}: digests NOT verified — the candidate commit is "
+            "absent from this clone (shallow checkout); fetch it to verify the attestation"
+        ]
+    import hashlib
+    import subprocess
+
+    mismatched = []
+    for rel, recorded in sorted(digests.items()):
+        blob = subprocess.run(
+            ["git", "-C", str(root), "show", f"{sha}:{rel}"], capture_output=True
+        )
+        if blob.returncode != 0:
+            mismatched.append(f"{rel} (absent at {sha[:12]})")
+            continue
+        if hashlib.sha256(blob.stdout).hexdigest() != recorded:
+            mismatched.append(rel)
+    if mismatched:
+        raise AssertionError(
+            f"LANDED DIGEST MISMATCH at {sha[:12]}: the attestation no longer describes "
+            f"the commit it names (history rewritten?): {mismatched[:5]}"
+        )
+    return [
+        f"LANDED freeze {sha[:12]}: {len(digests)} sealed digests verified against that "
+        "commit; the working tree is intentionally unconstrained"
+    ]
+
+
 def validate_source_inventory(doc: dict, root: Path = REPO_ROOT) -> list[str]:
     """Returns notices; raises on failure. @2 recomputes every digest (R5)."""
     _require_keys(
@@ -522,7 +636,16 @@ def main() -> int:
             "degrade to notices on a committed candidate"
         )
     validate_reconciliation(recon)
-    notices += validate_source_inventory(_load_json(cand_inventory), REPO_ROOT)
+    state = freeze_state(packet)
+    notices += validate_candidate_lineage(packet, REPO_ROOT)
+    if state == FREEZE_ACTIVE:
+        # Live freeze: the tree under validation must BE the reviewed content.
+        notices += validate_source_inventory(_load_json(cand_inventory), REPO_ROOT)
+    else:
+        # Landed freeze: the attestation is about its own commit. Verify it
+        # THERE (this still catches a rewritten history), and leave the working
+        # tree free for development.
+        notices += validate_landed_inventory(_load_json(cand_inventory), packet, REPO_ROOT)
     notices += validate_promotion_packet(packet, REPO_ROOT)
     notices += validate_blocking_derivation(matrix, packet)
     notices += validate_operator_channel(matrix, packet)

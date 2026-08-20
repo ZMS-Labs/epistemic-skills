@@ -1,93 +1,95 @@
 {
-  "schema": "v6-promotion-packet@2",
-  "program": "ES6-V6-CANDIDATE",
-  "issue": 191,
-  "candidate_sha": "03e972c5d427238033cb90d66846adabaf11928d",
-  "generated_at": "2026-08-19T19:14:10Z",
-  "readiness": "NOT_READY",
-  "self_certification": "refused",
-  "independent_gauntlet": "NOT_RUN",
-  "independent_gauntlet_ref": null,
-  "rollback": "Do not merge this branch to main outside a PROMOTION_RUN. Abandoning this branch reverts to origin/main, which merged this lineage's Public-content repair (PR #195, squash 03b7724, 2026-08-18, operator-ratified D11/RATIFY) and ran its required stdlib-checks green at that head. Main's live state is re-checked at operator acceptance per the acceptance procedure, never assumed from this dated record. One qualified exposure remains: the es#137 custody fixes exist only in this candidate tree (KL-MAIN-137). An independent GO and a separate PROMOTION_RUN remain required either way.",
-  "requested_irreversible_acts": [],
-  "blocking_claims": [
-    "CLM-INDEPENDENT-GAUNTLET"
-  ],
-  "known_limits": [
-    {
-      "id": "KL-SELF-GO",
-      "kind": "independence",
-      "statement": "The implementer of this packet cannot record Gauntlet GO on it.",
-      "release_consequence": "V6_CANDIDATE_READY_FOR_OPERATOR_ACCEPTANCE is unreachable until an independent panel runs (fresh seat: the prior adjudicating seat took the repair role under D2).",
-      "owner": "independent-panel"
-    },
-    {
-      "id": "KL-LIVE-ENV",
-      "kind": "live-environment",
-      "statement": "Behavioral epochs (#77/#39) and native harness live-fire (#136/#129/#142) were not run.",
-      "release_consequence": "Those claims are LIMITED, not PROVED.",
-      "owner": "agent"
-    },
-    {
-      "id": "KL-MACOS-162",
-      "kind": "platform",
-      "statement": "es#162 case-insensitivity is disclosed and now MEASURED beyond the ASCII probe: on macos-14 APFS the first full lifecycle-suite dispatch showed stra\u00dfe.txt/strasse.txt \u2014 contract-distinct artifacts \u2014 are one physical file under the filesystem's Unicode case folding; a decoy write clobbered the real artifact (tests distinct-real-file-untouched, distinct-both-files-tracked-separately; run 32189655677). contract-macos stays dispatch-only and non-gating.",
-      "release_consequence": "Not a merge-gating required job; custody distinctness claims exclude case-insensitive APFS until es#162 lands.",
-      "owner": "agent"
-    },
-    {
-      "id": "KL-DRAFT-CI",
-      "kind": "integrity",
-      "statement": "While the freeze PR is a draft, ALL FIVE gating workflows skip their jobs (stdlib-checks, mission-custody contract, commission-watch contract, openai-bundles build, full-history-secret-scan) plus DCO. Marking the PR ready dispatches every one of them at the unchanged head (ready_for_review trigger types; proven by the 2026-08-18 ready-mark drill). Until then the BUILD oracle is the local clean-room, which replicates the python steps of ONE workflow (epistemic-flexibility) with a completeness assertion and every non-replicated step NAMED with its reason \u2014 exact per-step counts live in evidence/clean-baseline.json, never in this prose (counts drift per commit; the rc2 packet's hand-written fraction did, kimi ruling S6). The other five workflows are NOT covered by the clean-room. A fail-fast CI failure also masks later steps: the oracle-audit step's missing-PyYAML defect was invisible on main behind the public-content failure until 2026-08-18.",
-      "release_consequence": "Local clean-room green is not GitHub required-job green. Requalification requires the ready-mark (or workflow_dispatch, D4b) runs on the exact candidate.",
-      "owner": "agent"
-    },
-    {
-      "id": "KL-MAIN-137",
-      "kind": "integrity",
-      "statement": "es#137 P1 false-allows are present on origin/main; closed only in this candidate tree.",
-      "release_consequence": "Merging this candidate is a PROMOTION act, not performed here.",
-      "owner": "operator"
-    },
-    {
-      "id": "KL-SEAL-MAIN-COUPLING",
-      "kind": "integrity",
-      "statement": "The digest seal binds inventoried sources as they stood at C. CI runs the freeze PR against its MERGE ref, so a change on main to ANY inventoried file makes that merge tree differ from C and the validator fails R5 DIGEST MISMATCH on the freeze PR \u2014 even though the candidate branch itself is untouched. Measured, not theorised: the rc4 candidate's own R4-NF1 repair landed on main (check_dco.py, dco.yml, release-security.yml) and forced the rc5 re-cut that absorbed it.",
-      "release_consequence": "While a freeze is open, main must not change inventoried files, or the freeze must be re-cut to absorb them. The practical rule: land main-side policy repairs BEFORE cutting a candidate, and keep the window between freeze and ready-mark short.",
-      "owner": "operator"
-    },
-    {
-      "id": "KL-WINDOWS",
-      "kind": "platform",
-      "statement": "No native Windows requalification was run for this candidate.",
-      "release_consequence": "CLM-WINDOWS-FS stays LIMITED.",
-      "owner": "agent"
-    },
-    {
-      "id": "KL-RESTAMP",
-      "kind": "integrity",
-      "statement": "The predecessor freeze's packet artifacts were generated at one commit and mutated at the freeze commit while still carrying the earlier stamp \u2014 self-falsifying evidence nothing detected (gauntlet ruling R5). The two specific instances R5(c) named (kimi ruling S4 completed this disclosure): (1) clean-baseline.json was ADDED to the predecessor packet after its freeze while the packet claimed immutability; (2) the packet's original disclaimer \u2014 that a recorded candidate SHA is an OBSERVATION of the tree it was generated from, never a target to restamp \u2014 was deleted rather than preserved, and its substance is hereby re-erected as the governing invariant of this packet. This packet is generated under the C/C+1 discipline: generation refuses a dirty tree and refuses --sha != HEAD, the source inventory binds per-file sha256 digests of git-tracked sources plus the candidate tree hash, and the validator recomputes those digests and rejects untracked inventory paths (S1).",
-      "release_consequence": "Any post-freeze edit to an inventoried file turns the validator red instead of shipping silently; the SHA-is-an-observation invariant governs every artifact in this directory.",
-      "owner": "agent"
-    },
-    {
-      "id": "KL-GUARD-LEXICAL",
-      "kind": "integrity",
-      "statement": "Custody guard path matching is lexical; a write spelled through a symlinked parent resolves inside a guarded tree while the guard does not match (measured probe; characterization-pinned; disclosed in mission-custody SECURITY.md). No matching-behavior change this epoch per gauntlet ruling R15.",
-      "release_consequence": "Guard globs bound spellings, not filesystem effects; CLM-MC-GUARD-LEXICAL stays LIMITED.",
-      "owner": "agent"
-    }
-  ],
-  "evidence_paths": [
-    "docs/v6/ES6-V6-CANDIDATE/claim-to-proof-matrix.json",
-    "docs/v6/ES6-V6-CANDIDATE/issue-pr-reconciliation.json",
-    "docs/v6/ES6-V6-CANDIDATE/source-inventory.json",
-    "docs/v6/ES6-V6-CANDIDATE/exact-candidate-receipt.json",
-    "docs/v6/ES6-V6-CANDIDATE/evidence/clean-baseline.json",
-    "docs/v6/ES6-V6-CANDIDATE/evidence/workflow-oracle-audit.json",
-    "docs/v6/ES6-V6-CANDIDATE/evidence/public-content.json",
-    "docs/v6/ES6-V6-CANDIDATE/evidence/custody-suite.json",
-    "docs/v6/ES6-V6-CANDIDATE/evidence/requalification.json",
-    "docs/v6/ES6-V6-CANDIDATE/evidence/tracker-capture.json"
-  ]
+ "schema": "v6-promotion-packet@2",
+ "program": "ES6-V6-CANDIDATE",
+ "issue": 191,
+ "candidate_sha": "03e972c5d427238033cb90d66846adabaf11928d",
+ "freeze_state": "LANDED",
+ "freeze_state_note": "ACTIVE while this freeze was the live subject; LANDED once freeze PR #197 merged as 50f595c7f749b7284e2e2bcf2394d0b1a0644572 and development continued past it. A landed packet is a historical attestation about candidate_sha: its digests are verified against THAT commit, and it no longer constrains the working tree. Measured reason for the distinction: while ACTIVE and merged, the seal made all 141 inventoried files uneditable on the default branch.",
+ "generated_at": "2026-08-19T19:14:10Z",
+ "readiness": "NOT_READY",
+ "self_certification": "refused",
+ "independent_gauntlet": "NOT_RUN",
+ "independent_gauntlet_ref": null,
+ "rollback": "Do not merge this branch to main outside a PROMOTION_RUN. Abandoning this branch reverts to origin/main, which merged this lineage's Public-content repair (PR #195, squash 03b7724, 2026-08-18, operator-ratified D11/RATIFY) and ran its required stdlib-checks green at that head. Main's live state is re-checked at operator acceptance per the acceptance procedure, never assumed from this dated record. One qualified exposure remains: the es#137 custody fixes exist only in this candidate tree (KL-MAIN-137). An independent GO and a separate PROMOTION_RUN remain required either way.",
+ "requested_irreversible_acts": [],
+ "blocking_claims": [
+  "CLM-INDEPENDENT-GAUNTLET"
+ ],
+ "known_limits": [
+  {
+   "id": "KL-SELF-GO",
+   "kind": "independence",
+   "statement": "The implementer of this packet cannot record Gauntlet GO on it.",
+   "release_consequence": "V6_CANDIDATE_READY_FOR_OPERATOR_ACCEPTANCE is unreachable until an independent panel runs (fresh seat: the prior adjudicating seat took the repair role under D2).",
+   "owner": "independent-panel"
+  },
+  {
+   "id": "KL-LIVE-ENV",
+   "kind": "live-environment",
+   "statement": "Behavioral epochs (#77/#39) and native harness live-fire (#136/#129/#142) were not run.",
+   "release_consequence": "Those claims are LIMITED, not PROVED.",
+   "owner": "agent"
+  },
+  {
+   "id": "KL-MACOS-162",
+   "kind": "platform",
+   "statement": "es#162 case-insensitivity is disclosed and now MEASURED beyond the ASCII probe: on macos-14 APFS the first full lifecycle-suite dispatch showed stra\u00dfe.txt/strasse.txt \u2014 contract-distinct artifacts \u2014 are one physical file under the filesystem's Unicode case folding; a decoy write clobbered the real artifact (tests distinct-real-file-untouched, distinct-both-files-tracked-separately; run 32189655677). contract-macos stays dispatch-only and non-gating.",
+   "release_consequence": "Not a merge-gating required job; custody distinctness claims exclude case-insensitive APFS until es#162 lands.",
+   "owner": "agent"
+  },
+  {
+   "id": "KL-DRAFT-CI",
+   "kind": "integrity",
+   "statement": "While the freeze PR is a draft, ALL FIVE gating workflows skip their jobs (stdlib-checks, mission-custody contract, commission-watch contract, openai-bundles build, full-history-secret-scan) plus DCO. Marking the PR ready dispatches every one of them at the unchanged head (ready_for_review trigger types; proven by the 2026-08-18 ready-mark drill). Until then the BUILD oracle is the local clean-room, which replicates the python steps of ONE workflow (epistemic-flexibility) with a completeness assertion and every non-replicated step NAMED with its reason \u2014 exact per-step counts live in evidence/clean-baseline.json, never in this prose (counts drift per commit; the rc2 packet's hand-written fraction did, kimi ruling S6). The other five workflows are NOT covered by the clean-room. A fail-fast CI failure also masks later steps: the oracle-audit step's missing-PyYAML defect was invisible on main behind the public-content failure until 2026-08-18.",
+   "release_consequence": "Local clean-room green is not GitHub required-job green. Requalification requires the ready-mark (or workflow_dispatch, D4b) runs on the exact candidate.",
+   "owner": "agent"
+  },
+  {
+   "id": "KL-MAIN-137",
+   "kind": "integrity",
+   "statement": "es#137 P1 false-allows are present on origin/main; closed only in this candidate tree.",
+   "release_consequence": "Merging this candidate is a PROMOTION act, not performed here.",
+   "owner": "operator"
+  },
+  {
+   "id": "KL-SEAL-MAIN-COUPLING",
+   "kind": "integrity",
+   "statement": "The digest seal binds inventoried sources as they stood at C. CI runs the freeze PR against its MERGE ref, so a change on main to ANY inventoried file makes that merge tree differ from C and the validator fails R5 DIGEST MISMATCH on the freeze PR \u2014 even though the candidate branch itself is untouched. Measured, not theorised: the rc4 candidate's own R4-NF1 repair landed on main (check_dco.py, dco.yml, release-security.yml) and forced the rc5 re-cut that absorbed it.",
+   "release_consequence": "While a freeze is open, main must not change inventoried files, or the freeze must be re-cut to absorb them. The practical rule: land main-side policy repairs BEFORE cutting a candidate, and keep the window between freeze and ready-mark short.",
+   "owner": "operator"
+  },
+  {
+   "id": "KL-WINDOWS",
+   "kind": "platform",
+   "statement": "No native Windows requalification was run for this candidate.",
+   "release_consequence": "CLM-WINDOWS-FS stays LIMITED.",
+   "owner": "agent"
+  },
+  {
+   "id": "KL-RESTAMP",
+   "kind": "integrity",
+   "statement": "The predecessor freeze's packet artifacts were generated at one commit and mutated at the freeze commit while still carrying the earlier stamp \u2014 self-falsifying evidence nothing detected (gauntlet ruling R5). The two specific instances R5(c) named (kimi ruling S4 completed this disclosure): (1) clean-baseline.json was ADDED to the predecessor packet after its freeze while the packet claimed immutability; (2) the packet's original disclaimer \u2014 that a recorded candidate SHA is an OBSERVATION of the tree it was generated from, never a target to restamp \u2014 was deleted rather than preserved, and its substance is hereby re-erected as the governing invariant of this packet. This packet is generated under the C/C+1 discipline: generation refuses a dirty tree and refuses --sha != HEAD, the source inventory binds per-file sha256 digests of git-tracked sources plus the candidate tree hash, and the validator recomputes those digests and rejects untracked inventory paths (S1).",
+   "release_consequence": "Any post-freeze edit to an inventoried file turns the validator red instead of shipping silently; the SHA-is-an-observation invariant governs every artifact in this directory.",
+   "owner": "agent"
+  },
+  {
+   "id": "KL-GUARD-LEXICAL",
+   "kind": "integrity",
+   "statement": "Custody guard path matching is lexical; a write spelled through a symlinked parent resolves inside a guarded tree while the guard does not match (measured probe; characterization-pinned; disclosed in mission-custody SECURITY.md). No matching-behavior change this epoch per gauntlet ruling R15.",
+   "release_consequence": "Guard globs bound spellings, not filesystem effects; CLM-MC-GUARD-LEXICAL stays LIMITED.",
+   "owner": "agent"
+  }
+ ],
+ "evidence_paths": [
+  "docs/v6/ES6-V6-CANDIDATE/claim-to-proof-matrix.json",
+  "docs/v6/ES6-V6-CANDIDATE/issue-pr-reconciliation.json",
+  "docs/v6/ES6-V6-CANDIDATE/source-inventory.json",
+  "docs/v6/ES6-V6-CANDIDATE/exact-candidate-receipt.json",
+  "docs/v6/ES6-V6-CANDIDATE/evidence/clean-baseline.json",
+  "docs/v6/ES6-V6-CANDIDATE/evidence/workflow-oracle-audit.json",
+  "docs/v6/ES6-V6-CANDIDATE/evidence/public-content.json",
+  "docs/v6/ES6-V6-CANDIDATE/evidence/custody-suite.json",
+  "docs/v6/ES6-V6-CANDIDATE/evidence/requalification.json",
+  "docs/v6/ES6-V6-CANDIDATE/evidence/tracker-capture.json"
+ ]
 }

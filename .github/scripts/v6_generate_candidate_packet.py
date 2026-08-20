@@ -1060,6 +1060,11 @@ def build_promotion_packet(sha: str, ts: str, matrix: dict) -> dict:
         "program": PROGRAM,
         "issue": 191,
         "candidate_sha": sha,
+        # A new freeze is born ACTIVE: its digests bind the tree under review.
+        # It becomes LANDED once its freeze PR merges and work continues past
+        # it, after which the attestation is verified against candidate_sha's
+        # own commit instead of constraining the default branch.
+        "freeze_state": "ACTIVE",
         "generated_at": ts,
         "readiness": "NOT_READY",
         "self_certification": "refused",
