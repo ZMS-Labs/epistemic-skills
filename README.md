@@ -35,6 +35,7 @@ The README is the fast path into the project. The [GitHub Wiki](https://github.c
 - [Coordination with epistemic-calibration](#coordination-with-epistemic-calibration)
 - [Trust, evidence, and known limits](#trust-evidence-and-known-limits)
 - [Developing and contributing](#developing-and-contributing)
+- [License and support](#license-and-support)
 
 ## What this is—and is not
 
@@ -66,14 +67,14 @@ Users and maintainers are equal first-class audiences:
 | [Skill Catalog](https://github.com/ZMS-Labs/epistemic-skills/wiki/Skill-Catalog) | [Release Process and Versioning](https://github.com/ZMS-Labs/epistemic-skills/wiki/Release-Process-and-Versioning) |
 | | [Security, Provenance, and DCO](https://github.com/ZMS-Labs/epistemic-skills/wiki/Security-Provenance-and-DCO) |
 
-The Wiki is unversioned navigation over versioned sources. If a handbook summary and a released contract differ, the immutable `v5.1.0` source controls.
+The Wiki is unversioned navigation over versioned sources. If a handbook summary and a released contract differ, the immutable `v5.1.0` source controls — and that precedence is load-bearing right now. The handbook still describes a v5.0.0-era package: most pages say fourteen skills, there is no `manifest` page, and several retired seats are still written in the present tense. Use it for orientation; read the in-tree `SKILL.md` for any contract you intend to rely on.
 
 ## Five-minute start
 
 1. **Install one immutable copy.** Choose the native path for your harness under [Installation and compatibility](#installation-and-compatibility). Use the generic Agent Skills path only when no native plugin or extension exists.
 2. **Reload the harness or start a fresh task.** Trigger discovery and role registries are commonly session-bound.
 3. **Choose the entry point.** There is one: `metacognate`. It is the only skill you invoke by name; every other member fires on its own description. (One carve-out: `manifest`, the mission-custody seat, may also be invoked directly — on `manifest this` or `/manifest` — for mission lifecycle acts.) It applies the routine gate first, and declining is its most common correct outcome.
-4. **Verify the inventory and source.** Expect exactly the count your source ships: a v5.1.0 or v5.1.0 package or tagged checkout ships fifteen (v4.1.0 and v4.0.0 ship eleven; v3.4.0 ships seventeen; v3.3.0 ships fourteen; v3.1.0/v3.2.0 ship twelve; the pinned `v3.0.0` tag also ships eleven — its different eleven)—not two copies found through different install mechanisms.
+4. **Verify the inventory and source.** Expect exactly the count your source ships: the `main` tree or a v5.1.0 package or tagged checkout ships fifteen (v4.1.0 and v4.0.0 ship eleven; v3.4.0 ships seventeen; v3.3.0 ships fourteen; v3.1.0/v3.2.0 ship twelve; the pinned `v3.0.0` tag also ships eleven — its different eleven)—not two copies found through different install mechanisms.
 5. **Let routine work leave.** A local, reversible, directly checkable, non-precedential task should finish with its bounded check and no process-only artifact.
 
 For a harness without a native package surface, the complete generic install is:
@@ -191,7 +192,7 @@ remains awake between sessions.
 
 ## Fifteen-skill catalog
 
-The package contains exactly one entry point and fourteen disciplines. Each name appears once in this catalog; the immutable tagged source defines the full contract, and the linked guide is unversioned navigation over it (per the precedence rule above — where they differ, the tagged source controls).
+The package contains exactly one entry point and fourteen disciplines. Each name appears once, and every row links to its canonical `SKILL.md` in this tree — the file that defines the contract. (Earlier editions sent six of these rows to Wiki pages instead; that contradicted the precedence rule above, and the handbook has since drifted a major version behind.) For the immutable form of any contract, read the same path at a release tag.
 
 | Skill | Positive trigger | Purpose | Output |
 |---|---|---|---|
@@ -203,12 +204,12 @@ The package contains exactly one entry point and fourteen disciplines. Each name
 | [Commission Watch (`watch`)](plugins/epistemic-skills/skills/watch/SKILL.md) | A bound must be noticed between sessions, or an external observer must be commissioned or re-proved | Specify, commission, and proof-fire an external observer; the skill itself never persists | Validated `watch-commission@1`: `DECLARED`/`BLOCKED`/`INERT`/`PROVEN`/`SUSPECT` |
 | [`recon`](plugins/epistemic-skills/skills/recon/SKILL.md) | Territory must be mapped before effort commits: a fuzzy/contradicted brief, a large foggy effort, or an external project overlapping your own (three modes: brief / initiative / candidate) | Read, decompose, or harvest — understanding only, never a change | Rewritten request; decision map + fog-free tickets; or harvest record with per-level spend decisions |
 | [`resolve`](plugins/epistemic-skills/skills/resolve/SKILL.md) | A live question or material decision needs an instrument, not an opinion (three instruments: derivation / literature / probe) | Settle it with the cheapest sufficient instrument; the instrument produces evidence, never the downstream verdict | Derivation or `formal-rigor-record@2`; claim-evidence matrix; or recorded probe answer with the build disposed |
-| [`write-goal`](https://github.com/ZMS-Labs/epistemic-skills/wiki/Skill-Write-Goal) | Explicit intent to author, refine, or start a durable goal | Bind operator intent to proof, scope, blockers, and stop rules | Approved goal contract; execution/certification remains downstream |
-| [`decision-ledger`](https://github.com/ZMS-Labs/epistemic-skills/wiki/Skill-Decision-Ledger) | Uncovered consequential decision, assumption, or recurrent correction will bear future load | Reuse adequate durable records and persist only the gap | Existing artifact reference or `ledger-entry@1`; never a verdict |
-| [`outsource`](https://github.com/ZMS-Labs/epistemic-skills/wiki/Skill-Outsource) | Durable handoff to an external model, agent, or process | Make the repository carry complete context and provenance | Committed, pushed, target-readable packet plus short pointer, or `BLOCKED` |
-| [`gauntlet`](https://github.com/ZMS-Labs/epistemic-skills/wiki/Skill-Gauntlet) | High-stakes, one-way-door, high-blast-radius, risky pre-merge, or explicit adversarial gate | Multi-lens review of a frozen, truth-gated subject | Conflict Ledger and computed GO / CONDITIONAL / NO-GO |
-| [`evidence-locked-uat`](https://github.com/ZMS-Labs/epistemic-skills/wiki/Skill-Evidence-Locked-UAT) | Explicit UAT or material interaction/state/accessibility-sensitive UI acceptance | Separate actor, blinded verifier, and deterministic judge | Evidence packet and strict verdict; `INCONCLUSIVE` never becomes PASS |
-| [`open-questions`](https://github.com/ZMS-Labs/epistemic-skills/wiki/Skill-Open-Questions) | Operator asks to be interviewed until no open questions remain; un-best-guessable irreversible fork with operator present | Exhaustive serial clarification interview (docket + cascade modes); the auto-trigger runs fork-scoped only | Emptied-or-parked ledger + 4-field stamp; fork-scoped exit: lineage resolved, one closing offer, declined items deferred to the durable tracker with defaults |
+| [`write-goal`](plugins/epistemic-skills/skills/write-goal/SKILL.md) | Explicit intent to author, refine, or start a durable goal | Bind operator intent to proof, scope, blockers, and stop rules | Approved goal contract; execution/certification remains downstream |
+| [`decision-ledger`](plugins/epistemic-skills/skills/decision-ledger/SKILL.md) | Uncovered consequential decision, assumption, or recurrent correction will bear future load | Reuse adequate durable records and persist only the gap | Existing artifact reference or `ledger-entry@1`; never a verdict |
+| [`outsource`](plugins/epistemic-skills/skills/outsource/SKILL.md) | Durable handoff to an external model, agent, or process | Make the repository carry complete context and provenance | Committed, pushed, target-readable packet plus short pointer, or `BLOCKED` |
+| [`gauntlet`](plugins/epistemic-skills/skills/gauntlet/SKILL.md) | High-stakes, one-way-door, high-blast-radius, risky pre-merge, or explicit adversarial gate | Multi-lens review of a frozen, truth-gated subject | Conflict Ledger and computed GO / CONDITIONAL / NO-GO |
+| [`evidence-locked-uat`](plugins/epistemic-skills/skills/evidence-locked-uat/SKILL.md) | Explicit UAT or material interaction/state/accessibility-sensitive UI acceptance | Separate actor, blinded verifier, and deterministic judge | Evidence packet and strict verdict; `INCONCLUSIVE` never becomes PASS |
+| [`open-questions`](plugins/epistemic-skills/skills/open-questions/SKILL.md) | Operator asks to be interviewed until no open questions remain; un-best-guessable irreversible fork with operator present | Exhaustive serial clarification interview (docket + cascade modes); the auto-trigger runs fork-scoped only | Emptied-or-parked ledger + 4-field stamp; fork-scoped exit: lineage resolved, one closing offer, declined items deferred to the durable tracker with defaults |
 | [`context-audit`](plugins/epistemic-skills/skills/context-audit/SKILL.md) | Explicit audit request, detected cross-layer instruction conflict, or model-generation upgrade | Audit the assembled instruction context for conflicts, duplicates, and dead weight; classify-and-watch, never quota-cut | Cut list as diff, conflict ledger, re-baseline watch note; operator-gated class-by-class apply |
 
 **Craft doctrine (not disciplines):** [`intent-traced-merge`](plugins/epistemic-skills/reference/craft/intent-traced-merge.md) and [`agent-interface-design`](plugins/epistemic-skills/reference/craft/agent-interface-design.md) are preserved as reference doctrine with their archived batteries and epoch results (v4.0.0 demotion — workflow/craft methods, not epistemic moment disciplines).
@@ -228,7 +229,7 @@ Install with **exactly one mechanism per harness**. Native plugin **or** generic
 | Antigravity (`agy`) | Tagged native local plugin | Validate with `agy` | Choose native, Gemini link, or import—only one |
 | Kimi Code | Tagged repository plugin | `/reload` or new session | Plugin instructions map isolated-agent primitives |
 | ZCode | Tagged local checkout, junction-projected into `~/.zcode/skills` | Start a fresh session; verify the tag's full skill count (fifteen at v5.1.0) | Session bootstrap junctions `~/.claude/skills` only — skills riding as Claude *plugins* are not auto-imported; junction surface verified on one fleet device, plugin install untested |
-| ChatGPT / OpenAI | Generated bundle from the release (`packaging/openai/chatgpt-skill`) | Upload the generated zip per [the packaging guide](docs/CHATGPT-AND-OPENAI-PACKAGING.md) | Generated-artifact bridge: a snapshot of the released tree, not self-updating; no live execution in this release |
+| ChatGPT / OpenAI | Generated bundle from the release (`packaging/openai/chatgpt-skill`) | Upload the generated zip per [the packaging guide](docs/CHATGPT-AND-OPENAI-PACKAGING.md) | Generated-artifact bridge: a snapshot of the released tree, not self-updating; the bundle carries no live execution |
 | Generic Agent Skills host | Tagged canonical skills URL | Reload host and verify source | Host must supply any runtime primitive the selected skill requires |
 
 **Shared-budget boundary (every harness):** harnesses cap the total description bytes they load; over the harness cap, descriptions are dropped **silently** — the skill files exist and the count looks right while triggers never fire. This package consumes 8,636 bytes (its own recorded ceiling). If other skills share your harness's budget, verify triggers actually fire after install; a file count alone is not proof of loading.
@@ -334,10 +335,15 @@ epistemic-skills/
 ├── plugins/epistemic-skills/
 │   ├── skills/<name>/SKILL.md           canonical skill cores (fifteen)
 │   ├── agents/                          five canonical Gauntlet roles
-│   ├── contracts/                       shared receipt schema and verifier
+│   ├── contracts/                       schemas + executable verifiers:
+│   │   ├── handoff-receipt / skill-run-ledger / calibration schemas
+│   │   ├── mission-custody/             custody gate, hook, and CLI
+│   │   ├── watch-commission/            commission validation
+│   │   └── v6-assurance/                release claim-to-proof validator
 │   ├── .claude-plugin/plugin.json
 │   ├── .codex-plugin/plugin.json
-│   └── .cursor-plugin/plugin.json
+│   ├── .cursor-plugin/plugin.json
+│   └── .kimi-plugin/plugin.json
 ├── skills  ──symlink──> plugins/epistemic-skills/skills
 ├── agents  ──symlink──> plugins/epistemic-skills/agents
 ├── .claude-plugin/marketplace.json
@@ -345,8 +351,15 @@ epistemic-skills/
 ├── .cursor-plugin/{plugin,marketplace}.json
 ├── gemini-extension.json + GEMINI.md
 ├── .kimi-plugin/plugin.json
-└── plugin.json                           Antigravity marker
+├── plugin.json                           Antigravity marker
+├── RELEASING.md                          the release gate (RG-1..RG-9)
+├── .ledger/entries.jsonl                 append-only durable decisions
+├── packaging/                            generated non-native bundles
+└── docs/                                 releases, evidence, design history
 ```
+
+Harness manifests are thin by rule: they point at the canonical tree and never fork a method.
+A skill's behavior is defined in exactly one place.
 
 ### Contract layers
 
@@ -383,21 +396,59 @@ baseline, the product boundary, the proposed
 `epistemic-product-calibration@1` exchange unit, adoption questions, and phased
 pilot plan. Calibration-side state remains unverified until that repository
 returns an immutable reference; the charter does not turn a proposed bilateral
-contract into an accepted one.
+contract into an accepted one. No such reference has been returned in the three
+major versions since that baseline, so treat this coordination as **dormant**:
+real as a stated boundary, inert as a dependency.
 
 ## Trust, evidence, and known limits
 
 **Version 6.0.0** is prepared on `main` and is **not** a support point: no tag, no Release, publication gate not passed. Its in-progress gate record is [RELEASE-6.0.0.md](docs/release/RELEASE-6.0.0.md). **Version 5.1.0** remains the current immutable support point: fifteen skills, aligned package surfaces, deterministic checks, and a tagged source snapshot. Its predecessor **v5.0.0** was published with explicit gate honesty — item 6 only PARTIALLY MET at publication, item 8 WAIVED / NOT MET — and a post-release independent review returned **NO-GO** for retrospective certification. Read the [errata](docs/release/RELEASE-5.0.0-ERRATA-2026-08-06.md), [post-release review](docs/release/POST-RELEASE-INDEPENDENT-REVIEW-5.0.0-2026-08-06.md), and [successor progress](docs/release/SUCCESSOR-PROGRESS-104-105-2026-08-07.md) before treating v5.0.0 as gate-complete. Corrective work for issues #104/#105 landed on `main` after the immutable tag; do not move the tag.
 
-Earlier support points remain historically accurate for their own campaigns. Version 3.2.0 established the behavioral-evidence posture that later releases inherit unless a new campaign re-opens it: aligned surfaces and deterministic checks, with named behavioral limits that were never rewritten into passes.
+Earlier support points remain historically accurate for their own campaigns, and a named limit
+stays on this page until a later campaign actually retires it. None has been rewritten into a pass.
+
+### Where v6.0.0 stands
+
+v6.0.0 is prepared and unpublished, for reasons this section states rather than hides:
+
+- It adds a **mission-custody contract** (the `manifest` seat) and a **v6 assurance contract**
+  ([`validate_v6_assurance.py`](plugins/epistemic-skills/contracts/v6-assurance/validate_v6_assurance.py))
+  that binds release claims to machine-checked proof.
+- The candidate freeze carries a **72-row claim-to-proof matrix**: 20 PROVED, 13 LIMITED,
+  7 PARTIAL, and **32 UNPROVED**. A matrix reporting two-fifths of its claims unproved is the
+  contract working, not failing.
+- The freeze seals **141 source files** by per-file digest against an exact candidate commit, so a
+  post-freeze edit to any of them turns CI red.
+- Five independent panels reviewed successive build candidates: **four returned NO-GO**, the fifth
+  GO. Two further reviews of the *publication act* — one of them cross-family — **both returned
+  NO-GO**.
+- The shipped packet therefore reads `readiness: NOT_READY` with
+  `blocking_claims: ["CLM-INDEPENDENT-GAUNTLET"]`. It refuses to certify itself, and the validator
+  exits 0 **because** of that refusal — that green is never support for publishing.
+
+What blocks the tag is the release *record*, not the engineering: publication identity, an evidence
+table with immutable coordinates, and two operator acts that cannot be delegated. Two of those
+seven reviews were genuinely cross-family (one build panel, one publication read); the rest shared a
+model family with the authors and recorded that as an independence *limit*, not as independence. See [RELEASE-6.0.0.md](docs/release/RELEASE-6.0.0.md) and the gate in
+[RELEASING.md](RELEASING.md).
 
 ### What the evidence supports
 
-- Deterministic checks protect named routing, proportionality, schema, receipt, UAT-judge, DCO-policy, package-integration, public-content, and Gauntlet-mechanics invariants (including post-v5 successor gates on `main`).
+- Deterministic checks protect named routing, proportionality, schema, receipt, UAT-judge,
+  DCO-policy, package-integration, public-content, mission-custody, and Gauntlet-mechanics
+  invariants.
+- The v6 assurance contract additionally binds the freeze itself: source-inventory digests, a
+  blocking-claims list derived from the matrix rather than hand-written, and a closed owner
+  vocabulary whose first run found a real unclassified owner.
 - The blinded proportionality campaign retained 162/162 terminal, schema-valid matched calls; the candidate passed the routine, material, and high-risk contract while corrected full-ceremony and always-routine parodies failed.
-- The tag and GitHub Release provide an immutable support coordinate for the packaged contracts and installation instructions.
+- A tag and GitHub Release provide an immutable support coordinate for packaged contracts and
+  install instructions — which is precisely what v6.0.0 does not yet have.
 
-### Required limitations
+### Required limitations — frozen at the v3.2.0 behavioral campaign
+
+**No later campaign has superseded these rows.** The releases since v3.2.0 added deterministic and
+structural assurance, not new behavioral measurement, so this remains the project's most recent
+behavioral evidence and its limits still bind.
 
 | Boundary | Honest v3.2.0 status |
 |---|---|
@@ -421,7 +472,7 @@ Start with [CONTRIBUTING.md](CONTRIBUTING.md) and the maintainer handbook. Contr
 
 Run checks in proportion to the change:
 
-```powershell
+```bash
 # Routing and proportionality
 python plugins/epistemic-skills/evals/epistemic-flexibility/run_tests.py
 python plugins/epistemic-skills/evals/proportionality/run_tests.py
