@@ -1,6 +1,6 @@
 # Routine-work fast path — leave the arc before ceremony starts
 
-This reference is part of `using-epistemic-skills`. It is **not another skill,
+This reference belongs to `metacognate`. It is **not another skill,
 trigger, receipt, or workflow stage**. It defines the negative path: when no
 special epistemic discipline is needed, ordinary work proceeds without
 manufacturing a record that says nothing happened.

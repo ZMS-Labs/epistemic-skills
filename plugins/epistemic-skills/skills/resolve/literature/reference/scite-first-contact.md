@@ -37,7 +37,7 @@ PR (2026); scite.ai; api.scite.ai/docs.
    the same "not permanent configuration — re-check live" header the
    Consensus profile uses). Keep this first-contact file's protocol section
    at the bottom for the next drift event.
-5. Update `evidence-research/SKILL.md` ONLY if the observed surface
+5. Update `resolve/SKILL.md` ONLY if the observed surface
    contradicts its engine-role assumptions (e.g. no tallies exposed → the
    reception pass degrades to citation-context sampling; say so in §4).
 6. Commit + push (canonical skills live in git), redeploy the skill cache.

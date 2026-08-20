@@ -49,6 +49,13 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     # example addresses are neutralized before scanning (see scan_text).
     ("email-address", re.compile(
         r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b")),
+    # Build-host scratch directories. Agent harnesses run in per-session temp
+    # trees whose names embed a session id, and tools that record a command line
+    # or cwd stamp them into committed evidence. Twelve tracked files carried
+    # them before this pattern existed and nothing could see it (publication-gate
+    # finding PG-24). No credential or personal data, but it is build-host
+    # topology in a public repository, and the class was invisible.
+    ("build-host-scratch-path", re.compile(r"/tmp/claude-\d+/")),
 ]
 
 # Allowlist: EXACT files only (es#186 / panel-1 SK-4 — the old whole-file
@@ -135,6 +142,20 @@ ALLOWLIST_EXACT_FILES: dict[str, tuple[str, str | None]] = {
     # this is that disposition applied to the record of the finding.
     "docs/v6/ES6-ZI-001/exact-start-receipt.json": ("v6 program parent tracker coordinate", "8ce838da0f9a32756d2ea0d5a7fd2cdc65447562e16a6b122a9307d8038e8154"),
     ".github/scripts/v6_generate_baseline_claims.py": ("v6 program parent tracker coordinate", "7296a40a03985ddfe2a9c1c83759074daba50888cd6fc4165a515f2d300bee8b"),
+    # The two build-host-scratch-path exemptions below are EARNED, not inherited.
+    # Both are records that must not be rewritten, and the root cause is fixed:
+    # v6_collect_candidate_evidence.py now records commands in portable
+    # repo-relative form, so nothing new enters this class. Contrast the
+    # gauntlet-run dossier entry removed on 2026-08-20 -- that one could be
+    # remediated, so it was, and the exemption went with it.
+    #
+    # Sealed freeze evidence. Editing an artifact inside a digest-sealed freeze
+    # to satisfy a detector added afterwards is precisely the KL-RESTAMP
+    # antipattern: it would make the packet describe a tree that never existed.
+    "docs/v6/ES6-V6-CANDIDATE/evidence/public-content.json": ("sealed v6 freeze evidence; immutable at its candidate", "f7754afb2e817496a5408ca3a11ebdac002017ac9a61a112546e865e6e2248c8"),
+    # Dated probe results. The file records what a 2026-08-04 run actually
+    # observed; rewriting it would falsify the observation it exists to hold.
+    "plugins/epistemic-skills/skills/resolve/probe/evals/trigger-and-scope/results/2026-08-04-v4-tier1/responses.json": ("dated probe results archive; a record of what was observed", "8ce7961eec4942598d9422b1a1470113c91a114dcf05901c69dfbc3c5124f515"),
 }
 
 
@@ -226,7 +247,14 @@ def run_self_test() -> int:
         "rfc1918-address": "the service answers on 10.10.10.50 today",
         "unc-ip-share": r"media lives at \\10.10.10.107\Media and //10.10.10.107/Media",
         "email-address": "reach the operator at z.stern@personalmailbox.org",
+        "build-host-scratch-path": "cwd was /tmp/claude-0/-home-user-proj/a1b2c3d4-0000-0000-0000-000000000000/scratchpad/wt",
     }
+    # The header says "Each entry must have a RED seed below." Nothing checked
+    # it, and a pattern was in fact added here without one -- an unseeded
+    # pattern is an untested pattern. Now the invariant is enforced.
+    unseeded = [name for name, _ in PATTERNS if name not in seeds]
+    if unseeded:
+        failures.append(f"patterns with no RED seed: {unseeded}")
     for expected, blob in seeds.items():
         hits = []
         for name, pattern in PATTERNS:

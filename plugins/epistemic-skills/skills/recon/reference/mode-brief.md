@@ -46,7 +46,7 @@ contradicts — both map/territory mismatches caught too late.
 ## Auto-fire discipline
 
 If you run a skill-triggering harness, start with the routine gate and two-read
-micro-recon from `using-epistemic-skills/reference/routine-fast-path.md`.
+micro-recon from `metacognate/reference/routine-fast-path.md`.
 Unfamiliarity alone does not fire the full skill.
 
 **Full-pass positive triggers:**
