@@ -536,6 +536,53 @@ def main() -> int:
             failures.append(f"main() candidate-nosev: code={code} raised={raised}")
             print(f"[FAIL] main() candidate-nosev: code={code} raised={raised}")
 
+    # --- freeze-state lifecycle (grok publication panel finding I + the
+    # measured consequence that a MERGED active freeze froze all 141
+    # inventoried files on the default branch) ---
+    import subprocess as _sp
+
+    if MOD.freeze_state({}) != MOD.FREEZE_ACTIVE:
+        failures.append("absent freeze_state must read ACTIVE (conservative direction)")
+        print("[FAIL] absent freeze_state must read ACTIVE")
+    else:
+        print("[PASS] absent freeze_state reads ACTIVE — a packet cannot escape the seal by omission")
+    expect_fail(
+        "unknown-freeze-state",
+        lambda: MOD.freeze_state({"freeze_state": "RETIRED"}),
+        "unknown freeze_state", failures,
+    )
+
+    # Lineage binding: a packet may not validate against an unrelated history.
+    repo_root = MOD.REPO_ROOT
+    inside = _sp.run(["git", "-C", str(repo_root), "rev-parse", "--is-inside-work-tree"],
+                     capture_output=True, text=True)
+    if inside.returncode == 0 and inside.stdout.strip() == "true":
+        head = _sp.run(["git", "-C", str(repo_root), "rev-parse", "HEAD"],
+                       capture_output=True, text=True).stdout.strip()
+        if MOD.validate_candidate_lineage({"candidate_sha": head}, repo_root) == []:
+            print("[PASS] a packet naming HEAD passes the lineage check silently")
+        else:
+            failures.append("HEAD-named packet raised a lineage notice")
+        orphan = _sp.run(["git", "-C", str(repo_root), "commit-tree", f"{head}^{{tree}}",
+                          "-m", "orphan probe"], capture_output=True, text=True,
+                         env={"GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t",
+                              "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t",
+                              "PATH": __import__("os").environ.get("PATH", "")})
+        if orphan.returncode == 0:
+            expect_fail(
+                "candidate-off-lineage",
+                lambda: MOD.validate_candidate_lineage(
+                    {"candidate_sha": orphan.stdout.strip()}, repo_root),
+                "off-lineage", failures,
+            )
+        notices = MOD.validate_candidate_lineage({"candidate_sha": "9" * 40}, repo_root)
+        if notices and "not present" in notices[0]:
+            print("[PASS] an absent candidate degrades to a loud notice, never a silent pass")
+        else:
+            failures.append(f"absent candidate did not notice: {notices}")
+    else:
+        print("[SKIP] lineage controls: not a git worktree")
+
     print(
         f"v6 assurance validator self-test: {'PASS' if not failures else 'FAIL'}"
     )
