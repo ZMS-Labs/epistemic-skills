@@ -1,16 +1,26 @@
 # Pre-authorization — v6.0.0
 
-> ## ⚠ STATUS: DRAFT — NOT ADOPTED. THIS AUTHORIZES NOTHING.
->
-> Drafted by the implementing lineage for the repository owner's adoption. It
-> takes effect only when the owner replaces this block with the ADOPTED block at
-> the bottom of this file, **in a commit authored by their own account**, before
-> the candidate is minted.
->
-> A draft committed by the implementing lineage is not an authorization, and
-> neither is any statement in a chat transcript. `RELEASING.md` and
-> `OPERATOR-ACCEPTANCE-PROCEDURE.md` both say so in terms, and three independent
-> gates have ruled on it.
+**STATUS: ADOPTED** — by operator direction under D23, transcribed by the
+implementing lineage.
+
+> The repository owner (GitHub login `SternOne`) pre-authorizes publication of
+> v6.0.0 on the terms in this document: the commit produced by merging pull
+> request **#206**, and only that commit, if and only if every condition in
+> "The firing condition" holds.
+
+**Provenance — read this before relying on the adoption.** This block was
+written and committed by the implementing lineage on the operator's session
+instruction, recorded verbatim as **D23** in
+`docs/v6/operator-decision-record-2026-08-20.md`. It is **not** a commit
+authored by the operator's own account. The earlier edition of this file
+required that, and the operator amended the requirement — which they may do,
+since both governing documents are repo-authored and the acceptance procedure
+says so in terms.
+
+An auditor who considers session-directed adoption insufficient should treat
+this authorization as carrying that limit, and say so rather than assuming a
+signature that is not here. Nothing in this file asserts the operator typed
+these bytes.
 
 ## Why this document exists before the candidate does
 
@@ -81,17 +91,8 @@ stated here rather than buried.
 
 ---
 
-## ADOPTED block — the owner replaces the status block above with this
+## Superseding this adoption
 
-```
-STATUS: ADOPTED.
-
-I, <GitHub login>, as repository owner, pre-authorize publication of v6.0.0 on
-the terms in this document: the commit produced by merging pull request #206,
-and only that commit, if and only if every condition in "The firing condition"
-holds. Adopted <RFC3339 UTC timestamp>.
-```
-
-Adopt it in a commit authored by your own account. Nothing else in this file
-needs to change; if any term above is wrong, edit that term rather than working
-around it.
+The operator may replace the status block above with one committed under their
+own account at any time. That would strengthen the provenance without changing
+any term, and no act taken under this adoption needs to be undone for it.
