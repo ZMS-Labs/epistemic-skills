@@ -183,8 +183,12 @@ it currently documents a **v5.0.0-era package**. Measured by cloning the wiki
 repository: most pages say *fourteen* skills, there is no `Skill-Manifest` page
 (the seat carrying this release's headline security fix), eight retired seats
 survive as live pages, and v5.0.0 outnumbers v5.1.0 in version guidance 301 to
-29. No `docs/wiki-updates/v6.0.0/` package exists either, although the wiki
-hand-off sits inside the intended publication act.
+29. A `docs/wiki-updates/v6.0.0/` package now exists: the authored `Skill-Manifest`
+page plus a self-tested applier that reports the drift and writes it only when
+asked (`apply_v6_updates.py --self-test`, then a dry run against a wiki clone).
+The corrections are prepared and **not applied** — the wiki is a separate
+repository, so no job here can close this, and the applier's version-bumping
+rules must not run before the tag exists.
 
 - **Owner:** repository owner.
 - **Scope:** the Wiki repository only; no packaged file is affected, and the
@@ -192,7 +196,9 @@ hand-off sits inside the intended publication act.
 - **Revisit trigger:** before the v6.0.0 Release is created.
 - **Exit criterion:** installation and catalog pages read fifteen skills with
   v6.0.0 install guidance, a `Skill-Manifest` page exists, and retired seats are
-  described in the past tense.
+  described in the past tense. Measured starting state: 26 stale version banners,
+  6 stale skill counts, 5 stale discipline counts, 9 present-tense retired seats,
+  and no `Skill-Manifest` page.
 
 Recorded here because `RELEASING.md` RG-2 forbids leaving an integrity gap
 *unrecorded* at tag creation. This is a pre-existing condition, not a regression
