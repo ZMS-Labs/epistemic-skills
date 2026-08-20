@@ -35,7 +35,9 @@ def new_repo(root: Path) -> Path:
     repo.mkdir()
     git(repo, "init", "-q", "-b", "main")
     git(repo, "config", "user.name", "Sim Owner")
-    git(repo, "config", "user.email", "owner@sim.invalid")
+    # No address shape: git accepts an arbitrary identity string, and the
+    # public-content gate rightly refuses email patterns in tracked files.
+    git(repo, "config", "user.email", "sim-owner")
     (repo / "RELEASE.md").write_text("# Release 1.0.0\n", encoding="utf-8")
     git(repo, "add", "-A")
     git(repo, "commit", "-q", "-m", "base")

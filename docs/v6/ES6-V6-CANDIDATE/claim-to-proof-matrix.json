@@ -308,10 +308,10 @@
       "environment": "isolated independent panel",
       "independence": "No actor certifies its own acceptance",
       "evidence_tier": "R0",
-      "status": "UNPROVED",
+      "status": "PROVED",
       "release_consequence": "Blocks V6_CANDIDATE_READY_FOR_OPERATOR_ACCEPTANCE",
       "owner": "independent-panel",
-      "closure_path": "Operator-dispatched independent Gauntlet on this packet's SHA",
+      "closure_path": "CLOSED 2026-08-20 by operator ratification (D20) of the rc5 verdict es-v6-rc5-narrow-review-2026-08-19 (GO, subject 03e972c5). The seat was fresh and non-authoring -- the oracle is satisfied -- but was dispatched by the implementing lineage, not the operator. The dispatch limb is closed by ratification, not by an operator-dispatched review. See docs/v6/operator-decision-record-2026-08-20.md.",
       "linked_issues": [
         191,
         40

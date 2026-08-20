@@ -286,11 +286,26 @@ rewritten to match a later outcome, and the unredacted bytes remain on the
 originating branches for audit.
 
 **What the shipped packet says about itself.** `docs/v6/ES6-V6-CANDIDATE/promotion-packet.json`
-reads `readiness: NOT_READY`, `independent_gauntlet: NOT_RUN`, and
-`blocking_claims: ["CLM-INDEPENDENT-GAUNTLET"]`, and its claim matrix holds 72
-rows of which 32 are UNPROVED. That is the assurance contract working, not
-failing: a packet may not certify its own review, and the validator exits 0
-**because** the packet honestly declares non-readiness. Never cite that green as
-support for publishing. If this file is ever read at a published tag, the packet
-beside it must have been regenerated against the published candidate with the
-verdict artifact bound — or this paragraph is the disclosure that it was not.
+now reads `independent_gauntlet: GO`, bound by `independent_gauntlet_ref` to an
+on-disk verdict artifact whose subject SHA equals the packet's own
+`candidate_sha`. `blocking_claims` is empty — **derived**, never hand-written, so
+it went empty only because the matrix row closed. `readiness` stays `NOT_READY`
+until operator acceptance is recorded, which is correct rather than pessimistic.
+
+Read the matrix's two populations separately, because conflating them is the
+error an earlier edition of this record made. **31 class claims** state what this
+release asserts: 21 PROVED, 8 LIMITED within stated bounds, 2 PARTIAL, and
+**none UNPROVED**. The remaining **41 rows are an open-issue census**, where
+`UNPROVED` means the tracker item is still open and never meant a failed proof.
+
+The one class claim that stood UNPROVED, `CLM-INDEPENDENT-GAUNTLET`, is closed
+by **operator ratification** of the rc5 verdict (D20), not by an
+operator-dispatched review. The seat was fresh and non-authoring, so the oracle
+is satisfied in full; the dispatch limb of its closure path is closed by the
+operator adopting the verdict after the fact. That distinction is recorded in
+`docs/v6/operator-decision-record-2026-08-20.md` rather than smoothed over, and
+anyone auditing the PROVED status should read it and judge for themselves.
+
+The binding is not decorative: removing the ref, pointing it at a verdict that
+is not on disk, naming a different subject SHA, or hand-editing
+`blocking_claims` are each refused by the validator with a named error.
