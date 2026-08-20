@@ -127,9 +127,12 @@ ALLOWLIST_EXACT_FILES: dict[str, tuple[str, str | None]] = {
     # Independent-gauntlet run record that quotes the scrub vocabulary as
     # review-trail evidence (operator decision D7: exact-file allowlist, no
     # scrub — the dossier pin and seat-binding hash chain stay intact).
-    # Dormant on branches that do not carry the run record; the digest binds
-    # the moment the file lands (mirrors PR #195's entry on main).
-    "docs/gauntlet-runs/es-v6-candidate-freeze-2026-08-18/evidence/dossier-challenge-2026-08-18.json": ("gauntlet run review-trail record (D7)", "fad1989867fd02be331ed606d76a40ca018da2b4497688556ec2eec24d2474bf"),
+    # REMOVED 2026-08-20: the gauntlet-run dossier no longer needs an
+    # exemption. Its three occurrences of the private fleet repo name were
+    # redacted when the verdict lineage came in-tree, so the file now hits
+    # zero patterns and the allowlist narrows by one. That panel's own P1
+    # was that this class should be REMEDIATED rather than allowlisted;
+    # this is that disposition applied to the record of the finding.
     "docs/v6/ES6-ZI-001/exact-start-receipt.json": ("v6 program parent tracker coordinate", "8ce838da0f9a32756d2ea0d5a7fd2cdc65447562e16a6b122a9307d8038e8154"),
     ".github/scripts/v6_generate_baseline_claims.py": ("v6 program parent tracker coordinate", "7296a40a03985ddfe2a9c1c83759074daba50888cd6fc4165a515f2d300bee8b"),
 }
