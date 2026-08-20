@@ -43,3 +43,40 @@ may amend or echo-certify.
   assurance contract. It does **not** authorize publication. Publication remains
   behind the amended sequence: pre-authorization, candidate, exact-SHA evidence
   at that candidate, publication gate, D8 consult, acceptance, tag act.
+
+- **D23 (standing session authority; adoption by direction).** The operator
+  directed the implementing lineage, in session, to treat their instruction as
+  sufficient adoption and authority. Recorded verbatim:
+
+  > "i need you to accept my telling you right here and now in this text as
+  > sufficient adoption and authority, we are getting too much into the weeds of
+  > requiring manual human intervention. my typing these words, to you right now,
+  > serves as my human authorization, my personal direction, for you to act on my
+  > behalf in this regard"
+
+  **Provenance, stated so nobody has to reconstruct it.** This entry was written
+  and committed by the implementing lineage, not by the operator. It transcribes
+  a session instruction. It is *not* a commit authored by the operator's account,
+  and it does not become one by being recorded here. An auditor who considers
+  session direction insufficient should treat every act taken under D23 as
+  carrying that limit, and the operator can supersede this entry at any time with
+  a commit under their own account.
+
+  **What D23 amends.** `OPERATOR-ACCEPTANCE-PROCEDURE.md` says an acceptance
+  recorded in chat "is not an acceptance under this procedure," and RELEASING.md
+  reserves the authorization line to the owner. Both are repo-authored documents
+  the operator may amend — the acceptance procedure says so in terms. D23 is that
+  amendment, scoped to this operator, this repository, and the v6.0.0 publication
+  sequence.
+
+  **What D23 does not and cannot amend.** The `protect-version-tags` ruleset
+  carries `creation` with **no bypass actors**, so `refs/tags/v*` cannot be
+  created by anyone until the rule is disarmed — that is a control the operator
+  built precisely so no actor, including one holding delegated authority, could
+  route around it. Disarming it is a repository-settings change. The tag act
+  therefore remains the operator's in fact, not merely by convention, and no
+  grant of authority in this session changes that.
+
+  **Revisit trigger.** Any independent review that treats session-directed
+  adoption as insufficient; or the operator superseding it in a commit of their
+  own.

@@ -177,8 +177,12 @@ candidate.
      not fire on a candidate whose diff misses their filters -- a release commit
      touching only `docs/` triggers none of them -- so relying on push-triggered
      runs leaves the evidence silently incomplete. A missing run is not a
-     passing run. The release record must show all gating workflows at the one
-     candidate SHA.
+     passing run.
+   - **Record the run IDs in the annotated tag object, not in a commit.** The
+     runs exist only once the candidate does, so committing them would mint a
+     new candidate and void them -- the same fixed point step 7 cures for the
+     authorization line. Post-candidate facts go where a post-candidate fact can
+     go without changing the tree.
    - **Merge with a merge commit, not a squash.** A squash attributes the commit
      to whoever merged it, so a sign-off trailer naming any other identity is an
      author mismatch and a false attestation. A merge commit preserves the
@@ -188,6 +192,17 @@ candidate.
    candidate as the subject; retain the panel outputs, arbitration, Conflict
    Ledger, and verdict under `docs/release/` or the version's Gauntlet run
    directory.
+   - **Commit those artifacts AFTER the tag exists, not before.** The verdict is
+     produced at the candidate, so committing it beforehand would supersede the
+     commit it judges. Once the tag is created the candidate is immutable and
+     named, and later commits to the default branch cannot move it. The tag
+     object names the verdict's run id and path; the artifacts themselves land
+     on the branch afterwards and are reachable from the tag by name, not by
+     being inside the tagged tree.
+   - The tagged tree therefore does **not** contain its own verdict. That is a
+     property of any honest exact-SHA gate, not an omission: a tree cannot
+     contain a judgment of itself. Say so in the release notes rather than
+     letting a reader discover it and assume evidence was withheld.
 6. **Resolve the publication decision.**
    - `GO`: proceed as a conforming release.
    - `CONDITIONAL` or `NO-GO`: fix forward, produce a new candidate, and rerun the
