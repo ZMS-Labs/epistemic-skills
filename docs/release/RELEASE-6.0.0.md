@@ -67,6 +67,15 @@ table** — the commit produced by merging the release pull request, per
 `RELEASING.md` Procedure step 4. Every other coordinate below is written in hex
 because it is resolvable in advance.
 
+**Why this file's evidence names its own parent.** Procedure step 4 makes the
+merge commit the candidate and says any correction mints a new one, so a table of
+exact-commit evidence can never sit *in* the commit it describes. The v5.1.0
+precedent resolves this by keeping the delta enumerable: the runs above were
+dispatched at `92b3ca6c`, and the **only** change between that commit and the one
+carrying this table is this table. `git diff 92b3ca6c..HEAD -- docs/release/`
+shows the whole of it. A delta-scoped re-check, not a full requalification, is
+what that difference warrants.
+
 **Authorization — NOT YET GIVEN.** `RELEASING.md` step 7 requires a line naming
 the verdict read, the exact candidate SHA authorized, and the owner. That line is
 the owner's to write and does not exist yet. Until it does, this file is a
@@ -81,27 +90,33 @@ candidate.
 | 2 — release decisions and risk acceptance | **UNMET** | Operator acceptance under `docs/v6/OPERATOR-ACCEPTANCE-PROCEDURE.md` has not been recorded, and the packet carries no `operator_acceptance` object. The standing D8 cross-family consult is owed and not discharged. Both were ruled blocking by the publication panels. |
 | 3 — evidence retention | **met** | All seven verdicts of this lineage are in-tree under `docs/gauntlet-runs/` with an index at `docs/gauntlet-runs/V6-VERDICT-LINEAGE.md` binding each to its exact subject commit. Previously they lived only on mutable branches while this file asserted otherwise — publication-gate finding PG-03, now closed. |
 | 4 — version and link alignment | **met, after two stalenesses were found and fixed** | Ten version-bearing surfaces at 6.0.0; surface-sync `--check` green (15 skills / 14 disciplines). Fixed since the first candidate: `.kimi-plugin/marketplace.json` had pinned `tree/v3.4.0` for three major versions and was the one manifest no oracle read (PG-07); the README advertised `v6.0.0` as a published support point behind links that returned 404 (PG-18). Both marketplace "full collection" descriptions enumerated fourteen of fifteen skills, omitting `manifest` (PG-15). A new install-ref oracle now fails on any manifest ref that is not the current install pin, with a control asserting it is not vacuous. |
-| 5 — deterministic and static-analysis evidence | **bound to the freeze candidate; MUST be re-run at the final candidate** | At `03e972c5`, all five gating workflows dispatched with step-level confirmation that both newest oracles executed rather than skipped: `epistemic-flexibility` 32313229574 success; `commission-watch-contract` 32313238605 success; `openai-bundles` 32313240639 success; `release-security` 32313248657 success; `mission-custody-contract` 32313232046 **failure at job level** — see the RG-5(c) disclosure below. The freeze pull request's full required set ran green at `466b9a0c` (9 checks, CodeQL included). Per Procedure step 4 this evidence does **not** transfer to the merge commit; re-running it there is a precondition of any tag. |
+| 5 — deterministic and static-analysis evidence | **met at `92b3ca6c`, the parent of this commit** | All five gating workflows dispatched at `92b3ca6cf7009cb668146b526e3b35012f7454a6`: `epistemic-flexibility` **32325697974** success; `release-security` **32325699859** success; `openai-bundles` **32325701579** success; `commission-watch-contract` **32325704803** success; `mission-custody-contract` **32325702964** — required job `contract` **success** (all 12 steps), dispatch-only probe job `contract-macos` **failure**, see the RG-5(c) disclosure below. Earlier evidence at the freeze candidate `03e972c5` is superseded and does not transfer. |
 | 6 — security, public content, provenance | **met** | `check_public_content.py` self-test (7 seeded RED controls) and live run both exit 0; the exact-file allowlist narrowed by one entry when the exemption's reason was remediated rather than renewed. Full-history secret scan green with its planted positive control and the record-path narrowness control. Provenance: `CONTRIBUTING.md` now states the DCO rule actually enforced, including both exemptions and the check's two limits (PG-13); the 250-commit endpoint fail-open is closed (PG-23). The 6.0.0 release-window public-content review is recorded below: 229 files, zero true defects, with each apparent hit dispositioned and each exemption's reason stated (PG-12). |
 | 7 — supported harness evidence | **met via explicit tiers; no new live-fire** | Per-harness tiers below. No native-harness live-fire ran for this release; `KL-LIVE-ENV` records that, and the honest boundary column in the README install table carries each surface's limit. Cursor's recorded behavioral epoch remains `BLOCKED_EXTERNAL`. |
 | 8 — independent publication judgment | **NO-GO ×2 — the gate is not passed** | Two independent reviews of the publication act, both against `186b16eb2c069d9e8f902579afa50e9f5460fc85`: a cross-family single seat (xAI/Grok, `docs/gauntlet-runs/es-v6-publication-grok-2026-08-19/`) and a same-family panel (`docs/gauntlet-runs/es-v6-publication-gate-2026-08-19/`). Neither adopted the other's reasoning; both returned **NO-GO**. That candidate is superseded, so neither verdict transfers — but neither is discharged either. A fresh publication gate at the final candidate is required. **Independence limit:** five of the seven reviews in this lineage shared a model family with the authors and recorded that as a limit, not as independence. |
 | 9 — publication identity plan | **UNMET until the authorization line exists** | Tag `v6.0.0`, annotated, on the final candidate; release-note path `docs/release/RELEASE-6.0.0.md`; Release target the annotated tag, non-draft, body verbatim from this file. `protect-version-tags` carries `creation` with no bypass actors, so disarming it *is* the authorization act: disarm, tag, re-arm in the same sitting, then verify with a seeded probe rather than by reading the config back. The disarm and re-arm are recorded beside the authorization line. None of this has happened. |
 
-### RG-5(c) disclosure — the red job at the freeze candidate
+### RG-5(c) disclosure — the red job at the candidate
 
 `RELEASING.md` RG-5's dispatch-only carve-out is conjunctive, and its third
-condition requires the release record to name what failed. Naming it:
+condition requires the release record to name what failed. Naming it, **verified
+at `92b3ca6c` rather than carried forward** from the freeze candidate:
 
-- **Run** 32313232046, workflow `mission-custody-contract`, job **`contract-macos`**.
+- **Run** 32325702964, workflow `mission-custody-contract`, job **`contract-macos`**
+  (`macos-14`).
 - **Step 8**, "Custody mission lifecycle unit tests".
-- **Failing tests:** `distinct-real-file-untouched` and
-  `distinct-both-files-tracked-separately`.
+- **Failing tests, read from that run's log:** `distinct-real-file-untouched`
+  and `distinct-both-files-tracked-separately` — exactly two, and the other three
+  `distinct-*` cases (`distinct-recover-raised`, `distinct-decoy-did-not-discharge`,
+  `distinct-real-recovery-discharges`) pass.
 - **Cause:** macOS default filesystems are case-insensitive, so two
   contract-distinct filenames resolve to one physical file. This is `KL-MACOS-162`,
-  settled negative before this release cycle, not a regression in it.
-- **Unmeasured as a consequence:** four custody suites did not run on macOS at
-  this candidate.
-- The required `contract` job on the same run was **success**.
+  settled negative before this release cycle, not a regression in it. The job's own
+  es#162 probe step (step 5) passes — the filesystem behaves as the probe expects.
+- **Unmeasured as a consequence:** steps 9–12 are skipped, so four custody suites
+  (CLI black-box, gate unit, enforcement hook, three-subprocess continuity) did
+  not run on macOS at this candidate. All four pass on `ubuntu-24.04` in the
+  required `contract` job.
 
 The substance is benign and long-disclosed. The gate failed on the record's
 silence, not on the failure — which is the correct way for it to fail.
