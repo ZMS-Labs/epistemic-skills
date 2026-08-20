@@ -35,3 +35,25 @@ git commit --signoff
 By signing off, you certify that you have the right to submit the contribution
 under this repository's license. The full DCO text is available at
 <https://developercertificate.org/>.
+
+### What the check actually enforces
+
+The rule above is the rule for contributors. `.github/scripts/check_dco.py`
+applies it with exactly two exceptions, both deliberate and both narrow:
+
+1. **Merge commits are exempt.** A merge's content is the mechanical result of
+   joining two histories and its author is whoever ran `git merge`; the DCO
+   certifies authored contributions. This is the same default GitHub's own DCO
+   app applies. Recorded limit: content a merge commit genuinely *does* author —
+   a conflict resolution — is not certified by this exemption. Prefer
+   `git merge --signoff` where that matters.
+2. **A closed list of five commits** is certified by the repository owner by
+   exact 40-hex SHA. They predate this workflow's coverage of the branch they
+   live on. The list is closed and content-bound: any amend or rebase produces a
+   different SHA and fails. A new unsigned commit is a defect to fix with
+   `git commit --amend --signoff`, never a new entry.
+
+Two limits worth knowing. The check runs against a pull request's commits, so it
+does not run against the commit a squash-merge actually creates — sign those off
+too. And GitHub's pull-request commits endpoint returns at most 250 commits; past
+that the check fails closed rather than certifying a range it cannot read.
