@@ -1,0 +1,14 @@
+{
+  "note": "Per-seat identity at family granularity (data axis: committed projections are family-granular; exact model ids stay out of committed artifacts). All seats one family, tier-separated: evaluator seats on a mid tier, gate/judge on the most capable available tier — same-family limitation disclosed in the dossier and summary.",
+  "seats": [
+    {"seat": "evaluator:human-automation-handoff-auditor", "role": "gauntlet-adversary", "binding": "materialized-role", "model_family": "claude", "tier": "lens-tier"},
+    {"seat": "evaluator:entropy-demon", "role": "gauntlet-adversary", "binding": "materialized-role", "model_family": "claude", "tier": "lens-tier", "wildcard": true},
+    {"seat": "evaluator:cloud-native-purist", "role": "gauntlet-constructive", "binding": "materialized-role", "model_family": "claude", "tier": "lens-tier"},
+    {"seat": "evaluator:requirements-traceability-auditor", "role": "gauntlet-metatextual", "binding": "materialized-role", "model_family": "claude", "tier": "lens-tier"},
+    {"seat": "evaluator:chesterton-gate", "role": "gauntlet-metatextual", "binding": "materialized-role", "model_family": "claude", "tier": "lens-tier"},
+    {"seat": "gate:red-lines-arbitrator", "role": "gauntlet-arbitrator", "binding": "role+card-at-dispatch", "model_family": "claude", "tier": "arbitral-tier"},
+    {"seat": "judge:pragmatic-judge", "role": "gauntlet-arbitrator", "binding": "role+card-at-dispatch", "model_family": "claude", "tier": "arbitral-tier"},
+    {"seat": "dispatcher", "model_family": "claude", "tier": "arbitral-tier"},
+    {"seat": "dossier-challenger", "model_family": "claude", "tier": "lens-tier"}
+  ]
+}

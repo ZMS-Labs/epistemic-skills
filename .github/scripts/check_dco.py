@@ -19,7 +19,7 @@ SIGNOFF = re.compile(r"^Signed-off-by:\s*(.+?)\s*<([^<>\s]+@[^<>\s]+)>\s*$", re.
 # 2026-08-19 (full wording in docs/v6/operator-decision-record-2026-08-19.md)
 # certifies them under the Developer Certificate of Origin. The exemption is
 # keyed on the full 40-hex SHA, which is content-bound: it exempts exactly these
-# six trees-and-messages and nothing else, and any amend or rebase produces a
+# five trees-and-messages and nothing else, and any amend or rebase produces a
 # different SHA that fails closed. This list is CLOSED — a new unsigned commit
 # is a defect to fix with `git commit --amend --signoff`, never a new entry here.
 ATTESTED_UNSIGNED = {
@@ -64,6 +64,11 @@ def unsigned_commits(commits: list[dict]) -> list[str]:
     return unsigned
 
 
+# GitHub returns at most this many commits for a pull request, no matter how
+# many pages are requested. Past it, completeness is unknowable from the API.
+GITHUB_PR_COMMIT_CAP = 250
+
+
 def github_commits() -> list[dict]:
     event_path = os.environ["GITHUB_EVENT_PATH"]
     repository = os.environ["GITHUB_REPOSITORY"]
@@ -91,6 +96,15 @@ def github_commits() -> list[dict]:
             batch = json.load(response)
         commits.extend(batch)
         if len(batch) < 100:
+            if len(commits) >= GITHUB_PR_COMMIT_CAP:
+                raise SystemExit(
+                    f"DCO: this pull request has at least {len(commits)} commits and the "
+                    f"GitHub pull-request commits endpoint returns at most "
+                    f"{GITHUB_PR_COMMIT_CAP}. The remaining commits cannot be read here, "
+                    "so this check cannot certify the range. Verify locally with "
+                    "`git log --format='%H %(trailers:key=Signed-off-by)' BASE..HEAD` "
+                    "and split the pull request."
+                )
             return commits
         page += 1
 

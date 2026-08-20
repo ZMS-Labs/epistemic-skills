@@ -1,0 +1,223 @@
+{
+ "seat": "p4-sweep",
+ "findings": [
+  {
+   "id": "RC5-P4S-F1",
+   "severity": "P4",
+   "claim": "R4-NF2's fourth repair limb is not discharged: no known_limits entry records the surviving in-scope suppression, and the residual it would have disclosed is in tension with CLM-SECRET-SCAN's own first falsifier clause. Three of the four limbs the rc4 arbitration named (anchor, in-CI narrowness control, refreshed falsifier) are discharged and execution-verified; the fourth ('add the residual KL') is absent.",
+   "evidence": "rc4 arbitration R4-NF2 repair line and Next-action 5 both enumerate four limbs incl. 'add the residual KL'. Live census of promotion-packet.json at 546ccc8: 9 known_limits (KL-SELF-GO, KL-LIVE-ENV, KL-MACOS-162, KL-DRAFT-CI, KL-MAIN-137, KL-SEAL-MAIN-COUPLING, KL-WINDOWS, KL-RESTAMP, KL-GUARD-LEXICAL) \u2014 none about the scan exemption; packet-wide `grep -rho 'KL-[A-Z0-9-]*'` returns exactly those 9 ids. Residual demonstrated by execution with the pinned scanner (gitleaks 8.30.1, version-checked): a generic-api-key-class token written to docs/gauntlet-runs/_resid/report.json in a checkout of C yields 'no leaks found', exit 0, zero findings \u2014 i.e. 'A seeded credential ... passes the scan' (CLM-SECRET-SCAN falsifier clause 1) is satisfiable by design inside the anchored path, while the refreshed falsifier's added clauses cover only leakage OUTSIDE the path and OTHER rules INSIDE it. Mitigations executed and confirmed: exemption anchored (^docs/gauntlet-runs/) and rule-scoped to generic-api-key only \u2014 planted github-pat and private-key both FIRE inside the record path; CI narrowness control passes at C and is mutation-hard (3/3 mutants killed); zero look-alike paths on ANY ref (all remote branches + tags scanned). Non-blocking: an open P4 does not move the lineage verdict enum, and the packet makes no false claim that a KL was added.",
+   "repair_dischargeable_on_this_sha": false
+  },
+  {
+   "id": "RC5-P4S-F2",
+   "severity": "P4",
+   "claim": "origin/main still carries the UNANCHORED rc4 form of the record-path exemption plus the weaker absolute-path narrowness control, and no packet surface discloses that main/candidate divergence \u2014 though the packet has precedent for exactly this disclosure shape (KL-MAIN-137: 'present on origin/main; closed only in this candidate tree').",
+   "evidence": "`git diff 13f1ad7 03e972c -- .gitleaks.toml` at head-of-main vs C: main = '''docs/gauntlet-runs/.*''' (unanchored), C = '''^docs/gauntlet-runs/.*'''. `git diff 7408a46 13f1ad7 -- .gitleaks.toml` is EMPTY, confirming main took the rc4 text byte-identically per decision-record D18a, which explicitly deferred the anchor 'to the next freeze's P4 sweep'; rc5 then anchored the candidate only. main's release-security.yml narrowness control scans an ABSOLUTE fixture dir, which no repo-anchored pattern can match \u2014 so main cannot take the anchor without also taking the control rewrite (the two are coupled, which is why the deferral existed). Mitigations verified: zero look-alike paths on any ref (all-refs ls-tree census, empty), so zero live instances; main (13f1ad7) is an ancestor of the branch head (546ccc8 -> 03e972c -> 375973c -> {e46c248, 13f1ad7}), so the promotion merge is conflict-free and yields the anchored form \u2014 live PR #197 mergeable_state = 'clean'. Fail direction is false-negative-only and confined to a directory with no look-alike siblings.",
+   "repair_dischargeable_on_this_sha": false
+  },
+  {
+   "id": "RC5-P4S-F3",
+   "severity": "P4",
+   "claim": "requalification.json's second superseded round (the rc4 candidate 7408a46) lists run 32261092986 among its five run URLs but describes the round as 'fully requalified (all five dispatched, gating jobs green, ledger step executed)' without naming that run's aggregate RED \u2014 asymmetric with the first superseded round, whose two reds are both named explicitly. This is the same class R4-NF9 was filed about, treated differently one entry down.",
+   "evidence": "Live REST: run 32261092986 (mission-custody-contract, workflow_dispatch, head_sha 7408a462b413d0ab41a08de1d37a10b9cdf2a6ea) conclusion = 'failure'; job breakdown = contract success, contract-macos failure. requalification.json superseded_rounds[1].why_superseded reads 'fully requalified (all five dispatched, gating jobs green, ledger step executed) and frozen as e46c2486, then superseded WITHOUT a defect in its own tree' \u2014 no red named. superseded_rounds[0].why_superseded by contrast names both reds ('full-history-secret-scan RED ... mission-custody aggregate RED ... Both reds are itemized here rather than only the decisive one (R4-NF9)'). Mitigations: the run URL IS listed, so nothing is dropped (R4-NF9's letter was about ABSENCE \u2014 32260118894 was itemized and I confirmed it live, failure at 74c8314, contract success / contract-macos failure); 'gating jobs green' is literally true and precise; the identical red at the CURRENT round IS itemized in non_flip_records with the note 'Recorded so the aggregate red is never silently dropped'; KL-MACOS-162 declares the class deterministic 'across rc2, rc3, rc4 and rc5'; contract-macos is dispatch-only non-gating per mission-custody-contract.yml (read at C).",
+   "repair_dischargeable_on_this_sha": false
+  },
+  {
+   "id": "RC5-P4S-F4",
+   "severity": "P4",
+   "claim": "The corrected handoff SHA law ('Every packet artifact that carries a candidate SHA names exactly that one') admits two literal counterexample classes under a strict reading of 'a candidate SHA' \u2014 but the specific rc4 defect is repaired and the corrected statement is TRUE under its natural reading, with zero misdirection possible.",
+   "evidence": "40-hex census executed over all 14 packet artifacts at 546ccc8: EXACTLY TWO carry zero 40-hex \u2014 evidence/tracker-capture.json and evidence/workflow-oracle-audit.json \u2014 precisely the two the corrected text names by filename, so R4-NF7's letter is discharged. All 12 SHA-bearing artifacts name C (03e972c5...). Literal counterexamples: evidence/requalification.json carries superseded_rounds[*].candidate_sha = 74c8314e... and 7408a462... (fields literally named candidate_sha, values != C); gauntlet-request.md carries four predecessor candidate SHAs (00e5146e, 6db8c504, 16b80ac6, 7408a462) and \u2014 by derivation-not-copy design (R3-NF2) \u2014 no 40-hex for C at all. Every non-C SHA sits under an explicit 'superseded_rounds' key or a 'Predecessor verdicts of record (all four stand as evidence; none transfers to this SHA)' heading. source-inventory.json's second hex (5355e26e...) is candidate_tree_hash, confirmed a real git tree object equal to `git rev-parse 03e972c^{tree}`. Recorded for completeness at the seat's own instruction to grep every artifact; below the misdirection threshold and non-blocking.",
+   "repair_dischargeable_on_this_sha": false
+  },
+  {
+   "id": "RC5-P4S-F5",
+   "severity": "P4",
+   "claim": "R4-NF5 remains correctly OPEN and dischargeable at acceptance. Graded: the provenance concern is MATERIALLY REDUCED, not merely relocated \u2014 but the structural residue ('recorded by the party it authorizes') persists and only an operator act at acceptance closes it.",
+   "evidence": "REDUCED, on execution-checkable grounds: (1) a 156-line full-wording record now exists at docs/v6/operator-decision-record-2026-08-19.md, present both on main (13f1ad7) and at C, carrying D16, D17, D18 (two limbs + declined alternatives + verified-before-proposal notes) and D19 in full wording, plus a D18a addendum \u2014 rc4 had no such record; (2) it lands on main via PR #198, opened and merged by SternOne (the operator account matching the repo owner) with commit verification 'verified/valid', a higher-durability surface than a candidate-branch ledger line; (3) it SELF-discloses its own gap: 'Status: recorded, not yet echo-certified ... the fourth Gauntlet panel flagged exactly that gap (finding R4-NF5, P4: the rulings were recorded by the party they authorize)' and names the two discharge routes; (4) its load-bearing factual claims are independently checkable and I checked them \u2014 D18's mechanism claim is confirmed by DCO conclusion=success at C+1 (run 32292298616, steps 'DCO checker self-test (planted RED controls)' and 'Require author-matching Signed-off-by lines' both success), and D18a's promotion-conflict rationale is confirmed by the merge topology. NOT ELIMINATED: PR #198's two commits are authored by 'Claude <noreply[at]anthropic.com [address redacted: public-content gate]>', so an agent holding the operator's token can produce SternOne-attributed acts \u2014 the account signal is suggestive, not dispositive; ledger entries 22/23 are again dispatcher-recorded on the candidate branch; and the record is NOT digest-inventoried (source-inventory covers workflows/contracts/ci_scripts only \u2014 zero docs/v6 entries). Ledger verified: 23 entries, ids v6-dco-inherited-commit-attestation-20260819-22 and v6-lineage-panel-cap-extension-two-20260819-23 present and read in full; validate_examples.py PASS with '23 valid entries'; check_ledger_append_only.py --self-test PASS (7/7 byte + 3 ref) and --base-git-ref FETCH_HEAD against live origin/main exit 0 ('8 line(s) appended over the merge base').",
+   "repair_dischargeable_on_this_sha": true
+  }
+ ],
+ "checks_executed": [
+  {
+   "check": "Workspace from primary sources: fresh clone of ZMS-Labs/epistemic-skills, worktrees at C (03e972c5) and C+1 (546ccc8e); all target SHAs resolve; branch head confirmed via live git ls-remote",
+   "result": "PASS",
+   "detail": "origin/claude/v6-candidate-rc2 = 546ccc8e55eb060379d62198310145f7243ac7bd; C+1 sole parent = C; C..C+1 adds 14 files, all under docs/v6/ES6-V6-CANDIDATE/"
+  },
+  {
+   "check": "rc4 arbitration read in full at origin/claude/es-v6-rc4-delta-review; letters for R4-NF2..NF9 and Next-action 5 extracted as the acceptance criteria",
+   "result": "PASS",
+   "detail": "198 lines; eight P4 findings enumerated; Next-action 5 lists six folds (NF2, NF3, NF4, NF7, NF8, NF9); NF5 dischargeable at acceptance; NF6 record-only"
+  },
+  {
+   "check": "R4-NF2: pinned scanner obtained and version-verified",
+   "result": "PASS",
+   "detail": "gitleaks v8.30.1 release binary downloaded; `gitleaks version` prints 8.30.1, matching the pin in release-security.yml (go install .../v8@v8.30.1)"
+  },
+  {
+   "check": "R4-NF2: CI narrowness control extracted verbatim from release-security.yml at C and executed from the repository root with a relative target, the way CI does",
+   "result": "PASS",
+   "detail": "exit 0; 'narrowness control: entropy exemption is anchored to the record path; look-alike paths and branded credentials still fire'; gitleaks reported exactly 3 leaks (notdocs entropy, src entropy, docs github-pat)"
+  },
+  {
+   "check": "R4-NF2: independent six-location probe at C (own assertion logic, not the dispatcher's)",
+   "result": "PASS",
+   "detail": "FIRES: src/_ind (outside), notdocs2/gauntlet-runs/_ind (look-alike), sub2/docs/gauntlet-runs/_ind (nested). SUPPRESSED: docs/gauntlet-runs/_ind and docs/gauntlet-runs/deep/_ind. Provider-branded github-pat and private-key both FIRE inside the record path"
+  },
+  {
+   "check": "R4-NF2: mutation kill 1 \u2014 revert the anchor to the rc4 unanchored form",
+   "result": "PASS",
+   "detail": "control exits 1: 'exemption leaked to a look-alike path (anchor lost): notdocs/gauntlet-runs/_narrowness-probe/report.json'"
+  },
+  {
+   "check": "R4-NF2: mutation kill 2 \u2014 delete the record-path allowlist block entirely",
+   "result": "PASS",
+   "detail": "control exits 1: 'exemption did NOT apply inside docs/gauntlet-runs/'"
+  },
+  {
+   "check": "R4-NF2: mutation kill 3 \u2014 widen targetRules so the exemption covers all rules",
+   "result": "PASS",
+   "detail": "control exits 1: 'a provider-branded credential was suppressed inside the record path'. All four asserted conditions are load-bearing"
+  },
+  {
+   "check": "R4-NF2: live step-level proof that the control actually runs in CI",
+   "result": "PASS",
+   "detail": "run 32291473397 (release-security, workflow_dispatch, head_sha = C) step 7 'Gauntlet-record allowlist narrowness control' = success; run 32292297681 (pull_request at C+1 merge ref) step 7 = success"
+  },
+  {
+   "check": "R4-NF2: CLM-SECRET-SCAN oracle/falsifier text now describes the exemption",
+   "result": "PASS",
+   "detail": "oracle names the record-path narrowness control and its four conditions; falsifier names the ^docs/gauntlet-runs/ exemption, its one-rule scope, and 'CI proves that scoping on every run rather than asserting it'. Generator source (v6_generate_candidate_packet.py) carries the same text, so the packet is not hand-edited here"
+  },
+  {
+   "check": "R4-NF2: residual KL limb \u2014 packet-wide known_limits and KL-id census",
+   "result": "FAIL",
+   "detail": "9 known_limits, none about the scan exemption; no KL id for it anywhere in the packet. Disclosure exists instead in CLM-SECRET-SCAN's oracle/falsifier, README, SUCCESSOR-SEAT-HANDOFF, gauntlet-request and the requalification note. Basis for RC5-P4S-F1"
+  },
+  {
+   "check": "R4-NF2: residual demonstrated \u2014 does a credential-shaped secret inside the anchored path pass the scan?",
+   "result": "FAIL",
+   "detail": "generic-api-key-class token at docs/gauntlet-runs/_resid/report.json in a checkout of C: 'no leaks found', exit 0, zero findings. Supports RC5-P4S-F1"
+  },
+  {
+   "check": "R4-NF2: main-vs-candidate config divergence",
+   "result": "FAIL",
+   "detail": "main (13f1ad7) .gitleaks.toml is byte-identical to rc4's UNANCHORED form; C is anchored. main's narrowness control scans an absolute fixture dir. Zero look-alike paths on ANY ref (all remote branches + tags), so zero live instances; main is an ancestor of the branch head so promotion merges clean. Basis for RC5-P4S-F2"
+  },
+  {
+   "check": "R4-NF3: check_pin_tags.py PINS comment states the actual rule",
+   "result": "PASS",
+   "detail": "rc4's 'rc3's pins get registered at the freeze after rc3' is replaced by 'The rule registers the newest pins that EXIST on origin at freeze time \u2014 which is not the same as \"the previous candidate's pins\": a NO-GO'd candidate's pins are never pushed ... rc3 and rc4 are exactly that case (R4-NF3 ...)'"
+  },
+  {
+   "check": "R4-NF3: live origin pin-tag census vs PINS, and checker execution",
+   "result": "PASS",
+   "detail": "git ls-remote refs/tags/pin/* returns exactly three: pin/ecs-contract-2026-07-27 (peeled 8d9b2f85), pin/es-v6-rc2-candidate-2026-08-18 (peeled 6db8c504), pin/es-v6-rc2-freeze-2026-08-18 (peeled 9aecd467) \u2014 all registered in PINS with matching peeled SHAs, plus v4.0.0. No rc3/rc4/rc5 pins exist. check_pin_tags.py exits 0 against live origin"
+  },
+  {
+   "check": "R4-NF4: validate_matrix now enforces a CLOSED owner vocabulary \u2014 mutation-tested against the real shipped matrix",
+   "result": "PASS",
+   "detail": "OWNER_VOCABULARY = {agent, independent-panel, joint, operator, operator+agent, program}. Planting owner 'operator-team' into the candidate matrix -> exit 1 AssertionError naming the closed vocabulary; planting 'Operator' -> exit 1 likewise. Both the ZI-001 and candidate matrices pass through validate_matrix in main()"
+  },
+  {
+   "check": "R4-NF4: the vocabulary check is mutation-hard",
+   "result": "PASS",
+   "detail": "deleting the vocabulary block from validate_matrix -> battery reports '[FAIL] planted owner-outside-closed-vocabulary was NOT rejected', self-test FAIL, exit 1"
+  },
+  {
+   "check": "R4-NF4: is 'program' vocabulary-known, non-operator-class, and CORRECT for its row?",
+   "result": "PASS",
+   "detail": "'program' in OWNER_VOCABULARY, is_operator_class('program') == False. Its sole row is CLM-ISSUE-191 (statement 'v6.0 assurance program ...'), consequence_severity P3, closure_path 'reconcile-in-matrix'. issue-pr-reconciliation.json carries the matching census item {kind: issue, number: 191, disposition: reconcile-in-matrix, owner: program}. Per the register's law limb 3, P3 tracker census rows are channeled by the reconciliation artifact and walked at acceptance item 3 \u2014 so non-operator-class is correct, and behaviorally inert (derive_blocking and the channel law scope to P1/P2)"
+  },
+  {
+   "check": "R4-NF4: register 'superset' wording accuracy, computed from the shipped module",
+   "result": "PASS",
+   "detail": "over the closed vocabulary, substring-test matches {operator, operator+agent} and set-test matches {operator, operator+agent, joint, independent-panel}; set superset-of substring == True; OPERATOR_CLASS_OWNERS subset-of OWNER_VOCABULARY == True; the register's named counterexample 'operator-team' is substring-true/set-false, exactly as stated, and is now rejected outright"
+  },
+  {
+   "check": "R4-NF4: validator battery run and planted-control count",
+   "result": "PASS",
+   "detail": "33/33 PASS at C+1 vs 30/30 at rc4 (e46c248) \u2014 exactly the three new R4-NF4 controls; 17 controls are named 'planted'. Battery includes 'planted owner-outside-closed-vocabulary fails closed', \"'program' is vocabulary-known and deliberately not operator-class\", 'every operator-class owner is vocabulary-known'"
+  },
+  {
+   "check": "R4-NF7: corrected handoff statement verified TRUE by 40-hex census over every packet artifact",
+   "result": "PASS",
+   "detail": "14 artifacts; exactly two carry zero 40-hex (evidence/tracker-capture.json, evidence/workflow-oracle-audit.json) \u2014 the two the corrected text names; the other 12 all name C; source-inventory's second hex is candidate_tree_hash 5355e26e, confirmed == git rev-parse 03e972c^{tree}"
+  },
+  {
+   "check": "R4-NF7: literal counterexample classes to the corrected law",
+   "result": "FAIL",
+   "detail": "requalification.json carries superseded_rounds[*].candidate_sha = 74c8314e / 7408a462; gauntlet-request.md carries four predecessor candidate SHAs and no 40-hex for C. All explicitly labeled superseded/predecessor; zero misdirection. Basis for RC5-P4S-F4"
+  },
+  {
+   "check": "R4-NF8: does the fix matter? Scratch-root retarget harness against the FIXED (rc5) code",
+   "result": "PASS",
+   "detail": "scratch root = copy of C+1 with one inventoried file (.github/scripts/check_dco.py) tampered scratch-only; module globals retargeted exactly as test harness run_main_in does -> main() raises 'R5 DIGEST MISMATCH ... [\".github/scripts/check_dco.py\"]'. The checks resolve against the scratch root"
+  },
+  {
+   "check": "R4-NF8: same harness against the rc4-form main() (no explicit root) \u2014 false-green demonstration",
+   "result": "PASS",
+   "detail": "with both trees carrying the rc4-form validator and both inventories digest-refreshed so the scratch-only check_dco.py tamper is the SOLE discriminator, main() returns exit_code 0 and prints 'v6 assurance artifacts: schema + rule checks passed (ZI-001 + candidate)' \u2014 a green verdict on a tampered scratch tree. The rc5 fix converts that false green into a real failure"
+  },
+  {
+   "check": "R4-NF9: requalification.json itemizes the macOS diagnostic and BOTH superseded rc4 rounds",
+   "result": "PASS",
+   "detail": "non_flip_records carries 'mission-custody-contract-macos-diagnostic' (conclusion failure, run 32291435791) with the non-gating rationale; superseded_rounds has two entries \u2014 74c8314 (both reds named) and 7408a46 (five runs listed)"
+  },
+  {
+   "check": "R4-NF9: every cited run id live-verified for existence, head_sha, and conclusion",
+   "result": "PASS",
+   "detail": "At C: 32291432381 flex success, 32291435791 custody failure, 32291447984 commission success, 32291450918 bundles success, 32291473397 security success. Superseded round 1 at 74c8314: 32260127759 release-security failure, 32260118894 custody failure. Superseded round 2 at 7408a46: 32261089304 success, 32261092986 failure, 32261096852 success, 32261100146 success, 32261103436 success. All head_shas match their claimed candidate exactly"
+  },
+  {
+   "check": "R4-NF9: job-level truth of the custody note at C",
+   "result": "PASS",
+   "detail": "run 32291435791 jobs = contract success + contract-macos failure, matching the note's 'GATING Linux contract job succeeded ... dispatch-only non-gating contract-macos diagnostic failed'; mission-custody-contract.yml at C confirms contract-macos is dispatch-only and non-gating"
+  },
+  {
+   "check": "R4-NF9: step-level proof the two lineage-added oracles executed at C",
+   "result": "PASS",
+   "detail": "run 32291432381 job stdlib-checks step 45 'Durable ledger append-only against merge base' = success; run 32291473397 step 7 narrowness control = success"
+  },
+  {
+   "check": "R4-NF9: asymmetry in the second superseded round's description",
+   "result": "FAIL",
+   "detail": "run 32261092986 is a live 'failure' listed without its aggregate red being named, while round 1 names both of its reds. Basis for RC5-P4S-F3"
+  },
+  {
+   "check": "R4-NF5/NF6: ledger entries 22 and 23 exist and are schema-valid",
+   "result": "PASS",
+   "detail": "23 entries; ids v6-dco-inherited-commit-attestation-20260819-22 (D18) and v6-lineage-panel-cap-extension-two-20260819-23 (D19), read in full with statement/because/revisit_when/durability. validate_examples.py: PASS, '23 valid entries'. check_ledger_append_only.py --self-test PASS (7/7 byte + 3 ref, incl. the fail-closed unresolvable-ref demo); --base-git-ref FETCH_HEAD vs live origin/main exit 0, '8 line(s) appended over the merge base'"
+  },
+  {
+   "check": "R4-NF5: docs/v6/operator-decision-record-2026-08-19.md carries D16-D19 in full wording",
+   "result": "PASS",
+   "detail": "156 lines, present at C and on main; D16 (rc4 repair shape, naming ledger entry 20 and the executed coordinates), D17 (first cap extension, naming entry 21 and its spend), D18 (DCO repair, two limbs + declined alternatives + 'verified before proposal' notes), D19 (second narrow cap extension), plus a 'Why this record is on main' section and a D18a addendum on the secret-scan exemption"
+  },
+  {
+   "check": "R4-NF5: provenance grading \u2014 reduced or relocated?",
+   "result": "PASS",
+   "detail": "Graded REDUCED, not eliminated. For: full wording now exists on main via PR #198, opened and merged by SternOne with commit verification 'verified/valid'; the record self-discloses 'recorded, not yet echo-certified', names R4-NF5 by id, and names the two discharge routes; its factual claims check out independently. Against: PR #198's commits are authored by 'Claude <noreply[at]anthropic.com [address redacted: public-content gate]>'; entries 22/23 are again dispatcher-recorded; the record is not digest-inventoried (source-inventory covers only workflows/contracts/ci_scripts). Correctly left OPEN and dischargeable at the acceptance gate, exactly as rc4 Next-action 2 prescribed"
+  },
+  {
+   "check": "R4-NF6: is the miscounted commit-message claim repeated anywhere at C+1?",
+   "result": "PASS",
+   "detail": "git grep for 're-serialized 15' / '15 published lines' across the whole tree at 546ccc8 returns nothing. Commit 74c8314's text is immutable history; record-only disposition is correct and there is no recurrence"
+  },
+  {
+   "check": "Cross-checks on the surfaces the P4 repairs touch",
+   "result": "PASS",
+   "detail": "validate_v6_assurance.py exit 0 at C+1; test_v6_candidate_packet.py 'ok'; check_dco.py --self-test PASS (7 controls, incl. 'an unsigned commit sharing an attested prefix is NOT exempt'); KL-SEAL-MAIN-COUPLING reproduced by execution \u2014 merging current main into the rc4 freeze e46c248 yields R5 DIGEST MISMATCH on exactly the three files the packet names (dco.yml, release-security.yml, check_dco.py)"
+  },
+  {
+   "check": "Live PR #197 state and required checks at C+1 (context for the narrow scope)",
+   "result": "PASS",
+   "detail": "draft = false, mergeable_state 'clean', base 13f1ad7, head 546ccc8, 31 commits. Check-runs at C+1: DCO success, build success, contract success, full-history-secret-scan success, stdlib-checks success, CodeQL/Analyze success (draft-era 'skipped' rows also present)"
+  },
+  {
+   "check": "No GitHub writes; every mutation reverted; worktrees clean",
+   "result": "PASS",
+   "detail": "network use limited to clone/fetch/ls-remote and unauthenticated REST GETs plus one release-asset download. `git status --porcelain` empty in both worktrees after every mutation batch; scratch merge worktree removed"
+  }
+ ],
+ "evidence_log": "SEAT SCOPE: the eight P4 findings R4-NF2..NF9 of docs/gauntlet-runs/es-v6-rc4-delta-review-2026-08-19/arbitration.md (read in full at origin/claude/es-v6-rc4-delta-review). Every claim below was re-executed from primary sources; nothing was adopted from the dispatch framing.\n\nBOTTOM LINE: 8/8 P4 findings are addressed in the rc5 delta, and every repair I could execute survives execution and mutation. One sub-limb of one finding is not literally discharged (R4-NF2's residual KL), and four narrow residuals remain \u2014 all P4, none moving the verdict enum under the lineage's own rule. My seat contributes no P1/P2/P3 and no BLOCKED checks.\n\nPER-FINDING DISPOSITION (my adjudication):\n- R4-NF2 (gitleaks allowlist) \u2014 CLOSED-QUALIFIED. 3 of 4 limbs discharged and execution-proven; the residual-KL limb is absent (RC5-P4S-F1), and main still carries the unanchored form (RC5-P4S-F2).\n- R4-NF3 (stale pin comment) \u2014 CLOSED. Comment states the real rule; PINS matches live origin exactly; checker green.\n- R4-NF4 (owner vocabulary) \u2014 CLOSED. Closed vocabulary enforced, mutation-hard, 'program' correctly classified against its actual row, register wording now computationally accurate.\n- R4-NF5 (ruling provenance) \u2014 correctly OPEN and dischargeable at acceptance; concern materially REDUCED (RC5-P4S-F5).\n- R4-NF6 (count drift) \u2014 CLOSED as record-only; no recurrence anywhere at C+1.\n- R4-NF7 (handoff SHA law) \u2014 CLOSED. Corrected statement true by census; two literal counterexample classes noted (RC5-P4S-F4), no misdirection.\n- R4-NF8 (harness root) \u2014 CLOSED, and the fix demonstrably matters: the rc4 form returns a GREEN exit 0 on a tampered scratch tree.\n- R4-NF9 (non-flip completeness) \u2014 CLOSED. macOS diagnostic and both superseded rounds itemized; all 12 cited run ids live-verified; one descriptive asymmetry noted (RC5-P4S-F3).\n\nHIGHEST-VALUE EXECUTIONS (the ones a re-checker should repeat first):\n1. R4-NF8 false-green proof. Copy C+1 to a scratch root, tamper one inventoried file there only, retarget the module globals the way test_v6_assurance_validator.run_main_in does, and call main(). rc5 code: AssertionError 'R5 DIGEST MISMATCH ... [\".github/scripts/check_dco.py\"]'. rc4-form code (main() calling validate_source_inventory/validate_promotion_packet without the explicit root): exit_code 0, 'schema + rule checks passed'. To make check_dco.py the sole discriminator, put the rc4-form validator in BOTH trees and refresh its digest in BOTH inventories first \u2014 otherwise the validator's own edited digest masks the result.\n2. R4-NF2 narrowness-control mutation battery. Extract the 'Gauntlet-record allowlist narrowness control' step body from release-security.yml (all lines at 10-space indent, so the heredoc terminator PY lands at column 0 after YAML de-indent), set RUNNER_TEMP with gitleaks 8.30.1 at $RUNNER_TEMP/bin, and run it FROM THE REPO ROOT. Three independent mutants each produce a distinct, correct diagnostic and exit 1: dropping '^' -> 'anchor lost'; deleting the allowlist block -> 'exemption did NOT apply'; dropping targetRules -> 'branded credential was suppressed'. The path semantics matter: I confirmed the anchor also rejects the nested 'sub/docs/gauntlet-runs/' case, which the CI control does not itself assert but the same '^' handles.\n3. R4-NF4 owner-vocabulary mutation. Plant 'operator-team' or 'Operator' into the real candidate matrix -> validate_v6_assurance.py exit 1 naming the closed vocabulary. Delete the check from validate_matrix -> the battery kills it. The register's corrected sentence is computationally true: over the closed vocabulary the set test is a superset of the substring test, and the counterexample it names behaves exactly as described.\n\nNOTABLE POSITIVE THAT IS NOT IN THE RC4 LETTER: the R4-NF4 repair found a real defect in the shipped artifact on its first run \u2014 owner 'program' was an unclassified spelling sitting in the live matrix, now vocabulary-known and deliberately non-operator-class, with its correctness verified against the actual row (CLM-ISSUE-191, P3, census-channeled via issue-pr-reconciliation.json item #191, disposition reconcile-in-matrix). The battery grew 30 -> 33 controls, and the three new ones are exactly these.\n\nWHAT I DID NOT ADJUDICATE (other seats): R4-NF1 discharge as such, the rc5 delta's non-P4 content, and the GO/NO-GO enum. I did confirm as context that PR #197 is non-draft with mergeable_state 'clean' and that DCO, build, contract, full-history-secret-scan and stdlib-checks are all conclusion=success at C+1 (546ccc8), with DCO run 32292298616 executing both its self-test and live check steps.\n\nMETHOD/INTEGRITY: fresh clone under a session mktemp scratchpad; two git worktrees (C, C+1) plus a disposable merge worktree, all restored or removed; zero GitHub writes, comments, pushes or tags; network limited to clone/fetch/ls-remote, unauthenticated api.github.com GETs, and one gitleaks release download. Every mutation was reverted and `git status --porcelain` verified empty afterward; the validator and battery were re-run green at the end to prove no residue."
+}

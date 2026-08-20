@@ -1,0 +1,46 @@
+== subject: wt-candidate @ 00e5146e43ff9011153452b83fedda706723c52b ==
+-- public-content self-test --
+public-content self-test ok: 7 seeded RED controls passed
+rc=0
+-- public-content live --
+public-content gate ok: 7 patterns, 41 allowlisted exact files
+rc=0
+-- v6 oracle audit self-test --
+v6 workflow oracle audit self-test: ok
+rc=0
+-- v6 oracle audit live --
+{
+  "schema": "workflow-oracle-audit@1",
+  "generated_at": "2026-08-18T15:55:15Z",
+  "finding_count": 0,
+  "findings": []
+}
+rc=0
+-- v6 candidate packet self-test --
+v6 candidate packet self-test: ok
+rc=0
+-- validate_v6_assurance --
+v6 assurance artifacts: schema checks passed (ZI-001 + candidate)
+rc=0
+-- skill inventory self-test+live --
+skill inventory self-test ok: 8 planted mismatches all failed closed
+skill inventory contract ok: 15 packaged skills; schema enum, event map, and verifier SKILL_NAMES match the glob exactly; 10 audited paths inside the inventory; every map entry carries a sentinel fixture
+rc=0
+-- sentinels self-test+live --
+sentinel self-test ok: planted RED rejected; honest UNKNOWN accepted
+sentinel corpus ok: 15 fixtures under plugins/epistemic-skills/contracts/epistemic-events/sentinels; every map entry resolves, every oracle rejects its seeded absence-as-success class
+rc=0
+-- loaded-descriptions self-test+live --
+loaded-description self-test ok
+loaded-description check LIVE_BLOCKED: no harness capture provided; package has 15 descriptions. Pass --capture <file> to compare a live listing. Package-local ceiling is not estate headroom.
+rc=0
+-- ruling-set self-test + scan --
+[PASS] shipped example preserves validation kernels
+[PASS] planted missing kernel fails closed
+validate_ruling_set self-test: PASS
+[PASS] docs/gauntlet-runs/successor-104-105-2026-08-07/arbitration.md
+[PASS] docs/gauntlet-runs/upgrades-landing-2026-08-03/arbitration.md
+[SKIP] docs/gauntlet-runs/commission-watch-pr110-2026-08-07/arbitration.md: no ruling-set@1 block (pre-contract artifact)
+[SKIP] docs/gauntlet-runs/es-v510-publication-2026-08-15/arbitration.md: no ruling-set@1 block (pre-contract artifact)
+ruling-set scan: 2 validated, 2 pre-contract skipped, 0 failed under docs/gauntlet-runs
+rc=0

@@ -1,0 +1,174 @@
+{
+ "seat": "seal-coupling",
+ "findings": [
+  {
+   "id": "RC5-SEAT-F1",
+   "severity": "P4",
+   "claim": "KL-SEAL-MAIN-COUPLING's release_consequence states the main-side freeze rule as \"main must not change inventoried files\", but that rule is under-inclusive: a main-side append to .ledger/entries.jsonl \u2014 a file that is NOT in the source inventory \u2014 also breaks the freeze PR closed, through a different oracle (check_ledger_append_only, LEDGER-REWRITTEN) rather than R5. An operator following the packet's stated rule literally would believe a routine main-side ledger append is safe during a freeze. It is not. No known_limits entry and no claim in the packet discloses this second coupling channel.",
+   "evidence": "Executed. (a) Inventory membership: parsed docs/v6/ES6-V6-CANDIDATE/source-inventory.json at C+1 \u2014 141 paths across workflows(6)/contracts(112)/ci_scripts(23); '.ledger/entries.jsonl' is NOT among them (while check_dco.py, dco.yml, release-security.yml, check_pin_tags.py, v6_generate_candidate_packet.py, requirement-register.json, validate_v6_assurance.py, test_v6_assurance_validator.py ARE). (b) Falsifier: control run `check_ledger_append_only.py --base <main@13f1ad7 ledger, 15 lines> --current .ledger/entries.jsonl` -> exit 0, 'ok ledger append-only: 8 line(s) appended over the merge base'. Probe run with ONE ordinary decision entry appended to main's copy (16 lines) -> exit 1, 'error LEDGER-REWRITTEN: byte 17742 (line 16) differs from the merge base'. (c) Disclosure search: programmatic scan of all 9 known_limits for {ledger, append-only, entries.jsonl, prefix} -> zero hits on any entry including KL-SEAL-MAIN-COUPLING; claim-to-proof-matrix.json scan for {\"do not append to main\", \"main's ledger\", \"main ledger\", \"ledger-rewritten\"} -> all False. (d) Materiality: docs/v6/OPERATOR-ACCEPTANCE-PROCEDURE.md item 5 makes known_limits the register the operator walks for main-branch couplings ('any main-branch disclosure in known_limits ... is still consistent with the live state at the moment of acceptance'). MITIGATIONS (all verified): the failure is fail-closed (red CI, not a silent ship); the correct doctrine IS written in-tree at docs/v6/operator-decision-record-2026-08-19.md ('for the duration of a freeze: do not append to main's ledger', with the same LEDGER-REWRITTEN result recorded as executed); zero live instances \u2014 D18/D19 were deliberately routed to that decision record instead of main's ledger, and main's 15 ledger lines are still an exact byte-prefix of the candidate's 23; acceptance item 5's live re-check would catch any instance. Not dischargeable on this SHA: the KL text is emitted by .github/scripts/v6_generate_candidate_packet.py lines 1168-1188, an INVENTORIED file, so changing it requires a re-cut.",
+   "repair_dischargeable_on_this_sha": false
+  },
+  {
+   "id": "RC5-SEAT-F2",
+   "severity": "P4",
+   "claim": "R4-NF2's repair had four enumerated limbs; three landed and are proven, but the fourth \u2014 'add the residual KL' \u2014 did not land. No known_limits entry records the secret-scan exemption residual. After anchoring, the ^docs/gauntlet-runs/.* exemption is still open-ended over FUTURE files and still not digest-bound, which is the specific contrast the arbitration drew against the repo's own es#186/SK-4 digest-binding doctrine. The refreshed CLM-SECRET-SCAN falsifier describes what the scoping PROVES but never states what the scoping still PERMITS.",
+   "evidence": "Executed. Arbitration letter (docs/gauntlet-runs/es-v6-rc4-delta-review-2026-08-19/arbitration.md on origin/claude/es-v6-rc4-delta-review, line 46): 'Repair (anchor the regex, add a narrowness control, refresh the falsifier text, add a KL) touches the config and packet'; Next-action 5 (line 118) repeats it explicitly as 'add the residual KL'. Limb audit at C: (1) ANCHOR landed \u2014 .gitleaks.toml now '''^docs/gauntlet-runs/.*''' (was unanchored), diff read at 375973c..03e972c; (2) NARROWNESS CONTROL landed and is proven in CI, not merely locally \u2014 GitHub jobs API for run 32292297681 at head_sha 546ccc8 shows step 'Gauntlet-record allowlist narrowness control' conclusion=success, and the rewritten step asserts four conditions including 'exemption leaked to a look-alike path (anchor lost)' for notdocs/gauntlet-runs/...; (3) FALSIFIER TEXT refreshed \u2014 CLM-SECRET-SCAN oracle+falsifier rewritten in the generator diff; (4) KL \u2014 ABSENT. Programmatic scan of all 9 known_limits ids for {gitleaks, secret, entropy, exemption, allowlist, gauntlet-runs, suppress}: the only hit is KL-DRAFT-CI on the bare word 'secret', which is just the workflow name 'full-history-secret-scan' in its list of five gating workflows, not a residual disclosure. Packet-wide grep for {open-ended, future-file, future file, digest bound} returns nothing in any known_limit. MITIGATIONS: the residual is materially smaller than at rc4 (rule-scoped to generic-api-key only, so provider-branded classes still fire inside the path \u2014 re-proven by the CI control's branded github-pat assertion; anchored, so path-traversal look-alikes no longer suppress); exploiting it requires a reviewed commit into an immutable record directory. Not dischargeable on this SHA: adding a KL edits the inventoried generator plus the packet.",
+   "repair_dischargeable_on_this_sha": false
+  },
+  {
+   "id": "RC5-SEAT-F3",
+   "severity": "P4",
+   "claim": "The operator ruling authorizing this panel (D19) states its scope as 'a GO/NO-GO on the same rc4 coordinates' and records the premise 'the candidate does not change for this repair'. Events falsified that premise: the candidate did change, rc4 (7408a46/e46c2486) -> rc5 (03e972c/546ccc8). The extension of D19's authority to the rc5 coordinates rests on ledger entry v6-lineage-panel-cap-extension-two-20260819-23, which is the dispatcher's own recorded gloss \u2014 the same provenance shape the fourth panel flagged as R4-NF5, but applied here to the SUBJECT of the review rather than to panel structure.",
+   "evidence": "Executed. D19 full wording read at docs/v6/operator-decision-record-2026-08-19.md lines 86-94 (byte-identical between origin/main@13f1ad7 and C \u2014 verified by empty `git diff` on that path): 'scoped narrowly to: whether R4-NF1 is discharged, whether the fourth panel's eight P4 findings are correctly dispositioned, and a GO/NO-GO on the **same** rc4 coordinates. ... the candidate does not change for this repair.' Chronology from primary git objects: the decision record landed on main via PR #198 squash 13f1ad7 (committed 2026-08-19T18:58:34Z), i.e. BEFORE the rc5 candidate 03e972c existed (19:08:00Z) and before the rc5 packet 546ccc8 (19:17:09Z). Ledger entry 23 (read at C) discloses the drift explicitly and honestly: \"The ruling named 'the same rc4 coordinates'; the subject is now rc5, because a main-side change to inventoried files broke the rc4 seal ... The narrow scope stands and the delta it reviews is the rc5 re-cut\" \u2014 but that adjudication is authored by the party the ruling authorizes. MITIGATIONS (verified live): the operator personally acted at the rc5 coordinates \u2014 GitHub issue-timeline API for PR #197 shows a single ready_for_review event at 2026-08-19T19:18:29Z by SternOne (the same account that merged PR #198), 80 seconds after the rc5 packet commit, with head.sha 546ccc8; the narrow scope itself (R4-NF1 + eight P4s + GO/NO-GO) is unchanged by the coordinate move; and R4-NF5's own discharge landed cleanly (D16/D17 supply full wording for ledger entries 20/21). Dischargeable on this SHA: a one-line operator confirmation in the acceptance record that D19 covers the rc5 coordinates; no new subject commits required.",
+   "repair_dischargeable_on_this_sha": true
+  }
+ ],
+ "checks_executed": [
+  {
+   "check": "VERIFY-1 Reproduce the rc4 failure historically: worktree at rc4 freeze e46c2486, merge current origin/main (13f1ad7), run validate_v6_assurance.py",
+   "result": "PASS",
+   "detail": "Merge clean (4 files: check_dco.py, dco.yml, release-security.yml, operator-decision-record-2026-08-19.md). Validator exit 1: 'R5 DIGEST MISMATCH: inventoried files changed after the packet was generated (restamp class): [.github/workflows/dco.yml, .github/workflows/release-security.yml, .github/scripts/check_dco.py]'. The three named files are EXACTLY the three KL-SEAL-MAIN-COUPLING names. The dispatcher's justification for rc5 is TRUE, not fabricated."
+  },
+  {
+   "check": "VERIFY-1b Control: rc4 freeze e46c2486 STANDALONE (no main merge)",
+   "result": "PASS",
+   "detail": "Validator exit 0. Confirms the dispatcher's claim that rc4 had no defect in its own tree \u2014 the failure is purely the merge-ref coupling, not a latent rc4 defect being laundered."
+  },
+  {
+   "check": "VERIFY-2 Prove rc5 fixes it: checkout 546ccc8, merge current origin/main, run validator",
+   "result": "PASS",
+   "detail": "Merge reports 'Already up to date' \u2014 origin/main@13f1ad7 is an ANCESTOR of C (git merge-base --is-ancestor confirms), so the merge is a no-op. Validator exit 0: 'schema + rule checks passed (ZI-001 + candidate)'."
+  },
+  {
+   "check": "VERIFY-2b Ledger append-only with CI's exact inputs, both invocation forms from epistemic-flexibility.yml lines 236-266",
+   "result": "PASS",
+   "detail": "--self-test: PASS (7/7 byte cases + 3 ref cases). Dispatch form `--base-git-ref 13f1ad7 --current .ledger/entries.jsonl`: exit 0. PR form `--base <git show main:.ledger/entries.jsonl> --current .ledger/entries.jsonl`: exit 0. Both report 'ok ledger append-only: 8 line(s) appended over the merge base' (main 15 lines, candidate 23)."
+  },
+  {
+   "check": "Live merge-ref identity: fetch refs/pull/197/merge and compare its tree to C+1's tree",
+   "result": "PASS",
+   "detail": "GitHub-computed merge commit 7534fd84357d45920d22b6db8b99401becbf1bb7; its tree 584d85588ce3d195b994780a0b102203a0e41077 is BYTE-IDENTICAL to C+1's tree. Strongest available proof that CI at C+1 validated exactly the frozen tree, not a reconstruction."
+  },
+  {
+   "check": "Live PR #197 state via REST (dispatcher claim: 'now READY, all required checks green at C+1')",
+   "result": "PASS",
+   "detail": "state=open, draft=False, mergeable=True, mergeable_state=clean, head.sha=546ccc8 (C+1), base.sha=13f1ad7 (current main). Claim verified, not taken on trust."
+  },
+  {
+   "check": "Live check-runs at C+1 (the R4-NF1 discharge evidence)",
+   "result": "PASS",
+   "detail": "18 check runs at 546ccc8. All five required green with the run ids the dispatcher named: DCO 32292298616 success, stdlib-checks 32292297976 success, full-history-secret-scan 32292297681 success, contract 32292297781 success, build 32292297696 success. The parallel 'skipped' rows are the earlier draft-state runs (32292185xxx, 19:17:18Z) \u2014 the KL-DRAFT-CI phenomenon behaving exactly as disclosed. contract-macos skipped (KL-MACOS-162)."
+  },
+  {
+   "check": "R4-NF1 independent re-execution: run the SHIPPED unsigned_commits() over the live PR #197 commit list",
+   "result": "PASS",
+   "detail": "31 commits fetched from the paginated GitHub API (same source github_commits() uses). Shipped logic returns ZERO unsigned -> DCO passes. Forensic control with the #198 repair logically removed: SEVEN would be unsigned \u2014 the five attested Cursor Agent SHAs plus TWO merges (59587eede339 from the rc3 era and 375973c9d002, the NEW rc5 main-merge). Note the rc5 delta itself introduced a commit that would have been DCO-red under the old policy; the merge-exemption limb covers it. check_dco.py is byte-identical between main@13f1ad7 and C+1 (empty diff), and dco.yml is pull_request_target with `ref: base.sha`, so main's copy is what executes."
+  },
+  {
+   "check": "DCO attestation hardness: --self-test plus six adversarial forgery probes of my own",
+   "result": "PASS",
+   "detail": "Self-test: PASS (7 planted controls, including 'an unsigned commit sharing an attested prefix is NOT exempt'). My probes: 12-hex prefix of an attested SHA CAUGHT; attested SHA uppercased CAUGHT; attested SHA with trailing space CAUGHT; unrelated unsigned single-parent CAUGHT. Allowlist is exact-40-hex, case-sensitive, whitespace-intolerant, and CLOSED. Unsigned merges by a stranger and octopus merges are ALLOWED \u2014 that is the operator-sanctioned D18 merge exemption (arbitration Next-action 1(b) prescribed it), with its residual recorded in the code comment ('content a merge commit DOES author, namely conflict resolutions, is uncertified'). Not a new finding."
+  },
+  {
+   "check": "VERIFY-3a KL-SEAL-MAIN-COUPLING statement truth, clause by clause",
+   "result": "PASS",
+   "detail": "TRUE as written on every load-bearing clause. 'digest seal binds inventoried sources as they stood at C' \u2014 confirmed (candidate_tree_hash + 141 per-file digests). 'CI runs the freeze PR against its MERGE ref' \u2014 confirmed: actions/checkout@v7.0.1 in epistemic-flexibility.yml carries NO `ref:` override, so pull_request checks out refs/pull/N/merge; independently corroborated by the live merge-ref tree identity above. 'a change on main to ANY inventoried file ... fails R5 DIGEST MISMATCH ... even though the candidate branch itself is untouched' \u2014 reproduced twice (historical rc4, prospective simulation). 'Measured, not theorised: (check_dco.py, dco.yml, release-security.yml)' \u2014 the three named files match the validator's own output member-for-member. No embellishment found."
+  },
+  {
+   "check": "VERIFY-3b KL-SEAL-MAIN-COUPLING release_consequence adequacy",
+   "result": "FAIL",
+   "detail": "Finding RC5-SEAT-F1. Adequate for the digest-seal channel it scopes; under-inclusive as the general main-side freeze rule because it omits the non-inventoried .ledger/entries.jsonl channel, proven to break the freeze closed via LEDGER-REWRITTEN. Also confirmed: NO mechanical guard exists anywhere on main that blocks a main-side edit to an inventoried file during a freeze \u2014 the rule is purely procedural (owner: operator), which the KL does disclose via its owner field."
+  },
+  {
+   "check": "VERIFY-3c Freshness-overclaim test on the whole packet",
+   "result": "PASS",
+   "detail": "No overclaim found. Packet generated_at 19:14:10Z; requalification captured_at 19:12:22Z; the ready-mark runs are 19:18-19:19Z, i.e. AFTER the seal. Grep of the entire packet directory for the C+1 SHA and for the ready-mark run ids (3229229*) returns ZERO hits \u2014 the packet claims no evidence it could not hold. CLM-REQUIRED-JOB (status PROVED) claims only the DISPATCH property, proven by the R8 drill, not that jobs are green at C+1. KL-DRAFT-CI states the horizon explicitly: 'Local clean-room green is not GitHub required-job green.' The live ready-mark evidence correctly lives outside the seal."
+  },
+  {
+   "check": "VERIFY-4a Blast-radius census: classify every file in git diff --stat 7408a46..03e972c",
+   "result": "PASS",
+   "detail": "11 files, ZERO in category (c). (a) absorbed from main (PR #198, 03b7724..13f1ad7): check_dco.py, dco.yml, docs/v6/operator-decision-record-2026-08-19.md. (a)+(b) mixed: release-security.yml (main +38, then the R4-NF2 narrowness-control rewrite), .gitleaks.toml (main +18, then the R4-NF2 anchor). (b) named P4 repairs: check_pin_tags.py [R4-NF3 comment], requirement-register.json [R4-NF4 superset overstatement corrected], validate_v6_assurance.py [R4-NF4 OWNER_VOCABULARY + R4-NF8 explicit REPO_ROOT], test_v6_assurance_validator.py [R4-NF4 planted control], v6_generate_candidate_packet.py [R4-NF2 falsifier refresh + KL-SEAL-MAIN-COUPLING emission]. The one item that is neither literally (a) nor a named P4 repair is .ledger/entries.jsonl (+2 entries recording D18/D19) \u2014 sanctioned, not a defect: docs/v6/operator-decision-record-2026-08-19.md prescribes exactly this ('ledger entries for D18 and D19 are appended after the freeze resolves, in the candidate lineage'), and the append preserves main's 15 lines as an exact prefix."
+  },
+  {
+   "check": "VERIFY-4b git diff C..C+1 must touch ONLY docs/v6/ES6-V6-CANDIDATE/",
+   "result": "PASS",
+   "detail": "14 files, all additions, all under docs/v6/ES6-V6-CANDIDATE/. `git diff --name-only C C+1 | grep -v '^docs/v6/ES6-V6-CANDIDATE/'` returns empty."
+  },
+  {
+   "check": "VERIFY-5 C-tree discipline and rc4 packet immutability",
+   "result": "PASS",
+   "detail": "`git ls-tree -r C -- docs/v6/ES6-V6-CANDIDATE` returns 0 entries \u2014 C carries no packet directory, by design. The rc4 packet remains readable and immutable in history at e46c2486 (14 files); read its promotion-packet.json there: candidate_sha 7408a462..., readiness NOT_READY, generated_at 2026-08-19T14:01:58Z. The rc5 repair commit deletes the rc4 packet dir inherited through the merge's first parent (e46c248), which is why the net 7408a46..C diff shows no packet paths."
+  },
+  {
+   "check": "VERIFY-6a S1 seal falsifier at the new coordinates, fresh clone from GitHub (--no-local equivalent)",
+   "result": "PASS",
+   "detail": "Fresh `git clone https://github.com/ZMS-Labs/epistemic-skills.git` at 546ccc8, 0 dirty entries. Baseline validator exit 0. One-byte append to plugins/epistemic-skills/contracts/v6-assurance/validate_v6_assurance.py -> exit 1, 'R5 DIGEST MISMATCH ... [plugins/epistemic-skills/contracts/v6-assurance/validate_v6_assurance.py]' \u2014 fails closed naming the exact file. Restored -> exit 0, tree clean. Note the traceback surfaces as an unhandled AssertionError rather than a formatted message; it exits 1 either way, so the fail-closed property holds. Not raised as a finding."
+  },
+  {
+   "check": "VERIFY-6b source-inventory names only git-tracked paths; digests recomputed independently",
+   "result": "PASS",
+   "detail": "141 paths (workflows 6 + contracts 112 + ci_scripts 23), exactly matching the 141 file_digests keys \u2014 no orphan digests, no undigested paths. All 141 present in `git ls-tree -r 03e972c`; ZERO untracked paths; zero __pycache__ or absolute paths (contrast: the LEGACY ZI-001 @1 inventory does list a .pyc, but it is schema @1 with no digests and the validator says so explicitly). I recomputed all 141 sha256 digests from file bytes: 141/141 match."
+  },
+  {
+   "check": "VERIFY-6c candidate_tree_hash equals git rev-parse C^{tree}",
+   "result": "PASS",
+   "detail": "Inventory candidate_tree_hash = 5355e26e625f5b8f2bd74b7cdd710cbafeff34f4; `git rev-parse 03e972c5d427238033cb90d66846adabaf11928d^{tree}` = 5355e26e625f5b8f2bd74b7cdd710cbafeff34f4. Exact match. exact_start_sha = C."
+  },
+  {
+   "check": "Prospective coupling probe: simulate an ordinary FUTURE main-side edit to an inventoried file, merge into C+1, validate",
+   "result": "PASS",
+   "detail": "Appended a comment to .github/workflows/epistemic-flexibility.yml on a simulated main head, merged into 546ccc8 -> validator exit 1, 'R5 DIGEST MISMATCH ... [.github/workflows/epistemic-flexibility.yml]'. The disclosed risk is LIVE and prospective at these exact coordinates, not merely a historical anecdote. KL-SEAL-MAIN-COUPLING is warning about a real, current exposure."
+  },
+  {
+   "check": "R4-NF2 four-limb audit",
+   "result": "FAIL",
+   "detail": "Finding RC5-SEAT-F2. Limbs 1-3 (anchor, in-CI narrowness control, refreshed falsifier) landed and are proven \u2014 the narrowness-control step is green in CI run 32292297681 at C+1. Limb 4 ('add the residual KL', arbitration line 46 and Next-action 5) did not land; no known_limits entry records the residual."
+  },
+  {
+   "check": "R4-NF4 and R4-NF8 repairs landed and are mutation-hard",
+   "result": "PASS",
+   "detail": "R4-NF4: OWNER_VOCABULARY = OPERATOR_CLASS_OWNERS | {agent, program} added to validate_v6_assurance.py with a fail-closed check in validate_matrix; requirement-register.json's 'strict superset ... never narrows' corrected to a precise limit naming the 'operator-team' spelling class. Planted control added to test_v6_assurance_validator.py ('owner-outside-closed-vocabulary') plus two invariant assertions. R4-NF8: main() now passes REPO_ROOT explicitly to validate_source_inventory (x2) and validate_promotion_packet. Full suite: 'v6 assurance validator self-test: PASS', exit 0. Honesty signal worth recording: the new vocabulary check found a genuinely unclassified owner spelling ('program') sitting in the shipped matrix, and the code comment says so rather than hiding it."
+  },
+  {
+   "check": "R4-NF9 repair landed (superseded rounds itemized, not laundered)",
+   "result": "PASS",
+   "detail": "evidence/requalification.json superseded_rounds now itemizes BOTH reds of the abandoned 74c8314 round \u2014 secret-scan 32260127759 and custody 32260118894 \u2014 with the note 'Both reds are itemized here rather than only the decisive one (R4-NF9)'. The current round's own aggregate red is also disclosed: I verified run 32291435791 live \u2014 gating Linux job 'contract' success, dispatch-only 'contract-macos' failure on 'Custody mission lifecycle unit tests', exactly the disclosed es#162/KL-MACOS-162 class, and non_flip_records records it."
+  },
+  {
+   "check": "R4-NF5 discharge (full-wording record for ledger entries 20/21)",
+   "result": "PASS",
+   "detail": "docs/v6/operator-decision-record-2026-08-19.md carries D14-D19; D16 supplies full wording for ledger entry v6-rc4-repair-shape-full-refreeze-20260819-20 and D17 for v6-lineage-panel-cap-extension-20260819-21, both naming their ledger ids explicitly. File is byte-identical between origin/main and C. The arbitration's stated discharge ('echo-certification or full-wording record') is met for entries 20/21."
+  },
+  {
+   "check": "D19 coordinate authority for the rc5 subject",
+   "result": "FAIL",
+   "detail": "Finding RC5-SEAT-F3. D19's recorded premise 'the candidate does not change for this repair' is falsified by events; authority over rc5 coordinates rests on the dispatcher's own ledger entry 23. Mitigated by an affirmative live operator act at C+1 (ready_for_review by SternOne, 19:18:29Z) and by entry 23's explicit self-disclosure of the drift."
+  },
+  {
+   "check": "Packet mutation-hardness: enum-flip falsifiers",
+   "result": "PASS",
+   "detail": "Probe A (readiness -> terminal + independent_gauntlet='GO', blockers left): exit 1, 'independent_gauntlet=GO requires independent_gauntlet_ref (a bare enum is not a verdict)'. Probe B (same plus blocking_claims emptied): exit 1, same refusal. Packet restored, baseline green. The self-certification refusal is real: readiness=NOT_READY, self_certification=refused, blocking_claims=['CLM-INDEPENDENT-GAUNTLET'], requested_irreversible_acts=[]."
+  },
+  {
+   "check": "R3-NF2 closure still holds at rc5 (no stale coordinate anchors) and subject derivation lands on the true subject",
+   "result": "PASS",
+   "detail": "SUCCESSOR-SEAT-HANDOFF.md contains ZERO occurrences of 9aecd46, 6db8c50, 16b80ac, 7ce03b9, 7408a46, e46c248. Of all 40-hex strings in the packet, only six resolve to real git commits: C (18 occurrences) plus five historical SHAs confined to legitimate superseded contexts (gauntlet-request.md lineage history and requalification.json superseded_rounds); the remaining matches are 40-char prefixes of 64-char sha256 digests. The handoff's own derivation rule executes correctly: `git log -1 --format=%H -- docs/v6/ES6-V6-CANDIDATE/promotion-packet.json` -> 546ccc8 (C+1), parent -> 03e972c (C)."
+  },
+  {
+   "check": "KL-MAIN-137 currency against live main",
+   "result": "PASS",
+   "detail": "Both es#137 closure commits (dc33de288077..., e8a476c73075...) are NOT ancestors of origin/main@13f1ad7. The limit's statement 'present on origin/main; closed only in this candidate tree' remains true at the moment of review."
+  },
+  {
+   "check": "Other main-coupled oracles census (is the coupling surface fully mapped?)",
+   "result": "PASS",
+   "detail": "Three channels exist, found by grepping all workflows for base.sha / origin/main / merge-base / pull_request_target: (1) the R5 digest seal via the merge-ref checkout \u2014 disclosed by KL-SEAL-MAIN-COUPLING; (2) the ledger append-only check against base.sha \u2014 NOT disclosed in the packet (RC5-SEAT-F1); (3) dco.yml pull_request_target executing the BASE revision's script \u2014 this is the channel through which R4-NF1 was repaired, and it is documented in D18. check_public_content.py's digest allowlist is self-contained within one tree, not main-coupled."
+  },
+  {
+   "check": "Final clean-clone verification sweep (confirm no scratch mutation contaminated any result)",
+   "result": "PASS",
+   "detail": "Fresh clone from GitHub at 546ccc8, 0 dirty entries. validate_v6_assurance.py exit 0; test_v6_assurance_validator.py exit 0; check_dco.py --self-test exit 0 (7 controls); check_ledger_append_only.py vs main exit 0; check_pin_tags.py exit 0 (all registered pins peel correctly against live origin); test_v6_candidate_packet.py exit 0."
+  }
+ ],
+ "evidence_log": "SEAT POSTURE: no P1, P2, or P3 from this seat. Three P4 findings. Under the lineage rule the fourth panel applied (\"Open P4s do not move the enum\"), this seat contributes NO BLOCKER to a GO. The dispatcher's central claim survived every falsification attempt I could execute.\n\nWORKSPACE (all absolute):\n- <build-scratch>/work/repo \u2014 clone of https://github.com/ZMS-Labs/epistemic-skills.git, all branches fetched\n- .../work/wt-rc4 \u2014 rc4 freeze e46c2486 + current main merged (the historical reproduction)\n- .../work/wt-rc4-pure \u2014 rc4 freeze e46c2486 standalone (the control)\n- .../work/wt-rc5 \u2014 C+1 546ccc8 + main merge\n- .../work/fresh and .../work/final \u2014 independent clones straight from GitHub (falsifier and final sweep)\nPython 3.11.15, git 2.43.0. No push, no comment, no write to GitHub at any point; every GitHub interaction was an unauthenticated REST GET or a git fetch.\n\n1. THE CENTRAL CLAIM IS TRUE, AND I TRIED HARD TO BREAK IT.\nThe seat brief told me that if the rc4 failure does not reproduce, \"the entire justification for rc5 is false and that is a P1 finding against this packet.\" It reproduces exactly. Merging current origin/main (13f1ad7) into the rc4 freeze (e46c2486) yields validator exit 1 with \"R5 DIGEST MISMATCH ... ['.github/workflows/dco.yml', '.github/workflows/release-security.yml', '.github/scripts/check_dco.py']\" \u2014 the same three files KL-SEAL-MAIN-COUPLING names, member for member, with no embellishment. The control matters as much as the probe: rc4 standalone validates green (exit 0), so the failure really is the coupling and not a latent rc4 defect being reframed as someone else's fault. And the coupling is not a one-off story about the past \u2014 I simulated an ordinary future main-side edit to an inventoried workflow and the freeze went red the same way, so the disclosure is warning about a live exposure at these coordinates.\n\n2. rc5 FIXES IT, AND THE FIX IS VERIFIED ON GITHUB'S OWN MERGE REF, NOT ONLY MY RECONSTRUCTION.\norigin/main is now an ancestor of C, so the merge is a no-op (\"Already up to date\") and the validator exits 0. The strongest single piece of evidence I gathered: I fetched refs/pull/197/merge and GitHub's own computed merge tree (584d8558...) is BYTE-IDENTICAL to C+1's tree. CI at C+1 therefore validated exactly the frozen bytes. The ledger append-only check passes in both of CI's invocation forms.\n\n3. R4-NF1 IS DISCHARGED ON PRIMARY EVIDENCE, RE-DERIVED RATHER THAN TRUSTED.\nLive check-runs at 546ccc8: DCO 32292298616, stdlib 32292297976, secret-scan 32292297681, contract 32292297781, build 32292297696 \u2014 all success, matching the run ids the dispatcher supplied. I did not stop at the green badge: I pulled the live 31-commit PR list from the API and ran the SHIPPED unsigned_commits() over it, getting zero unsigned. Removing the #198 repair logically yields seven. One of those seven is 375973c, the rc5 delta's OWN main-merge \u2014 so the rc5 re-cut introduced a commit that would itself have been DCO-red under the old policy, and the merge-exemption limb covers it. I also probed the attestation allowlist adversarially (prefix, case, whitespace variants) and it held closed on all of them.\n\n4. WHERE I PUSHED HARDEST, AND WHAT GAVE.\nMy seat's real assignment was to interrogate the new disclosure rather than admire it. KL-SEAL-MAIN-COUPLING's *statement* is true on every clause I could test. Its *release_consequence* is where I found the gap. It tells the operator \"main must not change inventoried files\" \u2014 but .ledger/entries.jsonl is NOT inventoried, and a single ordinary main-side append to it breaks the freeze PR closed through a different oracle entirely (LEDGER-REWRITTEN, byte 17742, line 16). I executed both the control and the probe. An operator reading the packet's rule literally would take an action the rule appears to permit and turn the freeze red. That is RC5-SEAT-F1. It matters more than it might look because OPERATOR-ACCEPTANCE-PROCEDURE.md item 5 makes known_limits the register the operator walks for exactly this class of main-branch coupling. It stays P4 rather than higher because the failure is fail-closed, the correct doctrine IS written in-tree at docs/v6/operator-decision-record-2026-08-19.md, there are zero live instances (the program actually followed the unwritten rule \u2014 D18/D19 were deliberately routed to the decision record instead of main's ledger), and acceptance item 5's live re-check would catch any instance.\n\nSecond, a limb audit of R4-NF2 against the arbitration's own letter: three of four limbs landed and are genuinely proven \u2014 the anchor is real, the CI narrowness control is green in run 32292297681 and asserts look-alike-path leakage as a failure, and the falsifier text is rewritten. The fourth limb, \"add the residual KL\", did not land. No known_limits entry records that the exemption is still open-ended over future files and still not digest-bound \u2014 the exact contrast the fourth panel drew against the repo's own digest-binding doctrine. The refreshed falsifier says what the scoping proves but never what it still permits. That is RC5-SEAT-F2.\n\nThird, on authority: D19 authorizes this panel on \"the same rc4 coordinates\" and records \"the candidate does not change for this repair.\" The candidate changed. The bridge to rc5 coordinates is ledger entry 23 \u2014 the dispatcher's own gloss, the same provenance shape R4-NF5 flagged, here applied to the SUBJECT rather than to panel structure. I checked whether the operator had touched the rc5 coordinates at all, and they had: the PR timeline shows a single ready_for_review by SternOne at 19:18:29Z against head 546ccc8, 80 seconds after the packet commit. That is a real operator act at these coordinates and it is why this is P4 and dischargeable at acceptance rather than something heavier. That is RC5-SEAT-F3.\n\n5. WHAT I DELIBERATELY DID NOT RAISE.\nI want the record to show the near-misses I discarded, because a panel that reports only hits is not calibrated. (a) The KL says a main change to \"ANY inventoried file\" makes the merge tree differ \u2014 strictly, a byte-identical main-side change would not, which is exactly what happened with .gitleaks.toml in the rc4 case. The phrasing over-warns, which is the safe direction, and the program demonstrably understands the nuance (the decision record reasons about it explicitly). Not a defect. (b) The R5 failure surfaces as an unhandled AssertionError traceback rather than a formatted message. It exits 1, so the fail-closed property is intact. Cosmetic. (c) The merge exemption in check_dco.py is broad \u2014 any merge by anyone is exempt. That is precisely what arbitration Next-action 1(b) prescribed and D18 ratified, with the residual recorded in the code comment. Sanctioned, not a finding. (d) README.md names seven of the nine R4-NF letters; SUCCESSOR-SEAT-HANDOFF.md names all nine and is the authoritative disposition surface, and README does not claim completeness. Not a finding. (e) The rollback field describes main via PR #195/03b7724 and omits #198. It is not false, it hedges explicitly (\"never assumed from this dated record\"), README documents the dated-facts-plus-live-recheck pattern as the R3-NF3 repair, and the omission understates main's state \u2014 conservative direction. Not a finding. (f) The +2 ledger entries are the one census item that is neither absorbed-from-main nor a named P4 repair, but the decision record prescribes exactly this routing, and the append preserves main's 15 lines as an exact prefix. Not a category-(c) violation.\n\n6. POSITIVE RESULTS WORTH THE OPERATOR'S ATTENTION.\nThe blast-radius census is clean: 11 files, zero unexplained. C\u2192C+1 touches only the packet directory. C carries no packet directory; the rc4 packet is immutable and readable at e46c2486. The seal is real and tight: 141 inventoried paths, all git-tracked, all digested, and I recomputed all 141 sha256 values independently \u2014 141/141 match; candidate_tree_hash equals C's tree exactly; a one-byte flip fails closed naming the file and restoring returns green. The packet refuses to self-certify and I could not force it: both enum-flip probes were refused with \"a bare enum is not a verdict.\" And on the question the brief specifically asked \u2014 does the packet overclaim freshness it cannot hold \u2014 the answer is no, demonstrably. The packet was sealed at 19:14 and the ready-mark runs are 19:18-19:19; a grep of the whole packet directory for the C+1 SHA and for those run ids returns zero hits. It claims requalification at C, which I verified live, and defers ready-mark evidence to the live gate where it belongs. That is the correct architecture given the seal, and it is the opposite of the restamp pathology this lineage exists to prevent.\n\nREMAINING EXPOSURE THE OPERATOR SHOULD CARRY FORWARD: the freeze is only as valid as main is quiet, and nothing mechanical enforces that \u2014 I confirmed there is no guard anywhere on main blocking edits to inventoried files during a freeze. The packet discloses this honestly and assigns it owner=operator, which is the right call, but the stated rule is narrower than the true constraint (F1). Because main@13f1ad7 is currently an ancestor of C and the merge-ref tree is byte-identical to C+1, the freeze is valid AT THIS INSTANT; any main commit touching an inventoried file, or any append to main's ledger, invalidates it and forces another re-cut."
+}

@@ -20,7 +20,7 @@ alone; the judge is deterministic script code.
 ## Routine presentation check — not a UAT run
 
 A UI-facing change does not automatically require the UAT container. Before Step 0,
-apply the routine-work gate from `using-epistemic-skills/reference/routine-fast-path.md`.
+apply the routine-work gate from `metacognate/reference/routine-fast-path.md`.
 The change must be reversible, local, directly checkable, and non-precedential.
 
 For an unfamiliar routine-looking presentation change, inspect the component and its

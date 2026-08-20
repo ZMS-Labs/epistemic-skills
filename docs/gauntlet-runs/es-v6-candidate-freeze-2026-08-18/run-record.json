@@ -1,0 +1,207 @@
+{
+ "conditions": [
+  {
+   "condition": "Either (a) remove the paths: blocks from epistemic-flexibility.yml's pull_request/push triggers (matching the repo's own adjudicated treatment of release-security.yml), making the statement true; or (b) demote CLM-WF-PATH-COVERAGE to PARTIAL with a known_limit enumerating the 72 uncovered tracked files. In both paths: narrow the release_consequence to the property actually proved (path-filter dispatch coverage) and add a separate honest-status claim for draft-gating and fail-fast skip risk; strengthen v6_audit_workflow_oracles.py to classify whole-tree readers (git ls-files walks) as requiring unfiltered triggers.",
+   "falsifier": {
+    "method": "At the re-frozen tree: evaluate the changed-file set of a scratch PR confined to a previously-unfiltered file against the triggers (or re-run cnp's fnmatch evaluation); parse the matrix row's status and release_consequence.",
+    "threshold": "Path (a): zero tracked files outside the filter (filter absent). Path (b): status == PARTIAL with the 72-file limit recorded. Both: release_consequence no longer claims silent-skip coverage. A PROVED status with the current statement and filter leaves the defect standing.",
+    "timeframe": "At re-freeze; the row edit necessarily produces a new SHA, so it cannot be discharged as a condition on 00e5146."
+   },
+   "owner": "agent"
+  },
+  {
+   "condition": "cleanroom_ci.sh (or the workflow-oracle audit) gains a completeness assertion \u2014 every python-invoking line in the workflow is either extracted or on an explicit, justified in-repo exclusion list, failing on divergence \u2014 and prints extracted-of-total plus the workflows it does not read; argparse-usage SKIPs counted into the headline; KL-DRAFT-CI rewritten to name all five skipped gating jobs and the measured scope (34 of 53 lines of one of six workflows), and to note that independent step execution cannot observe CI fail-fast ordering.",
+   "falsifier": {
+    "method": "Apply the extractor regex at the re-frozen tree against the workflow; diff extracted set vs full enumeration; grep for the completeness assertion and run the harness after commenting out one extractable step's indentation.",
+    "threshold": "The harness fails (or lists the exclusion) when counts diverge, and its output states numerator and denominator; KL-DRAFT-CI enumerates 5/5 skipped jobs. A bare 'N passed' with a non-empty unlisted complement leaves the defect standing.",
+    "timeframe": "At re-submission; re-check on every edit to epistemic-flexibility.yml."
+   },
+   "owner": "agent"
+  },
+  {
+   "condition": "A known_limit (kind: integrity) recording that origin/main is red on required stdlib-checks at the Public-content step, that eleven downstream release-gate steps have not executed on main's head, and that this candidate line is the in-flight fix; the rollback sentence qualified accordingly.",
+   "falsifier": {
+    "method": "Grep the re-submitted packet's known_limits for the main-red disclosure; independently re-read the newest push run on main (list_workflow_runs branch=main, then job/step conclusions) at the moment of operator acceptance.",
+    "threshold": "Disclosure present AND consistent with the live state at acceptance time (a subsequent green push to main retires the disclosure need and falsifies the finding). Missing disclosure with main still red leaves the defect standing.",
+    "timeframe": "Disclosure at re-submission; live re-check at the moment of operator acceptance."
+   },
+   "owner": "agent"
+  },
+  {
+   "condition": "(a) Either make allowlist entries pattern-scoped, or record a sha256 per allowlisted file at exemption time and fail closed when an allowlisted file changes without an allowlist-review update; or redact/relocate the parent_program string per the addendum's own disposition. (b) Correct CLM-PUBLIC-CONTENT's closure_path to state the true blast radius, and reconcile its falsifier text with its allowlist-scoped statement. (c) Regenerate evidence/public-content.json at the subject SHA on a clean tree (collector refuses on dirty git status), so stamped SHA and stdout are consistent. (d) Retire the three inert allowlist entries and record an owner/review cadence for the list.",
+   "falsifier": {
+    "method": "Re-run entropy-demon's seeded probe (append pattern-matching strings to an allowlisted, actively-edited file; run the gate and any accompanying guard); diff the evidence JSON's stamped SHA against its stdout allowlist count at that SHA; read the closure_path text.",
+    "threshold": "Seeded content in an allowlisted file is detected by the gate or an accompanying integrity check; evidence SHA and stdout are mutually consistent; closure_path names both files and the exemption granularity. Gate exit 0 on the seeded probe with no guard leaves the defect standing.",
+    "timeframe": "At re-submission; re-verify after any allowlist or scan_text change."
+   },
+   "owner": "agent implements; operator reviews the allowlist-policy decision (scrub vs allowlist is the operator's security call per the gate's RL-8 note)"
+  },
+  {
+   "condition": "blocking_claims and known_limits derived from the matrix: every BLOCKED claim, every claim whose owner contains 'operator', and every claim whose release_consequence starts with P1 appears in blocking_claims or in a known_limits entry naming it (owner field added to known_limits); an issue absent from ISSUE_DISPOSITIONS is a hard generator failure.",
+   "falsifier": {
+    "method": "Load the re-submitted promotion-packet.json and matrix; assert the derivation property over all claims; run the generator with a stub tracker containing an unknown gate:operator issue.",
+    "threshold": "Zero unlisted BLOCKED / operator-owned / P1-consequence claims, and the unknown-issue run exits non-zero. Currently 4 BLOCKED unlisted, 2 holds without limits, 2 P1-consequence claims unlisted \u2014 any recurrence leaves the defect standing.",
+    "timeframe": "At re-submission; one command against the committed artifacts."
+   },
+   "owner": "agent"
+  },
+  {
+   "condition": "A written operator-acceptance procedure in a repo- or operator-authored source: who may accept, what the acceptor personally verifies (the four operator holds and the R3 ratify-or-reverse decision among them), the artifact and schema fields (accepted_by, accepted_at, verdict provenance) recording it, and the explicit statement that BUILD-freeze acceptance authorizes nothing beyond recording the state.",
+   "falsifier": {
+    "method": "Grep the tree for the procedure document; inspect promotion-packet.schema.json for the acceptance/provenance fields; confirm the procedure names an acceptor and a recording artifact.",
+    "threshold": "At least one procedure document naming acceptor + recorded-acceptance artifact, plus schema fields able to hold it. Observed today: none in tree, none in #191, none in schema.",
+    "timeframe": "Before operator acceptance is requested of the replacement packet."
+   },
+   "owner": "operator (authors or approves); agent may draft"
+  },
+  {
+   "condition": "A committed requirement register / crosswalk keyed to #191's clause ids and RELEASING.md gate items, mapping each of the 8 claim classes and 16 evidence classes to covering claims or explicit NOT-APPLICABLE dispositions with reasons; a compatibility class claim added; validator fails on any registered requirement with neither claim nor disposition; CLM-REQUIRED-JOB's subject widened to all six workflows or its statement narrowed.",
+   "falsifier": {
+    "method": "For each enumerated class/gate item, search the register and matrix for the mapped claim or disposition; run the validator against a register entry with the mapping deleted.",
+    "threshold": "Every named class maps to at least one claim or recorded N/A; validator exits non-zero on the deleted mapping. Any unmapped class (compatibility today) leaves the defect standing.",
+    "timeframe": "Before the next candidate freeze is submitted."
+   },
+   "owner": "agent"
+  },
+  {
+   "condition": "A known_limit plus a LIMITED matrix row recording that guard path matching is lexical and can diverge from filesystem resolution through symlinked parents, with the concrete probe as evidence; the deleted safe-direction reasoning reinstated as a comment at _collapse_parent_segments. No matching-behavior change in this freeze.",
+   "falsifier": {
+    "method": "Grep the re-submitted packet for the limit/row; run chesterton-gate's symlink-and-parent-segment battery in the candidate worktree comparing evaluate()['matched'] against realpath containment.",
+    "threshold": "The limit and row exist and cite the probe; the battery still demonstrating >= 1 divergence case with no disclosure leaves the defect standing (zero divergence cases would instead falsify the finding itself).",
+    "timeframe": "At re-submission; probe runs in under a second."
+   },
+   "owner": "agent"
+  }
+ ],
+ "depth": "standard",
+ "docket_mode": "manual-docket",
+ "dossier": {
+  "frozen_at": "2026-08-18T17:15:00Z",
+  "path": "dossier.md",
+  "sha256": "8ba32c01de1c3499b63316db4cb56902b99d07ee42a64dfa423491ef60c02b89"
+ },
+ "evidence_root": {
+  "content_sha256": "37c281cbca333bf1afe7b8bc13d13d96c2c939c2051e781cd333c15008720c22",
+  "path": "evidence"
+ },
+ "fingerprint": {
+  "path": "reports/fingerprint.json",
+  "sha256": "20f773cd32e8619b812db9c93a59db9678893558786d6ece94ffb52544a356f4"
+ },
+ "generated_by": "scripts/finalize_run.py",
+ "independence_mode": "concurrent-isolated-subagents",
+ "reports": [
+  {
+   "lens": "chesterton-gate",
+   "path": "reports/chesterton-gate.md",
+   "sha256": "d98519a4624f8320518038a5ff735a0760a9d4569c5190d59a05c1704b57cfb8"
+  },
+  {
+   "lens": "cloud-native-purist",
+   "path": "reports/cloud-native-purist.md",
+   "sha256": "d16dd61d515bccee7c3f20ac07fd7aea56e9f23c2eb3f623239d9a637d141dd1"
+  },
+  {
+   "lens": "dispatcher-mechanical-criticism",
+   "path": "reports/dispatcher-mechanical-criticism.md",
+   "sha256": "9f02a79157674abce8a50bda2e9e6e13c1dd9b45d8d4f65af1f3db9578d95ab8"
+  },
+  {
+   "lens": "entropy-demon",
+   "path": "reports/entropy-demon.md",
+   "sha256": "159b5d6c317045340fa3137e297a7841860bb877e3280a92043a199765d37132"
+  },
+  {
+   "lens": "human-automation-handoff-auditor",
+   "path": "reports/human-automation-handoff-auditor.md",
+   "sha256": "da557cf97802de326c950424a19e4e0e65b21bc3bd621c7f0c71e90436598109"
+  },
+  {
+   "lens": "requirements-traceability-auditor",
+   "path": "reports/requirements-traceability-auditor.md",
+   "sha256": "9bba5104cf55ceb295851bfec2a06028020a28a181ecbf10c8ce50ba8c26b7fa"
+  }
+ ],
+ "role_binding": {
+  "mode": "materialized-role",
+  "ref": {
+   "path": "prompts/role-binding.json",
+   "sha256": "b02dc6a44bd78e3a031cd4722823483b5e25e33dc8852081d577fb49208f94a8"
+  }
+ },
+ "ruling_set": {
+  "path": "arbitration.md",
+  "sha256": "361d9639c55a4be72429c1fec773505784fe4a8b43bd99f30c4a48a8cd63b17c"
+ },
+ "run_id": "es-v6-candidate-freeze-2026-08-18",
+ "run_record": "gauntlet-run-record@1",
+ "seats": [
+  {
+   "model_family": "claude",
+   "seat": "evaluator:human-automation-handoff-auditor"
+  },
+  {
+   "model_family": "claude",
+   "seat": "evaluator:entropy-demon"
+  },
+  {
+   "model_family": "claude",
+   "seat": "evaluator:cloud-native-purist"
+  },
+  {
+   "model_family": "claude",
+   "seat": "evaluator:requirements-traceability-auditor"
+  },
+  {
+   "model_family": "claude",
+   "seat": "evaluator:chesterton-gate"
+  },
+  {
+   "model_family": "claude",
+   "seat": "gate:red-lines-arbitrator"
+  },
+  {
+   "model_family": "claude",
+   "seat": "judge:pragmatic-judge"
+  },
+  {
+   "model_family": "claude",
+   "seat": "dispatcher"
+  },
+  {
+   "model_family": "claude",
+   "seat": "dossier-challenger"
+  }
+ ],
+ "selection": {
+  "path": "prompts/selection.json",
+  "registry_sha256": "a71b7f30b937c433dc50c0c2a6b82212026161e2494398230c092fb156befa0d",
+  "registry_version": "3.0.0",
+  "replay_sha256": "31c2cb4bff071c6adddfe4b6e4d1c2872926fca59d8bc9d925a9beffb583eeb4",
+  "seed_source": "subject_sha256",
+  "selected_ids": [
+   "human-automation-handoff-auditor@1",
+   "cloud-native-purist@2",
+   "requirements-traceability-auditor@1",
+   "entropy-demon@2",
+   "chesterton-gate@2"
+  ],
+  "subject_seed_sha256": "8ba32c01de1c3499b63316db4cb56902b99d07ee42a64dfa423491ef60c02b89",
+  "wildcard_ids": [
+   "entropy-demon@2"
+  ]
+ },
+ "subject": {
+  "path": "docs/v6/ES6-V6-CANDIDATE",
+  "revision": "00e5146e43ff9011153452b83fedda706723c52b"
+ },
+ "summary": {
+  "path": "GAUNTLET-SUMMARY.md",
+  "sha256": "a5d2da6ee28d65a9878ed52805bf015586f8d1458d00739090a2265fda955457"
+ },
+ "valid_while": {
+  "evidence_root_sha256": "37c281cbca333bf1afe7b8bc13d13d96c2c939c2051e781cd333c15008720c22",
+  "subject_revision": "00e5146e43ff9011153452b83fedda706723c52b"
+ },
+ "verdict": "NO-GO"
+}

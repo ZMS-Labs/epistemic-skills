@@ -1,0 +1,153 @@
+{
+ "seat": "nf1-discharge",
+ "findings": [
+  {
+   "id": "NF1-V1-selftest-attested-control-self-referential",
+   "severity": "P4",
+   "claim": "The --self-test control 'attested commit is exempt' is SELF-REFERENTIAL and cannot detect a wrong, missing, or smuggled SHA. It binds `attested = sorted(ATTESTED_UNSIGNED)[0]` (check_dco.py:108), so it always tests whatever the dict happens to contain. Deleting an attested entry silently re-binds the control to the next key and the self-test stays green. The '--self-test with seven planted controls' framing therefore overstates what control #5 certifies: it proves the exemption MECHANISM (exact dict lookup), never the list CONTENTS. This does not affect the discharge \u2014 the live PR check is the contents oracle and I executed it \u2014 but a future bad edit to the list would not be caught by the self-test step that is advertised as guarding it.",
+   "evidence": "MUTATION M1: removed line 28 (\"00e5146e43ff9011153452b83fedda706723c52b\") from ATTESTED_UNSIGNED, then ran `python3 mut/M1_delete_exercised_attested.py --self-test` -> exit=0, all 7 controls [PASS] (mutation SURVIVED). Same mutated module run over PR #197's live commit list -> unsigned_commits() == ['00e5146e43ff'] (i.e. the real check DOES catch it). Contrast M2 (truncate dc33de28\u2026 to 12 hex) -> exit=1, '[FAIL] attested entry is not a full 40-hex SHA', and M4 (prefix-match lookup) -> exit=1, so the neighbouring controls are genuinely live. Source: <build-scratch>/nf1.771F8J/repo/.github/scripts/check_dco.py:108,118.",
+   "repair_dischargeable_on_this_sha": false
+  },
+  {
+   "id": "NF1-V2-merge-exemption-residual",
+   "severity": "P4",
+   "claim": "The merge-commit exemption is a real policy loosening whose residual I measured rather than assumed. Inside PR #197's range the loosening exempts NOTHING a reviewer would want certified: all three merge commits have an empty combined diff, i.e. zero authored content. Repo-wide, however, two merges in this repository's history DO author content, and one of them is unsigned: e7de3637 (Merge PR #53, author SternOne, 20 combined-diff lines) introduces genuine authored prose into plugins/epistemic-skills/skills/helix/SKILL.md ('Collection is downstream of the paired stage, never a prerequisite for it\u2026') that no sign-off covers and that the new exemption would wave through if it ever appeared in a PR range. Forward risk: any future 'evil merge' passes DCO with authored content uncertified. Reported at P4 and not higher because the limit is explicitly disclosed in both the code (check_dco.py:37-40) and D18 limb 1, it matches GitHub's own DCO app default, and there are zero instances in the candidate under review.",
+   "evidence": "`git rev-list --merges origin/claude/v6-candidate-rc2` + `git diff-tree --cc --no-commit-id <m> | wc -l` for each: in-PR merges 375973c9=0, 59587eed=0, ac27b8a7=0 (clean). Ancestors with authored content: 6abe7169=595 lines (sob=1, signed) and e7de3637=20 lines (sob=0, UNSIGNED, author SternOne <89846440+SternOne[at]users.noreply.github.com [address redacted: public-content gate]>, 2026-08-02). Combined-diff hunk shown for e7de3637 on helix/SKILL.md. Exemption is unconditional on parent count: `return len(item.get('parents') or []) > 1` (check_dco.py:42); an unsigned 3-parent octopus merge also passes (adversarial battery).",
+   "repair_dischargeable_on_this_sha": false
+  },
+  {
+   "id": "NF1-V3-rc5-delta-added-a-seventh-unsigned-commit",
+   "severity": "P4",
+   "claim": "The rc5 delta itself introduced a NEW unsigned commit after D18 declared the attestation list CLOSED and instructed that 'a future unsigned commit is a defect to fix with git commit --amend --signoff'. Merge 375973c9 ('Merge remote-tracking branch origin/main into claude/v6-candidate-rc2') carries no Signed-off-by line, so PR #197's range now holds SEVEN unsigned commits where the rc4 letter counted six. It does not violate the letter of the closed list \u2014 it rides limb 1 (merge exemption), not limb 2 \u2014 and it is a clean merge with zero authored content, so nothing uncertified enters the candidate. But it demonstrates that the merge exemption is a standing channel through which new unsigned commits keep entering the range, and D18's own guidance ('prefer git merge --signoff where the sign-off matters') was not applied to it.",
+   "evidence": "REST /pulls/197/commits index 28: 375973c9d002176811bec247ec79d8066eb07000, parents=2, no Signed-off-by, author Claude <noreply[at]anthropic.com [address redacted: public-content gate]>. `git cat-file` confirms parents=2, sob_lines=0. rc4 arbitration line 154 names six digests (five Cursor + 59587eede339); the seventh, 375973c9, postdates that verdict. Excused only by is_merge(): forcing its parents to 1 makes unsigned_commits() return ['375973c9d002'].",
+   "repair_dischargeable_on_this_sha": false
+  },
+  {
+   "id": "NF1-V4-comment-count-inconsistency",
+   "severity": "P4",
+   "claim": "Cosmetic, non-behavioral documentation inconsistency inside the shipped attestation comment: it opens 'These five predate this workflow's coverage\u2026' and four lines later asserts the exemption 'exempts exactly these six trees-and-messages and nothing else', while the dict holds exactly five entries. It is a leftover from the rc4 letter's 'six unsigned commits' framing (five Cursor originals + merge 59587eed), where only the five non-merge ones became dict entries. No behavioral effect, but the comment is the human-readable statement of what the owner certified, and it misstates the count of what it certifies.",
+   "evidence": "check_dco.py:16 ('These five predate\u2026') vs check_dco.py:22 ('six trees-and-messages and nothing else'); len(ATTESTED_UNSIGNED) == 5 executed. Introduced verbatim by PR #198 (git diff 03b7724..13f1ad7 -- .github/scripts/check_dco.py).",
+   "repair_dischargeable_on_this_sha": false
+  },
+  {
+   "id": "NF1-V5-pagination-fail-open-at-250-commits",
+   "severity": "P4",
+   "claim": "Latent, pre-existing, currently inapplicable fail-open in the very oracle that discharges R4-NF1. github_commits() pages until `len(batch) < 100`, but GitHub's /pulls/{n}/commits endpoint caps at 250 commits total. A PR with more than 250 commits would return 50 on page 3, terminate the loop, and silently certify only the first 250 \u2014 unsigned commits beyond that would never be examined and the job would report green. Flagged for completeness and honesty since I am certifying this oracle; it is NOT introduced by the repair (PR #198 is purely additive, +299/-0, and does not touch github_commits()) and is inapplicable at PR #197's 31 commits.",
+   "evidence": "check_dco.py:74-95 (`if len(batch) < 100: return commits`). PR #197 live commit count = 31 (REST `commits` field and one 31-item page), so a single page is read and the cap is not reached. `git show --stat 13f1ad7` = 5 files, 299 insertions, 0 deletions; `git diff 03b7724..13f1ad7 -- .github/scripts/check_dco.py` shows only additions (ATTESTED_UNSIGNED, is_merge, two guard lines, self_test).",
+   "repair_dischargeable_on_this_sha": false
+  }
+ ],
+ "checks_executed": [
+  {
+   "check": "S1a \u2014 Run main's shipped unsigned_commits() over PR #197's LIVE REST commit list",
+   "result": "PASS",
+   "detail": "Fetched https://api.github.com/repos/ZMS-Labs/epistemic-skills/pulls/197/commits (31 commits, one page, matches PR metadata commits=31). Loaded main@13f1ad7's .github/scripts/check_dco.py and executed unsigned_commits() over it -> [] (ZERO). Seven commits lack a Signed-off-by line; each is excused by exactly one documented limb: five ATTESTED (dc33de28, e8a476c7, 00e5146e, 36df665e, 7de88fab) and two MERGE-EXEMPT (59587eed, 375973c9)."
+  },
+  {
+   "check": "S1b \u2014 Confirm which copy CI actually executes (pull_request_target + checkout ref)",
+   "result": "PASS",
+   "detail": "dco.yml: `on: pull_request_target` types [opened, synchronize, reopened, ready_for_review]; `if: github.event.pull_request.draft == false`; single checkout with `ref: ${{ github.event.pull_request.base.sha }}` and `persist-credentials: false`. It is therefore the BASE revision's script that runs, and the PR's head code is never checked out (safe pull_request_target usage). PR #197 base.sha = 13f1ad7a0ce6 = current main HEAD = the merge commit of the repair PR #198."
+  },
+  {
+   "check": "S1c \u2014 Confirm PR #197's base is a main that contains the fix, and that it did so at run time",
+   "result": "PASS",
+   "detail": "PR #198 merged_at = 2026-08-19T18:58:35Z, merge_commit_sha = 13f1ad7a0ce6. DCO run 32292298616 created 2026-08-19T19:18:32Z \u2014 20 minutes later. main has not advanced since (git log -1 main = 13f1ad7), so base.sha at event time could only be 13f1ad7. main's check_dco.py contains ATTESTED_UNSIGNED and is_merge."
+  },
+  {
+   "check": "S2a \u2014 Run check_dco.py --self-test",
+   "result": "PASS",
+   "detail": "7/7 controls [PASS], exit=0: signed passes; unsigned caught; other-author signoff caught; merge exempt; attested exempt; attested-prefix NOT exempt; one bad among good caught. Plus a full-40-hex format loop over every dict key."
+  },
+  {
+   "check": "S2b \u2014 MUTATION-verify every self-test control is real, not vacuous (8 mutations)",
+   "result": "PASS",
+   "detail": "6 of 8 mutations KILLED the self-test: M2 truncate attested SHA to 12-hex -> '[FAIL] attested entry is not a full 40-hex SHA' (the format assertion is live); M3 is_merge->False -> '[FAIL] merge commit is exempt'; M4 prefix-match lookup -> '[FAIL] \u2026sharing an attested prefix is NOT exempt'; M5 accept any signoff -> '[FAIL] sign-off by someone other than the author is caught'; M6 unsigned_commits->[] -> 4 controls FAIL; M7 dead signoff regex -> 2 controls FAIL. M8 (delete the hex assertion) survived, correctly and non-vacuously \u2014 an assertion cannot change behavior on input that does not violate it, and M2 already proved it fires. M1 survived as a genuine scope limitation, reported as finding NF1-V1."
+  },
+  {
+   "check": "S2c \u2014 MUTATION: delete a merge commit's second parent, confirm it is caught",
+   "result": "PASS",
+   "detail": "On live PR data, demoting each merge to one parent: 59587eed -> caught ['59587eede339']; 375973c9 -> caught ['375973c9d002']; ac27b8a7 -> [] (it carries its own valid sign-off, so it does not depend on the exemption). The merge exemption is load-bearing for exactly the two unsigned merges and is doing real work, not passing vacuously."
+  },
+  {
+   "check": "S3a \u2014 Attestation SOUNDNESS: are the five SHAs necessary (no surplus, none out of range)?",
+   "result": "PASS",
+   "detail": "Removed each attested SHA one at a time and re-ran over the live commit list: every single removal caused exactly its own commit to be caught (00e5146e->['00e5146e43ff'], 36df665e->['36df665e80a3'], 7de88fab->['7de88fab412e'], dc33de28->['dc33de288077'], e8a476c7->['e8a476c73075']). No entry is surplus, and every entry is provably present in PR #197's range. No SHA is smuggled in."
+  },
+  {
+   "check": "S3b \u2014 Attestation SOUNDNESS: are the five exactly the unsigned non-merge set (no under/over-coverage)?",
+   "result": "PASS",
+   "detail": "Emptying ATTESTED_UNSIGNED entirely yields exactly ['dc33de288077','e8a476c73075','00e5146e43ff','36df665e80a3','7de88fab412e'] \u2014 set-equal to the dict's five keys. The list is exactly minimal and exactly sufficient: it covers all unsigned non-merge commits and nothing more."
+  },
+  {
+   "check": "S3c \u2014 Cross-check the five against PRIMARY git objects and against what the rc4 arbitration named",
+   "result": "PASS",
+   "detail": "`git cat-file`/`git log` on all five: type=commit, parents=1, sob_lines=0, author 'Cursor Agent <cursoragent[at]cursor.com [address redacted: public-content gate]>', and each is an ancestor of C+1 546ccc8e. History was NOT rewritten. rc4 arbitration (origin/claude/es-v6-rc4-delta-review, arbitration.md lines 40/114/154) names six digests dc33de288077, e8a476c73075, 00e5146e43ff, 36df665e80a3, 7de88fab412e, 59587eede339 \u2014 the five Cursor ones map exactly onto the dict and the sixth is handled by the merge limb. Member-for-member correspondence."
+  },
+  {
+   "check": "S3d \u2014 Does the repair match the rc4 letter's prescribed discharge path?",
+   "result": "PASS",
+   "detail": "rc4 arbitration line 114 option (b): 'a main-side check_dco.py policy amendment (merge-commit exemption + digest-pinned allowlist of the five historical Cursor commits), which greens the next ready_for_review event because dco.yml executes the base revision's script. Do not rewrite history.' All four elements verified satisfied. The repair is the prescribed one, not a substitute."
+  },
+  {
+   "check": "S4 \u2014 Grade the merge-commit exemption loosening against real repo history",
+   "result": "PASS",
+   "detail": "Enumerated every merge reachable from C+1 and measured authored content via `git diff-tree --cc`. All three in-PR merges have combined-diff = 0 lines (clean; nothing a reviewer would want certified is exempted for this candidate). Two ancestors carry authored content: 6abe7169 (595 lines, signed) and e7de3637 (20 lines, UNSIGNED, real authored prose). Residual reported honestly as NF1-V2 at P4 \u2014 disclosed in code and in D18, matches GitHub's DCO app default, zero instances in the candidate."
+  },
+  {
+   "check": "S5a \u2014 PR #197 is non-draft and the DCO check run at C+1 is success",
+   "result": "PASS",
+   "detail": "Live re-confirmed at 2026-08-19T19:34:13Z: draft=False, state=open, mergeable=True, mergeable_state=clean, base=13f1ad7a0ce6, head=546ccc8e55eb, commits=31. Run 32292298616: name=DCO, event=pull_request_target, status=completed, conclusion=success, head_sha=546ccc8e55eb\u2026, run_attempt=1."
+  },
+  {
+   "check": "S5b \u2014 STEP-LEVEL: confirm 'Require author-matching Signed-off-by lines' actually EXECUTED",
+   "result": "PASS",
+   "detail": "Jobs API for run 32292298616: job DCO conclusion=success with steps [1] Set up job success, [2] Check out trusted base revision success, [3] 'DCO checker self-test (planted RED controls)' completed/success, [4] 'Require author-matching Signed-off-by lines' completed/SUCCESS. Step 4 ran \u2014 it is not skipped and the run's green is not concealing an unexecuted gate. The self-test step also genuinely executed in CI."
+  },
+  {
+   "check": "S5c \u2014 ALL checks at C+1 green; no red anywhere",
+   "result": "PASS",
+   "detail": "All 13 workflow runs at head_sha 546ccc8e: 6 skipped (19:17 draft-time synchronize batch), 6 success (19:18:31-32 ready_for_review batch), 1 'PR #197' dynamic success. NON-GREEN: NONE. All 18 check-runs are success or skipped. Verified the four other cited run IDs are genuinely at C+1 and green: 32292297976 epistemic-flexibility (job stdlib-checks), 32292297681 release-security (full-history-secret-scan), 32292297781 commission-watch-contract (contract), 32292297696 openai-bundles (build) \u2014 every job success with ZERO skipped steps. Also checked the uncited run 32292297796 mission-custody-contract: success."
+  },
+  {
+   "check": "S5d \u2014 The one skipped job (contract-macos) against RELEASING.md gate 5's skip clause",
+   "result": "PASS",
+   "detail": "Gate 5 permits a skip 'only when its precondition is inapplicable and the reason is recorded'. contract-macos is gated `if: github.event_name == 'workflow_dispatch'` with an 11-line in-workflow comment declaring it dispatch-only and non-gating, and is disclosed in packet known_limits KL-MACOS-162 ('Not a merge-gating required job'). Precondition inapplicable on a pull_request event and the reason is recorded in two places. Satisfies the clause."
+  },
+  {
+   "check": "S6 \u2014 Promotion-merge survival of the main-side repair (verified, not assumed)",
+   "result": "PASS",
+   "detail": "PR #197's diff touches 20 files under .github/ but NEITHER check_dco.py NOR dco.yml (grep over `git diff --name-only base..head` returns nothing). Simulated the promotion merge (main + C+1, exit 0): post-merge check_dco.py is byte-identical to main's. Stronger still, C+1 ALREADY carries the fixed checker (absorbed via merge 375973c9): C+1's copy of check_dco.py and dco.yml are byte-identical to main's, and running C+1's own copy over the live commit list also returns []."
+  },
+  {
+   "check": "S7 \u2014 Adversarial fail-open battery against unsigned_commits (11 degenerate inputs)",
+   "result": "PASS",
+   "detail": "Fail-CLOSED on all of: empty author name+email with degenerate signoff; author dict empty; 'commit' key absent; 'parents' key absent; parents=None; sha absent (reported as 'unknown'); signoff appearing only inside quoted text ('> Signed-off-by:' \u2014 the ^ anchor defeats it); signoff matching committer not author; attested SHA in uppercase. Two pass-throughs are intentional policy, not defects: case-insensitive signoff matching (re.I + casefold, standard DCO) and unsigned octopus merges (parents>1, consistent with the documented exemption). No fail-open found."
+  },
+  {
+   "check": "S8 \u2014 Is the repair itself sealed, so future main-side drift is self-detecting?",
+   "result": "PASS",
+   "detail": "source-inventory.json lists .github/scripts/check_dco.py, .github/workflows/dco.yml and .github/scripts/test_check_dco.py, and all three file_digests match the candidate tree's actual sha256 exactly (check_dco.py 2b64b986\u20267b31, dco.yml edc8485c\u2026f542, test_check_dco.py ea542dea\u202640f3). Any future main-side edit to the checker while the freeze is open would trip R5 DIGEST MISMATCH \u2014 the coupling disclosed as KL-SEAL-MAIN-COUPLING is therefore self-detecting, not merely documented."
+  },
+  {
+   "check": "S9 \u2014 Second, independent test surface for the checker",
+   "result": "PASS",
+   "detail": ".github/scripts/test_check_dco.py: 4 unittest cases, executed locally -> 'Ran 4 tests\u2026 OK'. It is wired into CI at .github/workflows/epistemic-flexibility.yml:136 and appears as 'PASS .github/scripts/test_check_dco.py' in evidence/clean-baseline.json. So the checker is guarded by two surfaces (the in-DCO-job --self-test and this stdlib-checks unit suite), not one."
+  },
+  {
+   "check": "S10 \u2014 KL-SEAL-MAIN-COUPLING disclosure accuracy (scope item 3, as it bears on this seat)",
+   "result": "PASS",
+   "detail": "The disclosure is measured, not theorised, and it names this seat's repair as its own cause: 'the rc4 candidate's own R4-NF1 repair landed on main (check_dco.py, dco.yml, release-security.yml) and forced the rc5 re-cut that absorbed it.' Corroborated by evidence/requalification.json's why_superseded and by my own finding that C+1's checker is byte-identical to main's. The rc4 letter's complaint that 'no known_limits entry discloses it' is moot at rc5: the DCO red no longer exists (proven green live), so there is no red left to disclose, and the repair's own side-effect IS disclosed."
+  },
+  {
+   "check": "S11 \u2014 Enumerate GitHub's authoritative required-status-checks list",
+   "result": "BLOCKED",
+   "detail": "GET /repos/ZMS-Labs/epistemic-skills/branches/main/protection returns HTTP 403 'Resource not accessible by integration' (unauthenticated). I cannot read the authoritative required-check list. MITIGATED and non-load-bearing: (a) mergeable_state=clean; (b) all 13 runs and all 18 check-runs at C+1 are success or skipped, none red; (c) I judged against the repo's OWN policy letter instead \u2014 RELEASING.md gate 5 \u2014 including its skipped-step clause, which the single skipped job satisfies. Note the rc4 panel independently recorded that branch-protection required_status_checks enforcement is 'off', so GitHub mechanics were never the binding constraint here; the repo's policy letter is."
+  },
+  {
+   "check": "S12 \u2014 Read the raw stdout of the DCO run's steps",
+   "result": "BLOCKED",
+   "detail": "GET /actions/runs/32292298616/logs fails with 'CONNECT tunnel failed, response 403' through the agent proxy (log download requires authentication). MITIGATED and non-load-bearing: the jobs API supplies per-step status and conclusion, which is the same GitHub-side primary record and shows step [4] completed/success; and I independently reproduced the script's verdict by executing the identical base-revision script over the identical live commit list, obtaining ZERO."
+  }
+ ],
+ "evidence_log": "SEAT VERDICT: R4-NF1 IS DISCHARGED. GO from this seat. No P1, P2, or P3 survives execution. Five P4s, none blocking.\n\nWORKSPACE: <build-scratch>/nf1.771F8J (fresh clone + 8 mutant scripts under mut/). Nothing was pushed, commented, or written to GitHub. Every load-bearing claim below was re-executed from primary sources: live GitHub REST, git objects in a fresh clone, and the repo's own scripts.\n\n=== THE CORE RESULT ===\nThe rc4 NO-GO's decider was: six commits in PR #197's range carry no Signed-off-by, so DCO lands red at ready-mark. I re-executed the oracle end to end:\n- main@13f1ad7's shipped unsigned_commits(), run over PR #197's LIVE 31-commit REST list, returns [] \u2014 ZERO.\n- The copy CI executes is the BASE revision's: dco.yml is pull_request_target with `ref: base.sha`, and PR #197's base.sha is 13f1ad7 = current main HEAD = the merge of repair PR #198. PR #198 landed 18:58:35Z; the DCO run started 19:18:32Z; main has not moved since. The timing forecloses the \"ran against a stale base\" failure mode.\n- Live: PR #197 draft=False, DCO run 32292298616 conclusion=success, and step [4] 'Require author-matching Signed-off-by lines' is completed/SUCCESS \u2014 it EXECUTED. The green is not a skipped-gate artifact.\n- All 13 workflow runs and 18 check-runs at C+1: none red.\n\n=== SOUNDNESS, NOT MERELY EFFECTIVENESS (the question this seat exists to ask) ===\nThe strongest result I obtained is that the attestation is EXACTLY MINIMAL AND EXACTLY SUFFICIENT, which rules out a smuggled SHA:\n- Dropping any one of the five causes exactly that commit to be caught (5/5 individually necessary \u2014 so no entry is decorative, and every entry is provably inside PR #197's range).\n- Emptying the dict catches exactly those same five and no others (so the list is not over-broad).\n- git objects independently confirm all five are parents=1, sob_lines=0, authored by 'Cursor Agent <cursoragent[at]cursor.com [address redacted: public-content gate]>', and still ancestors of C+1 \u2014 history was not rewritten, so the three prior verdicts and pin tags remain valid.\n- Member-for-member match against the digests the rc4 arbitration itself named (lines 114/154).\nThe repair is also the exact remedy the rc4 letter prescribed in option (b), not a substitute for it.\n\n=== WHAT I TRIED TO BREAK AND COULD NOT ===\nI ran 8 source mutations and an 11-case adversarial input battery specifically hunting for a fail-open. Six mutations were killed by the self-test; forcing either unsigned merge to one parent makes it caught, proving the merge limb is load-bearing rather than decorative; and the checker is fail-CLOSED on every degenerate input I could construct (missing sha, missing parents, missing commit/author keys, empty author identity, quoted-text signoff, committer-not-author signoff, uppercase SHA). Two pass-throughs are deliberate policy (case-insensitive matching; octopus merges), not defects. I found no way to make an unsigned authored commit pass.\nTwo further assurances beyond the brief: the repair is itself SEALED (check_dco.py, dco.yml and test_check_dco.py are all inventoried with matching sha256 digests, so future main-side drift trips R5 DIGEST MISMATCH rather than silently changing the candidate's DCO verdict), and the checker has a SECOND independent test surface (test_check_dco.py, 4 tests, wired into epistemic-flexibility.yml:136 and PASSing in clean-baseline.json).\n\n=== WHAT I DID FIND (all P4, none blocking) ===\nNF1-V1 is the one the brief predicted and it is real: `attested = sorted(ATTESTED_UNSIGNED)[0]` makes the \"attested commit is exempt\" control self-referential. Delete an attested entry and the self-test stays green (mutation M1 survived, exit 0) while the live check correctly goes red. The control proves the mechanism, never the contents \u2014 so \"seven planted controls\" overstates what control #5 guards. It does not touch the discharge, because the contents oracle is the live PR check and I executed it, but a future bad edit to the list would not be caught by the step advertised as guarding it. Note M8 (deleting the 40-hex assertion) also survived, but that survival is correct by construction \u2014 an assertion cannot change behavior on input that does not violate it \u2014 and M2 proved that assertion genuinely fires.\nNF1-V2 grades the loosening honestly: inside PR #197 it exempts nothing anyone would want certified (all three merges have empty combined diffs), but repo-wide e7de3637 is a genuine unsigned \"evil merge\" carrying 20 lines of authored prose into helix/SKILL.md. It is an ancestor, out of range, and the limit is disclosed in both the code and D18 \u2014 hence P4, not higher. I deliberately did not inflate it.\nNF1-V3: the rc5 delta added a SEVENTH unsigned commit (merge 375973c9) after D18 declared the list closed. It rides the merge limb, is a clean merge, and violates no letter \u2014 but it shows the exemption is a standing channel, and D18's own `git merge --signoff` advice went unapplied.\nNF1-V4 is cosmetic (comment says \"five\" then \"six\" over five entries). NF1-V5 is a latent 250-commit pagination fail-open in github_commits(), pre-existing and inapplicable at 31 commits; I report it only because I am certifying that oracle.\n\n=== BLOCKED (2, both mitigated, neither load-bearing) ===\nBranch-protection enumeration (403 unauthenticated) and raw run-log download (403 via proxy). I did not treat either as a pass. For the first I substituted the repo's own policy letter, RELEASING.md gate 5, and checked the single skipped job (contract-macos) against its skipped-step clause \u2014 it is dispatch-only by an explicit workflow `if:` and disclosed in KL-MACOS-162, so the skip is licensed. For the second, the jobs API is the same GitHub-side primary record and gives step-level conclusions, and I reproduced the script's verdict locally over the identical live input. Independently relevant: the rc4 panel recorded branch-protection enforcement as \"off\", so GitHub mechanics were never the binding constraint \u2014 the repo's policy letter is, and it is satisfied.\n\n=== DISPATCHER CLAIMS I CHECKED RATHER THAN ACCEPTED ===\n\"PR #197 is READY and all required checks green at C+1\" \u2014 verified independently, true. The four non-DCO run IDs the dispatcher labelled \"stdlib/custody-style/contract/build\" have IDs numerically LOWER than the DCO run, which I flagged as a possible misattribution to the 19:17 skipped batch; on fetching each, all four are in fact the 19:18:31 ready-mark batch, all success at head 546ccc8e, all with zero skipped steps. The labels are workflow-job shorthand, not misattribution. The dispatcher also omitted one run (32292297796 mission-custody-contract) \u2014 I checked it too; success. Nothing in the dispatcher's framing was found to be self-serving or false.\n\nScope discipline: I stayed in my lane (R4-NF1). I did not adjudicate the eight P4 dispositions or the broader rc5 delta beyond where they bear on this finding. One cross-lane observation worth the arbitrator's attention, offered as information and not as a finding of mine: D19 authorized this panel on the premise that \"the candidate does not change for this repair\", yet the candidate did change (rc4 7408a46 -> rc5 03e972c5) because the main-side repair forced the re-cut disclosed as KL-SEAL-MAIN-COUPLING. That is transparently recorded rather than concealed, and it did not impair this seat's verification, but whether the new coordinates remain within D19's grant is a scope question for the arbitrator, not for me."
+}

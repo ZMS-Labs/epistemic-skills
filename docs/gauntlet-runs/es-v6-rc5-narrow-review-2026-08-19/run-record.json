@@ -1,0 +1,30 @@
+{
+ "schema": "gauntlet-run-record@1",
+ "run": "es-v6-rc5-narrow-review-2026-08-19",
+ "subject_sha": "03e972c5d427238033cb90d66846adabaf11928d",
+ "freeze_commit": "546ccc8e55eb060379d62198310145f7243ac7bd",
+ "computed_verdict": "GO",
+ "mode": "NARROW (operator ruling D19, ledger entry v6-lineage-panel-cap-extension-two-20260819-23); panel 5 of 5 — the final authorized panel, and this verdict SPENDS the second cap extension. Any further panel on this lineage, including a re-review at these coordinates, requires a fresh explicit recorded operator ruling.",
+ "seat_structure": "author-dispatched panel: four context-free verifier seats plus an adversarial challenger, adjudicated by an isolated judge. The dispatcher authored the rc5 candidate under review — disclosed in every seat prompt as an independence LIMIT, not independence. The judge adopted no seat's word for any load-bearing fact and re-executed 35 register items from primary sources. Single model family (Claude/Anthropic) across dispatcher, all five seats, and the judge.",
+ "agents": {
+  "verifiers": 4,
+  "challenger": 1,
+  "judge": 1,
+  "workflow_run": "wf_7ac6ea88-8ca",
+  "subagent_tokens": 1108026,
+  "tool_uses": 359
+ },
+ "outcome_summary": "GO. R4-NF1 — the P1 that decided the fourth panel's NO-GO — is DISCHARGED, judge-executed at three independent layers: main's shipped unsigned_commits() over PR #197's live 31-commit REST list returns [] (and returns 7 with both exemption limbs neutralised); dco.yml is pull_request_target with ref=base.sha, and base.sha is the main HEAD carrying repair PR #198; the live DCO check run at C+1 is success with its gating step completed. All eight of the fourth panel's P4 findings are correctly dispositioned — seven CLOSED or CLOSED-QUALIFIED, and R4-NF5 correctly left OPEN and dischargeable at the acceptance gate exactly as the rc4 letter prescribed. Twelve new findings recorded as R5-NF1..R5-NF12, ALL P4, three carrying preserved P3 dissents; under the standing lineage rule open P4s do not move the enum. The green-by-construction attack was ruled explicitly: the amended DCO gate is narrowed, not neutered — synthetic unsigned authored commits, prefix twins, case variants, and Merge-prefixed single-parent commits are all still CAUGHT; the one genuine widening (any 2-parent merge is exempt regardless of authored content) exempts zero authored lines inside PR #197's range and is ruled P4 as R5-NF4.",
+ "owed_before_acceptance": [
+  "D8 Step-7b cross-family consult — OWED and NOT discharged by this single-family panel. The prior kimi consult was against superseded candidate 6db8c50 and does not transfer to 03e972c.",
+  "Operator acceptance per docs/v6/OPERATOR-ACCEPTANCE-PROCEDURE.md items 1-5, with item 5's live re-check performed by rebuilding refs/pull/197/merge and running the validator against it (R5-NF11) — a stale green on the PR does not establish it.",
+  "In the acceptance record, in the operator's own words: confirm or echo-certify D16-D19 including D18's DCO attestation (R4-NF5 + R5-NF7), and confirm that D19's grant reaches the rc5 coordinates (R5-NF8).",
+  "Freeze hygiene while PR #197 remains open: change no inventoried file on main, AND do not append to main's .ledger/entries.jsonl — the second rule is real and currently undisclosed in the packet (R5-NF3)."
+ ],
+ "dispatcher_disclosures": [
+  "The dispatcher authored the rc5 candidate under review; all finding and judging was performed by isolated context-free seats per the operator's recorded authorization, and the structure was disclosed to every seat with an explicit instruction to treat dispatcher framing as potentially self-serving.",
+  "The dispatcher's brief instructed the challenger to press the 'green-by-construction' attack — that nearly every gate this candidate passes was authored or amended by the dispatcher during this program — and to name any gate whose current form would no longer catch the defect it was created for. The judge ruled that attack explicitly rather than leaving it implicit.",
+  "Dispatcher post-judgment edits, no substantive change: a leading conversational line was trimmed so arbitration.md begins at its title heading, and commit-author email addresses quoted as DCO evidence in the seat reports and arbitration were rewritten with '[at]' plus a redaction note, because the repo-wide public-content gate bans the email-address pattern class and fails closed. Identities and every evidentiary claim are preserved; only the address form changed. The digest-bound allowlist was deliberately not widened.",
+  "The dispatcher did NOT act on the arbitration's Next-action 2 (setting independent_gauntlet / independent_gauntlet_ref in the packet from this artifact). Flipping that enum is the single field the program's anti-counterfeit machinery exists to protect, and the packet's own handoff states it is updated only by the acceptance flow. It is left for the operator's acceptance act, not taken unilaterally by the party that wanted the green."
+ ]
+}

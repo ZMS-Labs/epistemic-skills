@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 
@@ -12,6 +13,12 @@ SKILL_ROOT = HERE.parents[1]
 PACKAGE_ROOT = HERE.parents[3]
 REPO_ROOT = HERE.parents[5]
 EXPECTED_VERSION = "6.0.0"
+
+# The newest tag an install recipe may point at. Deliberately NOT
+# EXPECTED_VERSION: this tree is 6.0.0 while the newest PUBLISHED tag is
+# v5.1.0, and pinning a tag that does not exist ships dead install links.
+INSTALL_REF_PIN = "v5.1.0"
+_REF = re.compile(r"github\.com/ZMS-Labs/epistemic-skills/(?:tree|blob)/(v[0-9]+\.[0-9]+\.[0-9]+)")
 
 
 def require(condition: bool, message: str) -> None:
@@ -332,6 +339,33 @@ def main() -> int:
         require(version == EXPECTED_VERSION, f"stale version in {path}")
         text = json.dumps(data).lower()
         require("outsource" in text, f"manifest does not advertise outsource: {path}")
+
+    # The loop above checks package `version` FIELDS. It is structurally blind
+    # to a stale install REF, which is how .kimi-plugin/marketplace.json kept
+    # pointing at tree/v3.4.0 across three major versions: it carries
+    # "version": "2" (a SCHEMA version), so it was never in the tuple, and no
+    # check looked at refs at all. Versions and refs drift independently -- a
+    # field names this tree, a ref names a tag that must already exist.
+    ref_bearing = (
+        REPO_ROOT / ".kimi-plugin" / "marketplace.json",
+        REPO_ROOT / ".claude-plugin" / "marketplace.json",
+        REPO_ROOT / ".cursor-plugin" / "marketplace.json",
+        REPO_ROOT / "gemini-extension.json",
+        REPO_ROOT / "plugin.json",
+    )
+    seen_refs = 0
+    for path in ref_bearing:
+        if not path.is_file():
+            continue
+        for found in _REF.findall(read(path)):
+            seen_refs += 1
+            require(
+                found == INSTALL_REF_PIN,
+                f"stale install ref in {path}: {found} (expected {INSTALL_REF_PIN})",
+            )
+    # Narrowness control: a pattern that matches nothing passes vacuously and
+    # would have "verified" the very drift it exists to catch.
+    require(seen_refs >= 1, "install-ref check matched no refs at all; it is vacuous")
 
     require(
         "outsource" in json.loads(read(REPO_ROOT / "plugin.json"))["description"].lower(),

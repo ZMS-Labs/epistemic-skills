@@ -106,6 +106,16 @@ ROOT_INSTRUCTION_FILES = ("GEMINI.md", "AGENTS.md", "CLAUDE.md", "README.md")
 # tree before trusting its green; do not loosen this anchor.
 SKILL_PATH_RE = re.compile(r"plugins/epistemic-skills/skills/([a-z0-9][a-z0-9-]*)/")
 
+# SKILL_PATH_RE requires the full package prefix, so it is structurally blind to
+# the BARE form -- `using-epistemic-skills/reference/routine-fast-path.md` names
+# a seat deleted in v5.0.0 but carries no `skills/` prefix to match. Three
+# shipped files routed that way, one of them the file the README pins, and it
+# survived since v5.0.0 (publication-gate finding PG-14). Matched only against
+# the CLOSED retired-name list, so it cannot invent findings.
+BARE_RETIRED_PATH_RE = re.compile(
+    r"(?<![a-z0-9/-])(" + "|".join(sorted(RETIRED, key=len, reverse=True)) + r")/[A-Za-z0-9._-]"
+)
+
 # Historical evidence, not routing: dated eval results and archived docs record
 # paths as they were at the time and must not be rewritten.
 ARCHIVE_PARTS = {".git", ".worktrees", "docs", "results", "traces", "outputs", "runs"}
@@ -271,6 +281,28 @@ def check_no_hand_authored_routing_tables(defects: list[str], root: Path = REPO)
                 )
 
 
+def check_bare_retired_paths(defects: list[str], root: Path = REPO) -> None:
+    """A skill's SKILL.md and its reference/ files ARE routing surfaces.
+
+    Scoped to those deliberately: eval READMEs and retirement notes describe
+    history and must stay free to name a dead seat in prose.
+    """
+    skills_dir = root / "plugins" / "epistemic-skills" / "skills"
+    for source in sorted(skills_dir.glob("**/*.md")):
+        if ARCHIVE_PARTS.intersection(source.parts):
+            continue
+        try:
+            text = source.read_text(encoding="utf-8")
+        except (UnicodeDecodeError, OSError):
+            continue
+        text = re.sub(r"blob/v?\d[^)\s]*", "", text)
+        for dead in sorted(set(BARE_RETIRED_PATH_RE.findall(text))):
+            defects.append(
+                f"{source.relative_to(root)}: routes to `{dead}/...`, a seat "
+                f"deleted in an earlier release (now {RETIRED[dead]})"
+            )
+
+
 def self_test() -> int:
     """Planted RED controls for rule 3 (the tree-independent rule)."""
     failures = 0
@@ -310,6 +342,31 @@ def self_test() -> int:
             else:
                 failures += 1
                 print(f"[FAIL] planted {name} table not rejected: {defects}")
+        # PG-14: the bare retired-path form, and the prose that must stay legal.
+        sk = root / "plugins" / "epistemic-skills" / "skills" / "some-skill"
+        sk.mkdir(parents=True)
+        (sk / "SKILL.md").write_text(
+            "Apply the gate from `using-epistemic-skills/reference/routine-fast-path.md`.\n",
+            encoding="utf-8")
+        defects = []
+        check_bare_retired_paths(defects, root)
+        if any("deleted in an earlier release" in d for d in defects):
+            print("[PASS] planted bare retired path fails closed")
+        else:
+            failures += 1
+            print(f"[FAIL] planted bare retired path not rejected: {defects}")
+        (sk / "SKILL.md").write_text(
+            "The `using-epistemic-skills` seat was retired in v5.0.0; metacognate "
+            "replaces it. See `metacognate/reference/routine-fast-path.md`.\n",
+            encoding="utf-8")
+        defects = []
+        check_bare_retired_paths(defects, root)
+        if defects:
+            failures += 1
+            print(f"[FAIL] honest prose naming a retired seat flagged: {defects}")
+        else:
+            print("[PASS] prose naming a retired seat without routing to it stays legal")
+
         # A rogue second ROUTING.md inside a skill directory is NOT exempt.
         (root / "NOTES.md").write_text("clean\n", encoding="utf-8")
         rogue = root / "plugins" / "epistemic-skills" / "skills" / "x"
@@ -337,6 +394,7 @@ def main() -> int:
     defects: list[str] = []
     check_firing_surfaces(defects)
     check_path_references(defects)
+    check_bare_retired_paths(defects)
     check_no_hand_authored_routing_tables(defects)
 
     if defects:

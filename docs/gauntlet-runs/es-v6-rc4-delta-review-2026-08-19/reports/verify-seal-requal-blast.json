@@ -1,0 +1,127 @@
+{
+ "seat": "seal-requal-blast",
+ "findings": [
+  {
+   "id": "RC4-BR-1-gitleaks-allowlist-path-unanchored",
+   "severity": "P4",
+   "claim": "The re-cut allowlist's path regex 'docs/gauntlet-runs/.*' is unanchored, so the generic-api-key suppression applies to ANY path containing that substring, not only the top-level directory the comment promises ('ONLY under docs/gauntlet-runs/').",
+   "evidence": "Executed with the workflow-pinned gitleaks v8.30.1 release binary against .gitleaks.toml extracted from C (7408a46): the same high-entropy api_key line that fires at repo root and is suppressed under docs/gauntlet-runs/ is ALSO suppressed under crafted paths notdocs/gauntlet-runs/planted.md and sub/docs/gauntlet-runs/planted.md (2 planted, 0 fired, exit 0). Mitigations verified: suppression is rule-scoped (a synthetic ghp_ GitHub PAT planted inside docs/gauntlet-runs/ still fires, github-pat rule, exit 1); exploiting requires a reviewed commit; zero live instances (pre-recut rc3 config over full --all history yields exactly ONE finding, the legitimate verify-blast.json line 2 at 2d835b9 \u2014 so nothing else is currently being suppressed by the wide pattern). One-line fix: anchor the regex (^docs/gauntlet-runs/). .gitleaks.toml is NOT digest-inventoried, but any fix is still a new commit.",
+   "repair_dischargeable_on_this_sha": false
+  },
+  {
+   "id": "RC4-BR-2-nonflip-records-omit-superseded-custody-red",
+   "severity": "P4",
+   "claim": "requalification.json's non_flip_records itemizes the superseded first-round secret-scan failure (32260127759) but not the same superseded round's mission-custody aggregate failure (run 32260118894 at 74c8314), leaving one aggregate red of the abandoned round un-itemized.",
+   "evidence": "Live API census of ALL runs at 74c8314 (12 total) surfaced run 32260118894 mission-custody-contract workflow_dispatch completed failure; its jobs live-fetched: gating 'contract' success, 'contract-macos' failure \u2014 the identical dispatch-only es#162 diagnostic class the capture DOES disclose for the current round (32261092986) with the note 'deterministic across rc2, rc3 and rc4', and the macos job's 'if: github.event_name == workflow_dispatch' gate was read at C, so it cannot gate a PR. Information content is therefore present and the round is superseded wholesale; the letter of 'the aggregate red is never silently dropped' is simply not applied to the abandoned round's duplicate instance. No laundering: the round's decision-forcing failure (the secret scan that drove the re-cut) IS recorded with an honest note. Completeness nit only; fixing the sealed capture requires regeneration, i.e. new commits.",
+   "repair_dischargeable_on_this_sha": false
+  }
+ ],
+ "checks_executed": [
+  {
+   "check": "Coordinates and delta shape: branch head, C parentage, exactly three commits 74c8314 -> 7408a46 (C) -> e46c248 (C+1)",
+   "result": "PASS",
+   "detail": "origin/claude/v6-candidate-rc2 = e46c248 (live clone + ls-remote); e46c248 parent = 7408a46; 7408a46 parent = 74c8314; git log 7ce03b9..e46c248 = exactly those three commits"
+  },
+  {
+   "check": "S1 falsifier limb 1: fresh git clone --no-local, checkout e46c248, validate_v6_assurance.py pristine",
+   "result": "PASS",
+   "detail": "exit 0: 'v6 assurance artifacts: schema + rule checks passed (ZI-001 + candidate)'; LEGACY note traces to predecessor ZI-001 inventory as in the rc3 record"
+  },
+  {
+   "check": "S1 falsifier limb 2: one-byte XOR in inventoried .github/scripts/check_dco.py fails closed naming the file; restore green",
+   "result": "PASS",
+   "detail": "exit 1 'R5 DIGEST MISMATCH: inventoried files changed after the packet was generated (restamp class): ['.github/scripts/check_dco.py']'; git checkout restore -> exit 0"
+  },
+  {
+   "check": "S1 inventory discipline: tracked-only paths, zero volatile, digests, tree hash",
+   "result": "PASS",
+   "detail": "source-inventory@2 at C+1: exact_start_sha = 7408a46; 141 files (6 workflows + 112 contracts + 23 ci_scripts, category union == digest keys); all 141 paths in git ls-tree -r at C (1465 tracked); 0 __pycache__/.pyc/volatile; all 141 sha256 recomputed from C's git blobs \u2014 zero mismatches; candidate_tree_hash == git rev-parse C^{tree} == c12e8bd4cc95613d133b6bea91167e179ff3d122"
+  },
+  {
+   "check": "Requalification capture at C+1 names candidate_sha = C and the five stated run ids",
+   "result": "PASS",
+   "detail": "candidate_sha 7408a46; runs flex 32261089304, custody 32261092986, commission 32261096852, bundles 32261100146, security 32261103436 all present in claims/non_flip_records"
+  },
+  {
+   "check": "Live REST: each of the five runs head_sha == C, event == workflow_dispatch, status completed, conclusions as captured",
+   "result": "PASS",
+   "detail": "All five head_sha = 7408a462b41...6ea on branch claude/v6-rc4-requal; flex/commission/bundles/security conclusion success; custody aggregate failure exactly as disclosed"
+  },
+  {
+   "check": "Live REST per-job: gating jobs success; custody contract-macos failure is the disclosed non-flip; macos job dispatch-only",
+   "result": "PASS",
+   "detail": "custody run: job 'contract' success, 'contract-macos' failure; mission-custody-contract.yml at C carries 'if: github.event_name == workflow_dispatch' on contract-macos (cannot gate a PR); commission 'contract', bundles 'build', security 'full-history-secret-scan' all success"
+  },
+  {
+   "check": "R3-NF1 oracle EXECUTED pre-freeze (not skipped) in the dispatch run at C",
+   "result": "PASS",
+   "detail": "flex run 32261089304 stdlib-checks step 'Durable ledger append-only against merge base': status=completed conclusion=success \u2014 at rc3 this step was skipped on dispatch; Next-action-2 surface proven live"
+  },
+  {
+   "check": "Superseded first-round secret-scan failure really exists, really failed, really at 74c8314; freeze does not launder its re-cut",
+   "result": "PASS",
+   "detail": "run 32260127759: release-security, workflow_dispatch, completed, conclusion=failure, head_sha=74c8314e9b8891e8d3833326533042a0498a7d78, failing step 'Scan the complete repository history'; recorded in non_flip_records with honest note"
+  },
+  {
+   "check": "Anti-cherry-pick census: ALL runs at C and at 74c8314 enumerated via head_sha query",
+   "result": "PASS",
+   "detail": "12 runs at C: the 5 named dispatch runs + 5 draft-PR pull_request runs concluded 'skipped' (KL-DRAFT-CI class) + DCO skipped + GitHub-generated 'PR #197' dynamic run success \u2014 no undisclosed red at C; 12 at 74c8314 incl. custody failure 32260118894 (see finding RC4-BR-2)"
+  },
+  {
+   "check": "Gitleaks re-cut scope: new allowlist = targetRules generic-api-key only, paths docs/gauntlet-runs/ only; commit C touches only .gitleaks.toml",
+   "result": "PASS",
+   "detail": "toml read at C; git show --stat 7408a46 = .gitleaks.toml +18 only; diff 74c8314..C contains only the new [[allowlists]] block; pre-existing digest allowlist untouched"
+  },
+  {
+   "check": "Narrowness control executed with pinned binary (v8.30.1 from release-security.yml, downloaded, version-verified)",
+   "result": "PASS",
+   "detail": "planted high-entropy api_key line FIRES at repo root (generic-api-key, exit 1) and is SUPPRESSED under docs/gauntlet-runs/; synthetic GitHub PAT inside docs/gauntlet-runs/ STILL fires (rule-scoping proven); unanchored-path suppression found under crafted paths -> finding RC4-BR-1 (P4)"
+  },
+  {
+   "check": "Full --all history scan on all-branches clone with C's config; pre-recut differential",
+   "result": "PASS",
+   "detail": "gitleaks git --log-opts=--all over 574 commits / 46 remote refs: no leaks, exit 0; same scan with rc3's toml: exactly ONE finding \u2014 generic-api-key, docs/gauntlet-runs/es-v6-rc3-delta-review-2026-08-18/reports/verify-blast.json line 2, commit 2d835b96d \u2014 the re-cut suppresses precisely the claimed finding and nothing else"
+  },
+  {
+   "check": "Flagged record line holds only public identifiers (P1 screen)",
+   "result": "PASS",
+   "detail": "line 2 (9322 chars) read at 2d835b9: entropy match is Actions run ids beside the word 'API' ('API: 32184104186=mission-custody-contract success...'); credential-shape sweep of ENTIRE file (AWS/GitHub/Slack/private-key/OpenAI/Google/JWT/basic-auth/password patterns) = 0 hits; all long tokens are commit SHAs, digests, run ids, ruling ids \u2014 NOT a P1"
+  },
+  {
+   "check": "Blast-radius census 7ce03b9..C: every file classified (a) R3 repair / (b) re-cut / (c) neither",
+   "result": "PASS",
+   "detail": "25 files. (a) 24: .ledger/entries.jsonl (NF1 + rulings 20/21), check_ledger_append_only.py (NF1/NA2, --base-git-ref + reserialize self-test case), epistemic-flexibility.yml (NA2 dispatch surface), cleanroom_ci.sh (NF8 early validation + NA2 harness parity), v6_generate_candidate_packet.py (NF3 KL-MAIN-RED retire/rollback + NF4 budget re-derivation + NF6 is_operator_class + NF8 evidence_paths), test_v6_candidate_packet.py (NF3/NF4/NF6 assertions), requirement-register.json (NF6 law/enforced_by/known_residual), validate_v6_assurance.py (NF6 severity guard + NF7 TORN-leftovers + _tracked_set toplevel), test_v6_assurance_validator.py (NF7 planted main()-path controls), test_live_runner.py (NF8 NT override), + 14 rc3-packet deletions (full-refreeze shape per ledger entry 20). (b) 1: .gitleaks.toml. (c) EMPTY \u2014 no smuggled change"
+  },
+  {
+   "check": "C..C+1 touches ONLY docs/v6/ES6-V6-CANDIDATE/; rc3 packet dir fully deleted at C",
+   "result": "PASS",
+   "detail": "git diff --name-status C..C+1 = 14 additions, all under docs/v6/ES6-V6-CANDIDATE/ (no M/D outside); git ls-tree C docs/v6/ | grep -c ES6-V6-CANDIDATE = 0"
+  },
+  {
+   "check": "R3-NF1 repair verified at the bytes: main's ledger an exact prefix; oracle green with CI's inputs; re-appends content-identical; rulings 20/21 recorded",
+   "result": "PASS",
+   "detail": "ledger at C/C+1 (identical): starts byte-for-byte with main@03b7724's 17710 bytes (live ls-remote main == 03b7724); check_ledger_append_only.py --base main-ledger --current C+1-ledger -> exit 0 'ok ledger append-only: 6 line(s) appended'; appended entries 16-21 compact-separator; entries 16-19 parse-identical to rc3's versions (no content smuggled under re-serialization); entry 20 = v6-rc4-repair-shape-full-refreeze-20260819-20 (Next-action-1 ruling), entry 21 = v6-lineage-panel-cap-extension-20260819-21 (this panel's authority, scope matches the dispatch disclosure); self-test PASS 7/7 byte cases + 3 ref cases incl. the literal reserialize defect class"
+  },
+  {
+   "check": "S5 spot-check: PINS at C unchanged by delta; all pins exist on origin at registered peeled commits",
+   "result": "PASS",
+   "detail": "check_pin_tags.py 0 files in delta diff; live ls-remote: pin/es-v6-rc2-candidate-2026-08-18^{} = 6db8c50420b1 (rc2 C), pin/es-v6-rc2-freeze-2026-08-18^{} = 9aecd467236d (rc2 C+1), pin/ecs-contract-2026-07-27^{} = 8d9b2f85, v4.0.0^{} = 53ad6d52 \u2014 all four PINS values match"
+  },
+  {
+   "check": "S10 spot-check: early CLEANROOM_TMPDIR validation + NF8 NT override read and executed; S10 mechanism preserved",
+   "result": "PASS",
+   "detail": "cleanroom_ci.sh: new early guard read; executed CLEANROOM_TMPDIR=/no/such/dir-xyz -> immediate attributed 'FATAL: ... is not an existing directory', real exit 1; bash -n clean; original mktemp -p override + honest S10 comment intact; test_live_runner.py NT branch honors CLEANROOM_TMPDIR before C:/tmp, S7 NT early-skip in check() untouched"
+  },
+  {
+   "check": "S9/S3/S4 blast radius at new coordinates; packet honesty fields",
+   "result": "PASS",
+   "detail": "epistemic-flexibility.yml at C retains ready_for_review trigger + validator steps; C+1 README line 44 literally names C = 7408a462b413d0ab41a08de1d37a10b9cdf2a6ea, titles itself rc4, lists the rc3 NO-GO; gauntlet-request titled rc4, lists rc2 AND rc3 NO-GO SHAs; SUCCESSOR-SEAT-HANDOFF derives subject from promotion-packet.json -> candidate_sha (zero stale-SHA hits); promotion-packet: candidate_sha = C, readiness NOT_READY, blocking_claims ['CLM-INDEPENDENT-GAUNTLET'], independent_gauntlet NOT_RUN ref None, KL-MAIN-RED absent, KL-RESTAMP present, evidence_paths includes requalification + tracker captures; PR #197 live: open, DRAFT, base main@03b7724, head e46c248, retitled rc4"
+  },
+  {
+   "check": "Shipped oracles executed at C+1: validator test suite, packet self-test, NF7 directional controls",
+   "result": "PASS",
+   "detail": "test_v6_assurance_validator.py PASS (incl. new main()-path controls); test_v6_candidate_packet.py 'ok'; whole-packet-dir deletion -> PRE-FREEZE exit 0; core-artifacts-deleted-README-left -> 'TORN candidate packet... (R3-NF7...)' real exit 1; seal clone restored clean"
+  }
+ ],
+ "evidence_log": "All work in own scratch (mktemp -d under session scratchpad: rc4seat.es0Nqp). Full clone of https://github.com/ZMS-Labs/epistemic-skills.git + fetch of all refs/heads into refs/remotes (46 refs). No GitHub writes; network = clone/fetch/ls-remote + unauthenticated api.github.com GETs + gitleaks v8.30.1 release-binary download. Verdict of record read in full from 2d835b9:docs/gauntlet-runs/es-v6-rc3-delta-review-2026-08-18/arbitration.md (363 lines): R3-NF1(P1)..NF8(P4), Next actions 1-5, cap EXHAUSTED. Panel authority: this seat's dispatch cites cap-extension ruling v6-lineage-panel-cap-extension-20260819-21 \u2014 verified recorded at C (.ledger line 21, scope 'exactly one delta-plus-blast-radius panel, fresh context-free seats, same mode as entry 19'), alongside entry 20 ruling the repair ships as rc4 FULL re-freeze (Next-action-1's demanded explicit ruling). Both entries are self-attested records of a 2026-08-19 operator interview \u2014 the same evidentiary form as ledger entries 17-19 that the rc2/rc3 panels accepted; noted, not re-litigated. SEAL: seal clone = git clone --no-local of the full clone (branches first materialized as local branches in my own full clone), checkout e46c248 clean. Pristine validator exit 0; byte-flip at offset 100 of check_dco.py -> AssertionError R5 DIGEST MISMATCH naming the file, exit 1; restore -> 0. Inventory: 141/141 digests recomputed equal vs git blobs at C, all paths tracked (git ls-tree -r at C), candidate_tree_hash c12e8bd4 == C^{tree}. REQUAL: capture at C+1 parsed; six runs fetched (5 requal + superseded 32260127759): head_sha/event/status/conclusions all as captured; jobs API: custody gating 'contract' success vs 'contract-macos' failure both rounds; step-level: 'Durable ledger append-only against merge base' EXECUTED conclusion=success in flex dispatch run at C (rc3's gap closed live); head_sha-filtered run census at C (12) and 74c8314 (12) rules out cherry-picking \u2014 only extra red is superseded custody macos duplicate (finding RC4-BR-2, P4). Timing coherent: 74c8314 round 13:47Z, re-cut commit 13:56:55Z, second round 13:57Z, captured_at 14:01:40Z, C+1 commit 14:02:31Z. GITLEAKS: pinned version read from release-security.yml at C (go install ...gitleaks/v8@v8.30.1); release binary gitleaks_8.30.1_linux_x64 downloaded, version-verified 8.30.1. Narrowness: planted api_key fires outside / suppressed inside docs/gauntlet-runs/; synthetic ghp_ PAT inside still fires (github-pat); crafted-path probe: suppression also under notdocs/gauntlet-runs/ and sub/docs/gauntlet-runs/ (unanchored regex \u2014 finding RC4-BR-1, P4, fix = anchor ^). History: gitleaks git --log-opts=--all with C's toml over 574 commits = clean exit 0; with rc3's toml = exactly 1 finding at the claimed coordinates (verify-blast.json line 2 @ 2d835b9). That line + whole file swept: 0 credential-shape hits; entropy match = run ids beside 'API'; all hex = SHAs/digests. NO P1. CENSUS: delta = exactly 3 commits; 74c8314 carries 10 modifications + 14 rc3-packet deletions, 7408a46 only .gitleaks.toml, e46c248 only the new packet (14 adds). Every modification diff read and mapped: ledger byte-restore verified (main@03b7724 bytes exact prefix, live ls-remote match; oracle exit 0 with CI's exact inputs; re-appended 16-19 parse-identical to rc3's \u2014 no edits smuggled; self-test 7+3 incl. planted reserialize case); checker --base-git-ref fail-closed (bad ref probe exit 1); workflow dispatch-mode surface; generator KL-MAIN-RED retired/rollback rewritten to dated facts/budget row PROVED citing ledger 17/evidence_paths += requal+tracker; register NF6 law + known_residual; validator is_operator_class + @2 severity guard + TORN-leftovers + _tracked_set toplevel; validator-test planted controls; cleanroom early guard + parity fetch; test_live_runner NT override. Category (c) EMPTY. Bonus executions at C+1: validator suite PASS, packet self-test ok, TORN-leftovers real exit 1, whole-dir PRE-FREEZE exit 0, invalid CLEANROOM_TMPDIR real exit 1 attributed, bash -n clean; seal checkout finished git-status clean. S5 pins: PINS untouched by delta; 4/4 tags live at registered peeled SHAs. S9: ready_for_review + validator steps retained at C. PR #197 live: open DRAFT base main@03b7724 head e46c248, title 'ES6-V6-CANDIDATE rc4 BUILD freeze... candidate 7408a46'. Net: every load-bearing repair claim of the rc4 delta re-executed from primary sources and confirmed; two P4 hardening/completeness findings, no P1/P2/P3; the R3-NF1 red-on-arrival mechanism is discharged at these coordinates (ready-mark comparison reproduced green locally against live main)."
+}
