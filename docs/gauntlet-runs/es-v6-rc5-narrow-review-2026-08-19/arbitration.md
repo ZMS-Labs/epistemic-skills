@@ -165,7 +165,7 @@ The two properties the repair's legitimacy rests on — that the list is CLOSED 
 
 ## 7. Re-verification register — executed by this judge
 
-Workspace: fresh `git clone https://github.com/ZMS-Labs/epistemic-skills.git` into `/tmp/claude-0/-home-user-epistemic-skills/d70e7b4d-f98a-5bc1-8e61-b1f949279334/scratchpad/judge5/repo`, with detached worktrees `../wt-c1` (C+1) and `../wt-merge` (`refs/pull/197/merge`), plus a mutation directory `../mut`. Python 3. All GitHub interaction was unauthenticated REST `GET` or `git fetch`/`ls-remote`. **No push, no comment, no write to GitHub at any point.** Every mutation was applied to copies; `git status --porcelain` in `wt-c1` verified empty at the end.
+Workspace: fresh `git clone https://github.com/ZMS-Labs/epistemic-skills.git` into `<build-scratch>/judge5/repo`, with detached worktrees `../wt-c1` (C+1) and `../wt-merge` (`refs/pull/197/merge`), plus a mutation directory `../mut`. Python 3. All GitHub interaction was unauthenticated REST `GET` or `git fetch`/`ls-remote`. **No push, no comment, no write to GitHub at any point.** Every mutation was applied to copies; `git status --porcelain` in `wt-c1` verified empty at the end.
 
 1. **Coordinates from git objects.** C = `03e972c5…`, parent `375973c9…` (merge of origin/main), authored 19:08:00Z. C+1 = `546ccc8e…`, sole parent C, 19:17:09Z. Live `ls-remote` confirms C+1 is the branch head.
 2. **C/C+1 layering.** `git diff --name-status C C+1` = 14 additions, **all** under `docs/v6/ES6-V6-CANDIDATE/`; count of non-packet paths = **0**. `git ls-tree -r C | grep -c ES6-V6-CANDIDATE` = **0** — C carries no packet directory, by design.

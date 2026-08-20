@@ -1,6 +1,6 @@
 [
   {
-    "report_path": "/home/user/epistemic-skills/docs/gauntlet-runs/es-v6-candidate-freeze-2026-08-18/reports/chesterton-gate.md",
+    "report_path": "<repo>/docs/gauntlet-runs/es-v6-candidate-freeze-2026-08-18/reports/chesterton-gate.md",
     "total": 40,
     "verified": 40,
     "hallucinated": 0,
@@ -292,7 +292,7 @@
     ]
   },
   {
-    "report_path": "/home/user/epistemic-skills/docs/gauntlet-runs/es-v6-candidate-freeze-2026-08-18/reports/cloud-native-purist.md",
+    "report_path": "<repo>/docs/gauntlet-runs/es-v6-candidate-freeze-2026-08-18/reports/cloud-native-purist.md",
     "total": 42,
     "verified": 42,
     "hallucinated": 0,
@@ -598,7 +598,7 @@
     ]
   },
   {
-    "report_path": "/home/user/epistemic-skills/docs/gauntlet-runs/es-v6-candidate-freeze-2026-08-18/reports/entropy-demon.md",
+    "report_path": "<repo>/docs/gauntlet-runs/es-v6-candidate-freeze-2026-08-18/reports/entropy-demon.md",
     "total": 44,
     "verified": 44,
     "hallucinated": 0,
@@ -918,7 +918,7 @@
     ]
   },
   {
-    "report_path": "/home/user/epistemic-skills/docs/gauntlet-runs/es-v6-candidate-freeze-2026-08-18/reports/human-automation-handoff-auditor.md",
+    "report_path": "<repo>/docs/gauntlet-runs/es-v6-candidate-freeze-2026-08-18/reports/human-automation-handoff-auditor.md",
     "total": 47,
     "verified": 47,
     "hallucinated": 0,
@@ -1259,7 +1259,7 @@
     ]
   },
   {
-    "report_path": "/home/user/epistemic-skills/docs/gauntlet-runs/es-v6-candidate-freeze-2026-08-18/reports/requirements-traceability-auditor.md",
+    "report_path": "<repo>/docs/gauntlet-runs/es-v6-candidate-freeze-2026-08-18/reports/requirements-traceability-auditor.md",
     "total": 49,
     "verified": 49,
     "hallucinated": 0,

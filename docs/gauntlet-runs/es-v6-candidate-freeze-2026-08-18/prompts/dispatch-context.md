@@ -8,15 +8,15 @@ persona card + frozen dossier — followed by this context.)
 
 - Pristine subject worktree (packet-head tree `26d0e9c5…`, commit
   `7de88fab412e56268b73371e1cd44138987911ae`) — READ-ONLY, cite from here:
-  `/tmp/claude-0/-home-user-epistemic-skills/d70e7b4d-f98a-5bc1-8e61-b1f949279334/scratchpad/wt-evidence`
+  `<build-scratch>/wt-evidence`
 - Candidate worktree (commit `00e5146e43ff9011153452b83fedda706723c52b`) —
   run probes/tests HERE (or in your own scratch copies), never in the
   pristine tree:
-  `/tmp/claude-0/-home-user-epistemic-skills/d70e7b4d-f98a-5bc1-8e61-b1f949279334/scratchpad/wt-candidate`
+  `<build-scratch>/wt-candidate`
 - Main checkout (origin/main content `a2b9c0d…`, plus this run directory):
-  `/home/user/epistemic-skills`
+  `<repo>`
 - This run's frozen evidence transcripts (cited as `evidence/<file>`):
-  `/home/user/epistemic-skills/docs/gauntlet-runs/es-v6-candidate-freeze-2026-08-18/evidence/`
+  `<repo>/docs/gauntlet-runs/es-v6-candidate-freeze-2026-08-18/evidence/`
 - Live GitHub reads (ZMS-Labs/epistemic-skills ONLY) are permitted via the
   GitHub MCP tools (load with ToolSearch). Record any live read you rely on
   as: the tool + parameters + the value you observed.

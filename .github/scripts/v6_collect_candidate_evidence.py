@@ -51,6 +51,19 @@ def custody_test_commands() -> list[str]:
     return commands
 
 
+def _portable(cmd: str) -> str:
+    """Record a command a READER can re-run from the repo root.
+
+    Recording ``sys.executable`` and absolute script paths stamped the build
+    host's interpreter and checkout -- including a scratch directory carrying a
+    session id -- into committed evidence. The public-content pattern set was
+    structurally blind to that class (publication-gate finding PG-24). The
+    normalized form is equivalent, portable, and reviewable; the command
+    actually executed is unchanged.
+    """
+    return cmd.replace(sys.executable, "python").replace(f"{REPO_ROOT}/", "")
+
+
 def run_cmd(cmd: str) -> dict:
     proc = subprocess.run(
         cmd,
@@ -60,7 +73,7 @@ def run_cmd(cmd: str) -> dict:
         text=True,
     )
     return {
-        "command": cmd,
+        "command": _portable(cmd),
         "exit_code": proc.returncode,
         "stdout": proc.stdout,
         "stderr": proc.stderr,

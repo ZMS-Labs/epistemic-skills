@@ -36,4 +36,12 @@ git diff origin/claude/epistemic-skills-v6-completion-nwptmc -- \
 ```
 
 Every difference that command reports should be one of the three above, plus
-this file.
+this file, plus the build-path scrub described next.
+
+## Build-host path scrub (applies to every run in the lineage)
+
+Eight files in this run additionally had the build container's scratch
+directory (which carries a session id) and its checkout path replaced with
+`<build-scratch>` and `<repo>`. That is publication-gate finding **PG-24** —
+no credential or personal data, but a class `check_public_content.py` could not
+see. The scrub is lineage-wide; see `../V6-VERDICT-LINEAGE.md`.
