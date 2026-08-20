@@ -82,7 +82,7 @@ candidate.
 | 3 — evidence retention | **met** | All seven verdicts of this lineage are in-tree under `docs/gauntlet-runs/` with an index at `docs/gauntlet-runs/V6-VERDICT-LINEAGE.md` binding each to its exact subject commit. Previously they lived only on mutable branches while this file asserted otherwise — publication-gate finding PG-03, now closed. |
 | 4 — version and link alignment | **met, after two stalenesses were found and fixed** | Ten version-bearing surfaces at 6.0.0; surface-sync `--check` green (15 skills / 14 disciplines). Fixed since the first candidate: `.kimi-plugin/marketplace.json` had pinned `tree/v3.4.0` for three major versions and was the one manifest no oracle read (PG-07); the README advertised `v6.0.0` as a published support point behind links that returned 404 (PG-18). Both marketplace "full collection" descriptions enumerated fourteen of fifteen skills, omitting `manifest` (PG-15). A new install-ref oracle now fails on any manifest ref that is not the current install pin, with a control asserting it is not vacuous. |
 | 5 — deterministic and static-analysis evidence | **bound to the freeze candidate; MUST be re-run at the final candidate** | At `03e972c5`, all five gating workflows dispatched with step-level confirmation that both newest oracles executed rather than skipped: `epistemic-flexibility` 32313229574 success; `commission-watch-contract` 32313238605 success; `openai-bundles` 32313240639 success; `release-security` 32313248657 success; `mission-custody-contract` 32313232046 **failure at job level** — see the RG-5(c) disclosure below. The freeze pull request's full required set ran green at `466b9a0c` (9 checks, CodeQL included). Per Procedure step 4 this evidence does **not** transfer to the merge commit; re-running it there is a precondition of any tag. |
-| 6 — security, public content, provenance | **met in substance; one record outstanding** | `check_public_content.py` self-test (7 seeded RED controls) and live run both exit 0; the exact-file allowlist narrowed by one entry when the exemption's reason was remediated rather than renewed. Full-history secret scan green with its planted positive control and the record-path narrowness control. Provenance: `CONTRIBUTING.md` now states the DCO rule actually enforced, including both exemptions and the check's two limits (PG-13); the 250-commit endpoint fail-open is closed (PG-23). Outstanding: no 6.0.0-specific public-content review artifact at an immutable path (PG-12). |
+| 6 — security, public content, provenance | **met** | `check_public_content.py` self-test (7 seeded RED controls) and live run both exit 0; the exact-file allowlist narrowed by one entry when the exemption's reason was remediated rather than renewed. Full-history secret scan green with its planted positive control and the record-path narrowness control. Provenance: `CONTRIBUTING.md` now states the DCO rule actually enforced, including both exemptions and the check's two limits (PG-13); the 250-commit endpoint fail-open is closed (PG-23). The 6.0.0 release-window public-content review is recorded below: 229 files, zero true defects, with each apparent hit dispositioned and each exemption's reason stated (PG-12). |
 | 7 — supported harness evidence | **met via explicit tiers; no new live-fire** | Per-harness tiers below. No native-harness live-fire ran for this release; `KL-LIVE-ENV` records that, and the honest boundary column in the README install table carries each surface's limit. Cursor's recorded behavioral epoch remains `BLOCKED_EXTERNAL`. |
 | 8 — independent publication judgment | **NO-GO ×2 — the gate is not passed** | Two independent reviews of the publication act, both against `186b16eb2c069d9e8f902579afa50e9f5460fc85`: a cross-family single seat (xAI/Grok, `docs/gauntlet-runs/es-v6-publication-grok-2026-08-19/`) and a same-family panel (`docs/gauntlet-runs/es-v6-publication-gate-2026-08-19/`). Neither adopted the other's reasoning; both returned **NO-GO**. That candidate is superseded, so neither verdict transfers — but neither is discharged either. A fresh publication gate at the final candidate is required. **Independence limit:** five of the seven reviews in this lineage shared a model family with the authors and recorded that as a limit, not as independence. |
 | 9 — publication identity plan | **UNMET until the authorization line exists** | Tag `v6.0.0`, annotated, on the final candidate; release-note path `docs/release/RELEASE-6.0.0.md`; Release target the annotated tag, non-draft, body verbatim from this file. `protect-version-tags` carries `creation` with no bypass actors, so disarming it *is* the authorization act: disarm, tag, re-arm in the same sitting, then verify with a seeded probe rather than by reading the config back. The disarm and re-arm are recorded beside the authorization line. None of this has happened. |
@@ -119,6 +119,40 @@ silence, not on the failure — which is the correct way for it to fail.
 | ChatGPT / OpenAI | generated bundle | `openai-bundles` green at the freeze candidate; snapshot artifact, no live execution |
 
 No row above claims a live behavioral verification, because none was run.
+
+### Release-window public-content review (item 6 record)
+
+`RELEASING.md` RG-6 requires a public-content review at an immutable path, and
+6.0.0 had none (publication-gate finding PG-12). This is that record.
+
+**Scope.** Every file changed in `v5.1.0..candidate` — **229 files**, the full
+release window rather than a single pull-request diff.
+
+**Method.** Each file was passed through `check_public_content.py`'s own
+`scan_text`, so the review applies the same sanitization and allowlist logic the
+gate applies, rather than a hand-rolled pattern sweep. A raw pattern sweep was
+run first and deliberately compared against it: the raw sweep reported four
+apparent hits that `scan_text` correctly clears.
+
+**Result: zero true defects.**
+
+| Apparent hit | File | Disposition |
+|---|---|---|
+| `email-address` ×2 | `.github/scripts/check_dco.py` | `dev@example.test`, `other@example.test` — DCO self-test identities on the RFC-reserved `.test` TLD. Not deliverable addresses. |
+| `email-address` | `…/formal-rigor-v2-fixtures/tests/test_live_runner.py` | Same class: synthetic fixture identity. |
+| `windows-user-path` ×2 | `…/es-v6-rc3-delta-review-2026-08-18/reports/verify-s7810.json`, `…/test_live_runner.py` | `C:/Users/example` — the synthetic username the scanner neutralizes by design, and the seed its own RED control depends on. |
+
+**Exemptions exercised in the window, each with a live reason.** The private
+fleet name in the ES6-ZI-001 parent-tracker coordinate and its generator; the
+scanner's own file, which necessarily quotes its whole pattern vocabulary;
+RFC1918 and UNC strings inside the v5.1.0 release record and a custody test
+fixture; and two build-host-scratch-path files (sealed freeze evidence, and a
+dated probe results archive). One exemption was **removed** during this window
+rather than renewed, because its reason had been remediated.
+
+**Pattern set at this release:** eight classes, up from seven. The added class is
+`build-host-scratch-path`. Every class carries a seeded RED control, and that
+invariant is now enforced rather than merely documented.
 
 ## Known limitations, carried honestly
 
