@@ -53,6 +53,13 @@ applies it with exactly two exceptions, both deliberate and both narrow:
    different SHA and fails. A new unsigned commit is a defect to fix with
    `git commit --amend --signoff`, never a new entry.
 
+**Release candidates are merged with a merge commit, not a squash.** A squash
+attributes the resulting commit to whoever merged it, so a `Signed-off-by`
+trailer naming any other identity is an author mismatch — and asserting a
+sign-off for an identity that did not author the commit is a false attestation,
+worse than an absent trailer. A merge commit keeps the individually signed
+commits in history and is exempt under the rule above.
+
 Two limits worth knowing. The check runs against a pull request's commits, so it
 does not run against the commit a squash-merge actually creates — sign those off
 too. And GitHub's pull-request commits endpoint returns at most 250 commits; past

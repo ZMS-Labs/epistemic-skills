@@ -1,9 +1,20 @@
 # Proposal — a non-self-invalidating publication authority sequence
 
-**Status: PROPOSAL. Not adopted, not in force.** It amends `RELEASING.md`, a
-governing document, so it requires the repository owner's decision and — per
-ruling **OAI-P1-03** — prospective independent review *before* the next
-candidate is cut. Nothing here may be relied on until both happen.
+**Status: ADOPTED by the repository owner, 2026-08-20.** The amendment is
+implemented in `RELEASING.md` (RG-9, Procedure steps 4 and 7) and the companion
+merge-commit correction is adopted with it.
+
+The ruling's acceptance criterion is executable and is executed:
+`.github/scripts/simulate_authority_sequence.py` simulates both sequences in a
+throwaway repository and recomputes the SHA after every required write. The
+amended sequence yields **one** immutable subject across checks, verdict,
+authorization and tag target; the superseded sequence yields **two**, plus a
+required commit after the candidate. The control matters — a test that only
+ever passes proves nothing about the defect it claims to cure.
+
+Whether this amendment additionally needs its own independent read before the
+next candidate is cut remains an open owner decision; the falsifier is offered
+as the mechanical part of that review, not as a substitute for it.
 
 ## The defect being cured
 

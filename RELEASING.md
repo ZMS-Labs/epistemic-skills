@@ -148,8 +148,13 @@ candidate.
    - Owner-authorized exception publication follows the explicit exception record
      above and remains `WAIVED`/`UNMET`, never `MET`.
 9. **Publication identity plan**
-   - The exact candidate SHA, tag name, release-note path, and intended Release
-     target are recorded before tag creation.
+   - A **pre-authorization** is committed BEFORE the candidate is minted, naming
+     the pull request to be merged, the version, the release-note path, the gate
+     that must return GO, and the condition on which authorization fires. It
+     names no SHA, because none exists yet.
+   - The tag name, release-note path, and intended Release target are recorded
+     before tag creation. The exact candidate SHA is carried by the **annotated
+     tag object**, not by a post-candidate commit — see Procedure step 7.
    - The tag and GitHub Release will be verified after publication without moving
      or reusing the version.
 
@@ -168,6 +173,17 @@ candidate.
    is the candidate. Re-run every exact-commit integrity workflow against that
    SHA. Any correction creates a new candidate and invalidates earlier
    exact-commit evidence.
+   - **Dispatch every gating workflow explicitly.** Path-filtered workflows do
+     not fire on a candidate whose diff misses their filters -- a release commit
+     touching only `docs/` triggers none of them -- so relying on push-triggered
+     runs leaves the evidence silently incomplete. A missing run is not a
+     passing run. The release record must show all gating workflows at the one
+     candidate SHA.
+   - **Merge with a merge commit, not a squash.** A squash attributes the commit
+     to whoever merged it, so a sign-off trailer naming any other identity is an
+     author mismatch and a false attestation. A merge commit preserves the
+     individually signed commits in history and is exempt under the DCO
+     checker's `is_merge()` rule.
 5. **Run and record the independent Gauntlet publication gate.** Freeze the exact
    candidate as the subject; retain the panel outputs, arbitration, Conflict
    Ledger, and verdict under `docs/release/` or the version's Gauntlet run
@@ -182,10 +198,25 @@ candidate.
 7. **Authorize publication explicitly, then disarm the tag rule.** A verdict is
    advice until an owner acts on it. Until 2026-08-13 nothing here recorded that
    act, and nothing prevented it from being skipped.
-   - Record, in the committed release notes, a line naming **the verdict read,
-     the exact candidate SHA authorized, and the owner**. A verdict without a
-     resolvable subject authorizes nothing: a `GO` for one SHA is not a `GO` for
-     the SHA about to be tagged unless they are the same string.
+   - **The authorization is split across the candidate boundary, and this is
+     deliberate.** Requiring a committed line to name the candidate's own SHA is
+     not executable: writing it changes the tree and produces a different SHA,
+     so the step-4 checks and the step-5 verdict would describe a commit that is
+     no longer the candidate. That fixed point stood in this document until
+     2026-08-20 and was found by an operator-dispatched independent gate.
+   - **Before** the candidate is minted, the owner commits the pre-authorization
+     of RG-9: the pull request to be merged, the version, the gate that must
+     return GO, and the firing condition. It authorizes a determinate act.
+   - **After** the gate returns GO, the owner records **in the annotated tag
+     object** the verdict read (path and run id), the exact candidate SHA, their
+     own identity, and the disarm/re-arm timestamps. A tag names its target
+     without altering it, so the candidate is identical across the step-4
+     checks, the step-5 verdict, the authorization, and the tag target.
+   - A verdict without a resolvable subject still authorizes nothing: a `GO` for
+     one SHA is not a `GO` for the SHA about to be tagged unless they are the
+     same string. The rule is unchanged; only where the string is written moves.
+   - **No commit may be made between the candidate and the tag.** If one is
+     required, the candidate is superseded and steps 4-6 re-run from the top.
    - The ruleset `protect-version-tags` carries `creation` with **no bypass
      actors**, so `refs/tags/v*` cannot be created by anyone — including an
      owner, and including automation acting with an owner's credential. That is
