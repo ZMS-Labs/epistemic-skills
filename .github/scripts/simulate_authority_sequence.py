@@ -66,8 +66,10 @@ def amended(repo: Path) -> tuple[str, dict[str, str], list[str]]:
     bound["independent_verdict"] = git(repo, "rev-parse", "HEAD")  # step 5
     # Step 7: authorization lives in the tag OBJECT, not a commit.
     git(repo, "tag", "-a", "v1.0.0", "-m",
-        f"verdict: runs/gate GO\nauthorized-sha: {candidate}\nowner: Sim Owner")
+        f"verdict: runs/gate GO\nauthorized-sha: {candidate}\nowner: Sim Owner\n"
+        f"exact-sha-runs: 111,222,333,444,555")
     bound["authorization"] = candidate
+    bound["evidence_record"] = candidate   # in the tag object, not a commit
     bound["tag_target"] = git(repo, "rev-list", "-n", "1", "v1.0.0")
 
     writes_after = []
@@ -100,6 +102,27 @@ def superseded(repo: Path) -> tuple[str, dict[str, str], list[str]]:
     return candidate, bound, writes_after
 
 
+def evidence_committed(repo: Path) -> tuple[str, dict[str, str], list[str]]:
+    """Evidence table COMMITTED after the candidate -- the limb missed by the
+    first version of this cure, and the reason this scenario exists."""
+    git(repo, "merge", "--no-ff", "-q", "-m", "merge: mint the candidate", "feature")
+    candidate = git(repo, "rev-parse", "HEAD")
+    bound = {"exact_checks": candidate, "independent_verdict": candidate,
+             "authorization": candidate}
+    notes = repo / "RELEASE.md"
+    notes.write_text(notes.read_text(encoding="utf-8")
+                     + "\nruns at candidate: 111,222,333,444,555\n", encoding="utf-8")
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "-m", "exact-SHA evidence table")
+    bound["evidence_record"] = candidate
+    git(repo, "tag", "-a", "v1.0.0", "-m", "tag")
+    bound["tag_target"] = git(repo, "rev-list", "-n", "1", "v1.0.0")
+    writes_after = []
+    if git(repo, "rev-parse", "HEAD") != candidate:
+        writes_after.append("evidence was committed after the candidate")
+    return candidate, bound, writes_after
+
+
 def run(label: str, fn, expect_pass: bool) -> bool:
     with tempfile.TemporaryDirectory() as tmp:
         repo = new_repo(Path(tmp))
@@ -124,6 +147,8 @@ def main() -> int:
     ok = run("AMENDED sequence (pre-authorization + tag object)", amended, True)
     ok &= run("SUPERSEDED sequence (authorization committed after candidate)",
               superseded, False)
+    ok &= run("EVIDENCE-COMMITTED variant (the limb the first cure missed)",
+              evidence_committed, False)
     print(f"\nauthority-sequence falsifier: {'PASS' if ok else 'FAIL'}")
     return 0 if ok else 1
 

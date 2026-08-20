@@ -96,6 +96,23 @@ candidate.
 | 8 — independent publication judgment | **NO-GO ×2 — the gate is not passed** | Two independent reviews of the publication act, both against `186b16eb2c069d9e8f902579afa50e9f5460fc85`: a cross-family single seat (xAI/Grok, `docs/gauntlet-runs/es-v6-publication-grok-2026-08-19/`) and a same-family panel (`docs/gauntlet-runs/es-v6-publication-gate-2026-08-19/`). Neither adopted the other's reasoning; both returned **NO-GO**. That candidate is superseded, so neither verdict transfers — but neither is discharged either. A fresh publication gate at the final candidate is required. **Independence limit:** five of the seven reviews in this lineage shared a model family with the authors and recorded that as a limit, not as independence. |
 | 9 — publication identity plan | **UNMET until the authorization line exists** | Tag `v6.0.0`, annotated, on the final candidate; release-note path `docs/release/RELEASE-6.0.0.md`; Release target the annotated tag, non-draft, body verbatim from this file. `protect-version-tags` carries `creation` with no bypass actors, so disarming it *is* the authorization act: disarm, tag, re-arm in the same sitting, then verify with a seeded probe rather than by reading the config back. The disarm and re-arm are recorded beside the authorization line. None of this has happened. |
 
+### Why this tree does not contain its own verdict
+
+A tree cannot contain a judgment of itself. The publication verdict is produced
+*at* the candidate, so committing it would supersede the commit it judges — the
+same fixed point `RELEASING.md` step 7 cures for the authorization line, and
+step 4 for the exact-SHA run evidence.
+
+So three classes of fact live outside the tagged tree, by design rather than by
+omission: the **exact-SHA run IDs**, the **verdict**, and the **authorization**.
+All three are carried by the annotated tag object, which names its target
+without altering it. The verdict artifacts themselves are committed to the
+default branch *after* the tag exists, where they are reachable by name and can
+no longer move the thing they judge.
+
+If you are auditing this release and cannot find its verdict inside the tag,
+that is the design working. Read the tag message.
+
 ### RG-5(c) disclosure — the red job at the candidate
 
 `RELEASING.md` RG-5's dispatch-only carve-out is conjunctive, and its third
