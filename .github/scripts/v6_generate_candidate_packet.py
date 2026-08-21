@@ -1194,6 +1194,38 @@ def build_promotion_packet(sha: str, ts: str, matrix: dict) -> dict:
                 "owner": "operator",
             },
             {
+                "id": "KL-SCAN-EXEMPTION",
+                "kind": "integrity",
+                "statement": (
+                    "The full-history secret scan carries exactly one path "
+                    "exemption, `^docs/gauntlet-runs/.*`, because verifier "
+                    "prose in those immutable records quotes credential-shaped "
+                    "strings it is reporting on. Two properties are PROVEN on "
+                    "every run by a CI narrowness control: the pattern is "
+                    "anchored (an earlier unanchored form also suppressed "
+                    "`notdocs/gauntlet-runs/` and `sub/docs/gauntlet-runs/`), "
+                    "and it applies to no look-alike path. "
+                    "What the control does NOT prove, and what this limit "
+                    "exists to say: the exemption is OPEN-ENDED OVER FUTURE "
+                    "FILES and is NOT digest-bound. It suppresses scanning for "
+                    "any file that later appears under that prefix, which is "
+                    "the exact contrast this repository draws against its own "
+                    "digest-binding doctrine elsewhere. The refreshed "
+                    "CLM-SECRET-SCAN falsifier states what the scoping proves "
+                    "and never what it still permits."
+                ),
+                "release_consequence": (
+                    "A real credential committed under docs/gauntlet-runs/ "
+                    "would not be caught by this scan. Residual risk is "
+                    "bounded by review, not by the oracle: reaching that path "
+                    "requires a reviewed commit into an immutable record "
+                    "directory. Treat it as a review obligation on gauntlet-run "
+                    "records, not as scanner coverage. Disclosed as R5-NF2; "
+                    "the narrowness control is necessary and not sufficient."
+                ),
+                "owner": "agent",
+            },
+            {
                 "id": "KL-WINDOWS",
                 "kind": "platform",
                 "statement": "No native Windows requalification was run for this candidate.",
