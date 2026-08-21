@@ -41,12 +41,22 @@ under this repository's license. The full DCO text is available at
 The rule above is the rule for contributors. `.github/scripts/check_dco.py`
 applies it with exactly two exceptions, both deliberate and both narrow:
 
-1. **Merge commits are exempt.** A merge's content is the mechanical result of
-   joining two histories and its author is whoever ran `git merge`; the DCO
-   certifies authored contributions. This is the same default GitHub's own DCO
-   app applies. Recorded limit: content a merge commit genuinely *does* author —
-   a conflict resolution — is not certified by this exemption. Prefer
-   `git merge --signoff` where that matters.
+1. **Merge commits that author nothing are exempt.** A merge whose tree is
+   exactly what a clean three-way merge of its parents produces contains no
+   authored content, and its author is whoever ran `git merge`; the DCO
+   certifies authored contributions.
+
+   **A merge that resolves a conflict is not exempt.** Its tree differs from the
+   clean result, and that difference is hand-written content like any other, so
+   it requires an author-matching sign-off. Use `git merge --signoff`, or amend
+   the resolution with one.
+
+   This was a recorded *limit* until 2026-08-21 — the exemption applied to every
+   merge unconditionally, so content could ship uncertified by routing it
+   through a conflict. It is now enforced: the checker recomputes the clean
+   merge with `git merge-tree` and compares trees. A merge it cannot classify,
+   because the objects are missing, fails closed rather than being waved
+   through — an exemption that cannot be verified is not an exemption.
 2. **A closed list of five commits** is certified by the repository owner by
    exact 40-hex SHA. They predate this workflow's coverage of the branch they
    live on. The list is closed and content-bound: any amend or rebase produces a

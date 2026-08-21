@@ -6,8 +6,17 @@ ROOT="$(git rev-parse --show-toplevel)"
 REF="${1:-HEAD}"
 SHA="$(git -C "$ROOT" rev-parse --verify "${REF}^{commit}")"
 STAMP="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-RECEIPT_DIR="$ROOT/docs/evidence/local-ci"
-RECEIPT="$RECEIPT_DIR/${SHA}.md"
+# The receipt is named for a COMMIT but describes the WORKING TREE, so whenever
+# the tree is dirty the filename asserts something false -- and writing it inside
+# the repository meant that false artifact was one `git add -A` away from being
+# committed. It happened twice during the v6.0.0 release and was caught by hand
+# both times. The receipt now lands OUTSIDE the repository by default, and its
+# name carries the tree hash it actually describes rather than only the commit.
+TREE="$(git -C "$ROOT" write-tree 2>/dev/null || echo unknown)"
+DIRTY=""
+if ! git -C "$ROOT" diff --quiet HEAD 2>/dev/null; then DIRTY="-dirty"; fi
+RECEIPT_DIR="${LOCAL_CI_RECEIPT_DIR:-${TMPDIR:-/tmp}/epistemic-skills-local-ci}"
+RECEIPT="$RECEIPT_DIR/${SHA:0:12}-tree-${TREE:0:12}${DIRTY}.md"
 mkdir -p "$RECEIPT_DIR"
 
 log() { echo "$*" | tee -a "$RECEIPT"; }
@@ -16,6 +25,7 @@ log() { echo "$*" | tee -a "$RECEIPT"; }
 log "# Local CI receipt"
 log ""
 log "- **commit:** \`${SHA}\`"
+log "- **tree actually tested:** \`${TREE}\`${DIRTY:+ (working tree is DIRTY -- NOT the tree of that commit)}"
 log "- **started:** ${STAMP}"
 log "- **host:** $(uname -a 2>/dev/null || true)"
 log ""

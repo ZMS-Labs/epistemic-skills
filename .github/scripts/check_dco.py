@@ -2,9 +2,12 @@
 """Fail a pull request when any commit lacks an author-matching DCO sign-off."""
 from __future__ import annotations
 
+import hashlib
 import json
 import os
+import pathlib
 import re
+import subprocess
 import sys
 import urllib.request
 
@@ -32,21 +35,74 @@ ATTESTED_UNSIGNED = {
 
 
 def is_merge(item: dict) -> bool:
-    """A merge commit joins two histories; its content is the mechanical result
-    of that join, and its author is whoever ran `git merge`. The DCO certifies
-    authored contributions, so merge commits are exempt — the same default
-    GitHub's own DCO app applies. Recorded limit: content a merge commit DOES
-    author, namely conflict resolutions, is uncertified by this exemption. Keep
-    merges clean, and prefer `git merge --signoff` where the sign-off matters.
+    """Shape test only: does this commit join two histories?
+
+    Being a merge is NOT by itself an exemption -- see `merge_authored_content`.
     """
     return len(item.get("parents") or []) > 1
 
 
+def _git(*args: str) -> tuple[int, str]:
+    try:
+        r = subprocess.run(["git", *args], capture_output=True, text=True, timeout=60)
+    except (OSError, subprocess.SubprocessError):
+        return 1, ""
+    return r.returncode, r.stdout.strip()
+
+
+def merge_authored_content(item: dict) -> bool | None:
+    """Did this merge commit AUTHOR content, rather than mechanically join two
+    histories?
+
+    A merge whose tree is exactly what a clean three-way merge of its parents
+    produces authored nothing: its content is the join, and its "author" is
+    whoever ran `git merge`. Exempting that is correct and matches GitHub's own
+    DCO app.
+
+    A merge whose tree DIFFERS from the clean result authored the difference --
+    a conflict resolution is hand-written content that no one certified. The
+    unconditional exemption this function replaces treated both cases alike, so
+    a contributor could ship uncertified content by routing it through a
+    conflict. That was a recorded limit of this checker (R5-NF4, and the release
+    note's own "largest open finding"); this is the enforcement it was missing.
+
+    Returns True (authored -> must be signed), False (clean -> exempt), or None
+    (undecidable here, because the objects are not in this clone). None is NOT
+    treated as False by the caller: an exemption that cannot be verified is not
+    an exemption.
+    """
+    parents = [str(p.get("sha") or "") for p in (item.get("parents") or [])]
+    sha = str(item.get("sha") or "")
+    if len(parents) != 2 or not sha:
+        # Octopus merges and malformed entries are not auto-exempted.
+        return None
+    for ref in (*parents, sha):
+        if _git("cat-file", "-e", f"{ref}^{{commit}}")[0] != 0:
+            return None
+    rc, clean_tree = _git("merge-tree", "--write-tree", parents[0], parents[1])
+    if rc != 0:
+        # A clean merge is impossible (conflict). Any commit that exists here
+        # therefore resolved it by hand, which is authoring.
+        return True
+    rc, actual_tree = _git("rev-parse", f"{sha}^{{tree}}")
+    if rc != 0 or not clean_tree or not actual_tree:
+        return None
+    return clean_tree.split("\n")[0].strip() != actual_tree
+
+
 def unsigned_commits(commits: list[dict]) -> list[str]:
     unsigned: list[str] = []
+    unverifiable: list[str] = []
     for item in commits:
         if is_merge(item):
-            continue
+            authored = merge_authored_content(item)
+            if authored is False:
+                continue
+            if authored is None:
+                unverifiable.append(str(item.get("sha") or "unknown")[:12])
+                continue
+            # authored is True: fall through and require a sign-off like any
+            # other authored contribution.
         if str(item.get("sha") or "") in ATTESTED_UNSIGNED:
             continue
         commit = item.get("commit") or {}
@@ -61,6 +117,16 @@ def unsigned_commits(commits: list[dict]) -> list[str]:
         )
         if not valid:
             unsigned.append(str(item.get("sha") or "unknown")[:12])
+    if unverifiable:
+        # Fail closed and say exactly what to do about it. A merge we cannot
+        # classify is not silently waved through.
+        raise SystemExit(
+            "DCO: cannot verify whether these merge commits authored content, "
+            f"because their objects are not in this clone: {', '.join(unverifiable)}. "
+            "Fetch them before running this check (the DCO workflow does this "
+            "with `git fetch --no-tags origin <sha>` for the pull request head). "
+            "An exemption that cannot be verified is not an exemption."
+        )
     return unsigned
 
 
@@ -128,7 +194,9 @@ def self_test() -> int:
             [c("c" * 40, "x\n\nSigned-off-by: Other <other@example.test>")],
             ["c" * 12],
         ),
-        ("merge commit is exempt", [c("d" * 40, "Merge branch", parents=2)], []),
+        # Merge behaviour is exercised against REAL git objects below -- a
+        # synthetic dict cannot be tree-compared, and pretending otherwise is
+        # how the unconditional exemption survived review for so long.
         ("attested commit is exempt", [c(attested, "no sign-off here")], []),
         (
             "an unsigned commit sharing an attested prefix is NOT exempt",
@@ -154,7 +222,107 @@ def self_test() -> int:
         if not re.fullmatch(r"[0-9a-f]{40}", sha):
             failures.append(f"attested entry is not a full 40-hex SHA: {sha!r}")
             print(f"[FAIL] attested entry is not a full 40-hex SHA: {sha!r}")
-    print(f"DCO self-test: {'PASS' if not failures else 'FAIL'} ({len(cases)} controls)")
+    # CLOSURE CONTROL. "This list is CLOSED" was asserted in a comment and
+    # enforced by nothing: an independent review mutation-tested it and found
+    # that appending an arbitrary sixth SHA, and deleting an exercised entry,
+    # BOTH survived the self-test (R5-NF4). A property that survives its own
+    # negation is not enforced. Pinning the digest of the exact set makes any
+    # addition or removal fail here, which is the only place it can fail.
+    ATTESTED_DIGEST = "422800ed2970640f6d82fb1ececd4a9e3fe29b0040c871f315ad721f58f091c2"
+    actual = hashlib.sha256("\n".join(sorted(ATTESTED_UNSIGNED)).encode()).hexdigest()
+    if actual != ATTESTED_DIGEST:
+        failures.append("ATTESTED_UNSIGNED changed")
+        print("[FAIL] ATTESTED_UNSIGNED is a CLOSED list and its contents changed.\n"
+              f"       expected sha256 {ATTESTED_DIGEST}\n"
+              f"       got             {actual}\n"
+              "       Adding an entry requires a new owner ruling, not a code edit;\n"
+              "       removing one silently drops a certification that was relied on.")
+    else:
+        print(f"[PASS] attested list is closed ({len(ATTESTED_UNSIGNED)} entries, digest pinned)")
+    # --- merge classification, against real repositories -------------------
+    import tempfile
+
+    def run(*args, cwd):
+        return subprocess.run(["git", *args], cwd=cwd, capture_output=True, text=True)
+
+    def build(conflict: bool) -> tuple[str, str]:
+        """Return (repo_dir, merge_sha) for a clean or conflicting merge."""
+        d = tempfile.mkdtemp()
+        env = ["-c", "user.email=t@example.test", "-c", "user.name=T"]
+        run("init", "-q", "-b", "main", cwd=d)
+        (pathlib.Path(d) / "shared.txt").write_text("base\n", encoding="utf-8")
+        run("add", "-A", cwd=d); run(*env, "commit", "-qm", "base", cwd=d)
+        run("checkout", "-q", "-b", "side", cwd=d)
+        (pathlib.Path(d) / "shared.txt").write_text("side\n", encoding="utf-8")
+        run("add", "-A", cwd=d); run(*env, "commit", "-qm", "side", cwd=d)
+        run("checkout", "-q", "main", cwd=d)
+        # Clean: touch a DIFFERENT file. Conflict: touch the SAME line.
+        target = "other.txt" if not conflict else "shared.txt"
+        (pathlib.Path(d) / target).write_text("main\n", encoding="utf-8")
+        run("add", "-A", cwd=d); run(*env, "commit", "-qm", "main", cwd=d)
+        r = run(*env, "merge", "--no-edit", "side", cwd=d)
+        if r.returncode != 0:  # conflicted -- resolve by hand, which is authoring
+            (pathlib.Path(d) / "shared.txt").write_text("hand-written\n", encoding="utf-8")
+            run("add", "-A", cwd=d); run(*env, "commit", "-qm", "resolve", cwd=d)
+        sha = run("rev-parse", "HEAD", cwd=d).stdout.strip()
+        return d, sha
+
+    cwd0 = os.getcwd()
+    merge_controls = 0
+    for conflict, expect, label in [
+        (False, False, "a clean merge authored nothing -> exempt"),
+        (True, True, "a conflict-resolving merge AUTHORED content -> not exempt"),
+    ]:
+        d, sha = build(conflict)
+        os.chdir(d)
+        try:
+            parents = run("rev-list", "--parents", "-n", "1", sha, cwd=d).stdout.split()[1:]
+            item = {"sha": sha, "parents": [{"sha": x} for x in parents],
+                    "commit": {"message": "Merge", "author": {"name": "T", "email": "t@example.test"}}}
+            got = merge_authored_content(item)
+            merge_controls += 1
+            if got is expect:
+                print(f"[PASS] {label}")
+            else:
+                failures.append(label)
+                print(f"[FAIL] {label}: expected {expect}, got {got}")
+        finally:
+            os.chdir(cwd0)
+
+    # END-TO-END control, through unsigned_commits() rather than around it.
+    # An earlier revision of this self-test exercised merge_authored_content()
+    # directly, which left `is_merge` itself untested: mutating it to `False`
+    # SURVIVED. A control that skips the dispatch path does not cover the
+    # dispatch path. This routes a real clean merge through the real entry point.
+    d, sha = build(conflict=False)
+    os.chdir(d)
+    try:
+        parents = run("rev-list", "--parents", "-n", "1", sha, cwd=d).stdout.split()[1:]
+        merge_item = {"sha": sha, "parents": [{"sha": x} for x in parents],
+                      "commit": {"message": "Merge branch 'side'",
+                                 "author": {"name": "T", "email": "t@example.test"}}}
+        merge_controls += 1
+        got = unsigned_commits([merge_item])
+        if got == []:
+            print("[PASS] clean merge is exempt end-to-end (exercises is_merge)")
+        else:
+            failures.append("clean merge not exempt end-to-end")
+            print(f"[FAIL] clean merge not exempt end-to-end: {got}")
+    finally:
+        os.chdir(cwd0)
+
+    # Fail-closed control: objects absent must NOT read as exempt.
+    absent = {"sha": "d" * 40, "parents": [{"sha": "e" * 40}, {"sha": "f" * 40}],
+              "commit": {"message": "Merge", "author": {"name": "T", "email": "t@example.test"}}}
+    merge_controls += 1
+    if merge_authored_content(absent) is None:
+        print("[PASS] unverifiable merge is undecidable, never silently exempt")
+    else:
+        failures.append("unverifiable merge did not return None")
+        print("[FAIL] unverifiable merge did not return None")
+
+    total = len(cases) + merge_controls
+    print(f"DCO self-test: {'PASS' if not failures else 'FAIL'} ({total} controls)")
     return 0 if not failures else 1
 
 
