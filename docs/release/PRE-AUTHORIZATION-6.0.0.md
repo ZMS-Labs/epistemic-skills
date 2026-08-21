@@ -60,7 +60,7 @@ disarm will mean; the operator's hand supplies that it happened.
 | Field | Value |
 |---|---|
 | Version | **6.0.0** |
-| Pull request to be merged | **the v6.0.0 final release PR opened from `release/v6.0.0-final`** |
+| Pull request to be merged | **#207**, the v6.0.0 final release PR from `release/v6.0.0-final` |
 | Merge method | **merge commit** (not squash — a squash attributes the commit to the merger, making any sign-off trailer a false attestation) |
 | Candidate | the commit produced by that merge, and no other commit |
 | Release-note path | `docs/release/RELEASE-6.0.0.md` |
@@ -102,7 +102,7 @@ commit produced by that merge:
 
 If any condition fails, this authorization does not fire and no tag may be
 created. Fix forward, mint a new candidate, and a fresh pre-authorization is
-required for it — this one names one pull request and expires with it.
+required for it — this one names **#207** and expires with it.
 
 ### What changed from the superseded edition, and why
 
@@ -121,7 +121,7 @@ what was not done. That record is conditions 2 and 4 above.
 
 ## What it does not authorize
 
-Any commit other than the merge of the named pull request. Any version other than
+Any commit other than the merge of **#207**. Any version other than
 6.0.0. Moving or reusing a tag. Altering `protect-version-tags` beyond the
 disarm/re-arm of the tag act itself, or leaving it disarmed past the sitting.
 Describing the result as a conforming release, or the NO-GO verdicts as
