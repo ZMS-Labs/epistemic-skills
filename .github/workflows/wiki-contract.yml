@@ -1,0 +1,62 @@
+name: wiki-contract
+
+# The public handbook is a SEPARATE repository with no CI of its own. That, not
+# carelessness, is why it drifted three major versions: `apply_v6_updates.py`
+# could rewrite pages, but nothing could tell anyone whether the result was
+# correct. This workflow is the missing half.
+#
+# Two jobs, because there are two different things that can go wrong:
+#   snapshot -- the committed pages/ copy drifts from the package it describes
+#   live     -- someone edits a page in GitHub's web UI and re-drifts the wiki
+#
+# Deliberately NOT path-filtered. A path filter would skip this on a commit that
+# changes the skill inventory without touching docs/wiki-updates/, which is
+# exactly the change that invalidates the snapshot. A missing run is not a
+# passing run.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches: [main]
+  schedule:
+    # Hourly would be noise; daily catches a web edit within a day.
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  snapshot:
+    name: snapshot
+    if: github.event.pull_request.draft != true
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Oracle self-test (planted RED controls)
+        run: python docs/wiki-updates/v6.0.0/check_wiki.py --self-test
+      - name: Applier self-test (includes the blanket-rewrite regression guard)
+        run: python docs/wiki-updates/v6.0.0/apply_v6_updates.py --self-test
+      - name: Committed handbook snapshot matches the package
+        run: python docs/wiki-updates/v6.0.0/check_wiki.py docs/wiki-updates/v6.0.0/pages
+
+  live:
+    name: live
+    # Only on a schedule or a manual run: a pull request cannot change what the
+    # published wiki says, so failing PR CI for someone else's web edit would be
+    # a false signal aimed at the wrong person.
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Clone the published wiki (read-only)
+        run: git clone --quiet --depth 1 https://github.com/${{ github.repository }}.wiki.git "$RUNNER_TEMP/wiki"
+      - name: Published handbook matches the package, and every link resolves
+        run: python docs/wiki-updates/v6.0.0/check_wiki.py "$RUNNER_TEMP/wiki" --links

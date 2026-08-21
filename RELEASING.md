@@ -73,6 +73,43 @@ A post-release review may add useful judgment evidence, but it cannot retroactiv
 turn an exception release into a conforming release or manufacture a pre-publication
 GO.
 
+#### The exception route is standing, not emergency (D25)
+
+Until 2026-08-21 this document treated the exception as a one-off, and v6.0.0's
+own records went further and said a second use "would convert an exception into a
+practice. Do not." **That is superseded**, deliberately, by operator decision
+**D25**. The reasoning is recorded rather than assumed:
+
+A repository maintained by one operator and one implementing agent lineage cannot
+manufacture the independence a conforming release requires. `KL-SELF-GO` says so
+plainly, and v6.0.0 proved it the expensive way: nine reviews, four publication
+NO-GOs, and an override at the end anyway. Treating the exception as forbidden did
+not produce independence — it produced a long detour to the same place, with the
+honesty of the outcome unchanged.
+
+So the exception is a **first-class, permanently available route**, on these
+standing terms:
+
+1. **The five disclosures above are mandatory every time**, in the committed notes,
+   before tag creation. They are what makes an exception honest rather than silent.
+2. **The exception reaches RG-8 and nothing else.** No integrity gate is waivable
+   by any authority in this repository — not the owner's, not a decision record's.
+   An accuracy defect found under an exception is fixed, never excused.
+3. **The release is labelled an exception release** in its notes, its tag message,
+   and its handbook entry. It is never described as conforming, and its NO-GO
+   verdicts are never described as discharged, superseded, or resolved.
+4. **The named cost is stated, not softened.** An exception release ships without
+   the one thing the judgment gate exists to establish: that an actor which did not
+   build it thinks it should be published. Readers should trust the artifact on its
+   integrity evidence and discount the judgment evidence to zero.
+5. **Standing obligations survive.** `KL-SELF-GO` stays unretired, and any owed
+   cross-family consult carries forward with an owner, a trigger, and an exit
+   criterion until it is actually discharged.
+
+What this is **not**: a way to skip work. Every integrity gate still runs, and the
+disclosure burden is heavier than a conforming release's, because a conforming
+release can point at a GO and an exception release has to explain itself.
+
 ## Release gate
 
 Before creating the tag, record every row below against the exact release

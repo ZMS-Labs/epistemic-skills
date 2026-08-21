@@ -25,3 +25,7 @@ missions/
 **/runs/*.jsonl
 !**/runs/*.example.jsonl
 !**/runs/README.md
+
+# Local CI receipts describe a working tree, not a commit. They are written
+# outside the repository by default; this is belt-and-braces for older copies.
+docs/evidence/local-ci/

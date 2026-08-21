@@ -140,3 +140,43 @@ may amend or echo-certify.
   Overriding RG-8 twice in a row without discharging D8 would convert an
   exception into a practice, which is the failure mode this entry is written to
   prevent.
+
+- **D25 (2026-08-21 — the exception route is standing; D24's prohibition is
+  superseded).** Asked whether 6.1.0 should try to retire `KL-SELF-GO` by
+  building a real acceptance seat, or should instead formalize the exception
+  path, the operator chose to **formalize the exception path**.
+
+  **What this supersedes.** D24, the v6.0.0 release note, and the `v6.0.0` tag
+  message all state that publishing again under an RG-8 exception without first
+  discharging D8 "would convert an exception into a practice. Do not." The
+  operator has now decided it *should* become a practice — an explicit, honest,
+  repeatable one rather than a prohibition that gets overridden anyway. D24 is
+  not edited: it recorded what was decided on 2026-08-21 and remains accurate as
+  of that moment. This entry records the later decision and which clause it
+  displaces.
+
+  **The tag cannot be corrected and is not being corrected.** `v6.0.0`'s message
+  carries the superseded wording permanently. That is the intended behaviour of
+  an immutable tag, and `RELEASING.md` step 11 forbids rewriting one to imply a
+  different history. A reader who finds the "do not" language in the tag and the
+  standing route in `RELEASING.md` is seeing an accurate record of a policy that
+  changed, on a repository that writes down when it changes its mind.
+
+  **Why the operator's reasoning is sound, stated so it can be argued with
+  later.** Independence has two limbs — the seat must not have built the thing,
+  and the actor being judged must not control whether the seat is heard. A solo
+  operator plus one agent lineage can satisfy the first and structurally cannot
+  satisfy the second. v6.0.0 spent nine reviews discovering that. Formalizing the
+  exception does not lower the standard; it stops pretending the standard is
+  reachable here and makes the shortfall a permanent, disclosed line item rather
+  than a per-release crisis.
+
+  **What D25 does not do.** It does not waive an integrity gate, does not retire
+  `KL-SELF-GO`, and does not discharge the D8 consult, which remains owed with
+  its own tracking issue. It does not authorize describing any release as
+  conforming when it is not.
+
+  **Revisit trigger.** If the project ever gains a reviewer whose selection the
+  implementing lineage does not control — a second maintainer, a funded external
+  review, an institutional seat — this decision should be revisited immediately,
+  because the constraint that justifies it would no longer hold.

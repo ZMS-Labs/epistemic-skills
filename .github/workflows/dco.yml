@@ -23,6 +23,17 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.base.sha }}
           persist-credentials: false
+          # Full history: classifying a merge commit needs its parents and their
+          # merge base, which a shallow clone does not have.
+          fetch-depth: 0
+      # Fetch the pull request's OBJECTS so the checker can decide whether each
+      # merge commit authored content. This fetches data only -- no code from the
+      # pull request is executed by this job, which is what pull_request_target
+      # requires. Without it every merge would be unverifiable and fail closed.
+      - name: Fetch pull-request objects (no checkout, no execution)
+        run: |
+          git fetch --no-tags --quiet origin \
+            "refs/pull/${{ github.event.pull_request.number }}/head"
       - name: DCO checker self-test (planted RED controls)
         run: python .github/scripts/check_dco.py --self-test
       - name: Require author-matching Signed-off-by lines
