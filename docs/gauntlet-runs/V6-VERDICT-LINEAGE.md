@@ -1,13 +1,13 @@
 # v6 verdict lineage — the record of what was reviewed and what was ruled
 
-Seven independent reviews were run against the v6 candidate lineage. Until this
+Nine independent reviews were run against the v6 candidate lineage. Until this
 file landed, every one of them lived only on a mutable branch, while
 `docs/release/RELEASE-6.0.0.md` told readers the run records were here. That
 gap is publication-gate finding **PG-03**: publishing would have made a false
 statement immutable at a tag.
 
 Each row's verdict is bound to an **exact commit**. A verdict never transfers to
-a different SHA — that rule is why this lineage has six NO-GOs rather than one.
+a different SHA — that rule is why this lineage has eight NO-GOs rather than one.
 
 | # | Run | Subject commit | Verdict | Seat family |
 |---|---|---|---|---|
@@ -18,10 +18,35 @@ a different SHA — that rule is why this lineage has six NO-GOs rather than one
 | 5 | `es-v6-rc5-narrow-review-2026-08-19` | `03e972c5d427` | **GO** (BUILD freeze only) | same-family |
 | 6 | `es-v6-publication-grok-2026-08-19` | `186b16eb2c06` | **NO-GO** | **cross-family** (xAI/Grok) |
 | 7 | `es-v6-publication-gate-2026-08-19` | `186b16eb2c06` | **NO-GO** | same-family |
+| 8 | `es-v6-publication-openai-2026-08-20` | `d0165bd0cf1e` | **NO-GO** | **cross-family** (OpenAI) |
+| 9 | `es-v6-publication-panel-2026-08-21` | `48009fef938b` | **NO-GO** | same-family |
 
-Rows 1–5 reviewed the **BUILD freeze**. Rows 6–7 reviewed the **publication
-act** and reached the same conclusion independently, neither adopting the
-other's reasoning.
+Rows 1–5 reviewed the **BUILD freeze**. Rows 6–9 reviewed the **publication
+act**, each against a different candidate, and reached the same conclusion
+independently — none adopted another's reasoning.
+
+## Who dispatched each review, and why that column matters
+
+Independence has two limbs, and this lineage learned the second one late. A seat
+can be fresh, non-authoring, and cross-family, and still tell you nothing if the
+actor being judged chose whether to seat it and whether its output ever
+surfaced. **Dispatch controls selection.** Row 9's judge made that argument
+against its own dispatcher, and it is recorded here rather than argued with.
+
+| # | Dispatched by | What that means for the verdict |
+|---|---|---|
+| 1–7, 9 | implementing lineage | Blocking findings are credible — each cost the dispatcher work. A `GO` from any of these establishes little. |
+| **8** | **operator** | The only review in the lineage whose *selection* the implementer did not control. |
+
+Row 8 is therefore the load-bearing publication review. It found that the
+authorization sequence in `RELEASING.md` was not executable, that a candidate's
+sign-off trailers were false attestations, and that two gating workflows had
+never run on the exact subject. All three were repaired.
+
+Row 5's `GO` was **ratified** by the operator (D20) rather than dispatched by
+them. Row 9 ruled that inadequate on the selection argument above. That dispute
+is unresolved and is disclosed in `docs/release/RELEASE-6.0.0.md` rather than
+settled in this release's favour.
 
 ## What row 5's GO does and does not authorize
 
@@ -33,10 +58,12 @@ ruled those blocking.
 
 ## Independence limits, stated plainly
 
-Five of the seven seats shared a model family with the candidate's authors. Those
+Six of the nine seats shared a model family with the candidate's authors. Those
 panels recorded that as an independence **limit**, not as independence. Only rows
-2 and 6 were genuinely cross-family. This is the limit the lineage has never
-retired, and it is the reason D8 exists.
+2, 6 and 8 were cross-family, and only row 8 was also operator-dispatched. This
+is the limit the lineage has never retired, and it is the reason D8 exists — a
+standing cross-family consult obligation that is **still owed** and carries
+forward to 6.1.0.
 
 ## Redactions applied when these records were brought in-tree
 
@@ -70,5 +97,10 @@ git diff origin/<branch> -- docs/gauntlet-runs/<run-id>/
 Originating branches: run 1 `claude/epistemic-skills-v6-completion-nwptmc`,
 run 2 `kimi/es-v6-rc2-gauntlet-2026-08-18`, run 3 `claude/es-v6-rc3-delta-review`,
 run 4 `claude/es-v6-rc4-delta-review`, run 5 `claude/es-v6-rc5-review`,
-run 6 `cursor/es-v6-publication-gauntlet-63a8`. Run 7 is first recorded here;
-only its arbitration was retained, not its individual seat reports.
+run 6 `cursor/es-v6-publication-gauntlet-63a8`,
+run 8 `review/v6.0.0-publication-gate-openai-2026-08-20` (recorded there at
+`ac0a91e` by the operator-dispatched seat, brought in-tree unaltered).
+
+Runs 7 and 9 are first recorded here; for both, only the arbitration was
+retained, not the individual seat reports. Run 9 states that gap and its own
+structural limit in its `TRANSCRIPTION.md`.

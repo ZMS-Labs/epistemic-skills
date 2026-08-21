@@ -78,15 +78,78 @@ def check_live_surface_counts(skill_count: int) -> None:
                 require(m.group(1).lower() in ok_words,
                         f"stale count word {m.group(1)!r} on live surface {mp.name}: ...{s[max(0,m.start()-30):m.end()+40]}...")
     readme = read(REPO_ROOT / "README.md")
-    mermaid = [ln for ln in readme.splitlines() if "router and" in ln and "disciplines" in ln]
+    # Select mermaid node lines structurally -- inside a fenced ```mermaid block --
+    # rather than by a prose fragment. The previous selector keyed on "router and",
+    # a phrase the README stopped using; it matched zero lines and the check passed
+    # vacuously for as long as that was true. Two non-vacuity controls below make
+    # that failure mode loud instead of silent.
+    mermaid = []
+    in_block = False
+    for ln in readme.splitlines():
+        if ln.strip().startswith("```"):
+            in_block = ln.strip().startswith("```mermaid")
+            continue
+        if in_block and "disciplines" in ln:
+            mermaid.append(ln)
+    require(mermaid, "README mermaid count check is vacuous: no fenced ```mermaid "
+                     "line mentions 'disciplines'. Either the diagram lost its count "
+                     "node or the selector drifted -- both mean this check guards nothing.")
+    checked = 0
     for ln in mermaid:
         found = [w for w in WORDS.values() if re.search(rf"\b{w}\b", ln.lower())]
+        checked += len(found)
         for w in found:
             require(w in ok_words, f"README mermaid node count stale: {ln.strip()}")
+    require(checked >= 1, "README mermaid count check is vacuous: the selected node "
+                          f"lines carry no spelled count at all: {mermaid!r}")
     gemini = read(REPO_ROOT / "GEMINI.md")
     for m in count_re.finditer(gemini):
         require(m.group(1).lower() in ok_words,
                 f"stale count word {m.group(1)!r} in GEMINI.md")
+
+
+def check_marketplace_enumeration(skill_names: set[str]) -> None:
+    """PG-15: the marketplace "full collection" descriptions enumerate the skills by
+    name, and a hand-maintained enumeration is a projection of a directory -- exactly
+    the drift class the collection warns about in its own README. Both descriptions
+    shipped fourteen of fifteen names for a full release cycle, omitting `manifest`,
+    and no oracle read them.
+
+    The expected set is DERIVED from `plugins/epistemic-skills/skills/`, never written
+    down here: a hard-coded list would reintroduce the projection one layer up. The
+    enumeration is parsed STRUCTURALLY -- the `a + b + c` list after the colon -- not
+    by scanning prose for word-shaped things, so a name that is present, absent, or
+    invented is decided by set equality rather than by substring luck."""
+    enumerating = []
+    for mp in (REPO_ROOT / ".claude-plugin" / "marketplace.json",
+               REPO_ROOT / ".cursor-plugin" / "marketplace.json"):
+        data = json.loads(read(mp))
+        for plugin in data.get("plugins", []):
+            desc = plugin.get("description", "")
+            if "full collection" not in desc.lower():
+                continue
+            enumerating.append(mp.name)
+            require(":" in desc, f"{mp.name} 'full collection' description has no "
+                                 "'<preamble>: a + b + c' enumeration to check")
+            listed = desc.split(":", 1)[1]
+            named = set()
+            for token in listed.split("+"):
+                token = re.sub(r"\(.*?\)", "", token).strip().rstrip(".").strip()
+                if token:
+                    named.add(token)
+            missing = sorted(skill_names - named)
+            invented = sorted(named - skill_names)
+            require(not missing,
+                    f"{mp.name} 'full collection' description omits {missing}; it must "
+                    f"enumerate all {len(skill_names)} skills")
+            require(not invented,
+                    f"{mp.name} 'full collection' description names {invented}, which "
+                    "is not a skill directory")
+    # Non-vacuity: if no description matched, the check verified nothing. Two
+    # manifests carry this claim; both must be reached.
+    require(len(enumerating) == 2,
+            "marketplace enumeration check is vacuous: expected two 'full collection' "
+            f"descriptions to check, reached {enumerating}")
 
 
 def main() -> int:
@@ -319,6 +382,7 @@ def main() -> int:
     skill_dirs = [p.parent for p in (PACKAGE_ROOT / "skills").glob("*/SKILL.md")]
     require(len(skill_dirs) == _n, f"expected {_n} skill directories, found {len(skill_dirs)}")
     check_live_surface_counts(len(skill_dirs))
+    check_marketplace_enumeration({d.name for d in skill_dirs})
     for directory in skill_dirs:
         require((directory / "SKILL.md").is_file(), f"missing SKILL.md: {directory.name}")
 

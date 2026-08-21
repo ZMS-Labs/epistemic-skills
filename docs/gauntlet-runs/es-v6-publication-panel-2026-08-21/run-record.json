@@ -1,0 +1,25 @@
+{
+  "run_id": "es-v6-publication-panel-2026-08-21",
+  "subject_sha": "48009fef938bfa989fb797380080824b050f3bb4",
+  "scope": "publication act (RG-1..RG-9)",
+  "verdict": "NO_GO",
+  "date": "2026-08-21",
+  "seat_family": "same-family",
+  "dispatched_by": "implementing-lineage",
+  "structure": {
+    "reviewing_seats": 5,
+    "verification_stage": true,
+    "judge": "isolated; authored no seat report and did not build the candidate"
+  },
+  "retention": {
+    "arbitration": "arbitration.md",
+    "seat_reports": "NOT RETAINED",
+    "verification_outputs": "NOT RETAINED"
+  },
+  "limits": [
+    "Implementer-dispatched: can block a release, cannot clear one.",
+    "Same model family as the candidate's authors.",
+    "Seat-level artifacts not retained; the judge's ruling is the only committed output."
+  ],
+  "authorizes": null
+}
