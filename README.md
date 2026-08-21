@@ -10,7 +10,7 @@
 
 Epistemic disciplines for agentic work: use the least process that can still expose an error capable of changing the action or the completion claim.
 
-**Version 6.0.0.** This is the version on `main` — **prepared, not yet published**. No `v6.0.0` tag or GitHub Release exists; its publication gate has not been passed, and the gate record in progress is [RELEASE-6.0.0.md](docs/release/RELEASE-6.0.0.md). The project's current [immutable support point](https://github.com/ZMS-Labs/epistemic-skills/releases/tag/v5.1.0) is **v5.1.0**, and every install recipe below pins it. The package is harness-agnostic, follows the [Agent Skills specification](https://agentskills.io/specification), and is licensed under [GPL-3.0-or-later](LICENSE).
+**Version 6.0.0.** Published 2026-08-21 and now the project's current [immutable support point](https://github.com/ZMS-Labs/epistemic-skills/releases/tag/v6.0.0); every install recipe below pins it. It shipped as an **exception release**, and that word is load-bearing: four independent reviews of the publication act, across three model families, all returned **NO-GO**, and the owner published anyway under a recorded exception rather than a passed gate. None of the four found a defect in the shipped skills — every P1 concerned the release process, its paperwork, or its authority chain. The full record is [RELEASE-6.0.0.md](docs/release/RELEASE-6.0.0.md); read it before citing this release's assurance posture. The package is harness-agnostic, follows the [Agent Skills specification](https://agentskills.io/specification), and is licensed under [GPL-3.0-or-later](LICENSE).
 
 [![Release](https://img.shields.io/github/v/release/ZMS-Labs/epistemic-skills?display_name=tag)](https://github.com/ZMS-Labs/epistemic-skills/releases/latest)
 [![epistemic-flexibility](https://github.com/ZMS-Labs/epistemic-skills/actions/workflows/epistemic-flexibility.yml/badge.svg)](https://github.com/ZMS-Labs/epistemic-skills/actions/workflows/epistemic-flexibility.yml)
@@ -67,14 +67,14 @@ Users and maintainers are equal first-class audiences:
 | [Skill Catalog](https://github.com/ZMS-Labs/epistemic-skills/wiki/Skill-Catalog) | [Release Process and Versioning](https://github.com/ZMS-Labs/epistemic-skills/wiki/Release-Process-and-Versioning) |
 | | [Security, Provenance, and DCO](https://github.com/ZMS-Labs/epistemic-skills/wiki/Security-Provenance-and-DCO) |
 
-The Wiki is unversioned navigation over versioned sources. If a handbook summary and a released contract differ, the immutable `v5.1.0` source controls — and that precedence is load-bearing right now. The handbook still describes a v5.0.0-era package: most pages say fourteen skills, there is no `manifest` page, and several retired seats are still written in the present tense. Use it for orientation; read the in-tree `SKILL.md` for any contract you intend to rely on.
+The Wiki is unversioned navigation over versioned sources. If a handbook summary and a released contract differ, the immutable `v6.0.0` source controls. The handbook was brought to v6.0.0 alongside this release and now has an oracle of its own ([`check_wiki.py`](docs/wiki-updates/v6.0.0/check_wiki.py)) checking skill inventory, version banners, spelled counts, link-text/URL version agreement, retired-seat tense, and live link resolution — it had never had one, which is why it had drifted three major versions. Use it for orientation; read the in-tree `SKILL.md` for any contract you intend to rely on.
 
 ## Five-minute start
 
 1. **Install one immutable copy.** Choose the native path for your harness under [Installation and compatibility](#installation-and-compatibility). Use the generic Agent Skills path only when no native plugin or extension exists.
 2. **Reload the harness or start a fresh task.** Trigger discovery and role registries are commonly session-bound.
 3. **Choose the entry point.** There is one: `metacognate`. It is the only skill you invoke by name; every other member fires on its own description. (One carve-out: `manifest`, the mission-custody seat, may also be invoked directly — on `manifest this` or `/manifest` — for mission lifecycle acts.) It applies the routine gate first, and declining is its most common correct outcome.
-4. **Verify the inventory and source.** Expect exactly the count your source ships: the `main` tree or a v5.1.0 package or tagged checkout ships fifteen (v4.1.0 and v4.0.0 ship eleven; v3.4.0 ships seventeen; v3.3.0 ships fourteen; v3.1.0/v3.2.0 ship twelve; the pinned `v3.0.0` tag also ships eleven — its different eleven)—not two copies found through different install mechanisms.
+4. **Verify the inventory and source.** Expect exactly the count your source ships: the `main` tree or a v6.0.0 or v5.1.0 package or tagged checkout ships fifteen (v4.1.0 and v4.0.0 ship eleven; v3.4.0 ships seventeen; v3.3.0 ships fourteen; v3.1.0/v3.2.0 ship twelve; the pinned `v3.0.0` tag also ships eleven — its different eleven)—not two copies found through different install mechanisms.
 5. **Let routine work leave.** A local, reversible, directly checkable, non-precedential task should finish with its bounded check and no process-only artifact.
 
 For a harness without a native package surface, the complete generic install is:
@@ -218,17 +218,17 @@ The package contains exactly one entry point and fourteen disciplines. Each name
 
 ### One copy, one version, one canonical tree
 
-Install with **exactly one mechanism per harness**. Native plugin **or** generic skill install—never both. For 5.1.0, replace an older untagged copy, reload, and verify both the skill count and source path. Duplicate copies create duplicate triggers and can silently mix contract versions.
+Install with **exactly one mechanism per harness**. Native plugin **or** generic skill install—never both. For 6.0.0, replace an older untagged copy, reload, and verify both the skill count and source path. Duplicate copies create duplicate triggers and can silently mix contract versions.
 
-| Harness | v5.1.0 surface | Required follow-through | Honest support boundary |
+| Harness | v6.0.0 surface | Required follow-through | Honest support boundary |
 |---|---|---|---|
 | Claude Code | Local marketplace from tagged checkout | Start a fresh task | Package discovery from one immutable checkout |
 | Codex | Tagged plugin marketplace | Render five Gauntlet roles; start a new task | Manifest does not itself register custom collaboration-agent types |
-| Cursor | Tagged local checkout or team marketplace | Reload window; verify the tag's full skill count (fifteen at v5.1.0) | Public listing unavailable; recorded behavioral epoch is `BLOCKED_EXTERNAL` |
+| Cursor | Tagged local checkout or team marketplace | Reload window; verify the tag's full skill count (fifteen at v6.0.0) | Public listing unavailable; recorded behavioral epoch is `BLOCKED_EXTERNAL` |
 | Gemini CLI | Tagged extension | Restart and validate extension | Uses root context and canonical symlinked tree |
 | Antigravity (`agy`) | Tagged native local plugin | Validate with `agy` | Choose native, Gemini link, or import—only one |
 | Kimi Code | Tagged repository plugin | `/reload` or new session | Plugin instructions map isolated-agent primitives |
-| ZCode | Tagged local checkout, junction-projected into `~/.zcode/skills` | Start a fresh session; verify the tag's full skill count (fifteen at v5.1.0) | Session bootstrap junctions `~/.claude/skills` only — skills riding as Claude *plugins* are not auto-imported; junction surface verified on one fleet device, plugin install untested |
+| ZCode | Tagged local checkout, junction-projected into `~/.zcode/skills` | Start a fresh session; verify the tag's full skill count (fifteen at v6.0.0) | Session bootstrap junctions `~/.claude/skills` only — skills riding as Claude *plugins* are not auto-imported; junction surface verified on one fleet device, plugin install untested |
 | ChatGPT / OpenAI | Generated bundle from the release (`packaging/openai/chatgpt-skill`) | Upload the generated zip per [the packaging guide](docs/CHATGPT-AND-OPENAI-PACKAGING.md) | Generated-artifact bridge: a snapshot of the released tree, not self-updating; the bundle carries no live execution |
 | Generic Agent Skills host | Tagged canonical skills URL | Reload host and verify source | Host must supply any runtime primitive the selected skill requires |
 
@@ -239,22 +239,22 @@ Full installation, migration, runtime-degradation, and troubleshooting guidance 
 ### Claude Code
 
 ```bash
-git clone --depth 1 --branch v5.1.0 https://github.com/ZMS-Labs/epistemic-skills.git /path/to/epistemic-skills-v5.1.0
+git clone --depth 1 --branch v6.0.0 https://github.com/ZMS-Labs/epistemic-skills.git /path/to/epistemic-skills-v6.0.0
 ```
 
 ```text
-/plugin marketplace add /absolute/path/to/epistemic-skills-v5.1.0
+/plugin marketplace add /absolute/path/to/epistemic-skills-v6.0.0
 /plugin install epistemic-skills@epistemic-skills
 ```
 
-Use one marketplace source only, then start a fresh task. Prefer the immutable `v5.1.0` tag for stable installs; `main` may include post-tag corrective documentation and contract hardening (see [successor progress](docs/release/SUCCESSOR-PROGRESS-104-105-2026-08-07.md)).
+Use one marketplace source only, then start a fresh task. Prefer the immutable `v6.0.0` tag for stable installs; `main` may include post-tag corrective documentation and contract hardening (see [successor progress](docs/release/SUCCESSOR-PROGRESS-104-105-2026-08-07.md)).
 
 ### Codex
 
 ```powershell
-codex plugin marketplace add ZMS-Labs/epistemic-skills --ref v5.1.0
+codex plugin marketplace add ZMS-Labs/epistemic-skills --ref v6.0.0
 codex plugin add epistemic-skills@epistemic-skills
-python "$HOME/.codex/plugins/cache/epistemic-skills/epistemic-skills/5.1.0/skills/gauntlet/scripts/render_codex_agents.py" --out "$HOME/.codex/agents"
+python "$HOME/.codex/plugins/cache/epistemic-skills/epistemic-skills/6.0.0/skills/gauntlet/scripts/render_codex_agents.py" --out "$HOME/.codex/agents"
 ```
 
 Start a new Codex task after rendering. The renderer converts the five canonical packaged Markdown roles into Codex's user-agent registry. The Gauntlet retains a hashed exact-role materialization fallback for tasks that started before registration.
@@ -266,9 +266,9 @@ Cursor packaging is present, but the plugin is **not publicly listed**. `/add-pl
 Windows local install:
 
 ```powershell
-git clone --depth 1 --branch v5.1.0 https://github.com/ZMS-Labs/epistemic-skills.git .\epistemic-skills-v5.1.0
-Set-Location .\epistemic-skills-v5.1.0
-if ((git describe --tags --exact-match) -ne 'v5.1.0') { throw 'expected v5.1.0' }
+git clone --depth 1 --branch v6.0.0 https://github.com/ZMS-Labs/epistemic-skills.git .\epistemic-skills-v6.0.0
+Set-Location .\epistemic-skills-v6.0.0
+if ((git describe --tags --exact-match) -ne 'v6.0.0') { throw 'expected v6.0.0' }
 New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.cursor\plugins\local" | Out-Null
 $src = (Resolve-Path .\plugins\epistemic-skills).Path
 $dest = Join-Path $env:USERPROFILE '.cursor\plugins\local\epistemic-skills'
@@ -279,19 +279,19 @@ cmd /c mklink /J "$dest" "$src"
 macOS/Linux local install:
 
 ```bash
-git clone --depth 1 --branch v5.1.0 https://github.com/ZMS-Labs/epistemic-skills.git ./epistemic-skills-v5.1.0
-cd ./epistemic-skills-v5.1.0
-test "$(git describe --tags --exact-match)" = v5.1.0
+git clone --depth 1 --branch v6.0.0 https://github.com/ZMS-Labs/epistemic-skills.git ./epistemic-skills-v6.0.0
+cd ./epistemic-skills-v6.0.0
+test "$(git describe --tags --exact-match)" = v6.0.0
 mkdir -p ~/.cursor/plugins/local
 ln -sfn "$(pwd)/plugins/epistemic-skills" ~/.cursor/plugins/local/epistemic-skills
 ```
 
-Run **Developer: Reload Window**, verify the tag's full skill count (fifteen at v5.1.0) under Customize → Skills, and do not also install them into `~/.cursor/skills/`.
+Run **Developer: Reload Window**, verify the tag's full skill count (fifteen at v6.0.0) under Customize → Skills, and do not also install them into `~/.cursor/skills/`.
 
 ### Gemini CLI
 
 ```bash
-gemini extensions install https://github.com/ZMS-Labs/epistemic-skills --ref v5.1.0 --consent
+gemini extensions install https://github.com/ZMS-Labs/epistemic-skills --ref v6.0.0 --consent
 # Local development only:
 gemini extensions link /path/to/epistemic-skills
 ```
@@ -301,9 +301,9 @@ Restart the session and run `gemini extensions validate` when validating a check
 ### Antigravity (`agy`)
 
 ```bash
-git clone --depth 1 --branch v5.1.0 https://github.com/ZMS-Labs/epistemic-skills.git /path/to/epistemic-skills-v5.1.0
-agy plugin install /path/to/epistemic-skills-v5.1.0
-agy plugin validate /path/to/epistemic-skills-v5.1.0
+git clone --depth 1 --branch v6.0.0 https://github.com/ZMS-Labs/epistemic-skills.git /path/to/epistemic-skills-v6.0.0
+agy plugin install /path/to/epistemic-skills-v6.0.0
+agy plugin validate /path/to/epistemic-skills-v6.0.0
 ```
 
 Use one of native `agy plugin install`, Gemini extension link, or `agy plugin import gemini`; do not combine them.
@@ -402,14 +402,14 @@ real as a stated boundary, inert as a dependency.
 
 ## Trust, evidence, and known limits
 
-**Version 6.0.0** is prepared on `main` and is **not** a support point: no tag, no Release, publication gate not passed. Its in-progress gate record is [RELEASE-6.0.0.md](docs/release/RELEASE-6.0.0.md). **Version 5.1.0** remains the current immutable support point: fifteen skills, aligned package surfaces, deterministic checks, and a tagged source snapshot. Its predecessor **v5.0.0** was published with explicit gate honesty — item 6 only PARTIALLY MET at publication, item 8 WAIVED / NOT MET — and a post-release independent review returned **NO-GO** for retrospective certification. Read the [errata](docs/release/RELEASE-5.0.0-ERRATA-2026-08-06.md), [post-release review](docs/release/POST-RELEASE-INDEPENDENT-REVIEW-5.0.0-2026-08-06.md), and [successor progress](docs/release/SUCCESSOR-PROGRESS-104-105-2026-08-07.md) before treating v5.0.0 as gate-complete. Corrective work for issues #104/#105 landed on `main` after the immutable tag; do not move the tag.
+**Version 6.0.0** is the current immutable support point: fifteen skills, aligned package surfaces, deterministic checks, and a tagged source snapshot. It was published as an **exception release** — no independent publication gate ever returned GO, and the owner overrode that gate on the record. Its gate record is [RELEASE-6.0.0.md](docs/release/RELEASE-6.0.0.md) and the post-publication record is [PUBLICATION-RECORD-6.0.0.md](docs/release/PUBLICATION-RECORD-6.0.0.md). **Version 5.1.0** remains a valid rollback target. Its predecessor **v5.0.0** was published with explicit gate honesty — item 6 only PARTIALLY MET at publication, item 8 WAIVED / NOT MET — and a post-release independent review returned **NO-GO** for retrospective certification. Read the [errata](docs/release/RELEASE-5.0.0-ERRATA-2026-08-06.md), [post-release review](docs/release/POST-RELEASE-INDEPENDENT-REVIEW-5.0.0-2026-08-06.md), and [successor progress](docs/release/SUCCESSOR-PROGRESS-104-105-2026-08-07.md) before treating v5.0.0 as gate-complete. Corrective work for issues #104/#105 landed on `main` after the immutable tag; do not move the tag.
 
 Earlier support points remain historically accurate for their own campaigns, and a named limit
 stays on this page until a later campaign actually retires it. None has been rewritten into a pass.
 
 ### Where v6.0.0 stands
 
-v6.0.0 is prepared and unpublished, for reasons this section states rather than hides:
+v6.0.0 is published as an exception release, for reasons this section states rather than hides:
 
 - It adds a **mission-custody contract** (the `manifest` seat) and a **v6 assurance contract**
   ([`validate_v6_assurance.py`](plugins/epistemic-skills/contracts/v6-assurance/validate_v6_assurance.py))
