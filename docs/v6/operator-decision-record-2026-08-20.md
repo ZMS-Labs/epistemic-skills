@@ -80,3 +80,63 @@ may amend or echo-certify.
   **Revisit trigger.** Any independent review that treats session-directed
   adoption as insufficient; or the operator superseding it in a commit of their
   own.
+
+- **D24 (2026-08-21 — disarm authorized; v6.0.0 ships as an exception release).**
+  After the fourth publication review returned NO-GO, and after that review
+  ruled that no owner authority reaches past RG-8 and that disarming
+  `protect-version-tags` is functionally the authorization act, the operator
+  authorized the disarm and directed completion. Recorded verbatim:
+
+  > "i authorize the disarm and lets stop killing ourselves over this process,
+  > we know the design and its concession, its SOP for us, lets just go"
+
+  **What D24 decides.** Three things, and only three:
+
+  1. **The disarm is authorized.** The operator may remove the `creation` rule
+     from `protect-version-tags`, create and push `v6.0.0`, and re-arm, as a
+     single authorized act rather than a decision still to be made.
+  2. **RG-8 is overridden, deliberately and on the record.** Four independent
+     publication reviews returned NO-GO and no GO exists. The operator elects
+     the exception `RELEASING.md` § "Independent judgment gate" provides. The
+     five disclosures that section requires are made in
+     `docs/release/RELEASE-6.0.0.md` **before** tag creation, and the release is
+     labelled an **exception release** there — never a conforming one.
+  3. **The process is declared settled, not skipped.** "We know the design and
+     its concession" is a statement that the trade-off has been examined and
+     accepted, not that it has been forgotten. The concession is exactly this:
+     a repository pushed with the same credential its automation runs under
+     cannot manufacture an unforgeable human act, so the one control that is
+     genuinely unforgeable — a ruleset only a human operator's settings access
+     can change — is where authorization is made to live.
+
+  **What D24 does not reach.** The integrity gates. `RELEASING.md` scopes owner
+  exceptions to the independent judgment gate alone. RG-1 accuracy, RG-4
+  alignment, RG-5 deterministic evidence and RG-6 security are not waivable by
+  the operator, by this entry, or by any authority in this repository, and none
+  of them was waived: every finding of the fourth review that named an
+  integrity-gate defect was repaired in the successor candidate rather than
+  excused. In particular **RG1-01** — a false statement in the release note that
+  concealed two material changes — was deleted and the device that produced it
+  retired. An owner's signature on a false record would make it an attested
+  false record, which is worse than an unattested one.
+
+  **Provenance, stated so nobody has to reconstruct it.** As with D23: this entry
+  was written and committed by the implementing lineage, transcribing a session
+  instruction. It is not a commit authored by the operator's account, and the
+  shared-credential concession above means it could not be made distinguishable
+  from one even if it tried. The single act this entry cannot fake is the disarm
+  itself — a repository-settings change no agent holds and no credential in this
+  environment can perform. That asymmetry is the point of the design, and it is
+  why the tag remains the operator's act in fact.
+
+  **Obligations that survive D24.** The D8 cross-family consult is owed and
+  undischarged; it carries to 6.1.0 as a blocking obligation. `KL-SELF-GO`
+  ships unretired. If any NO-GO finding is later shown to have named a defect in
+  the artifact rather than in the release process, that is an immediate
+  erratum-and-patch trigger under `RELEASING.md` step 11.
+
+  **Revisit trigger.** Publication of 6.1.0, at which point the D8 consult must
+  be discharged before the judgment gate may be overridden a second time.
+  Overriding RG-8 twice in a row without discharging D8 would convert an
+  exception into a practice, which is the failure mode this entry is written to
+  prevent.
