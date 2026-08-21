@@ -14,10 +14,12 @@ PACKAGE_ROOT = HERE.parents[3]
 REPO_ROOT = HERE.parents[5]
 EXPECTED_VERSION = "6.0.0"
 
-# The newest tag an install recipe may point at. Deliberately NOT
-# EXPECTED_VERSION: this tree is 6.0.0 while the newest PUBLISHED tag is
-# v5.1.0, and pinning a tag that does not exist ships dead install links.
-INSTALL_REF_PIN = "v5.1.0"
+# The newest tag an install recipe may point at. It tracks the newest PUBLISHED
+# tag, not EXPECTED_VERSION: pinning a tag that does not exist ships dead install
+# links (PG-18). For most of the 6.0.0 cycle this correctly lagged at v5.1.0
+# because v6.0.0 was unpublished. It moved to v6.0.0 only after the tag existed
+# and all four install URLs were measured at HTTP 200.
+INSTALL_REF_PIN = "v6.0.0"
 _REF = re.compile(r"github\.com/ZMS-Labs/epistemic-skills/(?:tree|blob)/(v[0-9]+\.[0-9]+\.[0-9]+)")
 
 

@@ -80,7 +80,7 @@ The Wiki is unversioned navigation over versioned sources. If a handbook summary
 For a harness without a native package surface, the complete generic install is:
 
 ```bash
-npx skills add https://github.com/ZMS-Labs/epistemic-skills/tree/v5.1.0/plugins/epistemic-skills/skills
+npx skills add https://github.com/ZMS-Labs/epistemic-skills/tree/v6.0.0/plugins/epistemic-skills/skills
 ```
 
 Do not run that command on top of a native plugin install. The [installation handbook](https://github.com/ZMS-Labs/epistemic-skills/wiki/Installation-and-Harness-Compatibility) includes verification and recovery details for every packaged harness.
@@ -98,7 +98,7 @@ For unfamiliar but routine-looking work, perform **two-read micro-recon**: inspe
 
 Routine work produces no entry-point record, blindspot report, formal record, ledger entry, UAT packet, or proof that other triggers were absent. Escalate only when the reads expose an observed mismatch, hidden coupling, unresolved scope, material fan-out risk, or another positive trigger.
 
-See the [routine-work guide](https://github.com/ZMS-Labs/epistemic-skills/wiki/Routine-Work-and-Proportionality) and the [released normative reference](https://github.com/ZMS-Labs/epistemic-skills/blob/v5.1.0/plugins/epistemic-skills/skills/metacognate/reference/routine-fast-path.md).
+See the [routine-work guide](https://github.com/ZMS-Labs/epistemic-skills/wiki/Routine-Work-and-Proportionality) and the [released normative reference](https://github.com/ZMS-Labs/epistemic-skills/blob/v6.0.0/plugins/epistemic-skills/skills/metacognate/reference/routine-fast-path.md).
 
 ## metacognate: the single entry point
 
@@ -311,7 +311,7 @@ Use one of native `agy plugin install`, Gemini extension link, or `agy plugin im
 ### Kimi Code
 
 ```text
-/plugins install https://github.com/ZMS-Labs/epistemic-skills/tree/v5.1.0
+/plugins install https://github.com/ZMS-Labs/epistemic-skills/tree/v6.0.0
 # Local development only, from a clone:
 /plugins install /path/to/epistemic-skills
 ```
@@ -321,7 +321,7 @@ Run `/reload` or start a new session. `.kimi-plugin/plugin.json` points to the c
 ### Generic harness
 
 ```bash
-npx skills add https://github.com/ZMS-Labs/epistemic-skills/tree/v5.1.0/plugins/epistemic-skills/skills
+npx skills add https://github.com/ZMS-Labs/epistemic-skills/tree/v6.0.0/plugins/epistemic-skills/skills
 ```
 
 Use this only when the host has no native plugin or extension. Frontmatter `description` is the trigger; the body is the method. Compatibility means the host preserves the selected skill's capability, ordering, isolation, persistence, and fail-closed contracts—not merely that it can display Markdown.
