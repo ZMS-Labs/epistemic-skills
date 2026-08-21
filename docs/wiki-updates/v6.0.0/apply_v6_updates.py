@@ -31,9 +31,22 @@ RULES: list[tuple[str, re.Pattern[str], str]] = [
     ("skill-count-title", re.compile(r"\bFourteen(?= skills\b)"), "Fifteen"),
     # Discipline count moves with it: fifteen skills = one entry point + fourteen.
     ("discipline-count", re.compile(r"\bthirteen(?= disciplines\b)"), "fourteen"),
-    # Version-pinned source links and install guidance.
-    ("tagged-tree-url", re.compile(r"(github\.com/ZMS-Labs/epistemic-skills/(?:tree|blob)/)v\d+\.\d+\.\d+"),
-     r"\g<1>v" + CURRENT_VERSION),
+    # NOTE: a "tagged-tree-url" rule used to live here, rewriting every
+    # `(tree|blob)/vX.Y.Z` in the wiki to the current version. It is REMOVED, not
+    # disabled, and must not be reintroduced.
+    #
+    # Measured against the real wiki it wanted to rewrite 219 URLs across 40
+    # pages. Most were wrong to touch: a link reading "v3.0.0 release record"
+    # must point at v3.0.0, and a historical audit citation must stay pinned to
+    # what it documents. Worse, running it once had already caused the damage it
+    # looked like a fix for -- `Design-History-and-Audits.md` carried
+    # "designs, audits, and evidence in v3.0.0" pointing at `tree/v5.0.0`,
+    # because an earlier blanket bump moved the URL and left the text behind.
+    #
+    # A regex cannot tell a navigational link from a historical citation. The
+    # replacement is an ORACLE, not a rewriter: `check_wiki.py` enforces that
+    # link text and URL name the same version, and that every URL resolves, and
+    # leaves the choice of version to a human who knows which one is meant.
     ("applies-to-banner", re.compile(r"(\*\*Applies to:\*\* epistemic-skills )v\d+\.\d+\.\d+"),
      r"\g<1>v" + CURRENT_VERSION),
 ]
@@ -87,9 +100,14 @@ def self_test() -> int:
          "The package ships fifteen skills. Chapter fourteen is unrelated."),
         ("title-case count",
          "Fourteen skills ship.", "Fifteen skills ship."),
-        ("tagged url is bumped",
-         "see github.com/ZMS-Labs/epistemic-skills/tree/v5.0.0/plugins",
-         "see github.com/ZMS-Labs/epistemic-skills/tree/v6.0.0/plugins"),
+        # REGRESSION GUARD. A blanket tree/blob version rewrite lived here and
+        # caused real damage: it moved URLs out from under link text, leaving
+        # "v3.0.0 release record" pointing at tree/v5.0.0. This case fails if
+        # anyone reintroduces it. Version choice belongs to a human; check_wiki.py
+        # only enforces that text and URL agree.
+        ("historical source links are LEFT ALONE",
+         "see github.com/ZMS-Labs/epistemic-skills/tree/v3.0.0/plugins",
+         "see github.com/ZMS-Labs/epistemic-skills/tree/v3.0.0/plugins"),
         ("applies-to banner is bumped",
          "**Applies to:** epistemic-skills v5.0.0",
          "**Applies to:** epistemic-skills v6.0.0"),
