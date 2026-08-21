@@ -337,7 +337,25 @@ def main() -> int:
             print(f"  - {sha}")
         print("Amend each commit with: git commit --amend --signoff")
         return 1
-    print(f"DCO: {len(commits)} commit(s) signed off by their authors")
+    # Report what was actually established, not the total. `len(commits)` counts
+    # exempt merges and owner-attested commits as "signed off by their authors",
+    # which is a claim no one made about them -- an overstatement in the success
+    # path of a checker whose entire job is accurate attestation. The breakdown
+    # uses the same helpers the decision used, so it cannot disagree with it.
+    signed = exempt_merges = attested = 0
+    for item in commits:
+        if is_merge(item) and merge_authored_content(item) is False:
+            exempt_merges += 1
+        elif str(item.get("sha") or "") in ATTESTED_UNSIGNED:
+            attested += 1
+        else:
+            signed += 1
+    parts = [f"{signed} signed off by their authors"]
+    if exempt_merges:
+        parts.append(f"{exempt_merges} exempt merge(s) that authored nothing")
+    if attested:
+        parts.append(f"{attested} owner-attested without a trailer")
+    print(f"DCO: {len(commits)} commit(s) checked -- " + "; ".join(parts))
     return 0
 
 

@@ -1189,9 +1189,57 @@ def build_promotion_packet(sha: str, ts: str, matrix: dict) -> dict:
                     "files, or the freeze must be re-cut to absorb them. The "
                     "practical rule: land main-side policy repairs BEFORE "
                     "cutting a candidate, and keep the window between freeze "
-                    "and ready-mark short."
+                    "and ready-mark short. "
+                    "SECOND CHANNEL, and the reason the rule above is not "
+                    "sufficient on its own: the digest seal is not the only "
+                    "thing coupling main to an open freeze. "
+                    "`.ledger/entries.jsonl` is NOT inventoried, so the rule "
+                    "as stated appears to permit appending to it on main — but "
+                    "`check_ledger_append_only.py` compares the freeze PR "
+                    "against its merge base, and a main-side append makes the "
+                    "candidate stop being a byte-prefix of it. Measured, not "
+                    "theorised: appending one ordinary decision entry to "
+                    "main's copy produced LEDGER-REWRITTEN at byte 17719. So a "
+                    "routine, apparently-permitted action breaks the freeze "
+                    "through a DIFFERENT oracle than the seal. Both failures "
+                    "are fail-closed — red CI, never a silent ship — and the "
+                    "correct doctrine is why durable decisions during a freeze "
+                    "are routed to a dated record under docs/v6/ rather than "
+                    "to main's ledger. Disclosed as R5-NF3."
                 ),
                 "owner": "operator",
+            },
+            {
+                "id": "KL-SCAN-EXEMPTION",
+                "kind": "integrity",
+                "statement": (
+                    "The full-history secret scan carries exactly one path "
+                    "exemption, `^docs/gauntlet-runs/.*`, because verifier "
+                    "prose in those immutable records quotes credential-shaped "
+                    "strings it is reporting on. Two properties are PROVEN on "
+                    "every run by a CI narrowness control: the pattern is "
+                    "anchored (an earlier unanchored form also suppressed "
+                    "`notdocs/gauntlet-runs/` and `sub/docs/gauntlet-runs/`), "
+                    "and it applies to no look-alike path. "
+                    "What the control does NOT prove, and what this limit "
+                    "exists to say: the exemption is OPEN-ENDED OVER FUTURE "
+                    "FILES and is NOT digest-bound. It suppresses scanning for "
+                    "any file that later appears under that prefix, which is "
+                    "the exact contrast this repository draws against its own "
+                    "digest-binding doctrine elsewhere. The refreshed "
+                    "CLM-SECRET-SCAN falsifier states what the scoping proves "
+                    "and never what it still permits."
+                ),
+                "release_consequence": (
+                    "A real credential committed under docs/gauntlet-runs/ "
+                    "would not be caught by this scan. Residual risk is "
+                    "bounded by review, not by the oracle: reaching that path "
+                    "requires a reviewed commit into an immutable record "
+                    "directory. Treat it as a review obligation on gauntlet-run "
+                    "records, not as scanner coverage. Disclosed as R5-NF2; "
+                    "the narrowness control is necessary and not sufficient."
+                ),
+                "owner": "agent",
             },
             {
                 "id": "KL-WINDOWS",
