@@ -35,7 +35,7 @@ I adopted no seat's word on anything load-bearing. Eleven checks, all from prima
 | 6 | **CodeQL — resolving the seat's UNVERIFIED** | API `commits/48009fef/check-runs` | **`Analyze (python)`, `Analyze (javascript-typescript)`, `Analyze (actions)` — all success at the exact candidate.** No workflow file; runs via GitHub default setup. **RG-5's CodeQL limb is satisfied.** Resolved in the candidate's favor. |
 | 7 | Red-job carve-out | API `runs/32430450479/jobs` | `contract` **success**; `contract-macos` **failure at step 8** "Custody mission lifecycle unit tests". Matches the disclosed carve-out shape. |
 | 8 | **D20's actual effect** | packet diff `92b3ca6c`→`48009fef` | `independent_gauntlet`: `NOT_RUN` → **`GO`**; `blocking_claims`: `["CLM-INDEPENDENT-GAUNTLET"]` → **`[]`**. `readiness` remains `NOT_READY`. |
-| 9 | Pre-authorization authorship | `git log -1 -- docs/release/PRE-AUTHORIZATION-6.0.0.md` | Committed at `e2610ef1` by **`Claude <noreply@anthropic.com>`**, msg "adopt … by operator direction (D23)". Step 7 requires "**the owner** commits the pre-authorization." Names no SHA (compliant on that limb). |
+| 9 | Pre-authorization authorship | `git log -1 -- docs/release/PRE-AUTHORIZATION-6.0.0.md` | Committed at `e2610ef1` by **`Claude <noreply-address-redacted>`**, msg "adopt … by operator direction (D23)". Step 7 requires "**the owner** commits the pre-authorization." Names no SHA (compliant on that limb). |
 | 10 | Firing condition 4 | `grep operator_acceptance` packet; `OPERATOR-ACCEPTANCE-PROCEDURE.md:100` | `operator_acceptance` object **ABSENT**. Procedure excludes "acceptance recorded any other way (chat message, commit message, enum…)". |
 | 11 | RG4-01 refutation spot-check | `git cat-file -e v5.0.0:<path>` | `helix/SKILL.md`, `using-epistemic-skills/SKILL.md` **absent at v5.0.0** (14 skills there). The 29 links are **already dead**. Refutation upheld. |
 
@@ -152,7 +152,7 @@ Recorded, not resolved away:
 
 Stated plainly, because this document is worth exactly what these limits allow:
 
-- **I share a model family with the candidate's authors.** Every substantive commit in the disputed delta is authored by `Claude <noreply@anthropic.com>`; I am Claude. My verdict carries the same family-correlation limit the note's own RG-8 row records for five of the seven prior reviews. It is a limit, not independence.
+- **I share a model family with the candidate's authors.** Every substantive commit in the disputed delta is authored by `Claude <noreply-address-redacted>`; I am Claude. My verdict carries the same family-correlation limit the note's own RG-8 row records for five of the seven prior reviews. It is a limit, not independence.
 - **I was dispatched by the implementing lineage, not by the operator.** The pre-authorization's firing condition 2 requires an operator-dispatched gate. **My verdict cannot satisfy it.** A NO-GO from me still holds (a hold needs no authority it lacks); a GO from me would have been worthless for firing the authorization. My seat can block but cannot clear.
 - **I refuse any implementer-authored GO,** and I did not accept one. No seat's recommendation was adopted; every load-bearing fact in §1 was re-executed from primary sources. Where the evidence favored the candidate (CodeQL, RG-5 substance, RG4-01) I said so.
 - **I did not author the candidate** and **did not produce the seat reports.**

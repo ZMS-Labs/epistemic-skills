@@ -160,12 +160,30 @@ ALLOWLIST_EXACT_FILES: dict[str, tuple[str, str | None]] = {
 
 
 def tracked_files() -> list[Path]:
+    """Every file a commit from this working tree could publish.
+
+    NOT just `ls-files`. Tracked-only enumeration made this gate silently
+    vacuous for exactly the files most likely to carry a defect: brand-new ones.
+    A pre-commit run reported green, the file was then staged unchanged, and CI
+    -- scanning a clean checkout where the file IS tracked -- failed on it. The
+    local run had given false assurance at the one moment it was being relied on.
+    Measured 2026-08-21 on `docs/gauntlet-runs/es-v6-publication-panel-2026-08-21/`.
+
+    `--others --exclude-standard` adds untracked, non-ignored files, so the local
+    answer matches the post-commit answer. In CI the checkout is clean and the
+    two enumerations are identical -- this changes nothing there and closes the
+    window here."""
     result = subprocess.run(
-        ["git", "-C", str(REPO_ROOT), "ls-files", "-z"],
+        ["git", "-C", str(REPO_ROOT), "ls-files", "-z",
+         "--cached", "--others", "--exclude-standard"],
         check=True,
         capture_output=True,
     )
-    return [REPO_ROOT / rel for rel in result.stdout.decode("utf-8").split("\0") if rel]
+    seen: dict[str, None] = {}
+    for rel in result.stdout.decode("utf-8").split("\0"):
+        if rel:
+            seen.setdefault(rel, None)
+    return [REPO_ROOT / rel for rel in seen]
 
 
 def is_allowlisted(path: Path) -> bool:
