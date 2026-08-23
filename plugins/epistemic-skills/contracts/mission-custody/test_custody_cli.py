@@ -164,6 +164,61 @@ def test_full_lifecycle_via_cli() -> None:
         check("full-cancel-refused-exit-2", r.returncode == 2)
 
 
+def test_cancel_requires_nonempty_reason() -> None:
+    """A terminal cancellation must retain why the mission was abandoned.
+
+    Empty argv text and whitespace-only reason files both refuse without
+    appending a checkpoint, so the still-active mission remains recoverable.
+    """
+    with tempfile.TemporaryDirectory() as tmp:
+        ws = Path(tmp) / "ws"
+        ws.mkdir()
+        reason_file = Path(tmp) / "blank-reason.txt"
+        reason_file.write_text(" \t\n", encoding="utf-8", newline="")
+        open_cli(ws, "cancel-reason", "instruction")
+        run("approve", "--workspace", str(ws), "--actor", "agent:worker")
+        checkpoints = ws / "missions" / "cancel-reason" / "checkpoints"
+        before = sorted(checkpoints.glob("*.json"))
+
+        cases = (
+            ("empty-argv", ("--reason", "")),
+            ("whitespace-argv", ("--reason", " \t")),
+            ("whitespace-file", ("--reason-file", str(reason_file))),
+        )
+        for name, reason_args in cases:
+            r = run(
+                "cancel",
+                "--workspace",
+                str(ws),
+                "--actor",
+                "agent:worker",
+                *reason_args,
+            )
+            check(f"cancel-{name}-exit-2", r.returncode == 2)
+            check(
+                f"cancel-{name}-names-required-reason",
+                "cancel reason required" in r.stderr,
+            )
+            check(f"cancel-{name}-no-traceback", "Traceback" not in r.stderr)
+            check(
+                f"cancel-{name}-no-checkpoint-write",
+                sorted(checkpoints.glob("*.json")) == before,
+            )
+            status = json.loads(
+                run(
+                    "status",
+                    "--workspace",
+                    str(ws),
+                    "--actor",
+                    "agent:worker",
+                ).stdout
+            )
+            check(
+                f"cancel-{name}-mission-still-active",
+                status["status"] == "active",
+            )
+
+
 def test_ascii_safe_drift_and_error_output() -> None:
     """Non-ASCII content in a drifted relpath or a CustodyError message must
     render as an ASCII-only escape on stdout/stderr -- never a raw non-ASCII
@@ -792,6 +847,7 @@ TESTS = [
     test_resume_detects_drift_exit_3,
     test_accept_self_cert_refused_exit_2,
     test_full_lifecycle_via_cli,
+    test_cancel_requires_nonempty_reason,
     test_ascii_safe_drift_and_error_output,
     test_open_stop_rules_and_acceptable_costs,
     test_open_without_stop_rules_yields_empty_lists,

@@ -2590,6 +2590,10 @@ class Mission:
         return new["revision"]
 
     def cancel(self, reason: str) -> int:
+        if not isinstance(reason, str) or not reason.strip():
+            raise CustodyError(
+                "cancel reason required (why the mission was abandoned)"
+            )
         latest, path = self.store.load_latest()
         self._verify_manifest(latest)
         if latest["status"] not in ("draft", "active", "reopened", "verifying"):
