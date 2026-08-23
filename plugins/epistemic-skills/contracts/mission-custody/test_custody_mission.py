@@ -2548,10 +2548,20 @@ def test_scope_entry_classification_table(workspace: Path) -> None:
         # scope_consistency() and an accepted PASS.
         ("My Documents/secrets.env", True), ("docs/release notes/**", True),
         ("a/b c/d.txt", True), ("docs/release notes/", True),
+        # Windows separators bind through the same matrix: with and without
+        # whitespace, and with wildcard, extension, directory, and ambiguous
+        # bare-final segments. Classification and matching must normalize the
+        # same spelling or the boundary looks enforced while binding nothing.
+        ("docs\\source", True), ("docs\\*.py", True),
+        ("My Documents\\secrets.env", True),
+        ("docs\\release notes\\**", True),
+        ("docs\\release notes\\", True),
+        ("My Documents\\archive", False),
         # ...while genuine prose that happens to carry a slash still reads as
         # prose, because it ends in a bare word rather than a path ending
         ("TCP/IP tuning", False), ("arr/Plex/NAS operations", False),
         ("docs and/or specs", False),
+        ("TCP\\IP tuning", False), ("arr\\Plex\\NAS operations", False),
         # ambiguous -> prose, deliberately
         ("docs and/or specs", False), ("TCP/IP tuning", False),
         ("", False),
@@ -2603,6 +2613,59 @@ def test_bare_filename_exclusion_is_enforced(workspace: Path) -> None:
         check("bare-filename-pass-refused", False)
     except AcceptanceRefused as exc:
         check("bare-filename-pass-refused", "crossed the declared scope" in str(exc))
+
+
+def test_windows_scope_entries_with_spaces_bind_end_to_end(
+        workspace: Path) -> None:
+    """Windows-spelled paths bind the same boundary as '/' spellings.
+
+    Before separator normalization, both spaced exclusions classified as
+    prose. Their writes disappeared from scope_consistency() and PASS could
+    close. An unrelated ordinary path is the positive control.
+    """
+    m = open_mission(
+        workspace,
+        "m-win-scope",
+        "Windows scope separators.",
+        scope_out=["My Documents\\secrets.env", "docs\\release notes\\**"],
+    )
+    m.approve()
+    m.record_effect("allowed/ordinary.txt", "ok", "win-1")
+    m.record_effect("My Documents/secrets.env", "leak", "win-2")
+    m.record_effect("docs/release notes/key.txt", "leak", "win-3")
+
+    findings = {
+        (finding["artifact_path"], finding["reason"])
+        for finding in m.scope_consistency()
+    }
+    check(
+        "windows-scope-spaced-extension-binds",
+        ("My Documents/secrets.env", "matches scope.out") in findings,
+    )
+    check(
+        "windows-scope-spaced-glob-binds",
+        ("docs/release notes/key.txt", "matches scope.out") in findings,
+    )
+    check(
+        "windows-scope-allowed-positive-control",
+        not any(path == "allowed/ordinary.txt" for path, _ in findings),
+    )
+
+    m.begin_verification()
+    acceptor = Mission.load(workspace, actor="agent:acceptor")
+    try:
+        acceptor.record_verdict(
+            "PASS",
+            acceptor_id="agent:acceptor",
+            assurance_tier="declared-role-separation",
+            reason="done",
+        )
+        check("windows-scope-pass-refused", False)
+    except AcceptanceRefused as exc:
+        check(
+            "windows-scope-pass-refused",
+            "crossed the declared scope" in str(exc),
+        )
 
 
 def test_prose_scope_does_not_refuse_acceptance(workspace: Path) -> None:
@@ -4640,6 +4703,7 @@ TESTS = [
     test_scope_entry_classification_table,
     test_uncompared_scope_entries_are_reported,
     test_bare_filename_exclusion_is_enforced,
+    test_windows_scope_entries_with_spaces_bind_end_to_end,
     test_prose_scope_does_not_refuse_acceptance,
     test_unrelated_amendment_never_discharges_regardless_of_order,
     test_mixed_prose_and_path_scope_in_does_not_flag_everything,
