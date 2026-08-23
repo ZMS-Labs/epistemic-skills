@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import shlex
 import shutil
 import subprocess
 import sys
@@ -12,6 +13,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 HOOK = ROOT / "custody_hook.py"
+CURSOR_CLI_RENDERER = (
+    ROOT.parents[1] / "hooks" / "render_cursor_cli_hooks.py"
+)
 sys.path.insert(0, str(ROOT))
 from custody_mission import Mission  # noqa: E402
 from custody_store import sha256_file  # noqa: E402
@@ -68,6 +72,70 @@ def test_block_per_harness() -> None:
             check(f"hook-{harness}-blocks", res.returncode == 2)
             check(f"hook-{harness}-reason-names-rule",
                   "no-rm" in (res.stderr + res.stdout))
+
+
+def test_cursor_cli_installation_emits_plugin_root_hook_command() -> None:
+    """es#136: render from an arbitrary workspace, then prove the installed
+    absolute command blocks an armed actuator and stays inert without a
+    mission.  The workspace deliberately has no local contracts tree."""
+    with tempfile.TemporaryDirectory() as tmp:
+        ws = Path(tmp) / "arbitrary workspace"
+        ws.mkdir()
+        destination = ws / ".cursor" / "hooks.json"
+        rendered = subprocess.run(
+            [sys.executable, str(CURSOR_CLI_RENDERER),
+             "--output", str(destination)],
+            cwd=ws, capture_output=True, text=True)
+        check("cursor-cli-render-exit-0", rendered.returncode == 0)
+        check("cursor-cli-config-written", destination.is_file())
+        check("cursor-cli-workspace-has-no-local-contracts",
+              not (ws / "contracts" / "mission-custody").exists())
+
+        config = json.loads(destination.read_text(encoding="utf-8"))
+        commands = [
+            row["command"]
+            for rows in config["hooks"].values()
+            for row in rows
+        ]
+        expected_argv = [str(Path(sys.executable).resolve()),
+                         str(HOOK.resolve()), "--harness", "cursor"]
+        expected_command = (subprocess.list2cmdline(expected_argv)
+                            if os.name == "nt" else shlex.join(expected_argv))
+        check("cursor-cli-every-command-is-installed-hook",
+              bool(commands) and all(c == expected_command for c in commands))
+        check("cursor-cli-config-does-not-reference-dot-contracts-path",
+              "./contracts/mission-custody/custody_hook.py"
+              not in destination.read_text(encoding="utf-8"))
+
+        mission = Mission.open(
+            ws, "cursor-cli-install", "i", "operator:t", "agent:t",
+            actor="agent:t", guard_mode="enforce", actuator_guards=GUARDS)
+        mission.approve()
+        blocked = subprocess.run(
+            expected_argv,
+            input=json.dumps({"command": "rm -rf x", "cwd": str(ws)}),
+            cwd=ws, capture_output=True, text=True)
+        check("cursor-cli-installed-hook-invoked", "no-rm" in blocked.stderr)
+        check("cursor-cli-installed-hook-blocks", blocked.returncode == 2)
+
+        inert = Path(tmp) / "inert workspace"
+        inert.mkdir()
+        allowed = subprocess.run(
+            expected_argv,
+            input=json.dumps({"command": "rm -rf x", "cwd": str(inert)}),
+            cwd=inert, capture_output=True, text=True)
+        check("cursor-cli-installed-hook-inert-without-mission",
+              allowed.returncode == 0)
+
+        before = destination.read_bytes()
+        refused = subprocess.run(
+            [sys.executable, str(CURSOR_CLI_RENDERER),
+             "--output", str(destination)],
+            cwd=ws, capture_output=True, text=True)
+        check("cursor-cli-render-refuses-existing-config",
+              refused.returncode == 2)
+        check("cursor-cli-existing-config-unchanged",
+              destination.read_bytes() == before)
 
 
 def test_allow_paths() -> None:
