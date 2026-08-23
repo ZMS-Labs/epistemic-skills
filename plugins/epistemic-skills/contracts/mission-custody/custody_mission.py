@@ -2155,6 +2155,7 @@ class Mission:
         if not includes and not excludes:
             return []
         findings: list[dict] = []
+        effect_paths = self._effect_path_index()
         for request_id in self._all_receipt_ids_ever():
             # The CHAINED effect note, not the receipt file, decides which
             # artifact an id covers. A receipt is a mutable file: a schema-valid
@@ -2162,7 +2163,7 @@ class Mission:
             # artifact_path would move an out-of-scope write into scope and let
             # PASS through. The chain is tamper-evident and is already treated
             # as the sounder authority everywhere else in this module.
-            rel = self._historical_effect_path(request_id)
+            rel = effect_paths.get(request_id)
             if rel is None:
                 receipt = self._load_receipt(request_id)
                 rel = receipt["artifact_path"] if receipt is not None else None

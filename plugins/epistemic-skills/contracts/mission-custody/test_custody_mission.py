@@ -1808,6 +1808,39 @@ def test_effect_path_index_matches_per_id(workspace: Path) -> None:
     check("index-covers-reconciled-id", index.get("req-a-again") == "notes/a.md")
 
 
+def test_scope_consistency_reuses_single_effect_index(workspace: Path) -> None:
+    """es#161: closing must not rescan the checkpoint chain per receipt."""
+    m = open_mission(
+        workspace, "m-scope-index", "One indexed scope traversal.",
+        scope_in=["docs/**"],
+    )
+    m.approve()
+    for i in range(40):
+        m.record_effect(f"docs/{i}.txt", str(i), f"req-{i}")
+
+    original_index = m._effect_path_index
+    original_per_id = m._historical_effect_path
+    index_calls = 0
+    per_id_calls = 0
+
+    def counted_index():
+        nonlocal index_calls
+        index_calls += 1
+        return original_index()
+
+    def counted_per_id(request_id: str, kind: bool = False):
+        nonlocal per_id_calls
+        per_id_calls += 1
+        return original_per_id(request_id, kind)
+
+    m._effect_path_index = counted_index
+    m._historical_effect_path = counted_per_id
+    findings = m.scope_consistency()
+    check("scope-index-preserves-findings", findings == [])
+    check("scope-index-built-once", index_calls == 1)
+    check("scope-index-never-rescans-per-id", per_id_calls == 0)
+
+
 def test_forged_restored_receipt_is_not_trusted(workspace: Path) -> None:
     """Round-3 finding: a schema-valid receipt planted at the lost id's path
     must not buy continuity. The chain records which artifact the id was
@@ -4711,6 +4744,7 @@ TESTS = [
     test_note_cannot_forge_machine_state,
     test_receipt_ids_always_carry_a_derivable_path,
     test_effect_path_index_matches_per_id,
+    test_scope_consistency_reuses_single_effect_index,
     test_foreign_mission_receipt_is_not_this_missions_receipt,
     test_cross_workspace_receipt_cannot_silence_drift,
     test_backslash_effect_path_still_loads_its_own_receipt,
