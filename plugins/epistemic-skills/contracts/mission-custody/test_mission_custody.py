@@ -99,6 +99,43 @@ def test_manifest_envelope_lists_require_nonblank_entries() -> None:
         check(f"manifest-{label}-substantive-whitespace-allowed",
               validate_record(substantive) == [])
 
+        empty = copy.deepcopy(valid_manifest())
+        empty[section][field] = []
+        check(f"manifest-{label}-empty-allowed", validate_record(empty) == [])
+
+
+def test_manifest_envelope_compound_and_embedded_blanks() -> None:
+    """Blank declarations fail predictably when faults are combined or nested."""
+    fields = (
+        ("authority", "permissions"),
+        ("authority", "protected_state"),
+        ("authority", "acceptable_costs"),
+        ("scope", "in"),
+        ("scope", "out"),
+        ("stop_rules", "hold_if"),
+        ("stop_rules", "stop_if"),
+        ("stop_rules", "escalate_if"),
+    )
+
+    compound = copy.deepcopy(valid_manifest())
+    for section, field in fields:
+        compound[section][field] = [" \t\u00a0 "]
+    check("manifest-envelope-all-blanks-refused",
+          validate_record(compound) != [])
+
+    mixed = copy.deepcopy(valid_manifest())
+    mixed["authority"]["permissions"] = []
+    mixed["scope"]["in"] = ["  substantive  "]
+    mixed["stop_rules"]["escalate_if"] = ["\u0085"]
+    check("manifest-envelope-mixed-blank-refused",
+          validate_record(mixed) != [])
+
+    checkpoint = valid_checkpoint_r1()
+    for section, field in fields:
+        checkpoint["manifest"][section][field] = ["\u001c"]
+    check("checkpoint-embedded-envelope-blanks-refused",
+          validate_record(checkpoint) != [])
+
 
 def test_whitespace_only_artifact_path_remains_legal() -> None:
     """Declaration validation must not leak into the filename surface."""
@@ -306,6 +343,7 @@ def main() -> int:
     test_manifest_bad_tier()
     test_manifest_amendments_must_be_list_of_dated_text()
     test_manifest_envelope_lists_require_nonblank_entries()
+    test_manifest_envelope_compound_and_embedded_blanks()
     test_whitespace_only_artifact_path_remains_legal()
     test_unknown_record_kind_rejected()
     test_checkpoint_valid_examples()

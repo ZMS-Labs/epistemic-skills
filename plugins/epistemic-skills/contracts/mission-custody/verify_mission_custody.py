@@ -283,6 +283,18 @@ def _str_list(value: Any) -> bool:
         isinstance(item, str) and item for item in value)
 
 
+# One explicit predicate is mirrored byte-for-byte in the JSON Schema.  Do not
+# spell this as `\S`: ECMA-262 and Python disagree about several whitespace
+# characters (notably U+001C..U+001F and U+0085).  This class is Python's
+# current `str.isspace()` set, written out so every schema engine receives the
+# same rule instead of substituting its host regex's idea of whitespace.
+DECLARATION_CONTENT_PATTERN = (
+    r"[^\u0009-\u000d\u001c-\u0020\u0085\u00a0\u1680"
+    r"\u2000-\u200a\u2028-\u2029\u202f\u205f\u3000]"
+)
+_DECLARATION_CONTENT_RE = re.compile(DECLARATION_CONTENT_PATTERN)
+
+
 def _nonblank_str_list(value: Any) -> bool:
     """A declaration list whose entries say something a reader can see.
 
@@ -290,7 +302,8 @@ def _nonblank_str_list(value: Any) -> bool:
     have their own contracts. This predicate is only for manifest declaration
     fields, where truthy whitespace would present an empty boundary as set.
     """
-    return _str_list(value) and all(item.strip() for item in value)
+    return _str_list(value) and all(
+        _DECLARATION_CONTENT_RE.search(item) for item in value)
 
 
 def _require(errors: list[str], cond: bool, field: str, reason: str) -> None:
