@@ -5,6 +5,7 @@ for the AST structural check on --mission-path/--mission-id placement."""
 from __future__ import annotations
 
 import ast
+import hashlib
 import json
 import shlex
 import subprocess
@@ -260,6 +261,64 @@ def test_control_characters_are_escaped_on_every_display_surface() -> None:
         check("control-display-refusal-no-raw-esc", "\x1b" not in refused.stderr)
         check("control-display-refusal-no-raw-cr", "\r" not in refused.stderr)
         check("control-display-refusal-no-raw-tab", "\t" not in refused.stderr)
+
+
+def test_legacy_continuity_paths_are_escaped_on_resume() -> None:
+    """Historical receipts can predate the artifact-path ingestion guard.
+
+    Recast a valid two-effect mission into that legacy on-disk shape, preserving
+    its checkpoint hash chain, and prove the continuity summary cannot execute
+    controls or forge a second stderr row.  This exercises the supported
+    historical-reader path rather than weakening today's writer guard.
+    """
+    hostile = "legacy\nFORGED\r\t\x1b[2J.txt"
+    escaped = "legacy\\nFORGED\\r\\t\\u001b[2J.txt"
+    with tempfile.TemporaryDirectory() as td:
+        ws = Path(td)
+        open_cli(ws, "m-legacy-continuity", "Read legacy custody.")
+        run("approve", "--workspace", str(ws), "--actor", "agent:worker")
+        run("effect", "--workspace", str(ws), "--actor", "agent:worker",
+            "--path", "safe.txt", "--content", "v1", "--request-id", "r1")
+        (ws / "safe.txt").write_text("tampered", encoding="utf-8")
+        run("effect", "--workspace", str(ws), "--actor", "agent:worker",
+            "--path", "safe.txt", "--content", "tampered",
+            "--request-id", "r2")
+
+        mission_dir = ws / "missions" / "m-legacy-continuity"
+        for receipt_path in sorted((mission_dir / "receipts").glob("*.json")):
+            receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+            receipt["artifact_path"] = hostile
+            receipt_path.write_text(
+                json.dumps(receipt, indent=1, sort_keys=True) + "\n",
+                encoding="utf-8")
+
+        previous_sha = None
+        for checkpoint_path in sorted(
+                (mission_dir / "checkpoints").glob("r????????.json")):
+            checkpoint = json.loads(
+                checkpoint_path.read_text(encoding="utf-8"))
+            checkpoint["prev_checkpoint_sha256"] = previous_sha
+            checkpoint["state"]["notes"] = [
+                f"effect: {hostile}" if note == "effect: safe.txt" else note
+                for note in checkpoint["state"]["notes"]
+            ]
+            data = (json.dumps(checkpoint, indent=1, sort_keys=True) + "\n")
+            checkpoint_path.write_text(data, encoding="utf-8")
+            previous_sha = hashlib.sha256(data.encode("utf-8")).hexdigest()
+
+        resumed = run("resume", "--workspace", str(ws),
+                      "--actor", "agent:second")
+        check("legacy-continuity-resume-exit-3", resumed.returncode == 3)
+        check("legacy-continuity-summary-escapes-path",
+              escaped in resumed.stderr)
+        check("legacy-continuity-summary-no-raw-esc",
+              "\x1b" not in resumed.stderr)
+        check("legacy-continuity-summary-no-raw-cr",
+              "\r" not in resumed.stderr)
+        check("legacy-continuity-summary-no-raw-tab",
+              "\t" not in resumed.stderr)
+        check("legacy-continuity-summary-no-forged-row",
+              "\nFORGED" not in resumed.stderr)
 
 
 def test_refusal_preserves_scope_ack_recipe() -> None:
@@ -878,6 +937,7 @@ TESTS = [
     test_full_lifecycle_via_cli,
     test_display_safe_drift_and_error_output,
     test_control_characters_are_escaped_on_every_display_surface,
+    test_legacy_continuity_paths_are_escaped_on_resume,
     test_refusal_preserves_scope_ack_recipe,
     test_open_stop_rules_and_acceptable_costs,
     test_open_without_stop_rules_yields_empty_lists,

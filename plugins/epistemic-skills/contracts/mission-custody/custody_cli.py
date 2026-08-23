@@ -469,7 +469,9 @@ def dispatch(args: argparse.Namespace) -> int:
         unanswered = [b for b in mission.continuity_breaks()
                       if not b["already_reconciled"]]
         if unanswered:
-            paths = ", ".join(sorted({b["artifact_path"] for b in unanswered}))
+            paths = ", ".join(sorted({
+                _display_safe(b["artifact_path"]) for b in unanswered
+            }))
             print(f"resume: {len(unanswered)} unreconciled continuity "
                   f"break(s) -- the artifact changed between receipted events "
                   f"with no reconciliation answering for it: {paths}; run "
