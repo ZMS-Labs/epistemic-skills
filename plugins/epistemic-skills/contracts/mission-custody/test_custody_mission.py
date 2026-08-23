@@ -1903,6 +1903,137 @@ def test_effect_path_index_invalidates_on_same_count_tail_rewrite(
           == [("secrets/a.txt", "req-a")])
 
 
+def test_resume_and_continuity_share_one_effect_index(
+        workspace: Path) -> None:
+    """Bulk readers must fingerprint the checkpoint chain only once each.
+
+    Receipt validation binds a mutable receipt to its chain-recorded path.
+    Calling that validation without passing the already-built path index makes
+    every receipt reload fingerprint every checkpoint, even when the index
+    cache itself hits.  Repeated writes to one artifact also exercise the
+    second receipt-loading loop in ``continuity_breaks``.
+    """
+    m = open_mission(
+        workspace, "m-reader-index", "One index per bulk reader.",
+    )
+    m.approve()
+    for i in range(16):
+        m.record_effect("docs/shared.txt", str(i), f"req-{i}")
+
+    original_index = m._effect_path_index
+    index_calls = 0
+
+    def counted_index():
+        nonlocal index_calls
+        index_calls += 1
+        return original_index()
+
+    m._effect_path_index = counted_index
+    check("resume-index-preserves-clean-result", m.resume() == [])
+    check("resume-index-built-once", index_calls == 1)
+
+    index_calls = 0
+    check("continuity-index-preserves-clean-result",
+          m.continuity_breaks() == [])
+    check("continuity-index-built-once", index_calls == 1)
+
+
+def test_effect_path_index_does_not_retain_checkpoint_bytes(
+        workspace: Path) -> None:
+    """Fingerprinting may hold one checkpoint's bytes, never the whole chain.
+
+    A bytes subclass records the maximum number of checkpoint payloads alive
+    together.  This is a positive memory-shape oracle rather than a timing or
+    source-text assertion: retaining a cumulative ``raw_records`` list makes
+    the peak grow with every checkpoint, while a streaming fingerprint plus
+    cache-miss reread keeps it constant.
+    """
+    m = open_mission(
+        workspace, "m-index-stream", "Stream checkpoint fingerprints.",
+    )
+    m.approve()
+    for i in range(12):
+        m.record_effect(f"docs/{i}.txt", str(i), f"req-{i}")
+
+    original_read_bytes = Path.read_bytes
+    checkpoint_dir = m.store.checkpoints_dir
+
+    class TrackedBytes(bytes):
+        live = 0
+        peak = 0
+
+        def __new__(cls, value: bytes):
+            instance = super().__new__(cls, value)
+            cls.live += 1
+            cls.peak = max(cls.peak, cls.live)
+            return instance
+
+        def __del__(self):
+            type(self).live -= 1
+
+    def tracked_read_bytes(path: Path) -> bytes:
+        data = original_read_bytes(path)
+        if path.parent == checkpoint_dir:
+            return TrackedBytes(data)
+        return data
+
+    m._effect_index_cache = None
+    Path.read_bytes = tracked_read_bytes
+    try:
+        index = m._effect_path_index()
+    finally:
+        Path.read_bytes = original_read_bytes
+
+    check("index-stream-preserves-all-paths", len(index) == 12)
+    check("index-stream-bounds-live-checkpoint-bytes", TrackedBytes.peak <= 2)
+    check("index-stream-releases-checkpoint-bytes", TrackedBytes.live == 0)
+
+
+def test_effect_path_index_uses_set_membership(workspace: Path) -> None:
+    """Cumulative receipt-id lists must not trigger cubic comparisons.
+
+    Each checkpoint repeats all prior IDs, so list membership compares every
+    repeated prefix against the previous prefix.  Counting equality calls
+    distinguishes that cubic comparison shape from set membership's linear
+    work in the already-quadratic number of serialized IDs.
+    """
+    effect_count = 18
+    m = open_mission(
+        workspace, "m-index-membership", "Bound ID membership work.",
+    )
+    m.approve()
+    for i in range(effect_count):
+        m.record_effect(f"docs/{i}.txt", str(i), f"req-{i}")
+
+    original_loads = json.loads
+
+    class CountingStr(str):
+        comparisons = 0
+        __hash__ = str.__hash__
+
+        def __eq__(self, other: object) -> bool:
+            type(self).comparisons += 1
+            return super().__eq__(other)
+
+    def counted_loads(value, *args, **kwargs):
+        record = original_loads(value, *args, **kwargs)
+        if isinstance(record, dict) and isinstance(record.get("receipt_ids"), list):
+            record["receipt_ids"] = [CountingStr(rid)
+                                     for rid in record["receipt_ids"]]
+        return record
+
+    m._effect_index_cache = None
+    json.loads = counted_loads
+    try:
+        index = m._effect_path_index()
+    finally:
+        json.loads = original_loads
+
+    check("index-membership-preserves-all-paths", len(index) == effect_count)
+    check("index-membership-comparisons-are-not-cubic",
+          CountingStr.comparisons < effect_count * effect_count)
+
+
 def test_forged_restored_receipt_is_not_trusted(workspace: Path) -> None:
     """Round-3 finding: a schema-valid receipt planted at the lost id's path
     must not buy continuity. The chain records which artifact the id was
@@ -4809,6 +4940,9 @@ TESTS = [
     test_scope_consistency_reuses_single_effect_index,
     test_scope_consistency_reuses_index_for_underivable_ids,
     test_effect_path_index_invalidates_on_same_count_tail_rewrite,
+    test_resume_and_continuity_share_one_effect_index,
+    test_effect_path_index_does_not_retain_checkpoint_bytes,
+    test_effect_path_index_uses_set_membership,
     test_foreign_mission_receipt_is_not_this_missions_receipt,
     test_cross_workspace_receipt_cannot_silence_drift,
     test_backslash_effect_path_still_loads_its_own_receipt,

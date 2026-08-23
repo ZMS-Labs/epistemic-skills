@@ -1394,31 +1394,35 @@ class Mission:
         # must not leave an authority-sensitive path index stale. Reading each
         # file once to fingerprint it preserves a linear scan and lets a cache
         # hit avoid reparsing while still observing that supported boundary.
+        # Retain only the digest from that pass: checkpoint records are
+        # cumulative, so retaining every payload at once makes peak memory
+        # quadratic in the number of receipts. A cache miss deliberately
+        # rereads one checkpoint at a time for parsing.
         paths = self.store.checkpoint_paths()
-        raw_records: list[bytes] = []
-        identity: list[tuple[str, str]] = []
-        for cp_path in paths:
-            data = cp_path.read_bytes()
-            identity.append((cp_path.name, sha256_bytes(data)))
-            raw_records.append(data)
-        fingerprint = tuple(identity)
+        fingerprint = tuple(
+            (cp_path.name, sha256_file(cp_path)) for cp_path in paths
+        )
         if self._effect_index_cache is not None \
                 and self._effect_index_cache[0] == fingerprint:
             return self._effect_index_cache[1]
         index: dict[str, str] = {}
-        prev_ids: list[str] = []
+        known_ids: set[str] = set()
         prev_notes: list[str] = []
-        for data in raw_records:
-            record = json.loads(data)
+        for cp_path in paths:
+            record = json.loads(cp_path.read_text(encoding="utf-8"))
             ids = record["receipt_ids"]
             notes = record["state"]["notes"]
-            fresh = [rid for rid in ids if rid not in prev_ids]
+            # Checkpoints repeat the full cumulative ID list. List membership
+            # makes comparing those cumulative prefixes cubic; request IDs
+            # are never reusable, so one mission-wide set is the exact rule.
+            fresh = [rid for rid in ids if rid not in known_ids]
             if fresh:
                 path = _first_effect_note(notes[len(prev_notes):])
                 if path is not None:
                     for rid in fresh:
                         index.setdefault(rid, path)
-            prev_ids, prev_notes = ids, notes
+                known_ids.update(fresh)
+            prev_notes = notes
         self._effect_index_cache = (fingerprint, index)
         return index
 
@@ -1681,11 +1685,14 @@ class Mission:
         # break across the gap where the retired one honestly sat. That fires
         # on the ordinary sanctioned recovery flow, which would train stewards
         # to ignore the signal on day one.
+        effect_paths = self._effect_path_index()
         by_path: dict[str, list[str]] = {}
         for request_id in self._all_receipt_ids_ever():
-            receipt = self._load_receipt(request_id)
+            receipt = self._load_receipt(
+                request_id, effect_paths=effect_paths
+            )
             rel = (receipt["artifact_path"] if receipt is not None
-                   else self._historical_effect_path(request_id))
+                   else effect_paths.get(request_id))
             if rel is None:
                 continue
             key = _normalize_relpath(rel)
@@ -1695,8 +1702,12 @@ class Mission:
         breaks: list[dict] = []
         for ids in by_path.values():
             for prior_id, next_id in zip(ids, ids[1:]):
-                prior = self._load_receipt(prior_id)
-                nxt = self._load_receipt(next_id)
+                prior = self._load_receipt(
+                    prior_id, effect_paths=effect_paths
+                )
+                nxt = self._load_receipt(
+                    next_id, effect_paths=effect_paths
+                )
                 if prior is None or nxt is None:
                     # A gap we cannot read is not evidence of a break. The
                     # missing receipt is already reported by resume as its own
@@ -1738,8 +1749,11 @@ class Mission:
         current_by_key: dict[str, tuple[str, dict | None, str | None]] = {}
         missing: list[str] = []
         unplaceable_opaque: list[tuple[str, str]] = []
+        effect_paths = self._effect_path_index()
         for request_id in latest["receipt_ids"]:
-            receipt, _refusal, opaque = self._load_receipt_checked(request_id)
+            receipt, _refusal, opaque = self._load_receipt_checked(
+                request_id, effect_paths=effect_paths
+            )
             # KIND, not a boolean. Both opaque kinds behave identically here
             # (present, unverifiable, never "lost"), and differ only in the
             # marker and message the operator is handed.
@@ -1758,7 +1772,7 @@ class Mission:
             # Claiming the slot as an OPAQUE entry supersedes the stale
             # receipt without asserting anything this reader cannot check.
             rel = (receipt["artifact_path"] if receipt is not None
-                   else self._historical_effect_path(request_id))
+                   else effect_paths.get(request_id))
             if rel is None:
                 if kind:
                     # Unattributable but NOT lost: a receipt that is merely
