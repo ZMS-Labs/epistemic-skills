@@ -48,12 +48,8 @@ jobs:
       - name: Install pinned Draft 2020-12 parity engine
         run: >-
           python -m pip install --disable-pip-version-check --no-deps
-          "attrs==26.1.0"
-          "jsonschema==4.25.1"
-          "jsonschema-specifications==2025.9.1"
-          "referencing==0.37.0"
-          "rpds-py==2026.6.3"
-          "typing-extensions==4.16.0"
+          --only-binary=:all: --require-hashes
+          -r plugins/epistemic-skills/contracts/mission-custody/requirements-jsonschema-parity-ubuntu-py312.txt
       - name: Mission custody stdlib/JSON Schema parity
         run: python plugins/epistemic-skills/contracts/mission-custody/test_mission_custody_jsonschema.py
       - name: Mission custody semantic and schema contract
