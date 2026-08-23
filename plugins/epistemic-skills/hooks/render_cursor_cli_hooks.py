@@ -60,6 +60,22 @@ def render() -> dict:
     return template
 
 
+def _write_new_config(destination: Path, rendered: str) -> None:
+    """Create a config without leaving a partial file after I/O failure."""
+    created = False
+    try:
+        with destination.open("x", encoding="utf-8", newline="\n") as handle:
+            created = True
+            handle.write(rendered)
+    except OSError:
+        if created:
+            try:
+                destination.unlink()
+            except FileNotFoundError:
+                pass
+        raise
+
+
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -76,8 +92,7 @@ def main(argv: list[str]) -> int:
             return 0
         destination = Path(args.output).expanduser()
         destination.parent.mkdir(parents=True, exist_ok=True)
-        with destination.open("x", encoding="utf-8", newline="\n") as handle:
-            handle.write(rendered)
+        _write_new_config(destination, rendered)
         print(destination.resolve())
         return 0
     except (OSError, RuntimeError, ValueError) as exc:

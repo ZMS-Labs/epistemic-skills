@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import runpy
 import shlex
 import shutil
 import subprocess
@@ -136,6 +137,40 @@ def test_cursor_cli_installation_emits_plugin_root_hook_command() -> None:
               refused.returncode == 2)
         check("cursor-cli-existing-config-unchanged",
               destination.read_bytes() == before)
+
+        partial = ws / ".cursor" / "partial-hooks.json"
+        real_open = Path.open
+
+        class FailingWrite:
+            def __init__(self) -> None:
+                self.handle = real_open(
+                    partial, "x", encoding="utf-8", newline="\n"
+                )
+
+            def __enter__(self):
+                return self
+
+            def write(self, value: str) -> int:
+                self.handle.write(value[:1])
+                self.handle.flush()
+                raise OSError("simulated partial write")
+
+            def __exit__(self, exc_type, exc, traceback) -> None:
+                self.handle.close()
+
+        renderer_globals = runpy.run_path(str(CURSOR_CLI_RENDERER))
+        original_path_open = Path.open
+        partial_write_raised = False
+        try:
+            Path.open = lambda *_args, **_kwargs: FailingWrite()
+            try:
+                renderer_globals["_write_new_config"](partial, "{}\n")
+            except OSError:
+                partial_write_raised = True
+        finally:
+            Path.open = original_path_open
+        check("cursor-cli-partial-write-raises", partial_write_raised)
+        check("cursor-cli-partial-write-removed", not partial.exists())
 
 
 def test_allow_paths() -> None:
