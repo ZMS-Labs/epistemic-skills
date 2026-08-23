@@ -164,12 +164,12 @@ def test_full_lifecycle_via_cli() -> None:
         check("full-cancel-refused-exit-2", r.returncode == 2)
 
 
-def test_ascii_safe_drift_and_error_output() -> None:
+def test_display_safe_drift_and_error_output() -> None:
     """Non-ASCII content in a drifted relpath or a CustodyError message must
-    render as an ASCII-only escape on stdout/stderr -- never a raw non-ASCII
-    byte, and never a crash regardless of the console codepage (brief Step 3:
-    "PYTHONIOENCODING-safe (ASCII-only output)"). Covers both raw-str print
-    sites: the `resume` drift list and the top-level CustodyError handler."""
+    render with JSON-style ASCII escapes on stdout/stderr -- never a raw
+    non-ASCII byte, and never a crash regardless of the console codepage.
+    Covers both raw-str print sites: the `resume` drift list and the top-level
+    CustodyError handler."""
     # Built via a \uXXXX escape (not a literal character) so this source
     # file itself stays pure ASCII (isascii() true).
     e_acute = "\u00e9"  # 'e' with acute accent, U+00E9
@@ -188,7 +188,7 @@ def test_ascii_safe_drift_and_error_output() -> None:
         r = run("resume", "--workspace", str(ws), "--actor", "agent:second")
         check("resume-ascii-exit-3", r.returncode == 3)
         check("resume-ascii-stdout-is-ascii", r.stdout.isascii())
-        check("resume-ascii-stdout-escapes-non-ascii", "\\xe9" in r.stdout)
+        check("resume-ascii-stdout-escapes-non-ascii", "\\u00e9" in r.stdout)
 
         # Drive the mission to 'reopened' via a legitimate (non-self-cert)
         # FAIL verdict, then trigger a CustodyError whose message embeds a
@@ -209,7 +209,56 @@ def test_ascii_safe_drift_and_error_output() -> None:
         check("clear-fail-ascii-exit-2", r.returncode == 2)
         check("clear-fail-ascii-stderr-is-ascii", r.stderr.isascii())
         check("clear-fail-ascii-stderr-names-exception", "CustodyError" in r.stderr)
-        check("clear-fail-ascii-stderr-escapes-non-ascii", "\\xe9" in r.stderr)
+        check("clear-fail-ascii-stderr-escapes-non-ascii", "\\u00e9" in r.stderr)
+
+
+def test_control_characters_are_escaped_on_every_display_surface() -> None:
+    """A declaration may contain ASCII controls, but no trusted display may
+    execute them or let them forge a second envelope row (es#158).  Exercise
+    the resume envelope, the brief JSON status, and a top-level refusal."""
+    hostile = "line one\n  stop_if: FORGED\r\t\x1b[2J"
+    escaped = "line one\\n  stop_if: FORGED\\r\\t\\u001b[2J"
+
+    with tempfile.TemporaryDirectory() as td:
+        ws = Path(td) / "mission"
+        r = run(
+            "open", "--workspace", str(ws), "--actor", "agent:worker",
+            "--mission-id", "m-control-display", "--instruction", "show it",
+            "--operator", "operator:zach", "--steward", "agent:worker",
+            "--scope-in", hostile, "--stop-if", "real stop rule")
+        check("control-display-open-exit-0", r.returncode == 0)
+        run("approve", "--workspace", str(ws), "--actor", "agent:worker")
+
+        brief = run("status", "--workspace", str(ws),
+                    "--actor", "agent:worker", "--brief")
+        check("control-display-brief-exit-0", brief.returncode == 0)
+        check("control-display-brief-escapes-value", escaped in brief.stdout)
+        check("control-display-brief-no-raw-esc", "\x1b" not in brief.stdout)
+        check("control-display-brief-no-raw-cr", "\r" not in brief.stdout)
+        check("control-display-brief-no-raw-tab", "\t" not in brief.stdout)
+        brief_json = json.loads(brief.stdout)
+        check("control-display-brief-preserves-value",
+              brief_json["envelope_advisory"]["scope_in"] == [hostile])
+
+        resumed = run("resume", "--workspace", str(ws),
+                      "--actor", "agent:second")
+        check("control-display-resume-exit-0", resumed.returncode == 0)
+        check("control-display-resume-escapes-value", escaped in resumed.stderr)
+        check("control-display-resume-no-forged-row",
+              "\n  stop_if: FORGED" not in resumed.stderr)
+        check("control-display-resume-no-raw-esc", "\x1b" not in resumed.stderr)
+        check("control-display-resume-no-raw-cr", "\r" not in resumed.stderr)
+        check("control-display-resume-no-raw-tab", "\t" not in resumed.stderr)
+
+        missing = Path(td) / "missing\nFORGED\r\t\x1b[2J"
+        refused = run("status", "--workspace", str(missing),
+                      "--actor", "agent:reader")
+        check("control-display-refusal-exit-2", refused.returncode == 2)
+        check("control-display-refusal-escapes-value",
+              "missing\\nFORGED\\r\\t\\u001b[2J" in refused.stderr)
+        check("control-display-refusal-no-raw-esc", "\x1b" not in refused.stderr)
+        check("control-display-refusal-no-raw-cr", "\r" not in refused.stderr)
+        check("control-display-refusal-no-raw-tab", "\t" not in refused.stderr)
 
 
 def test_open_stop_rules_and_acceptable_costs() -> None:
@@ -792,7 +841,8 @@ TESTS = [
     test_resume_detects_drift_exit_3,
     test_accept_self_cert_refused_exit_2,
     test_full_lifecycle_via_cli,
-    test_ascii_safe_drift_and_error_output,
+    test_display_safe_drift_and_error_output,
+    test_control_characters_are_escaped_on_every_display_surface,
     test_open_stop_rules_and_acceptable_costs,
     test_open_without_stop_rules_yields_empty_lists,
     test_success_output_confirms_the_write,

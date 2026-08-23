@@ -34,13 +34,17 @@ def _print_status(checkpoint: dict) -> None:
     print(json.dumps(checkpoint, indent=2, sort_keys=True, ensure_ascii=True))
 
 
-def _ascii_safe(text: str) -> str:
-    """Render text as ASCII-only, escaping any non-ASCII characters so a
-    print to stdout/stderr never raises UnicodeEncodeError regardless of
-    PYTHONIOENCODING or the console codepage. Mirrors the ensure_ascii=True
-    guarantee _print_status already gets from json.dumps, for the two
-    output paths that print a raw str instead of a JSON document."""
-    return text.encode("ascii", "backslashreplace").decode("ascii")
+def _display_safe(text: str) -> str:
+    """Render one raw display field with JSON string escaping.
+
+    Dropping only the surrounding JSON quotes preserves readable ordinary
+    text while escaping control characters, quotes, backslashes, and
+    non-ASCII code points.  Raw terminal output therefore cannot acquire a
+    forged row or ANSI control sequence from caller-influenced text, and the
+    result remains safe on an ASCII-only console.  JSON document surfaces
+    get the same guarantees from ``_print_status``'s ``ensure_ascii=True``.
+    """
+    return json.dumps(text, ensure_ascii=True)[1:-1]
 
 
 def _read_content(args: argparse.Namespace) -> str:
@@ -287,7 +291,7 @@ def _print_envelope(checkpoint: dict, file=sys.stdout) -> None:
     for name, values in rows:
         if values:
             for value in values:
-                print(f"  {name}: {_ascii_safe(value)}", file=file)
+                print(f"  {name}: {_display_safe(value)}", file=file)
         else:
             print(f"  {name}: (unset -- UNBOUNDED, not safely defaulted)",
                   file=file)
@@ -300,7 +304,7 @@ def _print_envelope(checkpoint: dict, file=sys.stdout) -> None:
         for entry in uncompared[direction]:
             # Naming what is NOT compared, so "scope is checked now" never
             # gets read as "all of scope is checked".
-            print(f"  scope.{direction}: {_ascii_safe(entry)} "
+            print(f"  scope.{direction}: {_display_safe(entry)} "
                   "(prose -- NOT machine-compared)", file=file)
 
 
@@ -440,7 +444,7 @@ def dispatch(args: argparse.Namespace) -> int:
     elif args.command == "resume":
         drift = mission.resume()
         for relpath in drift:
-            print(_ascii_safe(relpath))
+            print(_display_safe(relpath))
         if not drift:
             n = len(set(mission.status()["receipt_ids"]))
             vacuous = " -- vacuously (no effects recorded)" if n == 0 else ""
@@ -500,7 +504,7 @@ def main(argv: list[str]) -> int:
         # StoreError refusals (concurrent writer, duplicate receipt, invalid
         # record) honor the same exit-2 contract as custody refusals instead
         # of escaping as a traceback with exit 1.
-        print(_ascii_safe(f"{type(exc).__name__}: {exc}"), file=sys.stderr)
+        print(_display_safe(f"{type(exc).__name__}: {exc}"), file=sys.stderr)
         return 2
 
 
