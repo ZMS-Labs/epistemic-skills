@@ -1841,6 +1841,68 @@ def test_scope_consistency_reuses_single_effect_index(workspace: Path) -> None:
     check("scope-index-never-rescans-per-id", per_id_calls == 0)
 
 
+def test_scope_consistency_reuses_index_for_underivable_ids(
+        workspace: Path) -> None:
+    """The receipt fallback must not re-enumerate checkpoints for every miss.
+
+    An empty index models a legacy/noteless chain: every valid receipt must
+    supply its own path.  Before the fix, receipt validation called the same
+    index method again for every ID, retaining O(U*C) behavior.
+    """
+    m = open_mission(
+        workspace, "m-scope-index-fallback", "One fallback traversal.",
+        scope_in=["docs/**"],
+    )
+    m.approve()
+    for i in range(40):
+        m.record_effect(f"docs/{i}.txt", str(i), f"req-{i}")
+
+    index_calls = 0
+
+    def underivable_index():
+        nonlocal index_calls
+        index_calls += 1
+        return {}
+
+    m._effect_path_index = underivable_index
+    findings = m.scope_consistency()
+    check("scope-fallback-preserves-receipt-findings", findings == [])
+    check("scope-fallback-index-built-once", index_calls == 1)
+
+
+def test_effect_path_index_invalidates_on_same_count_tail_rewrite(
+        workspace: Path) -> None:
+    """An unsealed checkpoint@1 tail rewrite must invalidate cached paths."""
+    m = open_mission(
+        workspace, "m-scope-index-tail", "Observe the current tail.",
+        scope_in=["docs/**"],
+    )
+    m.approve()
+    m.record_effect("docs/a.txt", "x", "req-a")
+    check("scope-tail-cache-warmed",
+          m._effect_path_index().get("req-a") == "docs/a.txt")
+
+    tail = m.store.checkpoint_paths()[-1]
+    checkpoint = json.loads(tail.read_text(encoding="utf-8"))
+    checkpoint["state"]["notes"] = [
+        "effect: secrets/a.txt" if note == "effect: docs/a.txt" else note
+        for note in checkpoint["state"]["notes"]
+    ]
+    tail.write_text(
+        json.dumps(checkpoint, indent=1, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+    check("scope-tail-per-id-sees-current-path",
+          m._historical_effect_path("req-a") == "secrets/a.txt")
+    check("scope-tail-index-sees-current-path",
+          m._effect_path_index().get("req-a") == "secrets/a.txt")
+    findings = m.scope_consistency()
+    check("scope-tail-rewrite-is-not-hidden-by-cache",
+          [(f["artifact_path"], f["request_id"]) for f in findings]
+          == [("secrets/a.txt", "req-a")])
+
+
 def test_forged_restored_receipt_is_not_trusted(workspace: Path) -> None:
     """Round-3 finding: a schema-valid receipt planted at the lost id's path
     must not buy continuity. The chain records which artifact the id was
@@ -4745,6 +4807,8 @@ TESTS = [
     test_receipt_ids_always_carry_a_derivable_path,
     test_effect_path_index_matches_per_id,
     test_scope_consistency_reuses_single_effect_index,
+    test_scope_consistency_reuses_index_for_underivable_ids,
+    test_effect_path_index_invalidates_on_same_count_tail_rewrite,
     test_foreign_mission_receipt_is_not_this_missions_receipt,
     test_cross_workspace_receipt_cannot_silence_drift,
     test_backslash_effect_path_still_loads_its_own_receipt,
