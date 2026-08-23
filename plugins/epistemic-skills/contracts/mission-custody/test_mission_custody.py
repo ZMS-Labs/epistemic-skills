@@ -73,6 +73,41 @@ def test_manifest_amendments_must_be_list_of_dated_text() -> None:
     check("manifest-amendment-shape", validate_record(rec) != [])
 
 
+def test_manifest_envelope_lists_require_nonblank_entries() -> None:
+    """es#160: truthy whitespace is not a usable declaration.
+
+    These are manifest declarations, not filesystem names. A whitespace-only
+    artifact path remains legal and is pinned separately below.
+    """
+    fields = (
+        ("permissions", ("authority", "permissions")),
+        ("protected-state", ("authority", "protected_state")),
+        ("acceptable-costs", ("authority", "acceptable_costs")),
+        ("scope-in", ("scope", "in")),
+        ("scope-out", ("scope", "out")),
+        ("hold-if", ("stop_rules", "hold_if")),
+        ("stop-if", ("stop_rules", "stop_if")),
+        ("escalate-if", ("stop_rules", "escalate_if")),
+    )
+    for label, (section, field) in fields:
+        blank = copy.deepcopy(valid_manifest())
+        blank[section][field] = [" \t\u00a0 "]
+        check(f"manifest-{label}-blank-refused", validate_record(blank) != [])
+
+        substantive = copy.deepcopy(valid_manifest())
+        substantive[section][field] = ["  declared boundary  "]
+        check(f"manifest-{label}-substantive-whitespace-allowed",
+              validate_record(substantive) == [])
+
+
+def test_whitespace_only_artifact_path_remains_legal() -> None:
+    """Declaration validation must not leak into the filename surface."""
+    rec = load("valid-receipt.json")
+    rec["artifact_path"] = "   "
+    check("receipt-whitespace-only-artifact-path-valid",
+          validate_record(rec) == [])
+
+
 def test_unknown_record_kind_rejected() -> None:
     check("unknown-record-kind", validate_record({"record": "mystery@1"}) != [])
 
@@ -270,6 +305,8 @@ def main() -> int:
     test_manifest_unknown_top_level_field()
     test_manifest_bad_tier()
     test_manifest_amendments_must_be_list_of_dated_text()
+    test_manifest_envelope_lists_require_nonblank_entries()
+    test_whitespace_only_artifact_path_remains_legal()
     test_unknown_record_kind_rejected()
     test_checkpoint_valid_examples()
     test_checkpoint_r1_must_have_null_prev()

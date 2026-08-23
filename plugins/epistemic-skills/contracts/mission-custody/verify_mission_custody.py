@@ -283,6 +283,16 @@ def _str_list(value: Any) -> bool:
         isinstance(item, str) and item for item in value)
 
 
+def _nonblank_str_list(value: Any) -> bool:
+    """A declaration list whose entries say something a reader can see.
+
+    Keep this narrower than `_str_list`: receipt ids, notes, and artifact paths
+    have their own contracts. This predicate is only for manifest declaration
+    fields, where truthy whitespace would present an empty boundary as set.
+    """
+    return _str_list(value) and all(item.strip() for item in value)
+
+
 def _require(errors: list[str], cond: bool, field: str, reason: str) -> None:
     if not cond:
         errors.append(f"{field}: {reason}")
@@ -336,8 +346,8 @@ def validate_manifest(rec: dict) -> list[str]:
         _require(errors, ok, "authority.amendments",
                  "append-only list of {utc, text} objects required")
         for name in ("permissions", "protected_state", "acceptable_costs"):
-            _require(errors, _str_list(auth[name]),
-                     f"authority.{name}", "list of strings required")
+            _require(errors, _nonblank_str_list(auth[name]),
+                     f"authority.{name}", "list of nonblank strings required")
         mode = auth.get("guard_mode")
         guards = auth.get("actuator_guards")
         if mode is not None:
@@ -432,7 +442,8 @@ def validate_manifest(rec: dict) -> list[str]:
 
     scope = rec["scope"]
     ok = isinstance(scope, dict) and set(scope) == {"in", "out"} \
-        and _str_list(scope.get("in")) and _str_list(scope.get("out"))
+        and _nonblank_str_list(scope.get("in")) \
+        and _nonblank_str_list(scope.get("out"))
     _require(errors, ok, "scope", '{"in": [...], "out": [...]} required')
 
     acc = rec["acceptance"]
@@ -446,9 +457,10 @@ def validate_manifest(rec: dict) -> list[str]:
     stop = rec["stop_rules"]
     ok = isinstance(stop, dict) \
         and set(stop) == {"hold_if", "stop_if", "escalate_if"} \
-        and all(_str_list(stop[k]) for k in ("hold_if", "stop_if", "escalate_if"))
+        and all(_nonblank_str_list(stop[k])
+                for k in ("hold_if", "stop_if", "escalate_if"))
     _require(errors, ok, "stop_rules",
-             "hold_if/stop_if/escalate_if string lists required")
+             "hold_if/stop_if/escalate_if nonblank string lists required")
     return errors
 
 
