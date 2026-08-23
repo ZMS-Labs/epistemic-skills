@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import ast
 import json
+import shlex
 import subprocess
 import sys
 import tempfile
@@ -259,6 +260,40 @@ def test_control_characters_are_escaped_on_every_display_surface() -> None:
         check("control-display-refusal-no-raw-esc", "\x1b" not in refused.stderr)
         check("control-display-refusal-no-raw-cr", "\r" not in refused.stderr)
         check("control-display-refusal-no-raw-tab", "\t" not in refused.stderr)
+
+
+def test_refusal_preserves_scope_ack_recipe() -> None:
+    """The control-character fix must not re-escape the trusted JSON token
+    that record_verdict deliberately prints for byte-exact acknowledgement.
+    The displayed token remains both visible and accepted verbatim."""
+    path = "secrets/name with space.txt"
+    token = json.dumps(path)
+    with tempfile.TemporaryDirectory() as td:
+        ws = Path(td)
+        run("open", "--mission-id", "m-recipe", "--instruction", "w",
+            "--operator", "op", "--steward", "agent:worker",
+            "--actor", "agent:worker", "--scope-out", "secrets/**",
+            "--workspace", str(ws))
+        run("approve", "--actor", "agent:worker", "--workspace", str(ws))
+        run("effect", "--path", path, "--content", "x",
+            "--request-id", "r1", "--actor", "agent:worker",
+            "--workspace", str(ws))
+        run("begin-verification", "--actor", "agent:worker",
+            "--workspace", str(ws))
+        accept = ["accept", "--verdict", "PASS", "--actor", "agent:acceptor",
+                  "--acceptor", "agent:acceptor",
+                  "--tier", "declared-role-separation", "--reason", "done",
+                  "--workspace", str(ws)]
+        refused = run(*accept)
+        recipe = f"--scope-ack {token}"
+        check("scope-ack-recipe-refusal-exit-2", refused.returncode == 2)
+        check("scope-ack-recipe-preserved", recipe in refused.stderr)
+        check("scope-ack-recipe-shell-token-roundtrip",
+              shlex.split(recipe) == ["--scope-ack", path])
+
+        accepted = run(*accept, "--scope-ack", token)
+        check("scope-ack-recipe-verbatim-token-accepted",
+              accepted.returncode == 0)
 
 
 def test_open_stop_rules_and_acceptable_costs() -> None:
@@ -843,6 +878,7 @@ TESTS = [
     test_full_lifecycle_via_cli,
     test_display_safe_drift_and_error_output,
     test_control_characters_are_escaped_on_every_display_surface,
+    test_refusal_preserves_scope_ack_recipe,
     test_open_stop_rules_and_acceptable_costs,
     test_open_without_stop_rules_yields_empty_lists,
     test_success_output_confirms_the_write,

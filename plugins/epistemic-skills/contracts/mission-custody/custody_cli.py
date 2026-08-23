@@ -34,16 +34,24 @@ def _print_status(checkpoint: dict) -> None:
     print(json.dumps(checkpoint, indent=2, sort_keys=True, ensure_ascii=True))
 
 
-def _display_safe(text: str) -> str:
-    """Render one raw display field with JSON string escaping.
+def _display_safe(text: str, *, preserve_printable_syntax: bool = False) -> str:
+    """Render terminal text without allowing control-character execution.
 
-    Dropping only the surrounding JSON quotes preserves readable ordinary
-    text while escaping control characters, quotes, backslashes, and
-    non-ASCII code points.  Raw terminal output therefore cannot acquire a
-    forged row or ANSI control sequence from caller-influenced text, and the
-    result remains safe on an ASCII-only console.  JSON document surfaces
-    get the same guarantees from ``_print_status``'s ``ensure_ascii=True``.
+    Raw fields use full JSON string escaping (minus the surrounding quotes).
+    A completed refusal message can also contain trusted printable syntax --
+    notably the JSON-quoted ``--scope-ack`` token that the acceptor must copy
+    exactly.  In that mode preserve printable ASCII quotes and backslashes,
+    while still JSON-escaping every control and non-ASCII code point.  Both
+    modes therefore prevent forged rows and ANSI execution and remain safe
+    on an ASCII-only console.  JSON document surfaces get the same guarantees
+    from ``_print_status``'s ``ensure_ascii=True``.
     """
+    if preserve_printable_syntax:
+        return "".join(
+            char if " " <= char <= "~"
+            else json.dumps(char, ensure_ascii=True)[1:-1]
+            for char in text
+        )
     return json.dumps(text, ensure_ascii=True)[1:-1]
 
 
@@ -504,7 +512,9 @@ def main(argv: list[str]) -> int:
         # StoreError refusals (concurrent writer, duplicate receipt, invalid
         # record) honor the same exit-2 contract as custody refusals instead
         # of escaping as a traceback with exit 1.
-        print(_display_safe(f"{type(exc).__name__}: {exc}"), file=sys.stderr)
+        print(_display_safe(
+            f"{type(exc).__name__}: {exc}", preserve_printable_syntax=True
+        ), file=sys.stderr)
         return 2
 
 
