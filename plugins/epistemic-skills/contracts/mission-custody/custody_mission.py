@@ -48,6 +48,13 @@ _RESERVED_NOTE_PREFIXES = (
     # DRIFT-SIBLING -- caller narrative must not be able to imitate the
     # record that downgrades a drift finding (gauntlet major).
     "sibling-touched: ",
+    # es#173 section 4b, leg 3: the STRUCTURED cross-mission authorization.
+    # Leg 3 used to be a prose MENTION test (`_amendment_names`, which
+    # documents itself as a hint that "cannot say the operator granted it"),
+    # so "mission b remains forbidden from writing x.txt" authorised the
+    # downgrade it forbids. The grant is now a machine record with a
+    # reserved prefix, exactly like every other discharge in this contract.
+    "sibling-authorized: ",
 )
 
 
@@ -232,6 +239,18 @@ def _refuse_unrecordable_artifact_path(relpath) -> None:
             "without them. "
             "Offending: " + ", ".join(repr(c) for c in bad)
             + f" in {relpath!r}")
+
+
+def _store_identity(mission_dir: Path) -> str:
+    """One store, possibly several names. `missions/alias -> missions/real`
+    is two DIRECTORY NAMES over one store; every question about the store
+    itself (is this my own store? did a SIBLING write this?) must compare
+    identity, not name. Same key `census_missions` already uses."""
+    try:
+        st = os.stat(mission_dir)
+        return f"inode:{st.st_dev}:{st.st_ino}"
+    except OSError:
+        return f"path:{mission_dir.resolve()}"
 
 
 def now_utc() -> str:
@@ -569,29 +588,33 @@ def _is_matchable_pattern(entry: str) -> bool:
 
 def _seg_intersect(a: str, b: str) -> bool:
     """Can two single-segment globs ('*'/'?' in-segment, no '/') both match
-    at least one string? Standard two-pattern recursion; memoized."""
-    memo: dict[tuple[int, int], bool] = {}
+    at least one string? Standard two-pattern DP.
 
-    def rec(i: int, j: int) -> bool:
-        key = (i, j)
-        if key in memo:
-            return memo[key]
-        out = False
-        if i == len(a) and j == len(b):
-            out = True
-        else:
-            if not out and i < len(a) and a[i] == "*":
-                out = rec(i + 1, j) or (j < len(b) and rec(i, j + 1))
-            if not out and j < len(b) and b[j] == "*":
-                out = rec(i, j + 1) or (i < len(a) and rec(i + 1, j))
-            if not out and i < len(a) and j < len(b) \
+    BOTTOM-UP, not recursive: the memoized recursion this replaces descended
+    one frame per character, so a ~1500-character scope segment exceeded
+    CPython's default recursion limit INSIDE `open()`, and `custody_cli.main`
+    catches only CustodyError/StoreError -- the refusal escaped as a
+    RecursionError traceback instead. Same table, same verdicts, no stack."""
+    na, nb = len(a), len(b)
+    # dp[i][j] answers rec(i, j); every dependency has a strictly larger
+    # index, so filling in reverse order needs no memo dictionary.
+    dp = [[False] * (nb + 1) for _ in range(na + 1)]
+    for i in range(na, -1, -1):
+        for j in range(nb, -1, -1):
+            if i == na and j == nb:
+                dp[i][j] = True
+                continue
+            out = False
+            if i < na and a[i] == "*":
+                out = dp[i + 1][j] or (j < nb and dp[i][j + 1])
+            if not out and j < nb and b[j] == "*":
+                out = dp[i][j + 1] or (i < na and dp[i + 1][j])
+            if not out and i < na and j < nb \
                     and a[i] != "*" and b[j] != "*" \
                     and (a[i] == "?" or b[j] == "?" or a[i] == b[j]):
-                out = rec(i + 1, j + 1)
-        memo[key] = out
-        return out
-
-    return rec(0, 0)
+                out = dp[i + 1][j + 1]
+            dp[i][j] = out
+    return dp[0][0]
 
 
 def _globs_intersect(left: str, right: str) -> bool:
@@ -612,28 +635,26 @@ def _globs_intersect(left: str, right: str) -> bool:
         return ["**" if "**" in seg else seg for seg in norm.split("/")]
 
     pa, pb = prep(left), prep(right)
-    memo: dict[tuple[int, int], bool] = {}
-
-    def rec(i: int, j: int) -> bool:
-        key = (i, j)
-        if key in memo:
-            return memo[key]
-        out = False
-        if i == len(pa) and j == len(pb):
-            out = True
-        else:
-            if not out and i < len(pa) and pa[i] == "**":
-                out = rec(i + 1, j) or (j < len(pb) and rec(i, j + 1))
-            if not out and j < len(pb) and pb[j] == "**":
-                out = rec(i, j + 1) or (i < len(pa) and rec(i + 1, j))
-            if not out and i < len(pa) and j < len(pb) \
+    na, nb = len(pa), len(pb)
+    # BOTTOM-UP for the same reason `_seg_intersect` is: one frame per SEGMENT
+    # blew the recursion limit on deep scope entries inside `open()`.
+    dp = [[False] * (nb + 1) for _ in range(na + 1)]
+    for i in range(na, -1, -1):
+        for j in range(nb, -1, -1):
+            if i == na and j == nb:
+                dp[i][j] = True
+                continue
+            out = False
+            if i < na and pa[i] == "**":
+                out = dp[i + 1][j] or (j < nb and dp[i][j + 1])
+            if not out and j < nb and pb[j] == "**":
+                out = dp[i][j + 1] or (i < na and dp[i + 1][j])
+            if not out and i < na and j < nb \
                     and pa[i] != "**" and pb[j] != "**" \
                     and _seg_intersect(pa[i], pb[j]):
-                out = rec(i + 1, j + 1)
-        memo[key] = out
-        return out
-
-    return rec(0, 0)
+                out = dp[i + 1][j + 1]
+            dp[i][j] = out
+    return dp[0][0]
 
 
 def _norm_scope_segments(norm: str) -> list[str]:
@@ -1069,6 +1090,23 @@ class Mission:
                 "mission or what guards it arms. Opening beside it is "
                 "blind. Read this workspace with an updated custody "
                 "plugin/CLI first.")
+        # A sibling whose CHAIN loads but whose MANIFEST fails verification
+        # (armed guards rewritten with no authority amendment) used to read as
+        # perfectly readable here and slip past the quarantine gate entirely;
+        # the tamper only surfaced later, as UnionDegraded on the first
+        # effect, by which time the mission was already open beside it.
+        # `Mission.status()` is the same manifest-verifying read the union
+        # assembler performs, so open() and the union agree about what is
+        # trustworthy.
+        for entry in list(siblings):
+            try:
+                Mission(entry["store"], workspace, actor).status()
+            except (StoreError, ValueError, CustodyError) as exc:
+                siblings.remove(entry)
+                skipped.append({
+                    "name": entry["name"], "kind": type(exc).__name__,
+                    "reason": (f"{entry['name']}: {type(exc).__name__}: "
+                               f"{exc}")})
         acked = {str(name) for name in (acknowledge_unreadable or [])}
         unknown = sorted(acked - {s["name"] for s in skipped})
         if unknown:
@@ -1087,23 +1125,40 @@ class Mission:
                 "they are repaired or explicitly quarantined "
                 "(--acknowledge-unreadable <dir>, recorded in the opening "
                 "checkpoint).")
-        opening_notes = [f"unreadable sibling acknowledged: {s['name']}"
-                         for s in sorted(skipped, key=lambda s: s["name"])]
+        # THE RESERVED SPELLING, which `_acknowledged_unreadable` actually
+        # reads (`_RESERVED_NOTE_PREFIXES`, written by `record_effect`). The
+        # human-readable variant this line used to emit was read by nothing,
+        # so `open --acknowledge-unreadable X` followed by `approve` still
+        # met UnionDegraded on the mission's FIRST effect and demanded the
+        # same acknowledgement again -- contradicting both this method's own
+        # refusal text ("recorded in the opening checkpoint") and the design.
+        # Machine-written, so it is composed AFTER the `_refuse_reserved_note`
+        # pass below, which exists to stop CALLER text imitating one.
+        ack_notes = [f"unreadable-acknowledged: {s['name']}"
+                     for s in sorted(skipped, key=lambda s: s["name"])]
+        opening_notes = []
         # Scope-overlap disclosure (§3): pattern-vs-pattern intersection is
         # decidable for this glob dialect; prose entries are reported as
         # incomparable. Disclosure, not refusal -- coexistence on shared
         # paths is the feature being built. Deterministic: sorted walk over
         # sorted siblings, so identical inputs disclose identically.
+        # `_is_compared_entry`, not `_is_matchable_pattern`: the latter only
+        # rejects unmatchable path SPELLINGS, so prose like "media
+        # acquisition" -- the repo's own case-table prose row -- went into the
+        # compared set, intersected with nothing, and the `incomparable
+        # (prose)` disclosure never fired for the entries it exists to
+        # expose. `_is_compared_entry` is the single predicate written so the
+        # comparison and its disclosure cannot report different sets.
         new_patterns = sorted(e for e in (scope_in or [])
-                              if _is_matchable_pattern(e))
+                              if _is_compared_entry(e))
         new_prose = sorted(e for e in (scope_in or [])
-                           if not _is_matchable_pattern(e))
+                           if not _is_compared_entry(e))
         for entry in sorted(siblings, key=lambda e: e["name"]):
             sib_in = entry["latest"]["manifest"]["scope"]["in"]
             sib_patterns = sorted(e for e in sib_in
-                                  if _is_matchable_pattern(e))
+                                  if _is_compared_entry(e))
             sib_prose = sorted(e for e in sib_in
-                               if not _is_matchable_pattern(e))
+                               if not _is_compared_entry(e))
             for a in new_patterns:
                 for b in sib_patterns:
                     if _globs_intersect(a, b):
@@ -1125,6 +1180,7 @@ class Mission:
             # into the opening checkpoint. Refusing the open is the fail-safe
             # direction, and the guard's own message names the offending line.
             _refuse_reserved_note(note)
+        opening_notes = ack_notes + opening_notes
         store = MissionStore(workspace / "missions" / mission_id)
         created = now_utc()
         manifest = {
@@ -1190,6 +1246,29 @@ class Mission:
                     continue
                 store = MissionStore(mission_dir)
                 if not store.checkpoint_paths():
+                    continue
+                if not _ID_RE.match(mission_dir.name):
+                    # A dir holding checkpoints under a name no binding can
+                    # ever name (`missions/.backup`, a renamed or copied
+                    # store) used to join the guard union and ARM enforce
+                    # rules that nobody could discharge: `Mission.load`
+                    # refuses the id before it opens the store, so the
+                    # documented per-mission exits (`--mission <id>` +
+                    # `amend`) are unreachable by construction. Degraded
+                    # instead -- disclosed in both channels, dischargeable
+                    # through the same quarantine acknowledgement as any
+                    # other unreadable dir, never an unaddressable authority.
+                    reason = (f"{mission_dir.name}: IllegalMissionId: not a "
+                              "legal mission id (a single kebab-case "
+                              "segment), so no --mission binding can address "
+                              "it and its guards could never be discharged")
+                    skipped.append({"name": mission_dir.name,
+                                    "kind": "IllegalMissionId",
+                                    "reason": reason})
+                    print(("custody: skipping unaddressable mission dir "
+                           + reason)
+                          .encode("ascii", "backslashreplace").decode("ascii"),
+                          file=sys.stderr)
                     continue
                 try:
                     latest, _ = store.load_latest()
@@ -1951,9 +2030,37 @@ class Mission:
         # OD-4 refined ("Self-arm at open, union at approve", operator
         # ruling 2026-08-25): this mission's own guards bind its own
         # effect from the moment open arms them, approved or not.
-        matches = evaluate_effect_union(
-            entries, artifact_relpath,
-            own_mission=self.store.mission_dir.name)
+        # BOTH SPELLINGS. OD-2 says the effect IS the file write, and
+        # `_write_effect` resolves the path (`_resolve_artifact_path`) before
+        # writing it. Matching only the SUPPLIED spelling meant an
+        # in-workspace alias (`alias -> secrets`) matched nothing and wrote
+        # `secrets/x` straight through an enforce guard on `secrets/**`. The
+        # resolved in-workspace spelling is already computed for free here, so
+        # both are evaluated and the (mission, rule) pairs unioned. This is
+        # NOT the harness gate's documented lexical residue
+        # (KL-GUARD-LEXICAL): there the workspace may not even exist and the
+        # pinned test asserts the lexical behaviour; here the contract holds
+        # the resolved target in its hand.
+        spellings = [artifact_relpath]
+        try:
+            resolved_rel = self._resolve_artifact_path(
+                artifact_relpath).relative_to(
+                    self.workspace.resolve()).as_posix()
+        except (CustodyError, OSError, ValueError):
+            resolved_rel = None      # _write_effect raises on it in a moment
+        if resolved_rel and resolved_rel != artifact_relpath.replace("\\", "/"):
+            spellings.append(resolved_rel)
+        matches = []
+        seen_pairs: set[tuple[str, str]] = set()
+        for spelling in spellings:
+            for row in evaluate_effect_union(
+                    entries, spelling,
+                    own_mission=self.store.mission_dir.name):
+                key = (row["mission"], row["rule"])
+                if key in seen_pairs:
+                    continue
+                seen_pairs.add(key)
+                matches.append(row)
         if matches:
             self._log_effect_matches(matches, artifact_relpath)
         blocking = [m for m in matches if m["decision"] == "block"]
@@ -2049,6 +2156,67 @@ class Mission:
                                 manifest=manifest,
                                 note=f"authority amended: {text}")
         return new["revision"]
+
+    def authorize_sibling(self, mission_id: str, artifact_relpath: str,
+                          text: str) -> int:
+        """Record a STRUCTURED cross-mission authorization: leg 3 of the
+        FATAL-3 discriminator (es#173 section 4b).
+
+        Leg 3 used to be `_amendment_names` -- a MENTION test whose own
+        docstring says it "cannot say the operator granted it: 'secrets.env
+        remains forbidden' mentions secrets.env and authorises nothing". Used
+        as an authorization gate, a negating amendment authorised the very
+        downgrade it forbade. Everywhere else in this contract a discharge of
+        this severity requires an explicit acceptor act, so this one does
+        too: the operator's verbatim words are recorded as an authority
+        amendment (unchanged), and the MACHINE-readable grant rides a
+        reserved note prefix that caller narrative cannot imitate.
+
+        Zero schema change (OD-3): a note and an amendment, both already in
+        checkpoint@1."""
+        latest, path = self.store.load_latest()
+        self._verify_manifest(latest)
+        if latest["status"] not in _OPEN_STATES:
+            raise IllegalTransition(
+                f"cannot authorize_sibling: status is {latest['status']!r}")
+        if not isinstance(text, str) or not text.strip():
+            raise CustodyError(
+                "amendment text required (the verbatim operator grant this "
+                "authorization records)")
+        if not isinstance(mission_id, str) or not _ID_RE.match(mission_id):
+            raise CustodyError(
+                f"authorize_sibling names {mission_id!r}, which is not a "
+                "legal mission id (a single kebab-case segment)")
+        rel = _normalize_relpath(str(artifact_relpath).replace("\\", "/"))
+        if not rel:
+            raise CustodyError("authorize_sibling requires an artifact path")
+        _refuse_reserved_note(text)
+        _refuse_reserved_note(rel)
+        manifest = json.loads(json.dumps(latest["manifest"]))
+        manifest["authority"]["amendments"].append(
+            {"utc": now_utc(), "text": text})
+        new = self._write_next(
+            latest, path, status=latest["status"], manifest=manifest,
+            note=f"sibling-authorized: {rel} by {mission_id}")
+        return new["revision"]
+
+    def _authorized_siblings(self, latest: dict) -> list[tuple[str, str]]:
+        """(path-or-pattern, mission-id) pairs this mission's chain grants.
+
+        Read from the reserved machine note, never from prose: the note is
+        written only by `authorize_sibling` and `_refuse_reserved_note`
+        stops narrative imitating it, so this is a grant the record can
+        actually establish."""
+        prefix = "sibling-authorized: "
+        out: list[tuple[str, str]] = []
+        for note in latest["state"]["notes"]:
+            if not note.startswith(prefix):
+                continue
+            body, sep, mission = note[len(prefix):].rpartition(" by ")
+            if not sep or not _ID_RE.match(mission) or not body:
+                continue
+            out.append((body, mission))
+        return out
 
     def note(self, text: str) -> int:
         latest, path = self.store.load_latest()
@@ -2189,13 +2357,20 @@ class Mission:
         per store: an unreadable sibling contributes no evidence, never a
         crash -- the recovery path must not be killable (the
         _load_receipt doctrine, applied to foreign stores)."""
-        own_name = self.store.mission_dir.name
+        own_identity = _store_identity(self.store.mission_dir)
         missions_root = self.workspace / "missions"
         found: list[dict] = []
         if not missions_root.is_dir():
             return found
         for mission_dir in sorted(missions_root.iterdir()):
-            if not mission_dir.is_dir() or mission_dir.name == own_name:
+            if not mission_dir.is_dir():
+                continue
+            # IDENTITY, not directory name: `missions/alias -> missions/self`
+            # was scanned as a sibling and re-served this mission's OWN
+            # receipts, so a rollback to an older own receipt could classify
+            # as an authorized sibling write. `census_missions` already keys
+            # its alias collapse this way.
+            if _store_identity(mission_dir) == own_identity:
                 continue
             store = MissionStore(mission_dir)
             try:
@@ -2206,9 +2381,37 @@ class Mission:
                       .encode("ascii", "backslashreplace").decode("ascii"),
                       file=sys.stderr)
                 continue
+            # CHAIN ADMISSION. `load_receipts` is a bare `receipts/*.json`
+            # glob, so this scan used to accept evidence the sibling's own
+            # chain never admitted: (a) `_write_effect` mints the receipt
+            # BEFORE `record_effect` appends the admitting checkpoint, so a
+            # crash in that window leaves a valid orphan; (b) anyone with
+            # write access to an approved sibling's store could PLANT a
+            # receipt carrying the tampered hash and turn plain drift into
+            # the ack-only DRIFT-SIBLING lane. The chain is hash-sealed, the
+            # receipts directory is not -- so the chain decides.
+            try:
+                sib_latest, _ = store.load_latest()
+            except Exception as exc:  # noqa: BLE001
+                print(("custody: sibling receipt scan skipped "
+                       f"{mission_dir.name} (chain unreadable: "
+                       f"{type(exc).__name__}: {exc})")
+                      .encode("ascii", "backslashreplace").decode("ascii"),
+                      file=sys.stderr)
+                continue
+            admitted = set(sib_latest.get("receipt_ids") or ())
+            minted_paths = [
+                note[len(prefix):]
+                for note in sib_latest["state"]["notes"]
+                for prefix in ("effect: ", "reconciled: ")
+                if note.startswith(prefix)]
             for record in receipts:
                 if not isinstance(record, dict) or validate_record(record):
                     continue  # only well-formed receipt@1 counts
+                if record.get("request_id") not in admitted:
+                    continue  # orphan or planted: the chain never admitted it
+                if not any(_same_artifact(p, rel) for p in minted_paths):
+                    continue  # the chain records no write of THIS path
                 if _same_artifact(str(record.get("artifact_path")), rel)                         and record.get("after_sha256") == current_sha:
                     found.append({"mission": mission_dir.name,
                                   "receipt_id": record.get("request_id"),
@@ -2238,6 +2441,7 @@ class Mission:
         severity with the sibling receipt reported as evidence. The
         discriminator gates the severity downgrade, never the information
         -- resume always says what it found."""
+        from custody_gate import _glob_regex, _norm_path
         candidates = self._scan_sibling_receipts(rel, current_sha)
         evidence: list[str] = []
         amendments = latest["manifest"]["authority"]["amendments"]
@@ -2245,7 +2449,24 @@ class Mission:
             mission_name = candidate["mission"]
             approved = _approved_by_chain(
                 MissionStore(self.workspace / "missions" / mission_name))
+            # STRUCTURED, not prose. `_amendment_names` is documented as a
+            # hint that "cannot say the operator granted it"; used as this
+            # gate, "mission b remains forbidden from writing x.txt"
+            # authorised the downgrade. The grant is now the reserved
+            # `sibling-authorized:` machine note written by
+            # `authorize_sibling` -- an explicit acceptor act, like every
+            # other discharge of this severity in this contract.
             authorized = any(
+                grant_mission == mission_name
+                and (_same_artifact(grant_path, rel)
+                     or _glob_regex(_norm_path(grant_path)).match(
+                         _norm_path(rel)))
+                for grant_path, grant_mission in
+                self._authorized_siblings(latest))
+            # The prose amendment stays a HINT and is reported as one: it
+            # tells the acceptor WHERE TO LOOK when a downgrade was expected
+            # and did not happen.
+            mentioned = any(
                 isinstance(a, dict) and isinstance(a.get("text"), str)
                 and _amendment_names_mission(a["text"], mission_name)
                 and _amendment_names(a["text"], rel)
@@ -2256,8 +2477,12 @@ class Mission:
             if not approved:
                 legs.append("sibling not operator-approved (chain test)")
             if not authorized:
-                legs.append("no cross-mission authorization amendment "
-                            "in this mission's chain")
+                legs.append(
+                    "no cross-mission authorization record in this "
+                    "mission's chain (`custody authorize-sibling --sibling "
+                    f"{mission_name} --path {rel}`)"
+                    + (" -- an amendment MENTIONS both, but a mention is not "
+                       "a grant" if mentioned else ""))
             evidence.append(
                 f"{rel} matches sibling {mission_name} receipt "
                 f"{candidate['receipt_id']} -- NOT reclassified: "
@@ -2304,6 +2529,19 @@ class Mission:
                 "no-longer-attributable path becomes a plain "
                 "RECONCILIATION finding for `reconcile`; content that now "
                 "verifies drops the marker)")
+        # COMPARE AND SWAP, IMMEDIATELY BEFORE THE WRITE. The three legs were
+        # re-verified above and then written with an open window between:
+        # the artifact (or the sibling's store) can move in it, and the
+        # checkpoint would record a downgrade for content nobody attributed.
+        # `acknowledge_receipt_loss` carries the same guard for the same
+        # reason. Refusing costs a re-run of `resume`; not refusing spends
+        # the one exit a DRIFT-SIBLING marker has.
+        if (sha256_file(target) if target.exists() else None) != current_sha:
+            raise CustodyError(
+                f"{rel!r} changed while this acknowledgement was being "
+                "prepared -- nothing was written and the DRIFT-SIBLING "
+                "marker stands. Re-run `resume`: it re-classifies the path "
+                "at its current severity.")
         remaining = [m for m in unresolved if m != marker]
         status = "reopened" if remaining else self._resumption_status()
         new = self._write_next(

@@ -74,8 +74,17 @@ def merge_authored_content(item: dict) -> bool | None:
     parents = [str(p.get("sha") or "") for p in (item.get("parents") or [])]
     sha = str(item.get("sha") or "")
     if len(parents) != 2 or not sha:
-        # Octopus merges and malformed entries are not auto-exempted.
-        return None
+        # Octopus merges and malformed entries are not auto-EXEMPTED -- which
+        # is not the same as UNVERIFIABLE. Returning None routed them to the
+        # caller's `unverifiable` list, which raises SystemExit unconditionally
+        # and names a remedy ("fetch them before running this check") that can
+        # never apply to an octopus merge: no fetch turns three parents into
+        # two. A correctly signed octopus merge was therefore a permanently red
+        # gate. `True` is the honest answer here -- "treat it as authored
+        # content and require a sign-off like anything else", which is exactly
+        # what "not auto-exempted" is supposed to mean. A valid author-matching
+        # Signed-off-by then passes it; nothing is waved through.
+        return True
     for ref in (*parents, sha):
         if _git("cat-file", "-e", f"{ref}^{{commit}}")[0] != 0:
             return None

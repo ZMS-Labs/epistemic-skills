@@ -674,8 +674,15 @@ def test_b28_all_three_legs_yield_drift_sibling(workspace: Path) -> None:
     A's chain -> DRIFT-SIBLING, reconciled by acknowledgement with the
     machine note, written by A's own bound session."""
     a, b = _two_missions_one_artifact(workspace)
-    a.amend_authority("operator: mission m-beta is authorized to write "
-                      "shared.txt during the overlap")
+    # Leg 3 is a STRUCTURED grant, not a prose mention: `_amendment_names`
+    # documents itself as a hint that "cannot say the operator granted it",
+    # and used as a gate it accepted "m-beta remains forbidden from writing
+    # shared.txt" as authorization. The operator's verbatim words are still
+    # recorded as an amendment by this call; what the discriminator reads is
+    # the reserved `sibling-authorized:` machine note.
+    a.authorize_sibling("m-beta", "shared.txt",
+                        "operator: mission m-beta is authorized to write "
+                        "shared.txt during the overlap")
     b.record_effect("shared.txt", "beta-1", "req-b1")
     a = load_bound(workspace, "m-alpha")
     findings = a.resume()
@@ -703,8 +710,9 @@ def test_scan_covers_non_active_siblings(workspace: Path) -> None:
     its write and A's resume still explains the drift -- the scan ranges
     over all readable sibling stores, not only active ones."""
     a, b = _two_missions_one_artifact(workspace)
-    a.amend_authority("operator: mission m-beta is authorized to write "
-                      "shared.txt during the overlap")
+    a.authorize_sibling("m-beta", "shared.txt",
+                        "operator: mission m-beta is authorized to write "
+                        "shared.txt during the overlap")
     b.record_effect("shared.txt", "beta-1", "req-b1")
     b.begin_verification()
     acceptor = load_bound(workspace, "m-beta", actor="agent:acceptor")
@@ -843,7 +851,13 @@ def test_refuter_f1_substring_id_never_launders(workspace: Path) -> None:
     `m-al` must not ride on an amendment authorizing `m-alpine`, and a
     mission named `test` must not ride on the word `latest`.
     `_amendment_names` already refuses raw substrings for the PATH leg;
-    the id leg is held to the same standard."""
+    the id leg is held to the same standard.
+
+    The two negative legs below deliberately still grant through PROSE: since
+    leg 3 became a structured record (`authorize_sibling`), prose authorizes
+    nothing at all, so these rows now hold a strictly stronger property than
+    the token-matching one they were written for. Keep them as prose -- they
+    are the pin that says narrative cannot launder a crossing."""
     # Leg A: adversary id is a substring of the authorized id.
     ws = workspace / "sub-id"
     _seed_receipted_artifact(ws)
@@ -879,7 +893,8 @@ def test_refuter_f1_substring_id_never_launders(workspace: Path) -> None:
     ws = workspace / "exact"
     _seed_receipted_artifact(ws)
     a = load_bound(ws, "m-alpha")
-    a.amend_authority(
+    a.authorize_sibling(
+        "m-al", "shared.txt",
         "operator: mission m-al is authorized to write shared.txt")
     evil = open_mission(ws, "m-al", actor="agent:evil")
     evil.approve()
@@ -900,8 +915,9 @@ def test_refuter_f2_stale_sibling_marker_discharges(workspace: Path) -> None:
     only RECONCILIATION, and the mission wedged in `reopened` (measured,
     probe2 PROBE 2b)."""
     a, b = _two_missions_one_artifact(workspace)
-    a.amend_authority("operator: mission m-beta is authorized to write "
-                      "shared.txt")
+    a.authorize_sibling("m-beta", "shared.txt",
+                        "operator: mission m-beta is authorized to write "
+                        "shared.txt")
     b.record_effect("shared.txt", "beta-1", "req-b1")
     a = load_bound(workspace, "m-alpha")
     check("F2-sibling-raised", a.resume() == ["DRIFT-SIBLING:shared.txt"])
@@ -1084,8 +1100,9 @@ def _raise_sibling_marker(ws: Path) -> Mission:
     m-alpha's resume raises DRIFT-SIBLING:shared.txt. Returns bound
     m-alpha with the marker standing."""
     a, b = _two_missions_one_artifact(ws)
-    a.amend_authority("operator: mission m-beta is authorized to write "
-                      "shared.txt")
+    a.authorize_sibling("m-beta", "shared.txt",
+                        "operator: mission m-beta is authorized to write "
+                        "shared.txt")
     b.record_effect("shared.txt", "beta-1", "req-b1")
     a = load_bound(ws, "m-alpha")
     assert a.resume() == ["DRIFT-SIBLING:shared.txt"]

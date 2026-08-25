@@ -140,8 +140,19 @@ its parent's environment, and pretending otherwise would manufacture the
 disk: binding is a property of the SESSION, not of the store, so nothing about
 it can go stale inside a checkpoint.
 
-**Validation is strict.** A binding must name a mission directory in THIS
-workspace whose latest checkpoint status is an open state. Bound-to-completed,
+**Validation is strict** — for AUTHORITY ROUTING. A binding must name a
+mission directory in THIS workspace whose latest checkpoint status is an
+open state, and a stale or bad binding NEVER falls through to discovery or
+to the union when deciding *which mission a verb acts under*.
+
+*The `gate` verb is the one deliberate exception, and it is not a
+fall-through* (case row 16): a bad binding there is logged loudly on stderr
+and the approved union is evaluated **regardless**, because a binding can
+only ever ADD the bound mission's own guards (OD-1/OD-4). Refusing the gate
+on a bad binding would REMOVE exposure — the fail-open direction — so the
+gate reports the bad binding and enforces everything it can see
+(`custody_gate.py:451-458`). Read the sentence above as scoped to authority
+routing; row 16 is the gate's rule, not a contradiction of it. Bound-to-completed,
 bound-to-cancelled, bound-to-nonexistent, and bound-to-unreadable are four
 spellings of the same refusal (`BindingInvalid`, naming the state found).
 A stale binding NEVER falls through to union or to "the only active mission" —
@@ -319,12 +330,35 @@ function survives with **zero schema change**, in three parts:
 
 **(a) Detection — resume-time scan of sibling receipt stores.** `resume`
 (in A) on a drifted receipted artifact scans the receipt stores of the
-other active missions in the workspace for receipt@1 records whose
-`artifact_path` matches and whose `after_sha256` equals the current content
-hash. Every field this needs — `mission_id`, `artifact_path`,
-`after_sha256` — already exists on receipt@1
-(`verify_mission_custody.py:263-266`). No new field, no new record type,
-nothing minted at effect time that the schema must carry.
+other missions in the workspace for receipt@1 records whose `artifact_path`
+matches and whose `after_sha256` equals the current content hash. Every
+field this needs — `mission_id`, `artifact_path`, `after_sha256` — already
+exists on receipt@1 (`verify_mission_custody.py:263-266`). No new field, no
+new record type, nothing minted at effect time that the schema must carry.
+
+**The receipt must be ADMITTED BY THE SIBLING'S CHAIN**, not merely present
+in its `receipts/` directory. `MissionStore.load_receipts()` is a bare
+`receipts/*.json` glob, so a directory-only test accepts two things the
+sibling never recorded: (i) the **orphan** — `_write_effect` mints the
+receipt *before* `record_effect` appends the admitting checkpoint, so a
+crash in that window leaves a well-formed receipt no chain admits; and
+(ii) the **plant** — anyone with write access to an approved, authorized
+sibling's store can drop a `receipt@1` carrying the tampered hash and
+convert plain drift into the ack-only DRIFT-SIBLING lane. The chain is
+hash-sealed; the receipts directory is not. A candidate therefore counts
+only when the sibling's chain-carried `receipt_ids` contains the request id
+**and** the sibling's chain carries an `effect:`/`reconciled:` note naming
+the same artifact. Sibling identity is compared by **store identity**
+(device/inode, the key `census_missions` already uses), never by directory
+name: `missions/alias -> missions/<self>` was otherwise scanned as a sibling
+and re-served the mission's own receipts.
+
+*Known limit (fail-safe direction, disclosed not closed):* `_same_artifact`
+compares receipt path SPELLINGS (lexical, NT case-fold), so a crossing
+spelled through a symlink or hard-link alias is not recognised as the same
+artifact. A misses the attribution and reports **plain drift** — more work,
+not less scrutiny — which is why this is disclosed rather than fixed here;
+it is the same accepted residue as `SECURITY.md:33` and `:93`.
 
 **(b) Classification — the FATAL-3 authorization discriminator.**
 Hash-match alone is a self-serve audit-downgrade: `open()` takes unverified
@@ -340,16 +374,44 @@ requires ALL of:
    (`custody_mission.py:1420-1445`), not latest-status ≠ draft: a
    never-approved mission wedged in `reopened` must not launder any more
    than a draft can (same reasoning as OD-4 in §2);
-3. **an explicit cross-mission authorization record in A's own chain** — an
-   authority amendment recorded through the existing `amend` channel
-   (`amend_authority`, `custody_mission.py:1531`; appended, chained,
-   comparable) naming the sibling mission id authorized on the path or
-   pattern, recorded before the reclassification is offered.
+3. **an explicit cross-mission authorization record in A's own chain** —
+   a STRUCTURED grant recorded by `authorize_sibling`
+   (CLI: `custody authorize-sibling --sibling <id> --path <rel> --text
+   "<operator's words>"`), which appends the operator's verbatim words as an
+   authority amendment *and* writes the reserved machine note
+   `sibling-authorized: <path> by <mission>` into A's chain. The
+   discriminator reads the NOTE.
+
+   It must not read prose. `_amendment_names` documents itself as a hint
+   that "cannot say the operator granted it — 'secrets.env remains
+   forbidden' mentions secrets.env and authorises nothing", and used as this
+   gate it accepted *"mission B remains forbidden from writing x.txt"* as an
+   authorization to downgrade exactly that drift. Everywhere else in this
+   contract a discharge of this severity requires an explicit acceptor act
+   (`--scope-ack`), and the reserved-prefix guard (`_refuse_reserved_note`)
+   is what stops narrative imitating one. The prose amendment survives as
+   the acceptor's *where to look* hint and is reported in the refusal
+   evidence when it mentions both the sibling and the path but no grant
+   exists.
 
 Any leg missing → **plain drift at today's severity**, with the sibling
 receipt reported as evidence alongside it. The discriminator gates the
 severity downgrade, never the information: resume always says what it
 found.
+
+**What the leg set does and does not establish.** No leg can verify an
+operator PRINCIPAL — `open()` takes unverified refs, `approve()` performs no
+principal check, and `authorize_sibling` records caller-supplied text. That
+is the documented architectural limit this contract already states
+(`README.md:31`: scope and amendment controls are "a control against
+FORGETTING, not against intent … principal binding is the runtime
+boundary's job"), not a defect of this section. What the three legs DO
+establish is that each is a distinct, durable, chain-sealed act that the
+drift alone cannot produce: an approval TRANSITION in B's chain, a receipt
+B's own chain admitted, and a reserved-prefix grant in A's chain. The
+failure mode to guard against is a leg that the actor causing the drift can
+mint as a side effect of causing it — which is what a status-set complement
+(leg 2) and a prose mention (leg 3) each were.
 
 DRIFT-SIBLING is reconciled by acknowledging the sibling receipt — recorded
 in A's chain by A's own bound session as the machine note
@@ -399,10 +461,15 @@ Migration is an OPERATOR act per mission, not a bulk script:
 1. `git mv <scratch-ws>/missions/<id> <real-ws>/missions/<id>` (history moves
    with the chain — receipts reference workspace-relative paths, which now
    resolve against the governed repo).
-2. `resume` in the real workspace: every receipt whose path did not exist in
-   the scratch workspace reports RECEIPT-MISSING/drift; reconcile per the
-   existing contract (`acknowledge-loss` for unreceiptable history, fresh
-   effects to re-cover). Nothing is re-minted.
+2. `resume` in the real workspace: `resume` resolves every receipt against
+   the **destination** workspace (`_resolve_artifact_path`,
+   `custody_mission.py`), so the reconcilable condition is "absent, or
+   hash-mismatched, **in the destination**" — not "did not exist in the
+   scratch workspace", which is the wrong workspace and is close to vacuous
+   (a normally-minted receipt's effect created its path in the SOURCE
+   workspace by definition). Reconcile per the existing contract
+   (`acknowledge-loss` for unreceiptable history, fresh effects to
+   re-cover). Nothing is re-minted.
 3. Missions that cannot be made to resolve (paths meaningless in the real
    repo) stay where they are, completed or cancelled in place, and the scratch
    convention is retired for NEW missions by this design (open no longer

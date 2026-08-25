@@ -484,7 +484,15 @@ def run_gate(workspace: Path, tool_call: dict, *, actor: str,
                                f"or relabelled one ({detail})")}
         reason = "gate inert: NoActiveMission"
         if degraded:
+            # BOTH CHANNELS, like the entries-present path below and the
+            # EpochSkew branch above. This branch composed the disclosure into
+            # `reason` and printed nothing, so a workspace whose ONLY missions
+            # were unreadable produced an `allow` whose sole stderr line
+            # ("skipping unreadable mission dir") never says guards are not
+            # enforced -- the worst case wearing the quietest signal.
             reason += _degraded_disclosure(degraded)
+            print("custody gate:" + _degraded_disclosure(degraded),
+                  file=sys.stderr)
         return {"decision": "allow", "matched": False, "rule": None,
                 "mode": "inert", "reason": reason}
     matches = evaluate_union(entries, tool_call, own_mission=bound_mission)
@@ -544,6 +552,23 @@ def run_gate(workspace: Path, tool_call: dict, *, actor: str,
         return {"decision": "allow", "matched": False, "rule": None,
                 "mode": "inert",
                 "reason": "no approved mission guards armed" + disclosure}
+    # The reported POSTURE of a mixed union must not depend on directory
+    # names: `armed[0]` is the alphabetically first armed mission, so
+    # `a-audit` + `z-enforce` reported "audit" while the workspace was
+    # genuinely enforcing. Report the strongest posture present, and say so
+    # when the union is mixed. (Reporting only -- the decision here is
+    # allow/unmatched either way.)
+    modes = sorted({e["latest"]["manifest"]["authority"]["guard_mode"]
+                    for e in armed})
+    mode = "enforce" if "enforce" in modes else modes[0]
+    mixed = ""
+    if len(modes) > 1:
+        mixed = (" (union is MIXED: "
+                 + ", ".join(
+                     f"{e['name']}="
+                     f"{e['latest']['manifest']['authority']['guard_mode']}"
+                     for e in sorted(armed, key=lambda e: e["name"]))
+                 + ")")
     return {"decision": "allow", "matched": False, "rule": None,
-            "mode": armed[0]["latest"]["manifest"]["authority"]["guard_mode"],
-            "reason": "no guard matched" + disclosure}
+            "mode": mode,
+            "reason": "no guard matched" + mixed + disclosure}

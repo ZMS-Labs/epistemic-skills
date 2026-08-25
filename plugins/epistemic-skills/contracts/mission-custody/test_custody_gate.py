@@ -446,6 +446,76 @@ def test_run_gate_multiple_active_evaluates_the_union() -> None:
                   (ws / "missions" / name / "guard-log.jsonl").exists())
 
 
+# --- Codex MODERATE/MINOR triage, 2026-08-25 ------------------------------
+
+
+def test_union_excludes_unaddressable_mission_dirs() -> None:
+    """A store copied to a name no binding can ever name (`missions/.backup`)
+    used to ARM enforce guards nobody could discharge: `Mission.load` refuses
+    the id before it opens the store, so the documented per-mission exits are
+    unreachable. It must degrade, not arm."""
+    with tempfile.TemporaryDirectory() as tmp:
+        ws = Path(tmp)
+        m = Mission.open(ws, "gate-legal", "i", "operator:test", "agent:test",
+                         actor="agent:test", guard_mode="enforce",
+                         actuator_guards=GUARDS)
+        m.approve()
+        shutil.copytree(m.store.mission_dir, ws / "missions" / ".backup")
+        buf = io.StringIO()
+        with contextlib.redirect_stderr(buf):
+            v = run_gate(ws, {"tool_name": "Bash", "command": "curl :7878/api",
+                              "file_path": None}, actor="hook:custody-gate")
+        check("union-illegal-dir-still-blocks-on-the-legal-mission",
+              v["decision"] == "block")
+        check("union-illegal-dir-not-armed",
+              all(row["mission"] == "gate-legal"
+                  for row in v.get("matches", [])))
+        check("union-illegal-dir-disclosed",
+              "UNION DEGRADED" in v["reason"] and ".backup" in v["reason"])
+        check("union-illegal-dir-logged-no-guard-log",
+              not (ws / "missions" / ".backup" / "guard-log.jsonl").exists())
+
+
+def test_all_degraded_union_discloses_on_stderr_too() -> None:
+    """The `if not entries:` branch composed the degradation into `reason` and
+    printed nothing, so a workspace whose ONLY missions are unreadable
+    produced an allow whose sole stderr line never says guards are not
+    enforced."""
+    with tempfile.TemporaryDirectory() as tmp:
+        ws = Path(tmp)
+        broken = ws / "missions" / "m-broken" / "checkpoints"
+        broken.mkdir(parents=True)
+        (broken / "r00000001.json").write_text("{not json", encoding="utf-8")
+        buf = io.StringIO()
+        with contextlib.redirect_stderr(buf):
+            v = run_gate(ws, {"tool_name": "Bash", "command": "curl :7878/api",
+                              "file_path": None}, actor="hook:custody-gate")
+        check("all-degraded-allows", v["decision"] == "allow")
+        check("all-degraded-reason-discloses",
+              "UNION DEGRADED" in v["reason"])
+        check("all-degraded-stderr-discloses",
+              "UNION DEGRADED" in buf.getvalue())
+
+
+def test_unmatched_mixed_union_reports_the_strongest_posture() -> None:
+    """The unmatched-call `mode` was read from the alphabetically first armed
+    mission, so `a-audit` + `z-enforce` reported "audit" over an enforcing
+    workspace."""
+    with tempfile.TemporaryDirectory() as tmp:
+        ws = Path(tmp)
+        for name, mode in (("a-audit", "audit"), ("z-enforce", "enforce")):
+            m = Mission.open(ws, name, "i", "operator:test", "agent:test",
+                             actor="agent:test", guard_mode=mode,
+                             actuator_guards=GUARDS)
+            m.approve()
+        v = run_gate(ws, {"tool_name": "Bash", "command": "echo nothing",
+                          "file_path": None}, actor="hook:custody-gate")
+        check("mixed-union-unmatched-allows",
+              v["decision"] == "allow" and not v["matched"])
+        check("mixed-union-reports-enforce", v["mode"] == "enforce")
+        check("mixed-union-says-it-is-mixed", "MIXED" in v["reason"])
+
+
 if __name__ == "__main__":
     for fn in list(globals().values()):
         if callable(fn) and getattr(fn, "__name__", "").startswith("test_"):
