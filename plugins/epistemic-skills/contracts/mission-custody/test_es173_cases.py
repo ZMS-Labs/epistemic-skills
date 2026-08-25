@@ -52,16 +52,9 @@ FAILURES: list[str] = []
 # Rows not yet implemented. Every name here must FAIL when run; the
 # implementing commits shrink this set to empty.
 XFAIL: set[str] = {
-    "test_a1_a3_draft_vs_active_union_membership",
-    "test_a2_reopened_never_approved_contributes_nothing",
-    "test_b7_lone_unapproved_draft_contributes_nothing",
-    "test_b12_union_names_all_matching_pairs",
-    "test_b14_b16_binding_never_changes_exposure",
     "test_b13_effect_union_evaluated_before_write",
     "test_b13_own_guards_gate_own_effect",
     "test_b30_audit_channels_unblockable",
-    "test_gate_runs_leave_every_chain_byte_identical",
-    "test_b22_gate_degraded_union_is_disclosed",
     "test_b23_effect_refuses_union_degraded",
     "test_b21_crossing_writes_side_channel_never_the_chain",
     "test_b26_never_approved_sibling_never_launders",

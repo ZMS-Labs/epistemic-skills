@@ -679,10 +679,11 @@ def summarize(reports: list[dict]) -> dict:
     no_active = []
     for r in reports:
         act = [m["mission"] for m in r["missions"] if m["active"]]
-        if len(act) > 1:
-            fail_open.append({"root": r["root"], "cause": "multiple active",
-                              "missions": act})
-        elif not act:
+        # es#173: plurality is LEGAL and the gate evaluates the UNION of all
+        # approved missions' guards, so N>1 active is no longer a fail-open
+        # cause -- reporting it as one would be the inverse of the
+        # cry-fail-open defect this file has already paid for three times.
+        if not act:
             # NOT a disarmed guard -- there is nothing here to arm. But
             # `Mission.load` raises NoActiveMission and the gate is inert, so
             # a Q1 that says nothing about this root leaves the summary line

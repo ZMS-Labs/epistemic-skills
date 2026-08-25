@@ -20,11 +20,11 @@ import re
 import sys
 from pathlib import Path
 
-from custody_store import EpochSkew
+from custody_store import StoreError
 from custody_mission import (
+    CustodyError,
     Mission,
-    MultipleActiveMissions,
-    NoActiveMission,
+    _approved_by_chain,
     _ascii_case_fold,
     _normalize_relpath,
     now_utc,
@@ -263,98 +263,228 @@ def _append_guard_log(mission_dir: Path, entry: dict) -> None:
         handle.write(json.dumps(entry, sort_keys=True) + "\n")
 
 
-def run_gate(workspace: Path, tool_call: dict, *, actor: str,
-             session_id: str = "", harness: str = "") -> dict:
-    workspace = Path(workspace)
-    try:
-        mission = Mission.load(workspace, actor=actor)
-    except NoActiveMission as exc:
-        # VERSION SKEW IS NOT AN EMPTY WORKSPACE. A store from a newer contract
-        # epoch fails validation, gets skipped, and leaves the workspace looking
-        # missionless -- so an armed mission that BLOCKED reports `allow` with
-        # reason `NoActiveMission` the moment its epoch moves ahead of this
-        # reader (measured). That reason is false and points the operator at the
-        # wrong repair: the mission is fine, the READER is old.
-        #
-        # This is the failure mode the first contract@2 write would hit fleet-
-        # wide (es#118), so it is named on the verdict itself and on stderr,
-        # where the MultipleActiveMissions decoy warning already lives. The
-        # posture is unchanged -- still allow, still inert -- because inverting
-        # it would strand the workspace with no verb to resolve it.
-        detail = str(exc)
-        if "EpochSkew" in getattr(exc, "skipped_kinds", ()):
-            print(f"custody gate: MISSION STORE CLAIMS A NEWER EPOCH THAN "
-                  f"THIS READER under {workspace} -- gate inert and guards NOT "
-                  f"enforced. Read it with an updated custody plugin/CLI to "
-                  f"find out whether the store is genuinely newer or corrupt; "
-                  f"this reader cannot tell. Detail: {detail}", file=sys.stderr)
-            # CLAIMS, matching epoch_skew(). A categorical "is from a newer
-            # epoch" sends the operator to upgrade when the store may in fact
-            # be tampered -- the same over-claim corrected in the helper and
-            # SECURITY.md, left standing in the one string a consumer actually
-            # branches on.
-            return {"decision": "allow", "matched": False, "rule": None,
-                    "mode": "inert",
-                    "reason": ("gate inert: mission store CLAIMS a contract "
-                               "epoch newer than this reader -- guards are NOT "
-                               "enforced here, and this reader cannot tell a "
-                               "genuine newer store from a corrupt or "
-                               f"relabelled one ({detail})")}
-        return {"decision": "allow", "matched": False, "rule": None,
-                "mode": "inert", "reason": f"gate inert: {type(exc).__name__}"}
-    except MultipleActiveMissions as exc:
-        # Fail-open posture stands (a hook must never brick the tool loop on
-        # discovery ambiguity), but a decoy second mission silently disarming
-        # the gate must not pass quietly.
-        print(f"custody gate: MULTIPLE ACTIVE MISSIONS under {workspace} -- "
-              "gate inert, enforcement degraded to convention-held; resolve "
-              "the duplicate mission dirs before relying on guards",
-              file=sys.stderr)
-        return {"decision": "allow", "matched": False, "rule": None,
-                "mode": "inert", "reason": f"gate inert: {type(exc).__name__}"}
-    try:
-        latest = mission.status()
-    except EpochSkew as exc:
-        # THE CHAIN IS READ TWICE. `Mission.load` resolves the mission, then
-        # status() re-reads it -- so a writer publishing the first @2 between
-        # those two reads makes the skew surface HERE, where the handler above
-        # never sees it. Before this, a direct caller got a raw exception and
-        # the hook fell through to its generic error path, both of them missing
-        # the stale-reader verdict this change exists to deliver. That window is
-        # narrow but it is exactly the contract@2 rollout moment.
-        print(f"custody gate: MISSION STORE BEGAN CLAIMING A NEWER EPOCH "
-              f"mid-evaluation under {workspace} -- gate inert and guards NOT "
-              f"enforced. Read it with an updated custody plugin/CLI; this "
-              f"reader cannot tell a genuine newer store from a corrupt one. "
-              f"Detail: {exc}", file=sys.stderr)
-        return {"decision": "allow", "matched": False, "rule": None,
-                "mode": "inert",
-                "reason": ("gate inert: mission store CLAIMS a contract epoch "
-                           "newer than this reader -- guards are NOT enforced "
-                           "here, and this reader cannot tell a genuine newer "
-                           f"store from a corrupt or relabelled one ({exc})")}
-    verdict = evaluate(latest["manifest"]["authority"], tool_call)
-    if verdict["matched"]:
-        command = tool_call.get("command") or ""
+def _union_entries(workspace: Path, actor: str) -> tuple[list[dict], list[dict]]:
+    """Assemble the guard union (es#173 section 2): every ACTIVE mission,
+    chain-verified and manifest-verified, carrying the OD-4 approval flag
+    (`_approved_by_chain` -- the chain test, so a never-approved mission
+    wedged in `reopened` arms nothing).
+
+    A mission that fails to load or verify joins `degraded` instead: its
+    guards CANNOT be trusted, so they are not enforced -- and every caller
+    must SAY so, because a silently shrunken union is the old
+    MultipleActiveMissions fail-open decoy rebuilt one layer down."""
+    active, skipped = Mission._discover(workspace)
+    degraded = [dict(s) for s in skipped]
+    entries: list[dict] = []
+    for e in active:
+        mission = Mission(e["store"], workspace, actor)
+        try:
+            # status() re-reads the chain and verifies the manifest, so the
+            # authority evaluated is the chain-verified latest -- and a
+            # tampered manifest degrades instead of arming. This also covers
+            # the mid-evaluation epoch flip the old two-read gate special-
+            # cased: a writer publishing the first @2 between discovery and
+            # this read surfaces HERE, as a degraded entry.
+            latest = mission.status()
+        except (StoreError, ValueError, CustodyError) as exc:
+            reason = f"{e['name']}: {type(exc).__name__}: {exc}"
+            # Tamper keeps its own distinct, greppable stderr signal: a
+            # session log must be searchable for TAMPER (the hook's contract
+            # since before the union), and the union fold must not silently
+            # retire that marker.
+            print(("custody gate: TAMPER/custody error reading mission "
+                   + e["name"] + " -- its guards are NOT enforced (union "
+                   "degraded): " + reason)
+                  .encode("ascii", "backslashreplace").decode("ascii"),
+                  file=sys.stderr)
+            degraded.append({
+                "name": e["name"], "kind": type(exc).__name__,
+                "reason": reason})
+            continue
+        entries.append({"name": e["name"], "mission": mission,
+                        "latest": latest,
+                        "approved": _approved_by_chain(e["store"])})
+    return entries, degraded
+
+
+def evaluate_union(entries: list[dict], tool_call: dict) -> list[dict]:
+    """Every matching (mission, rule) pair across the union of APPROVED
+    missions' armed guards -- ALL matches, not first: the operator
+    discharging a block needs the full bill (es#173 section 2).
+
+    OD-1 UNION-ALWAYS: callers pass every entry; binding routes authority,
+    never exposure. OD-4 GATE ON APPROVE: an unapproved entry contributes
+    nothing -- checked here, in the one place membership is decided, so a
+    draft mission is subject to the union while arming none of it."""
+    matches: list[dict] = []
+    for entry in entries:
+        if not entry.get("approved"):
+            continue
+        authority = entry["latest"]["manifest"]["authority"]
+        mode = authority.get("guard_mode")
+        guards = authority.get("actuator_guards")
+        if not mode or not guards:
+            continue
+        for rule in guards:
+            if _tool_in(rule, tool_call.get("tool_name", "")) \
+                    and _patterns_match(rule, tool_call):
+                matches.append({"mission": entry["name"],
+                                "rule": rule["name"], "mode": mode,
+                                "decision": ("block" if mode == "enforce"
+                                             else "allow")})
+    return matches
+
+
+def _degraded_disclosure(degraded: list[dict]) -> str:
+    names = ", ".join(sorted(d["name"] for d in degraded))
+    return (f" UNION DEGRADED: mission dir(s) {names} unreadable -- their "
+            "guards are NOT enforced; repair or resolve them before "
+            "relying on the union.")
+
+
+def _log_matches(workspace: Path, matches: list[dict], tool_call: dict, *,
+                 actor: str, session_id: str, harness: str) -> None:
+    """One guard-log append per MATCHING (mission, rule) pair, into that
+    mission's own dir: each mission's audit trail must be complete from its
+    own dir (es#173 section 2). Best-effort exactly as before -- the append
+    is audit, the VERDICT is not, and a log failure must never flip a block
+    into an allow."""
+    command = tool_call.get("command") or ""
+    for row in matches:
         entry = {
             "utc": now_utc(),
             "actor": actor,
             "session_id": session_id,
             "harness": harness,
-            "mode": verdict["mode"],
-            "decision": verdict["decision"],
-            "rule": verdict["rule"],
+            "mode": row["mode"],
+            "decision": row["decision"],
+            "rule": row["rule"],
             "tool_name": tool_call.get("tool_name", ""),
             "command_preview": command[:_PREVIEW],
             "file_path": tool_call.get("file_path"),
         }
         try:
-            _append_guard_log(mission.store.mission_dir, entry)
+            _append_guard_log(workspace / "missions" / row["mission"], entry)
         except Exception as exc:
-            # The audit append is best-effort; the VERDICT is not. A log
-            # failure must never flip a block into an allow.
-            print(f"custody gate: guard-log append failed "
-                  f"({type(exc).__name__}: {exc}); verdict "
-                  f"{verdict['decision']} stands but was not logged",
+            print(f"custody gate: guard-log append failed for "
+                  f"{row['mission']} ({type(exc).__name__}: {exc}); verdict "
+                  f"{row['decision']} stands but was not logged",
                   file=sys.stderr)
-    return verdict
+
+
+def run_gate(workspace: Path, tool_call: dict, *, actor: str,
+             session_id: str = "", harness: str = "",
+             bound_mission: str | None = None) -> dict:
+    """Evaluate a harness tool call against the UNION of all approved
+    missions' armed guards (es#173, OD-1 UNION-ALWAYS): bound or not, every
+    gate-routed call sees every approved mission's guards -- if binding to
+    mission A exempted a call from mission B's guards, every guard would be
+    voluntary the moment two missions coexist. `bound_mission` is validated
+    for LOGGING only (case row 16): a bad binding is loud on stderr and
+    changes exposure not at all.
+
+    Plurality is legal, so MultipleActiveMissions is gone as an inert
+    cause -- the fail-open decoy is removed not by handling the error
+    better but by making the state legal. The hook path stays fail-open for
+    corrupt or epoch-skewed stores (a hook must never brick the tool loop),
+    but an allow that dropped a mission's guards must SAY so, in the
+    verdict reason and on stderr (case rows 22, B22)."""
+    workspace = Path(workspace)
+    if bound_mission:
+        try:
+            Mission.load(workspace, actor=actor, mission_id=bound_mission)
+        except (CustodyError, StoreError) as exc:
+            print(f"custody gate: session binding invalid "
+                  f"({type(exc).__name__}: {exc}) -- exposure unaffected: "
+                  "the union is evaluated regardless of binding",
+                  file=sys.stderr)
+    entries, degraded = _union_entries(workspace, actor)
+    if not entries:
+        skew = [d for d in degraded if d["kind"] == "EpochSkew"]
+        if skew:
+            # VERSION SKEW IS NOT AN EMPTY WORKSPACE. A store from a newer
+            # contract epoch fails validation, gets skipped, and leaves the
+            # workspace looking missionless -- so an armed mission that
+            # BLOCKED reports `allow` the moment its epoch moves ahead of
+            # this reader. Named on the verdict and on stderr; the posture
+            # stays allow/inert because inverting it would strand the
+            # workspace with no verb to resolve it. CLAIMS, not "is": this
+            # reader cannot tell a genuine newer store from a corrupt or
+            # relabelled one.
+            detail = "; ".join(d["reason"] for d in skew)
+            print(f"custody gate: MISSION STORE CLAIMS A NEWER EPOCH THAN "
+                  f"THIS READER under {workspace} -- gate inert and guards "
+                  f"NOT enforced. Read it with an updated custody "
+                  f"plugin/CLI to find out whether the store is genuinely "
+                  f"newer or corrupt; this reader cannot tell. "
+                  f"Detail: {detail}", file=sys.stderr)
+            return {"decision": "allow", "matched": False, "rule": None,
+                    "mode": "inert",
+                    "reason": ("gate inert: mission store CLAIMS a contract "
+                               "epoch newer than this reader -- guards are "
+                               "NOT enforced here, and this reader cannot "
+                               "tell a genuine newer store from a corrupt "
+                               f"or relabelled one ({detail})")}
+        reason = "gate inert: NoActiveMission"
+        if degraded:
+            reason += _degraded_disclosure(degraded)
+        return {"decision": "allow", "matched": False, "rule": None,
+                "mode": "inert", "reason": reason}
+    matches = evaluate_union(entries, tool_call)
+    disclosure = ""
+    if degraded:
+        # An allow that silently dropped a mission's guards would be the
+        # section-0 decoy rebuilt one layer down: disclose in BOTH channels.
+        disclosure = _degraded_disclosure(degraded)
+        print("custody gate:" + disclosure, file=sys.stderr)
+    if matches:
+        _log_matches(workspace, matches, tool_call, actor=actor,
+                     session_id=session_id, harness=harness)
+    blocking = [m for m in matches if m["decision"] == "block"]
+    if blocking:
+        pairs = "; ".join(f"mission={m['mission']} rule={m['rule']}"
+                          for m in blocking)
+        return {
+            "decision": "block", "matched": True,
+            "rule": blocking[0]["rule"], "mode": "enforce",
+            "matches": matches,
+            "reason": (
+                f"custody guard(s) matched this call: {pairs}. No mission "
+                "envelope discharges them. This gate reads ONLY guard_mode "
+                "and actuator_guards -- recording amendment TEXT does not "
+                "discharge a block, however clearly it grants the work. "
+                "Discharge is PER-MISSION: an amend recorded in one "
+                "mission discharges that mission's rule only, so a call "
+                "blocked by several missions needs each one's amend. The "
+                "exits, per matching mission (bind with --mission <id>): "
+                "change the rule that matched via `amend --guards-file`, "
+                "or `amend --guard-mode audit` to retire that mission's "
+                "guard set, or stop. Both amend forms are recorded, "
+                "chained and comparable; narrating a grant is not. NOTE: "
+                "if a rule covers the shell itself, the amend command is "
+                "blocked by the same rule -- run it OUT OF BAND (a session "
+                "or terminal this hook does not gate). The gate "
+                "deliberately has no self-repair exemption: a rule that "
+                "exempted its own discharge command would be a hole shaped "
+                "exactly like the thing it guards." + disclosure)}
+    if matches:
+        pairs = "; ".join(f"mission={m['mission']} rule={m['rule']}"
+                          for m in matches)
+        return {"decision": "allow", "matched": True,
+                "rule": matches[0]["rule"], "mode": matches[0]["mode"],
+                "matches": matches,
+                "reason": (f"custody guard(s) matched (audit mode): {pairs}"
+                           + disclosure)}
+    armed = [e for e in entries
+             if e.get("approved")
+             and e["latest"]["manifest"]["authority"].get("guard_mode")
+             and e["latest"]["manifest"]["authority"].get("actuator_guards")]
+    if not armed:
+        # Case row 7: a lone unapproved draft (or unguarded missions only)
+        # contributes nothing -- allow, disclosed as such.
+        return {"decision": "allow", "matched": False, "rule": None,
+                "mode": "inert",
+                "reason": "no approved mission guards armed" + disclosure}
+    return {"decision": "allow", "matched": False, "rule": None,
+            "mode": armed[0]["latest"]["manifest"]["authority"]["guard_mode"],
+            "reason": "no guard matched" + disclosure}

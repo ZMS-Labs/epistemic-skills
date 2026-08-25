@@ -161,7 +161,10 @@ def test_cursor_string_tool_input_mcp() -> None:
               run_hook("cursor", payload).returncode == 2)
 
 
-def test_multiple_active_allows_with_warning() -> None:
+def test_multiple_active_evaluates_the_union() -> None:
+    # es#173: the decoy-disarm is dead -- a duplicated mission dir no longer
+    # turns the gate inert; both copies' guards enforce and the hook blocks,
+    # naming every matching (mission, rule) pair in the BLOCKED line.
     with tempfile.TemporaryDirectory() as tmp:
         ws = Path(tmp)
         m = Mission.open(ws, "hook-multi", "i", "operator:t", "agent:t",
@@ -171,9 +174,9 @@ def test_multiple_active_allows_with_warning() -> None:
         shutil.copytree(ws / "missions" / "hook-multi",
                         ws / "missions" / "hook-multi-2")
         res = run_hook("claude", payloads(tmp)["claude"])
-        check("hook-multi-active-allows", res.returncode == 0)
-        check("hook-multi-active-warns",
-              "multiple active" in res.stderr.lower())
+        check("hook-multi-active-blocks", res.returncode == 2)
+        check("hook-multi-active-names-both",
+              "hook-multi" in res.stderr and "hook-multi-2" in res.stderr)
 
 
 def test_fail_open() -> None:
