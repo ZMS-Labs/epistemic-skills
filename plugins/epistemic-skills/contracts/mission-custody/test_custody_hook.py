@@ -971,12 +971,47 @@ def test_cursor_cli_render_quotes_for_the_shell_not_for_createprocess() -> None:
             refused = str(exc)
         check("cursor-cli-cmd-style-refuses-percent-expansion",
               refused is not None and "%" in (refused or ""))
-        # ...but a LONE '%' IS neutralised by quoting (measured), so
-        # refusing it would be a false refusal blocking a legitimate path.
-        lone = shell_command(["C:\\Py\\python.exe",
-                              "C:\\100%done\\hook.py"], style="cmd")
-        check("cursor-cli-cmd-style-allows-a-lone-percent",
-              '"C:\\100%done\\hook.py"' in lone)
+
+        # A LONE '%' is NOT safe, and the earlier claim that it was came
+        # from measuring ONE execution context only.  Measured both:
+        #   cmd /c  echo "C:\100%done\x"  ->  "C:\100%done\x"  (survives)
+        #   a .bat  echo "C:\100%done\x"  ->  "C:\100done\x"   (EATEN)
+        # Cursor does not document which shell runs a hook command on
+        # Windows, so the renderer cannot know which applies.  End-to-end,
+        # a plugin installed under `100%done` rendered exit 0 and then,
+        # run from a batch file, exited 2 WITHOUT naming any rule --
+        # python could not open `...100done\custody_hook.py`.  That is a
+        # fabricated refusal blocking every tool call: exactly the SERIOUS
+        # class this PR already fixed for the upgrade path.
+        lone_refused = None
+        try:
+            shell_command(["C:\\Py\\python.exe",
+                           "C:\\100%done\\hook.py"], style="cmd")
+        except RuntimeError as exc:
+            lone_refused = str(exc)
+        check("cursor-cli-cmd-style-refuses-a-lone-percent",
+              lone_refused is not None)
+        check("cursor-cli-lone-percent-refusal-names-the-percent",
+              "%" in (lone_refused or ""))
+
+        # Codex es#216: two arguments each holding ONE '%' are individually
+        # allowed but JOIN into a `%...%` pair.  A per-argument check
+        # cannot see it; the guard has to hold for the final command.
+        split_refused = None
+        try:
+            shell_command(["C:\\100%done\\python.exe",
+                           "C:\\100%done\\hook.py"], style="cmd")
+        except RuntimeError as exc:
+            split_refused = str(exc)
+        check("cursor-cli-cmd-style-refuses-percent-split-across-arguments",
+              split_refused is not None)
+
+        # The fix must not over-refuse: POSIX shells have no '%'
+        # expansion, so a '%' path is legitimate there and shlex holds it.
+        posix_pct_argv = ["/usr/bin/python3", "/opt/100%done/hook.py"]
+        check("cursor-cli-posix-style-still-allows-a-percent",
+              shell_command(posix_pct_argv, style="posix")
+              == shlex.join(posix_pct_argv))
 
     # ---- behavioural proof on the native shell ----
     with tempfile.TemporaryDirectory() as tmp:
@@ -1083,6 +1118,136 @@ def test_cursor_cli_documented_command_names_a_runnable_interpreter() -> None:
     check("cursor-cli-readme-invocations-name-python3",
           bool(spans) and all(span.startswith("python3 ")
                               for span in spans))
+
+
+def test_cursor_cli_percent_install_path_refuses_at_render_time() -> None:
+    """Codex es#216 (on the FIX): a '%' in the install path survives the
+    per-argument quoter and produces a command whose meaning depends on
+    which Windows shell runs it.
+
+    Measured end-to-end with the plugin staged under `100%done`: render
+    exited 0, and the emitted command run from a batch file exited 2
+    WITHOUT naming any rule -- a fabricated refusal that blocks every tool
+    call while custody never issued one.
+
+    The fix refuses at RENDER time instead.  The failure mode it
+    introduces -- a legitimate `%` path can no longer be installed on
+    Windows -- is the deliberate trade and is pinned here: the refusal is
+    loud, names the offending character, and leaves NO config behind, so
+    it fails closed at install rather than open at runtime.
+    """
+    if os.name != "nt":
+        return
+    with tempfile.TemporaryDirectory() as tmp:
+        base = Path(tmp)
+        plugin = _stage_plugin_checkout(base / "100%done")
+        ws = base / "workspace"
+        ws.mkdir()
+        destination = ws / ".cursor" / "hooks.json"
+        rendered = subprocess.run(
+            [sys.executable,
+             str(plugin / "hooks" / "render_cursor_cli_hooks.py"),
+             "--output", str(destination)],
+            cwd=str(ws), capture_output=True, text=True)
+        check("cursor-cli-percent-path-render-refuses",
+              rendered.returncode == 2)
+        check("cursor-cli-percent-refusal-names-the-percent",
+              "%" in rendered.stderr)
+        check("cursor-cli-percent-refusal-leaves-no-config",
+              not destination.exists())
+
+
+def _render_with_template(base: Path, mutate) -> subprocess.CompletedProcess:
+    """Stage a checkout, mutate its canonical template, then render."""
+    plugin = _stage_plugin_checkout(base)
+    template_path = plugin / "hooks" / "cursor-hooks.json"
+    template = json.loads(template_path.read_text(encoding="utf-8"))
+    mutate(template)
+    template_path.write_text(
+        json.dumps(template, indent=2) + "\n", encoding="utf-8", newline="\n")
+    ws = base / "workspace"
+    ws.mkdir()
+    return subprocess.run(
+        [sys.executable,
+         str(plugin / "hooks" / "render_cursor_cli_hooks.py")],
+        cwd=str(ws), capture_output=True, text=True)
+
+
+def test_cursor_cli_render_requires_every_guarded_event() -> None:
+    """Codex es#216 (on the FIX): the drift check counted rows across the
+    WHOLE template, so it only required one row anywhere.
+
+    Measured on this head before the fix: deleting `beforeMCPExecution`,
+    emptying it, deleting `preToolUse`, and even deleting all but ONE
+    event each left render SUCCEEDING.  The generated config then installs
+    cleanly while leaving that class of actuator unguarded -- a fail-open
+    inside the renderer's own fail-closed drift policy, and a silent
+    contradiction of the README's promise of three event rows.
+    """
+    canonical = json.loads(
+        (PLUGIN_ROOT / "hooks" / "cursor-hooks.json").read_text(
+            encoding="utf-8"))
+    renderer_globals = runpy.run_path(str(CURSOR_CLI_RENDERER))
+    required = renderer_globals.get("REQUIRED_EVENTS")
+    check("cursor-cli-required-events-declared", bool(required))
+    # The constant must not drift away from the template it guards.
+    check("cursor-cli-required-events-match-the-template",
+          bool(required) and set(required) == set(canonical.get("hooks", {})))
+
+    mutations = [
+        ("dropped-event", lambda t: t["hooks"].pop("beforeMCPExecution")),
+        ("emptied-event",
+         lambda t: t["hooks"].__setitem__("beforeMCPExecution", [])),
+        ("dropped-pretooluse", lambda t: t["hooks"].pop("preToolUse")),
+    ]
+    for label, mutate in mutations:
+        with tempfile.TemporaryDirectory() as tmp:
+            result = _render_with_template(Path(tmp), mutate)
+            check(f"cursor-cli-render-refuses-a-{label}",
+                  result.returncode == 2)
+            check(f"cursor-cli-{label}-refusal-names-the-event",
+                  "beforeMCPExecution" in result.stderr
+                  or "preToolUse" in result.stderr)
+
+    # The fix must not over-refuse: the shipped template still renders,
+    # and an ADDED event is carried rather than rejected.
+    with tempfile.TemporaryDirectory() as tmp:
+        result = _render_with_template(Path(tmp), lambda t: None)
+        check("cursor-cli-canonical-template-still-renders",
+              result.returncode == 0)
+    with tempfile.TemporaryDirectory() as tmp:
+        result = _render_with_template(
+            Path(tmp),
+            lambda t: t["hooks"].__setitem__(
+                "afterFileEdit",
+                [{"command": RELATIVE_COMMAND_FOR_TEST, "timeout": 10}]))
+        check("cursor-cli-an-added-event-is-carried-not-refused",
+              result.returncode == 0)
+        if result.returncode == 0:
+            check("cursor-cli-added-event-command-is-rendered",
+                  "afterFileEdit" in result.stdout
+                  and "./contracts/" not in result.stdout)
+
+
+def test_cursor_cli_readme_says_to_re_render_after_an_upgrade() -> None:
+    """Codex es#216 (on the FIX): binding to the install link keeps the
+    COMMAND live across an upgrade, but the event table, matchers,
+    timeouts and version were copied into the persistent hooks.json at
+    render time.  A link-only upgrade therefore cannot deliver a newly
+    guarded event, so the README's "the rendered gate remains live" is
+    true of the command and NOT of the event set.  Documented, and pinned
+    here so the sentence cannot quietly disappear.
+    """
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    check("cursor-cli-readme-says-re-render-after-upgrade",
+          "re-render" in readme.lower() and "upgrade" in readme.lower())
+    check("cursor-cli-readme-scopes-the-link-guarantee-to-the-command",
+          "event table" in readme.lower())
+
+
+RELATIVE_COMMAND_FOR_TEST = (
+    "python ./contracts/mission-custody/custody_hook.py --harness cursor"
+)
 
 
 if __name__ == "__main__":

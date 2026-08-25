@@ -12,7 +12,6 @@ import argparse
 import io
 import json
 import os
-import re
 import shlex
 import sys
 from pathlib import Path
@@ -22,12 +21,44 @@ RELATIVE_COMMAND = (
     "python ./contracts/mission-custody/custody_hook.py --harness cursor"
 )
 
+# Every Cursor event the custody gate must be wired into.  Rendering
+# REFUSES if the canonical template stops carrying a command for any of
+# them, so a template that silently drops a guarded event cannot install
+# as a config that looks armed but leaves that actuator class open.
+# An event ADDED to the template is carried through, not rejected --
+# over-refusal here would be its own outage.
+REQUIRED_EVENTS = ("beforeShellExecution", "preToolUse", "beforeMCPExecution")
+
 # cmd.exe expands %NAME% even INSIDE double quotes, and no command-line
 # escape suppresses it (measured: `"a%USERNAME%b"` -> `aRESOLVEDb`).  Every
 # other cmd metacharacter a Windows path may legally hold -- & ^ ( ) $ !,
-# whitespace, and a LONE % -- is neutralised by double quotes (measured).
-# So: encode what quoting can hold, refuse only what it cannot.
-_CMD_EXPANDS = re.compile(r"%[^%]*%")
+# and whitespace -- IS neutralised by double quotes (measured).  So: encode
+# what quoting can hold, refuse what it cannot.
+#
+# '%' is refused OUTRIGHT, not just as a `%...%` pair.  Two earlier, weaker
+# rules both failed, and for the same reason -- each was measured in one
+# execution context and generalised to "Windows":
+#
+#   1. per-argument `%...%` only.  Two arguments each holding ONE '%' pass
+#      individually and then JOIN into a pair (Codex es#216):
+#      `"C:\100%done\python.exe" "C:\100%done\hook.py"`.
+#   2. "a LONE % is safe".  True under `cmd /c`, FALSE in a batch file:
+#          cmd /c  echo "C:\100%done\x"  ->  "C:\100%done\x"
+#          a .bat  echo "C:\100%done\x"  ->  "C:\100done\x"     (EATEN)
+#
+# Cursor does not document which shell runs a hook command on Windows, so
+# the renderer cannot know which rule applies.  Measured end-to-end: a
+# plugin installed under `100%done` rendered exit 0, and the emitted
+# command run from a batch file exited 2 WITHOUT naming a rule -- python
+# could not open `...100done\custody_hook.py`.  Cursor reads that as a
+# custody BLOCK on every tool call carrying a refusal custody never
+# issued: the same fabricated-refusal class as the resolved-symlink bug.
+# Refusing every '%' makes a pair unconstructible and is context-free.
+#
+# The cost is deliberate: a legitimate '%' install path cannot be rendered
+# on Windows.  That fails CLOSED at install time, loudly, with nothing
+# written -- the alternative fails open (or fabricates a block) at runtime.
+_CMD_UNSAFE = "%"
 
 
 def _link_preserving(path: str | os.PathLike[str]) -> Path:
@@ -50,12 +81,14 @@ def _link_preserving(path: str | os.PathLike[str]) -> Path:
 
 def _quote_cmd(arg: str) -> str:
     """Quote one argument for cmd.exe *and* the CreateProcess argv parser."""
-    if _CMD_EXPANDS.search(arg):
+    if _CMD_UNSAFE in arg:
         raise RuntimeError(
-            f"cannot safely quote {arg!r} for cmd.exe: it contains a "
-            "%-delimited name that cmd.exe expands even inside double "
-            "quotes, and no command-line escape suppresses it; install to "
-            "a path with no '%' pair"
+            f"cannot safely quote {arg!r} for a Windows shell: it contains "
+            "'%'.  cmd.exe expands a %-delimited name even inside double "
+            "quotes, a batch file strips a lone '%' outright, and two "
+            "arguments holding one '%' each join into a pair -- and Cursor "
+            "does not document which shell runs the hook.  Install to a "
+            "path with no '%' in it."
         )
     if any(ch in arg for ch in "\n\r\x00"):
         raise RuntimeError(f"argument is not a single shell word: {arg!r}")
@@ -88,10 +121,18 @@ def _shell_command(argv: list[str], style: str | None = None) -> str:
     ran as a second command.
 
     `style` is explicit so both quoters are testable on either platform;
-    it defaults to the host.  The Windows branch assumes cmd.exe, which is
-    what Cursor's undocumented shell is on Windows in practice.  Delayed
-    expansion is off under a plain `cmd /c`, so a `!` in the path is
-    literal; under `cmd /v:on` it would still expand.
+    it defaults to the host.
+
+    The Windows branch quotes for cmd.exe.  WHICH Windows shell Cursor
+    runs a hook command through is undocumented, so this branch is
+    written to lean on that as little as possible: `%` is refused
+    outright (see `_CMD_UNSAFE`) precisely because its meaning is what
+    differs between `cmd /c` and a batch file.  What stays
+    shell-dependent is narrower but real -- delayed expansion is off
+    under a plain `cmd /c`, so a `!` in the path is literal, but under
+    `cmd /v:on` it expands; and under PowerShell a quoted leading token
+    is a string expression, not a command.  Both are recorded in
+    README.md as unaddressed rather than assumed away.
     """
     if style is None:
         style = "cmd" if os.name == "nt" else "posix"
@@ -121,7 +162,7 @@ def render() -> dict:
         [str(python_path), str(hook_path), "--harness", "cursor"]
     )
 
-    rows_seen = 0
+    rendered_per_event: dict[str, int] = {}
     for event, rows in template.get("hooks", {}).items():
         if not isinstance(rows, list):
             raise RuntimeError(f"Cursor hook event {event!r} is not a list")
@@ -131,9 +172,23 @@ def render() -> dict:
                     f"Cursor hook event {event!r} has an unexpected command"
                 )
             row["command"] = command
-            rows_seen += 1
-    if rows_seen == 0:
-        raise RuntimeError("Cursor hook template contains no commands")
+            rendered_per_event[event] = rendered_per_event.get(event, 0) + 1
+
+    # Counting rows across the WHOLE template only ever required ONE row
+    # anywhere, so dropping or emptying a guarded event still rendered a
+    # config that installed cleanly with that actuator class unguarded --
+    # a fail-open inside the fail-closed drift policy (Codex es#216).
+    # Measured before this fix: deleting `beforeMCPExecution`, emptying it,
+    # deleting `preToolUse`, and deleting all but one event each left
+    # render SUCCEEDING.  Every guarded event must now carry a command.
+    missing = [event for event in REQUIRED_EVENTS
+               if not rendered_per_event.get(event)]
+    if missing:
+        raise RuntimeError(
+            "Cursor hook template is missing a command for required "
+            f"event(s): {', '.join(missing)}.  Rendering would install a "
+            "config leaving that actuator class unguarded."
+        )
     return template
 
 
