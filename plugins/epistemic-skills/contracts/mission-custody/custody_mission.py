@@ -192,19 +192,31 @@ def _require_substantive_text(text, label: str, purpose: str) -> None:
     """
     if not isinstance(text, str) or not text:
         raise CustodyError(f"{label} required ({purpose})")
-    blanks = []
+    # The accumulator is capped at what the message can print. `--reason-file`
+    # has no size limit, so one entry per character would make the REFUSAL path
+    # allocate in proportion to the file -- measured at ~4.3x the file's bytes
+    # and rising, which turns a documented exit-2 into an OOM for a large blank
+    # file. Only the first `_MAX_REPORTED_BLANKS` DISTINCT code points are ever
+    # shown, so only those are ever held; `len(text)` supplies the count, and
+    # `more_blanks` reproduces the "..." suffix without a full distinct list.
+    shown_blanks: dict = {}
+    more_blanks = False
     for ch in text:
         if not (ch.isspace() or not ch.isprintable()
                 or unicodedata.category(ch) in _ZERO_ADVANCE_MARK_CATEGORIES
                 or ord(ch) in _BLANK_GLYPH_CODEPOINTS):
             return  # at least one character a reader can actually see
-        blanks.append(ord(ch))
+        cp = ord(ch)
+        if cp not in shown_blanks:
+            if len(shown_blanks) < _MAX_REPORTED_BLANKS:
+                shown_blanks[cp] = None
+            else:
+                more_blanks = True
     # Name the code points in ASCII. Echoing the glyphs would print the very
     # invisibility being refused, and this module's errors must survive an
     # ASCII-only console (see custody_cli._ascii_safe).
-    distinct = list(dict.fromkeys(blanks))
-    shown = " ".join("U+%04X" % cp for cp in distinct[:_MAX_REPORTED_BLANKS])
-    if len(distinct) > _MAX_REPORTED_BLANKS:
+    shown = " ".join("U+%04X" % cp for cp in shown_blanks)
+    if more_blanks:
         shown += " ..."
     raise CustodyError(
         f"{label} required ({purpose}); the text supplied is "
