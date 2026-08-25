@@ -60,6 +60,22 @@ REQUIRED_EVENTS = ("beforeShellExecution", "preToolUse", "beforeMCPExecution")
 # written -- the alternative fails open (or fabricates a block) at runtime.
 _CMD_UNSAFE = "%"
 
+# Characters an argument may hold and still be emitted BARE to cmd.exe.
+# Kept deliberately narrow -- exactly what an ordinary Windows path needs.
+# Everything else (space, & | < > ( ) ^ " ' ` , ; = ! ~ + @ # $ [ ] { } and
+# any character not listed) is quoted.  Narrowing is always safe here; the
+# only cost of a redundant quote is that the line may start with one.
+# WIDENING is not safe: admit a cmd metacharacter and that argument goes
+# out bare, cmd splits the command at it, and the armed guard exits 1 --
+# the original fail-open.  Pinned by the test-suite constant
+# CMD_METACHARACTERS, which asserts every one of them still forces quotes.
+_CMD_SAFE_CHARS = frozenset(
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    "abcdefghijklmnopqrstuvwxyz"
+    "0123456789"
+    "\\/:._-"
+)
+
 
 def _link_preserving(path: str | os.PathLike[str]) -> Path:
     """Make `path` absolute WITHOUT resolving symlinks or junctions.
@@ -110,6 +126,17 @@ def _quote_cmd(arg: str) -> str:
     return "".join(out)
 
 
+def _needs_cmd_quoting(arg: str) -> bool:
+    """True unless EVERY character of `arg` is known safe bare to cmd.exe.
+
+    Deliberately a WHITELIST.  A blacklist of metacharacters fails open on
+    the character nobody enumerated -- it emits that argument bare and cmd
+    splits the command there.  This fails closed on it: an unrecognised
+    character means quote, and the worst case is a redundant quote.
+    """
+    return not arg or not all(ch in _CMD_SAFE_CHARS for ch in arg)
+
+
 def _shell_command(argv: list[str], style: str | None = None) -> str:
     """Quote for the SHELL that will execute the config.
 
@@ -123,21 +150,46 @@ def _shell_command(argv: list[str], style: str | None = None) -> str:
     `style` is explicit so both quoters are testable on either platform;
     it defaults to the host.
 
-    The Windows branch quotes for cmd.exe.  WHICH Windows shell Cursor
-    runs a hook command through is undocumented, so this branch is
-    written to lean on that as little as possible: `%` is refused
-    outright (see `_CMD_UNSAFE`) precisely because its meaning is what
-    differs between `cmd /c` and a batch file.  What stays
-    shell-dependent is narrower but real -- delayed expansion is off
-    under a plain `cmd /c`, so a `!` in the path is literal, but under
-    `cmd /v:on` it expands; and under PowerShell a quoted leading token
-    is a string expression, not a command.  Both are recorded in
-    README.md as unaddressed rather than assumed away.
+    The Windows branch quotes MINIMALLY, and that is load-bearing rather
+    than cosmetic.  `cmd /?` documents that for `cmd /c <command>`, when
+    the line begins with a quote and holds more than two, cmd strips the
+    FIRST quote and the LAST quote on the line.  Quoting every argument
+    therefore destroyed the command under a bare `cmd /c` -- for EVERY
+    install path, including one with no space and no metacharacter in it
+    (measured: rc 1, "The filename, directory name, or volume label
+    syntax is incorrect"; the guard never ran, and exit 1 is fail OPEN).
+    `subprocess(shell=True)` emits `cmd /d /s /c "<command>"` and a batch
+    file re-parses per line, so both supply or absorb the outer pair and
+    mask the defect entirely -- which is why proving the command through
+    only those two contexts licensed nothing about a bare `cmd /c`.
+
+    Quoting only what needs it keeps the metacharacter fix (`R&D` is not
+    in `_CMD_SAFE_CHARS`, so it is still quoted) and leaves the line
+    starting bare whenever the interpreter path needs no quoting, which
+    is the case cmd's rule can be got past at all.
+
+    What stays shell-dependent is narrower but real, and is recorded in
+    README.md as UNADDRESSED rather than assumed away: an interpreter
+    path that itself needs quoting is unrescuable under a bare `cmd /c`
+    (no quoting survives the rule); `!` is literal under a plain
+    `cmd /c` but expands under `cmd /v:on`; and under PowerShell a quoted
+    leading token is a string expression, not a command.  `%` is refused
+    outright (see `_CMD_UNSAFE`) because its meaning is what differs
+    between `cmd /c` and a batch file.
     """
     if style is None:
         style = "cmd" if os.name == "nt" else "posix"
     if style == "cmd":
-        return " ".join(_quote_cmd(arg) for arg in argv)
+        # Refuse '%' for EVERY argument, independently of the quoting
+        # decision: a bare argument never reaches `_quote_cmd`, so the
+        # refusal cannot be allowed to ride on the whitelist.
+        for arg in argv:
+            if _CMD_UNSAFE in arg:
+                _quote_cmd(arg)
+        return " ".join(
+            _quote_cmd(arg) if _needs_cmd_quoting(arg) else arg
+            for arg in argv
+        )
     if style == "posix":
         return shlex.join(argv)
     raise RuntimeError(f"unknown shell style: {style!r}")

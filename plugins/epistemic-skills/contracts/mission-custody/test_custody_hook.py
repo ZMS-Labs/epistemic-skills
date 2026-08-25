@@ -1250,6 +1250,187 @@ RELATIVE_COMMAND_FOR_TEST = (
 )
 
 
+
+CMD_METACHARACTERS = "&|<>()^\"'`,;= \t"
+"""Characters cmd.exe treats specially OUTSIDE quotes, enumerated explicitly.
+
+This constant is the pin on the failure mode the minimal quoter introduces.
+Minimal quoting leaves an argument BARE when every character of it is in a
+safe WHITELIST.  Widen that whitelist to admit any character below and the
+ORIGINAL fail-open returns: cmd splits the command at the metacharacter,
+python is handed a truncated path, and the armed guard exits 1 -- which
+Cursor reads as "allow", not as a block.  A whitelist fails closed on a
+character nobody enumerated; a metacharacter blacklist would not.
+('%' is absent on purpose: it is refused outright before quoting.)
+"""
+
+
+def test_cursor_cli_quoting_is_minimal_so_a_bare_cmd_c_still_runs() -> None:
+    """es#216 re-gate: always-quoting broke `cmd /c <rendered command>`.
+
+    `_quote_cmd` wrapped EVERY argument, so the rendered line began with a
+    quote and held more than two.  cmd.exe then applies its documented
+    rule 2 -- strip the leading quote and the last quote on the line -- and
+    the command is destroyed.  Measured on Windows against a plain install
+    path with no space and no metacharacter in it:
+
+        always-quote        `cmd /c <rendered>`  -> rc 1, guard NEVER RAN
+            "The filename, directory name, or volume label syntax is
+             incorrect."
+        list2cmdline (the PRE-fix code, same argv, same shell)
+                            `cmd /c <rendered>`  -> rc 0, guard RAN
+
+    Exit 1 is fail OPEN.  So always-quoting regressed the ordinary case
+    into the exact class this PR set out to close: it fixed the
+    metacharacter path and, in doing so, disarmed every path -- but only
+    under invocation forms that do NOT supply their own outer quote pair.
+    `subprocess(shell=True)` emits `cmd /d /s /c "<cmd>"` and a batch file
+    re-parses per line, so both mask it.  Every end-to-end proof in this
+    file ran through `shell=True`: one execution context, generalised to
+    "Windows" -- the same mistake this PR already diagnosed twice.
+
+    Quoting only what NEEDS quoting keeps the metacharacter fix (the
+    whitelist forces quotes around `R&D`) and restores the bare-`cmd /c`
+    case whenever the interpreter path itself needs no quoting.  It cannot
+    rescue an interpreter path that DOES need quoting -- under rule 2 no
+    quoting can -- and that residue is recorded in README.md as
+    unaddressed rather than assumed away.
+    """
+    renderer_globals = runpy.run_path(str(CURSOR_CLI_RENDERER))
+    shell_command = renderer_globals.get("_shell_command")
+    needs_quoting = renderer_globals.get("_needs_cmd_quoting")
+    check("cursor-cli-needs-cmd-quoting-exists", callable(needs_quoting))
+    if not callable(needs_quoting) or not callable(shell_command):
+        return
+
+    safe = "C:\\Tools\\es\\hook.py"
+    check("cursor-cli-a-safe-argument-is-not-quoted",
+          not needs_quoting(safe))
+    # the pin against MY fix: every enumerated metacharacter must force
+    # quotes.  A whitelist that let one through would split the command.
+    leaked = [c for c in CMD_METACHARACTERS
+              if not needs_quoting("C:\\a" + c + "b\\hook.py")]
+    check("cursor-cli-every-cmd-metacharacter-forces-quoting", not leaked)
+    check("cursor-cli-empty-argument-is-quoted", needs_quoting(""))
+
+    bare_argv = ["C:\\Py\\python.exe", "C:\\Tools\\es\\hook.py",
+                 "--harness", "cursor"]
+    bare = shell_command(bare_argv, style="cmd")
+    check("cursor-cli-all-safe-argv-renders-with-no-quotes",
+          '"' not in bare)
+    check("cursor-cli-all-safe-argv-does-not-start-with-a-quote",
+          not bare.startswith('"'))
+
+    # the metacharacter fix must SURVIVE minimal quoting
+    amp_argv = ["C:\\Py\\python.exe", "C:\\Tools\\R&D\\hook.py",
+                "--harness", "cursor"]
+    amp = shell_command(amp_argv, style="cmd")
+    check("cursor-cli-ampersand-argument-is-still-quoted",
+          '"C:\\Tools\\R&D\\hook.py"' in amp)
+    check("cursor-cli-ampersand-leaves-no-bare-metacharacter",
+          "&" not in amp.replace('"C:\\Tools\\R&D\\hook.py"', ""))
+    spacey = shell_command(
+        ["C:\\Program Files\\Py\\python.exe", "C:\\Tools\\es\\hook.py"],
+        style="cmd")
+    check("cursor-cli-spaced-argument-is-still-quoted",
+          '"C:\\Program Files\\Py\\python.exe"' in spacey)
+    # POSIX is untouched: shlex already quotes minimally.
+    check("cursor-cli-posix-style-unchanged-by-minimal-quoting",
+          shell_command(bare_argv, style="posix") == shlex.join(bare_argv))
+    # '%' is still refused before any quoting decision is reached.
+    pct = None
+    try:
+        shell_command(["C:\\Py\\python.exe", "C:\\100%done\\hook.py"],
+                      style="cmd")
+    except RuntimeError as exc:
+        pct = str(exc)
+    check("cursor-cli-percent-still-refused-under-minimal-quoting",
+          pct is not None)
+
+
+def test_cursor_cli_rendered_command_runs_under_a_bare_cmd_c() -> None:
+    """The behavioural half: prove the armed guard actually BLOCKS, and
+    names its rule, when the rendered command is handed to `cmd /c`
+    WITHOUT an enclosing quote pair.
+
+    A junction supplies an interpreter path with no space in it, which is
+    the case minimal quoting can rescue.  The oracle is the matched rule
+    name, never `returncode == 2` alone: a command cmd has mangled also
+    exits non-zero, and that is precisely the fabricated refusal this PR
+    keeps having to tell apart from a real custody block.
+    """
+    if os.name != "nt":
+        return
+    with tempfile.TemporaryDirectory() as tmp:
+        base = Path(tmp)
+        plugin = _stage_plugin_checkout(base / "plugin")
+        pyhome = base / "pyhome"
+        made = subprocess.run(
+            ["cmd", "/c", "mklink", "/J", str(pyhome),
+             str(Path(sys.executable).parent)],
+            capture_output=True, text=True)
+        if made.returncode != 0:
+            return
+        interpreter = pyhome / Path(sys.executable).name
+        check("cursor-cli-bare-interpreter-path-has-no-space",
+              " " not in str(interpreter))
+        if not interpreter.is_file():
+            return
+
+        ws = base / "workspace"
+        ws.mkdir()
+        destination = ws / ".cursor" / "hooks.json"
+        rendered = subprocess.run(
+            [str(interpreter),
+             str(plugin / "hooks" / "render_cursor_cli_hooks.py"),
+             "--output", str(destination)],
+            cwd=str(ws), capture_output=True, text=True)
+        check("cursor-cli-bare-cmd-render-exit-0", rendered.returncode == 0)
+        if rendered.returncode != 0:
+            return
+        command = _commands_of(destination)[0]
+        check("cursor-cli-bare-cmd-command-is-unquoted",
+              not command.startswith('"'))
+
+        _arm(ws, "cursor-cli-bare-cmd")
+        payload = json.dumps({"command": BLOCKED_COMMAND, "cwd": str(ws)})
+        # shell=False with a raw command line: cmd gets EXACTLY
+        # `cmd /c <command>`, with no wrapper quotes added by anyone.
+        blocked = subprocess.run(
+            "cmd /c " + command, shell=False, input=payload,
+            cwd=str(ws), capture_output=True, text=True)
+        check("cursor-cli-bare-cmd-c-guard-blocks", blocked.returncode == 2)
+        check("cursor-cli-bare-cmd-c-block-names-the-rule",
+              "no-rm" in blocked.stdout + blocked.stderr)
+
+        inert = base / "inert"
+        inert.mkdir()
+        allowed = subprocess.run(
+            "cmd /c " + command, shell=False,
+            input=json.dumps({"command": BLOCKED_COMMAND,
+                              "cwd": str(inert)}),
+            cwd=str(inert), capture_output=True, text=True)
+        check("cursor-cli-bare-cmd-c-inert-without-a-mission",
+              allowed.returncode == 0)
+
+
+def test_cursor_cli_readme_records_the_unwrapped_cmd_c_residue() -> None:
+    """The residue minimal quoting CANNOT fix must be enumerated, not
+    assumed away -- an interpreter path that itself needs quoting stays
+    broken under a bare `cmd /c` because cmd's rule 2 strips the outer
+    quotes no matter how the line is built.  README.md already lists the
+    `cmd /v:on` and PowerShell hazards; this is the third, and it is the
+    one that fails OPEN."""
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    lowered = readme.lower()
+    check("cursor-cli-readme-names-the-bare-cmd-c-hazard",
+          "cmd /c" in lowered and "quoted only where" in lowered)
+    check("cursor-cli-readme-says-a-spaced-interpreter-path-is-unrescued",
+          "install python to a path with no space" in lowered)
+
+
+BLOCKED_COMMAND = "rm -rf x"
+
 if __name__ == "__main__":
     for fn in list(globals().values()):
         if callable(fn) and getattr(fn, "__name__", "").startswith("test_"):
