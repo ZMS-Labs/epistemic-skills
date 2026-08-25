@@ -41,6 +41,9 @@ _RETIRED_NOTE = "receipt loss acknowledged: "
 _RESERVED_NOTE_PREFIXES = (
     "effect: ", "reconciled: ", "drift detected: ", "receipt restored: ",
     "authority amended: ", _RETIRED_NOTE, "scope-ack by ",
+    # es#173: the quarantine acknowledgement discharges the UnionDegraded
+    # refusal, so narrative able to imitate it would forge the discharge.
+    "unreadable-acknowledged: ",
 )
 
 
@@ -1717,8 +1720,163 @@ class Mission:
         new = self._write_next(latest, path, status="active", note="approved")
         return new["revision"]
 
+    def _acknowledged_unreadable(self, latest: dict) -> set[str]:
+        """Dir names whose union degradation this mission's chain has
+        acknowledged (machine note, reserved prefix -- so narrative cannot
+        forge the discharge). Permanent for the mission's life, like every
+        note: the quarantine judgement was recorded once and holds."""
+        prefix = "unreadable-acknowledged: "
+        return {note[len(prefix):] for note in latest["state"]["notes"]
+                if note.startswith(prefix)}
+
+    def _effect_union_entries(
+            self, latest: dict,
+            acknowledge_unreadable: tuple | list = (),
+    ) -> tuple[list[dict], list[str]]:
+        """Assemble the union for an `effect` (es#173, OD-2) and enforce the
+        B23 degradation rule. Returns (entries, fresh_acknowledgements).
+
+        Every ACTIVE mission joins as {"name", "store", "authority",
+        "approved"} -- including this one: complete mediation has no
+        self-exemption. A sibling whose store cannot be read or whose
+        manifest fails verification is a DEGRADED union: unlike the hook
+        (which must never brick the tool loop), effect CAN refuse without
+        bricking anything, so it does -- UnionDegraded, until the sibling
+        is repaired, completed/cancelled by an updated reader, or
+        explicitly acknowledged (recorded in this mission's chain via the
+        reserved 'unreadable-acknowledged: ' machine note, so the
+        acknowledgement persists and cannot be forged by narrative)."""
+        own_name = self.store.mission_dir.name
+        active, skipped = Mission._discover(self.workspace)
+        degraded = [{"name": s["name"], "reason": s["reason"]}
+                    for s in skipped]
+        entries: list[dict] = []
+        for e in active:
+            if e["name"] == own_name:
+                entries.append({"name": own_name, "store": self.store,
+                                "authority":
+                                    latest["manifest"]["authority"],
+                                "approved":
+                                    _approved_by_chain(self.store)})
+                continue
+            sibling = Mission(e["store"], self.workspace, self.actor)
+            try:
+                sib_latest = sibling.status()
+            except (StoreError, ValueError, CustodyError) as exc:
+                degraded.append({
+                    "name": e["name"],
+                    "reason": f"{type(exc).__name__}: {exc}"})
+                continue
+            entries.append({"name": e["name"], "store": e["store"],
+                            "authority":
+                                sib_latest["manifest"]["authority"],
+                            "approved": _approved_by_chain(e["store"])})
+        acked_chain = self._acknowledged_unreadable(latest)
+        acked_now = {str(name) for name in (acknowledge_unreadable or ())}
+        degraded_names = {d["name"] for d in degraded}
+        unknown = sorted(acked_now - degraded_names - acked_chain)
+        if unknown:
+            raise CustodyError(
+                "acknowledge_unreadable names dir(s) that are not degraded "
+                f"here: {', '.join(unknown)} -- an acknowledgement that "
+                "matches nothing is a typo, not a quarantine")
+        unacked = sorted(d["name"] for d in degraded
+                         if d["name"] not in acked_chain
+                         and d["name"] not in acked_now)
+        if unacked:
+            detail = "; ".join(d["reason"] for d in degraded
+                               if d["name"] in unacked)
+            raise UnionDegraded(
+                "effect refused: sibling mission dir(s) "
+                + ", ".join(unacked) +
+                " cannot be read, so their guards are silently absent from "
+                "the union (case row B23). Repair them, resolve them with "
+                "an updated reader, or acknowledge explicitly "
+                "(--acknowledge-unreadable <dir>; recorded in this "
+                f"mission's chain). Detail: {detail}")
+        fresh = sorted((acked_now & degraded_names) - acked_chain)
+        return entries, fresh
+
+    def _append_sibling_touches(self, entries: list[dict],
+                                artifact_relpath: str, request_id: str,
+                                after_sha256: str) -> None:
+        """The crossing record (es#173 section 4c, FATAL-4): when this
+        effect touches a path an ACTIVE sibling has receipted, append one
+        advisory JSON line to that sibling's sibling-touch.jsonl -- the
+        guard-log analog: append-only, OUTSIDE the chain, chain
+        byte-identity preserved, never a write into the sibling's chain
+        (binding routes where notes land; this mission's actor holds no
+        authority there). Best-effort exactly like the guard-log append: a
+        failed append never blocks the effect but is loud on stderr. It is
+        ADVISORY: ground truth for detection is the resume-time receipt
+        scan, so a lost or suppressed entry cannot hide a crossing -- it
+        only costs the sibling's next resume the early hint."""
+        own_name = self.store.mission_dir.name
+        rel = artifact_relpath.replace("\\", "/")
+        for entry in entries:
+            if entry["name"] == own_name:
+                continue
+            try:
+                touched = any(
+                    isinstance(r, dict)
+                    and isinstance(r.get("artifact_path"), str)
+                    and _same_artifact(r["artifact_path"], rel)
+                    for r in entry["store"].load_receipts())
+                if not touched:
+                    continue
+                line = json.dumps({
+                    "utc": now_utc(),
+                    "actor": self.actor,
+                    "session_id": "",
+                    "from_mission": own_name,
+                    "receipt_id": request_id,
+                    "artifact_path": rel,
+                    "after_sha256": after_sha256,
+                }, sort_keys=True)
+                with open(entry["store"].mission_dir
+                          / "sibling-touch.jsonl", "a",
+                          encoding="utf-8") as handle:
+                    handle.write(line + "\n")
+            except Exception as exc:  # noqa: BLE001
+                print(("custody: sibling-touch append failed for "
+                       f"{entry['name']} ({type(exc).__name__}: {exc}); "
+                       "the effect stands -- detection falls back to the "
+                       "sibling's resume-time receipt scan")
+                      .encode("ascii", "backslashreplace").decode("ascii"),
+                      file=sys.stderr)
+
+    def _log_effect_matches(self, matches: list[dict],
+                            artifact_relpath: str) -> None:
+        """Guard-log the effect verb's matches into each matching mission's
+        dir, mirroring the gate's audit trail (tool_name 'effect').
+        Best-effort: the audit append is not verdict-bearing."""
+        for row in matches:
+            entry = {
+                "utc": now_utc(),
+                "actor": self.actor,
+                "session_id": "",
+                "harness": "effect",
+                "mode": row["mode"],
+                "decision": row["decision"],
+                "rule": row["rule"],
+                "tool_name": "effect",
+                "command_preview": "",
+                "file_path": artifact_relpath,
+            }
+            target = (self.workspace / "missions" / row["mission"]
+                      / "guard-log.jsonl")
+            try:
+                with open(target, "a", encoding="utf-8") as handle:
+                    handle.write(json.dumps(entry, sort_keys=True) + "\n")
+            except Exception as exc:  # noqa: BLE001
+                print(f"custody: guard-log append failed for "
+                      f"{row['mission']} ({type(exc).__name__}: {exc}); "
+                      f"verdict {row['decision']} stands but was not "
+                      "logged", file=sys.stderr)
+
     def record_effect(self, artifact_relpath: str, content: str,
-                       request_id: str) -> dict:
+                       request_id: str, *,
+                       acknowledge_unreadable: tuple | list = ()) -> dict:
         latest, path = self.store.load_latest()
         self._verify_manifest(latest)
         if latest["status"] not in _EFFECT_STATES:
@@ -1740,6 +1898,41 @@ class Mission:
         # the record ALREADY carries; only genuinely NEW paths are refused.
         if recover is None:
             _refuse_unrecordable_artifact_path(artifact_relpath)
+        # es#173 OD-2: effect IS the file write, so it runs union guard
+        # evaluation BEFORE _write_effect. A block refuses side-effect-free
+        # (nothing written, no receipt minted -- the same
+        # refuse-before-mutate posture as the idempotency guard), naming
+        # every matching (mission_id, rule) pair; audit-mode matches are
+        # allowed and logged. A RECOVER discharge is deliberately NOT
+        # exempt: a blocked recovery discharges through the (unblockable)
+        # amend channel of each matching mission, not through a hole in the
+        # mediation -- amend being unblockable is what keeps this legal.
+        entries, fresh_acks = self._effect_union_entries(
+            latest, acknowledge_unreadable)
+        for name in fresh_acks:
+            # The quarantine judgement becomes chain state BEFORE the write
+            # it licenses, one machine-note checkpoint per dir.
+            self._write_next(latest, path, status=latest["status"],
+                              note=f"unreadable-acknowledged: {name}")
+            latest, path = self.store.load_latest()
+        from custody_gate import evaluate_effect_union
+        matches = evaluate_effect_union(entries, artifact_relpath)
+        if matches:
+            self._log_effect_matches(matches, artifact_relpath)
+        blocking = [m for m in matches if m["decision"] == "block"]
+        if blocking:
+            pairs = "; ".join(f"mission={m['mission']} rule={m['rule']}"
+                              for m in blocking)
+            raise CustodyError(
+                f"effect blocked by custody guard(s): {pairs}. Nothing was "
+                "written and no receipt was minted. Discharge is "
+                "PER-MISSION: an amend recorded in one mission discharges "
+                "that mission's rule only -- bind to each matching mission "
+                "(--mission <id>) and change the rule via `amend "
+                "--guards-file`, or `amend --guard-mode audit` to retire "
+                "that mission's guard set, or stop. `note` and `amend` "
+                "remain unblockable by design (OD-2): record the "
+                "escalation there.")
         receipt = self._write_effect(latest, artifact_relpath, content, request_id)
         if recover is not None:
             remaining = [m for m in unresolved if m != recover]
@@ -1748,6 +1941,8 @@ class Mission:
         self._write_next(latest, path, status=status, add_receipt_id=request_id,
                           unresolved_verdicts=remaining,
                           note=f"effect: {artifact_relpath}")
+        self._append_sibling_touches(entries, artifact_relpath, request_id,
+                                     receipt["after_sha256"])
         return receipt
 
     def amend_authority(self, text: str, *, guard_mode=_UNSET,

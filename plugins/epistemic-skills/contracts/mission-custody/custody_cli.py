@@ -522,8 +522,9 @@ def dispatch(args: argparse.Namespace) -> int:
     elif args.command == "frontier":
         print(mission.set_frontier(_read_text(args, "text")))
     elif args.command == "effect":
-        receipt = mission.record_effect(args.path, _read_content(args),
-                                         args.request_id)
+        receipt = mission.record_effect(
+            args.path, _read_content(args), args.request_id,
+            acknowledge_unreadable=args.acknowledge_unreadable)
         _print_status(receipt)
     elif args.command == "resume":
         drift = mission.resume()

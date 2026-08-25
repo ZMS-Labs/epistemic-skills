@@ -335,6 +335,46 @@ def evaluate_union(entries: list[dict], tool_call: dict) -> list[dict]:
     return matches
 
 
+def effect_rule_matches(rule: dict, artifact_relpath: str) -> bool:
+    """Does an armed guard bind the `effect` verb's write to this path?
+    (es#173, OD-2: effect IS the file write.)
+
+    `tool_names` -- a harness concept -- deliberately does NOT filter here:
+    the effect verb is not a harness tool, and a guard that binds a path
+    must bind the path however the write is spelled, or the custody CLI
+    itself remains the one unmediated writer (the FATAL-2 hole restated).
+    Over-matching is this module's documented safe direction: a false block
+    names its rule and is discharged per-mission by amend. Rules carrying
+    only command_regexes never match an effect -- there is no command."""
+    target = _guard_norm_path(artifact_relpath)
+    return any(_guard_glob_regex(glob).match(target)
+               for glob in rule["path_globs"])
+
+
+def evaluate_effect_union(entries: list[dict], artifact_relpath: str) -> list[dict]:
+    """Every matching (mission, rule) pair for an `effect` write, across
+    the union of APPROVED missions' armed guards -- the OD-2 surface,
+    sharing OD-4 membership with `evaluate_union` (approved contributes,
+    unapproved is subject-only). Entries carry {"name", "authority",
+    "approved"}."""
+    matches: list[dict] = []
+    for entry in entries:
+        if not entry.get("approved"):
+            continue
+        authority = entry["authority"]
+        mode = authority.get("guard_mode")
+        guards = authority.get("actuator_guards")
+        if not mode or not guards:
+            continue
+        for rule in guards:
+            if effect_rule_matches(rule, artifact_relpath):
+                matches.append({"mission": entry["name"],
+                                "rule": rule["name"], "mode": mode,
+                                "decision": ("block" if mode == "enforce"
+                                             else "allow")})
+    return matches
+
+
 def _degraded_disclosure(degraded: list[dict]) -> str:
     names = ", ".join(sorted(d["name"] for d in degraded))
     return (f" UNION DEGRADED: mission dir(s) {names} unreadable -- their "
