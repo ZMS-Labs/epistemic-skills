@@ -825,6 +825,175 @@ def test_open_still_refuses_duplicate_mission_id(workspace: Path) -> None:
 
 
 # ---------------------------------------------------------------------------
+# PR #220 refuter findings -- live-reproduced defects pinned as regressions
+# ---------------------------------------------------------------------------
+
+
+def _seed_receipted_artifact(ws: Path) -> None:
+    """m-alpha approved with a receipt on shared.txt."""
+    a = open_mission(ws, "m-alpha")
+    a.approve()
+    a = load_bound(ws, "m-alpha")
+    a.record_effect("shared.txt", "alpha-1", "req-a1")
+
+
+def test_refuter_f1_substring_id_never_launders(workspace: Path) -> None:
+    """Refuter finding 1: the authorization leg's mission-id test must
+    match the sibling id as a whole token, never a raw substring --
+    `m-al` must not ride on an amendment authorizing `m-alpine`, and a
+    mission named `test` must not ride on the word `latest`.
+    `_amendment_names` already refuses raw substrings for the PATH leg;
+    the id leg is held to the same standard."""
+    # Leg A: adversary id is a substring of the authorized id.
+    ws = workspace / "sub-id"
+    _seed_receipted_artifact(ws)
+    a = load_bound(ws, "m-alpha")
+    a.amend_authority(
+        "operator: mission m-alpine is authorized to write shared.txt")
+    evil = open_mission(ws, "m-al", actor="agent:evil")
+    evil.approve()
+    evil = load_bound(ws, "m-al", actor="agent:evil")
+    evil.record_effect("shared.txt", "tampered-by-m-al", "req-e1")
+    a = load_bound(ws, "m-alpha")
+    check("F1-substring-id-stays-plain-drift", a.resume() == ["shared.txt"])
+    latest = a.store.load_latest()[0]
+    check("F1-substring-id-reconciliation-marker",
+          "RECONCILIATION:shared.txt"
+          in latest["state"]["unresolved_verdicts"])
+    # Leg B: adversary id is an accidental substring of ordinary prose.
+    ws = workspace / "sub-word"
+    _seed_receipted_artifact(ws)
+    a = load_bound(ws, "m-alpha")
+    a.amend_authority(
+        "operator: the latest revision of shared.txt is authorized")
+    evil = open_mission(ws, "test", actor="agent:evil")
+    evil.approve()
+    evil = load_bound(ws, "test", actor="agent:evil")
+    evil.record_effect("shared.txt", "tampered-by-test", "req-e2")
+    a = load_bound(ws, "m-alpha")
+    check("F1-prose-substring-stays-plain-drift",
+          a.resume() == ["shared.txt"])
+    # Positive control: an amendment naming the sibling id as a whole
+    # token still reclassifies -- the fix must not break the sanctioned
+    # crossing.
+    ws = workspace / "exact"
+    _seed_receipted_artifact(ws)
+    a = load_bound(ws, "m-alpha")
+    a.amend_authority(
+        "operator: mission m-al is authorized to write shared.txt")
+    evil = open_mission(ws, "m-al", actor="agent:evil")
+    evil.approve()
+    evil = load_bound(ws, "m-al", actor="agent:evil")
+    evil.record_effect("shared.txt", "sanctioned-by-m-al", "req-e3")
+    a = load_bound(ws, "m-alpha")
+    check("F1-exact-token-still-reclassifies",
+          a.resume() == ["DRIFT-SIBLING:shared.txt"])
+
+
+def test_refuter_f2_stale_sibling_marker_discharges(workspace: Path) -> None:
+    """Refuter finding 2: a DRIFT-SIBLING marker whose path is no longer
+    sibling-attributable (content moved on before acknowledgement) must be
+    dischargeable. Resume re-classifies the path at its CURRENT severity,
+    replacing the stale marker, so the normal reconcile flow applies and
+    the mission can reach begin_verification. Pre-fix the marker had no
+    working exit: acknowledge_sibling refused forever, reconcile cleared
+    only RECONCILIATION, and the mission wedged in `reopened` (measured,
+    probe2 PROBE 2b)."""
+    a, b = _two_missions_one_artifact(workspace)
+    a.amend_authority("operator: mission m-beta is authorized to write "
+                      "shared.txt")
+    b.record_effect("shared.txt", "beta-1", "req-b1")
+    a = load_bound(workspace, "m-alpha")
+    check("F2-sibling-raised", a.resume() == ["DRIFT-SIBLING:shared.txt"])
+    # content moves on before acknowledgement -- attribution is now stale
+    (workspace / "shared.txt").write_text("operator-later-edit",
+                                          encoding="utf-8")
+    try:
+        a.acknowledge_sibling("shared.txt")
+        check("F2-stale-ack-refused", False)
+    except CustodyError as exc:
+        check("F2-stale-ack-refused", True)
+        check("F2-refusal-names-real-remedy", "re-run resume" in str(exc))
+    findings = a.resume()
+    check("F2-reclassified-at-current-severity", findings == ["shared.txt"])
+    unresolved = a.store.load_latest()[0]["state"]["unresolved_verdicts"]
+    check("F2-stale-marker-replaced",
+          "DRIFT-SIBLING:shared.txt" not in unresolved
+          and "RECONCILIATION:shared.txt" in unresolved)
+    a = load_bound(workspace, "m-alpha")
+    a.reconcile("shared.txt", "operator-later-edit", "req-fix")
+    a = load_bound(workspace, "m-alpha")
+    check("F2-resume-clean-after-reconcile", a.resume() == [])
+    latest = a.store.load_latest()[0]
+    check("F2-nothing-unresolved",
+          latest["state"]["unresolved_verdicts"] == [])
+    try:
+        a.begin_verification()
+        check("F2-begin-verification-reachable", True)
+    except IllegalTransition:
+        check("F2-begin-verification-reachable", False)
+
+
+def test_refuter_f3_bound_load_validates_mission_id(workspace: Path) -> None:
+    """Refuter finding 3: the bound-load channel (--mission /
+    ZMS_MISSION_ID, lower-provenance input) must validate mission_id as a
+    single kebab-case segment -- the same rule open's schema enforces. A
+    traversal id must never bind across workspaces: pre-fix the effect
+    wrote the artifact in ws1 while the receipt landed in ws2's store, a
+    split brain neither workspace's resume could explain (measured,
+    PROBE 4)."""
+    ws1 = workspace / "ws1"
+    ws2 = workspace / "ws2"
+    open_mission(ws2, "m-remote").approve()
+    open_mission(ws1, "m-local").approve()
+    for spelling, mid in (
+            ("posix", "../../ws2/missions/m-remote"),
+            ("nt", "..\\..\\ws2\\missions\\m-remote"),
+            ("absolute", str(ws2 / "missions" / "m-remote"))):
+        try:
+            Mission.load(ws1, actor="agent:worker", mission_id=mid)
+            check(f"F3-traversal-refused-{spelling}", False)
+        except CustodyError:
+            check(f"F3-traversal-refused-{spelling}", True)
+    m = load_bound(ws1, "m-local")
+    check("F3-normal-id-still-loads",
+          m.store.mission_dir == ws1 / "missions" / "m-local")
+
+
+def test_refuter_f4_blocked_effect_writes_nothing(workspace: Path) -> None:
+    """Refuter finding 4: a blocked effect's refusal claims "Nothing was
+    written and no receipt was minted" -- so nothing may be. Pre-fix the
+    fresh unreadable-acknowledged checkpoints landed BEFORE union
+    evaluation could block (measured, PROBE 5: checkpoint count 2 -> 3 on
+    a refusal). Refuse-before-mutate: the chain must be byte-identical
+    after a block."""
+    g = [{"name": "no-frozen", "tool_names": ["Write"],
+          "command_regexes": [], "path_globs": ["frozen/**"]}]
+    open_mission(workspace, "m-guard", guard_mode="enforce",
+                 actuator_guards=g).approve()
+    w = open_mission(workspace, "m-writer")
+    w.approve()
+    w = load_bound(workspace, "m-writer")
+    corrupt_dir(workspace, "m-corrupt")
+    before = chain_bytes(workspace, "m-writer")
+    with contextlib.redirect_stderr(io.StringIO()):
+        try:
+            w.record_effect("frozen/f.txt", "x", "req-1",
+                            acknowledge_unreadable=["m-corrupt"])
+            check("F4-effect-blocked", False)
+        except CustodyError as exc:
+            check("F4-effect-blocked",
+                  "blocked by custody guard" in str(exc))
+    check("F4-chain-byte-identical-after-block",
+          chain_bytes(workspace, "m-writer") == before)
+    check("F4-no-artifact-written",
+          not (workspace / "frozen" / "f.txt").exists())
+    receipts = workspace / "missions" / "m-writer" / "receipts"
+    check("F4-no-receipt-minted",
+          not receipts.exists() or not list(receipts.glob("*.json")))
+
+
+# ---------------------------------------------------------------------------
 # Registry
 # ---------------------------------------------------------------------------
 
@@ -864,6 +1033,10 @@ TESTS = [
     test_receipt_at_1_closure_regression,
     test_scope_overlap_disclosure_deterministic,
     test_open_still_refuses_duplicate_mission_id,
+    test_refuter_f1_substring_id_never_launders,
+    test_refuter_f2_stale_sibling_marker_discharges,
+    test_refuter_f3_bound_load_validates_mission_id,
+    test_refuter_f4_blocked_effect_writes_nothing,
 ]
 
 

@@ -16,7 +16,7 @@ from custody_store import (
     MissionStore, StoreError, atomic_write_json, sha256_bytes, sha256_file,
 )
 from verify_mission_custody import (
-    TIERS, VERDICTS, epoch_skew_anywhere, validate_record,
+    TIERS, VERDICTS, _ID_RE, epoch_skew_anywhere, validate_record,
 )
 
 _OPEN_STATES = {"draft", "active", "reopened", "verifying"}
@@ -708,6 +708,23 @@ def _amendment_names(text: str, rel_path: str) -> bool:
     return False
 
 
+def _amendment_names_mission(text: str, mission_id: str) -> bool:
+    """Does this amendment NAME `mission_id` as a whole token?
+
+    The id leg of the FATAL-3 discriminator, held to the standard
+    `_amendment_names` sets for the path leg: never a raw substring. A
+    substring test let mission `m-al` ride on an amendment authorizing
+    `m-alpine`, and a mission named `test` ride on the word `latest` --
+    the false-ALLOW direction, an audit-severity downgrade self-served by
+    choosing a convenient id (PR #220 refuter, finding 1). Tokenized
+    exactly like `_amendment_names` so the two legs cannot drift apart."""
+    for segment in text.replace("\\", "/").splitlines():
+        for raw in segment.split():
+            if raw.strip(_TOKEN_TRIM).rstrip(".") == mission_id:
+                return True
+    return False
+
+
 def _display_path(path: str) -> str:
     """A path the acceptor can SEE, in a spelling that survives being typed.
 
@@ -1216,6 +1233,23 @@ class Mission:
         binding channels. It never guesses."""
         workspace = Path(workspace)
         if mission_id is not None:
+            # The binding channels (--mission / ZMS_MISSION_ID) are
+            # lower-provenance input: env-derived text must never steer
+            # which store this session acts under beyond naming ONE id in
+            # THIS workspace. Without this check a traversal id
+            # (`../../ws2/missions/m-remote`) bound across workspaces --
+            # the effect wrote its artifact here while the receipt landed
+            # in the foreign store, a split brain neither workspace's
+            # resume could explain (PR #220 refuter, finding 3). Same
+            # _ID_RE the schema enforces on every manifest at open: an id
+            # is a single kebab-case segment, never a path.
+            if not _ID_RE.match(mission_id):
+                raise BindingInvalid(
+                    f"binding names {mission_id!r}, which is not a legal "
+                    "mission id (single kebab-case segment, the rule "
+                    "open's schema enforces) -- a binding is an "
+                    "identifier, never a path. Fix or unset it "
+                    "(--mission / ZMS_MISSION_ID)")
             mission_dir = workspace / "missions" / mission_id
             store = MissionStore(mission_dir)
             if not store.checkpoint_paths():
@@ -1913,12 +1947,6 @@ class Mission:
         # mediation -- amend being unblockable is what keeps this legal.
         entries, fresh_acks = self._effect_union_entries(
             latest, acknowledge_unreadable)
-        for name in fresh_acks:
-            # The quarantine judgement becomes chain state BEFORE the write
-            # it licenses, one machine-note checkpoint per dir.
-            self._write_next(latest, path, status=latest["status"],
-                              note=f"unreadable-acknowledged: {name}")
-            latest, path = self.store.load_latest()
         from custody_gate import evaluate_effect_union
         matches = evaluate_effect_union(entries, artifact_relpath)
         if matches:
@@ -1937,6 +1965,18 @@ class Mission:
                 "that mission's guard set, or stop. `note` and `amend` "
                 "remain unblockable by design (OD-2): record the "
                 "escalation there.")
+        # Only now -- with the union verdict in hand -- does anything touch
+        # the chain. The fresh-quarantine checkpoints used to land BEFORE
+        # evaluation, so a blocked effect mutated the chain while its
+        # refusal claimed "Nothing was written" (PR #220 refuter, finding
+        # 4: checkpoint count 2 -> 3 on a block, measured). Evaluation is a
+        # pure read over `entries`, so ordering it first costs nothing; the
+        # quarantine judgement still becomes chain state BEFORE the write
+        # it licenses, one machine-note checkpoint per dir.
+        for name in fresh_acks:
+            self._write_next(latest, path, status=latest["status"],
+                              note=f"unreadable-acknowledged: {name}")
+            latest, path = self.store.load_latest()
         receipt = self._write_effect(latest, artifact_relpath, content, request_id)
         if recover is not None:
             remaining = [m for m in unresolved if m != recover]
@@ -2180,8 +2220,10 @@ class Mission:
             (_approved_by_chain) -- never latest-status, so a
             never-approved mission wedged in `reopened` launders nothing;
         (3) an explicit cross-mission authorization amendment in THIS
-            mission's own chain, naming the sibling mission id and the
-            path or a pattern covering it (_amendment_names).
+            mission's own chain, naming the sibling mission id as a
+            whole token (_amendment_names_mission -- never a raw
+            substring) and the path or a pattern covering it
+            (_amendment_names).
 
         Any leg missing -> (None, evidence): plain drift at today's
         severity with the sibling receipt reported as evidence. The
@@ -2196,7 +2238,7 @@ class Mission:
                 MissionStore(self.workspace / "missions" / mission_name))
             authorized = any(
                 isinstance(a, dict) and isinstance(a.get("text"), str)
-                and mission_name in a["text"]
+                and _amendment_names_mission(a["text"], mission_name)
                 and _amendment_names(a["text"], rel)
                 for a in amendments)
             if approved and authorized:
@@ -2247,8 +2289,12 @@ class Mission:
             raise CustodyError(
                 "sibling attribution no longer verifies for "
                 f"{rel!r} (content moved on, the sibling receipt vanished, "
-                "or a discriminator leg no longer holds) -- re-run resume "
-                "and handle the finding at its current severity")
+                "or a discriminator leg no longer holds) -- re-run resume: "
+                "it re-classifies the path at its current severity, "
+                "replacing this stale DRIFT-SIBLING marker (a "
+                "no-longer-attributable path becomes a plain "
+                "RECONCILIATION finding for `reconcile`; content that now "
+                "verifies drops the marker)")
         remaining = [m for m in unresolved if m != marker]
         status = "reopened" if remaining else self._resumption_status()
         new = self._write_next(
@@ -2390,10 +2436,25 @@ class Mission:
                       if (m.startswith("RECEIPT-NEWER-EPOCH:")
                           or m.startswith("RECEIPT-UNREADABLE:"))
                       and m not in live_opaque]
-        if not findings and not stale_skew:
+        # THE STALE SIBLING MARKER'S EXIT LIVES HERE (PR #220 refuter,
+        # finding 2). acknowledge_sibling re-verifies attribution against
+        # CURRENT bytes, so a DRIFT-SIBLING marker whose path had since
+        # moved on (operator edit, reconcile) could never discharge: ack
+        # refused forever, reconcile cleared only RECONCILIATION, and the
+        # mission wedged in `reopened` with begin_verification refusing
+        # (measured). Resume therefore re-classifies the path at its
+        # CURRENT severity: a still-attributable path keeps its marker, a
+        # no-longer-attributable one becomes a plain RECONCILIATION
+        # finding (the mismatched loop below raises it), and a path whose
+        # content now verifies drops the marker entirely.
+        live_sibling = {f"DRIFT-SIBLING:{rel}" for rel in sibling_class}
+        stale_sibling = [m for m in latest["state"]["unresolved_verdicts"]
+                         if m.startswith("DRIFT-SIBLING:")
+                         and m not in live_sibling]
+        if not findings and not stale_skew and not stale_sibling:
             return []
         unresolved = [m for m in latest["state"]["unresolved_verdicts"]
-                      if m not in stale_skew]
+                      if m not in stale_skew and m not in stale_sibling]
         for rel in mismatched:
             marker = (f"DRIFT-SIBLING:{rel}" if rel in sibling_class
                       else f"RECONCILIATION:{rel}")
@@ -2421,11 +2482,22 @@ class Mission:
                          f"{hit['mission']} receipt {hit['receipt_id']}")
             for line in sibling_evidence:
                 note += f"; sibling receipt evidence: {line}"
+            for m in stale_sibling:
+                note += (f"; stale sibling marker superseded: {m} "
+                         "re-classified at current severity")
         else:
             status = ("reopened" if unresolved
                       else self._resumption_status())
-            note = ("previously unverifiable receipt(s) now readable: "
+            cleared = []
+            if stale_skew:
+                cleared.append(
+                    "previously unverifiable receipt(s) now readable: "
                     + ", ".join(m.split(":", 1)[1] for m in stale_skew))
+            if stale_sibling:
+                cleared.append(
+                    "stale sibling marker(s) discharged, content verifies: "
+                    + ", ".join(m.split(":", 1)[1] for m in stale_sibling))
+            note = "; ".join(cleared)
         self._write_next(latest, path, status=status,
                           unresolved_verdicts=unresolved, note=note)
         return findings
