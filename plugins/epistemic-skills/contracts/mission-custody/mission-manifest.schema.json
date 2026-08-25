@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "mission-manifest@1",
   "title": "mission-manifest@1",
-  "description": "Durable mission authority record. Verbatim operator instruction is immutable; amendments append. Validation authority: verify_mission_custody.py (stdlib).",
+  "description": "Durable mission authority record. Verbatim operator instruction is immutable; amendments append. Validation authority: verify_mission_custody.py (stdlib). The declaration-content pattern on the eight envelope lists states the WRITE contract -- what a steward may newly author. The reader deliberately does not apply it to records already persisted: refusing one there makes the Stage-C gate report an armed mission as no mission and answer allow (es#217, SECURITY.md).",
   "type": "object",
   "required": [
     "record",

@@ -4,6 +4,12 @@
 `verify_mission_custody.py` is normative.  The checked-in JSON Schema is a
 secondary consumer contract, so this suite uses a real Draft 2020-12 engine and
 fails on any accept/reject divergence at the eight envelope-list positions.
+
+Both authorities here state the WRITE contract -- `validate_record`'s default.
+The READ path is deliberately more permissive (es#217): applying a newly-added
+declaration rule to an already-persisted record makes the Stage-C gate skip an
+armed mission and answer `allow`.  That asymmetry is pinned in
+`test_custody_gate.py`, not here, and is documented in SECURITY.md.
 """
 from __future__ import annotations
 
