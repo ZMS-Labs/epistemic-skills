@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path, PurePosixPath, PureWindowsPath
 
@@ -276,6 +277,13 @@ def main(argv: list[str]) -> int:
                      "command": call.get("command"),
                      "file_path": call.get("file_path"),
                      "tool_input": call.get("tool_input")}
+        # The session's binding channel, best-effort: the harness process
+        # env is what this hook inherits. Under OD-4 refined ("Self-arm at
+        # open, union at approve") the binding SELF-ARMS the named
+        # mission's own guards; it can only ADD exposure (a name matching
+        # no mission dir changes nothing), so the lower-provenance env
+        # never widens what a session may do -- only what it may not.
+        bound = os.environ.get("ZMS_MISSION_ID", "").strip() or None
         # ANY candidate blocking blocks the call. A custody error on one
         # candidate must not skip the rest: an unreadable mission in the first
         # workspace would otherwise suppress a real block from the second,
@@ -284,7 +292,8 @@ def main(argv: list[str]) -> int:
             try:
                 verdict = run_gate(
                     workspace, tool_call, actor="hook:custody-gate",
-                    session_id=call.get("session_id", ""), harness=args.harness)
+                    session_id=call.get("session_id", ""),
+                    harness=args.harness, bound_mission=bound)
             except CustodyError as exc:
                 # Tamper keeps its own distinct, greppable signal: a session log
                 # must be searchable for TAMPER, and folding it into the generic

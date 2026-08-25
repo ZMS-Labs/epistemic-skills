@@ -307,18 +307,27 @@ def _union_entries(workspace: Path, actor: str) -> tuple[list[dict], list[dict]]
     return entries, degraded
 
 
-def evaluate_union(entries: list[dict], tool_call: dict) -> list[dict]:
+def evaluate_union(entries: list[dict], tool_call: dict,
+                   own_mission: str | None = None) -> list[dict]:
     """Every matching (mission, rule) pair across the union of APPROVED
-    missions' armed guards -- ALL matches, not first: the operator
-    discharging a block needs the full bill (es#173 section 2).
+    missions' armed guards, plus the bound mission's OWN guards -- ALL
+    matches, not first: the operator discharging a block needs the full
+    bill (es#173 section 2).
 
-    OD-1 UNION-ALWAYS: callers pass every entry; binding routes authority,
-    never exposure. OD-4 GATE ON APPROVE: an unapproved entry contributes
-    nothing -- checked here, in the one place membership is decided, so a
-    draft mission is subject to the union while arming none of it."""
+    OD-1 UNION-ALWAYS: callers pass every entry; binding routes authority
+    and never REMOVES exposure. OD-4 REFINED (operator ruling 2026-08-25:
+    "Self-arm at open, union at approve"): a mission's armed guards bind
+    its OWN session -- a call bound to it via `own_mission` -- from the
+    moment open arms them, exactly as the pre-union core behaved; they
+    join the fleet-wide union only once the mission is chain-approved.
+    Unbound calls see only the approved union, so an unblessed draft
+    still cannot block OTHER sessions -- membership is decided here, in
+    the one place, and binding can only ADD the bound mission's own
+    guards (the safe direction: a false block names its rule and is
+    discharged by amend)."""
     matches: list[dict] = []
     for entry in entries:
-        if not entry.get("approved"):
+        if not entry.get("approved") and entry["name"] != own_mission:
             continue
         authority = entry["latest"]["manifest"]["authority"]
         mode = authority.get("guard_mode")
@@ -351,15 +360,19 @@ def effect_rule_matches(rule: dict, artifact_relpath: str) -> bool:
                for glob in rule["path_globs"])
 
 
-def evaluate_effect_union(entries: list[dict], artifact_relpath: str) -> list[dict]:
+def evaluate_effect_union(entries: list[dict], artifact_relpath: str,
+                          own_mission: str | None = None) -> list[dict]:
     """Every matching (mission, rule) pair for an `effect` write, across
-    the union of APPROVED missions' armed guards -- the OD-2 surface,
-    sharing OD-4 membership with `evaluate_union` (approved contributes,
-    unapproved is subject-only). Entries carry {"name", "authority",
-    "approved"}."""
+    the union of APPROVED missions' armed guards plus the acting
+    mission's OWN guards -- the OD-2 surface, sharing OD-4 REFINED
+    membership with `evaluate_union` ("Self-arm at open, union at
+    approve", operator ruling 2026-08-25): a draft mission's own effect
+    is checked against its own guards from open, and against the
+    approved union; its guards bind no OTHER mission pre-approve.
+    Entries carry {"name", "authority", "approved"}."""
     matches: list[dict] = []
     for entry in entries:
-        if not entry.get("approved"):
+        if not entry.get("approved") and entry["name"] != own_mission:
             continue
         authority = entry["authority"]
         mode = authority.get("guard_mode")
@@ -419,9 +432,13 @@ def run_gate(workspace: Path, tool_call: dict, *, actor: str,
     missions' armed guards (es#173, OD-1 UNION-ALWAYS): bound or not, every
     gate-routed call sees every approved mission's guards -- if binding to
     mission A exempted a call from mission B's guards, every guard would be
-    voluntary the moment two missions coexist. `bound_mission` is validated
-    for LOGGING only (case row 16): a bad binding is loud on stderr and
-    changes exposure not at all.
+    voluntary the moment two missions coexist. Under OD-4 REFINED
+    ("Self-arm at open, union at approve", operator ruling 2026-08-25)
+    `bound_mission` additionally SELF-ARMS: a call bound to mission M is
+    also checked against M's own guards even before M is approved, so a
+    binding can ADD exposure but never remove any (case row 16 keeps its
+    teeth: a bad binding is loud on stderr, names no active mission, and
+    the approved union is evaluated regardless).
 
     Plurality is legal, so MultipleActiveMissions is gone as an inert
     cause -- the fail-open decoy is removed not by handling the error
@@ -470,7 +487,7 @@ def run_gate(workspace: Path, tool_call: dict, *, actor: str,
             reason += _degraded_disclosure(degraded)
         return {"decision": "allow", "matched": False, "rule": None,
                 "mode": "inert", "reason": reason}
-    matches = evaluate_union(entries, tool_call)
+    matches = evaluate_union(entries, tool_call, own_mission=bound_mission)
     disclosure = ""
     if degraded:
         # An allow that silently dropped a mission's guards would be the
@@ -516,12 +533,14 @@ def run_gate(workspace: Path, tool_call: dict, *, actor: str,
                 "reason": (f"custody guard(s) matched (audit mode): {pairs}"
                            + disclosure)}
     armed = [e for e in entries
-             if e.get("approved")
+             if (e.get("approved") or e["name"] == bound_mission)
              and e["latest"]["manifest"]["authority"].get("guard_mode")
              and e["latest"]["manifest"]["authority"].get("actuator_guards")]
     if not armed:
         # Case row 7: a lone unapproved draft (or unguarded missions only)
-        # contributes nothing -- allow, disclosed as such.
+        # contributes nothing to an UNBOUND call -- allow, disclosed as
+        # such. Its own bound session is self-armed above (OD-4 refined),
+        # so this branch is reached only when no evaluated source exists.
         return {"decision": "allow", "matched": False, "rule": None,
                 "mode": "inert",
                 "reason": "no approved mission guards armed" + disclosure}

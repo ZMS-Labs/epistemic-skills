@@ -993,6 +993,83 @@ def test_refuter_f4_blocked_effect_writes_nothing(workspace: Path) -> None:
           not receipts.exists() or not list(receipts.glob("*.json")))
 
 
+def test_refuter_f5_draft_self_arms_own_session(workspace: Path) -> None:
+    """Finding 5 (operator ruling 2026-08-25: "Self-arm at open, union at
+    approve"): a mission's armed guards bind its OWN session -- calls
+    bound to it, and its own effect verb -- from the moment open arms
+    them, exactly as the pre-union core behaved. The defect this row
+    pins: on the unrefined branch a draft's guards bound NOBODY until
+    approve, a silent disarm of the shipped core's behaviour."""
+    g = [guard("no-secrets", ["secrets/**"], tools=["Write"])]
+    open_mission(workspace, "m-draft", guard_mode="enforce",
+                 actuator_guards=g)
+    call = {"tool_name": "Write", "command": None,
+            "file_path": "secrets/x.env"}
+    v = run_gate(workspace, call, actor="hook:test",
+                 bound_mission="m-draft")
+    check("F5-own-bound-gate-blocked-pre-approve", v["decision"] == "block")
+    check("F5-block-names-own-pair",
+          "m-draft" in v.get("reason", "")
+          and "no-secrets" in v.get("reason", ""))
+    r = run_cli(["gate", "--workspace", str(workspace), "--actor", "hook:t",
+                 "--mission", "m-draft"], stdin=json.dumps(call))
+    check("F5-cli-bound-gate-blocked-pre-approve", r.returncode == 2)
+    m = load_bound(workspace, "m-draft")
+    try:
+        m.record_effect("secrets/own.env", "x", "req-1")
+        check("F5-own-effect-blocked-pre-approve", False)
+    except CustodyError as exc:
+        check("F5-own-effect-blocked-pre-approve",
+              not isinstance(exc, IllegalTransition)
+              and "no-secrets" in str(exc))
+
+
+def test_refuter_f5_draft_guards_invisible_elsewhere(workspace: Path) -> None:
+    """Finding 5 counterweight (the adjudication's preserved intent): an
+    unblessed draft cannot block OTHER sessions. Its guards stay out of
+    the fleet union for unbound calls, for calls bound to OTHER missions,
+    and for sibling effects, until approve."""
+    g = [guard("no-secrets", ["secrets/**"], tools=["Write"])]
+    open_mission(workspace, "m-draft", guard_mode="enforce",
+                 actuator_guards=g)
+    open_mission(workspace, "m-other", actor="agent:other").approve()
+    call = {"tool_name": "Write", "command": None,
+            "file_path": "secrets/x.env"}
+    v = run_gate(workspace, call, actor="hook:test")
+    check("F5-unbound-gate-unaffected", v["decision"] == "allow")
+    v = run_gate(workspace, call, actor="hook:test",
+                 bound_mission="m-other")
+    check("F5-other-bound-gate-unaffected", v["decision"] == "allow")
+    other = load_bound(workspace, "m-other", actor="agent:other")
+    receipt = other.record_effect("secrets/x.env", "s", "req-o1")
+    check("F5-sibling-effect-unaffected",
+          receipt["after_sha256"] is not None)
+
+
+def test_refuter_f5_post_approve_union_unchanged(workspace: Path) -> None:
+    """Finding 5 leg (c): approval still arms the fleet union exactly as
+    before the refinement -- unbound calls, other-bound calls, and
+    sibling effects are all blocked post-approve."""
+    g = [guard("no-secrets", ["secrets/**"], tools=["Write"])]
+    open_mission(workspace, "m-draft", guard_mode="enforce",
+                 actuator_guards=g)
+    open_mission(workspace, "m-other", actor="agent:other").approve()
+    load_bound(workspace, "m-draft").approve()
+    call = {"tool_name": "Write", "command": None,
+            "file_path": "secrets/x.env"}
+    v = run_gate(workspace, call, actor="hook:test")
+    check("F5-post-approve-unbound-blocked", v["decision"] == "block")
+    v = run_gate(workspace, call, actor="hook:test",
+                 bound_mission="m-other")
+    check("F5-post-approve-other-bound-blocked", v["decision"] == "block")
+    other = load_bound(workspace, "m-other", actor="agent:other")
+    try:
+        other.record_effect("secrets/x.env", "s", "req-o1")
+        check("F5-post-approve-sibling-effect-blocked", False)
+    except CustodyError:
+        check("F5-post-approve-sibling-effect-blocked", True)
+
+
 # ---------------------------------------------------------------------------
 # Registry
 # ---------------------------------------------------------------------------
@@ -1037,6 +1114,9 @@ TESTS = [
     test_refuter_f2_stale_sibling_marker_discharges,
     test_refuter_f3_bound_load_validates_mission_id,
     test_refuter_f4_blocked_effect_writes_nothing,
+    test_refuter_f5_draft_self_arms_own_session,
+    test_refuter_f5_draft_guards_invisible_elsewhere,
+    test_refuter_f5_post_approve_union_unchanged,
 ]
 
 

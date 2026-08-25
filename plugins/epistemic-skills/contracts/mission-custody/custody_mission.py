@@ -1948,7 +1948,12 @@ class Mission:
         entries, fresh_acks = self._effect_union_entries(
             latest, acknowledge_unreadable)
         from custody_gate import evaluate_effect_union
-        matches = evaluate_effect_union(entries, artifact_relpath)
+        # OD-4 refined ("Self-arm at open, union at approve", operator
+        # ruling 2026-08-25): this mission's own guards bind its own
+        # effect from the moment open arms them, approved or not.
+        matches = evaluate_effect_union(
+            entries, artifact_relpath,
+            own_mission=self.store.mission_dir.name)
         if matches:
             self._log_effect_matches(matches, artifact_relpath)
         blocking = [m for m in matches if m["decision"] == "block"]

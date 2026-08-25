@@ -483,8 +483,13 @@ def dispatch(args: argparse.Namespace) -> int:
 
     if args.command == "gate":
         from custody_gate import run_gate
+        # OD-4 refined ("Self-arm at open, union at approve", operator
+        # ruling 2026-08-25): the session binding self-arms the bound
+        # mission's own guards. Exposure only grows -- the union of
+        # approved missions is evaluated with or without a binding.
         verdict = run_gate(workspace, _read_tool_call(args), actor=args.actor,
-                           session_id="", harness="cli")
+                           session_id="", harness="cli",
+                           bound_mission=_session_binding(args))
         _print_status(verdict)
         return 2 if verdict["decision"] == "block" else 0
 
