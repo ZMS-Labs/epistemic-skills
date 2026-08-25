@@ -15,7 +15,7 @@
    `utm_source=claude_desktop` suffix), authors, year, citation count, journal,
    then the full abstract. Default 20 papers ("Found 20 papers, showing top 20").
 4. **Consensus detail IDs are the join key** for Zotero deposits (deposited as
-   `webpage` items with `consensus-id` in Extra per zms-homelab zotero_tools).
+   `webpage` items with `consensus-id` in Extra per the fleet's zotero_tools).
 
 ## `search` parameters (live schema 2026-08-15)
 
