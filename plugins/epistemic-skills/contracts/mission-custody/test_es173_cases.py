@@ -54,15 +54,6 @@ FAILURES: list[str] = []
 XFAIL: set[str] = {
     "test_a1_a3_draft_vs_active_union_membership",
     "test_a2_reopened_never_approved_contributes_nothing",
-    "test_a6_a7_terminal_states_binding_invalid",
-    "test_a8_unreadable_dir_binding_invalid",
-    "test_b4_binding_with_nothing_active",
-    "test_b5_b10_open_beside_active_is_legal",
-    "test_b8_bound_resolves_to_bound",
-    "test_b9_b15_stale_binding_never_falls_through",
-    "test_b11_plural_unbound_lifecycle_requires_binding",
-    "test_binding_channels_cli_flag_env_precedence",
-    "test_missions_list_verb",
     "test_b7_lone_unapproved_draft_contributes_nothing",
     "test_b12_union_names_all_matching_pairs",
     "test_b14_b16_binding_never_changes_exposure",
@@ -70,7 +61,6 @@ XFAIL: set[str] = {
     "test_b13_own_guards_gate_own_effect",
     "test_b30_audit_channels_unblockable",
     "test_gate_runs_leave_every_chain_byte_identical",
-    "test_b17_open_refuses_unreadable_sibling",
     "test_b22_gate_degraded_union_is_disclosed",
     "test_b23_effect_refuses_union_degraded",
     "test_b21_crossing_writes_side_channel_never_the_chain",
@@ -79,8 +69,6 @@ XFAIL: set[str] = {
     "test_b28_all_three_legs_yield_drift_sibling",
     "test_scan_covers_non_active_siblings",
     "test_b29_sibling_touched_prefix_forgery_refused",
-    "test_receipt_at_1_closure_regression",
-    "test_scope_overlap_disclosure_deterministic",
 }
 
 

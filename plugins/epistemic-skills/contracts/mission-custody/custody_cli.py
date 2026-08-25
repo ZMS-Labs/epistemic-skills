@@ -6,8 +6,13 @@ revision number for lifecycle mutations, the receipt JSON for effect and
 reconcile, the checkpoint JSON for status.
 
 Discovery is pathless by contract: no subcommand other than `open` accepts a
---mission-path or --mission-id flag. `Mission.load()` finds the single active
-mission under --workspace on every other command.
+--mission-path or --mission-id flag. Under es#173 concurrent missions a
+session declares which mission it acts under through exactly two channels --
+`--mission <id>` (per-call, wins) and the `ZMS_MISSION_ID` environment
+variable (session default); flag > env > unbound. Unbound, `Mission.load()`
+resolves the single active mission (unchanged), refuses `BindingRequired`
+when several are active, and a stale binding refuses `BindingInvalid` --
+it never falls through to discovery.
 
 Exit codes: 0 success; 2 usage/refusal (argparse prints usage; a CustodyError
 subclass prints its class name + message to stderr); 3 drift detected on
@@ -23,6 +28,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -57,7 +63,23 @@ def _common_parser() -> argparse.ArgumentParser:
     common = argparse.ArgumentParser(add_help=False)
     common.add_argument("--workspace", required=True)
     common.add_argument("--actor", required=True)
+    # es#173 session->mission binding, channel 1 of 2 (channel 2 is the
+    # ZMS_MISSION_ID environment variable; the flag wins). Deliberately
+    # named --mission, NOT --mission-id/--mission-path: those flags remain
+    # banned outside `open` (pathless-discovery contract) -- this one names
+    # which mission's AUTHORITY the verb acts under, never a path.
+    common.add_argument("--mission", default=None)
     return common
+
+
+def _session_binding(args: argparse.Namespace) -> str | None:
+    """flag > env > unbound. An empty or whitespace env value is unset --
+    `export ZMS_MISSION_ID=` must not manufacture a binding."""
+    flag = getattr(args, "mission", None)
+    if flag:
+        return flag
+    env = os.environ.get("ZMS_MISSION_ID", "").strip()
+    return env or None
 
 
 def _add_content_flags(parser: argparse.ArgumentParser) -> None:
@@ -149,6 +171,11 @@ def build_parser() -> argparse.ArgumentParser:
     p_open.add_argument("--guards-file", dest="guards_file")
     p_open.add_argument("--guard-mode", dest="guard_mode",
                         choices=["audit", "enforce"])
+    # es#173: quarantine an unreadable sibling mission dir, recorded in the
+    # opening checkpoint; open refuses otherwise (case row B17).
+    p_open.add_argument("--acknowledge-unreadable", action="append",
+                        default=[], dest="acknowledge_unreadable",
+                        metavar="DIR")
 
     sub.add_parser("approve", parents=[common])
 
@@ -176,6 +203,21 @@ def build_parser() -> argparse.ArgumentParser:
     p_effect.add_argument("--path", required=True)
     _add_content_flags(p_effect)
     p_effect.add_argument("--request-id", required=True)
+    # es#173 case row B23: effect under an unreadable active sibling refuses
+    # UnionDegraded until repaired or explicitly acknowledged (the
+    # acknowledgement is recorded in the acting mission's chain and
+    # persists).
+    p_effect.add_argument("--acknowledge-unreadable", action="append",
+                          default=[], dest="acknowledge_unreadable",
+                          metavar="DIR")
+
+    # es#173: plurality needs an enumeration verb.
+    sub.add_parser("missions", parents=[common],
+                   help="READ-ONLY list of every mission dir: id, status, "
+                        "approved?, steward, frontier")
+
+    p_ack_sib = sub.add_parser("acknowledge-sibling", parents=[common])
+    p_ack_sib.add_argument("--path", required=True)
 
     sub.add_parser("resume", parents=[common])
 
@@ -381,6 +423,12 @@ def dispatch(args: argparse.Namespace) -> int:
             raise CustodyError("--guard-mode requires --guards-file")
         guards = (_read_guards_file(args.guards_file)
                   if args.guards_file else None)
+        binding = _session_binding(args)
+        if binding is not None:
+            # Case row B4/B9: a present binding is validated on EVERY verb --
+            # a stale ZMS_MISSION_ID must refuse loudly, never be silently
+            # ignored. A valid binding does not otherwise affect `open`.
+            Mission.load(workspace, actor=args.actor, mission_id=binding)
         Mission.open(
             workspace, mission_id=args.mission_id,
             instruction=_read_text(args, "instruction"),
@@ -390,8 +438,47 @@ def dispatch(args: argparse.Namespace) -> int:
             permissions=args.permission, protected_state=args.protected,
             hold_if=args.hold_if, stop_if=args.stop_if, escalate_if=args.escalate_if,
             acceptable_costs=args.acceptable_costs,
-            guard_mode=args.guard_mode, actuator_guards=guards)
+            guard_mode=args.guard_mode, actuator_guards=guards,
+            acknowledge_unreadable=args.acknowledge_unreadable)
         print(1)  # Mission.open always writes revision 1
+        # The binding line for the shell: printed, NOT set -- a child
+        # process cannot set its parent's environment, and pretending
+        # otherwise would manufacture the "bound, actually unbound" decoy
+        # (es#173 section 1). stderr, so stdout keeps its one-value contract.
+        print(f"bind: export ZMS_MISSION_ID={_ascii_safe(args.mission_id)}",
+              file=sys.stderr)
+        return 0
+
+    if args.command == "missions":
+        rows = []
+        missions_root = workspace / "missions"
+        if missions_root.is_dir():
+            from custody_mission import _approved_by_chain
+            from custody_store import MissionStore
+            for mission_dir in sorted(missions_root.iterdir()):
+                if not mission_dir.is_dir():
+                    continue
+                store = MissionStore(mission_dir)
+                if not store.checkpoint_paths():
+                    continue
+                row = {"mission": mission_dir.name}
+                try:
+                    latest, _ = store.load_latest()
+                except (StoreError, ValueError) as exc:
+                    row.update({"status": "unreadable",
+                                "error": f"{type(exc).__name__}: {exc}",
+                                "approved": None, "steward_ref": None,
+                                "frontier": None})
+                else:
+                    row.update({
+                        "status": latest["status"],
+                        "approved": _approved_by_chain(store),
+                        "steward_ref": latest["manifest"]["steward_ref"],
+                        "frontier": latest["state"]["frontier"],
+                        "revision": latest["revision"],
+                    })
+                rows.append(row)
+        _print_status(rows)
         return 0
 
     if args.command == "gate":
@@ -401,7 +488,8 @@ def dispatch(args: argparse.Namespace) -> int:
         _print_status(verdict)
         return 2 if verdict["decision"] == "block" else 0
 
-    mission = Mission.load(workspace, actor=args.actor)
+    mission = Mission.load(workspace, actor=args.actor,
+                           mission_id=_session_binding(args))
 
     if args.command == "approve":
         print(mission.approve())
@@ -469,6 +557,8 @@ def dispatch(args: argparse.Namespace) -> int:
         _print_status(receipt)
     elif args.command == "acknowledge-loss":
         print(mission.acknowledge_receipt_loss(args.request_id))
+    elif args.command == "acknowledge-sibling":
+        print(mission.acknowledge_sibling(args.path))
     elif args.command == "verify":
         # READ-ONLY (es#138): never a lifecycle write. Exit 0 = chain intact,
         # exit 4 = chain break reported. Either way nothing was written.

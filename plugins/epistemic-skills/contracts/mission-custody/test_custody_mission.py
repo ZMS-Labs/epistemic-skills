@@ -25,10 +25,10 @@ import census_missions  # noqa: E402
 from custody_mission import (  # noqa: E402
     _same_artifact,
     AcceptanceRefused,
+    BindingRequired,
     CustodyError,
     IllegalTransition,
     Mission,
-    MultipleActiveMissions,
     NoActiveMission,
 )
 
@@ -95,16 +95,21 @@ def test_load_refuses_zero_and_multiple(workspace: Path) -> None:
         check("load-zero-raises", True)
 
     m1 = open_mission(workspace, "m-one", "A.")
-    # open() refuses to CREATE a second active mission in one workspace
-    # (decoy-disarm wedge, es#117 review fix 4); a duplicated mission dir
-    # arriving out-of-band (sync, copy) is exactly the multiple-active state
-    # load() must still refuse, so build it that way.
+    # es#173: plurality is legal, and an UNBOUND lifecycle verb over N>1
+    # active missions refuses BindingRequired (never guesses; the retired
+    # MultipleActiveMissions is raised nowhere) -- the refusal names every
+    # id and both binding channels; a bound load resolves normally.
     shutil.copytree(m1.store.mission_dir, workspace / "missions" / "m-two")
     try:
         Mission.load(workspace, actor="agent:x")
         check("load-multiple-raises", False)
-    except MultipleActiveMissions:
-        check("load-multiple-raises", True)
+    except BindingRequired as exc:
+        check("load-multiple-raises",
+              "m-one" in str(exc) and "m-two" in str(exc)
+              and "ZMS_MISSION_ID" in str(exc))
+    bound = Mission.load(workspace, actor="agent:x", mission_id="m-two")
+    check("load-multiple-bound-resolves",
+          bound.store.mission_dir.name == "m-two")
 
 
 def test_effect_writes_receipt_and_artifact(workspace: Path) -> None:

@@ -347,6 +347,25 @@ def _find_marker(unresolved: list[str], prefix: str, artifact_relpath: str) -> s
     return None
 
 
+def _approved_by_chain(store: MissionStore) -> bool:
+    """Has this mission EVER been operator-approved? The chain test, not
+    latest status: a never-approved mission can sit in `reopened` (drift on
+    a draft reopens it), so "latest status != draft" would let store damage
+    arm a draft's guards (OD-4) and let a never-approved sibling launder
+    drift (FATAL-3 leg 2). The core's own `_resumption_status` doctrine,
+    shared here so the union assembler and the resume discriminator cannot
+    disagree with it. Unreadable checkpoints answer False -- damage must
+    never widen authority."""
+    for cp_path in store.checkpoint_paths():
+        try:
+            record = json.loads(cp_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return False
+        if record.get("status") not in ("draft", "reopened"):
+            return True
+    return False
+
+
 class CustodyError(Exception):
     pass
 
@@ -356,7 +375,29 @@ class NoActiveMission(CustodyError):
 
 
 class MultipleActiveMissions(CustodyError):
-    pass
+    """RETIRED as a load-failure class (es#173): plurality is legal, so no
+    verb raises this any more. The class survives for import compatibility
+    and for readers of historical stores/logs that name it."""
+
+
+class BindingRequired(CustodyError):
+    """N>1 active missions and no session binding: the verb refuses rather
+    than guess which mission's authority the work lands under (es#173 §1)."""
+
+
+class BindingInvalid(CustodyError):
+    """The session's binding names a mission this workspace cannot act
+    under -- nonexistent, unreadable, completed, or cancelled. A stale
+    binding NEVER falls through to discovery or to the union: silent
+    fallback is how a session acts under the wrong authority politely
+    (es#173 §1)."""
+
+
+class UnionDegraded(CustodyError):
+    """An active sibling's store is unreadable, so its guards are silently
+    absent from the union. `effect` refuses under this state until the
+    sibling is repaired or the degradation is explicitly acknowledged
+    (es#173 §2, case row B23)."""
 
 
 class IllegalTransition(CustodyError):
@@ -517,6 +558,75 @@ def _is_matchable_pattern(entry: str) -> bool:
         # is both the declared meaning and the safe direction.
         return False
     return ".." not in segments
+
+
+def _seg_intersect(a: str, b: str) -> bool:
+    """Can two single-segment globs ('*'/'?' in-segment, no '/') both match
+    at least one string? Standard two-pattern recursion; memoized."""
+    memo: dict[tuple[int, int], bool] = {}
+
+    def rec(i: int, j: int) -> bool:
+        key = (i, j)
+        if key in memo:
+            return memo[key]
+        out = False
+        if i == len(a) and j == len(b):
+            out = True
+        else:
+            if not out and i < len(a) and a[i] == "*":
+                out = rec(i + 1, j) or (j < len(b) and rec(i, j + 1))
+            if not out and j < len(b) and b[j] == "*":
+                out = rec(i, j + 1) or (i < len(a) and rec(i + 1, j))
+            if not out and i < len(a) and j < len(b) \
+                    and a[i] != "*" and b[j] != "*" \
+                    and (a[i] == "?" or b[j] == "?" or a[i] == b[j]):
+                out = rec(i + 1, j + 1)
+        memo[key] = out
+        return out
+
+    return rec(0, 0)
+
+
+def _globs_intersect(left: str, right: str) -> bool:
+    """Do two scope path patterns admit a common path? (es#173 §3.)
+
+    Decidable for the dialect `_glob_regex` compiles: segments split on '/',
+    a segment containing '**' matches ZERO or more whole segments (which
+    also covers the trailing-'/**' base-path rule: ['x','**'] with '**'
+    consuming zero segments matches the base 'x'), '*'/'?' stay in-segment.
+    Both sides are normalized exactly as the receipt comparison normalizes,
+    including the NT-only A-Z fold, so the disclosure agrees with the
+    machinery it discloses about. Disclosure-only: an over- or under-report
+    here blocks nothing (coexistence on shared paths is the feature)."""
+    def prep(pattern: str) -> list[str]:
+        norm = _normalize_relpath(pattern)
+        if os.name == "nt":
+            norm = _ascii_case_fold(norm)
+        return ["**" if "**" in seg else seg for seg in norm.split("/")]
+
+    pa, pb = prep(left), prep(right)
+    memo: dict[tuple[int, int], bool] = {}
+
+    def rec(i: int, j: int) -> bool:
+        key = (i, j)
+        if key in memo:
+            return memo[key]
+        out = False
+        if i == len(pa) and j == len(pb):
+            out = True
+        else:
+            if not out and i < len(pa) and pa[i] == "**":
+                out = rec(i + 1, j) or (j < len(pb) and rec(i, j + 1))
+            if not out and j < len(pb) and pb[j] == "**":
+                out = rec(i, j + 1) or (i < len(pa) and rec(i + 1, j))
+            if not out and i < len(pa) and j < len(pb) \
+                    and pa[i] != "**" and pb[j] != "**" \
+                    and _seg_intersect(pa[i], pb[j]):
+                out = rec(i + 1, j + 1)
+        memo[key] = out
+        return out
+
+    return rec(0, 0)
 
 
 def _norm_scope_segments(norm: str) -> list[str]:
@@ -894,7 +1004,8 @@ class Mission:
               escalate_if: list[str] | None = None,
               acceptable_costs: list[str] | None = None,
               guard_mode: str | None = None,
-              actuator_guards: list | None = None) -> "Mission":
+              actuator_guards: list | None = None,
+              acknowledge_unreadable: list[str] | None = None) -> "Mission":
         workspace = Path(workspace)
         # ALL THREE identities validate BEFORE the load-probe, so a refused
         # open touches nothing on disk. The actor was missing from this
@@ -909,37 +1020,87 @@ class Mission:
         _refuse_unprintable_identity(actor, "actor")
         _refuse_unprintable_identity(steward_ref, "steward_ref")
         _refuse_unprintable_identity(operator_ref, "operator_ref")
-        # One ACTIVE mission per workspace, enforced at the door: every other
-        # command refuses multiple-active discovery, so open creating that
-        # state would be a decoy-disarm wedge (a second armed-or-unarmed
-        # mission bricks the gate's discovery). Checked BEFORE anything is
-        # written, so a refused open leaves no partial mission dir.
-        try:
-            cls.load(workspace, actor=actor)
-        except NoActiveMission as exc:
-            # "NOTHING ACTIVE" AND "I COULD NOT READ IT" ARE DIFFERENT ANSWERS.
-            # A store this reader must skip for epoch skew may hold an ACTIVE
-            # mission -- an updated reader is exactly the thing that would find
-            # out. Treating the skip as absence let open() write a second @1
-            # mission beside it (reproduced: the workspace ended with both),
-            # and the moment the reader is upgraded discovery sees two active
-            # missions, refuses, and the gate goes inert -- in a state no
-            # duplicate-resolution verb can clear, because this contract has
-            # none. Refusing costs an operator one upgrade; allowing it wedges
-            # the workspace for whoever comes next.
-            if "EpochSkew" in getattr(exc, "skipped_kinds", ()):
-                raise CustodyError(
-                    "a mission store here CLAIMS a newer contract epoch, so "
-                    "this reader cannot tell whether it holds an active "
-                    "mission. Opening beside it risks two active missions "
-                    "once the reader is updated, which wedges the gate. Read "
-                    "this workspace with an updated custody plugin/CLI first."
-                ) from exc
-            pass  # the expected state: nothing active to conflict with
-        else:
+        # PLURALITY IS LEGAL (es#173 §3): open no longer refuses on an
+        # existing active mission -- the fail-open decoy is removed not by
+        # handling MultipleActiveMissions better but by making the state
+        # legal. What open still refuses, checked BEFORE anything is written
+        # so a refused open leaves no partial mission dir:
+        #
+        # 1. a duplicate mission_id (the dir already holds checkpoints);
+        # 2. EpochSkew anywhere in the store -- a store this reader cannot
+        #    read may hold anything, and opening beside it is still blind;
+        # 3. unreadable mission dirs, unless each is explicitly quarantined:
+        #    under concurrent missions a corrupt sibling's guards are
+        #    silently absent from the union, so ignorable-corruption is no
+        #    longer a safe posture (case row B17).
+        if MissionStore(workspace / "missions" / mission_id).checkpoint_paths():
             raise CustodyError(
-                "an active mission already exists under this workspace; "
-                "complete or cancel it before opening another")
+                f"mission {mission_id!r} already exists under this "
+                "workspace; mission ids are permanent -- choose a fresh id")
+        siblings, skipped = cls._discover(workspace)
+        if any(s["kind"] == "EpochSkew" for s in skipped):
+            raise CustodyError(
+                "a mission store here CLAIMS a newer contract epoch, so "
+                "this reader cannot tell whether it holds an active "
+                "mission or what guards it arms. Opening beside it is "
+                "blind. Read this workspace with an updated custody "
+                "plugin/CLI first.")
+        acked = {str(name) for name in (acknowledge_unreadable or [])}
+        unknown = sorted(acked - {s["name"] for s in skipped})
+        if unknown:
+            raise CustodyError(
+                "acknowledge_unreadable names dir(s) that are not "
+                f"unreadable mission dirs here: {', '.join(unknown)} -- an "
+                "acknowledgement that matches nothing is a typo, not a "
+                "quarantine")
+        unacked = sorted(s["name"] for s in skipped if s["name"] not in acked)
+        if unacked:
+            raise CustodyError(
+                "unreadable mission dir(s) under this workspace: "
+                + ", ".join(unacked) +
+                ". Under concurrent missions an unreadable sibling's guards "
+                "are silently absent from the union, so open refuses until "
+                "they are repaired or explicitly quarantined "
+                "(--acknowledge-unreadable <dir>, recorded in the opening "
+                "checkpoint).")
+        opening_notes = [f"unreadable sibling acknowledged: {s['name']}"
+                         for s in sorted(skipped, key=lambda s: s["name"])]
+        # Scope-overlap disclosure (§3): pattern-vs-pattern intersection is
+        # decidable for this glob dialect; prose entries are reported as
+        # incomparable. Disclosure, not refusal -- coexistence on shared
+        # paths is the feature being built. Deterministic: sorted walk over
+        # sorted siblings, so identical inputs disclose identically.
+        new_patterns = sorted(e for e in (scope_in or [])
+                              if _is_matchable_pattern(e))
+        new_prose = sorted(e for e in (scope_in or [])
+                           if not _is_matchable_pattern(e))
+        for entry in sorted(siblings, key=lambda e: e["name"]):
+            sib_in = entry["latest"]["manifest"]["scope"]["in"]
+            sib_patterns = sorted(e for e in sib_in
+                                  if _is_matchable_pattern(e))
+            sib_prose = sorted(e for e in sib_in
+                               if not _is_matchable_pattern(e))
+            for a in new_patterns:
+                for b in sib_patterns:
+                    if _globs_intersect(a, b):
+                        opening_notes.append(
+                            f"scope overlap with {entry['name']}: "
+                            f"{a} ~ {b}")
+            if (scope_in or []) and sib_in:
+                for e in new_prose:
+                    opening_notes.append(
+                        f"scope entry vs {entry['name']} incomparable "
+                        f"(prose): {e}")
+                for e in sib_prose:
+                    opening_notes.append(
+                        f"scope entry of {entry['name']} incomparable "
+                        f"(prose): {e}")
+        for note in opening_notes:
+            # The composed disclosure embeds caller text (scope entries, dir
+            # names); a multi-line entry could smuggle a machine-note line
+            # into the opening checkpoint. Refusing the open is the fail-safe
+            # direction, and the guard's own message names the offending line.
+            _refuse_reserved_note(note)
         store = MissionStore(workspace / "missions" / mission_id)
         created = now_utc()
         manifest = {
@@ -975,7 +1136,7 @@ class Mission:
             "manifest": manifest,
             "state": {
                 "frontier": "await operator approval",
-                "notes": [],
+                "notes": opening_notes,
                 "unresolved_verdicts": [],
             },
             "receipt_ids": [],
@@ -986,12 +1147,19 @@ class Mission:
         return cls(store, workspace, actor)
 
     @classmethod
-    def load(cls, workspace: Path, actor: str) -> "Mission":
+    def _discover(cls, workspace: Path) -> tuple[list[dict], list[dict]]:
+        """Walk missions/ once: every ACTIVE mission and every skip.
+
+        Returns (active, skipped). Each active entry is
+        {"name", "dir", "store", "latest"} -- latest is the chain-verified
+        latest checkpoint. Each skipped entry is {"name", "kind", "reason"}
+        for a dir whose latest checkpoint fails to load. The ONE discovery
+        walk, shared by load, open, the union assembler, and the effect
+        gate, so no two surfaces can disagree about what is active."""
         workspace = Path(workspace)
         missions_root = workspace / "missions"
-        active: list[Path] = []
-        skipped: list[str] = []
-        skipped_kinds: list[str] = []
+        active: list[dict] = []
+        skipped: list[dict] = []
         if missions_root.is_dir():
             for mission_dir in sorted(missions_root.iterdir()):
                 if not mission_dir.is_dir():
@@ -1009,29 +1177,85 @@ class Mission:
                     # skipping those would reroute discovery around a mission
                     # that is merely busy, inviting a duplicate open.
                     reason = f"{mission_dir.name}: {type(exc).__name__}: {exc}"
-                    skipped.append(reason)
-                    skipped_kinds.append(type(exc).__name__)
+                    skipped.append({"name": mission_dir.name,
+                                    "kind": type(exc).__name__,
+                                    "reason": reason})
                     print(("custody: skipping unreadable mission dir " + reason)
                           .encode("ascii", "backslashreplace").decode("ascii"),
                           file=sys.stderr)
                     continue
                 if latest["status"] not in ("completed", "cancelled"):
-                    active.append(mission_dir)
+                    active.append({"name": mission_dir.name,
+                                   "dir": mission_dir, "store": store,
+                                   "latest": latest})
+        return active, skipped
+
+    @classmethod
+    def load(cls, workspace: Path, actor: str,
+             mission_id: str | None = None) -> "Mission":
+        """Resolve the mission this session acts under (es#173 §1).
+
+        Bound (mission_id given): the binding must name a mission directory
+        in THIS workspace whose latest checkpoint status is an open state.
+        Bound-to-nonexistent, bound-to-unreadable, bound-to-completed and
+        bound-to-cancelled are four spellings of the same BindingInvalid
+        refusal -- a stale binding NEVER falls through to discovery or to
+        "the only active mission": silent fallback is how a session acts
+        under the wrong authority politely.
+
+        Unbound: 0 active -> NoActiveMission (unchanged); 1 active ->
+        resolves to it (the single-mission workflow must not grow
+        ceremony); N>1 active -> BindingRequired naming every id and both
+        binding channels. It never guesses."""
+        workspace = Path(workspace)
+        if mission_id is not None:
+            mission_dir = workspace / "missions" / mission_id
+            store = MissionStore(mission_dir)
+            if not store.checkpoint_paths():
+                raise BindingInvalid(
+                    f"binding names mission {mission_id!r}: no such mission "
+                    f"under {workspace / 'missions'}. A binding never falls "
+                    "through to discovery -- fix or unset it (--mission / "
+                    "ZMS_MISSION_ID)")
+            try:
+                latest, _ = store.load_latest()
+            except (StoreError, ValueError) as exc:
+                raise BindingInvalid(
+                    f"binding names mission {mission_id!r}, whose store "
+                    f"cannot be read ({type(exc).__name__}: {exc}). A "
+                    "binding never falls through -- repair the store or "
+                    "unset the binding (--mission / ZMS_MISSION_ID)"
+                ) from exc
+            if latest["status"] not in _OPEN_STATES:
+                raise BindingInvalid(
+                    f"binding names mission {mission_id!r}, whose status is "
+                    f"{latest['status']!r} -- not an open state. Unset the "
+                    "binding (--mission / ZMS_MISSION_ID)")
+            return cls(store, workspace, actor)
+        active, skipped = cls._discover(workspace)
         if not active:
-            detail = f"; skipped unreadable: {'; '.join(skipped)}" if skipped else ""
-            exc = NoActiveMission(f"no active mission under {missions_root}{detail}")
+            reasons = [s["reason"] for s in skipped]
+            detail = (f"; skipped unreadable: {'; '.join(reasons)}"
+                      if skipped else "")
+            exc = NoActiveMission(
+                f"no active mission under {workspace / 'missions'}{detail}")
             # STRUCTURED, not prose. A caller that needs to know WHY discovery
             # came up empty must not have to grep the message: the message
             # contains the workspace path, so a directory literally named
             # `/work/NEWER epoch migration` made a substring test report a
             # newer-epoch store in a workspace holding no stores at all
             # (measured). Callers read this attribute instead.
-            exc.skipped_kinds = tuple(skipped_kinds)
+            exc.skipped_kinds = tuple(s["kind"] for s in skipped)
             raise exc
         if len(active) > 1:
-            names = ", ".join(p.name for p in active)
-            raise MultipleActiveMissions(f"multiple active missions: {names}")
-        return cls(MissionStore(active[0]), workspace, actor)
+            names = ", ".join(e["name"] for e in active)
+            raise BindingRequired(
+                f"{len(active)} active missions under this workspace: "
+                f"{names}. Bind the session to one -- pass --mission <id> "
+                "on the verb, or export ZMS_MISSION_ID=<id> for the "
+                "session. Binding routes authority (where effects and "
+                "notes land), never guard exposure.")
+        return cls(active[0]["store"], workspace, actor)
 
     # -- internal helpers ---------------------------------------------------
 
@@ -1437,12 +1661,10 @@ class Mission:
         The chain is the authority, as everywhere else here: a mission that
         has never been approved has no checkpoint whose status is anything but
         `draft` or `reopened`. Nothing is read from a caller-supplied string.
-        """
-        for cp_path in self.store.checkpoint_paths():
-            record = json.loads(cp_path.read_text(encoding="utf-8"))
-            if record["status"] not in ("draft", "reopened"):
-                return "active"
-        return "draft"
+        ONE implementation (`_approved_by_chain`), shared with the union
+        assembler and the sibling-drift discriminator (es#173), so the three
+        readers of "was this ever approved" cannot drift apart."""
+        return "active" if _approved_by_chain(self.store) else "draft"
 
     def _retired_receipt_ids(self, latest: dict) -> set[str]:
         """Ids whose loss was acknowledged. Retirement is permanent and lives
