@@ -1961,8 +1961,10 @@ class Mission:
             pairs = "; ".join(f"mission={m['mission']} rule={m['rule']}"
                               for m in blocking)
             raise CustodyError(
-                f"effect blocked by custody guard(s): {pairs}. Nothing was "
-                "written and no receipt was minted. Discharge is "
+                f"effect blocked by custody guard(s): {pairs}. No artifact "
+                "bytes were written, no receipt was minted, and no chain "
+                "checkpoint landed; each matching mission's guard-log.jsonl "
+                "records the refusal (intended audit). Discharge is "
                 "PER-MISSION: an amend recorded in one mission discharges "
                 "that mission's rule only -- bind to each matching mission "
                 "(--mission <id>) and change the rule via `amend "
@@ -1973,11 +1975,13 @@ class Mission:
         # Only now -- with the union verdict in hand -- does anything touch
         # the chain. The fresh-quarantine checkpoints used to land BEFORE
         # evaluation, so a blocked effect mutated the chain while its
-        # refusal claimed "Nothing was written" (PR #220 refuter, finding
+        # refusal claimed nothing was written (PR #220 refuter, finding
         # 4: checkpoint count 2 -> 3 on a block, measured). Evaluation is a
         # pure read over `entries`, so ordering it first costs nothing; the
         # quarantine judgement still becomes chain state BEFORE the write
-        # it licenses, one machine-note checkpoint per dir.
+        # it licenses, one machine-note checkpoint per dir. The guard-log
+        # append above is deliberate and outside the chain -- the refusal
+        # is audit, and the message says so rather than claiming silence.
         for name in fresh_acks:
             self._write_next(latest, path, status=latest["status"],
                               note=f"unreadable-acknowledged: {name}")
@@ -2381,13 +2385,20 @@ class Mission:
                       if k] + unplaceable_opaque
         mismatched: list[str] = []
         current_sha_by_rel: dict[str, str] = {}
-        for request_id, receipt, kind in current_by_key.values():
+        # Per-key dispositions this run established, kept so a stale
+        # DRIFT-SIBLING marker (below) can say truthfully what became of
+        # its path: verified clean, receipt lost, or receipt opaque.
+        verified_keys: set[str] = set()
+        missing_by_key: dict[str, str] = {}
+        opaque_by_key: dict[str, tuple[str, str]] = {}
+        for key, (request_id, receipt, kind) in current_by_key.items():
             if kind:
                 # Unverifiable, and honestly so: without the receipt's hash
                 # this reader cannot say the artifact drifted OR that it is
                 # clean. RECEIPT-NEWER-EPOCH already carries that, and NOT
                 # emitting RECONCILIATION here is what keeps `reconcile`
                 # unavailable for this path -- it refuses without a marker.
+                opaque_by_key[key] = (kind, request_id)
                 continue
             if receipt is None:
                 # An unloadable receipt is drift, not a skip: the artifact it
@@ -2395,6 +2406,7 @@ class Mission:
                 # false "clean" for exactly the file most likely tampered.
                 if request_id not in missing:
                     missing.append(request_id)
+                missing_by_key[key] = request_id
                 continue
             rel = receipt["artifact_path"]
             target = self.workspace / rel
@@ -2403,6 +2415,8 @@ class Mission:
                 mismatched.append(rel)
                 if actual is not None:
                     current_sha_by_rel[rel] = actual
+            else:
+                verified_keys.add(key)
         mismatched.sort()
         missing.sort()
         opaque_ids.sort()
@@ -2451,13 +2465,77 @@ class Mission:
         # CURRENT severity: a still-attributable path keeps its marker, a
         # no-longer-attributable one becomes a plain RECONCILIATION
         # finding (the mismatched loop below raises it), and a path whose
-        # content now verifies drops the marker entirely.
+        # content now verifies drops the marker.
+        #
+        # LOUD AUTO-DISCHARGE (operator ruling 2026-08-25, fix-refuter
+        # F-A): the drop stays automatic -- a transient crossing whose
+        # bytes were reverted leaves nothing to reconcile -- but it is a
+        # finding-grade event, never silence: resume RETURNS a
+        # SIBLING-DISCHARGED:<path> marker (non-blocking -- it is not an
+        # unresolved verdict and the status still transitions), and the
+        # discharge note carries the sibling attribution recorded at the
+        # original detection, so the crossing survives in the record even
+        # though its bytes no longer show it.
         live_sibling = {f"DRIFT-SIBLING:{rel}" for rel in sibling_class}
         stale_sibling = [m for m in latest["state"]["unresolved_verdicts"]
                          if m.startswith("DRIFT-SIBLING:")
                          and m not in live_sibling]
         if not findings and not stale_skew and not stale_sibling:
             return []
+
+        def _marker_key(rel: str) -> str:
+            key = _normalize_relpath(rel)
+            return _ascii_case_fold(key) if os.name == "nt" else key
+
+        def _sibling_attribution(rel: str) -> str:
+            # The attribution the ORIGINAL detection recorded ("sibling
+            # receipt: <rel> matches <mission> receipt <id>") -- read from
+            # the chain's own notes, newest first, because the bytes that
+            # proved it may no longer exist.
+            # The detection writes the attribution as a clause INSIDE the
+            # composite drift note, so search within each note and take
+            # the clause up to the next ';'.
+            needle = f"sibling receipt: {rel} matches "
+            for n in reversed(latest["state"]["notes"]):
+                if isinstance(n, str) and needle in n:
+                    tail = n[n.index(needle) + len(needle):]
+                    return tail.split(";", 1)[0].strip()
+            return "an unrecorded sibling"
+
+        mismatched_keys = {_marker_key(r) for r in mismatched}
+        discharged: list[str] = []
+        stale_sibling_notes: list[str] = []
+        for m in stale_sibling:
+            rel = m[len("DRIFT-SIBLING:"):]
+            key = _marker_key(rel)
+            attribution = _sibling_attribution(rel)
+            if key in mismatched_keys:
+                stale_sibling_notes.append(
+                    f"stale sibling marker superseded: {m} re-classified "
+                    f"at current severity (was attributed to {attribution})")
+            elif key in missing_by_key:
+                # The obligation TRANSFERS to receipt-loss (fix-refuter
+                # F-B): nothing was re-classified -- the receipt that
+                # would prove either reading is gone, and RECEIPT-MISSING
+                # now carries the path's obligation.
+                stale_sibling_notes.append(
+                    "stale sibling marker superseded by "
+                    f"RECEIPT-MISSING:{missing_by_key[key]}: {m} (was "
+                    f"attributed to {attribution})")
+            elif key in opaque_by_key:
+                kind, rid = opaque_by_key[key]
+                stale_sibling_notes.append(
+                    "stale sibling marker superseded by "
+                    f"RECEIPT-{kind}:{rid}: {m} (was attributed to "
+                    f"{attribution})")
+            else:
+                verdict = ("content verifies against this mission's own "
+                           "receipt" if key in verified_keys
+                           else "the path is no longer attributable")
+                discharged.append(f"SIBLING-DISCHARGED:{rel}")
+                stale_sibling_notes.append(
+                    f"transient sibling crossing discharged: {rel} -- "
+                    f"{verdict}; was attributed to {attribution}")
         unresolved = [m for m in latest["state"]["unresolved_verdicts"]
                       if m not in stale_skew and m not in stale_sibling]
         for rel in mismatched:
@@ -2487,9 +2565,8 @@ class Mission:
                          f"{hit['mission']} receipt {hit['receipt_id']}")
             for line in sibling_evidence:
                 note += f"; sibling receipt evidence: {line}"
-            for m in stale_sibling:
-                note += (f"; stale sibling marker superseded: {m} "
-                         "re-classified at current severity")
+            for line in stale_sibling_notes:
+                note += f"; {line}"
         else:
             status = ("reopened" if unresolved
                       else self._resumption_status())
@@ -2498,14 +2575,14 @@ class Mission:
                 cleared.append(
                     "previously unverifiable receipt(s) now readable: "
                     + ", ".join(m.split(":", 1)[1] for m in stale_skew))
-            if stale_sibling:
-                cleared.append(
-                    "stale sibling marker(s) discharged, content verifies: "
-                    + ", ".join(m.split(":", 1)[1] for m in stale_sibling))
+            cleared.extend(stale_sibling_notes)
             note = "; ".join(cleared)
         self._write_next(latest, path, status=status,
                           unresolved_verdicts=unresolved, note=note)
-        return findings
+        # The discharge markers ride the RETURN, not unresolved_verdicts:
+        # callers (and the CLI) must see the event, but nothing is left to
+        # reconcile and the status has already transitioned.
+        return findings + discharged
 
     def reconcile(self, artifact_relpath: str, content: str, request_id: str) -> dict:
         latest, path = self.store.load_latest()

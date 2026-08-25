@@ -958,15 +958,24 @@ def test_refuter_f3_bound_load_validates_mission_id(workspace: Path) -> None:
     m = load_bound(ws1, "m-local")
     check("F3-normal-id-still-loads",
           m.store.mission_dir == ws1 / "missions" / "m-local")
+    # fix-refuter F-D: re's `$` also matches just before a trailing
+    # newline, so "m-x\n" passed the schema's kebab-case check -- the id
+    # rule must anchor with \Z.
+    from verify_mission_custody import _ID_RE
+    check("F3-id-re-rejects-trailing-newline",
+          _ID_RE.match("m-x\n") is None)
+    check("F3-id-re-still-accepts-plain-id",
+          _ID_RE.match("m-x") is not None)
 
 
 def test_refuter_f4_blocked_effect_writes_nothing(workspace: Path) -> None:
-    """Refuter finding 4: a blocked effect's refusal claims "Nothing was
-    written and no receipt was minted" -- so nothing may be. Pre-fix the
-    fresh unreadable-acknowledged checkpoints landed BEFORE union
+    """Refuter finding 4: a blocked effect's refusal claimed "Nothing was
+    written and no receipt was minted" while the fresh
+    unreadable-acknowledged checkpoints had landed BEFORE union
     evaluation could block (measured, PROBE 5: checkpoint count 2 -> 3 on
     a refusal). Refuse-before-mutate: the chain must be byte-identical
-    after a block."""
+    after a block. (The message now names its one deliberate side effect,
+    the guard-log append -- fix-refuter F-C.)"""
     g = [{"name": "no-frozen", "tool_names": ["Write"],
           "command_regexes": [], "path_globs": ["frozen/**"]}]
     open_mission(workspace, "m-guard", guard_mode="enforce",
@@ -1070,6 +1079,88 @@ def test_refuter_f5_post_approve_union_unchanged(workspace: Path) -> None:
         check("F5-post-approve-sibling-effect-blocked", True)
 
 
+def _raise_sibling_marker(ws: Path) -> Mission:
+    """m-alpha receipts shared.txt, authorizes m-beta, m-beta crosses,
+    m-alpha's resume raises DRIFT-SIBLING:shared.txt. Returns bound
+    m-alpha with the marker standing."""
+    a, b = _two_missions_one_artifact(ws)
+    a.amend_authority("operator: mission m-beta is authorized to write "
+                      "shared.txt")
+    b.record_effect("shared.txt", "beta-1", "req-b1")
+    a = load_bound(ws, "m-alpha")
+    assert a.resume() == ["DRIFT-SIBLING:shared.txt"]
+    return a
+
+
+def test_refuter_fa_transient_crossing_discharges_loudly(workspace: Path) -> None:
+    """Fix-refuter F-A (operator ruling 2026-08-25: loud auto-discharge):
+    a transient sibling crossing -- write then revert to the receipted
+    bytes -- self-discharged in SILENCE: resume returned [], the CLI
+    printed "resume: clean", and the discharge note named the path but
+    not the sibling. The discharge stays automatic (nothing is left to
+    reconcile) but is finding-grade: resume RETURNS
+    SIBLING-DISCHARGED:<path> (non-blocking -- status still transitions),
+    the CLI prints it and never "clean", and the note carries the sibling
+    attribution from the original detection."""
+    # Library leg.
+    ws = workspace / "lib"
+    a = _raise_sibling_marker(ws)
+    (ws / "shared.txt").write_text("alpha-1", encoding="utf-8")  # revert
+    findings = a.resume()
+    check("FA-resume-returns-discharge",
+          findings == ["SIBLING-DISCHARGED:shared.txt"])
+    latest = a.store.load_latest()[0]
+    check("FA-status-transitions", latest["status"] == "active")
+    check("FA-nothing-unresolved",
+          latest["state"]["unresolved_verdicts"] == [])
+    check("FA-note-names-sibling-and-receipt",
+          any("discharged" in n and "m-beta" in n and "req-b1" in n
+              for n in latest["state"]["notes"]))
+    try:
+        a.begin_verification()
+        check("FA-verification-reachable-without-ack", True)
+    except IllegalTransition:
+        check("FA-verification-reachable-without-ack", False)
+    # CLI leg: the discharge line reaches stdout, "clean" never prints,
+    # and the exit code stays 0 -- finding-grade, not drift-grade.
+    ws = workspace / "cli"
+    _raise_sibling_marker(ws)
+    (ws / "shared.txt").write_text("alpha-1", encoding="utf-8")
+    r = run_cli(["resume", "--workspace", str(ws),
+                 "--actor", "agent:worker", "--mission", "m-alpha"])
+    check("FA-cli-prints-discharge",
+          "SIBLING-DISCHARGED:shared.txt" in r.stdout)
+    check("FA-cli-never-clean",
+          "resume: clean" not in (r.stdout + r.stderr))
+    check("FA-cli-exit-nonblocking", r.returncode == 0)
+
+
+def test_refuter_fb_marker_transfer_note_truthful(workspace: Path) -> None:
+    """Fix-refuter F-B: when a stale DRIFT-SIBLING marker's obligation
+    transfers to receipt-loss (the covering receipt file vanished), the
+    note claimed "re-classified at current severity" -- false: nothing
+    was re-classified, the receipt that would prove either reading is
+    gone. The note must say the marker was superseded by RECEIPT-MISSING
+    and carry the sibling attribution."""
+    a = _raise_sibling_marker(workspace)
+    a.store.receipt_path("req-a1").unlink()
+    findings = a.resume()
+    check("FB-receipt-missing-raised",
+          "RECEIPT-MISSING:req-a1" in findings)
+    latest = a.store.load_latest()[0]
+    unresolved = latest["state"]["unresolved_verdicts"]
+    check("FB-marker-transferred",
+          "DRIFT-SIBLING:shared.txt" not in unresolved
+          and "RECEIPT-MISSING:req-a1" in unresolved)
+    notes = latest["state"]["notes"]
+    check("FB-note-names-transfer-and-sibling",
+          any("superseded by RECEIPT-MISSING:req-a1" in n
+              and "m-beta" in n and "req-b1" in n for n in notes))
+    check("FB-note-not-falsely-reclassified",
+          not any("re-classified at current severity" in n
+                  for n in notes))
+
+
 # ---------------------------------------------------------------------------
 # Registry
 # ---------------------------------------------------------------------------
@@ -1117,6 +1208,8 @@ TESTS = [
     test_refuter_f5_draft_self_arms_own_session,
     test_refuter_f5_draft_guards_invisible_elsewhere,
     test_refuter_f5_post_approve_union_unchanged,
+    test_refuter_fa_transient_crossing_discharges_loudly,
+    test_refuter_fb_marker_transfer_note_truthful,
 ]
 
 

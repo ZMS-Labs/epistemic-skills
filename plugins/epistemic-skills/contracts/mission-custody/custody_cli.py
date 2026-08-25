@@ -532,10 +532,17 @@ def dispatch(args: argparse.Namespace) -> int:
             acknowledge_unreadable=args.acknowledge_unreadable)
         _print_status(receipt)
     elif args.command == "resume":
-        drift = mission.resume()
-        for relpath in drift:
-            print(_ascii_safe(relpath))
-        if not drift:
+        findings = mission.resume()
+        for marker in findings:
+            print(_ascii_safe(marker))
+        # SIBLING-DISCHARGED is finding-grade but non-blocking (operator
+        # ruling 2026-08-25, loud auto-discharge): it rides stdout like
+        # every finding -- a resume that discharged a transient sibling
+        # crossing must NEVER print "clean" -- but it leaves nothing
+        # unresolved, so it does not contribute to the drift exit code.
+        drift = [m for m in findings
+                 if not m.startswith("SIBLING-DISCHARGED:")]
+        if not findings:
             n = len(set(mission.status()["receipt_ids"]))
             vacuous = " -- vacuously (no effects recorded)" if n == 0 else ""
             print(f"resume: clean; {n} receipt id(s) on record{vacuous}",
