@@ -334,14 +334,14 @@ def test_mcp_tool_input_serialized_match() -> None:
                "command_regexes": ["7878"], "path_globs": []}]
     call = {"tool_name": "mcp__sonarr__post", "command": None,
             "file_path": None,
-            "tool_input": {"url": "http://10.10.10.50:7878/api/v3/series",
+            "tool_input": {"url": "http://203.0.113.10:7878/api/v3/series",
                            "method": "POST"}}
     v = evaluate(auth("enforce", guards), call)
     check("eval-mcp-serialized-args-block",
           v["decision"] == "block" and v["rule"] == "arr-mcp")
     safe = {"tool_name": "mcp__sonarr__post", "command": None,
             "file_path": None,
-            "tool_input": {"url": "http://10.10.10.50:8989/api/v3/series"}}
+            "tool_input": {"url": "http://203.0.113.10:8989/api/v3/series"}}
     check("eval-mcp-no-match-allows",
           not evaluate(auth("enforce", guards), safe)["matched"])
 
