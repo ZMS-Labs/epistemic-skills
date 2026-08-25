@@ -2861,6 +2861,130 @@ def test_windows_separator_form_table(workspace: Path) -> None:
               == (_is_path_pattern(fwd), _is_matchable_pattern(fwd)))
 
 
+# THE BARE MULTI-SEGMENT FORM -- the one cell of #157's product the table
+# above does not carry, and the only cell whose END-TO-END verdict this
+# change actually moves.
+#
+# #157 asked for the product separator x whitespace x wildcard x extension.
+# Walking it for the `\\` separator, every cell is asserted somewhere above
+# EXCEPT (whitespace=no, wildcard=no, extension=no, trailing=no) --
+# `Docs\archive`. `test_scope_entry_classification_table` carries its
+# predicate row (`docs\source` -> True); nothing carried its BINDING.
+#
+# That absence is not cosmetic, because a differential over the two
+# classifiers says this is the cell the fix moves. Measured, pre-fix vs
+# post-fix, over the separator corpus -- only four entries change verdict:
+#
+#   Case I\SECRETS.env      DISCLOSED -> BINDS   (case row, asserted below)
+#   Trail E\rel notes\      DISCLOSED -> BINDS   (trailing row, above)
+#   Docs\archive            DISCLOSED -> compared, EXACT-ONLY   <- unasserted
+#   a\b\c                   DISCLOSED -> compared, EXACT-ONLY   <- unasserted
+#
+# Every other row above was ALREADY compared before the fix -- carried by a
+# `/`, a `*`, an extension or the deleted `endswith("\\")` clause -- so the
+# rows that bind are largely enumeration and this is where the change lands.
+#
+# THE VERDICT IS A THIRD ONE, AND SAYING SO IS THE POINT. The form table
+# above divides entries into BINDS and DISCLOSED and states that no row may
+# be silently inert. Both remain true under that block's own definitions --
+# "silently inert" there means UNMATCHABLE-yet-compared, the class
+# `_is_matchable_pattern` demotes, and `Docs\archive` is matchable: it binds
+# the artifact `Docs/archive` exactly. But it does NOT bind anything beneath
+# that path, and it is not listed by `uncompared_scope_entries` either. An
+# operator who wrote it meaning the DIRECTORY is told nothing.
+#
+# That reading is CORRECT, not a defect, and the distinction is load-bearing:
+# #155's case table settled `docs` -> `docs` as the wanted behaviour and named
+# this exact class "matchable-but-wrong", stating that the disclosure surface
+# "is authoritative only for the unmatchable class". The subtree reading is
+# spelled with a trailing separator (`Docs\archive\`), which the row
+# `trailing-bare` above proves binds.
+#
+# So the honest price of the fix, asserted rather than narrated: for THIS
+# form the backslash spelling loses a disclosure it used to get for the wrong
+# reason. Pre-fix it was called prose and listed as uncompared -- not because
+# anything understood it, but because the classifier could not see a
+# separator. The forward-slash twin never had that listing. The rows below
+# pin BOTH spellings to the same behaviour, so the invariance the fix claims
+# is asserted end-to-end and not only through the predicate.
+#
+# WHAT A FUTURE READER MUST NOT CONCLUDE FROM THESE ROWS GOING RED. The
+# `-child-not-flagged` assertions pin SETTLED SEMANTICS (#155), not a bug
+# fence. If a later change deliberately gives a bare entry its subtree, they
+# go red and that red means "update this row and #155's table", not "a
+# regression appeared". They are here so that change has to be deliberate.
+
+# (label, scope.out entry, the artifact the entry names, a CHILD of it)
+_WIN_SEPARATOR_EXACT_ONLY_ROWS = [
+    ("bare-two-segment", "Docs\\archive", "Docs/archive", "Docs/archive/x.txt"),
+    ("bare-three-segment", "a\\b\\c", "a/b/c", "a/b/c/leaf.txt"),
+]
+
+
+def test_windows_bare_multi_segment_entry_names_exactly_one_path(
+        workspace: Path) -> None:
+    """A bare `Docs\\archive` is COMPARED, binds that path, and binds nothing
+    under it -- identically to `Docs/archive`.
+
+    Red under the pre-fix classifier (both `-compared-` and `-exact-flagged-`
+    go red: the entry falls back to prose, so the exclusion is dropped and the
+    write it names draws no finding), and red under the half-applied fix that
+    deletes the `endswith("\\\\")` clause without adding normalization.
+
+    The `-child-not-flagged` half is NOT red under either mutant. It is not a
+    control; it is a pinned reading, and it is asserted for the forward-slash
+    twin in the same breath so that no future edit can make one separator
+    spelling mean a subtree while the other means one file.
+    """
+    from custody_mission import _is_compared_entry, uncompared_scope_entries
+
+    def _mission(subdir: str, mission_id: str, entries, artifacts):
+        m = open_mission(
+            workspace / subdir, mission_id,
+            "Bare multi-segment separator forms.",
+            scope_out=entries)
+        m.approve()
+        for i, artifact in enumerate(artifacts):
+            m.record_effect(artifact, "x", "%s-%d" % (mission_id, i))
+        flagged = {f["artifact_path"] for f in m.scope_consistency()
+                   if f["reason"] == "matches scope.out"}
+        latest, _ = m.store.load_latest()
+        return flagged, uncompared_scope_entries(latest["manifest"])["out"]
+
+    for spelling, to_entry in (("win", lambda e: e),
+                               ("fwd", lambda e: e.replace("\\", "/"))):
+        entries = [to_entry(entry)
+                   for _, entry, _, _ in _WIN_SEPARATOR_EXACT_ONLY_ROWS]
+
+        # The entry is COMPARED -- this is what the fix moved, and it is the
+        # assertion that goes red without the normalization.
+        for (label, entry, _named, _child) in _WIN_SEPARATOR_EXACT_ONLY_ROWS:
+            check("sep-exact-%s-compared-%s" % (spelling, label),
+                  _is_compared_entry(to_entry(entry)))
+
+        # ...and it BINDS the artifact it names. A separate mission per half:
+        # `Docs/archive` cannot be both a file and a directory at once, so
+        # writing the named path and its child in one workspace is impossible.
+        flagged, declined = _mission(
+            "exact-" + spelling, "m-sep-exact-" + spelling, entries,
+            [named for _, _, named, _ in _WIN_SEPARATOR_EXACT_ONLY_ROWS])
+        check("sep-exact-%s-none-uncompared" % spelling, declined == [])
+        for (label, _entry, named, _child) in _WIN_SEPARATOR_EXACT_ONLY_ROWS:
+            check("sep-exact-%s-flagged-%s" % (spelling, label),
+                  named in flagged)
+
+        # ...and binds NOTHING beneath it, while saying nothing about that.
+        # Both halves of the price are asserted: no finding AND no disclosure.
+        child_flagged, child_declined = _mission(
+            "child-" + spelling, "m-sep-child-" + spelling, entries,
+            [child for _, _, _, child in _WIN_SEPARATOR_EXACT_ONLY_ROWS])
+        for (label, _entry, _named, child) in _WIN_SEPARATOR_EXACT_ONLY_ROWS:
+            check("sep-exact-%s-child-not-flagged-%s" % (spelling, label),
+                  child not in child_flagged)
+        check("sep-exact-%s-child-not-disclosed-either" % spelling,
+              child_declined == [])
+
+
 def test_windows_scope_case_insensitive_compare(workspace: Path) -> None:
     """CASE-INSENSITIVE COMPARE, and the residue it does not cover.
 
@@ -4937,6 +5061,7 @@ TESTS = [
     test_bare_filename_exclusion_is_enforced,
     test_windows_scope_entries_with_spaces_bind_end_to_end,
     test_windows_separator_form_table,
+    test_windows_bare_multi_segment_entry_names_exactly_one_path,
     test_windows_scope_case_insensitive_compare,
     test_prose_scope_does_not_refuse_acceptance,
     test_unrelated_amendment_never_discharges_regardless_of_order,
