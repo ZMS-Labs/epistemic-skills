@@ -74,6 +74,7 @@ sys.path.insert(0, str(ROOT))
 from custody_mission import (  # noqa: E402
     CustodyError, Mission, _ascii_case_fold, _normalize_relpath,
 )
+from custody_mission import _approved_by_chain  # noqa: E402
 from custody_store import EpochSkew, MissionStore, StoreError  # noqa: E402
 
 TERMINAL = ("completed", "cancelled")
@@ -629,6 +630,13 @@ def census(root: Path) -> dict:
             "coverage_probe_failures": probe_failures,
             "identity_probe_failures": identity_failures,
             "guard_mode": auth.get("guard_mode"),
+            # OD-4: guards join the fleet-wide union only once the mission is
+            # chain-approved. Without this the census counted a never-approved
+            # enforce-mode draft as armed and enforcing, while `run_gate` over
+            # the same workspace answered "no approved mission guards armed" --
+            # the measurement instrument OVER-reporting enforcement, the
+            # direction this file has already paid for.
+            "approved": _approved_by_chain(store),
             "guard_count": len(guards),
             "guard_classes": [_classify_guard(g) for g in guards],
             "guard_names": [g.get("name") if isinstance(g, dict) else None
@@ -672,17 +680,24 @@ def summarize(reports: list[dict]) -> dict:
             all_missions.append((r, m))
     active = [(r, m) for r, m in all_missions if m["active"]]
     sound = [(r, m) for r, m in active if m.get("integrity_ok", True)]
+    # `approved` gates arming for the same reason `evaluate_union` does: an
+    # unapproved draft's guards bind its own bound session only, which is a
+    # session property this instrument cannot see and must not report as
+    # fleet enforcement. Missing key (older report) reads as approved, so a
+    # stale report is never silently downgraded.
     armed = [(r, m) for r, m in sound
-             if m["guard_count"] > 0 and m["guard_mode"]]
+             if m["guard_count"] > 0 and m["guard_mode"]
+             and m.get("approved", True)]
     enforce = [(r, m) for r, m in armed if m["guard_mode"] == "enforce"]
     fail_open = []
     no_active = []
     for r in reports:
         act = [m["mission"] for m in r["missions"] if m["active"]]
-        if len(act) > 1:
-            fail_open.append({"root": r["root"], "cause": "multiple active",
-                              "missions": act})
-        elif not act:
+        # es#173: plurality is LEGAL and the gate evaluates the UNION of all
+        # approved missions' guards, so N>1 active is no longer a fail-open
+        # cause -- reporting it as one would be the inverse of the
+        # cry-fail-open defect this file has already paid for three times.
+        if not act:
             # NOT a disarmed guard -- there is nothing here to arm. But
             # `Mission.load` raises NoActiveMission and the gate is inert, so
             # a Q1 that says nothing about this root leaves the summary line

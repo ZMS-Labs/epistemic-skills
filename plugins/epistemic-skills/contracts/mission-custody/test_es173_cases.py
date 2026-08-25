@@ -1,0 +1,1278 @@
+#!/usr/bin/env python3
+"""es#173 concurrent missions -- the case tables as an executable spec.
+
+Every test here is one or more rows of the adjudicated design's product
+space (docs/design/2026-08-25-es173-concurrent-missions-design.md, Tables
+A and B in section 7, plus the section 9 test obligations). The tables are
+the spec; this file is the tables made falsifiable. Rows the implementation
+does not yet satisfy are listed in XFAIL below and MUST fail until the
+implementing commit lands -- an XFAIL row that passes is itself a failure
+(the spec would be pinning nothing).
+
+One deliberate departure from the design text, per the verification report
+this implementation was ordered to honor: the resume-time sibling receipt
+scan ranges over ALL readable sibling mission stores, not only the ACTIVE
+ones -- the adjudication ("resume-time scan of sibling receipt stores") and
+the gauntlet repair carry no active-only narrowing, and a sibling that
+completed between its write and A's resume must still explain the drift.
+"""
+from __future__ import annotations
+
+import contextlib
+import io
+import json
+import os
+import shutil
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent
+sys.path.insert(0, str(ROOT))
+
+import custody_mission as cm  # noqa: E402
+from custody_mission import (  # noqa: E402
+    CustodyError, IllegalTransition, Mission, NoActiveMission,
+)
+from custody_gate import run_gate  # noqa: E402
+from custody_store import MissionStore, sha256_file  # noqa: E402
+from verify_mission_custody import validate_record  # noqa: E402
+
+# New names the implementation must provide; resolved lazily so this spec
+# can run (and fail where expected) against the pre-change core.
+BindingRequired = getattr(cm, "BindingRequired", None)
+BindingInvalid = getattr(cm, "BindingInvalid", None)
+UnionDegraded = getattr(cm, "UnionDegraded", None)
+
+CLI = ROOT / "custody_cli.py"
+
+FAILURES: list[str] = []
+
+# Rows not yet implemented. Every name here must FAIL when run; the
+# implementing commits shrink this set to empty.
+XFAIL: set[str] = set()  # every row implemented -- the set burned down to empty
+
+
+def check(name: str, cond: bool) -> None:
+    if not cond:
+        FAILURES.append(name)
+        print(f"FAIL {name}")
+        if "PYTEST_CURRENT_TEST" in os.environ:
+            raise AssertionError(f"es173 case check failed: {name}")
+    else:
+        print(f"ok   {name}")
+
+
+def open_mission(workspace: Path, mission_id: str, instruction: str = "i",
+                 actor: str = "agent:worker", **kwargs) -> Mission:
+    return Mission.open(
+        workspace, mission_id=mission_id, instruction=instruction,
+        operator_ref="operator:zach", steward_ref="agent:worker",
+        required_tier="declared-role-separation", actor=actor, **kwargs)
+
+
+def load_bound(workspace: Path, mission_id: str,
+               actor: str = "agent:worker") -> Mission:
+    return Mission.load(workspace, actor=actor, mission_id=mission_id)
+
+
+def guard(name: str, globs: list[str], tools: list[str] | None = None,
+          regexes: list[str] | None = None) -> dict:
+    return {"name": name, "tool_names": tools or ["Write"],
+            "command_regexes": regexes or [], "path_globs": globs}
+
+
+def corrupt_dir(workspace: Path, name: str) -> Path:
+    """Plant a mission dir whose latest checkpoint cannot be loaded."""
+    src = None
+    for d in sorted((workspace / "missions").iterdir()):
+        if d.is_dir():
+            src = d
+            break
+    target = workspace / "missions" / name
+    if src is not None and src.name != name:
+        shutil.copytree(src, target)
+    else:
+        (target / "checkpoints").mkdir(parents=True)
+    tail = sorted((target / "checkpoints").glob("r*.json"))
+    if tail:
+        tail[-1].write_text("{not json", encoding="utf-8")
+    else:
+        (target / "checkpoints" / "r00000001.json").write_text(
+            "{not json", encoding="utf-8")
+    return target
+
+
+def chain_bytes(workspace: Path, mission: str) -> list[bytes]:
+    return [p.read_bytes() for p in sorted(
+        (workspace / "missions" / mission / "checkpoints").glob("r*.json"))]
+
+
+def run_cli(args: list[str], *, env_extra: dict | None = None,
+            stdin: str | None = None) -> subprocess.CompletedProcess:
+    env = dict(os.environ)
+    env.pop("ZMS_MISSION_ID", None)
+    env["PYTHONIOENCODING"] = "utf-8"
+    if env_extra:
+        env.update(env_extra)
+    return subprocess.run([sys.executable, str(CLI)] + args, env=env,
+                          input=stdin, capture_output=True, text=True)
+
+
+# ---------------------------------------------------------------------------
+# Table A -- mission status x discovery x binding x union (guard-source)
+# ---------------------------------------------------------------------------
+
+def test_a1_a3_draft_vs_active_union_membership(workspace: Path) -> None:
+    """A1 + A3 + B24/B25 mirror: the SAME armed guard contributes nothing
+    while its mission is a never-approved draft, and blocks the moment
+    approve() lands. Approval is the arming event (OD-4)."""
+    g = [guard("no-secrets", ["secrets/**"], tools=["Write"])]
+    open_mission(workspace, "m-draft", guard_mode="enforce",
+                 actuator_guards=g)
+    call = {"tool_name": "Write", "command": None,
+            "file_path": "secrets/x.env"}
+    v = run_gate(workspace, call, actor="hook:test")
+    check("A1-draft-guards-not-in-union", v["decision"] == "allow")
+    load_bound(workspace, "m-draft").approve()
+    v2 = run_gate(workspace, call, actor="hook:test")
+    check("A3-approved-guards-arm-union", v2["decision"] == "block")
+    check("B25-block-names-mission-and-rule",
+          "m-draft" in v2["reason"] and "no-secrets" in v2["reason"])
+
+
+def test_a2_reopened_never_approved_contributes_nothing(workspace: Path) -> None:
+    """A2: a never-approved mission wedged in `reopened` (drift on a draft)
+    must not arm the union -- the chain test, not latest status, decides
+    (OD-4 / FATAL-3 leg 2 share this discriminator)."""
+    g = [guard("no-secrets", ["secrets/**"], tools=["Write"])]
+    m = open_mission(workspace, "m-re", guard_mode="enforce",
+                     actuator_guards=g)
+    m.record_effect("a.txt", "aa", "req-1")  # legal in draft
+    (workspace / "a.txt").write_text("tampered", encoding="utf-8")
+    m.resume()  # draft -> reopened, never approved
+    check("A2-setup-reopened",
+          m.store.load_latest()[0]["status"] == "reopened")
+    call = {"tool_name": "Write", "command": None,
+            "file_path": "secrets/x.env"}
+    v = run_gate(workspace, call, actor="hook:test")
+    check("A2-never-approved-reopened-not-in-union",
+          v["decision"] == "allow")
+
+
+def test_a4_reopened_approved_lineage_stays_armed(workspace: Path) -> None:
+    g = [guard("no-secrets", ["secrets/**"], tools=["Write"])]
+    m = open_mission(workspace, "m-re-appr", guard_mode="enforce",
+                     actuator_guards=g)
+    m.approve()
+    m.record_effect("a.txt", "aa", "req-1")
+    (workspace / "a.txt").write_text("tampered", encoding="utf-8")
+    m.resume()
+    check("A4-setup-reopened",
+          m.store.load_latest()[0]["status"] == "reopened")
+    v = run_gate(workspace, {"tool_name": "Write", "command": None,
+                             "file_path": "secrets/x.env"},
+                 actor="hook:test")
+    check("A4-approved-reopened-still-armed", v["decision"] == "block")
+
+
+def test_a5_verifying_guards_keep_binding_effect_illegal(workspace: Path) -> None:
+    g = [guard("no-secrets", ["secrets/**"], tools=["Write"])]
+    m = open_mission(workspace, "m-ver", guard_mode="enforce",
+                     actuator_guards=g)
+    m.approve()
+    m.begin_verification()
+    v = run_gate(workspace, {"tool_name": "Write", "command": None,
+                             "file_path": "secrets/x.env"},
+                 actor="hook:test")
+    check("A5-verifying-guards-still-armed", v["decision"] == "block")
+    try:
+        m.record_effect("b.txt", "bb", "req-2")
+        check("A5-effect-illegal-in-verifying", False)
+    except IllegalTransition:
+        check("A5-effect-illegal-in-verifying", True)
+
+
+def test_a6_a7_terminal_states_binding_invalid(workspace: Path) -> None:
+    m = open_mission(workspace, "m-done")
+    m.approve()
+    m.begin_verification()
+    acceptor = Mission.load(workspace, actor="agent:acceptor")
+    acceptor.record_verdict("PASS", acceptor_id="agent:acceptor",
+                            assurance_tier="declared-role-separation",
+                            reason="done")
+    try:
+        load_bound(workspace, "m-done")
+        check("A6-bound-to-completed-refused", False)
+    except Exception as exc:
+        check("A6-bound-to-completed-refused",
+              BindingInvalid is not None and isinstance(exc, BindingInvalid)
+              and "completed" in str(exc))
+    c = open_mission(workspace, "m-gone")
+    c.cancel("abandoned")
+    try:
+        load_bound(workspace, "m-gone")
+        check("A7-bound-to-cancelled-refused", False)
+    except Exception as exc:
+        check("A7-bound-to-cancelled-refused",
+              BindingInvalid is not None and isinstance(exc, BindingInvalid)
+              and "cancelled" in str(exc))
+
+
+def test_a8_unreadable_dir_binding_invalid(workspace: Path) -> None:
+    open_mission(workspace, "m-live").approve()
+    corrupt_dir(workspace, "m-corrupt")
+    try:
+        with contextlib.redirect_stderr(io.StringIO()):
+            load_bound(workspace, "m-corrupt")
+        check("A8-bound-to-unreadable-refused", False)
+    except Exception as exc:
+        check("A8-bound-to-unreadable-refused",
+              BindingInvalid is not None and isinstance(exc, BindingInvalid))
+
+
+def test_b4_binding_with_nothing_active(workspace: Path) -> None:
+    """Row 4: a binding naming a mission in an empty workspace is
+    BindingInvalid -- never silently unbound."""
+    try:
+        load_bound(workspace, "m-ghost")
+        check("B4-binding-nothing-active-refused", False)
+    except Exception as exc:
+        check("B4-binding-nothing-active-refused",
+              BindingInvalid is not None and isinstance(exc, BindingInvalid))
+
+
+# ---------------------------------------------------------------------------
+# Table B -- binding mechanics (rows 1, 2, 5, 6, 8, 9, 10, 11, 15)
+# ---------------------------------------------------------------------------
+
+def test_b1_b2_zero_active_unchanged(workspace: Path) -> None:
+    try:
+        Mission.load(workspace, actor="agent:x")
+        check("B2-zero-active-lifecycle-refuses", False)
+    except NoActiveMission:
+        check("B2-zero-active-lifecycle-refuses", True)
+    m = open_mission(workspace, "m-first")
+    check("B1-open-yields-draft",
+          m.store.load_latest()[0]["status"] == "draft")
+
+
+def test_b5_b10_open_beside_active_is_legal(workspace: Path) -> None:
+    """Rows 5 and 10: plurality is legal -- open no longer refuses on an
+    existing active mission, and the new mission is a union-inert draft."""
+    open_mission(workspace, "m-one").approve()
+    second = open_mission(workspace, "m-two")
+    check("B5-second-open-succeeds",
+          second.store.load_latest()[0]["status"] == "draft")
+    third = open_mission(workspace, "m-three")
+    check("B10-nth-open-succeeds",
+          third.store.load_latest()[0]["status"] == "draft")
+
+
+def test_b6_single_active_unbound_flow_preserved(workspace: Path) -> None:
+    """Row 6: the single-mission workflow must not grow ceremony."""
+    m = open_mission(workspace, "m-solo")
+    m.approve()
+    loaded = Mission.load(workspace, actor="agent:worker")
+    check("B6-unbound-resolves-to-the-one-active",
+          loaded.store.mission_dir.name == "m-solo")
+
+
+def test_b8_bound_resolves_to_bound(workspace: Path) -> None:
+    open_mission(workspace, "m-solo").approve()
+    loaded = load_bound(workspace, "m-solo")
+    check("B8-bound-same-as-unbound-when-ids-coincide",
+          loaded.store.mission_dir.name == "m-solo")
+
+
+def test_b9_b15_stale_binding_never_falls_through(workspace: Path) -> None:
+    open_mission(workspace, "m-one").approve()
+    try:
+        load_bound(workspace, "m-nonexistent")
+        check("B9-stale-binding-no-fallback-to-the-one-active", False)
+    except Exception as exc:
+        check("B9-stale-binding-no-fallback-to-the-one-active",
+              BindingInvalid is not None and isinstance(exc, BindingInvalid))
+    open_mission(workspace, "m-two")
+    try:
+        load_bound(workspace, "m-nonexistent")
+        check("B15-stale-binding-no-fallback-to-union", False)
+    except Exception as exc:
+        check("B15-stale-binding-no-fallback-to-union",
+              BindingInvalid is not None and isinstance(exc, BindingInvalid))
+
+
+def test_b11_plural_unbound_lifecycle_requires_binding(workspace: Path) -> None:
+    open_mission(workspace, "m-one").approve()
+    open_mission(workspace, "m-two")
+    try:
+        Mission.load(workspace, actor="agent:worker")
+        check("B11-plural-unbound-refuses", False)
+    except Exception as exc:
+        ok = (BindingRequired is not None
+              and isinstance(exc, BindingRequired))
+        check("B11-plural-unbound-refuses", ok)
+        if ok:
+            msg = str(exc)
+            check("B11-refusal-lists-ids",
+                  "m-one" in msg and "m-two" in msg)
+            check("B11-refusal-names-channels",
+                  "--mission" in msg and "ZMS_MISSION_ID" in msg)
+
+
+def test_binding_channels_cli_flag_env_precedence(workspace: Path) -> None:
+    """Section 1: flag > env > unbound, on the CLI surface."""
+    ws = str(workspace)
+    r = run_cli(["open", "--workspace", ws, "--actor", "agent:t",
+                 "--mission-id", "m-a", "--instruction", "i",
+                 "--operator", "operator:t", "--steward", "agent:t"])
+    check("cli-open-a", r.returncode == 0)
+    check("cli-open-prints-binding-line", "ZMS_MISSION_ID=m-a" in
+          (r.stdout + r.stderr))
+    r = run_cli(["open", "--workspace", ws, "--actor", "agent:t",
+                 "--mission-id", "m-b", "--instruction", "i",
+                 "--operator", "operator:t", "--steward", "agent:t"])
+    check("cli-open-b", r.returncode == 0)
+    # unbound with two active: refusal
+    r = run_cli(["note", "--workspace", ws, "--actor", "agent:t",
+                 "--text", "x"])
+    check("cli-plural-unbound-note-refuses", r.returncode == 2)
+    # env binds
+    r = run_cli(["note", "--workspace", ws, "--actor", "agent:t",
+                 "--text", "via-env"], env_extra={"ZMS_MISSION_ID": "m-a"})
+    check("cli-env-binding-works", r.returncode == 0)
+    # flag beats env
+    r = run_cli(["note", "--workspace", ws, "--actor", "agent:t",
+                 "--text", "via-flag", "--mission", "m-b"],
+                env_extra={"ZMS_MISSION_ID": "m-a"})
+    check("cli-flag-beats-env", r.returncode == 0)
+    got_a = json.loads(run_cli(
+        ["status", "--workspace", ws, "--actor", "agent:t",
+         "--mission", "m-a"]).stdout)
+    got_b = json.loads(run_cli(
+        ["status", "--workspace", ws, "--actor", "agent:t",
+         "--mission", "m-b"]).stdout)
+    check("cli-notes-landed-by-binding",
+          "via-env" in got_a["state"]["notes"]
+          and "via-flag" in got_b["state"]["notes"]
+          and "via-flag" not in got_a["state"]["notes"])
+
+
+def test_missions_list_verb(workspace: Path) -> None:
+    """Section 6: plurality needs an enumeration verb."""
+    open_mission(workspace, "m-one").approve()
+    open_mission(workspace, "m-two")
+    r = run_cli(["missions", "--workspace", str(workspace),
+                 "--actor", "agent:t"])
+    check("cli-missions-exit-0", r.returncode == 0)
+    if r.returncode == 0:
+        rows = json.loads(r.stdout)
+        by_id = {row["mission"]: row for row in rows}
+        check("cli-missions-lists-both",
+              set(by_id) >= {"m-one", "m-two"})
+        check("cli-missions-approved-flag",
+              by_id.get("m-one", {}).get("approved") is True
+              and by_id.get("m-two", {}).get("approved") is False)
+        check("cli-missions-carries-status-steward-frontier",
+              all(k in by_id.get("m-one", {})
+                  for k in ("status", "steward_ref", "frontier")))
+
+
+# ---------------------------------------------------------------------------
+# Union guard evaluation (rows 7, 12, 13, 14, 16, 24, 25, 30 + section 9)
+# ---------------------------------------------------------------------------
+
+def test_b7_lone_unapproved_draft_contributes_nothing(workspace: Path) -> None:
+    g = [guard("no-secrets", ["secrets/**"], tools=["Write"])]
+    open_mission(workspace, "m-draft", guard_mode="enforce",
+                 actuator_guards=g)
+    v = run_gate(workspace, {"tool_name": "Write", "command": None,
+                             "file_path": "secrets/x.env"},
+                 actor="hook:test")
+    check("B7-lone-draft-allows", v["decision"] == "allow")
+
+
+def test_b12_union_names_all_matching_pairs(workspace: Path) -> None:
+    """Row 12: a call matching guards in TWO approved missions is blocked
+    naming every (mission, rule) pair -- the operator needs the full bill."""
+    open_mission(workspace, "m-a", guard_mode="enforce",
+                 actuator_guards=[guard("rule-a", ["shared/**"],
+                                        tools=["Write"])]).approve()
+    open_mission(workspace, "m-b", guard_mode="enforce",
+                 actuator_guards=[guard("rule-b", ["shared/**"],
+                                        tools=["Write"])]).approve()
+    v = run_gate(workspace, {"tool_name": "Write", "command": None,
+                             "file_path": "shared/f.txt"},
+                 actor="hook:test")
+    check("B12-union-blocks", v["decision"] == "block")
+    check("B12-names-all-pairs",
+          all(t in v["reason"] for t in ("m-a", "rule-a", "m-b", "rule-b")))
+    for mid in ("m-a", "m-b"):
+        log = workspace / "missions" / mid / "guard-log.jsonl"
+        check(f"B12-guard-log-appended-{mid}", log.exists())
+
+
+def test_b14_b16_binding_never_changes_exposure(workspace: Path) -> None:
+    """Rows 14/16 + the section 9 adversarial exposure test: a session bound
+    to mission A attempting an actuator guarded ONLY by approved sibling B
+    MUST be blocked (OD-1); a bad binding still gets the union."""
+    open_mission(workspace, "m-a").approve()
+    open_mission(workspace, "m-b", guard_mode="enforce",
+                 actuator_guards=[guard("b-only", ["frozen/**"],
+                                        tools=["Write"])]).approve()
+    call = {"tool_name": "Write", "command": None,
+            "file_path": "frozen/f.txt"}
+    v = run_gate(workspace, call, actor="hook:test")
+    check("B14-union-regardless-of-binding", v["decision"] == "block")
+    # CLI: gate bound to m-a is still blocked by m-b's guard
+    r = run_cli(["gate", "--workspace", str(workspace), "--actor", "hook:t",
+                 "--mission", "m-a"], stdin=json.dumps(call))
+    check("B14-cli-bound-gate-still-blocked", r.returncode == 2)
+    # bad binding: union still evaluated, block stands (row 16)
+    r = run_cli(["gate", "--workspace", str(workspace), "--actor", "hook:t",
+                 "--mission", "m-ghost"], stdin=json.dumps(call))
+    check("B16-bad-binding-gate-still-union", r.returncode == 2)
+
+
+def test_b13_effect_union_evaluated_before_write(workspace: Path) -> None:
+    """Row 13 + OD-2: effect IS the file write, union-evaluated BEFORE
+    _write_effect; a block is side-effect-free -- no bytes, no receipt."""
+    open_mission(workspace, "m-guard", guard_mode="enforce",
+                 actuator_guards=[guard("no-frozen", ["frozen/**"],
+                                        tools=["Write"])]).approve()
+    b = open_mission(workspace, "m-writer")
+    b.approve()
+    b = load_bound(workspace, "m-writer")
+    try:
+        b.record_effect("frozen/f.txt", "content", "req-1")
+        check("B13-effect-blocked", False)
+    except CustodyError as exc:
+        check("B13-effect-blocked", not isinstance(exc, IllegalTransition))
+        check("B13-block-names-pair",
+              "m-guard" in str(exc) and "no-frozen" in str(exc))
+    check("B13-no-bytes-written",
+          not (workspace / "frozen" / "f.txt").exists())
+    check("B13-no-receipt-minted",
+          not b.store.receipt_path("req-1").exists())
+    check("B13-request-id-still-fresh",
+          "req-1" not in b.store.load_latest()[0]["receipt_ids"])
+
+
+def test_b13_own_guards_gate_own_effect(workspace: Path) -> None:
+    """Union includes the acting mission itself once approved: complete
+    mediation for actuation has no self-exemption."""
+    m = open_mission(workspace, "m-self", guard_mode="enforce",
+                     actuator_guards=[guard("self-frozen", ["frozen/**"],
+                                            tools=["Write"])])
+    m.approve()
+    try:
+        m.record_effect("frozen/own.txt", "x", "req-1")
+        check("B13-own-guard-gates-own-effect", False)
+    except CustodyError:
+        check("B13-own-guard-gates-own-effect", True)
+
+
+def test_b30_audit_channels_unblockable(workspace: Path) -> None:
+    """Row 30 + OD-2 paired test: the same union guard that blocks effect
+    leaves note, amend, and frontier recorded on the same surface."""
+    open_mission(workspace, "m-guard", guard_mode="enforce",
+                 actuator_guards=[guard("no-frozen", ["frozen/**"],
+                                        tools=["Write"])]).approve()
+    b = open_mission(workspace, "m-writer")
+    b.approve()
+    b = load_bound(workspace, "m-writer")
+    try:
+        b.record_effect("frozen/f.txt", "content", "req-1")
+        check("B30-effect-blocked-for-contrast", False)
+    except CustodyError:
+        check("B30-effect-blocked-for-contrast", True)
+    check("B30-note-recorded", isinstance(
+        b.note("blocked on frozen/f.txt; escalating"), int))
+    check("B30-amend-recorded", isinstance(
+        b.amend_authority("operator: granted frozen/f.txt to m-writer"), int))
+    check("B30-frontier-recorded", isinstance(
+        b.set_frontier("await operator on frozen/"), int))
+
+
+def test_gate_runs_leave_every_chain_byte_identical(workspace: Path) -> None:
+    """Section 9: byte-identity of gate runs under N missions."""
+    open_mission(workspace, "m-a", guard_mode="enforce",
+                 actuator_guards=[guard("rule-a", ["shared/**"],
+                                        tools=["Write"])]).approve()
+    open_mission(workspace, "m-b", guard_mode="audit",
+                 actuator_guards=[guard("rule-b", ["shared/**"],
+                                        tools=["Write"])]).approve()
+    before = {m: chain_bytes(workspace, m) for m in ("m-a", "m-b")}
+    run_gate(workspace, {"tool_name": "Write", "command": None,
+                         "file_path": "shared/f.txt"}, actor="hook:test")
+    after = {m: chain_bytes(workspace, m) for m in ("m-a", "m-b")}
+    check("gate-chains-byte-identical", before == after)
+
+
+# ---------------------------------------------------------------------------
+# Degraded stores (rows 17, 18, 22, 23)
+# ---------------------------------------------------------------------------
+
+def test_b17_open_refuses_unreadable_sibling(workspace: Path) -> None:
+    open_mission(workspace, "m-live").approve()
+    corrupt_dir(workspace, "m-corrupt")
+    with contextlib.redirect_stderr(io.StringIO()):
+        try:
+            open_mission(workspace, "m-new")
+            check("B17-open-refuses-unreadable-sibling", False)
+        except CustodyError:
+            check("B17-open-refuses-unreadable-sibling", True)
+        check("B17-refused-open-left-no-dir",
+              not (workspace / "missions" / "m-new").exists())
+        # acknowledged: open proceeds and records the acknowledgement
+        m = open_mission(workspace, "m-new",
+                         acknowledge_unreadable=["m-corrupt"])
+    notes = m.store.load_latest()[0]["state"]["notes"]
+    check("B17-acknowledgement-recorded-in-opening-checkpoint",
+          any("m-corrupt" in n for n in notes))
+
+
+def test_b22_gate_degraded_union_is_disclosed(workspace: Path) -> None:
+    """Row 22: hook path stays fail-open, but the verdict reason AND stderr
+    must name the skipped sibling and say its guards are NOT enforced."""
+    open_mission(workspace, "m-live").approve()
+    corrupt_dir(workspace, "m-corrupt")
+    buf = io.StringIO()
+    with contextlib.redirect_stderr(buf):
+        v = run_gate(workspace, {"tool_name": "Bash", "command": "ls",
+                                 "file_path": None}, actor="hook:test")
+    check("B22-gate-still-allows", v["decision"] == "allow")
+    check("B22-reason-names-degradation",
+          "m-corrupt" in v["reason"] and "NOT enforced" in v["reason"])
+    check("B22-stderr-names-degradation", "m-corrupt" in buf.getvalue())
+
+
+def test_b23_effect_refuses_union_degraded(workspace: Path) -> None:
+    """Row 23: effect CAN refuse without bricking anything, so it does."""
+    m = open_mission(workspace, "m-live")
+    m.approve()
+    corrupt_dir(workspace, "m-corrupt")
+    with contextlib.redirect_stderr(io.StringIO()):
+        try:
+            m.record_effect("a.txt", "aa", "req-1")
+            check("B23-effect-refuses-degraded", False)
+        except Exception as exc:
+            check("B23-effect-refuses-degraded",
+                  UnionDegraded is not None and isinstance(exc, UnionDegraded)
+                  and "m-corrupt" in str(exc))
+        check("B23-refused-effect-wrote-nothing",
+              not (workspace / "a.txt").exists())
+        # recorded acknowledgement lets work continue, and persists
+        m.record_effect("a.txt", "aa", "req-1",
+                        acknowledge_unreadable=["m-corrupt"])
+        check("B23-acknowledged-effect-proceeds",
+              (workspace / "a.txt").exists())
+        m2 = Mission.load(workspace, actor="agent:worker",
+                          mission_id="m-live")
+        m2.record_effect("b.txt", "bb", "req-2")
+        check("B23-acknowledgement-persists-in-chain",
+              (workspace / "b.txt").exists())
+
+
+def test_b18_open_refuses_epoch_skew_sibling(workspace: Path) -> None:
+    m = open_mission(workspace, "m-old")
+    m.approve()
+    m.begin_verification()
+    acceptor = Mission.load(workspace, actor="agent:acceptor")
+    acceptor.record_verdict("PASS", acceptor_id="agent:acceptor",
+                            assurance_tier="declared-role-separation",
+                            reason="done")
+    # relabel the tail to a future epoch: the store CLAIMS a newer contract
+    tail = sorted((workspace / "missions" / "m-old" / "checkpoints")
+                  .glob("r*.json"))[-1]
+    rec = json.loads(tail.read_text(encoding="utf-8"))
+    rec["record"] = "checkpoint@99"
+    tail.write_text(json.dumps(rec), encoding="utf-8")
+    with contextlib.redirect_stderr(io.StringIO()):
+        try:
+            open_mission(workspace, "m-new")
+            check("B18-open-refuses-epoch-skew", False)
+        except CustodyError:
+            check("B18-open-refuses-epoch-skew", True)
+
+
+# ---------------------------------------------------------------------------
+# Sibling crossings (rows 19, 21, 26, 27, 28, 29 + section 9)
+# ---------------------------------------------------------------------------
+
+def _two_missions_one_artifact(workspace: Path) -> tuple[Mission, Mission]:
+    """A receipts shared.txt; returns (A, B) both approved and bound."""
+    a = open_mission(workspace, "m-alpha")
+    a.approve()
+    a = load_bound(workspace, "m-alpha")
+    a.record_effect("shared.txt", "alpha-1", "req-a1")
+    b = open_mission(workspace, "m-beta", actor="agent:other")
+    b.approve()
+    b = load_bound(workspace, "m-beta", actor="agent:other")
+    return a, b
+
+
+def test_b21_crossing_writes_side_channel_never_the_chain(workspace: Path) -> None:
+    """Row 21 + FATAL-4 + section 9 byte-identity: B's effect on a path A
+    receipted appends one advisory JSONL line to A's sibling-touch.jsonl;
+    A's checkpoint chain stays byte-identical."""
+    a, b = _two_missions_one_artifact(workspace)
+    before = chain_bytes(workspace, "m-alpha")
+    receipt = b.record_effect("shared.txt", "beta-1", "req-b1")
+    check("B21-effect-succeeded", receipt["after_sha256"] is not None)
+    check("B21-sibling-chain-byte-identical",
+          chain_bytes(workspace, "m-alpha") == before)
+    side = workspace / "missions" / "m-alpha" / "sibling-touch.jsonl"
+    check("B21-side-channel-written", side.exists())
+    if side.exists():
+        entry = json.loads(side.read_text(encoding="utf-8").splitlines()[-1])
+        check("B21-entry-fields",
+              entry.get("from_mission") == "m-beta"
+              and entry.get("receipt_id") == "req-b1"
+              and entry.get("artifact_path") == "shared.txt"
+              and set(entry) >= {"utc", "actor", "session_id",
+                                 "after_sha256"})
+
+
+def test_b26_never_approved_sibling_never_launders(workspace: Path) -> None:
+    """Row 26 + the FATAL-3 laundering test, never-approved leg: an
+    adversary opens a throwaway sibling, effects the tampered bytes, and A's
+    resume must report plain drift -- no DRIFT-SIBLING."""
+    a, _ = _two_missions_one_artifact(workspace)
+    evil = open_mission(workspace, "m-evil", actor="agent:evil")
+    evil = load_bound(workspace, "m-evil", actor="agent:evil")
+    evil.record_effect("shared.txt", "tampered", "req-e1")  # legal in draft
+    a = load_bound(workspace, "m-alpha")
+    findings = a.resume()
+    check("B26-plain-drift-not-sibling",
+          findings == ["shared.txt"])
+    latest = a.store.load_latest()[0]
+    check("B26-reconciliation-marker",
+          "RECONCILIATION:shared.txt" in latest["state"]["unresolved_verdicts"])
+    check("B26-evidence-reported",
+          any("m-evil" in n and "req-e1" in n
+              for n in latest["state"]["notes"]))
+
+
+def test_b27_no_authorization_amendment_no_downgrade(workspace: Path) -> None:
+    """Row 27: hash match + approved sibling, but no cross-mission
+    authorization amendment in A's own chain -> plain drift + evidence."""
+    a, b = _two_missions_one_artifact(workspace)
+    b.record_effect("shared.txt", "beta-1", "req-b1")
+    a = load_bound(workspace, "m-alpha")
+    findings = a.resume()
+    check("B27-plain-drift-not-sibling", findings == ["shared.txt"])
+    latest = a.store.load_latest()[0]
+    check("B27-evidence-reported",
+          any("m-beta" in n and "req-b1" in n
+              for n in latest["state"]["notes"]))
+
+
+def test_b28_all_three_legs_yield_drift_sibling(workspace: Path) -> None:
+    """Row 28: hash match + approved sibling + authorization amendment in
+    A's chain -> DRIFT-SIBLING, reconciled by acknowledgement with the
+    machine note, written by A's own bound session."""
+    a, b = _two_missions_one_artifact(workspace)
+    # Leg 3 is a STRUCTURED grant, not a prose mention: `_amendment_names`
+    # documents itself as a hint that "cannot say the operator granted it",
+    # and used as a gate it accepted "m-beta remains forbidden from writing
+    # shared.txt" as authorization. The operator's verbatim words are still
+    # recorded as an amendment by this call; what the discriminator reads is
+    # the reserved `sibling-authorized:` machine note.
+    a.authorize_sibling("m-beta", "shared.txt",
+                        "operator: mission m-beta is authorized to write "
+                        "shared.txt during the overlap")
+    b.record_effect("shared.txt", "beta-1", "req-b1")
+    a = load_bound(workspace, "m-alpha")
+    findings = a.resume()
+    check("B28-drift-sibling-classified",
+          findings == ["DRIFT-SIBLING:shared.txt"])
+    latest = a.store.load_latest()[0]
+    check("B28-marker-raised",
+          "DRIFT-SIBLING:shared.txt" in latest["state"]["unresolved_verdicts"])
+    check("B28-note-names-mission-and-receipt",
+          any("m-beta" in n and "req-b1" in n
+              for n in latest["state"]["notes"]))
+    rev = a.acknowledge_sibling("shared.txt")
+    check("B28-acknowledge-returns-revision", isinstance(rev, int))
+    latest = a.store.load_latest()[0]
+    check("B28-marker-cleared",
+          latest["state"]["unresolved_verdicts"] == [])
+    check("B28-machine-note-written",
+          any(n.startswith("sibling-touched: shared.txt by m-beta receipt "
+                           "req-b1") for n in latest["state"]["notes"]))
+    check("B28-mission-back-to-active", latest["status"] == "active")
+
+
+def test_scan_covers_non_active_siblings(workspace: Path) -> None:
+    """The verification-report correction: a sibling that COMPLETED between
+    its write and A's resume still explains the drift -- the scan ranges
+    over all readable sibling stores, not only active ones."""
+    a, b = _two_missions_one_artifact(workspace)
+    a.authorize_sibling("m-beta", "shared.txt",
+                        "operator: mission m-beta is authorized to write "
+                        "shared.txt during the overlap")
+    b.record_effect("shared.txt", "beta-1", "req-b1")
+    b.begin_verification()
+    acceptor = load_bound(workspace, "m-beta", actor="agent:acceptor")
+    acceptor.record_verdict("PASS", acceptor_id="agent:acceptor",
+                            assurance_tier="declared-role-separation",
+                            reason="beta done")
+    a = load_bound(workspace, "m-alpha")
+    findings = a.resume()
+    check("scan-completed-sibling-still-attributes",
+          findings == ["DRIFT-SIBLING:shared.txt"])
+
+
+def test_b29_sibling_touched_prefix_forgery_refused(workspace: Path) -> None:
+    """Row 29 + section 9 forgery test: every documented bypass shape, on
+    every caller-text surface."""
+    m = open_mission(workspace, "m-forge")
+    m.approve()
+    forged = "sibling-touched: shared.txt by m-evil receipt req-x"
+    shapes = {
+        "plain": forged,
+        "leading-space": " " + forged,
+        "capital": "Sibling-touched: shared.txt by m-evil receipt req-x",
+        "leading-newline": "\n" + forged,
+        "second-line": "ordinary narrative\n" + forged,
+        "cf-smuggled": "sibling​-touched: shared.txt by m-evil "
+                       "receipt req-x",
+    }
+    for shape, text in shapes.items():
+        try:
+            m.note(text)
+            check(f"B29-note-refuses-{shape}", False)
+        except CustodyError:
+            check(f"B29-note-refuses-{shape}", True)
+    try:
+        m.amend_authority(forged)
+        check("B29-amend-refuses", False)
+    except CustodyError:
+        check("B29-amend-refuses", True)
+    try:
+        m.set_frontier(forged)
+        check("B29-frontier-refuses", False)
+    except CustodyError:
+        check("B29-frontier-refuses", True)
+    try:
+        m.cancel(forged)
+        check("B29-cancel-refuses", False)
+    except CustodyError:
+        check("B29-cancel-refuses", True)
+    m.begin_verification()
+    acceptor = Mission.load(workspace, actor="agent:acceptor")
+    try:
+        acceptor.record_verdict("PASS", acceptor_id="agent:acceptor",
+                                assurance_tier="declared-role-separation",
+                                reason=forged)
+        check("B29-verdict-reason-refuses", False)
+    except CustodyError:
+        check("B29-verdict-reason-refuses", True)
+
+
+# ---------------------------------------------------------------------------
+# Record closure, disclosure, migration-adjacent invariants
+# ---------------------------------------------------------------------------
+
+def test_receipt_at_1_closure_regression(workspace: Path) -> None:
+    """Section 9: the implementation never attempts a receipt field outside
+    RECEIPT_FIELDS; a receipt minted before the change round-trips."""
+    a, b = _two_missions_one_artifact(workspace)
+    receipt_path = a.store.receipt_path("req-a1")
+    before = receipt_path.read_bytes()
+    b.record_effect("shared.txt", "beta-1", "req-b1")  # the crossing write
+    check("receipt-closure-sibling-receipt-untouched",
+          receipt_path.read_bytes() == before)
+    crossing = json.loads(
+        b.store.receipt_path("req-b1").read_text(encoding="utf-8"))
+    check("receipt-closure-crossing-receipt-validates",
+          validate_record(crossing) == [])
+    check("receipt-closure-no-new-fields",
+          set(crossing) == {"record", "mission_id", "request_id", "actor",
+                            "utc", "artifact_path", "before_sha256",
+                            "after_sha256"})
+
+
+def test_scope_overlap_disclosure_deterministic(workspace: Path) -> None:
+    """Section 3 + section 9: overlapping scope.in patterns are disclosed
+    and recorded at open, deterministically; prose is incomparable."""
+    def build(ws: Path) -> list[str]:
+        open_mission(ws, "m-one", scope_in=["docs/**", "media acquisition"])\
+            .approve()
+        m = open_mission(ws, "m-two", scope_in=["docs/plans/*.md"])
+        return [n for n in m.store.load_latest()[0]["state"]["notes"]
+                if "overlap" in n or "incomparable" in n]
+    ws1 = workspace / "w1"
+    ws2 = workspace / "w2"
+    notes1 = build(ws1)
+    notes2 = build(ws2)
+    check("overlap-disclosed", any("m-one" in n and "docs/**" in n
+                                   for n in notes1))
+    check("overlap-deterministic", notes1 == notes2)
+    ws3 = workspace / "w3"
+    open_mission(ws3, "m-one", scope_in=["src/**"]).approve()
+    m = open_mission(ws3, "m-disjoint", scope_in=["docs/**"])
+    check("no-false-overlap",
+          not any("overlap" in n
+                  for n in m.store.load_latest()[0]["state"]["notes"]))
+
+
+def test_open_still_refuses_duplicate_mission_id(workspace: Path) -> None:
+    open_mission(workspace, "m-dup")
+    try:
+        open_mission(workspace, "m-dup")
+        check("open-refuses-duplicate-id", False)
+    except (CustodyError, Exception):
+        check("open-refuses-duplicate-id", True)
+    # exactly one r1 checkpoint exists
+    cps = sorted((workspace / "missions" / "m-dup" / "checkpoints")
+                 .glob("r*.json"))
+    check("duplicate-open-wrote-nothing", len(cps) == 1)
+
+
+# ---------------------------------------------------------------------------
+# PR #220 refuter findings -- live-reproduced defects pinned as regressions
+# ---------------------------------------------------------------------------
+
+
+def _seed_receipted_artifact(ws: Path) -> None:
+    """m-alpha approved with a receipt on shared.txt."""
+    a = open_mission(ws, "m-alpha")
+    a.approve()
+    a = load_bound(ws, "m-alpha")
+    a.record_effect("shared.txt", "alpha-1", "req-a1")
+
+
+def test_refuter_f1_substring_id_never_launders(workspace: Path) -> None:
+    """Refuter finding 1: the authorization leg's mission-id test must
+    match the sibling id as a whole token, never a raw substring --
+    `m-al` must not ride on an amendment authorizing `m-alpine`, and a
+    mission named `test` must not ride on the word `latest`.
+    `_amendment_names` already refuses raw substrings for the PATH leg;
+    the id leg is held to the same standard.
+
+    The two negative legs below deliberately still grant through PROSE: since
+    leg 3 became a structured record (`authorize_sibling`), prose authorizes
+    nothing at all, so these rows now hold a strictly stronger property than
+    the token-matching one they were written for. Keep them as prose -- they
+    are the pin that says narrative cannot launder a crossing."""
+    # Leg A: adversary id is a substring of the authorized id.
+    ws = workspace / "sub-id"
+    _seed_receipted_artifact(ws)
+    a = load_bound(ws, "m-alpha")
+    a.amend_authority(
+        "operator: mission m-alpine is authorized to write shared.txt")
+    evil = open_mission(ws, "m-al", actor="agent:evil")
+    evil.approve()
+    evil = load_bound(ws, "m-al", actor="agent:evil")
+    evil.record_effect("shared.txt", "tampered-by-m-al", "req-e1")
+    a = load_bound(ws, "m-alpha")
+    check("F1-substring-id-stays-plain-drift", a.resume() == ["shared.txt"])
+    latest = a.store.load_latest()[0]
+    check("F1-substring-id-reconciliation-marker",
+          "RECONCILIATION:shared.txt"
+          in latest["state"]["unresolved_verdicts"])
+    # Leg B: adversary id is an accidental substring of ordinary prose.
+    ws = workspace / "sub-word"
+    _seed_receipted_artifact(ws)
+    a = load_bound(ws, "m-alpha")
+    a.amend_authority(
+        "operator: the latest revision of shared.txt is authorized")
+    evil = open_mission(ws, "test", actor="agent:evil")
+    evil.approve()
+    evil = load_bound(ws, "test", actor="agent:evil")
+    evil.record_effect("shared.txt", "tampered-by-test", "req-e2")
+    a = load_bound(ws, "m-alpha")
+    check("F1-prose-substring-stays-plain-drift",
+          a.resume() == ["shared.txt"])
+    # Positive control: an amendment naming the sibling id as a whole
+    # token still reclassifies -- the fix must not break the sanctioned
+    # crossing.
+    ws = workspace / "exact"
+    _seed_receipted_artifact(ws)
+    a = load_bound(ws, "m-alpha")
+    a.authorize_sibling(
+        "m-al", "shared.txt",
+        "operator: mission m-al is authorized to write shared.txt")
+    evil = open_mission(ws, "m-al", actor="agent:evil")
+    evil.approve()
+    evil = load_bound(ws, "m-al", actor="agent:evil")
+    evil.record_effect("shared.txt", "sanctioned-by-m-al", "req-e3")
+    a = load_bound(ws, "m-alpha")
+    check("F1-exact-token-still-reclassifies",
+          a.resume() == ["DRIFT-SIBLING:shared.txt"])
+
+
+def test_refuter_f2_stale_sibling_marker_discharges(workspace: Path) -> None:
+    """Refuter finding 2: a DRIFT-SIBLING marker whose path is no longer
+    sibling-attributable (content moved on before acknowledgement) must be
+    dischargeable. Resume re-classifies the path at its CURRENT severity,
+    replacing the stale marker, so the normal reconcile flow applies and
+    the mission can reach begin_verification. Pre-fix the marker had no
+    working exit: acknowledge_sibling refused forever, reconcile cleared
+    only RECONCILIATION, and the mission wedged in `reopened` (measured,
+    probe2 PROBE 2b)."""
+    a, b = _two_missions_one_artifact(workspace)
+    a.authorize_sibling("m-beta", "shared.txt",
+                        "operator: mission m-beta is authorized to write "
+                        "shared.txt")
+    b.record_effect("shared.txt", "beta-1", "req-b1")
+    a = load_bound(workspace, "m-alpha")
+    check("F2-sibling-raised", a.resume() == ["DRIFT-SIBLING:shared.txt"])
+    # content moves on before acknowledgement -- attribution is now stale
+    (workspace / "shared.txt").write_text("operator-later-edit",
+                                          encoding="utf-8")
+    try:
+        a.acknowledge_sibling("shared.txt")
+        check("F2-stale-ack-refused", False)
+    except CustodyError as exc:
+        check("F2-stale-ack-refused", True)
+        check("F2-refusal-names-real-remedy", "re-run resume" in str(exc))
+    findings = a.resume()
+    check("F2-reclassified-at-current-severity", findings == ["shared.txt"])
+    unresolved = a.store.load_latest()[0]["state"]["unresolved_verdicts"]
+    check("F2-stale-marker-replaced",
+          "DRIFT-SIBLING:shared.txt" not in unresolved
+          and "RECONCILIATION:shared.txt" in unresolved)
+    a = load_bound(workspace, "m-alpha")
+    a.reconcile("shared.txt", "operator-later-edit", "req-fix")
+    a = load_bound(workspace, "m-alpha")
+    check("F2-resume-clean-after-reconcile", a.resume() == [])
+    latest = a.store.load_latest()[0]
+    check("F2-nothing-unresolved",
+          latest["state"]["unresolved_verdicts"] == [])
+    try:
+        a.begin_verification()
+        check("F2-begin-verification-reachable", True)
+    except IllegalTransition:
+        check("F2-begin-verification-reachable", False)
+
+
+def test_refuter_f3_bound_load_validates_mission_id(workspace: Path) -> None:
+    """Refuter finding 3: the bound-load channel (--mission /
+    ZMS_MISSION_ID, lower-provenance input) must validate mission_id as a
+    single kebab-case segment -- the same rule open's schema enforces. A
+    traversal id must never bind across workspaces: pre-fix the effect
+    wrote the artifact in ws1 while the receipt landed in ws2's store, a
+    split brain neither workspace's resume could explain (measured,
+    PROBE 4)."""
+    ws1 = workspace / "ws1"
+    ws2 = workspace / "ws2"
+    open_mission(ws2, "m-remote").approve()
+    open_mission(ws1, "m-local").approve()
+    for spelling, mid in (
+            ("posix", "../../ws2/missions/m-remote"),
+            ("nt", "..\\..\\ws2\\missions\\m-remote"),
+            ("absolute", str(ws2 / "missions" / "m-remote"))):
+        try:
+            Mission.load(ws1, actor="agent:worker", mission_id=mid)
+            check(f"F3-traversal-refused-{spelling}", False)
+        except CustodyError:
+            check(f"F3-traversal-refused-{spelling}", True)
+    m = load_bound(ws1, "m-local")
+    check("F3-normal-id-still-loads",
+          m.store.mission_dir == ws1 / "missions" / "m-local")
+    # fix-refuter F-D: re's `$` also matches just before a trailing
+    # newline, so "m-x\n" passed the schema's kebab-case check -- the id
+    # rule must anchor with \Z.
+    from verify_mission_custody import _ID_RE
+    check("F3-id-re-rejects-trailing-newline",
+          _ID_RE.match("m-x\n") is None)
+    check("F3-id-re-still-accepts-plain-id",
+          _ID_RE.match("m-x") is not None)
+
+
+def test_refuter_f4_blocked_effect_writes_nothing(workspace: Path) -> None:
+    """Refuter finding 4: a blocked effect's refusal claimed "Nothing was
+    written and no receipt was minted" while the fresh
+    unreadable-acknowledged checkpoints had landed BEFORE union
+    evaluation could block (measured, PROBE 5: checkpoint count 2 -> 3 on
+    a refusal). Refuse-before-mutate: the chain must be byte-identical
+    after a block. (The message now names its one deliberate side effect,
+    the guard-log append -- fix-refuter F-C.)"""
+    g = [{"name": "no-frozen", "tool_names": ["Write"],
+          "command_regexes": [], "path_globs": ["frozen/**"]}]
+    open_mission(workspace, "m-guard", guard_mode="enforce",
+                 actuator_guards=g).approve()
+    w = open_mission(workspace, "m-writer")
+    w.approve()
+    w = load_bound(workspace, "m-writer")
+    corrupt_dir(workspace, "m-corrupt")
+    before = chain_bytes(workspace, "m-writer")
+    with contextlib.redirect_stderr(io.StringIO()):
+        try:
+            w.record_effect("frozen/f.txt", "x", "req-1",
+                            acknowledge_unreadable=["m-corrupt"])
+            check("F4-effect-blocked", False)
+        except CustodyError as exc:
+            check("F4-effect-blocked",
+                  "blocked by custody guard" in str(exc))
+    check("F4-chain-byte-identical-after-block",
+          chain_bytes(workspace, "m-writer") == before)
+    check("F4-no-artifact-written",
+          not (workspace / "frozen" / "f.txt").exists())
+    receipts = workspace / "missions" / "m-writer" / "receipts"
+    check("F4-no-receipt-minted",
+          not receipts.exists() or not list(receipts.glob("*.json")))
+
+
+def test_refuter_f5_draft_self_arms_own_session(workspace: Path) -> None:
+    """Finding 5 (operator ruling 2026-08-25: "Self-arm at open, union at
+    approve"): a mission's armed guards bind its OWN session -- calls
+    bound to it, and its own effect verb -- from the moment open arms
+    them, exactly as the pre-union core behaved. The defect this row
+    pins: on the unrefined branch a draft's guards bound NOBODY until
+    approve, a silent disarm of the shipped core's behaviour."""
+    g = [guard("no-secrets", ["secrets/**"], tools=["Write"])]
+    open_mission(workspace, "m-draft", guard_mode="enforce",
+                 actuator_guards=g)
+    call = {"tool_name": "Write", "command": None,
+            "file_path": "secrets/x.env"}
+    v = run_gate(workspace, call, actor="hook:test",
+                 bound_mission="m-draft")
+    check("F5-own-bound-gate-blocked-pre-approve", v["decision"] == "block")
+    check("F5-block-names-own-pair",
+          "m-draft" in v.get("reason", "")
+          and "no-secrets" in v.get("reason", ""))
+    r = run_cli(["gate", "--workspace", str(workspace), "--actor", "hook:t",
+                 "--mission", "m-draft"], stdin=json.dumps(call))
+    check("F5-cli-bound-gate-blocked-pre-approve", r.returncode == 2)
+    m = load_bound(workspace, "m-draft")
+    try:
+        m.record_effect("secrets/own.env", "x", "req-1")
+        check("F5-own-effect-blocked-pre-approve", False)
+    except CustodyError as exc:
+        check("F5-own-effect-blocked-pre-approve",
+              not isinstance(exc, IllegalTransition)
+              and "no-secrets" in str(exc))
+
+
+def test_refuter_f5_draft_guards_invisible_elsewhere(workspace: Path) -> None:
+    """Finding 5 counterweight (the adjudication's preserved intent): an
+    unblessed draft cannot block OTHER sessions. Its guards stay out of
+    the fleet union for unbound calls, for calls bound to OTHER missions,
+    and for sibling effects, until approve."""
+    g = [guard("no-secrets", ["secrets/**"], tools=["Write"])]
+    open_mission(workspace, "m-draft", guard_mode="enforce",
+                 actuator_guards=g)
+    open_mission(workspace, "m-other", actor="agent:other").approve()
+    call = {"tool_name": "Write", "command": None,
+            "file_path": "secrets/x.env"}
+    v = run_gate(workspace, call, actor="hook:test")
+    check("F5-unbound-gate-unaffected", v["decision"] == "allow")
+    v = run_gate(workspace, call, actor="hook:test",
+                 bound_mission="m-other")
+    check("F5-other-bound-gate-unaffected", v["decision"] == "allow")
+    other = load_bound(workspace, "m-other", actor="agent:other")
+    receipt = other.record_effect("secrets/x.env", "s", "req-o1")
+    check("F5-sibling-effect-unaffected",
+          receipt["after_sha256"] is not None)
+
+
+def test_refuter_f5_post_approve_union_unchanged(workspace: Path) -> None:
+    """Finding 5 leg (c): approval still arms the fleet union exactly as
+    before the refinement -- unbound calls, other-bound calls, and
+    sibling effects are all blocked post-approve."""
+    g = [guard("no-secrets", ["secrets/**"], tools=["Write"])]
+    open_mission(workspace, "m-draft", guard_mode="enforce",
+                 actuator_guards=g)
+    open_mission(workspace, "m-other", actor="agent:other").approve()
+    load_bound(workspace, "m-draft").approve()
+    call = {"tool_name": "Write", "command": None,
+            "file_path": "secrets/x.env"}
+    v = run_gate(workspace, call, actor="hook:test")
+    check("F5-post-approve-unbound-blocked", v["decision"] == "block")
+    v = run_gate(workspace, call, actor="hook:test",
+                 bound_mission="m-other")
+    check("F5-post-approve-other-bound-blocked", v["decision"] == "block")
+    other = load_bound(workspace, "m-other", actor="agent:other")
+    try:
+        other.record_effect("secrets/x.env", "s", "req-o1")
+        check("F5-post-approve-sibling-effect-blocked", False)
+    except CustodyError:
+        check("F5-post-approve-sibling-effect-blocked", True)
+
+
+def _raise_sibling_marker(ws: Path) -> Mission:
+    """m-alpha receipts shared.txt, authorizes m-beta, m-beta crosses,
+    m-alpha's resume raises DRIFT-SIBLING:shared.txt. Returns bound
+    m-alpha with the marker standing."""
+    a, b = _two_missions_one_artifact(ws)
+    a.authorize_sibling("m-beta", "shared.txt",
+                        "operator: mission m-beta is authorized to write "
+                        "shared.txt")
+    b.record_effect("shared.txt", "beta-1", "req-b1")
+    a = load_bound(ws, "m-alpha")
+    assert a.resume() == ["DRIFT-SIBLING:shared.txt"]
+    return a
+
+
+def test_refuter_fa_transient_crossing_discharges_loudly(workspace: Path) -> None:
+    """Fix-refuter F-A (operator ruling 2026-08-25: loud auto-discharge):
+    a transient sibling crossing -- write then revert to the receipted
+    bytes -- self-discharged in SILENCE: resume returned [], the CLI
+    printed "resume: clean", and the discharge note named the path but
+    not the sibling. The discharge stays automatic (nothing is left to
+    reconcile) but is finding-grade: resume RETURNS
+    SIBLING-DISCHARGED:<path> (non-blocking -- status still transitions),
+    the CLI prints it and never "clean", and the note carries the sibling
+    attribution from the original detection."""
+    # Library leg.
+    ws = workspace / "lib"
+    a = _raise_sibling_marker(ws)
+    (ws / "shared.txt").write_text("alpha-1", encoding="utf-8")  # revert
+    findings = a.resume()
+    check("FA-resume-returns-discharge",
+          findings == ["SIBLING-DISCHARGED:shared.txt"])
+    latest = a.store.load_latest()[0]
+    check("FA-status-transitions", latest["status"] == "active")
+    check("FA-nothing-unresolved",
+          latest["state"]["unresolved_verdicts"] == [])
+    check("FA-note-names-sibling-and-receipt",
+          any("discharged" in n and "m-beta" in n and "req-b1" in n
+              for n in latest["state"]["notes"]))
+    try:
+        a.begin_verification()
+        check("FA-verification-reachable-without-ack", True)
+    except IllegalTransition:
+        check("FA-verification-reachable-without-ack", False)
+    # CLI leg: the discharge line reaches stdout, "clean" never prints,
+    # and the exit code stays 0 -- finding-grade, not drift-grade.
+    ws = workspace / "cli"
+    _raise_sibling_marker(ws)
+    (ws / "shared.txt").write_text("alpha-1", encoding="utf-8")
+    r = run_cli(["resume", "--workspace", str(ws),
+                 "--actor", "agent:worker", "--mission", "m-alpha"])
+    check("FA-cli-prints-discharge",
+          "SIBLING-DISCHARGED:shared.txt" in r.stdout)
+    check("FA-cli-never-clean",
+          "resume: clean" not in (r.stdout + r.stderr))
+    check("FA-cli-exit-nonblocking", r.returncode == 0)
+
+
+def test_refuter_fb_marker_transfer_note_truthful(workspace: Path) -> None:
+    """Fix-refuter F-B: when a stale DRIFT-SIBLING marker's obligation
+    transfers to receipt-loss (the covering receipt file vanished), the
+    note claimed "re-classified at current severity" -- false: nothing
+    was re-classified, the receipt that would prove either reading is
+    gone. The note must say the marker was superseded by RECEIPT-MISSING
+    and carry the sibling attribution."""
+    a = _raise_sibling_marker(workspace)
+    a.store.receipt_path("req-a1").unlink()
+    findings = a.resume()
+    check("FB-receipt-missing-raised",
+          "RECEIPT-MISSING:req-a1" in findings)
+    latest = a.store.load_latest()[0]
+    unresolved = latest["state"]["unresolved_verdicts"]
+    check("FB-marker-transferred",
+          "DRIFT-SIBLING:shared.txt" not in unresolved
+          and "RECEIPT-MISSING:req-a1" in unresolved)
+    notes = latest["state"]["notes"]
+    check("FB-note-names-transfer-and-sibling",
+          any("superseded by RECEIPT-MISSING:req-a1" in n
+              and "m-beta" in n and "req-b1" in n for n in notes))
+    check("FB-note-not-falsely-reclassified",
+          not any("re-classified at current severity" in n
+                  for n in notes))
+
+
+# ---------------------------------------------------------------------------
+# Registry
+# ---------------------------------------------------------------------------
+
+TESTS = [
+    test_a1_a3_draft_vs_active_union_membership,
+    test_a2_reopened_never_approved_contributes_nothing,
+    test_a4_reopened_approved_lineage_stays_armed,
+    test_a5_verifying_guards_keep_binding_effect_illegal,
+    test_a6_a7_terminal_states_binding_invalid,
+    test_a8_unreadable_dir_binding_invalid,
+    test_b4_binding_with_nothing_active,
+    test_b1_b2_zero_active_unchanged,
+    test_b5_b10_open_beside_active_is_legal,
+    test_b6_single_active_unbound_flow_preserved,
+    test_b8_bound_resolves_to_bound,
+    test_b9_b15_stale_binding_never_falls_through,
+    test_b11_plural_unbound_lifecycle_requires_binding,
+    test_binding_channels_cli_flag_env_precedence,
+    test_missions_list_verb,
+    test_b7_lone_unapproved_draft_contributes_nothing,
+    test_b12_union_names_all_matching_pairs,
+    test_b14_b16_binding_never_changes_exposure,
+    test_b13_effect_union_evaluated_before_write,
+    test_b13_own_guards_gate_own_effect,
+    test_b30_audit_channels_unblockable,
+    test_gate_runs_leave_every_chain_byte_identical,
+    test_b17_open_refuses_unreadable_sibling,
+    test_b22_gate_degraded_union_is_disclosed,
+    test_b23_effect_refuses_union_degraded,
+    test_b18_open_refuses_epoch_skew_sibling,
+    test_b21_crossing_writes_side_channel_never_the_chain,
+    test_b26_never_approved_sibling_never_launders,
+    test_b27_no_authorization_amendment_no_downgrade,
+    test_b28_all_three_legs_yield_drift_sibling,
+    test_scan_covers_non_active_siblings,
+    test_b29_sibling_touched_prefix_forgery_refused,
+    test_receipt_at_1_closure_regression,
+    test_scope_overlap_disclosure_deterministic,
+    test_open_still_refuses_duplicate_mission_id,
+    test_refuter_f1_substring_id_never_launders,
+    test_refuter_f2_stale_sibling_marker_discharges,
+    test_refuter_f3_bound_load_validates_mission_id,
+    test_refuter_f4_blocked_effect_writes_nothing,
+    test_refuter_f5_draft_self_arms_own_session,
+    test_refuter_f5_draft_guards_invisible_elsewhere,
+    test_refuter_f5_post_approve_union_unchanged,
+    test_refuter_fa_transient_crossing_discharges_loudly,
+    test_refuter_fb_marker_transfer_note_truthful,
+]
+
+
+def _check_registry_is_complete() -> None:
+    registered = {fn.__name__ for fn in TESTS}
+    defined = {name for name, value in globals().items()
+               if name.startswith("test_") and callable(value)}
+    orphans = sorted(defined - registered)
+    if orphans:
+        FAILURES.append("unregistered")
+        print(f"FAIL registry-complete: defined but never run: {orphans}")
+
+
+def _run(fn) -> None:
+    before = len(FAILURES)
+    err: Exception | None = None
+    try:
+        with tempfile.TemporaryDirectory() as td:
+            fn(Path(td))
+    except Exception as exc:  # noqa: BLE001
+        err = exc
+    failed = len(FAILURES) > before or err is not None
+    if fn.__name__ in XFAIL:
+        # Expected to fail until the implementing commit lands. The recorded
+        # failures are rolled back; an unexpected PASS is itself a failure,
+        # because a green row that is still listed here pins nothing.
+        del FAILURES[before:]
+        if failed:
+            suffix = f" [{type(err).__name__}]" if err else ""
+            print(f"xfail (unimplemented) {fn.__name__}{suffix}")
+        else:
+            FAILURES.append(f"XPASS:{fn.__name__}")
+            print(f"FAIL XPASS {fn.__name__}: passed while marked "
+                  "expectedFailure -- remove it from XFAIL")
+    elif err is not None:
+        FAILURES.append(f"ERROR:{fn.__name__}")
+        print(f"FAIL {fn.__name__}: {type(err).__name__}: {err}")
+
+
+def main() -> int:
+    _check_registry_is_complete()
+    for fn in TESTS:
+        _run(fn)
+    print(f"\n{len(FAILURES)} failures")
+    return 1 if FAILURES else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

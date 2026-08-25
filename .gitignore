@@ -29,3 +29,8 @@ missions/
 # Local CI receipts describe a working tree, not a commit. They are written
 # outside the repository by default; this is belt-and-braces for older copies.
 docs/evidence/local-ci/
+
+# Site-local skill overlays bind a skill to ONE harness/host (this tree runs on
+# zms-pc-2025). Per-device by design; the overlay mechanism exists so these
+# never ship with the plugin.
+plugins/epistemic-skills/skills/**/LOCAL.md
