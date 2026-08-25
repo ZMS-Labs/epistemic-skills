@@ -51,13 +51,7 @@ FAILURES: list[str] = []
 
 # Rows not yet implemented. Every name here must FAIL when run; the
 # implementing commits shrink this set to empty.
-XFAIL: set[str] = {
-    "test_b26_never_approved_sibling_never_launders",
-    "test_b27_no_authorization_amendment_no_downgrade",
-    "test_b28_all_three_legs_yield_drift_sibling",
-    "test_scan_covers_non_active_siblings",
-    "test_b29_sibling_touched_prefix_forgery_refused",
-}
+XFAIL: set[str] = set()  # every row implemented -- the set burned down to empty
 
 
 def check(name: str, cond: bool) -> None:

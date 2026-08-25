@@ -44,6 +44,10 @@ _RESERVED_NOTE_PREFIXES = (
     # es#173: the quarantine acknowledgement discharges the UnionDegraded
     # refusal, so narrative able to imitate it would forge the discharge.
     "unreadable-acknowledged: ",
+    # es#173 section 4: the machine acknowledgement that reconciles
+    # DRIFT-SIBLING -- caller narrative must not be able to imitate the
+    # record that downgrades a drift finding (gauntlet major).
+    "sibling-touched: ",
 )
 
 
@@ -2121,6 +2125,138 @@ class Mission:
         breaks.sort(key=lambda b: (b["artifact_path"], b["request_id"]))
         return breaks
 
+    def _scan_sibling_receipts(self, rel: str, current_sha: str) -> list[dict]:
+        """receipt@1 records in OTHER mission stores whose artifact_path
+        names this artifact and whose after_sha256 equals the CURRENT
+        content hash -- the es#173 section 4(a) detection scan. Every field
+        it needs already exists on receipt@1; nothing is minted at effect
+        time that the schema must carry (OD-3: zero schema change).
+
+        ANY status, not only active -- the verification-report correction
+        to the design's section 4(a) wording: the adjudication's
+        "resume-time scan of sibling receipt stores" carries no active-only
+        narrowing, and a sibling that completed or was cancelled between
+        its write and this resume must still explain the drift. Best-effort
+        per store: an unreadable sibling contributes no evidence, never a
+        crash -- the recovery path must not be killable (the
+        _load_receipt doctrine, applied to foreign stores)."""
+        own_name = self.store.mission_dir.name
+        missions_root = self.workspace / "missions"
+        found: list[dict] = []
+        if not missions_root.is_dir():
+            return found
+        for mission_dir in sorted(missions_root.iterdir()):
+            if not mission_dir.is_dir() or mission_dir.name == own_name:
+                continue
+            store = MissionStore(mission_dir)
+            try:
+                receipts = store.load_receipts()
+            except Exception as exc:  # noqa: BLE001
+                print(("custody: sibling receipt scan skipped "
+                       f"{mission_dir.name} ({type(exc).__name__}: {exc})")
+                      .encode("ascii", "backslashreplace").decode("ascii"),
+                      file=sys.stderr)
+                continue
+            for record in receipts:
+                if not isinstance(record, dict) or validate_record(record):
+                    continue  # only well-formed receipt@1 counts
+                if _same_artifact(str(record.get("artifact_path")), rel)                         and record.get("after_sha256") == current_sha:
+                    found.append({"mission": mission_dir.name,
+                                  "receipt_id": record.get("request_id"),
+                                  "record": record})
+        return found
+
+    def _classify_sibling_drift(
+            self, latest: dict, rel: str, current_sha: str,
+    ) -> tuple[dict | None, list[str]]:
+        """The FATAL-3 authorization discriminator (es#173 section 4b).
+
+        Hash-match alone is a self-serve audit-downgrade: open() takes
+        unverified refs, so whoever caused unauthorized drift could open a
+        throwaway sibling, effect the tampered bytes, and self-mint the
+        laundering receipt. DRIFT-SIBLING therefore requires ALL of:
+        (1) a sibling receipt@1 hash match (the scan);
+        (2) the sibling operator-approved BY THE CHAIN TEST
+            (_approved_by_chain) -- never latest-status, so a
+            never-approved mission wedged in `reopened` launders nothing;
+        (3) an explicit cross-mission authorization amendment in THIS
+            mission's own chain, naming the sibling mission id and the
+            path or a pattern covering it (_amendment_names).
+
+        Any leg missing -> (None, evidence): plain drift at today's
+        severity with the sibling receipt reported as evidence. The
+        discriminator gates the severity downgrade, never the information
+        -- resume always says what it found."""
+        candidates = self._scan_sibling_receipts(rel, current_sha)
+        evidence: list[str] = []
+        amendments = latest["manifest"]["authority"]["amendments"]
+        for candidate in candidates:
+            mission_name = candidate["mission"]
+            approved = _approved_by_chain(
+                MissionStore(self.workspace / "missions" / mission_name))
+            authorized = any(
+                isinstance(a, dict) and isinstance(a.get("text"), str)
+                and mission_name in a["text"]
+                and _amendment_names(a["text"], rel)
+                for a in amendments)
+            if approved and authorized:
+                return candidate, []
+            legs = []
+            if not approved:
+                legs.append("sibling not operator-approved (chain test)")
+            if not authorized:
+                legs.append("no cross-mission authorization amendment "
+                            "in this mission's chain")
+            evidence.append(
+                f"{rel} matches sibling {mission_name} receipt "
+                f"{candidate['receipt_id']} -- NOT reclassified: "
+                + "; ".join(legs))
+        return None, evidence
+
+    def acknowledge_sibling(self, artifact_relpath: str) -> int:
+        """The only exit for a DRIFT-SIBLING marker (es#173 section 4):
+        acknowledge a sanctioned sibling write, recorded in THIS mission's
+        chain by this mission's own bound session as the reserved machine
+        note `sibling-touched: <path> by <mission> receipt <id>`. Not
+        `acknowledge_loss` -- nothing was lost -- and not `reconcile` --
+        nothing needs rewriting.
+
+        The three discriminator legs are RE-VERIFIED here, at the moment
+        the downgrade is consummated: a marker raised by an earlier resume
+        must not discharge against a store that has since changed."""
+        latest, path = self.store.load_latest()
+        self._verify_manifest(latest)
+        if latest["status"] != "reopened":
+            raise IllegalTransition(
+                f"cannot acknowledge_sibling: status is "
+                f"{latest['status']!r}, expected 'reopened'")
+        norm = artifact_relpath.replace("\\", "/")
+        unresolved = latest["state"]["unresolved_verdicts"]
+        marker = _find_marker(unresolved, "DRIFT-SIBLING:", norm)
+        if marker is None:
+            raise CustodyError(
+                f"no DRIFT-SIBLING marker for {artifact_relpath!r}")
+        rel = marker[len("DRIFT-SIBLING:"):]
+        target = self.workspace / rel
+        current_sha = sha256_file(target) if target.exists() else None
+        hit = None
+        if current_sha is not None:
+            hit, _evidence = self._classify_sibling_drift(
+                latest, rel, current_sha)
+        if hit is None:
+            raise CustodyError(
+                "sibling attribution no longer verifies for "
+                f"{rel!r} (content moved on, the sibling receipt vanished, "
+                "or a discriminator leg no longer holds) -- re-run resume "
+                "and handle the finding at its current severity")
+        remaining = [m for m in unresolved if m != marker]
+        status = "reopened" if remaining else self._resumption_status()
+        new = self._write_next(
+            latest, path, status=status, unresolved_verdicts=remaining,
+            note=(f"sibling-touched: {rel} by {hit['mission']} receipt "
+                  f"{hit['receipt_id']}"))
+        return new["revision"]
+
     def resume(self) -> list[str]:
         latest, path = self.store.load_latest()
         self._verify_manifest(latest)
@@ -2193,6 +2329,7 @@ class Mission:
         opaque_ids = [(rid, k) for rid, _r, k in current_by_key.values()
                       if k] + unplaceable_opaque
         mismatched: list[str] = []
+        current_sha_by_rel: dict[str, str] = {}
         for request_id, receipt, kind in current_by_key.values():
             if kind:
                 # Unverifiable, and honestly so: without the receipt's hash
@@ -2213,10 +2350,31 @@ class Mission:
             actual = sha256_file(target) if target.exists() else None
             if actual != receipt["after_sha256"]:
                 mismatched.append(rel)
+                if actual is not None:
+                    current_sha_by_rel[rel] = actual
         mismatched.sort()
         missing.sort()
         opaque_ids.sort()
-        findings = (mismatched
+        # es#173 section 4: a drifted artifact whose CURRENT bytes match a
+        # sibling receipt@1 is either a sanctioned crossing (all three
+        # discriminator legs -> DRIFT-SIBLING, reconciled by
+        # acknowledge_sibling) or plain drift WITH the sibling receipt
+        # reported as evidence (any leg missing). The discriminator gates
+        # the severity downgrade, never the information.
+        sibling_class: dict[str, dict] = {}
+        sibling_evidence: list[str] = []
+        for rel in mismatched:
+            current_sha = current_sha_by_rel.get(rel)
+            if current_sha is None:
+                continue
+            hit, evidence = self._classify_sibling_drift(
+                latest, rel, current_sha)
+            if hit is not None:
+                sibling_class[rel] = hit
+            else:
+                sibling_evidence.extend(evidence)
+        findings = ([f"DRIFT-SIBLING:{rel}" if rel in sibling_class else rel
+                     for rel in mismatched]
                     + [f"RECEIPT-MISSING:{rid}" for rid in missing]
                     + [f"RECEIPT-{k}:{rid}" for rid, k in opaque_ids])
         # THE SKEW MARKER'S EXIT LIVES HERE. Its remedy is "update the reader
@@ -2237,7 +2395,8 @@ class Mission:
         unresolved = [m for m in latest["state"]["unresolved_verdicts"]
                       if m not in stale_skew]
         for rel in mismatched:
-            marker = f"RECONCILIATION:{rel}"
+            marker = (f"DRIFT-SIBLING:{rel}" if rel in sibling_class
+                      else f"RECONCILIATION:{rel}")
             if marker not in unresolved:
                 unresolved.append(marker)
         for rid in missing:
@@ -2257,6 +2416,11 @@ class Mission:
         # update that fixed the receipt would leave it reopened forever.
         if findings:
             status, note = "reopened", f"drift detected: {', '.join(findings)}"
+            for rel, hit in sorted(sibling_class.items()):
+                note += (f"; sibling receipt: {rel} matches "
+                         f"{hit['mission']} receipt {hit['receipt_id']}")
+            for line in sibling_evidence:
+                note += f"; sibling receipt evidence: {line}"
         else:
             status = ("reopened" if unresolved
                       else self._resumption_status())
