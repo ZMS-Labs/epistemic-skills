@@ -2034,6 +2034,105 @@ def test_effect_path_index_uses_set_membership(workspace: Path) -> None:
           CountingStr.comparisons < effect_count * effect_count)
 
 
+def _count_checkpoint_reads(fn):
+    """Run `fn`; return (result, reads of files under any `checkpoints/` dir).
+
+    The oracle is FILE READS, not calls to `_effect_path_index`. A counter
+    installed on that method goes green the moment the call moves, whether or
+    not the chain is still being re-read -- and re-reading the chain is the
+    cost, not calling the method. Counting reads measures what the claim is
+    about."""
+    orig_bytes, orig_text = Path.read_bytes, Path.read_text
+    reads = 0
+
+    def counted_bytes(self):
+        nonlocal reads
+        if self.parent.name == "checkpoints":
+            reads += 1
+        return orig_bytes(self)
+
+    def counted_text(self, *args, **kwargs):
+        nonlocal reads
+        if self.parent.name == "checkpoints":
+            reads += 1
+        return orig_text(self, *args, **kwargs)
+
+    Path.read_bytes, Path.read_text = counted_bytes, counted_text
+    try:
+        return fn(), reads
+    finally:
+        Path.read_bytes, Path.read_text = orig_bytes, orig_text
+
+
+def test_census_receipts_does_not_rescan_the_chain_per_receipt(
+        workspace: Path) -> None:
+    """es#161 residue: the ESTATE WALK must not re-read the chain per receipt.
+
+    `census_missions._receipts` builds the chain index once and then calls
+    `_load_receipt_checked` for every id WITHOUT handing that index over, so
+    every receipt re-enters `_effect_path_index`. That was survivable while a
+    cache hit cost one directory listing. Keying the cache to checkpoint
+    CONTENT -- the right fix for the stale-index finding -- turns each hit
+    into a full SHA-256 pass over the whole cumulative chain, so the census
+    goes from O(C) checkpoint reads to O(R x C): measured on a 300-receipt
+    mission, 303 reads / 1.9 MiB before the content key, 91,205 reads /
+    578 MiB after it.
+
+    The same class as the finding it came from, in the sibling module the
+    optimisation exists to serve. Every other control here counts calls on a
+    `Mission` method and none of them runs the census, so none of them sees
+    it."""
+    effect_count = 24
+    m = open_mission(workspace, "m-census-io", "Bounded census chain reads.")
+    m.approve()
+    for i in range(effect_count):
+        m.record_effect(f"docs/{i}.txt", str(i), f"req-{i}")
+    latest, _ = m.store.load_latest()
+    checkpoints = len(m.store.checkpoint_paths())
+    m._effect_index_cache = None
+
+    (paths, problems, orphans), reads = _count_checkpoint_reads(
+        lambda: census_missions._receipts(m, m.store, latest))
+
+    check("census-io-preserves-every-path", len(paths) == effect_count)
+    check("census-io-reports-no-problems", not problems and not orphans)
+    # One index build reads each checkpoint at most twice (fingerprint, then
+    # parse). Anything that scales with the RECEIPT count is a per-id rescan.
+    check("census-io-does-not-rescan-per-receipt", reads <= 4 * checkpoints)
+
+
+def test_census_still_reports_receipts_when_the_index_is_unbuildable(
+        workspace: Path) -> None:
+    """The failure mode the rescan fix introduces, pinned.
+
+    Handing the census's prebuilt mapping to `_load_receipt_checked` removes
+    the rescan -- and would also hand it an EMPTY mapping on the path where
+    the index could not be built at all, silently disabling the loader's own
+    chained-path check and turning unreadable receipts into ordinary ones.
+    So the fix forwards only a mapping it actually built; when the build
+    fails the loader is called exactly as before, re-raises, and every id is
+    still reported."""
+    m = open_mission(workspace, "m-census-blind", "Index build fails.")
+    m.approve()
+    m.record_effect("docs/a.txt", "a", "req-a")
+    m.record_effect("docs/b.txt", "b", "req-b")
+    latest, _ = m.store.load_latest()
+
+    def _boom():
+        raise OSError("checkpoints unreadable")
+
+    m._effect_path_index = _boom
+    paths, problems, orphans = census_missions._receipts(m, m.store, latest)
+
+    blob = " ".join(problems)
+    check("census-blind-reports-index-failure",
+          "chain index unreadable" in blob)
+    check("census-blind-still-names-every-id",
+          all(f"{rid}: " in blob for rid in ("req-a", "req-b")))
+    check("census-blind-does-not-report-clean-coverage", paths == [])
+    check("census-blind-no-orphans-invented", orphans == [])
+
+
 def test_forged_restored_receipt_is_not_trusted(workspace: Path) -> None:
     """Round-3 finding: a schema-valid receipt planted at the lost id's path
     must not buy continuity. The chain records which artifact the id was
@@ -4943,6 +5042,8 @@ TESTS = [
     test_resume_and_continuity_share_one_effect_index,
     test_effect_path_index_does_not_retain_checkpoint_bytes,
     test_effect_path_index_uses_set_membership,
+    test_census_receipts_does_not_rescan_the_chain_per_receipt,
+    test_census_still_reports_receipts_when_the_index_is_unbuildable,
     test_foreign_mission_receipt_is_not_this_missions_receipt,
     test_cross_workspace_receipt_cannot_silence_drift,
     test_backslash_effect_path_still_loads_its_own_receipt,
