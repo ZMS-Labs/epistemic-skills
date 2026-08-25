@@ -191,12 +191,29 @@ def check(wiki: Path, version: str, live: set[str], retired: dict[str, str],
                     except Exception:
                         code = -1
                     seen[url] = code
-                if code >= 400:
+                if code < 0:
+                    # A request that could not COMPLETE (timeout, DNS failure,
+                    # connection reset) was mapped to -1 and then passed the
+                    # `code >= 400` test, while the summary line below counted
+                    # it among "resolved" URLs. The scheduled live job stayed
+                    # green over links nobody checked. "A rule that cannot go
+                    # red is not a rule" -- this one could not go red for the
+                    # most common failure of a network probe.
+                    fail.append(
+                        f"UNREACHABLE: {p.name} -> request did not complete "
+                        f"{url}")
+                elif code >= 400:
                     fail.append(f"DEAD-LINK: {p.name} -> HTTP {code} {url}")
         if not seen:
             fail.append("VACUOUS: --links resolved no URLs")
         else:
-            print(f"  resolved {len(seen)} distinct repository URLs")
+            # Count RESOLVED and UNREACHABLE separately. The old line counted
+            # every attempted URL as "resolved", including the ones whose
+            # request never completed -- the summary asserting coverage the
+            # probe did not have.
+            unreachable = sum(1 for c in seen.values() if c < 0)
+            print(f"  resolved {len(seen) - unreachable} distinct repository "
+                  f"URLs ({unreachable} UNREACHABLE)")
 
     print(f"  {len(pages)} pages | {banners} banners | {counts} counts | "
           f"{checked_links} versioned links | {exempt} historical counts | expecting v{version}, "
@@ -258,6 +275,55 @@ def self_test() -> int:
             else:
                 failures += 1
                 print(f"[FAIL] {name}: expected {expect!r}, got {out[:3]}")
+
+    # THE LINK RULE HAD NO PLANTED CONTROL AT ALL: every case above runs with
+    # check_links=False, so the one rule that reaches the network was the one
+    # rule never proven able to go red. Both directions are planted here, with
+    # `urlopen` replaced -- no network in the self-test.
+    import urllib.error
+    import urllib.request
+
+    class _Resp:
+        status = 200
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+    link_cases = [
+        ("live link resolves", lambda *a, **k: _Resp(), None),
+        # A request that could not COMPLETE used to be mapped to -1 and then
+        # pass the `code >= 400` test, while the summary line counted it among
+        # "resolved" URLs -- the scheduled live job green over an unchecked
+        # link.
+        ("unreachable link is a failure",
+         lambda *a, **k: (_ for _ in ()).throw(OSError("name resolution")),
+         "UNREACHABLE"),
+        ("404 link is still a failure",
+         lambda *a, **k: (_ for _ in ()).throw(
+             urllib.error.HTTPError("u", 404, "gone", None, None)),
+         "DEAD-LINK"),
+    ]
+    real_urlopen = urllib.request.urlopen
+    for name, fake, expect in link_cases:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for fn, body in good_pages.items():
+                (root / fn).write_text(body, encoding="utf-8")
+            urllib.request.urlopen = fake
+            try:
+                out = check(root, version, live, retired, check_links=True)
+            finally:
+                urllib.request.urlopen = real_urlopen
+        hit = any(expect in f for f in out) if expect else not out
+        if hit:
+            print(f"[PASS] {name}")
+        else:
+            failures += 1
+            print(f"[FAIL] {name}: expected {expect!r}, got {out[:3]}")
+
     print(f"check_wiki self-test: {'PASS' if not failures else 'FAIL'}")
     return 1 if failures else 0
 

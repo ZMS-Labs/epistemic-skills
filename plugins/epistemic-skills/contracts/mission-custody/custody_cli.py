@@ -76,7 +76,14 @@ def _session_binding(args: argparse.Namespace) -> str | None:
     """flag > env > unbound. An empty or whitespace env value is unset --
     `export ZMS_MISSION_ID=` must not manufacture a binding."""
     flag = getattr(args, "mission", None)
-    if flag:
+    if flag is not None:
+        # PRESENT, not truthy. `custody effect --mission "$MISSION_ID"` with an
+        # unset variable passes an EMPTY flag; treating that as absent handed
+        # the session back to a stale `ZMS_MISSION_ID`, so effects and notes
+        # landed under a different mission's authority -- silently, and against
+        # the documented flag-over-environment precedence. An empty flag is now
+        # a binding that `_ID_RE` refuses in `Mission.load` (BindingInvalid),
+        # which is the loud outcome.
         return flag
     env = os.environ.get("ZMS_MISSION_ID", "").strip()
     return env or None
@@ -218,6 +225,18 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_ack_sib = sub.add_parser("acknowledge-sibling", parents=[common])
     p_ack_sib.add_argument("--path", required=True)
+
+    # es#173 section 4b leg 3: the STRUCTURED grant. `--sibling`, not
+    # `--mission`: `--mission` names the acting session's binding on every
+    # verb and must keep meaning exactly that.
+    p_auth_sib = sub.add_parser(
+        "authorize-sibling", parents=[common],
+        help="record an operator grant that mission <sibling> may write "
+             "<path>, so a drift matching its receipt can be acknowledged "
+             "rather than reconciled")
+    p_auth_sib.add_argument("--sibling", required=True)
+    p_auth_sib.add_argument("--path", required=True)
+    _add_text_flags(p_auth_sib, "text")
 
     sub.add_parser("resume", parents=[common])
 
@@ -450,6 +469,14 @@ def dispatch(args: argparse.Namespace) -> int:
         return 0
 
     if args.command == "missions":
+        # Case rows 4/9/15: a present binding is validated on EVERY verb. This
+        # was the one verb that silently accepted a stale ZMS_MISSION_ID.
+        # Read-only, so nothing was misrouted -- but "the binding you are
+        # holding is dead" is exactly what an operator running `missions` is
+        # trying to find out.
+        binding = _session_binding(args)
+        if binding is not None:
+            Mission.load(workspace, actor=args.actor, mission_id=binding)
         rows = []
         missions_root = workspace / "missions"
         if missions_root.is_dir():
@@ -464,7 +491,12 @@ def dispatch(args: argparse.Namespace) -> int:
                 row = {"mission": mission_dir.name}
                 try:
                     latest, _ = store.load_latest()
-                except (StoreError, ValueError) as exc:
+                except (StoreError, ValueError, OSError) as exc:
+                    # OSError too: `load_latest` can raise PermissionError or
+                    # FileNotFoundError, and `main()` catches only
+                    # CustodyError/StoreError -- so one locked mission dir
+                    # killed the whole listing with a traceback instead of
+                    # emitting an `unreadable` row and continuing.
                     row.update({"status": "unreadable",
                                 "error": f"{type(exc).__name__}: {exc}",
                                 "approved": None, "steward_ref": None,
@@ -572,6 +604,9 @@ def dispatch(args: argparse.Namespace) -> int:
         print(mission.acknowledge_receipt_loss(args.request_id))
     elif args.command == "acknowledge-sibling":
         print(mission.acknowledge_sibling(args.path))
+    elif args.command == "authorize-sibling":
+        print(mission.authorize_sibling(args.sibling, args.path,
+                                        _read_text(args, "text")))
     elif args.command == "verify":
         # READ-ONLY (es#138): never a lifecycle write. Exit 0 = chain intact,
         # exit 4 = chain break reported. Either way nothing was written.
