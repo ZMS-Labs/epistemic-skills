@@ -149,6 +149,14 @@ class MissionStore:
             return False
         try:
             successor = json.loads(paths[index + 1].read_text(encoding="utf-8"))
+            # A successor that is valid JSON and NOT AN OBJECT proves nothing
+            # and must not crash the diagnosis: `[]` made `.get` raise
+            # AttributeError, which this handler does not catch, so
+            # `load_latest` leaked a raw exception instead of the
+            # ChainBroken/EpochSkew verdict -- taking the census and the gate
+            # down with it. Read defensively means read defensively.
+            if not isinstance(successor, dict):
+                return False
             recorded = successor.get("prev_checkpoint_sha256")
             if not isinstance(recorded, str):
                 return False
