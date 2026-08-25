@@ -193,6 +193,6 @@ Confirmed the 2026-07-29 anonymous-rich regime and added one structural finding:
    10.1038/s41586-020-2649-2) and record: response shape, whether contexts
    are included or need a second call, rate limits, auth failures.
 4. Rewrite this profile (dated, "re-check live" header retained).
-5. Update `evidence-research/SKILL.md` ONLY if the observed surface
+5. Update `resolve/literature/METHOD.md` ONLY if the observed surface
    contradicts its engine-role assumptions.
 6. Commit + push (canonical skills live in git), redeploy the skill cache.
