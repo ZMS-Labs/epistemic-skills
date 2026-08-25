@@ -303,7 +303,11 @@ def test_legacy_continuity_paths_are_escaped_on_resume() -> None:
                 for note in checkpoint["state"]["notes"]
             ]
             data = (json.dumps(checkpoint, indent=1, sort_keys=True) + "\n")
-            checkpoint_path.write_text(data, encoding="utf-8")
+            # newline="" or Windows translates the LF this string carries into
+            # CRLF ON DISK, while the chain below hashes the untranslated bytes.
+            # sha256_file() reads what is on disk, so every rebuilt link would be
+            # wrong and the mission unreadable -- green on Linux CI, red here.
+            checkpoint_path.write_text(data, encoding="utf-8", newline="")
             previous_sha = hashlib.sha256(data.encode("utf-8")).hexdigest()
 
         resumed = run("resume", "--workspace", str(ws),
@@ -929,6 +933,115 @@ def test_verify_detects_tampered_chain() -> None:
         shutil.rmtree(ws, ignore_errors=True)
 
 
+
+# --- Codex MODERATE/MINOR triage, 2026-08-25 ------------------------------
+
+
+def run_env(env_extra: dict, *args: str) -> subprocess.CompletedProcess:
+    """`run`, plus environment: the session binding's second channel lives
+    there, and its precedence against the flag is the thing under test."""
+    import os
+    env = {**os.environ, **env_extra}
+    return subprocess.run(
+        [sys.executable, str(CLI), *args], capture_output=True, text=True,
+        env=env)
+
+
+def test_empty_mission_flag_never_defers_to_the_environment() -> None:
+    """`custody effect --mission "$MISSION_ID"` with an unset variable passes
+    an EMPTY flag. Treating that as absent handed the session back to a stale
+    ZMS_MISSION_ID, so the effect landed under a different mission's
+    authority -- against the documented flag-over-environment precedence."""
+    with tempfile.TemporaryDirectory() as td:
+        ws = Path(td)
+        for name in ("m-stale", "m-real"):
+            open_cli(ws, name, "two missions")
+            run("approve", "--workspace", str(ws), "--actor", "agent:worker",
+                "--mission", name)
+        r = run_env({"ZMS_MISSION_ID": "m-stale"},
+                    "effect", "--workspace", str(ws), "--actor", "agent:worker",
+                    "--mission", "", "--path", "notes/a.md",
+                    "--content", "x", "--request-id", "req-1")
+        check("empty-mission-flag-refuses", r.returncode == 2)
+        check("empty-mission-flag-names-the-binding-rule",
+              "BindingInvalid" in r.stderr)
+        check("empty-mission-flag-wrote-nothing",
+              not (ws / "notes" / "a.md").exists())
+        check("empty-mission-flag-did-not-use-the-environment",
+              not list((ws / "missions" / "m-stale" / "receipts").glob("*")))
+
+
+def test_missions_validates_its_own_session_binding() -> None:
+    """Case rows 4/9/15: a present binding is validated on EVERY verb.
+    `missions` was the one verb that silently accepted a stale
+    ZMS_MISSION_ID. Read-only, so nothing was misrouted -- but "the binding
+    you are holding is dead" is what an operator running it wants to know."""
+    with tempfile.TemporaryDirectory() as td:
+        ws = Path(td)
+        open_cli(ws, "m-live", "the live one")
+        r = run_env({"ZMS_MISSION_ID": "m-gone"},
+                    "missions", "--workspace", str(ws), "--actor",
+                    "agent:worker")
+        check("missions-refuses-a-stale-binding", r.returncode == 2)
+        check("missions-names-the-stale-binding", "m-gone" in r.stderr)
+        r = run_env({"ZMS_MISSION_ID": "m-live"},
+                    "missions", "--workspace", str(ws), "--actor",
+                    "agent:worker")
+        check("missions-accepts-a-valid-binding", r.returncode == 0)
+
+
+def test_missions_survives_an_unreadable_mission_dir() -> None:
+    """The per-row handler caught only (StoreError, ValueError) while
+    `load_latest` can raise OSError, and `main()` catches neither -- so one
+    unreadable mission dir killed the listing with a traceback instead of
+    emitting an `unreadable` row and continuing."""
+    with tempfile.TemporaryDirectory() as td:
+        ws = Path(td)
+        open_cli(ws, "m-live", "the live one")
+        # A DIRECTORY where the checkpoint file belongs: reading it raises
+        # IsADirectoryError (POSIX) / PermissionError (NT) -- both OSError,
+        # neither a StoreError.
+        cps = ws / "missions" / "m-trap" / "checkpoints"
+        (cps / "r00000001.json").mkdir(parents=True)
+        r = run("missions", "--workspace", str(ws), "--actor", "agent:worker")
+        check("missions-no-traceback-on-oserror", "Traceback" not in r.stderr)
+        check("missions-exit-0-with-an-unreadable-row", r.returncode == 0)
+        rows = json.loads(r.stdout)
+        by_name = {row["mission"]: row for row in rows}
+        check("missions-reports-the-unreadable-row",
+              by_name.get("m-trap", {}).get("status") == "unreadable")
+        check("missions-still-reports-the-healthy-row",
+              by_name.get("m-live", {}).get("status") == "draft")
+
+
+def test_authorize_sibling_verb_records_a_structured_grant() -> None:
+    """FATAL-3 leg 3 is a structured record now, not a prose mention: the CLI
+    must expose the grant, and the note it writes must carry the reserved
+    machine prefix (which caller narrative cannot imitate)."""
+    with tempfile.TemporaryDirectory() as td:
+        ws = Path(td)
+        open_cli(ws, "a-owner", "own it")
+        run("approve", "--workspace", str(ws), "--actor", "agent:worker",
+            "--mission", "a-owner")
+        r = run("authorize-sibling", "--workspace", str(ws), "--actor",
+                "agent:worker", "--mission", "a-owner",
+                "--sibling", "b-writer", "--path", "docs/x.txt",
+                "--text", "operator: b-writer may write docs/x.txt")
+        check("authorize-sibling-exit-0", r.returncode == 0)
+        r = run("status", "--workspace", str(ws), "--actor", "agent:worker",
+                "--mission", "a-owner")
+        st = json.loads(r.stdout)
+        check("authorize-sibling-writes-the-reserved-note",
+              "sibling-authorized: docs/x.txt by b-writer"
+              in st["state"]["notes"])
+        check("authorize-sibling-records-the-operator-words",
+              any(a["text"] == "operator: b-writer may write docs/x.txt"
+                  for a in st["manifest"]["authority"]["amendments"]))
+        r = run("note", "--workspace", str(ws), "--actor", "agent:worker",
+                "--mission", "a-owner",
+                "--text", "sibling-authorized: docs/x.txt by b-writer")
+        check("narrative-cannot-forge-the-grant", r.returncode == 2)
+
 TESTS = [
     test_scope_ack_has_a_cli_door,
     test_open_approve_effect_status_roundtrip,
@@ -958,6 +1071,10 @@ TESTS = [
     test_text_file_mutual_exclusion_across_subcommands,
     test_verify_is_read_only_and_reports_chain,
     test_verify_detects_tampered_chain,
+    test_empty_mission_flag_never_defers_to_the_environment,
+    test_missions_validates_its_own_session_binding,
+    test_missions_survives_an_unreadable_mission_dir,
+    test_authorize_sibling_verb_records_a_structured_grant,
 ]
 
 

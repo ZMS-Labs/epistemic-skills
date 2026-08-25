@@ -38,5 +38,51 @@ class DcoTests(unittest.TestCase):
         self.assertEqual(CHECK_DCO.unsigned_commits(commits), ["eeeeeeeeeeee"])
 
 
+    def test_signed_octopus_merge_is_not_a_permanent_red(self):
+        """`merge_authored_content` cannot AUTO-EXEMPT an octopus merge, which
+        is not the same as being unable to VERIFY one. Returning None routed it
+        to `unverifiable`, which raises unconditionally and names a remedy
+        ("fetch them before running this check") that no fetch can satisfy: no
+        fetch turns three parents into two. A correctly signed octopus merge
+        was a permanently red gate."""
+        octopus = {
+            "sha": "f" * 40,
+            "parents": [{"sha": "1" * 40}, {"sha": "2" * 40}, {"sha": "3" * 40}],
+            "commit": {
+                "message": "merge: three heads\n\n"
+                           "Signed-off-by: Ada Lovelace <ada@example.com>",
+                "author": {"name": "Ada Lovelace", "email": "ada@example.com"},
+            },
+        }
+        self.assertEqual(CHECK_DCO.unsigned_commits([octopus]), [])
+
+    def test_unsigned_octopus_merge_still_fails(self):
+        """The positive control: falling through to the ordinary sign-off
+        requirement must still REQUIRE the sign-off, not wave the merge past."""
+        octopus = {
+            "sha": "e" * 40,
+            "parents": [{"sha": "1" * 40}, {"sha": "2" * 40}, {"sha": "3" * 40}],
+            "commit": {"message": "merge: three heads",
+                       "author": {"name": "Ada Lovelace",
+                                  "email": "ada@example.com"}},
+        }
+        self.assertEqual(CHECK_DCO.unsigned_commits([octopus]),
+                         ["eeeeeeeeeeee"])
+
+    def test_two_parent_merge_with_absent_objects_is_still_unverifiable(self):
+        """The other None cause must keep failing closed: a two-parent merge
+        whose objects are not in this clone cannot be classified, and an
+        exemption that cannot be verified is not an exemption."""
+        merge = {
+            "sha": "d" * 40,
+            "parents": [{"sha": "a" * 40}, {"sha": "b" * 40}],
+            "commit": {"message": "merge: two heads",
+                       "author": {"name": "Ada Lovelace",
+                                  "email": "ada@example.com"}},
+        }
+        with self.assertRaises(SystemExit):
+            CHECK_DCO.unsigned_commits([merge])
+
+
 if __name__ == "__main__":
     unittest.main()

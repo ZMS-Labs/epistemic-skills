@@ -25,11 +25,12 @@ import census_missions  # noqa: E402
 from custody_mission import (  # noqa: E402
     _same_artifact,
     AcceptanceRefused,
+    BindingRequired,
     CustodyError,
     IllegalTransition,
     Mission,
-    MultipleActiveMissions,
     NoActiveMission,
+    now_utc,
 )
 
 FAILURES: list[str] = []
@@ -95,16 +96,21 @@ def test_load_refuses_zero_and_multiple(workspace: Path) -> None:
         check("load-zero-raises", True)
 
     m1 = open_mission(workspace, "m-one", "A.")
-    # open() refuses to CREATE a second active mission in one workspace
-    # (decoy-disarm wedge, es#117 review fix 4); a duplicated mission dir
-    # arriving out-of-band (sync, copy) is exactly the multiple-active state
-    # load() must still refuse, so build it that way.
+    # es#173: plurality is legal, and an UNBOUND lifecycle verb over N>1
+    # active missions refuses BindingRequired (never guesses; the retired
+    # MultipleActiveMissions is raised nowhere) -- the refusal names every
+    # id and both binding channels; a bound load resolves normally.
     shutil.copytree(m1.store.mission_dir, workspace / "missions" / "m-two")
     try:
         Mission.load(workspace, actor="agent:x")
         check("load-multiple-raises", False)
-    except MultipleActiveMissions:
-        check("load-multiple-raises", True)
+    except BindingRequired as exc:
+        check("load-multiple-raises",
+              "m-one" in str(exc) and "m-two" in str(exc)
+              and "ZMS_MISSION_ID" in str(exc))
+    bound = Mission.load(workspace, actor="agent:x", mission_id="m-two")
+    check("load-multiple-bound-resolves",
+          bound.store.mission_dir.name == "m-two")
 
 
 def test_effect_writes_receipt_and_artifact(workspace: Path) -> None:
@@ -1144,7 +1150,10 @@ def test_stale_reader_scope_never_claims_enforcement_the_gate_lacks(
     check("stale-scope-control-says-enforces",
           "still enforce" in _stale_reader_scope(healthy, "m-legacy"))
 
-    # DEFECT 1: a duplicate active mission -- Mission.load refuses, gate allows.
+    # DUPLICATE ACTIVE MISSIONS (was DEFECT 1): under es#173 plurality is
+    # legal and the gate evaluates the UNION -- both copies' guards enforce,
+    # so the census must NOT report the root fail-open any more, and the
+    # honest "still enforces" line must apply.
     dupe = workspace / "dupe"
     one = open_mission(dupe, "m-one", "First.",
                        guard_mode="enforce", actuator_guards=guards)
@@ -1152,13 +1161,11 @@ def test_stale_reader_scope_never_claims_enforcement_the_gate_lacks(
     one.record_effect("a.txt", "aa", "req-one")
     shutil.copytree(one.store.mission_dir, dupe / "missions" / "m-two")
     _skew_a_store_into(dupe, "m-legacy")
-    check("stale-scope-duplicate-gate-allows",
-          run_gate(dupe, call, actor="probe")["decision"] == "allow")
+    check("stale-scope-duplicate-gate-blocks",
+          run_gate(dupe, call, actor="probe")["decision"] == "block")
     dupe_scope = _stale_reader_scope(dupe, "m-legacy")
-    check("stale-scope-duplicate-claims-no-enforcement",
-          "still enforce" not in dupe_scope)
-    check("stale-scope-duplicate-names-the-cause",
-          "multiple active" in dupe_scope)
+    check("stale-scope-duplicate-still-enforces",
+          "still enforce" in dupe_scope)
 
     # DEFECT 2: a tampered sole active mission -- status() raises, hook allows.
     tampered = workspace / "tampered"
@@ -1174,12 +1181,15 @@ def test_stale_reader_scope_never_claims_enforcement_the_gate_lacks(
         ["nothing/**"]
     tail.write_text(json.dumps(record, indent=1, sort_keys=True) + "\n",
                     encoding="utf-8")
-    try:
-        run_gate(tampered, call, actor="probe")
-        check("stale-scope-tamper-gate-does-not-enforce", False)
-    except CustodyError:
-        # run_gate propagates; custody_hook catches CustodyError and ALLOWS.
-        check("stale-scope-tamper-gate-does-not-enforce", True)
+    # es#173: run_gate no longer propagates the tamper -- the mission joins
+    # the DEGRADED set (guards NOT enforced, disclosed in the reason and as
+    # a greppable TAMPER line on stderr) and the verdict stays allow.
+    buf_t = io.StringIO()
+    with contextlib.redirect_stderr(buf_t):
+        v_t = run_gate(tampered, call, actor="probe")
+    check("stale-scope-tamper-gate-does-not-enforce",
+          v_t["decision"] == "allow" and "NOT enforced" in v_t["reason"])
+    check("stale-scope-tamper-stderr-greppable", "TAMPER" in buf_t.getvalue())
     check("stale-scope-tamper-claims-no-enforcement",
           "still enforce" not in _stale_reader_scope(tampered, "m-legacy"))
 
@@ -2332,19 +2342,25 @@ def test_tail_guard_tamper_without_amendment_detected(workspace: Path) -> None:
         check("tail-guard-tamper-detected", True)
 
 
-def test_open_refuses_second_active_mission(workspace: Path) -> None:
-    # A second ACTIVE mission under one workspace makes every other command
-    # refuse (MultipleActiveMissions) -- including the gate's discovery -- so
-    # open creating one is a decoy-disarm wedge, not a feature.
+def test_open_beside_active_is_legal_but_duplicate_id_refused(
+        workspace: Path) -> None:
+    # es#173: plurality is legal -- open no longer refuses on an existing
+    # active mission (the decoy-disarm wedge died with the inert-on-
+    # plurality gate branch; the union now enforces across all approved
+    # missions). The door still refuses a DUPLICATE mission id, and the
+    # refused open must not leave a partial mission dir behind.
     open_mission(workspace, "m-first", "First.")
+    second = open_mission(workspace, "m-second", "Concurrent.")
+    check("open-second-active-is-legal",
+          second.store.load_latest()[0]["status"] == "draft")
     try:
-        open_mission(workspace, "m-second", "Decoy.")
-        check("open-refuses-second-active", False)
+        open_mission(workspace, "m-second", "Duplicate id.")
+        check("open-refuses-duplicate-id", False)
     except CustodyError:
-        check("open-refuses-second-active", True)
-    # the refused open must not leave a partial mission dir behind
-    check("open-refused-left-no-dir",
-          not (workspace / "missions" / "m-second").exists())
+        check("open-refuses-duplicate-id", True)
+    cps = sorted((workspace / "missions" / "m-second" / "checkpoints")
+                 .glob("r*.json"))
+    check("open-duplicate-refusal-wrote-nothing", len(cps) == 1)
 
 
 def test_api_disarm_clears_guard_mode_with_guard_list(workspace: Path) -> None:
@@ -4636,6 +4652,278 @@ def test_trailing_slash_scope_entry_binds_the_subtree(
           and ("secretsfile.txt", "matches scope.out") not in findings)
 
 
+
+# --- Codex MODERATE/MINOR triage, 2026-08-25 ------------------------------
+
+
+def _plant_orphan_receipt(store, mission_id, rel, after_sha, request_id):
+    """A well-formed receipt@1 sitting in a store's receipts/ directory that
+    the store's own chain never admitted -- the crash-window orphan, and the
+    shape an actor with write access to a sibling store can plant."""
+    store.write_receipt({
+        "record": "receipt@1", "mission_id": mission_id,
+        "request_id": request_id, "actor": "agent:worker",
+        "utc": now_utc(), "artifact_path": rel,
+        "before_sha256": None, "after_sha256": after_sha,
+    })
+
+
+def test_sibling_receipt_must_be_admitted_by_the_sibling_chain(
+        workspace: Path) -> None:
+    """FATAL-3 leg 1: the scan reads a DIRECTORY, so an orphan (or planted)
+    receipt in an approved, authorized sibling downgrades plain drift to the
+    ack-only DRIFT-SIBLING lane with nothing in that sibling's chain."""
+    rel = "docs/x.txt"
+    a = open_mission(workspace, "a-owner", "own the artifact")
+    a.approve()
+    a.record_effect(rel, "one\n", "req-a1")
+    b = open_mission(workspace, "b-writer", "the sibling")
+    b.approve()
+    target = workspace / "docs" / "x.txt"
+    target.write_bytes(b"tampered\n")
+    _plant_orphan_receipt(b.store, "b-writer", rel, sha256_file(target),
+                          "req-orphan")
+    a.authorize_sibling("b-writer", rel,
+                        "operator: b-writer may write docs/x.txt")
+    a.resume()
+    markers = a.status()["state"]["unresolved_verdicts"]
+    check("orphan-sibling-receipt-not-reclassified",
+          not any(m.startswith("DRIFT-SIBLING:") for m in markers))
+    check("orphan-sibling-receipt-still-plain-drift",
+          any(m.startswith("RECONCILIATION:") for m in markers))
+
+
+def test_chain_admitted_sibling_receipt_still_reclassifies(
+        workspace: Path) -> None:
+    """The positive control for the leg above: a genuine sibling effect --
+    minted through record_effect, so the sibling's chain admits the id --
+    still downgrades to DRIFT-SIBLING. Without it the leg-1 test would pass
+    on a fix that broke reclassification outright."""
+    rel = "docs/x.txt"
+    a = open_mission(workspace, "a-owner", "own the artifact")
+    a.approve()
+    a.record_effect(rel, "one\n", "req-a1")
+    b = open_mission(workspace, "b-writer", "the sibling")
+    b.approve()
+    b.record_effect(rel, "sibling wrote this\n", "req-b1")
+    a.authorize_sibling("b-writer", rel,
+                        "operator: b-writer may write docs/x.txt")
+    a.resume()
+    markers = a.status()["state"]["unresolved_verdicts"]
+    check("chain-admitted-sibling-receipt-reclassified",
+          any(m.startswith("DRIFT-SIBLING:") for m in markers))
+
+
+def test_negating_amendment_does_not_authorize_a_sibling(
+        workspace: Path) -> None:
+    """FATAL-3 leg 3: `_amendment_names` documents itself as a HINT ("secrets
+    .env remains forbidden" mentions the path and authorises nothing), yet
+    the discriminator used it as the authorization gate."""
+    rel = "docs/x.txt"
+    a = open_mission(workspace, "a-owner", "own the artifact")
+    a.approve()
+    a.record_effect(rel, "one\n", "req-a1")
+    b = open_mission(workspace, "b-writer", "the sibling")
+    b.approve()
+    b.record_effect(rel, "sibling wrote this\n", "req-b1")
+    a.amend_authority("mission b-writer remains forbidden from writing "
+                      "docs/x.txt")
+    a.resume()
+    markers = a.status()["state"]["unresolved_verdicts"]
+    check("negating-amendment-does-not-authorize",
+          not any(m.startswith("DRIFT-SIBLING:") for m in markers))
+
+
+def test_scan_skips_a_symlinked_alias_of_this_mission_store(
+        workspace: Path) -> None:
+    """`_scan_sibling_receipts` excluded siblings by DIRECTORY NAME, so an
+    alias of this mission's own store re-served its own receipts as a
+    sibling's -- a rollback to an older own receipt reading as an authorized
+    sibling write."""
+    rel = "docs/x.txt"
+    a = open_mission(workspace, "a-owner", "own the artifact")
+    a.approve()
+    a.record_effect(rel, "one\n", "req-a1")
+    a.record_effect(rel, "two\n", "req-a2")
+    try:
+        (workspace / "missions" / "a-alias").symlink_to(
+            a.store.mission_dir, target_is_directory=True)
+    except (OSError, NotImplementedError):
+        print("skip alias-self-scan (symlinks unavailable on this host)")
+        return
+    (workspace / rel).write_bytes(b"one\n")     # roll back to req-a1's bytes
+    a.authorize_sibling("a-alias", rel, "operator: alias may write it")
+    a.resume()
+    markers = a.status()["state"]["unresolved_verdicts"]
+    check("alias-of-own-store-not-scanned-as-sibling",
+          not any(m.startswith("DRIFT-SIBLING:") for m in markers))
+
+
+def test_effect_guard_matches_the_resolved_write_target(
+        workspace: Path) -> None:
+    """OD-2 says the effect IS the file write. The guard matched the supplied
+    SPELLING while `_write_effect` resolved it, so an in-workspace alias
+    wrote straight through an enforce guard."""
+    (workspace / "secrets").mkdir()
+    try:
+        (workspace / "alias").symlink_to(workspace / "secrets",
+                                         target_is_directory=True)
+    except (OSError, NotImplementedError):
+        print("skip effect-resolved-guard (symlinks unavailable on this host)")
+        return
+    m = open_mission(workspace, "m-guarded", "guarded", guard_mode="enforce",
+                     actuator_guards=[{"name": "no-secrets",
+                                       "tool_names": ["Write"],
+                                       "command_regexes": [],
+                                       "path_globs": ["secrets/**"]}])
+    m.approve()
+    try:
+        m.record_effect("alias/leak.txt", "x", "req-alias")
+        check("effect-through-alias-blocked", False)
+    except CustodyError as exc:
+        check("effect-through-alias-blocked", "custody guard" in str(exc))
+    check("effect-through-alias-wrote-nothing",
+          not (workspace / "secrets" / "leak.txt").exists())
+
+
+def test_open_discloses_prose_scope_entries_as_incomparable(
+        workspace: Path) -> None:
+    """open() split patterns from prose with `_is_matchable_pattern`, which
+    only rejects unmatchable path SPELLINGS -- so "media acquisition", the
+    repo's own case-table prose row, went into the compared set and the
+    `incomparable (prose)` disclosure never fired."""
+    open_mission(workspace, "a-first", "first", scope_in=["docs/**"])
+    m = open_mission(workspace, "b-second", "second",
+                     scope_in=["media acquisition"])
+    notes = m.status()["state"]["notes"]
+    check("open-discloses-prose-scope-entry",
+          any("incomparable (prose)" in n and "media acquisition" in n
+              for n in notes))
+
+
+def test_open_time_unreadable_acknowledgement_is_the_canonical_spelling(
+        workspace: Path) -> None:
+    """open --acknowledge-unreadable wrote "unreadable sibling acknowledged:",
+    a spelling nothing reads: the first effect then raised UnionDegraded and
+    demanded the same acknowledgement again."""
+    broken = workspace / "missions" / "x-broken" / "checkpoints"
+    broken.mkdir(parents=True)
+    (broken / "r00000001.json").write_text("{not json", encoding="utf-8")
+    m = open_mission(workspace, "m-live", "live",
+                     acknowledge_unreadable=["x-broken"])
+    m.approve()
+    try:
+        m.record_effect("docs/a.txt", "x", "req-1")
+        check("open-time-unreadable-ack-discharges-effect", True)
+    except CustodyError as exc:
+        check("open-time-unreadable-ack-discharges-effect", False)
+        print(f"     {type(exc).__name__}: {exc}")
+
+
+def test_scope_overlap_disclosure_survives_a_very_deep_entry(
+        workspace: Path) -> None:
+    """`_globs_intersect` recursed per segment, so two deep scope entries blew
+    the interpreter recursion limit inside open() and escaped custody_cli's
+    refusal handling as a RecursionError traceback."""
+    deep = "/".join(f"d{i}" for i in range(1200)) + "/**"
+    open_mission(workspace, "a-deep", "first", scope_in=[deep])
+    try:
+        open_mission(workspace, "b-deep", "second", scope_in=[deep])
+        check("deep-scope-entry-does-not-recurse-to-death", True)
+    except RecursionError:
+        check("deep-scope-entry-does-not-recurse-to-death", False)
+
+
+def test_acknowledge_sibling_rechecks_immediately_before_the_write(
+        workspace: Path) -> None:
+    """The three legs were re-verified and THEN written with no compare-and-
+    swap; `acknowledge_receipt_loss` carries an explicit CAS for the same
+    window. Here the artifact moves after classification, before the
+    commit."""
+    rel = "docs/x.txt"
+    a = open_mission(workspace, "a-owner", "own the artifact")
+    a.approve()
+    a.record_effect(rel, "one\n", "req-a1")
+    b = open_mission(workspace, "b-writer", "the sibling")
+    b.approve()
+    b.record_effect(rel, "sibling wrote this\n", "req-b1")
+    a.authorize_sibling("b-writer", rel, "operator: b-writer may write it")
+    a.resume()
+    real = Mission._classify_sibling_drift
+    state = {"fired": False}
+
+    def racing(self, latest, r, current_sha):
+        out = real(self, latest, r, current_sha)
+        if not state["fired"]:
+            state["fired"] = True
+            (workspace / rel).write_bytes(b"changed under the ack\n")
+        return out
+
+    Mission._classify_sibling_drift = racing
+    try:
+        try:
+            a.acknowledge_sibling(rel)
+            check("acknowledge-sibling-refuses-a-changed-artifact", False)
+        except CustodyError:
+            check("acknowledge-sibling-refuses-a-changed-artifact", True)
+    finally:
+        Mission._classify_sibling_drift = real
+    markers = a.status()["state"]["unresolved_verdicts"]
+    check("acknowledge-sibling-race-left-the-marker",
+          any(m.startswith("DRIFT-SIBLING:") for m in markers))
+
+
+def test_open_refuses_a_sibling_whose_manifest_fails_verification(
+        workspace: Path) -> None:
+    """`_discover` verifies the CHAIN but never the MANIFEST, so a sibling
+    whose armed guards were rewritten without an authority amendment read as
+    readable at open() and bypassed the --acknowledge-unreadable quarantine;
+    the tamper only surfaced later as UnionDegraded on the first effect."""
+    sib = open_mission(workspace, "s-tampered", "sibling",
+                       guard_mode="enforce",
+                       actuator_guards=[{"name": "g", "tool_names": ["Write"],
+                                         "command_regexes": [],
+                                         "path_globs": ["docs/**"]}])
+    sib.approve()
+    tail = sorted(sib.store.checkpoints_dir.glob("r*.json"))[-1]
+    rec = json.loads(tail.read_text(encoding="utf-8"))
+    rec["manifest"]["authority"]["actuator_guards"][0]["path_globs"] = ["**"]
+    tail.write_text(json.dumps(rec), encoding="utf-8")
+    try:
+        open_mission(workspace, "m-new", "new one")
+        check("open-refuses-tampered-sibling", False)
+    except CustodyError as exc:
+        check("open-refuses-tampered-sibling", "s-tampered" in str(exc))
+    try:
+        open_mission(workspace, "m-new", "new one",
+                     acknowledge_unreadable=["s-tampered"])
+        check("open-quarantines-tampered-sibling", True)
+    except CustodyError as exc:
+        check("open-quarantines-tampered-sibling", False)
+        print(f"     {type(exc).__name__}: {exc}")
+
+
+def test_census_does_not_count_unapproved_guards_as_armed(
+        workspace: Path) -> None:
+    """The census read only latest-status, so a never-approved enforce-mode
+    draft reported q2/q3 enforcement while run_gate over the same workspace
+    returned "no approved mission guards armed"."""
+    open_mission(workspace, "d-draft", "never approved", guard_mode="enforce",
+                 actuator_guards=[{"name": "g", "tool_names": ["Write"],
+                                   "command_regexes": [],
+                                   "path_globs": ["docs/**"]}])
+    summary = census_missions.summarize([census_missions.census(workspace)])
+    verdict = run_gate(workspace, {"tool_name": "Write",
+                                   "file_path": "docs/a.txt"},
+                       actor="probe")
+    check("gate-says-nothing-approved-is-armed",
+          verdict["decision"] == "allow"
+          and "no approved mission guards armed" in verdict["reason"])
+    check("census-does-not-count-the-unapproved-draft-as-armed",
+          summary["q2_armed_active_missions"] == 0)
+    check("census-does-not-count-the-unapproved-draft-as-enforcing",
+          summary["q3_enforce_mode"] == 0)
+
 TESTS = [
     test_scope_entry_classification_table,
     test_uncompared_scope_entries_are_reported,
@@ -4754,10 +5042,21 @@ TESTS = [
     test_amend_arms_guards_legitimately,
     test_api_disarm_clears_guard_mode_with_guard_list,
     test_amend_none_clears_guard_keys,
-    test_open_refuses_second_active_mission,
+    test_open_beside_active_is_legal_but_duplicate_id_refused,
     test_amend_empty_guards_list_refused,
     test_amend_then_tail_guard_strip_detected,
     test_unrelated_amend_then_tail_regex_narrow_detected,
+    test_sibling_receipt_must_be_admitted_by_the_sibling_chain,
+    test_chain_admitted_sibling_receipt_still_reclassifies,
+    test_negating_amendment_does_not_authorize_a_sibling,
+    test_scan_skips_a_symlinked_alias_of_this_mission_store,
+    test_effect_guard_matches_the_resolved_write_target,
+    test_open_discloses_prose_scope_entries_as_incomparable,
+    test_open_time_unreadable_acknowledgement_is_the_canonical_spelling,
+    test_scope_overlap_disclosure_survives_a_very_deep_entry,
+    test_acknowledge_sibling_rechecks_immediately_before_the_write,
+    test_open_refuses_a_sibling_whose_manifest_fails_verification,
+    test_census_does_not_count_unapproved_guards_as_armed,
 ]
 
 

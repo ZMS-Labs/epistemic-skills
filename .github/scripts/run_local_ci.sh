@@ -12,9 +12,25 @@ STAMP="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 # committed. It happened twice during the v6.0.0 release and was caught by hand
 # both times. The receipt now lands OUTSIDE the repository by default, and its
 # name carries the tree hash it actually describes rather than only the commit.
-TREE="$(git -C "$ROOT" write-tree 2>/dev/null || echo unknown)"
+# `git write-tree` hashes the INDEX, and `git diff --quiet HEAD` ignores
+# untracked files -- so the receipt named a tree nobody tested. Two measured
+# consequences: an untracked-only tree was labelled clean and named with HEAD's
+# tree (the receipt asserting a tested state that is not what ran), and two
+# different unstaged-dirty states produced the SAME filename and silently
+# overwrote each other. Both matter here specifically, because this file is the
+# evidence artifact that substitutes for hosted green. The tree is now built
+# from the WORKING TREE in a scratch index (the real index is never touched),
+# and dirtiness comes from `status --porcelain`, so untracked files count.
+SCRATCH_INDEX="$(mktemp -u "${TMPDIR:-/tmp}/es-local-ci-index.XXXXXX")"
+TREE="$(
+  GIT_INDEX_FILE="$SCRATCH_INDEX" git -C "$ROOT" read-tree HEAD 2>/dev/null &&
+  GIT_INDEX_FILE="$SCRATCH_INDEX" git -C "$ROOT" add -A 2>/dev/null &&
+  GIT_INDEX_FILE="$SCRATCH_INDEX" git -C "$ROOT" write-tree 2>/dev/null
+  )" || TREE=""
+rm -f "$SCRATCH_INDEX"
+[ -n "$TREE" ] || TREE=unknown
 DIRTY=""
-if ! git -C "$ROOT" diff --quiet HEAD 2>/dev/null; then DIRTY="-dirty"; fi
+if [ -n "$(git -C "$ROOT" status --porcelain 2>/dev/null)" ]; then DIRTY="-dirty"; fi
 RECEIPT_DIR="${LOCAL_CI_RECEIPT_DIR:-${TMPDIR:-/tmp}/epistemic-skills-local-ci}"
 RECEIPT="$RECEIPT_DIR/${SHA:0:12}-tree-${TREE:0:12}${DIRTY}.md"
 mkdir -p "$RECEIPT_DIR"

@@ -152,6 +152,30 @@ Re-check before trusting any "slim-only" assumption above:
 5. Auth state was NOT re-established this session; whether OAuth restores an
    even richer surface (or just lifts quota) remains UNVERIFIED.
 
+## DRIFT EVENT (observed 2026-08-15, ZCode harness, `mcp__scite__*`)
+
+Confirmed the 2026-07-29 anonymous-rich regime and added one structural finding:
+
+1. **Anonymous tier returns rich records — reconfirmed.** Batched two-DOI
+   `search_literature` fetch (no auth, canary failed in the same session)
+   returned `tally` (incl. `citingPublications`), classified citation
+   `snippets` with sections, full abstracts, `access` links, and the full
+   `editorialNotices` list. Batch-DOI fetching remains the right quota move.
+2. **Retraction falsification pair re-verified on this surface:** NumPy
+   `10.1038/s41586-020-2649-2` → no notices; Wakefield
+   `10.1016/s0140-6736(97)11096-0` → `RETRACTED:` title prefix +
+   `status: retracted` notice (10.1016/s0140-6736(10)60175-4, 2010-02) +
+   `has expression of concern` + `has correction`/`has erratum` entries.
+3. **OAuth is NOT auto-triggered by clients on this endpoint.** Scite serves
+   anonymous successfully at the transport layer, so an OAuth-capable client
+   (ZCode, native PKCE + RFC 9728 support verified) never receives the HTTP 401
+   that would start the dance; the sign-in failure only surfaces at tool level
+   (collections canary). Consequence: harness-native OAuth must be initiated
+   from the client's MCP UI (Settings → MCP → scite → sign in) or not at all —
+   do not expect it to fire on its own.
+4. Canary semantics unchanged: `search_collections` errors with the sign-in
+   message when anonymous.
+
 ## Remaining unobserved
 
 - Rate-limit / 429 behavior.
@@ -169,6 +193,6 @@ Re-check before trusting any "slim-only" assumption above:
    10.1038/s41586-020-2649-2) and record: response shape, whether contexts
    are included or need a second call, rate limits, auth failures.
 4. Rewrite this profile (dated, "re-check live" header retained).
-5. Update `resolve/SKILL.md` ONLY if the observed surface
+5. Update `evidence-research/SKILL.md` ONLY if the observed surface
    contradicts its engine-role assumptions.
 6. Commit + push (canonical skills live in git), redeploy the skill cache.

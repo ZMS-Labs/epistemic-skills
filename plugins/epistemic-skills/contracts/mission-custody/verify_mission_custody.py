@@ -230,9 +230,13 @@ def epoch_skew_anywhere(record, expected_family: str) -> str | None:
     return None
 
 
-_ISO_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
-_SHA_RE = re.compile(r"^[0-9a-f]{64}$")
-_ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
+# \Z, never $: re's $ also matches just before a trailing newline, so
+# "m-x\n" passed as a kebab-case id (fix-refuter F-D, measured). No legal
+# value of any of these carries a newline; the same one-character mechanism
+# is closed for all three rather than only the instance it was caught on.
+_ISO_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z\Z")
+_SHA_RE = re.compile(r"^[0-9a-f]{64}\Z")
+_ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]*\Z")
 
 MANIFEST_FIELDS = {
     "record", "mission_id", "created_utc", "authority", "scope",
