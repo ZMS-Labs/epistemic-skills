@@ -32,9 +32,13 @@ binding answers authority routing."*
   survives via resume-time scan of sibling receipt stores plus the FATAL-3
   authorization discriminator; zero schema change; contract@2 is off the
   table; the tolerant-reader claim is deleted.
-- **OD-4 GATE ON APPROVE** — guards join the union only once the mission is
-  operator-approved; a never-approved draft cannot block the fleet;
-  `evaluate()` gains a status check; the case table gains the rows.
+- **OD-4 GATE ON APPROVE — REFINED 2026-08-25: "Self-arm at open, union at
+  approve" (operator ruling)** — a mission's armed guards bind its OWN
+  session (calls bound to it, and its own `effect`) from the moment open
+  arms them, exactly as the shipped core behaves; they join the fleet-wide
+  union only once the mission is operator-approved. A never-approved draft
+  still cannot block OTHER sessions; `evaluate()` gains the approval check
+  plus own-mission membership; the case table gains the rows.
 
 **The four questions the 2026-08-15 adjudication ordered answered:** binding
 mechanics · coexistence without false drift · fairness/coordination on shared
@@ -198,8 +202,10 @@ OD-2 ("GATE `effect` ONLY"):
   authority routing (§1), and the reserved-prefix forgery guard
   (`custody_mission.py:41-101`, extended in §4).
 
-**OD-4 (GATE ON APPROVE, adjudicated 2026-08-24): approval arms the union.**
-A mission's guards join the union only once the mission is
+**OD-4 (GATE ON APPROVE, adjudicated 2026-08-24; REFINED 2026-08-25:
+"Self-arm at open, union at approve"): approval arms the fleet union; open
+arms the mission's own session.**
+A mission's guards join the fleet-wide union only once the mission is
 operator-approved. "Approved" is the chain test the core already ships —
 the chain holds a checkpoint whose status is outside `{draft, reopened}`
 (`custody_mission.py:1420-1445`) — deliberately stronger than
@@ -212,8 +218,23 @@ the status check — today it reads only `guard_mode` and `actuator_guards`
 (`custody_gate.py:222-227`) and cannot see approval at all. The asymmetry
 is deliberate and one-directional in the safe direction: a draft mission is
 **subject to** the union (its effects are checked against approved
-siblings' guards) but **contributes nothing** to it until `approve()`
-(`custody_mission.py:1489-1495`) lands. Case rows B24–B25.
+siblings' guards) but **contributes nothing to other sessions** until
+`approve()` (`custody_mission.py:1489-1495`) lands. Case rows B24–B25.
+
+**The 2026-08-25 refinement (operator-adjudicated): "Self-arm at open,
+union at approve."** The unrefined 2026-08-24 text silently disarmed the
+shipped core for the one session a mission always bound: pre-union, a lone
+mission's armed guards gated its own session from the moment `open` armed
+them, and gating union membership purely on approval made a draft's guards
+bind NOBODY until `approve()` — the hostile review's silent-disarm
+regression. The refinement restores the shipped behaviour without
+surrendering the adjudication's intent: a call bound to mission M
+evaluates M's OWN guards regardless of M's approval status, PLUS the union
+of approved missions; unbound calls see only the approved union; a
+mission's own `effect` is checked against its own guards plus the approved
+union whatever its approval status. Binding can therefore only ADD
+exposure — the safe direction — and an unblessed draft still cannot block
+any session but its own.
 
 Union semantics:
 
@@ -268,9 +289,11 @@ design closes this per surface, by what each surface can afford:
 A freshly opened mission is a **draft**: it is active for discovery and
 binding (`custody_mission.py:1018-1019`), its steward may work it
 (`_EFFECT_STATES` includes draft, `custody_mission.py:23`), and it is
-subject to the union — but its guards arm nothing until `approve()` (OD-4,
-§2). `open` printing the binding line therefore hands the session authority
-routing, not blocking power.
+subject to the union — its own guards bind its OWN bound session from the
+moment open arms them, and arm nothing for any OTHER session until
+`approve()` (OD-4 refined, §2). `open` printing the binding line therefore
+hands the session authority routing plus its own self-restraint, never
+blocking power over others.
 
 **Scope-overlap disclosure:** when a new mission's `scope.in` path patterns
 intersect an active sibling's (pattern-vs-pattern intersection is decidable for
@@ -430,8 +453,8 @@ has a defined outcome; blank cells do not exist.
 
 | # | latest status (lineage) | active for load? | bindable? | guards in union? | subject to union? |
 |---|---|---|---|---|---|
-| A1 | draft (never approved) | yes (`custody_mission.py:1018-1019`) | yes — own steward works it (`_EFFECT_STATES`, `:23`) | **NO** (OD-4) | yes |
-| A2 | reopened (never approved — drift on a draft, `:1427-1434`) | yes | yes | **NO** — chain test (`:1420-1445`), not latest-status | yes |
+| A1 | draft (never approved) | yes (`custody_mission.py:1018-1019`) | yes — own steward works it (`_EFFECT_STATES`, `:23`) | fleet union **NO**; own bound session **YES** from open (OD-4 refined) | yes |
+| A2 | reopened (never approved — drift on a draft, `:1427-1434`) | yes | yes | fleet union **NO** — chain test (`:1420-1445`), not latest-status; own bound session **YES** | yes |
 | A3 | active | yes | yes | yes | yes |
 | A4 | reopened (approved lineage) | yes | yes | yes | yes |
 | A5 | verifying | yes | yes — but `effect` is status-illegal (`_EFFECT_STATES` excludes verifying, `:23`) | yes — guards keep binding the fleet while it verifies | yes (for its remaining legal verbs) |
@@ -453,18 +476,18 @@ no row below claims a verb succeeds in a status where the core refuses it.
 | 2 | 0 | none | lifecycle | NoActiveMission (unchanged) |
 | 3 | 0 | none | gate | allow, mode per no-mission today (unchanged) |
 | 4 | 0 | valid-id | any | BindingInvalid — nothing to bind to; never silently unbound |
-| 5 | 1 | none | open | opens SECOND mission (draft — union-inert until approve, OD-4); overlap disclosure; prints binding line |
+| 5 | 1 | none | open | opens SECOND mission (draft — self-armed for its own bound session from open, union-inert for everyone else until approve, OD-4 refined); overlap disclosure; prints binding line |
 | 6 | 1 | none | lifecycle | resolves to the one active (today's flow preserved) |
-| 7 | 1 | none | gate | union of that mission if approved; a lone unapproved draft contributes nothing (OD-4) — allow, disclosed as "no approved mission guards" |
+| 7 | 1 | none | gate | unbound: union of that mission if approved; a lone unapproved draft contributes nothing to an UNBOUND call (OD-4) — allow, disclosed as "no approved mission guards". Bound to that draft: its own guards evaluate from open (OD-4 refined). Honest-disclosure note: this row originally read "union of 1 = today's behaviour"; the 2026-08-24 revision silently rewrote it (under pure gate-on-approve a lone draft's guards bound nobody — NOT today's behaviour for the mission's own session); the 2026-08-25 refinement makes the original claim TRUE again for the own-session case |
 | 8 | 1 | valid | lifecycle | bound mission (same as 6 when ids coincide) |
 | 9 | 1 | stale/bad | lifecycle | BindingInvalid, names found state; NO fallback to the one active |
 | 10 | N | none | open | opens N+1th (draft); disclosure vs every active sibling |
 | 11 | N | none | lifecycle | BindingRequired, lists ids + channels |
 | 12 | N | none | gate | UNION over approved missions; all matching (mission, rule) pairs named; log to each |
 | 13 | N | valid | effect (status legal per A-row) | union-evaluated BEFORE `_write_effect` (OD-2); block refuses side-effect-free naming all (mission, rule) pairs; allowed → write + receipt + B21 |
-| 14 | N | valid | gate | UNION still (binding routes authority, not exposure — OD-1) |
+| 14 | N | valid | gate | UNION still — binding never REMOVES exposure (OD-1); it can only ADD the bound mission's own pre-approve guards (OD-4 refined) |
 | 15 | N | stale/bad | lifecycle | BindingInvalid; NO fallback to union or to any mission |
-| 16 | N | stale/bad | gate | UNION (gate never trusts binding for exposure; bad binding logged) |
+| 16 | N | stale/bad | gate | UNION (a bad binding names no active mission, so self-arm adds nothing; loud on stderr; exposure never shrinks) |
 | 17 | any | any | open w/ unreadable sibling dir | refuse unless --acknowledge-unreadable |
 | 18 | any | any | open w/ EpochSkew sibling | refuse (unchanged) |
 | 19 | N | valid | resume | drift vs own receipts; sibling-receipt handling per B26–B28 |
@@ -472,8 +495,8 @@ no row below claims a verb succeeds in a status where the core refuses it.
 | 21 | N | valid | effect crossing an active sibling's receipted path | after 13 allows: write + receipt in B; append advisory line to sibling's `sibling-touch.jsonl` (best-effort, loud on failure, never blocks — §4c); sibling's chain untouched |
 | 22 | N | any | gate, sibling dir became unreadable mid-session | allow (hook fail-open stands) with union-degraded disclosure in reason + stderr naming the dir and that its guards are NOT enforced (§2) |
 | 23 | N | valid | effect, sibling dir became unreadable mid-session | refuse `UnionDegraded` naming the dir, until repair or recorded acknowledgement (§2) |
-| 24 | N incl. armed never-approved draft/reopened | any | gate or effect matching ONLY that mission's guards | allow — never-approved guards are not in the union (OD-4, chain test); nothing evaluated, nothing logged for it |
-| 25 | same as 24, after `approve()` lands | any | same call | the guard now blocks/audits per its mission's guard_mode — approval is the arming event (OD-4 mirror of 24) |
+| 24 | N incl. armed never-approved draft/reopened | any | gate or effect matching ONLY that mission's guards | unbound, or bound to ANOTHER mission: allow — never-approved guards are not in the fleet union (OD-4, chain test); nothing evaluated, nothing logged for it. Bound to THAT mission, or its own effect: its own guards evaluate from open — block/audit per its guard_mode (OD-4 refined, "Self-arm at open, union at approve") |
+| 25 | same as 24, after `approve()` lands | any | same call | the guard now blocks/audits per its mission's guard_mode for EVERY session — approval is the fleet-arming event (OD-4 mirror of 24; own-session arming happened at open) |
 | 26 | N | valid | resume in A: drifted artifact hash-matches a NEVER-APPROVED sibling's receipt | plain drift at today's severity + sibling receipt reported as evidence; NO DRIFT-SIBLING downgrade (FATAL-3 leg 2) |
 | 27 | N | valid | resume in A: hash-matches APPROVED sibling's receipt, no cross-mission authorization amendment in A | plain drift + evidence; NO downgrade (FATAL-3 leg 3) |
 | 28 | N | valid | resume in A: hash-match + approved sibling + authorization amendment in A | `DRIFT-SIBLING(mission, receipt)`; reconciled by acknowledgement; machine note `sibling-touched: …` in A's chain by A's session |
@@ -482,10 +505,12 @@ no row below claims a verb succeeds in a status where the core refuses it.
 
 Mirror rows the tables force (per the fixes-open-holes discipline): 4 vs 9
 (bad binding with nothing active vs one active — both refuse, different
-messages); 12 vs 14 (unbound vs bound gate — SAME exposure, different audit
-routing); 6 vs 11 (the convenience of one active must not survive into N, or
-binding is optional forever); 24 vs 25 (the SAME guard inert then armed —
-approval is the only edge, OD-4); 26/27 vs 28 (each discriminator leg has a
+messages); 12 vs 14 (unbound vs bound gate — same APPROVED exposure, and a
+binding can only add the bound mission's own guards, never subtract); 6 vs
+11 (the convenience of one active must not survive into N, or binding is
+optional forever); 24 vs 25 (the SAME guard fleet-inert then fleet-armed —
+approval is the fleet edge; the own-session edge is open, OD-4 refined);
+26/27 vs 28 (each discriminator leg has a
 row where it alone withholds the downgrade — the false-CLEAN twin is
 enumerated, not assumed); 21 vs 23 (readable vs unreadable sibling on the
 same crossing); 13 vs 30 (actuation gated, audit unblockable — the OD-2
@@ -520,11 +545,14 @@ Every row of BOTH case tables becomes at least one test; additionally:
 - the OD-2 boundary as a paired test: the same union guard blocks `effect`
   side-effect-free (no bytes written, no receipt minted) while `note` and
   `amend` on the same surface succeed and are recorded;
-- the OD-4 arming pair: an armed never-approved draft blocks nothing; the
-  identical call blocks the moment `approve()` lands; and the
-  never-approved-`reopened` variant (drift a draft first) also blocks
-  nothing — the chain test, not latest status, must be what the
-  implementation reads;
+- the OD-4 arming pair, refined: an armed never-approved draft blocks no
+  UNBOUND call and no call bound to another mission, while its OWN bound
+  session and its own `effect` ARE blocked from open ("Self-arm at open,
+  union at approve", operator ruling 2026-08-25); the identical unbound
+  call blocks the moment `approve()` lands; and the
+  never-approved-`reopened` variant (drift a draft first) arms the fleet
+  no more than the draft did — the chain test, not latest status, must be
+  what the implementation reads;
 - the FATAL-3 laundering test: adversary opens a throwaway sibling
   (unverified refs, `custody_mission.py:887-897`), effects the tampered
   bytes, and A's resume must report plain drift — no DRIFT-SIBLING offer —
