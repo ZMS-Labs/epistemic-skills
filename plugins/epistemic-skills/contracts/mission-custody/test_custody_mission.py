@@ -25,10 +25,10 @@ import census_missions  # noqa: E402
 from custody_mission import (  # noqa: E402
     _same_artifact,
     AcceptanceRefused,
+    BindingRequired,
     CustodyError,
     IllegalTransition,
     Mission,
-    MultipleActiveMissions,
     NoActiveMission,
 )
 
@@ -95,16 +95,21 @@ def test_load_refuses_zero_and_multiple(workspace: Path) -> None:
         check("load-zero-raises", True)
 
     m1 = open_mission(workspace, "m-one", "A.")
-    # open() refuses to CREATE a second active mission in one workspace
-    # (decoy-disarm wedge, es#117 review fix 4); a duplicated mission dir
-    # arriving out-of-band (sync, copy) is exactly the multiple-active state
-    # load() must still refuse, so build it that way.
+    # es#173: plurality is legal, and an UNBOUND lifecycle verb over N>1
+    # active missions refuses BindingRequired (never guesses; the retired
+    # MultipleActiveMissions is raised nowhere) -- the refusal names every
+    # id and both binding channels; a bound load resolves normally.
     shutil.copytree(m1.store.mission_dir, workspace / "missions" / "m-two")
     try:
         Mission.load(workspace, actor="agent:x")
         check("load-multiple-raises", False)
-    except MultipleActiveMissions:
-        check("load-multiple-raises", True)
+    except BindingRequired as exc:
+        check("load-multiple-raises",
+              "m-one" in str(exc) and "m-two" in str(exc)
+              and "ZMS_MISSION_ID" in str(exc))
+    bound = Mission.load(workspace, actor="agent:x", mission_id="m-two")
+    check("load-multiple-bound-resolves",
+          bound.store.mission_dir.name == "m-two")
 
 
 def test_effect_writes_receipt_and_artifact(workspace: Path) -> None:
@@ -1144,7 +1149,10 @@ def test_stale_reader_scope_never_claims_enforcement_the_gate_lacks(
     check("stale-scope-control-says-enforces",
           "still enforce" in _stale_reader_scope(healthy, "m-legacy"))
 
-    # DEFECT 1: a duplicate active mission -- Mission.load refuses, gate allows.
+    # DUPLICATE ACTIVE MISSIONS (was DEFECT 1): under es#173 plurality is
+    # legal and the gate evaluates the UNION -- both copies' guards enforce,
+    # so the census must NOT report the root fail-open any more, and the
+    # honest "still enforces" line must apply.
     dupe = workspace / "dupe"
     one = open_mission(dupe, "m-one", "First.",
                        guard_mode="enforce", actuator_guards=guards)
@@ -1152,13 +1160,11 @@ def test_stale_reader_scope_never_claims_enforcement_the_gate_lacks(
     one.record_effect("a.txt", "aa", "req-one")
     shutil.copytree(one.store.mission_dir, dupe / "missions" / "m-two")
     _skew_a_store_into(dupe, "m-legacy")
-    check("stale-scope-duplicate-gate-allows",
-          run_gate(dupe, call, actor="probe")["decision"] == "allow")
+    check("stale-scope-duplicate-gate-blocks",
+          run_gate(dupe, call, actor="probe")["decision"] == "block")
     dupe_scope = _stale_reader_scope(dupe, "m-legacy")
-    check("stale-scope-duplicate-claims-no-enforcement",
-          "still enforce" not in dupe_scope)
-    check("stale-scope-duplicate-names-the-cause",
-          "multiple active" in dupe_scope)
+    check("stale-scope-duplicate-still-enforces",
+          "still enforce" in dupe_scope)
 
     # DEFECT 2: a tampered sole active mission -- status() raises, hook allows.
     tampered = workspace / "tampered"
@@ -1174,12 +1180,15 @@ def test_stale_reader_scope_never_claims_enforcement_the_gate_lacks(
         ["nothing/**"]
     tail.write_text(json.dumps(record, indent=1, sort_keys=True) + "\n",
                     encoding="utf-8")
-    try:
-        run_gate(tampered, call, actor="probe")
-        check("stale-scope-tamper-gate-does-not-enforce", False)
-    except CustodyError:
-        # run_gate propagates; custody_hook catches CustodyError and ALLOWS.
-        check("stale-scope-tamper-gate-does-not-enforce", True)
+    # es#173: run_gate no longer propagates the tamper -- the mission joins
+    # the DEGRADED set (guards NOT enforced, disclosed in the reason and as
+    # a greppable TAMPER line on stderr) and the verdict stays allow.
+    buf_t = io.StringIO()
+    with contextlib.redirect_stderr(buf_t):
+        v_t = run_gate(tampered, call, actor="probe")
+    check("stale-scope-tamper-gate-does-not-enforce",
+          v_t["decision"] == "allow" and "NOT enforced" in v_t["reason"])
+    check("stale-scope-tamper-stderr-greppable", "TAMPER" in buf_t.getvalue())
     check("stale-scope-tamper-claims-no-enforcement",
           "still enforce" not in _stale_reader_scope(tampered, "m-legacy"))
 
@@ -2332,19 +2341,25 @@ def test_tail_guard_tamper_without_amendment_detected(workspace: Path) -> None:
         check("tail-guard-tamper-detected", True)
 
 
-def test_open_refuses_second_active_mission(workspace: Path) -> None:
-    # A second ACTIVE mission under one workspace makes every other command
-    # refuse (MultipleActiveMissions) -- including the gate's discovery -- so
-    # open creating one is a decoy-disarm wedge, not a feature.
+def test_open_beside_active_is_legal_but_duplicate_id_refused(
+        workspace: Path) -> None:
+    # es#173: plurality is legal -- open no longer refuses on an existing
+    # active mission (the decoy-disarm wedge died with the inert-on-
+    # plurality gate branch; the union now enforces across all approved
+    # missions). The door still refuses a DUPLICATE mission id, and the
+    # refused open must not leave a partial mission dir behind.
     open_mission(workspace, "m-first", "First.")
+    second = open_mission(workspace, "m-second", "Concurrent.")
+    check("open-second-active-is-legal",
+          second.store.load_latest()[0]["status"] == "draft")
     try:
-        open_mission(workspace, "m-second", "Decoy.")
-        check("open-refuses-second-active", False)
+        open_mission(workspace, "m-second", "Duplicate id.")
+        check("open-refuses-duplicate-id", False)
     except CustodyError:
-        check("open-refuses-second-active", True)
-    # the refused open must not leave a partial mission dir behind
-    check("open-refused-left-no-dir",
-          not (workspace / "missions" / "m-second").exists())
+        check("open-refuses-duplicate-id", True)
+    cps = sorted((workspace / "missions" / "m-second" / "checkpoints")
+                 .glob("r*.json"))
+    check("open-duplicate-refusal-wrote-nothing", len(cps) == 1)
 
 
 def test_api_disarm_clears_guard_mode_with_guard_list(workspace: Path) -> None:
@@ -4754,7 +4769,7 @@ TESTS = [
     test_amend_arms_guards_legitimately,
     test_api_disarm_clears_guard_mode_with_guard_list,
     test_amend_none_clears_guard_keys,
-    test_open_refuses_second_active_mission,
+    test_open_beside_active_is_legal_but_duplicate_id_refused,
     test_amend_empty_guards_list_refused,
     test_amend_then_tail_guard_strip_detected,
     test_unrelated_amend_then_tail_regex_narrow_detected,

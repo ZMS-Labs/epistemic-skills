@@ -70,6 +70,34 @@ def test_block_per_harness() -> None:
                   "no-rm" in (res.stderr + res.stdout))
 
 
+def test_env_bound_draft_self_arms() -> None:
+    """OD-4 refined (operator ruling 2026-08-25: "Self-arm at open, union
+    at approve"): a session whose harness env carries ZMS_MISSION_ID for a
+    draft mission is gated by that draft's OWN guards pre-approve; without
+    the binding the draft arms nothing (union at approve, unchanged)."""
+    def run_with_env(binding: str | None) -> subprocess.CompletedProcess:
+        env = dict(os.environ)
+        env.pop("ZMS_MISSION_ID", None)
+        if binding is not None:
+            env["ZMS_MISSION_ID"] = binding
+        return subprocess.run(
+            [sys.executable, str(HOOK), "--harness", "claude"],
+            input=raw, capture_output=True, text=True, env=env)
+
+    with tempfile.TemporaryDirectory() as tmp:
+        ws = Path(tmp)
+        Mission.open(ws, "hook-draft", "i", "operator:t", "agent:t",
+                     actor="agent:t", guard_mode="enforce",
+                     actuator_guards=GUARDS)
+        raw = json.dumps(payloads(tmp)["claude"])
+        check("hook-unbound-draft-allows",
+              run_with_env(None).returncode == 0)
+        res = run_with_env("hook-draft")
+        check("hook-env-bound-draft-blocks", res.returncode == 2)
+        check("hook-env-bound-reason-names-rule",
+              "no-rm" in (res.stderr + res.stdout))
+
+
 def test_allow_paths() -> None:
     with tempfile.TemporaryDirectory() as tmp:
         ws = Path(tmp)
@@ -161,7 +189,10 @@ def test_cursor_string_tool_input_mcp() -> None:
               run_hook("cursor", payload).returncode == 2)
 
 
-def test_multiple_active_allows_with_warning() -> None:
+def test_multiple_active_evaluates_the_union() -> None:
+    # es#173: the decoy-disarm is dead -- a duplicated mission dir no longer
+    # turns the gate inert; both copies' guards enforce and the hook blocks,
+    # naming every matching (mission, rule) pair in the BLOCKED line.
     with tempfile.TemporaryDirectory() as tmp:
         ws = Path(tmp)
         m = Mission.open(ws, "hook-multi", "i", "operator:t", "agent:t",
@@ -171,9 +202,9 @@ def test_multiple_active_allows_with_warning() -> None:
         shutil.copytree(ws / "missions" / "hook-multi",
                         ws / "missions" / "hook-multi-2")
         res = run_hook("claude", payloads(tmp)["claude"])
-        check("hook-multi-active-allows", res.returncode == 0)
-        check("hook-multi-active-warns",
-              "multiple active" in res.stderr.lower())
+        check("hook-multi-active-blocks", res.returncode == 2)
+        check("hook-multi-active-names-both",
+              "hook-multi" in res.stderr and "hook-multi-2" in res.stderr)
 
 
 def test_fail_open() -> None:

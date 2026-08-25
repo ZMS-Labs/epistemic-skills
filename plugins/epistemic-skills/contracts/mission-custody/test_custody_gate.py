@@ -424,23 +424,26 @@ def test_run_gate_log_failure_keeps_verdict() -> None:
               "guard-log" in buf.getvalue())
 
 
-def test_run_gate_multiple_active_allows_loudly() -> None:
+def test_run_gate_multiple_active_evaluates_the_union() -> None:
+    # es#173: plurality is legal and the old inert-on-plurality fail-open is
+    # DELETED -- a duplicated mission dir arriving out-of-band (sync, copy)
+    # now contributes its guards to the union like any approved mission, and
+    # a block names every matching (mission, rule) pair.
     with tempfile.TemporaryDirectory() as tmp:
         ws = Path(tmp)
         m = Mission.open(ws, "gate-multi", "i", "operator:test", "agent:test",
                          actor="agent:test", guard_mode="enforce",
                          actuator_guards=GUARDS)
         m.approve()
-        # a duplicated mission dir arriving out-of-band (sync, copy) -- the
-        # decoy shape open() now refuses to create itself
         shutil.copytree(m.store.mission_dir, ws / "missions" / "gate-multi-2")
-        buf = io.StringIO()
-        with contextlib.redirect_stderr(buf):
-            v = run_gate(ws, {"tool_name": "Bash", "command": "curl :7878/api",
-                              "file_path": None}, actor="hook:custody-gate")
-        check("run-gate-multi-active-allows", v["decision"] == "allow")
-        check("run-gate-multi-active-warns",
-              "multiple active" in buf.getvalue().lower())
+        v = run_gate(ws, {"tool_name": "Bash", "command": "curl :7878/api",
+                          "file_path": None}, actor="hook:custody-gate")
+        check("run-gate-multi-active-blocks", v["decision"] == "block")
+        check("run-gate-multi-active-names-both-missions",
+              "gate-multi" in v["reason"] and "gate-multi-2" in v["reason"])
+        for name in ("gate-multi", "gate-multi-2"):
+            check(f"run-gate-multi-active-logs-{name}",
+                  (ws / "missions" / name / "guard-log.jsonl").exists())
 
 
 if __name__ == "__main__":

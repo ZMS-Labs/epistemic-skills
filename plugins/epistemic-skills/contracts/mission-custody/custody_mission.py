@@ -16,7 +16,7 @@ from custody_store import (
     MissionStore, StoreError, atomic_write_json, sha256_bytes, sha256_file,
 )
 from verify_mission_custody import (
-    TIERS, VERDICTS, epoch_skew_anywhere, validate_record,
+    TIERS, VERDICTS, _ID_RE, epoch_skew_anywhere, validate_record,
 )
 
 _OPEN_STATES = {"draft", "active", "reopened", "verifying"}
@@ -41,6 +41,13 @@ _RETIRED_NOTE = "receipt loss acknowledged: "
 _RESERVED_NOTE_PREFIXES = (
     "effect: ", "reconciled: ", "drift detected: ", "receipt restored: ",
     "authority amended: ", _RETIRED_NOTE, "scope-ack by ",
+    # es#173: the quarantine acknowledgement discharges the UnionDegraded
+    # refusal, so narrative able to imitate it would forge the discharge.
+    "unreadable-acknowledged: ",
+    # es#173 section 4: the machine acknowledgement that reconciles
+    # DRIFT-SIBLING -- caller narrative must not be able to imitate the
+    # record that downgrades a drift finding (gauntlet major).
+    "sibling-touched: ",
 )
 
 
@@ -347,6 +354,25 @@ def _find_marker(unresolved: list[str], prefix: str, artifact_relpath: str) -> s
     return None
 
 
+def _approved_by_chain(store: MissionStore) -> bool:
+    """Has this mission EVER been operator-approved? The chain test, not
+    latest status: a never-approved mission can sit in `reopened` (drift on
+    a draft reopens it), so "latest status != draft" would let store damage
+    arm a draft's guards (OD-4) and let a never-approved sibling launder
+    drift (FATAL-3 leg 2). The core's own `_resumption_status` doctrine,
+    shared here so the union assembler and the resume discriminator cannot
+    disagree with it. Unreadable checkpoints answer False -- damage must
+    never widen authority."""
+    for cp_path in store.checkpoint_paths():
+        try:
+            record = json.loads(cp_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return False
+        if record.get("status") not in ("draft", "reopened"):
+            return True
+    return False
+
+
 class CustodyError(Exception):
     pass
 
@@ -356,7 +382,29 @@ class NoActiveMission(CustodyError):
 
 
 class MultipleActiveMissions(CustodyError):
-    pass
+    """RETIRED as a load-failure class (es#173): plurality is legal, so no
+    verb raises this any more. The class survives for import compatibility
+    and for readers of historical stores/logs that name it."""
+
+
+class BindingRequired(CustodyError):
+    """N>1 active missions and no session binding: the verb refuses rather
+    than guess which mission's authority the work lands under (es#173 §1)."""
+
+
+class BindingInvalid(CustodyError):
+    """The session's binding names a mission this workspace cannot act
+    under -- nonexistent, unreadable, completed, or cancelled. A stale
+    binding NEVER falls through to discovery or to the union: silent
+    fallback is how a session acts under the wrong authority politely
+    (es#173 §1)."""
+
+
+class UnionDegraded(CustodyError):
+    """An active sibling's store is unreadable, so its guards are silently
+    absent from the union. `effect` refuses under this state until the
+    sibling is repaired or the degradation is explicitly acknowledged
+    (es#173 §2, case row B23)."""
 
 
 class IllegalTransition(CustodyError):
@@ -519,6 +567,75 @@ def _is_matchable_pattern(entry: str) -> bool:
     return ".." not in segments
 
 
+def _seg_intersect(a: str, b: str) -> bool:
+    """Can two single-segment globs ('*'/'?' in-segment, no '/') both match
+    at least one string? Standard two-pattern recursion; memoized."""
+    memo: dict[tuple[int, int], bool] = {}
+
+    def rec(i: int, j: int) -> bool:
+        key = (i, j)
+        if key in memo:
+            return memo[key]
+        out = False
+        if i == len(a) and j == len(b):
+            out = True
+        else:
+            if not out and i < len(a) and a[i] == "*":
+                out = rec(i + 1, j) or (j < len(b) and rec(i, j + 1))
+            if not out and j < len(b) and b[j] == "*":
+                out = rec(i, j + 1) or (i < len(a) and rec(i + 1, j))
+            if not out and i < len(a) and j < len(b) \
+                    and a[i] != "*" and b[j] != "*" \
+                    and (a[i] == "?" or b[j] == "?" or a[i] == b[j]):
+                out = rec(i + 1, j + 1)
+        memo[key] = out
+        return out
+
+    return rec(0, 0)
+
+
+def _globs_intersect(left: str, right: str) -> bool:
+    """Do two scope path patterns admit a common path? (es#173 §3.)
+
+    Decidable for the dialect `_glob_regex` compiles: segments split on '/',
+    a segment containing '**' matches ZERO or more whole segments (which
+    also covers the trailing-'/**' base-path rule: ['x','**'] with '**'
+    consuming zero segments matches the base 'x'), '*'/'?' stay in-segment.
+    Both sides are normalized exactly as the receipt comparison normalizes,
+    including the NT-only A-Z fold, so the disclosure agrees with the
+    machinery it discloses about. Disclosure-only: an over- or under-report
+    here blocks nothing (coexistence on shared paths is the feature)."""
+    def prep(pattern: str) -> list[str]:
+        norm = _normalize_relpath(pattern)
+        if os.name == "nt":
+            norm = _ascii_case_fold(norm)
+        return ["**" if "**" in seg else seg for seg in norm.split("/")]
+
+    pa, pb = prep(left), prep(right)
+    memo: dict[tuple[int, int], bool] = {}
+
+    def rec(i: int, j: int) -> bool:
+        key = (i, j)
+        if key in memo:
+            return memo[key]
+        out = False
+        if i == len(pa) and j == len(pb):
+            out = True
+        else:
+            if not out and i < len(pa) and pa[i] == "**":
+                out = rec(i + 1, j) or (j < len(pb) and rec(i, j + 1))
+            if not out and j < len(pb) and pb[j] == "**":
+                out = rec(i, j + 1) or (i < len(pa) and rec(i + 1, j))
+            if not out and i < len(pa) and j < len(pb) \
+                    and pa[i] != "**" and pb[j] != "**" \
+                    and _seg_intersect(pa[i], pb[j]):
+                out = rec(i + 1, j + 1)
+        memo[key] = out
+        return out
+
+    return rec(0, 0)
+
+
 def _norm_scope_segments(norm: str) -> list[str]:
     """Segments of an entry as the comparison will see them, so the matchability
     question is asked against the same normalization the matcher uses."""
@@ -587,6 +704,23 @@ def _amendment_names(text: str, rel_path: str) -> bool:
                     return True
                 continue
             if _glob_regex(_norm_path(token)).match(target):
+                return True
+    return False
+
+
+def _amendment_names_mission(text: str, mission_id: str) -> bool:
+    """Does this amendment NAME `mission_id` as a whole token?
+
+    The id leg of the FATAL-3 discriminator, held to the standard
+    `_amendment_names` sets for the path leg: never a raw substring. A
+    substring test let mission `m-al` ride on an amendment authorizing
+    `m-alpine`, and a mission named `test` ride on the word `latest` --
+    the false-ALLOW direction, an audit-severity downgrade self-served by
+    choosing a convenient id (PR #220 refuter, finding 1). Tokenized
+    exactly like `_amendment_names` so the two legs cannot drift apart."""
+    for segment in text.replace("\\", "/").splitlines():
+        for raw in segment.split():
+            if raw.strip(_TOKEN_TRIM).rstrip(".") == mission_id:
                 return True
     return False
 
@@ -894,7 +1028,8 @@ class Mission:
               escalate_if: list[str] | None = None,
               acceptable_costs: list[str] | None = None,
               guard_mode: str | None = None,
-              actuator_guards: list | None = None) -> "Mission":
+              actuator_guards: list | None = None,
+              acknowledge_unreadable: list[str] | None = None) -> "Mission":
         workspace = Path(workspace)
         # ALL THREE identities validate BEFORE the load-probe, so a refused
         # open touches nothing on disk. The actor was missing from this
@@ -909,37 +1044,87 @@ class Mission:
         _refuse_unprintable_identity(actor, "actor")
         _refuse_unprintable_identity(steward_ref, "steward_ref")
         _refuse_unprintable_identity(operator_ref, "operator_ref")
-        # One ACTIVE mission per workspace, enforced at the door: every other
-        # command refuses multiple-active discovery, so open creating that
-        # state would be a decoy-disarm wedge (a second armed-or-unarmed
-        # mission bricks the gate's discovery). Checked BEFORE anything is
-        # written, so a refused open leaves no partial mission dir.
-        try:
-            cls.load(workspace, actor=actor)
-        except NoActiveMission as exc:
-            # "NOTHING ACTIVE" AND "I COULD NOT READ IT" ARE DIFFERENT ANSWERS.
-            # A store this reader must skip for epoch skew may hold an ACTIVE
-            # mission -- an updated reader is exactly the thing that would find
-            # out. Treating the skip as absence let open() write a second @1
-            # mission beside it (reproduced: the workspace ended with both),
-            # and the moment the reader is upgraded discovery sees two active
-            # missions, refuses, and the gate goes inert -- in a state no
-            # duplicate-resolution verb can clear, because this contract has
-            # none. Refusing costs an operator one upgrade; allowing it wedges
-            # the workspace for whoever comes next.
-            if "EpochSkew" in getattr(exc, "skipped_kinds", ()):
-                raise CustodyError(
-                    "a mission store here CLAIMS a newer contract epoch, so "
-                    "this reader cannot tell whether it holds an active "
-                    "mission. Opening beside it risks two active missions "
-                    "once the reader is updated, which wedges the gate. Read "
-                    "this workspace with an updated custody plugin/CLI first."
-                ) from exc
-            pass  # the expected state: nothing active to conflict with
-        else:
+        # PLURALITY IS LEGAL (es#173 §3): open no longer refuses on an
+        # existing active mission -- the fail-open decoy is removed not by
+        # handling MultipleActiveMissions better but by making the state
+        # legal. What open still refuses, checked BEFORE anything is written
+        # so a refused open leaves no partial mission dir:
+        #
+        # 1. a duplicate mission_id (the dir already holds checkpoints);
+        # 2. EpochSkew anywhere in the store -- a store this reader cannot
+        #    read may hold anything, and opening beside it is still blind;
+        # 3. unreadable mission dirs, unless each is explicitly quarantined:
+        #    under concurrent missions a corrupt sibling's guards are
+        #    silently absent from the union, so ignorable-corruption is no
+        #    longer a safe posture (case row B17).
+        if MissionStore(workspace / "missions" / mission_id).checkpoint_paths():
             raise CustodyError(
-                "an active mission already exists under this workspace; "
-                "complete or cancel it before opening another")
+                f"mission {mission_id!r} already exists under this "
+                "workspace; mission ids are permanent -- choose a fresh id")
+        siblings, skipped = cls._discover(workspace)
+        if any(s["kind"] == "EpochSkew" for s in skipped):
+            raise CustodyError(
+                "a mission store here CLAIMS a newer contract epoch, so "
+                "this reader cannot tell whether it holds an active "
+                "mission or what guards it arms. Opening beside it is "
+                "blind. Read this workspace with an updated custody "
+                "plugin/CLI first.")
+        acked = {str(name) for name in (acknowledge_unreadable or [])}
+        unknown = sorted(acked - {s["name"] for s in skipped})
+        if unknown:
+            raise CustodyError(
+                "acknowledge_unreadable names dir(s) that are not "
+                f"unreadable mission dirs here: {', '.join(unknown)} -- an "
+                "acknowledgement that matches nothing is a typo, not a "
+                "quarantine")
+        unacked = sorted(s["name"] for s in skipped if s["name"] not in acked)
+        if unacked:
+            raise CustodyError(
+                "unreadable mission dir(s) under this workspace: "
+                + ", ".join(unacked) +
+                ". Under concurrent missions an unreadable sibling's guards "
+                "are silently absent from the union, so open refuses until "
+                "they are repaired or explicitly quarantined "
+                "(--acknowledge-unreadable <dir>, recorded in the opening "
+                "checkpoint).")
+        opening_notes = [f"unreadable sibling acknowledged: {s['name']}"
+                         for s in sorted(skipped, key=lambda s: s["name"])]
+        # Scope-overlap disclosure (§3): pattern-vs-pattern intersection is
+        # decidable for this glob dialect; prose entries are reported as
+        # incomparable. Disclosure, not refusal -- coexistence on shared
+        # paths is the feature being built. Deterministic: sorted walk over
+        # sorted siblings, so identical inputs disclose identically.
+        new_patterns = sorted(e for e in (scope_in or [])
+                              if _is_matchable_pattern(e))
+        new_prose = sorted(e for e in (scope_in or [])
+                           if not _is_matchable_pattern(e))
+        for entry in sorted(siblings, key=lambda e: e["name"]):
+            sib_in = entry["latest"]["manifest"]["scope"]["in"]
+            sib_patterns = sorted(e for e in sib_in
+                                  if _is_matchable_pattern(e))
+            sib_prose = sorted(e for e in sib_in
+                               if not _is_matchable_pattern(e))
+            for a in new_patterns:
+                for b in sib_patterns:
+                    if _globs_intersect(a, b):
+                        opening_notes.append(
+                            f"scope overlap with {entry['name']}: "
+                            f"{a} ~ {b}")
+            if (scope_in or []) and sib_in:
+                for e in new_prose:
+                    opening_notes.append(
+                        f"scope entry vs {entry['name']} incomparable "
+                        f"(prose): {e}")
+                for e in sib_prose:
+                    opening_notes.append(
+                        f"scope entry of {entry['name']} incomparable "
+                        f"(prose): {e}")
+        for note in opening_notes:
+            # The composed disclosure embeds caller text (scope entries, dir
+            # names); a multi-line entry could smuggle a machine-note line
+            # into the opening checkpoint. Refusing the open is the fail-safe
+            # direction, and the guard's own message names the offending line.
+            _refuse_reserved_note(note)
         store = MissionStore(workspace / "missions" / mission_id)
         created = now_utc()
         manifest = {
@@ -975,7 +1160,7 @@ class Mission:
             "manifest": manifest,
             "state": {
                 "frontier": "await operator approval",
-                "notes": [],
+                "notes": opening_notes,
                 "unresolved_verdicts": [],
             },
             "receipt_ids": [],
@@ -986,12 +1171,19 @@ class Mission:
         return cls(store, workspace, actor)
 
     @classmethod
-    def load(cls, workspace: Path, actor: str) -> "Mission":
+    def _discover(cls, workspace: Path) -> tuple[list[dict], list[dict]]:
+        """Walk missions/ once: every ACTIVE mission and every skip.
+
+        Returns (active, skipped). Each active entry is
+        {"name", "dir", "store", "latest"} -- latest is the chain-verified
+        latest checkpoint. Each skipped entry is {"name", "kind", "reason"}
+        for a dir whose latest checkpoint fails to load. The ONE discovery
+        walk, shared by load, open, the union assembler, and the effect
+        gate, so no two surfaces can disagree about what is active."""
         workspace = Path(workspace)
         missions_root = workspace / "missions"
-        active: list[Path] = []
-        skipped: list[str] = []
-        skipped_kinds: list[str] = []
+        active: list[dict] = []
+        skipped: list[dict] = []
         if missions_root.is_dir():
             for mission_dir in sorted(missions_root.iterdir()):
                 if not mission_dir.is_dir():
@@ -1009,29 +1201,102 @@ class Mission:
                     # skipping those would reroute discovery around a mission
                     # that is merely busy, inviting a duplicate open.
                     reason = f"{mission_dir.name}: {type(exc).__name__}: {exc}"
-                    skipped.append(reason)
-                    skipped_kinds.append(type(exc).__name__)
+                    skipped.append({"name": mission_dir.name,
+                                    "kind": type(exc).__name__,
+                                    "reason": reason})
                     print(("custody: skipping unreadable mission dir " + reason)
                           .encode("ascii", "backslashreplace").decode("ascii"),
                           file=sys.stderr)
                     continue
                 if latest["status"] not in ("completed", "cancelled"):
-                    active.append(mission_dir)
+                    active.append({"name": mission_dir.name,
+                                   "dir": mission_dir, "store": store,
+                                   "latest": latest})
+        return active, skipped
+
+    @classmethod
+    def load(cls, workspace: Path, actor: str,
+             mission_id: str | None = None) -> "Mission":
+        """Resolve the mission this session acts under (es#173 §1).
+
+        Bound (mission_id given): the binding must name a mission directory
+        in THIS workspace whose latest checkpoint status is an open state.
+        Bound-to-nonexistent, bound-to-unreadable, bound-to-completed and
+        bound-to-cancelled are four spellings of the same BindingInvalid
+        refusal -- a stale binding NEVER falls through to discovery or to
+        "the only active mission": silent fallback is how a session acts
+        under the wrong authority politely.
+
+        Unbound: 0 active -> NoActiveMission (unchanged); 1 active ->
+        resolves to it (the single-mission workflow must not grow
+        ceremony); N>1 active -> BindingRequired naming every id and both
+        binding channels. It never guesses."""
+        workspace = Path(workspace)
+        if mission_id is not None:
+            # The binding channels (--mission / ZMS_MISSION_ID) are
+            # lower-provenance input: env-derived text must never steer
+            # which store this session acts under beyond naming ONE id in
+            # THIS workspace. Without this check a traversal id
+            # (`../../ws2/missions/m-remote`) bound across workspaces --
+            # the effect wrote its artifact here while the receipt landed
+            # in the foreign store, a split brain neither workspace's
+            # resume could explain (PR #220 refuter, finding 3). Same
+            # _ID_RE the schema enforces on every manifest at open: an id
+            # is a single kebab-case segment, never a path.
+            if not _ID_RE.match(mission_id):
+                raise BindingInvalid(
+                    f"binding names {mission_id!r}, which is not a legal "
+                    "mission id (single kebab-case segment, the rule "
+                    "open's schema enforces) -- a binding is an "
+                    "identifier, never a path. Fix or unset it "
+                    "(--mission / ZMS_MISSION_ID)")
+            mission_dir = workspace / "missions" / mission_id
+            store = MissionStore(mission_dir)
+            if not store.checkpoint_paths():
+                raise BindingInvalid(
+                    f"binding names mission {mission_id!r}: no such mission "
+                    f"under {workspace / 'missions'}. A binding never falls "
+                    "through to discovery -- fix or unset it (--mission / "
+                    "ZMS_MISSION_ID)")
+            try:
+                latest, _ = store.load_latest()
+            except (StoreError, ValueError) as exc:
+                raise BindingInvalid(
+                    f"binding names mission {mission_id!r}, whose store "
+                    f"cannot be read ({type(exc).__name__}: {exc}). A "
+                    "binding never falls through -- repair the store or "
+                    "unset the binding (--mission / ZMS_MISSION_ID)"
+                ) from exc
+            if latest["status"] not in _OPEN_STATES:
+                raise BindingInvalid(
+                    f"binding names mission {mission_id!r}, whose status is "
+                    f"{latest['status']!r} -- not an open state. Unset the "
+                    "binding (--mission / ZMS_MISSION_ID)")
+            return cls(store, workspace, actor)
+        active, skipped = cls._discover(workspace)
         if not active:
-            detail = f"; skipped unreadable: {'; '.join(skipped)}" if skipped else ""
-            exc = NoActiveMission(f"no active mission under {missions_root}{detail}")
+            reasons = [s["reason"] for s in skipped]
+            detail = (f"; skipped unreadable: {'; '.join(reasons)}"
+                      if skipped else "")
+            exc = NoActiveMission(
+                f"no active mission under {workspace / 'missions'}{detail}")
             # STRUCTURED, not prose. A caller that needs to know WHY discovery
             # came up empty must not have to grep the message: the message
             # contains the workspace path, so a directory literally named
             # `/work/NEWER epoch migration` made a substring test report a
             # newer-epoch store in a workspace holding no stores at all
             # (measured). Callers read this attribute instead.
-            exc.skipped_kinds = tuple(skipped_kinds)
+            exc.skipped_kinds = tuple(s["kind"] for s in skipped)
             raise exc
         if len(active) > 1:
-            names = ", ".join(p.name for p in active)
-            raise MultipleActiveMissions(f"multiple active missions: {names}")
-        return cls(MissionStore(active[0]), workspace, actor)
+            names = ", ".join(e["name"] for e in active)
+            raise BindingRequired(
+                f"{len(active)} active missions under this workspace: "
+                f"{names}. Bind the session to one -- pass --mission <id> "
+                "on the verb, or export ZMS_MISSION_ID=<id> for the "
+                "session. Binding routes authority (where effects and "
+                "notes land), never guard exposure.")
+        return cls(active[0]["store"], workspace, actor)
 
     # -- internal helpers ---------------------------------------------------
 
@@ -1437,12 +1702,10 @@ class Mission:
         The chain is the authority, as everywhere else here: a mission that
         has never been approved has no checkpoint whose status is anything but
         `draft` or `reopened`. Nothing is read from a caller-supplied string.
-        """
-        for cp_path in self.store.checkpoint_paths():
-            record = json.loads(cp_path.read_text(encoding="utf-8"))
-            if record["status"] not in ("draft", "reopened"):
-                return "active"
-        return "draft"
+        ONE implementation (`_approved_by_chain`), shared with the union
+        assembler and the sibling-drift discriminator (es#173), so the three
+        readers of "was this ever approved" cannot drift apart."""
+        return "active" if _approved_by_chain(self.store) else "draft"
 
     def _retired_receipt_ids(self, latest: dict) -> set[str]:
         """Ids whose loss was acknowledged. Retirement is permanent and lives
@@ -1495,8 +1758,163 @@ class Mission:
         new = self._write_next(latest, path, status="active", note="approved")
         return new["revision"]
 
+    def _acknowledged_unreadable(self, latest: dict) -> set[str]:
+        """Dir names whose union degradation this mission's chain has
+        acknowledged (machine note, reserved prefix -- so narrative cannot
+        forge the discharge). Permanent for the mission's life, like every
+        note: the quarantine judgement was recorded once and holds."""
+        prefix = "unreadable-acknowledged: "
+        return {note[len(prefix):] for note in latest["state"]["notes"]
+                if note.startswith(prefix)}
+
+    def _effect_union_entries(
+            self, latest: dict,
+            acknowledge_unreadable: tuple | list = (),
+    ) -> tuple[list[dict], list[str]]:
+        """Assemble the union for an `effect` (es#173, OD-2) and enforce the
+        B23 degradation rule. Returns (entries, fresh_acknowledgements).
+
+        Every ACTIVE mission joins as {"name", "store", "authority",
+        "approved"} -- including this one: complete mediation has no
+        self-exemption. A sibling whose store cannot be read or whose
+        manifest fails verification is a DEGRADED union: unlike the hook
+        (which must never brick the tool loop), effect CAN refuse without
+        bricking anything, so it does -- UnionDegraded, until the sibling
+        is repaired, completed/cancelled by an updated reader, or
+        explicitly acknowledged (recorded in this mission's chain via the
+        reserved 'unreadable-acknowledged: ' machine note, so the
+        acknowledgement persists and cannot be forged by narrative)."""
+        own_name = self.store.mission_dir.name
+        active, skipped = Mission._discover(self.workspace)
+        degraded = [{"name": s["name"], "reason": s["reason"]}
+                    for s in skipped]
+        entries: list[dict] = []
+        for e in active:
+            if e["name"] == own_name:
+                entries.append({"name": own_name, "store": self.store,
+                                "authority":
+                                    latest["manifest"]["authority"],
+                                "approved":
+                                    _approved_by_chain(self.store)})
+                continue
+            sibling = Mission(e["store"], self.workspace, self.actor)
+            try:
+                sib_latest = sibling.status()
+            except (StoreError, ValueError, CustodyError) as exc:
+                degraded.append({
+                    "name": e["name"],
+                    "reason": f"{type(exc).__name__}: {exc}"})
+                continue
+            entries.append({"name": e["name"], "store": e["store"],
+                            "authority":
+                                sib_latest["manifest"]["authority"],
+                            "approved": _approved_by_chain(e["store"])})
+        acked_chain = self._acknowledged_unreadable(latest)
+        acked_now = {str(name) for name in (acknowledge_unreadable or ())}
+        degraded_names = {d["name"] for d in degraded}
+        unknown = sorted(acked_now - degraded_names - acked_chain)
+        if unknown:
+            raise CustodyError(
+                "acknowledge_unreadable names dir(s) that are not degraded "
+                f"here: {', '.join(unknown)} -- an acknowledgement that "
+                "matches nothing is a typo, not a quarantine")
+        unacked = sorted(d["name"] for d in degraded
+                         if d["name"] not in acked_chain
+                         and d["name"] not in acked_now)
+        if unacked:
+            detail = "; ".join(d["reason"] for d in degraded
+                               if d["name"] in unacked)
+            raise UnionDegraded(
+                "effect refused: sibling mission dir(s) "
+                + ", ".join(unacked) +
+                " cannot be read, so their guards are silently absent from "
+                "the union (case row B23). Repair them, resolve them with "
+                "an updated reader, or acknowledge explicitly "
+                "(--acknowledge-unreadable <dir>; recorded in this "
+                f"mission's chain). Detail: {detail}")
+        fresh = sorted((acked_now & degraded_names) - acked_chain)
+        return entries, fresh
+
+    def _append_sibling_touches(self, entries: list[dict],
+                                artifact_relpath: str, request_id: str,
+                                after_sha256: str) -> None:
+        """The crossing record (es#173 section 4c, FATAL-4): when this
+        effect touches a path an ACTIVE sibling has receipted, append one
+        advisory JSON line to that sibling's sibling-touch.jsonl -- the
+        guard-log analog: append-only, OUTSIDE the chain, chain
+        byte-identity preserved, never a write into the sibling's chain
+        (binding routes where notes land; this mission's actor holds no
+        authority there). Best-effort exactly like the guard-log append: a
+        failed append never blocks the effect but is loud on stderr. It is
+        ADVISORY: ground truth for detection is the resume-time receipt
+        scan, so a lost or suppressed entry cannot hide a crossing -- it
+        only costs the sibling's next resume the early hint."""
+        own_name = self.store.mission_dir.name
+        rel = artifact_relpath.replace("\\", "/")
+        for entry in entries:
+            if entry["name"] == own_name:
+                continue
+            try:
+                touched = any(
+                    isinstance(r, dict)
+                    and isinstance(r.get("artifact_path"), str)
+                    and _same_artifact(r["artifact_path"], rel)
+                    for r in entry["store"].load_receipts())
+                if not touched:
+                    continue
+                line = json.dumps({
+                    "utc": now_utc(),
+                    "actor": self.actor,
+                    "session_id": "",
+                    "from_mission": own_name,
+                    "receipt_id": request_id,
+                    "artifact_path": rel,
+                    "after_sha256": after_sha256,
+                }, sort_keys=True)
+                with open(entry["store"].mission_dir
+                          / "sibling-touch.jsonl", "a",
+                          encoding="utf-8") as handle:
+                    handle.write(line + "\n")
+            except Exception as exc:  # noqa: BLE001
+                print(("custody: sibling-touch append failed for "
+                       f"{entry['name']} ({type(exc).__name__}: {exc}); "
+                       "the effect stands -- detection falls back to the "
+                       "sibling's resume-time receipt scan")
+                      .encode("ascii", "backslashreplace").decode("ascii"),
+                      file=sys.stderr)
+
+    def _log_effect_matches(self, matches: list[dict],
+                            artifact_relpath: str) -> None:
+        """Guard-log the effect verb's matches into each matching mission's
+        dir, mirroring the gate's audit trail (tool_name 'effect').
+        Best-effort: the audit append is not verdict-bearing."""
+        for row in matches:
+            entry = {
+                "utc": now_utc(),
+                "actor": self.actor,
+                "session_id": "",
+                "harness": "effect",
+                "mode": row["mode"],
+                "decision": row["decision"],
+                "rule": row["rule"],
+                "tool_name": "effect",
+                "command_preview": "",
+                "file_path": artifact_relpath,
+            }
+            target = (self.workspace / "missions" / row["mission"]
+                      / "guard-log.jsonl")
+            try:
+                with open(target, "a", encoding="utf-8") as handle:
+                    handle.write(json.dumps(entry, sort_keys=True) + "\n")
+            except Exception as exc:  # noqa: BLE001
+                print(f"custody: guard-log append failed for "
+                      f"{row['mission']} ({type(exc).__name__}: {exc}); "
+                      f"verdict {row['decision']} stands but was not "
+                      "logged", file=sys.stderr)
+
     def record_effect(self, artifact_relpath: str, content: str,
-                       request_id: str) -> dict:
+                       request_id: str, *,
+                       acknowledge_unreadable: tuple | list = ()) -> dict:
         latest, path = self.store.load_latest()
         self._verify_manifest(latest)
         if latest["status"] not in _EFFECT_STATES:
@@ -1518,6 +1936,56 @@ class Mission:
         # the record ALREADY carries; only genuinely NEW paths are refused.
         if recover is None:
             _refuse_unrecordable_artifact_path(artifact_relpath)
+        # es#173 OD-2: effect IS the file write, so it runs union guard
+        # evaluation BEFORE _write_effect. A block refuses side-effect-free
+        # (nothing written, no receipt minted -- the same
+        # refuse-before-mutate posture as the idempotency guard), naming
+        # every matching (mission_id, rule) pair; audit-mode matches are
+        # allowed and logged. A RECOVER discharge is deliberately NOT
+        # exempt: a blocked recovery discharges through the (unblockable)
+        # amend channel of each matching mission, not through a hole in the
+        # mediation -- amend being unblockable is what keeps this legal.
+        entries, fresh_acks = self._effect_union_entries(
+            latest, acknowledge_unreadable)
+        from custody_gate import evaluate_effect_union
+        # OD-4 refined ("Self-arm at open, union at approve", operator
+        # ruling 2026-08-25): this mission's own guards bind its own
+        # effect from the moment open arms them, approved or not.
+        matches = evaluate_effect_union(
+            entries, artifact_relpath,
+            own_mission=self.store.mission_dir.name)
+        if matches:
+            self._log_effect_matches(matches, artifact_relpath)
+        blocking = [m for m in matches if m["decision"] == "block"]
+        if blocking:
+            pairs = "; ".join(f"mission={m['mission']} rule={m['rule']}"
+                              for m in blocking)
+            raise CustodyError(
+                f"effect blocked by custody guard(s): {pairs}. No artifact "
+                "bytes were written, no receipt was minted, and no chain "
+                "checkpoint landed; each matching mission's guard-log.jsonl "
+                "records the refusal (intended audit). Discharge is "
+                "PER-MISSION: an amend recorded in one mission discharges "
+                "that mission's rule only -- bind to each matching mission "
+                "(--mission <id>) and change the rule via `amend "
+                "--guards-file`, or `amend --guard-mode audit` to retire "
+                "that mission's guard set, or stop. `note` and `amend` "
+                "remain unblockable by design (OD-2): record the "
+                "escalation there.")
+        # Only now -- with the union verdict in hand -- does anything touch
+        # the chain. The fresh-quarantine checkpoints used to land BEFORE
+        # evaluation, so a blocked effect mutated the chain while its
+        # refusal claimed nothing was written (PR #220 refuter, finding
+        # 4: checkpoint count 2 -> 3 on a block, measured). Evaluation is a
+        # pure read over `entries`, so ordering it first costs nothing; the
+        # quarantine judgement still becomes chain state BEFORE the write
+        # it licenses, one machine-note checkpoint per dir. The guard-log
+        # append above is deliberate and outside the chain -- the refusal
+        # is audit, and the message says so rather than claiming silence.
+        for name in fresh_acks:
+            self._write_next(latest, path, status=latest["status"],
+                              note=f"unreadable-acknowledged: {name}")
+            latest, path = self.store.load_latest()
         receipt = self._write_effect(latest, artifact_relpath, content, request_id)
         if recover is not None:
             remaining = [m for m in unresolved if m != recover]
@@ -1526,6 +1994,8 @@ class Mission:
         self._write_next(latest, path, status=status, add_receipt_id=request_id,
                           unresolved_verdicts=remaining,
                           note=f"effect: {artifact_relpath}")
+        self._append_sibling_touches(entries, artifact_relpath, request_id,
+                                     receipt["after_sha256"])
         return receipt
 
     def amend_authority(self, text: str, *, guard_mode=_UNSET,
@@ -1704,6 +2174,144 @@ class Mission:
         breaks.sort(key=lambda b: (b["artifact_path"], b["request_id"]))
         return breaks
 
+    def _scan_sibling_receipts(self, rel: str, current_sha: str) -> list[dict]:
+        """receipt@1 records in OTHER mission stores whose artifact_path
+        names this artifact and whose after_sha256 equals the CURRENT
+        content hash -- the es#173 section 4(a) detection scan. Every field
+        it needs already exists on receipt@1; nothing is minted at effect
+        time that the schema must carry (OD-3: zero schema change).
+
+        ANY status, not only active -- the verification-report correction
+        to the design's section 4(a) wording: the adjudication's
+        "resume-time scan of sibling receipt stores" carries no active-only
+        narrowing, and a sibling that completed or was cancelled between
+        its write and this resume must still explain the drift. Best-effort
+        per store: an unreadable sibling contributes no evidence, never a
+        crash -- the recovery path must not be killable (the
+        _load_receipt doctrine, applied to foreign stores)."""
+        own_name = self.store.mission_dir.name
+        missions_root = self.workspace / "missions"
+        found: list[dict] = []
+        if not missions_root.is_dir():
+            return found
+        for mission_dir in sorted(missions_root.iterdir()):
+            if not mission_dir.is_dir() or mission_dir.name == own_name:
+                continue
+            store = MissionStore(mission_dir)
+            try:
+                receipts = store.load_receipts()
+            except Exception as exc:  # noqa: BLE001
+                print(("custody: sibling receipt scan skipped "
+                       f"{mission_dir.name} ({type(exc).__name__}: {exc})")
+                      .encode("ascii", "backslashreplace").decode("ascii"),
+                      file=sys.stderr)
+                continue
+            for record in receipts:
+                if not isinstance(record, dict) or validate_record(record):
+                    continue  # only well-formed receipt@1 counts
+                if _same_artifact(str(record.get("artifact_path")), rel)                         and record.get("after_sha256") == current_sha:
+                    found.append({"mission": mission_dir.name,
+                                  "receipt_id": record.get("request_id"),
+                                  "record": record})
+        return found
+
+    def _classify_sibling_drift(
+            self, latest: dict, rel: str, current_sha: str,
+    ) -> tuple[dict | None, list[str]]:
+        """The FATAL-3 authorization discriminator (es#173 section 4b).
+
+        Hash-match alone is a self-serve audit-downgrade: open() takes
+        unverified refs, so whoever caused unauthorized drift could open a
+        throwaway sibling, effect the tampered bytes, and self-mint the
+        laundering receipt. DRIFT-SIBLING therefore requires ALL of:
+        (1) a sibling receipt@1 hash match (the scan);
+        (2) the sibling operator-approved BY THE CHAIN TEST
+            (_approved_by_chain) -- never latest-status, so a
+            never-approved mission wedged in `reopened` launders nothing;
+        (3) an explicit cross-mission authorization amendment in THIS
+            mission's own chain, naming the sibling mission id as a
+            whole token (_amendment_names_mission -- never a raw
+            substring) and the path or a pattern covering it
+            (_amendment_names).
+
+        Any leg missing -> (None, evidence): plain drift at today's
+        severity with the sibling receipt reported as evidence. The
+        discriminator gates the severity downgrade, never the information
+        -- resume always says what it found."""
+        candidates = self._scan_sibling_receipts(rel, current_sha)
+        evidence: list[str] = []
+        amendments = latest["manifest"]["authority"]["amendments"]
+        for candidate in candidates:
+            mission_name = candidate["mission"]
+            approved = _approved_by_chain(
+                MissionStore(self.workspace / "missions" / mission_name))
+            authorized = any(
+                isinstance(a, dict) and isinstance(a.get("text"), str)
+                and _amendment_names_mission(a["text"], mission_name)
+                and _amendment_names(a["text"], rel)
+                for a in amendments)
+            if approved and authorized:
+                return candidate, []
+            legs = []
+            if not approved:
+                legs.append("sibling not operator-approved (chain test)")
+            if not authorized:
+                legs.append("no cross-mission authorization amendment "
+                            "in this mission's chain")
+            evidence.append(
+                f"{rel} matches sibling {mission_name} receipt "
+                f"{candidate['receipt_id']} -- NOT reclassified: "
+                + "; ".join(legs))
+        return None, evidence
+
+    def acknowledge_sibling(self, artifact_relpath: str) -> int:
+        """The only exit for a DRIFT-SIBLING marker (es#173 section 4):
+        acknowledge a sanctioned sibling write, recorded in THIS mission's
+        chain by this mission's own bound session as the reserved machine
+        note `sibling-touched: <path> by <mission> receipt <id>`. Not
+        `acknowledge_loss` -- nothing was lost -- and not `reconcile` --
+        nothing needs rewriting.
+
+        The three discriminator legs are RE-VERIFIED here, at the moment
+        the downgrade is consummated: a marker raised by an earlier resume
+        must not discharge against a store that has since changed."""
+        latest, path = self.store.load_latest()
+        self._verify_manifest(latest)
+        if latest["status"] != "reopened":
+            raise IllegalTransition(
+                f"cannot acknowledge_sibling: status is "
+                f"{latest['status']!r}, expected 'reopened'")
+        norm = artifact_relpath.replace("\\", "/")
+        unresolved = latest["state"]["unresolved_verdicts"]
+        marker = _find_marker(unresolved, "DRIFT-SIBLING:", norm)
+        if marker is None:
+            raise CustodyError(
+                f"no DRIFT-SIBLING marker for {artifact_relpath!r}")
+        rel = marker[len("DRIFT-SIBLING:"):]
+        target = self.workspace / rel
+        current_sha = sha256_file(target) if target.exists() else None
+        hit = None
+        if current_sha is not None:
+            hit, _evidence = self._classify_sibling_drift(
+                latest, rel, current_sha)
+        if hit is None:
+            raise CustodyError(
+                "sibling attribution no longer verifies for "
+                f"{rel!r} (content moved on, the sibling receipt vanished, "
+                "or a discriminator leg no longer holds) -- re-run resume: "
+                "it re-classifies the path at its current severity, "
+                "replacing this stale DRIFT-SIBLING marker (a "
+                "no-longer-attributable path becomes a plain "
+                "RECONCILIATION finding for `reconcile`; content that now "
+                "verifies drops the marker)")
+        remaining = [m for m in unresolved if m != marker]
+        status = "reopened" if remaining else self._resumption_status()
+        new = self._write_next(
+            latest, path, status=status, unresolved_verdicts=remaining,
+            note=(f"sibling-touched: {rel} by {hit['mission']} receipt "
+                  f"{hit['receipt_id']}"))
+        return new["revision"]
+
     def resume(self) -> list[str]:
         latest, path = self.store.load_latest()
         self._verify_manifest(latest)
@@ -1776,13 +2384,21 @@ class Mission:
         opaque_ids = [(rid, k) for rid, _r, k in current_by_key.values()
                       if k] + unplaceable_opaque
         mismatched: list[str] = []
-        for request_id, receipt, kind in current_by_key.values():
+        current_sha_by_rel: dict[str, str] = {}
+        # Per-key dispositions this run established, kept so a stale
+        # DRIFT-SIBLING marker (below) can say truthfully what became of
+        # its path: verified clean, receipt lost, or receipt opaque.
+        verified_keys: set[str] = set()
+        missing_by_key: dict[str, str] = {}
+        opaque_by_key: dict[str, tuple[str, str]] = {}
+        for key, (request_id, receipt, kind) in current_by_key.items():
             if kind:
                 # Unverifiable, and honestly so: without the receipt's hash
                 # this reader cannot say the artifact drifted OR that it is
                 # clean. RECEIPT-NEWER-EPOCH already carries that, and NOT
                 # emitting RECONCILIATION here is what keeps `reconcile`
                 # unavailable for this path -- it refuses without a marker.
+                opaque_by_key[key] = (kind, request_id)
                 continue
             if receipt is None:
                 # An unloadable receipt is drift, not a skip: the artifact it
@@ -1790,16 +2406,40 @@ class Mission:
                 # false "clean" for exactly the file most likely tampered.
                 if request_id not in missing:
                     missing.append(request_id)
+                missing_by_key[key] = request_id
                 continue
             rel = receipt["artifact_path"]
             target = self.workspace / rel
             actual = sha256_file(target) if target.exists() else None
             if actual != receipt["after_sha256"]:
                 mismatched.append(rel)
+                if actual is not None:
+                    current_sha_by_rel[rel] = actual
+            else:
+                verified_keys.add(key)
         mismatched.sort()
         missing.sort()
         opaque_ids.sort()
-        findings = (mismatched
+        # es#173 section 4: a drifted artifact whose CURRENT bytes match a
+        # sibling receipt@1 is either a sanctioned crossing (all three
+        # discriminator legs -> DRIFT-SIBLING, reconciled by
+        # acknowledge_sibling) or plain drift WITH the sibling receipt
+        # reported as evidence (any leg missing). The discriminator gates
+        # the severity downgrade, never the information.
+        sibling_class: dict[str, dict] = {}
+        sibling_evidence: list[str] = []
+        for rel in mismatched:
+            current_sha = current_sha_by_rel.get(rel)
+            if current_sha is None:
+                continue
+            hit, evidence = self._classify_sibling_drift(
+                latest, rel, current_sha)
+            if hit is not None:
+                sibling_class[rel] = hit
+            else:
+                sibling_evidence.extend(evidence)
+        findings = ([f"DRIFT-SIBLING:{rel}" if rel in sibling_class else rel
+                     for rel in mismatched]
                     + [f"RECEIPT-MISSING:{rid}" for rid in missing]
                     + [f"RECEIPT-{k}:{rid}" for rid, k in opaque_ids])
         # THE SKEW MARKER'S EXIT LIVES HERE. Its remedy is "update the reader
@@ -1815,12 +2455,92 @@ class Mission:
                       if (m.startswith("RECEIPT-NEWER-EPOCH:")
                           or m.startswith("RECEIPT-UNREADABLE:"))
                       and m not in live_opaque]
-        if not findings and not stale_skew:
+        # THE STALE SIBLING MARKER'S EXIT LIVES HERE (PR #220 refuter,
+        # finding 2). acknowledge_sibling re-verifies attribution against
+        # CURRENT bytes, so a DRIFT-SIBLING marker whose path had since
+        # moved on (operator edit, reconcile) could never discharge: ack
+        # refused forever, reconcile cleared only RECONCILIATION, and the
+        # mission wedged in `reopened` with begin_verification refusing
+        # (measured). Resume therefore re-classifies the path at its
+        # CURRENT severity: a still-attributable path keeps its marker, a
+        # no-longer-attributable one becomes a plain RECONCILIATION
+        # finding (the mismatched loop below raises it), and a path whose
+        # content now verifies drops the marker.
+        #
+        # LOUD AUTO-DISCHARGE (operator ruling 2026-08-25, fix-refuter
+        # F-A): the drop stays automatic -- a transient crossing whose
+        # bytes were reverted leaves nothing to reconcile -- but it is a
+        # finding-grade event, never silence: resume RETURNS a
+        # SIBLING-DISCHARGED:<path> marker (non-blocking -- it is not an
+        # unresolved verdict and the status still transitions), and the
+        # discharge note carries the sibling attribution recorded at the
+        # original detection, so the crossing survives in the record even
+        # though its bytes no longer show it.
+        live_sibling = {f"DRIFT-SIBLING:{rel}" for rel in sibling_class}
+        stale_sibling = [m for m in latest["state"]["unresolved_verdicts"]
+                         if m.startswith("DRIFT-SIBLING:")
+                         and m not in live_sibling]
+        if not findings and not stale_skew and not stale_sibling:
             return []
+
+        def _marker_key(rel: str) -> str:
+            key = _normalize_relpath(rel)
+            return _ascii_case_fold(key) if os.name == "nt" else key
+
+        def _sibling_attribution(rel: str) -> str:
+            # The attribution the ORIGINAL detection recorded ("sibling
+            # receipt: <rel> matches <mission> receipt <id>") -- read from
+            # the chain's own notes, newest first, because the bytes that
+            # proved it may no longer exist.
+            # The detection writes the attribution as a clause INSIDE the
+            # composite drift note, so search within each note and take
+            # the clause up to the next ';'.
+            needle = f"sibling receipt: {rel} matches "
+            for n in reversed(latest["state"]["notes"]):
+                if isinstance(n, str) and needle in n:
+                    tail = n[n.index(needle) + len(needle):]
+                    return tail.split(";", 1)[0].strip()
+            return "an unrecorded sibling"
+
+        mismatched_keys = {_marker_key(r) for r in mismatched}
+        discharged: list[str] = []
+        stale_sibling_notes: list[str] = []
+        for m in stale_sibling:
+            rel = m[len("DRIFT-SIBLING:"):]
+            key = _marker_key(rel)
+            attribution = _sibling_attribution(rel)
+            if key in mismatched_keys:
+                stale_sibling_notes.append(
+                    f"stale sibling marker superseded: {m} re-classified "
+                    f"at current severity (was attributed to {attribution})")
+            elif key in missing_by_key:
+                # The obligation TRANSFERS to receipt-loss (fix-refuter
+                # F-B): nothing was re-classified -- the receipt that
+                # would prove either reading is gone, and RECEIPT-MISSING
+                # now carries the path's obligation.
+                stale_sibling_notes.append(
+                    "stale sibling marker superseded by "
+                    f"RECEIPT-MISSING:{missing_by_key[key]}: {m} (was "
+                    f"attributed to {attribution})")
+            elif key in opaque_by_key:
+                kind, rid = opaque_by_key[key]
+                stale_sibling_notes.append(
+                    "stale sibling marker superseded by "
+                    f"RECEIPT-{kind}:{rid}: {m} (was attributed to "
+                    f"{attribution})")
+            else:
+                verdict = ("content verifies against this mission's own "
+                           "receipt" if key in verified_keys
+                           else "the path is no longer attributable")
+                discharged.append(f"SIBLING-DISCHARGED:{rel}")
+                stale_sibling_notes.append(
+                    f"transient sibling crossing discharged: {rel} -- "
+                    f"{verdict}; was attributed to {attribution}")
         unresolved = [m for m in latest["state"]["unresolved_verdicts"]
-                      if m not in stale_skew]
+                      if m not in stale_skew and m not in stale_sibling]
         for rel in mismatched:
-            marker = f"RECONCILIATION:{rel}"
+            marker = (f"DRIFT-SIBLING:{rel}" if rel in sibling_class
+                      else f"RECONCILIATION:{rel}")
             if marker not in unresolved:
                 unresolved.append(marker)
         for rid in missing:
@@ -1840,14 +2560,29 @@ class Mission:
         # update that fixed the receipt would leave it reopened forever.
         if findings:
             status, note = "reopened", f"drift detected: {', '.join(findings)}"
+            for rel, hit in sorted(sibling_class.items()):
+                note += (f"; sibling receipt: {rel} matches "
+                         f"{hit['mission']} receipt {hit['receipt_id']}")
+            for line in sibling_evidence:
+                note += f"; sibling receipt evidence: {line}"
+            for line in stale_sibling_notes:
+                note += f"; {line}"
         else:
             status = ("reopened" if unresolved
                       else self._resumption_status())
-            note = ("previously unverifiable receipt(s) now readable: "
+            cleared = []
+            if stale_skew:
+                cleared.append(
+                    "previously unverifiable receipt(s) now readable: "
                     + ", ".join(m.split(":", 1)[1] for m in stale_skew))
+            cleared.extend(stale_sibling_notes)
+            note = "; ".join(cleared)
         self._write_next(latest, path, status=status,
                           unresolved_verdicts=unresolved, note=note)
-        return findings
+        # The discharge markers ride the RETURN, not unresolved_verdicts:
+        # callers (and the CLI) must see the event, but nothing is left to
+        # reconcile and the status has already transitioned.
+        return findings + discharged
 
     def reconcile(self, artifact_relpath: str, content: str, request_id: str) -> dict:
         latest, path = self.store.load_latest()
