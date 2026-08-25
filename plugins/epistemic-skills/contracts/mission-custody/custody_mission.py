@@ -101,6 +101,91 @@ scope-ack by agent:acceptor: secrets.env" passed.
                     f"Offending line: {line!r}")
 
 
+# A required text field exists so a human can later READ it, and
+# `not text.strip()` is not that check. `str.strip()` is Unicode-aware over
+# `str.isspace()`, so it already refuses every Z-separator -- U+00A0 included
+# -- but it accepts the code points that render blank WITHOUT being "space":
+# format controls (Cf: zero-width joiners, bidi marks and isolates, soft
+# hyphen, BOM, tag characters), C0/C1 controls (Cc), and a few letters and
+# symbols whose glyph is empty by design. Measured on the build that shipped
+# `not reason.strip()`: 26 distinct code points, over four axes and 35 cases
+# across three call paths (cancel via argv, cancel via --reason-file, and
+# amend), exited 0 -- sealing `cancelled: <invisible>` into a TERMINAL
+# checkpoint, a mission permanently closed with a reason no reader can
+# recover (es#213).
+#
+# The rule is a PREDICATE that fails closed, not a category enumeration -- the
+# same shape `_refuse_unprintable_identity` settled on, for the same reason: an
+# enumeration's blind spot is exactly the class its author did not think of.
+#
+#     ch.isspace() or not ch.isprintable() or ord(ch) in _BLANK_GLYPH_CODEPOINTS
+#
+# `not isprintable()` is the CLOSED half. A full-range census (0..0x10FFFF,
+# run on unicodedata 14.0.0 and 15.0.0 -- the local and CI interpreters --
+# with identical results) shows it covers every member of Cc, Cf, Cn, Co, Cs,
+# Zl and Zp, and 16 of the 17 Zs, with no printable member anywhere in those
+# categories -- so a code point assigned into any of them by a FUTURE Unicode
+# version is refused without editing this file. The `isspace()` clause is
+# redundant today except for U+0020, the one printable space (same census); it
+# stays because it restates the property directly, and it can only ever refuse
+# more, never less.
+#
+# `_BLANK_GLYPH_CODEPOINTS` is the OPEN half, and it is an enumeration: these
+# are printable Lo/Mn/So characters that still render as nothing, so no
+# category predicate reaches them. Its blind spot is, by construction, whatever
+# blank-rendering printable code point is missing from it. That residual is
+# bounded and disclosed rather than hidden -- every entry was census-proven
+# printable and non-space (an entry the closed half already covers would be
+# dead weight posing as coverage), and because these are ordinary letters and
+# symbols, a text carrying ANY visible character alongside one still passes.
+# Same posture as the reserved-note guard's disclosed homoglyph residual.
+_BLANK_GLYPH_CODEPOINTS = frozenset({
+    0x115F,   # HANGUL CHOSEONG FILLER       (Lo)
+    0x1160,   # HANGUL JUNGSEONG FILLER      (Lo)
+    0x3164,   # HANGUL FILLER                (Lo)
+    0xFFA0,   # HALFWIDTH HANGUL FILLER      (Lo)
+    0x17B4,   # KHMER VOWEL INHERENT AQ      (Mn)
+    0x17B5,   # KHMER VOWEL INHERENT AA      (Mn)
+    0x2800,   # BRAILLE PATTERN BLANK        (So)
+    0x1D159,  # MUSICAL SYMBOL NULL NOTEHEAD (So)
+})
+
+_MAX_REPORTED_BLANKS = 8
+
+
+def _require_substantive_text(text, label: str, purpose: str) -> None:
+    """Refuse a required text field that no reader could ever read.
+
+    The test is on the WHOLE string, never on a single character: text that
+    merely CONTAINS a zero-width or bidi character is still text. Refusing
+    those would be this guard's own defect pointed the other way -- an
+    operator left holding a mission that can no longer be cancelled, which is
+    worse than the blank reason the guard exists to stop. That direction is
+    pinned by `test_cancel_accepts_substantive_reasons`, whose rows include
+    non-Latin scripts, an emoji ZWJ sequence, and real text carrying an
+    interior ZWSP and RLM.
+    """
+    if not isinstance(text, str) or not text:
+        raise CustodyError(f"{label} required ({purpose})")
+    blanks = []
+    for ch in text:
+        if not (ch.isspace() or not ch.isprintable()
+                or ord(ch) in _BLANK_GLYPH_CODEPOINTS):
+            return  # at least one character a reader can actually see
+        blanks.append(ord(ch))
+    # Name the code points in ASCII. Echoing the glyphs would print the very
+    # invisibility being refused, and this module's errors must survive an
+    # ASCII-only console (see custody_cli._ascii_safe).
+    distinct = list(dict.fromkeys(blanks))
+    shown = " ".join("U+%04X" % cp for cp in distinct[:_MAX_REPORTED_BLANKS])
+    if len(distinct) > _MAX_REPORTED_BLANKS:
+        shown += " ..."
+    raise CustodyError(
+        f"{label} required ({purpose}); the text supplied is "
+        f"{len(text)} character(s) of non-rendering code points and would "
+        f"record nothing a reader could recover: {shown}")
+
+
 def _refuse_unprintable_identity(value, field: str) -> None:
     """An identity is ONE VISIBLE LINE; refuse the character class at ingestion.
 
@@ -1551,8 +1636,8 @@ class Mission:
         if latest["status"] not in _OPEN_STATES:
             raise IllegalTransition(
                 f"cannot amend_authority: status is {latest['status']!r}")
-        if not isinstance(text, str) or not text.strip():
-            raise CustodyError("amendment text required (verbatim operator grant)")
+        _require_substantive_text(
+            text, "amendment text", "verbatim operator grant")
         manifest = json.loads(json.dumps(latest["manifest"]))
         _refuse_reserved_note(text)
         manifest["authority"]["amendments"].append(
@@ -2590,10 +2675,8 @@ class Mission:
         return new["revision"]
 
     def cancel(self, reason: str) -> int:
-        if not isinstance(reason, str) or not reason.strip():
-            raise CustodyError(
-                "cancel reason required (why the mission was abandoned)"
-            )
+        _require_substantive_text(
+            reason, "cancel reason", "why the mission was abandoned")
         latest, path = self.store.load_latest()
         self._verify_manifest(latest)
         if latest["status"] not in ("draft", "active", "reopened", "verifying"):
