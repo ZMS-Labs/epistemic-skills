@@ -1808,6 +1808,78 @@ def test_effect_path_index_matches_per_id(workspace: Path) -> None:
     check("index-covers-reconciled-id", index.get("req-a-again") == "notes/a.md")
 
 
+def test_effect_path_index_agrees_after_readmission(workspace: Path) -> None:
+    """The index and the per-id lookup must still agree when an id is admitted
+    with NO effect note, dropped from receipt_ids, and later RE-ADMITTED by a
+    revision that does carry one.
+
+    es#161's linear rewrite replaced the index's adjacent-checkpoint freshness
+    test (`rid not in prev_ids`) with a mission-wide first-admission set
+    (`rid not in known_ids`). That is not only a speed change. On this chain
+    the old shape treated the re-admitting revision as a fresh admission and
+    re-derived `req-x` from ITS note -- answering 'secrets/x.md' -- while
+    `_historical_effect_path` stopped at the first admission and answered
+    None. Measured on 488f252 (this PR's exact base) and on b6c6eef: index
+    'secrets/x.md' vs per-id None. The existing pin
+    (test_effect_path_index_matches_per_id) could not see it, because its
+    noteless id is never dropped and re-admitted -- so the one test that
+    exists to stop these two readers drifting was blind to the case where
+    they had already drifted.
+
+    None is the answer the contract asks for: `_effect_path_index` declares
+    that ids with no derivable path are ABSENT, never mapped to a guess, and
+    that `.get(rid)` returns None exactly where the per-id method does. The
+    consequence is deliberate and belongs in a test rather than a reviewer's
+    memory: with no chained path for such an id, `_load_receipt_checked` has
+    nothing to compare a receipt against, so the receipt file is the only
+    authority. The base's disagreeing index refused that receipt -- an
+    accident of the drift, not a rule anyone wrote down.
+
+    `record_effect` refuses any id already in the mission's history, so only
+    a direct chain write can produce this shape: legacy or hand-written
+    history, which is exactly the class the underivable-id fallback exists
+    for. If a later change deliberately teaches BOTH readers to keep scanning
+    past a noteless first admission, `readmit-index-answers-none` is the
+    check that must be updated with it -- the agreement check above it is the
+    invariant that must not be."""
+    m = open_mission(workspace, "m-readmit", "Re-admitted noteless id.")
+    m.approve()
+    m.record_effect("docs/a.md", "aa", "req-a")
+
+    def bare(note: str, *, add=None, ids=None) -> None:
+        latest, path = m.store.load_latest()
+        m._write_next(
+            latest, path, status=latest["status"], add_receipt_id=add,
+            receipt_ids=ids,
+            unresolved_verdicts=latest["state"]["unresolved_verdicts"],
+            note=note)
+
+    bare("bare progress note with no effect marker", add="req-x")
+    latest, _ = m.store.load_latest()
+    bare("bare removal note",
+         ids=[r for r in latest["receipt_ids"] if r != "req-x"])
+    bare("effect: secrets/x.md", add="req-x")
+
+    # NOT VACUOUS. Without these two the whole test would pass on a chain
+    # where the re-admission never happened -- the failure mode of a
+    # regression test whose scenario silently stops being built.
+    notes = [n for p in m.store.checkpoint_paths()
+             for n in json.loads(p.read_text(encoding="utf-8"))["state"]["notes"]]
+    check("readmit-note-is-really-in-the-chain",
+          "effect: secrets/x.md" in notes)
+    check("readmit-id-is-really-back",
+          "req-x" in m.status()["receipt_ids"]
+          and m._all_receipt_ids_ever() == ["req-a", "req-x"])
+
+    index = m._effect_path_index()
+    check("readmit-index-agrees-with-per-id",
+          index.get("req-x") == m._historical_effect_path("req-x"))
+    check("readmit-index-answers-none", index.get("req-x") is None)
+    check("readmit-first-admission-still-wins-elsewhere",
+          index.get("req-a") == "docs/a.md"
+          and m._historical_effect_path("req-a") == "docs/a.md")
+
+
 def test_scope_consistency_reuses_single_effect_index(workspace: Path) -> None:
     """es#161: closing must not rescan the checkpoint chain per receipt."""
     m = open_mission(
@@ -5036,6 +5108,7 @@ TESTS = [
     test_note_cannot_forge_machine_state,
     test_receipt_ids_always_carry_a_derivable_path,
     test_effect_path_index_matches_per_id,
+    test_effect_path_index_agrees_after_readmission,
     test_scope_consistency_reuses_single_effect_index,
     test_scope_consistency_reuses_index_for_underivable_ids,
     test_effect_path_index_invalidates_on_same_count_tail_rewrite,
