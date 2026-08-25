@@ -117,35 +117,56 @@ scope-ack by agent:acceptor: secrets.env" passed.
 # The rule is a PREDICATE that fails closed, not a category enumeration -- the
 # same shape `_refuse_unprintable_identity` settled on, for the same reason: an
 # enumeration's blind spot is exactly the class its author did not think of.
+# That reason is not decorative here. The FIRST pass at this class shipped only
+# the first two clauses plus an eight-entry allow-list, and the allow-list's
+# blind spot was measured on the shipped build: 1961 code points -- every Mn
+# and Me assigned in Unicode 14.0.0 -- were still accepted, and nine of them
+# were confirmed live to exit 0 and seal `cancelled: <invisible>` into a
+# terminal checkpoint (U+034F, U+FE00, U+FE0F, U+E0100, U+180B, U+16FE4,
+# U+0301, U+05B0, U+20DD). The third clause below closes that axis by
+# CATEGORY, which is why it is a category test and not 1961 more entries.
 #
-#     ch.isspace() or not ch.isprintable() or ord(ch) in _BLANK_GLYPH_CODEPOINTS
+#     ch.isspace()
+#     or not ch.isprintable()
+#     or unicodedata.category(ch) in _ZERO_ADVANCE_MARK_CATEGORIES
+#     or ord(ch) in _BLANK_GLYPH_CODEPOINTS
 #
-# `not isprintable()` is the CLOSED half. A full-range census (0..0x10FFFF,
-# run on unicodedata 14.0.0 and 15.0.0 -- the local and CI interpreters --
-# with identical results) shows it covers every member of Cc, Cf, Cn, Co, Cs,
-# Zl and Zp, and 16 of the 17 Zs, with no printable member anywhere in those
-# categories -- so a code point assigned into any of them by a FUTURE Unicode
-# version is refused without editing this file. The `isspace()` clause is
-# redundant today except for U+0020, the one printable space (same census); it
-# stays because it restates the property directly, and it can only ever refuse
-# more, never less.
+# `not isprintable()` is the FIRST closed half. A full-range census
+# (0..0x10FFFF, run on unicodedata 14.0.0 and 15.0.0 -- the local and CI
+# interpreters -- with identical results) shows it covers every member of Cc,
+# Cf, Cn, Co, Cs, Zl and Zp, and 16 of the 17 Zs, with no printable member
+# anywhere in those categories -- so a code point assigned into any of them by
+# a FUTURE Unicode version is refused without editing this file. The
+# `isspace()` clause is redundant today except for U+0020, the one printable
+# space (same census); it stays because it restates the property directly, and
+# it can only ever refuse more, never less.
 #
-# `_BLANK_GLYPH_CODEPOINTS` is the OPEN half, and it is an enumeration: these
-# are printable Lo/Mn/So characters that still render as nothing, so no
-# category predicate reaches them. Its blind spot is, by construction, whatever
-# blank-rendering printable code point is missing from it. That residual is
-# bounded and disclosed rather than hidden -- every entry was census-proven
-# printable and non-space (an entry the closed half already covers would be
-# dead weight posing as coverage), and because these are ordinary letters and
-# symbols, a text carrying ANY visible character alongside one still passes.
+# `_ZERO_ADVANCE_MARK_CATEGORIES` is the SECOND closed half, and it is the same
+# kind of guarantee: a nonspacing (Mn) or enclosing (Me) mark has zero advance
+# width BY DEFINITION and composes onto a preceding base character, so a string
+# that is nothing but marks has no base to compose onto and renders as nothing
+# or as a dotted-circle artifact. Future Mn/Me assignments are covered without
+# editing this file. Mc (SPACING combining mark) is deliberately excluded: 445
+# code points that do carry advance width and are visible on their own.
+#
+# `_BLANK_GLYPH_CODEPOINTS` is what is left OPEN, and it is an enumeration:
+# printable Lo/So characters that still render as nothing, which no category
+# predicate reaches without also refusing every CJK ideograph or every emoji.
+# Its blind spot is, by construction, whatever blank-rendering printable Lo/So
+# code point is missing from it. That residual is bounded and disclosed rather
+# than hidden -- every entry is census-proven printable, non-space, and not
+# Mn/Me (an entry a closed half already covers would be dead weight posing as
+# coverage; U+17B4 and U+17B5 were exactly that once Mn was closed, and are
+# removed), and because these are ordinary letters and symbols, a text carrying
+# ANY visible character alongside one still passes.
 # Same posture as the reserved-note guard's disclosed homoglyph residual.
+_ZERO_ADVANCE_MARK_CATEGORIES = frozenset({"Mn", "Me"})
+
 _BLANK_GLYPH_CODEPOINTS = frozenset({
     0x115F,   # HANGUL CHOSEONG FILLER       (Lo)
     0x1160,   # HANGUL JUNGSEONG FILLER      (Lo)
     0x3164,   # HANGUL FILLER                (Lo)
     0xFFA0,   # HALFWIDTH HANGUL FILLER      (Lo)
-    0x17B4,   # KHMER VOWEL INHERENT AQ      (Mn)
-    0x17B5,   # KHMER VOWEL INHERENT AA      (Mn)
     0x2800,   # BRAILLE PATTERN BLANK        (So)
     0x1D159,  # MUSICAL SYMBOL NULL NOTEHEAD (So)
 })
@@ -157,19 +178,24 @@ def _require_substantive_text(text, label: str, purpose: str) -> None:
     """Refuse a required text field that no reader could ever read.
 
     The test is on the WHOLE string, never on a single character: text that
-    merely CONTAINS a zero-width or bidi character is still text. Refusing
-    those would be this guard's own defect pointed the other way -- an
+    merely CONTAINS a zero-width, bidi, or combining character is still text.
+    Refusing those would be this guard's own defect pointed the other way -- an
     operator left holding a mission that can no longer be cancelled, which is
-    worse than the blank reason the guard exists to stop. That direction is
-    pinned by `test_cancel_accepts_substantive_reasons`, whose rows include
-    non-Latin scripts, an emoji ZWJ sequence, and real text carrying an
-    interior ZWSP and RLM.
+    worse than the blank reason the guard exists to stop. That direction is the
+    failure mode the Mn/Me clause specifically risks, because ordinary
+    well-formed text in several living scripts carries a nonspacing mark and
+    emoji presentation is a base symbol plus U+FE0F; it is pinned by
+    `test_cancel_accepts_substantive_reasons`, whose rows include non-Latin
+    scripts, an emoji ZWJ sequence, Hebrew with niqqud, Thai with a vowel mark,
+    an emoji and a CJK ideograph each followed by a variation selector, and
+    real text carrying an interior ZWSP, RLM, and combining grapheme joiner.
     """
     if not isinstance(text, str) or not text:
         raise CustodyError(f"{label} required ({purpose})")
     blanks = []
     for ch in text:
         if not (ch.isspace() or not ch.isprintable()
+                or unicodedata.category(ch) in _ZERO_ADVANCE_MARK_CATEGORIES
                 or ord(ch) in _BLANK_GLYPH_CODEPOINTS):
             return  # at least one character a reader can actually see
         blanks.append(ord(ch))

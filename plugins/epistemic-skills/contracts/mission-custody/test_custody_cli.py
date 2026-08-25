@@ -239,6 +239,14 @@ def test_cancel_requires_nonempty_reason() -> None:
 # the guard refuses a code point because of its CATEGORY, so one row proves the
 # axis and the remaining rows are regression pins for code points a real shell,
 # editor, or copy-paste actually emits.
+#
+# The `zero-advance-mark` block at the bottom is the SECOND pass. The first one
+# closed Cc/Cf/Cn/Co/Cs/Zl/Zp/Zs with `isspace() or not isprintable()` and left
+# the printable half to an 8-entry allow-list -- which is the shape whose blind
+# spot is whatever its author did not enumerate. Measured on that build, 1961
+# Mn/Me code points (Unicode 14.0.0) were still accepted, and 9 of them are
+# pinned below as having actually sealed a terminal cancellation. Enumeration
+# closed by category, not by adding 1961 more entries.
 _BLANK_REASON_CASES = (
     # (axis, codepoint, label)
     ("ascii-whitespace", 0x0020, "SPACE"),
@@ -279,16 +287,59 @@ _BLANK_REASON_CASES = (
     ("blank-glyph", 0xFFA0, "HALFWIDTH HANGUL FILLER"),
     ("blank-glyph", 0x2800, "BRAILLE PATTERN BLANK"),
     ("blank-glyph", 0x1D159, "MUSICAL SYMBOL NULL NOTEHEAD"),
-    ("blank-glyph", 0x17B4, "KHMER VOWEL INHERENT AQ"),
+    # Zero-advance marks (Mn/Me) -- the axis the first pass at this class left
+    # open. An Mn/Me code point is PRINTABLE and is not `isspace()`, so neither
+    # half of `isspace() or not isprintable()` reaches it, and the 8-entry
+    # blank-glyph allow-list reached 2 of the 1961 Mn/Me code points assigned
+    # in Unicode 14.0.0. A mark is nonspacing BY DEFINITION -- zero advance
+    # width, composed onto a preceding base -- so a string that is nothing but
+    # marks has no base to compose onto and renders as nothing (or a
+    # dotted-circle artifact). Measured against the build that shipped the
+    # category predicate alone, every row below exited 0 and sealed
+    # `cancelled: <invisible>` into the terminal checkpoint.
+    ("zero-advance-mark", 0x034F, "COMBINING GRAPHEME JOINER"),
+    ("zero-advance-mark", 0xFE0F, "VARIATION SELECTOR-16"),
+    ("zero-advance-mark", 0xFE00, "VARIATION SELECTOR-1"),
+    ("zero-advance-mark", 0xE0100, "VARIATION SELECTOR-17"),
+    ("zero-advance-mark", 0x180B, "MONGOLIAN FREE VARIATION SELECTOR ONE"),
+    ("zero-advance-mark", 0x16FE4, "KHITAN SMALL SCRIPT FILLER"),
+    ("zero-advance-mark", 0x0301, "COMBINING ACUTE ACCENT"),
+    ("zero-advance-mark", 0x05B0, "HEBREW POINT SHEVA"),
+    ("zero-advance-mark", 0x20DD, "COMBINING ENCLOSING CIRCLE"),
+    # Moved down from `blank-glyph`: these two are Mn, so the Mn/Me clause is
+    # what refuses them now. Leaving them labelled as allow-list entries would
+    # misreport which half of the guard is load-bearing for them -- and they
+    # were removed from the allow-list for exactly that reason.
+    ("zero-advance-mark", 0x17B4, "KHMER VOWEL INHERENT AQ"),
+    ("zero-advance-mark", 0x17B5, "KHMER VOWEL INHERENT AA"),
+)
+
+# The guard tests the WHOLE string, so a RUN of blank-shaped characters drawn
+# from DIFFERENT axes has to refuse as well. A per-character predicate that had
+# only ever been shown single-character rows could pass every row above and
+# still admit a mixed run -- which is what a real paste produces, since an
+# operator's "invisible" text is rarely one code point repeated.
+# Written as \u escapes on purpose: a source file that carries the invisible
+# characters literally cannot be reviewed, which is the same unreadability the
+# guard exists to refuse.
+_BLANK_REASON_RUNS = (
+    ("all-marks", "\u0301\u0302\u0303"),
+    ("mixed-axes", "\u200b\u0301\u00a0"),
+    ("mark-after-space", " \u034f"),
+    ("variation-selector-run", "\ufe0f\ufe0f\ufe0f"),
+    ("mark-then-format-control", "\u05b0\u200e"),
 )
 
 # The fix's OWN failure mode is over-rejection. Refusing a reason the operator
 # is entitled to give wedges a mission that can then never be cancelled -- a
 # worse outcome than the blank reason it was meant to stop. Every row here MUST
-# be accepted. The last three are the load-bearing ones: a reason that CONTAINS
-# a zero-width or bidi character alongside real text is substantive, and a
-# guard written as "refuse if ANY character is Cf" would ship exactly the
-# defect this one fixes, pointed the other way.
+# be accepted. The load-bearing ones are the tail: a reason that CONTAINS a
+# zero-width, bidi, or combining code point alongside real text is substantive,
+# and a guard written as "refuse if ANY character is Cf/Mn" would ship exactly
+# the defect this one fixes, pointed the other way. The variation-selector and
+# niqqud rows are the pins for the Mn/Me clause specifically -- ordinary
+# well-formed text in several living scripts carries a nonspacing mark, and
+# emoji presentation is a base symbol plus U+FE0F.
 _SUBSTANTIVE_REASON_CASES = (
     ("ascii", "superseded by es#214"),
     ("single-punctuation", "."),
@@ -304,6 +355,11 @@ _SUBSTANTIVE_REASON_CASES = (
     ("real-text-padded-with-nbsp", "\u00a0superseded by es#214\u00a0"),
     ("real-text-containing-zwsp", "superseded\u200bby es#214"),
     ("real-text-containing-rlm", "closed\u200f by operator"),
+    ("real-text-containing-cgj", "supersed\u034fed by es#214"),
+    ("emoji-with-variation-selector", "\u2764\ufe0f"),
+    ("cjk-with-variation-selector", "\u845b\ufe00"),
+    ("hebrew-with-niqqud", "\u05d1\u05b0\u05d5\u05d8\u05dc"),
+    ("thai-with-vowel-mark", "\u0e22\u0e01\u0e40\u0e25\u0e34\u0e01"),
 )
 
 
@@ -353,6 +409,34 @@ def test_cancel_refuses_every_blank_shaped_reason() -> None:
                   record["status"] != "cancelled")
 
 
+def test_cancel_refuses_blank_shaped_runs() -> None:
+    """The predicate is per-character but the verdict is on the WHOLE string.
+
+    Every row above is one code point repeated, which a guard could pass by
+    special-casing single characters. These rows mix axes -- mark plus space,
+    mark plus zero-width, mark plus bidi -- because that is what a real paste
+    of "invisible" text actually contains.
+    """
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        for i, (label, reason) in enumerate(_BLANK_REASON_RUNS):
+            mid = "blankrun-%02d" % i
+            r, checkpoints = _cancel_with(root, mid, ("--reason", reason))
+            check("cancel-blankrun-%s-exit-2" % label, r.returncode == 2)
+            check("cancel-blankrun-%s-names-required-reason" % label,
+                  "cancel reason required" in r.stderr)
+            check("cancel-blankrun-%s-no-traceback" % label,
+                  "Traceback" not in r.stderr)
+            check("cancel-blankrun-%s-stderr-is-ascii" % label,
+                  all(ord(c) < 128 for c in r.stderr))
+            check("cancel-blankrun-%s-no-checkpoint-write" % label,
+                  len(sorted(checkpoints.glob("*.json"))) == 1)
+            latest = sorted(checkpoints.glob("*.json"))[-1]
+            record = json.loads(latest.read_text(encoding="utf-8"))
+            check("cancel-blankrun-%s-mission-not-cancelled" % label,
+                  record["status"] != "cancelled")
+
+
 def test_cancel_refuses_blank_shaped_reason_files() -> None:
     """The --reason-file vector reaches code points argv cannot carry.
 
@@ -370,6 +454,8 @@ def test_cancel_refuses_blank_shaped_reason_files() -> None:
         ("rtl-and-bidi", 0x202E, "RIGHT-TO-LEFT OVERRIDE"),
         ("blank-glyph", 0x3164, "HANGUL FILLER"),
         ("unicode-whitespace", 0x00A0, "NO-BREAK SPACE"),
+        ("zero-advance-mark", 0xFE0F, "VARIATION SELECTOR-16"),
+        ("zero-advance-mark", 0x034F, "COMBINING GRAPHEME JOINER"),
     )
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
@@ -425,6 +511,7 @@ def test_amend_refuses_blank_shaped_text() -> None:
         ("rtl-and-bidi", 0x202E),
         ("control", 0x0007),
         ("blank-glyph", 0x3164),
+        ("zero-advance-mark", 0xFE0F),
     )
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
@@ -440,8 +527,11 @@ def test_amend_refuses_blank_shaped_text() -> None:
                   "amendment text required" in r.stderr)
             check("amend-blank-%s-no-traceback" % tag,
                   "Traceback" not in r.stderr)
-        # positive control: a real grant, and one that merely contains a ZWSP
+        # positive control: a real grant, one that merely contains a ZWSP, and
+        # one that merely contains a nonspacing mark -- the over-rejection
+        # direction has to be pinned on this call path too, not only on cancel.
         for label, text in (("plain", "operator grants scope: docs/"),
+                            ("contains-mark", "grant scope: docs/ \u2764\ufe0f"),
                             ("contains-zwsp", "grant\u200bscope: docs/")):
             ws = root / ("amend-ok-" + label)
             ws.mkdir(parents=True)
@@ -1081,6 +1171,7 @@ TESTS = [
     test_full_lifecycle_via_cli,
     test_cancel_requires_nonempty_reason,
     test_cancel_refuses_every_blank_shaped_reason,
+    test_cancel_refuses_blank_shaped_runs,
     test_cancel_refuses_blank_shaped_reason_files,
     test_cancel_accepts_substantive_reasons,
     test_amend_refuses_blank_shaped_text,
