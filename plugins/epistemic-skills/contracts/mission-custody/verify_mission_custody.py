@@ -21,6 +21,16 @@ RECORD_KINDS = {
     "checkpoint@1",
     "receipt@1",
     "acceptance-verdict@1",
+    # `audit` EMITS this kind. A `record:` label is a claim of membership in
+    # this contract family, and the claim was false: `validate_record` answered
+    # `unknown kind 'continuity-report@1'`, so the command's own JSON could not
+    # be read by the repository's own validator. Either the label goes or the
+    # validator does; the label is the useful half.
+    #
+    # It is a REPORT, not a stored record: nothing writes it into a mission
+    # store, so it never reaches the chain, the receipts directory, or
+    # `atomic_write_json`'s pre-write validation of things that do.
+    "continuity-report@1",
 }
 
 # The epoch this reader implements, per record family. RECORD_KINDS above is a
@@ -45,6 +55,7 @@ SUPPORTED_EPOCHS = {
     "checkpoint": 1,
     "receipt": 1,
     "acceptance-verdict": 1,
+    "continuity-report": 1,
 }
 
 
@@ -468,7 +479,51 @@ def validate_record(record: Any) -> list[str]:
         return validate_checkpoint(record)      # Task 2
     if kind == "receipt@1":
         return validate_receipt(record)         # Task 3
+    if kind == "continuity-report@1":
+        return validate_continuity_report(record)
     return validate_acceptance_verdict(record)  # Task 3
+
+
+CONTINUITY_REPORT_FIELDS = {
+    "record", "continuity_breaks", "orphaned_retired_receipts",
+}
+
+
+def validate_continuity_report(rec: dict) -> list[str]:
+    """The shape `custody_cli audit` emits. Structural only, deliberately:
+    the report is a READING of a mission, not an authority record, so this
+    validates that a consumer can traverse it -- not that its findings are
+    true. Saying which of the two a check establishes is the whole point of
+    this file."""
+    errors: list[str] = []
+    _check_exact_fields(errors, rec, CONTINUITY_REPORT_FIELDS,
+                        "continuity-report")
+    if errors:
+        return errors
+    breaks = rec["continuity_breaks"]
+    if not isinstance(breaks, list) or not all(
+            isinstance(item, dict) for item in breaks):
+        errors.append("continuity_breaks: list of objects required")
+    else:
+        for index, item in enumerate(breaks):
+            for name in ("artifact_path", "already_reconciled"):
+                if name not in item:
+                    errors.append(
+                        f"continuity_breaks[{index}].{name}: missing")
+            if "artifact_path" in item and not (
+                    isinstance(item["artifact_path"], str)
+                    and item["artifact_path"]):
+                errors.append(
+                    f"continuity_breaks[{index}].artifact_path: "
+                    "non-empty string required")
+            if "already_reconciled" in item and not isinstance(
+                    item["already_reconciled"], bool):
+                errors.append(
+                    f"continuity_breaks[{index}].already_reconciled: "
+                    "boolean required")
+    _require(errors, _str_list(rec["orphaned_retired_receipts"]),
+             "orphaned_retired_receipts", "list of strings required")
+    return errors
 
 
 def validate_checkpoint(rec: dict) -> list[str]:

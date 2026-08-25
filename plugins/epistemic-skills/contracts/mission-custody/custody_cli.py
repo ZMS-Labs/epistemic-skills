@@ -50,12 +50,33 @@ def _ascii_safe(text: str) -> str:
 
 
 def _read_content(args: argparse.Namespace) -> str:
+    """Artifact bodies, with the SAME refusal contract `_read_text` carries.
+
+    `_read_text` was hardened for missing and non-UTF-8 files and this reader
+    was not, so the ONE flag an operator uses most (`--content-file`) answered
+    an ordinary input error with a traceback and exit 1 -- indistinguishable
+    from an internal crash, and outside this module's documented 0/2/3
+    contract. Measured: `effect --content-file <missing>` -> FileNotFoundError,
+    rc 1.
+
+    Deliberately NOT sharing `_read_text`'s body: that reader strips a BOM and
+    ONE trailing terminator, and an artifact body must be hashed as the exact
+    bytes the file carries. Only the refusal behaviour is shared, and the
+    difference is the point."""
     if args.content_file is not None:
         # newline='' disables universal-newline translation: the receipt
         # hashes exactly the bytes the file carries, CRLF preserved -- silent
         # normalization here would make every cross-store hash compare lie.
-        with open(args.content_file, encoding="utf-8", newline="") as handle:
-            return handle.read()
+        try:
+            with open(args.content_file, encoding="utf-8", newline="") as handle:
+                return handle.read()
+        except UnicodeDecodeError as exc:
+            raise CustodyError(
+                f"content file is not valid UTF-8 ({exc.reason}); the receipt "
+                "hashes these bytes, and a file this cannot decode would be "
+                "recorded wrong or not at all -- re-save it as UTF-8") from None
+        except OSError as exc:
+            raise CustodyError(f"cannot read content file: {exc}") from None
     return args.content
 
 
@@ -591,10 +612,16 @@ def dispatch(args: argparse.Namespace) -> int:
                       if not b["already_reconciled"]]
         if unanswered:
             paths = ", ".join(sorted({b["artifact_path"] for b in unanswered}))
-            print(f"resume: {len(unanswered)} unreconciled continuity "
-                  f"break(s) -- the artifact changed between receipted events "
-                  f"with no reconciliation answering for it: {paths}; run "
-                  "`audit` for detail", file=sys.stderr)
+            # _ascii_safe, like every other path-bearing output here. This
+            # warning was added later and interpolated the path raw, so a
+            # non-ASCII artifact name put a raw non-ASCII byte on stderr --
+            # which a console codepage that cannot encode it turns into a
+            # UnicodeEncodeError, i.e. the warning destroying itself.
+            print(_ascii_safe(
+                f"resume: {len(unanswered)} unreconciled continuity "
+                f"break(s) -- the artifact changed between receipted events "
+                f"with no reconciliation answering for it: {paths}; run "
+                "`audit` for detail"), file=sys.stderr)
         return 3 if drift else 0
     elif args.command == "reconcile":
         receipt = mission.reconcile(args.path, _read_content(args),

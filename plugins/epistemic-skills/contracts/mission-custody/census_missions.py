@@ -298,7 +298,21 @@ def _receipts(mission: Mission, store: MissionStore,
     orphans: list[str] = []
     try:
         for rid in sorted(mission._retired_receipt_ids(latest)):
-            if mission.store.receipt_path(rid).exists():
+            # stat(), NOT exists(). `Path.exists()` converts ENOENT, ENOTDIR,
+            # EBADF and ELOOP alike into False, so a retired-receipt path this
+            # census could not TRAVERSE read as "no orphan here" and the run
+            # still reported answers_are_partial: false -- the file's own
+            # distinction ("something is wrong" vs "I could not look")
+            # inverted. Only FileNotFoundError means absent; every other
+            # failure is an inspection failure and belongs in `problems`
+            # below. (EACCES already propagated, because pathlib does not
+            # ignore it -- measured; the reachable silent cases are ENOTDIR
+            # and ELOOP.)
+            try:
+                os.stat(mission.store.receipt_path(rid))
+            except FileNotFoundError:
+                continue
+            else:
                 orphans.append(
                     f"{rid}: ORPHANED-RETIRED-RECEIPT -- a receipt file is "
                     "present for an id this mission RETIRED. It covers "
@@ -810,11 +824,19 @@ def summarize(reports: list[dict]) -> dict:
                 if m["receipt_count"] > 0
                 and m["artifacts_present_under_root"] == 0
                 and not m.get("coverage_probe_failures")]
+    # ANY probe failure makes coverage UNKNOWN, whatever else was confirmed.
+    # Requiring `artifacts_present_under_root == 0` meant a mission with one
+    # readable artifact and one unreadable one fell out of every bucket --
+    # unknown, zero, lost and untested alike -- and the human summary printed
+    # "all active missions have receipted artifacts present here" over a file
+    # nobody could look at. The confirmed count rides along so the report says
+    # what WAS established rather than only what was not.
     unknown_cov = [{"mission": f"{r['root']}::{m['mission']}",
-                    "unreadable_artifacts": m["coverage_probe_failures"]}
+                    "unreadable_artifacts": m["coverage_probe_failures"],
+                    "artifacts_confirmed_present":
+                        m["artifacts_present_under_root"]}
                    for r, m in sound
-                   if m.get("coverage_probe_failures")
-                   and m["artifacts_present_under_root"] == 0]
+                   if m.get("coverage_probe_failures")]
     lost = [{"mission": f"{r['root']}::{m['mission']}",
              "artifacts": m.get("recover_obligations", [])}
             for r, m in sound if m.get("recover_obligations")]
