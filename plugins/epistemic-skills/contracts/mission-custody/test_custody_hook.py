@@ -1055,6 +1055,18 @@ def test_cursor_cli_completed_install_never_reports_a_refusal() -> None:
         check("cursor-cli-broken-pipe-left-the-config",
               destination2.is_file())
 
+        # (c) the OTHER branch of the same defect: with `--output -` stdout
+        # IS the product, so a dead stdout must still REFUSE -- but with
+        # exit 2, not the 120 the finalisation flush would otherwise give.
+        read_fd, write_fd = os.pipe()
+        os.close(read_fd)
+        stdout_mode = subprocess.run(
+            [sys.executable, str(CURSOR_CLI_RENDERER)],
+            stdout=write_fd, stderr=subprocess.PIPE, text=True)
+        os.close(write_fd)
+        check("cursor-cli-stdout-mode-broken-pipe-refuses-with-2",
+              stdout_mode.returncode == 2)
+
 
 def test_cursor_cli_documented_command_names_a_runnable_interpreter() -> None:
     """es#216 MINOR: the documented install command used bare `python`,
