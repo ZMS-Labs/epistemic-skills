@@ -26,15 +26,24 @@ def check(name: str, cond: bool) -> None:
         print(f"ok   {name}")
 
 
-def run(tool_name: str, state: object, *, write_state: bool = True) -> dict:
-    """Returns {"rc": int, "denied": bool, "reason": str}."""
+def run(tool_name: str, state: object, *, write_state: bool = True,
+        raw_event: str | None = None) -> dict:
+    """Returns {"rc", "denied", "reason", "allow_ok"}.
+
+    `allow_ok` is the STRICT allow: rc == 0, no deny decision, and stdout
+    either empty (implicit allow) or a well-formed hook payload. Until this
+    field existed the allow rows of the published table passed on a hook
+    that had crashed, exited nonzero, or printed garbage -- `decision`
+    stays "" in all three cases, so `denied` is False and the row reads as
+    "allowed" without the hook having successfully allowed anything."""
     with tempfile.TemporaryDirectory() as tmp:
         state_path = Path(tmp) / "state.json"
         if write_state:
             state_path.write_text(json.dumps(state), encoding="utf-8")
         proc = subprocess.run(
             [sys.executable, str(HOOK)],
-            input=json.dumps({"tool_name": tool_name}),
+            input=(raw_event if raw_event is not None
+                   else json.dumps({"tool_name": tool_name})),
             capture_output=True, text=True, encoding="utf-8",
             env={"EPISTEMIC_CONTROL_STATE": str(state_path),
                  "PYTHONIOENCODING": "utf-8",
@@ -43,16 +52,20 @@ def run(tool_name: str, state: object, *, write_state: bool = True) -> dict:
         )
     decision = ""
     reason = ""
+    shape_ok = True
     if proc.stdout.strip():
         try:
             payload = json.loads(proc.stdout)
             out = payload.get("hookSpecificOutput", {})
             decision = out.get("permissionDecision", "")
             reason = out.get("permissionDecisionReason", "")
-        except ValueError:
-            pass
-    return {"rc": proc.returncode, "denied": decision == "deny",
-            "reason": reason}
+            shape_ok = (isinstance(out, dict)
+                        and decision in ("", "allow", "ask", "deny"))
+        except (ValueError, AttributeError):
+            shape_ok = False
+    denied = decision == "deny"
+    return {"rc": proc.returncode, "denied": denied, "reason": reason,
+            "allow_ok": proc.returncode == 0 and not denied and shape_ok}
 
 
 def main() -> int:
@@ -62,12 +75,12 @@ def main() -> int:
             check(f"{control}-denies-{tool}",
                   run(tool, {"control": control})["denied"])
         check(f"{control}-allows-a-read-only-tool",
-              not run("Read", {"control": control})["denied"])
+              run("Read", {"control": control})["allow_ok"])
     for tool in ("Write", "Bash"):
         check(f"proceed-allows-{tool}",
-              not run(tool, {"control": "proceed"})["denied"])
+              run(tool, {"control": "proceed"})["allow_ok"])
     check("absent-state-is-inactive",
-          not run("Bash", None, write_state=False)["denied"])
+          run("Bash", None, write_state=False)["allow_ok"])
 
     # ---- MultiEdit is a side-effecting built-in ---------------------------
     # The denial set listed Write/Edit/NotebookEdit/Bash and the MCP-prefix
@@ -78,7 +91,7 @@ def main() -> int:
     check("escalate-denies-MultiEdit",
           run("MultiEdit", {"control": "escalate"})["denied"])
     check("proceed-allows-MultiEdit",
-          not run("MultiEdit", {"control": "proceed"})["denied"])
+          run("MultiEdit", {"control": "proceed"})["allow_ok"])
 
     # ---- side effects outside the GitHub MCP namespace --------------------
     # The prefix list named five `mcp__github__*` verbs, so a mutating tool in
@@ -98,7 +111,33 @@ def main() -> int:
     # one thing a held agent must still be able to do.
     for tool in ("mcp__github__get_issue", "mcp__notion__API-retrieve-a-page",
                  "mcp__filesystem__read_file"):
-        check(f"hold-allows-{tool}", not run(tool, {"control": "hold"})["denied"])
+        check(f"hold-allows-{tool}", run(tool, {"control": "hold"})["allow_ok"])
+
+    # ---- the repository's own `mutate` MCP verb is side-effecting --------
+    # `mcp__arr__mutate` is this repository's existing, explicitly mutating
+    # tool (contracts/mission-custody/test_custody_hook.py pairs it with an
+    # `rm -rf` command), but `_WORD` extracts `mutate` and the verb
+    # vocabulary did not carry it, so under hold/escalate the gate allowed a
+    # KNOWN side-effecting call the classification exists to deny. This is
+    # not the documented opaque-name residue: the verb was simply missing.
+    for control in ("hold", "escalate"):
+        check(f"{control}-denies-mcp__arr__mutate",
+              run("mcp__arr__mutate", {"control": control})["denied"])
+    check("proceed-allows-mcp__arr__mutate",
+          run("mcp__arr__mutate", {"control": "proceed"})["allow_ok"])
+
+    # ---- the malformed-event half of the fail-closed row ------------------
+    # Every case above sends a valid object with a string `tool_name`, so
+    # the advertised `malformed event -> deny` row was never EXECUTED:
+    # deleting the hook's event validation would have left this suite green.
+    for label, raw in (("invalid-json", "{not json"),
+                       ("missing-key", json.dumps({"tool": "Bash"})),
+                       ("non-string-tool", json.dumps({"tool_name": ["Bash"]})),
+                       ("null-tool", json.dumps({"tool_name": None})),
+                       ("empty-stdin", "")):
+        result = run("Bash", {"control": "proceed"}, raw_event=raw)
+        check(f"malformed-event-{label}-denies", result["denied"])
+        check(f"malformed-event-{label}-exits-0", result["rc"] == 0)
 
     # ---- an out-of-vocabulary control is malformed state ------------------
     # The README's own table says malformed state DENIES. `control in

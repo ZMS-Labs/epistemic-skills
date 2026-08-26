@@ -43,11 +43,16 @@ MCP_MUTATING_VERBS = {
     "add", "append", "apply", "approve", "archive", "cancel", "clear",
     "click", "close", "commit", "copy", "create", "delete", "deploy",
     "destroy", "drag", "drop", "edit", "exec", "execute", "fill", "import",
-    "insert", "install", "invite", "kill", "merge", "move", "navigate",
+    "insert", "install", "invite", "kill", "merge", "move", "mutate",
+    "navigate",
     "patch", "post", "press", "publish", "purge", "push", "put", "remove",
     "rename", "reset", "restart", "revoke", "run", "save", "schedule",
     "send", "set", "share", "start", "stop", "submit", "sync", "trash",
     "type", "unlink", "update", "upload", "upsert", "write",
+    # `mutate` is not aspirational: this repository's own `mcp__arr__mutate`
+    # (paired with `rm -rf` in contracts/mission-custody/test_custody_hook.py)
+    # was ALLOWED under hold/escalate because the word was absent here -- a
+    # known side-effecting call the classification exists to deny.
 }
 _WORD = re.compile(r"[A-Z]+(?![a-z])|[A-Z][a-z]+|[a-z]+|\d+")
 
