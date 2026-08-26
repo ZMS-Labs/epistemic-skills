@@ -151,7 +151,11 @@ def validate(value: object) -> None:
     if frame["observed"] + frame["excluded"] + frame["missing"] != frame["planned"]:
         fail("POPULATION_MISMATCH", "observed + excluded + missing must equal planned")
 
-    if record["status"] not in STATUSES:
+    # isinstance FIRST: `STATUSES` is a set of strings, so an unhashable
+    # status ({} or []) is not a member -- but `in` RAISES on it instead of
+    # answering, and this verifier's contract is a named failure, never a
+    # traceback.
+    if not isinstance(record["status"], str) or record["status"] not in STATUSES:
         fail("UNKNOWN_STATUS", f"status must be one of {sorted(STATUSES)}")
     supersedes = record.get("supersedes")
     if supersedes is not None and (not isinstance(supersedes, str) or not SHA256.fullmatch(supersedes)):
@@ -188,6 +192,11 @@ def self_test() -> None:
         "invalid-missing-never-attests.json": "MISSING_NEVER_ATTESTS",
         "invalid-floating-revision.json": "BAD_REVISION",
         "invalid-nonrfc3339-timestamp.json": "SCHEMA_VIOLATION",
+        # A CLOSED vocabulary tested with `in` raises TypeError on an
+        # unhashable value, so an inbound envelope carrying `"status": []`
+        # produced a traceback instead of the promised named failure --
+        # the same shape es#137 P2 fixed once, in one place, for one field.
+        "invalid-unhashable-status.json": "UNKNOWN_STATUS",
     }
     for name, expected in cases.items():
         try:
@@ -199,7 +208,34 @@ def self_test() -> None:
         else:
             if expected is not None:
                 raise AssertionError(f"{name}: expected {expected}, got pass")
-    print(f"calibration contract self-test: PASS ({len(cases)}/{len(cases)})")
+    # SCHEMA/VERIFIER PARITY. A producer is told to validate against the
+    # published JSON Schema; a consumer runs this verifier. Where the two
+    # disagree the producer gets a false PASS and the consumer refuses the
+    # same bytes. This asserts the schema DECLARES the status-dependent
+    # supersession requirement this verifier enforces.
+    #
+    # HONEST SCOPE OF THIS ORACLE: it reads the schema document, so it
+    # establishes that the constraint is DECLARED -- not that any JSON Schema
+    # implementation enforces it. There is no stdlib JSON Schema validator, so
+    # enforcement cannot be exercised here; a structural pin is what this
+    # repository can actually check, and saying so is the point.
+    schema = json.loads(
+        (Path(__file__).parent / "epistemic-product-calibration.schema.json")
+        .read_text(encoding="utf-8"))
+    conditionals = [
+        rule for rule in schema.get("allOf", [])
+        if rule.get("if", {}).get("properties", {}).get("status", {}).get("const")
+        == "superseded"
+        and "supersedes" in rule.get("then", {}).get("required", [])
+    ]
+    if not conditionals:
+        raise AssertionError(
+            "schema/verifier parity: this verifier raises MISSING_SUPERSESSION "
+            "for status=superseded without `supersedes`, but the published "
+            "schema declares no such conditional -- a producer validating "
+            "against the schema would get a false PASS")
+    print(f"calibration contract self-test: PASS ({len(cases)}/{len(cases)} "
+          "cases + schema/verifier supersession parity)")
 
 
 def main() -> int:

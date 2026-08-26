@@ -4924,6 +4924,74 @@ def test_census_does_not_count_unapproved_guards_as_armed(
     check("census-does-not-count-the-unapproved-draft-as-enforcing",
           summary["q3_enforce_mode"] == 0)
 
+def test_typeinvalid_sibling_is_skipped_not_fatal(workspace: Path) -> None:
+    """A sibling checkpoint that is JSON-valid but TYPE-invalid must be a
+    SKIPPED corrupt sibling, not a workspace-wide denial of service.
+
+    `_discover` catches (StoreError, ValueError) and lets everything else
+    propagate, on the reasoning that environmental OSErrors should not reroute
+    discovery. But `validate_checkpoint` reaches `rec["status"] in STATES`,
+    and a list status raises TypeError from set membership -- neither a
+    StoreError nor a ValueError. Measured before the fix: dropping a sibling
+    whose checkpoint carries `"status": []` made EVERY pathless lifecycle
+    command in the workspace raise `TypeError: unhashable type: 'list'`, from
+    a string in a file that no healthy mission references."""
+    m = open_mission(workspace, "m-good", "Do the thing.")
+    m.approve()
+    good = json.loads(
+        (workspace / "missions" / "m-good" / "checkpoints"
+         / "r00000001.json").read_text(encoding="utf-8"))
+    bad_dir = workspace / "missions" / "m-typebad" / "checkpoints"
+    bad_dir.mkdir(parents=True)
+    good["mission_id"] = "m-typebad"
+    good["status"] = []
+    (bad_dir / "r00000001.json").write_text(json.dumps(good), encoding="utf-8")
+    try:
+        loaded = Mission.load(workspace, actor="agent:worker")
+    except TypeError:
+        check("typeinvalid-sibling-no-typeerror", False)
+        return
+    except Exception as exc:  # noqa: BLE001
+        check("typeinvalid-sibling-no-typeerror", True)
+        check("typeinvalid-sibling-loads-the-healthy-one",
+              False)
+        print(f"     (raised {type(exc).__name__}: {exc})")
+        return
+    check("typeinvalid-sibling-no-typeerror", True)
+    check("typeinvalid-sibling-loads-the-healthy-one",
+          loaded.store.mission_dir.name == "m-good")
+
+
+def test_malformed_successor_does_not_crash_chain_load(workspace: Path) -> None:
+    """`_successor_proves_alteration` reads the NEXT checkpoint defensively,
+    but `successor.get(...)` assumes a dict. A successor that is valid JSON
+    and not an object (`[]`) raises AttributeError, which its
+    `except (OSError, ValueError)` does not catch -- so `load_latest` leaks a
+    raw exception instead of the ChainBroken/EpochSkew diagnosis, taking the
+    census and the gate down with it."""
+    m = open_mission(workspace, "m-succ", "Do the thing.")
+    m.approve()
+    m = Mission.load(workspace, actor="agent:worker")
+    m.note("second")
+    cps = sorted((workspace / "missions" / "m-succ" / "checkpoints").glob("*.json"))
+    check("successor-fixture-has-three", len(cps) == 3)
+    # Make the INTERIOR checkpoint fail validation, and the successor a
+    # non-object: the epoch/alteration arbitration must still answer.
+    rec = json.loads(cps[1].read_text(encoding="utf-8"))
+    rec["record"] = "checkpoint@2"
+    cps[1].write_text(json.dumps(rec), encoding="utf-8")
+    cps[2].write_text("[]", encoding="utf-8")
+    try:
+        MissionStore(workspace / "missions" / "m-succ").load_latest()
+    except StoreError:
+        check("malformed-successor-is-storeerror", True)
+    except Exception as exc:  # noqa: BLE001
+        check("malformed-successor-is-storeerror", False)
+        print(f"     (raised {type(exc).__name__}: {exc})")
+    else:
+        check("malformed-successor-is-storeerror", False)
+
+
 TESTS = [
     test_scope_entry_classification_table,
     test_uncompared_scope_entries_are_reported,
@@ -4933,6 +5001,8 @@ TESTS = [
     test_mixed_prose_and_path_scope_in_does_not_flag_everything,
     test_scope_ack_is_the_only_discharge,
     test_every_violating_representation_must_be_acknowledged,
+    test_typeinvalid_sibling_is_skipped_not_fatal,
+    test_malformed_successor_does_not_crash_chain_load,
     test_scope_ack_is_normalised_like_the_findings,
     test_scope_ack_note_cannot_be_forged_by_narrative,
     test_reserved_note_refusal_names_a_working_discharge,

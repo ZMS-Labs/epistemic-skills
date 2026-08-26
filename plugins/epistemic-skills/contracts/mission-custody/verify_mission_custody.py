@@ -209,7 +209,7 @@ def epoch_skew_anywhere(record, expected_family: str) -> str | None:
     # corruption, per validate_record) be reported as EpochSkew, which is the
     # decoy suppression again one level up. A newer outer kind never reaches
     # this line: epoch_skew(record) above already returned for it.
-    if kind not in RECORD_KINDS:
+    if not _in_vocab(kind, RECORD_KINDS):
         return None
     family, _, _ = kind.rpartition("@")
     # ... AND IT MUST BE THE FAMILY THIS SLOT HOLDS. A whole checkpoint@1
@@ -282,6 +282,27 @@ def is_sha256(value: Any) -> bool:
     return isinstance(value, str) and bool(_SHA_RE.match(value))
 
 
+def _in_vocab(value: Any, vocabulary: set) -> bool:
+    """Closed-vocabulary membership that ANSWERS instead of raising.
+
+    `value in SET` is a TypeError the moment `value` is unhashable, and every
+    one of these vocabularies is read straight out of an untrusted JSON file.
+    es#137 P2 fixed exactly one instance (`guard_mode`) with an inline
+    `isinstance` and left the mechanism scoped to it; `status`, `verdict`,
+    `assurance_tier`, `required_tier` and the top-level `record` kind all kept
+    the raising shape, and a sibling checkpoint carrying `"status": []` took
+    every pathless custody command in the workspace down with a TypeError.
+    `validate_record` promises a LIST OF ERRORS: a promise that turns into a
+    traceback on hostile input is a denial of service through the recovery
+    path -- exactly what drift detection exists to survive. One predicate, so
+    the next vocabulary added cannot be forgotten.
+
+    Non-strings are never members: every one of these vocabularies is a set of
+    strings, so "not a string" and "not in the set" are the same verdict, and
+    the caller's existing error message already says the right thing."""
+    return isinstance(value, str) and value in vocabulary
+
+
 def _str_list(value: Any) -> bool:
     return isinstance(value, list) and all(
         isinstance(item, str) and item for item in value)
@@ -345,7 +366,7 @@ def validate_manifest(rec: dict) -> list[str]:
         mode = auth.get("guard_mode")
         guards = auth.get("actuator_guards")
         if mode is not None:
-            _require(errors, isinstance(mode, str) and mode in GUARD_MODES,
+            _require(errors, _in_vocab(mode, GUARD_MODES),
                      "authority.guard_mode", "must be 'audit' or 'enforce'")
             _require(errors, isinstance(guards, list) and bool(guards),
                      "authority.guard_mode",
@@ -441,7 +462,7 @@ def validate_manifest(rec: dict) -> list[str]:
 
     acc = rec["acceptance"]
     ok = isinstance(acc, dict) and set(acc) == {"required_tier", "acceptor_ref"} \
-        and acc.get("required_tier") in TIERS \
+        and _in_vocab(acc.get("required_tier"), TIERS) \
         and (acc.get("acceptor_ref") is None
              or (isinstance(acc.get("acceptor_ref"), str) and acc["acceptor_ref"]))
     _require(errors, ok, "acceptance",
@@ -460,7 +481,7 @@ def validate_record(record: Any) -> list[str]:
     if not isinstance(record, dict):
         return ["record: JSON object required"]
     kind = record.get("record")
-    if kind not in RECORD_KINDS:
+    if not _in_vocab(kind, RECORD_KINDS):
         return [f"record: unknown kind {kind!r}"]
     if kind == "mission-manifest@1":
         return validate_manifest(record)
@@ -478,7 +499,7 @@ def validate_checkpoint(rec: dict) -> list[str]:
         return errors
     _require(errors, isinstance(rec["revision"], int) and rec["revision"] >= 1,
              "revision", "integer >= 1 required")
-    _require(errors, rec["status"] in STATES, "status",
+    _require(errors, _in_vocab(rec["status"], STATES), "status",
              f"one of {sorted(STATES)} required")
     prev = rec["prev_checkpoint_sha256"]
     if rec.get("revision") == 1:
@@ -538,9 +559,9 @@ def validate_acceptance_verdict(rec: dict) -> list[str]:
         return errors
     _require(errors, isinstance(rec["revision"], int) and rec["revision"] >= 1,
              "revision", "integer >= 1 required")
-    _require(errors, rec["verdict"] in VERDICTS, "verdict",
+    _require(errors, _in_vocab(rec["verdict"], VERDICTS), "verdict",
              f"one of {sorted(VERDICTS)} required")
-    _require(errors, rec["assurance_tier"] in TIERS, "assurance_tier",
+    _require(errors, _in_vocab(rec["assurance_tier"], TIERS), "assurance_tier",
              f"one of {sorted(TIERS)} required")
     _require(errors, isinstance(rec["mission_id"], str)
              and bool(_ID_RE.match(rec["mission_id"])),
