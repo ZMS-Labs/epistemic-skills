@@ -585,6 +585,77 @@ def test_environmental_read_failure_degrades_the_union_it_does_not_abort() -> No
               "DEGRADED" not in verdict["reason"].upper())
 
 
+def test_verification_reread_oserror_degrades_the_union() -> None:
+    """The discovery walk's OSError arm covers the FIRST read; the union
+    then re-reads every discovered mission through `mission.status()`,
+    whose handler caught only (StoreError, ValueError, CustodyError). A
+    mission that becomes unreadable BETWEEN the two reads (a lock or
+    permission change) raised OSError out of `_union_entries`, `run_gate`
+    propagated, and the hook caught it at the workspace boundary and failed
+    OPEN -- the silent-allow class the discovery fix closed, one read
+    later."""
+    import custody_store
+
+    with tempfile.TemporaryDirectory() as tmp:
+        ws = Path(tmp)
+        flaky = Mission.open(ws, "a-flaky", "i", "operator:test",
+                             "agent:test", actor="agent:test")
+        flaky.approve()
+        healthy = Mission.open(ws, "z-healthy", "i", "operator:test",
+                               "agent:test", actor="agent:test",
+                               guard_mode="enforce", actuator_guards=GUARDS)
+        healthy.approve()
+
+        real_load = custody_store.MissionStore.load_latest
+        target = (ws / "missions" / "a-flaky").resolve()
+        reads = {"n": 0}
+
+        def failing_second_read(self):
+            if Path(self.mission_dir).resolve() == target:
+                reads["n"] += 1
+                if reads["n"] > 1:
+                    raise PermissionError(13, "Permission denied")
+            return real_load(self)
+
+        custody_store.MissionStore.load_latest = failing_second_read
+        verdict = None
+        try:
+            try:
+                verdict = run_gate(
+                    ws, {"tool_name": "Bash", "command": "curl :7878/api/v3",
+                         "file_path": None}, actor="hook:custody-gate")
+            except PermissionError:
+                pass
+        finally:
+            custody_store.MissionStore.load_latest = real_load
+
+        check("reread-oserror-run-gate-does-not-raise",
+              verdict is not None)
+        check("reread-oserror-does-not-suppress-a-real-block",
+              verdict is not None and verdict["decision"] == "block")
+        check("reread-oserror-block-names-the-healthy-mission",
+              verdict is not None and "z-healthy" in verdict["reason"])
+        check("reread-oserror-loss-is-disclosed",
+              verdict is not None
+              and ("DEGRADED" in verdict["reason"].upper()
+                   or "a-flaky" in verdict["reason"]))
+
+    # CONTROL: with nothing failing, the same call blocks and the verdict
+    # claims no degradation.
+    with tempfile.TemporaryDirectory() as tmp:
+        ws = Path(tmp)
+        healthy = Mission.open(ws, "z-healthy", "i", "operator:test",
+                               "agent:test", actor="agent:test",
+                               guard_mode="enforce", actuator_guards=GUARDS)
+        healthy.approve()
+        verdict = run_gate(
+            ws, {"tool_name": "Bash", "command": "curl :7878/api/v3",
+                 "file_path": None}, actor="hook:custody-gate")
+        check("reread-control-still-blocks", verdict["decision"] == "block")
+        check("reread-control-claims-no-degradation",
+              "DEGRADED" not in verdict["reason"].upper())
+
+
 if __name__ == "__main__":
     for fn in list(globals().values()):
         if callable(fn) and getattr(fn, "__name__", "").startswith("test_"):

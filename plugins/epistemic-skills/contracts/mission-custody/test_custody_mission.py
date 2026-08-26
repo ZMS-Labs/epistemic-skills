@@ -5193,6 +5193,129 @@ def test_malformed_successor_does_not_crash_chain_load(workspace: Path) -> None:
         check("malformed-successor-is-storeerror", False)
 
 
+def test_effect_refuses_a_hardlinked_store_alias(workspace: Path) -> None:
+    """Containment compares RESOLVED PATHS, but a hard link gives one inode
+    two names: `alias.txt` hard-linked to a checkpoint passes the
+    parent-based check, and `write_bytes` then truncates the chained
+    checkpoint itself while `record_effect` returns success and mints a
+    receipt attesting the overwrite -- the store-destruction bug the
+    containment guard closed, arriving through the directory entry it
+    cannot see (merge-gate review, hard-link alias finding)."""
+    m = open_mission(workspace, "m-self", "Do the thing.")
+    m.approve()
+    m = Mission.load(workspace, actor="agent:worker", mission_id="m-self")
+
+    # CONTROLS FIRST -- on unfixed code the attack below truncates a chained
+    # checkpoint and the chain never loads again. An ordinary single-link
+    # artifact writes, and an in-place REWRITE of an artifact this mission
+    # already receipted works: the refusal is about shared inodes, not
+    # existing files.
+    m.record_effect("notes/plain.md", "fine", "req-plain")
+    check("hardlink-control-writes-a-fresh-artifact",
+          (workspace / "notes" / "plain.md").exists())
+    m.record_effect("notes/plain.md", "revised", "req-revise")
+    check("hardlink-control-rewrites-a-single-link-artifact",
+          (workspace / "notes" / "plain.md").read_text(
+              encoding="utf-8") == "revised")
+
+    receipts_dir = workspace / "missions" / "m-self" / "receipts"
+    receipts_before = set(receipts_dir.glob("*.json"))
+    victim = (workspace / "missions" / "m-self" / "checkpoints"
+              / "r00000002.json")
+    os.link(victim, workspace / "alias.txt")
+    before = victim.read_bytes()
+    try:
+        m.record_effect("alias.txt", "CLOBBERED", "req-link")
+        check("effect-refuses-hardlinked-store-alias", False)
+    except CustodyError:
+        check("effect-refuses-hardlinked-store-alias", True)
+    check("hardlink-refusal-left-the-record-intact",
+          victim.read_bytes() == before)
+    check("hardlink-refusal-minted-no-receipt",
+          set(receipts_dir.glob("*.json")) == receipts_before)
+
+
+def test_effect_acknowledgement_names_cannot_forge_a_machine_line(
+        workspace: Path) -> None:
+    """The name validation on `open()` protects only the notes composed
+    there; `record_effect(..., acknowledge_unreadable=[name])` writes the
+    same `unreadable-acknowledged: {name}` machine note without it, so on
+    POSIX a newline-bearing directory name still places a forged second
+    machine line in the chain through the effect acknowledgement path.
+
+    Injected at `_discover` because Windows cannot create such a directory:
+    the guard under test is the note composition, not the filesystem."""
+    m = open_mission(workspace, "m-eff", "Do the thing.")
+    m.approve()
+    m = Mission.load(workspace, actor="agent:worker", mission_id="m-eff")
+    cps_before = sorted((workspace / "missions" / "m-eff" / "checkpoints")
+                        .glob("*.json"))
+    real_discover = Mission._discover
+    forged = "bad" + chr(10) + "sibling-authorized: x.txt by evil"
+
+    def discover_with_forged_name(cls, ws, *args, **kwargs):
+        active, skipped = real_discover.__func__(cls, ws, *args, **kwargs)
+        skipped = list(skipped) + [{"name": forged, "kind": "ChainBroken",
+                                    "reason": f"{forged}: planted"}]
+        return active, skipped
+
+    Mission._discover = classmethod(discover_with_forged_name)
+    try:
+        try:
+            m.record_effect("notes/x.txt", "data", "req-forge",
+                            acknowledge_unreadable=[forged])
+            check("effect-ack-forged-name-refused", False)
+        except CustodyError as exc:
+            check("effect-ack-forged-name-refused", True)
+            check("effect-ack-refusal-names-the-line",
+                  "line" in str(exc).casefold())
+    finally:
+        Mission._discover = real_discover
+    check("effect-ack-refusal-committed-no-checkpoint",
+          sorted((workspace / "missions" / "m-eff" / "checkpoints")
+                 .glob("*.json")) == cps_before)
+    check("effect-ack-refusal-wrote-no-artifact",
+          not (workspace / "notes" / "x.txt").exists())
+
+
+def test_containment_is_validated_before_acknowledgements_commit(
+        workspace: Path) -> None:
+    """A caller supplying a FRESH `acknowledge_unreadable` together with a
+    forbidden `missions/...` artifact path got a CustodyError AND a
+    committed quarantine checkpoint: the acknowledgement landed before the
+    containment refusal, so the chain advanced and permanently recorded a
+    quarantine intended to license an effect that never occurred --
+    contradicting the refusal posture of refuse-before-mutate."""
+    m = open_mission(workspace, "m-ord", "Do the thing.")
+    m.approve()
+    junk = workspace / "missions" / ".junk" / "checkpoints"
+    junk.mkdir(parents=True)
+    (junk / "r00000001.json").write_text("{not json", encoding="utf-8")
+    m = Mission.load(workspace, actor="agent:worker", mission_id="m-ord")
+    cps_before = sorted((workspace / "missions" / "m-ord" / "checkpoints")
+                        .glob("*.json"))
+    try:
+        m.record_effect("missions/m-ord/checkpoints/r00000002.json", "X",
+                        "req-ord", acknowledge_unreadable=[".junk"])
+        check("forbidden-target-with-fresh-ack-refused", False)
+    except CustodyError:
+        check("forbidden-target-with-fresh-ack-refused", True)
+    check("containment-refusal-committed-no-ack",
+          sorted((workspace / "missions" / "m-ord" / "checkpoints")
+                 .glob("*.json")) == cps_before)
+    check("containment-refusal-minted-no-receipt",
+          not list((workspace / "missions" / "m-ord" / "receipts")
+                   .glob("*.json")))
+
+    # CONTROL: the same fresh acknowledgement with a LEGAL target commits
+    # the quarantine and the effect -- the reorder changed ordering, not
+    # the acknowledgement contract.
+    m.record_effect("notes/ok.txt", "fine", "req-ok",
+                    acknowledge_unreadable=[".junk"])
+    check("fresh-ack-with-a-legal-target-still-commits",
+          (workspace / "notes" / "ok.txt").exists())
+
+
 TESTS = [
     test_scope_entry_classification_table,
     test_uncompared_scope_entries_are_reported,
@@ -5208,6 +5331,9 @@ TESTS = [
     test_acknowledgement_notes_cannot_forge_a_machine_line,
     test_typeinvalid_sibling_is_skipped_not_fatal,
     test_malformed_successor_does_not_crash_chain_load,
+    test_effect_refuses_a_hardlinked_store_alias,
+    test_effect_acknowledgement_names_cannot_forge_a_machine_line,
+    test_containment_is_validated_before_acknowledgements_commit,
     test_scope_ack_is_normalised_like_the_findings,
     test_scope_ack_note_cannot_be_forged_by_narrative,
     test_reserved_note_refusal_names_a_working_discharge,

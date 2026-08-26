@@ -300,7 +300,14 @@ def _union_entries(workspace: Path, actor: str) -> tuple[list[dict], list[dict]]
             # cased: a writer publishing the first @2 between discovery and
             # this read surfaces HERE, as a degraded entry.
             latest = mission.status()
-        except (StoreError, ValueError, CustodyError) as exc:
+        except (StoreError, ValueError, CustodyError, OSError) as exc:
+            # OSError belongs in this arm, not just in `_discover`'s: a
+            # mission that becomes unreadable BETWEEN the discovery read and
+            # this verification reread (a lock or permission change landing
+            # in the gap) otherwise raised out of `run_gate`, and the hook
+            # caught it at the workspace boundary and failed OPEN -- the
+            # same silent-allow class `degrade_on_oserror` closed for the
+            # first read, one read later.
             reason = f"{e['name']}: {type(exc).__name__}: {exc}"
             # Tamper keeps its own distinct, greppable stderr signal: a
             # session log must be searchable for TAMPER (the hook's contract
