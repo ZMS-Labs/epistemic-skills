@@ -521,8 +521,26 @@ def validate_continuity_report(rec: dict) -> list[str]:
                 errors.append(
                     f"continuity_breaks[{index}].already_reconciled: "
                     "boolean required")
-    _require(errors, _str_list(rec["orphaned_retired_receipts"]),
-             "orphaned_retired_receipts", "list of strings required")
+    orphans = rec["orphaned_retired_receipts"]
+    if not isinstance(orphans, list) or not all(
+            isinstance(item, dict) for item in orphans):
+        # The emitter (`Mission.orphaned_retired_receipts`) supplies OBJECTS
+        # -- request_id, receipt_path, note -- and the first version of this
+        # check required STRINGS, so a continuity report validated only
+        # while the orphan list was empty and was rejected precisely when an
+        # orphan was reported: the validator refused the command's real
+        # output at the exact moment the output carried its finding.
+        errors.append("orphaned_retired_receipts: list of objects required")
+    else:
+        for index, item in enumerate(orphans):
+            for name in ("request_id", "receipt_path", "note"):
+                if name not in item:
+                    errors.append(
+                        f"orphaned_retired_receipts[{index}].{name}: missing")
+                elif not isinstance(item[name], str) or not item[name]:
+                    errors.append(
+                        f"orphaned_retired_receipts[{index}].{name}: "
+                        "non-empty string required")
     return errors
 
 

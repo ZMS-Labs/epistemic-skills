@@ -270,6 +270,58 @@ def test_audit_report_kind_is_validatable() -> None:
         check("audit-report-negative-control", validate_record(bad) != [])
 
 
+def test_audit_report_with_orphaned_receipt_validates() -> None:
+    """`orphaned_retired_receipts()` supplies OBJECTS (request_id,
+    receipt_path, note), but continuity-report@1's validator required a list
+    of STRINGS -- so the report validated only while the orphan list was
+    empty and was rejected precisely when an orphan was reported: the
+    command's real output refused by the contract it claims membership in."""
+    sys.path.insert(0, str(ROOT))
+    from verify_mission_custody import validate_record  # noqa: E402
+
+    with tempfile.TemporaryDirectory() as td:
+        ws = Path(td)
+        open_cli(ws, "m-cli-orphan", "Exercise orphan report validity.")
+        run("approve", "--workspace", str(ws), "--actor", "agent:worker")
+        run("effect", "--workspace", str(ws), "--actor", "agent:worker",
+            "--path", "a.md", "--content", "x", "--request-id", "orph-1")
+
+        # An orphan is a receipt PRESENT for an id the chain RETIRED: lose
+        # the file, acknowledge the loss (retires the id), restore the file.
+        receipts = ws / "missions" / "m-cli-orphan" / "receipts"
+        held = None
+        for c in receipts.glob("*.json"):
+            held = c.read_bytes()
+            c.unlink()
+        check("orphan-fixture-receipt-removed", held is not None)
+        # acknowledge_receipt_loss is legal only from 'reopened': a
+        # drift-detecting resume moves the mission there first.
+        r = run("resume", "--workspace", str(ws), "--actor", "agent:second")
+        check("orphan-fixture-resume-sees-the-loss", r.returncode == 3)
+        r = run("acknowledge-loss", "--workspace", str(ws),
+                "--actor", "agent:worker", "--request-id", "orph-1")
+        check("orphan-fixture-loss-acknowledged", r.returncode == 0)
+        import hashlib
+        (receipts / (hashlib.sha256(b"orph-1").hexdigest() + ".json")
+         ).write_bytes(held)
+
+        # audit exits 3 when it has something to report -- the finding is
+        # the fixture, not a failure of the command.
+        r = run("audit", "--workspace", str(ws), "--actor", "agent:worker")
+        check("orphan-audit-exit-3-reports-the-orphan", r.returncode == 3)
+        report = json.loads(r.stdout)
+        check("orphan-audit-lists-the-orphan",
+              len(report["orphaned_retired_receipts"]) == 1)
+        check("orphan-report-validates", validate_record(report) == [])
+
+        # Negative control: the STRING shape the first validator demanded is
+        # now the malformed input -- the check enforces the object shape,
+        # it does not wave everything through.
+        bad = dict(report)
+        bad["orphaned_retired_receipts"] = ["orph-1"]
+        check("orphan-report-negative-control", validate_record(bad) != [])
+
+
 def test_ascii_safe_drift_and_error_output() -> None:
     """Non-ASCII content in a drifted relpath or a CustodyError message must
     render as an ASCII-only escape on stdout/stderr -- never a raw non-ASCII
@@ -1011,6 +1063,7 @@ TESTS = [
     test_content_file_read_failures_are_refusals,
     test_continuity_warning_is_ascii_safe,
     test_audit_report_kind_is_validatable,
+    test_audit_report_with_orphaned_receipt_validates,
     test_open_stop_rules_and_acceptable_costs,
     test_open_without_stop_rules_yields_empty_lists,
     test_success_output_confirms_the_write,
