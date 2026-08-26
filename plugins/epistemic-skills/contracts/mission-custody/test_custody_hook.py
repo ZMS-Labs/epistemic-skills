@@ -833,6 +833,24 @@ def _commands_of(config_path: Path) -> list[str]:
             for row in rows]
 
 
+def _git(repo: Path, *args: str) -> subprocess.CompletedProcess:
+    res = subprocess.run(["git", "-C", str(repo), *args],
+                         capture_output=True, text=True)
+    if res.returncode != 0:
+        raise RuntimeError(f"git {' '.join(args)}: {res.stderr.strip()}")
+    return res
+
+
+def _git_init_repo(repo: Path) -> None:
+    repo.mkdir(parents=True)
+    _git(repo, "init")
+    _git(repo, "config", "user.email", "test@example.invalid")
+    _git(repo, "config", "user.name", "Test")
+    (repo / "README.md").write_text("shared project\n", encoding="utf-8")
+    _git(repo, "add", "README.md")
+    _git(repo, "commit", "-m", "init")
+
+
 def test_cursor_cli_render_survives_a_plugin_upgrade() -> None:
     """es#216 SERIOUS: `Path(__file__).resolve()` collapses the documented
     RETARGETABLE install link, baking the versioned checkout into
@@ -1430,6 +1448,185 @@ def test_cursor_cli_readme_records_the_unwrapped_cmd_c_residue() -> None:
 
 
 BLOCKED_COMMAND = "rm -rf x"
+
+
+def test_cursor_cli_narrowed_matcher_refuses_to_render() -> None:
+    """Codex es#216 thread r3858530080: the drift check validated only the
+    command string, so narrowing the preToolUse matcher from
+    `Shell|Write|Delete` to `Shell` still rendered -- installing a config
+    that looks armed while Write/Delete tool calls never reach the gate.
+    Matcher coverage, not just command presence, is part of the required
+    event table."""
+    with tempfile.TemporaryDirectory() as tmp:
+        plugin = _stage_plugin_checkout(Path(tmp) / "plugin")
+        template_path = plugin / "hooks" / "cursor-hooks.json"
+        original = json.loads(template_path.read_text(encoding="utf-8"))
+
+        def render_with(template_obj: dict) -> subprocess.CompletedProcess:
+            # stdout mode: nothing is written, so a REFUSAL is observable
+            # purely as exit 2 plus an empty stdout.
+            template_path.write_text(json.dumps(template_obj),
+                                     encoding="utf-8")
+            return subprocess.run(
+                [sys.executable,
+                 str(plugin / "hooks" / "render_cursor_cli_hooks.py")],
+                capture_output=True, text=True)
+
+        narrowed = json.loads(json.dumps(original))
+        narrowed["hooks"]["preToolUse"][0]["matcher"] = "Shell"
+        res = render_with(narrowed)
+        check("cursor-cli-shell-only-matcher-refuses", res.returncode == 2)
+        check("cursor-cli-shell-only-refusal-names-the-matcher",
+              "matcher" in res.stderr.lower())
+        check("cursor-cli-shell-only-refusal-names-uncovered-tools",
+              "Write" in res.stderr and "Delete" in res.stderr)
+        check("cursor-cli-shell-only-refusal-emits-no-config",
+              not res.stdout.strip())
+
+        no_shell = json.loads(json.dumps(original))
+        no_shell["hooks"]["preToolUse"][0]["matcher"] = "Write|Delete"
+        res = render_with(no_shell)
+        check("cursor-cli-matcher-without-shell-refuses",
+              res.returncode == 2)
+
+        # no matcher at all is FULL coverage: the row sees every tool call
+        matcherless = json.loads(json.dumps(original))
+        del matcherless["hooks"]["preToolUse"][0]["matcher"]
+        res = render_with(matcherless)
+        check("cursor-cli-matcherless-pretooluse-still-renders",
+              res.returncode == 0)
+
+        # a matcher on an event whose payloads the gate must see in FULL
+        # narrows by payload text, which only the mission's own guard
+        # regexes may do
+        matched_shell = json.loads(json.dumps(original))
+        matched_shell["hooks"]["beforeShellExecution"][0]["matcher"] = "rm"
+        res = render_with(matched_shell)
+        check("cursor-cli-matcher-on-shell-event-refuses",
+              res.returncode == 2)
+        check("cursor-cli-shell-event-refusal-names-the-event",
+              "beforeShellExecution" in res.stderr)
+
+        matched_mcp = json.loads(json.dumps(original))
+        matched_mcp["hooks"]["beforeMCPExecution"][0]["matcher"] = "rm"
+        res = render_with(matched_mcp)
+        check("cursor-cli-matcher-on-mcp-event-refuses",
+              res.returncode == 2)
+
+        # over-refusal is its own outage: the canonical template must pass
+        res = render_with(original)
+        check("cursor-cli-canonical-template-still-renders",
+              res.returncode == 0)
+
+
+def test_cursor_cli_project_output_stays_out_of_version_control() -> None:
+    """Codex es#216 thread r3858335200 / estate handoff 2026-08-25 section 7:
+    the README's documented project form bakes the AUTHOR's absolute
+    interpreter and plugin paths into .cursor/hooks.json, and project hooks
+    are committed -- so every collaborator's Cursor gets a config naming
+    files that exist only on the authoring machine.  Measured end-to-end
+    below: the committed config fabricates a custody block (exit 2, naming
+    no rule) on the collaborator's machine.  The renderer must keep the
+    generated file machine-local: refuse a destination git already tracks,
+    and refuse the worktree-root .cursor/hooks.json -- the shape Cursor
+    auto-loads as project hooks -- unless git ignores it.
+    """
+    with tempfile.TemporaryDirectory() as tmp:
+        base = Path(tmp)
+        plugin = _stage_plugin_checkout(base / "author-machine" / "plugin")
+        renderer = plugin / "hooks" / "render_cursor_cli_hooks.py"
+
+        # ---- the documented project form in a repo that does NOT ignore it
+        repo = base / "shared-repo"
+        _git_init_repo(repo)
+        destination = repo / ".cursor" / "hooks.json"
+        refused = subprocess.run(
+            [sys.executable, str(renderer), "--output", str(destination)],
+            cwd=str(repo), capture_output=True, text=True)
+        check("cursor-cli-committable-project-output-refused",
+              refused.returncode == 2)
+        check("cursor-cli-committable-refusal-wrote-nothing",
+              not destination.exists())
+        check("cursor-cli-committable-refusal-names-gitignore",
+              ".gitignore" in refused.stderr)
+
+        # ---- the machine-local flow: ignore first, then render ----
+        (repo / ".gitignore").write_text(".cursor/hooks.json\n",
+                                         encoding="utf-8")
+        rendered = subprocess.run(
+            [sys.executable, str(renderer), "--output", str(destination)],
+            cwd=str(repo), capture_output=True, text=True)
+        check("cursor-cli-ignored-project-output-renders",
+              rendered.returncode == 0)
+        check("cursor-cli-ignored-render-wrote-the-config",
+              destination.is_file())
+        commands = _commands_of(destination)
+        command = commands[0] if commands else ""
+        _arm(repo, "cursor-cli-vcs-gate")
+        run = _run_rendered(command, repo)
+        check("cursor-cli-ignored-project-config-still-arms",
+              run.returncode == 2 and "no-rm" in run.stdout + run.stderr)
+
+        # ---- a non-root path inside a worktree renders, with the notice ----
+        subdir_destination = repo / "sub" / "hooks.json"
+        noted = subprocess.run(
+            [sys.executable, str(renderer),
+             "--output", str(subdir_destination)],
+            cwd=str(repo), capture_output=True, text=True)
+        check("cursor-cli-non-root-worktree-path-renders",
+              noted.returncode == 0 and subdir_destination.is_file())
+        check("cursor-cli-non-root-render-carries-the-machine-local-notice",
+              "machine-local" in noted.stderr)
+
+        # ---- a TRACKED destination refuses even when deleted locally ----
+        tracked = base / "tracked-repo"
+        _git_init_repo(tracked)
+        tracked_destination = tracked / ".cursor" / "hooks.json"
+        tracked_destination.parent.mkdir()
+        tracked_destination.write_text("{}\n", encoding="utf-8")
+        _git(tracked, "add", ".cursor/hooks.json")
+        _git(tracked, "commit", "-m", "add hooks.json")
+        tracked_destination.unlink()
+        res = subprocess.run(
+            [sys.executable, str(renderer),
+             "--output", str(tracked_destination)],
+            cwd=str(tracked), capture_output=True, text=True)
+        check("cursor-cli-tracked-destination-refused", res.returncode == 2)
+        check("cursor-cli-tracked-refusal-wrote-nothing",
+              not tracked_destination.exists())
+        check("cursor-cli-tracked-refusal-names-tracking",
+              "track" in res.stderr.lower())
+
+        # ---- the hazard the gate exists for, measured: force the commit ----
+        _git(repo, "add", "-f", ".cursor/hooks.json")
+        _git(repo, "commit", "-m", "force-add the machine-local config")
+        clone = base / "collaborator-machine" / "shared-repo"
+        subprocess.run(["git", "clone", str(repo), str(clone)],
+                       check=True, capture_output=True, text=True)
+        shutil.rmtree(base / "author-machine")
+        check("cursor-cli-committed-config-reaches-the-collaborator",
+              (clone / ".cursor" / "hooks.json").is_file())
+        blocked = subprocess.run(
+            command, shell=True,
+            input=json.dumps({"command": BLOCKED_COMMAND, "cwd": str(clone)}),
+            cwd=str(clone), capture_output=True, text=True)
+        check("cursor-cli-collaborator-gets-a-fabricated-block",
+              blocked.returncode == 2)
+        check("cursor-cli-collaborator-block-names-no-rule",
+              "no-rm" not in blocked.stdout + blocked.stderr)
+
+
+def test_cursor_cli_readme_marks_project_output_machine_local() -> None:
+    """The README's project form must carry the do-not-commit instruction
+    and the renderer's matcher-coverage refusal, pinned so neither sentence
+    can quietly disappear."""
+    readme = (ROOT / "README.md").read_text(encoding="utf-8").lower()
+    check("cursor-cli-readme-says-machine-local", "machine-local" in readme)
+    check("cursor-cli-readme-says-do-not-commit", "do not commit" in readme)
+    check("cursor-cli-readme-names-gitignore-for-project-output",
+          ".gitignore" in readme)
+    check("cursor-cli-readme-pins-matcher-coverage",
+          "shell|write|delete" in readme and "matcher" in readme)
 
 if __name__ == "__main__":
     for fn in list(globals().values()):

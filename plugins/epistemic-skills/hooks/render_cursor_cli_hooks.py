@@ -5,6 +5,14 @@ Cursor CLI does not load marketplace-plugin hooks.  Project and user hook
 files also do not run from the plugin root, so the plugin-relative IDE
 template cannot be copied there unchanged.  This renderer binds both the
 Python interpreter and custody hook to their absolute installed paths.
+
+That binding is MACHINE-LOCAL.  Committed to a shared repository, the
+rendered config points every collaborator's Cursor at files that exist
+only on the authoring machine -- a shared interpreter exits 2 (cannot
+open the hook script), which Cursor reads as a custody BLOCK on every
+matching tool call with a refusal custody never issued, and a missing
+interpreter exits 1, which fails open.  `_version_control_gate` keeps the
+generated file out of version control; see README.md, "Cursor CLI".
 """
 from __future__ import annotations
 
@@ -12,7 +20,9 @@ import argparse
 import io
 import json
 import os
+import re
 import shlex
+import subprocess
 import sys
 from pathlib import Path
 
@@ -28,6 +38,21 @@ RELATIVE_COMMAND = (
 # An event ADDED to the template is carried through, not rejected --
 # over-refusal here would be its own outage.
 REQUIRED_EVENTS = ("beforeShellExecution", "preToolUse", "beforeMCPExecution")
+
+# The tool coverage a preToolUse matcher must preserve.  The gate can only
+# evaluate what the config delivers: Shell carries the command the command
+# guards match, Write and Delete carry the file_path the path guards
+# match.  A matcher narrowed to "Shell" still passes a command-string
+# check while Write/Delete calls never reach the gate (Codex es#216 thread
+# r3858530080) -- a config that looks armed with the file-mutating
+# actuator class open.  No matcher at all is FULL coverage and passes.
+REQUIRED_TOOL_COVERAGE = {"preToolUse": ("Shell", "Write", "Delete")}
+
+# Events whose payloads the gate must see in FULL.  Their matcher field
+# filters by payload TEXT (the shell command string, the MCP tool name) --
+# narrowing there pre-empts the mission's own guard regexes, which are the
+# only place that decision may live.
+MATCHERLESS_EVENTS = ("beforeShellExecution", "beforeMCPExecution")
 
 # cmd.exe expands %NAME% even INSIDE double quotes, and no command-line
 # escape suppresses it (measured: `"a%USERNAME%b"` -> `aRESOLVEDb`).  Every
@@ -195,6 +220,52 @@ def _shell_command(argv: list[str], style: str | None = None) -> str:
     raise RuntimeError(f"unknown shell style: {style!r}")
 
 
+def _validate_matcher_coverage(event: str, row: dict) -> None:
+    """Refuse a matcher that narrows a guarded event below what custody
+    needs -- the drift check's command-string comparison cannot see it.
+
+    The matcher is a JavaScript regex; it is evaluated here as a Python
+    regex.  The two dialects agree on the alternations this template
+    carries, and a pattern Python cannot compile is REFUSED rather than
+    waved through: an unverifiable matcher cannot be proven to cover the
+    required tools, so failing closed is the only sound reading.
+    """
+    matcher = row.get("matcher")
+    if event in MATCHERLESS_EVENTS:
+        if matcher:
+            raise RuntimeError(
+                f"Cursor hook event {event!r} carries a matcher "
+                f"({matcher!r}).  That narrows delivery by payload text, "
+                "pre-empting the mission's own guard regexes: the gate "
+                "must see every payload for this event."
+            )
+        return
+    required = REQUIRED_TOOL_COVERAGE.get(event)
+    if not required or not matcher:
+        # no matcher: the row fires for every tool call -- full coverage
+        return
+    if not isinstance(matcher, str):
+        raise RuntimeError(
+            f"Cursor hook event {event!r} has a non-string matcher: "
+            f"{matcher!r}"
+        )
+    try:
+        pattern = re.compile(matcher)
+    except re.error as exc:
+        raise RuntimeError(
+            f"Cursor hook event {event!r} matcher {matcher!r} does not "
+            f"compile ({exc}); coverage cannot be proven"
+        ) from exc
+    uncovered = [tool for tool in required if not pattern.search(tool)]
+    if uncovered:
+        raise RuntimeError(
+            f"Cursor hook event {event!r} matcher {matcher!r} no longer "
+            f"covers {', '.join(uncovered)}.  Those tool calls would "
+            "never reach the custody gate, installing a config that "
+            "looks armed while that actuator class is open."
+        )
+
+
 def render() -> dict:
     plugin_root = _link_preserving(__file__).parent.parent
     template_path = plugin_root / "hooks" / "cursor-hooks.json"
@@ -223,6 +294,7 @@ def render() -> dict:
                 raise RuntimeError(
                     f"Cursor hook event {event!r} has an unexpected command"
                 )
+            _validate_matcher_coverage(event, row)
             row["command"] = command
             rendered_per_event[event] = rendered_per_event.get(event, 0) + 1
 
@@ -242,6 +314,128 @@ def render() -> dict:
             "config leaving that actuator class unguarded."
         )
     return template
+
+
+def _git_probe(args: list[str], cwd: Path) -> subprocess.CompletedProcess | None:
+    """Run a read-only git query; None when git itself cannot run."""
+    try:
+        return subprocess.run(["git", *args], cwd=str(cwd),
+                              capture_output=True, text=True)
+    except OSError:
+        return None
+
+
+def _version_control_gate(destination: Path) -> tuple[str | None, str | None]:
+    """Keep the machine-local config out of version control.
+
+    Returns (refusal, notice).  The rendered command binds THIS machine's
+    interpreter and plugin paths.  Committed to a shared repository it
+    points every collaborator's Cursor at files that exist only on the
+    authoring machine: a shared interpreter exits 2 -- cannot open the
+    hook script -- which Cursor reads as a custody BLOCK on every matching
+    tool call, with a refusal custody never issued (measured end-to-end:
+    rendered as the author, committed, cloned, the author's plugin tree
+    deleted, the committed command run -> exit 2 naming no rule), and a
+    missing interpreter exits 1, which fails OPEN (Codex es#216 thread
+    r3858335200).
+
+    A portable committed form was considered and rejected: the command
+    still has to name an interpreter and a script, and no cross-platform
+    spelling exists -- Cursor's own guidance is that shebang scripts do
+    not run on Windows (use .cmd or an explicit interpreter), git does not
+    restore the execute bit on Windows clones, and Cursor documents no
+    variable expansion inside command strings.  The machine binding is
+    exactly what this renderer exists to compute, so the generated file
+    is machine-local and this gate refuses the two shapes that would put
+    it into version control silently:
+
+      * a destination git already TRACKS, and
+      * the worktree-root .cursor/hooks.json -- the shape Cursor
+        auto-loads as project hooks -- that git does not IGNORE.
+
+    Anything else inside a worktree that git does not ignore renders, with
+    a notice: the hazard there needs a manual commit AND a manual copy
+    into place, which no install-time gate can reach.
+    """
+    probe_dir = destination.parent
+    while not probe_dir.is_dir():
+        # the destination's parent chain need not exist yet; the nearest
+        # existing ancestor answers the worktree question just as well
+        if probe_dir.parent == probe_dir:
+            return None, None
+        probe_dir = probe_dir.parent
+    probe = _git_probe(["rev-parse", "--show-toplevel"], probe_dir)
+    if probe is None or probe.returncode != 0:
+        # no git, or outside any worktree: nothing to prove with, and no
+        # version-control path for the file to leak through
+        return None, None
+    root = probe.stdout.strip()
+
+    def norm(p: str) -> str:
+        # realpath, not normpath alone: git reports the worktree root in
+        # resolved terms, so on macOS an unresolved destination under
+        # /var/folders would compare against a /private/var/folders root
+        # and silently escape the gate.  This resolution only feeds the
+        # gate's path MATH; the rendered command still binds the
+        # link-preserving spelling (see `_link_preserving`).
+        return os.path.normcase(os.path.normpath(os.path.realpath(p)))
+
+    root_norm = norm(root)
+    try:
+        rel = os.path.relpath(norm(str(destination)), root_norm)
+    except ValueError:
+        return None, None  # different drive on Windows
+    if rel == ".." or rel.startswith(".." + os.sep):
+        return None, None
+    rel_posix = rel.replace(os.sep, "/")
+
+    tracked = _git_probe(["ls-files", "--error-unmatch", "--", rel_posix],
+                         Path(root))
+    if tracked is not None and tracked.returncode == 0:
+        return (
+            f"{destination} is tracked by git at {root}.  The rendered "
+            "config binds this machine's interpreter and plugin paths and "
+            "is machine-local: committed, it fabricates a custody block "
+            "(or fails open) on every collaborator's machine.  Remove it "
+            "from the index (`git rm --cached`) and ignore it, or render "
+            "to stdout (the default) and merge by hand.",
+            None,
+        )
+
+    ignored = _git_probe(["check-ignore", "-q", "--", rel_posix],
+                         Path(root))
+    if ignored is not None and ignored.returncode == 0:
+        return None, None  # git ignores it: it cannot be committed by accident
+
+    if norm(str(destination)) == norm(os.path.join(root, ".cursor",
+                                                   "hooks.json")):
+        return (
+            f"{destination} is the project-hooks file Cursor auto-loads "
+            f"for the worktree at {root}, and git does not ignore it.  "
+            "The rendered config binds this machine's interpreter and "
+            "plugin paths and is machine-local: committed, it fabricates "
+            "a custody block (or fails open) on every collaborator's "
+            "machine.  Add '.cursor/hooks.json' to the project's "
+            ".gitignore FIRST, then re-render; or render to stdout (the "
+            "default) and merge by hand.",
+            None,
+        )
+
+    return None, (
+        f"cursor-cli-hook note: {destination} sits inside the git "
+        f"worktree at {root} and is not ignored.  The rendered config is "
+        "machine-local (it binds this machine's interpreter and plugin "
+        "paths) -- do not commit it."
+    )
+
+
+def _report_notice(notice: str) -> None:
+    """Best-effort stderr notice; never raises, never changes exit status."""
+    try:
+        sys.stderr.write(notice + "\n")
+        sys.stderr.flush()
+    except (OSError, ValueError):
+        pass
 
 
 def _write_new_config(destination: Path, rendered: str) -> None:
@@ -348,6 +542,11 @@ def main(argv: list[str]) -> int:
 
     try:
         destination = _link_preserving(Path(args.output).expanduser())
+        refusal, notice = _version_control_gate(destination)
+        if refusal is not None:
+            print(f"cursor-cli-hook install refused: {refusal}",
+                  file=sys.stderr)
+            return 2
         destination.parent.mkdir(parents=True, exist_ok=True)
         _write_new_config(destination, rendered)
     except (OSError, RuntimeError, ValueError) as exc:
@@ -355,6 +554,8 @@ def main(argv: list[str]) -> int:
         return 2
 
     # The install is COMPLETE from here.  Nothing below may report a refusal.
+    if notice is not None:
+        _report_notice(notice)
     _report_installed(destination)
     return 0
 
