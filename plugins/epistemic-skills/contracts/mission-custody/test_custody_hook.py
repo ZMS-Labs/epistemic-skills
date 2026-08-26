@@ -643,7 +643,18 @@ def test_non_custody_error_on_one_root_does_not_suppress_a_later_block() -> None
         res = run_hook("cursor", payload)
         check("poisoned-earlier-root-does-not-suppress-later-block",
               res.returncode == 2)
-        check("poisoned-root-failure-is-loud", "failing open" in res.stderr)
+        # The LOUDNESS invariant is unchanged; its spelling moved because the
+        # behaviour improved. The unreadable root used to raise out of
+        # `_union_entries`, be caught by the hook's per-candidate handler, and
+        # print "failing open for that mission only". The gate now degrades
+        # PER MISSION instead of aborting the union, so the same loss is
+        # announced one layer earlier and more precisely -- the dir is named,
+        # and the disclosure says its guards are NOT enforced. Asserting on
+        # the property, not on the old sentence.
+        check("poisoned-root-failure-is-loud",
+              "UNION DEGRADED" in res.stderr
+              and "broken" in res.stderr
+              and "NOT enforced" in res.stderr)
 
 
 if __name__ == "__main__":

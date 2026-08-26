@@ -516,6 +516,75 @@ def test_unmatched_mixed_union_reports_the_strongest_posture() -> None:
         check("mixed-union-says-it-is-mixed", "MIXED" in v["reason"])
 
 
+def test_environmental_read_failure_degrades_the_union_it_does_not_abort() -> None:
+    """One unreadable mission dir must not silence every OTHER mission's
+    guards.
+
+    `Mission._discover` deliberately propagates environmental OSErrors so that
+    `open` does not reroute around a mission that is merely busy and invite a
+    duplicate open. For the gate that reasoning inverts: the exception escaped
+    `_union_entries`, the hook caught it at the workspace boundary, and an
+    approved enforce-mode mission's BLOCK became a silent allow. Measured
+    before the fix by injecting PermissionError for one mission's checkpoint
+    read: `run_gate` raised instead of blocking, so the healthy sibling never
+    voted.
+
+    The failure is injected at the read the discovery walk performs, which is
+    where a locked or permission-denied store actually fails."""
+    import custody_mission
+    import custody_store
+
+    with tempfile.TemporaryDirectory() as tmp:
+        ws = Path(tmp)
+        blocked = Mission.open(ws, "a-blocked", "i", "operator:test",
+                               "agent:test", actor="agent:test")
+        blocked.approve()
+        healthy = Mission.open(ws, "z-healthy", "i", "operator:test",
+                               "agent:test", actor="agent:test",
+                               guard_mode="enforce", actuator_guards=GUARDS)
+        healthy.approve()
+
+        real_load = custody_store.MissionStore.load_latest
+        target = (ws / "missions" / "a-blocked").resolve()
+
+        def refusing_load(self):
+            if Path(self.mission_dir).resolve() == target:
+                raise PermissionError(13, "Permission denied")
+            return real_load(self)
+
+        custody_store.MissionStore.load_latest = refusing_load
+        try:
+            verdict = run_gate(
+                ws, {"tool_name": "Bash", "command": "curl :7878/api/v3",
+                     "file_path": None}, actor="hook:custody-gate")
+        finally:
+            custody_store.MissionStore.load_latest = real_load
+
+        check("unreadable-sibling-does-not-suppress-a-real-block",
+              verdict["decision"] == "block")
+        check("unreadable-sibling-block-names-the-healthy-mission",
+              "z-healthy" in verdict["reason"])
+        check("unreadable-sibling-loss-is-disclosed",
+              "DEGRADED" in verdict["reason"].upper()
+              or "a-blocked" in verdict["reason"])
+
+    # CONTROL: with nothing unreadable, the same call must still block and the
+    # verdict must NOT claim degradation -- a gate that always says "degraded"
+    # has stopped distinguishing.
+    with tempfile.TemporaryDirectory() as tmp:
+        ws = Path(tmp)
+        healthy = Mission.open(ws, "z-healthy", "i", "operator:test",
+                               "agent:test", actor="agent:test",
+                               guard_mode="enforce", actuator_guards=GUARDS)
+        healthy.approve()
+        verdict = run_gate(
+            ws, {"tool_name": "Bash", "command": "curl :7878/api/v3",
+                 "file_path": None}, actor="hook:custody-gate")
+        check("clean-union-still-blocks", verdict["decision"] == "block")
+        check("clean-union-claims-no-degradation",
+              "DEGRADED" not in verdict["reason"].upper())
+
+
 if __name__ == "__main__":
     for fn in list(globals().values()):
         if callable(fn) and getattr(fn, "__name__", "").startswith("test_"):

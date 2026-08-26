@@ -273,7 +273,21 @@ def _union_entries(workspace: Path, actor: str) -> tuple[list[dict], list[dict]]
     guards CANNOT be trusted, so they are not enforced -- and every caller
     must SAY so, because a silently shrunken union is the old
     MultipleActiveMissions fail-open decoy rebuilt one layer down."""
-    active, skipped = Mission._discover(workspace)
+    # PER-MISSION degradation, not a workspace-level abort. `_discover`
+    # propagates environmental OSErrors by default so that `open` does not
+    # reroute around a mission that is merely busy and invite a duplicate
+    # open. For the GATE that reasoning inverts: one unreadable mission dir
+    # aborted the whole union before any healthy sibling was evaluated, the
+    # hook caught it at the workspace boundary, and an approved enforce-mode
+    # mission's BLOCK became a silent allow (measured: run_gate raised
+    # instead of blocking).
+    #
+    # `degrade_on_oserror=True` is strictly narrower than what it replaces:
+    # the unreadable mission alone loses its guards, the loss is named in the
+    # verdict reason AND on stderr by `_degraded_disclosure`, and every
+    # readable mission still enforces. Previously the same unreadable dir
+    # silenced EVERY mission under the root.
+    active, skipped = Mission._discover(workspace, degrade_on_oserror=True)
     degraded = [dict(s) for s in skipped]
     entries: list[dict] = []
     for e in active:
