@@ -844,7 +844,7 @@ def _git(repo: Path, *args: str) -> subprocess.CompletedProcess:
 def _git_init_repo(repo: Path) -> None:
     repo.mkdir(parents=True)
     _git(repo, "init")
-    _git(repo, "config", "user.email", "test@example.invalid")
+    _git(repo, "config", "user.email", "test@example.test")
     _git(repo, "config", "user.name", "Test")
     (repo / "README.md").write_text("shared project\n", encoding="utf-8")
     _git(repo, "add", "README.md")
