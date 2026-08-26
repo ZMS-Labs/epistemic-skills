@@ -18,7 +18,14 @@ KEEP_CLASSES = {
     "KEEP:GOVERNANCE",
 }
 APPLY_ORDER = ["CONFLICT", "DUPLICATE", "OVER-VERIFY", "OBVIOUS", "MODEL-HANDLES-THIS-NOW"]
-AUDIT_ARTIFACT_FIELDS = ("layers_inventoried", "cross_layer_merge", "report_emitted", "cut_list", "applied")
+AUDIT_ARTIFACT_FIELDS = ("layers_inventoried", "cross_layer_merge", "report_emitted", "cut_list", "applied",
+                         # `cuts_applied` is audit activity too: the report-only
+                         # branch below already forbids it, and a no-fire row
+                         # carrying it is the silent over-firing this battery
+                         # exists to catch. It was omitted here, so a negative
+                         # fixture could declare action no-fire AND applied cuts
+                         # and still pass.
+                         "cuts_applied")
 
 
 def _audit_common(fid: str, row: dict, failures: list[str]) -> None:
