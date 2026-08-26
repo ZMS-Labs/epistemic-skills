@@ -18,7 +18,13 @@ KEEP_CLASSES = {
     "KEEP:GOVERNANCE",
 }
 APPLY_ORDER = ["CONFLICT", "DUPLICATE", "OVER-VERIFY", "OBVIOUS", "MODEL-HANDLES-THIS-NOW"]
-AUDIT_ARTIFACT_FIELDS = ("layers_inventoried", "cross_layer_merge", "report_emitted", "cut_list", "applied")
+# `cuts_applied` belongs here too: it is audit ACTIVITY, and the no-fire
+# branch is the only reader of this tuple. Without it a response could declare
+# `action: "no-fire"` AND `cuts_applied: true` and pass -- silent over-firing,
+# which is precisely what this battery exists to detect. The report-only
+# branch already checked it separately; the two readers disagreed about what
+# counts as having audited.
+AUDIT_ARTIFACT_FIELDS = ("layers_inventoried", "cross_layer_merge", "report_emitted", "cut_list", "applied", "cuts_applied")
 
 
 def _audit_common(fid: str, row: dict, failures: list[str]) -> None:

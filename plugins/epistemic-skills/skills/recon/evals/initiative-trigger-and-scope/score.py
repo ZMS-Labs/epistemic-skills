@@ -35,8 +35,12 @@ def _bare_str_set(value: object) -> tuple[set, bool]:
     2026-08-04 v4 Tier-1 run: a subject reported frontier as objects and
     the scorer crashed instead of failing).
     """
-    if value is None:
-        return set(), True
+    # An explicit JSON `null` is a SHAPE violation, not an absence. Every
+    # caller passes `row.get(field, [])`, so None reaches this function ONLY
+    # as a null the response actually wrote -- never as a missing field.
+    # Returning ok=True for it made `"pulled_tickets": null` indistinguishable
+    # from omitting the field, and certified an off-contract response instead
+    # of naming the shape, which is exactly what this helper exists to do.
     if not isinstance(value, list) or not all(isinstance(v, str) for v in value):
         return set(), False
     return set(value), True

@@ -45,6 +45,21 @@ def main() -> int:
     require(any("most local" in failure for failure in under["failures"]), under["failures"])
     require(any("expected report-only-audit" in failure for failure in under["failures"]), under["failures"])
 
+    # ---- a no-fire may not have APPLIED anything ------------------------
+    # `cuts_applied` is audit activity, and the no-fire branch checked only
+    # AUDIT_ARTIFACT_FIELDS -- which does not list it. A response could
+    # declare `action: "no-fire"` AND `cuts_applied: true` and pass: silent
+    # over-firing, which is exactly what this battery exists to detect.
+    nofire = [f for f in fixtures if f["expected_action"] == "no-fire"][:1]
+    require(nofire, "no no-fire fixture to exercise")
+    nid = nofire[0]["id"]
+    require(scorer.score(nofire, [{"id": nid, "action": "no-fire"}])["pass"],
+            "a bare no-fire must pass")
+    report = scorer.score(nofire, [{"id": nid, "action": "no-fire",
+                                    "cuts_applied": True}])
+    require(not report["pass"],
+            "a no-fire that applied cuts scored as a PASS")
+
     print("context-audit trigger-and-scope: PASS")
     return 0
 

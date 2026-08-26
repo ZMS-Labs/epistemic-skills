@@ -43,6 +43,34 @@ def main() -> int:
     require(any("expected chart-map, got no-fire" in failure for failure in under["failures"]), under["failures"])
     require(any("expected pull-ticket, got no-fire" in failure for failure in under["failures"]), under["failures"])
 
+    # ---- an explicit null is a SHAPE violation, not an absence ----------
+    # `_bare_str_set` returned (set(), ok=True) for None, but every caller
+    # passes `row.get(field, [])` -- so None reaches it ONLY as an explicit
+    # JSON null, never as an absent field. Treating that as an empty list
+    # certified an off-contract response instead of naming the shape.
+    balanced_rows = json.loads(
+        (ROOT / "examples" / "balanced.json").read_text(encoding="utf-8"))
+    require(scorer.score(fixtures, balanced_rows)["pass"],
+            "balanced example must pass before the null probe")
+    # The discriminating case is a field the response may legitimately OMIT:
+    # an absent `pulled_tickets` on a chart-map fixture with no fog tickets
+    # passes, and so did an explicit `null` -- so `null` was indistinguishable
+    # from absent while the helper's own contract calls non-list shapes
+    # malformed. (Nulling a REQUIRED field fails for a different reason and
+    # would not test this at all.)
+    nulled = json.loads(
+        (ROOT / "examples" / "balanced.json").read_text(encoding="utf-8"))
+    patched = False
+    for row in nulled:
+        if row.get("action") == "chart-map" and "pulled_tickets" not in row:
+            row["pulled_tickets"] = None
+            patched = True
+            break
+    require(patched, "no chart-map row without pulled_tickets to null out")
+    report = scorer.score(fixtures, nulled)
+    require(not report["pass"],
+            "an explicit null pulled_tickets scored as a PASS")
+
     print("Wayfinding trigger-and-scope: PASS")
     return 0
 

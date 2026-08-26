@@ -64,6 +64,19 @@ def _check_harvest_scope(fixture: dict, row: dict, fid: str, failures: list) -> 
         malformed = [entry for entry in decisions if not LEVEL_DECISION.match(entry)]
         if malformed:
             failures.append(f"{fid}: per_level_decisions entries must match 'L<level>:PROBE|PARK|DROP' with level 1-8 (got {malformed!r})")
+        # ONE LEVEL, ONE DECISION. Entries were validated one at a time, so a
+        # response could assert both `L1:PROBE` and `L1:DROP`; the battery
+        # treats these as auditable per-level spend decisions, and a level
+        # that decided two incompatible things decided nothing.
+        levels_decided: dict = {}
+        for entry in decisions:
+            match = LEVEL_DECISION.match(entry)
+            if match:
+                levels_decided.setdefault(match.group(1), set()).add(match.group(2))
+        contradictory = sorted(f"L{level}" for level, verdicts
+                               in levels_decided.items() if len(verdicts) > 1)
+        if contradictory:
+            failures.append(f"{fid}: one level, one spend decision — contradictory decisions for {contradictory}")
     not_harvestable = _string_list(row, "not_harvestable", fid, failures)
     if not_harvestable is not None and not any(item.strip() for item in not_harvestable):
         failures.append(f"{fid}: confirmation risk — every harvest names what it examined and could not use; not_harvestable is empty")
@@ -125,8 +138,14 @@ def score(fixtures: object, responses: object) -> dict:
         if expected == "no-fire":
             if "skip_record" in row:
                 failures.append(f"{fid}: non-events are silent — proceed without a skip record; absence is not an artifact")
-            if any(field in row for field in PROCESS_ARTIFACT_FIELDS):
-                failures.append(f"{fid}: no-fire is silent — no harvest record, no spend decision, no partition, no process artifacts at all")
+            # AN ALLOWLIST, not a denylist. `PROCESS_ARTIFACT_FIELDS` encodes
+            # the author's enumeration, so its blind spot IS the field nobody
+            # enumerated: `explanation`, `reason`, `notes` all rode through a
+            # supposedly silent non-event. A no-fire carries exactly its id
+            # and its action.
+            extra = sorted(set(row) - {"id", "action"})
+            if extra:
+                failures.append(f"{fid}: no-fire is silent — no harvest record, no spend decision, no partition, no process artifacts at all (got {extra})")
         elif expected == "harvest":
             _check_harvest_scope(fixture, row, fid, failures)
         elif expected == "partition":
@@ -151,6 +170,13 @@ def score(fixtures: object, responses: object) -> dict:
             for field in ("harvest_record", "levels_read"):
                 if field in row:
                     failures.append(f"{fid}: triage-only is a spend decision without a read — {field} must be absent")
+            # The pinned response contract requires `installed`/`adopted` to
+            # be false or absent on EVERY firing action. The harvest branch
+            # enforced it and this one did not, so triage-only could certify
+            # the exact adoption side effect candidate mode forbids.
+            for field in ("installed", "adopted"):
+                if row.get(field):
+                    failures.append(f"{fid}: the candidate never runs and is never adopted on a spend decision — {field} must be false or absent")
     return {"pass": not failures, "failures": failures, "actions": dict(actions)}
 
 

@@ -28,6 +28,21 @@ def _identified(entry: object, *, needs_tracker: bool) -> bool:
     return True
 
 
+def _bare_strings(value: object) -> tuple[set, bool]:
+    """(set of strings, ok). ok=False marks an off-contract SHAPE.
+
+    This scorer is the admission boundary for MODEL-GENERATED JSON, so an
+    off-contract shape is an ordinary input, not an impossible one. `set(...)`
+    over a list holding an object raises TypeError, and `sorted(...)` over a
+    set of mixed scalar types raises TypeError too -- either one aborts the
+    whole epoch and loses every OTHER fixture's verdict, when the contract
+    asks for one deterministic failure line."""
+    if not isinstance(value, list) or not all(
+            isinstance(item, str) for item in value):
+        return set(), False
+    return set(value), True
+
+
 def score(fixtures: list[dict], responses: list[dict]) -> dict:
     failures: list[str] = []
     by_id = {row.get("id"): row for row in responses if isinstance(row, dict)}
@@ -41,11 +56,14 @@ def score(fixtures: list[dict], responses: list[dict]) -> dict:
             failures.append(f"{fid}: response missing")
             continue
         action = row.get("action")
-        actions[action] += 1
         expected = fixture["expected_action"]
-        if action not in ACTIONS:
+        # isinstance BEFORE the Counter: `actions[action] += 1` hashes the
+        # value, so a list or object action raised TypeError before the
+        # unknown-action check could report it as the scored failure it is.
+        if not isinstance(action, str) or action not in ACTIONS:
             failures.append(f"{fid}: unknown action {action!r}")
             continue
+        actions[action] += 1
         if action != expected:
             failures.append(f"{fid}: expected {expected}, got {action}")
             continue
@@ -65,11 +83,21 @@ def score(fixtures: list[dict], responses: list[dict]) -> dict:
                 failures.append(f"{fid}: hold-escalate is a halt, not an interview — no questions, no process artifact")
         elif expected == "full-interview":
             exhausted = row.get("closing_probe") and row.get("ledger_empty")
-            released = row.get("operator_release")
+            # THE FIXTURE decides which termination happened, not the
+            # response. Reading `row["operator_release"]` let a response that
+            # simply did not CLAIM the release take the exhausted-ledger
+            # branch: on `explicit-release-parks` -- whose scenario states two
+            # items remain -- omitting the flag and asserting
+            # closing_probe + ledger_empty PASSED with nothing parked. A
+            # candidate must not choose which rule it is graded against.
+            released = bool(fixture.get("operator_release")) or bool(
+                row.get("operator_release"))
             if released:
                 parked = row.get("parked", [])
                 remaining = set(fixture.get("remaining_items", []))
-                parked_ids = {item.get("question") for item in parked if isinstance(item, dict)}
+                parked_ids = {item["question"] for item in parked
+                              if isinstance(item, dict)
+                              and isinstance(item.get("question"), str)}
                 if remaining and not remaining <= parked_ids:
                     failures.append(f"{fid}: operator release parks EVERY remaining ledger item — missing {sorted(remaining - parked_ids)}")
                 if not all(_identified(item, needs_tracker=False) for item in parked):
@@ -83,7 +111,9 @@ def score(fixtures: list[dict], responses: list[dict]) -> dict:
             if outcome not in OFFER_OUTCOMES:
                 failures.append(f"{fid}: fixture has unknown offer_outcome {outcome!r}")
                 continue
-            walked = set(row.get("walked", []))
+            walked, walked_ok = _bare_strings(row.get("walked", []))
+            if not walked_ok:
+                failures.append(f"{fid}: walked must be an array of bare question ids")
             if not lineage <= walked:
                 failures.append(f"{fid}: fork lineage not fully walked")
             allowed = lineage | (unrelated if outcome == "accepted" else set())
@@ -92,9 +122,23 @@ def score(fixtures: list[dict], responses: list[dict]) -> dict:
             offers = row.get("offer_count", 0)
             if unrelated and offers != 1:
                 failures.append(f"{fid}: exactly one offer is required when unrelated material questions surfaced")
+            deferred_ids, deferred_ok = _bare_strings(
+                [d.get("question") for d in row.get("deferred", [])
+                 if isinstance(d, dict)])
+            if not deferred_ok:
+                failures.append(f"{fid}: deferred entries must name their question as a string")
             if outcome == "accepted":
                 if not unrelated <= walked:
                     failures.append(f"{fid}: accepted offer means the surfaced questions are walked now")
+                # ACCEPTED means resolved NOW. Leaving the same question in a
+                # durable tracker records it as still pending, so the two
+                # records contradict each other and the tracker is the one a
+                # later session reads.
+                still_pending = sorted(unrelated & deferred_ids)
+                if still_pending:
+                    failures.append(
+                        f"{fid}: accepted questions were resolved now and must not "
+                        f"remain deferred: {still_pending}")
             else:
                 if unrelated:
                     # declined and unanswered offers defer identically

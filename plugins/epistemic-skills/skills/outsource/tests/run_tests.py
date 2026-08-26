@@ -37,6 +37,34 @@ WORDS = {9: "nine", 10: "ten", 11: "eleven", 12: "twelve", 13: "thirteen", 14: "
          16: "sixteen", 17: "seventeen", 18: "eighteen", 19: "nineteen", 20: "twenty"}
 
 
+def stale_counts(text: str, skill_count: int) -> list[tuple[str, str]]:
+    """Every (count-word, noun) pair in `text` that contradicts the derived
+    counts. Pure, so the binding itself is testable.
+
+    THE NOUN IS PART OF THE CLAIM. The previous form collected both correct
+    words into one `ok_words` set and accepted either next to either noun, so
+    with fifteen skills and fourteen disciplines a manifest saying "fifteen
+    disciplines" -- or "fourteen skills" -- passed a lint whose entire purpose
+    is catching stale counts. A check that cannot distinguish the two claims
+    it makes is not checking either.
+
+    The lookahead is non-greedy so the NEAREST noun wins; a phrase naming both
+    is scored against the one it actually stands next to."""
+    import re
+    disciplines = skill_count - 1  # the entry point is not a discipline
+    expected = {"skill": WORDS[skill_count], "discipline": WORDS[disciplines]}
+    pattern = re.compile(
+        r"\b(" + "|".join(WORDS.values())
+        + r")\b(?=[^.;]{0,60}?(skill|discipline))",
+        re.IGNORECASE)
+    bad = []
+    for m in pattern.finditer(text):
+        noun = m.group(2).lower()
+        if m.group(1).lower() != expected[noun]:
+            bad.append((m.group(1), noun))
+    return bad
+
+
 def check_live_surface_counts(skill_count: int) -> None:
     """Issue #72 lint: every spelled count adjacent to skill/discipline wording on a
     LIVE surface must match the derived counts. Live surfaces = all JSON manifests
@@ -46,9 +74,6 @@ def check_live_surface_counts(skill_count: int) -> None:
     import re
     disciplines = skill_count - 1  # the entry point is not a discipline
     ok_words = {WORDS[skill_count], WORDS[disciplines]}
-    count_re = re.compile(
-        r"\b(" + "|".join(WORDS.values()) + r")\b(?=[^.;]{0,60}(?:skill|discipline))",
-        re.IGNORECASE)
 
     def strings_of(obj):
         if isinstance(obj, str):
@@ -76,9 +101,10 @@ def check_live_surface_counts(skill_count: int) -> None:
     for mp in manifests:
         data = json.loads(read(mp))
         for s in strings_of(data):
-            for m in count_re.finditer(s):
-                require(m.group(1).lower() in ok_words,
-                        f"stale count word {m.group(1)!r} on live surface {mp.name}: ...{s[max(0,m.start()-30):m.end()+40]}...")
+            for word, noun in stale_counts(s, skill_count):
+                require(False,
+                        f"stale count word {word!r} beside {noun!r} on live "
+                        f"surface {mp.name}: ...{s[:160]}...")
     readme = read(REPO_ROOT / "README.md")
     # Select mermaid node lines structurally -- inside a fenced ```mermaid block --
     # rather than by a prose fragment. The previous selector keyed on "router and",
@@ -105,9 +131,8 @@ def check_live_surface_counts(skill_count: int) -> None:
     require(checked >= 1, "README mermaid count check is vacuous: the selected node "
                           f"lines carry no spelled count at all: {mermaid!r}")
     gemini = read(REPO_ROOT / "GEMINI.md")
-    for m in count_re.finditer(gemini):
-        require(m.group(1).lower() in ok_words,
-                f"stale count word {m.group(1)!r} in GEMINI.md")
+    for word, noun in stale_counts(gemini, skill_count):
+        require(False, f"stale count word {word!r} beside {noun!r} in GEMINI.md")
 
 
 def check_marketplace_enumeration(skill_names: set[str]) -> None:
@@ -152,6 +177,27 @@ def check_marketplace_enumeration(skill_names: set[str]) -> None:
     require(len(enumerating) == 2,
             "marketplace enumeration check is vacuous: expected two 'full collection' "
             f"descriptions to check, reached {enumerating}")
+
+
+def check_count_lint_binds_the_noun(skill_count: int) -> None:
+    """PLANTED CONTROLS for the lint above. A lint whose own negation survives
+    is not a lint: before the noun binding, BOTH lines below passed."""
+    disciplines = skill_count - 1
+    good = f"{WORDS[skill_count]} self-triggering skills"
+    require(not stale_counts(good, skill_count),
+            f"the lint rejects a CORRECT sentence: {good!r}")
+    good_d = f"{WORDS[disciplines]} disciplines"
+    require(not stale_counts(good_d, skill_count),
+            f"the lint rejects a CORRECT sentence: {good_d!r}")
+    swapped = f"{WORDS[disciplines]} skills"
+    require(stale_counts(swapped, skill_count),
+            f"the lint accepts the discipline count beside 'skills': {swapped!r}")
+    swapped_d = f"{WORDS[skill_count]} disciplines"
+    require(stale_counts(swapped_d, skill_count),
+            f"the lint accepts the skill count beside 'disciplines': {swapped_d!r}")
+    stale = f"{WORDS[skill_count - 2]} skills"
+    require(stale_counts(stale, skill_count),
+            f"the lint accepts an outright stale count: {stale!r}")
 
 
 def main() -> int:
@@ -383,6 +429,7 @@ def main() -> int:
     # require editing this line.
     skill_dirs = [p.parent for p in (PACKAGE_ROOT / "skills").glob("*/SKILL.md")]
     require(len(skill_dirs) == _n, f"expected {_n} skill directories, found {len(skill_dirs)}")
+    check_count_lint_binds_the_noun(len(skill_dirs))
     check_live_surface_counts(len(skill_dirs))
     check_marketplace_enumeration({d.name for d in skill_dirs})
     for directory in skill_dirs:

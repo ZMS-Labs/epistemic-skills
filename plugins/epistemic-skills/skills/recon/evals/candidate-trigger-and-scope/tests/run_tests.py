@@ -147,6 +147,64 @@ def main() -> int:
     report = scorer.score(triage_fixture, [{"id": "synthetic-cheap-probe", "action": "triage-only", "spend_decision": "PARK", "harvest_record": True, "levels_read": [1]}])
     require(not report["pass"] and sum("spend decision without a read" in failure for failure in report["failures"]) == 2, report["failures"])
 
+    # ---- one level, one decision ---------------------------------------
+    # `per_level_decisions` entries were validated one at a time, so a
+    # response could assert BOTH `L1:PROBE` and `L1:DROP`. The battery treats
+    # these as auditable per-level spend decisions; a level that decided two
+    # incompatible things decided nothing.
+    harvest_fixture = [f for f in fixtures if f["expected_action"] == "harvest"][:1]
+    require(harvest_fixture, "no harvest fixture to exercise")
+    hid = harvest_fixture[0]["id"]
+
+    def harvest_row(**over):
+        row = {"id": hid, "action": "harvest", "harvest_record": True,
+               "levels_read": [1, 2], "per_level_decisions": ["L1:PROBE"],
+               "not_harvestable": ["the vendored fork"]}
+        if harvest_fixture[0].get("negative_harvest"):
+            row["negative_harvest"] = True
+        if harvest_fixture[0].get("injection_present"):
+            row["landmine_reported"] = True
+        if harvest_fixture[0].get("drop_at_top"):
+            row["per_level_decisions"] = ["L1:PROBE", "L6:DROP"]
+        row.update(over)
+        return row
+
+    baseline = scorer.score(harvest_fixture, [harvest_row()])
+    require(baseline["pass"], baseline["failures"])
+
+    dup = harvest_row()
+    dup["per_level_decisions"] = list(dup["per_level_decisions"]) + ["L1:DROP"]
+    report = scorer.score(harvest_fixture, [dup])
+    require(not report["pass"],
+            "contradictory per-level decisions scored as a PASS")
+
+    # ---- a no-fire is silent, including in fields nobody enumerated ------
+    nofire_fixture = [f for f in fixtures if f["expected_action"] == "no-fire"][:1]
+    require(nofire_fixture, "no no-fire fixture to exercise")
+    nid = nofire_fixture[0]["id"]
+    require(scorer.score(nofire_fixture,
+                         [{"id": nid, "action": "no-fire"}])["pass"],
+            "a bare no-fire must pass")
+    for extra in ("explanation", "reason", "notes"):
+        report = scorer.score(nofire_fixture,
+                              [{"id": nid, "action": "no-fire", extra: "why"}])
+        require(not report["pass"],
+                f"no-fire carrying an unlisted {extra!r} field scored as a PASS")
+
+    # ---- triage-only decides spend; it does not adopt --------------------
+    triage_only = [{
+        "id": "synthetic-cheap-probe",
+        "scenario": "Triage-only control.",
+        "trigger": "state",
+        "expected_action": "triage-only",
+    }]
+    for field in ("installed", "adopted"):
+        report = scorer.score(triage_only, [{
+            "id": "synthetic-cheap-probe", "action": "triage-only",
+            "spend_decision": "PROBE", field: True}])
+        require(not report["pass"],
+                f"triage-only reporting {field}=true scored as a PASS")
+
     print("recon candidate-mode trigger-and-scope: PASS")
     return 0
 
