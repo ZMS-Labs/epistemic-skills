@@ -22,6 +22,26 @@ Verified behavior (2026-08-04 probe, 9/9 matrix, first execution):
 | `proceed` / absent | allow | allow |
 | malformed event/state | **DENY (fail closed)** | DENY (fail closed) |
 
+**The table is now executed**, by `test_hook.py` in this directory (wired into
+`epistemic-flexibility.yml`). Until it was, three of its rows were false:
+`MultiEdit` -- the standard multi-file edit path -- was permitted under
+`hold`; every mutating MCP tool outside five `mcp__github__*` prefixes was
+permitted; and an out-of-vocabulary `control` value (a typo, a number) read as
+`proceed` rather than as the malformed state this table says must DENY. A
+published behaviour table that nothing runs is a claim, not a control.
+
+**What counts as side-effecting.** Built-ins: `Write`, `Edit`, `MultiEdit`,
+`NotebookEdit`, `Bash`. MCP: any tool whose name carries a mutating verb
+(`create`, `delete`, `write`, `patch`, `post`, `send`, `click`, `run`, ... --
+the full set is `MCP_MUTATING_VERBS` in `hook.py`), in ANY namespace, because
+an allowlist of GitHub prefixes has its blind spot exactly where nobody
+enumerated. Deliberately over-broad in the safe direction: under `hold` a
+false deny costs a retry and a false allow costs the action.
+
+**Named residue:** a mutating MCP tool whose name carries none of those verbs
+(`mcp__x__thing`) is still allowed. That vocabulary is the measured set, not a
+proof of completeness.
+
 ## Honest boundary (read before trusting it)
 
 - **Cooperative-agent-grade.** The control-state file's writer defines the

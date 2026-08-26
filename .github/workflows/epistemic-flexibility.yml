@@ -104,6 +104,14 @@ jobs:
           python plugins/epistemic-skills/skills/gauntlet/scripts/validate_ruling_set.py --scan docs/gauntlet-runs
       - name: Outsource packet and package integration
         run: python plugins/epistemic-skills/skills/outsource/tests/run_tests.py
+      # The reference runtime gate (issue #42) shipped a published behaviour
+      # table and NO executing test. Three of its rows were false: MultiEdit
+      # was permitted under `hold`, every mutating MCP tool outside the five
+      # `mcp__github__*` prefixes was permitted, and an out-of-vocabulary
+      # control value read as `proceed` instead of denying. A table nothing
+      # runs is a claim, not a control.
+      - name: Reference runtime gate behaviour table
+        run: python plugins/epistemic-skills/reference/runtime-gate/test_hook.py
       - name: Continuity resume-fixture committed results
         run: |
           score=plugins/epistemic-skills/skills/decision-ledger/evals/resume-fixtures/score.py
