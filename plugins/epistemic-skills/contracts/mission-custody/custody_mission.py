@@ -1359,7 +1359,7 @@ class Mission:
                           .encode("ascii", "backslashreplace").decode("ascii"),
                           file=sys.stderr)
                     continue
-                degradable: tuple = (StoreError, ValueError)
+                degradable: tuple = (StoreError, ValueError, TypeError)
                 if degrade_on_oserror:
                     degradable = degradable + (OSError,)
                 try:
@@ -1371,6 +1371,16 @@ class Mission:
                     # OSErrors (transient locks, permissions) propagate instead:
                     # skipping those would reroute discovery around a mission
                     # that is merely busy, inviting a duplicate open.
+                    #
+                    # TypeError joins the CORRUPT list, not the environmental
+                    # one: it is what a type-invalid record produced when a
+                    # closed vocabulary was tested with `in` (`"status": []`).
+                    # The verifier now answers instead of raising, so this arm
+                    # is belt-and-braces -- kept because a validator reached
+                    # through a hostile file has no business deciding whether
+                    # the WHOLE WORKSPACE can be read, and the next
+                    # type-unsafe expression added there would otherwise
+                    # reopen a workspace-wide denial of service.
                     reason = f"{mission_dir.name}: {type(exc).__name__}: {exc}"
                     skipped.append({"name": mission_dir.name,
                                     "kind": type(exc).__name__,

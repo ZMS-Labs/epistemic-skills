@@ -253,6 +253,57 @@ def test_unhashable_guard_mode_returns_validation_error() -> None:
     check("guard-unknown-tools-pass", validate_record(rec) == [])
 
 
+def test_closed_vocabularies_never_raise_typeerror() -> None:
+    """Every CLOSED vocabulary must answer a non-string with a validation
+    ERROR, not a TypeError.
+
+    es#137 P2 fixed exactly one of these -- `guard_mode` -- and the class was
+    scoped to that instance. The same `value in SET` shape sits on
+    `checkpoint.status`, `verdict.verdict`, `verdict.assurance_tier`,
+    `manifest.acceptance.required_tier`, and the top-level `record` kind, and
+    every one of them raises `TypeError: unhashable type` on a list or dict.
+    Measured before the fix: `validate_record({... "status": []})` raised
+    TypeError, and a sibling checkpoint carrying `"status": []` took EVERY
+    pathless custody command in the workspace down with it (see
+    test_custody_mission.test_typeinvalid_sibling_is_skipped_not_fatal).
+
+    `validate_record` promises a list of errors. A promise that becomes a
+    traceback on hostile input is a denial of service through the recovery
+    path -- exactly what drift detection exists to survive."""
+    cases = []
+
+    rec = copy.deepcopy(valid_checkpoint_r1())
+    rec["status"] = []
+    cases.append(("checkpoint-status", rec))
+
+    rec = copy.deepcopy(valid_checkpoint_r1())
+    rec["manifest"]["acceptance"]["required_tier"] = {}
+    cases.append(("manifest-required-tier", rec))
+
+    rec = copy.deepcopy(valid_manifest())
+    rec["acceptance"]["required_tier"] = []
+    cases.append(("manifest-required-tier-standalone", rec))
+
+    rec = load("valid-verdict-pass-separated.json")
+    rec["verdict"] = []
+    cases.append(("verdict-verdict", rec))
+
+    rec = load("valid-verdict-pass-separated.json")
+    rec["assurance_tier"] = {"a": 1}
+    cases.append(("verdict-assurance-tier", rec))
+
+    cases.append(("record-kind", {"record": ["checkpoint@1"]}))
+
+    for name, record in cases:
+        try:
+            errors = validate_record(record)
+        except TypeError:
+            check(f"closed-vocab-no-typeerror-{name}", False)
+            continue
+        check(f"closed-vocab-no-typeerror-{name}", True)
+        check(f"closed-vocab-returns-errors-{name}", errors != [])
+
+
 def test_examples_corpus() -> None:
     ex = ROOT / "examples"
     for path in sorted(ex.glob("valid-*.json")):
@@ -289,6 +340,7 @@ def main() -> int:
     test_manifest_guard_empty_guards_list_invalid()
     test_manifest_guard_inert_shapes_rejected()
     test_unhashable_guard_mode_returns_validation_error()
+    test_closed_vocabularies_never_raise_typeerror()
     test_examples_corpus()
     print(f"\n{len(FAILURES)} failures")
     return 1 if FAILURES else 0
