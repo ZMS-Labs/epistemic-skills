@@ -38,7 +38,7 @@ Use a discipline when the first reads expose a positive trigger:
 | High-stakes or irreversible frozen decision | [Gauntlet](Skill-Gauntlet) |
 | Material user-visible completion claim | [Evidence-Locked UAT](Skill-Evidence-Locked-UAT) |
 
-If a workflow-skill layer is active, [Helix](Helix-Central-Passage) is the central passage that pairs the workflow stage with the positively triggered discipline. It does not require every skill or replace the routine exit.
+If a workflow-skill layer also runs, pairing with it is a [`metacognate`](Skill-Metacognate) Tier 2 judgment made at the moment it is needed. Historical [Helix](Helix-Central-Passage) is not a live seat; there is no pair table.
 
 ## Repository invariants
 
