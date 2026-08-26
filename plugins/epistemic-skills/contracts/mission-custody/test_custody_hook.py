@@ -1578,6 +1578,31 @@ def test_cursor_cli_project_output_stays_out_of_version_control() -> None:
         check("cursor-cli-non-root-render-carries-the-machine-local-notice",
               "machine-local" in noted.stderr)
 
+        # ---- a NESTED project root is the same auto-loaded shape ----
+        # Cursor opened on repo/packages/app loads
+        # packages/app/.cursor/hooks.json as the project hooks file, so a
+        # nested .cursor/hooks.json carries the identical committed-config
+        # hazard and must get the identical refusal.
+        nested = repo / "packages" / "app" / ".cursor" / "hooks.json"
+        nested_refused = subprocess.run(
+            [sys.executable, str(renderer), "--output", str(nested)],
+            cwd=str(repo), capture_output=True, text=True)
+        check("cursor-cli-nested-project-output-refused",
+              nested_refused.returncode == 2)
+        check("cursor-cli-nested-refusal-wrote-nothing",
+              not nested.exists())
+        check("cursor-cli-nested-refusal-names-gitignore",
+              ".gitignore" in nested_refused.stderr)
+
+        with (repo / ".gitignore").open("a", encoding="utf-8",
+                                        newline="\n") as handle:
+            handle.write("packages/app/.cursor/hooks.json\n")
+        nested_rendered = subprocess.run(
+            [sys.executable, str(renderer), "--output", str(nested)],
+            cwd=str(repo), capture_output=True, text=True)
+        check("cursor-cli-ignored-nested-project-output-renders",
+              nested_rendered.returncode == 0 and nested.is_file())
+
         # ---- a TRACKED destination refuses even when deleted locally ----
         tracked = base / "tracked-repo"
         _git_init_repo(tracked)

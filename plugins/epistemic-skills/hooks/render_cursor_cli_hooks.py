@@ -350,8 +350,10 @@ def _version_control_gate(destination: Path) -> tuple[str | None, str | None]:
     it into version control silently:
 
       * a destination git already TRACKS, and
-      * the worktree-root .cursor/hooks.json -- the shape Cursor
-        auto-loads as project hooks -- that git does not IGNORE.
+      * ANY .cursor/hooks.json inside the worktree that git does not
+        IGNORE -- Cursor opened on the directory above it (including a
+        NESTED directory, e.g. a monorepo package) auto-loads it as the
+        project hooks file.
 
     Anything else inside a worktree that git does not ignore renders, with
     a notice: the hazard there needs a manual commit AND a manual copy
@@ -407,16 +409,26 @@ def _version_control_gate(destination: Path) -> tuple[str | None, str | None]:
     if ignored is not None and ignored.returncode == 0:
         return None, None  # git ignores it: it cannot be committed by accident
 
-    if norm(str(destination)) == norm(os.path.join(root, ".cursor",
-                                                   "hooks.json")):
+    # The shape Cursor auto-loads as project hooks is ANY
+    # `.cursor/hooks.json` inside the worktree, not only the root one:
+    # Cursor opened on a NESTED directory (a monorepo package, say
+    # repo/packages/app) loads packages/app/.cursor/hooks.json as the
+    # project hooks file.  The destination is already known to sit inside
+    # this worktree, so the final two segments decide.
+    destination_parts = Path(norm(str(destination))).parts
+    if len(destination_parts) >= 2 and \
+            destination_parts[-2] == os.path.normcase(".cursor") and \
+            destination_parts[-1] == os.path.normcase("hooks.json"):
         return (
-            f"{destination} is the project-hooks file Cursor auto-loads "
-            f"for the worktree at {root}, and git does not ignore it.  "
+            f"{destination} is a project-hooks file Cursor auto-loads "
+            f"(.cursor/hooks.json at {rel_posix} in the worktree at "
+            f"{root}), and git does not ignore it.  "
             "The rendered config binds this machine's interpreter and "
             "plugin paths and is machine-local: committed, it fabricates "
             "a custody block (or fails open) on every collaborator's "
-            "machine.  Add '.cursor/hooks.json' to the project's "
-            ".gitignore FIRST, then re-render; or render to stdout (the "
+            "machine.  Add '.cursor/hooks.json' to the .gitignore beside "
+            f"the project root (or '{rel_posix}' to the worktree root's) "
+            "FIRST, then re-render; or render to stdout (the "
             "default) and merge by hand.",
             None,
         )
