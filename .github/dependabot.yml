@@ -9,7 +9,23 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
     open-pull-requests-limit: 5
     labels:
       - "pin-gardening"
+    # Grouped updates (Phase 3, ZMS-Labs/zms-homelab#1719): collapse many
+    # single-dependency PRs into one PR per severity band, cutting the
+    # downstream CI fan-out. Majors ride in their own PR so a breaking
+    # action bump is never merged alongside routine patch re-pins.
+    groups:
+      github-actions-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+      github-actions-major:
+        patterns:
+          - "*"
+        update-types:
+          - "major"
