@@ -566,6 +566,8 @@ def _is_path_pattern(entry: str) -> bool:
       docs/**, src/*.py, *.env        pattern (glob)
       secrets.env, README.md          pattern (bare filename + extension)
       .env, .gitignore                pattern (dotfile)
+      My Documents\\secrets.env       pattern (Windows separator)
+      docs\\release notes\\**         pattern (Windows separator + glob)
       reconciliation                  prose  (single bare word, no extension)
       monitored-missing reconc...     prose  (whitespace)
       media acquisition, arr/Plex     prose  (comma + whitespace)
@@ -576,7 +578,13 @@ def _is_path_pattern(entry: str) -> bool:
     is real and is not silently absorbed -- `uncompared_scope_entries` reports
     every entry this predicate declines, so an operator sees which of their
     declarations no machine is checking instead of assuming all of them are."""
-    if not entry or "," in entry:
+    if not entry:
+        return False
+    # Scope matching already canonicalizes Windows separators. Classification
+    # must inspect the same spelling, or a path can look enforced everywhere
+    # else while being discarded here as prose.
+    entry = entry.replace("\\", "/")
+    if "," in entry:
         return False
     if any(c.isspace() for c in entry):
         # A SPACE ALONE NO LONGER MEANS PROSE. Testing whitespace before the
@@ -596,7 +604,7 @@ def _is_path_pattern(entry: str) -> bool:
             return True
         stem, dot, ext = last.rpartition(".")
         return bool(stem) and bool(dot) and ext.isalnum()
-    if "/" in entry or "*" in entry or "?" in entry or entry.endswith("\\"):
+    if "/" in entry or "*" in entry or "?" in entry:
         return True
     name = entry[1:] if entry.startswith(".") else entry
     stem, dot, ext = name.rpartition(".")
