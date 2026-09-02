@@ -2569,10 +2569,19 @@ def test_scope_entry_classification_table(workspace: Path) -> None:
         # scope_consistency() and an accepted PASS.
         ("My Documents/secrets.env", True), ("docs/release notes/**", True),
         ("a/b c/d.txt", True), ("docs/release notes/", True),
+        # Windows separators bind through the same matrix: with and without
+        # whitespace, and with wildcard, extension, directory, and bare-final
+        # segments. The last row remains prose by the established ambiguity rule.
+        ("docs\\source", True), ("docs\\*.py", True),
+        ("My Documents\\secrets.env", True),
+        ("docs\\release notes\\**", True),
+        ("docs\\release notes\\", True),
+        ("My Documents\\archive", False),
         # ...while genuine prose that happens to carry a slash still reads as
         # prose, because it ends in a bare word rather than a path ending
         ("TCP/IP tuning", False), ("arr/Plex/NAS operations", False),
         ("docs and/or specs", False),
+        ("TCP\\IP tuning", False), ("arr\\Plex\\NAS operations", False),
         # ambiguous -> prose, deliberately
         ("docs and/or specs", False), ("TCP/IP tuning", False),
         ("", False),
@@ -2624,6 +2633,416 @@ def test_bare_filename_exclusion_is_enforced(workspace: Path) -> None:
         check("bare-filename-pass-refused", False)
     except AcceptanceRefused as exc:
         check("bare-filename-pass-refused", "crossed the declared scope" in str(exc))
+
+
+def test_windows_scope_entries_with_spaces_bind_end_to_end(
+        workspace: Path) -> None:
+    """A Windows-spelled path must bind the same boundary as '/' spelling.
+
+    Before separator normalization, both spaced exclusions classified as prose,
+    so the two excluded writes disappeared from scope_consistency() and PASS
+    could close.
+
+    THE INCLUDE SIDE NEEDS ITS OWN CONTROL, AND THE OBVIOUS ONE IS INERT. The
+    first version of this test used `scope_in=["allowed\\**"]` and asserted the
+    allowed artifact drew no finding. That assertion is GREEN UNDER THE EXACT
+    DEFECT THIS CHANGE FIXES, twice over. First, `*` short-circuits the
+    classifier before it ever inspects a separator, so `allowed\\**` was
+    already accepted by the pre-fix predicate -- the row exercised nothing on
+    the separator axis. Second, and worse, a DROPPED include produces the
+    identical observation: `scope_consistency` sets `includes = []` when any
+    include is uncompared, so "the allowed path drew no finding" is what you
+    see both when the include bound and matched AND when the include was
+    discarded and NOTHING was compared. Same reading, opposite worlds.
+
+    So the include control here is wildcard-FREE and spaced -- the form the
+    pre-fix predicate actually dropped -- and the load-bearing assertion is
+    that an artifact OUTSIDE it is FLAGGED. "Outside scope.in" is an absence
+    inference the comparison draws only when the whole include set is
+    comparable, so that assertion goes red the moment the Windows-spelled
+    include falls back to prose. The disclosure surface is asserted beside it:
+    an include that binds must leave `uncompared_scope_entries` empty with
+    `in_comparison_disabled` false -- a condition an unconditionally-emitted
+    finding could not satisfy, so the pair cannot both go green for the wrong
+    reason.
+    """
+    from custody_mission import uncompared_scope_entries
+    m = open_mission(
+        workspace,
+        "m-win-scope",
+        "Windows scope separators.",
+        scope_in=["Allowed Work\\ordinary.txt"],
+        scope_out=["My Documents\\secrets.env", "docs\\release notes\\**"],
+    )
+    m.approve()
+    m.record_effect("Allowed Work/ordinary.txt", "ok", "win-1")
+    m.record_effect("My Documents/secrets.env", "leak", "win-2")
+    m.record_effect("docs/release notes/key.txt", "leak", "win-3")
+    m.record_effect("elsewhere/other.txt", "stray", "win-4")
+
+    findings = {
+        (finding["artifact_path"], finding["reason"])
+        for finding in m.scope_consistency()
+    }
+    check(
+        "windows-scope-spaced-extension-binds",
+        ("My Documents/secrets.env", "matches scope.out") in findings,
+    )
+    check(
+        "windows-scope-spaced-glob-binds",
+        ("docs/release notes/key.txt", "matches scope.out") in findings,
+    )
+    # The include BOUND: a path outside it is reported, which the comparison
+    # can only conclude with a comparable include set. Red under prose fallback.
+    check(
+        "windows-scope-include-binds-outside-flagged",
+        ("elsewhere/other.txt", "outside scope.in") in findings,
+    )
+    check(
+        "windows-scope-include-binds-inside-clean",
+        not any(path == "Allowed Work/ordinary.txt" for path, _ in findings),
+    )
+    latest, _ = m.store.load_latest()
+    uncompared = uncompared_scope_entries(latest["manifest"])
+    check(
+        "windows-scope-nothing-left-uncompared",
+        uncompared["in"] == [] and uncompared["out"] == []
+        and uncompared["in_comparison_disabled"] is False,
+    )
+
+    m.begin_verification()
+    acceptor = Mission.load(workspace, actor="agent:acceptor")
+    try:
+        acceptor.record_verdict(
+            "PASS",
+            acceptor_id="agent:acceptor",
+            assurance_tier="declared-role-separation",
+            reason="done",
+        )
+        check("windows-scope-pass-refused", False)
+    except AcceptanceRefused as exc:
+        check(
+            "windows-scope-pass-refused",
+            "crossed the declared scope" in str(exc),
+        )
+
+
+"""The separator-form case table, asserted through the live comparison.
+
+THE ENUMERATION IS THE SPEC, and the spec is here rather than in a comment
+because a comment beside the classifier dies with the next edit while a row
+that no longer holds goes red. #157 said so in advance: this branch had
+already been refuted once by an unenumerated row, so a separator fix that
+does not enumerate the separator SPACE is the same defect wearing the fix's
+clothes.
+
+The space is separator FORM, not just separator character. Windows spells a
+path in more shapes than `dir\\file`, and the shapes divide into two verdicts
+that must never be confused:
+
+  BINDS      -- the entry is compared, and an artifact it names is flagged.
+  DISCLOSED  -- the entry cannot match any workspace-relative receipt path, so
+                it is demoted to uncompared and LISTED. Inert, but visibly so.
+
+The third verdict is the one this module exists to prevent and no row may
+have: silently inert -- compared, matching nothing, reported nowhere.
+
+Both halves run through `scope_consistency()` and `uncompared_scope_entries()`
+on a real mission, not through a local copy of the regex builder. A test that
+rebuilds the matcher proves the test agrees with itself; only the live
+comparison proves the entry an operator writes binds the file they meant.
+
+WHICH ROWS DISCRIMINATE, measured rather than assumed. Three mutants were run
+against this table (baseline 57 assertions, 0 red):
+
+  A  the pre-fix classifier (no separator normalization)   -> 10 red
+  B  `_is_matchable_pattern` forced True                   -> 10 red
+  C  the fix HALF-APPLIED: the `entry.endswith("\\\\")` clause
+     deleted as this change deletes it, but the
+     normalization it delegates to removed                 -> 18 red
+
+A kills the spaced-trailing and include rows; B kills the ENTIRE disclosed
+half, which is what makes those drive/UNC rows load-bearing rather than
+decorative; C kills every trailing-separator row, which is the specific price
+of the deleted clause and the reason those rows exist.
+
+The rows green under all three -- mixed separators, doubled interior,
+dot-relative, the two prose rows -- are ENUMERATION, not controls: each
+carries a `/`, a `*` or an extension that every mutant also accepts. They are
+here so the next person fixing this branch inherits the space rather than the
+instance, and they must not be read as evidence that a change is safe.
+"""
+
+# (label, scope.out entry, artifact the entry is meant to catch)
+_WIN_SEPARATOR_BINDING_ROWS = [
+    # MIXED separators, both orders, with and without whitespace.
+    ("mixed-glob-spaced", "Mixed A\\rel notes/**", "Mixed A/rel notes/leaf.txt"),
+    ("mixed-file-spaced", "Mixed B/rel notes\\leaf.txt", "Mixed B/rel notes/leaf.txt"),
+    ("mixed-wildcard", "MixedC/sub\\deep\\*.py", "MixedC/sub/deep/x.py"),
+    # TRAILING separator: the directory marker, in its Windows spelling. The
+    # `/` twin of this row is es#155, found three times; the `\\` spelling
+    # reaches the same compiler only because classification normalizes first.
+    ("trailing-bare", "TrailD\\", "TrailD/x.txt"),
+    ("trailing-spaced", "Trail E\\rel notes\\", "Trail E/rel notes/x.txt"),
+    ("trailing-doubled", "TrailF\\\\", "TrailF/x.txt"),
+    # DOUBLED interior separators and a dot-relative prefix: spellings a
+    # Windows shell or a copied path routinely produces.
+    ("doubled-interior", "DupG\\\\sub\\\\x.txt", "DupG/sub/x.txt"),
+    ("dot-relative", ".\\DotH\\**", "DotH/x.txt"),
+]
+
+# (label, scope.out entry, why it can never match a workspace-relative path)
+_WIN_SEPARATOR_DISCLOSED_ROWS = [
+    ("drive-absolute", "C:\\Users\\zachs\\secrets.env", "drive-absolute"),
+    # DRIVE-RELATIVE is the form with no root at all: `C:secrets.env` means
+    # "secrets.env in the current directory OF DRIVE C:", which is neither
+    # absolute nor workspace-relative and resolves against per-drive state no
+    # receipt records. It looks the most like a relative path of any row here.
+    ("drive-relative", "C:secrets.env", "drive-relative"),
+    ("drive-relative-sub", "C:docs\\secrets.env", "drive-relative"),
+    ("unc-file", "\\\\server\\share\\secrets.env", "UNC (absolute)"),
+    ("unc-glob", "\\\\server\\share\\**", "UNC (absolute)"),
+    ("unc-extended", "\\\\?\\C:\\docs\\x.txt", "extended-length UNC"),
+    ("lone-separator", "\\", "names the root"),
+    ("traversal", "docs\\..\\secrets\\**", "'..' segment survives normalization"),
+    ("dot-only", ".\\", "normalizes to the workspace itself"),
+    # PROSE keeps its reading in the Windows spelling too: a spaced entry
+    # ending in a bare word is ambiguous by the established rule, and the
+    # normalization must not quietly promote it.
+    ("bare-final-segment", "My Documents\\archive", "spaced, ends in a bare word"),
+    ("prose-with-separators", "TCP\\IP tuning", "spaced, ends in a bare word"),
+]
+
+
+def test_windows_separator_form_table(workspace: Path) -> None:
+    """Every separator FORM binds or is disclosed -- none is silently inert."""
+    from custody_mission import (
+        _is_compared_entry, _is_matchable_pattern, _is_path_pattern,
+        uncompared_scope_entries,
+    )
+
+    # -- half one: the forms that must BIND ------------------------------
+    # Two missions, each in its OWN SUBDIRECTORY of the fixture. `workspace`
+    # already holds an active mission per half, and the second half must not
+    # be opened against `workspace.parent`: that reaches outside the fixture
+    # into the shared temp root, where it collides with whatever sibling test
+    # ran last. Caught by running this test under a mutation harness whose
+    # fixture was the temp root itself -- the escape is invisible while the
+    # fixture happens to be private.
+    m = open_mission(
+        workspace / "binds", "m-win-sep-binds",
+        "Windows separator forms that bind.",
+        scope_out=[entry for _, entry, _ in _WIN_SEPARATOR_BINDING_ROWS],
+    )
+    m.approve()
+    for i, (_, _, artifact) in enumerate(_WIN_SEPARATOR_BINDING_ROWS):
+        m.record_effect(artifact, "x", f"sep-{i}")
+    flagged = {f["artifact_path"] for f in m.scope_consistency()
+               if f["reason"] == "matches scope.out"}
+    for label, entry, artifact in _WIN_SEPARATOR_BINDING_ROWS:
+        check(f"sep-binds-{label}", artifact in flagged)
+        check(f"sep-compared-{label}", _is_compared_entry(entry))
+    latest, _ = m.store.load_latest()
+    check("sep-binding-rows-none-uncompared",
+          uncompared_scope_entries(latest["manifest"])["out"] == [])
+
+    # -- half two: the forms that must be DISCLOSED, never silent --------
+    m2 = open_mission(
+        workspace / "disclosed", "m-win-sep-disclosed",
+        "Windows separator forms that cannot match.",
+        scope_out=[entry for _, entry, _ in _WIN_SEPARATOR_DISCLOSED_ROWS],
+    )
+    m2.approve()
+    # Artifacts a reader would expect these entries to catch. Each is written,
+    # and each must draw NO finding -- the entries are inert. That is only
+    # acceptable because every one of them is named by the disclosure surface.
+    for i, artifact in enumerate(
+            ["secrets.env", "docs/secrets.env", "secrets/x.txt",
+             "My Documents/archive/x.txt", "TCP/IP tuning"]):
+        m2.record_effect(artifact, "x", f"sep-d-{i}")
+    check("sep-disclosed-rows-bind-nothing", m2.scope_consistency() == [])
+    latest2, _ = m2.store.load_latest()
+    declined = uncompared_scope_entries(latest2["manifest"])["out"]
+    check("sep-disclosed-rows-all-reported",
+          declined == [entry for _, entry, _ in _WIN_SEPARATOR_DISCLOSED_ROWS])
+    for label, entry, _why in _WIN_SEPARATOR_DISCLOSED_ROWS:
+        check(f"sep-disclosed-{label}", not _is_compared_entry(entry))
+
+    # -- separator invariance --------------------------------------------
+    # The change's own claim: classification and matching inspect ONE canonical
+    # spelling. A LIMITED control, and limited in a stated way -- it compares
+    # the predicate against itself, so it cannot catch a rule that is wrong for
+    # both spellings alike. The per-row verdicts above are the independent
+    # half; this only pins that `\\` and `/` never diverge.
+    for label, entry, _x in (_WIN_SEPARATOR_BINDING_ROWS
+                             + _WIN_SEPARATOR_DISCLOSED_ROWS):
+        fwd = entry.replace("\\", "/")
+        check(f"sep-invariant-{label}",
+              (_is_path_pattern(entry), _is_matchable_pattern(entry))
+              == (_is_path_pattern(fwd), _is_matchable_pattern(fwd)))
+
+
+# THE BARE MULTI-SEGMENT FORM -- the one cell of #157's product the table
+# above does not carry, and the only cell whose END-TO-END verdict this
+# change actually moves.
+#
+# #157 asked for the product separator x whitespace x wildcard x extension.
+# Walking it for the `\\` separator, every cell is asserted somewhere above
+# EXCEPT (whitespace=no, wildcard=no, extension=no, trailing=no) --
+# `Docs\archive`. `test_scope_entry_classification_table` carries its
+# predicate row (`docs\source` -> True); nothing carried its BINDING.
+#
+# That absence is not cosmetic, because a differential over the two
+# classifiers says this is the cell the fix moves. Measured, pre-fix vs
+# post-fix, over the separator corpus -- only four entries change verdict:
+#
+#   Case I\SECRETS.env      DISCLOSED -> BINDS   (case row, asserted below)
+#   Trail E\rel notes\      DISCLOSED -> BINDS   (trailing row, above)
+#   Docs\archive            DISCLOSED -> compared, EXACT-ONLY   <- unasserted
+#   a\b\c                   DISCLOSED -> compared, EXACT-ONLY   <- unasserted
+#
+# Every other row above was ALREADY compared before the fix -- carried by a
+# `/`, a `*`, an extension or the deleted `endswith("\\")` clause -- so the
+# rows that bind are largely enumeration and this is where the change lands.
+#
+# THE VERDICT IS A THIRD ONE, AND SAYING SO IS THE POINT. The form table
+# above divides entries into BINDS and DISCLOSED and states that no row may
+# be silently inert. Both remain true under that block's own definitions --
+# "silently inert" there means UNMATCHABLE-yet-compared, the class
+# `_is_matchable_pattern` demotes, and `Docs\archive` is matchable: it binds
+# the artifact `Docs/archive` exactly. But it does NOT bind anything beneath
+# that path, and it is not listed by `uncompared_scope_entries` either. An
+# operator who wrote it meaning the DIRECTORY is told nothing.
+#
+# That reading is CORRECT, not a defect, and the distinction is load-bearing:
+# #155's case table settled `docs` -> `docs` as the wanted behaviour and named
+# this exact class "matchable-but-wrong", stating that the disclosure surface
+# "is authoritative only for the unmatchable class". The subtree reading is
+# spelled with a trailing separator (`Docs\archive\`), which the row
+# `trailing-bare` above proves binds.
+#
+# So the honest price of the fix, asserted rather than narrated: for THIS
+# form the backslash spelling loses a disclosure it used to get for the wrong
+# reason. Pre-fix it was called prose and listed as uncompared -- not because
+# anything understood it, but because the classifier could not see a
+# separator. The forward-slash twin never had that listing. The rows below
+# pin BOTH spellings to the same behaviour, so the invariance the fix claims
+# is asserted end-to-end and not only through the predicate.
+#
+# WHAT A FUTURE READER MUST NOT CONCLUDE FROM THESE ROWS GOING RED. The
+# `-child-not-flagged` assertions pin SETTLED SEMANTICS (#155), not a bug
+# fence. If a later change deliberately gives a bare entry its subtree, they
+# go red and that red means "update this row and #155's table", not "a
+# regression appeared". They are here so that change has to be deliberate.
+
+# (label, scope.out entry, the artifact the entry names, a CHILD of it)
+_WIN_SEPARATOR_EXACT_ONLY_ROWS = [
+    ("bare-two-segment", "Docs\\archive", "Docs/archive", "Docs/archive/x.txt"),
+    ("bare-three-segment", "a\\b\\c", "a/b/c", "a/b/c/leaf.txt"),
+]
+
+
+def test_windows_bare_multi_segment_entry_names_exactly_one_path(
+        workspace: Path) -> None:
+    """A bare `Docs\\archive` is COMPARED, binds that path, and binds nothing
+    under it -- identically to `Docs/archive`.
+
+    Red under the pre-fix classifier (both `-compared-` and `-exact-flagged-`
+    go red: the entry falls back to prose, so the exclusion is dropped and the
+    write it names draws no finding), and red under the half-applied fix that
+    deletes the `endswith("\\\\")` clause without adding normalization.
+
+    The `-child-not-flagged` half is NOT red under either mutant. It is not a
+    control; it is a pinned reading, and it is asserted for the forward-slash
+    twin in the same breath so that no future edit can make one separator
+    spelling mean a subtree while the other means one file.
+    """
+    from custody_mission import _is_compared_entry, uncompared_scope_entries
+
+    def _mission(subdir: str, mission_id: str, entries, artifacts):
+        m = open_mission(
+            workspace / subdir, mission_id,
+            "Bare multi-segment separator forms.",
+            scope_out=entries)
+        m.approve()
+        for i, artifact in enumerate(artifacts):
+            m.record_effect(artifact, "x", "%s-%d" % (mission_id, i))
+        flagged = {f["artifact_path"] for f in m.scope_consistency()
+                   if f["reason"] == "matches scope.out"}
+        latest, _ = m.store.load_latest()
+        return flagged, uncompared_scope_entries(latest["manifest"])["out"]
+
+    for spelling, to_entry in (("win", lambda e: e),
+                               ("fwd", lambda e: e.replace("\\", "/"))):
+        entries = [to_entry(entry)
+                   for _, entry, _, _ in _WIN_SEPARATOR_EXACT_ONLY_ROWS]
+
+        # The entry is COMPARED -- this is what the fix moved, and it is the
+        # assertion that goes red without the normalization.
+        for (label, entry, _named, _child) in _WIN_SEPARATOR_EXACT_ONLY_ROWS:
+            check("sep-exact-%s-compared-%s" % (spelling, label),
+                  _is_compared_entry(to_entry(entry)))
+
+        # ...and it BINDS the artifact it names. A separate mission per half:
+        # `Docs/archive` cannot be both a file and a directory at once, so
+        # writing the named path and its child in one workspace is impossible.
+        flagged, declined = _mission(
+            "exact-" + spelling, "m-sep-exact-" + spelling, entries,
+            [named for _, _, named, _ in _WIN_SEPARATOR_EXACT_ONLY_ROWS])
+        check("sep-exact-%s-none-uncompared" % spelling, declined == [])
+        for (label, _entry, named, _child) in _WIN_SEPARATOR_EXACT_ONLY_ROWS:
+            check("sep-exact-%s-flagged-%s" % (spelling, label),
+                  named in flagged)
+
+        # ...and binds NOTHING beneath it, while saying nothing about that.
+        # Both halves of the price are asserted: no finding AND no disclosure.
+        child_flagged, child_declined = _mission(
+            "child-" + spelling, "m-sep-child-" + spelling, entries,
+            [child for _, _, _, child in _WIN_SEPARATOR_EXACT_ONLY_ROWS])
+        for (label, _entry, _named, child) in _WIN_SEPARATOR_EXACT_ONLY_ROWS:
+            check("sep-exact-%s-child-not-flagged-%s" % (spelling, label),
+                  child not in child_flagged)
+        check("sep-exact-%s-child-not-disclosed-either" % spelling,
+              child_declined == [])
+
+
+def test_windows_scope_case_insensitive_compare(workspace: Path) -> None:
+    """CASE-INSENSITIVE COMPARE, and the residue it does not cover.
+
+    On NT `_norm_path` folds both sides, so a scope entry and a receipt that
+    differ only in ASCII case name one file and the exclusion binds. That is
+    the row an operator relies on: nobody retypes a Windows path with the
+    original capitalization.
+
+    THE RESIDUE IS ASSERTED, NOT ASSUMED. `_ascii_case_fold` folds A-Z ONLY,
+    while NTFS's upcase table also folds Latin-1 and beyond -- so a scope.out
+    entry differing from the receipt in a NON-ASCII case pair names the same
+    file on disk and does NOT bind. It is pinned here as a KNOWN row rather
+    than repaired, because the repair is `str.casefold()` and that function's
+    docstring already measured what it costs: 1-to-many folding makes distinct
+    NTFS files compare equal, and one write then discharges another file's
+    obligation. Swapping an under-match for an over-match would be a new defect
+    of exactly the class this table exists to close.
+
+    The tie-break that chose under-matching was argued for the DISCHARGE
+    direction, where leaving an obligation outstanding is visible and
+    recoverable. On scope.out it inverts: an exclusion that binds nothing is
+    the false-CLEAN direction. Filed rather than silently inherited.
+    """
+    fold_is_live = os.name == "nt"
+    m = open_mission(
+        workspace, "m-win-case", "Windows case folding.",
+        scope_out=["Case I\\SECRETS.env", "Case J\\\u00c4rchive.env"],
+    )
+    m.approve()
+    m.record_effect("case i/secrets.env", "leak", "case-1")
+    m.record_effect("case j/\u00e4rchive.env", "leak", "case-2")
+    flagged = {f["artifact_path"] for f in m.scope_consistency()
+               if f["reason"] == "matches scope.out"}
+    check("win-case-ascii-fold-binds",
+          ("case i/secrets.env" in flagged) is fold_is_live)
+    check("win-case-non-ascii-residue-does-not-bind",
+          "case j/\u00e4rchive.env" not in flagged)
 
 
 def test_prose_scope_does_not_refuse_acceptance(workspace: Path) -> None:
@@ -5560,6 +5979,10 @@ TESTS = [
     test_scope_entry_classification_table,
     test_uncompared_scope_entries_are_reported,
     test_bare_filename_exclusion_is_enforced,
+    test_windows_scope_entries_with_spaces_bind_end_to_end,
+    test_windows_separator_form_table,
+    test_windows_bare_multi_segment_entry_names_exactly_one_path,
+    test_windows_scope_case_insensitive_compare,
     test_prose_scope_does_not_refuse_acceptance,
     test_unrelated_amendment_never_discharges_regardless_of_order,
     test_mixed_prose_and_path_scope_in_does_not_flag_everything,
