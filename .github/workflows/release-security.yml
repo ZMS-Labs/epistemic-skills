@@ -10,9 +10,14 @@ name: release-security
     # ready_for_review included so gating jobs actually dispatch when a
     # draft PR is marked ready -- the takeover KL-DRAFT-CI promised.
     # Mirrors dco.yml; gauntlet ruling R8 (es-v6-candidate-freeze-2026-08-18).
-    types: [opened, synchronize, reopened, ready_for_review]
+    types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]
   push:
     branches: [main]
+
+# NO concurrency group, deliberately. This is the full-history secret scan: the
+# one workflow whose run must not be cancelled by a newer commit. A secret is
+# introduced by a commit, not by the tip of a branch, and a scan cancelled
+# halfway is indistinguishable in the UI from a scan that found nothing.
 
 permissions:
   contents: read

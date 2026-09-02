@@ -4,7 +4,15 @@ on:
   pull_request_target:
     # ready_for_review included so a PR opened as draft gets its DCO check
     # the moment it becomes a real candidate.
-    types: [opened, synchronize, reopened, ready_for_review]
+    types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]
+
+# `pull_request_target` runs in the context of the BASE branch, so `github.ref`
+# is `refs/heads/main` for every pull request -- a group keyed on it would make
+# one PR's DCO run cancel an unrelated PR's. Key on the pull request number, so
+# only a newer revision of the SAME pull request supersedes.
+concurrency:
+  group: dco-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
