@@ -13,7 +13,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from custody_store import (
-    MissionStore, StoreError, atomic_write_json, sha256_bytes, sha256_file,
+    EpochSkew, MissionStore, StoreError, atomic_write_json, sha256_bytes,
+    sha256_file,
 )
 from verify_mission_custody import (
     TIERS, VERDICTS, _ID_RE, epoch_skew_anywhere, validate_record,
@@ -113,6 +114,86 @@ scope-ack by agent:acceptor: secrets.env" passed.
                     "unmistakably narrative. Indentation does NOT work: "
                     "leading whitespace is stripped before this comparison. "
                     f"Offending line: {line!r}")
+
+
+def _refuse_unacknowledgable_name(name: str) -> None:
+    """Refuse an unreadable-dir NAME that cannot safely ride an
+    `unreadable-acknowledged: {name}` machine note.
+
+    Machine-written FORMAT, caller-controlled VALUE: a directory name is
+    attacker-controlled on POSIX, where a newline is a legal filename
+    character, so `bad\nsibling-authorized: x.txt by evil` composed a
+    chained note whose SECOND LINE reads as a machine authorization to any
+    line-oriented auditor -- the exact class `_refuse_reserved_note` exists
+    to close, arriving through the one channel that ran AFTER it. The
+    composed note cannot itself be handed to that guard -- it legitimately
+    BEGINS with a reserved prefix -- so the guard belongs on the value, and
+    it is the same narrow Cc/Zl/Zp refusal `effect` applies to artifact
+    paths, for the same reason: the note carries the name verbatim, so a
+    line boundary inside it forges a line.
+
+    ONE guard for BOTH composition sites -- `open()` and the
+    `record_effect(..., acknowledge_unreadable=...)` quarantine commit --
+    because they write the identical note. Printable names, spaces and dots
+    stay legal; the quarantine path for awkward directory names survives
+    intact."""
+    bad = sorted({c for c in str(name)
+                  if unicodedata.category(c) in ("Cc", "Zl", "Zp")})
+    if bad:
+        raise CustodyError(
+            "mission directory name contains control characters or "
+            "line separators, and the acknowledgement note carries "
+            "the name verbatim -- an embedded line boundary forges a "
+            "machine-note line in this mission's chain. Rename the "
+            "directory before quarantining it. Offending: "
+            + ", ".join(repr(c) for c in bad)
+            + f" in {name!r}")
+
+
+def _refuse_store_aliased_target(workspace: Path, target: Path,
+                                 artifact_relpath: str) -> None:
+    """Refuse to write through a hard-linked alias OF A CUSTODY RECORD.
+
+    A resolved path answers WHERE a name points, not WHAT sits there. A
+    hard link is not a link to a path -- it is a second name for one inode
+    -- and realpath cannot see it, so an in-workspace alias linked to a
+    checkpoint passes the parent-based containment check while
+    `write_bytes` truncates the RECORD itself: the store-destruction bug
+    containment exists to close, arriving through the directory entry it
+    cannot see.
+
+    Identity is compared against the custody records, NOT refused on link
+    count alone: an ordinary multiply-linked ARTIFACT stays legal -- it is
+    the `_MULTIPLY_LINKED` scope-consistency disclosure's case, with teeth
+    at acceptance -- and refusing it here would repeal a deliberate
+    contract. The workspace walk only runs for an already multiply-linked
+    target, so the common path costs one stat. On filesystems whose
+    st_dev/st_ino are unreliable the comparison simply never matches and
+    the disclosure contract below carries the case, as before."""
+    try:
+        st = target.stat()
+    except OSError:
+        return
+    if st.st_nlink <= 1:
+        return
+    key = (st.st_dev, st.st_ino)
+    missions = workspace / "missions"
+    if not missions.is_dir():
+        return
+    for dirpath, _dirnames, filenames in os.walk(missions):
+        for name in filenames:
+            try:
+                fst = (Path(dirpath) / name).stat()
+            except OSError:
+                continue
+            if (fst.st_dev, fst.st_ino) == key:
+                raise CustodyError(
+                    "artifact path is a hard-linked alias of a custody "
+                    f"record ({artifact_relpath!r} -> {target}, one inode "
+                    "with several names, the other under missions/) -- "
+                    "writing through it would truncate the record that "
+                    "attests the work. Remove the alias and record a fresh "
+                    "artifact.")
 
 
 def _refuse_unprintable_identity(value, field: str) -> None:
@@ -381,13 +462,28 @@ def _approved_by_chain(store: MissionStore) -> bool:
     drift (FATAL-3 leg 2). The core's own `_resumption_status` doctrine,
     shared here so the union assembler and the resume discriminator cannot
     disagree with it. Unreadable checkpoints answer False -- damage must
-    never widen authority."""
+    never widen authority.
+
+    THE POSITIVE TRANSITION, not the absence of two statuses. This used to
+    answer True for any status outside {draft, reopened}, and `cancel()` is
+    legal directly from `draft`: opening a mission, never approving it and
+    cancelling it produced a chain that read as APPROVED (measured). That is
+    the discriminator the resume-time sibling attribution consults, so a
+    never-approved throwaway could launder another mission's drift into
+    DRIFT-SIBLING.
+
+    `active` is the only status `approve()` writes, and it is unreachable
+    otherwise: `begin_verification` requires `active`, every later status
+    descends from it, and `_resumption_status` -- the one other writer of
+    `active` -- asks THIS function first, so a never-approved mission returns
+    to `draft` and cannot bootstrap itself. Looking for `active` is therefore
+    looking for the approval act itself."""
     for cp_path in store.checkpoint_paths():
         try:
             record = json.loads(cp_path.read_text(encoding="utf-8"))
         except (OSError, ValueError):
             return False
-        if record.get("status") not in ("draft", "reopened"):
+        if record.get("status") == "active":
             return True
     return False
 
@@ -1132,8 +1228,10 @@ class Mission:
         # met UnionDegraded on the mission's FIRST effect and demanded the
         # same acknowledgement again -- contradicting both this method's own
         # refusal text ("recorded in the opening checkpoint") and the design.
-        # Machine-written, so it is composed AFTER the `_refuse_reserved_note`
-        # pass below, which exists to stop CALLER text imitating one.
+        # The name guard is `_refuse_unacknowledgable_name`, shared with the
+        # record_effect quarantine commit, which writes the identical note.
+        for entry in sorted(skipped, key=lambda s: s["name"]):
+            _refuse_unacknowledgable_name(str(entry["name"]))
         ack_notes = [f"unreadable-acknowledged: {s['name']}"
                      for s in sorted(skipped, key=lambda s: s["name"])]
         opening_notes = []
@@ -1227,7 +1325,9 @@ class Mission:
         return cls(store, workspace, actor)
 
     @classmethod
-    def _discover(cls, workspace: Path) -> tuple[list[dict], list[dict]]:
+    def _discover(cls, workspace: Path, *,
+                  degrade_on_oserror: bool = False
+                  ) -> tuple[list[dict], list[dict]]:
         """Walk missions/ once: every ACTIVE mission and every skip.
 
         Returns (active, skipped). Each active entry is
@@ -1235,7 +1335,24 @@ class Mission:
         latest checkpoint. Each skipped entry is {"name", "kind", "reason"}
         for a dir whose latest checkpoint fails to load. The ONE discovery
         walk, shared by load, open, the union assembler, and the effect
-        gate, so no two surfaces can disagree about what is active."""
+        gate, so no two surfaces can disagree about what is active.
+
+        `degrade_on_oserror` exists because the two CALLERS want opposite
+        things from an ENVIRONMENTAL failure, and only they can say which:
+
+        - `open` and `load` want it PROPAGATED. Skipping a mission that is
+          merely busy or momentarily unreadable would reroute discovery
+          around it and invite a duplicate open -- the fail-open decoy this
+          contract has already paid for.
+        - the GATE wants it DEGRADED. One unreadable dir aborted the union
+          before any healthy sibling was evaluated, the hook caught the
+          exception at the workspace boundary, and an approved enforce-mode
+          mission's BLOCK became a silent allow (measured). Degraded here
+          loses exactly that one mission's guards and SAYS SO, in the verdict
+          reason and on stderr.
+
+        Default False, so the safety-critical caller keeps the stricter
+        behaviour and only the caller that can survive partial data opts in."""
         workspace = Path(workspace)
         missions_root = workspace / "missions"
         active: list[dict] = []
@@ -1247,6 +1364,35 @@ class Mission:
                 store = MissionStore(mission_dir)
                 if not store.checkpoint_paths():
                     continue
+                # EPOCH FIRST. The name check used to return before the
+                # store was ever read, so a checkpoint-bearing dir under an
+                # illegal name was reported only as IllegalMissionId -- which
+                # `open()` treats as ACKNOWLEDGEABLE, while EpochSkew is a
+                # hard refusal. Measured: copying an approved mission to
+                # `missions/.backup`, relabelling its checkpoint
+                # `checkpoint@2`, and opening with
+                # `--acknowledge-unreadable .backup` SUCCEEDED. The
+                # acknowledgeable classification laundered the one condition
+                # this contract says cannot be acknowledged -- opening beside
+                # a store this reader cannot read is blind, whatever the
+                # directory is called. An ordinary corrupt store under an
+                # illegal name keeps the acknowledgeable classification: only
+                # the epoch claim is promoted.
+                if not _ID_RE.match(mission_dir.name):
+                    try:
+                        store.load_latest()
+                    except EpochSkew as exc:
+                        reason = (f"{mission_dir.name}: EpochSkew: {exc}")
+                        skipped.append({"name": mission_dir.name,
+                                        "kind": "EpochSkew",
+                                        "reason": reason})
+                        print(("custody: skipping mission dir from a NEWER "
+                               "epoch " + reason)
+                              .encode("ascii", "backslashreplace")
+                              .decode("ascii"), file=sys.stderr)
+                        continue
+                    except (StoreError, ValueError, TypeError, OSError):
+                        pass   # ordinary damage: the name verdict below owns it
                 if not _ID_RE.match(mission_dir.name):
                     # A dir holding checkpoints under a name no binding can
                     # ever name (`missions/.backup`, a renamed or copied
@@ -1270,9 +1416,12 @@ class Mission:
                           .encode("ascii", "backslashreplace").decode("ascii"),
                           file=sys.stderr)
                     continue
+                degradable: tuple = (StoreError, ValueError, TypeError)
+                if degrade_on_oserror:
+                    degradable = degradable + (OSError,)
                 try:
                     latest, _ = store.load_latest()
-                except (StoreError, ValueError, TypeError) as exc:
+                except degradable as exc:
                     # A CORRUPT sibling must not brick discovery of a healthy
                     # mission -- but the skip is loud, and if nothing loads the
                     # skip reasons ride the NoActiveMission error. Environmental
@@ -1511,6 +1660,35 @@ class Mission:
             raise CustodyError(f"artifact path escapes workspace: {relpath!r}") from None
         return target
 
+    def _refuse_store_target(self, target: Path,
+                             artifact_relpath: str) -> None:
+        """THE CUSTODY STORE IS NOT AN ARTIFACT. `_resolve_artifact_path`
+        only asks "is this under the workspace", and `missions/` is.
+        Measured on main: `effect --path
+        missions/<id>/checkpoints/r00000002.json` overwrote the chained
+        checkpoint, minted a receipt attesting the overwrite, and returned
+        success -- brokered work destroying its own authority and history
+        record, with a receipt saying it was authorised.
+
+        RESOLVED comparison, not lexical: `missions\\x`,
+        `notes/../missions/x` and an in-workspace symlink aliasing the store
+        all name the same place, and a lexical prefix test catches none of
+        them.
+
+        EVERY mission dir, not only this one: a sibling's store is someone
+        else's authority, and "my own" is exactly the store an attacker
+        would not name. `docs/missions/plan.md` and `missionsummary.md` are
+        untouched -- only the workspace's own top-level `missions/` tree."""
+        missions_root = (self.workspace / "missions").resolve()
+        if target == missions_root or missions_root in target.parents:
+            raise CustodyError(
+                "artifact path resolves inside the custody store "
+                f"({artifact_relpath!r} -> {target}). `effect` writes ARTIFACTS; "
+                "checkpoints, receipts and verdicts are the record that "
+                "attests them, and a verb that can overwrite its own "
+                "authority is not a gate. Record the artifact outside "
+                "missions/.")
+
     def _write_effect(self, latest: dict, artifact_relpath: str, content: str,
                        request_id: str) -> dict:
         # Idempotency is checked BEFORE the workspace mutates: previously the
@@ -1536,6 +1714,19 @@ class Mission:
                 f"request_id {request_id!r} is already recorded in this "
                 "mission's history and can never be reused -- use a fresh id")
         target = self._resolve_artifact_path(artifact_relpath)
+        # THE CUSTODY STORE IS NOT AN ARTIFACT (`_refuse_store_target`).
+        # At the WRITE seam, so `reconcile` is covered by the same guard and
+        # a RECOVER obligation cannot route around it. Honest residue: a
+        # historical mission that already receipted a path inside a store
+        # cannot re-cover it through this verb any more. Such a mission is
+        # already corrupt by construction, and the refusal names the reason.
+        self._refuse_store_target(target, artifact_relpath)
+        # A resolved path answers WHERE a name points, not WHAT sits there
+        # (`_refuse_store_aliased_target`): an in-workspace hard-linked
+        # alias OF A CUSTODY RECORD passes the parent-based containment
+        # check while `write_bytes` truncates the RECORD itself.
+        _refuse_store_aliased_target(self.workspace, target,
+                                     artifact_relpath)
         before_sha = sha256_file(target) if target.exists() else None
         data = content.encode("utf-8")
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -2036,6 +2227,14 @@ class Mission:
         # mediation -- amend being unblockable is what keeps this legal.
         entries, fresh_acks = self._effect_union_entries(
             latest, acknowledge_unreadable)
+        # The fresh quarantine commits below write `unreadable-acknowledged:
+        # {name}` machine notes that carry the name VERBATIM -- the identical
+        # note `open()` composes -- so the identical name guard applies here;
+        # without it this path was the one remaining channel that skipped the
+        # Cc/Zl/Zp refusal, and a newline-bearing directory name forged a
+        # second machine line through the effect acknowledgement.
+        for name in fresh_acks:
+            _refuse_unacknowledgable_name(name)
         from custody_gate import evaluate_effect_union
         # OD-4 refined ("Self-arm at open, union at approve", operator
         # ruling 2026-08-25): this mission's own guards bind its own
@@ -2089,6 +2288,23 @@ class Mission:
                 "that mission's guard set, or stop. `note` and `amend` "
                 "remain unblockable by design (OD-2): record the "
                 "escalation there.")
+        # REFUSE-BEFORE-MUTATE ORDERING. The containment and hard-link
+        # refusals live in `_write_effect` at the write seam (so `reconcile`
+        # stays covered by them), but the fresh quarantine checkpoints
+        # commit BELOW, before the write they license. A caller supplying a
+        # fresh acknowledgement together with a forbidden target otherwise
+        # received a CustodyError AND a committed chain checkpoint recording
+        # a quarantine intended to license an effect that never occurred.
+        # Resolution failures stay deferred to `_write_effect`, which raises
+        # on them exactly as before this preflight existed.
+        try:
+            preflight_target = self._resolve_artifact_path(artifact_relpath)
+        except (CustodyError, OSError, ValueError):
+            preflight_target = None  # _write_effect raises on it in a moment
+        if preflight_target is not None:
+            self._refuse_store_target(preflight_target, artifact_relpath)
+            _refuse_store_aliased_target(self.workspace, preflight_target,
+                                         artifact_relpath)
         # Only now -- with the union verdict in hand -- does anything touch
         # the chain. The fresh-quarantine checkpoints used to land BEFORE
         # evaluation, so a blocked effect mutated the chain while its
