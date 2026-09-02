@@ -11,7 +11,7 @@
 
 Epistemic disciplines for agentic work: use the least process that can still expose an error capable of changing the action or the completion claim.
 
-**Version 6.0.0.** Published 2026-08-21 and now the project's current [immutable support point](https://github.com/ZMS-Labs/epistemic-skills/releases/tag/v6.0.0); every install recipe below pins it. It shipped as an **exception release**, and that word is load-bearing: four independent reviews of the publication act, across three model families, all returned **NO-GO**, and the owner published anyway under a recorded exception rather than a passed gate. None of the four found a defect in the shipped skills — every P1 concerned the release process, its paperwork, or its authority chain. The full record is [RELEASE-6.0.0.md](docs/release/RELEASE-6.0.0.md); read it before citing this release's assurance posture. The package is harness-agnostic, follows the [Agent Skills specification](https://agentskills.io/specification), and is licensed under [GPL-3.0-or-later](LICENSE).
+**Version 7.0.0.** Prepared, **not yet published**. The install recipes below still pin [v6.0.0](https://github.com/ZMS-Labs/epistemic-skills/releases/tag/v6.0.0), which is the newest *published* immutable support point and the one to install today. Install refs track the newest published tag rather than the version in the manifests, because pinning a tag that does not exist ships dead links; they rotate to `v7.0.0` once that tag is measured live. 7.0.0 is a **major** version because two published schemas were tightened in place at their existing contract versions: `epistemic-product-calibration@1` now requires `supersedes` when `status` is `superseded`, and `mission-manifest@1` now refuses whitespace-only strings in eight envelope lists. A manifest with an empty-string permission that validated at 6.0.0 fails at 7.0.0, so this is an incompatible change to a consumed contract, not a minor one. The full record is [RELEASE-7.0.0.md](docs/release/RELEASE-7.0.0.md); read it before citing this release's assurance posture, because its publication-judgment row is the part that matters. Its predecessor **6.0.0** shipped as an **exception release** — four independent reviews of the publication act, across three model families, all returned **NO-GO**, and the owner published anyway under a recorded exception rather than a passed gate; none of the four found a defect in the shipped skills. The package is harness-agnostic, follows the [Agent Skills specification](https://agentskills.io/specification), and is licensed under [GPL-3.0-or-later](LICENSE).
 
 [![Release](https://img.shields.io/github/v/release/ZMS-Labs/epistemic-skills?display_name=tag)](https://github.com/ZMS-Labs/epistemic-skills/releases/latest)
 [![epistemic-flexibility](https://github.com/ZMS-Labs/epistemic-skills/actions/workflows/epistemic-flexibility.yml/badge.svg)](https://github.com/ZMS-Labs/epistemic-skills/actions/workflows/epistemic-flexibility.yml)
@@ -68,14 +68,14 @@ Users and maintainers are equal first-class audiences:
 | [Skill Catalog](https://github.com/ZMS-Labs/epistemic-skills/wiki/Skill-Catalog) | [Release Process and Versioning](https://github.com/ZMS-Labs/epistemic-skills/wiki/Release-Process-and-Versioning) |
 | | [Security, Provenance, and DCO](https://github.com/ZMS-Labs/epistemic-skills/wiki/Security-Provenance-and-DCO) |
 
-The Wiki is unversioned navigation over versioned sources. If a handbook summary and a released contract differ, the immutable `v6.0.0` source controls. The handbook was brought to v6.0.0 alongside this release and now has an oracle of its own ([`check_wiki.py`](docs/wiki-updates/v6.0.0/check_wiki.py)) checking skill inventory, version banners, spelled counts, link-text/URL version agreement, retired-seat tense, and live link resolution — it had never had one, which is why it had drifted three major versions. Use it for orientation; read the in-tree `SKILL.md` for any contract you intend to rely on.
+The Wiki is unversioned navigation over versioned sources. If a handbook summary and a released contract differ, the immutable released source controls. The handbook is brought to each release alongside it and has an oracle of its own ([`check_wiki.py`](docs/wiki-updates/v7.0.0/check_wiki.py)) checking skill inventory, version banners, spelled counts, link-text/URL version agreement, retired-seat tense, and live link resolution — it had never had one, which is why it had drifted three major versions. Use it for orientation; read the in-tree `SKILL.md` for any contract you intend to rely on.
 
 ## Five-minute start
 
 1. **Install one immutable copy.** Choose the native path for your harness under [Installation and compatibility](#installation-and-compatibility). Use the generic Agent Skills path only when no native plugin or extension exists.
 2. **Reload the harness or start a fresh task.** Trigger discovery and role registries are commonly session-bound.
 3. **Choose the entry point.** There is one: `metacognate`. It is the only skill you invoke by name; every other member fires on its own description. (One carve-out: `manifest`, the mission-custody seat, may also be invoked directly — on `manifest this` or `/manifest` — for mission lifecycle acts.) It applies the routine gate first, and declining is its most common correct outcome.
-4. **Verify the inventory and source.** Expect exactly the count your source ships: the `main` tree or a v6.0.0 or v5.1.0 package or tagged checkout ships fifteen (v4.1.0 and v4.0.0 ship eleven; v3.4.0 ships seventeen; v3.3.0 ships fourteen; v3.1.0/v3.2.0 ship twelve; the pinned `v3.0.0` tag also ships eleven — its different eleven)—not two copies found through different install mechanisms.
+4. **Verify the inventory and source.** Expect exactly the count your source ships: the `main` tree or a v7.0.0, v6.0.0 or v5.1.0 package or tagged checkout ships fifteen (v4.1.0 and v4.0.0 ship eleven; v3.4.0 ships seventeen; v3.3.0 ships fourteen; v3.1.0/v3.2.0 ship twelve; the pinned `v3.0.0` tag also ships eleven — its different eleven)—not two copies found through different install mechanisms.
 5. **Let routine work leave.** A local, reversible, directly checkable, non-precedential task should finish with its bounded check and no process-only artifact.
 
 For a harness without a native package surface, the complete generic install is:
@@ -403,14 +403,41 @@ real as a stated boundary, inert as a dependency.
 
 ## Trust, evidence, and known limits
 
-**Version 6.0.0** is the current immutable support point: fifteen skills, aligned package surfaces, deterministic checks, and a tagged source snapshot. It was published as an **exception release** — no independent publication gate ever returned GO, and the owner overrode that gate on the record. Its gate record is [RELEASE-6.0.0.md](docs/release/RELEASE-6.0.0.md) and the post-publication record is [PUBLICATION-RECORD-6.0.0.md](docs/release/PUBLICATION-RECORD-6.0.0.md). **Version 5.1.0** remains a valid rollback target. Its predecessor **v5.0.0** was published with explicit gate honesty — item 6 only PARTIALLY MET at publication, item 8 WAIVED / NOT MET — and a post-release independent review returned **NO-GO** for retrospective certification. Read the [errata](docs/release/RELEASE-5.0.0-ERRATA-2026-08-06.md), [post-release review](docs/release/POST-RELEASE-INDEPENDENT-REVIEW-5.0.0-2026-08-06.md), and [successor progress](docs/release/SUCCESSOR-PROGRESS-104-105-2026-08-07.md) before treating v5.0.0 as gate-complete. Corrective work for issues #104/#105 landed on `main` after the immutable tag; do not move the tag.
+**Version 7.0.0** is prepared but **not yet published**: it has no tag and no Release, so it is not yet an immutable support point and nothing should install it. Its gate record is [RELEASE-7.0.0.md](docs/release/RELEASE-7.0.0.md), whose publication-judgment row is the one to read first. **Version 6.0.0** is the newest published support point and the current install target; it shipped as an **exception release** — no independent publication gate ever returned GO, and the owner overrode that gate on the record. Its gate record is [RELEASE-6.0.0.md](docs/release/RELEASE-6.0.0.md) and the post-publication record is [PUBLICATION-RECORD-6.0.0.md](docs/release/PUBLICATION-RECORD-6.0.0.md). **Version 5.1.0** remains a valid rollback target. Its predecessor **v5.0.0** was published with explicit gate honesty — item 6 only PARTIALLY MET at publication, item 8 WAIVED / NOT MET — and a post-release independent review returned **NO-GO** for retrospective certification. Read the [errata](docs/release/RELEASE-5.0.0-ERRATA-2026-08-06.md), [post-release review](docs/release/POST-RELEASE-INDEPENDENT-REVIEW-5.0.0-2026-08-06.md), and [successor progress](docs/release/SUCCESSOR-PROGRESS-104-105-2026-08-07.md) before treating v5.0.0 as gate-complete. Corrective work for issues #104/#105 landed on `main` after the immutable tag; do not move the tag.
 
 Earlier support points remain historically accurate for their own campaigns, and a named limit
 stays on this page until a later campaign actually retires it. None has been rewritten into a pass.
 
-### Where v6.0.0 stands
+### Where v7.0.0 stands
 
-v6.0.0 is published as an exception release, for reasons this section states rather than hides:
+v7.0.0 is a **contract-tightening** release. What it changes for a consumer, and nothing more:
+
+- `epistemic-product-calibration@1` gained a conditional requiring `supersedes` when `status` is
+  `superseded`. The bundled stdlib verifier already refused those envelopes with
+  `MISSING_SUPERSESSION`; the published schema did not, so a producer validating against the schema
+  as instructed got a false PASS and the consumer rejected the same bytes. Two definitions of valid
+  is one definition too many. No envelope the system ever accepted becomes invalid — but a
+  producer's schema-only check can go from green to red, which is why this is major.
+- `mission-manifest@1` gained a no-whitespace pattern on eight envelope string lists. A manifest
+  carrying an empty-string permission validated at 6.0.0 and fails at 7.0.0.
+- `verify_calibration.py` no longer raises `TypeError` on an unhashable `status`; it returns the
+  named `UNKNOWN_STATUS` failure the contract promises, and its self-test now asserts that the
+  published schema declares the supersession rule the verifier enforces.
+- Mission custody gained concurrent missions (es#173): the one-active-mission door is gone,
+  and unreadable sibling directories require an explicit acknowledgement.
+
+No `SKILL.md` changed, so triggers, routing and the skill count are identical to 6.0.0.
+
+**Publication judgment — read this before citing 7.0.0's assurance posture.** As of this commit
+the independent publication gate has neither returned GO nor been waived on the record, so
+[RELEASE-7.0.0.md](docs/release/RELEASE-7.0.0.md) carries that row as `UNMET`. Under
+[RELEASING.md](RELEASING.md) the release is not conforming until that row is resolved by an owner
+act, and it is never resolved by this file describing it. Treat the integrity evidence as the
+evidence and the judgment evidence as absent.
+
+### Where v6.0.0 stood
+
+v6.0.0 was published as an exception release, for reasons this section states rather than hides:
 
 - It adds a **mission-custody contract** (the `manifest` seat) and a **v6 assurance contract**
   ([`validate_v6_assurance.py`](plugins/epistemic-skills/contracts/v6-assurance/validate_v6_assurance.py))
@@ -454,7 +481,8 @@ model family with the authors and recorded that as an independence *limit*, not 
   vocabulary whose first run found a real unclassified owner.
 - The blinded proportionality campaign retained 162/162 terminal, schema-valid matched calls; the candidate passed the routine, material, and high-risk contract while corrected full-ceremony and always-routine parodies failed.
 - A tag and GitHub Release provide an immutable support coordinate for packaged contracts and
-  install instructions — which is precisely what v6.0.0 does not yet have.
+  install instructions. v6.0.0 has had both since 2026-08-21; the clause here that said it did not
+  was written before the tag existed and was left standing after it did.
 
 ### Required limitations — frozen at the v3.2.0 behavioral campaign
 

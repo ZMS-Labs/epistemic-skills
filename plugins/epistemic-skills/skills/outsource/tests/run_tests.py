@@ -12,13 +12,21 @@ HERE = Path(__file__).resolve()
 SKILL_ROOT = HERE.parents[1]
 PACKAGE_ROOT = HERE.parents[3]
 REPO_ROOT = HERE.parents[5]
-EXPECTED_VERSION = "6.0.0"
+EXPECTED_VERSION = "7.0.0"
 
 # The newest tag an install recipe may point at. It tracks the newest PUBLISHED
 # tag, not EXPECTED_VERSION: pinning a tag that does not exist ships dead install
 # links (PG-18). For most of the 6.0.0 cycle this correctly lagged at v5.1.0
 # because v6.0.0 was unpublished. It moved to v6.0.0 only after the tag existed
 # and all four install URLs were measured at HTTP 200.
+#
+# It lags at v6.0.0 through the 7.0.0 cycle for the same reason, and this guard
+# earned that a second time: the 7.0.0 preparation branch rewrote every install
+# ref to v7.0.0 and this check caught it. Measured at the time:
+#   404  .../tree/v7.0.0/plugins/epistemic-skills/skills
+#   200  .../tree/v6.0.0/plugins/epistemic-skills/skills
+# Rotate to v7.0.0 only after that tag exists and the install URLs are measured
+# at HTTP 200 -- not when the manifests say 7.0.0.
 INSTALL_REF_PIN = "v6.0.0"
 _REF = re.compile(r"github\.com/ZMS-Labs/epistemic-skills/(?:tree|blob)/(v[0-9]+\.[0-9]+\.[0-9]+)")
 

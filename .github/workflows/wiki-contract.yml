@@ -48,11 +48,11 @@ jobs:
         with:
           persist-credentials: false
       - name: Oracle self-test (planted RED controls)
-        run: python docs/wiki-updates/v6.0.0/check_wiki.py --self-test
+        run: python docs/wiki-updates/v7.0.0/check_wiki.py --self-test
       - name: Applier self-test (includes the blanket-rewrite regression guard)
-        run: python docs/wiki-updates/v6.0.0/apply_v6_updates.py --self-test
+        run: python docs/wiki-updates/v7.0.0/apply_v7_updates.py --self-test
       - name: Committed handbook snapshot matches the package
-        run: python docs/wiki-updates/v6.0.0/check_wiki.py docs/wiki-updates/v6.0.0/pages
+        run: python docs/wiki-updates/v7.0.0/check_wiki.py docs/wiki-updates/v7.0.0/pages
 
   live:
     name: live
@@ -69,4 +69,4 @@ jobs:
       - name: Clone the published wiki (read-only)
         run: git clone --quiet --depth 1 https://github.com/${{ github.repository }}.wiki.git "$RUNNER_TEMP/wiki"
       - name: Published handbook matches the package, and every link resolves
-        run: python docs/wiki-updates/v6.0.0/check_wiki.py "$RUNNER_TEMP/wiki" --links
+        run: python docs/wiki-updates/v7.0.0/check_wiki.py "$RUNNER_TEMP/wiki" --links
