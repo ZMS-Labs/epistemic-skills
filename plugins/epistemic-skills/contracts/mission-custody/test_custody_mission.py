@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import contextlib
+import errno
 import io
 import json
 import os
@@ -5316,6 +5317,120 @@ def test_containment_is_validated_before_acknowledgements_commit(
           (workspace / "notes" / "ok.txt").exists())
 
 
+def test_census_reports_partial_coverage_when_a_probe_fails(
+        workspace: Path) -> None:
+    """Q6 must not read "all artifacts present" over an artifact nobody could
+    inspect.
+
+    `q6_coverage_unknown` required `artifacts_present_under_root == 0`, so a
+    mission with one readable artifact and one UNREADABLE one fell out of
+    every bucket -- unknown, zero, lost and untested alike -- and the human
+    summary printed "all active missions have receipted artifacts present
+    here". A count of what WAS looked at is not a claim about what was not.
+
+    The probe failure is injected at `os.stat`, the exact seam the census
+    already classifies, because the portable filesystem tricks do not
+    reproduce it: a directory standing in for a file stats FINE and is
+    correctly counted as not-a-regular-file, which is a different verdict."""
+    m = open_mission(workspace, "m-cov", "Two artifacts, one unreadable.")
+    m.approve()
+    m = Mission.load(workspace, actor="agent:worker")
+    m.record_effect("ok.txt", "fine", "cov-1")
+    m.record_effect("blocked.txt", "fine", "cov-2")
+
+    real_stat = census_missions.os.stat
+    blocked = str((workspace / "blocked.txt").resolve())
+
+    def refusing_stat(path, *args, **kwargs):
+        if str(path) == blocked:
+            raise PermissionError(13, "Permission denied")
+        return real_stat(path, *args, **kwargs)
+
+    census_missions.os.stat = refusing_stat
+    try:
+        report = census_missions.census(workspace)
+    finally:
+        census_missions.os.stat = real_stat
+
+    row = [r for r in report["missions"] if r["mission"] == "m-cov"][0]
+    check("census-probe-failure-counted",
+          row.get("coverage_probe_failures", 0) >= 1)
+    check("census-one-artifact-confirmed-present",
+          row["artifacts_present_under_root"] >= 1)
+    summary = census_missions.summarize([report])
+    names = [entry["mission"] for entry in summary["q6_coverage_unknown"]]
+    check("census-partial-coverage-is-reported",
+          any(name.endswith("::m-cov") for name in names))
+
+    # CONTROL: a mission whose artifacts ALL stat cleanly must stay out of
+    # the unknown list -- an always-on "coverage unknown" is not a signal.
+    clean_report = census_missions.census(workspace)
+    clean_names = [entry["mission"] for entry in
+                   census_missions.summarize([clean_report])["q6_coverage_unknown"]]
+    check("census-no-unknown-coverage-without-a-failure",
+          not any(name.endswith("::m-cov") for name in clean_names))
+
+
+def test_census_orphan_probe_failure_is_partial_not_absence(
+        workspace: Path) -> None:
+    """`Path.exists()` converts EVERY OSError into False, so a retired-receipt
+    path the census could not stat read as "no orphan here" and the run still
+    reported `answers_are_partial: false`.
+
+    That is the census's own stated distinction inverted: "something is wrong"
+    and "I could not look" are different claims, and the es#166 measurement
+    procedure requires `answers_are_partial == false` of every governing run
+    -- so an unlookable residue could certify a run that never inspected it.
+    Only `FileNotFoundError` (and its NotADirectory sibling) mean absence;
+    everything else is an inspection failure.
+
+    MEASURED, not assumed: the finding that named this cited a permission
+    error, and that example does NOT reproduce -- `pathlib._ignore_error`
+    swallows only ENOENT, ENOTDIR, EBADF and ELOOP, so EACCES already
+    propagates and is already recorded. What DOES reproduce is ENOTDIR (a
+    receipts path whose parent is not a directory) and ELOOP (a symlink
+    loop): `Path("x").exists()` returns False for both. So the class is real
+    and its named instance was wrong, and the test injects the errno that
+    actually reproduces."""
+    m = open_mission(workspace, "m-orph", "Retire a receipt id.")
+    m.approve()
+    m = Mission.load(workspace, actor="agent:worker")
+    m.record_effect("a.txt", "aa", "req-1")
+    next((workspace / "missions" / "m-orph" / "receipts").glob("*.json")).unlink()
+    Mission.load(workspace, actor="agent:worker").resume()
+    Mission.load(workspace, actor="agent:worker").acknowledge_receipt_loss("req-1")
+
+    store = MissionStore(workspace / "missions" / "m-orph")
+    retired_path = str(store.receipt_path("req-1").resolve())
+    real_stat = census_missions.os.stat
+
+    def refusing_stat(path, *args, **kwargs):
+        if str(path) == retired_path:
+            raise NotADirectoryError(errno.ENOTDIR, "Not a directory")
+        return real_stat(path, *args, **kwargs)
+
+    census_missions.os.stat = refusing_stat
+    try:
+        report = census_missions.census(workspace)
+    finally:
+        census_missions.os.stat = real_stat
+
+    unreadable_reasons = " ".join(e.get("reason", "")
+                                  for e in report.get("unreadable", []))
+    check("orphan-probe-failure-recorded",
+          "retired" in unreadable_reasons.casefold()
+          and "NotADirectoryError" in unreadable_reasons)
+    summary = census_missions.summarize([report])
+    check("orphan-probe-failure-makes-the-run-partial",
+          summary["answers_are_partial"] is True)
+
+    # CONTROL: with the probe working, this same mission must NOT be partial
+    # -- a census that is always partial has stopped measuring anything.
+    clean = census_missions.summarize([census_missions.census(workspace)])
+    check("orphan-probe-clean-run-is-not-partial",
+          clean["answers_are_partial"] is False)
+
+
 TESTS = [
     test_scope_entry_classification_table,
     test_uncompared_scope_entries_are_reported,
@@ -5458,6 +5573,8 @@ TESTS = [
     test_acknowledge_sibling_rechecks_immediately_before_the_write,
     test_open_refuses_a_sibling_whose_manifest_fails_verification,
     test_census_does_not_count_unapproved_guards_as_armed,
+    test_census_reports_partial_coverage_when_a_probe_fails,
+    test_census_orphan_probe_failure_is_partial_not_absence,
 ]
 
 

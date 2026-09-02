@@ -154,6 +154,51 @@ def main() -> int:
         finally:
             cs.os.link, cs.os.fsync = real_link, real_fsync
 
+    # ---- filename must agree with the revision it claims ----------------
+    # `write_checkpoint` derives the destination from the RECORD's revision
+    # and refuses out-of-order writes, but `load_latest` never checked that
+    # `rNNNNNNNN.json` actually CONTAINS revision NNNNNNNN, nor that the
+    # revisions are contiguous. Renaming r2 to the r3 filename therefore
+    # loaded as a healthy chain (the hash link still verifies), and the next
+    # mutation refused with "already exists; concurrent writer detected" --
+    # a diagnosis that names a race that never happened and sends the
+    # operator looking for another process. The chain is fine; the FILENAMES
+    # are not, and only this loader can say so.
+    with tempfile.TemporaryDirectory() as td:
+        store = MissionStore(Path(td) / "m")
+        store.write_checkpoint(checkpoint(1, None))
+        r1 = store.checkpoint_paths()[0]
+        store.write_checkpoint(checkpoint(2, sha256_file(r1)))
+        r2 = store.checkpoint_paths()[1]
+        r2.rename(r2.parent / "r00000003.json")
+        try:
+            store.load_latest()
+            check("renamed-revision-detected", False)
+        except ChainBroken as exc:
+            check("renamed-revision-detected", True)
+            check("renamed-revision-names-the-file",
+                  "r00000003.json" in str(exc))
+            # The old failure mode was "already exists; concurrent writer
+            # detected" from the NEXT write. The new message may SAY the words
+            # in order to deny them, so the assertion is on the claim, not the
+            # substring.
+            check("renamed-revision-does-not-blame-a-race",
+                  "concurrent writer detected" not in str(exc)
+                  and "FILENAME break" in str(exc))
+        except Exception:  # noqa: BLE001
+            check("renamed-revision-detected", False)
+
+    # Positive control: an ORDINARY chain must still load. A contiguity check
+    # that refuses everything would pass the test above and break the product.
+    with tempfile.TemporaryDirectory() as td:
+        store = MissionStore(Path(td) / "m")
+        store.write_checkpoint(checkpoint(1, None))
+        r1 = store.checkpoint_paths()[0]
+        store.write_checkpoint(checkpoint(2, sha256_file(r1)))
+        record, path = store.load_latest()
+        check("contiguity-positive-control",
+              record["revision"] == 2 and path.name == "r00000002.json")
+
     print(f"\n{len(FAILURES)} failures")
     return 1 if FAILURES else 0
 

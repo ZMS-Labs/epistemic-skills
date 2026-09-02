@@ -166,6 +166,164 @@ def test_full_lifecycle_via_cli() -> None:
         check("full-cancel-refused-exit-2", r.returncode == 2)
 
 
+def test_content_file_read_failures_are_refusals() -> None:
+    """`--content-file` naming a missing or non-UTF-8 file must be the
+    documented exit-2 refusal, not a traceback and exit 1.
+
+    `_read_text` (instruction/text/reason) was hardened for exactly this and
+    `_read_content` (effect/reconcile bodies) was not, so an ordinary input
+    error on the ONE flag an operator uses most was indistinguishable from an
+    internal crash. Measured before the fix:
+    `effect --content-file <missing>` -> FileNotFoundError traceback, rc 1."""
+    with tempfile.TemporaryDirectory() as td:
+        ws = Path(td)
+        open_cli(ws, "m-cli-cfile", "Exercise content-file refusals.")
+        run("approve", "--workspace", str(ws), "--actor", "agent:worker")
+
+        missing = ws / "nope.txt"
+        r = run("effect", "--workspace", str(ws), "--actor", "agent:worker",
+                "--path", "a.md", "--content-file", str(missing),
+                "--request-id", "req-missing")
+        check("content-file-missing-exit-2", r.returncode == 2)
+        check("content-file-missing-no-traceback",
+              "Traceback" not in r.stderr)
+        check("content-file-missing-names-the-flag",
+              "content" in r.stderr.casefold())
+
+        # PowerShell's bare `Out-File` writes UTF-16LE; the same class the
+        # instruction/text readers already refuse.
+        utf16 = ws / "utf16.txt"
+        # WITH the BOM: bare UTF-16LE ASCII is NUL-padded and decodes as valid
+        # (garbage) UTF-8, so it would not exercise the decode refusal at all.
+        # The BOM's leading 0xFF is invalid UTF-8 in any position -- the shape
+        # PowerShell's `Out-File` actually writes.
+        utf16.write_bytes("hello".encode("utf-16"))
+        r = run("effect", "--workspace", str(ws), "--actor", "agent:worker",
+                "--path", "b.md", "--content-file", str(utf16),
+                "--request-id", "req-utf16")
+        check("content-file-utf16-exit-2", r.returncode == 2)
+        check("content-file-utf16-no-traceback", "Traceback" not in r.stderr)
+
+        # ... and reconcile reads the same helper.
+        r = run("reconcile", "--workspace", str(ws), "--actor", "agent:worker",
+                "--path", "a.md", "--content-file", str(missing),
+                "--request-id", "req-missing-2")
+        check("reconcile-content-file-missing-exit-2", r.returncode == 2)
+        check("reconcile-content-file-missing-no-traceback",
+              "Traceback" not in r.stderr)
+
+
+def test_continuity_warning_is_ascii_safe() -> None:
+    """The unreconciled-continuity warning interpolates an artifact path
+    straight into stderr, bypassing `_ascii_safe`.
+
+    Every other path-bearing output in this CLI is escaped; this one was
+    added later and was not. Measured before the fix: a break on
+    `notes/r\u00e9sum\u00e9.md` put a raw non-ASCII byte on stderr, which is
+    what the ASCII-only output contract exists to prevent (a console codepage
+    that cannot encode it turns a warning into a UnicodeEncodeError)."""
+    e_acute = "\u00e9"
+    with tempfile.TemporaryDirectory() as td:
+        ws = Path(td)
+        rel = f"notes/r{e_acute}sum{e_acute}.md"
+        open_cli(ws, "m-cli-cont", "Exercise continuity warning output.")
+        run("approve", "--workspace", str(ws), "--actor", "agent:worker")
+        run("effect", "--workspace", str(ws), "--actor", "agent:worker",
+            "--path", rel, "--content", "x", "--request-id", "cont-1")
+        # An unreceipted write BETWEEN two receipted events is the break.
+        (ws / "notes" / f"r{e_acute}sum{e_acute}.md").write_text(
+            "y", encoding="utf-8")
+        run("effect", "--workspace", str(ws), "--actor", "agent:worker",
+            "--path", rel, "--content", "z", "--request-id", "cont-2")
+
+        r = run("resume", "--workspace", str(ws), "--actor", "agent:worker")
+        check("continuity-warning-present",
+              "unreconciled continuity break" in r.stderr)
+        check("continuity-warning-stderr-is-ascii", r.stderr.isascii())
+        check("continuity-warning-escapes-non-ascii",
+              "\\u00e9" in r.stderr)
+
+
+def test_audit_report_kind_is_validatable() -> None:
+    """`audit` labels its JSON `record: continuity-report@1`. A record label
+    is a promise that the repository's own validator can read it -- and
+    `validate_record` answered `unknown kind 'continuity-report@1'`, so the
+    command's output was incompatible with the contract it claims membership
+    in."""
+    sys.path.insert(0, str(ROOT))
+    from verify_mission_custody import validate_record  # noqa: E402
+
+    with tempfile.TemporaryDirectory() as td:
+        ws = Path(td)
+        open_cli(ws, "m-cli-audit", "Exercise audit record validity.")
+        run("approve", "--workspace", str(ws), "--actor", "agent:worker")
+        run("effect", "--workspace", str(ws), "--actor", "agent:worker",
+            "--path", "a.md", "--content", "x", "--request-id", "aud-1")
+        r = run("audit", "--workspace", str(ws), "--actor", "agent:worker")
+        check("audit-exit-0-clean", r.returncode == 0)
+        report = json.loads(r.stdout)
+        check("audit-record-kind", report["record"] == "continuity-report@1")
+        check("audit-report-validates", validate_record(report) == [])
+
+        # A malformed report must still be REFUSED -- a validator that accepts
+        # everything is not a validator (planted negative control).
+        bad = dict(report)
+        bad["continuity_breaks"] = "not-a-list"
+        check("audit-report-negative-control", validate_record(bad) != [])
+
+
+def test_audit_report_with_orphaned_receipt_validates() -> None:
+    """`orphaned_retired_receipts()` supplies OBJECTS (request_id,
+    receipt_path, note), but continuity-report@1's validator required a list
+    of STRINGS -- so the report validated only while the orphan list was
+    empty and was rejected precisely when an orphan was reported: the
+    command's real output refused by the contract it claims membership in."""
+    sys.path.insert(0, str(ROOT))
+    from verify_mission_custody import validate_record  # noqa: E402
+
+    with tempfile.TemporaryDirectory() as td:
+        ws = Path(td)
+        open_cli(ws, "m-cli-orphan", "Exercise orphan report validity.")
+        run("approve", "--workspace", str(ws), "--actor", "agent:worker")
+        run("effect", "--workspace", str(ws), "--actor", "agent:worker",
+            "--path", "a.md", "--content", "x", "--request-id", "orph-1")
+
+        # An orphan is a receipt PRESENT for an id the chain RETIRED: lose
+        # the file, acknowledge the loss (retires the id), restore the file.
+        receipts = ws / "missions" / "m-cli-orphan" / "receipts"
+        held = None
+        for c in receipts.glob("*.json"):
+            held = c.read_bytes()
+            c.unlink()
+        check("orphan-fixture-receipt-removed", held is not None)
+        # acknowledge_receipt_loss is legal only from 'reopened': a
+        # drift-detecting resume moves the mission there first.
+        r = run("resume", "--workspace", str(ws), "--actor", "agent:second")
+        check("orphan-fixture-resume-sees-the-loss", r.returncode == 3)
+        r = run("acknowledge-loss", "--workspace", str(ws),
+                "--actor", "agent:worker", "--request-id", "orph-1")
+        check("orphan-fixture-loss-acknowledged", r.returncode == 0)
+        import hashlib
+        (receipts / (hashlib.sha256(b"orph-1").hexdigest() + ".json")
+         ).write_bytes(held)
+
+        # audit exits 3 when it has something to report -- the finding is
+        # the fixture, not a failure of the command.
+        r = run("audit", "--workspace", str(ws), "--actor", "agent:worker")
+        check("orphan-audit-exit-3-reports-the-orphan", r.returncode == 3)
+        report = json.loads(r.stdout)
+        check("orphan-audit-lists-the-orphan",
+              len(report["orphaned_retired_receipts"]) == 1)
+        check("orphan-report-validates", validate_record(report) == [])
+
+        # Negative control: the STRING shape the first validator demanded is
+        # now the malformed input -- the check enforces the object shape,
+        # it does not wave everything through.
+        bad = dict(report)
+        bad["orphaned_retired_receipts"] = ["orph-1"]
+        check("orphan-report-negative-control", validate_record(bad) != [])
+
+
 def test_display_safe_drift_and_error_output() -> None:
     """Non-ASCII content in a drifted relpath or a CustodyError message must
     render with JSON-style ASCII escapes on stdout/stderr -- never a raw
@@ -1052,6 +1210,10 @@ TESTS = [
     test_control_characters_are_escaped_on_every_display_surface,
     test_legacy_continuity_paths_are_escaped_on_resume,
     test_refusal_preserves_scope_ack_recipe,
+    test_content_file_read_failures_are_refusals,
+    test_continuity_warning_is_ascii_safe,
+    test_audit_report_kind_is_validatable,
+    test_audit_report_with_orphaned_receipt_validates,
     test_open_stop_rules_and_acceptable_costs,
     test_open_without_stop_rules_yields_empty_lists,
     test_success_output_confirms_the_write,

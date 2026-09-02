@@ -214,6 +214,25 @@ class MissionStore:
             raise StoreError(f"no checkpoints under {self.checkpoints_dir}")
         prev_sha: str | None = None
         for index, path in enumerate(paths):
+            # THE FILENAME IS PART OF THE RECORD. `write_checkpoint` derives
+            # the destination from the record's revision and refuses
+            # out-of-order writes, but nothing checked that `rNNNNNNNN.json`
+            # CONTAINS revision NNNNNNNN, or that revisions are contiguous.
+            # Renaming r2 to the r3 filename therefore loaded as a healthy
+            # chain -- the hash link still verifies, because the bytes did not
+            # change -- and the NEXT mutation refused with "already exists;
+            # concurrent writer detected", a diagnosis naming a race that
+            # never happened. The exclusive publish keeps the store safe; only
+            # this loader can make the DIAGNOSIS honest.
+            expected_revision = index + 1
+            if path.name != f"r{expected_revision:08d}.json":
+                raise ChainBroken(
+                    f"{path.name}: checkpoint filenames must be contiguous "
+                    f"from r00000001.json; expected "
+                    f"r{expected_revision:08d}.json at this position. The "
+                    "hash chain may still verify -- a renamed or removed "
+                    "checkpoint file does not alter any bytes -- so this is "
+                    "a FILENAME break, not a concurrent writer")
             record = json.loads(path.read_text(encoding="utf-8"))
             # TIGHTENING A CONTRACT MUST NEVER DISARM A DEPLOYED GUARD (es#217).
             # This walk is what the Stage-C gate reads. Every error raised here
@@ -267,6 +286,12 @@ class MissionStore:
                         f"bytes were altered after it was written. Do not read "
                         f"this as a stale reader: {skew}")
                 raise ChainBroken(f"{path.name}: invalid: {errors[:3]}")
+            if record.get("revision") != expected_revision:
+                raise ChainBroken(
+                    f"{path.name}: contains revision "
+                    f"{record.get('revision')!r}, not {expected_revision} -- "
+                    "the filename and the record disagree about which "
+                    "checkpoint this is")
             if record["prev_checkpoint_sha256"] != prev_sha:
                 raise ChainBroken(f"{path.name}: chain mismatch")
             prev_sha = sha256_file(path)

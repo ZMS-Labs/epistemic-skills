@@ -21,6 +21,16 @@ RECORD_KINDS = {
     "checkpoint@1",
     "receipt@1",
     "acceptance-verdict@1",
+    # `audit` EMITS this kind. A `record:` label is a claim of membership in
+    # this contract family, and the claim was false: `validate_record` answered
+    # `unknown kind 'continuity-report@1'`, so the command's own JSON could not
+    # be read by the repository's own validator. Either the label goes or the
+    # validator does; the label is the useful half.
+    #
+    # It is a REPORT, not a stored record: nothing writes it into a mission
+    # store, so it never reaches the chain, the receipts directory, or
+    # `atomic_write_json`'s pre-write validation of things that do.
+    "continuity-report@1",
 }
 
 # The epoch this reader implements, per record family. RECORD_KINDS above is a
@@ -45,6 +55,7 @@ SUPPORTED_EPOCHS = {
     "checkpoint": 1,
     "receipt": 1,
     "acceptance-verdict": 1,
+    "continuity-report": 1,
 }
 
 
@@ -562,7 +573,116 @@ def validate_record(record: Any, *,
             record, declaration_content=declaration_content)
     if kind == "receipt@1":
         return validate_receipt(record)         # Task 3
+    if kind == "continuity-report@1":
+        return validate_continuity_report(record)
     return validate_acceptance_verdict(record)  # Task 3
+
+
+CONTINUITY_REPORT_FIELDS = {
+    "record", "continuity_breaks", "orphaned_retired_receipts",
+}
+
+# Every field `Mission.continuity_breaks` emits, enumerated here so the
+# validator and continuity-report.schema.json state one shape in two places
+# and the parity test can compare them.
+CONTINUITY_BREAK_FIELDS = frozenset({
+    "artifact_path", "prior_request_id", "request_id",
+    "expected_before_sha256", "observed_before_sha256",
+    "no_op_write", "already_reconciled",
+})
+
+# Likewise for the orphan objects.
+ORPHANED_RECEIPT_FIELDS = frozenset({"request_id", "receipt_path", "note"})
+
+
+def validate_continuity_report(rec: dict) -> list[str]:
+    """The shape `custody_cli audit` emits. Structural only, deliberately:
+    the report is a READING of a mission, not an authority record, so this
+    validates that a consumer can traverse it -- not that its findings are
+    true. Saying which of the two a check establishes is the whole point of
+    this file."""
+    errors: list[str] = []
+    _check_exact_fields(errors, rec, CONTINUITY_REPORT_FIELDS,
+                        "continuity-report")
+    if errors:
+        return errors
+    breaks = rec["continuity_breaks"]
+    if not isinstance(breaks, list) or not all(
+            isinstance(item, dict) for item in breaks):
+        errors.append("continuity_breaks: list of objects required")
+    else:
+        for index, item in enumerate(breaks):
+            # The WHOLE shape `Mission.continuity_breaks` guarantees, not the
+            # two fields the first version happened to check. Checking a
+            # subset of a guaranteed shape is not a weaker validator, it is a
+            # validator that RETURNS SUCCESS on a record a consumer cannot
+            # traverse: the missing five could be absent, or hold lists and
+            # integers, and `validate_record` still answered [].
+            #
+            # expected_before_sha256 comes from the prior receipt's
+            # `after_sha256`, which the receipt contract types as a plain
+            # string. observed_before_sha256 comes from the next receipt's
+            # `before_sha256`, typed `["string", "null"]` -- null is how a
+            # first write records "nothing was there". Collapsing the two into
+            # one rule would either reject honest reports or accept a null
+            # where a hash is guaranteed.
+            for name in CONTINUITY_BREAK_FIELDS:
+                if name not in item:
+                    errors.append(
+                        f"continuity_breaks[{index}].{name}: missing")
+            extra = sorted(set(item) - CONTINUITY_BREAK_FIELDS)
+            if extra:
+                errors.append(
+                    f"continuity_breaks[{index}]: unexpected field(s) "
+                    f"{extra}")
+            for name in ("artifact_path", "prior_request_id", "request_id"):
+                if name in item and not (
+                        isinstance(item[name], str) and item[name]):
+                    errors.append(
+                        f"continuity_breaks[{index}].{name}: "
+                        "non-empty string required")
+            if "expected_before_sha256" in item and not is_sha256(
+                    item["expected_before_sha256"]):
+                errors.append(
+                    f"continuity_breaks[{index}].expected_before_sha256: "
+                    "sha256 hex string required")
+            if "observed_before_sha256" in item and not (
+                    item["observed_before_sha256"] is None
+                    or is_sha256(item["observed_before_sha256"])):
+                errors.append(
+                    f"continuity_breaks[{index}].observed_before_sha256: "
+                    "sha256 hex string or null required")
+            for name in ("no_op_write", "already_reconciled"):
+                if name in item and not isinstance(item[name], bool):
+                    errors.append(
+                        f"continuity_breaks[{index}].{name}: "
+                        "boolean required")
+    orphans = rec["orphaned_retired_receipts"]
+    if not isinstance(orphans, list) or not all(
+            isinstance(item, dict) for item in orphans):
+        # The emitter (`Mission.orphaned_retired_receipts`) supplies OBJECTS
+        # -- request_id, receipt_path, note -- and the first version of this
+        # check required STRINGS, so a continuity report validated only
+        # while the orphan list was empty and was rejected precisely when an
+        # orphan was reported: the validator refused the command's real
+        # output at the exact moment the output carried its finding.
+        errors.append("orphaned_retired_receipts: list of objects required")
+    else:
+        for index, item in enumerate(orphans):
+            extra = sorted(set(item) - ORPHANED_RECEIPT_FIELDS)
+            if extra:
+                errors.append(
+                    f"orphaned_retired_receipts[{index}]: unexpected "
+                    f"field(s) {extra}")
+            for name in sorted(ORPHANED_RECEIPT_FIELDS):
+                if name not in item:
+                    errors.append(
+                        f"orphaned_retired_receipts[{index}].{name}: missing")
+                elif not isinstance(item[name], str) or not item[name]:
+                    errors.append(
+                        f"orphaned_retired_receipts[{index}].{name}: "
+                        "non-empty string required")
+    return errors
 
 
 def validate_checkpoint(rec: dict, *,
