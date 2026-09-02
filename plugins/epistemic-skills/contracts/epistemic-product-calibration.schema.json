@@ -240,5 +240,30 @@
         }
       }
     }
-  }
+  },
+  "allOf": [
+    {
+      "$comment": "A superseded record must name what superseded it. The bundled stdlib verifier already refuses this with MISSING_SUPERSESSION; the published schema did not, so a producer validating against the schema as instructed got a false PASS and the consumer rejected the same envelope. Two definitions of valid is one definition too many.",
+      "if": {
+        "properties": {
+          "status": {
+            "const": "superseded"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "required": [
+          "supersedes"
+        ],
+        "properties": {
+          "supersedes": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  ]
 }

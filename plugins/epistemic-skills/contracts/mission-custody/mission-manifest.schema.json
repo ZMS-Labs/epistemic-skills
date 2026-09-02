@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "mission-manifest@1",
   "title": "mission-manifest@1",
-  "description": "Durable mission authority record. Verbatim operator instruction is immutable; amendments append. Validation authority: verify_mission_custody.py (stdlib).",
+  "description": "Durable mission authority record. Verbatim operator instruction is immutable; amendments append. Validation authority: verify_mission_custody.py (stdlib). The declaration-content pattern on the eight envelope lists states the WRITE contract -- what a steward may newly author. The reader deliberately does not apply it to records already persisted: refusing one there makes the Stage-C gate report an armed mission as no mission and answer allow (es#217, SECURITY.md).",
   "type": "object",
   "required": [
     "record",
@@ -70,20 +70,23 @@
         "permissions": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "string",
+            "pattern": "[^\\u0009-\\u000d\\u001c-\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028-\\u2029\\u202f\\u205f\\u3000]"
           }
         },
         "protected_state": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "string",
+            "pattern": "[^\\u0009-\\u000d\\u001c-\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028-\\u2029\\u202f\\u205f\\u3000]"
           },
           "description": "ADVISORY list of state the mission must not disturb. Read by stewards; consumed by no runtime gate."
         },
         "acceptable_costs": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "string",
+            "pattern": "[^\\u0009-\\u000d\\u001c-\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028-\\u2029\\u202f\\u205f\\u3000]"
           }
         },
         "guard_mode": {
@@ -145,13 +148,15 @@
         "in": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "string",
+            "pattern": "[^\\u0009-\\u000d\\u001c-\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028-\\u2029\\u202f\\u205f\\u3000]"
           }
         },
         "out": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "string",
+            "pattern": "[^\\u0009-\\u000d\\u001c-\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028-\\u2029\\u202f\\u205f\\u3000]"
           }
         }
       },
@@ -191,19 +196,22 @@
         "hold_if": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "string",
+            "pattern": "[^\\u0009-\\u000d\\u001c-\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028-\\u2029\\u202f\\u205f\\u3000]"
           }
         },
         "stop_if": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "string",
+            "pattern": "[^\\u0009-\\u000d\\u001c-\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028-\\u2029\\u202f\\u205f\\u3000]"
           }
         },
         "escalate_if": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "string",
+            "pattern": "[^\\u0009-\\u000d\\u001c-\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028-\\u2029\\u202f\\u205f\\u3000]"
           }
         }
       },

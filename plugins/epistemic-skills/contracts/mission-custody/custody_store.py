@@ -8,7 +8,11 @@ import os
 import tempfile
 from pathlib import Path
 
-from verify_mission_custody import epoch_skew_anywhere, validate_record
+from verify_mission_custody import (
+    declaration_view,
+    epoch_skew_anywhere,
+    validate_record,
+)
 
 
 class StoreError(Exception):
@@ -78,8 +82,10 @@ def _publish_exclusive(tmp: str, path: Path) -> None:
         raise
 
 
-def atomic_write_json(path: Path, record: dict, *, exclusive: bool = False) -> str:
-    errors = validate_record(record)
+def atomic_write_json(path: Path, record: dict, *, exclusive: bool = False,
+                      declaration_content: bool = True) -> str:
+    errors = validate_record(record,
+                             declaration_content=declaration_content)
     if errors:
         raise StoreError(f"invalid record for {path.name}: {errors[:3]}")
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -116,12 +122,48 @@ class MissionStore:
     def _path_for(self, revision: int) -> Path:
         return self.checkpoints_dir / f"r{revision:08d}.json"
 
+    def _declarations_inherited(self, record: dict,
+                                existing: list[Path]) -> bool:
+        """True when this checkpoint's eight envelope declarations are
+        IDENTICAL to its predecessor's -- carried forward, not authored here.
+
+        WHY THIS EXEMPTION EXISTS. The manifest is immutable from open to close
+        (`Mission._verify_manifest`), so `_write_next` copies it verbatim into
+        every later checkpoint. Apply a NEW declaration rule to that copy and a
+        mission opened before the rule loses `note`, `amend`, `cancel` and
+        `accept` at once -- and cannot be repaired, because repairing the
+        declaration is itself a manifest change this contract refuses. That is
+        not fail-closed, it is a lock with no key, on a mission whose guard is
+        still enforcing.
+
+        WHY IT IS NOT A HOLE. Exempting the carry-forward exempts nothing new:
+        the offending bytes are already persisted and already readable. The
+        moment a declaration list DIFFERS from its predecessor's, this returns
+        False and the full rule applies -- so `open` (no predecessor) and any
+        attempt to introduce a blank at a later revision are both refused.
+        Pinned by test_new_blank_declaration_is_still_refused_at_the_writer.
+        """
+        if not existing or not isinstance(record, dict):
+            return False
+        if record.get("record") != "checkpoint@1":
+            return False
+        try:
+            prior = json.loads(existing[-1].read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            # An unreadable predecessor proves no inheritance. Fall through to
+            # the strict rule: refusing the write is the safe direction here,
+            # and the chain check below reports the real damage.
+            return False
+        return declaration_view(record.get("manifest")) \
+            == declaration_view(prior.get("manifest"))
+
     def write_checkpoint(self, record: dict) -> str:
-        errors = validate_record(record)
+        existing = self.checkpoint_paths()
+        inherited = self._declarations_inherited(record, existing)
+        errors = validate_record(record, declaration_content=not inherited)
         if errors:
             raise StoreError(f"invalid checkpoint: {errors[:3]}")
         revision = record["revision"]
-        existing = self.checkpoint_paths()
         expected_rev = len(existing) + 1
         if revision != expected_rev:
             raise StoreError(
@@ -133,7 +175,9 @@ class MissionStore:
             prior_sha = sha256_file(existing[-1])
             if record["prev_checkpoint_sha256"] != prior_sha:
                 raise StoreError("prev_checkpoint_sha256 does not match prior file")
-        return atomic_write_json(self._path_for(revision), record, exclusive=True)
+        return atomic_write_json(self._path_for(revision), record,
+                                 exclusive=True,
+                                 declaration_content=not inherited)
 
     def _successor_proves_alteration(self, paths: list[Path],
                                      index: int) -> bool:
@@ -149,6 +193,14 @@ class MissionStore:
             return False
         try:
             successor = json.loads(paths[index + 1].read_text(encoding="utf-8"))
+            # A successor that is valid JSON and NOT AN OBJECT proves nothing
+            # and must not crash the diagnosis: `[]` made `.get` raise
+            # AttributeError, which this handler does not catch, so
+            # `load_latest` leaked a raw exception instead of the
+            # ChainBroken/EpochSkew verdict -- taking the census and the gate
+            # down with it. Read defensively means read defensively.
+            if not isinstance(successor, dict):
+                return False
             recorded = successor.get("prev_checkpoint_sha256")
             if not isinstance(recorded, str):
                 return False
@@ -163,7 +215,25 @@ class MissionStore:
         prev_sha: str | None = None
         for index, path in enumerate(paths):
             record = json.loads(path.read_text(encoding="utf-8"))
-            errors = validate_record(record)
+            # TIGHTENING A CONTRACT MUST NEVER DISARM A DEPLOYED GUARD (es#217).
+            # This walk is what the Stage-C gate reads. Every error raised here
+            # becomes ChainBroken, `Mission.load` skips the mission dir, and
+            # `run_gate` answers `allow` with reason `gate inert:
+            # NoActiveMission` -- so a rule added to the validator silently
+            # converts an ARMED, ENFORCING mission into no mission at all.
+            # Measured: an active enforce-mode store written by the pre-es#160
+            # API returned `block` to its own reader and `allow` to this one.
+            #
+            # So the read path validates STRUCTURE and CHAIN INTEGRITY, which
+            # is what "can this record be trusted" means, and does not apply
+            # the declaration-CONTENT rule, which is a statement about what a
+            # steward may newly author. A blank declaration cannot widen
+            # authority -- guard matching reads `actuator_guards`, never these
+            # eight lists, and scope comparison ignores non-path entries -- so
+            # accepting one on read costs a display honesty defect on legacy
+            # records and buys back an enforcement surface. That trade is not
+            # close.  Refused at the writer: see `write_checkpoint`.
+            errors = validate_record(record, declaration_content=False)
             if errors:
                 # ANYWHERE: an embedded mission-manifest@2 inside a
                 # checkpoint@1 fails validation with a familiar outer

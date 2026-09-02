@@ -53,6 +53,13 @@ def score(fixtures: list[dict], responses: list[dict]) -> dict:
             justifications = row.get("example_justifications", [])
             if examples_added and len(justifications) != examples_added:
                 failures.append(f"{fid}: every added example needs a written weaker-consumer justification")
+            elif examples_added and any(not _nonempty(j) for j in justifications):
+                # A COUNT match is not a justification: [""] satisfied the old
+                # check. The example-lint contract requires written prose naming
+                # the weaker-consumer audience, and an empty string names none.
+                failures.append(f"{fid}: an added example's justification must be "
+                                f"written prose naming the weaker-consumer audience, "
+                                f"got {justifications!r}")
         elif expected == "consumer-gate":
             remedy = row.get("remedy")
             if remedy not in GATE_REMEDIES:

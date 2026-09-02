@@ -209,7 +209,7 @@ def epoch_skew_anywhere(record, expected_family: str) -> str | None:
     # corruption, per validate_record) be reported as EpochSkew, which is the
     # decoy suppression again one level up. A newer outer kind never reaches
     # this line: epoch_skew(record) above already returned for it.
-    if kind not in RECORD_KINDS:
+    if not _in_vocab(kind, RECORD_KINDS):
         return None
     family, _, _ = kind.rpartition("@")
     # ... AND IT MUST BE THE FAMILY THIS SLOT HOLDS. A whole checkpoint@1
@@ -282,9 +282,84 @@ def is_sha256(value: Any) -> bool:
     return isinstance(value, str) and bool(_SHA_RE.match(value))
 
 
+def _in_vocab(value: Any, vocabulary: set) -> bool:
+    """Closed-vocabulary membership that ANSWERS instead of raising.
+
+    `value in SET` is a TypeError the moment `value` is unhashable, and every
+    one of these vocabularies is read straight out of an untrusted JSON file.
+    es#137 P2 fixed exactly one instance (`guard_mode`) with an inline
+    `isinstance` and left the mechanism scoped to it; `status`, `verdict`,
+    `assurance_tier`, `required_tier` and the top-level `record` kind all kept
+    the raising shape, and a sibling checkpoint carrying `"status": []` took
+    every pathless custody command in the workspace down with a TypeError.
+    `validate_record` promises a LIST OF ERRORS: a promise that turns into a
+    traceback on hostile input is a denial of service through the recovery
+    path -- exactly what drift detection exists to survive. One predicate, so
+    the next vocabulary added cannot be forgotten.
+
+    Non-strings are never members: every one of these vocabularies is a set of
+    strings, so "not a string" and "not in the set" are the same verdict, and
+    the caller's existing error message already says the right thing."""
+    return isinstance(value, str) and value in vocabulary
+
+
 def _str_list(value: Any) -> bool:
     return isinstance(value, list) and all(
         isinstance(item, str) and item for item in value)
+
+
+# One explicit predicate is mirrored byte-for-byte in the JSON Schema.  Do not
+# spell this as `\S`: ECMA-262 and Python disagree about several whitespace
+# characters (notably U+001C..U+001F and U+0085).  This class is Python's
+# current `str.isspace()` set, written out so every schema engine receives the
+# same rule instead of substituting its host regex's idea of whitespace.
+DECLARATION_CONTENT_PATTERN = (
+    r"[^\u0009-\u000d\u001c-\u0020\u0085\u00a0\u1680"
+    r"\u2000-\u200a\u2028-\u2029\u202f\u205f\u3000]"
+)
+_DECLARATION_CONTENT_RE = re.compile(DECLARATION_CONTENT_PATTERN)
+
+
+def _nonblank_str_list(value: Any) -> bool:
+    """A declaration list whose entries say something a reader can see.
+
+    Keep this narrower than `_str_list`: receipt ids, notes, and artifact paths
+    have their own contracts. This predicate is only for manifest declaration
+    fields, where truthy whitespace would present an empty boundary as set.
+    """
+    return _str_list(value) and all(
+        _DECLARATION_CONTENT_RE.search(item) for item in value)
+
+
+# The eight envelope-declaration positions this rule governs -- the same eight
+# `status --brief` and `resume` present as set.  Named once, so the store's
+# carry-forward comparison and the JSON Schema parity oracle cannot drift from
+# the validator that decides.
+DECLARATION_FIELDS = (
+    ("authority", "permissions"),
+    ("authority", "protected_state"),
+    ("authority", "acceptable_costs"),
+    ("scope", "in"),
+    ("scope", "out"),
+    ("stop_rules", "hold_if"),
+    ("stop_rules", "stop_if"),
+    ("stop_rules", "escalate_if"),
+)
+
+
+def declaration_view(manifest: Any) -> dict:
+    """The eight declaration lists of `manifest`, for carry-forward comparison.
+
+    Total by construction: a missing or malformed section yields None for that
+    position rather than raising, because this is called on records that have
+    not been validated yet and must never turn a shape question into a crash.
+    """
+    out: dict = {}
+    for section, field in DECLARATION_FIELDS:
+        block = manifest.get(section) if isinstance(manifest, dict) else None
+        out[f"{section}.{field}"] = (
+            block.get(field) if isinstance(block, dict) else None)
+    return out
 
 
 def _require(errors: list[str], cond: bool, field: str, reason: str) -> None:
@@ -302,8 +377,21 @@ def _check_exact_fields(errors: list[str], rec: dict, allowed: set[str],
             errors.append(f"{where}.{key}: missing")
 
 
-def validate_manifest(rec: dict) -> list[str]:
+def validate_manifest(rec: dict, *,
+                      declaration_content: bool = True) -> list[str]:
+    """Validate a mission-manifest@1.
+
+    `declaration_content` gates ONE rule: whether the eight envelope
+    declaration lists must carry visible content (es#160).  It defaults to
+    True -- the contract this repository publishes -- and is turned OFF only
+    where applying it to an ALREADY-PERSISTED record would change an
+    enforcement answer.  See `custody_store.MissionStore.load_latest` and
+    `write_checkpoint` for the two exemptions and why each exists.
+    """
     errors: list[str] = []
+    entries_ok = _nonblank_str_list if declaration_content else _str_list
+    wanted = ("list of nonblank strings required" if declaration_content
+              else "list of strings required")
     _check_exact_fields(errors, rec, MANIFEST_FIELDS, "manifest")
     if errors:
         return errors
@@ -340,12 +428,12 @@ def validate_manifest(rec: dict) -> list[str]:
         _require(errors, ok, "authority.amendments",
                  "append-only list of {utc, text} objects required")
         for name in ("permissions", "protected_state", "acceptable_costs"):
-            _require(errors, _str_list(auth[name]),
-                     f"authority.{name}", "list of strings required")
+            _require(errors, entries_ok(auth[name]),
+                     f"authority.{name}", wanted)
         mode = auth.get("guard_mode")
         guards = auth.get("actuator_guards")
         if mode is not None:
-            _require(errors, isinstance(mode, str) and mode in GUARD_MODES,
+            _require(errors, _in_vocab(mode, GUARD_MODES),
                      "authority.guard_mode", "must be 'audit' or 'enforce'")
             _require(errors, isinstance(guards, list) and bool(guards),
                      "authority.guard_mode",
@@ -436,12 +524,12 @@ def validate_manifest(rec: dict) -> list[str]:
 
     scope = rec["scope"]
     ok = isinstance(scope, dict) and set(scope) == {"in", "out"} \
-        and _str_list(scope.get("in")) and _str_list(scope.get("out"))
+        and entries_ok(scope.get("in")) and entries_ok(scope.get("out"))
     _require(errors, ok, "scope", '{"in": [...], "out": [...]} required')
 
     acc = rec["acceptance"]
     ok = isinstance(acc, dict) and set(acc) == {"required_tier", "acceptor_ref"} \
-        and acc.get("required_tier") in TIERS \
+        and _in_vocab(acc.get("required_tier"), TIERS) \
         and (acc.get("acceptor_ref") is None
              or (isinstance(acc.get("acceptor_ref"), str) and acc["acceptor_ref"]))
     _require(errors, ok, "acceptance",
@@ -450,35 +538,42 @@ def validate_manifest(rec: dict) -> list[str]:
     stop = rec["stop_rules"]
     ok = isinstance(stop, dict) \
         and set(stop) == {"hold_if", "stop_if", "escalate_if"} \
-        and all(_str_list(stop[k]) for k in ("hold_if", "stop_if", "escalate_if"))
+        and all(entries_ok(stop[k])
+                for k in ("hold_if", "stop_if", "escalate_if"))
     _require(errors, ok, "stop_rules",
-             "hold_if/stop_if/escalate_if string lists required")
+             "hold_if/stop_if/escalate_if "
+             + ("nonblank " if declaration_content else "")
+             + "string lists required")
     return errors
 
 
-def validate_record(record: Any) -> list[str]:
+def validate_record(record: Any, *,
+                    declaration_content: bool = True) -> list[str]:
     if not isinstance(record, dict):
         return ["record: JSON object required"]
     kind = record.get("record")
-    if kind not in RECORD_KINDS:
+    if not _in_vocab(kind, RECORD_KINDS):
         return [f"record: unknown kind {kind!r}"]
     if kind == "mission-manifest@1":
-        return validate_manifest(record)
+        return validate_manifest(record,
+                                 declaration_content=declaration_content)
     if kind == "checkpoint@1":
-        return validate_checkpoint(record)      # Task 2
+        return validate_checkpoint(          # Task 2
+            record, declaration_content=declaration_content)
     if kind == "receipt@1":
         return validate_receipt(record)         # Task 3
     return validate_acceptance_verdict(record)  # Task 3
 
 
-def validate_checkpoint(rec: dict) -> list[str]:
+def validate_checkpoint(rec: dict, *,
+                        declaration_content: bool = True) -> list[str]:
     errors: list[str] = []
     _check_exact_fields(errors, rec, CHECKPOINT_FIELDS, "checkpoint")
     if errors:
         return errors
     _require(errors, isinstance(rec["revision"], int) and rec["revision"] >= 1,
              "revision", "integer >= 1 required")
-    _require(errors, rec["status"] in STATES, "status",
+    _require(errors, _in_vocab(rec["status"], STATES), "status",
              f"one of {sorted(STATES)} required")
     prev = rec["prev_checkpoint_sha256"]
     if rec.get("revision") == 1:
@@ -489,7 +584,8 @@ def validate_checkpoint(rec: dict) -> list[str]:
                  "64-hex sha256 of prior checkpoint file required")
     if isinstance(rec["manifest"], dict) \
             and rec["manifest"].get("record") == "mission-manifest@1":
-        for err in validate_manifest(rec["manifest"]):
+        for err in validate_manifest(
+                rec["manifest"], declaration_content=declaration_content):
             errors.append(f"manifest.{err}")
         if rec["manifest"].get("mission_id") != rec["mission_id"]:
             errors.append("manifest.mission_id: must equal checkpoint mission_id")
@@ -538,9 +634,9 @@ def validate_acceptance_verdict(rec: dict) -> list[str]:
         return errors
     _require(errors, isinstance(rec["revision"], int) and rec["revision"] >= 1,
              "revision", "integer >= 1 required")
-    _require(errors, rec["verdict"] in VERDICTS, "verdict",
+    _require(errors, _in_vocab(rec["verdict"], VERDICTS), "verdict",
              f"one of {sorted(VERDICTS)} required")
-    _require(errors, rec["assurance_tier"] in TIERS, "assurance_tier",
+    _require(errors, _in_vocab(rec["assurance_tier"], TIERS), "assurance_tier",
              f"one of {sorted(TIERS)} required")
     _require(errors, isinstance(rec["mission_id"], str)
              and bool(_ID_RE.match(rec["mission_id"])),

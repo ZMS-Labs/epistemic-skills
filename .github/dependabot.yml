@@ -9,7 +9,18 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
     open-pull-requests-limit: 5
     labels:
       - "pin-gardening"
+    # Grouped updates (fleet CI fan-out reduction, Phase 3): collapse many
+    # single-dependency PRs into one PR per severity band, cutting the
+    # downstream CI fan-out. Only minor/patch re-pins are grouped; majors
+    # stay ungrouped so each breaking action bump gets its own PR.
+    groups:
+      github-actions-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
