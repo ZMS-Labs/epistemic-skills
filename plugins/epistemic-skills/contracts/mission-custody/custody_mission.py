@@ -1259,7 +1259,10 @@ class Mission:
         # immutable for the mission's life, so reading it once is sound and
         # keeps receipt loading off a per-call chain read.
         self._mission_id: str | None = None
-        self._effect_index_cache: tuple[int, dict[str, str]] | None = None
+        self._effect_index_cache: tuple[
+            tuple[tuple[str, str], ...],
+            tuple[dict[str, str], dict[str, str]],
+        ] | None = None
 
     # -- construction -----------------------------------------------------
 
@@ -1890,16 +1893,22 @@ class Mission:
                 self._mission_id = None
         return self._mission_id
 
-    def _load_receipt(self, request_id: str) -> dict | None:
+    def _load_receipt(
+            self, request_id: str, *,
+            effect_paths: dict[str, str] | None = None
+    ) -> dict | None:
         """None means UNLOADABLE -- absent, corrupt, schema-invalid, or
         BELONGING TO ANOTHER MISSION alike. A corrupt receipt must degrade to
         drift (RECEIPT-MISSING), never crash resume: crashing the recovery
         path on a mangled receipt is a denial of service by exactly the
         tampering drift detection exists to catch."""
-        return self._load_receipt_checked(request_id)[0]
+        return self._load_receipt_checked(
+            request_id, effect_paths=effect_paths
+        )[0]
 
     def _load_receipt_checked(
-            self, request_id: str
+            self, request_id: str, *,
+            effect_paths: dict[str, str] | None = None
     ) -> tuple[dict | None, str | None, tuple[str, str] | None]:
         """(record, refusal reason, OPAQUE). ONE implementation of the trust rule,
         two callers: `_load_receipt` wants only the verdict, while
@@ -2005,7 +2014,10 @@ class Mission:
         # raises the bar without closing that case; it is the es#118 residue,
         # and the tail anchor closes it. Disclosed in SECURITY.md rather than
         # papered over here.
-        chained = self._effect_path_index().get(request_id)
+        chained = (
+            effect_paths if effect_paths is not None
+            else self._effect_path_index()
+        ).get(request_id)
         if chained is not None and record.get("artifact_path") != chained:
             return None, (
                 f"present receipt claims {record.get('artifact_path')!r}, "
@@ -2037,7 +2049,32 @@ class Mission:
 
     def _effect_path_index(self) -> dict[str, str]:
         """Every chain-bound request id -> the path its admitting revision
-        recorded, built in ONE pass over the chain.
+        recorded. See `_effect_indexes` for how it is built."""
+        return self._effect_indexes()[0]
+
+    def _effect_kind_index(self) -> dict[str, str]:
+        """Every chain-bound request id -> HOW it was minted ('effect' or
+        'reconciled'), from the same note that records the path.
+
+        The path index removed the per-id rescan from every caller that wanted
+        all the PATHS, and left the one caller that wants all the KINDS still
+        rescanning: `continuity_breaks` asked `_historical_effect_path(...,
+        kind=True)` once per break, so a mission with many real breaks read
+        the chain from checkpoint 1 for each of them -- O(breaks x
+        checkpoints) reads on exactly the histories that have the most to
+        read. A clean chain never reaches that branch, which is why a green
+        suite did not notice.
+
+        Same keys as the path index, necessarily: both come from the same
+        note, so an id has a kind exactly when it has a path."""
+        return self._effect_indexes()[1]
+
+    def _effect_indexes(self) -> tuple[dict[str, str], dict[str, str]]:
+        """(path index, kind index), built together in ONE pass over the chain.
+
+        Built together rather than in two passes because they are two readings
+        of the SAME note: separating them would double the chain reads and
+        create a second place for the two answers to disagree.
 
         Same rule as `_historical_effect_path`, and deliberately sharing
         `_first_effect_note` with it so the two cannot drift: a reader that
@@ -2051,31 +2088,51 @@ class Mission:
         millions of JSON parses. Callers that want ALL the paths ask once.
         Ids with no derivable path are ABSENT (never mapped to a guess), so
         `.get(rid)` returns None exactly where the per-id method does."""
-        # CACHED against the checkpoint COUNT, not time: the chain is
-        # append-only, so a count that has not moved cannot have new ids in
-        # it, and a count that has moved rebuilds. Without this, binding
-        # `_load_receipt` to the chain (round 7) would have reintroduced the
-        # quadratic walk round 3 removed -- resume() loads every receipt.
+        # Cache against exact checkpoint CONTENT, not merely count. Interior
+        # rewrites are rejected by chain verification, but checkpoint@1's tail
+        # is deliberately unsealed until contract@2; a same-count tail rewrite
+        # must not leave an authority-sensitive path index stale. Reading each
+        # file once to fingerprint it preserves a linear scan and lets a cache
+        # hit avoid reparsing while still observing that supported boundary.
+        # Retain only the digest from that pass: checkpoint records are
+        # cumulative, so retaining every payload at once makes peak memory
+        # quadratic in the number of receipts. A cache miss deliberately
+        # rereads one checkpoint at a time for parsing.
         paths = self.store.checkpoint_paths()
+        fingerprint = tuple(
+            (cp_path.name, sha256_file(cp_path)) for cp_path in paths
+        )
         if self._effect_index_cache is not None \
-                and self._effect_index_cache[0] == len(paths):
+                and self._effect_index_cache[0] == fingerprint:
             return self._effect_index_cache[1]
         index: dict[str, str] = {}
-        prev_ids: list[str] = []
+        kinds: dict[str, str] = {}
+        known_ids: set[str] = set()
         prev_notes: list[str] = []
         for cp_path in paths:
             record = json.loads(cp_path.read_text(encoding="utf-8"))
             ids = record["receipt_ids"]
             notes = record["state"]["notes"]
-            fresh = [rid for rid in ids if rid not in prev_ids]
+            # Checkpoints repeat the full cumulative ID list. List membership
+            # makes comparing those cumulative prefixes cubic; request IDs
+            # are never reusable, so one mission-wide set is the exact rule.
+            fresh = [rid for rid in ids if rid not in known_ids]
             if fresh:
-                path = _first_effect_note(notes[len(prev_notes):])
+                fresh_notes = notes[len(prev_notes):]
+                path = _first_effect_note(fresh_notes)
                 if path is not None:
+                    # Both readings come from `_first_effect_note`, the one
+                    # place the rule is written, so the index cannot
+                    # paraphrase what the per-id method answers.
+                    kind = _first_effect_note(fresh_notes, kind=True)
                     for rid in fresh:
                         index.setdefault(rid, path)
-            prev_ids, prev_notes = ids, notes
-        self._effect_index_cache = (len(paths), index)
-        return index
+                        if kind is not None:
+                            kinds.setdefault(rid, kind)
+                known_ids.update(fresh)
+            prev_notes = notes
+        self._effect_index_cache = (fingerprint, (index, kinds))
+        return index, kinds
 
     def _all_receipt_ids_ever(self) -> list[str]:
         """Every request id ever admitted to receipt_ids, in the order the
@@ -2659,11 +2716,14 @@ class Mission:
         # break across the gap where the retired one honestly sat. That fires
         # on the ordinary sanctioned recovery flow, which would train stewards
         # to ignore the signal on day one.
+        effect_paths, effect_kinds = self._effect_indexes()
         by_path: dict[str, list[str]] = {}
         for request_id in self._all_receipt_ids_ever():
-            receipt = self._load_receipt(request_id)
+            receipt = self._load_receipt(
+                request_id, effect_paths=effect_paths
+            )
             rel = (receipt["artifact_path"] if receipt is not None
-                   else self._historical_effect_path(request_id))
+                   else effect_paths.get(request_id))
             if rel is None:
                 continue
             key = _normalize_relpath(rel)
@@ -2673,8 +2733,12 @@ class Mission:
         breaks: list[dict] = []
         for ids in by_path.values():
             for prior_id, next_id in zip(ids, ids[1:]):
-                prior = self._load_receipt(prior_id)
-                nxt = self._load_receipt(next_id)
+                prior = self._load_receipt(
+                    prior_id, effect_paths=effect_paths
+                )
+                nxt = self._load_receipt(
+                    next_id, effect_paths=effect_paths
+                )
                 if prior is None or nxt is None:
                     # A gap we cannot read is not evidence of a break. The
                     # missing receipt is already reported by resume as its own
@@ -2687,8 +2751,13 @@ class Mission:
                 # already caught and the steward already answered for. The
                 # break is real either way, but only an unreconciled one is
                 # news -- that is the case nothing else in the contract sees.
-                reconciled = self._historical_effect_path(
-                    nxt["request_id"], kind=True) == "reconciled"
+                # Read from the prebuilt index, NOT from a per-id rescan. This
+                # is the one branch a clean chain never reaches, so the rescan
+                # here survived the round that removed every other one: a
+                # mission with many real breaks paid a full chain walk per
+                # break. Same note, same rule, one pass.
+                reconciled = effect_kinds.get(
+                    nxt["request_id"]) == "reconciled"
                 breaks.append({
                     "artifact_path": nxt["artifact_path"],
                     "prior_request_id": prior["request_id"],
@@ -2924,8 +2993,11 @@ class Mission:
         current_by_key: dict[str, tuple[str, dict | None, str | None]] = {}
         missing: list[str] = []
         unplaceable_opaque: list[tuple[str, str]] = []
+        effect_paths = self._effect_path_index()
         for request_id in latest["receipt_ids"]:
-            receipt, _refusal, opaque = self._load_receipt_checked(request_id)
+            receipt, _refusal, opaque = self._load_receipt_checked(
+                request_id, effect_paths=effect_paths
+            )
             # KIND, not a boolean. Both opaque kinds behave identically here
             # (present, unverifiable, never "lost"), and differ only in the
             # marker and message the operator is handed.
@@ -2944,7 +3016,7 @@ class Mission:
             # Claiming the slot as an OPAQUE entry supersedes the stale
             # receipt without asserting anything this reader cannot check.
             rel = (receipt["artifact_path"] if receipt is not None
-                   else self._historical_effect_path(request_id))
+                   else effect_paths.get(request_id))
             if rel is None:
                 if kind:
                     # Unattributable but NOT lost: a receipt that is merely
@@ -3487,6 +3559,7 @@ class Mission:
         if not includes and not excludes:
             return []
         findings: list[dict] = []
+        effect_paths = self._effect_path_index()
         for request_id in self._all_receipt_ids_ever():
             # The CHAINED effect note, not the receipt file, decides which
             # artifact an id covers. A receipt is a mutable file: a schema-valid
@@ -3494,9 +3567,11 @@ class Mission:
             # artifact_path would move an out-of-scope write into scope and let
             # PASS through. The chain is tamper-evident and is already treated
             # as the sounder authority everywhere else in this module.
-            rel = self._historical_effect_path(request_id)
+            rel = effect_paths.get(request_id)
             if rel is None:
-                receipt = self._load_receipt(request_id)
+                receipt = self._load_receipt(
+                    request_id, effect_paths=effect_paths
+                )
                 rel = receipt["artifact_path"] if receipt is not None else None
             if rel is None:
                 continue

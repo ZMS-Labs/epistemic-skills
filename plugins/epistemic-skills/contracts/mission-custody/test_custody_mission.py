@@ -1823,6 +1823,409 @@ def test_effect_path_index_matches_per_id(workspace: Path) -> None:
     check("index-covers-reconciled-id", index.get("req-a-again") == "notes/a.md")
 
 
+def test_effect_path_index_agrees_after_readmission(workspace: Path) -> None:
+    """The index and the per-id lookup must still agree when an id is admitted
+    with NO effect note, dropped from receipt_ids, and later RE-ADMITTED by a
+    revision that does carry one.
+
+    es#161's linear rewrite replaced the index's adjacent-checkpoint freshness
+    test (`rid not in prev_ids`) with a mission-wide first-admission set
+    (`rid not in known_ids`). That is not only a speed change. On this chain
+    the old shape treated the re-admitting revision as a fresh admission and
+    re-derived `req-x` from ITS note -- answering 'secrets/x.md' -- while
+    `_historical_effect_path` stopped at the first admission and answered
+    None. Measured on 488f252 (this PR's exact base) and on b6c6eef: index
+    'secrets/x.md' vs per-id None. The existing pin
+    (test_effect_path_index_matches_per_id) could not see it, because its
+    noteless id is never dropped and re-admitted -- so the one test that
+    exists to stop these two readers drifting was blind to the case where
+    they had already drifted.
+
+    None is the answer the contract asks for: `_effect_path_index` declares
+    that ids with no derivable path are ABSENT, never mapped to a guess, and
+    that `.get(rid)` returns None exactly where the per-id method does. The
+    consequence is deliberate and belongs in a test rather than a reviewer's
+    memory: with no chained path for such an id, `_load_receipt_checked` has
+    nothing to compare a receipt against, so the receipt file is the only
+    authority. The base's disagreeing index refused that receipt -- an
+    accident of the drift, not a rule anyone wrote down.
+
+    `record_effect` refuses any id already in the mission's history, so only
+    a direct chain write can produce this shape: legacy or hand-written
+    history, which is exactly the class the underivable-id fallback exists
+    for. If a later change deliberately teaches BOTH readers to keep scanning
+    past a noteless first admission, `readmit-index-answers-none` is the
+    check that must be updated with it -- the agreement check above it is the
+    invariant that must not be."""
+    m = open_mission(workspace, "m-readmit", "Re-admitted noteless id.")
+    m.approve()
+    m.record_effect("docs/a.md", "aa", "req-a")
+
+    def bare(note: str, *, add=None, ids=None) -> None:
+        latest, path = m.store.load_latest()
+        m._write_next(
+            latest, path, status=latest["status"], add_receipt_id=add,
+            receipt_ids=ids,
+            unresolved_verdicts=latest["state"]["unresolved_verdicts"],
+            note=note)
+
+    bare("bare progress note with no effect marker", add="req-x")
+    latest, _ = m.store.load_latest()
+    bare("bare removal note",
+         ids=[r for r in latest["receipt_ids"] if r != "req-x"])
+    bare("effect: secrets/x.md", add="req-x")
+
+    # NOT VACUOUS. Without these two the whole test would pass on a chain
+    # where the re-admission never happened -- the failure mode of a
+    # regression test whose scenario silently stops being built.
+    notes = [n for p in m.store.checkpoint_paths()
+             for n in json.loads(p.read_text(encoding="utf-8"))["state"]["notes"]]
+    check("readmit-note-is-really-in-the-chain",
+          "effect: secrets/x.md" in notes)
+    check("readmit-id-is-really-back",
+          "req-x" in m.status()["receipt_ids"]
+          and m._all_receipt_ids_ever() == ["req-a", "req-x"])
+
+    index = m._effect_path_index()
+    check("readmit-index-agrees-with-per-id",
+          index.get("req-x") == m._historical_effect_path("req-x"))
+    check("readmit-index-answers-none", index.get("req-x") is None)
+    check("readmit-first-admission-still-wins-elsewhere",
+          index.get("req-a") == "docs/a.md"
+          and m._historical_effect_path("req-a") == "docs/a.md")
+
+
+def test_scope_consistency_reuses_single_effect_index(workspace: Path) -> None:
+    """es#161: closing must not rescan the checkpoint chain per receipt."""
+    m = open_mission(
+        workspace, "m-scope-index", "One indexed scope traversal.",
+        scope_in=["docs/**"],
+    )
+    m.approve()
+    for i in range(40):
+        m.record_effect(f"docs/{i}.txt", str(i), f"req-{i}")
+
+    original_index = m._effect_path_index
+    original_per_id = m._historical_effect_path
+    index_calls = 0
+    per_id_calls = 0
+
+    def counted_index():
+        nonlocal index_calls
+        index_calls += 1
+        return original_index()
+
+    def counted_per_id(request_id: str, kind: bool = False):
+        nonlocal per_id_calls
+        per_id_calls += 1
+        return original_per_id(request_id, kind)
+
+    m._effect_path_index = counted_index
+    m._historical_effect_path = counted_per_id
+    findings = m.scope_consistency()
+    check("scope-index-preserves-findings", findings == [])
+    check("scope-index-built-once", index_calls == 1)
+    check("scope-index-never-rescans-per-id", per_id_calls == 0)
+
+
+def test_scope_consistency_reuses_index_for_underivable_ids(
+        workspace: Path) -> None:
+    """The receipt fallback must not re-enumerate checkpoints for every miss.
+
+    An empty index models a legacy/noteless chain: every valid receipt must
+    supply its own path.  Before the fix, receipt validation called the same
+    index method again for every ID, retaining O(U*C) behavior.
+    """
+    m = open_mission(
+        workspace, "m-scope-index-fallback", "One fallback traversal.",
+        scope_in=["docs/**"],
+    )
+    m.approve()
+    for i in range(40):
+        m.record_effect(f"docs/{i}.txt", str(i), f"req-{i}")
+
+    index_calls = 0
+
+    def underivable_index():
+        nonlocal index_calls
+        index_calls += 1
+        return {}
+
+    m._effect_path_index = underivable_index
+    findings = m.scope_consistency()
+    check("scope-fallback-preserves-receipt-findings", findings == [])
+    check("scope-fallback-index-built-once", index_calls == 1)
+
+
+def test_effect_path_index_invalidates_on_same_count_tail_rewrite(
+        workspace: Path) -> None:
+    """An unsealed checkpoint@1 tail rewrite must invalidate cached paths."""
+    m = open_mission(
+        workspace, "m-scope-index-tail", "Observe the current tail.",
+        scope_in=["docs/**"],
+    )
+    m.approve()
+    m.record_effect("docs/a.txt", "x", "req-a")
+    check("scope-tail-cache-warmed",
+          m._effect_path_index().get("req-a") == "docs/a.txt")
+
+    tail = m.store.checkpoint_paths()[-1]
+    checkpoint = json.loads(tail.read_text(encoding="utf-8"))
+    checkpoint["state"]["notes"] = [
+        "effect: secrets/a.txt" if note == "effect: docs/a.txt" else note
+        for note in checkpoint["state"]["notes"]
+    ]
+    tail.write_text(
+        json.dumps(checkpoint, indent=1, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+    check("scope-tail-per-id-sees-current-path",
+          m._historical_effect_path("req-a") == "secrets/a.txt")
+    check("scope-tail-index-sees-current-path",
+          m._effect_path_index().get("req-a") == "secrets/a.txt")
+    findings = m.scope_consistency()
+    check("scope-tail-rewrite-is-not-hidden-by-cache",
+          [(f["artifact_path"], f["request_id"]) for f in findings]
+          == [("secrets/a.txt", "req-a")])
+
+
+def test_resume_and_continuity_share_one_effect_index(
+        workspace: Path) -> None:
+    """Bulk readers must fingerprint the checkpoint chain only once each.
+
+    Receipt validation binds a mutable receipt to its chain-recorded path.
+    Calling that validation without passing the already-built path index makes
+    every receipt reload fingerprint every checkpoint, even when the index
+    cache itself hits.  Repeated writes to one artifact also exercise the
+    second receipt-loading loop in ``continuity_breaks``.
+
+    The counter hooks ``_effect_indexes``, the ONE place the chain is walked,
+    rather than ``_effect_path_index``, which is now a thin accessor over it.
+    Counting the accessor would have gone quiet the moment a reader asked for
+    the kind index instead -- a green result meaning "the hook was bypassed",
+    not "the chain was walked once".
+    """
+    m = open_mission(
+        workspace, "m-reader-index", "One index per bulk reader.",
+    )
+    m.approve()
+    for i in range(16):
+        m.record_effect("docs/shared.txt", str(i), f"req-{i}")
+
+    original_index = m._effect_indexes
+    index_calls = 0
+
+    def counted_index():
+        nonlocal index_calls
+        index_calls += 1
+        return original_index()
+
+    m._effect_indexes = counted_index
+    check("resume-index-preserves-clean-result", m.resume() == [])
+    check("resume-index-built-once", index_calls == 1)
+
+    index_calls = 0
+    check("continuity-index-preserves-clean-result",
+          m.continuity_breaks() == [])
+    check("continuity-index-built-once", index_calls == 1)
+
+
+def test_effect_path_index_does_not_retain_checkpoint_bytes(
+        workspace: Path) -> None:
+    """Fingerprinting may hold one checkpoint's bytes, never the whole chain.
+
+    A bytes subclass records the maximum number of checkpoint payloads alive
+    together.  This is a positive memory-shape oracle rather than a timing or
+    source-text assertion: retaining a cumulative ``raw_records`` list makes
+    the peak grow with every checkpoint, while a streaming fingerprint plus
+    cache-miss reread keeps it constant.
+    """
+    m = open_mission(
+        workspace, "m-index-stream", "Stream checkpoint fingerprints.",
+    )
+    m.approve()
+    for i in range(12):
+        m.record_effect(f"docs/{i}.txt", str(i), f"req-{i}")
+
+    original_read_bytes = Path.read_bytes
+    checkpoint_dir = m.store.checkpoints_dir
+
+    class TrackedBytes(bytes):
+        live = 0
+        peak = 0
+
+        def __new__(cls, value: bytes):
+            instance = super().__new__(cls, value)
+            cls.live += 1
+            cls.peak = max(cls.peak, cls.live)
+            return instance
+
+        def __del__(self):
+            type(self).live -= 1
+
+    def tracked_read_bytes(path: Path) -> bytes:
+        data = original_read_bytes(path)
+        if path.parent == checkpoint_dir:
+            return TrackedBytes(data)
+        return data
+
+    m._effect_index_cache = None
+    Path.read_bytes = tracked_read_bytes
+    try:
+        index = m._effect_path_index()
+    finally:
+        Path.read_bytes = original_read_bytes
+
+    check("index-stream-preserves-all-paths", len(index) == 12)
+    check("index-stream-bounds-live-checkpoint-bytes", TrackedBytes.peak <= 2)
+    check("index-stream-releases-checkpoint-bytes", TrackedBytes.live == 0)
+
+
+def test_effect_path_index_uses_set_membership(workspace: Path) -> None:
+    """Cumulative receipt-id lists must not trigger cubic comparisons.
+
+    Each checkpoint repeats all prior IDs, so list membership compares every
+    repeated prefix against the previous prefix.  Counting equality calls
+    distinguishes that cubic comparison shape from set membership's linear
+    work in the already-quadratic number of serialized IDs.
+    """
+    effect_count = 18
+    m = open_mission(
+        workspace, "m-index-membership", "Bound ID membership work.",
+    )
+    m.approve()
+    for i in range(effect_count):
+        m.record_effect(f"docs/{i}.txt", str(i), f"req-{i}")
+
+    original_loads = json.loads
+
+    class CountingStr(str):
+        comparisons = 0
+        __hash__ = str.__hash__
+
+        def __eq__(self, other: object) -> bool:
+            type(self).comparisons += 1
+            return super().__eq__(other)
+
+    def counted_loads(value, *args, **kwargs):
+        record = original_loads(value, *args, **kwargs)
+        if isinstance(record, dict) and isinstance(record.get("receipt_ids"), list):
+            record["receipt_ids"] = [CountingStr(rid)
+                                     for rid in record["receipt_ids"]]
+        return record
+
+    m._effect_index_cache = None
+    json.loads = counted_loads
+    try:
+        index = m._effect_path_index()
+    finally:
+        json.loads = original_loads
+
+    check("index-membership-preserves-all-paths", len(index) == effect_count)
+    check("index-membership-comparisons-are-not-cubic",
+          CountingStr.comparisons < effect_count * effect_count)
+
+
+def _count_checkpoint_reads(fn):
+    """Run `fn`; return (result, reads of files under any `checkpoints/` dir).
+
+    The oracle is FILE READS, not calls to `_effect_path_index`. A counter
+    installed on that method goes green the moment the call moves, whether or
+    not the chain is still being re-read -- and re-reading the chain is the
+    cost, not calling the method. Counting reads measures what the claim is
+    about."""
+    orig_bytes, orig_text = Path.read_bytes, Path.read_text
+    reads = 0
+
+    def counted_bytes(self):
+        nonlocal reads
+        if self.parent.name == "checkpoints":
+            reads += 1
+        return orig_bytes(self)
+
+    def counted_text(self, *args, **kwargs):
+        nonlocal reads
+        if self.parent.name == "checkpoints":
+            reads += 1
+        return orig_text(self, *args, **kwargs)
+
+    Path.read_bytes, Path.read_text = counted_bytes, counted_text
+    try:
+        return fn(), reads
+    finally:
+        Path.read_bytes, Path.read_text = orig_bytes, orig_text
+
+
+def test_census_receipts_does_not_rescan_the_chain_per_receipt(
+        workspace: Path) -> None:
+    """es#161 residue: the ESTATE WALK must not re-read the chain per receipt.
+
+    `census_missions._receipts` builds the chain index once and then calls
+    `_load_receipt_checked` for every id WITHOUT handing that index over, so
+    every receipt re-enters `_effect_path_index`. That was survivable while a
+    cache hit cost one directory listing. Keying the cache to checkpoint
+    CONTENT -- the right fix for the stale-index finding -- turns each hit
+    into a full SHA-256 pass over the whole cumulative chain, so the census
+    goes from O(C) checkpoint reads to O(R x C): measured on a 300-receipt
+    mission, 303 reads / 1.9 MiB before the content key, 91,205 reads /
+    578 MiB after it.
+
+    The same class as the finding it came from, in the sibling module the
+    optimisation exists to serve. Every other control here counts calls on a
+    `Mission` method and none of them runs the census, so none of them sees
+    it."""
+    effect_count = 24
+    m = open_mission(workspace, "m-census-io", "Bounded census chain reads.")
+    m.approve()
+    for i in range(effect_count):
+        m.record_effect(f"docs/{i}.txt", str(i), f"req-{i}")
+    latest, _ = m.store.load_latest()
+    checkpoints = len(m.store.checkpoint_paths())
+    m._effect_index_cache = None
+
+    (paths, problems, orphans), reads = _count_checkpoint_reads(
+        lambda: census_missions._receipts(m, m.store, latest))
+
+    check("census-io-preserves-every-path", len(paths) == effect_count)
+    check("census-io-reports-no-problems", not problems and not orphans)
+    # One index build reads each checkpoint at most twice (fingerprint, then
+    # parse). Anything that scales with the RECEIPT count is a per-id rescan.
+    check("census-io-does-not-rescan-per-receipt", reads <= 4 * checkpoints)
+
+
+def test_census_still_reports_receipts_when_the_index_is_unbuildable(
+        workspace: Path) -> None:
+    """The failure mode the rescan fix introduces, pinned.
+
+    Handing the census's prebuilt mapping to `_load_receipt_checked` removes
+    the rescan -- and would also hand it an EMPTY mapping on the path where
+    the index could not be built at all, silently disabling the loader's own
+    chained-path check and turning unreadable receipts into ordinary ones.
+    So the fix forwards only a mapping it actually built; when the build
+    fails the loader is called exactly as before, re-raises, and every id is
+    still reported."""
+    m = open_mission(workspace, "m-census-blind", "Index build fails.")
+    m.approve()
+    m.record_effect("docs/a.txt", "a", "req-a")
+    m.record_effect("docs/b.txt", "b", "req-b")
+    latest, _ = m.store.load_latest()
+
+    def _boom():
+        raise OSError("checkpoints unreadable")
+
+    m._effect_path_index = _boom
+    paths, problems, orphans = census_missions._receipts(m, m.store, latest)
+
+    blob = " ".join(problems)
+    check("census-blind-reports-index-failure",
+          "chain index unreadable" in blob)
+    check("census-blind-still-names-every-id",
+          all(f"{rid}: " in blob for rid in ("req-a", "req-b")))
+    check("census-blind-does-not-report-clean-coverage", paths == [])
+    check("census-blind-no-orphans-invented", orphans == [])
+
+
 def test_forged_restored_receipt_is_not_trusted(workspace: Path) -> None:
     """Round-3 finding: a schema-valid receipt planted at the lost id's path
     must not buy continuity. The chain records which artifact the id was
@@ -2006,6 +2409,64 @@ def test_superseded_receipt_never_shadows_the_current_one(workspace: Path) -> No
     m.record_effect("notes/a.md", "v3", "req-3")
     check("supersede-recovered-clean",
           m.status()["status"] == "active" and m.resume() == [])
+
+
+def test_continuity_break_classification_never_rescans_the_chain(
+        workspace: Path) -> None:
+    """A mission with MANY REAL breaks must not walk the chain once per break.
+
+    `continuity_breaks` reads every other path from the prebuilt index, but
+    classified each break by calling `_historical_effect_path(..., kind=True)`,
+    which rescans from checkpoint 1. That is O(breaks x checkpoints) reads on
+    exactly the histories that have the most to read.
+
+    It survived the round that removed every other rescan because a CLEAN
+    chain never reaches that branch: the existing cases assert an empty break
+    list, so the loop body never runs and a green suite says nothing about it.
+    This case seeds real breaks so the branch is actually exercised, and the
+    counter is on `_historical_effect_path` itself -- the thing that must not
+    happen -- rather than on elapsed time.
+    """
+    m = open_mission(workspace, "m-break-scan", "Many real breaks.")
+    m.approve()
+    target = workspace / "notes" / "a.md"
+    m.record_effect("notes/a.md", "v0", "req-0")
+    for i in range(1, 9):
+        # Tamper out of band, then re-effect WITHOUT resuming: each pair is a
+        # genuine continuity break.
+        target.write_text("tampered-%d" % i, encoding="utf-8")
+        m.record_effect("notes/a.md", "v%d" % i, "req-%d" % i)
+
+    original = m._historical_effect_path
+    rescans = []
+
+    def counted(request_id, kind=False):
+        rescans.append((request_id, kind))
+        return original(request_id, kind)
+
+    m._historical_effect_path = counted
+    breaks = m.continuity_breaks()
+    m._historical_effect_path = original
+
+    check("many-breaks-actually-seeded", len(breaks) == 8)
+    check("break-classification-does-no-per-id-rescan", rescans == [])
+    check("break-classification-still-correct",
+          all(b["already_reconciled"] is False for b in breaks))
+
+    # Negative control on the classification itself: a reconciled write must
+    # still read as reconciled through the index, or the cheap path would be
+    # cheap and wrong.
+    target.write_text("drifted", encoding="utf-8")
+    m.resume()
+    m.reconcile("notes/a.md", "repaired", "req-fixed")
+    after = m.continuity_breaks()
+    reconciled = [b for b in after if b["request_id"] == "req-fixed"]
+    check("reconciled-break-is-present", len(reconciled) == 1)
+    check("reconciled-break-reads-as-reconciled",
+          reconciled[0]["already_reconciled"] is True)
+    check("index-and-per-id-kind-agree",
+          m._effect_kind_index().get("req-fixed")
+          == m._historical_effect_path("req-fixed", kind=True))
 
 
 def test_continuity_surfaces_unreceipted_mutation(workspace: Path) -> None:
@@ -6063,6 +6524,15 @@ TESTS = [
     test_note_cannot_forge_machine_state,
     test_receipt_ids_always_carry_a_derivable_path,
     test_effect_path_index_matches_per_id,
+    test_effect_path_index_agrees_after_readmission,
+    test_scope_consistency_reuses_single_effect_index,
+    test_scope_consistency_reuses_index_for_underivable_ids,
+    test_effect_path_index_invalidates_on_same_count_tail_rewrite,
+    test_resume_and_continuity_share_one_effect_index,
+    test_effect_path_index_does_not_retain_checkpoint_bytes,
+    test_effect_path_index_uses_set_membership,
+    test_census_receipts_does_not_rescan_the_chain_per_receipt,
+    test_census_still_reports_receipts_when_the_index_is_unbuildable,
     test_foreign_mission_receipt_is_not_this_missions_receipt,
     test_cross_workspace_receipt_cannot_silence_drift,
     test_backslash_effect_path_still_loads_its_own_receipt,
@@ -6090,6 +6560,7 @@ TESTS = [
     test_obligations_match_by_artifact_not_by_string,
     test_drift_marker_matches_by_artifact,
     test_superseded_receipt_never_shadows_the_current_one,
+    test_continuity_break_classification_never_rescans_the_chain,
     test_continuity_surfaces_unreceipted_mutation,
     test_continuity_is_silent_on_sanctioned_recovery,
     test_request_ids_are_never_reusable,
