@@ -6,6 +6,13 @@ on:
     # the moment it becomes a real candidate.
     types: [opened, synchronize, reopened, ready_for_review]
 
+# Superseded runs are cancelled. This workflow only asks a question about a
+# commit; when a newer commit arrives, the answer about the old one is not worth
+# a runner.
+concurrency:
+  group: dco-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
   pull-requests: read

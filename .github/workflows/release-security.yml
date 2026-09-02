@@ -14,6 +14,11 @@ name: release-security
   push:
     branches: [main]
 
+# NO concurrency group, deliberately. This is the full-history secret scan: the
+# one workflow whose run must not be cancelled by a newer commit. A secret is
+# introduced by a commit, not by the tip of a branch, and a scan cancelled
+# halfway is indistinguishable in the UI from a scan that found nothing.
+
 permissions:
   contents: read
 

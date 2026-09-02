@@ -22,6 +22,13 @@ name: mission-custody-contract
       - "docs/superpowers/plans/2026-08-11-mission-custody-contracts.md"
       - ".github/workflows/mission-custody-contract.yml"
 
+# Superseded runs are cancelled. This workflow only asks a question about a
+# commit; when a newer commit arrives, the answer about the old one is not worth
+# a runner.
+concurrency:
+  group: mission-custody-contract-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
