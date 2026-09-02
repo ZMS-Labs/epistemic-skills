@@ -15,8 +15,8 @@ updates:
       - "pin-gardening"
     # Grouped updates (Phase 3, ZMS-Labs/zms-homelab#1719): collapse many
     # single-dependency PRs into one PR per severity band, cutting the
-    # downstream CI fan-out. Majors ride in their own PR so a breaking
-    # action bump is never merged alongside routine patch re-pins.
+    # downstream CI fan-out. Only minor/patch re-pins are grouped; majors
+    # stay ungrouped so each breaking action bump gets its own PR.
     groups:
       github-actions-minor-patch:
         patterns:
@@ -24,8 +24,3 @@ updates:
         update-types:
           - "minor"
           - "patch"
-      github-actions-major:
-        patterns:
-          - "*"
-        update-types:
-          - "major"
