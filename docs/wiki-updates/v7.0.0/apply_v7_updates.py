@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Apply the v6.0.0 corrections to a clone of the epistemic-skills wiki.
+"""Apply the v7.0.0 corrections to a clone of the epistemic-skills wiki.
 
 The wiki is a separate repository, so this cannot run in CI against the thing it
 edits. It is therefore written to be *checkable*: `--dry-run` (the default)
@@ -21,7 +21,12 @@ import sys
 import tempfile
 from pathlib import Path
 
-CURRENT_VERSION = "6.0.0"
+# The version this campaign targets. It is the MANIFEST version, not the newest
+# published tag: `tag_exists()` below is what stops an early apply, and it does
+# so by asking the remote rather than by lagging this constant. Leaving this at
+# 6.0.0 in a v7 campaign would make --apply rewrite every v7 banner back to v6
+# and pass its own guard, because v6.0.0 is published.
+CURRENT_VERSION = "7.0.0"
 
 # Ordered: each rule is (name, compiled pattern, replacement).
 RULES: list[tuple[str, re.Pattern[str], str]] = [
@@ -109,8 +114,8 @@ def self_test() -> int:
          "see github.com/ZMS-Labs/epistemic-skills/tree/v3.0.0/plugins",
          "see github.com/ZMS-Labs/epistemic-skills/tree/v3.0.0/plugins"),
         ("applies-to banner is bumped",
-         "**Applies to:** epistemic-skills v5.0.0",
-         "**Applies to:** epistemic-skills v6.0.0"),
+         "**Applies to:** epistemic-skills v6.0.0",
+         "**Applies to:** epistemic-skills v7.0.0"),
         ("prose numeral untouched",
          "fourteen of the findings were closed", "fourteen of the findings were closed"),
     ]
@@ -220,8 +225,8 @@ def check_paths(root: Path) -> list[str]:
 
 
 # 2. Run before the tag exists. `tagged-tree-url` and `applies-to-banner` rewrite
-#    links to point at /v6.0.0/. If that tag has not been created yet, applying
-#    them replaces working v5 links with 404s -- publication-gate finding PG-18,
+#    links to point at /v7.0.0/. If that tag has not been created yet, applying
+#    them replaces working v6 links with 404s -- publication-gate finding PG-18,
 #    reproduced in the wiki where no oracle in this repository can see it.
 def tag_exists(version: str = CURRENT_VERSION) -> bool | None:
     """True/False if it could be determined, None if the check could not run

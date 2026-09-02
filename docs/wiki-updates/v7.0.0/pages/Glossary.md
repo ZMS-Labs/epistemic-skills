@@ -38,7 +38,7 @@
 
 **Unresolved uncertainty** — A condition where evidence cannot support proceeding. It remains visible as a hold/escalation/probe choice rather than being explained away.
 
-**v6.0.0 support boundary** — The current immutable support point (fifteen skills). Published as an **exception release**: four independent publication reviews returned NO-GO and the owner overrode the judgment gate under a recorded exception. The integrity gates were met on their own terms and were not waived. Does not claim universal behavioral superiority or gate-complete certification.
+**v7.0.0 support boundary** — The support boundary this handbook describes (fifteen skills). Its predecessor **v6.0.0** is the newest *published* immutable support point, and was published as an **exception release**: four independent publication reviews returned NO-GO and the owner overrode the judgment gate under a recorded exception. The integrity gates were met on their own terms and were not waived. Does not claim universal behavioral superiority or gate-complete certification.
 
 **Exception release** — A release published without a `GO` from the independent publication gate, under a recorded owner exception that must state, *before* the tag is created: that the gate did not reach GO, that no GO exists, the owner and date and scope, what evidence remains and what it cannot establish, and the successor condition. The exception reaches the judgment gate only; it never reaches the integrity gates. Contrast **conforming release**.
 

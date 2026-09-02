@@ -8,6 +8,45 @@
 
 The Wiki is unversioned navigation over immutable released sources. For exact behavioral contracts, schemas, test results, and install coordinates, use the tagged repository—not this summary.
 
+## v7.0.0 — the contract-tightening release
+
+**Breaking, and NOT YET PUBLISHED at the time this page was written.** There is
+no v7.0.0 tag and no Release: publication is blocked on two owner acts recorded
+in the release notes, and until they happen the release to install is v6.0.0.
+Every source link on these pages therefore still points at v6.0.0, deliberately.
+
+**Why it is major.** Two published schemas were tightened **in place, at their
+existing contract versions**:
+
+- `epistemic-product-calibration@1` now requires `supersedes` when `status` is
+  `superseded`. The bundled verifier already refused those envelopes; the
+  published schema did not, so a producer validating against the schema as
+  instructed got a false PASS while the consumer rejected the same bytes.
+- `mission-manifest@1` now refuses whitespace-only and empty strings in eight
+  envelope lists. A manifest carrying an empty-string permission validated at
+  6.0.0 and fails at 7.0.0.
+
+**What this means for you.**
+
+| If you | Then |
+|---|---|
+| emit `status: "superseded"` envelopes | emit `supersedes` alongside it. If you already passed the bundled verifier you are already compliant — only schema-only validation changes verdict |
+| author `mission-manifest@1` manifests | remove empty and whitespace-only entries from the eight envelope lists. Records already persisted are unaffected, by design |
+| pin a skills release SHA downstream | rotate to the v7.0.0 tag once it exists, and update whatever record declares the coordinate in the same change |
+| just use the skills | nothing changes. No `SKILL.md` moved, so triggers, routing, the entry point and the fifteen-skill catalog are identical to v6.0.0 |
+
+Also in this release: `verify_calibration.py` returns the named
+`UNKNOWN_STATUS` failure instead of raising on an unhashable `status`, and its
+self-test now asserts that the published schema declares the supersession rule
+the verifier enforces. Mission custody gained concurrent missions — the
+one-active-mission door is gone, and unreadable sibling directories require an
+explicit acknowledgement.
+
+**Assurance posture.** The independent publication-judgment gate has not
+returned GO and has not been waived on the record. Read the release notes before
+citing this release's assurance posture; treat its integrity evidence as the
+evidence and its judgment evidence as absent.
+
 ## v6.0.0 — 2026-08-21 — the assurance release
 
 **Breaking. Published as an EXCEPTION RELEASE**, and the distinction is

@@ -2,11 +2,11 @@
 >
 > **Canonical source:** [released skill tree](https://github.com/ZMS-Labs/epistemic-skills/tree/v6.0.0/plugins/epistemic-skills/skills)
 >
-> **v6.0.0** ships **fifteen** skills: `metacognate` (the only skill you invoke by
-> name) and fourteen disciplines. The skill surface did not grow from v5.1.0 — the
-> major version marks a security fix in the mission-custody contract (es#137), the
-> completion of the v5 design commitments, and a new assurance contract that
-> changes what a release of this project is allowed to claim.
+> **v7.0.0** ships **fifteen** skills: `metacognate` (the only skill you invoke by
+> name) and fourteen disciplines. The skill surface did not grow from v6.0.0 — the
+> major version marks two published schemas tightened in place at their existing
+> contract versions, which is what makes it incompatible rather than minor.
+> Triggers, routing and the catalog are unchanged.
 >
 > **v6.0.0 is an exception release.** Four independent publication reviews across
 > three model families all returned NO-GO, and the owner published anyway under a
@@ -23,8 +23,11 @@ the target, evidence, and claims honest.
 
 ## Start from the current release
 
-This handbook is unversioned navigation over the versioned
-[v6.0.0 release](https://github.com/ZMS-Labs/epistemic-skills/releases/tag/v6.0.0).
+This handbook describes **v7.0.0**. Until that tag is published, the release to
+install is
+[v6.0.0](https://github.com/ZMS-Labs/epistemic-skills/releases/tag/v6.0.0), and
+every source link on these pages points at it for the same reason: a link to an
+unpublished tag is a 404, not a coordinate.
 It explains the released contracts; the
 [canonical repository](https://github.com/ZMS-Labs/epistemic-skills) and its
 versioned sources control if this handbook and a contract differ. The release

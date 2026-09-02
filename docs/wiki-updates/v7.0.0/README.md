@@ -1,4 +1,4 @@
-# Wiki update for v6.0.0 — NOT PUBLISHED
+# Wiki update for v7.0.0 — NOT PUBLISHED
 
 **Status: prepared, not applied.** The live `ZMS-Labs/epistemic-skills.wiki`
 still serves v5.0.0-era content. This package exists so that gap is a
@@ -38,14 +38,14 @@ it edits. It is written to be checkable instead:
 
 ```bash
 # Prove the rules on fixtures — no wiki needed.
-python docs/wiki-updates/v6.0.0/apply_v7_updates.py --self-test
+python docs/wiki-updates/v7.0.0/apply_v7_updates.py --self-test
 
 # See exactly what would change. Default is dry-run; writes nothing.
 git clone https://github.com/ZMS-Labs/epistemic-skills.wiki.git /tmp/es-wiki
-python docs/wiki-updates/v6.0.0/apply_v7_updates.py /tmp/es-wiki
+python docs/wiki-updates/v7.0.0/apply_v7_updates.py /tmp/es-wiki
 
 # Write, then review the diff before pushing.
-python docs/wiki-updates/v6.0.0/apply_v7_updates.py /tmp/es-wiki --apply
+python docs/wiki-updates/v7.0.0/apply_v7_updates.py /tmp/es-wiki --apply
 git -C /tmp/es-wiki diff
 ```
 
@@ -56,13 +56,23 @@ seats deleted in v4.0.0/v5.0.0 in the present tense, and rewriting a sentence's
 tense mechanically produces confident nonsense. The script names the pages; a
 human edits them.
 
-The tagged-URL and banner rules bump to `v6.0.0`. **Do not apply them until the
+**Deliberate split in this campaign: banners and prose move, source URLs do not.**
+The committed snapshot describes v7.0.0 — banners, the Version History entry, and
+the migration table — while every tagged source URL still points at `v6.0.0`.
+That is not an inconsistency left behind. A link to an unpublished tag is a 404
+(publication-gate finding PG-18), and `check_wiki.py --links` resolves these
+links for real on the scheduled run. `apply_v7_updates.py` enforces the ordering
+from the other side: `tag_exists()` returns False for v7.0.0 today, so `--apply`
+refuses. Rotate the URLs in the same post-tag change that moves the README
+install recipes and `INSTALL_REF_PIN`.
+
+The tagged-URL and banner rules bump to `v7.0.0`. **Do not apply them until the
 tag exists** — the README learned this the expensive way (PG-18): pointing at an
 unpublished tag ships dead links.
 
 ## Exit criterion
 
-Installation and catalog pages read fifteen skills with v6.0.0 install guidance,
+Installation and catalog pages read fifteen skills with v7.0.0 install guidance,
 a `Skill-Manifest` page exists, and retired seats are described in the past
 tense. Until all four hold, the gap recorded in `docs/release/RELEASE-6.0.0.md`
 stays open.

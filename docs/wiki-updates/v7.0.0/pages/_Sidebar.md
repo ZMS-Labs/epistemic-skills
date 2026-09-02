@@ -11,7 +11,7 @@
 - [Installation and Harness Compatibility](Installation-and-Harness-Compatibility)
 - [Skill Catalog](Skill-Catalog)
 
-### Current skills (v6.0.0) — fifteen
+### Current skills (v7.0.0) — fifteen
 
 **Entry point**
 
