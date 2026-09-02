@@ -1,6 +1,6 @@
 > **Applies to:** epistemic-skills v7.0.0
 >
-> **Canonical source:** [released skill tree](https://github.com/ZMS-Labs/epistemic-skills/tree/v7.0.0/plugins/epistemic-skills/skills)
+> **Canonical source:** [released skill tree](https://github.com/ZMS-Labs/epistemic-skills/tree/v6.0.0/plugins/epistemic-skills/skills)
 >
 > Prefer immutable `v5.1.0` coordinates. `main` is current development and may move ahead of the tag.
 

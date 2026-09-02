@@ -1,6 +1,6 @@
 > **Applies to:** epistemic-skills v7.0.0
 >
-> **Canonical source:** [released skill tree](https://github.com/ZMS-Labs/epistemic-skills/tree/v7.0.0/plugins/epistemic-skills/skills)
+> **Canonical source:** [released skill tree](https://github.com/ZMS-Labs/epistemic-skills/tree/v6.0.0/plugins/epistemic-skills/skills)
 
 # Skill Catalog
 

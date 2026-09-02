@@ -1,6 +1,6 @@
 > **Applies to:** epistemic-skills v7.0.0
 >
-> **Canonical source:** [released skill tree](https://github.com/ZMS-Labs/epistemic-skills/tree/v7.0.0/plugins/epistemic-skills/skills)
+> **Canonical source:** [released skill tree](https://github.com/ZMS-Labs/epistemic-skills/tree/v6.0.0/plugins/epistemic-skills/skills)
 >
 > **v6.0.0** ships **fifteen** skills: `metacognate` (the only skill you invoke by
 > name) and fourteen disciplines. The skill surface did not grow from v5.1.0 — the

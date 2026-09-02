@@ -120,7 +120,7 @@ annotated tag object.
 
 | Gate | Status | Exact subject | Evidence | Limits |
 |---|---|---|---|---|
-| RG-4 version/link alignment | `MET` | release branch tip | Ten version-bearing manifests at `7.0.0`; every README install recipe and pinned URL at `v7.0.0`; all four referenced paths verified present in the candidate tree; `check_wiki.py` reports `47 pages, 27 banners, 16 counts, 224 versioned links` and `wiki gate: PASS` | Path existence verified in the candidate tree, not against the published tag, which does not yet exist |
+| RG-4 version/link alignment | `MET` | release branch tip | Ten version-bearing manifests at `7.0.0`; handbook banners at `v7.0.0`; **install refs deliberately lagging at `v6.0.0`** (see below); `outsource integration: PASS`; `check_wiki.py` reports `47 pages, 27 banners, 16 counts, 224 versioned links` and `wiki gate: PASS` | Alignment is with the *published* tag for install refs and with the *manifest* version for the banner. Those are different values on purpose during a release cycle |
 | RG-5 deterministic + CodeQL | `UNMET — not yet run on a candidate` | — | The candidate is minted by merging this pull request; per step 4 the checks must be re-run on that exact commit | A pull-request run is not a candidate run |
 | RG-6 security + public content | `PARTIAL` | release branch tip | `check_public_content.py --self-test` → `8 seeded RED controls passed`; `check_public_content.py` → `8 patterns, 38 allowlisted exact files digest-verified (0 dormant entries)` | The full-history secret scan with its planted-secret positive control has not been run on a candidate |
 | description-byte delta | `0 bytes` | release branch tip vs `v6.0.0` | `check_description_budget.py --report` at both: `8636 TOTAL across 15 skills (ceiling 8636)` | Package-local only; the estate gate is retired |
@@ -131,6 +131,37 @@ annotated tag object.
 **No row above is `MET` on the strength of remembered work.** Where a check ran,
 its output is quoted; where it did not, the row says so rather than borrowing
 credibility from a neighbouring green.
+
+### Install refs lag the version on purpose (PG-18)
+
+Every install coordinate in the README, the kimi marketplace source, and the
+handbook's canonical-source links still points at **`v6.0.0`**, while the
+manifests and the handbook banners say **7.0.0**. That is not an oversight and
+must not be "fixed" before the tag exists.
+
+`outsource/tests/run_tests.py` carries the rule as a guard with two separate
+constants: `EXPECTED_VERSION` tracks the manifests, and `INSTALL_REF_PIN` tracks
+the newest **published** tag. Its comment records that during most of the 6.0.0
+cycle the pin correctly lagged at `v5.1.0`.
+
+**The guard earned that a second time here.** The first pass of this preparation
+rewrote every install ref to `v7.0.0`, and the guard caught it. Measured at the
+time:
+
+```
+404  https://github.com/ZMS-Labs/epistemic-skills/tree/v7.0.0/plugins/epistemic-skills/skills
+200  https://github.com/ZMS-Labs/epistemic-skills/tree/v6.0.0/plugins/epistemic-skills/skills
+```
+
+A version bump that moves install refs ahead of the tag ships dead install links
+to every user who follows the README. The lesson is now recorded at the pin
+itself, not only here, so the next cycle does not have to rediscover it.
+
+**Post-tag rotation, required.** Once `v7.0.0` exists and its install URLs are
+measured at HTTP 200, rotate in one change: `INSTALL_REF_PIN`, the README
+install recipes, `.kimi-plugin/marketplace.json`'s source, and the handbook's
+canonical-source links. That change is a successor to the tag, never a
+predecessor.
 
 ---
 
