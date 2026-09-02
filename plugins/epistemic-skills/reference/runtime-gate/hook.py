@@ -17,6 +17,14 @@ SIDE_EFFECTING = {
     # was denied.
     "Write", "Edit", "MultiEdit", "NotebookEdit", "Bash",
 }
+
+# DELEGATION IS ACTION. These built-ins do not themselves write anything; they
+# hand the work to another executor. Under `hold` that is the evasion the
+# control exists to prevent, and "the subagent has the same hook" is an
+# assumption about another process's configuration, not a property of this one.
+# A gate that denies the edit and permits ordering someone else to make it has
+# denied a spelling, not an action.
+DELEGATING = {"Task", "Agent", "SlashCommand"}
 SIDE_EFFECTING_PREFIXES = (
     "mcp__github__merge", "mcp__github__push", "mcp__github__create",
     "mcp__github__update", "mcp__github__delete",
@@ -66,11 +74,29 @@ NON_ACTING = {"hold", "escalate"}
 CONTROLS = NON_ACTING | {"proceed"}
 
 
+def name_mutates(tool: str) -> bool:
+    """Does this tool name carry a mutating verb?
+
+    Applied to BUILT-INS as well as MCP names. The five-name built-in set above
+    is an enumeration exactly like the five `mcp__github__*` prefixes were, and
+    it has the same blind spot: measured against the shipped built-ins under
+    `hold`, `KillShell` -- which terminates a running process -- was allowed,
+    because nothing tested a built-in name it did not already list. Closing the
+    MCP allowlist and leaving the built-in allowlist open fixes one instance of
+    a defect and leaves its sibling.
+
+    Read-only built-ins keep passing because their names carry no verb from the
+    vocabulary: Read, Grep, Glob, BashOutput, WebFetch, WebSearch,
+    NotebookRead, ExitPlanMode. A held agent must still be able to LOOK.
+    """
+    return bool({w.lower() for w in _WORD.findall(tool)} & MCP_MUTATING_VERBS)
+
+
 def mcp_mutates(tool: str) -> bool:
     """Does this MCP tool name carry a mutating verb, in any namespace?"""
     if not tool.startswith("mcp__"):
         return False
-    return bool({w.lower() for w in _WORD.findall(tool)} & MCP_MUTATING_VERBS)
+    return name_mutates(tool)
 
 
 def deny(reason: str) -> None:
@@ -111,8 +137,9 @@ def main() -> None:
         return
     if control in NON_ACTING and (
         tool in SIDE_EFFECTING
+        or tool in DELEGATING
         or tool.startswith(SIDE_EFFECTING_PREFIXES)
-        or mcp_mutates(tool)
+        or name_mutates(tool)
     ):
         deny(f"runtime gate: active control {control!r} forbids side-effecting"
              f" tool {tool!r} (cooperative-agent-grade; see reference/runtime-gate)")

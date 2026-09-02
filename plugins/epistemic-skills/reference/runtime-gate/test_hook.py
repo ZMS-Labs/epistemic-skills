@@ -126,6 +126,54 @@ def main() -> int:
     check("proceed-allows-mcp__arr__mutate",
           run("mcp__arr__mutate", {"control": "proceed"})["allow_ok"])
 
+    # ---- the built-in denial set was an allowlist too ---------------------
+    # Closing the five `mcp__github__*` prefixes and leaving the five built-in
+    # NAMES fixes one instance of a defect and leaves its sibling. Measured
+    # against the shipped built-ins under `hold` before this change:
+    #
+    #     KillShell     allowed   <- terminates a running process
+    #     Task          allowed   <- delegates arbitrary action to a subagent
+    #     Agent         allowed
+    #     SlashCommand  allowed   <- executes an arbitrary command file
+    #     TodoWrite     allowed
+    #
+    # Every one is a side effect, and the published table says a side-effecting
+    # tool is DENIED under `hold`. The table was false for five more rows than
+    # the three this PR set out to close.
+    for control in ("hold", "escalate"):
+        for tool in ("KillShell", "TodoWrite"):
+            check(f"{control}-denies-builtin-{tool}",
+                  run(tool, {"control": control})["denied"])
+        # Delegation is action. "The subagent has the same hook" is an
+        # assumption about another process's configuration, not a property of
+        # this one; a gate that denies the edit and permits ordering someone
+        # else to make it has denied a spelling.
+        for tool in ("Task", "Agent", "SlashCommand"):
+            check(f"{control}-denies-delegation-{tool}",
+                  run(tool, {"control": control})["denied"])
+    for tool in ("KillShell", "Task", "SlashCommand"):
+        check(f"proceed-allows-{tool}",
+              run(tool, {"control": "proceed"})["allow_ok"])
+
+    # ---- CONTROL: a held agent must still be able to LOOK ------------------
+    # Widening the classification to built-in names is only safe if the
+    # read-only built-ins still pass. A gate that denies everything under
+    # `hold` has stopped distinguishing, and this is the assertion that fails
+    # if the verb vocabulary is widened carelessly later.
+    for tool in ("Read", "Grep", "Glob", "BashOutput", "WebFetch",
+                 "WebSearch", "NotebookRead", "ExitPlanMode"):
+        check(f"hold-allows-read-only-builtin-{tool}",
+              run(tool, {"control": "hold"})["allow_ok"])
+
+    # ---- the residue is still named, and still real ------------------------
+    # An opaque name carrying no verb is allowed, built-in or MCP alike. This
+    # is asserted rather than left implicit so the documented boundary is
+    # executed instead of described.
+    check("hold-allows-opaque-mcp-name",
+          run("mcp__x__thing", {"control": "hold"})["allow_ok"])
+    check("hold-allows-opaque-builtin-name",
+          run("Frobnicate", {"control": "hold"})["allow_ok"])
+
     # ---- the malformed-event half of the fail-closed row ------------------
     # Every case above sends a valid object with a string `tool_name`, so
     # the advertised `malformed event -> deny` row was never EXECUTED:
