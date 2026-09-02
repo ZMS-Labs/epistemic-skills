@@ -11,7 +11,7 @@ name: epistemic-flexibility
     # ready_for_review included so gating jobs actually dispatch when a
     # draft PR is marked ready -- the takeover KL-DRAFT-CI promised.
     # Mirrors dco.yml; gauntlet ruling R8 (es-v6-candidate-freeze-2026-08-18).
-    types: [opened, synchronize, reopened, ready_for_review]
+    types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]
     # NO paths filter, deliberately (gauntlet ruling R7, path A). This suite's
     # checks are WHOLE-TREE readers: sync_skill_surfaces.py asserts count
     # phrasing in README.md and in every harness manifest (plugin.json,

@@ -15,7 +15,7 @@ name: mission-custody-contract
     # ready_for_review included so gating jobs actually dispatch when a
     # draft PR is marked ready -- the takeover KL-DRAFT-CI promised.
     # Mirrors dco.yml; gauntlet ruling R8 (es-v6-candidate-freeze-2026-08-18).
-    types: [opened, synchronize, reopened, ready_for_review]
+    types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]
     paths:
       - "plugins/epistemic-skills/contracts/mission-custody/**"
       - "docs/superpowers/specs/2026-08-11-mission-custody-contracts-design.md"

@@ -4,7 +4,7 @@ on:
   pull_request_target:
     # ready_for_review included so a PR opened as draft gets its DCO check
     # the moment it becomes a real candidate.
-    types: [opened, synchronize, reopened, ready_for_review]
+    types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]
 
 # Superseded runs are cancelled. This workflow only asks a question about a
 # commit; when a newer commit arrives, the answer about the old one is not worth
