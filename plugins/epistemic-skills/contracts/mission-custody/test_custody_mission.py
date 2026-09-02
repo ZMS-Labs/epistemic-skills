@@ -10,6 +10,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import tracemalloc
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
@@ -25,6 +26,8 @@ from custody_gate import run_gate  # noqa: E402
 import census_missions  # noqa: E402
 from custody_mission import (  # noqa: E402
     _approved_by_chain,
+    _MAX_REPORTED_BLANKS,
+    _require_substantive_text,
     _same_artifact,
     AcceptanceRefused,
     BindingRequired,
@@ -5429,9 +5432,131 @@ def test_census_orphan_probe_failure_is_partial_not_absence(
     clean = census_missions.summarize([census_missions.census(workspace)])
     check("orphan-probe-clean-run-is-not-partial",
           clean["answers_are_partial"] is False)
+def test_blank_text_refusal_accumulator_is_bounded(_ws: Path) -> None:
+    """The REFUSAL path must not allocate in proportion to the input.
+
+    `--reason-file` has no size limit. The first version of this guard appended
+    one entry per character before de-duplicating, so refusing a large blank
+    file allocated ~4.3x the file's bytes and rising -- turning a documented
+    exit-2 refusal into an OOM (chatgpt-codex-connector on es#213). Only the
+    first `_MAX_REPORTED_BLANKS` DISTINCT code points are ever printed, so only
+    those may ever be held.
+
+    The oracle is the allocation the CALL makes: the input string is built
+    before tracing starts, so the traced peak is the guard's own. The old shape
+    peaks at ~8 bytes per character (~16 MB at n=2,000,000); the bound below is
+    two orders of magnitude under that, so it discriminates rather than merely
+    passing.
+    """
+    blanks = "\u0020\u00a0\u200b\u200e\u0007\u3164\u034f\ufe0f" \
+             "\u2060\u202e\u0001\u2800"
+    small = (blanks * ((100_000 // len(blanks)) + 1))[:100_000]
+    large = (blanks * ((2_000_000 // len(blanks)) + 1))[:2_000_000]
+
+    peaks = {}
+    for name, text in (("small", small), ("large", large)):
+        tracemalloc.start()
+        base = tracemalloc.get_traced_memory()[0]
+        raised = False
+        try:
+            _require_substantive_text(text, "cancel reason", "why")
+        except CustodyError:
+            raised = True
+        peaks[name] = tracemalloc.get_traced_memory()[1] - base
+        tracemalloc.stop()
+        check("blank-accumulator-%s-still-refuses" % name, raised)
+
+    check("blank-accumulator-large-input-allocation-bounded",
+          peaks["large"] < 100_000)
+    # 20x the input must not buy 20x the allocation.
+    check("blank-accumulator-allocation-does-not-scale-with-input",
+          peaks["large"] < max(peaks["small"], 1) * 4)
+
+
+def test_blank_text_refusal_message_names_first_distinct_codepoints(_ws: Path) -> None:
+    """Capping the accumulator must not change what the message says.
+
+    The diagnosis names the first `_MAX_REPORTED_BLANKS` DISTINCT code points
+    in order of first appearance, ASCII-only, with a trailing `...` only when a
+    further distinct code point was seen. Repetition is not a further distinct
+    code point, and the 9th distinct one is counted but never named.
+    """
+    twelve = "\u0020\u00a0\u200b\u200e\u0007\u3164\u034f\ufe0f" \
+             "\u2060\u202e\u0001\u2800"
+    exactly_eight = twelve[:8] * 40
+    try:
+        _require_substantive_text(exactly_eight, "cancel reason", "why")
+        check("blank-message-eight-distinct-refuses", False)
+    except CustodyError as exc:
+        msg = str(exc)
+        check("blank-message-eight-distinct-refuses", True)
+        check("blank-message-eight-distinct-no-ellipsis", "..." not in msg)
+        check("blank-message-eight-distinct-names-all-eight",
+              all(("U+%04X" % ord(c)) in msg for c in twelve[:8]))
+        check("blank-message-eight-distinct-counts-characters",
+              "%d character(s)" % len(exactly_eight) in msg)
+        check("blank-message-eight-distinct-is-ascii",
+              all(ord(c) < 128 for c in msg))
+
+    over_cap = twelve * 40
+    try:
+        _require_substantive_text(over_cap, "cancel reason", "why")
+        check("blank-message-over-cap-refuses", False)
+    except CustodyError as exc:
+        msg = str(exc)
+        check("blank-message-over-cap-refuses", True)
+        check("blank-message-over-cap-has-ellipsis", msg.endswith("..."))
+        check("blank-message-over-cap-names-first-eight",
+              all(("U+%04X" % ord(c)) in msg
+                  for c in twelve[:_MAX_REPORTED_BLANKS]))
+        check("blank-message-over-cap-omits-the-ninth",
+              ("U+%04X" % ord(twelve[_MAX_REPORTED_BLANKS])) not in msg)
+        check("blank-message-over-cap-preserves-first-appearance-order",
+              " ".join("U+%04X" % ord(c)
+                       for c in twelve[:_MAX_REPORTED_BLANKS]) in msg)
+        check("blank-message-over-cap-is-ascii",
+              all(ord(c) < 128 for c in msg))
+
+
+def test_authorize_sibling_refuses_blank_shaped_grant(
+        workspace: Path) -> None:
+    """The THIRD site of the blank-text class, not a second instance of a
+    fixed one.
+
+    `authorize_sibling` landed with es#173 after this work was first
+    written, and reached for `not text.strip()` -- the check measured as
+    open on 26 code points. It records an authority grant a human must
+    later read, so it takes the same predicate, and the mission must
+    survive the refusal rather than absorb an unreadable authorization."""
+    rel = "docs/x.txt"
+    a = open_mission(workspace, "a-owner", "own the artifact")
+    a.approve()
+    a.record_effect(rel, "one\n", "req-a1")
+    before = a.status()["revision"]
+    # Built from escapes, never literal characters, so this source file
+    # stays pure ASCII.
+    for label, grant in (("empty", ""), ("space", " "),
+                         ("nbsp", "\u00a0"), ("zwsp", "\u200b"),
+                         ("bom", "\ufeff"), ("vs16", "\ufe0f"),
+                         ("cgj", "\u034f")):
+        try:
+            a.authorize_sibling("b-writer", rel, grant)
+            check("sibling-grant-refuses-%s" % label, False)
+        except CustodyError:
+            check("sibling-grant-refuses-%s" % label, True)
+    check("sibling-grant-refusal-appends-nothing",
+          a.status()["revision"] == before)
+    # Negative control: a real grant still lands, so the guard refuses the
+    # class and not the verb.
+    a.authorize_sibling("b-writer", rel, "operator: b-writer may write it")
+    check("sibling-grant-accepts-real-text",
+          a.status()["revision"] > before)
 
 
 TESTS = [
+    test_blank_text_refusal_accumulator_is_bounded,
+    test_blank_text_refusal_message_names_first_distinct_codepoints,
+    test_authorize_sibling_refuses_blank_shaped_grant,
     test_scope_entry_classification_table,
     test_uncompared_scope_entries_are_reported,
     test_bare_filename_exclusion_is_enforced,

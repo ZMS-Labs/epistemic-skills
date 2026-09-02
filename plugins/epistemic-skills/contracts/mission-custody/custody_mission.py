@@ -194,6 +194,127 @@ def _refuse_store_aliased_target(workspace: Path, target: Path,
                     "writing through it would truncate the record that "
                     "attests the work. Remove the alias and record a fresh "
                     "artifact.")
+# A required text field exists so a human can later READ it, and
+# `not text.strip()` is not that check. `str.strip()` is Unicode-aware over
+# `str.isspace()`, so it already refuses every Z-separator -- U+00A0 included
+# -- but it accepts the code points that render blank WITHOUT being "space":
+# format controls (Cf: zero-width joiners, bidi marks and isolates, soft
+# hyphen, BOM, tag characters), C0/C1 controls (Cc), and a few letters and
+# symbols whose glyph is empty by design. Measured on the build that shipped
+# `not reason.strip()`: 26 distinct code points, over four axes and 35 cases
+# across three call paths (cancel via argv, cancel via --reason-file, and
+# amend), exited 0 -- sealing `cancelled: <invisible>` into a TERMINAL
+# checkpoint, a mission permanently closed with a reason no reader can
+# recover (es#213).
+#
+# The rule is a PREDICATE that fails closed, not a category enumeration -- the
+# same shape `_refuse_unprintable_identity` settled on, for the same reason: an
+# enumeration's blind spot is exactly the class its author did not think of.
+# That reason is not decorative here. The FIRST pass at this class shipped only
+# the first two clauses plus an eight-entry allow-list, and the allow-list's
+# blind spot was measured on the shipped build: 1961 code points -- every Mn
+# and Me assigned in Unicode 14.0.0 -- were still accepted, and nine of them
+# were confirmed live to exit 0 and seal `cancelled: <invisible>` into a
+# terminal checkpoint (U+034F, U+FE00, U+FE0F, U+E0100, U+180B, U+16FE4,
+# U+0301, U+05B0, U+20DD). The third clause below closes that axis by
+# CATEGORY, which is why it is a category test and not 1961 more entries.
+#
+#     ch.isspace()
+#     or not ch.isprintable()
+#     or unicodedata.category(ch) in _ZERO_ADVANCE_MARK_CATEGORIES
+#     or ord(ch) in _BLANK_GLYPH_CODEPOINTS
+#
+# `not isprintable()` is the FIRST closed half. A full-range census
+# (0..0x10FFFF, run on unicodedata 14.0.0 and 15.0.0 -- the local and CI
+# interpreters -- with identical results) shows it covers every member of Cc,
+# Cf, Cn, Co, Cs, Zl and Zp, and 16 of the 17 Zs, with no printable member
+# anywhere in those categories -- so a code point assigned into any of them by
+# a FUTURE Unicode version is refused without editing this file. The
+# `isspace()` clause is redundant today except for U+0020, the one printable
+# space (same census); it stays because it restates the property directly, and
+# it can only ever refuse more, never less.
+#
+# `_ZERO_ADVANCE_MARK_CATEGORIES` is the SECOND closed half, and it is the same
+# kind of guarantee: a nonspacing (Mn) or enclosing (Me) mark has zero advance
+# width BY DEFINITION and composes onto a preceding base character, so a string
+# that is nothing but marks has no base to compose onto and renders as nothing
+# or as a dotted-circle artifact. Future Mn/Me assignments are covered without
+# editing this file. Mc (SPACING combining mark) is deliberately excluded: 445
+# code points that do carry advance width and are visible on their own.
+#
+# `_BLANK_GLYPH_CODEPOINTS` is what is left OPEN, and it is an enumeration:
+# printable Lo/So characters that still render as nothing, which no category
+# predicate reaches without also refusing every CJK ideograph or every emoji.
+# Its blind spot is, by construction, whatever blank-rendering printable Lo/So
+# code point is missing from it. That residual is bounded and disclosed rather
+# than hidden -- every entry is census-proven printable, non-space, and not
+# Mn/Me (an entry a closed half already covers would be dead weight posing as
+# coverage; U+17B4 and U+17B5 were exactly that once Mn was closed, and are
+# removed), and because these are ordinary letters and symbols, a text carrying
+# ANY visible character alongside one still passes.
+# Same posture as the reserved-note guard's disclosed homoglyph residual.
+_ZERO_ADVANCE_MARK_CATEGORIES = frozenset({"Mn", "Me"})
+
+_BLANK_GLYPH_CODEPOINTS = frozenset({
+    0x115F,   # HANGUL CHOSEONG FILLER       (Lo)
+    0x1160,   # HANGUL JUNGSEONG FILLER      (Lo)
+    0x3164,   # HANGUL FILLER                (Lo)
+    0xFFA0,   # HALFWIDTH HANGUL FILLER      (Lo)
+    0x2800,   # BRAILLE PATTERN BLANK        (So)
+    0x1D159,  # MUSICAL SYMBOL NULL NOTEHEAD (So)
+})
+
+_MAX_REPORTED_BLANKS = 8
+
+
+def _require_substantive_text(text, label: str, purpose: str) -> None:
+    """Refuse a required text field that no reader could ever read.
+
+    The test is on the WHOLE string, never on a single character: text that
+    merely CONTAINS a zero-width, bidi, or combining character is still text.
+    Refusing those would be this guard's own defect pointed the other way -- an
+    operator left holding a mission that can no longer be cancelled, which is
+    worse than the blank reason the guard exists to stop. That direction is the
+    failure mode the Mn/Me clause specifically risks, because ordinary
+    well-formed text in several living scripts carries a nonspacing mark and
+    emoji presentation is a base symbol plus U+FE0F; it is pinned by
+    `test_cancel_accepts_substantive_reasons`, whose rows include non-Latin
+    scripts, an emoji ZWJ sequence, Hebrew with niqqud, Thai with a vowel mark,
+    an emoji and a CJK ideograph each followed by a variation selector, and
+    real text carrying an interior ZWSP, RLM, and combining grapheme joiner.
+    """
+    if not isinstance(text, str) or not text:
+        raise CustodyError(f"{label} required ({purpose})")
+    # The accumulator is capped at what the message can print. `--reason-file`
+    # has no size limit, so one entry per character would make the REFUSAL path
+    # allocate in proportion to the file -- measured at ~4.3x the file's bytes
+    # and rising, which turns a documented exit-2 into an OOM for a large blank
+    # file. Only the first `_MAX_REPORTED_BLANKS` DISTINCT code points are ever
+    # shown, so only those are ever held; `len(text)` supplies the count, and
+    # `more_blanks` reproduces the "..." suffix without a full distinct list.
+    shown_blanks: dict = {}
+    more_blanks = False
+    for ch in text:
+        if not (ch.isspace() or not ch.isprintable()
+                or unicodedata.category(ch) in _ZERO_ADVANCE_MARK_CATEGORIES
+                or ord(ch) in _BLANK_GLYPH_CODEPOINTS):
+            return  # at least one character a reader can actually see
+        cp = ord(ch)
+        if cp not in shown_blanks:
+            if len(shown_blanks) < _MAX_REPORTED_BLANKS:
+                shown_blanks[cp] = None
+            else:
+                more_blanks = True
+    # Name the code points in ASCII. Echoing the glyphs would print the very
+    # invisibility being refused, and this module's errors must survive an
+    # ASCII-only console (see custody_cli._ascii_safe).
+    shown = " ".join("U+%04X" % cp for cp in shown_blanks)
+    if more_blanks:
+        shown += " ..."
+    raise CustodyError(
+        f"{label} required ({purpose}); the text supplied is "
+        f"{len(text)} character(s) of non-rendering code points and would "
+        f"record nothing a reader could recover: {shown}")
 
 
 def _refuse_unprintable_identity(value, field: str) -> None:
@@ -2354,8 +2475,8 @@ class Mission:
         if latest["status"] not in _OPEN_STATES:
             raise IllegalTransition(
                 f"cannot amend_authority: status is {latest['status']!r}")
-        if not isinstance(text, str) or not text.strip():
-            raise CustodyError("amendment text required (verbatim operator grant)")
+        _require_substantive_text(
+            text, "amendment text", "verbatim operator grant")
         manifest = json.loads(json.dumps(latest["manifest"]))
         _refuse_reserved_note(text)
         manifest["authority"]["amendments"].append(
@@ -2405,10 +2526,14 @@ class Mission:
         if latest["status"] not in _OPEN_STATES:
             raise IllegalTransition(
                 f"cannot authorize_sibling: status is {latest['status']!r}")
-        if not isinstance(text, str) or not text.strip():
-            raise CustodyError(
-                "amendment text required (the verbatim operator grant this "
-                "authorization records)")
+        # THIRD site of the same class, not a second instance of a fixed one.
+        # `authorize_sibling` landed with es#173 after this branch was cut and
+        # reached for `not text.strip()`, the check es#213 measured as open on
+        # 26 code points. A sibling authorization is an authority record with
+        # the same reader, so it takes the same predicate.
+        _require_substantive_text(
+            text, "amendment text",
+            "the verbatim operator grant this authorization records")
         if not isinstance(mission_id, str) or not _ID_RE.match(mission_id):
             raise CustodyError(
                 f"authorize_sibling names {mission_id!r}, which is not a "
@@ -3789,6 +3914,8 @@ class Mission:
         return new["revision"]
 
     def cancel(self, reason: str) -> int:
+        _require_substantive_text(
+            reason, "cancel reason", "why the mission was abandoned")
         latest, path = self.store.load_latest()
         self._verify_manifest(latest)
         if latest["status"] not in ("draft", "active", "reopened", "verifying"):
