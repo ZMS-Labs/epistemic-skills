@@ -19,12 +19,15 @@ name: commission-watch-contract
     types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]
     # NO paths filter — same R7 rationale as push above.
 
-# Superseded runs are cancelled. This workflow only asks a question about a
-# commit; when a newer commit arrives, the answer about the old one is not worth
-# a runner.
+# Pull requests group by ref and supersede each other. Every NON-pull-request run
+# gets a group of its own, keyed on the run id, so it can neither be cancelled
+# nor evicted. Both halves matter: `cancel-in-progress: false` protects a RUNNING
+# member of a group but NOT a PENDING one -- GitHub replaces a queued run when a
+# newer one joins its group -- so a shared group would let a push silently
+# discard a queued scheduled or dispatched run.
 concurrency:
-  group: commission-watch-contract-${{ github.ref }}
-  cancel-in-progress: true
+  group: commission-watch-contract-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read

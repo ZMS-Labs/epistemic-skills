@@ -14,11 +14,16 @@ all. They are worth reading before merging; nothing enforces that anyone did.
 ## Why the shared template does not apply
 
 The org's Tier C gate templates (`tier-c-gate-python`, `-node`, `-mixed`) live in
-the **private** `ZMS-Labs/zms-homelab` repository. `epistemic-skills` is
+a **private** fleet repository in the same organisation. `epistemic-skills` is
 **public**, and GitHub does not permit a public repository to call a reusable
 workflow that lives in a private one. The template cannot be referenced from
 here at all, so the Tier C shape is implemented directly in this repo's own
 workflows.
+
+(That repository is deliberately not named here.
+`.github/scripts/check_public_content.py` rejects its name as
+`private-fleet-repo-name`, and the first draft of this document failed that
+check — which is the clean-room gate doing its job.)
 
 There is a second reason it would not fit even if it could be called: this
 repo's gates are not one build. They are seven independent contract oracles,
@@ -33,7 +38,7 @@ A single consolidated job would hide which oracle failed.
 | `commission-watch-contract.yml` | `contract` | ready PRs + push to `main` + dispatch | 30 min | the commission-watch contract |
 | `mission-custody-contract.yml` | `contract`, `contract-macos` | ready PRs + push, path-filtered to the mission-custody contracts and their specs; the macOS job on dispatch only | 30 min each | the mission-custody contract, on Linux always and on macOS on demand |
 | `wiki-contract.yml` | `snapshot`, `live` | `snapshot` on ready PRs + push; `live` on a daily cron and dispatch | 10 / 15 min | that the committed handbook snapshot matches the package, and (daily) that the *published* wiki still does |
-| `openai-bundles.yml` | `build` | ready PRs + push, path-filtered; plus published releases | 15 min | the OpenAI packaging bundles build |
+| `openai-bundles.yml` | `build` | ready PRs + push, path-filtered; plus published releases and **`workflow_dispatch`** | 15 min | the OpenAI packaging bundles build. The push trigger is path-filtered and will not fire for a docs-only release candidate, so the manual dispatch is how `RELEASING.md`'s exact-candidate bundle evidence gets recorded — do not assume the automatic triggers cover it |
 | `release-security.yml` | `full-history-secret-scan` | ready PRs + push to `main` + dispatch | 15 min | no secret anywhere in the history |
 | `dco.yml` | `dco` | ready PRs (`pull_request_target`) | 5 min | every commit carries a real `Signed-off-by` name and email |
 
@@ -45,17 +50,27 @@ A single consolidated job would hide which oracle failed.
   without `ready_for_review`, a PR marked ready would be mergeable having
   executed zero checks, because pressing merge needs no further `synchronize`.
   This was already true before tiering and is unchanged.
-- **Cancellation, with two deliberate exceptions.** Every PR-triggered workflow
-  now declares a `concurrency` group on `github.ref`. Two do not simply cancel:
-  - **`release-security.yml` has no group at all.** It is the full-history
-    secret scan. A secret is introduced by a *commit*, not by the tip of a
-    branch, and a scan cancelled halfway is indistinguishable in the UI from a
-    scan that found nothing.
-  - **`wiki-contract.yml` cancels only on pull requests.** Its `live` job is a
-    daily cron alarm — the only thing that would notice someone re-drifting the
-    published wiki through GitHub's web UI. A scheduled run cancelled by a push
-    to `main` is an alarm that silently did not fire, which is precisely the
-    failure the workflow exists to prevent.
+- **Cancellation.** Every workflow but one groups pull-request runs on
+  `github.ref` and supersedes them, while giving every **non**-pull-request run a
+  group of its own keyed on `github.run_id`. Both halves are load-bearing:
+  `cancel-in-progress: false` protects a *running* member of a group but **not a
+  pending one** — GitHub replaces a queued run when a newer one joins its group.
+  A shared group would therefore let a push to `main` silently discard a queued
+  scheduled or dispatched run, with no record that it never happened. The two
+  places that would have bitten:
+  - `wiki-contract.yml`'s `live` job is a **daily cron alarm** — the only thing
+    that would notice someone re-drifting the published wiki through the web UI.
+  - `mission-custody-contract.yml`'s `contract-macos` job runs on
+    `workflow_dispatch` **only**, so a cancelled dispatch cannot be replaced by
+    the push that displaced it. It is the sole macOS diagnostic.
+- **`dco.yml` is keyed on the pull request number, not the ref.** It runs on
+  `pull_request_target`, which executes in the context of the *base* branch, so
+  `github.ref` is `refs/heads/main` for every pull request alike. A ref-keyed
+  group would make one PR's DCO run cancel an unrelated PR's.
+- **`release-security.yml` has no concurrency group at all**, deliberately. It is
+  the full-history secret scan. A secret is introduced by a *commit*, not by the
+  tip of a branch, and a scan cancelled halfway is indistinguishable in the UI
+  from a scan that found nothing.
 - **Bounded.** Every job in every workflow declares `timeout-minutes`. This was
   already true before tiering.
 
