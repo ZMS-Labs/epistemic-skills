@@ -13,7 +13,7 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - "pin-gardening"
-    # Grouped updates (Phase 3, ZMS-Labs/zms-homelab#1719): collapse many
+    # Grouped updates (fleet CI fan-out reduction, Phase 3): collapse many
     # single-dependency PRs into one PR per severity band, cutting the
     # downstream CI fan-out. Only minor/patch re-pins are grouped; majors
     # stay ungrouped so each breaking action bump gets its own PR.
