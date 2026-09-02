@@ -2,9 +2,10 @@
 
 <!-- ZMS-ESTATE:BEGIN -->
 
-> **Estate status:** `maintenance` · **Purpose:** `governance_method` · **Portfolio role:** `none`
+> **Obligation:** `best effort` · **Stage:** `building` · **Load-bearing:** `unknown — not yet observed`
+> **Purpose:** `governance_method`
 > **Canonical for:** epistemic-agent-skill-package
-> Lifecycle authority: `<private-fleet-repo>/governance/estate.yaml`.
+> Estate authority: the ZMS fleet governance registry (private), `governance/estate.yaml`.
 
 <!-- ZMS-ESTATE:END -->
 

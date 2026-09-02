@@ -308,6 +308,60 @@ def _str_list(value: Any) -> bool:
         isinstance(item, str) and item for item in value)
 
 
+# One explicit predicate is mirrored byte-for-byte in the JSON Schema.  Do not
+# spell this as `\S`: ECMA-262 and Python disagree about several whitespace
+# characters (notably U+001C..U+001F and U+0085).  This class is Python's
+# current `str.isspace()` set, written out so every schema engine receives the
+# same rule instead of substituting its host regex's idea of whitespace.
+DECLARATION_CONTENT_PATTERN = (
+    r"[^\u0009-\u000d\u001c-\u0020\u0085\u00a0\u1680"
+    r"\u2000-\u200a\u2028-\u2029\u202f\u205f\u3000]"
+)
+_DECLARATION_CONTENT_RE = re.compile(DECLARATION_CONTENT_PATTERN)
+
+
+def _nonblank_str_list(value: Any) -> bool:
+    """A declaration list whose entries say something a reader can see.
+
+    Keep this narrower than `_str_list`: receipt ids, notes, and artifact paths
+    have their own contracts. This predicate is only for manifest declaration
+    fields, where truthy whitespace would present an empty boundary as set.
+    """
+    return _str_list(value) and all(
+        _DECLARATION_CONTENT_RE.search(item) for item in value)
+
+
+# The eight envelope-declaration positions this rule governs -- the same eight
+# `status --brief` and `resume` present as set.  Named once, so the store's
+# carry-forward comparison and the JSON Schema parity oracle cannot drift from
+# the validator that decides.
+DECLARATION_FIELDS = (
+    ("authority", "permissions"),
+    ("authority", "protected_state"),
+    ("authority", "acceptable_costs"),
+    ("scope", "in"),
+    ("scope", "out"),
+    ("stop_rules", "hold_if"),
+    ("stop_rules", "stop_if"),
+    ("stop_rules", "escalate_if"),
+)
+
+
+def declaration_view(manifest: Any) -> dict:
+    """The eight declaration lists of `manifest`, for carry-forward comparison.
+
+    Total by construction: a missing or malformed section yields None for that
+    position rather than raising, because this is called on records that have
+    not been validated yet and must never turn a shape question into a crash.
+    """
+    out: dict = {}
+    for section, field in DECLARATION_FIELDS:
+        block = manifest.get(section) if isinstance(manifest, dict) else None
+        out[f"{section}.{field}"] = (
+            block.get(field) if isinstance(block, dict) else None)
+    return out
+
+
 def _require(errors: list[str], cond: bool, field: str, reason: str) -> None:
     if not cond:
         errors.append(f"{field}: {reason}")
@@ -323,8 +377,21 @@ def _check_exact_fields(errors: list[str], rec: dict, allowed: set[str],
             errors.append(f"{where}.{key}: missing")
 
 
-def validate_manifest(rec: dict) -> list[str]:
+def validate_manifest(rec: dict, *,
+                      declaration_content: bool = True) -> list[str]:
+    """Validate a mission-manifest@1.
+
+    `declaration_content` gates ONE rule: whether the eight envelope
+    declaration lists must carry visible content (es#160).  It defaults to
+    True -- the contract this repository publishes -- and is turned OFF only
+    where applying it to an ALREADY-PERSISTED record would change an
+    enforcement answer.  See `custody_store.MissionStore.load_latest` and
+    `write_checkpoint` for the two exemptions and why each exists.
+    """
     errors: list[str] = []
+    entries_ok = _nonblank_str_list if declaration_content else _str_list
+    wanted = ("list of nonblank strings required" if declaration_content
+              else "list of strings required")
     _check_exact_fields(errors, rec, MANIFEST_FIELDS, "manifest")
     if errors:
         return errors
@@ -361,8 +428,8 @@ def validate_manifest(rec: dict) -> list[str]:
         _require(errors, ok, "authority.amendments",
                  "append-only list of {utc, text} objects required")
         for name in ("permissions", "protected_state", "acceptable_costs"):
-            _require(errors, _str_list(auth[name]),
-                     f"authority.{name}", "list of strings required")
+            _require(errors, entries_ok(auth[name]),
+                     f"authority.{name}", wanted)
         mode = auth.get("guard_mode")
         guards = auth.get("actuator_guards")
         if mode is not None:
@@ -457,7 +524,7 @@ def validate_manifest(rec: dict) -> list[str]:
 
     scope = rec["scope"]
     ok = isinstance(scope, dict) and set(scope) == {"in", "out"} \
-        and _str_list(scope.get("in")) and _str_list(scope.get("out"))
+        and entries_ok(scope.get("in")) and entries_ok(scope.get("out"))
     _require(errors, ok, "scope", '{"in": [...], "out": [...]} required')
 
     acc = rec["acceptance"]
@@ -471,28 +538,35 @@ def validate_manifest(rec: dict) -> list[str]:
     stop = rec["stop_rules"]
     ok = isinstance(stop, dict) \
         and set(stop) == {"hold_if", "stop_if", "escalate_if"} \
-        and all(_str_list(stop[k]) for k in ("hold_if", "stop_if", "escalate_if"))
+        and all(entries_ok(stop[k])
+                for k in ("hold_if", "stop_if", "escalate_if"))
     _require(errors, ok, "stop_rules",
-             "hold_if/stop_if/escalate_if string lists required")
+             "hold_if/stop_if/escalate_if "
+             + ("nonblank " if declaration_content else "")
+             + "string lists required")
     return errors
 
 
-def validate_record(record: Any) -> list[str]:
+def validate_record(record: Any, *,
+                    declaration_content: bool = True) -> list[str]:
     if not isinstance(record, dict):
         return ["record: JSON object required"]
     kind = record.get("record")
     if not _in_vocab(kind, RECORD_KINDS):
         return [f"record: unknown kind {kind!r}"]
     if kind == "mission-manifest@1":
-        return validate_manifest(record)
+        return validate_manifest(record,
+                                 declaration_content=declaration_content)
     if kind == "checkpoint@1":
-        return validate_checkpoint(record)      # Task 2
+        return validate_checkpoint(          # Task 2
+            record, declaration_content=declaration_content)
     if kind == "receipt@1":
         return validate_receipt(record)         # Task 3
     return validate_acceptance_verdict(record)  # Task 3
 
 
-def validate_checkpoint(rec: dict) -> list[str]:
+def validate_checkpoint(rec: dict, *,
+                        declaration_content: bool = True) -> list[str]:
     errors: list[str] = []
     _check_exact_fields(errors, rec, CHECKPOINT_FIELDS, "checkpoint")
     if errors:
@@ -510,7 +584,8 @@ def validate_checkpoint(rec: dict) -> list[str]:
                  "64-hex sha256 of prior checkpoint file required")
     if isinstance(rec["manifest"], dict) \
             and rec["manifest"].get("record") == "mission-manifest@1":
-        for err in validate_manifest(rec["manifest"]):
+        for err in validate_manifest(
+                rec["manifest"], declaration_content=declaration_content):
             errors.append(f"manifest.{err}")
         if rec["manifest"].get("mission_id") != rec["mission_id"]:
             errors.append("manifest.mission_id: must equal checkpoint mission_id")

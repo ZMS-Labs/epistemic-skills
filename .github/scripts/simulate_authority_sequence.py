@@ -16,6 +16,7 @@ only ever passes proves nothing about the defect it claims to cure.
 
 from __future__ import annotations
 
+import re
 import subprocess
 import sys
 import tempfile
@@ -50,8 +51,13 @@ def new_repo(root: Path) -> Path:
     return repo
 
 
-def amended(repo: Path) -> tuple[str, dict[str, str], list[str]]:
-    """Pre-authorization BEFORE the candidate; tag object AFTER."""
+def amended(repo: Path, *, drop: tuple[str, ...] = ()) -> tuple[str, dict[str, str], list[str]]:
+    """Pre-authorization BEFORE the candidate; tag object AFTER.
+
+    `drop` omits annotation fields from the created tag, so the tampered
+    variants below exercise THIS scenario's own binding logic: a falsifier
+    that derives nothing from the tag reports PASS over a tag that says
+    nothing."""
     (repo / "PRE-AUTH.md").write_text(
         "I authorize publication of the commit produced by merging the feature "
         "branch, and only that commit, iff the gate returns GO.\n", encoding="utf-8")
@@ -65,17 +71,61 @@ def amended(repo: Path) -> tuple[str, dict[str, str], list[str]]:
     bound["exact_checks"] = git(repo, "rev-parse", "HEAD")      # step 4
     bound["independent_verdict"] = git(repo, "rev-parse", "HEAD")  # step 5
     # Step 7: authorization lives in the tag OBJECT, not a commit.
+    lines = ["verdict: runs/gate GO", f"authorized-sha: {candidate}",
+             "owner: Sim Owner", "exact-sha-runs: 111,222,333,444,555"]
     git(repo, "tag", "-a", "v1.0.0", "-m",
-        f"verdict: runs/gate GO\nauthorized-sha: {candidate}\nowner: Sim Owner\n"
-        f"exact-sha-runs: 111,222,333,444,555")
-    bound["authorization"] = candidate
-    bound["evidence_record"] = candidate   # in the tag object, not a commit
+        "\n".join(l for l in lines if l.split(":", 1)[0] not in drop))
+    # The authorization subject is what the TAG SAYS, not what this harness
+    # remembers. Hard-coding `candidate` here meant a tag that omitted or
+    # mistyped `authorized-sha` still produced one distinct subject and PASS:
+    # the AMENDED-TAMPERED scenario above went red only when this binding
+    # started reading the annotation. A missing or wrong field now yields a
+    # subject that is not the candidate, and the scenario fails as it must.
+    fields = tag_fields(repo, "v1.0.0")
+    bound["authorization"] = fields.get("authorized-sha", "")
+    # The evidence binding is read from the same annotation: the
+    # `exact-sha-runs` field must exist and carry the run-id list it claims.
+    # Hard-coded to `candidate`, this value survived the field being removed,
+    # malformed, or attached to the wrong subject -- the
+    # AMENDED-EVIDENCE-TAMPERED scenario stayed green until the binding was
+    # derived from the tag message it asserts about.
+    bound["evidence_record"] = (
+        candidate if re.fullmatch(r"[0-9]+(,[0-9]+)*",
+                                  fields.get("exact-sha-runs", "")) else "")
     bound["tag_target"] = git(repo, "rev-list", "-n", "1", "v1.0.0")
 
     writes_after = []
     if git(repo, "rev-parse", "HEAD") != candidate:
         writes_after.append("a commit was made after the candidate")
     return candidate, bound, writes_after
+
+
+def tag_fields(repo: Path, tag: str) -> dict[str, str]:
+    """`key: value` lines of the annotated tag OBJECT. The amended sequence
+    keeps its authorization and evidence bindings in this message and nowhere
+    else, so what the tag actually says is the only honest source for either
+    subject."""
+    msg = git(repo, "for-each-ref", f"refs/tags/{tag}", "--format=%(contents)")
+    fields: dict[str, str] = {}
+    for line in msg.splitlines():
+        key, sep, value = line.partition(":")
+        if sep:
+            fields[key.strip()] = value.strip()
+    return fields
+
+
+def amended_tampered(repo: Path) -> tuple[str, dict[str, str], list[str]]:
+    """The amended sequence with `authorized-sha` DROPPED from the tag. A
+    falsifier that hard-codes the authorization subject cannot see this: the
+    tag authorizes nothing, yet every bound value still reads candidate."""
+    return amended(repo, drop=("authorized-sha",))
+
+
+def amended_evidence_tampered(repo: Path) -> tuple[str, dict[str, str], list[str]]:
+    """The amended sequence with `exact-sha-runs` DROPPED from the tag. The
+    authorization field survives, so only an evidence binding that actually
+    reads the annotation can turn this scenario red."""
+    return amended(repo, drop=("exact-sha-runs",))
 
 
 def superseded(repo: Path) -> tuple[str, dict[str, str], list[str]]:
@@ -145,6 +195,10 @@ def main() -> int:
     print("Falsifier: one immutable subject across checks, verdict, "
           "authorization, and tag target.")
     ok = run("AMENDED sequence (pre-authorization + tag object)", amended, True)
+    ok &= run("AMENDED-TAMPERED sequence (tag omits authorized-sha)",
+              amended_tampered, False)
+    ok &= run("AMENDED-EVIDENCE-TAMPERED sequence (tag omits exact-sha-runs)",
+              amended_evidence_tampered, False)
     ok &= run("SUPERSEDED sequence (authorization committed after candidate)",
               superseded, False)
     ok &= run("EVIDENCE-COMMITTED variant (the limb the first cure missed)",

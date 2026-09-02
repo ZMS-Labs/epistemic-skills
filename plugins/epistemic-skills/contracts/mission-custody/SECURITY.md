@@ -355,6 +355,70 @@ assuming:
 root?" as a security question, not housekeeping. A guard set that reads as
 armed is only armed while that answer is exactly one.
 
+## TIGHTENING THE VALIDATOR DISARMS A DEPLOYED GUARD — declaration content is a WRITE rule
+
+`load_latest` is what the Stage-C gate reads. Every error it raises becomes
+`ChainBroken`, `Mission.load` skips the mission dir, and `run_gate` answers
+`allow` with reason `gate inert: NoActiveMission`. So **any** rule added to
+`validate_record` is, by construction, also a rule that can convert an armed
+enforcing mission into no mission at all — retroactively, on stores that were
+written correctly under the contract in force when they were written.
+
+**Measured (es#217).** An `active`, `enforce`-mode mission with a matching
+blocking guard was written by the pre-es#160 API, its `scope.in` carrying one
+`U+00A0` entry — legal to the writer that produced it. That reader answered
+`block`. A reader carrying the es#160 declaration rule on the read path
+answered `allow` / `gate inert: NoActiveMission` on the same bytes, unchanged
+on disk. Nothing was corrupt and nothing was newer; the validator had simply
+changed its mind about a string, and an enforcement surface went quiet.
+
+**Why the direction is not symmetric.** A false block names its rule and is
+discharged by an amend. A false ALLOW retires custody of the actuator class
+with nothing left to notice it — the same asymmetry the glob compiler and the
+`..` collapse are written around. A validation rule is worth having only if it
+cannot be spent on an allow.
+
+**What now happens.** The declaration-content rule (`permissions`,
+`protected_state`, `acceptable_costs`, `scope.in`, `scope.out`,
+`stop_rules.hold_if` / `.stop_if` / `.escalate_if`) is a statement about what a
+steward may newly **author**, not about whether a persisted record can be
+trusted:
+
+- `MissionStore.load_latest` validates structure and chain integrity and does
+  **not** apply it. Measured over 466 records — the checked-in corpus, a live
+  base-written store, the full whitespace enumeration across all eight fields,
+  and a structural/type/identity mutation sweep — the read path's verdicts are
+  identical to the pre-es#160 contract in every case: no record that reader
+  could read becomes unreadable, and no record it refused becomes readable.
+- `Mission.open` and `MissionStore.write_checkpoint` **do** apply it, so no new
+  blank declaration can be authored, at revision 1 or at any later revision.
+- A checkpoint whose eight declaration lists are **identical** to its
+  predecessor's is exempt at write time. The manifest is immutable from open to
+  close, so `_write_next` copies a legacy declaration forward verbatim; without
+  the exemption a mission opened before the rule would keep its enforcing guard
+  and lose `note`, `amend`, `cancel` and `accept` at once — unrepairable,
+  because repairing the declaration is itself a manifest change this contract
+  refuses. That is not fail-closed, it is a lock with no key. The exemption
+  grants nothing new: those bytes are already persisted and already readable,
+  and the moment a list DIFFERS from its predecessor's the full rule applies.
+
+**Residual, disclosed.** A legacy record can still present a whitespace-only
+declaration as a set boundary in `status --brief` and `resume` — the display
+defect es#160 names, which is why the rule exists. That defect is bounded to
+records already on disk, and it cannot widen authority: guard matching reads
+`actuator_guards`, never these eight lists, and scope comparison ignores
+non-path entries. Trading it for a live enforcement surface would not be a
+trade worth making.
+
+**Operator consequence, and the general rule.** Do not add a validation rule to
+a durable record format without deciding, explicitly, whether it gates the READ
+path. The default is that it must not: the corpus on disk was written under the
+old contract and the reader is an enforcement surface. Pinned by
+`test_run_gate_legacy_blank_declaration_still_enforces`,
+`test_legacy_blank_declaration_mission_is_not_wedged` and
+`test_new_blank_declaration_is_still_refused_at_the_writer` in
+`test_custody_gate.py`, each enumerated across all eight declaration positions.
+
 ## A PROVEN chain break outranks an epoch CLAIM
 
 `EpochSkew` says this reader cannot tell a genuine newer record from a

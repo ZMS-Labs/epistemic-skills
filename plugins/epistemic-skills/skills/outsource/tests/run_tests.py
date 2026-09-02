@@ -46,9 +46,16 @@ def check_live_surface_counts(skill_count: int) -> None:
     import re
     disciplines = skill_count - 1  # the entry point is not a discipline
     ok_words = {WORDS[skill_count], WORDS[disciplines]}
+    # The count word must bind to the NOUN it quantifies. Pooling both counts
+    # into one accepted set meant "fifteen disciplines" and "fourteen skills"
+    # both passed -- each naming the other's total. The lookahead captures the
+    # nearest following noun and the comparison is against THAT noun's count.
     count_re = re.compile(
-        r"\b(" + "|".join(WORDS.values()) + r")\b(?=[^.;]{0,60}(?:skill|discipline))",
+        r"\b(" + "|".join(WORDS.values()) + r")\b(?=[^.;]{0,60}?\b(skills?|disciplines?)\b)",
         re.IGNORECASE)
+
+    def want_for(noun: str) -> str:
+        return WORDS[skill_count] if noun.lower().startswith("skill") else WORDS[disciplines]
 
     def strings_of(obj):
         if isinstance(obj, str):
@@ -77,8 +84,10 @@ def check_live_surface_counts(skill_count: int) -> None:
         data = json.loads(read(mp))
         for s in strings_of(data):
             for m in count_re.finditer(s):
-                require(m.group(1).lower() in ok_words,
-                        f"stale count word {m.group(1)!r} on live surface {mp.name}: ...{s[max(0,m.start()-30):m.end()+40]}...")
+                require(m.group(1).lower() == want_for(m.group(2)),
+                        f"stale count word {m.group(1)!r} for {m.group(2)!r} on live surface "
+                        f"{mp.name} (expected {want_for(m.group(2))!r}): "
+                        f"...{s[max(0,m.start()-30):m.end()+40]}...")
     readme = read(REPO_ROOT / "README.md")
     # Select mermaid node lines structurally -- inside a fenced ```mermaid block --
     # rather than by a prose fragment. The previous selector keyed on "router and",
@@ -106,8 +115,9 @@ def check_live_surface_counts(skill_count: int) -> None:
                           f"lines carry no spelled count at all: {mermaid!r}")
     gemini = read(REPO_ROOT / "GEMINI.md")
     for m in count_re.finditer(gemini):
-        require(m.group(1).lower() in ok_words,
-                f"stale count word {m.group(1)!r} in GEMINI.md")
+        require(m.group(1).lower() == want_for(m.group(2)),
+                f"stale count word {m.group(1)!r} for {m.group(2)!r} in GEMINI.md "
+                f"(expected {want_for(m.group(2))!r})")
 
 
 def check_marketplace_enumeration(skill_names: set[str]) -> None:

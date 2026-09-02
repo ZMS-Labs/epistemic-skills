@@ -19,7 +19,7 @@ The prior it operates under: as models strengthen, most accumulated instruction 
 ## Do not use it when
 
 - A single document needs prose editing — that is ordinary editing, not an assembly audit.
-- You are designing a NEW tool or agent-consumed interface — craft doctrine [`agent-interface-design`](Skill-Agent-Interface-Design) owns the outbound channel.
+- You are designing a NEW tool or agent-consumed interface — that is the outbound channel, retained as craft doctrine under [`agent-interface-design`](Skill-Agent-Interface-Design) (a retired seat, no longer routed).
 - You need pre-work recon on a task brief — [`recon`](Skill-Recon) (brief mode) audits the territory; this skill audits the map.
 - You want to tune one prompt for one task's output — that is prompt engineering, not context hygiene.
 

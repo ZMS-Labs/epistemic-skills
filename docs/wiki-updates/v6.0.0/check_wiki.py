@@ -163,12 +163,39 @@ def check(wiki: Path, version: str, live: set[str], retired: dict[str, str],
     # way to describe a retired seat, and an earlier form of this rule flagged it
     # -- 9 false positives against 1 true one. A rule that fires on the correct
     # phrasing trains writers to avoid the correct phrasing.
+    #
+    # The rule reads the VISIBLE text -- a Markdown link's label, not its raw
+    # `[text](target)` spelling -- and ignores capitalisation. The raw-text,
+    # case-sensitive form could not see "[Helix](Helix-Central-Passage) is the
+    # central passage", the exact sentence the published Contributing page
+    # carried, so the gate false-greened on the one real defect it had caught
+    # in prose review. Precision is kept by the same constraints as before:
+    # word boundaries, a verb immediately after the name, and the negation
+    # lookahead.
+    #
+    # Two exemptions, both checkable and both in the spirit of STALE-COUNT's
+    # "states its own version on the same line": a line that names a date or a
+    # past version is history recording itself (the design-history table), and
+    # a page that opens with the "**Historical page.**" banner has already
+    # told the reader the seat is not live -- the retired seat's own retained
+    # page is exactly that case.
     RETIRED_PRESENT = re.compile(
         r"\b(" + "|".join(re.escape(k) for k in retired) + r")\b`?\s+"
-        r"(?:is|selects|owns|routes|hands)\b(?!\s+(?:not|no longer|never))")
+        r"(?:is|selects|owns|routes|hands)\b(?!\s+(?:not|no longer|never))",
+        re.IGNORECASE)
+    ANY_LINK = re.compile(r"\[([^\]]+)\]\([^)]*\)")
+    DATED_LINE = re.compile(r"\b\d{4}-\d{2}-\d{2}\b")
     for p in pages:
-        for m in RETIRED_PRESENT.finditer(p.read_text(encoding="utf-8")):
-            fail.append(f"RETIRED-PRESENT-TENSE: {p.name} -- {m.group(0)!r}")
+        text = p.read_text(encoding="utf-8")
+        if "**Historical page.**" in text:
+            continue
+        for ln in ANY_LINK.sub(r"\1", text).splitlines():
+            if DATED_LINE.search(ln):
+                continue
+            if any(v != version for v in VER_IN_TEXT.findall(ln)):
+                continue
+            for m in RETIRED_PRESENT.finditer(ln):
+                fail.append(f"RETIRED-PRESENT-TENSE: {p.name} -- {m.group(0)!r}")
 
     # RULE 6 -- optional live link resolution.
     if check_links:
@@ -251,8 +278,26 @@ def self_test() -> int:
           + f"\nIt shipped {WORDS[n-1]} skills.\n"}, "STALE-COUNT"),
         ("retired seat in present tense", {"Home.md": good_pages["Home.md"]
                                            + "\n`helix` is the central passage.\n"}, "RETIRED-PRESENT-TENSE"),
+        # The published Contributing page carried exactly this shape --
+        # "[Helix](Helix-Central-Passage) is the central passage ..." -- and the
+        # raw-text, case-sensitive rule could not see it: the gate false-greened
+        # on the one real defect it existed to catch.
+        ("retired seat behind a Markdown link and capitalisation",
+         {"Home.md": good_pages["Home.md"]
+          + "\n[Helix](Helix-Central-Passage) is the central passage.\n"}, "RETIRED-PRESENT-TENSE"),
         ("retired seat correctly negated is NOT flagged", {"Home.md": good_pages["Home.md"]
                                            + "\n`helix` is not a live skill; removed in v5.0.0.\n"}, None),
+        ("negation survives Markdown and capitalisation too", {"Home.md": good_pages["Home.md"]
+          + "\nHistorical [Helix](Helix-Central-Passage) is not a live seat.\n"}, None),
+        ("a dated line is history, not present tense", {"Home.md": good_pages["Home.md"]
+          + "\n| 2026-07-20 | helix design | Helix is the central passage, not the router. |\n"}, None),
+        # The retired seat's own retained page opens with a banner that already
+        # tells the reader the seat is not live; its body legitimately describes
+        # the historical design in the present tense.
+        ("a banner-marked historical page may use present tense",
+         {"Skill-Helix.md": "> **Historical page.** `helix` is not a live skill.\n\n"
+                            "# Helix\n\nHelix is the sole guide to the central passage.\n"},
+         None),
         ("empty wiki is vacuous, not clean", {"__WIPE__": None}, "VACUOUS"),
     ]
     failures = 0
