@@ -77,8 +77,45 @@ APPLIES_TO = re.compile(r"\*\*Applies to:\*\*\s+epistemic-skills\s+v(\d+\.\d+\.\
 MD_LINK = re.compile(r"\[([^\]]+)\]\((https?://[^)]+)\)")
 VER_IN_TEXT = re.compile(r"\bv(\d+\.\d+\.\d+)\b")
 URL_VER = re.compile(r"/(?:tree|blob|releases/tag)/v(\d+\.\d+\.\d+)")
+# Every spelled cardinal this handbook could plausibly use for an inventory. The
+# rule matches ANY of them and then demands the right one, rather than listing
+# only the values that happen to be wrong today: an enumeration of wrong answers
+# has a blind spot exactly where its author's imagination stopped, and this one
+# did. `eleven` was absent entirely, so a v4-era claim survived the release gate
+# in the committed v7 snapshot.
+#
+# A modifier between the number and the noun does not make the claim any less an
+# inventory claim. "exactly eleven released skills" is the same assertion as
+# "eleven skills" and was invisible to the immediately-adjacent form. Up to three
+# intervening words are allowed, which covers the real phrasings without letting
+# a match wander into an unrelated clause.
+COUNT_WORDS = (
+    "one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|"
+    "fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty"
+)
 COUNT_NEAR = re.compile(
-    r"\b(twelve|thirteen|fourteen|fifteen|sixteen)\b\s+(skills|disciplines)", re.I)
+    r"\b(" + COUNT_WORDS + r")\b((?:\s+[A-Za-z-]+){0,3}?)\s+(skills|disciplines)\b",
+    re.I)
+
+# Widening the match widened the FALSE positives too, so two narrow exclusions
+# come with it. Both were measured on the committed snapshot rather than
+# imagined, and each names a construction that is not an inventory claim at all:
+#
+#   INDEFINITE -- "a routing record exists only when two or more disciplines
+#   actually fire" is a threshold, not a count of what the package ships.
+#
+#   COMPOUND -- "keep one canonical skills tree" counts trees, not skills. The
+#   noun only ends the phrase when nothing turns it into a modifier.
+#
+# Deliberately small. A larger exclusion list would start excusing real stale
+# claims, which is the failure this rule exists to catch, so anything not
+# covered here is reported and the writer names the version on the line.
+COUNT_INDEFINITE = re.compile(
+    r"\b(?:or\s+(?:more|fewer|less)|at\s+least|at\s+most|up\s+to|more\s+than|"
+    r"fewer\s+than|no\s+more\s+than)\b", re.I)
+COUNT_COMPOUND_TAIL = re.compile(
+    r"^\s+(?:tree|trees|directory|directories|folder|folders|repo|repos|"
+    r"path|paths|list|lists|table|tables|registry|registries)\b", re.I)
 
 
 def check(wiki: Path, version: str, live: set[str], retired: dict[str, str],
@@ -126,8 +163,14 @@ def check(wiki: Path, version: str, live: set[str], retired: dict[str, str],
     for p in pages:
         for ln in p.read_text(encoding="utf-8").splitlines():
             for m in COUNT_NEAR.finditer(ln):
+                # Not an inventory claim: a threshold, or a compound noun whose
+                # head is something other than skills/disciplines.
+                if COUNT_INDEFINITE.search(m.group(0)):
+                    continue
+                if COUNT_COMPOUND_TAIL.match(ln[m.end():]):
+                    continue
                 counts += 1
-                word, noun = m.group(1).lower(), m.group(2).lower()
+                word, noun = m.group(1).lower(), m.group(3).lower()
                 want = WORDS[n_skills] if noun == "skills" else WORDS[n_disc]
                 if word == want:
                     continue
@@ -135,7 +178,8 @@ def check(wiki: Path, version: str, live: set[str], retired: dict[str, str],
                 if past:
                     exempt += 1
                     continue
-                fail.append(f"STALE-COUNT: {p.name} says {word!r} {noun}, expected {want!r} "
+                phrase = (word + m.group(2) + " " + noun).strip()
+                fail.append(f"STALE-COUNT: {p.name} says {phrase!r}, expected {want!r} "
                             f"({n_skills} skills = 1 entry point + {n_disc} disciplines). "
                             f"If this describes a past release, name that version on the same line.")
     if counts == 0:
@@ -267,6 +311,22 @@ def self_test() -> int:
             f"epistemic-skills v{version}", "epistemic-skills v1.0.0", 1)}, "STALE-BANNER"),
         ("stale count", {"Home.md": good_pages["Home.md"].replace(
             f"{WORDS[n]} skills", f"{WORDS[n-2]} skills", 1)}, "STALE-COUNT"),
+        # The shape the immediately-adjacent rule could not see. The committed
+        # v7 snapshot carried "exactly eleven released skills" and the gate
+        # reported PASS, so this is a seeded copy of a real false-green, not a
+        # hypothetical. `eleven` also sat outside the old word list entirely.
+        ("stale count with a modifier between number and noun",
+         {"Home.md": good_pages["Home.md"] + "\nInventory: exactly eleven released skills.\n"},
+         "STALE-COUNT"),
+        # Negative controls for the two exclusions that came with the widening.
+        # Without these the exclusions could quietly grow until the rule stopped
+        # measuring, and nothing would say so.
+        ("a threshold is not an inventory claim",
+         {"Home.md": good_pages["Home.md"]
+          + "\nA routing record exists when two or more disciplines fire.\n"}, None),
+        ("a compound noun is not an inventory claim",
+         {"Home.md": good_pages["Home.md"]
+          + "\nKeep one canonical skills tree per harness.\n"}, None),
         ("link text/URL version mismatch", {"Home.md": good_pages["Home.md"].replace(
             f"[the v{version} tree]", "[the v3.0.0 tree]", 1)}, "LINK-VERSION-MISMATCH"),
         ("missing live skill page", {page_slug(sorted(live)[0]) + ".md": None}, "SKILL-PAGE-MISSING"),

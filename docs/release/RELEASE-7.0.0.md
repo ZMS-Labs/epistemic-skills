@@ -1,6 +1,7 @@
 # epistemic-skills 7.0.0
 
-**Status at the time this file was committed: NOT PUBLISHABLE.** The independent
+**Status at the time this file was committed: NOT PUBLISHABLE.** Seven
+prerequisites are outstanding, four of them owner-only. The independent
 publication-judgment gate (RG-8) has neither returned GO nor been waived on the
 record, and the two acts that would resolve it cannot be performed by the
 implementing agent. See [Before this may be tagged](#before-this-may-be-tagged).
@@ -106,8 +107,10 @@ consumer-side confirmation that this release is the coordinate they need.
    records are unaffected by design.
 3. **Consumers pinning a skills release SHA.** Rotate to this tag and update
    whatever record declares the coordinate, in the same change.
-4. **Everyone else.** Re-point install recipes at `v7.0.0`. No skill surface
-   changed, so no trigger or routing behaviour changes.
+4. **Everyone else.** Nothing changes. No skill surface changed, so triggers,
+   routing and the catalog are identical. Re-point install recipes at `v7.0.0`
+   **once that tag exists** — until then `v6.0.0` is the install target, and the
+   recipes in the README still say so on purpose.
 
 ---
 
@@ -120,7 +123,7 @@ annotated tag object.
 
 | Gate | Status | Exact subject | Evidence | Limits |
 |---|---|---|---|---|
-| RG-4 version/link alignment | `MET` | release branch tip | Ten version-bearing manifests at `7.0.0`; handbook banners at `v7.0.0`; **install refs deliberately lagging at `v6.0.0`** (see below); `outsource integration: PASS`; `check_wiki.py` reports `47 pages, 27 banners, 16 counts, 224 versioned links` and `wiki gate: PASS` | Alignment is with the *published* tag for install refs and with the *manifest* version for the banner. Those are different values on purpose during a release cycle |
+| RG-4 version/link alignment | **`UNMET`** | release branch tip | Ten version-bearing manifests at `7.0.0`; handbook banners at `v7.0.0`; `outsource integration: PASS`; `check_wiki.py` reports `47 pages, 27 banners, 24 counts, 224 versioned links` and `wiki gate: PASS`. **Install examples are at `v6.0.0`, not the proposed version** | `RELEASING.md` RG-4 requires every install example to agree on the proposed version. They do not, deliberately. This row is `UNMET` rather than argued into a pass — see the conflict below |
 | RG-5 deterministic + CodeQL | `UNMET — not yet run on a candidate` | — | The candidate is minted by merging this pull request; per step 4 the checks must be re-run on that exact commit | A pull-request run is not a candidate run |
 | RG-6 security + public content | `PARTIAL` | release branch tip | `check_public_content.py --self-test` → `8 seeded RED controls passed`; `check_public_content.py` → `8 patterns, 38 allowlisted exact files digest-verified (0 dormant entries)` | The full-history secret scan with its planted-secret positive control has not been run on a candidate |
 | description-byte delta | `0 bytes` | release branch tip vs `v6.0.0` | `check_description_budget.py --report` at both: `8636 TOTAL across 15 skills (ceiling 8636)` | Package-local only; the estate gate is retired |
@@ -131,6 +134,36 @@ annotated tag object.
 **No row above is `MET` on the strength of remembered work.** Where a check ran,
 its output is quoted; where it did not, the row says so rather than borrowing
 credibility from a neighbouring green.
+
+### RG-4 and PG-18 contradict each other, and the procedure has to say which wins
+
+This is a defect in the governing procedure, surfaced by trying to follow it,
+and it is recorded here rather than resolved by an implementing agent.
+
+`RELEASING.md` RG-4 requires that **every install example agree on the proposed
+version**. Its very next bullet requires that **every path behind a rewritten
+version-pinned URL exist in the candidate tree** — and warns that a blind bump
+"can mint immutable links to paths that never existed at that tag". Before the
+tag exists, no `v7.0.0` path exists, so the two bullets cannot both hold. PG-18,
+encoded as a live guard in `outsource/tests/run_tests.py`, resolves it in
+practice by lagging install refs at the newest published tag.
+
+So one of these is true, and the owner has to choose:
+
+1. **RG-4 means "aligned at publication"**, and a preparation commit is expected
+   to sit with install refs lagging. Then the procedure text should say so, and
+   this row becomes `MET` under the corrected wording.
+2. **RG-4 means what it literally says**, and this integrity gate cannot be met
+   before the tag exists. Then the tag must be created from a candidate that
+   fails RG-4, which `RELEASING.md` forbids, or the sequence needs a second
+   candidate after the refs rotate.
+
+Recorded as `UNMET` on the strength of the text as written. That is the
+conservative reading, and an integrity gate is explicitly non-waivable, so
+reading it the convenient way would be exactly the move the procedure exists to
+prevent. **An implementing agent must not amend the governing procedure to make
+its own release pass**, which is why option 1 is written here as a proposal
+rather than applied.
 
 ### Install refs lag the version on purpose (PG-18)
 
@@ -167,7 +200,27 @@ predecessor.
 
 ## Before this may be tagged
 
-Two acts remain, and **neither can be performed by the implementing agent**.
+**Every unmet prerequisite, not only the two owner acts.** An earlier draft of
+this section named just the two acts below, and the table above already recorded
+four other rows as incomplete. A reader following only this section could have
+tagged with mandatory integrity gates unrun, so the full list comes first.
+
+| # | Prerequisite | Who | Why it is not done |
+|---|---|---|---|
+| 1 | **RG-5** — full deterministic suite, DCO, manifest parity, committed-JSON, and every required CodeQL matrix, dispatched explicitly on the **exact candidate** | anyone | The candidate does not exist until this pull request merges. A pull-request run is not a candidate run, and path-filtered workflows do not fire on a docs-heavy commit — dispatch them |
+| 2 | **RG-6** — full-history secret scan on the exact candidate, **with a planted-secret positive control**, plus the release-diff public-content review | anyone | Only the tree-scoped public-content gate has been run. A scan without its positive control does not establish that the scanner works |
+| 3 | **RG-7** — exercise each supported harness against the candidate, or assign an explicit verification tier per harness in these notes | anyone | Not run. The package surface is unchanged from 6.0.0, which is a reason to *expect* parity, not evidence of it |
+| 4 | **RG-4** — resolve the procedure conflict recorded above, then align install refs or correct the procedure text | **owner** | Two bullets of RG-4 cannot both hold before the tag exists |
+| 5 | **RG-9** — commit the pre-authorization **before** the candidate is minted, naming the pull request, the version, the release-note path, the gate that must return GO, and the firing condition | **owner** | It names no SHA because none exists yet, and it must be in this pull request |
+| 6 | **RG-8** — resolve the publication-judgment gate | **owner** | See below |
+| 7 | Create the tag | **owner** | See below |
+
+Rows 1 to 3 are ordinary work that any actor can do **once the candidate
+exists**. Rows 4 to 7 are the owner's. Rows 5 to 7 are also **ordered**: the
+pre-authorization precedes the merge that mints the candidate, the judgment gate
+runs on the frozen candidate, and the tag comes last.
+
+The two acts below are the ones **no implementing agent can perform at all**.
 This section exists so that is unambiguous rather than discovered later.
 
 ### 1. Resolve RG-8
