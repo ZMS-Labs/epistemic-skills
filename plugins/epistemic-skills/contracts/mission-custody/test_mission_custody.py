@@ -10,6 +10,9 @@ ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 
 from verify_mission_custody import (  # noqa: E402
+    CONTINUITY_BREAK_FIELDS,
+    CONTINUITY_REPORT_FIELDS,
+    ORPHANED_RECEIPT_FIELDS,
     RECORD_KINDS,
     STATES,
     TIERS,
@@ -72,6 +75,78 @@ def test_manifest_amendments_must_be_list_of_dated_text() -> None:
     rec = copy.deepcopy(valid_manifest())
     rec["authority"]["amendments"] = ["bare string"]
     check("manifest-amendment-shape", validate_record(rec) != [])
+
+
+def test_manifest_envelope_lists_require_nonblank_entries() -> None:
+    """es#160: truthy whitespace is not a usable declaration.
+
+    These are manifest declarations, not filesystem names. A whitespace-only
+    artifact path remains legal and is pinned separately below.
+    """
+    fields = (
+        ("permissions", ("authority", "permissions")),
+        ("protected-state", ("authority", "protected_state")),
+        ("acceptable-costs", ("authority", "acceptable_costs")),
+        ("scope-in", ("scope", "in")),
+        ("scope-out", ("scope", "out")),
+        ("hold-if", ("stop_rules", "hold_if")),
+        ("stop-if", ("stop_rules", "stop_if")),
+        ("escalate-if", ("stop_rules", "escalate_if")),
+    )
+    for label, (section, field) in fields:
+        blank = copy.deepcopy(valid_manifest())
+        blank[section][field] = [" \t\u00a0 "]
+        check(f"manifest-{label}-blank-refused", validate_record(blank) != [])
+
+        substantive = copy.deepcopy(valid_manifest())
+        substantive[section][field] = ["  declared boundary  "]
+        check(f"manifest-{label}-substantive-whitespace-allowed",
+              validate_record(substantive) == [])
+
+        empty = copy.deepcopy(valid_manifest())
+        empty[section][field] = []
+        check(f"manifest-{label}-empty-allowed", validate_record(empty) == [])
+
+
+def test_manifest_envelope_compound_and_embedded_blanks() -> None:
+    """Blank declarations fail predictably when faults are combined or nested."""
+    fields = (
+        ("authority", "permissions"),
+        ("authority", "protected_state"),
+        ("authority", "acceptable_costs"),
+        ("scope", "in"),
+        ("scope", "out"),
+        ("stop_rules", "hold_if"),
+        ("stop_rules", "stop_if"),
+        ("stop_rules", "escalate_if"),
+    )
+
+    compound = copy.deepcopy(valid_manifest())
+    for section, field in fields:
+        compound[section][field] = [" \t\u00a0 "]
+    check("manifest-envelope-all-blanks-refused",
+          validate_record(compound) != [])
+
+    mixed = copy.deepcopy(valid_manifest())
+    mixed["authority"]["permissions"] = []
+    mixed["scope"]["in"] = ["  substantive  "]
+    mixed["stop_rules"]["escalate_if"] = ["\u0085"]
+    check("manifest-envelope-mixed-blank-refused",
+          validate_record(mixed) != [])
+
+    checkpoint = valid_checkpoint_r1()
+    for section, field in fields:
+        checkpoint["manifest"][section][field] = ["\u001c"]
+    check("checkpoint-embedded-envelope-blanks-refused",
+          validate_record(checkpoint) != [])
+
+
+def test_whitespace_only_artifact_path_remains_legal() -> None:
+    """Declaration validation must not leak into the filename surface."""
+    rec = load("valid-receipt.json")
+    rec["artifact_path"] = "   "
+    check("receipt-whitespace-only-artifact-path-valid",
+          validate_record(rec) == [])
 
 
 def test_unknown_record_kind_rejected() -> None:
@@ -254,6 +329,189 @@ def test_unhashable_guard_mode_returns_validation_error() -> None:
     check("guard-unknown-tools-pass", validate_record(rec) == [])
 
 
+def test_closed_vocabularies_never_raise_typeerror() -> None:
+    """Every CLOSED vocabulary must answer a non-string with a validation
+    ERROR, not a TypeError.
+
+    es#137 P2 fixed exactly one of these -- `guard_mode` -- and the class was
+    scoped to that instance. The same `value in SET` shape sits on
+    `checkpoint.status`, `verdict.verdict`, `verdict.assurance_tier`,
+    `manifest.acceptance.required_tier`, and the top-level `record` kind, and
+    every one of them raises `TypeError: unhashable type` on a list or dict.
+    Measured before the fix: `validate_record({... "status": []})` raised
+    TypeError, and a sibling checkpoint carrying `"status": []` took EVERY
+    pathless custody command in the workspace down with it (see
+    test_custody_mission.test_typeinvalid_sibling_is_skipped_not_fatal).
+
+    `validate_record` promises a list of errors. A promise that becomes a
+    traceback on hostile input is a denial of service through the recovery
+    path -- exactly what drift detection exists to survive."""
+    cases = []
+
+    rec = copy.deepcopy(valid_checkpoint_r1())
+    rec["status"] = []
+    cases.append(("checkpoint-status", rec))
+
+    rec = copy.deepcopy(valid_checkpoint_r1())
+    rec["manifest"]["acceptance"]["required_tier"] = {}
+    cases.append(("manifest-required-tier", rec))
+
+    rec = copy.deepcopy(valid_manifest())
+    rec["acceptance"]["required_tier"] = []
+    cases.append(("manifest-required-tier-standalone", rec))
+
+    rec = load("valid-verdict-pass-separated.json")
+    rec["verdict"] = []
+    cases.append(("verdict-verdict", rec))
+
+    rec = load("valid-verdict-pass-separated.json")
+    rec["assurance_tier"] = {"a": 1}
+    cases.append(("verdict-assurance-tier", rec))
+
+    cases.append(("record-kind", {"record": ["checkpoint@1"]}))
+
+    for name, record in cases:
+        try:
+            errors = validate_record(record)
+        except TypeError:
+            check(f"closed-vocab-no-typeerror-{name}", False)
+            continue
+        check(f"closed-vocab-no-typeerror-{name}", True)
+        check(f"closed-vocab-returns-errors-{name}", errors != [])
+
+
+def a_continuity_report() -> dict:
+    """One report carrying BOTH findings, which is the case that mattered.
+
+    The first version of this validator required the orphan entries to be
+    strings while `Mission.orphaned_retired_receipts()` emits objects, so the
+    report validated only while the orphan list was EMPTY and was rejected at
+    the exact moment it carried a finding. A validator that passes only when
+    there is nothing to report is worse than none: it is green on the healthy
+    case and red on the one it exists for.
+    """
+    return {
+        "record": "continuity-report@1",
+        "continuity_breaks": [{
+            "artifact_path": "notes/a.md",
+            "prior_request_id": "r-1",
+            "request_id": "r-2",
+            "expected_before_sha256": "a" * 64,
+            "observed_before_sha256": "b" * 64,
+            "no_op_write": False,
+            "already_reconciled": False,
+        }],
+        "orphaned_retired_receipts": [{
+            "request_id": "r-0",
+            "receipt_path": "missions/m/receipts/r-0.json",
+            "note": "receipt present for an id the chain retired",
+        }],
+    }
+
+
+def test_continuity_report_with_findings_validates() -> None:
+    check("continuity-report-with-both-findings-valid",
+          validate_record(a_continuity_report()) == [])
+    empty = {"record": "continuity-report@1", "continuity_breaks": [],
+             "orphaned_retired_receipts": []}
+    check("continuity-report-empty-valid", validate_record(empty) == [])
+    # A first write records "nothing was there" as null, and receipt@1 types
+    # before_sha256 as string-or-null, so the observed side must accept null
+    # while the expected side -- taken from the prior receipt's after_sha256,
+    # typed a plain string -- must not.
+    rec = a_continuity_report()
+    rec["continuity_breaks"][0]["observed_before_sha256"] = None
+    check("continuity-report-observed-hash-may-be-null",
+          validate_record(rec) == [])
+    rec = a_continuity_report()
+    rec["continuity_breaks"][0]["expected_before_sha256"] = None
+    check("continuity-report-expected-hash-may-not-be-null",
+          validate_record(rec) != [])
+
+
+def test_every_continuity_break_field_is_validated() -> None:
+    """Checking a SUBSET of a guaranteed shape is not a weaker validator.
+
+    It is a validator that returns success on a record a consumer cannot
+    traverse. Only `artifact_path` and `already_reconciled` were checked, so
+    the other five could be missing outright, or hold lists and integers, and
+    `validate_record` still answered `[]`. Each field is exercised twice --
+    removed, and given a wrong-typed value -- because a presence check and a
+    type check fail differently and a fix can close one and leave the other.
+    """
+    for name in sorted(CONTINUITY_BREAK_FIELDS):
+        rec = a_continuity_report()
+        del rec["continuity_breaks"][0][name]
+        check(f"continuity-break-missing-{name}-rejected",
+              validate_record(rec) != [])
+        rec = a_continuity_report()
+        rec["continuity_breaks"][0][name] = [1, 2, 3]
+        check(f"continuity-break-wrongtype-{name}-rejected",
+              validate_record(rec) != [])
+    for name in sorted(ORPHANED_RECEIPT_FIELDS):
+        rec = a_continuity_report()
+        del rec["orphaned_retired_receipts"][0][name]
+        check(f"orphan-missing-{name}-rejected", validate_record(rec) != [])
+        rec = a_continuity_report()
+        rec["orphaned_retired_receipts"][0][name] = 7
+        check(f"orphan-wrongtype-{name}-rejected", validate_record(rec) != [])
+    # Closed shapes: an unexpected field is a report this contract did not
+    # author, and silently ignoring it is how a shape drifts.
+    rec = a_continuity_report()
+    rec["continuity_breaks"][0]["surprise"] = 1
+    check("continuity-break-extra-field-rejected", validate_record(rec) != [])
+    rec = a_continuity_report()
+    rec["orphaned_retired_receipts"][0]["surprise"] = 1
+    check("orphan-extra-field-rejected", validate_record(rec) != [])
+
+
+def test_every_record_kind_has_a_published_schema() -> None:
+    """The schemas are the documentation contract for consumers that do not
+    execute this Python verifier.
+
+    `continuity-report@1` was added to `RECORD_KINDS` -- a public claim that
+    the kind exists -- with no schema beside it, so a schema-based consumer
+    could not recognise the record `audit` emits. This asserts the invariant
+    for every kind rather than for the one that was missing, since the next
+    kind added will have the same hole otherwise.
+    """
+    for kind in sorted(RECORD_KINDS):
+        name = kind.split("@")[0] + ".schema.json"
+        check(f"schema-published-for-{kind}", (ROOT / name).is_file())
+
+
+def test_continuity_schema_and_verifier_state_one_shape() -> None:
+    """Two statements of a shape drift unless something compares them.
+
+    The verifier's field constants and the schema's `required`/`properties`
+    are the same contract written twice, so this equates them field by field
+    rather than trusting that whoever edits one remembers the other.
+    """
+    schema = json.loads(
+        (ROOT / "continuity-report.schema.json").read_text(encoding="utf-8"))
+    props = schema["properties"]
+    check("continuity-schema-top-level-parity",
+          set(schema["required"]) == set(CONTINUITY_REPORT_FIELDS))
+    check("continuity-schema-closed", schema["additionalProperties"] is False)
+    breaks = props["continuity_breaks"]["items"]
+    check("continuity-schema-break-required-parity",
+          set(breaks["required"]) == set(CONTINUITY_BREAK_FIELDS))
+    check("continuity-schema-break-properties-parity",
+          set(breaks["properties"]) == set(CONTINUITY_BREAK_FIELDS))
+    check("continuity-schema-break-closed",
+          breaks["additionalProperties"] is False)
+    orphans = props["orphaned_retired_receipts"]["items"]
+    check("continuity-schema-orphan-required-parity",
+          set(orphans["required"]) == set(ORPHANED_RECEIPT_FIELDS))
+    check("continuity-schema-orphan-closed",
+          orphans["additionalProperties"] is False)
+    # The orphan items must be OBJECTS in the schema too. The defect this
+    # whole thread began with was a string/object disagreement, and a schema
+    # that repeated it would hand consumers the same wrong answer.
+    check("continuity-schema-orphan-items-are-objects",
+          orphans["type"] == "object")
+
+
 def test_examples_corpus() -> None:
     ex = ROOT / "examples"
     for path in sorted(ex.glob("valid-*.json")):
@@ -271,6 +529,9 @@ def main() -> int:
     test_manifest_unknown_top_level_field()
     test_manifest_bad_tier()
     test_manifest_amendments_must_be_list_of_dated_text()
+    test_manifest_envelope_lists_require_nonblank_entries()
+    test_manifest_envelope_compound_and_embedded_blanks()
+    test_whitespace_only_artifact_path_remains_legal()
     test_unknown_record_kind_rejected()
     test_checkpoint_valid_examples()
     test_checkpoint_r1_must_have_null_prev()
@@ -290,6 +551,11 @@ def main() -> int:
     test_manifest_guard_empty_guards_list_invalid()
     test_manifest_guard_inert_shapes_rejected()
     test_unhashable_guard_mode_returns_validation_error()
+    test_closed_vocabularies_never_raise_typeerror()
+    test_continuity_report_with_findings_validates()
+    test_every_continuity_break_field_is_validated()
+    test_every_record_kind_has_a_published_schema()
+    test_continuity_schema_and_verifier_state_one_shape()
     test_examples_corpus()
     print(f"\n{len(FAILURES)} failures")
     return 1 if FAILURES else 0

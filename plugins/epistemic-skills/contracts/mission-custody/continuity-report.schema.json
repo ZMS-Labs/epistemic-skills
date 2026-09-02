@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "continuity-report@1",
+  "title": "continuity-report@1",
+  "description": "Continuity report: the read-only JSON that `custody_cli audit` emits. It is a READING of a mission, not an authority record -- nothing writes it into a mission store, so it never reaches the chain, the receipts directory, or atomic_write_json's pre-write validation. This schema therefore describes what a consumer must be able to traverse, not that the findings are true. Validation authority: verify_mission_custody.py (stdlib); this schema is the contract for consumers that do not execute it.",
+  "type": "object",
+  "required": ["record", "continuity_breaks", "orphaned_retired_receipts"],
+  "additionalProperties": false,
+  "properties": {
+    "record": {"const": "continuity-report@1"},
+    "continuity_breaks": {
+      "type": "array",
+      "description": "Where an artifact changed between two receipted events without a receipted event of its own. Emitted by Mission.continuity_breaks().",
+      "items": {
+        "type": "object",
+        "required": ["artifact_path", "prior_request_id", "request_id", "expected_before_sha256", "observed_before_sha256", "no_op_write", "already_reconciled"],
+        "additionalProperties": false,
+        "properties": {
+          "artifact_path": {"type": "string", "minLength": 1},
+          "prior_request_id": {"type": "string", "minLength": 1},
+          "request_id": {"type": "string", "minLength": 1},
+          "expected_before_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$",
+            "description": "The prior receipt's after_sha256, which receipt@1 types as a plain string. Never null."
+          },
+          "observed_before_sha256": {
+            "type": ["string", "null"],
+            "pattern": "^[0-9a-f]{64}$",
+            "description": "The next receipt's before_sha256, which receipt@1 types as string-or-null; null is how a first write records that nothing was there."
+          },
+          "no_op_write": {"type": "boolean"},
+          "already_reconciled": {"type": "boolean"}
+        }
+      }
+    },
+    "orphaned_retired_receipts": {
+      "type": "array",
+      "description": "Ids whose loss was acknowledged but whose receipt file is still present. Emitted by Mission.orphaned_retired_receipts(). These are OBJECTS, not strings.",
+      "items": {
+        "type": "object",
+        "required": ["request_id", "receipt_path", "note"],
+        "additionalProperties": false,
+        "properties": {
+          "request_id": {"type": "string", "minLength": 1},
+          "receipt_path": {"type": "string", "minLength": 1},
+          "note": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  }
+}

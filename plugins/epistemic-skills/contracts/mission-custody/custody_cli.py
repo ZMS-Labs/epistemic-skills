@@ -40,13 +40,25 @@ def _print_status(checkpoint: dict) -> None:
     print(json.dumps(checkpoint, indent=2, sort_keys=True, ensure_ascii=True))
 
 
-def _ascii_safe(text: str) -> str:
-    """Render text as ASCII-only, escaping any non-ASCII characters so a
-    print to stdout/stderr never raises UnicodeEncodeError regardless of
-    PYTHONIOENCODING or the console codepage. Mirrors the ensure_ascii=True
-    guarantee _print_status already gets from json.dumps, for the two
-    output paths that print a raw str instead of a JSON document."""
-    return text.encode("ascii", "backslashreplace").decode("ascii")
+def _display_safe(text: str, *, preserve_printable_syntax: bool = False) -> str:
+    """Render terminal text without allowing control-character execution.
+
+    Raw fields use full JSON string escaping (minus the surrounding quotes).
+    A completed refusal message can also contain trusted printable syntax --
+    notably the JSON-quoted ``--scope-ack`` token that the acceptor must copy
+    exactly.  In that mode preserve printable ASCII quotes and backslashes,
+    while still JSON-escaping every control and non-ASCII code point.  Both
+    modes therefore prevent forged rows and ANSI execution and remain safe
+    on an ASCII-only console.  JSON document surfaces get the same guarantees
+    from ``_print_status``'s ``ensure_ascii=True``.
+    """
+    if preserve_printable_syntax:
+        return "".join(
+            char if " " <= char <= "~"
+            else json.dumps(char, ensure_ascii=True)[1:-1]
+            for char in text
+        )
+    return json.dumps(text, ensure_ascii=True)[1:-1]
 
 
 def _read_content(args: argparse.Namespace) -> str:
@@ -369,7 +381,7 @@ def _print_envelope(checkpoint: dict, file=sys.stdout) -> None:
     for name, values in rows:
         if values:
             for value in values:
-                print(f"  {name}: {_ascii_safe(value)}", file=file)
+                print(f"  {name}: {_display_safe(value)}", file=file)
         else:
             print(f"  {name}: (unset -- UNBOUNDED, not safely defaulted)",
                   file=file)
@@ -382,7 +394,7 @@ def _print_envelope(checkpoint: dict, file=sys.stdout) -> None:
         for entry in uncompared[direction]:
             # Naming what is NOT compared, so "scope is checked now" never
             # gets read as "all of scope is checked".
-            print(f"  scope.{direction}: {_ascii_safe(entry)} "
+            print(f"  scope.{direction}: {_display_safe(entry)} "
                   "(prose -- NOT machine-compared)", file=file)
 
 
@@ -485,7 +497,7 @@ def dispatch(args: argparse.Namespace) -> int:
         # process cannot set its parent's environment, and pretending
         # otherwise would manufacture the "bound, actually unbound" decoy
         # (es#173 section 1). stderr, so stdout keeps its one-value contract.
-        print(f"bind: export ZMS_MISSION_ID={_ascii_safe(args.mission_id)}",
+        print(f"bind: export ZMS_MISSION_ID={_display_safe(args.mission_id)}",
               file=sys.stderr)
         return 0
 
@@ -587,7 +599,7 @@ def dispatch(args: argparse.Namespace) -> int:
     elif args.command == "resume":
         findings = mission.resume()
         for marker in findings:
-            print(_ascii_safe(marker))
+            print(_display_safe(marker))
         # SIBLING-DISCHARGED is finding-grade but non-blocking (operator
         # ruling 2026-08-25, loud auto-discharge): it rides stdout like
         # every finding -- a resume that discharged a transient sibling
@@ -611,17 +623,13 @@ def dispatch(args: argparse.Namespace) -> int:
         unanswered = [b for b in mission.continuity_breaks()
                       if not b["already_reconciled"]]
         if unanswered:
-            paths = ", ".join(sorted({b["artifact_path"] for b in unanswered}))
-            # _ascii_safe, like every other path-bearing output here. This
-            # warning was added later and interpolated the path raw, so a
-            # non-ASCII artifact name put a raw non-ASCII byte on stderr --
-            # which a console codepage that cannot encode it turns into a
-            # UnicodeEncodeError, i.e. the warning destroying itself.
-            print(_ascii_safe(
-                f"resume: {len(unanswered)} unreconciled continuity "
-                f"break(s) -- the artifact changed between receipted events "
-                f"with no reconciliation answering for it: {paths}; run "
-                "`audit` for detail"), file=sys.stderr)
+            paths = ", ".join(sorted({
+                _display_safe(b["artifact_path"]) for b in unanswered
+            }))
+            print(f"resume: {len(unanswered)} unreconciled continuity "
+                  f"break(s) -- the artifact changed between receipted events "
+                  f"with no reconciliation answering for it: {paths}; run "
+                  "`audit` for detail", file=sys.stderr)
         return 3 if drift else 0
     elif args.command == "reconcile":
         receipt = mission.reconcile(args.path, _read_content(args),
@@ -665,7 +673,9 @@ def main(argv: list[str]) -> int:
         # StoreError refusals (concurrent writer, duplicate receipt, invalid
         # record) honor the same exit-2 contract as custody refusals instead
         # of escaping as a traceback with exit 1.
-        print(_ascii_safe(f"{type(exc).__name__}: {exc}"), file=sys.stderr)
+        print(_display_safe(
+            f"{type(exc).__name__}: {exc}", preserve_printable_syntax=True
+        ), file=sys.stderr)
         return 2
 
 

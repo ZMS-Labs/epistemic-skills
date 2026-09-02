@@ -2,8 +2,12 @@
 """End-to-end tests for custody_hook.py: stdin payload -> exit code."""
 from __future__ import annotations
 
+import io
 import json
 import os
+import re
+import runpy
+import shlex
 import shutil
 import subprocess
 import sys
@@ -12,6 +16,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 HOOK = ROOT / "custody_hook.py"
+PLUGIN_ROOT = ROOT.parents[1]
+CURSOR_CLI_RENDERER = (
+    PLUGIN_ROOT / "hooks" / "render_cursor_cli_hooks.py"
+)
 sys.path.insert(0, str(ROOT))
 from custody_mission import Mission  # noqa: E402
 from custody_store import sha256_file  # noqa: E402
@@ -70,6 +78,123 @@ def test_block_per_harness() -> None:
                   "no-rm" in (res.stderr + res.stdout))
 
 
+def test_cursor_cli_installation_emits_plugin_root_hook_command() -> None:
+    """es#136: render from an arbitrary workspace, then prove the installed
+    absolute command blocks an armed actuator and stays inert without a
+    mission.  The workspace deliberately has no local contracts tree."""
+    with tempfile.TemporaryDirectory() as tmp:
+        ws = Path(tmp) / "arbitrary workspace"
+        ws.mkdir()
+        destination = ws / ".cursor" / "hooks.json"
+        rendered = subprocess.run(
+            [sys.executable, str(CURSOR_CLI_RENDERER),
+             "--output", str(destination)],
+            cwd=ws, capture_output=True, text=True)
+        check("cursor-cli-render-exit-0", rendered.returncode == 0)
+        check("cursor-cli-config-written", destination.is_file())
+        check("cursor-cli-workspace-has-no-local-contracts",
+              not (ws / "contracts" / "mission-custody").exists())
+
+        config = json.loads(destination.read_text(encoding="utf-8"))
+        commands = [
+            row["command"]
+            for rows in config["hooks"].values()
+            for row in rows
+        ]
+        expected_argv = [str(Path(sys.executable).resolve()),
+                         str(HOOK.resolve()), "--harness", "cursor"]
+        # Deliberately NOT compared against subprocess.list2cmdline: that
+        # expectation encoded the argv-reconstruction quoter the renderer
+        # must not use (es#216), so the old assertion pinned the defect in
+        # place.  Assert the properties, and prove the rendered STRING
+        # through the shell below -- an argv LIST cannot observe quoting.
+        check("cursor-cli-every-command-is-identical",
+              bool(commands) and len(set(commands)) == 1)
+        check("cursor-cli-command-names-the-installed-hook",
+              bool(commands) and str(HOOK.resolve()) in commands[0])
+        # .absolute(), not .resolve(): on Debian/Ubuntu `/usr/bin/python3`
+        # is a symlink to `/usr/bin/python3.N`, and resolving it would bake
+        # the minor version so a routine distro upgrade breaks the armed
+        # gate -- the SERIOUS finding's mechanism on the interpreter arg.
+        check("cursor-cli-command-names-the-installed-interpreter",
+              bool(commands)
+              and str(Path(sys.executable).absolute()) in commands[0])
+        check("cursor-cli-config-does-not-reference-dot-contracts-path",
+              "./contracts/mission-custody/custody_hook.py"
+              not in destination.read_text(encoding="utf-8"))
+
+        mission = Mission.open(
+            ws, "cursor-cli-install", "i", "operator:t", "agent:t",
+            actor="agent:t", guard_mode="enforce", actuator_guards=GUARDS)
+        mission.approve()
+        blocked = subprocess.run(
+            expected_argv,
+            input=json.dumps({"command": "rm -rf x", "cwd": str(ws)}),
+            cwd=ws, capture_output=True, text=True)
+        check("cursor-cli-installed-hook-invoked", "no-rm" in blocked.stderr)
+        check("cursor-cli-installed-hook-blocks", blocked.returncode == 2)
+
+        via_shell = subprocess.run(
+            commands[0], shell=True,
+            input=json.dumps({"command": "rm -rf x", "cwd": str(ws)}),
+            cwd=ws, capture_output=True, text=True)
+        check("cursor-cli-rendered-string-blocks-through-the-shell",
+              via_shell.returncode == 2)
+        check("cursor-cli-rendered-string-block-names-the-rule",
+              "no-rm" in via_shell.stdout + via_shell.stderr)
+
+        inert = Path(tmp) / "inert workspace"
+        inert.mkdir()
+        allowed = subprocess.run(
+            expected_argv,
+            input=json.dumps({"command": "rm -rf x", "cwd": str(inert)}),
+            cwd=inert, capture_output=True, text=True)
+        check("cursor-cli-installed-hook-inert-without-mission",
+              allowed.returncode == 0)
+
+        before = destination.read_bytes()
+        refused = subprocess.run(
+            [sys.executable, str(CURSOR_CLI_RENDERER),
+             "--output", str(destination)],
+            cwd=ws, capture_output=True, text=True)
+        check("cursor-cli-render-refuses-existing-config",
+              refused.returncode == 2)
+        check("cursor-cli-existing-config-unchanged",
+              destination.read_bytes() == before)
+
+        partial = ws / ".cursor" / "partial-hooks.json"
+        real_open = Path.open
+
+        class FailingWrite:
+            def __init__(self) -> None:
+                self.handle = real_open(
+                    partial, "x", encoding="utf-8", newline="\n"
+                )
+
+            def __enter__(self):
+                return self
+
+            def write(self, value: str) -> int:
+                self.handle.write(value[:1])
+                self.handle.flush()
+                raise OSError("simulated partial write")
+
+            def __exit__(self, exc_type, exc, traceback) -> None:
+                self.handle.close()
+
+        renderer_globals = runpy.run_path(str(CURSOR_CLI_RENDERER))
+        original_path_open = Path.open
+        partial_write_raised = False
+        try:
+            Path.open = lambda *_args, **_kwargs: FailingWrite()
+            try:
+                renderer_globals["_write_new_config"](partial, "{}\n")
+            except OSError:
+                partial_write_raised = True
+        finally:
+            Path.open = original_path_open
+        check("cursor-cli-partial-write-raises", partial_write_raised)
+        check("cursor-cli-partial-write-removed", not partial.exists())
 def test_env_bound_draft_self_arms() -> None:
     """OD-4 refined (operator ruling 2026-08-25: "Self-arm at open, union
     at approve"): a session whose harness env carries ZMS_MISSION_ID for a
@@ -643,8 +768,901 @@ def test_non_custody_error_on_one_root_does_not_suppress_a_later_block() -> None
         res = run_hook("cursor", payload)
         check("poisoned-earlier-root-does-not-suppress-later-block",
               res.returncode == 2)
-        check("poisoned-root-failure-is-loud", "failing open" in res.stderr)
+        # The LOUDNESS invariant is unchanged; its spelling moved because the
+        # behaviour improved. The unreadable root used to raise out of
+        # `_union_entries`, be caught by the hook's per-candidate handler, and
+        # print "failing open for that mission only". The gate now degrades
+        # PER MISSION instead of aborting the union, so the same loss is
+        # announced one layer earlier and more precisely -- the dir is named,
+        # and the disclosure says its guards are NOT enforced. Asserting on
+        # the property, not on the old sentence.
+        check("poisoned-root-failure-is-loud",
+              "UNION DEGRADED" in res.stderr
+              and "broken" in res.stderr
+              and "NOT enforced" in res.stderr)
 
+
+def _stage_plugin_checkout(root: Path) -> Path:
+    """Materialise a versioned checkout: <root>/plugins/epistemic-skills."""
+    plugin = root / "plugins" / "epistemic-skills"
+    plugin.mkdir(parents=True)
+    shutil.copytree(PLUGIN_ROOT / "hooks", plugin / "hooks")
+    (plugin / "contracts").mkdir()
+    shutil.copytree(PLUGIN_ROOT / "contracts" / "mission-custody",
+                    plugin / "contracts" / "mission-custody",
+                    ignore=shutil.ignore_patterns("__pycache__"))
+    return plugin
+
+
+def _make_install_link(link: Path, target: Path) -> None:
+    """Build the install shape README.md documents for Cursor.
+
+    Windows: `cmd /c mklink /J` (a junction; needs no privilege).
+    POSIX:   `ln -sfn` (the README's exact command).
+    """
+    link.parent.mkdir(parents=True, exist_ok=True)
+    if os.name == "nt":
+        res = subprocess.run(["cmd", "/c", "mklink", "/J",
+                              str(link), str(target)],
+                             capture_output=True, text=True)
+        if res.returncode != 0:
+            raise RuntimeError(
+                f"mklink /J failed: {res.stdout.strip()} {res.stderr.strip()}")
+    else:
+        subprocess.run(["ln", "-sfn", str(target), str(link)], check=True)
+
+
+def _drop_install_link(link: Path) -> None:
+    if os.name == "nt":
+        subprocess.run(["cmd", "/c", "rmdir", str(link)],
+                       capture_output=True, text=True)
+    else:
+        link.unlink()
+
+
+def _arm(ws: Path, name: str) -> None:
+    mission = Mission.open(ws, name, "i", "operator:t", "agent:t",
+                           actor="agent:t", guard_mode="enforce",
+                           actuator_guards=GUARDS)
+    mission.approve()
+
+
+def _run_rendered(command: str, ws: Path) -> subprocess.CompletedProcess:
+    """Execute the rendered command the way a harness does: as ONE string
+    handed to the platform shell.  Running it as an argv list -- which the
+    older test did -- cannot observe a quoting defect at all."""
+    return subprocess.run(
+        command, shell=True,
+        input=json.dumps({"command": "rm -rf x", "cwd": str(ws)}),
+        cwd=str(ws), capture_output=True, text=True)
+
+
+def _commands_of(config_path: Path) -> list[str]:
+    config = json.loads(config_path.read_text(encoding="utf-8"))
+    return [row["command"]
+            for rows in config["hooks"].values()
+            for row in rows]
+
+
+def _git(repo: Path, *args: str) -> subprocess.CompletedProcess:
+    res = subprocess.run(["git", "-C", str(repo), *args],
+                         capture_output=True, text=True)
+    if res.returncode != 0:
+        raise RuntimeError(f"git {' '.join(args)}: {res.stderr.strip()}")
+    return res
+
+
+def _git_init_repo(repo: Path) -> None:
+    repo.mkdir(parents=True)
+    _git(repo, "init")
+    _git(repo, "config", "user.email", "test@example.test")
+    _git(repo, "config", "user.name", "Test")
+    (repo / "README.md").write_text("shared project\n", encoding="utf-8")
+    _git(repo, "add", "README.md")
+    _git(repo, "commit", "-m", "init")
+
+
+def test_cursor_cli_render_survives_a_plugin_upgrade() -> None:
+    """es#216 SERIOUS: `Path(__file__).resolve()` collapses the documented
+    RETARGETABLE install link, baking the versioned checkout into
+    hooks.json.  After an ordinary upgrade (re-point the link at the new
+    tag, delete the old checkout) the armed gate stops being a gate.
+
+    The oracle here is deliberately not `returncode == 2`: a stale baked
+    path ALSO exits 2, because CPython exits 2 when it cannot open the
+    script.  Only a block that NAMES the matched rule distinguishes a real
+    custody refusal from a fabricated one.
+    """
+    with tempfile.TemporaryDirectory() as tmp:
+        base = Path(tmp)
+        old = _stage_plugin_checkout(base / "epistemic-skills-v6.0.0")
+        new = _stage_plugin_checkout(base / "epistemic-skills-v6.1.0")
+        link = base / "dot-cursor" / "plugins" / "local" / "epistemic-skills"
+        _make_install_link(link, old)
+        check("cursor-cli-install-link-built", (link / "hooks").is_dir())
+
+        # the mechanism itself, on every platform: junction on Windows,
+        # symlink on POSIX -- absolute() keeps the link, resolve() eats it
+        renderer_globals = runpy.run_path(str(CURSOR_CLI_RENDERER))
+        link_preserving = renderer_globals.get("_link_preserving")
+        check("cursor-cli-link-preserving-exists", callable(link_preserving))
+        if callable(link_preserving):
+            probe = link / "hooks" / "render_cursor_cli_hooks.py"
+            check("cursor-cli-link-preserving-keeps-the-link",
+                  str(link_preserving(probe)) == str(probe))
+            check("cursor-cli-link-preserving-differs-from-resolve",
+                  str(Path(probe).resolve()) != str(probe))
+            check("cursor-cli-link-preserving-is-absolute",
+                  link_preserving(probe).is_absolute())
+
+        ws = base / "workspace"
+        ws.mkdir()
+        destination = ws / ".cursor" / "hooks.json"
+        rendered = subprocess.run(
+            [sys.executable, str(link / "hooks" /
+                                 "render_cursor_cli_hooks.py"),
+             "--output", str(destination)],
+            cwd=str(ws), capture_output=True, text=True)
+        check("cursor-cli-upgrade-render-exit-0", rendered.returncode == 0)
+        commands = _commands_of(destination)
+        command = commands[0] if commands else ""
+
+        check("cursor-cli-command-keeps-the-install-link",
+              str(link) in command)
+        check("cursor-cli-command-does-not-bake-the-versioned-checkout",
+              str(old) not in command)
+
+        # ---- the upgrade the README prescribes ----
+        _drop_install_link(link)
+        _make_install_link(link, new)
+        shutil.rmtree(base / "epistemic-skills-v6.0.0")
+        check("cursor-cli-upgraded-link-valid", (link / "hooks").is_dir())
+
+        _arm(ws, "cursor-cli-upgrade")
+        after = _run_rendered(command, ws)
+        check("cursor-cli-armed-guard-still-blocks-after-upgrade",
+              after.returncode == 2)
+        check("cursor-cli-block-after-upgrade-is-a-real-custody-refusal",
+              "no-rm" in after.stdout + after.stderr)
+
+        inert = base / "inert"
+        inert.mkdir()
+        allowed = subprocess.run(
+            command, shell=True,
+            input=json.dumps({"command": "rm -rf x", "cwd": str(inert)}),
+            cwd=str(inert), capture_output=True, text=True)
+        check("cursor-cli-still-inert-without-a-mission-after-upgrade",
+              allowed.returncode == 0)
+
+        # ---- the failure mode THIS fix introduces, pinned ----
+        # Binding to the link means UNINSTALLING the plugin (removing the
+        # link) breaks the baked command.  That must fail CLOSED (exit 2 =
+        # block), never fail open, or removing a plugin would silently
+        # disarm an armed mission's guards.
+        _drop_install_link(link)
+        check("cursor-cli-link-removed", not link.exists())
+        uninstalled = _run_rendered(command, ws)
+        check("cursor-cli-removed-install-fails-closed",
+              uninstalled.returncode == 2)
+
+
+def test_cursor_cli_render_quotes_for_the_shell_not_for_createprocess() -> None:
+    """es#216 MODERATE: `subprocess.list2cmdline` reconstructs an argv for
+    CreateProcess and quotes only on whitespace, so an install path holding
+    a cmd metacharacter (`C:\\Tools\\R&D\\...`) was emitted BARE: cmd split
+    the command at the `&`, python was handed a truncated path, and the
+    armed guard exited 1 -- fail OPEN -- while the tail after `&` ran as a
+    second command.
+
+    Both shell styles are asserted on every platform: hosted CI is Linux
+    and would otherwise never exercise the Windows quoter at all.
+    """
+    renderer_globals = runpy.run_path(str(CURSOR_CLI_RENDERER))
+    shell_command = renderer_globals.get("_shell_command")
+    check("cursor-cli-shell-command-exists", callable(shell_command))
+    if not callable(shell_command):
+        return
+
+    argv = ["C:\\Py\\python.exe",
+            "C:\\Tools\\R&D\\contracts\\mission-custody\\custody_hook.py",
+            "--harness", "cursor"]
+    try:
+        cmd_style = shell_command(argv, style="cmd")
+    except TypeError:
+        cmd_style = None
+    check("cursor-cli-shell-command-takes-an-explicit-style",
+          isinstance(cmd_style, str))
+    if isinstance(cmd_style, str):
+        check("cursor-cli-cmd-style-quotes-the-ampersand-path",
+              '"C:\\Tools\\R&D\\contracts\\mission-custody\\custody_hook.py"'
+              in cmd_style)
+        check("cursor-cli-cmd-style-leaves-no-bare-ampersand",
+              "&" not in cmd_style.replace(
+                  '"C:\\Tools\\R&D\\contracts\\mission-custody'
+                  '\\custody_hook.py"', ""))
+        check("cursor-cli-cmd-style-is-not-list2cmdline",
+              cmd_style != subprocess.list2cmdline(argv))
+
+    if isinstance(cmd_style, str):
+        posix_style = shell_command(argv, style="posix")
+        check("cursor-cli-posix-style-still-shlex",
+              posix_style == shlex.join(argv))
+
+        # cmd.exe expands %NAME% even inside double quotes and no
+        # command-line escape suppresses it (measured), so rendering must
+        # REFUSE rather than emit a command that silently resolves to a
+        # different path.
+        refused = None
+        try:
+            shell_command(["C:\\Py\\python.exe",
+                           "C:\\a%USERNAME%b\\hook.py"], style="cmd")
+        except RuntimeError as exc:
+            refused = str(exc)
+        check("cursor-cli-cmd-style-refuses-percent-expansion",
+              refused is not None and "%" in (refused or ""))
+
+        # A LONE '%' is NOT safe, and the earlier claim that it was came
+        # from measuring ONE execution context only.  Measured both:
+        #   cmd /c  echo "C:\100%done\x"  ->  "C:\100%done\x"  (survives)
+        #   a .bat  echo "C:\100%done\x"  ->  "C:\100done\x"   (EATEN)
+        # Cursor does not document which shell runs a hook command on
+        # Windows, so the renderer cannot know which applies.  End-to-end,
+        # a plugin installed under `100%done` rendered exit 0 and then,
+        # run from a batch file, exited 2 WITHOUT naming any rule --
+        # python could not open `...100done\custody_hook.py`.  That is a
+        # fabricated refusal blocking every tool call: exactly the SERIOUS
+        # class this PR already fixed for the upgrade path.
+        lone_refused = None
+        try:
+            shell_command(["C:\\Py\\python.exe",
+                           "C:\\100%done\\hook.py"], style="cmd")
+        except RuntimeError as exc:
+            lone_refused = str(exc)
+        check("cursor-cli-cmd-style-refuses-a-lone-percent",
+              lone_refused is not None)
+        check("cursor-cli-lone-percent-refusal-names-the-percent",
+              "%" in (lone_refused or ""))
+
+        # Codex es#216: two arguments each holding ONE '%' are individually
+        # allowed but JOIN into a `%...%` pair.  A per-argument check
+        # cannot see it; the guard has to hold for the final command.
+        split_refused = None
+        try:
+            shell_command(["C:\\100%done\\python.exe",
+                           "C:\\100%done\\hook.py"], style="cmd")
+        except RuntimeError as exc:
+            split_refused = str(exc)
+        check("cursor-cli-cmd-style-refuses-percent-split-across-arguments",
+              split_refused is not None)
+
+        # The fix must not over-refuse: POSIX shells have no '%'
+        # expansion, so a '%' path is legitimate there and shlex holds it.
+        posix_pct_argv = ["/usr/bin/python3", "/opt/100%done/hook.py"]
+        check("cursor-cli-posix-style-still-allows-a-percent",
+              shell_command(posix_pct_argv, style="posix")
+              == shlex.join(posix_pct_argv))
+
+    # ---- behavioural proof on the native shell ----
+    with tempfile.TemporaryDirectory() as tmp:
+        base = Path(tmp)
+        plugin = _stage_plugin_checkout(base / "R&D")
+        ws = base / "workspace"
+        ws.mkdir()
+        destination = ws / ".cursor" / "hooks.json"
+        rendered = subprocess.run(
+            [sys.executable,
+             str(plugin / "hooks" / "render_cursor_cli_hooks.py"),
+             "--output", str(destination)],
+            cwd=str(ws), capture_output=True, text=True)
+        check("cursor-cli-ampersand-render-exit-0", rendered.returncode == 0)
+        commands = _commands_of(destination)
+        command = commands[0] if commands else ""
+        _arm(ws, "cursor-cli-ampersand")
+        run = _run_rendered(command, ws)
+        check("cursor-cli-ampersand-path-guard-blocks", run.returncode == 2)
+        check("cursor-cli-ampersand-path-block-names-the-rule",
+              "no-rm" in run.stdout + run.stderr)
+
+
+def test_cursor_cli_completed_install_never_reports_a_refusal() -> None:
+    """es#216 MODERATE: a SUCCESSFUL install reported 'install refused'
+    (exit 2) when the post-install `print(destination.resolve())` raised --
+    leaving a valid config on disk that no retry can reconcile, because the
+    retry can only fail with 'File exists'.
+
+    A real broken pipe is worse than exit 2: CPython flushes sys.stdout
+    during finalisation and exits 120 regardless of what main() returned,
+    so wrapping the print alone would NOT have closed this.
+    """
+    with tempfile.TemporaryDirectory() as tmp:
+        base = Path(tmp)
+
+        # (a) deterministic: the report write itself raises.
+        ws = base / "ws-inproc"
+        ws.mkdir()
+        destination = ws / ".cursor" / "hooks.json"
+
+        class DeadStdout(io.TextIOBase):
+            def write(self, _s: str) -> int:
+                raise OSError(28, "No space left on device")
+
+        renderer_globals = runpy.run_path(str(CURSOR_CLI_RENDERER))
+        real_stdout, real_stderr = sys.stdout, sys.stderr
+        captured_stderr = io.StringIO()
+        try:
+            sys.stdout = DeadStdout()
+            sys.stderr = captured_stderr
+            rc = renderer_globals["main"](["--output", str(destination)])
+        finally:
+            sys.stdout, sys.stderr = real_stdout, real_stderr
+        check("cursor-cli-report-failure-is-not-a-refusal", rc == 0)
+        check("cursor-cli-report-failure-left-the-config", destination.is_file())
+        check("cursor-cli-report-failure-is-still-announced",
+              str(destination) in captured_stderr.getvalue())
+        commands = _commands_of(destination)
+        check("cursor-cli-report-failure-config-is-complete",
+              len(commands) == 3 and all(
+                  "./contracts/mission-custody" not in c for c in commands))
+
+        # (b) a real broken pipe end to end: neither 2 nor 120.
+        ws2 = base / "ws-pipe"
+        ws2.mkdir()
+        destination2 = ws2 / ".cursor" / "hooks.json"
+        read_fd, write_fd = os.pipe()
+        os.close(read_fd)
+        piped = subprocess.run(
+            [sys.executable, str(CURSOR_CLI_RENDERER),
+             "--output", str(destination2)],
+            stdout=write_fd, stderr=subprocess.PIPE, text=True)
+        os.close(write_fd)
+        check("cursor-cli-broken-pipe-install-exit-0", piped.returncode == 0)
+        check("cursor-cli-broken-pipe-left-the-config",
+              destination2.is_file())
+
+        # (c) the OTHER branch of the same defect: with `--output -` stdout
+        # IS the product, so a dead stdout must still REFUSE -- but with
+        # exit 2, not the 120 the finalisation flush would otherwise give.
+        read_fd, write_fd = os.pipe()
+        os.close(read_fd)
+        stdout_mode = subprocess.run(
+            [sys.executable, str(CURSOR_CLI_RENDERER)],
+            stdout=write_fd, stderr=subprocess.PIPE, text=True)
+        os.close(write_fd)
+        check("cursor-cli-stdout-mode-broken-pipe-refuses-with-2",
+              stdout_mode.returncode == 2)
+
+
+def test_cursor_cli_documented_command_names_a_runnable_interpreter() -> None:
+    """es#216 MINOR: the documented install command used bare `python`,
+    which does not exist on stock Debian/Ubuntu/Fedora -- the same class as
+    the P1 this PR set out to fix (a documented command that cannot run)."""
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    # only the INVOCATIONS, not the prose that discusses them
+    spans = [span for span in re.findall(r"`([^`]+)`", readme)
+             if "render_cursor_cli_hooks.py" in span]
+    check("cursor-cli-readme-documents-the-renderer", bool(spans))
+    check("cursor-cli-readme-invocations-are-not-bare-python",
+          bool(spans) and all(not span.startswith("python ")
+                              for span in spans))
+    check("cursor-cli-readme-invocations-name-python3",
+          bool(spans) and all(span.startswith("python3 ")
+                              for span in spans))
+
+
+def test_cursor_cli_percent_install_path_refuses_at_render_time() -> None:
+    """Codex es#216 (on the FIX): a '%' in the install path survives the
+    per-argument quoter and produces a command whose meaning depends on
+    which Windows shell runs it.
+
+    Measured end-to-end with the plugin staged under `100%done`: render
+    exited 0, and the emitted command run from a batch file exited 2
+    WITHOUT naming any rule -- a fabricated refusal that blocks every tool
+    call while custody never issued one.
+
+    The fix refuses at RENDER time instead.  The failure mode it
+    introduces -- a legitimate `%` path can no longer be installed on
+    Windows -- is the deliberate trade and is pinned here: the refusal is
+    loud, names the offending character, and leaves NO config behind, so
+    it fails closed at install rather than open at runtime.
+    """
+    if os.name != "nt":
+        return
+    with tempfile.TemporaryDirectory() as tmp:
+        base = Path(tmp)
+        plugin = _stage_plugin_checkout(base / "100%done")
+        ws = base / "workspace"
+        ws.mkdir()
+        destination = ws / ".cursor" / "hooks.json"
+        rendered = subprocess.run(
+            [sys.executable,
+             str(plugin / "hooks" / "render_cursor_cli_hooks.py"),
+             "--output", str(destination)],
+            cwd=str(ws), capture_output=True, text=True)
+        check("cursor-cli-percent-path-render-refuses",
+              rendered.returncode == 2)
+        check("cursor-cli-percent-refusal-names-the-percent",
+              "%" in rendered.stderr)
+        check("cursor-cli-percent-refusal-leaves-no-config",
+              not destination.exists())
+
+
+def _render_with_template(base: Path, mutate) -> subprocess.CompletedProcess:
+    """Stage a checkout, mutate its canonical template, then render."""
+    plugin = _stage_plugin_checkout(base)
+    template_path = plugin / "hooks" / "cursor-hooks.json"
+    template = json.loads(template_path.read_text(encoding="utf-8"))
+    mutate(template)
+    template_path.write_text(
+        json.dumps(template, indent=2) + "\n", encoding="utf-8", newline="\n")
+    ws = base / "workspace"
+    ws.mkdir()
+    return subprocess.run(
+        [sys.executable,
+         str(plugin / "hooks" / "render_cursor_cli_hooks.py")],
+        cwd=str(ws), capture_output=True, text=True)
+
+
+def test_cursor_cli_render_requires_every_guarded_event() -> None:
+    """Codex es#216 (on the FIX): the drift check counted rows across the
+    WHOLE template, so it only required one row anywhere.
+
+    Measured on this head before the fix: deleting `beforeMCPExecution`,
+    emptying it, deleting `preToolUse`, and even deleting all but ONE
+    event each left render SUCCEEDING.  The generated config then installs
+    cleanly while leaving that class of actuator unguarded -- a fail-open
+    inside the renderer's own fail-closed drift policy, and a silent
+    contradiction of the README's promise of three event rows.
+    """
+    canonical = json.loads(
+        (PLUGIN_ROOT / "hooks" / "cursor-hooks.json").read_text(
+            encoding="utf-8"))
+    renderer_globals = runpy.run_path(str(CURSOR_CLI_RENDERER))
+    required = renderer_globals.get("REQUIRED_EVENTS")
+    check("cursor-cli-required-events-declared", bool(required))
+    # The constant must not drift away from the template it guards.
+    check("cursor-cli-required-events-match-the-template",
+          bool(required) and set(required) == set(canonical.get("hooks", {})))
+
+    mutations = [
+        ("dropped-event", lambda t: t["hooks"].pop("beforeMCPExecution")),
+        ("emptied-event",
+         lambda t: t["hooks"].__setitem__("beforeMCPExecution", [])),
+        ("dropped-pretooluse", lambda t: t["hooks"].pop("preToolUse")),
+    ]
+    for label, mutate in mutations:
+        with tempfile.TemporaryDirectory() as tmp:
+            result = _render_with_template(Path(tmp), mutate)
+            check(f"cursor-cli-render-refuses-a-{label}",
+                  result.returncode == 2)
+            check(f"cursor-cli-{label}-refusal-names-the-event",
+                  "beforeMCPExecution" in result.stderr
+                  or "preToolUse" in result.stderr)
+
+    # The fix must not over-refuse: the shipped template still renders,
+    # and an ADDED event is carried rather than rejected.
+    with tempfile.TemporaryDirectory() as tmp:
+        result = _render_with_template(Path(tmp), lambda t: None)
+        check("cursor-cli-canonical-template-still-renders",
+              result.returncode == 0)
+    with tempfile.TemporaryDirectory() as tmp:
+        result = _render_with_template(
+            Path(tmp),
+            lambda t: t["hooks"].__setitem__(
+                "afterFileEdit",
+                [{"command": RELATIVE_COMMAND_FOR_TEST, "timeout": 10}]))
+        check("cursor-cli-an-added-event-is-carried-not-refused",
+              result.returncode == 0)
+        if result.returncode == 0:
+            check("cursor-cli-added-event-command-is-rendered",
+                  "afterFileEdit" in result.stdout
+                  and "./contracts/" not in result.stdout)
+
+
+def test_cursor_cli_readme_says_to_re_render_after_an_upgrade() -> None:
+    """Codex es#216 (on the FIX): binding to the install link keeps the
+    COMMAND live across an upgrade, but the event table, matchers,
+    timeouts and version were copied into the persistent hooks.json at
+    render time.  A link-only upgrade therefore cannot deliver a newly
+    guarded event, so the README's "the rendered gate remains live" is
+    true of the command and NOT of the event set.  Documented, and pinned
+    here so the sentence cannot quietly disappear.
+    """
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    check("cursor-cli-readme-says-re-render-after-upgrade",
+          "re-render" in readme.lower() and "upgrade" in readme.lower())
+    check("cursor-cli-readme-scopes-the-link-guarantee-to-the-command",
+          "event table" in readme.lower())
+
+
+RELATIVE_COMMAND_FOR_TEST = (
+    "python ./contracts/mission-custody/custody_hook.py --harness cursor"
+)
+
+
+
+CMD_METACHARACTERS = "&|<>()^\"'`,;= \t"
+"""Characters cmd.exe treats specially OUTSIDE quotes, enumerated explicitly.
+
+This constant is the pin on the failure mode the minimal quoter introduces.
+Minimal quoting leaves an argument BARE when every character of it is in a
+safe WHITELIST.  Widen that whitelist to admit any character below and the
+ORIGINAL fail-open returns: cmd splits the command at the metacharacter,
+python is handed a truncated path, and the armed guard exits 1 -- which
+Cursor reads as "allow", not as a block.  A whitelist fails closed on a
+character nobody enumerated; a metacharacter blacklist would not.
+('%' is absent on purpose: it is refused outright before quoting.)
+"""
+
+
+def test_cursor_cli_quoting_is_minimal_so_a_bare_cmd_c_still_runs() -> None:
+    """es#216 re-gate: always-quoting broke `cmd /c <rendered command>`.
+
+    `_quote_cmd` wrapped EVERY argument, so the rendered line began with a
+    quote and held more than two.  cmd.exe then applies its documented
+    rule 2 -- strip the leading quote and the last quote on the line -- and
+    the command is destroyed.  Measured on Windows against a plain install
+    path with no space and no metacharacter in it:
+
+        always-quote        `cmd /c <rendered>`  -> rc 1, guard NEVER RAN
+            "The filename, directory name, or volume label syntax is
+             incorrect."
+        list2cmdline (the PRE-fix code, same argv, same shell)
+                            `cmd /c <rendered>`  -> rc 0, guard RAN
+
+    Exit 1 is fail OPEN.  So always-quoting regressed the ordinary case
+    into the exact class this PR set out to close: it fixed the
+    metacharacter path and, in doing so, disarmed every path -- but only
+    under invocation forms that do NOT supply their own outer quote pair.
+    `subprocess(shell=True)` emits `cmd /d /s /c "<cmd>"` and a batch file
+    re-parses per line, so both mask it.  Every end-to-end proof in this
+    file ran through `shell=True`: one execution context, generalised to
+    "Windows" -- the same mistake this PR already diagnosed twice.
+
+    Quoting only what NEEDS quoting keeps the metacharacter fix (the
+    whitelist forces quotes around `R&D`) and restores the bare-`cmd /c`
+    case whenever the interpreter path itself needs no quoting.  It cannot
+    rescue an interpreter path that DOES need quoting -- under rule 2 no
+    quoting can -- and that residue is recorded in README.md as
+    unaddressed rather than assumed away.
+    """
+    renderer_globals = runpy.run_path(str(CURSOR_CLI_RENDERER))
+    shell_command = renderer_globals.get("_shell_command")
+    needs_quoting = renderer_globals.get("_needs_cmd_quoting")
+    check("cursor-cli-needs-cmd-quoting-exists", callable(needs_quoting))
+    if not callable(needs_quoting) or not callable(shell_command):
+        return
+
+    safe = "C:\\Tools\\es\\hook.py"
+    check("cursor-cli-a-safe-argument-is-not-quoted",
+          not needs_quoting(safe))
+    # the pin against MY fix: every enumerated metacharacter must force
+    # quotes.  A whitelist that let one through would split the command.
+    leaked = [c for c in CMD_METACHARACTERS
+              if not needs_quoting("C:\\a" + c + "b\\hook.py")]
+    check("cursor-cli-every-cmd-metacharacter-forces-quoting", not leaked)
+    check("cursor-cli-empty-argument-is-quoted", needs_quoting(""))
+
+    bare_argv = ["C:\\Py\\python.exe", "C:\\Tools\\es\\hook.py",
+                 "--harness", "cursor"]
+    bare = shell_command(bare_argv, style="cmd")
+    check("cursor-cli-all-safe-argv-renders-with-no-quotes",
+          '"' not in bare)
+    check("cursor-cli-all-safe-argv-does-not-start-with-a-quote",
+          not bare.startswith('"'))
+
+    # the metacharacter fix must SURVIVE minimal quoting
+    amp_argv = ["C:\\Py\\python.exe", "C:\\Tools\\R&D\\hook.py",
+                "--harness", "cursor"]
+    amp = shell_command(amp_argv, style="cmd")
+    check("cursor-cli-ampersand-argument-is-still-quoted",
+          '"C:\\Tools\\R&D\\hook.py"' in amp)
+    check("cursor-cli-ampersand-leaves-no-bare-metacharacter",
+          "&" not in amp.replace('"C:\\Tools\\R&D\\hook.py"', ""))
+    spacey = shell_command(
+        ["C:\\Program Files\\Py\\python.exe", "C:\\Tools\\es\\hook.py"],
+        style="cmd")
+    check("cursor-cli-spaced-argument-is-still-quoted",
+          '"C:\\Program Files\\Py\\python.exe"' in spacey)
+    # POSIX is untouched: shlex already quotes minimally.
+    check("cursor-cli-posix-style-unchanged-by-minimal-quoting",
+          shell_command(bare_argv, style="posix") == shlex.join(bare_argv))
+    # '%' is still refused before any quoting decision is reached.
+    pct = None
+    try:
+        shell_command(["C:\\Py\\python.exe", "C:\\100%done\\hook.py"],
+                      style="cmd")
+    except RuntimeError as exc:
+        pct = str(exc)
+    check("cursor-cli-percent-still-refused-under-minimal-quoting",
+          pct is not None)
+
+
+def test_cursor_cli_rendered_command_runs_under_a_bare_cmd_c() -> None:
+    """The behavioural half: prove the armed guard actually BLOCKS, and
+    names its rule, when the rendered command is handed to `cmd /c`
+    WITHOUT an enclosing quote pair.
+
+    A junction supplies an interpreter path with no space in it, which is
+    the case minimal quoting can rescue.  The oracle is the matched rule
+    name, never `returncode == 2` alone: a command cmd has mangled also
+    exits non-zero, and that is precisely the fabricated refusal this PR
+    keeps having to tell apart from a real custody block.
+    """
+    if os.name != "nt":
+        return
+    with tempfile.TemporaryDirectory() as tmp:
+        base = Path(tmp)
+        plugin = _stage_plugin_checkout(base / "plugin")
+        pyhome = base / "pyhome"
+        made = subprocess.run(
+            ["cmd", "/c", "mklink", "/J", str(pyhome),
+             str(Path(sys.executable).parent)],
+            capture_output=True, text=True)
+        if made.returncode != 0:
+            return
+        interpreter = pyhome / Path(sys.executable).name
+        check("cursor-cli-bare-interpreter-path-has-no-space",
+              " " not in str(interpreter))
+        if not interpreter.is_file():
+            return
+
+        ws = base / "workspace"
+        ws.mkdir()
+        destination = ws / ".cursor" / "hooks.json"
+        rendered = subprocess.run(
+            [str(interpreter),
+             str(plugin / "hooks" / "render_cursor_cli_hooks.py"),
+             "--output", str(destination)],
+            cwd=str(ws), capture_output=True, text=True)
+        check("cursor-cli-bare-cmd-render-exit-0", rendered.returncode == 0)
+        if rendered.returncode != 0:
+            return
+        command = _commands_of(destination)[0]
+        check("cursor-cli-bare-cmd-command-is-unquoted",
+              not command.startswith('"'))
+
+        _arm(ws, "cursor-cli-bare-cmd")
+        payload = json.dumps({"command": BLOCKED_COMMAND, "cwd": str(ws)})
+        # shell=False with a raw command line: cmd gets EXACTLY
+        # `cmd /c <command>`, with no wrapper quotes added by anyone.
+        blocked = subprocess.run(
+            "cmd /c " + command, shell=False, input=payload,
+            cwd=str(ws), capture_output=True, text=True)
+        check("cursor-cli-bare-cmd-c-guard-blocks", blocked.returncode == 2)
+        check("cursor-cli-bare-cmd-c-block-names-the-rule",
+              "no-rm" in blocked.stdout + blocked.stderr)
+
+        inert = base / "inert"
+        inert.mkdir()
+        allowed = subprocess.run(
+            "cmd /c " + command, shell=False,
+            input=json.dumps({"command": BLOCKED_COMMAND,
+                              "cwd": str(inert)}),
+            cwd=str(inert), capture_output=True, text=True)
+        check("cursor-cli-bare-cmd-c-inert-without-a-mission",
+              allowed.returncode == 0)
+
+
+def test_cursor_cli_readme_records_the_unwrapped_cmd_c_residue() -> None:
+    """The residue minimal quoting CANNOT fix must be enumerated, not
+    assumed away -- an interpreter path that itself needs quoting stays
+    broken under a bare `cmd /c` because cmd's rule 2 strips the outer
+    quotes no matter how the line is built.  README.md already lists the
+    `cmd /v:on` and PowerShell hazards; this is the third, and it is the
+    one that fails OPEN."""
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    lowered = readme.lower()
+    check("cursor-cli-readme-names-the-bare-cmd-c-hazard",
+          "cmd /c" in lowered and "quoted only where" in lowered)
+    check("cursor-cli-readme-says-a-spaced-interpreter-path-is-unrescued",
+          "install python to a path with no space" in lowered)
+
+
+BLOCKED_COMMAND = "rm -rf x"
+
+
+def test_cursor_cli_narrowed_matcher_refuses_to_render() -> None:
+    """Codex es#216 thread r3858530080: the drift check validated only the
+    command string, so narrowing the preToolUse matcher from
+    `Shell|Write|Delete` to `Shell` still rendered -- installing a config
+    that looks armed while Write/Delete tool calls never reach the gate.
+    Matcher coverage, not just command presence, is part of the required
+    event table."""
+    with tempfile.TemporaryDirectory() as tmp:
+        plugin = _stage_plugin_checkout(Path(tmp) / "plugin")
+        template_path = plugin / "hooks" / "cursor-hooks.json"
+        original = json.loads(template_path.read_text(encoding="utf-8"))
+
+        def render_with(template_obj: dict) -> subprocess.CompletedProcess:
+            # stdout mode: nothing is written, so a REFUSAL is observable
+            # purely as exit 2 plus an empty stdout.
+            template_path.write_text(json.dumps(template_obj),
+                                     encoding="utf-8")
+            return subprocess.run(
+                [sys.executable,
+                 str(plugin / "hooks" / "render_cursor_cli_hooks.py")],
+                capture_output=True, text=True)
+
+        narrowed = json.loads(json.dumps(original))
+        narrowed["hooks"]["preToolUse"][0]["matcher"] = "Shell"
+        res = render_with(narrowed)
+        check("cursor-cli-shell-only-matcher-refuses", res.returncode == 2)
+        check("cursor-cli-shell-only-refusal-names-the-matcher",
+              "matcher" in res.stderr.lower())
+        check("cursor-cli-shell-only-refusal-names-uncovered-tools",
+              "Write" in res.stderr and "Delete" in res.stderr)
+        check("cursor-cli-shell-only-refusal-emits-no-config",
+              not res.stdout.strip())
+
+        no_shell = json.loads(json.dumps(original))
+        no_shell["hooks"]["preToolUse"][0]["matcher"] = "Write|Delete"
+        res = render_with(no_shell)
+        check("cursor-cli-matcher-without-shell-refuses",
+              res.returncode == 2)
+
+        # no matcher at all is FULL coverage: the row sees every tool call
+        matcherless = json.loads(json.dumps(original))
+        del matcherless["hooks"]["preToolUse"][0]["matcher"]
+        res = render_with(matcherless)
+        check("cursor-cli-matcherless-pretooluse-still-renders",
+              res.returncode == 0)
+
+        # a matcher on an event whose payloads the gate must see in FULL
+        # narrows by payload text, which only the mission's own guard
+        # regexes may do
+        matched_shell = json.loads(json.dumps(original))
+        matched_shell["hooks"]["beforeShellExecution"][0]["matcher"] = "rm"
+        res = render_with(matched_shell)
+        check("cursor-cli-matcher-on-shell-event-refuses",
+              res.returncode == 2)
+        check("cursor-cli-shell-event-refusal-names-the-event",
+              "beforeShellExecution" in res.stderr)
+
+        matched_mcp = json.loads(json.dumps(original))
+        matched_mcp["hooks"]["beforeMCPExecution"][0]["matcher"] = "rm"
+        res = render_with(matched_mcp)
+        check("cursor-cli-matcher-on-mcp-event-refuses",
+              res.returncode == 2)
+
+        # over-refusal is its own outage: the canonical template must pass
+        res = render_with(original)
+        check("cursor-cli-canonical-template-still-renders",
+              res.returncode == 0)
+
+
+def test_cursor_cli_project_output_stays_out_of_version_control() -> None:
+    """Codex es#216 thread r3858335200 / estate handoff 2026-08-25 section 7:
+    the README's documented project form bakes the AUTHOR's absolute
+    interpreter and plugin paths into .cursor/hooks.json, and project hooks
+    are committed -- so every collaborator's Cursor gets a config naming
+    files that exist only on the authoring machine.  Measured end-to-end
+    below: the committed config fabricates a custody block (exit 2, naming
+    no rule) on the collaborator's machine.  The renderer must keep the
+    generated file machine-local: refuse a destination git already tracks,
+    and refuse the worktree-root .cursor/hooks.json -- the shape Cursor
+    auto-loads as project hooks -- unless git ignores it.
+    """
+    with tempfile.TemporaryDirectory() as tmp:
+        base = Path(tmp)
+        plugin = _stage_plugin_checkout(base / "author-machine" / "plugin")
+        renderer = plugin / "hooks" / "render_cursor_cli_hooks.py"
+
+        # ---- the documented project form in a repo that does NOT ignore it
+        repo = base / "shared-repo"
+        _git_init_repo(repo)
+        destination = repo / ".cursor" / "hooks.json"
+        refused = subprocess.run(
+            [sys.executable, str(renderer), "--output", str(destination)],
+            cwd=str(repo), capture_output=True, text=True)
+        check("cursor-cli-committable-project-output-refused",
+              refused.returncode == 2)
+        check("cursor-cli-committable-refusal-wrote-nothing",
+              not destination.exists())
+        check("cursor-cli-committable-refusal-names-gitignore",
+              ".gitignore" in refused.stderr)
+
+        # ---- the machine-local flow: ignore first, then render ----
+        (repo / ".gitignore").write_text(".cursor/hooks.json\n",
+                                         encoding="utf-8")
+        rendered = subprocess.run(
+            [sys.executable, str(renderer), "--output", str(destination)],
+            cwd=str(repo), capture_output=True, text=True)
+        check("cursor-cli-ignored-project-output-renders",
+              rendered.returncode == 0)
+        check("cursor-cli-ignored-render-wrote-the-config",
+              destination.is_file())
+        commands = _commands_of(destination)
+        command = commands[0] if commands else ""
+        _arm(repo, "cursor-cli-vcs-gate")
+        run = _run_rendered(command, repo)
+        check("cursor-cli-ignored-project-config-still-arms",
+              run.returncode == 2 and "no-rm" in run.stdout + run.stderr)
+
+        # ---- a non-root path inside a worktree renders, with the notice ----
+        subdir_destination = repo / "sub" / "hooks.json"
+        noted = subprocess.run(
+            [sys.executable, str(renderer),
+             "--output", str(subdir_destination)],
+            cwd=str(repo), capture_output=True, text=True)
+        check("cursor-cli-non-root-worktree-path-renders",
+              noted.returncode == 0 and subdir_destination.is_file())
+        check("cursor-cli-non-root-render-carries-the-machine-local-notice",
+              "machine-local" in noted.stderr)
+
+        # ---- a NESTED project root is the same auto-loaded shape ----
+        # Cursor opened on repo/packages/app loads
+        # packages/app/.cursor/hooks.json as the project hooks file, so a
+        # nested .cursor/hooks.json carries the identical committed-config
+        # hazard and must get the identical refusal.
+        nested = repo / "packages" / "app" / ".cursor" / "hooks.json"
+        nested_refused = subprocess.run(
+            [sys.executable, str(renderer), "--output", str(nested)],
+            cwd=str(repo), capture_output=True, text=True)
+        check("cursor-cli-nested-project-output-refused",
+              nested_refused.returncode == 2)
+        check("cursor-cli-nested-refusal-wrote-nothing",
+              not nested.exists())
+        check("cursor-cli-nested-refusal-names-gitignore",
+              ".gitignore" in nested_refused.stderr)
+
+        with (repo / ".gitignore").open("a", encoding="utf-8",
+                                        newline="\n") as handle:
+            handle.write("packages/app/.cursor/hooks.json\n")
+        nested_rendered = subprocess.run(
+            [sys.executable, str(renderer), "--output", str(nested)],
+            cwd=str(repo), capture_output=True, text=True)
+        check("cursor-cli-ignored-nested-project-output-renders",
+              nested_rendered.returncode == 0 and nested.is_file())
+
+        # ---- a TRACKED destination refuses even when deleted locally ----
+        tracked = base / "tracked-repo"
+        _git_init_repo(tracked)
+        tracked_destination = tracked / ".cursor" / "hooks.json"
+        tracked_destination.parent.mkdir()
+        tracked_destination.write_text("{}\n", encoding="utf-8")
+        _git(tracked, "add", ".cursor/hooks.json")
+        _git(tracked, "commit", "-m", "add hooks.json")
+        tracked_destination.unlink()
+        res = subprocess.run(
+            [sys.executable, str(renderer),
+             "--output", str(tracked_destination)],
+            cwd=str(tracked), capture_output=True, text=True)
+        check("cursor-cli-tracked-destination-refused", res.returncode == 2)
+        check("cursor-cli-tracked-refusal-wrote-nothing",
+              not tracked_destination.exists())
+        check("cursor-cli-tracked-refusal-names-tracking",
+              "track" in res.stderr.lower())
+
+        # ---- the hazard the gate exists for, measured: force the commit ----
+        _git(repo, "add", "-f", ".cursor/hooks.json")
+        _git(repo, "commit", "-m", "force-add the machine-local config")
+        clone = base / "collaborator-machine" / "shared-repo"
+        subprocess.run(["git", "clone", str(repo), str(clone)],
+                       check=True, capture_output=True, text=True)
+        shutil.rmtree(base / "author-machine")
+        check("cursor-cli-committed-config-reaches-the-collaborator",
+              (clone / ".cursor" / "hooks.json").is_file())
+        blocked = subprocess.run(
+            command, shell=True,
+            input=json.dumps({"command": BLOCKED_COMMAND, "cwd": str(clone)}),
+            cwd=str(clone), capture_output=True, text=True)
+        check("cursor-cli-collaborator-gets-a-fabricated-block",
+              blocked.returncode == 2)
+        check("cursor-cli-collaborator-block-names-no-rule",
+              "no-rm" not in blocked.stdout + blocked.stderr)
+
+
+def test_cursor_cli_readme_marks_project_output_machine_local() -> None:
+    """The README's project form must carry the do-not-commit instruction
+    and the renderer's matcher-coverage refusal, pinned so neither sentence
+    can quietly disappear."""
+    readme = (ROOT / "README.md").read_text(encoding="utf-8").lower()
+    check("cursor-cli-readme-says-machine-local", "machine-local" in readme)
+    check("cursor-cli-readme-says-do-not-commit", "do not commit" in readme)
+    check("cursor-cli-readme-names-gitignore-for-project-output",
+          ".gitignore" in readme)
+    check("cursor-cli-readme-pins-matcher-coverage",
+          "shell|write|delete" in readme and "matcher" in readme)
 
 if __name__ == "__main__":
     for fn in list(globals().values()):

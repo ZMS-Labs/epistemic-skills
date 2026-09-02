@@ -16,7 +16,7 @@ sys.path.insert(0, str(ROOT))
 
 from custody_gate import _guard_norm_path, evaluate, run_gate  # noqa: E402
 from custody_mission import Mission  # noqa: E402
-from custody_store import sha256_file  # noqa: E402
+from custody_store import StoreError, sha256_bytes, sha256_file  # noqa: E402
 
 FAILURES: list[str] = []
 
@@ -514,6 +514,332 @@ def test_unmatched_mixed_union_reports_the_strongest_posture() -> None:
               v["decision"] == "allow" and not v["matched"])
         check("mixed-union-reports-enforce", v["mode"] == "enforce")
         check("mixed-union-says-it-is-mixed", "MIXED" in v["reason"])
+
+
+# es#217: the same eight envelope positions the declaration rule governs, and
+# the `Mission.open` keyword that authors each one. Enumerated, not sampled:
+# the defect this file pins is one rule applied to eight fields, so a pin on
+# one field is green on a fix that only reaches one field.
+DECLARATION_OPEN_KWARGS = {
+    ("authority", "permissions"): "permissions",
+    ("authority", "protected_state"): "protected_state",
+    ("authority", "acceptable_costs"): "acceptable_costs",
+    ("scope", "in"): "scope_in",
+    ("scope", "out"): "scope_out",
+    ("stop_rules", "hold_if"): "hold_if",
+    ("stop_rules", "stop_if"): "stop_if",
+    ("stop_rules", "escalate_if"): "escalate_if",
+}
+
+
+def rewrite_chain_as_legacy_writer(mission_dir: Path, mutate) -> None:
+    """Rewrite a checkpoint chain exactly as an OLDER writer left it on disk.
+
+    Serialization is byte-faithful to the shipped store: ``atomic_write_json``
+    emits ``json.dumps(record, indent=1, sort_keys=True) + "\\n"`` as UTF-8, and
+    a record written by the real writer round-trips through these exact bytes
+    (measured on a store produced by the pre-es#160 API). Bytes, never
+    ``write_text``: on a Windows host that would turn every LF into CRLF and
+    change every chained hash, so the fixture would fail for a reason that has
+    nothing to do with what it tests.
+
+    This is the only honest way to build the store a deployed fleet already
+    has, because the point of the test is a shape THIS writer now refuses to
+    author.
+    """
+    paths = sorted((mission_dir / "checkpoints").glob("r????????.json"))
+    prev_sha = None
+    for path in paths:
+        record = json.loads(path.read_text(encoding="utf-8"))
+        mutate(record)
+        record["prev_checkpoint_sha256"] = prev_sha
+        data = (json.dumps(record, indent=1, sort_keys=True) + "\n").encode("utf-8")
+        path.write_bytes(data)
+        prev_sha = sha256_bytes(data)
+
+
+def _armed_legacy_blank_mission(ws: Path, mission_id: str,
+                                position=("scope", "in")) -> Path:
+    """An ACTIVE, enforce-mode mission whose `position` declaration carries one
+    whitespace-only entry -- legal to the writer that produced it."""
+    section, field = position
+    m = Mission.open(ws, mission_id, "i", "operator:test", "agent:test",
+                     actor="agent:test", scope_in=["prod/**"],
+                     scope_out=["everything else"],
+                     guard_mode="enforce", actuator_guards=GUARDS)
+    m.approve()
+    mission_dir = m.store.mission_dir
+
+    def inject_blank(record: dict) -> None:
+        entries = list(record["manifest"][section].get(field) or [])
+        record["manifest"][section][field] = entries + [" "]
+
+    rewrite_chain_as_legacy_writer(mission_dir, inject_blank)
+    return mission_dir
+
+
+def test_run_gate_legacy_blank_declaration_still_enforces() -> None:
+    """A TIGHTENED DECLARATION RULE MUST NEVER DISARM A DEPLOYED GUARD (es#217).
+
+    Measured on the store built below, written by the pre-es#160 API: that
+    reader returned ``block``. With the new declaration rule gating the READ
+    path, ``load_latest`` raised ChainBroken, ``Mission.load`` skipped the only
+    mission, and ``run_gate`` answered ``allow`` with reason
+    ``gate inert: NoActiveMission`` -- an armed, enforcing guard silently
+    stopped enforcing, and the reason named a state (no mission here) that was
+    false.
+
+    The direction is the whole point. A false block names its rule and is
+    discharged by an amend; a false ALLOW retires custody of the actuator class
+    with nothing left to notice it. So record VALIDITY is deliberately not
+    tightened on read: the contract statement moved, the deployed corpus did
+    not, and a validator is not allowed to disarm a guard by changing its mind
+    about a string.
+
+    All eight declaration positions are exercised. One rule reaches eight
+    fields, so a pin on one field stays green on a fix that reaches one field.
+    """
+    for index, position in enumerate(DECLARATION_OPEN_KWARGS):
+        label = f"{position[0]}.{position[1]}"
+        with tempfile.TemporaryDirectory() as tmp:
+            ws = Path(tmp)
+            _armed_legacy_blank_mission(ws, f"gate-legacy-{index}", position)
+            call = {"tool_name": "Bash", "command": "curl :7878/api",
+                    "file_path": None}
+            buf = io.StringIO()
+            with contextlib.redirect_stderr(buf):
+                v = run_gate(ws, call, actor="hook:custody-gate")
+            check(f"run-gate-legacy-blank-{label}-still-blocks",
+                  v["decision"] == "block" and v["rule"] == "arr-api")
+            check(f"run-gate-legacy-blank-{label}-not-inert",
+                  v["mode"] == "enforce"
+                  and "NoActiveMission" not in v["reason"])
+            check(f"run-gate-legacy-blank-{label}-not-skipped",
+                  "skipping unreadable mission dir" not in buf.getvalue())
+
+
+def test_legacy_blank_declaration_mission_is_not_wedged() -> None:
+    """READ-ONLY IS NOT SAFE EITHER: a mission that loads but can never be
+    written again is a lock, not a fix.
+
+    The manifest is immutable from open to close (``_verify_manifest``), so a
+    legacy blank declaration is carried forward verbatim by ``_write_next``
+    into every subsequent checkpoint. Had the new rule gated only the WRITE
+    path, the operator of such a mission would keep an enforcing guard and lose
+    every verb that could resolve it -- note, amend, cancel, accept -- with no
+    repair available, because repairing the declaration is itself a manifest
+    change this contract refuses. Carrying a declaration forward unchanged is
+    therefore exempt; authoring one is not.
+
+    This is the failure mode the es#217 correction could have introduced, so it
+    is pinned rather than reasoned about.
+    """
+    for index, position in enumerate(DECLARATION_OPEN_KWARGS):
+        label = f"{position[0]}.{position[1]}"
+        with tempfile.TemporaryDirectory() as tmp:
+            ws = Path(tmp)
+            _armed_legacy_blank_mission(ws, f"wedge-{index}", position)
+            m = Mission.load(ws, actor="agent:test")
+            before = m.store.load_latest()[0]["manifest"][position[0]][position[1]]
+            check(f"legacy-blank-{label}-note-writes",
+                  m.note("still writable") == 3)
+            check(f"legacy-blank-{label}-amend-writes",
+                  m.amend_authority("operator: stand the guard down",
+                                    actuator_guards=None) == 4)
+            check(f"legacy-blank-{label}-cancel-writes",
+                  m.cancel("closing out the legacy mission") == 5)
+            check(f"legacy-blank-{label}-carried-forward-verbatim",
+                  m.store.load_latest()[0]["manifest"][position[0]][position[1]]
+                  == before)
+
+
+def test_new_blank_declaration_is_still_refused_at_the_writer() -> None:
+    """The original rejection still bites where a declaration is AUTHORED.
+
+    Exempting carry-forward must not exempt authorship. Without the r2 half
+    below, the exemption would be a hole shaped exactly like the defect it
+    closes: write a clean r1, then introduce a blank at r2 and have it pass as
+    inherited. Both halves run for all eight positions.
+    """
+    for index, (position, kwarg) in enumerate(DECLARATION_OPEN_KWARGS.items()):
+        section, field = position
+        label = f"{section}.{field}"
+        with tempfile.TemporaryDirectory() as tmp:
+            ws = Path(tmp)
+            refused = False
+            try:
+                Mission.open(ws, f"blank-open-{index}", "i", "operator:test",
+                             "agent:test", actor="agent:test",
+                             guard_mode="enforce", actuator_guards=GUARDS,
+                             **{kwarg: [" "]})
+            except Exception:
+                refused = True
+            check(f"blank-{label}-refused-at-open", refused)
+            check(f"blank-{label}-refused-at-open-writes-no-checkpoint",
+                  not sorted((ws / "missions" / f"blank-open-{index}"
+                              / "checkpoints").glob("r????????.json")))
+
+        with tempfile.TemporaryDirectory() as tmp:
+            ws = Path(tmp)
+            m = Mission.open(ws, f"blank-r2-{index}", "i", "operator:test",
+                             "agent:test", actor="agent:test",
+                             scope_in=["prod/**"], guard_mode="enforce",
+                             actuator_guards=GUARDS)
+            m.approve()
+            latest, path = m.store.load_latest()
+            smuggled = json.loads(json.dumps(latest))
+            smuggled["revision"] = latest["revision"] + 1
+            smuggled["prev_checkpoint_sha256"] = sha256_file(path)
+            entries = list(smuggled["manifest"][section].get(field) or [])
+            smuggled["manifest"][section][field] = entries + [" "]
+            refused = False
+            try:
+                m.store.write_checkpoint(smuggled)
+            except StoreError:
+                refused = True
+            check(f"blank-{label}-refused-when-newly-authored-at-r2", refused)
+            check(f"blank-{label}-refused-at-r2-writes-no-checkpoint",
+                  len(m.store.checkpoint_paths()) == 2)
+
+
+def test_environmental_read_failure_degrades_the_union_it_does_not_abort() -> None:
+    """One unreadable mission dir must not silence every OTHER mission's
+    guards.
+
+    `Mission._discover` deliberately propagates environmental OSErrors so that
+    `open` does not reroute around a mission that is merely busy and invite a
+    duplicate open. For the gate that reasoning inverts: the exception escaped
+    `_union_entries`, the hook caught it at the workspace boundary, and an
+    approved enforce-mode mission's BLOCK became a silent allow. Measured
+    before the fix by injecting PermissionError for one mission's checkpoint
+    read: `run_gate` raised instead of blocking, so the healthy sibling never
+    voted.
+
+    The failure is injected at the read the discovery walk performs, which is
+    where a locked or permission-denied store actually fails."""
+    import custody_mission
+    import custody_store
+
+    with tempfile.TemporaryDirectory() as tmp:
+        ws = Path(tmp)
+        blocked = Mission.open(ws, "a-blocked", "i", "operator:test",
+                               "agent:test", actor="agent:test")
+        blocked.approve()
+        healthy = Mission.open(ws, "z-healthy", "i", "operator:test",
+                               "agent:test", actor="agent:test",
+                               guard_mode="enforce", actuator_guards=GUARDS)
+        healthy.approve()
+
+        real_load = custody_store.MissionStore.load_latest
+        target = (ws / "missions" / "a-blocked").resolve()
+
+        def refusing_load(self):
+            if Path(self.mission_dir).resolve() == target:
+                raise PermissionError(13, "Permission denied")
+            return real_load(self)
+
+        custody_store.MissionStore.load_latest = refusing_load
+        try:
+            verdict = run_gate(
+                ws, {"tool_name": "Bash", "command": "curl :7878/api/v3",
+                     "file_path": None}, actor="hook:custody-gate")
+        finally:
+            custody_store.MissionStore.load_latest = real_load
+
+        check("unreadable-sibling-does-not-suppress-a-real-block",
+              verdict["decision"] == "block")
+        check("unreadable-sibling-block-names-the-healthy-mission",
+              "z-healthy" in verdict["reason"])
+        check("unreadable-sibling-loss-is-disclosed",
+              "DEGRADED" in verdict["reason"].upper()
+              or "a-blocked" in verdict["reason"])
+
+    # CONTROL: with nothing unreadable, the same call must still block and the
+    # verdict must NOT claim degradation -- a gate that always says "degraded"
+    # has stopped distinguishing.
+    with tempfile.TemporaryDirectory() as tmp:
+        ws = Path(tmp)
+        healthy = Mission.open(ws, "z-healthy", "i", "operator:test",
+                               "agent:test", actor="agent:test",
+                               guard_mode="enforce", actuator_guards=GUARDS)
+        healthy.approve()
+        verdict = run_gate(
+            ws, {"tool_name": "Bash", "command": "curl :7878/api/v3",
+                 "file_path": None}, actor="hook:custody-gate")
+        check("clean-union-still-blocks", verdict["decision"] == "block")
+        check("clean-union-claims-no-degradation",
+              "DEGRADED" not in verdict["reason"].upper())
+
+
+def test_verification_reread_oserror_degrades_the_union() -> None:
+    """The discovery walk's OSError arm covers the FIRST read; the union
+    then re-reads every discovered mission through `mission.status()`,
+    whose handler caught only (StoreError, ValueError, CustodyError). A
+    mission that becomes unreadable BETWEEN the two reads (a lock or
+    permission change) raised OSError out of `_union_entries`, `run_gate`
+    propagated, and the hook caught it at the workspace boundary and failed
+    OPEN -- the silent-allow class the discovery fix closed, one read
+    later."""
+    import custody_store
+
+    with tempfile.TemporaryDirectory() as tmp:
+        ws = Path(tmp)
+        flaky = Mission.open(ws, "a-flaky", "i", "operator:test",
+                             "agent:test", actor="agent:test")
+        flaky.approve()
+        healthy = Mission.open(ws, "z-healthy", "i", "operator:test",
+                               "agent:test", actor="agent:test",
+                               guard_mode="enforce", actuator_guards=GUARDS)
+        healthy.approve()
+
+        real_load = custody_store.MissionStore.load_latest
+        target = (ws / "missions" / "a-flaky").resolve()
+        reads = {"n": 0}
+
+        def failing_second_read(self):
+            if Path(self.mission_dir).resolve() == target:
+                reads["n"] += 1
+                if reads["n"] > 1:
+                    raise PermissionError(13, "Permission denied")
+            return real_load(self)
+
+        custody_store.MissionStore.load_latest = failing_second_read
+        verdict = None
+        try:
+            try:
+                verdict = run_gate(
+                    ws, {"tool_name": "Bash", "command": "curl :7878/api/v3",
+                         "file_path": None}, actor="hook:custody-gate")
+            except PermissionError:
+                pass
+        finally:
+            custody_store.MissionStore.load_latest = real_load
+
+        check("reread-oserror-run-gate-does-not-raise",
+              verdict is not None)
+        check("reread-oserror-does-not-suppress-a-real-block",
+              verdict is not None and verdict["decision"] == "block")
+        check("reread-oserror-block-names-the-healthy-mission",
+              verdict is not None and "z-healthy" in verdict["reason"])
+        check("reread-oserror-loss-is-disclosed",
+              verdict is not None
+              and ("DEGRADED" in verdict["reason"].upper()
+                   or "a-flaky" in verdict["reason"]))
+
+    # CONTROL: with nothing failing, the same call blocks and the verdict
+    # claims no degradation.
+    with tempfile.TemporaryDirectory() as tmp:
+        ws = Path(tmp)
+        healthy = Mission.open(ws, "z-healthy", "i", "operator:test",
+                               "agent:test", actor="agent:test",
+                               guard_mode="enforce", actuator_guards=GUARDS)
+        healthy.approve()
+        verdict = run_gate(
+            ws, {"tool_name": "Bash", "command": "curl :7878/api/v3",
+                 "file_path": None}, actor="hook:custody-gate")
+        check("reread-control-still-blocks", verdict["decision"] == "block")
+        check("reread-control-claims-no-degradation",
+              "DEGRADED" not in verdict["reason"].upper())
 
 
 if __name__ == "__main__":
