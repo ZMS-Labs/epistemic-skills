@@ -1652,6 +1652,69 @@ def test_cursor_cli_project_output_stays_out_of_version_control() -> None:
               "no-rm" not in blocked.stdout + blocked.stderr)
 
 
+def test_cursor_cli_symlinked_project_dir_still_refuses() -> None:
+    """A SYMLINKED `.cursor` must not walk around the project-hooks refusal
+    (es#235, from Codex es#216 thread 3866510301).
+
+    The gate compared the REALPATH-resolved destination, so `.cursor ->
+    cursor-local` lost the `.cursor` component before the comparison ran:
+    the refusal never fired, the renderer wrote `cursor-local/hooks.json`,
+    and git left it untracked AND unignored -- committable, and still
+    auto-loaded by Cursor through `.cursor/hooks.json`.  Measured on the
+    build that filed this: exit 0 with the file written, against exit 2 for
+    an identical repo whose `.cursor` is a real directory.
+
+    Cursor reads the LOGICAL spelling and git indexes the RESOLVED one, so
+    either spelling naming `.cursor/hooks.json` is the auto-loaded shape.
+    The resolved leg keeps its own coverage in the test above -- a `.cursor`
+    reached through a symlinked PARENT only carries the component after
+    resolution -- so this pin adds the logical leg without retiring it.
+    """
+    if os.name == "nt":
+        print("  skip symlinked-.cursor pin (POSIX-scoped: a directory "
+              "symlink needs privilege on NT)")
+        return
+    with tempfile.TemporaryDirectory() as tmp:
+        repo = Path(tmp) / "symlinked-repo"
+        _git_init_repo(repo)
+        (repo / "cursor-local").mkdir()
+        try:
+            (repo / ".cursor").symlink_to("cursor-local",
+                                          target_is_directory=True)
+        except OSError:
+            print("  skip symlinked-.cursor pin (no symlink support here)")
+            return
+        destination = repo / ".cursor" / "hooks.json"
+        resolved = repo / "cursor-local" / "hooks.json"
+
+        refused = subprocess.run(
+            [sys.executable, str(CURSOR_CLI_RENDERER),
+             "--output", str(destination)],
+            cwd=str(repo), capture_output=True, text=True)
+        check("cursor-cli-symlinked-project-output-refused",
+              refused.returncode == 2)
+        check("cursor-cli-symlinked-refusal-wrote-nothing",
+              not resolved.exists() and not destination.exists())
+        check("cursor-cli-symlinked-refusal-names-gitignore",
+              ".gitignore" in refused.stderr)
+        check("cursor-cli-symlinked-refusal-names-project-hooks",
+              "project-hooks" in refused.stderr)
+
+        # ---- the documented escape still works through the link ----
+        # Ignoring the path git actually indexes is what makes the file
+        # uncommittable, so the gate must stand down once it is ignored --
+        # a refusal nothing can discharge would wedge the install.
+        (repo / ".gitignore").write_text("cursor-local/\n", encoding="utf-8")
+        rendered = subprocess.run(
+            [sys.executable, str(CURSOR_CLI_RENDERER),
+             "--output", str(destination)],
+            cwd=str(repo), capture_output=True, text=True)
+        check("cursor-cli-ignored-symlinked-project-output-renders",
+              rendered.returncode == 0)
+        check("cursor-cli-ignored-symlinked-render-wrote-the-config",
+              resolved.is_file())
+
+
 def test_cursor_cli_readme_marks_project_output_machine_local() -> None:
     """The README's project form must carry the do-not-commit instruction
     and the renderer's matcher-coverage refusal, pinned so neither sentence

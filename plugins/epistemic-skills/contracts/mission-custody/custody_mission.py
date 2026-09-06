@@ -59,6 +59,38 @@ _RESERVED_NOTE_PREFIXES = (
 )
 
 
+def _display_safe(text: str, *, preserve_printable_syntax: bool = False) -> str:
+    """Render terminal text without allowing control-character execution.
+
+    Raw fields use full JSON string escaping (minus the surrounding quotes).
+    A completed refusal message can also contain trusted printable syntax --
+    notably the JSON-quoted ``--scope-ack`` token that the acceptor must copy
+    exactly.  In that mode preserve printable ASCII quotes and backslashes,
+    while still JSON-escaping every control and non-ASCII code point.  Both
+    modes therefore prevent forged rows and ANSI execution and remain safe
+    on an ASCII-only console.  JSON document surfaces get the same guarantees
+    from ``custody_cli._print_status``'s ``ensure_ascii=True``.
+
+    THE ONE RENDERING HELPER (es#158), so it lives in the module every
+    operator-facing surface can already import: the CLI, the gate and this
+    module's own discovery notices.  It was defined in ``custody_cli`` and
+    used only there, which left seven sibling sites escaping with
+    ``backslashreplace`` -- whose whole effect is on NON-ASCII, so a raw CR
+    and a raw ESC CSI in a filesystem-supplied directory name reached the
+    operator's terminal unchanged (es#232, measured on
+    ``Mission._discover``).  A pin in the suite keeps that retired shape out
+    of every module here, because three of the seven are best-effort logging
+    paths no fixture can schedule.
+    """
+    if preserve_printable_syntax:
+        return "".join(
+            char if " " <= char <= "~"
+            else json.dumps(char, ensure_ascii=True)[1:-1]
+            for char in text
+        )
+    return json.dumps(text, ensure_ascii=True)[1:-1]
+
+
 def _refuse_reserved_note(text: str) -> None:
     """Refuse caller text that imitates a machine-written note ON ANY LINE.
 
@@ -307,7 +339,7 @@ def _require_substantive_text(text, label: str, purpose: str) -> None:
                 more_blanks = True
     # Name the code points in ASCII. Echoing the glyphs would print the very
     # invisibility being refused, and this module's errors must survive an
-    # ASCII-only console (see custody_cli._ascii_safe).
+    # ASCII-only console (see `_display_safe`).
     shown = " ".join("U+%04X" % cp for cp in shown_blanks)
     if more_blanks:
         shown += " ..."
@@ -1293,6 +1325,16 @@ class Mission:
         _refuse_unprintable_identity(actor, "actor")
         _refuse_unprintable_identity(steward_ref, "steward_ref")
         _refuse_unprintable_identity(operator_ref, "operator_ref")
+        # The instruction is what the WHOLE mission is anchored to: scope,
+        # acceptance and every later amendment are read against it, and it is
+        # the one field `_verify_manifest` has always treated as immutable.
+        # An instruction of non-rendering code points anchors the mission to
+        # nothing a reader can recover, and unlike a bad cancel reason it can
+        # never be corrected -- the manifest is immutable from open to close.
+        # Guarded here, beside the identity checks and BEFORE the load-probe,
+        # so a refused open still touches nothing on disk (es#228).
+        _require_substantive_text(
+            instruction, "instruction", "what the mission is for")
         # PLURALITY IS LEGAL (es#173 §3): open no longer refuses on an
         # existing active mission -- the fail-open decoy is removed not by
         # handling MultipleActiveMissions better but by making the state
@@ -1518,10 +1560,9 @@ class Mission:
                         skipped.append({"name": mission_dir.name,
                                         "kind": "EpochSkew",
                                         "reason": reason})
-                        print(("custody: skipping mission dir from a NEWER "
-                               "epoch " + reason)
-                              .encode("ascii", "backslashreplace")
-                              .decode("ascii"), file=sys.stderr)
+                        print(_display_safe(
+                            "custody: skipping mission dir from a NEWER "
+                            "epoch " + reason), file=sys.stderr)
                         continue
                     except (StoreError, ValueError, TypeError, OSError):
                         pass   # ordinary damage: the name verdict below owns it
@@ -1543,10 +1584,9 @@ class Mission:
                     skipped.append({"name": mission_dir.name,
                                     "kind": "IllegalMissionId",
                                     "reason": reason})
-                    print(("custody: skipping unaddressable mission dir "
-                           + reason)
-                          .encode("ascii", "backslashreplace").decode("ascii"),
-                          file=sys.stderr)
+                    print(_display_safe(
+                        "custody: skipping unaddressable mission dir "
+                        + reason), file=sys.stderr)
                     continue
                 degradable: tuple = (StoreError, ValueError, TypeError)
                 if degrade_on_oserror:
@@ -1574,9 +1614,9 @@ class Mission:
                     skipped.append({"name": mission_dir.name,
                                     "kind": type(exc).__name__,
                                     "reason": reason})
-                    print(("custody: skipping unreadable mission dir " + reason)
-                          .encode("ascii", "backslashreplace").decode("ascii"),
-                          file=sys.stderr)
+                    print(_display_safe(
+                        "custody: skipping unreadable mission dir " + reason),
+                        file=sys.stderr)
                     continue
                 if latest["status"] not in ("completed", "cancelled"):
                     active.append({"name": mission_dir.name,
@@ -2342,12 +2382,11 @@ class Mission:
                           encoding="utf-8") as handle:
                     handle.write(line + "\n")
             except Exception as exc:  # noqa: BLE001
-                print(("custody: sibling-touch append failed for "
-                       f"{entry['name']} ({type(exc).__name__}: {exc}); "
-                       "the effect stands -- detection falls back to the "
-                       "sibling's resume-time receipt scan")
-                      .encode("ascii", "backslashreplace").decode("ascii"),
-                      file=sys.stderr)
+                print(_display_safe(
+                    "custody: sibling-touch append failed for "
+                    f"{entry['name']} ({type(exc).__name__}: {exc}); "
+                    "the effect stands -- detection falls back to the "
+                    "sibling's resume-time receipt scan"), file=sys.stderr)
 
     def _log_effect_matches(self, matches: list[dict],
                             artifact_relpath: str) -> None:
@@ -2639,6 +2678,11 @@ class Mission:
         self._verify_manifest(latest)
         if latest["status"] not in _OPEN_STATES:
             raise IllegalTransition(f"cannot note: status is {latest['status']!r}")
+        # A note is the mission's append-only narrative, and a checkpoint is
+        # permanent: a blank-shaped one spends a revision recording nothing an
+        # auditor could ever read back (es#228).
+        _require_substantive_text(
+            text, "note text", "what this checkpoint records")
         _refuse_reserved_note(text)
         new = self._write_next(latest, path, status=latest["status"], note=text)
         return new["revision"]
@@ -2652,6 +2696,12 @@ class Mission:
         # by `status`/`resume` and lives in the same checkpoint JSON, so an
         # auditor grepping the chain for a machine-note prefix hits it just the
         # same. Same guard, same reason.
+        #
+        # And the frontier is what a resuming session reads to learn where the
+        # work stands; blank-shaped, it REPLACES a readable frontier with
+        # nothing, which is worse than leaving the old one in place (es#228).
+        _require_substantive_text(
+            text, "frontier text", "what remains to be done")
         _refuse_reserved_note(text)
         new = self._write_next(latest, path, status=latest["status"], frontier=text)
         return new["revision"]
@@ -2804,10 +2854,10 @@ class Mission:
             try:
                 receipts = store.load_receipts()
             except Exception as exc:  # noqa: BLE001
-                print(("custody: sibling receipt scan skipped "
-                       f"{mission_dir.name} ({type(exc).__name__}: {exc})")
-                      .encode("ascii", "backslashreplace").decode("ascii"),
-                      file=sys.stderr)
+                print(_display_safe(
+                    "custody: sibling receipt scan skipped "
+                    f"{mission_dir.name} ({type(exc).__name__}: {exc})"),
+                    file=sys.stderr)
                 continue
             # CHAIN ADMISSION. `load_receipts` is a bare `receipts/*.json`
             # glob, so this scan used to accept evidence the sibling's own
@@ -2821,11 +2871,10 @@ class Mission:
             try:
                 sib_latest, _ = store.load_latest()
             except Exception as exc:  # noqa: BLE001
-                print(("custody: sibling receipt scan skipped "
-                       f"{mission_dir.name} (chain unreadable: "
-                       f"{type(exc).__name__}: {exc})")
-                      .encode("ascii", "backslashreplace").decode("ascii"),
-                      file=sys.stderr)
+                print(_display_safe(
+                    "custody: sibling receipt scan skipped "
+                    f"{mission_dir.name} (chain unreadable: "
+                    f"{type(exc).__name__}: {exc})"), file=sys.stderr)
                 continue
             admitted = set(sib_latest.get("receipt_ids") or ())
             minted_paths = [
@@ -3667,6 +3716,16 @@ class Mission:
         self._verify_manifest(latest)
         if verdict not in VERDICTS:
             raise CustodyError(f"unknown verdict {verdict!r}")
+        # THE SHARP ONE (es#228). A PASS SEALS the mission `completed`, and
+        # the reason is hash-chained into the acceptance-verdict record as the
+        # acceptor's account of why. Blank-shaped, it closed the mission with
+        # an acceptance no reader could recover and no transition could
+        # revisit -- the defect es#213 closed on `cancel`, landing on the
+        # transition that matters more. FAIL and the conditional verdicts take
+        # the same rule: a FAIL reason is what `clear-fail` is later matched
+        # against, so an unreadable one wedges the repair path too.
+        _require_substantive_text(
+            reason, "verdict reason", "why the verdict was reached")
         _refuse_reserved_note(reason)
         if verdict in ("PASS", "FAIL"):
             if latest["status"] != "verifying":

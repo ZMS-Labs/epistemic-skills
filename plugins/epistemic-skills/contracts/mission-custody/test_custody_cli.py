@@ -657,6 +657,180 @@ def test_cancel_accepts_substantive_reasons() -> None:
                   ("cancelled: " + reason) in record["state"]["notes"])
 
 
+# es#228: the four required-text fields the blank-text class was NEVER closed
+# on. es#213/es#241 guarded `cancel --reason`, `amend --text` and
+# `authorize-sibling --text`; these four kept `accept --reason` able to seal a
+# mission COMPLETED with an acceptance reason no reader can recover, and
+# `open --instruction` able to anchor a whole mission to nothing.
+#
+# One row per category axis, the same axes the cancel table proves in full --
+# the per-code-point table lives there, which is where the class was found.
+_REQUIRED_TEXT_AXES = (
+    ("ascii-whitespace", 0x0020),
+    ("unicode-whitespace", 0x00A0),
+    ("zero-width", 0x200B),
+    ("rtl-and-bidi", 0x202E),
+    ("control", 0x0007),
+    ("blank-glyph", 0x3164),
+    ("zero-advance-mark", 0xFE0F),
+)
+
+
+def _blank_field_probe(ws: Path, field: str, text: str) -> tuple:
+    """Drive ONE required-text field with `text`, from a fresh workspace.
+
+    Returns (result, checkpoints dir). Every field is reached through the
+    transition that actually needs it, so a refusal is measured where an
+    operator would meet it.
+    """
+    mission_id = "req-" + field
+    checkpoints = ws / "missions" / mission_id / "checkpoints"
+    if field == "instruction":
+        return run("open", "--workspace", str(ws), "--actor", "agent:worker",
+                   "--mission-id", mission_id, "--instruction", text,
+                   "--operator", "operator:zach",
+                   "--steward", "agent:worker"), checkpoints
+    open_cli(ws, mission_id, "anchor the mission")
+    run("approve", "--workspace", str(ws), "--actor", "agent:worker")
+    if field == "note":
+        return run("note", "--workspace", str(ws), "--actor", "agent:worker",
+                   "--text", text), checkpoints
+    if field == "frontier":
+        return run("frontier", "--workspace", str(ws),
+                   "--actor", "agent:worker", "--text", text), checkpoints
+    run("begin-verification", "--workspace", str(ws), "--actor", "agent:worker")
+    return run("accept", "--workspace", str(ws), "--actor", "agent:acceptor",
+               "--verdict", "PASS", "--acceptor", "agent:acceptor",
+               "--tier", "declared-role-separation",
+               "--reason", text), checkpoints
+
+
+# field -> (label the refusal must name, checkpoints present before the call)
+_REQUIRED_TEXT_FIELDS = (
+    ("instruction", "instruction required", 0),
+    ("note", "note text required", 2),
+    ("frontier", "frontier text required", 2),
+    ("accept", "verdict reason required", 3),
+)
+
+
+def test_every_required_text_field_refuses_a_blank_shaped_value() -> None:
+    """es#228: the blank-text class was closed on three call sites, not seven.
+
+    Measured before this fix, one U+200B per field: `open --instruction`,
+    `note --text`, `frontier --text` and `accept --reason` all exited 0.
+    `accept` is the sharp one -- it sealed the mission COMPLETED with
+    `PASS: <ZWSP>`, an acceptance reason no reader could ever recover, which
+    is the defect es#213 fixed on the cancel path landing on the transition
+    that matters more. `open --instruction` is next: the instruction is what
+    the whole mission is anchored to.
+
+    Each row proves exit 2, a diagnosis naming the field, no traceback, and
+    no checkpoint appended -- a refused transition writes nothing.
+    """
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        for field, names, before in _REQUIRED_TEXT_FIELDS:
+            for i, (axis, cp) in enumerate(_REQUIRED_TEXT_AXES):
+                ws = root / ("%s-%02d" % (field, i))
+                ws.mkdir(parents=True)
+                r, checkpoints = _blank_field_probe(ws, field, chr(cp))
+                tag = "%s-%s-U+%04X" % (field, axis, cp)
+                check("required-text-blank-%s-exit-2" % tag,
+                      r.returncode == 2)
+                check("required-text-blank-%s-names-the-field" % tag,
+                      names in r.stderr)
+                check("required-text-blank-%s-names-codepoint" % tag,
+                      ("U+%04X" % cp) in r.stderr)
+                check("required-text-blank-%s-no-traceback" % tag,
+                      "Traceback" not in r.stderr)
+                check("required-text-blank-%s-stderr-is-ascii" % tag,
+                      r.stderr.isascii())
+                check("required-text-blank-%s-no-checkpoint-write" % tag,
+                      len(sorted(checkpoints.glob("*.json"))
+                          if checkpoints.is_dir() else []) == before)
+
+
+def _latest_checkpoint(ws: Path, mission_id: str) -> dict:
+    """The tail checkpoint, read off disk.
+
+    Deliberately not `status`: a COMPLETED mission is no longer active, so
+    the unbound `status` verb refuses it -- and the post-state this pin has
+    to read is exactly the completed one.
+    """
+    paths = sorted((ws / "missions" / mission_id / "checkpoints").glob("*.json"))
+    return json.loads(paths[-1].read_text(encoding="utf-8"))
+
+
+def test_blank_accept_reason_cannot_seal_a_mission_completed() -> None:
+    """The post-state es#228 named, pinned on its own.
+
+    Exit 2 is not the whole claim: the sharp case is that the mission stays
+    OPEN and can still be accepted with a reason a reader can recover. A
+    refusal that nonetheless completed the mission would satisfy every check
+    above and leave the defect intact.
+    """
+    with tempfile.TemporaryDirectory() as tmp:
+        ws = Path(tmp) / "ws"
+        ws.mkdir(parents=True)
+        open_cli(ws, "seal", "anchor the mission")
+        run("approve", "--workspace", str(ws), "--actor", "agent:worker")
+        run("begin-verification", "--workspace", str(ws),
+            "--actor", "agent:worker")
+        blank = run("accept", "--workspace", str(ws),
+                    "--actor", "agent:acceptor", "--verdict", "PASS",
+                    "--acceptor", "agent:acceptor",
+                    "--tier", "declared-role-separation", "--reason", "\u200b")
+        check("blank-accept-refused", blank.returncode == 2)
+        check("blank-accept-left-the-mission-verifying",
+              _latest_checkpoint(ws, "seal")["status"] == "verifying")
+        verdicts = ws / "missions" / "seal" / "verdicts"
+        check("blank-accept-minted-no-verdict-record",
+              not verdicts.is_dir() or not list(verdicts.glob("*.json")))
+
+        # The transition is refused, not WEDGED: the acceptor can still close
+        # the mission with a reason a reader can recover.
+        good = run("accept", "--workspace", str(ws),
+                   "--actor", "agent:acceptor", "--verdict", "PASS",
+                   "--acceptor", "agent:acceptor",
+                   "--tier", "declared-role-separation",
+                   "--reason", "reviewed end-to-end; receipts match")
+        check("substantive-accept-still-completes", good.returncode == 0)
+        check("substantive-accept-seals-completed",
+              _latest_checkpoint(ws, "seal")["status"] == "completed")
+
+
+def test_required_text_fields_accept_substantive_values() -> None:
+    """Over-rejection is this guard's OWN failure mode -- pin it per field.
+
+    A refused-but-legitimate value does not merely annoy: a mission whose
+    instruction is refused never opens, and one whose acceptance reason is
+    refused can never be closed. The load-bearing rows are the tail, where
+    real text merely CONTAINS a zero-width, bidi or combining code point --
+    a guard written as "refuse if ANY character is Cf/Mn" would ship this
+    very defect pointed the other way.
+    """
+    accepted = (
+        ("ascii", "ship the CLI"),
+        ("single-punctuation", "."),
+        ("cjk", "\u4efb\u52a1\u5df2\u5b8c\u6210"),
+        ("hebrew-with-niqqud", "\u05d1\u05b0\u05d5\u05d8\u05dc"),
+        ("emoji-with-variation-selector", "done \u2764\ufe0f"),
+        ("contains-zwsp", "done\u200bend-to-end"),
+        ("contains-rlm", "closed\u200f by operator"),
+        ("padded-with-nbsp", "\u00a0done end-to-end\u00a0"),
+    )
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        for field, _names, _before in _REQUIRED_TEXT_FIELDS:
+            for i, (label, text) in enumerate(accepted):
+                ws = root / ("ok-%s-%02d" % (field, i))
+                ws.mkdir(parents=True)
+                r, _ = _blank_field_probe(ws, field, text)
+                check("required-text-substantive-%s-%s-exit-0"
+                      % (field, label), r.returncode == 0)
+
+
 def test_amend_refuses_blank_shaped_text() -> None:
     """`amend --text` carries the same guard idiom, so it carries the same hole.
 
@@ -1597,6 +1771,9 @@ TESTS = [
     test_cancel_refuses_blank_shaped_reason_files,
     test_cancel_accepts_substantive_reasons,
     test_amend_refuses_blank_shaped_text,
+    test_every_required_text_field_refuses_a_blank_shaped_value,
+    test_blank_accept_reason_cannot_seal_a_mission_completed,
+    test_required_text_fields_accept_substantive_values,
     test_open_stop_rules_and_acceptable_costs,
     test_open_without_stop_rules_yields_empty_lists,
     test_success_output_confirms_the_write,
