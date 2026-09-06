@@ -2726,6 +2726,57 @@ def test_failed_effect_removes_the_directories_it_created(
           (workspace / "esrm" / "deep" / "x.txt").exists())
 
 
+def test_failed_mkdir_removes_the_ancestors_it_already_created(
+        workspace: Path) -> None:
+    """The unwind must cover a FAILURE INSIDE THE MKDIR, not only after it.
+
+    The first cut of the es#169 fix left `target.parent.mkdir(parents=True)`
+    outside the try, so only a failure after the directories existed was
+    unwound. But mkdir(parents=True) builds the chain one level at a time
+    and can fail partway: a component longer than NAME_MAX raises OSError
+    [Errno 36] after the shallower parents are already on disk. That is the
+    same unreceipted residue the issue names, and the seam comment claimed
+    it was unwound "on the way out of any raise" while it was not.
+
+    No injection is needed here -- the filesystem itself supplies the
+    partial failure, which is why this case is worth having alongside the
+    injected-write one."""
+    m = open_mission(workspace, "m-mkdir-partial", "Fail inside the mkdir.")
+    m.approve()
+    cps_before = sorted(
+        (workspace / "missions" / "m-mkdir-partial" / "checkpoints")
+        .glob("*.json"))
+
+    too_long = "z" * 300  # > NAME_MAX (255) on every mainstream filesystem
+    try:
+        m.record_effect(f"aa/bb/{too_long}/x.txt", "data", "req-partial")
+        check("partial-mkdir-propagates-the-error", False)
+    except OSError:
+        check("partial-mkdir-propagates-the-error", True)
+
+    check("partial-mkdir-minted-no-receipt",
+          not list((workspace / "missions" / "m-mkdir-partial" / "receipts")
+                   .glob("*.json")))
+    check("partial-mkdir-committed-no-checkpoint",
+          sorted((workspace / "missions" / "m-mkdir-partial" / "checkpoints")
+                 .glob("*.json")) == cps_before)
+    # THE PROPERTY: `aa` and `aa/bb` were created by this call and must be gone.
+    check("partial-mkdir-left-no-created-ancestor",
+          not (workspace / "aa").exists())
+
+    # CONTROL: still only what THIS call created. A pre-existing ancestor on
+    # the failing path survives, so the assertion above cannot pass by an
+    # unwind that climbs out of its own scope.
+    (workspace / "cc").mkdir()
+    try:
+        m.record_effect(f"cc/dd/{too_long}/y.txt", "data", "req-partial-2")
+        check("partial-mkdir-propagates-the-error-2", False)
+    except OSError:
+        check("partial-mkdir-propagates-the-error-2", True)
+    check("partial-mkdir-kept-the-caller-s-own-directory",
+          (workspace / "cc").is_dir() and not (workspace / "cc" / "dd").exists())
+
+
 def test_accept_requires_verifying_and_separation(workspace: Path) -> None:
     m = open_mission(workspace, "m-accept", "Finish task.")
     m.approve()
@@ -6636,6 +6687,7 @@ TESTS = [
     test_corrupt_receipt_degrades_to_drift,
     test_effect_duplicate_id_leaves_workspace_untouched,
     test_failed_effect_removes_the_directories_it_created,
+    test_failed_mkdir_removes_the_ancestors_it_already_created,
     test_accept_requires_verifying_and_separation,
     test_fail_is_clearable,
     test_operator_tier,
