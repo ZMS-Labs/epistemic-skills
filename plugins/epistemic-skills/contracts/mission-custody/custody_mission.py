@@ -476,10 +476,30 @@ def _unwind_absent_ancestors(created: list[Path]) -> None:
     stops too. Removing a directory somebody else is now using would be a
     worse mutation than the one being undone.
 
+    A level that IS NOT THERE is skipped rather than treated as a refusal.
+    `mkdir(parents=True)` builds the chain one level at a time and can fail
+    partway, so the deepest recorded levels may never have been created at
+    all -- and a level that does not exist holds nothing, shelters nobody's
+    data, and must not stop the unwind of the levels BELOW it that this call
+    really did create. Stopping there was the whole residue: a component
+    longer than NAME_MAX left `aa/` and `aa/bb/` standing because the rmdir
+    of the too-long name raised first. The ENOTEMPTY guarantee is unchanged
+    and is enforced by `rmdir` itself, not by this skip: an ancestor holding
+    a level that would not come away is non-empty and refuses in its turn.
+
     Failures are swallowed because this runs on the way out of a `raise`:
     the caller must see the error that failed the effect, not a cleanup
     error standing in front of it."""
     for directory in created:
+        try:
+            if not directory.exists():
+                continue
+        except OSError:
+            # Existence undecidable at this level. Skipping is the same
+            # conservative direction as above -- nothing is removed here --
+            # while still letting a level this call demonstrably created be
+            # unwound. A non-empty ancestor still refuses on its own rmdir.
+            continue
         try:
             directory.rmdir()
         except OSError:
@@ -1918,9 +1938,18 @@ class Mission:
         # it declines to touch: a write that landed bytes and then failed to
         # receipt them leaves a non-empty directory, and the artifact's own
         # bytes are not this cleanup's to delete.
+        # The mkdir is INSIDE the try. mkdir(parents=True) creates the chain one
+        # level at a time and can fail partway — a long component raises OSError
+        # [Errno 36] after the shallower parents already exist — so leaving it
+        # outside left exactly the residue this seam is about, and contradicted
+        # the sentence above about unwinding "on the way out of any raise".
+        # `created_parents` is still read BEFORE the mkdir, which is the part
+        # that has to happen first: Path.mkdir reports nothing about what it
+        # made, and re-deriving it afterwards cannot tell our directory from one
+        # a concurrent writer created in between.
         created_parents = _absent_ancestors(target.parent)
-        target.parent.mkdir(parents=True, exist_ok=True)
         try:
+            target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(data)
             receipt = {
                 "record": "receipt@1",
