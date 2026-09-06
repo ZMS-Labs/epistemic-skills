@@ -1087,6 +1087,110 @@ def test_unreadable_root_is_never_reported_as_nothing_to_enforce(
           and "NOT established as empty" not in out_done)
 
 
+# es#232: one control-permissive payload, reused by the pins below. A raw CR
+# forges a second row in a line-oriented operator log; a raw ESC CSI and the
+# 8-bit C1 CSI (U+009B) are sequences a terminal EXECUTES. All three are C0/C1
+# controls, which is exactly the class `backslashreplace` lets through: it
+# converts non-ASCII and nothing else. Written as escapes so this source file
+# stays pure ASCII, the way the other control-character fixtures here are.
+_CONTROL_PERMISSIVE_NAME = "ev\ril\x1b[31m\u009bFORGED-ROW"
+
+
+def test_discovery_stderr_escapes_control_characters(workspace: Path) -> None:
+    """es#232, following es#158: EVERY operator-facing surface renders
+    through the ONE helper, not just the CLI's.
+
+    `_discover`'s three skip notices interpolate a filesystem-supplied
+    directory name and a store-supplied exception message, and they escaped
+    with `.encode("ascii", "backslashreplace")` -- which converts non-ASCII
+    and NOTHING else, so a raw CR and a raw ESC CSI walked straight onto the
+    operator's terminal. Measured before the fix, read through `cat -v`:
+    `custody: skipping unaddressable mission dir ev^Mil^[[31m...`.
+
+    All three sites are driven from real stores, and the payload reaches the
+    third through the EXCEPTION rather than the directory name, because a
+    legal mission id passes `_ID_RE` and the exception is the channel that
+    stays open behind it.
+    """
+    missions = workspace / "missions"
+    # The live mission is opened FIRST: `open` refuses beside an unreadable
+    # sibling, so the hostile dirs cannot exist yet.
+    live = open_mission(workspace, "m-hostile-field", "Live.")
+    live.approve()
+    hostile = _CONTROL_PERMISSIVE_NAME
+    try:
+        # (a) an epoch-CLAIMING store under an illegal, hostile name.
+        staged = open_mission(workspace / "staging", "m-skew", "Skewed.")
+        staged.approve()
+        skew_dir = missions / ("skew-" + hostile)
+        shutil.move(str(workspace / "staging" / "missions" / "m-skew"),
+                    str(skew_dir))
+        shutil.rmtree(workspace / "staging", ignore_errors=True)
+        tail = sorted((skew_dir / "checkpoints").glob("*.json"))[-1]
+        record = json.loads(tail.read_text(encoding="utf-8"))
+        record["record"] = "checkpoint@2"
+        tail.write_text(json.dumps(record, indent=1, sort_keys=True),
+                        encoding="utf-8")
+
+        # (b) an ordinary corrupt store under an illegal, hostile name.
+        corrupt = missions / ("bad-" + hostile) / "checkpoints"
+        corrupt.mkdir(parents=True)
+        (corrupt / "r00000001.json").write_text("{", encoding="utf-8")
+    except OSError:
+        print("  skip discovery-control-escape pin (this filesystem refuses "
+              "a control-character directory name)")
+        return
+
+    # (c) a LEGAL mission id whose store-supplied error quotes the payload.
+    live_tail = sorted(
+        (missions / "m-hostile-field" / "checkpoints").glob("*.json"))[-1]
+    record = json.loads(live_tail.read_text(encoding="utf-8"))
+    record["manifest"][hostile] = "x"
+    live_tail.write_text(json.dumps(record, indent=1, sort_keys=True) + "\n",
+                         encoding="utf-8")
+
+    buf = io.StringIO()
+    with contextlib.redirect_stderr(buf):
+        _, skipped = Mission._discover(workspace, degrade_on_oserror=True)
+    printed = buf.getvalue()
+
+    check("discovery-control-exercises-all-three-skip-sites",
+          {"EpochSkew", "IllegalMissionId", "ChainBroken"}
+          <= {s["kind"] for s in skipped})
+    for label, raw in (("cr", "\r"), ("esc", "\x1b"), ("c1-csi", "\u009b")):
+        check("discovery-control-no-raw-%s-on-stderr" % label,
+              raw not in printed)
+    check("discovery-control-stderr-is-ascii", printed.isascii())
+    for label, escaped in (("cr", "\\r"), ("esc", "\\u001b"),
+                           ("c1-csi", "\\u009b")):
+        check("discovery-control-escapes-%s" % label, escaped in printed)
+    # Escaping is a DISPLAY act. The skip RECORDS keep the name that is
+    # actually on disk, because `--acknowledge-unreadable <dir>` has to name
+    # it -- an escaped name there would be an acknowledgement matching
+    # nothing, which `open` refuses as a typo.
+    check("discovery-control-skip-records-keep-the-raw-name",
+          any(hostile in s["name"] for s in skipped))
+
+
+def test_no_contract_module_keeps_the_control_permissive_escaper(
+        _ws: Path) -> None:
+    """es#158 asked for ONE rendering helper, not a fix per call site.
+
+    es#215 moved the CLI onto `_display_safe` and left seven siblings on
+    `.encode("ascii", "backslashreplace")`, an escaper whose whole effect is
+    on NON-ASCII: every C0 and C1 control it was reached for passed through
+    unchanged. Three of those seven are best-effort logging paths that no
+    single-threaded fixture can schedule, so the retired shape is pinned out
+    of the modules directly -- otherwise the next surface reintroduces it and
+    the behavioural pins above stay green while it does.
+    """
+    retired = '.encode("ascii", "backslashreplace")'
+    for name in ("custody_mission.py", "custody_gate.py", "custody_cli.py",
+                 "custody_hook.py", "custody_store.py", "census_missions.py"):
+        check("no-control-permissive-escaper-in-%s" % name,
+              retired not in (ROOT / name).read_text(encoding="utf-8"))
+
+
 def _skew_a_store_into(workspace: Path, name: str) -> None:
     """Move a mission opened elsewhere in beside an existing one and relabel
     its tail `checkpoint@2`, so the root holds a store this reader must skip.
@@ -6663,6 +6767,8 @@ TESTS = [
     test_census_does_not_count_unapproved_guards_as_armed,
     test_census_reports_partial_coverage_when_a_probe_fails,
     test_census_orphan_probe_failure_is_partial_not_absence,
+    test_discovery_stderr_escapes_control_characters,
+    test_no_contract_module_keeps_the_control_permissive_escaper,
 ]
 
 
