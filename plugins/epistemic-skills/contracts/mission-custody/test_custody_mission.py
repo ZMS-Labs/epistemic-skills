@@ -2658,6 +2658,74 @@ def test_effect_duplicate_id_leaves_workspace_untouched(workspace: Path) -> None
           (workspace / "notes" / "a.md").read_text(encoding="utf-8") == "hello")
 
 
+def test_failed_effect_removes_the_directories_it_created(
+        workspace: Path) -> None:
+    """A write that mints no receipt must leave no directory behind.
+
+    `_write_effect` creates the target's parents and only then writes the
+    bytes and the receipt, so a `PermissionError` at the write -- the case
+    es#169 names -- left `esrm/deep/` standing with no receipt and no
+    checkpoint: an unreceipted workspace mutation from the verb whose whole
+    contract is "no effect without a receipt".
+
+    The failure is injected at `Path.write_bytes`, for this one target,
+    because that is the exact seam the issue names and no portable
+    filesystem trick reaches it: a read-only parent fails the MKDIR
+    instead, which creates nothing at all and so measures the ordering that
+    was already correct rather than the cleanup that was missing."""
+    m = open_mission(workspace, "m-mkdir", "Fail after the mkdir.")
+    m.approve()
+    cps_before = sorted((workspace / "missions" / "m-mkdir" / "checkpoints")
+                        .glob("*.json"))
+
+    real_write_bytes = Path.write_bytes
+    blocked = {str(workspace.resolve() / "esrm" / "deep" / "x.txt"),
+               str(workspace.resolve() / "esrm-keep" / "deep" / "y.txt")}
+
+    def refusing_write_bytes(self, data):
+        if str(self) in blocked:
+            raise PermissionError(13, "Permission denied")
+        return real_write_bytes(self, data)
+
+    # A directory the caller made itself, to prove the unwind removes only
+    # what THIS call created.
+    (workspace / "esrm-keep").mkdir()
+
+    Path.write_bytes = refusing_write_bytes
+    try:
+        try:
+            m.record_effect("esrm/deep/x.txt", "data", "req-mkdir")
+            check("failed-effect-propagates-the-write-error", False)
+        except PermissionError:
+            check("failed-effect-propagates-the-write-error", True)
+        try:
+            m.record_effect("esrm-keep/deep/y.txt", "data", "req-mkdir-2")
+            check("failed-effect-propagates-the-write-error-2", False)
+        except PermissionError:
+            check("failed-effect-propagates-the-write-error-2", True)
+    finally:
+        Path.write_bytes = real_write_bytes
+
+    check("failed-effect-minted-no-receipt",
+          not list((workspace / "missions" / "m-mkdir" / "receipts")
+                   .glob("*.json")))
+    check("failed-effect-committed-no-checkpoint",
+          sorted((workspace / "missions" / "m-mkdir" / "checkpoints")
+                 .glob("*.json")) == cps_before)
+    check("failed-effect-left-no-created-directory",
+          not (workspace / "esrm").exists())
+    check("failed-effect-removed-only-what-it-created",
+          (workspace / "esrm-keep").is_dir()
+          and not (workspace / "esrm-keep" / "deep").exists())
+
+    # CONTROL: the unwind is not always-on. A write that DOES receipt keeps
+    # the directories it made -- otherwise the fix would be deleting the
+    # workspace it is supposed to protect.
+    m.record_effect("esrm/deep/x.txt", "data", "req-mkdir-ok")
+    check("receipted-effect-keeps-its-directories",
+          (workspace / "esrm" / "deep" / "x.txt").exists())
+
+
 def test_accept_requires_verifying_and_separation(workspace: Path) -> None:
     m = open_mission(workspace, "m-accept", "Finish task.")
     m.approve()
@@ -6567,6 +6635,7 @@ TESTS = [
     test_reconcile_clears_exactly_one_marker,
     test_corrupt_receipt_degrades_to_drift,
     test_effect_duplicate_id_leaves_workspace_untouched,
+    test_failed_effect_removes_the_directories_it_created,
     test_accept_requires_verifying_and_separation,
     test_fail_is_clearable,
     test_operator_tier,
