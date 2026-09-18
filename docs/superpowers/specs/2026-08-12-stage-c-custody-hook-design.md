@@ -48,7 +48,7 @@ Two optional fields inside `authority`:
       "name": "media-fs-moves",
       "tool_names": ["Bash", "Write", "Edit"],
       "command_regexes": ["\\b(mv|robocopy|rsync|Move-Item)\\b[^\\n]*[Mm]edia"],
-      "path_globs": ["M:/Media/**", "//10.10.10.107/Media/**"]
+      "path_globs": ["M:/Media/**", "//192.0.2.10/Media/**"]
     }
   ]
 }

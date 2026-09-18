@@ -1,17 +1,23 @@
 # epistemic-skills
 
-<!-- ZMS-ESTATE:BEGIN -->
+A collection of fifteen agent skills for checking assumptions, evaluating evidence,
+reviewing decisions, and verifying that work meets its acceptance criteria.
+Each skill combines a defined trigger and stopping rule with references,
+examples, and executable checks where a claim can be tested mechanically.
 
-> **Obligation:** `best effort` · **Stage:** `building` · **Load-bearing:** `unknown — not yet observed`
-> **Purpose:** `governance_method`
-> **Canonical for:** epistemic-agent-skill-package
-> Estate authority: the ZMS fleet governance registry (private), `governance/estate.yaml`.
+Use the least process that can expose an error capable of changing the action.
+A routine edit should finish with a relevant check; a consequential decision may
+need structured research, independent review, or a durable handoff.
 
-<!-- ZMS-ESTATE:END -->
+The skills use the [Agent Skills format](https://agentskills.io/specification).
+Thin integration manifests share one canonical skill tree across supported
+hosts. See [compatibility](#installation-and-compatibility) for the distinction
+between a packaged integration and verified runtime behavior.
 
-Epistemic disciplines for agentic work: use the least process that can still expose an error capable of changing the action or the completion claim.
-
-**Version 6.0.0.** Published 2026-08-21 and now the project's current [immutable support point](https://github.com/ZMS-Labs/epistemic-skills/releases/tag/v6.0.0); every install recipe below pins it. It shipped as an **exception release**, and that word is load-bearing: four independent reviews of the publication act, across three model families, all returned **NO-GO**, and the owner published anyway under a recorded exception rather than a passed gate. None of the four found a defect in the shipped skills — every P1 concerned the release process, its paperwork, or its authority chain. The full record is [RELEASE-6.0.0.md](docs/release/RELEASE-6.0.0.md); read it before citing this release's assurance posture. The package is harness-agnostic, follows the [Agent Skills specification](https://agentskills.io/specification), and is licensed under [GPL-3.0-or-later](LICENSE).
+**Version 6.0.0.** Latest published [release](https://github.com/ZMS-Labs/epistemic-skills/releases/tag/v6.0.0)
+(2026-08-21). `main` includes subsequent fixes. The release's independent
+publication review did not approve publication; it shipped under a documented
+owner exception. See [release status and limitations](#trust-evidence-and-known-limits).
 
 [![Release](https://img.shields.io/github/v/release/ZMS-Labs/epistemic-skills?display_name=tag)](https://github.com/ZMS-Labs/epistemic-skills/releases/latest)
 [![epistemic-flexibility](https://github.com/ZMS-Labs/epistemic-skills/actions/workflows/epistemic-flexibility.yml/badge.svg)](https://github.com/ZMS-Labs/epistemic-skills/actions/workflows/epistemic-flexibility.yml)
@@ -68,14 +74,17 @@ Users and maintainers are equal first-class audiences:
 | [Skill Catalog](https://github.com/ZMS-Labs/epistemic-skills/wiki/Skill-Catalog) | [Release Process and Versioning](https://github.com/ZMS-Labs/epistemic-skills/wiki/Release-Process-and-Versioning) |
 | | [Security, Provenance, and DCO](https://github.com/ZMS-Labs/epistemic-skills/wiki/Security-Provenance-and-DCO) |
 
-The Wiki is unversioned navigation over versioned sources. If a handbook summary and a released contract differ, the immutable `v6.0.0` source controls. The handbook was brought to v6.0.0 alongside this release and now has an oracle of its own ([`check_wiki.py`](docs/wiki-updates/v6.0.0/check_wiki.py)) checking skill inventory, version banners, spelled counts, link-text/URL version agreement, retired-seat tense, and live link resolution — it had never had one, which is why it had drifted three major versions. Use it for orientation; read the in-tree `SKILL.md` for any contract you intend to rely on.
+The Wiki explains the released contracts. The versioned skill files take
+precedence when a summary differs. Its [committed snapshot](docs/wiki-updates/v6.0.0/pages)
+is checked for inventory, version, and link consistency by
+[`check_wiki.py`](docs/wiki-updates/v6.0.0/check_wiki.py).
 
 ## Five-minute start
 
 1. **Install one immutable copy.** Choose the native path for your harness under [Installation and compatibility](#installation-and-compatibility). Use the generic Agent Skills path only when no native plugin or extension exists.
 2. **Reload the harness or start a fresh task.** Trigger discovery and role registries are commonly session-bound.
 3. **Choose the entry point.** There is one: `metacognate`. It is the only skill you invoke by name; every other member fires on its own description. (One carve-out: `manifest`, the mission-custody seat, may also be invoked directly — on `manifest this` or `/manifest` — for mission lifecycle acts.) It applies the routine gate first, and declining is its most common correct outcome.
-4. **Verify the inventory and source.** Expect exactly the count your source ships: the `main` tree or a v6.0.0 or v5.1.0 package or tagged checkout ships fifteen (v4.1.0 and v4.0.0 ship eleven; v3.4.0 ships seventeen; v3.3.0 ships fourteen; v3.1.0/v3.2.0 ship twelve; the pinned `v3.0.0` tag also ships eleven — its different eleven)—not two copies found through different install mechanisms.
+4. **Verify the inventory and source.** v6.0.0 ships fifteen skills. Check that the host loads the expected descriptions from one installation.
 5. **Let routine work leave.** A local, reversible, directly checkable, non-precedential task should finish with its bounded check and no process-only artifact.
 
 For a harness without a native package surface, the complete generic install is:
@@ -193,7 +202,9 @@ remains awake between sessions.
 
 ## Fifteen-skill catalog
 
-The package contains exactly one entry point and fourteen disciplines. Each name appears once, and every row links to its canonical `SKILL.md` in this tree — the file that defines the contract. (Earlier editions sent six of these rows to Wiki pages instead; that contradicted the precedence rule above, and the handbook has since drifted a major version behind.) For the immutable form of any contract, read the same path at a release tag.
+The package contains one entry point and fourteen disciplines. Each row links to
+its canonical `SKILL.md`. Read the same path at a release tag for the released
+version of that contract.
 
 | Skill | Positive trigger | Purpose | Output |
 |---|---|---|---|
@@ -229,11 +240,14 @@ Install with **exactly one mechanism per harness**. Native plugin **or** generic
 | Gemini CLI | Tagged extension | Restart and validate extension | Uses root context and canonical symlinked tree |
 | Antigravity (`agy`) | Tagged native local plugin | Validate with `agy` | Choose native, Gemini link, or import—only one |
 | Kimi Code | Tagged repository plugin | `/reload` or new session | Plugin instructions map isolated-agent primitives |
-| ZCode | Tagged local checkout, junction-projected into `~/.zcode/skills` | Start a fresh session; verify the tag's full skill count (fifteen at v6.0.0) | Session bootstrap junctions `~/.claude/skills` only — skills riding as Claude *plugins* are not auto-imported; junction surface verified on one fleet device, plugin install untested |
+| ZCode | Tagged local checkout, junction-projected into `~/.zcode/skills` | Start a fresh session; verify the tag's full skill count (fifteen at v6.0.0) | Session bootstrap junctions `~/.claude/skills` only — skills riding as Claude *plugins* are not auto-imported; limited local discovery evidence; native plugin installation unverified |
 | ChatGPT / OpenAI | Generated bundle from the release (`packaging/openai/chatgpt-skill`) | Upload the generated zip per [the packaging guide](docs/CHATGPT-AND-OPENAI-PACKAGING.md) | Generated-artifact bridge: a snapshot of the released tree, not self-updating; the bundle carries no live execution |
 | Generic Agent Skills host | Tagged canonical skills URL | Reload host and verify source | Host must supply any runtime primitive the selected skill requires |
 
-**Shared-budget boundary (every harness):** harnesses cap the total description bytes they load; over the harness cap, descriptions are dropped **silently** — the skill files exist and the count looks right while triggers never fire. This package consumes 8,636 bytes (its own recorded ceiling). If other skills share your harness's budget, verify triggers actually fire after install; a file count alone is not proof of loading.
+**Description loading:** hosts may limit the descriptions they load. Verify
+discovery after installation, especially when using several skill collections.
+The package's [description-budget check](.github/scripts/check_description_budget.py)
+measures its own metadata; it cannot establish a host's remaining capacity.
 
 Full installation, migration, runtime-degradation, and troubleshooting guidance lives in the [installation handbook](https://github.com/ZMS-Labs/epistemic-skills/wiki/Installation-and-Harness-Compatibility).
 
@@ -381,7 +395,7 @@ For a stable behavior claim, use this order:
 2. released references, records, and evidence at the same tag;
 3. README and Wiki explanations.
 
-`main` is current development and may move. The Wiki is a curated, unversioned handbook and must label current-development links. Historical audits and evaluations retain the status and scope they had at their frozen revision. Stable installation commands always use an immutable tag.
+`main` is current development and may move. The Wiki is a curated, unversioned handbook and must label current-development links. Historical audits and evaluations retain their original outcomes and revision scope; see the [documentation guide](docs/README.md) for redaction provenance. Stable installation commands always use an immutable tag.
 
 ## Coordination with epistemic-calibration
 
@@ -392,75 +406,35 @@ estimates.** They exchange revision-bound records rather than sharing mutable
 source or creating an installation dependency.
 
 The [coordination charter](docs/coordination/epistemic-calibration.md) records
-the coordination status as frozen at its 2d66a27 (v3.0.0-era)
-baseline, the product boundary, the proposed
-`epistemic-product-calibration@1` exchange unit, adoption questions, and phased
-pilot plan. Calibration-side state remains unverified until that repository
-returns an immutable reference; the charter does not turn a proposed bilateral
-contract into an accepted one. No such reference has been returned in the three
-major versions since that baseline, so treat this coordination as **dormant**:
-real as a stated boundary, inert as a dependency.
+a proposed exchange contract at its v3.0.0-era baseline. It is historical design
+context, not an installation dependency or a current claim about the other
+repository.
 
 ## Trust, evidence, and known limits
 
-**Version 6.0.0** is the current immutable support point: fifteen skills, aligned package surfaces, deterministic checks, and a tagged source snapshot. It was published as an **exception release** — no independent publication gate ever returned GO, and the owner overrode that gate on the record. Its gate record is [RELEASE-6.0.0.md](docs/release/RELEASE-6.0.0.md) and the post-publication record is [PUBLICATION-RECORD-6.0.0.md](docs/release/PUBLICATION-RECORD-6.0.0.md). **Version 5.1.0** remains a valid rollback target. Its predecessor **v5.0.0** was published with explicit gate honesty — item 6 only PARTIALLY MET at publication, item 8 WAIVED / NOT MET — and a post-release independent review returned **NO-GO** for retrospective certification. Read the [errata](docs/release/RELEASE-5.0.0-ERRATA-2026-08-06.md), [post-release review](docs/release/POST-RELEASE-INDEPENDENT-REVIEW-5.0.0-2026-08-06.md), and [successor progress](docs/release/SUCCESSOR-PROGRESS-104-105-2026-08-07.md) before treating v5.0.0 as gate-complete. Corrective work for issues #104/#105 landed on `main` after the immutable tag; do not move the tag.
+v6.0.0 is published and available as a versioned source snapshot. Its
+[release notes](docs/release/RELEASE-6.0.0.md) and
+[publication record](docs/release/PUBLICATION-RECORD-6.0.0.md) disclose an
+**exception release**: four publication reviews returned NO-GO, and the owner
+authorized publication with that judgment gate unmet. The published review outcomes remain part of the release record.
 
-Earlier support points remain historically accurate for their own campaigns, and a named limit
-stays on this page until a later campaign actually retires it. None has been rewritten into a pass.
+The repository includes deterministic checks for routing, schemas, packaging,
+receipt integrity, mission custody, review mechanics, and public content.
+These checks establish their named invariants. They do not prove that an agent
+will follow every instruction or that one model performs better than another.
+The [testing handbook](https://github.com/ZMS-Labs/epistemic-skills/wiki/Testing-and-Evaluations)
+separates deterministic tests from behavioral evaluations.
 
-### Where v6.0.0 stands
+Historical audits and evaluations describe the revisions and conditions named
+in those records. Use them within that scope. The development branch contains
+post-release corrections; installing the v6.0.0 tag does not include them.
 
-v6.0.0 is published as an exception release, for reasons this section states rather than hides:
+### Behavioral evidence and remaining limits
 
-- It adds a **mission-custody contract** (the `manifest` seat) and a **v6 assurance contract**
-  ([`validate_v6_assurance.py`](plugins/epistemic-skills/contracts/v6-assurance/validate_v6_assurance.py))
-  that binds release claims to machine-checked proof.
-- The candidate freeze carries a **72-row claim-to-proof matrix**, and the two
-  populations in it must not be conflated. **31 class claims** state what this
-  release asserts: **21 PROVED, 8 LIMITED** (proven within stated bounds),
-  **2 PARTIAL, 0 UNPROVED**. The other **41 rows are an open-issue census**,
-  one per tracker item, where `UNPROVED` means "this issue is still open" and
-  never meant a failed proof. An earlier edition of this note reported the raw
-  total as though two-fifths of the release's claims were unproven; that was
-  the headline honesty number and it was wrong.
-- `CLM-INDEPENDENT-GAUNTLET`, the one class claim that stood UNPROVED, is
-  closed by **operator ratification** of the rc5 verdict (D20) — not by an
-  operator-dispatched review. The seat was fresh and non-authoring, satisfying
-  the oracle; the dispatch limb is closed by the operator adopting the verdict
-  after the fact. `docs/v6/operator-decision-record-2026-08-20.md` states this
-  so no reader has to reconstruct it.
-- The freeze seals **141 source files** by per-file digest against an exact candidate commit, so a
-  post-freeze edit to any of them turns CI red.
-- Five independent panels reviewed successive build candidates: **four returned NO-GO**, the fifth
-  GO. Two further reviews of the *publication act* — one of them cross-family — **both returned
-  NO-GO**.
-- The shipped packet therefore reads `readiness: NOT_READY` with
-  `blocking_claims: ["CLM-INDEPENDENT-GAUNTLET"]`. It refuses to certify itself, and the validator
-  exits 0 **because** of that refusal — that green is never support for publishing.
-
-What blocks the tag is the release *record*, not the engineering: publication identity, an evidence
-table with immutable coordinates, and two operator acts that cannot be delegated. Two of those
-seven reviews were genuinely cross-family (one build panel, one publication read); the rest shared a
-model family with the authors and recorded that as an independence *limit*, not as independence. See [RELEASE-6.0.0.md](docs/release/RELEASE-6.0.0.md) and the gate in
-[RELEASING.md](RELEASING.md).
-
-### What the evidence supports
-
-- Deterministic checks protect named routing, proportionality, schema, receipt, UAT-judge,
-  DCO-policy, package-integration, public-content, mission-custody, and Gauntlet-mechanics
-  invariants.
-- The v6 assurance contract additionally binds the freeze itself: source-inventory digests, a
-  blocking-claims list derived from the matrix rather than hand-written, and a closed owner
-  vocabulary whose first run found a real unclassified owner.
-- The blinded proportionality campaign retained 162/162 terminal, schema-valid matched calls; the candidate passed the routine, material, and high-risk contract while corrected full-ceremony and always-routine parodies failed.
-- A tag and GitHub Release provide an immutable support coordinate for packaged contracts and
-  install instructions — which is precisely what v6.0.0 does not yet have.
-
-### Required limitations — frozen at the v3.2.0 behavioral campaign
-
-**No later campaign has superseded these rows.** The releases since v3.2.0 added deterministic and
-structural assurance, not new behavioral measurement, so this remains the project's most recent
-behavioral evidence and its limits still bind.
+The [2026-08-04 four-arm experiment](plugins/epistemic-skills/evals/epistemic-flexibility/behavioral/results/2026-08-04-four-arm/RESULTS.md)
+completed 72 blinded trials and found no arm separation. It does not establish
+behavioral superiority. Earlier formal-rigor findings remain relevant within
+their own scope; the table below summarizes the v3.2.0 campaign limitations.
 
 | Boundary | Honest v3.2.0 status |
 |---|---|

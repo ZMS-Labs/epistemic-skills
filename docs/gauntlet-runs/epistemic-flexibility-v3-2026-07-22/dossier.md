@@ -14,7 +14,7 @@
 
 ## Evidence root (for `[V path:line]`)
 
-All `[V]` tags resolve against the checked-out worktree at repo root `Y:/dev/_wt/epistemic-flex-v3/`.
+All `[V]` tags resolve against the checked-out worktree at repo root `/workspace/_wt/epistemic-flex-v3/`.
 The exact frozen diff is `.gauntlet-subject/pr35.diff`; the design is `.gauntlet-subject/spec.md`;
 the cross-cutting definition + ownership map is
 `plugins/epistemic-skills/skills/using-epistemic-skills/reference/epistemic-flexibility.md`.
@@ -56,7 +56,7 @@ DCO unit tests             PASS      .github/scripts/test_check_dco.py
 
 PR #35 status (live): `stdlib-checks` PASS, CodeQL/Analyze PASS, **DCO check FAIL**. CORRECTION
 (gauntlet F3, 2026-07-22): the commits **do** carry `Signed-off-by`; DCO fails on an author/sign-off
-**email mismatch** (GitHub noreply identity vs. `zachstern@gmail.com`), which `check_dco.py` treats as
+**email mismatch** (GitHub noreply identity vs. `maintainer@example.org`), which `check_dco.py` treats as
 by-design strict — not absence of sign-off. Process/sign-off gate, not a code defect.
 
 ## UNVERIFIED / out-of-scope (do NOT treat as established)

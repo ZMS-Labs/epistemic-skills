@@ -61,8 +61,8 @@ This clean run includes the three source corrections, reports 01–08, decision 
 PR #43 was left intact; no amend/rebase/force-push occurred. Every commit on the replacement branch was created by the authenticated `SternOne` account and contains both:
 
 ```text
-Signed-off-by: SternOne <89846440+SternOne@users.noreply.github.com>
-Signed-off-by: SternOne <zachstern@gmail.com>
+Signed-off-by: SternOne <maintainer@example.org>
+Signed-off-by: SternOne <maintainer@example.org>
 ```
 
 This mechanically covers either observed GitHub author-email identity under the repository's exact `check_dco.py` rule, which accepts any author-matching `Signed-off-by` line. The DCO policy unit-test suite is green. The available connector did not expose the separate `pull_request_target` DCO run identifier, so this report does not invent one; reviewers should treat the PR check surface as the final check-run record.

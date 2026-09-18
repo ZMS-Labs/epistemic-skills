@@ -57,7 +57,7 @@ hand-maintained inventory.
 - Stdlib-only deterministic core; adapter dependencies remain optional and isolated.
 - All state mutations are atomic, revisioned, and crash-recoverable.
 - Every production behavior change follows RED → GREEN → REFACTOR.
-- Every commit carries `Signed-off-by: SternOne <89846440+SternOne@users.noreply.github.com>`.
+- Every commit carries `Signed-off-by: SternOne <maintainer@example.org>`.
 - Public content must not expose private repository names, local absolute paths, credentials, hostnames, or estate topology.
 
 ---
@@ -252,7 +252,7 @@ Copy the author-matching DCO semantics from `epistemic-skills`; do not weaken th
 git add .
 git commit -m "chore: adopt practical-agency seed
 
-Signed-off-by: SternOne <89846440+SternOne@users.noreply.github.com>"
+Signed-off-by: SternOne <maintainer@example.org>"
 ```
 
 ---
@@ -474,7 +474,7 @@ git add contracts/mission-manifest.schema.json examples/minimal-mission.json \
         tests/test_manifest_model.py
 git commit -m "feat: define the mission manifest contract
 
-Signed-off-by: SternOne <89846440+SternOne@users.noreply.github.com>"
+Signed-off-by: SternOne <maintainer@example.org>"
 ```
 
 ---
@@ -573,7 +573,7 @@ git add contracts/mission-event.schema.json practical_agency/authority.py \
         tests/test_state_machine.py
 git commit -m "feat: enforce bounded mission authority and transitions
 
-Signed-off-by: SternOne <89846440+SternOne@users.noreply.github.com>"
+Signed-off-by: SternOne <maintainer@example.org>"
 ```
 
 ---
@@ -658,7 +658,7 @@ git add contracts/checkpoint.schema.json contracts/execution-receipt.schema.json
         practical_agency/checkpoint_store.py tests/test_checkpoint_store.py
 git commit -m "feat: add atomic mission checkpoints
 
-Signed-off-by: SternOne <89846440+SternOne@users.noreply.github.com>"
+Signed-off-by: SternOne <maintainer@example.org>"
 ```
 
 ---
@@ -741,7 +741,7 @@ git add contracts/capability-request.schema.json contracts/capability-result.sch
         practical_agency/capability_discovery.py tests/test_capability_discovery.py
 git commit -m "feat: discover mission capabilities dynamically
 
-Signed-off-by: SternOne <89846440+SternOne@users.noreply.github.com>"
+Signed-off-by: SternOne <maintainer@example.org>"
 ```
 
 ---
@@ -837,7 +837,7 @@ python -m unittest discover -s tests -p 'test_*.py' -v
 git add practical_agency/coordinator.py roles tests/test_coordinator.py
 git commit -m "feat: add bounded mission coordination
 
-Signed-off-by: SternOne <89846440+SternOne@users.noreply.github.com>"
+Signed-off-by: SternOne <maintainer@example.org>"
 ```
 
 ---
@@ -948,7 +948,7 @@ python -m unittest discover -s tests -p 'test_*.py' -v
 git add skills/manifest/SKILL.md plugin.json .cursor-plugin .claude-plugin README.md .github/workflows/ci.yml tests/test_manifest_skill.py
 git commit -m "feat: upgrade the manifest mission-control skill
 
-Signed-off-by: SternOne <89846440+SternOne@users.noreply.github.com>"
+Signed-off-by: SternOne <maintainer@example.org>"
 ```
 
 ---
@@ -1040,7 +1040,7 @@ git add adapters examples/watch-commission-mission.json \
         practical_agency/watch_commission.py tests/test_watch_commission_adapter.py
 git commit -m "feat: integrate external watch commissions
 
-Signed-off-by: SternOne <89846440+SternOne@users.noreply.github.com>"
+Signed-off-by: SternOne <maintainer@example.org>"
 ```
 
 ---
@@ -1107,7 +1107,7 @@ README must state:
 git add README.md tests/test_end_to_end_mission.py practical_agency
 git commit -m "test: prove resumable independently accepted missions
 
-Signed-off-by: SternOne <89846440+SternOne@users.noreply.github.com>"
+Signed-off-by: SternOne <maintainer@example.org>"
 ```
 
 ---

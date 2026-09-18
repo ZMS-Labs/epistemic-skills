@@ -79,7 +79,7 @@
  ],
  "decision_frame": {
   "actors": [
-   "operator (human, operator_ref 'operator:zach') -- GATE OWNER: runs or commissions the non-emptiness check and judges adoption at close",
+   "operator (human, operator_ref 'operator:example') -- GATE OWNER: runs or commissions the non-emptiness check and judges adoption at close",
    "steward (agent, steward_ref)",
    "census reader (agent, prepares the readout; does not judge)"
   ],

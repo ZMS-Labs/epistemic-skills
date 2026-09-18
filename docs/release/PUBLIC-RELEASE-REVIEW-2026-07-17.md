@@ -9,8 +9,8 @@ Decision: approved by the ZMS-Labs owner for `GPL-3.0-or-later` publication.
 - Full Git history at baseline `d28a672` contained 33 commits and 75 tracked
   files.
 - All commit authors resolve to the same organization owner through the two
-  identities `Zachary Stern <zachstern@gmail.com>` and
-  `SternOne <89846440+SternOne@users.noreply.github.com>`.
+  identities `repository maintainer <maintainer@example.org>` and
+  `SternOne <maintainer@example.org>`.
 - Some commits disclose model assistance with `Co-Authored-By` trailers. The
   organization owner is the submitting author and rights holder for the
   resulting repository content.

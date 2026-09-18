@@ -1,0 +1,537 @@
+{
+  "date": "2026-09-18",
+  "source_commit": "5b23823b2e4a0739d3a6316f87af2c9f25dfef40",
+  "scope": "Public copies: personal identifiers, local paths and deployment coordinates replaced with synthetic values. Historical findings, verdicts and original digest references are retained; these copies are not byte-identical original receipts. This is not a Git-history rewrite.",
+  "files": [
+    {
+      "path": ".github/scripts/v6_generate_baseline_claims.py",
+      "source_sha256": "7296a40a03985ddfe2a9c1c83759074daba50888cd6fc4165a515f2d300bee8b",
+      "public_copy_sha256": "d14fbc4f91963d479ddcb162f1a9be13a77e0cd3c6230352e5bc2541571f75e2"
+    },
+    {
+      "path": "docs/audits/2026-07-23-suite-stress-test/08-changes-and-verification.md",
+      "source_sha256": "aa1ec0490d028a56a8376cb9176d7ef2b8687373d0e1be987206989f3c3fd05b",
+      "public_copy_sha256": "d749f7b3a7f9546e60be7c06d9c287c73cdb94c7864a9189b0eb1e7ad5da0265"
+    },
+    {
+      "path": "docs/audits/2026-07-23-suite-stress-test/09-final-verification.md",
+      "source_sha256": "23c7bab9eda7f1602ad49eaf7706128e442e2b47e53680bfe938509df80f53eb",
+      "public_copy_sha256": "a95f2c4693174a59180abb7d190ee2d5bdc703dbda984af9faf76e8e9b4c8c2b"
+    },
+    {
+      "path": "docs/coordination/2026-08-04-phase0-counterpart-reconnaissance.md",
+      "source_sha256": "2e57e0d515381405a3c0a39dcabc4f473c20ad505f512708776cdeb8aa3c0943",
+      "public_copy_sha256": "8a6ff3d3013d59b6c6dd5c7303b446638c340e766195f5399012d30606427b9e"
+    },
+    {
+      "path": "docs/derivations/es166-gate-parameters-2026-08-14/CORRECTIONS.md",
+      "source_sha256": "8ddfdab90e5eb20e0033afd4d723db763229f38932ad5071fe0fb78c8f3432fc",
+      "public_copy_sha256": "a056c1e6c8bcb459f19aa27534629c3ed556a0ac8791f984ad8ab0c83c1baab3"
+    },
+    {
+      "path": "docs/derivations/es166-gate-parameters-2026-08-14/predicate.json",
+      "source_sha256": "497274763ea706784ca87b4c907805ad37a5f5a7f2ecc615073fc23c1822d6c2",
+      "public_copy_sha256": "88e9449aa1c27b06d2517588b5a48f8ce8728433d5299d1abe2df85f30291b5a"
+    },
+    {
+      "path": "docs/design/2026-08-25-es173-gauntlet-record.txt",
+      "source_sha256": "502bbff384070aa83984b2b4bdcfc4d43a0768eadc615a3aa8c25d3aa4a2cbe0",
+      "public_copy_sha256": "ff83e5718cbb89a1adede75bfe28c0ec510e6e44469171b57747626e05187cf3"
+    },
+    {
+      "path": "docs/evidence/2026-08-06-context-audit-firing-probe.md",
+      "source_sha256": "a66e8fe1578dc8aa98b9c188ff1e688703716ce0e338e142cdbdaa13f5b2c7b7",
+      "public_copy_sha256": "ec377334799cc51c6f45f6a427b23a1252b4c0fa598797b04ad235bf3b9da401"
+    },
+    {
+      "path": "docs/gauntlet-runs/V6-VERDICT-LINEAGE.md",
+      "source_sha256": "35405428877fb80e6e7f7ff8749f10f672ed0d68aff31d19e3f8cff6355ad79f",
+      "public_copy_sha256": "8d6a3a7d2045d5e28dafd55ef91b0e1fb753a2ed74a1cd5e5c47c23b8baa701b"
+    },
+    {
+      "path": "docs/gauntlet-runs/epistemic-flexibility-v3-2026-07-22/arbitration.json",
+      "source_sha256": "6aa9c9da2ce77de967bf480b728927b5c2f75f745eadbaf71a33bb47bf9cb24e",
+      "public_copy_sha256": "fe679700d18a8b01e80270e2905fac8ddf6616a5d6ccb2caf424e4cbce9fcc4f"
+    },
+    {
+      "path": "docs/gauntlet-runs/epistemic-flexibility-v3-2026-07-22/dossier.md",
+      "source_sha256": "5ff434be25b053f420bbc9cb5c3299ae13871bb6c6d440b350326d9368bbfb52",
+      "public_copy_sha256": "0a2fa3593fed4384174a95831b4fd15f7624cfb5471f3d2ab878ca6c7bd11050"
+    },
+    {
+      "path": "docs/gauntlet-runs/epistemic-flexibility-v3-2026-07-22/reports/adjacent-possible-explorer.json",
+      "source_sha256": "0e41b122a306ac71cc025254e6f38c2c85207fb26304a7eb921bf3e7ee9e1783",
+      "public_copy_sha256": "3f4ae34ed39f24a338570fc9e44e0dc96aa5de9ef890b765c3fe638845d8f208"
+    },
+    {
+      "path": "docs/gauntlet-runs/epistemic-flexibility-v3-2026-07-22/reports/compliance-litigator.json",
+      "source_sha256": "2d5687c433f36f14316d34b3b4911292d23990ad201a89c6d1db64ce9a44e898",
+      "public_copy_sha256": "47b017140d60f5ce9428ab14f4ca1ea8bf604b4372e0cd8ba24df2b0fd5e1616"
+    },
+    {
+      "path": "docs/gauntlet-runs/epistemic-flexibility-v3-2026-07-22/reports/semantic-critic.json",
+      "source_sha256": "caa98ffd3753d78a5ee8035f9feed1f6545939631b4b17ad463f50c43d08e633",
+      "public_copy_sha256": "59e399a5d66c9dc4338723dee65e402cc06db925ecc39c56b8ae11362b89a986"
+    },
+    {
+      "path": "docs/gauntlet-runs/epistemic-flexibility-v3-2026-07-22/workflow-result.json",
+      "source_sha256": "69e54ef33066ed43221b5e4930c68720460d0f81b0e68678adecb7e961deb4c2",
+      "public_copy_sha256": "82e4bc2fd899e3a7b5cb2cf855d587096567c2b2098a8b2acddf947587808f4d"
+    },
+    {
+      "path": "docs/gauntlet-runs/es-v510-publication-2026-08-15/GAUNTLET-SUMMARY.md",
+      "source_sha256": "603cfc0f3b65c36e332b2c1c6d49bee7d88f117e40a16b0f963fc5f398dae40c",
+      "public_copy_sha256": "3f0fc71e658325a0ecc0245cece75c723fb4a05169de4b85b3fcf487d4c4eef3"
+    },
+    {
+      "path": "docs/gauntlet-runs/es-v510-publication-2026-08-15/arbitration.md",
+      "source_sha256": "9413ff64a547be38f4a88d0b057b01e027b6a9aea87bdb3377d79ebea7a173ef",
+      "public_copy_sha256": "d5fcd26be2e7c2c59916bd033ba777f3c8edc3a85ad5ea38b32059ba260ad3f4"
+    },
+    {
+      "path": "docs/gauntlet-runs/es-v510-publication-2026-08-15/panel2/reports/release-cutover-auditor.md",
+      "source_sha256": "6c832c93600a1dae272f00e32500f88fa906ad379e69608c95932798e1f193bc",
+      "public_copy_sha256": "9488dfbc53aa1599475d25fa48beeccbd521cf8bde1c5af3419ef1f74c046983"
+    },
+    {
+      "path": "docs/gauntlet-runs/es-v510-publication-2026-08-15/reports/causal-identification-auditor.md",
+      "source_sha256": "8942f9538f2f7196a05de1cc59f3805882543067d4060c8d3fd0eb8aa3d21a9f",
+      "public_copy_sha256": "e611479dd666e7853d3d7f7c71c9b445bbc60b5805a13566c27cf65e96a95e38"
+    },
+    {
+      "path": "docs/gauntlet-runs/es-v510-publication-2026-08-15/reports/script-kiddie.md",
+      "source_sha256": "25af88208a4b59b08bc06fff80a590bb454b25afc350ca58fdaad11b51a80333",
+      "public_copy_sha256": "f681ad9f36fd0401b3f50fdf517af2188c364e5d9317e6f725875c7957e372da"
+    },
+    {
+      "path": "docs/gauntlet-runs/es-v6-candidate-freeze-2026-08-18/REDACTIONS.md",
+      "source_sha256": "a6b7abaed2942062eef7d1ac018016fc3466a078ee932d2bcac974f04c0aa06b",
+      "public_copy_sha256": "e5e70cc881a5dfc24e836f2e30f907ee9cab4e9b1c91f46f3d59ad70fa8250b0"
+    },
+    {
+      "path": "docs/gauntlet-runs/es-v6-candidate-freeze-2026-08-18/arbitration.md",
+      "source_sha256": "437c69b54bf6dcf4ef7dc25629fbf2529b9a5e1da9f833b5da8c2d8cce2073bc",
+      "public_copy_sha256": "e2335deba65ecea3926a43046dc5dad0de716459df0cccfb199b515c22c72eef"
+    },
+    {
+      "path": "docs/gauntlet-runs/es-v6-candidate-freeze-2026-08-18/evidence/dossier-challenge-2026-08-18.json",
+      "source_sha256": "29fe946ad87740938a5138d260f3990f32a8f2b4949e7d3808081aa08e270891",
+      "public_copy_sha256": "46e2e9302c9e117f45939f686e111eccf734769bc5907dde49b09b14fb23f09f"
+    },
+    {
+      "path": "docs/gauntlet-runs/es-v6-candidate-freeze-2026-08-18/reports/chesterton-gate.md",
+      "source_sha256": "d98519a4624f8320518038a5ff735a0760a9d4569c5190d59a05c1704b57cfb8",
+      "public_copy_sha256": "a995b37b0f154dfac6d54981a454db5602b2eb6bf6e314b943c20ff0bffccc0d"
+    },
+    {
+      "path": "docs/gauntlet-runs/es-v6-candidate-freeze-2026-08-18/reports/entropy-demon.md",
+      "source_sha256": "159b5d6c317045340fa3137e297a7841860bb877e3280a92043a199765d37132",
+      "public_copy_sha256": "5714c663d3ecd49888431833062ba34eb10a5a87b7de139d38a7a08286d20fef"
+    },
+    {
+      "path": "docs/gauntlet-runs/es-v6-candidate-freeze-2026-08-18/reports/human-automation-handoff-auditor.md",
+      "source_sha256": "da557cf97802de326c950424a19e4e0e65b21bc3bd621c7f0c71e90436598109",
+      "public_copy_sha256": "ad4f6b10d87e8f1988848fd29716473c4954ffc1dcbe6735137f88be7658e5e1"
+    },
+    {
+      "path": "docs/gauntlet-runs/es-v6-rc2-gauntlet-kimi-2026-08-18/prompts/role-binding-chesterton-gate.json",
+      "source_sha256": "69d325e35d31fe2ddc8fcbeebdc49e4614f00ac900f6e76d717ee1918802c7f9",
+      "public_copy_sha256": "3d451b1e2ad215b30ea61cf92a9dbab5fda5d2958ba77a7cbc14b1b7b395cbb9"
+    },
+    {
+      "path": "docs/gauntlet-runs/es-v6-rc2-gauntlet-kimi-2026-08-18/prompts/role-binding-cloud-native-purist.json",
+      "source_sha256": "ce51d352a650aa948035023f181f2a3dcb45344abde17eeb8a683488c6bb6c45",
+      "public_copy_sha256": "6a3dd76e041074d41e54da7e788d34842fd6f3bcbba90faa517c187286c5dd22"
+    },
+    {
+      "path": "docs/gauntlet-runs/es-v6-rc2-gauntlet-kimi-2026-08-18/prompts/role-binding-human-automation-handoff-auditor.json",
+      "source_sha256": "38f0762db6f1fdafd32831b62dcde8d324d2ff6faab7d3933f58efadd64ca356",
+      "public_copy_sha256": "a1fb6b84774d1f759520cc88fbb9ac50eac8d0ac8ff216eb2f71a7a6217f0fb9"
+    },
+    {
+      "path": "docs/gauntlet-runs/es-v6-rc2-gauntlet-kimi-2026-08-18/prompts/role-binding-requirements-traceability-auditor.json",
+      "source_sha256": "763a6c3a6e97c82674f30b2d5b91c91eb2ac3436794952e2c0e4ca67a5e332f1",
+      "public_copy_sha256": "98e6d6226b6c0cd1ac29826538dcf713bb060ea2d63cf0121993c3ddf9987198"
+    },
+    {
+      "path": "docs/gauntlet-runs/es-v6-rc2-gauntlet-kimi-2026-08-18/prompts/role-binding-safety-hazard-auditor.json",
+      "source_sha256": "2f3cdbcddaa8bbfdcc2a510120f0789f098a70c9ffdfb1bae25a00cbdad9e701",
+      "public_copy_sha256": "321b572c0cccaf867e12a3ce0ed91caf0422f200dad71b78797b72eafc801924"
+    },
+    {
+      "path": "docs/gauntlet-runs/es-v6-rc2-gauntlet-kimi-2026-08-18/reports/fingerprint.json",
+      "source_sha256": "97c5a94367329120874c35fa7a8009e205a933737aa3baed2b114932e4bed03e",
+      "public_copy_sha256": "f6ca26f14aff55d0a47e1036dfa87df614d0e692658e724078cf69293459b731"
+    },
+    {
+      "path": "docs/gauntlet-runs/upgrades-landing-2026-08-03/arbitration.md",
+      "source_sha256": "7122588feadb9ac54c5054ef3d9ce160d8f0022628b129e88b870f9bd3d8f641",
+      "public_copy_sha256": "3cf0cde050f1fa57f786b62d74701cf6cf9dc10b903f67b782ca269b9ea0476c"
+    },
+    {
+      "path": "docs/gauntlet-runs/upgrades-landing-2026-08-03/evidence/commits.txt",
+      "source_sha256": "2958df43bbcfe248168e8e26a05e27b745f6e58efc7d9109c8a661ce9e992004",
+      "public_copy_sha256": "23a8d6af63cfc900082bf7074313807f4703f91e1d0d6275f273542cc73e5c3b"
+    },
+    {
+      "path": "docs/gauntlet-runs/upgrades-landing-2026-08-03/evidence/dco-check.txt",
+      "source_sha256": "a80820988848a4adec2f11d582c5c5b2498c5130019fba24c1408df685ef7d96",
+      "public_copy_sha256": "19c54ccc8343657efeee3d615098941e3900203c8eb07b06b69b91972f430edf"
+    },
+    {
+      "path": "docs/gauntlet-runs/upgrades-landing-2026-08-03/evidence/store-validation.txt",
+      "source_sha256": "60181862e74b823c9fe23cfd17c9aac768f948723855aede169072d3c2844f6e",
+      "public_copy_sha256": "3e55559d14ede0a2de8860236373dc913ffa181443845a924d433d462024990e"
+    },
+    {
+      "path": "docs/gauntlet-runs/upgrades-landing-2026-08-03/prompts/binding-chaos-monkey.json",
+      "source_sha256": "6edfc321ec731a6226810695551125b096a366bb3b0a56c7f5a0156ea921d65b",
+      "public_copy_sha256": "ff392e0bd3a8e5dcbba9fe6e4c07f22c17c41626afe44afeb3d97ef94376d69b"
+    },
+    {
+      "path": "docs/gauntlet-runs/upgrades-landing-2026-08-03/prompts/binding-cloud-native-purist.json",
+      "source_sha256": "12d4d68d7b8dbc7f8fe700592b92ef394efb1dfcbb5c07f5eadc2672f1c591d5",
+      "public_copy_sha256": "cbb527c21a53a7bb7429bbb16ba577c1cd1d232b93c7cdbf90047e57df869a0a"
+    },
+    {
+      "path": "docs/gauntlet-runs/upgrades-landing-2026-08-03/prompts/binding-decision-rights-auditor.json",
+      "source_sha256": "121ce98db91915e9142073afaf468ad1b88080201d4be0cd7ce272e04474fc73",
+      "public_copy_sha256": "8557b9f897909febace19337cf076e08854c20ef6f97108a7e917b8c513d021d"
+    },
+    {
+      "path": "docs/gauntlet-runs/upgrades-landing-2026-08-03/prompts/binding-disgruntled-maintainer.json",
+      "source_sha256": "06509dc31668cdee78e981f3b1a84db547769c131b1c80cf25a9c9868b179f4c",
+      "public_copy_sha256": "f159ff2592b7331ad2843f801fd4e60b68fb1965a871959be4eed295e73e6838"
+    },
+    {
+      "path": "docs/gauntlet-runs/upgrades-landing-2026-08-03/prompts/binding-ecological-systems-analyst.json",
+      "source_sha256": "d30d2688b4a99871cfa2c2945ee8420ab83568766b97e3d61ca466448685bfdd",
+      "public_copy_sha256": "7c1eb9bf6ec3c6a67c83848234f128aa446c43fe24dfb25a633f6469f1b38c86"
+    },
+    {
+      "path": "docs/gauntlet-runs/upgrades-landing-2026-08-03/reports/decision-rights-auditor.md",
+      "source_sha256": "e5e400885977a3dbe394a420f9b93597336c172d25dac87d959d1f87cf2820d4",
+      "public_copy_sha256": "6172a97d3ffbb7e5845a7ea4578329bb7d91b95fcf949786cf8e1bf796caa261"
+    },
+    {
+      "path": "docs/gauntlet-runs/upgrades-landing-2026-08-03/reports/disgruntled-maintainer.md",
+      "source_sha256": "620b2ce4433ddefdec54d35e5cefd7ee7e2d2278e82fe6befd1d15f7d0e2d197",
+      "public_copy_sha256": "a5ac1235b2588f2721ffd68bbdf376dd3296d791db412ad42e8f5efa050fb09a"
+    },
+    {
+      "path": "docs/gauntlet-runs/upgrades-landing-2026-08-03/reports/ecological-systems-analyst.md",
+      "source_sha256": "dcefefe11e279aaceb922e7ca107ad75f403138a4d25b1ff0acae53eaa416919",
+      "public_copy_sha256": "b0f07d4611f557b9eaa055da529420b74fe06ce14631ec8d44c4a556e3577fd6"
+    },
+    {
+      "path": "docs/outsource/epistemic-skills-pr43-readonly-review/HANDOFF.md",
+      "source_sha256": "c0ada1ded21bce898dc148b23e7d43475cccf3360685caf6dd87e1968453fcfd",
+      "public_copy_sha256": "0f12f9498a698a08cd4a2138a05f0ccc31a3ebf322803a8b31ec5b95a0d60ce1"
+    },
+    {
+      "path": "docs/outsource/epistemic-skills-suite-stress-test/HANDOFF.md",
+      "source_sha256": "0d1a3e5947f8ad934822a44cfe0094f297dafd8bb10f50fee318d1aad5153569",
+      "public_copy_sha256": "53a2ed35da4653c419b683c52068e8ae6a56c9b908a9f71be69845d1536dede9"
+    },
+    {
+      "path": "docs/release/PUBLIC-CONTENT-POST-RELEASE-REVIEW-5.0.0-2026-08-06.md",
+      "source_sha256": "80ba4ad0bb94bef68efd9c05c21e16988a28da57514bd269aa4b11b7c9f81856",
+      "public_copy_sha256": "2428ce1d416ab2950645d8efd87f0eb20e8fd4126750e92c1ff1d9201dd4ecde"
+    },
+    {
+      "path": "docs/release/PUBLIC-RELEASE-REVIEW-2026-07-17.md",
+      "source_sha256": "8420cb7dbfc0ab486d2d76b91f89242d8e35e7288574b995148567ab39999891",
+      "public_copy_sha256": "191b0c6e68b1894a58e2c64421123b919c87682915a0822c58c7a8e0a91907aa"
+    },
+    {
+      "path": "docs/release/PUBLIC-RELEASE-REVIEW-ADDENDUM-2026-07-21.md",
+      "source_sha256": "8c60bde388cc716ada8b9147053723876aa7def84a24f85aa7bf012f3892f159",
+      "public_copy_sha256": "ccb91b70dc6c6524ded731de7a6f45aeb407dcbb8ce930ff14bbdad1a5c229f3"
+    },
+    {
+      "path": "docs/release/RELEASE-5.1.0.md",
+      "source_sha256": "731eab7452519b2e93034a9e924f4b56263f15c29bde527f1c09fb396e3dc2cc",
+      "public_copy_sha256": "16533df4d8e35b605842fe489f9d7fa8e053ceada9b5c2b4a193ec10c9b9acae"
+    },
+    {
+      "path": "docs/superpowers/plans/2026-07-20-helix.md",
+      "source_sha256": "99db118d8abd4f337abe4e9c950119dcd56234c7324d9405b157d36b91931d81",
+      "public_copy_sha256": "0160e9d817b0ca895b0449ccc633c2be495dc35e4c10fe14e8a465034b9a8b8e"
+    },
+    {
+      "path": "docs/superpowers/plans/2026-07-26-github-wiki-readme-handbook.md",
+      "source_sha256": "543bbc012f92da5f4890e0a6c0b5d56a2460ee14603f36214d4b41eb119d72eb",
+      "public_copy_sha256": "53318d5e390056d1845e03f4c854e7dad8547298b3e12c79ab37a41c3be29f16"
+    },
+    {
+      "path": "docs/superpowers/plans/2026-07-29-open-questions.md",
+      "source_sha256": "57ab46785471caf73beb04ff97c5c8c60f358447e3e704f3cc33ece0e7f65916",
+      "public_copy_sha256": "7723d403ccd0feef594e7ce60d7dcff529a181a7ed5b9e1f872b9ea87eb74250"
+    },
+    {
+      "path": "docs/superpowers/plans/2026-08-06-openai-plugin-bundles.md",
+      "source_sha256": "c044618d4d1d14d8a6a20a804782da1e32a78c2657a0985e4da666482952c57d",
+      "public_copy_sha256": "e4b91989a18acb9e6f40f0c833eb38b31e147a7dade2e7030c1e2131316d80ff"
+    },
+    {
+      "path": "docs/superpowers/plans/2026-08-07-commission-watch-clarification.md",
+      "source_sha256": "f48b87307de7ed6972996c05aa42ab8064a077f026c3099c6638cd1c81920f1a",
+      "public_copy_sha256": "8ae2231dc090e76e9267964df50c457b4c68ef6d2b6d660cb977714f33b011d0"
+    },
+    {
+      "path": "docs/superpowers/plans/2026-08-07-practical-agency-bootstrap.md",
+      "source_sha256": "89b220240d8e1d79669e9e8ce04e51a9edc8be65fe3888c8f62875aa15693fe6",
+      "public_copy_sha256": "07b0c1df3e9c7a2f646978be69a26cf77351a16d617a8bb77168ccae51446404"
+    },
+    {
+      "path": "docs/superpowers/plans/2026-08-11-mission-custody-contracts.md",
+      "source_sha256": "ec4eea32e2e6448103b6c730dd6f7e0008618895f09a446fcfd79c214b6d760b",
+      "public_copy_sha256": "4c866b7b4573f5075fb955f39e63273d09ebf1d22a197c92d99ad2df929ec25a"
+    },
+    {
+      "path": "docs/superpowers/plans/2026-08-12-stage-c-custody-hook.md",
+      "source_sha256": "c0e6b949fcc34e498dd3b1af25beb42c17e52f28c84a32f92beb35c04c438fe6",
+      "public_copy_sha256": "e72645d7375b178a334b669b0634424f706bb7fced6c213ab9801798b7e3eb28"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-07-18-agentic-control-plane-design.md",
+      "source_sha256": "18c60418b6c90fded8a3a3251800767de1f220ed53014237b65fb38c412cc96d",
+      "public_copy_sha256": "5848319186b939f4a033587b37136d78296b4ec3da6132460e40ac9cf3b77c71"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-07-18-agentic-skills-packaging-architecture.md",
+      "source_sha256": "dfa4bbcc4beb8ddcc9b5118d37d8b2d06194f1f6bc30ba967c011db6f55c64ba",
+      "public_copy_sha256": "bff93d329cfd4d62147e99a4cdb55daf1ade3dc1545780fe01502e5c15ce5370"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-07-26-github-wiki-and-readme-design.md",
+      "source_sha256": "e463a7b797299e685b036700b875977741d11e362fb25c8382e91fa785ddfac1",
+      "public_copy_sha256": "ec65d6a2536d021d40b28e97883cd5f36eb18a3e6391d7885b7b6ccb5c783b48"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-07-29-open-questions-design.md",
+      "source_sha256": "197acd634fe9111c1d83959b73ffdb8b1b56e524b465d4d71c9c4a4871bdcaa0",
+      "public_copy_sha256": "9a06a90996a0e6ce14e4c0033ebcd58b74629c84ab94f3e6a900956998932bf0"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-08-07-practical-agency-and-commission-watch-design.md",
+      "source_sha256": "29c4601b17375a618821ab38b25c5449e6591e641f4dc1f14551eba4807b1db9",
+      "public_copy_sha256": "349c58c82df438a541b72b64435966f9ddd7c5c784621b1b0bd074febb43a722"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-08-07-zms-labs-design-fleet-placement.md",
+      "source_sha256": "545338f4accfd1c419e50f0c3a66d441a9dcb388fae768555d1a6f26614f3e33",
+      "public_copy_sha256": "75445c6e1a4d452b2ab210f18f22001067c68fc06e689d847b0d1dff212af150"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-08-12-stage-c-custody-hook-design.md",
+      "source_sha256": "cc6ba6f53b172178124e3fde706dd6fa0ce6231ef105e9e14130d174c5b2854c",
+      "public_copy_sha256": "378e51bcb1fc0794eba0521e432a5e050bafff217a999d300311356b83a2d5db"
+    },
+    {
+      "path": "docs/v6/ES6-V6-CANDIDATE/evidence/public-content.json",
+      "source_sha256": "f7754afb2e817496a5408ca3a11ebdac002017ac9a61a112546e865e6e2248c8",
+      "public_copy_sha256": "94fac76296ad44949b6928d70d462b98129f9c055e27759e4e26073d77224459"
+    },
+    {
+      "path": "docs/v6/ES6-ZI-001/exact-start-receipt.json",
+      "source_sha256": "8ce838da0f9a32756d2ea0d5a7fd2cdc65447562e16a6b122a9307d8038e8154",
+      "public_copy_sha256": "27d2109329179afe3b39019a7ef2b3a7d4b205f8324d8a2f08353f0d58779f4e"
+    },
+    {
+      "path": "docs/wiki-updates/v4.0.0/v4.0.0-wiki-update.patch",
+      "source_sha256": "5ce514bfbe9066e38ec606c202f57259061cbd804c6331e5cc868d512d01c548",
+      "public_copy_sha256": "e9908c5be017dd57062405f92b2e7a6e67d9892ef9e30928ece283738efba6ed"
+    },
+    {
+      "path": "plugins/epistemic-skills/contracts/mission-custody/examples/invalid-checkpoint-bad-status.json",
+      "source_sha256": "0c7d95fab8309ee13a50027f556756c77738e1a98d414b8794c1025820cb3959",
+      "public_copy_sha256": "be779dc6b3ca1deb27aae4d7b790a436807755e61ab174069a547a9dbe083e88"
+    },
+    {
+      "path": "plugins/epistemic-skills/contracts/mission-custody/examples/invalid-checkpoint-r2-unchained.json",
+      "source_sha256": "3362620f61710e17b33ab409fc2bce0b4bb0b01999bf411ba1ea1e2eb8b561e6",
+      "public_copy_sha256": "1f02d712d475cf566bf8fca42cbd6d8ecca6597a181ffd9dfe24b71541694f2b"
+    },
+    {
+      "path": "plugins/epistemic-skills/contracts/mission-custody/examples/invalid-manifest-amended-instruction.json",
+      "source_sha256": "8831719abd834f2d7636fc5815122b7794d51fd1e776da07ad983b8e0b53c971",
+      "public_copy_sha256": "9ddbccfc2d96a4e66f4b6c0f0a1da56892abc3b9a9552ab25ef7f4ae6a89c1ef"
+    },
+    {
+      "path": "plugins/epistemic-skills/contracts/mission-custody/examples/invalid-manifest-guard-bad-mode.json",
+      "source_sha256": "d92a3ccfc054d0879592d2303d62aa8c8d5881f80ee7eee13d7f488b571d8317",
+      "public_copy_sha256": "160e3f2732f69220e69b6cb90cc952def58dd2da67c82a8fe85d55ce275fe8c8"
+    },
+    {
+      "path": "plugins/epistemic-skills/contracts/mission-custody/examples/invalid-manifest-guard-bad-regex.json",
+      "source_sha256": "f2d2967ca8b12ab95816287f12b8bf0b84b9baabe75a2c751b06e02e4ba297db",
+      "public_copy_sha256": "28122a605201114db8018e38e28a6b0c7e46811cae90ac0168ab0bfa484fc558"
+    },
+    {
+      "path": "plugins/epistemic-skills/contracts/mission-custody/examples/invalid-manifest-guard-empty-rule.json",
+      "source_sha256": "80dcaaceac508adfb5c02fc0b83849d1e584f3892a1f510485d1ece395faee26",
+      "public_copy_sha256": "cb976f79223ebba1bdf44386a0935930c498cc8c76497bd7c940ba3142517800"
+    },
+    {
+      "path": "plugins/epistemic-skills/contracts/mission-custody/examples/invalid-manifest-guard-mode-without-guards.json",
+      "source_sha256": "7742b54dcb38f0eb1551a894cb3bc69cf8deb79b7e63bc8a3988bbfb87af62fa",
+      "public_copy_sha256": "55700e87708dd7de8aa10279c44c57d7550449773e66951da0c2f56db91d0309"
+    },
+    {
+      "path": "plugins/epistemic-skills/contracts/mission-custody/examples/invalid-manifest-guard-shell-only-globs.json",
+      "source_sha256": "9aa78a121c798d0b9c97cbf2497004f5c0ad96407acc590e5c67d1512aea837b",
+      "public_copy_sha256": "f6149ac0bc6a170a48b05bcef5ecc8608c98e74331b24175098d242b82f9a59c"
+    },
+    {
+      "path": "plugins/epistemic-skills/contracts/mission-custody/examples/invalid-manifest-guard-unknown-field.json",
+      "source_sha256": "13769cffbccb9e4d49602938d01dd34b310772ab1d60d0a7ac23ccdc23e3316e",
+      "public_copy_sha256": "bc2d65642b74659487f00a7007867a8c14f9654f98eb975d9973362bf544ba9e"
+    },
+    {
+      "path": "plugins/epistemic-skills/contracts/mission-custody/examples/invalid-verdict-operator-tier-wrong-acceptor.json",
+      "source_sha256": "554df8fb47cf7e58619a27e0fcf49a6a8adb3ede6e055b8efe2c4a31497a0614",
+      "public_copy_sha256": "9f7989679c186f51a2ff9dcd0203ce394292547395f8011b0f29d7e26d1d3d53"
+    },
+    {
+      "path": "plugins/epistemic-skills/contracts/mission-custody/examples/invalid-verdict-self-certified-case.json",
+      "source_sha256": "a5406ae8ea7d9ce403b92d692dea9508417209813e7968dca7732a1c3e95d023",
+      "public_copy_sha256": "88c70ccbd118e7961f6245a84c46aa9cf05a4b5dfa2c36397df4345b38256602"
+    },
+    {
+      "path": "plugins/epistemic-skills/contracts/mission-custody/examples/invalid-verdict-self-certified.json",
+      "source_sha256": "ebfa825246b798df490abc8dca98affc7dbb02dd596caa5fb548c2d68e95ad3d",
+      "public_copy_sha256": "d1f71ce80788574d614455c08fc225777f359ba5211e90a6eee549f115456ffd"
+    },
+    {
+      "path": "plugins/epistemic-skills/contracts/mission-custody/examples/valid-checkpoint-r1.json",
+      "source_sha256": "af73f3fbd759fbd0d5fea093a05f1eab34fe3c8a5e4b4eab743f35bc32a4c16e",
+      "public_copy_sha256": "9a4fa344a2082d11bd721f2491c33fd4fe435494ef4ffe805dccae3c0fd3d45d"
+    },
+    {
+      "path": "plugins/epistemic-skills/contracts/mission-custody/examples/valid-checkpoint-r2-chained.json",
+      "source_sha256": "e6fcfca3eeb608bc823d29076940ed62da23feabda1cdfbd881848ecbe6e8779",
+      "public_copy_sha256": "23238e6978070fc6ddefd14acc8ef0e9dcfaef275f3e267125878c0014684e73"
+    },
+    {
+      "path": "plugins/epistemic-skills/contracts/mission-custody/examples/valid-manifest-guards.json",
+      "source_sha256": "595e586d3da23c63f3bcebced94c3d4a78adb926348e1984a99feb6fe056f966",
+      "public_copy_sha256": "dcccf54e318a354d2b7eb5e2f3dfae4711704239108f91d16d0000b00c1078e7"
+    },
+    {
+      "path": "plugins/epistemic-skills/contracts/mission-custody/examples/valid-manifest-minimal.json",
+      "source_sha256": "f72e784d22cdb89f3e8784b2f7b7fc8edf89c5e9bdd8ba9fc4f348cc840c4d05",
+      "public_copy_sha256": "3fccad7d03c93d6f3200debb4f5c423e76adda883932232974a1c274dc8daafd"
+    },
+    {
+      "path": "plugins/epistemic-skills/contracts/mission-custody/examples/valid-verdict-fail.json",
+      "source_sha256": "97ecee82c0eb519901b31fe4715a99d7ff80297ef6bd809a09bca2d981f0a564",
+      "public_copy_sha256": "b3a6bc608dcda97615226b76c0e4495a913d184b32ea399c83fb874bf3a3ae0d"
+    },
+    {
+      "path": "plugins/epistemic-skills/contracts/mission-custody/examples/valid-verdict-pass-separated.json",
+      "source_sha256": "36fd2587d1524a3122a7d572343d9b2c3caa42c1d0edc23a475592ad1e15f25c",
+      "public_copy_sha256": "4b45bb9ff0ee410fb825dcab73b029476710bf7e4bb085201a68aafe30d142c5"
+    },
+    {
+      "path": "plugins/epistemic-skills/contracts/mission-custody/test_custody_cli.py",
+      "source_sha256": "1563738f05dd00b84fd6c5f2df15d021aea56d5d9659c44cac9c33da87de390b",
+      "public_copy_sha256": "f7cd36b729140400a92984e55d521c4425b9ab03ddbb24d585951a7d0429ab1a"
+    },
+    {
+      "path": "plugins/epistemic-skills/contracts/mission-custody/test_custody_mission.py",
+      "source_sha256": "68b1dd701d57ddca477566ea19545b252f19fc3cac09e99c97e556a2d8d8f96d",
+      "public_copy_sha256": "91bf48b00b845cddf5263f36d004ed02801326e28f0450d3f821904693ab885b"
+    },
+    {
+      "path": "plugins/epistemic-skills/contracts/mission-custody/test_custody_process_proof.py",
+      "source_sha256": "58c2998dc1349936fd374fd88dfca9b336d8b7609200e4683162c2494be700a6",
+      "public_copy_sha256": "f75e6dbbcd59a490682239ae8a181bc2b22d988a6d7a6443e310858415d89d28"
+    },
+    {
+      "path": "plugins/epistemic-skills/contracts/mission-custody/test_es173_cases.py",
+      "source_sha256": "a8772c3d6e6b3943a8cad462cfb4ffb3e3ea7e4e6827a9238832c816a9dad9ed",
+      "public_copy_sha256": "0e2cf7b0143fd700cd24609e837757977c1d25485835fcb1ad55485fd7930d70"
+    },
+    {
+      "path": "plugins/epistemic-skills/evals/epistemic-flexibility/behavioral/results/2026-08-04-four-arm/traces/T24-A-06-clean-local-edit-r2.adapted.json",
+      "source_sha256": "17d722abdb58629a90757c670c9a2a79d0cc7cc13d167e9124922e0c95e03cf3",
+      "public_copy_sha256": "aebe711c83d4d2850124e1f627fbc3c7533570b1b5db23a41a8b1bd5c363d844"
+    },
+    {
+      "path": "plugins/epistemic-skills/evals/epistemic-flexibility/behavioral/results/2026-08-04-four-arm/traces/T24-A-06-clean-local-edit-r2.json",
+      "source_sha256": "d1dc056801c90d4a4a56c0f1ae5e66225bee80424dc19bd5272c719ff381fcfd",
+      "public_copy_sha256": "41c0cff26ddf760414473a8cfabf5952f2ec79614805650399bbd93840015744"
+    },
+    {
+      "path": "plugins/epistemic-skills/evals/epistemic-flexibility/behavioral/results/2026-08-04-four-arm/traces/T54-A-06-clean-local-edit-r1.adapted.json",
+      "source_sha256": "92ad821e83ac65705d39877a240a807979ba2746615d629f1df55d96160334e1",
+      "public_copy_sha256": "58c6f81c620a4a72a108ea0a5f81a35bb3f0c18c8ed3fbe258a2ea34f34744ee"
+    },
+    {
+      "path": "plugins/epistemic-skills/evals/epistemic-flexibility/behavioral/results/2026-08-04-four-arm/traces/T54-A-06-clean-local-edit-r1.json",
+      "source_sha256": "702343e8608bd499ff547895c9f508b8f82f5a9cbcc64c410aee6404fb4d3b51",
+      "public_copy_sha256": "fe26a98ec4ae48dd05758ce8761d6a9b28dd8955077beabd67f62e70087358af"
+    },
+    {
+      "path": "plugins/epistemic-skills/skills/context-audit/evals/trigger-and-scope/results/2026-08-04/responses.json",
+      "source_sha256": "fa523cfb42aab2ae61bcf3bfd00699ad18075ec4e4b5c9eb5c804d9700966ce6",
+      "public_copy_sha256": "f9bc02054998d021af91c8be30404eca63606fe699da49707433567439333336"
+    },
+    {
+      "path": "plugins/epistemic-skills/skills/decision-ledger/evals/resume-fixtures/results/baseline-v4-2026-08-04/run-1/score-output.txt",
+      "source_sha256": "2810d1678b622c4a91d906efc9e25895248f9a441e89e27516cd160bb37c6207",
+      "public_copy_sha256": "97fe60685652625e75a74d82926c5d55bac2bb0c2816ca265cf87de8acee26a4"
+    },
+    {
+      "path": "plugins/epistemic-skills/skills/decision-ledger/evals/resume-fixtures/results/baseline-v4-2026-08-04/run-2/score-output.txt",
+      "source_sha256": "16546f7dd25f9078244b7a4271a13d413077ba72317c308e7b2c37f916d6f457",
+      "public_copy_sha256": "6da605ef3028915ba7a3f9588b910f80cb535b51e965ad0e58ec53258b79a199"
+    },
+    {
+      "path": "plugins/epistemic-skills/skills/decision-ledger/evals/resume-fixtures/results/baseline-v4-2026-08-04/run-3/score-output.txt",
+      "source_sha256": "7fe98d6490fc27d867c88627f163a034a6269047bfe977c161050dd0744641fb",
+      "public_copy_sha256": "b67ca7c32c9e80764afdc40e54cb3569b507e98fe200847d2c2e219448c63a51"
+    },
+    {
+      "path": "plugins/epistemic-skills/skills/decision-ledger/evals/resume-fixtures/results/skilled-v4-2026-08-04/run-1/score-output.txt",
+      "source_sha256": "b2341deb58b923dea20d8ab7b9406bdaa35cd6c195ab544efbba234227922c70",
+      "public_copy_sha256": "0427b26cc5e4d6cb0248a886eae7f25e197932863d14f399027e74454aeffb04"
+    },
+    {
+      "path": "plugins/epistemic-skills/skills/decision-ledger/evals/resume-fixtures/results/skilled-v4-2026-08-04/run-2/score-output.txt",
+      "source_sha256": "2c845bd18b5b6c2e882c5bf7e43d6751d3b897deb07d869676fb64deeb0ff516",
+      "public_copy_sha256": "5947b595c4c3a074ed801fa141ab8d81f3f092e44b8cd54dbf7156d8001416e1"
+    },
+    {
+      "path": "plugins/epistemic-skills/skills/decision-ledger/evals/resume-fixtures/results/skilled-v4-2026-08-04/run-3/score-output.txt",
+      "source_sha256": "1c5fef2ee8b8d539d7a1c5844c609f5056f4ac2a6b8b416e97222497c4dc1549",
+      "public_copy_sha256": "ffedfb081c8099eeeb87ec259365444874a8a1f6c5d1cae9ed8ae2f78c1b6b99"
+    },
+    {
+      "path": "plugins/epistemic-skills/skills/outsource/evals/trigger-and-scope/fixtures.json",
+      "source_sha256": "c7211cf833ce63d29a023d7f1c41b9aef0d811b0d4caf0942b0deee04a4974b7",
+      "public_copy_sha256": "11a9c3ee80fc6e066b0739175c3ec224e5588b98b85da95f6ee423791831c7f5"
+    },
+    {
+      "path": "plugins/epistemic-skills/skills/recon/evals/initiative-trigger-and-scope/results/2026-08-04-v4-tier1-invalid-dispatch/scorer-report-crash.json",
+      "source_sha256": "b26358fa5a9a4d412f6292984afd3a8f011bff123d5ed3884eb8623482aa43c8",
+      "public_copy_sha256": "f20289837b7305a91cd8e3bda364ed78825c725d72c6bb5d52a1739bebf96b34"
+    },
+    {
+      "path": "plugins/epistemic-skills/skills/recon/evals/initiative-trigger-and-scope/results/2026-08-04/responses.json",
+      "source_sha256": "a559718a6011362d0a99137bf6249dc9589bb0a29f50670fb6fe3d921fae00c2",
+      "public_copy_sha256": "8cf36278a903ee1fe25b53d545da22d15c3d3f7f622fde13e35ddce13ea25b2c"
+    },
+    {
+      "path": "plugins/epistemic-skills/skills/resolve/probe/evals/trigger-and-scope/results/2026-08-04-v4-tier1/responses.json",
+      "source_sha256": "8ce7961eec4942598d9422b1a1470113c91a114dcf05901c69dfbc3c5124f515",
+      "public_copy_sha256": "b66e61398938708e928d7bac117c78c3c4c6d7d773b53b232db07f3f9edb463a"
+    },
+    {
+      "path": "plugins/epistemic-skills/skills/write-goal/SKILL.md",
+      "source_sha256": "83dffbb4e0ea18517a4517fc961a66127b1666f11703da9ecef570a190fa967a",
+      "public_copy_sha256": "5a08e528843bafc9e3f696fc6bdf9c4c87ef17e9c0cec0f01aa951bebf06f9ea"
+    }
+  ]
+}

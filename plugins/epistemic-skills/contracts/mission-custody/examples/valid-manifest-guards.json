@@ -3,7 +3,7 @@
   "mission_id": "tracer-media-missing",
   "created_utc": "2026-08-11T00:00:00Z",
   "authority": {
-    "operator_ref": "operator:zach-stern",
+    "operator_ref": "operator:example",
     "instruction": "Reconcile the monitored-missing media backlog without re-grabbing over VPN.",
     "amendments": [],
     "permissions": ["repo:media-library:read", "repo:media-library:write-config"],
@@ -16,7 +16,7 @@
        "path_globs": []},
       {"name": "media-fs-moves", "tool_names": ["Bash", "Write", "Edit"],
        "command_regexes": ["\\b(mv|robocopy|rsync|Move-Item)\\b[^\\n]*[Mm]edia"],
-       "path_globs": ["M:/Media/**", "//10.10.10.107/Media/**"]}
+       "path_globs": ["M:/Media/**", "//192.0.2.10/Media/**"]}
     ]
   },
   "scope": {

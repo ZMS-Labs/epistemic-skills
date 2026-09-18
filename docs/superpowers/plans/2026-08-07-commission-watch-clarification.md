@@ -29,7 +29,7 @@ earlier excerpt.
 - Missing substrate, destination, authority, kill switch, safe proof, or probe is an explicit `BLOCKED` result.
 - Never auto-remediate.
 - Every production behavior change follows RED → GREEN → REFACTOR.
-- Every commit carries `Signed-off-by: SternOne <89846440+SternOne@users.noreply.github.com>`.
+- Every commit carries `Signed-off-by: SternOne <maintainer@example.org>`.
 - The aggregate loaded-description budget must not increase silently; any description growth must be paid for in the same diff.
 
 ---
@@ -310,7 +310,7 @@ git add plugins/epistemic-skills/contracts/watch-commission/test_watch_commissio
         .github/workflows/epistemic-flexibility.yml
 git commit -m "test: define commission-watch semantic contract
 
-Signed-off-by: SternOne <89846440+SternOne@users.noreply.github.com>"
+Signed-off-by: SternOne <maintainer@example.org>"
 ```
 
 ---
@@ -496,7 +496,7 @@ Expected: all pass.
 git add plugins/epistemic-skills/contracts/watch-commission
 git commit -m "feat: add watch commission contract and verifier
 
-Signed-off-by: SternOne <89846440+SternOne@users.noreply.github.com>"
+Signed-off-by: SternOne <maintainer@example.org>"
 ```
 
 ---
@@ -631,7 +631,7 @@ git add plugins/epistemic-skills/skills/watch/SKILL.md \
         .github/scripts/check_description_budget.py
 git commit -m "fix: make watch an explicit commissioning discipline
 
-Signed-off-by: SternOne <89846440+SternOne@users.noreply.github.com>"
+Signed-off-by: SternOne <maintainer@example.org>"
 ```
 
 ---
@@ -717,7 +717,7 @@ git add README.md \
         plugins/epistemic-skills/contracts/epistemic-events/sentinels/watch-silence-read-as-healthy.json
 git commit -m "docs: distinguish commission-watch from its external observer
 
-Signed-off-by: SternOne <89846440+SternOne@users.noreply.github.com>"
+Signed-off-by: SternOne <maintainer@example.org>"
 ```
 
 ---

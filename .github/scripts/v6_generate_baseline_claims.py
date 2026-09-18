@@ -448,7 +448,7 @@ def build_exact_start_receipt(sha: str, ts: str) -> dict:
         "issue": 191,
         "exact_start_sha": sha,
         "recorded_at": ts,
-        "parent_program": "ZMS-Labs/zms-homelab#1601",
+        "parent_program": "ZMS-Labs/epistemic-skills#191",
         "authorized_packets": [
             "ES6-BASELINE-CLAIMS",
             "ES6-ORACLE-AUDIT",

@@ -36,7 +36,7 @@ def open_cli(ws: Path, mission_id: str, instruction: str, actor: str = "agent:wo
              steward: str = "agent:worker") -> subprocess.CompletedProcess:
     return run("open", "--workspace", str(ws), "--actor", actor,
                "--mission-id", mission_id, "--instruction", instruction,
-               "--operator", "operator:zach", "--steward", steward)
+               "--operator", "operator:example", "--steward", steward)
 
 
 def test_open_approve_effect_status_roundtrip() -> None:
@@ -761,7 +761,7 @@ def test_control_characters_are_escaped_on_every_display_surface() -> None:
         r = run(
             "open", "--workspace", str(ws), "--actor", "agent:worker",
             "--mission-id", "m-control-display", "--instruction", "show it",
-            "--operator", "operator:zach", "--steward", "agent:worker",
+            "--operator", "operator:example", "--steward", "agent:worker",
             "--scope-in", hostile, "--stop-if", "real stop rule")
         check("control-display-open-exit-0", r.returncode == 0)
         run("approve", "--workspace", str(ws), "--actor", "agent:worker")
@@ -901,7 +901,7 @@ def test_open_stop_rules_and_acceptable_costs() -> None:
         ws = Path(td)
         r = run("open", "--workspace", str(ws), "--actor", "agent:worker",
                  "--mission-id", "m-cli-stoprules", "--instruction", "Guard the stop rules.",
-                 "--operator", "operator:zach", "--steward", "agent:worker",
+                 "--operator", "operator:example", "--steward", "agent:worker",
                  "--hold-if", "clientA re-grabs", "--hold-if", "second hold",
                  "--stop-if", "operator revokes",
                  "--escalate-if", "protected state touched",
@@ -1227,7 +1227,7 @@ def test_text_file_preserves_bytes_exactly() -> None:
 
         r = run("open", "--workspace", str(ws), "--actor", "agent:w",
                 "--mission-id", "textfile", "--instruction-file", str(grant),
-                "--operator", "operator:zach", "--steward", "agent:w")
+                "--operator", "operator:example", "--steward", "agent:w")
         check("open-instruction-file-exit-0", r.returncode == 0)
         run("approve", "--workspace", str(ws), "--actor", "agent:w")
 
@@ -1268,7 +1268,7 @@ def test_text_file_artifact_stripping_is_exact() -> None:
         multi.write_bytes(b"Line one.\r\nLine two.\r\n\r\n")
         r = run("open", "--workspace", str(ws), "--actor", "agent:w",
                 "--mission-id", "artifacts", "--instruction-file", str(multi),
-                "--operator", "operator:zach", "--steward", "agent:w")
+                "--operator", "operator:example", "--steward", "agent:w")
         check("multiline-open-exit-0", r.returncode == 0)
         st = json.loads(run("status", "--workspace", str(ws),
                              "--actor", "agent:w").stdout)
@@ -1299,7 +1299,7 @@ def test_text_file_invalid_utf8_refuses_not_crashes() -> None:
         bad.write_bytes(b"\xff\xfeo\x00p\x00")
         r = run("open", "--workspace", str(ws), "--actor", "agent:w",
                 "--mission-id", "badenc", "--instruction-file", str(bad),
-                "--operator", "operator:zach", "--steward", "agent:w")
+                "--operator", "operator:example", "--steward", "agent:w")
         check("invalid-utf8-exit-2", r.returncode == 2)
         check("invalid-utf8-names-custody-error", "CustodyError" in r.stderr)
         check("invalid-utf8-no-traceback", "Traceback" not in r.stderr)

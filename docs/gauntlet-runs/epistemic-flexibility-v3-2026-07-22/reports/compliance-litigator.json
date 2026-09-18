@@ -23,7 +23,7 @@
     },
     {
      "tier": "V",
-     "ref": "Y:/dev/_wt/epistemic-flex-v3/plugins/epistemic-skills/skills/decision-ledger/reference/README.md:39-45 (PR-review checklist item explicitly declared 'human-enforced, not schema-checkable'; 'a verdict-carrying-but-well-formed entry passes the schema \u2014 it is caught by this review, never claimed as schema-rejected')"
+     "ref": "/workspace/_wt/epistemic-flex-v3/plugins/epistemic-skills/skills/decision-ledger/reference/README.md:39-45 (PR-review checklist item explicitly declared 'human-enforced, not schema-checkable'; 'a verdict-carrying-but-well-formed entry passes the schema \u2014 it is caught by this review, never claimed as schema-rejected')"
     },
     {
      "tier": "I",
@@ -45,11 +45,11 @@
    "evidence": [
     {
      "tier": "V",
-     "ref": "Y:/dev/_wt/epistemic-flex-v3/plugins/epistemic-skills/skills/decision-ledger/reference/validate_examples.py:75-89 (globs only 'example-*.json' in ROOT, plus one hardcoded planted-mutation of example-correction-with-chain.json)"
+     "ref": "/workspace/_wt/epistemic-flex-v3/plugins/epistemic-skills/skills/decision-ledger/reference/validate_examples.py:75-89 (globs only 'example-*.json' in ROOT, plus one hardcoded planted-mutation of example-correction-with-chain.json)"
     },
     {
      "tier": "V",
-     "ref": "Y:/dev/_wt/epistemic-flex-v3/.github/workflows/epistemic-flexibility.yml:40,58 (workflow invokes validate_examples.py \u2014 same fixture-only script \u2014 with no path/trigger touching a real store)"
+     "ref": "/workspace/_wt/epistemic-flex-v3/.github/workflows/epistemic-flexibility.yml:40,58 (workflow invokes validate_examples.py \u2014 same fixture-only script \u2014 with no path/trigger touching a real store)"
     },
     {
      "tier": "I",
@@ -71,19 +71,19 @@
    "evidence": [
     {
      "tier": "V",
-     "ref": "Y:/dev/_wt/epistemic-flex-v3 dossier.md:57 ('DCO check FAIL (commits lack Signed-off-by...)')"
+     "ref": "/workspace/_wt/epistemic-flex-v3 dossier.md:57 ('DCO check FAIL (commits lack Signed-off-by...)')"
     },
     {
      "tier": "V",
-     "ref": "live probe: git log --format='%H %an <%ae>' e1f6054..641ff2c and git log --format='...%B' showing 3 commits authored as 'SternOne <89846440+SternOne@users.noreply.github.com>' each carrying 'Signed-off-by: SternOne <zachstern@gmail.com>' \u2014 email mismatch, not absence"
+     "ref": "live probe: git log --format='%H %an <%ae>' e1f6054..641ff2c and git log --format='...%B' showing 3 commits authored as 'SternOne <maintainer@example.org>' each carrying 'Signed-off-by: SternOne <maintainer@example.org>' \u2014 email mismatch, not absence"
     },
     {
      "tier": "V",
-     "ref": "Y:/dev/_wt/epistemic-flex-v3/.github/scripts/check_dco.py:20-27 (unsigned_commits requires exact casefold match of BOTH name and email between author and Signed-off-by trailer)"
+     "ref": "/workspace/_wt/epistemic-flex-v3/.github/scripts/check_dco.py:20-27 (unsigned_commits requires exact casefold match of BOTH name and email between author and Signed-off-by trailer)"
     },
     {
      "tier": "V",
-     "ref": "Y:/dev/_wt/epistemic-flex-v3/.github/scripts/test_check_dco.py:36-38 (test_mismatched_signoff_does_not_pass confirms mismatch-fails is intended design, distinct from 'missing')"
+     "ref": "/workspace/_wt/epistemic-flex-v3/.github/scripts/test_check_dco.py:36-38 (test_mismatched_signoff_does_not_pass confirms mismatch-fails is intended design, distinct from 'missing')"
     }
    ],
    "falsifier": {
@@ -101,7 +101,7 @@
    "evidence": [
     {
      "tier": "V",
-     "ref": "Y:/dev/_wt/epistemic-flex-v3/plugins/epistemic-skills/skills/decision-ledger/SKILL.md:39-42 (consequential-moment test: 'a named downstream consumer class will cite it') and :44-50 (skip gate: skippable only if reversible AND self-contained AND no future session needs the reasoning)"
+     "ref": "/workspace/_wt/epistemic-flex-v3/plugins/epistemic-skills/skills/decision-ledger/SKILL.md:39-42 (consequential-moment test: 'a named downstream consumer class will cite it') and :44-50 (skip gate: skippable only if reversible AND self-contained AND no future session needs the reasoning)"
     },
     {
      "tier": "V",

@@ -54,7 +54,7 @@ def open_mission(workspace: Path, mission_id: str, instruction: str,
                   actor: str = "agent:worker", **kwargs) -> Mission:
     return Mission.open(
         workspace, mission_id=mission_id, instruction=instruction,
-        operator_ref="operator:zach", steward_ref="agent:worker",
+        operator_ref="operator:example", steward_ref="agent:worker",
         required_tier=required_tier, actor=actor, **kwargs)
 
 
@@ -684,8 +684,8 @@ def test_orphan_residue_is_reportable_after_the_mission_ends(
     Mission.load(root, actor="agent:worker").acknowledge_receipt_loss("req-1")
     Mission.load(root, actor="agent:worker").record_effect("a.txt", "aa", "r9")
     Mission.load(root, actor="agent:worker").begin_verification()
-    Mission.load(root, actor="operator:zach").record_verdict(
-        "PASS", "operator:zach", "operator-accepted", "done")
+    Mission.load(root, actor="operator:example").record_verdict(
+        "PASS", "operator:example", "operator-accepted", "done")
     receipt_path.write_text(saved, encoding="utf-8")   # residue, after the end
 
     report = census_missions.census(root)
@@ -1077,8 +1077,8 @@ def test_unreadable_root_is_never_reported_as_nothing_to_enforce(
     m.approve()
     m.record_effect("a.txt", "aa", "req-1")
     m.begin_verification()
-    Mission.load(done, actor="operator:zach").record_verdict(
-        "PASS", "operator:zach", "operator-accepted", "done")
+    Mission.load(done, actor="operator:example").record_verdict(
+        "PASS", "operator:example", "operator-accepted", "done")
     out_done = subprocess.run(
         [sys.executable, str(Path(__file__).parent / "census_missions.py"),
          str(done)], capture_output=True, text=True).stdout
@@ -2867,8 +2867,8 @@ def test_operator_tier(workspace: Path) -> None:
     except AcceptanceRefused:
         check("tier-insufficient-refused", True)
 
-    operator = Mission.load(workspace, actor="operator:zach")
-    operator.record_verdict("PASS", acceptor_id="operator:zach",
+    operator = Mission.load(workspace, actor="operator:example")
+    operator.record_verdict("PASS", acceptor_id="operator:example",
                              assurance_tier="operator-accepted",
                              reason="operator signed off")
     st = m.status()
@@ -3373,7 +3373,7 @@ _WIN_SEPARATOR_BINDING_ROWS = [
 
 # (label, scope.out entry, why it can never match a workspace-relative path)
 _WIN_SEPARATOR_DISCLOSED_ROWS = [
-    ("drive-absolute", "C:\\Users\\zachs\\secrets.env", "drive-absolute"),
+    ("drive-absolute", "C:\\Users\\example\\secrets.env", "drive-absolute"),
     # DRIVE-RELATIVE is the form with no root at all: `C:secrets.env` means
     # "secrets.env in the current directory OF DRIVE C:", which is neither
     # absolute nor workspace-relative and resolves against per-drive state no

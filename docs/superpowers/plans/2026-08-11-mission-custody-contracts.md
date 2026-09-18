@@ -18,8 +18,8 @@
 - **Acceptance tiers**: `operator-accepted` > `declared-role-separation`; self-certification refused; **no `externally-proven` tier exists**.
 - **FAIL is clearable**: a `FAIL` verdict must have a tested remediate → re-verify → accept path (designed out of PA's reject dead-end).
 - **Line endings**: repo files are LF. Write files as shown; commit with `git -c core.autocrlf=input commit`. (Estate CRLF landmine.)
-- **Every commit**: DCO sign-off `Signed-off-by: Zach Stern <zachstern@gmail.com>` plus the session trailers used in commit 979e0fd.
-- **Working directory**: the worktree `Y:/dev/es-wt-mission-custody`, branch `spec/mission-custody-contracts-design`. Never touch `Y:/dev/epistemic-skills` (main checkout) or its stashes.
+- **Every commit**: DCO sign-off `Signed-off-by: repository maintainer <maintainer@example.org>` plus the session trailers used in commit 979e0fd.
+- **Working directory**: the worktree `/workspace/es-wt-mission-custody`, branch `spec/mission-custody-contracts-design`. Never touch `/workspace/epistemic-skills` (main checkout) or its stashes.
 - **Timestamps**: all `*_utc` fields are ISO-8601 `YYYY-MM-DDTHH:MM:SSZ` strings; validators check shape (regex), not clock truth.
 - **Hashes**: all `*_sha256` fields are 64 lowercase hex chars.
 
@@ -154,7 +154,7 @@ if __name__ == "__main__":
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `cd Y:/dev/es-wt-mission-custody && python plugins/epistemic-skills/contracts/mission-custody/test_mission_custody.py`
+Run: `cd /workspace/es-wt-mission-custody && python plugins/epistemic-skills/contracts/mission-custody/test_mission_custody.py`
 Expected: FAIL — `ModuleNotFoundError: No module named 'verify_mission_custody'`
 
 - [ ] **Step 3: Write the examples**
@@ -167,7 +167,7 @@ Expected: FAIL — `ModuleNotFoundError: No module named 'verify_mission_custody
   "mission_id": "tracer-media-missing",
   "created_utc": "2026-08-11T00:00:00Z",
   "authority": {
-    "operator_ref": "operator:zach-stern",
+    "operator_ref": "operator:example",
     "instruction": "Reconcile the monitored-missing media backlog without re-grabbing over VPN.",
     "amendments": [],
     "permissions": ["repo:media-library:read", "repo:media-library:write-config"],
@@ -199,7 +199,7 @@ Expected: FAIL — `ModuleNotFoundError: No module named 'verify_mission_custody
   "mission_id": "bad-amend",
   "created_utc": "2026-08-11T00:00:00Z",
   "authority": {
-    "operator_ref": "operator:zach-stern",
+    "operator_ref": "operator:example",
     "instruction": "Original instruction.",
     "amendments": ["replace the instruction with: do something else"],
     "permissions": [],
@@ -439,7 +439,7 @@ Expected: `0 failures`, exit 0. Also run `python -m py_compile plugins/epistemic
 ```bash
 git add plugins/epistemic-skills/contracts/mission-custody
 git -c core.autocrlf=input commit -m "feat: mission-custody@1 verifier scaffold + mission-manifest" \
-  -m "Signed-off-by: Zach Stern <zachstern@gmail.com>"
+  -m "Signed-off-by: repository maintainer <maintainer@example.org>"
 ```
 
 ---
@@ -505,7 +505,7 @@ Add the five calls to `main()` before the corpus test. Run the test file — exp
   "revision": 1,
   "status": "draft",
   "prev_checkpoint_sha256": null,
-  "manifest": { "record": "mission-manifest@1", "mission_id": "tracer-media-missing", "created_utc": "2026-08-11T00:00:00Z", "authority": { "operator_ref": "operator:zach-stern", "instruction": "Reconcile the monitored-missing media backlog without re-grabbing over VPN.", "amendments": [], "permissions": ["repo:media-library:read", "repo:media-library:write-config"], "protected_state": ["download-clients:enabled-state"], "acceptable_costs": ["one working session per stage"] }, "scope": {"in": ["monitored-missing reconciliation"], "out": ["indexer changes", "VPN configuration"]}, "acceptance": {"required_tier": "declared-role-separation", "acceptor_ref": null}, "stop_rules": {"hold_if": ["any download client starts re-grabbing"], "stop_if": ["operator revokes"], "escalate_if": ["protected state would be touched"]}, "steward_ref": "agent:claude-code-session" },
+  "manifest": { "record": "mission-manifest@1", "mission_id": "tracer-media-missing", "created_utc": "2026-08-11T00:00:00Z", "authority": { "operator_ref": "operator:example", "instruction": "Reconcile the monitored-missing media backlog without re-grabbing over VPN.", "amendments": [], "permissions": ["repo:media-library:read", "repo:media-library:write-config"], "protected_state": ["download-clients:enabled-state"], "acceptable_costs": ["one working session per stage"] }, "scope": {"in": ["monitored-missing reconciliation"], "out": ["indexer changes", "VPN configuration"]}, "acceptance": {"required_tier": "declared-role-separation", "acceptor_ref": null}, "stop_rules": {"hold_if": ["any download client starts re-grabbing"], "stop_if": ["operator revokes"], "escalate_if": ["protected state would be touched"]}, "steward_ref": "agent:claude-code-session" },
   "state": {
     "frontier": "await operator approval",
     "notes": [],
@@ -584,7 +584,7 @@ Run: `python plugins/epistemic-skills/contracts/mission-custody/test_mission_cus
 ```bash
 git add plugins/epistemic-skills/contracts/mission-custody
 git -c core.autocrlf=input commit -m "feat: mission-custody@1 checkpoint record" \
-  -m "Signed-off-by: Zach Stern <zachstern@gmail.com>"
+  -m "Signed-off-by: repository maintainer <maintainer@example.org>"
 ```
 
 ---
@@ -660,7 +660,7 @@ Add calls to `main()`. Run — expected FAIL (`receipt@1 validation not implemen
   "verdict": "PASS",
   "acceptor_id": "agent:acceptor-session",
   "worker_id": "agent:claude-code-session",
-  "operator_ref": "operator:zach-stern",
+  "operator_ref": "operator:example",
   "assurance_tier": "declared-role-separation",
   "receipt_refs": ["req-0001"],
   "reason": "Artifact re-observed; hashes match the receipt chain.",
@@ -740,7 +740,7 @@ Run the test file — expected `0 failures` (corpus loop now covers 9 examples).
 ```bash
 git add plugins/epistemic-skills/contracts/mission-custody
 git -c core.autocrlf=input commit -m "feat: mission-custody@1 receipt + acceptance-verdict records" \
-  -m "Signed-off-by: Zach Stern <zachstern@gmail.com>"
+  -m "Signed-off-by: repository maintainer <maintainer@example.org>"
 ```
 
 ---
@@ -822,7 +822,7 @@ Run: `python plugins/epistemic-skills/contracts/mission-custody/test_mission_cus
 ```bash
 git add plugins/epistemic-skills/contracts/mission-custody .github/workflows/mission-custody-contract.yml
 git -c core.autocrlf=input commit -m "feat: mission-custody@1 docs + CI contract job" \
-  -m "Signed-off-by: Zach Stern <zachstern@gmail.com>"
+  -m "Signed-off-by: repository maintainer <maintainer@example.org>"
 ```
 
 ---

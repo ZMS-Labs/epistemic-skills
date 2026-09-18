@@ -5,7 +5,7 @@
   "verdict": "PASS",
   "acceptor_id": "agent:claude-code-session",
   "worker_id": "agent:claude-code-session",
-  "operator_ref": "operator:zach-stern",
+  "operator_ref": "operator:example",
   "assurance_tier": "declared-role-separation",
   "receipt_refs": ["req-0001"],
   "reason": "Artifact re-observed; hashes match the receipt chain.",
