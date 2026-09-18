@@ -6,7 +6,7 @@
 
 ## What it does
 
-Applying Formal Rigor establishes software-and-systems properties inside an explicit model, then applies operator-authorized priorities to those results. It requires three disciplines: name the precise construct, prove its preconditions and derive the result, and reconcile all material property terrain without pretending the shipped module library is exhaustive.
+Applying Formal Rigor establishes software-and-systems properties inside an explicit model, then applies operator-authorized priorities to those results. It requires three obligations: name the precise construct, prove its preconditions and derive the result, and reconcile all material property terrain without pretending the shipped module library is exhaustive.
 
 Formal theory can establish properties. It cannot manufacture runtime observations, operator values, product semantics, or a winning option.
 

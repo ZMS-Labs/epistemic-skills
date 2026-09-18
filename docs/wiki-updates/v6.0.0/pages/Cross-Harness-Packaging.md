@@ -12,7 +12,7 @@ The packaging rule is simple: **one canonical implementation, one installed copy
 
 | Path | Kind | Maintainer invariant |
 |---|---|---|
-| `plugins/epistemic-skills/skills/` | canonical directory | All eleven skill cores and supporting files live here. |
+| `plugins/epistemic-skills/skills/` | canonical directory | All fifteen skill cores and supporting files live here. |
 | `plugins/epistemic-skills/agents/` | canonical directory | All five Gauntlet role definitions live here. |
 | `skills` | repository symlink | Resolves to the canonical skills directory. |
 | `agents` | repository symlink | Resolves to the canonical agents directory. |
@@ -42,7 +42,7 @@ Duplicate installs cause duplicate trigger discovery, ambiguous versions, and po
 - tagged stable checkout **or** mutable development checkout, never an unlabeled mixture;
 - replacement during migration, not layering;
 - reload/new session after install; and
-- inventory verification: exactly eleven released skills.
+- inventory verification: exactly fifteen released skills.
 
 A report that “the skill appears” is insufficient if the harness can see two copies. Verification should establish source path or package version as well as inventory.
 
@@ -62,7 +62,7 @@ For a manifest, path, or harness integration change:
 2. Resolve every manifest path from the directory where that manifest lives.
 3. Verify all expected names and the exact count of fifteen skills.
 4. Verify the five Gauntlet roles where the surface advertises agents.
-5. Keep description text consistent about router, nine disciplines, and Helix.
+5. Keep description text consistent about the single entry point and fourteen disciplines.
 6. Run package integration and committed-JSON checks.
 7. Exercise a live harness only when the release or change contract requires it; label source-only or deterministic-only verification honestly.
 8. Test the upgrade path from one existing copy. Do not document a second install mechanism as an additive migration.
