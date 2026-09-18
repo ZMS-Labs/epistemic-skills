@@ -72,7 +72,7 @@ mechanical and both disclosed:
 
 1. **Private fleet repository name** — three occurrences in run 1
    (`arbitration.md` ×1, `evidence/dossier-challenge-2026-08-18.json` ×2),
-   replaced with `<private-fleet-repo>`. See that run's `REDACTIONS.md`. The
+   replaced with `<deployment-repository>`. See that run's `REDACTIONS.md`. The
    irony is worth stating: run 1's own finding was that this string had been
    *allowlisted rather than remediated*, and restating the finding reproduced
    the string. Quoting a detector's trigger re-arms it.

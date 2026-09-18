@@ -1,11 +1,13 @@
 # epistemic-skills 7.0.0
 
-**Status at the time this file was committed: NOT PUBLISHABLE.** Seven
-prerequisites are outstanding, four of them owner-only. The independent
-publication-judgment gate (RG-8) has neither returned GO nor been waived on the
-record, and the two acts that would resolve it cannot be performed by the
-implementing agent. See [Before this may be tagged](#before-this-may-be-tagged).
-Nothing below should be read as a publication decision.
+**Publication is conditional on the exact-candidate evidence described below.**
+Preparation is held: the selected Gemini reviewer is currently unavailable,
+so PR #244 remains draft and no v7 tag is authorized yet. This file records the
+release scope, migration boundary, verification tiers, and owner
+pre-authorization before the candidate exists. It does not itself report
+a completed publication. After publication, the annotated `v7.0.0` tag and its
+linked receipt supply the exact SHA, check run IDs, independent verdict, and
+publication verification. No exception release is authorized for v7.0.0.
 
 Preceded by [6.0.0](RELEASE-6.0.0.md), an exception release. This document
 governs 7.0.0 only; `RELEASING.md` governs the procedure.
@@ -62,217 +64,164 @@ mission as no mission and answer `allow` (es#217).
 
 ## Consumer-visible changes since 6.0.0
 
-Twenty-eight commits. Grouped by what a consumer can observe:
-
 | Surface | Change |
 |---|---|
-| `epistemic-product-calibration@1` schema | Conditional supersession requirement (above) |
-| `mission-manifest@1` schema | No-whitespace pattern on eight envelope lists (above) |
-| `verify_calibration.py` | An unhashable `status` (`{}`, `[]`) now returns the named `UNKNOWN_STATUS` failure instead of raising `TypeError`. The self-test gained that case and a schema/verifier parity assertion, so its output string changed from `PASS (5/5)` to `PASS (6/6 cases + schema/verifier supersession parity)` |
-| `continuity-report.schema.json` | New |
-| Mission custody (es#173) | Concurrent missions are legal; the one-active-mission door is gone. Unreadable sibling directories require `--acknowledge-unreadable`. Containment, approval lineage and per-mission union degradation reworked |
-| Custody instruments | Control characters escaped on display surfaces; absolute hook rendering for Cursor CLI; instruments refuse, escape, and admit what they could not read |
-| Skills (`SKILL.md`) | **None.** Triggers, routing, entry point and the skill count are identical to 6.0.0 |
+| Calibration and mission-manifest schemas | The stricter supersession and nonblank declaration requirements described above |
+| Calibration verifier | An unhashable `status` returns `UNKNOWN_STATUS` instead of raising `TypeError`; regression checks cover schema/verifier supersession parity |
+| Mission custody | Concurrent missions, containment and approval-lineage repairs, and independent degradation of unreadable siblings; an unreadable store is not treated as proof that no mission exists |
+| Custody instruments | Validated continuity-report shape, escaped control characters in displayed text, required-text validation, shared safe-display handling, and guard checks against the unresolved path spelling ([#246](https://github.com/ZMS-Labs/epistemic-skills/pull/246)) |
+| Custody performance and portability | Linear scope-close work, shared receipt lookup indexes, Windows separator classification, and absolute Cursor CLI hook rendering |
+| Public documentation | Current-tree private identifiers replaced with public examples, clearer source/evidence navigation, corrected publication claims, and preservation of historical outcomes and original digest references |
+| Privacy checks | Historical files and new nonignored text are scanned without whole-file exemptions; narrow synthetic examples and seeded detection controls remain explicit |
+| Release operation | Required main-branch CI contexts, a bounded tag-creation procedure, explicit candidate-versus-published install refs, and a complete v7 handbook snapshot |
+| Skill catalog | Fifteen skills: one entry point and fourteen disciplines. Names, triggers, and routing remain the same; example text includes privacy corrections |
 
-The last row is the one most likely to be misread. Fifteen skills at 6.0.0,
-fifteen at 7.0.0, same names, same descriptions. This release is a contract
-release, not a catalog release.
-
-### Downstream effect already measured
-
-`ZMS-Labs/epistemic-calibration` pins a skills release coordinate and compares
-its product schema against skills `main`. That comparison currently fails —
-correctly — because the release it pins predates the `allOf` addition:
-
-```
-xr-v5: e3e2fd459ce619a9b7c6cbf0cce23f668e294f54cfb9ba7fa2886e43d3a1f66a
-main:  84f229c17732874db30bb4a0fd8a5580941a07d06ac182f1efacd468450189d4
-EXIT=1
-```
-
-Pointed at this candidate the same run returns `EXIT=0` with the verifier
-self-test passing at 6 of 6 cases plus the parity assertion. That is the
-consumer-side confirmation that this release is the coordinate they need.
-
----
+The preserved historical records do not become new efficacy evidence. The
+current-tree privacy cleanup leaves Git history and existing release tags
+unchanged; older published coordinates may retain previously published details.
+Redaction provenance is recorded in `docs/public-content-redactions.json`.
 
 ## Migration from 6.0.0
 
-1. **Producers of `epistemic-product-calibration@1` envelopes.** If you emit
-   `status: "superseded"`, emit `supersedes` with it. If you were already
-   passing the bundled verifier you are already compliant; only schema-only
-   validation changes verdict.
-2. **Authors of `mission-manifest@1` manifests.** Remove empty and
-   whitespace-only entries from the eight envelope lists. Existing persisted
-   records are unaffected by design.
-3. **Consumers pinning a skills release SHA.** Rotate to this tag and update
-   whatever record declares the coordinate, in the same change.
-4. **Everyone else.** Nothing changes. No skill surface changed, so triggers,
-   routing and the catalog are identical. Re-point install recipes at `v7.0.0`
-   **once that tag exists** — until then `v6.0.0` is the install target, and the
-   recipes in the README still say so on purpose.
+1. **Calibration producers.** Supply `supersedes` whenever `status` is
+   `superseded`. Producers already passing the bundled verifier meet this rule;
+   schema-only validation can newly reject an incomplete envelope.
+2. **Mission authors.** Remove empty or whitespace-only values from the eight
+   declaration lists. Supply readable nonblank required-text values for new
+   operations. Existing declarations carried forward unchanged remain readable;
+   this release does not rewrite persisted mission records.
+3. **Custody users.** Recheck local hook paths and reload the updated integration.
+   Test affected guards against the paths the harness actually supplies. The
+   package remains on the existing contract epochs; the unfinished contract@2
+   work in issue #118 is not part of this release, and no @2 migration is implied.
+4. **Pinned consumers.** Update the release coordinate and its provenance record
+   together after the tag exists. Before publication, `v6.0.0` remains the
+   installation target even though candidate manifests say `7.0.0`.
+5. **Skill users.** Keep one installation mechanism per harness, reload it, and
+   verify the loaded source and fifteen-skill catalog. A matching catalog does
+   not prove custody behavior or native-harness execution.
 
----
+## Owner pre-authorization (2026-09-18)
 
-## Gate record
+The repository owner, **SternOne**, approved the stabilization recommendation
+with **"approve your reccomendation"**. That recommendation explicitly included
+refreshing [PR #244](https://github.com/ZMS-Labs/epistemic-skills/pull/244),
+finishing its release requirements, and completing a successor release. The
+owner then selected the external review family with **"Select Gemini for the
+independent review"**.
 
-Recorded against the release candidate. **The candidate SHA is not written in
-this file**, because writing it would change the tree and produce a different
-commit — the fixed point `RELEASING.md` step 7 describes. It is carried by the
-annotated tag object.
+This records the approved execution scope: merge the reviewed and passing
+**PR #244**, prepare **v7.0.0** using
+**`docs/release/RELEASE-7.0.0.md`**, and have the implementing agent execute
+publication on the owner's behalf **only when all of these conditions hold**:
 
-| Gate | Status | Exact subject | Evidence | Limits |
+- All required integrity checks and the release-diff privacy review pass on the
+  exact merge candidate, with the DCO determination and required CodeQL matrices
+  recorded. The secret scan includes its detection positive control.
+- Supported harnesses retain the explicit limits below; packaging checks are not
+  promoted to live execution evidence.
+- The independent Gauntlet publication gate, including the selected Gemini
+  cross-family review, judges that same candidate and returns **GO** with no
+  unresolved P1 or P2 findings. Selecting Gemini does not itself establish that
+  the review has run or passed.
+
+The delegation includes the bounded creation-rule change, annotated tag and
+GitHub Release, unconditional re-arming and its probe, and subsequent install-ref
+and wiki publication checks. It authorizes no weakening of update/deletion
+protection and no exception to an unmet gate. `CONDITIONAL`, `NO-GO`, missing
+evidence, or a changed candidate holds publication until a corrected candidate
+has been checked and independently judged.
+
+The final candidate SHA, workflow run IDs, reviewer identities, verdict path and
+hashes, and execution timestamps are post-candidate facts. Record them in the
+annotated tag and linked publication receipt; do not invent them here or add
+them to the candidate tree after it is frozen.
+
+## Gate record and evidence locations
+
+These rows describe the preparation state. Their pending entries are not
+completed check claims. When the release is published, read the tag and receipt
+for the immutable execution evidence; the tagged preparation file remains
+unchanged.
+
+| Gate | Status at preparation | Exact subject | Required evidence | Limits |
 |---|---|---|---|---|
-| RG-4 version/link alignment | **`UNMET`** | release branch tip | Ten version-bearing manifests at `7.0.0`; handbook banners at `v7.0.0`; `outsource integration: PASS`; `check_wiki.py` reports `47 pages, 27 banners, 24 counts, 224 versioned links` and `wiki gate: PASS`. **Install examples are at `v6.0.0`, not the proposed version** | `RELEASING.md` RG-4 requires every install example to agree on the proposed version. They do not, deliberately. This row is `UNMET` rather than argued into a pass — see the conflict below |
-| RG-5 deterministic + CodeQL | `UNMET — not yet run on a candidate` | — | The candidate is minted by merging this pull request; per step 4 the checks must be re-run on that exact commit | A pull-request run is not a candidate run |
-| RG-6 security + public content | `PARTIAL` | release branch tip | `check_public_content.py --self-test` → `8 seeded RED controls passed`; `check_public_content.py` → `8 patterns, 38 allowlisted exact files digest-verified (0 dormant entries)` | The full-history secret scan with its planted-secret positive control has not been run on a candidate |
-| description-byte delta | `0 bytes` | release branch tip vs `v6.0.0` | `check_description_budget.py --report` at both: `8636 TOTAL across 15 skills (ceiling 8636)` | Package-local only; the estate gate is retired |
-| RG-7 harness evidence | `UNMET` | — | No harness exercised live against a candidate | Install recipes changed only in the version they pin; the package surface is unchanged from 6.0.0, which is a reason to expect parity, not evidence of it |
-| RG-8 independent publication judgment | **`UNMET`** | — | **No gauntlet run, no GO, and no owner exception record exists** | This is the blocking row |
-| RG-9 publication identity | `UNMET` | — | No pre-authorization committed; no tag; no Release | Requires the owner |
+| RG-4 version/link alignment | Proposed version `7.0.0`; published install ref `v6.0.0` | PR #244 preparation; recheck exact merge candidate | Manifest/integration and snapshot checks; candidate paths for planned v7 links; reachable existing v6 install links | Rotate current installation refs only after the v7 tag resolves; preserve historical citations |
+| RG-5 deterministic + CodeQL | Pending at preparation | Exact merge candidate, not yet minted | Full deterministic, package, custody and watch checks; committed-JSON checks; required CodeQL matrices; PR DCO run plus exact-merge determination | Record each required job result, and disclose any inapplicable diagnostic separately |
+| RG-6 security + public content | Current-tree cleanup included; candidate scan pending | Exact merge candidate and scanned history range | Full-history secret scan with positive control, privacy self-test and scan, and release-diff review | History and old tags were not rewritten; pattern scanning is not proof against every possible private fact |
+| Description-byte delta | Re-measure against `v6.0.0` | Exact merge candidate versus `v6.0.0` | `check_description_budget.py --report` at both coordinates, recorded in the receipt | Package-local measurement; no estate-wide loaded-context claim |
+| RG-7 harness evidence | Explicit fallback tiers assigned below | Proposed v7 package; exact-candidate checks pending | Candidate packaging checks supporting those tiers | No new live-harness execution is claimed |
+| RG-8 independent publication judgment | **HELD: selected Gemini reviewer unavailable; no review or verdict** | Frozen exact merge candidate | Isolated lens reports, cross-family review, arbitration, Conflict Ledger, and exact-candidate **GO** | No self-issued GO or owner exception is authorized |
+| RG-9 publication identity | Pre-authorization recorded above; execution pending | PR #244 and proposed `v7.0.0`; final identity in tag | Annotated tag, peeled candidate, matching Release body, actual re-arm and probe result, then source/wiki publication receipt | Later artifact commits and install-ref rotation do not move the tag |
 
-**No row above is `MET` on the strength of remembered work.** Where a check ran,
-its output is quoted; where it did not, the row says so rather than borrowing
-credibility from a neighbouring green.
+### Per-harness verification tiers (RG-7)
 
-### RG-4 and PG-18 contradict each other, and the procedure has to say which wins
+The following are the declared evidence ceilings for this candidate. The
+candidate-bound packaging checks still have to pass before publication; older
+release results do not transfer to it. No new native-harness live execution is
+claimed in these notes.
 
-This is a defect in the governing procedure, surfaced by trying to follow it,
-and it is recorded here rather than resolved by an implementing agent.
+| Harness | Declared tier | Required evidence and remaining limitation |
+|---|---|---|
+| Claude Code | Packaging and deterministic checks | Manifest/surface parity and integration tests; no candidate plugin install, reload, or live skill run |
+| Codex | Packaging and role-renderer checks | Manifest parity and renderer tests; no candidate role registration or loaded-session verification |
+| Cursor | Packaging; existing behavioral epoch `BLOCKED_EXTERNAL` | Manifest and hook-renderer tests; no new native session proof or public marketplace listing |
+| Gemini CLI | Packaging | Extension manifest and canonical-tree checks; a Gemini review is not an extension-install test |
+| Antigravity | Packaging | Native manifest and shared-tree checks; no candidate plugin installation or runtime validation |
+| Kimi Code | Packaging | Manifest/integration checks and published install ref; no candidate reinstall or reload proof |
+| ChatGPT / OpenAI | Generated-artifact checks | Deterministic bundle tests and build; no uploaded bundle or hosted execution proof |
 
-`RELEASING.md` RG-4 requires that **every install example agree on the proposed
-version**. Its very next bullet requires that **every path behind a rewritten
-version-pinned URL exist in the candidate tree** — and warns that a blind bump
-"can mint immutable links to paths that never existed at that tag". Before the
-tag exists, no `v7.0.0` path exists, so the two bullets cannot both hold. PG-18,
-encoded as a live guard in `outsource/tests/run_tests.py`, resolves it in
-practice by lagging install refs at the newest published tag.
+## Installation and handbook publication order
 
-So one of these is true, and the owner has to choose:
+`EXPECTED_VERSION` in the integration tests tracks the package version;
+`INSTALL_REF_PIN` tracks the latest published tag. The README, Kimi marketplace
+source, and current handbook source links keep the published coordinate during
+preparation. This distinction is required by `RELEASING.md` RG-4 and prevents
+users receiving links to a tag that does not yet exist.
 
-1. **RG-4 means "aligned at publication"**, and a preparation commit is expected
-   to sit with install refs lagging. Then the procedure text should say so, and
-   this row becomes `MET` under the corrected wording.
-2. **RG-4 means what it literally says**, and this integrity gate cannot be met
-   before the tag exists. Then the tag must be created from a candidate that
-   fails RG-4, which `RELEASING.md` forbids, or the sequence needs a second
-   candidate after the refs rotate.
+After `v7.0.0` exists, verify its intended paths and install URLs, then rotate
+`INSTALL_REF_PIN`, the README recipes, the Kimi source ref, and current handbook
+links in one reviewed successor change. Publish the complete 47-page v7 snapshot
+to the separate wiki and run its live link check. Historical version references
+remain pinned to the evidence they describe.
 
-Recorded as `UNMET` on the strength of the text as written. That is the
-conservative reading, and an integrity gate is explicitly non-waivable, so
-reading it the convenient way would be exactly the move the procedure exists to
-prevent. **An implementing agent must not amend the governing procedure to make
-its own release pass**, which is why option 1 is written here as a proposal
-rather than applied.
+The preceding v6 wiki publication is already live at
+`4bfd64e4c26e9bee039cf3e56d8362d73986050f`, with the snapshot and live checks
+passing in [run 35387408694](https://github.com/ZMS-Labs/epistemic-skills/actions/runs/35387408694).
+That proves the v6 publication only. It is not v7 candidate or publication
+evidence.
 
-### Install refs lag the version on purpose (PG-18)
+## Remaining publication conditions
 
-Every install coordinate in the README, the kimi marketplace source, and the
-handbook's canonical-source links still points at **`v6.0.0`**, while the
-manifests and the handbook banners say **7.0.0**. That is not an oversight and
-must not be "fixed" before the tag exists.
+**Reviewer availability hold, 2026-09-18.** The selected Gemini CLI returned
+`IneligibleTierError` with the service explanation that the client is no longer
+supported for Gemini Code Assist for individuals. No model review ran. The
+browser fallback also failed before review. These are access failures, not
+judgments of the candidate; no GO, NO-GO, or exception is inferred.
 
-`outsource/tests/run_tests.py` carries the rule as a guard with two separate
-constants: `EXPECTED_VERSION` tracks the manifests, and `INSTALL_REF_PIN` tracks
-the newest **published** tag. Its comment records that during most of the 6.0.0
-cycle the pin correctly lagged at `v5.1.0`.
+Keep PR #244 draft and v7.0.0 untagged while that review path is unavailable.
+Once the selected reviewer can run, advance the reviewed PR with the preparation
+record intact, merge it, freeze the resulting candidate, complete every required
+integrity check, and obtain the independent exact-candidate GO described above. A changed candidate invalidates
+earlier candidate-bound results. The implementing agent may carry out the
+recorded delegation when its conditions hold; the owner need not repeat the
+same approval.
 
-**The guard earned that a second time here.** The first pass of this preparation
-rewrote every install ref to `v7.0.0`, and the guard caught it. Measured at the
-time:
+During tag creation, retain update/deletion protection, re-arm creation on every
+exit path, and record the verification. If a seeded probe unexpectedly creates
+a tag, preserve the incident and follow the narrowly authorized recovery in
+`RELEASING.md`; do not disable all tag protection to clean it up.
 
-```
-404  https://github.com/ZMS-Labs/epistemic-skills/tree/v7.0.0/plugins/epistemic-skills/skills
-200  https://github.com/ZMS-Labs/epistemic-skills/tree/v6.0.0/plugins/epistemic-skills/skills
-```
+After publication, commit the reviewed evidence artifacts and receipt, binding
+artifact hashes to their landing commit, and finish the install-ref and wiki
+checks. The tagged tree does not contain its own later verdict or publication
+receipt.
 
-A version bump that moves install refs ahead of the tag ships dead install links
-to every user who follows the README. The lesson is now recorded at the pin
-itself, not only here, so the next cycle does not have to rediscover it.
+## Standing obligations
 
-**Post-tag rotation, required.** Once `v7.0.0` exists and its install URLs are
-measured at HTTP 200, rotate in one change: `INSTALL_REF_PIN`, the README
-install recipes, `.kimi-plugin/marketplace.json`'s source, and the handbook's
-canonical-source links. That change is a successor to the tag, never a
-predecessor.
-
----
-
-## Before this may be tagged
-
-**Every unmet prerequisite, not only the two owner acts.** An earlier draft of
-this section named just the two acts below, and the table above already recorded
-four other rows as incomplete. A reader following only this section could have
-tagged with mandatory integrity gates unrun, so the full list comes first.
-
-| # | Prerequisite | Who | Why it is not done |
-|---|---|---|---|
-| 1 | **RG-5** — full deterministic suite, DCO, manifest parity, committed-JSON, and every required CodeQL matrix, dispatched explicitly on the **exact candidate** | anyone | The candidate does not exist until this pull request merges. A pull-request run is not a candidate run, and path-filtered workflows do not fire on a docs-heavy commit — dispatch them |
-| 2 | **RG-6** — full-history secret scan on the exact candidate, **with a planted-secret positive control**, plus the release-diff public-content review | anyone | Only the tree-scoped public-content gate has been run. A scan without its positive control does not establish that the scanner works |
-| 3 | **RG-7** — exercise each supported harness against the candidate, or assign an explicit verification tier per harness in these notes | anyone | Not run. The package surface is unchanged from 6.0.0, which is a reason to *expect* parity, not evidence of it |
-| 4 | **RG-4** — resolve the procedure conflict recorded above, then align install refs or correct the procedure text | **owner** | Two bullets of RG-4 cannot both hold before the tag exists |
-| 5 | **RG-9** — commit the pre-authorization **before** the candidate is minted, naming the pull request, the version, the release-note path, the gate that must return GO, and the firing condition | **owner** | It names no SHA because none exists yet, and it must be in this pull request |
-| 6 | **RG-8** — resolve the publication-judgment gate | **owner** | See below |
-| 7 | Create the tag | **owner** | See below |
-
-Rows 1 to 3 are ordinary work that any actor can do **once the candidate
-exists**. Rows 4 to 7 are the owner's. Rows 5 to 7 are also **ordered**: the
-pre-authorization precedes the merge that mints the candidate, the judgment gate
-runs on the frozen candidate, and the tag comes last.
-
-The two acts below are the ones **no implementing agent can perform at all**.
-This section exists so that is unambiguous rather than discovered later.
-
-### 1. Resolve RG-8
-
-Either commission an independent Gauntlet publication review on the frozen
-candidate and record a `GO`, **or** publish under the standing exception route,
-which requires all five disclosures from `RELEASING.md` committed to **this
-file** before the tag is created:
-
-1. that the gate was not run or did not reach GO;
-2. that no GO exists;
-3. the owner's identity, date, scope, and exact authorization;
-4. the evidence that remains available and what it cannot establish; and
-5. any successor-release condition or revisit trigger.
-
-Disclosure 3 is why an agent cannot write this section. An authorization the
-owner did not give is not made real by an agent typing it, and a placeholder
-here would be the precise artifact the exception route exists to prevent.
-
-`CONDITIONAL` is not `GO`. `WAIVED` is never a synonym for `MET`.
-
-### 2. Create the tag
-
-`refs/tags/v*` is covered by the `protect-version-tags` ruleset, which carries
-`creation`, `update` and `deletion` with `bypass_actors: []` and
-`current_user_can_bypass: "never"`. Verified against the API on 2026-09-02.
-
-That is deliberate, and `RELEASING.md` says why: this repository is pushed with
-the same credential automation runs under, so an admin bypass would exempt
-exactly the actors the rule exists to constrain. **Disarming the ruleset is
-therefore the owner's authorization act**, not a mechanical step preceding it —
-and an agent holding that credential disarming it would be the control failing
-at the only moment it matters.
-
-Disarm, tag, and re-arm in the same sitting, then verify the re-arm with a
-seeded probe rather than by reading the configuration back. A release that ends
-with the gate left open has removed the control it was meant to satisfy.
-
----
-
-## Standing obligations carried forward
-
-`KL-SELF-GO` remains unretired: a repository maintained by one operator and one
-implementing agent lineage cannot manufacture the independence a conforming
-release requires. 6.0.0 demonstrated that at length — nine reviews, four
-publication NO-GOs, and an override at the end. Naming the limit is not
-discharging it.
-
-## Preparation provenance
-
-The version bump, the handbook campaign, this file and the gate table above were
-prepared by an agent steward session, from the actual diff between `v6.0.0` and
-the release branch. Every quoted output in the table was produced by running the
-named command; none is recalled. The gate rows that say `UNMET` say so because
-the check has not run, not because its result was unfavourable.
+`KL-SELF-GO` remains a general limit: implementing agents cannot manufacture
+independent judgment by reviewing their own work. Issue #211's cross-family
+review obligation is discharged only by retained qualifying evidence and an
+explicit disposition; choosing a provider is not completion. The v6 exception
+release and its adverse verdicts remain historical facts. A conforming v7 review,
+if obtained, does not retroactively change them.

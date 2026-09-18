@@ -213,13 +213,24 @@ def _receipts(mission: Mission, store: MissionStore,
     the per-id lookup about every id rescans from revision 1 each time, so a
     mission with one effect per revision made this quadratic -- an estate
     walk over thousands of revisions, millions of parses.
+
+    AND THAT ONE PASS IS HANDED TO THE LOADER. Building the index here and
+    then letting `_load_receipt_checked` reach for its own put the rescan
+    straight back: the loader consults the index for every id, and once that
+    cache is keyed to checkpoint CONTENT a hit costs a full SHA-256 pass over
+    the whole cumulative chain rather than a directory listing. Measured on a
+    300-receipt mission, the census went from 303 checkpoint reads / 1.9 MiB
+    to 91,205 reads / 578 MiB. Forwarding the mapping is the same repair
+    `scope_consistency` already makes for its own fallback loads.
     """
     paths: list[str] = []
     problems: list[str] = []
+    index_built = True
     try:
         index = mission._effect_path_index()
     except (OSError, ValueError, KeyError, TypeError) as exc:
         index = {}
+        index_built = False
         problems.append(f"chain index unreadable: {type(exc).__name__}: {exc}")
     for rid in _lget(latest, "receipt_ids"):
         if not isinstance(rid, str):
@@ -232,7 +243,18 @@ def _receipts(mission: Mission, store: MissionStore,
             # RECEIPT-MISSING for a receipt that is present, intact and merely
             # newer -- telling the operator the opposite of what `resume` now
             # says about the same file.
-            receipt, _refusal, opaque = mission._load_receipt_checked(rid)
+            #
+            # ONLY A MAPPING THAT WAS ACTUALLY BUILT is forwarded. The empty
+            # dict above is a failure marker, not an answer: handing it over
+            # would tell the loader that NO id has a chained path and silently
+            # retire its own artifact_path comparison -- a forged receipt would
+            # then read as ordinary coverage on exactly the run that already
+            # could not read the chain. When the build failed the loader is
+            # called as before, raises the same error, and every id is still
+            # reported.
+            receipt, _refusal, opaque = (
+                mission._load_receipt_checked(rid, effect_paths=index)
+                if index_built else mission._load_receipt_checked(rid))
         except (OSError, ValueError) as exc:
             receipt = None
             problems.append(f"{rid}: receipt unreadable: {type(exc).__name__}")

@@ -26,6 +26,7 @@ from custody_mission import (
     Mission,
     _approved_by_chain,
     _ascii_case_fold,
+    _display_safe,
     _normalize_relpath,
     now_utc,
 )
@@ -313,11 +314,10 @@ def _union_entries(workspace: Path, actor: str) -> tuple[list[dict], list[dict]]
             # session log must be searchable for TAMPER (the hook's contract
             # since before the union), and the union fold must not silently
             # retire that marker.
-            print(("custody gate: TAMPER/custody error reading mission "
-                   + e["name"] + " -- its guards are NOT enforced (union "
-                   "degraded): " + reason)
-                  .encode("ascii", "backslashreplace").decode("ascii"),
-                  file=sys.stderr)
+            print(_display_safe(
+                "custody gate: TAMPER/custody error reading mission "
+                + e["name"] + " -- its guards are NOT enforced (union "
+                "degraded): " + reason), file=sys.stderr)
             degraded.append({
                 "name": e["name"], "kind": type(exc).__name__,
                 "reason": reason})

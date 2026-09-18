@@ -2,7 +2,7 @@ __pycache__/
 *.pyc
 *.pyo
 
-# Run output roots — run directories, dossiers, live receipts over real
+# Run output roots â€” run directories, dossiers, live receipts over real
 # subjects, and screenshot-class captures are local-only; only schemas,
 # verifiers, READMEs, and synthetic examples commit (see
 # plugins/epistemic-skills/contracts/README.md).
@@ -15,11 +15,11 @@ pilot/runs/
 # Deterministic OpenAI/ChatGPT archives are CI artifacts, not source.
 dist/openai/
 
-# Mission-custody checkpoints — live mission chains are fleet-local runtime
+# Mission-custody checkpoints â€” live mission chains are fleet-local runtime
 # state (like run telemetry), not source.
 missions/
 
-# Skill run telemetry — real ledger/adjudication lines are runtime state
+# Skill run telemetry â€” real ledger/adjudication lines are runtime state
 # (operator-private), not public content; only the synthetic example ships
 # (see plugins/epistemic-skills/skills/gauntlet/runs/README.md).
 **/runs/*.jsonl
@@ -30,7 +30,13 @@ missions/
 # outside the repository by default; this is belt-and-braces for older copies.
 docs/evidence/local-ci/
 
-# Site-local skill overlays bind a skill to ONE harness/host (this tree runs on
-# zms-pc-2025). Per-device by design; the overlay mechanism exists so these
-# never ship with the plugin.
+# Site-local skill overlays are private configuration and do not ship.
 plugins/epistemic-skills/skills/**/LOCAL.md
+
+# Local checkouts, assistant state, and generated export archives.
+.worktrees/
+.mimosa/
+.impeccable/
+.superpowers/
+.pytest_cache/
+/epistemic-skills-*.zip

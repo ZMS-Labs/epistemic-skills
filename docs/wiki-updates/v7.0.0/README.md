@@ -1,78 +1,50 @@
-# Wiki update for v7.0.0 — NOT PUBLISHED
+# Handbook source and v7.0.0 publication
 
-**Status: prepared, not applied.** The live `ZMS-Labs/epistemic-skills.wiki`
-still serves v5.0.0-era content. This package exists so that gap is a
-*reproducible correction* rather than a promise.
+`pages/` is the **complete 47-page v7.0.0 handbook snapshot**, prepared for
+publication. It is not a delta against the old v5 handbook. The GitHub Wiki is a
+separate repository; editing this directory does not publish it.
 
-It is deliberately a **delta package**, not a 40-page rewrite: the v5.0.0
-package under `docs/wiki-updates/v5.0.0/` remains the base, and this applies the
-drift measured on top of it.
+As verified on 2026-09-18, the live wiki contains the corrected v6 snapshot at
+`4bfd64e4c26e9bee039cf3e56d8362d73986050f`. Its snapshot and live-link checks
+passed in [run 35387408694](https://github.com/ZMS-Labs/epistemic-skills/actions/runs/35387408694).
+The v7 snapshot has not yet been published. Its status changes only after a
+separate wiki push and live verification.
 
-## Why this exists
-
-Publication-gate finding **PG-08**. The v5.1.0 release recorded a post-tag
-handbook pass as a follow-up and it was never performed — "we will fix the wiki
-after the tag" is 0-for-1 in this project. So the correction ships as runnable
-code with a self-test, and the gap is recorded in the release note with an owner
-and an exit criterion.
-
-## Measured drift (2026-08-20, by cloning the wiki)
-
-| Rule | Occurrences | Pages |
-|---|---|---|
-| `applies-to-banner` | 26 | 26 |
-| `discipline-count` | 5 | 4 |
-| `retired-seat-present-tense (MANUAL)` | 9 | 9 |
-| `skill-count-lower` | 6 | 5 |
-| `skill-count-title` | 1 | 1 |
-| `tagged-tree-url` | 219 | 40 |
-
-Plus one page that does not exist at all: **`Skill-Manifest`** — the seat
-carrying this release's headline security fix. It is authored here under
-`pages/`.
-
-## How to use it
-
-The wiki is a separate repository, so no CI job can run this against the thing
-it edits. It is written to be checkable instead:
+## Validate the prepared snapshot
 
 ```bash
-# Prove the rules on fixtures — no wiki needed.
+python docs/wiki-updates/v7.0.0/check_wiki.py --self-test
 python docs/wiki-updates/v7.0.0/apply_v7_updates.py --self-test
-
-# See exactly what would change. Default is dry-run; writes nothing.
-git clone https://github.com/ZMS-Labs/epistemic-skills.wiki.git /tmp/es-wiki
-python docs/wiki-updates/v7.0.0/apply_v7_updates.py /tmp/es-wiki
-
-# Write, then review the diff before pushing.
-python docs/wiki-updates/v7.0.0/apply_v7_updates.py /tmp/es-wiki --apply
-git -C /tmp/es-wiki diff
+python docs/wiki-updates/v7.0.0/check_wiki.py docs/wiki-updates/v7.0.0/pages --links
 ```
 
-## What it will NOT do for you
+The snapshot's banners describe the proposed v7 package while current source
+links retain the published v6 install reference. `RELEASING.md` RG-4 explicitly
+distinguishes those values. Before tagging, the snapshot check is candidate
+integrity evidence; a new-version check against the still-v6 live wiki is not
+proof of v7 publication.
 
-The retired-seat rule is **advisory and reported only**. Nine pages describe
-seats deleted in v4.0.0/v5.0.0 in the present tense, and rewriting a sentence's
-tense mechanically produces confident nonsense. The script names the pages; a
-human edits them.
+## Publish after the release tag exists
 
-**Deliberate split in this campaign: banners and prose move, source URLs do not.**
-The committed snapshot describes v7.0.0 — banners, the Version History entry, and
-the migration table — while every tagged source URL still points at `v6.0.0`.
-That is not an inconsistency left behind. A link to an unpublished tag is a 404
-(publication-gate finding PG-18), and `check_wiki.py --links` resolves these
-links for real on the scheduled run. `apply_v7_updates.py` enforces the ordering
-from the other side: `tag_exists()` returns False for v7.0.0 today, so `--apply`
-refuses. Rotate the URLs in the same post-tag change that moves the README
-install recipes and `INSTALL_REF_PIN`.
+1. Verify that `v7.0.0` exists and each intended tagged source path resolves.
+2. Rotate current installation and navigation links alongside `INSTALL_REF_PIN`,
+   README recipes, and the Kimi marketplace source. Leave historical citations
+   on the versions they describe.
+3. Copy the reviewed complete `pages/` snapshot to a clean wiki checkout. Inspect
+   the diff and run the same checker with `--links` against that checkout.
+4. Commit and push the wiki, then run the hosted live-wiki check. Record the wiki
+   commit, source commit, and successful check in the publication receipt.
 
-The tagged-URL and banner rules bump to `v7.0.0`. **Do not apply them until the
-tag exists** — the README learned this the expensive way (PG-18): pointing at an
-unpublished tag ships dead links.
+`apply_v7_updates.py` is a limited migration helper. It updates counts and
+banners and copies the Manifest page; it does not replace the complete snapshot
+or blindly rotate tagged URLs. Its `--apply` mode checks that the target tag
+exists. The self-test covers these boundaries. Do not treat running the helper
+as evidence that all pages have been published.
 
-## Exit criterion
+## Completion evidence
 
-Installation and catalog pages read fifteen skills with v7.0.0 install guidance,
-a `Skill-Manifest` page exists, and retired seats are described in the past
-tense. Until all four hold, the gap recorded in `docs/release/RELEASE-6.0.0.md`
-stays open.
+The published wiki must show fifteen skills and fourteen disciplines, include
+`Skill-Manifest`, describe retired seats historically, and provide reachable v7
+installation/navigation links. A passing live check and the recorded wiki commit
+establish that this snapshot landed. The earlier v6 publication and its checks
+remain separate historical evidence.

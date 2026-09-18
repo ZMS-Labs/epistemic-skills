@@ -88,6 +88,6 @@
 - Produces: signed commits and a draft PR against `main`.
 
 - [x] Append the bounded metacognate engagement record.
-- [x] Commit all files with `Signed-off-by: SternOne <89846440+SternOne@users.noreply.github.com>`.
+- [x] Commit all files with `Signed-off-by: SternOne <maintainer@example.org>`.
 - [x] Open a draft PR with validation evidence and explicit platform boundaries.
 - [x] Inspect the resulting PR diff and CI state; correct the observed temporary-merge-SHA provenance defect with a regression test.

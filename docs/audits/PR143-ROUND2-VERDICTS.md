@@ -1,5 +1,9 @@
 # PR #143 round 2 — five case tables, adversarially refuted
 
+> Historical review of [PR #143](https://github.com/ZMS-Labs/epistemic-skills/pull/143).
+> Proposed fixes and temporary evidence paths below describe that review, not
+> current implementation or reproducible checkout paths.
+
 **Method:** one derivation agent per defect (product-space case table, adopted
 rule, rejected rules with the row that kills each, predicted mutants), then two
 independent lenses per defect — *unenumerated-case* and *collateral*. 15 agents,

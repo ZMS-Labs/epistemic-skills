@@ -587,7 +587,7 @@ The following are invariant:
 | No workflow package | Use the harness's native workflow while preserving mission and epistemic contracts. |
 | No independent acceptor | Material completion remains `VERIFYING` or `BLOCKED`; never self-promote. |
 | Capability description missing or dropped | Treat capability as unavailable; do not infer its body or identity from memory. |
-| Watch substrate absent | `watch-commission@1.state = BLOCKED`, reason `NO_EXECUTION_SUBSTRATE`. |
+| Watch substrate absent | `maintainer@example.org = BLOCKED`, reason `NO_EXECUTION_SUBSTRATE`. |
 | Checkpoint contradicts live state | Live state wins; record the contradiction and re-open affected decisions. |
 
 ## Description-budget posture

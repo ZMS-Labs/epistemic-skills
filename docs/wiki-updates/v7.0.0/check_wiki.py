@@ -434,11 +434,20 @@ def self_test() -> int:
 
 
 def main() -> int:
+    global REPO, SKILLS_DIR
     ap = argparse.ArgumentParser()
     ap.add_argument("wiki", nargs="?")
     ap.add_argument("--links", action="store_true", help="HTTP-resolve every repository URL")
     ap.add_argument("--self-test", action="store_true")
+    ap.add_argument("--source-root", type=Path, default=REPO,
+                    help="derive expectations from this source checkout (default: this repository)")
     args = ap.parse_args()
+    REPO = args.source_root.resolve()
+    SKILLS_DIR = REPO / "plugins" / "epistemic-skills" / "skills"
+    required = [SKILLS_DIR, REPO / "plugins/epistemic-skills/.claude-plugin/plugin.json",
+                REPO / ".github/scripts/check_no_phantom_skills.py"]
+    if not all(path.exists() for path in required):
+        ap.error("source root must contain the package manifest, skills, and retired-skill checker")
     if args.self_test:
         return self_test()
     if not args.wiki:

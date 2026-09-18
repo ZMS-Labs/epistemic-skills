@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 
 from custody_gate import _guard_norm_path, evaluate, run_gate  # noqa: E402
-from custody_mission import Mission  # noqa: E402
+from custody_mission import CustodyError, Mission  # noqa: E402
 from custody_store import StoreError, sha256_bytes, sha256_file  # noqa: E402
 
 FAILURES: list[str] = []
@@ -840,6 +840,62 @@ def test_verification_reread_oserror_degrades_the_union() -> None:
         check("reread-control-still-blocks", verdict["decision"] == "block")
         check("reread-control-claims-no-degradation",
               "DEGRADED" not in verdict["reason"].upper())
+
+
+def test_union_degradation_stderr_escapes_control_characters() -> None:
+    """es#232, following es#158: the union's TAMPER line renders through the
+    shared helper too.
+
+    `_union_entries` interpolates the mission name and the VERIFYING re-read's
+    exception, and escaped them with `.encode("ascii", "backslashreplace")` --
+    an escaper whose whole effect is on non-ASCII, so every C0 control passed
+    through. A raw ESC CSI on this line is a sequence the operator's terminal
+    executes, and a raw CR forges a second row in a log the hook's contract
+    says must stay greppable for TAMPER.
+
+    The re-read is failed deliberately. This arm exists for a tamper landing
+    BETWEEN discovery and the verification re-read -- an OSError naming the
+    operator's own workspace path, or a store error quoting a field published
+    in that window -- which no single-threaded fixture can schedule. What is
+    measured is what the arm PRINTS from an exception it is handed, and that
+    is the whole of the defect.
+    """
+    hostile = "ev\ril\x1b[31m\u009bFORGED-ROW"
+    with tempfile.TemporaryDirectory() as tmp:
+        ws = Path(tmp)
+        mission = Mission.open(ws, "m-degraded", "i", "operator:test",
+                               "agent:test", actor="agent:test",
+                               guard_mode="enforce", actuator_guards=GUARDS)
+        mission.approve()
+
+        def hostile_status(self):
+            raise CustodyError(hostile)
+
+        real_status = Mission.status
+        Mission.status = hostile_status
+        buf = io.StringIO()
+        try:
+            with contextlib.redirect_stderr(buf):
+                verdict = run_gate(
+                    ws, {"tool_name": "Bash", "command": "curl :7878/api",
+                         "file_path": None}, actor="hook:custody-gate")
+        finally:
+            Mission.status = real_status
+        printed = buf.getvalue()
+
+        check("union-degraded-control-reached-the-tamper-arm",
+              "TAMPER" in printed)
+        check("union-degraded-control-still-degrades",
+              verdict["decision"] == "allow"
+              and "NOT enforced" in verdict["reason"])
+        for label, raw in (("cr", "\r"), ("esc", "\x1b"), ("c1-csi", "\u009b")):
+            check("union-degraded-control-no-raw-%s-on-stderr" % label,
+                  raw not in printed)
+        check("union-degraded-control-stderr-is-ascii", printed.isascii())
+        for label, escaped in (("cr", "\\r"), ("esc", "\\u001b"),
+                               ("c1-csi", "\\u009b")):
+            check("union-degraded-control-escapes-%s" % label,
+                  escaped in printed)
 
 
 if __name__ == "__main__":

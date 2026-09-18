@@ -90,7 +90,7 @@ def test_three_subprocess_kill_resume_repair_proof() -> None:
         # ---------------------------------------------------------------
         r = run("open", "--workspace", str(ws), "--actor", "agent:worker",
                  "--mission-id", mission_id, "--instruction", instruction,
-                 "--operator", "operator:zach", "--steward", "agent:worker")
+                 "--operator", "operator:example", "--steward", "agent:worker")
         check("a-open-exit-0", r.returncode == 0)
 
         r = run("approve", "--workspace", str(ws), "--actor", "agent:worker")

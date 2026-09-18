@@ -133,12 +133,17 @@ candidate.
      `results/`, `runs/`, and references; relocate evidence whose subject is
      broader than the deleted seat.
 4. **Version and link alignment**
-   - Every version-bearing live manifest, README statement, install example,
-     package-integration expectation, and release-note statement agrees on the
-     proposed version.
-   - Every repository path referenced by a rewritten version-pinned URL exists in
-     the candidate tree. A blind version bump can mint immutable links to paths
-     that never existed at that tag.
+   - Package manifests, proposed-version statements, package-integration
+     expectations, and release notes agree on the proposed package version.
+     Preparation wording identifies that version as unpublished.
+   - Published installation coordinates are a separate value: keep install
+     examples, marketplace source refs, and handbook source links on the latest
+     published tag until the new tag exists. Name both values in the release
+     notes; this deliberate lag does not fail the pre-tag alignment gate.
+   - Every repository path intended for a new version-pinned URL exists in the
+     candidate tree. Verify the old published links before tagging; verify the
+     new links against the actual tag before rotating them in a post-tag change.
+     Never rewrite historical evidence citations to the new version.
    - Live user-facing architecture words—entry point, router, skill counts,
      retired names—agree with the candidate.
 5. **Deterministic and static-analysis evidence**
@@ -166,7 +171,8 @@ candidate.
      internal topology, credentials, personal data, and accidental telemetry.
      Run `.github/scripts/check_public_content.py --self-test` and
      `.github/scripts/check_public_content.py` on the exact candidate; both must
-     exit 0. Pattern hits outside the documented allowlist fail closed.
+     exit 0. Pattern hits outside the checker's narrow synthetic-example
+     normalization fail closed; historical files are scanned too.
    - Public-content findings and dispositions are recorded at an immutable path.
    - Provenance and license surfaces remain accurate.
 7. **Supported harness evidence**
@@ -223,8 +229,19 @@ candidate.
    - **Merge with a merge commit, not a squash.** A squash attributes the commit
      to whoever merged it, so a sign-off trailer naming any other identity is an
      author mismatch and a false attestation. A merge commit preserves the
-     individually signed commits in history and is exempt under the DCO
-     checker's `is_merge()` rule.
+     individually signed commits in history. The DCO checker exempts only a
+     merge whose tree matches its `merge-tree` recomputation; a merge that
+     authors conflict resolutions needs an author-matching sign-off. Being a
+     merge is not itself an exemption.
+   - DCO runs on the pull request and has no dispatch-at-SHA mode. Retain that
+     run and verify the candidate's actual merge tree: either prove the clean
+     merge exemption or verify its author-matching sign-off. Record that exact
+     candidate determination with the other integrity evidence.
+   - The handbook snapshot is candidate integrity evidence. Publication of the
+     separate live wiki follows the tag, so its new-version live check is a
+     post-publication obligation. Before tagging, retain the passing live check
+     for the currently published version; do not call an unrun new-version live
+     check passed or disguise an unexpected workflow failure as this sequencing.
 5. **Run and record the independent Gauntlet publication gate.** Freeze the exact
    candidate as the subject; retain the panel outputs, arbitration, Conflict
    Ledger, and verdict under `docs/release/` or the version's Gauntlet run
@@ -240,6 +257,9 @@ candidate.
      property of any honest exact-SHA gate, not an omission: a tree cannot
      contain a judgment of itself. Say so in the release notes rather than
      letting a reader discover it and assume evidence was withheld.
+   - Record verdict and artifact hashes in the annotated tag, then identify the
+     artifact landing commit in the post-publication receipt. This binds the
+     later committed evidence to the bytes reviewed before tagging.
 6. **Resolve the publication decision.**
    - `GO`: proceed as a conforming release.
    - `CONDITIONAL` or `NO-GO`: fix forward, produce a new candidate, and rerun the
@@ -261,7 +281,9 @@ candidate.
      return GO, and the firing condition. It authorizes a determinate act.
    - **After** the gate returns GO, the owner records **in the annotated tag
      object** the verdict read (path and run id), the exact candidate SHA, their
-     own identity, and the disarm/re-arm timestamps. A tag names its target
+     own identity, any explicitly delegated executor, and the disarm timestamp
+     with the intended re-arm. The actual re-arm is a later fact recorded in the
+     publication receipt. A tag names its target
      without altering it, so the candidate is identical across the step-4
      checks, the step-5 verdict, the authorization, and the tag target.
    - A verdict without a resolvable subject still authorizes nothing: a `GO` for
@@ -275,13 +297,21 @@ candidate.
      deliberate: this repository is pushed with the same credential automation
      runs under, so an admin bypass would have exempted exactly the actors the
      rule exists to constrain.
-   - **Disarming the rule is therefore the authorization act.** Remove the
-     `creation` rule (or set the ruleset's enforcement to `disabled`), create and
-     push the tag, then **re-arm it in the same sitting**. Record the disarm and
-     re-arm alongside the authorization line.
-   - Verify the rule is armed again before closing the release, with a seeded
-     probe rather than by reading the config back. A release that ends with the
-     gate left open has removed the control it was meant to satisfy.
+   - **Disarming executes the owner's authorization.** An agent may perform
+     that act only under explicit, recorded delegation whose publication
+     conditions have been met. Credentials alone confer no authorization.
+     Remove only the `creation` rule; never disable the whole ruleset, which
+     would also remove update and deletion protection from existing tags.
+     Proceed immediately to step 8, then re-arm in the same sitting.
+   - **Re-arm unconditionally on every exit path.** If creation or push fails,
+     restore the creation rule before diagnosing the failure. Record the actual
+     re-arm timestamp and verification in the post-publication receipt.
+   - Verify re-arming with a reserved never-released probe tag (for example,
+     `v0.0.0-armprobe`), expecting rejection. If it unexpectedly succeeds, restore
+     protection and record the control failure. Do not assume the probe can
+     then be deleted: deletion protection remains active. Preserve the probe
+     until a separately authorized, narrowly scoped recovery can remove it
+     without exposing published tags to updates or deletion.
 8. **Create and push the annotated tag.** Tag `v<version>` on the exact candidate
    SHA. Never use a lightweight tag for a support point.
 9. **Create the GitHub Release.** Use the committed release-note file verbatim as
@@ -294,7 +324,12 @@ candidate.
       equal; and
     - `main` contains the release commit or an explicitly documented fast-forward
       successor.
-11. **Record any post-publication discovery honestly.** Correct documentation on
+11. **Finish the publication surfaces.** After the tag and its URLs resolve,
+    rotate the current install refs and publish the reviewed handbook snapshot.
+    Run snapshot and live-link checks, then record their results and the source
+    and wiki commit identities in the publication receipt. These are post-tag
+    successors; they never move the released tag or rewrite historical links.
+12. **Record any post-publication discovery honestly.** Correct documentation on
     `main`, add a clearly labeled erratum or post-release review, and ship artifact
     changes under a new semantic version. Never rewrite the immutable tag or imply
     a missing pre-publication event occurred.
@@ -314,7 +349,14 @@ Every release note should contain a table with at least these columns:
 | publication identity | `MET` / `UNMET` | tag + release | API identity receipt | normalization rules |
 
 A row without an immutable evidence coordinate is not `MET` merely because the
-work is remembered to have happened.
+work is remembered to have happened. Tables committed before the candidate may
+state that exact-candidate execution is pending and name its required evidence
+location. After publication, the annotated tag and receipt supply the execution
+record; the immutable preparation table must not be read as a later live status.
+
+Exact-candidate workflow run IDs, verdict hashes, and authorization execution
+facts belong in the annotated tag and post-publication receipt. Committing them
+into the candidate would change the subject they describe.
 
 ## Partial-publication recovery
 

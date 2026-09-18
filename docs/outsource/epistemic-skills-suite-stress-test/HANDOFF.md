@@ -148,7 +148,7 @@ directs their execution.
   matrices, two narrow documentation corrections, an outsource regression-test extension, and a
   CI workflow expansion. These are existing claims/work products, not yet origin-certified.
 - At the stable snapshot, stdlib checks and all CodeQL checks were green. DCO failed on every PR
-  commit because the `Signed-off-by: SternOne <zachstern@gmail.com>` trailer did not match the GitHub
+  commit because the `Signed-off-by: SternOne <maintainer@example.org>` trailer did not match the GitHub
   noreply commit-author identity.
 - The capability-matched review in
   `docs/outsource/epistemic-skills-pr43-readonly-review/relay/0002-target.md` inspected all 12 changed

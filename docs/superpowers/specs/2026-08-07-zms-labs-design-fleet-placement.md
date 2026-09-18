@@ -122,7 +122,7 @@ Think in **layers**, not “install design everywhere.”
 |---|---|---|
 | **Human UI repos** (wiki, canvas chrome, operator tools) | Pin `zms-labs-design`; optional Fudge only pre-DS; Impeccable or Claude path per harness | `visual-design-md` craft + `evidence-locked-uat` |
 | **Libraries / APIs / agents** | `agent-interface-design` only | No visual craft |
-| **Homelab / fleet ops** | `LOCAL.md` overrides; site-specific diagnostics stay out of portable DS | `health` · `triage` · `watch` (v5) |
+| **example deployment / fleet ops** | `LOCAL.md` overrides; site-specific diagnostics stay out of portable DS | `health` · `triage` · `watch` (v5) |
 | **Clusters (K8s)** | Dashboards only if product-owned; DS from `zms-labs-design` | Runtime truth ≠ pixel polish |
 | **Claude Code fleet** | `/design-login`; `/design-sync` from DS rooted in `zms-labs-design`; handoff bundles land in product repos | Same `epistemic-skills` install |
 | **Cursor / cloud agents** | Environment lists repos; add `zms-labs-design` to agent environment; craft points to pinned DS path | No `/design-sync` unless API path |

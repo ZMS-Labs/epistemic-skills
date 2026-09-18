@@ -59,6 +59,38 @@ _RESERVED_NOTE_PREFIXES = (
 )
 
 
+def _display_safe(text: str, *, preserve_printable_syntax: bool = False) -> str:
+    """Render terminal text without allowing control-character execution.
+
+    Raw fields use full JSON string escaping (minus the surrounding quotes).
+    A completed refusal message can also contain trusted printable syntax --
+    notably the JSON-quoted ``--scope-ack`` token that the acceptor must copy
+    exactly.  In that mode preserve printable ASCII quotes and backslashes,
+    while still JSON-escaping every control and non-ASCII code point.  Both
+    modes therefore prevent forged rows and ANSI execution and remain safe
+    on an ASCII-only console.  JSON document surfaces get the same guarantees
+    from ``custody_cli._print_status``'s ``ensure_ascii=True``.
+
+    THE ONE RENDERING HELPER (es#158), so it lives in the module every
+    operator-facing surface can already import: the CLI, the gate and this
+    module's own discovery notices.  It was defined in ``custody_cli`` and
+    used only there, which left seven sibling sites escaping with
+    ``backslashreplace`` -- whose whole effect is on NON-ASCII, so a raw CR
+    and a raw ESC CSI in a filesystem-supplied directory name reached the
+    operator's terminal unchanged (es#232, measured on
+    ``Mission._discover``).  A pin in the suite keeps that retired shape out
+    of every module here, because three of the seven are best-effort logging
+    paths no fixture can schedule.
+    """
+    if preserve_printable_syntax:
+        return "".join(
+            char if " " <= char <= "~"
+            else json.dumps(char, ensure_ascii=True)[1:-1]
+            for char in text
+        )
+    return json.dumps(text, ensure_ascii=True)[1:-1]
+
+
 def _refuse_reserved_note(text: str) -> None:
     """Refuse caller text that imitates a machine-written note ON ANY LINE.
 
@@ -194,6 +226,127 @@ def _refuse_store_aliased_target(workspace: Path, target: Path,
                     "writing through it would truncate the record that "
                     "attests the work. Remove the alias and record a fresh "
                     "artifact.")
+# A required text field exists so a human can later READ it, and
+# `not text.strip()` is not that check. `str.strip()` is Unicode-aware over
+# `str.isspace()`, so it already refuses every Z-separator -- U+00A0 included
+# -- but it accepts the code points that render blank WITHOUT being "space":
+# format controls (Cf: zero-width joiners, bidi marks and isolates, soft
+# hyphen, BOM, tag characters), C0/C1 controls (Cc), and a few letters and
+# symbols whose glyph is empty by design. Measured on the build that shipped
+# `not reason.strip()`: 26 distinct code points, over four axes and 35 cases
+# across three call paths (cancel via argv, cancel via --reason-file, and
+# amend), exited 0 -- sealing `cancelled: <invisible>` into a TERMINAL
+# checkpoint, a mission permanently closed with a reason no reader can
+# recover (es#213).
+#
+# The rule is a PREDICATE that fails closed, not a category enumeration -- the
+# same shape `_refuse_unprintable_identity` settled on, for the same reason: an
+# enumeration's blind spot is exactly the class its author did not think of.
+# That reason is not decorative here. The FIRST pass at this class shipped only
+# the first two clauses plus an eight-entry allow-list, and the allow-list's
+# blind spot was measured on the shipped build: 1961 code points -- every Mn
+# and Me assigned in Unicode 14.0.0 -- were still accepted, and nine of them
+# were confirmed live to exit 0 and seal `cancelled: <invisible>` into a
+# terminal checkpoint (U+034F, U+FE00, U+FE0F, U+E0100, U+180B, U+16FE4,
+# U+0301, U+05B0, U+20DD). The third clause below closes that axis by
+# CATEGORY, which is why it is a category test and not 1961 more entries.
+#
+#     ch.isspace()
+#     or not ch.isprintable()
+#     or unicodedata.category(ch) in _ZERO_ADVANCE_MARK_CATEGORIES
+#     or ord(ch) in _BLANK_GLYPH_CODEPOINTS
+#
+# `not isprintable()` is the FIRST closed half. A full-range census
+# (0..0x10FFFF, run on unicodedata 14.0.0 and 15.0.0 -- the local and CI
+# interpreters -- with identical results) shows it covers every member of Cc,
+# Cf, Cn, Co, Cs, Zl and Zp, and 16 of the 17 Zs, with no printable member
+# anywhere in those categories -- so a code point assigned into any of them by
+# a FUTURE Unicode version is refused without editing this file. The
+# `isspace()` clause is redundant today except for U+0020, the one printable
+# space (same census); it stays because it restates the property directly, and
+# it can only ever refuse more, never less.
+#
+# `_ZERO_ADVANCE_MARK_CATEGORIES` is the SECOND closed half, and it is the same
+# kind of guarantee: a nonspacing (Mn) or enclosing (Me) mark has zero advance
+# width BY DEFINITION and composes onto a preceding base character, so a string
+# that is nothing but marks has no base to compose onto and renders as nothing
+# or as a dotted-circle artifact. Future Mn/Me assignments are covered without
+# editing this file. Mc (SPACING combining mark) is deliberately excluded: 445
+# code points that do carry advance width and are visible on their own.
+#
+# `_BLANK_GLYPH_CODEPOINTS` is what is left OPEN, and it is an enumeration:
+# printable Lo/So characters that still render as nothing, which no category
+# predicate reaches without also refusing every CJK ideograph or every emoji.
+# Its blind spot is, by construction, whatever blank-rendering printable Lo/So
+# code point is missing from it. That residual is bounded and disclosed rather
+# than hidden -- every entry is census-proven printable, non-space, and not
+# Mn/Me (an entry a closed half already covers would be dead weight posing as
+# coverage; U+17B4 and U+17B5 were exactly that once Mn was closed, and are
+# removed), and because these are ordinary letters and symbols, a text carrying
+# ANY visible character alongside one still passes.
+# Same posture as the reserved-note guard's disclosed homoglyph residual.
+_ZERO_ADVANCE_MARK_CATEGORIES = frozenset({"Mn", "Me"})
+
+_BLANK_GLYPH_CODEPOINTS = frozenset({
+    0x115F,   # HANGUL CHOSEONG FILLER       (Lo)
+    0x1160,   # HANGUL JUNGSEONG FILLER      (Lo)
+    0x3164,   # HANGUL FILLER                (Lo)
+    0xFFA0,   # HALFWIDTH HANGUL FILLER      (Lo)
+    0x2800,   # BRAILLE PATTERN BLANK        (So)
+    0x1D159,  # MUSICAL SYMBOL NULL NOTEHEAD (So)
+})
+
+_MAX_REPORTED_BLANKS = 8
+
+
+def _require_substantive_text(text, label: str, purpose: str) -> None:
+    """Refuse a required text field that no reader could ever read.
+
+    The test is on the WHOLE string, never on a single character: text that
+    merely CONTAINS a zero-width, bidi, or combining character is still text.
+    Refusing those would be this guard's own defect pointed the other way -- an
+    operator left holding a mission that can no longer be cancelled, which is
+    worse than the blank reason the guard exists to stop. That direction is the
+    failure mode the Mn/Me clause specifically risks, because ordinary
+    well-formed text in several living scripts carries a nonspacing mark and
+    emoji presentation is a base symbol plus U+FE0F; it is pinned by
+    `test_cancel_accepts_substantive_reasons`, whose rows include non-Latin
+    scripts, an emoji ZWJ sequence, Hebrew with niqqud, Thai with a vowel mark,
+    an emoji and a CJK ideograph each followed by a variation selector, and
+    real text carrying an interior ZWSP, RLM, and combining grapheme joiner.
+    """
+    if not isinstance(text, str) or not text:
+        raise CustodyError(f"{label} required ({purpose})")
+    # The accumulator is capped at what the message can print. `--reason-file`
+    # has no size limit, so one entry per character would make the REFUSAL path
+    # allocate in proportion to the file -- measured at ~4.3x the file's bytes
+    # and rising, which turns a documented exit-2 into an OOM for a large blank
+    # file. Only the first `_MAX_REPORTED_BLANKS` DISTINCT code points are ever
+    # shown, so only those are ever held; `len(text)` supplies the count, and
+    # `more_blanks` reproduces the "..." suffix without a full distinct list.
+    shown_blanks: dict = {}
+    more_blanks = False
+    for ch in text:
+        if not (ch.isspace() or not ch.isprintable()
+                or unicodedata.category(ch) in _ZERO_ADVANCE_MARK_CATEGORIES
+                or ord(ch) in _BLANK_GLYPH_CODEPOINTS):
+            return  # at least one character a reader can actually see
+        cp = ord(ch)
+        if cp not in shown_blanks:
+            if len(shown_blanks) < _MAX_REPORTED_BLANKS:
+                shown_blanks[cp] = None
+            else:
+                more_blanks = True
+    # Name the code points in ASCII. Echoing the glyphs would print the very
+    # invisibility being refused, and this module's errors must survive an
+    # ASCII-only console (see `_display_safe`).
+    shown = " ".join("U+%04X" % cp for cp in shown_blanks)
+    if more_blanks:
+        shown += " ..."
+    raise CustodyError(
+        f"{label} required ({purpose}); the text supplied is "
+        f"{len(text)} character(s) of non-rendering code points and would "
+        f"record nothing a reader could recover: {shown}")
 
 
 def _refuse_unprintable_identity(value, field: str) -> None:
@@ -320,6 +473,69 @@ def _refuse_unrecordable_artifact_path(relpath) -> None:
             "without them. "
             "Offending: " + ", ".join(repr(c) for c in bad)
             + f" in {relpath!r}")
+
+
+def _absent_ancestors(directory: Path) -> list[Path]:
+    """The ancestors of `directory`, DEEPEST FIRST, that do not exist yet.
+
+    Read BEFORE the mkdir that creates them, because afterwards the answer
+    is gone: `Path.mkdir(parents=True, exist_ok=True)` reports nothing
+    about what it made, and a directory found on the way back out cannot be
+    told apart from one a concurrent writer created in the meantime. An
+    ancestor whose existence cannot be decided (a stat that raises rather
+    than answering) is treated as ALREADY THERE -- a directory this call
+    cannot prove it created is not this call's to remove."""
+    absent: list[Path] = []
+    node = directory
+    while node != node.parent:
+        try:
+            if node.exists():
+                break
+        except OSError:
+            break
+        absent.append(node)
+        node = node.parent
+    return absent
+
+
+def _unwind_absent_ancestors(created: list[Path]) -> None:
+    """Remove the directories `_absent_ancestors` recorded, deepest first.
+
+    ONLY WHILE EMPTY, and only until the first that will not come away:
+    `rmdir` refuses a populated directory, so bytes the failed write did
+    leave behind -- or anything a concurrent writer put there -- stop the
+    unwind at that level, and every ancestor above it holds that level and
+    stops too. Removing a directory somebody else is now using would be a
+    worse mutation than the one being undone.
+
+    A level that IS NOT THERE is skipped rather than treated as a refusal.
+    `mkdir(parents=True)` builds the chain one level at a time and can fail
+    partway, so the deepest recorded levels may never have been created at
+    all -- and a level that does not exist holds nothing, shelters nobody's
+    data, and must not stop the unwind of the levels BELOW it that this call
+    really did create. Stopping there was the whole residue: a component
+    longer than NAME_MAX left `aa/` and `aa/bb/` standing because the rmdir
+    of the too-long name raised first. The ENOTEMPTY guarantee is unchanged
+    and is enforced by `rmdir` itself, not by this skip: an ancestor holding
+    a level that would not come away is non-empty and refuses in its turn.
+
+    Failures are swallowed because this runs on the way out of a `raise`:
+    the caller must see the error that failed the effect, not a cleanup
+    error standing in front of it."""
+    for directory in created:
+        try:
+            if not directory.exists():
+                continue
+        except OSError:
+            # Existence undecidable at this level. Skipping is the same
+            # conservative direction as above -- nothing is removed here --
+            # while still letting a level this call demonstrably created be
+            # unwound. A non-empty ancestor still refuses on its own rmdir.
+            continue
+        try:
+            directory.rmdir()
+        except OSError:
+            return
 
 
 def _store_identity(mission_dir: Path) -> str:
@@ -566,6 +782,8 @@ def _is_path_pattern(entry: str) -> bool:
       docs/**, src/*.py, *.env        pattern (glob)
       secrets.env, README.md          pattern (bare filename + extension)
       .env, .gitignore                pattern (dotfile)
+      My Documents\\secrets.env       pattern (Windows separator)
+      docs\\release notes\\**         pattern (Windows separator + glob)
       reconciliation                  prose  (single bare word, no extension)
       monitored-missing reconc...     prose  (whitespace)
       media acquisition, arr/Plex     prose  (comma + whitespace)
@@ -576,7 +794,13 @@ def _is_path_pattern(entry: str) -> bool:
     is real and is not silently absorbed -- `uncompared_scope_entries` reports
     every entry this predicate declines, so an operator sees which of their
     declarations no machine is checking instead of assuming all of them are."""
-    if not entry or "," in entry:
+    if not entry:
+        return False
+    # Scope matching already canonicalizes Windows separators. Classification
+    # must inspect the same spelling, or a path can look enforced everywhere
+    # else while being discarded here as prose.
+    entry = entry.replace("\\", "/")
+    if "," in entry:
         return False
     if any(c.isspace() for c in entry):
         # A SPACE ALONE NO LONGER MEANS PROSE. Testing whitespace before the
@@ -596,7 +820,7 @@ def _is_path_pattern(entry: str) -> bool:
             return True
         stem, dot, ext = last.rpartition(".")
         return bool(stem) and bool(dot) and ext.isalnum()
-    if "/" in entry or "*" in entry or "?" in entry or entry.endswith("\\"):
+    if "/" in entry or "*" in entry or "?" in entry:
         return True
     name = entry[1:] if entry.startswith(".") else entry
     stem, dot, ext = name.rpartition(".")
@@ -1130,7 +1354,10 @@ class Mission:
         # immutable for the mission's life, so reading it once is sound and
         # keeps receipt loading off a per-call chain read.
         self._mission_id: str | None = None
-        self._effect_index_cache: tuple[int, dict[str, str]] | None = None
+        self._effect_index_cache: tuple[
+            tuple[tuple[str, str], ...],
+            tuple[dict[str, str], dict[str, str]],
+        ] | None = None
 
     # -- construction -----------------------------------------------------
 
@@ -1161,6 +1388,16 @@ class Mission:
         _refuse_unprintable_identity(actor, "actor")
         _refuse_unprintable_identity(steward_ref, "steward_ref")
         _refuse_unprintable_identity(operator_ref, "operator_ref")
+        # The instruction is what the WHOLE mission is anchored to: scope,
+        # acceptance and every later amendment are read against it, and it is
+        # the one field `_verify_manifest` has always treated as immutable.
+        # An instruction of non-rendering code points anchors the mission to
+        # nothing a reader can recover, and unlike a bad cancel reason it can
+        # never be corrected -- the manifest is immutable from open to close.
+        # Guarded here, beside the identity checks and BEFORE the load-probe,
+        # so a refused open still touches nothing on disk (es#228).
+        _require_substantive_text(
+            instruction, "instruction", "what the mission is for")
         # PLURALITY IS LEGAL (es#173 §3): open no longer refuses on an
         # existing active mission -- the fail-open decoy is removed not by
         # handling MultipleActiveMissions better but by making the state
@@ -1386,10 +1623,9 @@ class Mission:
                         skipped.append({"name": mission_dir.name,
                                         "kind": "EpochSkew",
                                         "reason": reason})
-                        print(("custody: skipping mission dir from a NEWER "
-                               "epoch " + reason)
-                              .encode("ascii", "backslashreplace")
-                              .decode("ascii"), file=sys.stderr)
+                        print(_display_safe(
+                            "custody: skipping mission dir from a NEWER "
+                            "epoch " + reason), file=sys.stderr)
                         continue
                     except (StoreError, ValueError, TypeError, OSError):
                         pass   # ordinary damage: the name verdict below owns it
@@ -1411,10 +1647,9 @@ class Mission:
                     skipped.append({"name": mission_dir.name,
                                     "kind": "IllegalMissionId",
                                     "reason": reason})
-                    print(("custody: skipping unaddressable mission dir "
-                           + reason)
-                          .encode("ascii", "backslashreplace").decode("ascii"),
-                          file=sys.stderr)
+                    print(_display_safe(
+                        "custody: skipping unaddressable mission dir "
+                        + reason), file=sys.stderr)
                     continue
                 degradable: tuple = (StoreError, ValueError, TypeError)
                 if degrade_on_oserror:
@@ -1442,9 +1677,9 @@ class Mission:
                     skipped.append({"name": mission_dir.name,
                                     "kind": type(exc).__name__,
                                     "reason": reason})
-                    print(("custody: skipping unreadable mission dir " + reason)
-                          .encode("ascii", "backslashreplace").decode("ascii"),
-                          file=sys.stderr)
+                    print(_display_safe(
+                        "custody: skipping unreadable mission dir " + reason),
+                        file=sys.stderr)
                     continue
                 if latest["status"] not in ("completed", "cancelled"):
                     active.append({"name": mission_dir.name,
@@ -1729,19 +1964,47 @@ class Mission:
                                      artifact_relpath)
         before_sha = sha256_file(target) if target.exists() else None
         data = content.encode("utf-8")
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_bytes(data)
-        receipt = {
-            "record": "receipt@1",
-            "mission_id": latest["mission_id"],
-            "request_id": request_id,
-            "actor": self.actor,
-            "utc": now_utc(),
-            "artifact_path": artifact_relpath.replace("\\", "/"),
-            "before_sha256": before_sha,
-            "after_sha256": sha256_bytes(data),
-        }
-        self.store.write_receipt(receipt)
+        # THE DIRECTORY IS PART OF THE EFFECT. Every precondition above
+        # already runs before this mkdir -- that ordering is the
+        # refuse-before-mutate discipline the idempotency guard established
+        # -- but ordering alone only covers the failures this verb PREDICTS.
+        # A `PermissionError` at `write_bytes`, or any failure at
+        # `write_receipt`, fails AFTER the directories exist, and the
+        # freshly created parents used to survive it with no receipt and no
+        # checkpoint: an unreceipted workspace mutation minted by the verb
+        # whose whole contract is "no effect without a receipt" (es#169).
+        # So the parents this call creates are recorded before the fact and
+        # unwound on the way out of any raise. What the unwind CANNOT undo
+        # it declines to touch: a write that landed bytes and then failed to
+        # receipt them leaves a non-empty directory, and the artifact's own
+        # bytes are not this cleanup's to delete.
+        # The mkdir is INSIDE the try. mkdir(parents=True) creates the chain one
+        # level at a time and can fail partway — a long component raises OSError
+        # [Errno 36] after the shallower parents already exist — so leaving it
+        # outside left exactly the residue this seam is about, and contradicted
+        # the sentence above about unwinding "on the way out of any raise".
+        # `created_parents` is still read BEFORE the mkdir, which is the part
+        # that has to happen first: Path.mkdir reports nothing about what it
+        # made, and re-deriving it afterwards cannot tell our directory from one
+        # a concurrent writer created in between.
+        created_parents = _absent_ancestors(target.parent)
+        try:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(data)
+            receipt = {
+                "record": "receipt@1",
+                "mission_id": latest["mission_id"],
+                "request_id": request_id,
+                "actor": self.actor,
+                "utc": now_utc(),
+                "artifact_path": artifact_relpath.replace("\\", "/"),
+                "before_sha256": before_sha,
+                "after_sha256": sha256_bytes(data),
+            }
+            self.store.write_receipt(receipt)
+        except BaseException:
+            _unwind_absent_ancestors(created_parents)
+            raise
         return receipt
 
     def _own_mission_id(self) -> str | None:
@@ -1761,16 +2024,22 @@ class Mission:
                 self._mission_id = None
         return self._mission_id
 
-    def _load_receipt(self, request_id: str) -> dict | None:
+    def _load_receipt(
+            self, request_id: str, *,
+            effect_paths: dict[str, str] | None = None
+    ) -> dict | None:
         """None means UNLOADABLE -- absent, corrupt, schema-invalid, or
         BELONGING TO ANOTHER MISSION alike. A corrupt receipt must degrade to
         drift (RECEIPT-MISSING), never crash resume: crashing the recovery
         path on a mangled receipt is a denial of service by exactly the
         tampering drift detection exists to catch."""
-        return self._load_receipt_checked(request_id)[0]
+        return self._load_receipt_checked(
+            request_id, effect_paths=effect_paths
+        )[0]
 
     def _load_receipt_checked(
-            self, request_id: str
+            self, request_id: str, *,
+            effect_paths: dict[str, str] | None = None
     ) -> tuple[dict | None, str | None, tuple[str, str] | None]:
         """(record, refusal reason, OPAQUE). ONE implementation of the trust rule,
         two callers: `_load_receipt` wants only the verdict, while
@@ -1876,7 +2145,10 @@ class Mission:
         # raises the bar without closing that case; it is the es#118 residue,
         # and the tail anchor closes it. Disclosed in SECURITY.md rather than
         # papered over here.
-        chained = self._effect_path_index().get(request_id)
+        chained = (
+            effect_paths if effect_paths is not None
+            else self._effect_path_index()
+        ).get(request_id)
         if chained is not None and record.get("artifact_path") != chained:
             return None, (
                 f"present receipt claims {record.get('artifact_path')!r}, "
@@ -1908,7 +2180,32 @@ class Mission:
 
     def _effect_path_index(self) -> dict[str, str]:
         """Every chain-bound request id -> the path its admitting revision
-        recorded, built in ONE pass over the chain.
+        recorded. See `_effect_indexes` for how it is built."""
+        return self._effect_indexes()[0]
+
+    def _effect_kind_index(self) -> dict[str, str]:
+        """Every chain-bound request id -> HOW it was minted ('effect' or
+        'reconciled'), from the same note that records the path.
+
+        The path index removed the per-id rescan from every caller that wanted
+        all the PATHS, and left the one caller that wants all the KINDS still
+        rescanning: `continuity_breaks` asked `_historical_effect_path(...,
+        kind=True)` once per break, so a mission with many real breaks read
+        the chain from checkpoint 1 for each of them -- O(breaks x
+        checkpoints) reads on exactly the histories that have the most to
+        read. A clean chain never reaches that branch, which is why a green
+        suite did not notice.
+
+        Same keys as the path index, necessarily: both come from the same
+        note, so an id has a kind exactly when it has a path."""
+        return self._effect_indexes()[1]
+
+    def _effect_indexes(self) -> tuple[dict[str, str], dict[str, str]]:
+        """(path index, kind index), built together in ONE pass over the chain.
+
+        Built together rather than in two passes because they are two readings
+        of the SAME note: separating them would double the chain reads and
+        create a second place for the two answers to disagree.
 
         Same rule as `_historical_effect_path`, and deliberately sharing
         `_first_effect_note` with it so the two cannot drift: a reader that
@@ -1922,31 +2219,51 @@ class Mission:
         millions of JSON parses. Callers that want ALL the paths ask once.
         Ids with no derivable path are ABSENT (never mapped to a guess), so
         `.get(rid)` returns None exactly where the per-id method does."""
-        # CACHED against the checkpoint COUNT, not time: the chain is
-        # append-only, so a count that has not moved cannot have new ids in
-        # it, and a count that has moved rebuilds. Without this, binding
-        # `_load_receipt` to the chain (round 7) would have reintroduced the
-        # quadratic walk round 3 removed -- resume() loads every receipt.
+        # Cache against exact checkpoint CONTENT, not merely count. Interior
+        # rewrites are rejected by chain verification, but checkpoint@1's tail
+        # is deliberately unsealed until contract@2; a same-count tail rewrite
+        # must not leave an authority-sensitive path index stale. Reading each
+        # file once to fingerprint it preserves a linear scan and lets a cache
+        # hit avoid reparsing while still observing that supported boundary.
+        # Retain only the digest from that pass: checkpoint records are
+        # cumulative, so retaining every payload at once makes peak memory
+        # quadratic in the number of receipts. A cache miss deliberately
+        # rereads one checkpoint at a time for parsing.
         paths = self.store.checkpoint_paths()
+        fingerprint = tuple(
+            (cp_path.name, sha256_file(cp_path)) for cp_path in paths
+        )
         if self._effect_index_cache is not None \
-                and self._effect_index_cache[0] == len(paths):
+                and self._effect_index_cache[0] == fingerprint:
             return self._effect_index_cache[1]
         index: dict[str, str] = {}
-        prev_ids: list[str] = []
+        kinds: dict[str, str] = {}
+        known_ids: set[str] = set()
         prev_notes: list[str] = []
         for cp_path in paths:
             record = json.loads(cp_path.read_text(encoding="utf-8"))
             ids = record["receipt_ids"]
             notes = record["state"]["notes"]
-            fresh = [rid for rid in ids if rid not in prev_ids]
+            # Checkpoints repeat the full cumulative ID list. List membership
+            # makes comparing those cumulative prefixes cubic; request IDs
+            # are never reusable, so one mission-wide set is the exact rule.
+            fresh = [rid for rid in ids if rid not in known_ids]
             if fresh:
-                path = _first_effect_note(notes[len(prev_notes):])
+                fresh_notes = notes[len(prev_notes):]
+                path = _first_effect_note(fresh_notes)
                 if path is not None:
+                    # Both readings come from `_first_effect_note`, the one
+                    # place the rule is written, so the index cannot
+                    # paraphrase what the per-id method answers.
+                    kind = _first_effect_note(fresh_notes, kind=True)
                     for rid in fresh:
                         index.setdefault(rid, path)
-            prev_ids, prev_notes = ids, notes
-        self._effect_index_cache = (len(paths), index)
-        return index
+                        if kind is not None:
+                            kinds.setdefault(rid, kind)
+                known_ids.update(fresh)
+            prev_notes = notes
+        self._effect_index_cache = (fingerprint, (index, kinds))
+        return index, kinds
 
     def _all_receipt_ids_ever(self) -> list[str]:
         """Every request id ever admitted to receipt_ids, in the order the
@@ -2156,12 +2473,11 @@ class Mission:
                           encoding="utf-8") as handle:
                     handle.write(line + "\n")
             except Exception as exc:  # noqa: BLE001
-                print(("custody: sibling-touch append failed for "
-                       f"{entry['name']} ({type(exc).__name__}: {exc}); "
-                       "the effect stands -- detection falls back to the "
-                       "sibling's resume-time receipt scan")
-                      .encode("ascii", "backslashreplace").decode("ascii"),
-                      file=sys.stderr)
+                print(_display_safe(
+                    "custody: sibling-touch append failed for "
+                    f"{entry['name']} ({type(exc).__name__}: {exc}); "
+                    "the effect stands -- detection falls back to the "
+                    "sibling's resume-time receipt scan"), file=sys.stderr)
 
     def _log_effect_matches(self, matches: list[dict],
                             artifact_relpath: str) -> None:
@@ -2354,8 +2670,8 @@ class Mission:
         if latest["status"] not in _OPEN_STATES:
             raise IllegalTransition(
                 f"cannot amend_authority: status is {latest['status']!r}")
-        if not isinstance(text, str) or not text.strip():
-            raise CustodyError("amendment text required (verbatim operator grant)")
+        _require_substantive_text(
+            text, "amendment text", "verbatim operator grant")
         manifest = json.loads(json.dumps(latest["manifest"]))
         _refuse_reserved_note(text)
         manifest["authority"]["amendments"].append(
@@ -2405,10 +2721,14 @@ class Mission:
         if latest["status"] not in _OPEN_STATES:
             raise IllegalTransition(
                 f"cannot authorize_sibling: status is {latest['status']!r}")
-        if not isinstance(text, str) or not text.strip():
-            raise CustodyError(
-                "amendment text required (the verbatim operator grant this "
-                "authorization records)")
+        # THIRD site of the same class, not a second instance of a fixed one.
+        # `authorize_sibling` landed with es#173 after this branch was cut and
+        # reached for `not text.strip()`, the check es#213 measured as open on
+        # 26 code points. A sibling authorization is an authority record with
+        # the same reader, so it takes the same predicate.
+        _require_substantive_text(
+            text, "amendment text",
+            "the verbatim operator grant this authorization records")
         if not isinstance(mission_id, str) or not _ID_RE.match(mission_id):
             raise CustodyError(
                 f"authorize_sibling names {mission_id!r}, which is not a "
@@ -2449,6 +2769,11 @@ class Mission:
         self._verify_manifest(latest)
         if latest["status"] not in _OPEN_STATES:
             raise IllegalTransition(f"cannot note: status is {latest['status']!r}")
+        # A note is the mission's append-only narrative, and a checkpoint is
+        # permanent: a blank-shaped one spends a revision recording nothing an
+        # auditor could ever read back (es#228).
+        _require_substantive_text(
+            text, "note text", "what this checkpoint records")
         _refuse_reserved_note(text)
         new = self._write_next(latest, path, status=latest["status"], note=text)
         return new["revision"]
@@ -2462,6 +2787,12 @@ class Mission:
         # by `status`/`resume` and lives in the same checkpoint JSON, so an
         # auditor grepping the chain for a machine-note prefix hits it just the
         # same. Same guard, same reason.
+        #
+        # And the frontier is what a resuming session reads to learn where the
+        # work stands; blank-shaped, it REPLACES a readable frontier with
+        # nothing, which is worse than leaving the old one in place (es#228).
+        _require_substantive_text(
+            text, "frontier text", "what remains to be done")
         _refuse_reserved_note(text)
         new = self._write_next(latest, path, status=latest["status"], frontier=text)
         return new["revision"]
@@ -2526,11 +2857,14 @@ class Mission:
         # break across the gap where the retired one honestly sat. That fires
         # on the ordinary sanctioned recovery flow, which would train stewards
         # to ignore the signal on day one.
+        effect_paths, effect_kinds = self._effect_indexes()
         by_path: dict[str, list[str]] = {}
         for request_id in self._all_receipt_ids_ever():
-            receipt = self._load_receipt(request_id)
+            receipt = self._load_receipt(
+                request_id, effect_paths=effect_paths
+            )
             rel = (receipt["artifact_path"] if receipt is not None
-                   else self._historical_effect_path(request_id))
+                   else effect_paths.get(request_id))
             if rel is None:
                 continue
             key = _normalize_relpath(rel)
@@ -2540,8 +2874,12 @@ class Mission:
         breaks: list[dict] = []
         for ids in by_path.values():
             for prior_id, next_id in zip(ids, ids[1:]):
-                prior = self._load_receipt(prior_id)
-                nxt = self._load_receipt(next_id)
+                prior = self._load_receipt(
+                    prior_id, effect_paths=effect_paths
+                )
+                nxt = self._load_receipt(
+                    next_id, effect_paths=effect_paths
+                )
                 if prior is None or nxt is None:
                     # A gap we cannot read is not evidence of a break. The
                     # missing receipt is already reported by resume as its own
@@ -2554,8 +2892,13 @@ class Mission:
                 # already caught and the steward already answered for. The
                 # break is real either way, but only an unreconciled one is
                 # news -- that is the case nothing else in the contract sees.
-                reconciled = self._historical_effect_path(
-                    nxt["request_id"], kind=True) == "reconciled"
+                # Read from the prebuilt index, NOT from a per-id rescan. This
+                # is the one branch a clean chain never reaches, so the rescan
+                # here survived the round that removed every other one: a
+                # mission with many real breaks paid a full chain walk per
+                # break. Same note, same rule, one pass.
+                reconciled = effect_kinds.get(
+                    nxt["request_id"]) == "reconciled"
                 breaks.append({
                     "artifact_path": nxt["artifact_path"],
                     "prior_request_id": prior["request_id"],
@@ -2602,10 +2945,10 @@ class Mission:
             try:
                 receipts = store.load_receipts()
             except Exception as exc:  # noqa: BLE001
-                print(("custody: sibling receipt scan skipped "
-                       f"{mission_dir.name} ({type(exc).__name__}: {exc})")
-                      .encode("ascii", "backslashreplace").decode("ascii"),
-                      file=sys.stderr)
+                print(_display_safe(
+                    "custody: sibling receipt scan skipped "
+                    f"{mission_dir.name} ({type(exc).__name__}: {exc})"),
+                    file=sys.stderr)
                 continue
             # CHAIN ADMISSION. `load_receipts` is a bare `receipts/*.json`
             # glob, so this scan used to accept evidence the sibling's own
@@ -2619,11 +2962,10 @@ class Mission:
             try:
                 sib_latest, _ = store.load_latest()
             except Exception as exc:  # noqa: BLE001
-                print(("custody: sibling receipt scan skipped "
-                       f"{mission_dir.name} (chain unreadable: "
-                       f"{type(exc).__name__}: {exc})")
-                      .encode("ascii", "backslashreplace").decode("ascii"),
-                      file=sys.stderr)
+                print(_display_safe(
+                    "custody: sibling receipt scan skipped "
+                    f"{mission_dir.name} (chain unreadable: "
+                    f"{type(exc).__name__}: {exc})"), file=sys.stderr)
                 continue
             admitted = set(sib_latest.get("receipt_ids") or ())
             minted_paths = [
@@ -2791,8 +3133,11 @@ class Mission:
         current_by_key: dict[str, tuple[str, dict | None, str | None]] = {}
         missing: list[str] = []
         unplaceable_opaque: list[tuple[str, str]] = []
+        effect_paths = self._effect_path_index()
         for request_id in latest["receipt_ids"]:
-            receipt, _refusal, opaque = self._load_receipt_checked(request_id)
+            receipt, _refusal, opaque = self._load_receipt_checked(
+                request_id, effect_paths=effect_paths
+            )
             # KIND, not a boolean. Both opaque kinds behave identically here
             # (present, unverifiable, never "lost"), and differ only in the
             # marker and message the operator is handed.
@@ -2811,7 +3156,7 @@ class Mission:
             # Claiming the slot as an OPAQUE entry supersedes the stale
             # receipt without asserting anything this reader cannot check.
             rel = (receipt["artifact_path"] if receipt is not None
-                   else self._historical_effect_path(request_id))
+                   else effect_paths.get(request_id))
             if rel is None:
                 if kind:
                     # Unattributable but NOT lost: a receipt that is merely
@@ -3354,6 +3699,7 @@ class Mission:
         if not includes and not excludes:
             return []
         findings: list[dict] = []
+        effect_paths = self._effect_path_index()
         for request_id in self._all_receipt_ids_ever():
             # The CHAINED effect note, not the receipt file, decides which
             # artifact an id covers. A receipt is a mutable file: a schema-valid
@@ -3361,9 +3707,11 @@ class Mission:
             # artifact_path would move an out-of-scope write into scope and let
             # PASS through. The chain is tamper-evident and is already treated
             # as the sounder authority everywhere else in this module.
-            rel = self._historical_effect_path(request_id)
+            rel = effect_paths.get(request_id)
             if rel is None:
-                receipt = self._load_receipt(request_id)
+                receipt = self._load_receipt(
+                    request_id, effect_paths=effect_paths
+                )
                 rel = receipt["artifact_path"] if receipt is not None else None
             if rel is None:
                 continue
@@ -3459,6 +3807,16 @@ class Mission:
         self._verify_manifest(latest)
         if verdict not in VERDICTS:
             raise CustodyError(f"unknown verdict {verdict!r}")
+        # THE SHARP ONE (es#228). A PASS SEALS the mission `completed`, and
+        # the reason is hash-chained into the acceptance-verdict record as the
+        # acceptor's account of why. Blank-shaped, it closed the mission with
+        # an acceptance no reader could recover and no transition could
+        # revisit -- the defect es#213 closed on `cancel`, landing on the
+        # transition that matters more. FAIL and the conditional verdicts take
+        # the same rule: a FAIL reason is what `clear-fail` is later matched
+        # against, so an unreadable one wedges the repair path too.
+        _require_substantive_text(
+            reason, "verdict reason", "why the verdict was reached")
         _refuse_reserved_note(reason)
         if verdict in ("PASS", "FAIL"):
             if latest["status"] != "verifying":
@@ -3789,6 +4147,8 @@ class Mission:
         return new["revision"]
 
     def cancel(self, reason: str) -> int:
+        _require_substantive_text(
+            reason, "cancel reason", "why the mission was abandoned")
         latest, path = self.store.load_latest()
         self._verify_manifest(latest)
         if latest["status"] not in ("draft", "active", "reopened", "verifying"):

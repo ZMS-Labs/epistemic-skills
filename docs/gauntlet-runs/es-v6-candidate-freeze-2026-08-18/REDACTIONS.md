@@ -8,7 +8,7 @@ the record stays verifiable.
 ## What was changed
 
 Three occurrences of the private fleet repository's literal name were replaced
-with the placeholder `<private-fleet-repo>`:
+with the placeholder `<deployment-repository>`:
 
 | File | Occurrences |
 |---|---|

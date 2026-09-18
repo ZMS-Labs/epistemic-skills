@@ -68,5 +68,15 @@ jobs:
           persist-credentials: false
       - name: Clone the published wiki (read-only)
         run: git clone --quiet --depth 1 https://github.com/${{ github.repository }}.wiki.git "$RUNNER_TEMP/wiki"
-      - name: Published handbook matches the package, and every link resolves
-        run: python docs/wiki-updates/v7.0.0/check_wiki.py "$RUNNER_TEMP/wiki" --links
+      # During release preparation main can describe a newer candidate. The live
+      # handbook belongs to the latest published release until publication.
+      - name: Clone the latest published source for live expectations
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          published_tag="$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName --jq .tagName)"
+          [[ "$published_tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || exit 1
+          git clone --quiet --depth 1 --branch "$published_tag" \
+            "https://github.com/$GITHUB_REPOSITORY.git" "$RUNNER_TEMP/published-source"
+      - name: Published handbook matches the released package, and every link resolves
+        run: python docs/wiki-updates/v7.0.0/check_wiki.py "$RUNNER_TEMP/wiki" --source-root "$RUNNER_TEMP/published-source" --links

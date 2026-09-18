@@ -5,6 +5,6 @@
 [PASS] planted chain on decision: recurrence_risk is correction-only; failure_chain is correction-only
 [PASS] planted unknown property: additional properties are forbidden: verdict
 [PASS] planted bad id: id must match <slug>-<YYYYMMDD>-<seq>
-[PASS] durable ledger /home/user/epistemic-skills/.ledger/entries.jsonl: 8 valid entries
+[PASS] durable ledger /workspace/epistemic-skills/.ledger/entries.jsonl: 8 valid entries
 
 RESULT: PASS

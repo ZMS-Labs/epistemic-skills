@@ -11,8 +11,9 @@ The Wiki is unversioned navigation over immutable released sources. For exact be
 ## v7.0.0 — the contract-tightening release
 
 **Breaking, and NOT YET PUBLISHED at the time this page was written.** There is
-no v7.0.0 tag and no Release: publication is blocked on two owner acts recorded
-in the release notes, and until they happen the release to install is v6.0.0.
+no v7.0.0 tag and no Release. The owner has authorized preparation and selected
+Gemini for the independent review. Publication remains conditional on the exact
+candidate checks and a favorable release verdict; the release to install is v6.0.0.
 Every source link on these pages therefore still points at v6.0.0, deliberately.
 
 **Why it is major.** Two published schemas were tightened **in place, at their
@@ -33,7 +34,7 @@ existing contract versions**:
 | emit `status: "superseded"` envelopes | emit `supersedes` alongside it. If you already passed the bundled verifier you are already compliant — only schema-only validation changes verdict |
 | author `mission-manifest@1` manifests | remove empty and whitespace-only entries from the eight envelope lists. Records already persisted are unaffected, by design |
 | pin a skills release SHA downstream | rotate to the v7.0.0 tag once it exists, and update whatever record declares the coordinate in the same change |
-| just use the skills | nothing changes. No `SKILL.md` moved, so triggers, routing, the entry point and the fifteen-skill catalog are identical to v6.0.0 |
+| just use the skills | the fifteen-skill catalog and triggers are unchanged; examples were sanitized and supporting custody tools include correctness fixes |
 
 Also in this release: `verify_calibration.py` returns the named
 `UNKNOWN_STATUS` failure instead of raising on an unhashable `status`, and its
@@ -128,7 +129,7 @@ Sources:
 
 ### What changed and why
 
-v3.x grew to eighteen skills by v3.4.0 faster than evidence accumulated, and every new seat cost ~12 hand-synced enumeration surfaces. 4.0.0 inverts both curves by consolidating the collection into fewer, mode-structured disciplines:
+v3.x grew to seventeen skills by v3.4.0 faster than evidence accumulated, and every new seat cost ~12 hand-synced enumeration surfaces. 4.0.0 inverts both curves by consolidating the collection into fewer, mode-structured disciplines:
 
 | v4.0.0 skill | Consolidates (as modes/instruments) |
 |---|---|

@@ -524,8 +524,9 @@ def _selftest_copy(dst: Path) -> None:
     # Windows host creates a FILE symlink to a directory and the self-test
     # crashes deterministically (kimi ruling S8).
     try:
+        # Native separators matter for relative directory links on Windows.
         (dst / "skills").symlink_to(
-            "plugins/epistemic-skills/skills", target_is_directory=True)
+            Path("plugins") / "epistemic-skills" / "skills", target_is_directory=True)
     except OSError:
         (dst / "skills").write_text(
             "plugins/epistemic-skills/skills\n", encoding="utf-8")

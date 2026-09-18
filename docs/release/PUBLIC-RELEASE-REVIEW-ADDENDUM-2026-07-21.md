@@ -13,13 +13,9 @@ tracked files that had not been through that review. This addendum covers
   (not just the diff range), including `outputs/` and
   `plugins/epistemic-skills/skills/gauntlet/runs/` — directories a prior
   reviewer pattern-scanned but did not read file-by-file.
-- Patterns swept: private-repo name (`zms-homelab`), local-checkout path
-  forms (`Y:\dev`, `Y:/dev`, `C:\Users\zachs`, `C:/Users/zachs`), internal
-  network ranges (`10.10.*`, `10.147.*`), internal domain suffix
-  (`.internal.zms`), device hostnames (`zms-pc-2025`, `ZMS-PC-2025`),
-  infrastructure vendor/product terms (`unas`/`UNAS`, `flashstor`,
-  `jetson`, `ha-yellow`, `zimaboard`, `mele`), `H:\`, `secrets.env`,
-  `Homelab`.
+- Patterns swept: private repository identifiers, local checkout and user-home
+  paths, internal network ranges and domains, device names, and storage topology.
+  Identifying literals are redacted in this public copy.
 - A separate generic credential pass: `token`, `apikey`, `api_key`,
   `password`, `Bearer `, `ghp_`, `github_pat_`, `-----BEGIN`.
 - Every hit was read in context and classified individually; no pattern
@@ -33,7 +29,7 @@ in the private fleet repo — see companion PR there):
 
 - `docs/superpowers/plans/2026-07-19-agentic-control-plane-phase-0.md` —
   step-by-step implementation plan for a private control-plane project
-  (worktree names, `Y:\dev\zms-homelab*` paths, private-repo verification
+  (worktree names, `/workspace/example-infrastructure*` paths, private-repo verification
   commands).
 - `docs/superpowers/specs/2026-07-18-SESSION-HANDOFF.md` — session
   pause/resume notes with private worktree paths and no content describing
@@ -43,7 +39,7 @@ in the private fleet repo — see companion PR there):
   fleet paths and process.
 - `outputs/gauntlet-runs/penecho-zms-integration-2026-07-18/` (17 files) —
   a real Gauntlet run evaluating a private infrastructure/product decision,
-  referencing the private `ZMS-Labs/zms-k3s-gitops` repo and internal
+  referencing the private `ZMS-Labs/example-infrastructure` repo and internal
   LiteLLM/secrets architecture. Confirmed as accidentally-committed fleet
   telemetry (the relocated `SESSION-HANDOFF.md` itself flagged the
   corresponding ledger line as "fleet telemetry" at capture time).
@@ -54,7 +50,7 @@ retained):
 
 - `docs/superpowers/specs/2026-07-18-agentic-control-plane-design.md` —
   replaced two references to the private repo name/path with
-  `<private-fleet-repo>` / `<local-checkout>` placeholders; updated the
+  `<deployment-repository>` / `<local-checkout>` placeholders; updated the
   provenance pointer to the now-relocated session-handoff note.
 - `docs/superpowers/specs/2026-07-18-agentic-skills-packaging-architecture.md`
   — replaced four references to the private repo name/path/worktree with
@@ -76,7 +72,7 @@ since the mechanism is part of the shipped skill:
 ## Intentional / not scrubbed
 
 - `docs/superpowers/plans/2026-07-20-helix.md` references
-  `Y:/dev/epistemic-skills` — this is the *public* repo's own local
+  `/workspace/epistemic-skills` — this is the *public* repo's own local
   checkout path used in verification commands within its own implementation
   plan, not a private-infrastructure reference. Left as-is.
 - The operator name/email in `PUBLIC-RELEASE-REVIEW-2026-07-17.md` remains

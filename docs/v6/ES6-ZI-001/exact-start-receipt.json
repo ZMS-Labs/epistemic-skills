@@ -4,7 +4,7 @@
   "issue": 191,
   "exact_start_sha": "9ca9735745466fb12eb6cbcf0ed7d966778d7a83",
   "recorded_at": "2026-08-18T06:37:04Z",
-  "parent_program": "ZMS-Labs/zms-homelab#1601",
+  "parent_program": "redacted:private-tracker",
   "authorized_packets": [
     "ES6-BASELINE-CLAIMS",
     "ES6-ORACLE-AUDIT",

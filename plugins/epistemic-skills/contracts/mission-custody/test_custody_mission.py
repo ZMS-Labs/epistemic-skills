@@ -10,6 +10,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import tracemalloc
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
@@ -25,6 +26,8 @@ from custody_gate import run_gate  # noqa: E402
 import census_missions  # noqa: E402
 from custody_mission import (  # noqa: E402
     _approved_by_chain,
+    _MAX_REPORTED_BLANKS,
+    _require_substantive_text,
     _same_artifact,
     AcceptanceRefused,
     BindingRequired,
@@ -51,7 +54,7 @@ def open_mission(workspace: Path, mission_id: str, instruction: str,
                   actor: str = "agent:worker", **kwargs) -> Mission:
     return Mission.open(
         workspace, mission_id=mission_id, instruction=instruction,
-        operator_ref="operator:zach", steward_ref="agent:worker",
+        operator_ref="operator:example", steward_ref="agent:worker",
         required_tier=required_tier, actor=actor, **kwargs)
 
 
@@ -681,8 +684,8 @@ def test_orphan_residue_is_reportable_after_the_mission_ends(
     Mission.load(root, actor="agent:worker").acknowledge_receipt_loss("req-1")
     Mission.load(root, actor="agent:worker").record_effect("a.txt", "aa", "r9")
     Mission.load(root, actor="agent:worker").begin_verification()
-    Mission.load(root, actor="operator:zach").record_verdict(
-        "PASS", "operator:zach", "operator-accepted", "done")
+    Mission.load(root, actor="operator:example").record_verdict(
+        "PASS", "operator:example", "operator-accepted", "done")
     receipt_path.write_text(saved, encoding="utf-8")   # residue, after the end
 
     report = census_missions.census(root)
@@ -1074,14 +1077,118 @@ def test_unreadable_root_is_never_reported_as_nothing_to_enforce(
     m.approve()
     m.record_effect("a.txt", "aa", "req-1")
     m.begin_verification()
-    Mission.load(done, actor="operator:zach").record_verdict(
-        "PASS", "operator:zach", "operator-accepted", "done")
+    Mission.load(done, actor="operator:example").record_verdict(
+        "PASS", "operator:example", "operator-accepted", "done")
     out_done = subprocess.run(
         [sys.executable, str(Path(__file__).parent / "census_missions.py"),
          str(done)], capture_output=True, text=True).stdout
     check("terminal-only-root-still-nothing-to-enforce",
           "nothing to enforce" in out_done
           and "NOT established as empty" not in out_done)
+
+
+# es#232: one control-permissive payload, reused by the pins below. A raw CR
+# forges a second row in a line-oriented operator log; a raw ESC CSI and the
+# 8-bit C1 CSI (U+009B) are sequences a terminal EXECUTES. All three are C0/C1
+# controls, which is exactly the class `backslashreplace` lets through: it
+# converts non-ASCII and nothing else. Written as escapes so this source file
+# stays pure ASCII, the way the other control-character fixtures here are.
+_CONTROL_PERMISSIVE_NAME = "ev\ril\x1b[31m\u009bFORGED-ROW"
+
+
+def test_discovery_stderr_escapes_control_characters(workspace: Path) -> None:
+    """es#232, following es#158: EVERY operator-facing surface renders
+    through the ONE helper, not just the CLI's.
+
+    `_discover`'s three skip notices interpolate a filesystem-supplied
+    directory name and a store-supplied exception message, and they escaped
+    with `.encode("ascii", "backslashreplace")` -- which converts non-ASCII
+    and NOTHING else, so a raw CR and a raw ESC CSI walked straight onto the
+    operator's terminal. Measured before the fix, read through `cat -v`:
+    `custody: skipping unaddressable mission dir ev^Mil^[[31m...`.
+
+    All three sites are driven from real stores, and the payload reaches the
+    third through the EXCEPTION rather than the directory name, because a
+    legal mission id passes `_ID_RE` and the exception is the channel that
+    stays open behind it.
+    """
+    missions = workspace / "missions"
+    # The live mission is opened FIRST: `open` refuses beside an unreadable
+    # sibling, so the hostile dirs cannot exist yet.
+    live = open_mission(workspace, "m-hostile-field", "Live.")
+    live.approve()
+    hostile = _CONTROL_PERMISSIVE_NAME
+    try:
+        # (a) an epoch-CLAIMING store under an illegal, hostile name.
+        staged = open_mission(workspace / "staging", "m-skew", "Skewed.")
+        staged.approve()
+        skew_dir = missions / ("skew-" + hostile)
+        shutil.move(str(workspace / "staging" / "missions" / "m-skew"),
+                    str(skew_dir))
+        shutil.rmtree(workspace / "staging", ignore_errors=True)
+        tail = sorted((skew_dir / "checkpoints").glob("*.json"))[-1]
+        record = json.loads(tail.read_text(encoding="utf-8"))
+        record["record"] = "checkpoint@2"
+        tail.write_text(json.dumps(record, indent=1, sort_keys=True),
+                        encoding="utf-8")
+
+        # (b) an ordinary corrupt store under an illegal, hostile name.
+        corrupt = missions / ("bad-" + hostile) / "checkpoints"
+        corrupt.mkdir(parents=True)
+        (corrupt / "r00000001.json").write_text("{", encoding="utf-8")
+    except OSError:
+        print("  skip discovery-control-escape pin (this filesystem refuses "
+              "a control-character directory name)")
+        return
+
+    # (c) a LEGAL mission id whose store-supplied error quotes the payload.
+    live_tail = sorted(
+        (missions / "m-hostile-field" / "checkpoints").glob("*.json"))[-1]
+    record = json.loads(live_tail.read_text(encoding="utf-8"))
+    record["manifest"][hostile] = "x"
+    live_tail.write_text(json.dumps(record, indent=1, sort_keys=True) + "\n",
+                         encoding="utf-8")
+
+    buf = io.StringIO()
+    with contextlib.redirect_stderr(buf):
+        _, skipped = Mission._discover(workspace, degrade_on_oserror=True)
+    printed = buf.getvalue()
+
+    check("discovery-control-exercises-all-three-skip-sites",
+          {"EpochSkew", "IllegalMissionId", "ChainBroken"}
+          <= {s["kind"] for s in skipped})
+    for label, raw in (("cr", "\r"), ("esc", "\x1b"), ("c1-csi", "\u009b")):
+        check("discovery-control-no-raw-%s-on-stderr" % label,
+              raw not in printed)
+    check("discovery-control-stderr-is-ascii", printed.isascii())
+    for label, escaped in (("cr", "\\r"), ("esc", "\\u001b"),
+                           ("c1-csi", "\\u009b")):
+        check("discovery-control-escapes-%s" % label, escaped in printed)
+    # Escaping is a DISPLAY act. The skip RECORDS keep the name that is
+    # actually on disk, because `--acknowledge-unreadable <dir>` has to name
+    # it -- an escaped name there would be an acknowledgement matching
+    # nothing, which `open` refuses as a typo.
+    check("discovery-control-skip-records-keep-the-raw-name",
+          any(hostile in s["name"] for s in skipped))
+
+
+def test_no_contract_module_keeps_the_control_permissive_escaper(
+        _ws: Path) -> None:
+    """es#158 asked for ONE rendering helper, not a fix per call site.
+
+    es#215 moved the CLI onto `_display_safe` and left seven siblings on
+    `.encode("ascii", "backslashreplace")`, an escaper whose whole effect is
+    on NON-ASCII: every C0 and C1 control it was reached for passed through
+    unchanged. Three of those seven are best-effort logging paths that no
+    single-threaded fixture can schedule, so the retired shape is pinned out
+    of the modules directly -- otherwise the next surface reintroduces it and
+    the behavioural pins above stay green while it does.
+    """
+    retired = '.encode("ascii", "backslashreplace")'
+    for name in ("custody_mission.py", "custody_gate.py", "custody_cli.py",
+                 "custody_hook.py", "custody_store.py", "census_missions.py"):
+        check("no-control-permissive-escaper-in-%s" % name,
+              retired not in (ROOT / name).read_text(encoding="utf-8"))
 
 
 def _skew_a_store_into(workspace: Path, name: str) -> None:
@@ -1820,6 +1927,409 @@ def test_effect_path_index_matches_per_id(workspace: Path) -> None:
     check("index-covers-reconciled-id", index.get("req-a-again") == "notes/a.md")
 
 
+def test_effect_path_index_agrees_after_readmission(workspace: Path) -> None:
+    """The index and the per-id lookup must still agree when an id is admitted
+    with NO effect note, dropped from receipt_ids, and later RE-ADMITTED by a
+    revision that does carry one.
+
+    es#161's linear rewrite replaced the index's adjacent-checkpoint freshness
+    test (`rid not in prev_ids`) with a mission-wide first-admission set
+    (`rid not in known_ids`). That is not only a speed change. On this chain
+    the old shape treated the re-admitting revision as a fresh admission and
+    re-derived `req-x` from ITS note -- answering 'secrets/x.md' -- while
+    `_historical_effect_path` stopped at the first admission and answered
+    None. Measured on 488f252 (this PR's exact base) and on b6c6eef: index
+    'secrets/x.md' vs per-id None. The existing pin
+    (test_effect_path_index_matches_per_id) could not see it, because its
+    noteless id is never dropped and re-admitted -- so the one test that
+    exists to stop these two readers drifting was blind to the case where
+    they had already drifted.
+
+    None is the answer the contract asks for: `_effect_path_index` declares
+    that ids with no derivable path are ABSENT, never mapped to a guess, and
+    that `.get(rid)` returns None exactly where the per-id method does. The
+    consequence is deliberate and belongs in a test rather than a reviewer's
+    memory: with no chained path for such an id, `_load_receipt_checked` has
+    nothing to compare a receipt against, so the receipt file is the only
+    authority. The base's disagreeing index refused that receipt -- an
+    accident of the drift, not a rule anyone wrote down.
+
+    `record_effect` refuses any id already in the mission's history, so only
+    a direct chain write can produce this shape: legacy or hand-written
+    history, which is exactly the class the underivable-id fallback exists
+    for. If a later change deliberately teaches BOTH readers to keep scanning
+    past a noteless first admission, `readmit-index-answers-none` is the
+    check that must be updated with it -- the agreement check above it is the
+    invariant that must not be."""
+    m = open_mission(workspace, "m-readmit", "Re-admitted noteless id.")
+    m.approve()
+    m.record_effect("docs/a.md", "aa", "req-a")
+
+    def bare(note: str, *, add=None, ids=None) -> None:
+        latest, path = m.store.load_latest()
+        m._write_next(
+            latest, path, status=latest["status"], add_receipt_id=add,
+            receipt_ids=ids,
+            unresolved_verdicts=latest["state"]["unresolved_verdicts"],
+            note=note)
+
+    bare("bare progress note with no effect marker", add="req-x")
+    latest, _ = m.store.load_latest()
+    bare("bare removal note",
+         ids=[r for r in latest["receipt_ids"] if r != "req-x"])
+    bare("effect: secrets/x.md", add="req-x")
+
+    # NOT VACUOUS. Without these two the whole test would pass on a chain
+    # where the re-admission never happened -- the failure mode of a
+    # regression test whose scenario silently stops being built.
+    notes = [n for p in m.store.checkpoint_paths()
+             for n in json.loads(p.read_text(encoding="utf-8"))["state"]["notes"]]
+    check("readmit-note-is-really-in-the-chain",
+          "effect: secrets/x.md" in notes)
+    check("readmit-id-is-really-back",
+          "req-x" in m.status()["receipt_ids"]
+          and m._all_receipt_ids_ever() == ["req-a", "req-x"])
+
+    index = m._effect_path_index()
+    check("readmit-index-agrees-with-per-id",
+          index.get("req-x") == m._historical_effect_path("req-x"))
+    check("readmit-index-answers-none", index.get("req-x") is None)
+    check("readmit-first-admission-still-wins-elsewhere",
+          index.get("req-a") == "docs/a.md"
+          and m._historical_effect_path("req-a") == "docs/a.md")
+
+
+def test_scope_consistency_reuses_single_effect_index(workspace: Path) -> None:
+    """es#161: closing must not rescan the checkpoint chain per receipt."""
+    m = open_mission(
+        workspace, "m-scope-index", "One indexed scope traversal.",
+        scope_in=["docs/**"],
+    )
+    m.approve()
+    for i in range(40):
+        m.record_effect(f"docs/{i}.txt", str(i), f"req-{i}")
+
+    original_index = m._effect_path_index
+    original_per_id = m._historical_effect_path
+    index_calls = 0
+    per_id_calls = 0
+
+    def counted_index():
+        nonlocal index_calls
+        index_calls += 1
+        return original_index()
+
+    def counted_per_id(request_id: str, kind: bool = False):
+        nonlocal per_id_calls
+        per_id_calls += 1
+        return original_per_id(request_id, kind)
+
+    m._effect_path_index = counted_index
+    m._historical_effect_path = counted_per_id
+    findings = m.scope_consistency()
+    check("scope-index-preserves-findings", findings == [])
+    check("scope-index-built-once", index_calls == 1)
+    check("scope-index-never-rescans-per-id", per_id_calls == 0)
+
+
+def test_scope_consistency_reuses_index_for_underivable_ids(
+        workspace: Path) -> None:
+    """The receipt fallback must not re-enumerate checkpoints for every miss.
+
+    An empty index models a legacy/noteless chain: every valid receipt must
+    supply its own path.  Before the fix, receipt validation called the same
+    index method again for every ID, retaining O(U*C) behavior.
+    """
+    m = open_mission(
+        workspace, "m-scope-index-fallback", "One fallback traversal.",
+        scope_in=["docs/**"],
+    )
+    m.approve()
+    for i in range(40):
+        m.record_effect(f"docs/{i}.txt", str(i), f"req-{i}")
+
+    index_calls = 0
+
+    def underivable_index():
+        nonlocal index_calls
+        index_calls += 1
+        return {}
+
+    m._effect_path_index = underivable_index
+    findings = m.scope_consistency()
+    check("scope-fallback-preserves-receipt-findings", findings == [])
+    check("scope-fallback-index-built-once", index_calls == 1)
+
+
+def test_effect_path_index_invalidates_on_same_count_tail_rewrite(
+        workspace: Path) -> None:
+    """An unsealed checkpoint@1 tail rewrite must invalidate cached paths."""
+    m = open_mission(
+        workspace, "m-scope-index-tail", "Observe the current tail.",
+        scope_in=["docs/**"],
+    )
+    m.approve()
+    m.record_effect("docs/a.txt", "x", "req-a")
+    check("scope-tail-cache-warmed",
+          m._effect_path_index().get("req-a") == "docs/a.txt")
+
+    tail = m.store.checkpoint_paths()[-1]
+    checkpoint = json.loads(tail.read_text(encoding="utf-8"))
+    checkpoint["state"]["notes"] = [
+        "effect: secrets/a.txt" if note == "effect: docs/a.txt" else note
+        for note in checkpoint["state"]["notes"]
+    ]
+    tail.write_text(
+        json.dumps(checkpoint, indent=1, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+    check("scope-tail-per-id-sees-current-path",
+          m._historical_effect_path("req-a") == "secrets/a.txt")
+    check("scope-tail-index-sees-current-path",
+          m._effect_path_index().get("req-a") == "secrets/a.txt")
+    findings = m.scope_consistency()
+    check("scope-tail-rewrite-is-not-hidden-by-cache",
+          [(f["artifact_path"], f["request_id"]) for f in findings]
+          == [("secrets/a.txt", "req-a")])
+
+
+def test_resume_and_continuity_share_one_effect_index(
+        workspace: Path) -> None:
+    """Bulk readers must fingerprint the checkpoint chain only once each.
+
+    Receipt validation binds a mutable receipt to its chain-recorded path.
+    Calling that validation without passing the already-built path index makes
+    every receipt reload fingerprint every checkpoint, even when the index
+    cache itself hits.  Repeated writes to one artifact also exercise the
+    second receipt-loading loop in ``continuity_breaks``.
+
+    The counter hooks ``_effect_indexes``, the ONE place the chain is walked,
+    rather than ``_effect_path_index``, which is now a thin accessor over it.
+    Counting the accessor would have gone quiet the moment a reader asked for
+    the kind index instead -- a green result meaning "the hook was bypassed",
+    not "the chain was walked once".
+    """
+    m = open_mission(
+        workspace, "m-reader-index", "One index per bulk reader.",
+    )
+    m.approve()
+    for i in range(16):
+        m.record_effect("docs/shared.txt", str(i), f"req-{i}")
+
+    original_index = m._effect_indexes
+    index_calls = 0
+
+    def counted_index():
+        nonlocal index_calls
+        index_calls += 1
+        return original_index()
+
+    m._effect_indexes = counted_index
+    check("resume-index-preserves-clean-result", m.resume() == [])
+    check("resume-index-built-once", index_calls == 1)
+
+    index_calls = 0
+    check("continuity-index-preserves-clean-result",
+          m.continuity_breaks() == [])
+    check("continuity-index-built-once", index_calls == 1)
+
+
+def test_effect_path_index_does_not_retain_checkpoint_bytes(
+        workspace: Path) -> None:
+    """Fingerprinting may hold one checkpoint's bytes, never the whole chain.
+
+    A bytes subclass records the maximum number of checkpoint payloads alive
+    together.  This is a positive memory-shape oracle rather than a timing or
+    source-text assertion: retaining a cumulative ``raw_records`` list makes
+    the peak grow with every checkpoint, while a streaming fingerprint plus
+    cache-miss reread keeps it constant.
+    """
+    m = open_mission(
+        workspace, "m-index-stream", "Stream checkpoint fingerprints.",
+    )
+    m.approve()
+    for i in range(12):
+        m.record_effect(f"docs/{i}.txt", str(i), f"req-{i}")
+
+    original_read_bytes = Path.read_bytes
+    checkpoint_dir = m.store.checkpoints_dir
+
+    class TrackedBytes(bytes):
+        live = 0
+        peak = 0
+
+        def __new__(cls, value: bytes):
+            instance = super().__new__(cls, value)
+            cls.live += 1
+            cls.peak = max(cls.peak, cls.live)
+            return instance
+
+        def __del__(self):
+            type(self).live -= 1
+
+    def tracked_read_bytes(path: Path) -> bytes:
+        data = original_read_bytes(path)
+        if path.parent == checkpoint_dir:
+            return TrackedBytes(data)
+        return data
+
+    m._effect_index_cache = None
+    Path.read_bytes = tracked_read_bytes
+    try:
+        index = m._effect_path_index()
+    finally:
+        Path.read_bytes = original_read_bytes
+
+    check("index-stream-preserves-all-paths", len(index) == 12)
+    check("index-stream-bounds-live-checkpoint-bytes", TrackedBytes.peak <= 2)
+    check("index-stream-releases-checkpoint-bytes", TrackedBytes.live == 0)
+
+
+def test_effect_path_index_uses_set_membership(workspace: Path) -> None:
+    """Cumulative receipt-id lists must not trigger cubic comparisons.
+
+    Each checkpoint repeats all prior IDs, so list membership compares every
+    repeated prefix against the previous prefix.  Counting equality calls
+    distinguishes that cubic comparison shape from set membership's linear
+    work in the already-quadratic number of serialized IDs.
+    """
+    effect_count = 18
+    m = open_mission(
+        workspace, "m-index-membership", "Bound ID membership work.",
+    )
+    m.approve()
+    for i in range(effect_count):
+        m.record_effect(f"docs/{i}.txt", str(i), f"req-{i}")
+
+    original_loads = json.loads
+
+    class CountingStr(str):
+        comparisons = 0
+        __hash__ = str.__hash__
+
+        def __eq__(self, other: object) -> bool:
+            type(self).comparisons += 1
+            return super().__eq__(other)
+
+    def counted_loads(value, *args, **kwargs):
+        record = original_loads(value, *args, **kwargs)
+        if isinstance(record, dict) and isinstance(record.get("receipt_ids"), list):
+            record["receipt_ids"] = [CountingStr(rid)
+                                     for rid in record["receipt_ids"]]
+        return record
+
+    m._effect_index_cache = None
+    json.loads = counted_loads
+    try:
+        index = m._effect_path_index()
+    finally:
+        json.loads = original_loads
+
+    check("index-membership-preserves-all-paths", len(index) == effect_count)
+    check("index-membership-comparisons-are-not-cubic",
+          CountingStr.comparisons < effect_count * effect_count)
+
+
+def _count_checkpoint_reads(fn):
+    """Run `fn`; return (result, reads of files under any `checkpoints/` dir).
+
+    The oracle is FILE READS, not calls to `_effect_path_index`. A counter
+    installed on that method goes green the moment the call moves, whether or
+    not the chain is still being re-read -- and re-reading the chain is the
+    cost, not calling the method. Counting reads measures what the claim is
+    about."""
+    orig_bytes, orig_text = Path.read_bytes, Path.read_text
+    reads = 0
+
+    def counted_bytes(self):
+        nonlocal reads
+        if self.parent.name == "checkpoints":
+            reads += 1
+        return orig_bytes(self)
+
+    def counted_text(self, *args, **kwargs):
+        nonlocal reads
+        if self.parent.name == "checkpoints":
+            reads += 1
+        return orig_text(self, *args, **kwargs)
+
+    Path.read_bytes, Path.read_text = counted_bytes, counted_text
+    try:
+        return fn(), reads
+    finally:
+        Path.read_bytes, Path.read_text = orig_bytes, orig_text
+
+
+def test_census_receipts_does_not_rescan_the_chain_per_receipt(
+        workspace: Path) -> None:
+    """es#161 residue: the ESTATE WALK must not re-read the chain per receipt.
+
+    `census_missions._receipts` builds the chain index once and then calls
+    `_load_receipt_checked` for every id WITHOUT handing that index over, so
+    every receipt re-enters `_effect_path_index`. That was survivable while a
+    cache hit cost one directory listing. Keying the cache to checkpoint
+    CONTENT -- the right fix for the stale-index finding -- turns each hit
+    into a full SHA-256 pass over the whole cumulative chain, so the census
+    goes from O(C) checkpoint reads to O(R x C): measured on a 300-receipt
+    mission, 303 reads / 1.9 MiB before the content key, 91,205 reads /
+    578 MiB after it.
+
+    The same class as the finding it came from, in the sibling module the
+    optimisation exists to serve. Every other control here counts calls on a
+    `Mission` method and none of them runs the census, so none of them sees
+    it."""
+    effect_count = 24
+    m = open_mission(workspace, "m-census-io", "Bounded census chain reads.")
+    m.approve()
+    for i in range(effect_count):
+        m.record_effect(f"docs/{i}.txt", str(i), f"req-{i}")
+    latest, _ = m.store.load_latest()
+    checkpoints = len(m.store.checkpoint_paths())
+    m._effect_index_cache = None
+
+    (paths, problems, orphans), reads = _count_checkpoint_reads(
+        lambda: census_missions._receipts(m, m.store, latest))
+
+    check("census-io-preserves-every-path", len(paths) == effect_count)
+    check("census-io-reports-no-problems", not problems and not orphans)
+    # One index build reads each checkpoint at most twice (fingerprint, then
+    # parse). Anything that scales with the RECEIPT count is a per-id rescan.
+    check("census-io-does-not-rescan-per-receipt", reads <= 4 * checkpoints)
+
+
+def test_census_still_reports_receipts_when_the_index_is_unbuildable(
+        workspace: Path) -> None:
+    """The failure mode the rescan fix introduces, pinned.
+
+    Handing the census's prebuilt mapping to `_load_receipt_checked` removes
+    the rescan -- and would also hand it an EMPTY mapping on the path where
+    the index could not be built at all, silently disabling the loader's own
+    chained-path check and turning unreadable receipts into ordinary ones.
+    So the fix forwards only a mapping it actually built; when the build
+    fails the loader is called exactly as before, re-raises, and every id is
+    still reported."""
+    m = open_mission(workspace, "m-census-blind", "Index build fails.")
+    m.approve()
+    m.record_effect("docs/a.txt", "a", "req-a")
+    m.record_effect("docs/b.txt", "b", "req-b")
+    latest, _ = m.store.load_latest()
+
+    def _boom():
+        raise OSError("checkpoints unreadable")
+
+    m._effect_path_index = _boom
+    paths, problems, orphans = census_missions._receipts(m, m.store, latest)
+
+    blob = " ".join(problems)
+    check("census-blind-reports-index-failure",
+          "chain index unreadable" in blob)
+    check("census-blind-still-names-every-id",
+          all(f"{rid}: " in blob for rid in ("req-a", "req-b")))
+    check("census-blind-does-not-report-clean-coverage", paths == [])
+    check("census-blind-no-orphans-invented", orphans == [])
+
+
 def test_forged_restored_receipt_is_not_trusted(workspace: Path) -> None:
     """Round-3 finding: a schema-valid receipt planted at the lost id's path
     must not buy continuity. The chain records which artifact the id was
@@ -2003,6 +2513,64 @@ def test_superseded_receipt_never_shadows_the_current_one(workspace: Path) -> No
     m.record_effect("notes/a.md", "v3", "req-3")
     check("supersede-recovered-clean",
           m.status()["status"] == "active" and m.resume() == [])
+
+
+def test_continuity_break_classification_never_rescans_the_chain(
+        workspace: Path) -> None:
+    """A mission with MANY REAL breaks must not walk the chain once per break.
+
+    `continuity_breaks` reads every other path from the prebuilt index, but
+    classified each break by calling `_historical_effect_path(..., kind=True)`,
+    which rescans from checkpoint 1. That is O(breaks x checkpoints) reads on
+    exactly the histories that have the most to read.
+
+    It survived the round that removed every other rescan because a CLEAN
+    chain never reaches that branch: the existing cases assert an empty break
+    list, so the loop body never runs and a green suite says nothing about it.
+    This case seeds real breaks so the branch is actually exercised, and the
+    counter is on `_historical_effect_path` itself -- the thing that must not
+    happen -- rather than on elapsed time.
+    """
+    m = open_mission(workspace, "m-break-scan", "Many real breaks.")
+    m.approve()
+    target = workspace / "notes" / "a.md"
+    m.record_effect("notes/a.md", "v0", "req-0")
+    for i in range(1, 9):
+        # Tamper out of band, then re-effect WITHOUT resuming: each pair is a
+        # genuine continuity break.
+        target.write_text("tampered-%d" % i, encoding="utf-8")
+        m.record_effect("notes/a.md", "v%d" % i, "req-%d" % i)
+
+    original = m._historical_effect_path
+    rescans = []
+
+    def counted(request_id, kind=False):
+        rescans.append((request_id, kind))
+        return original(request_id, kind)
+
+    m._historical_effect_path = counted
+    breaks = m.continuity_breaks()
+    m._historical_effect_path = original
+
+    check("many-breaks-actually-seeded", len(breaks) == 8)
+    check("break-classification-does-no-per-id-rescan", rescans == [])
+    check("break-classification-still-correct",
+          all(b["already_reconciled"] is False for b in breaks))
+
+    # Negative control on the classification itself: a reconciled write must
+    # still read as reconciled through the index, or the cheap path would be
+    # cheap and wrong.
+    target.write_text("drifted", encoding="utf-8")
+    m.resume()
+    m.reconcile("notes/a.md", "repaired", "req-fixed")
+    after = m.continuity_breaks()
+    reconciled = [b for b in after if b["request_id"] == "req-fixed"]
+    check("reconciled-break-is-present", len(reconciled) == 1)
+    check("reconciled-break-reads-as-reconciled",
+          reconciled[0]["already_reconciled"] is True)
+    check("index-and-per-id-kind-agree",
+          m._effect_kind_index().get("req-fixed")
+          == m._historical_effect_path("req-fixed", kind=True))
 
 
 def test_continuity_surfaces_unreceipted_mutation(workspace: Path) -> None:
@@ -2194,6 +2762,125 @@ def test_effect_duplicate_id_leaves_workspace_untouched(workspace: Path) -> None
           (workspace / "notes" / "a.md").read_text(encoding="utf-8") == "hello")
 
 
+def test_failed_effect_removes_the_directories_it_created(
+        workspace: Path) -> None:
+    """A write that mints no receipt must leave no directory behind.
+
+    `_write_effect` creates the target's parents and only then writes the
+    bytes and the receipt, so a `PermissionError` at the write -- the case
+    es#169 names -- left `esrm/deep/` standing with no receipt and no
+    checkpoint: an unreceipted workspace mutation from the verb whose whole
+    contract is "no effect without a receipt".
+
+    The failure is injected at `Path.write_bytes`, for this one target,
+    because that is the exact seam the issue names and no portable
+    filesystem trick reaches it: a read-only parent fails the MKDIR
+    instead, which creates nothing at all and so measures the ordering that
+    was already correct rather than the cleanup that was missing."""
+    m = open_mission(workspace, "m-mkdir", "Fail after the mkdir.")
+    m.approve()
+    cps_before = sorted((workspace / "missions" / "m-mkdir" / "checkpoints")
+                        .glob("*.json"))
+
+    real_write_bytes = Path.write_bytes
+    blocked = {str(workspace.resolve() / "esrm" / "deep" / "x.txt"),
+               str(workspace.resolve() / "esrm-keep" / "deep" / "y.txt")}
+
+    def refusing_write_bytes(self, data):
+        if str(self) in blocked:
+            raise PermissionError(13, "Permission denied")
+        return real_write_bytes(self, data)
+
+    # A directory the caller made itself, to prove the unwind removes only
+    # what THIS call created.
+    (workspace / "esrm-keep").mkdir()
+
+    Path.write_bytes = refusing_write_bytes
+    try:
+        try:
+            m.record_effect("esrm/deep/x.txt", "data", "req-mkdir")
+            check("failed-effect-propagates-the-write-error", False)
+        except PermissionError:
+            check("failed-effect-propagates-the-write-error", True)
+        try:
+            m.record_effect("esrm-keep/deep/y.txt", "data", "req-mkdir-2")
+            check("failed-effect-propagates-the-write-error-2", False)
+        except PermissionError:
+            check("failed-effect-propagates-the-write-error-2", True)
+    finally:
+        Path.write_bytes = real_write_bytes
+
+    check("failed-effect-minted-no-receipt",
+          not list((workspace / "missions" / "m-mkdir" / "receipts")
+                   .glob("*.json")))
+    check("failed-effect-committed-no-checkpoint",
+          sorted((workspace / "missions" / "m-mkdir" / "checkpoints")
+                 .glob("*.json")) == cps_before)
+    check("failed-effect-left-no-created-directory",
+          not (workspace / "esrm").exists())
+    check("failed-effect-removed-only-what-it-created",
+          (workspace / "esrm-keep").is_dir()
+          and not (workspace / "esrm-keep" / "deep").exists())
+
+    # CONTROL: the unwind is not always-on. A write that DOES receipt keeps
+    # the directories it made -- otherwise the fix would be deleting the
+    # workspace it is supposed to protect.
+    m.record_effect("esrm/deep/x.txt", "data", "req-mkdir-ok")
+    check("receipted-effect-keeps-its-directories",
+          (workspace / "esrm" / "deep" / "x.txt").exists())
+
+
+def test_failed_mkdir_removes_the_ancestors_it_already_created(
+        workspace: Path) -> None:
+    """The unwind must cover a FAILURE INSIDE THE MKDIR, not only after it.
+
+    The first cut of the es#169 fix left `target.parent.mkdir(parents=True)`
+    outside the try, so only a failure after the directories existed was
+    unwound. But mkdir(parents=True) builds the chain one level at a time
+    and can fail partway: a component longer than NAME_MAX raises OSError
+    [Errno 36] after the shallower parents are already on disk. That is the
+    same unreceipted residue the issue names, and the seam comment claimed
+    it was unwound "on the way out of any raise" while it was not.
+
+    No injection is needed here -- the filesystem itself supplies the
+    partial failure, which is why this case is worth having alongside the
+    injected-write one."""
+    m = open_mission(workspace, "m-mkdir-partial", "Fail inside the mkdir.")
+    m.approve()
+    cps_before = sorted(
+        (workspace / "missions" / "m-mkdir-partial" / "checkpoints")
+        .glob("*.json"))
+
+    too_long = "z" * 300  # > NAME_MAX (255) on every mainstream filesystem
+    try:
+        m.record_effect(f"aa/bb/{too_long}/x.txt", "data", "req-partial")
+        check("partial-mkdir-propagates-the-error", False)
+    except OSError:
+        check("partial-mkdir-propagates-the-error", True)
+
+    check("partial-mkdir-minted-no-receipt",
+          not list((workspace / "missions" / "m-mkdir-partial" / "receipts")
+                   .glob("*.json")))
+    check("partial-mkdir-committed-no-checkpoint",
+          sorted((workspace / "missions" / "m-mkdir-partial" / "checkpoints")
+                 .glob("*.json")) == cps_before)
+    # THE PROPERTY: `aa` and `aa/bb` were created by this call and must be gone.
+    check("partial-mkdir-left-no-created-ancestor",
+          not (workspace / "aa").exists())
+
+    # CONTROL: still only what THIS call created. A pre-existing ancestor on
+    # the failing path survives, so the assertion above cannot pass by an
+    # unwind that climbs out of its own scope.
+    (workspace / "cc").mkdir()
+    try:
+        m.record_effect(f"cc/dd/{too_long}/y.txt", "data", "req-partial-2")
+        check("partial-mkdir-propagates-the-error-2", False)
+    except OSError:
+        check("partial-mkdir-propagates-the-error-2", True)
+    check("partial-mkdir-kept-the-caller-s-own-directory",
+          (workspace / "cc").is_dir() and not (workspace / "cc" / "dd").exists())
+
+
 def test_accept_requires_verifying_and_separation(workspace: Path) -> None:
     m = open_mission(workspace, "m-accept", "Finish task.")
     m.approve()
@@ -2284,8 +2971,8 @@ def test_operator_tier(workspace: Path) -> None:
     except AcceptanceRefused:
         check("tier-insufficient-refused", True)
 
-    operator = Mission.load(workspace, actor="operator:zach")
-    operator.record_verdict("PASS", acceptor_id="operator:zach",
+    operator = Mission.load(workspace, actor="operator:example")
+    operator.record_verdict("PASS", acceptor_id="operator:example",
                              assurance_tier="operator-accepted",
                              reason="operator signed off")
     st = m.status()
@@ -2566,10 +3253,19 @@ def test_scope_entry_classification_table(workspace: Path) -> None:
         # scope_consistency() and an accepted PASS.
         ("My Documents/secrets.env", True), ("docs/release notes/**", True),
         ("a/b c/d.txt", True), ("docs/release notes/", True),
+        # Windows separators bind through the same matrix: with and without
+        # whitespace, and with wildcard, extension, directory, and bare-final
+        # segments. The last row remains prose by the established ambiguity rule.
+        ("docs\\source", True), ("docs\\*.py", True),
+        ("My Documents\\secrets.env", True),
+        ("docs\\release notes\\**", True),
+        ("docs\\release notes\\", True),
+        ("My Documents\\archive", False),
         # ...while genuine prose that happens to carry a slash still reads as
         # prose, because it ends in a bare word rather than a path ending
         ("TCP/IP tuning", False), ("arr/Plex/NAS operations", False),
         ("docs and/or specs", False),
+        ("TCP\\IP tuning", False), ("arr\\Plex\\NAS operations", False),
         # ambiguous -> prose, deliberately
         ("docs and/or specs", False), ("TCP/IP tuning", False),
         ("", False),
@@ -2621,6 +3317,416 @@ def test_bare_filename_exclusion_is_enforced(workspace: Path) -> None:
         check("bare-filename-pass-refused", False)
     except AcceptanceRefused as exc:
         check("bare-filename-pass-refused", "crossed the declared scope" in str(exc))
+
+
+def test_windows_scope_entries_with_spaces_bind_end_to_end(
+        workspace: Path) -> None:
+    """A Windows-spelled path must bind the same boundary as '/' spelling.
+
+    Before separator normalization, both spaced exclusions classified as prose,
+    so the two excluded writes disappeared from scope_consistency() and PASS
+    could close.
+
+    THE INCLUDE SIDE NEEDS ITS OWN CONTROL, AND THE OBVIOUS ONE IS INERT. The
+    first version of this test used `scope_in=["allowed\\**"]` and asserted the
+    allowed artifact drew no finding. That assertion is GREEN UNDER THE EXACT
+    DEFECT THIS CHANGE FIXES, twice over. First, `*` short-circuits the
+    classifier before it ever inspects a separator, so `allowed\\**` was
+    already accepted by the pre-fix predicate -- the row exercised nothing on
+    the separator axis. Second, and worse, a DROPPED include produces the
+    identical observation: `scope_consistency` sets `includes = []` when any
+    include is uncompared, so "the allowed path drew no finding" is what you
+    see both when the include bound and matched AND when the include was
+    discarded and NOTHING was compared. Same reading, opposite worlds.
+
+    So the include control here is wildcard-FREE and spaced -- the form the
+    pre-fix predicate actually dropped -- and the load-bearing assertion is
+    that an artifact OUTSIDE it is FLAGGED. "Outside scope.in" is an absence
+    inference the comparison draws only when the whole include set is
+    comparable, so that assertion goes red the moment the Windows-spelled
+    include falls back to prose. The disclosure surface is asserted beside it:
+    an include that binds must leave `uncompared_scope_entries` empty with
+    `in_comparison_disabled` false -- a condition an unconditionally-emitted
+    finding could not satisfy, so the pair cannot both go green for the wrong
+    reason.
+    """
+    from custody_mission import uncompared_scope_entries
+    m = open_mission(
+        workspace,
+        "m-win-scope",
+        "Windows scope separators.",
+        scope_in=["Allowed Work\\ordinary.txt"],
+        scope_out=["My Documents\\secrets.env", "docs\\release notes\\**"],
+    )
+    m.approve()
+    m.record_effect("Allowed Work/ordinary.txt", "ok", "win-1")
+    m.record_effect("My Documents/secrets.env", "leak", "win-2")
+    m.record_effect("docs/release notes/key.txt", "leak", "win-3")
+    m.record_effect("elsewhere/other.txt", "stray", "win-4")
+
+    findings = {
+        (finding["artifact_path"], finding["reason"])
+        for finding in m.scope_consistency()
+    }
+    check(
+        "windows-scope-spaced-extension-binds",
+        ("My Documents/secrets.env", "matches scope.out") in findings,
+    )
+    check(
+        "windows-scope-spaced-glob-binds",
+        ("docs/release notes/key.txt", "matches scope.out") in findings,
+    )
+    # The include BOUND: a path outside it is reported, which the comparison
+    # can only conclude with a comparable include set. Red under prose fallback.
+    check(
+        "windows-scope-include-binds-outside-flagged",
+        ("elsewhere/other.txt", "outside scope.in") in findings,
+    )
+    check(
+        "windows-scope-include-binds-inside-clean",
+        not any(path == "Allowed Work/ordinary.txt" for path, _ in findings),
+    )
+    latest, _ = m.store.load_latest()
+    uncompared = uncompared_scope_entries(latest["manifest"])
+    check(
+        "windows-scope-nothing-left-uncompared",
+        uncompared["in"] == [] and uncompared["out"] == []
+        and uncompared["in_comparison_disabled"] is False,
+    )
+
+    m.begin_verification()
+    acceptor = Mission.load(workspace, actor="agent:acceptor")
+    try:
+        acceptor.record_verdict(
+            "PASS",
+            acceptor_id="agent:acceptor",
+            assurance_tier="declared-role-separation",
+            reason="done",
+        )
+        check("windows-scope-pass-refused", False)
+    except AcceptanceRefused as exc:
+        check(
+            "windows-scope-pass-refused",
+            "crossed the declared scope" in str(exc),
+        )
+
+
+"""The separator-form case table, asserted through the live comparison.
+
+THE ENUMERATION IS THE SPEC, and the spec is here rather than in a comment
+because a comment beside the classifier dies with the next edit while a row
+that no longer holds goes red. #157 said so in advance: this branch had
+already been refuted once by an unenumerated row, so a separator fix that
+does not enumerate the separator SPACE is the same defect wearing the fix's
+clothes.
+
+The space is separator FORM, not just separator character. Windows spells a
+path in more shapes than `dir\\file`, and the shapes divide into two verdicts
+that must never be confused:
+
+  BINDS      -- the entry is compared, and an artifact it names is flagged.
+  DISCLOSED  -- the entry cannot match any workspace-relative receipt path, so
+                it is demoted to uncompared and LISTED. Inert, but visibly so.
+
+The third verdict is the one this module exists to prevent and no row may
+have: silently inert -- compared, matching nothing, reported nowhere.
+
+Both halves run through `scope_consistency()` and `uncompared_scope_entries()`
+on a real mission, not through a local copy of the regex builder. A test that
+rebuilds the matcher proves the test agrees with itself; only the live
+comparison proves the entry an operator writes binds the file they meant.
+
+WHICH ROWS DISCRIMINATE, measured rather than assumed. Three mutants were run
+against this table (baseline 57 assertions, 0 red):
+
+  A  the pre-fix classifier (no separator normalization)   -> 10 red
+  B  `_is_matchable_pattern` forced True                   -> 10 red
+  C  the fix HALF-APPLIED: the `entry.endswith("\\\\")` clause
+     deleted as this change deletes it, but the
+     normalization it delegates to removed                 -> 18 red
+
+A kills the spaced-trailing and include rows; B kills the ENTIRE disclosed
+half, which is what makes those drive/UNC rows load-bearing rather than
+decorative; C kills every trailing-separator row, which is the specific price
+of the deleted clause and the reason those rows exist.
+
+The rows green under all three -- mixed separators, doubled interior,
+dot-relative, the two prose rows -- are ENUMERATION, not controls: each
+carries a `/`, a `*` or an extension that every mutant also accepts. They are
+here so the next person fixing this branch inherits the space rather than the
+instance, and they must not be read as evidence that a change is safe.
+"""
+
+# (label, scope.out entry, artifact the entry is meant to catch)
+_WIN_SEPARATOR_BINDING_ROWS = [
+    # MIXED separators, both orders, with and without whitespace.
+    ("mixed-glob-spaced", "Mixed A\\rel notes/**", "Mixed A/rel notes/leaf.txt"),
+    ("mixed-file-spaced", "Mixed B/rel notes\\leaf.txt", "Mixed B/rel notes/leaf.txt"),
+    ("mixed-wildcard", "MixedC/sub\\deep\\*.py", "MixedC/sub/deep/x.py"),
+    # TRAILING separator: the directory marker, in its Windows spelling. The
+    # `/` twin of this row is es#155, found three times; the `\\` spelling
+    # reaches the same compiler only because classification normalizes first.
+    ("trailing-bare", "TrailD\\", "TrailD/x.txt"),
+    ("trailing-spaced", "Trail E\\rel notes\\", "Trail E/rel notes/x.txt"),
+    ("trailing-doubled", "TrailF\\\\", "TrailF/x.txt"),
+    # DOUBLED interior separators and a dot-relative prefix: spellings a
+    # Windows shell or a copied path routinely produces.
+    ("doubled-interior", "DupG\\\\sub\\\\x.txt", "DupG/sub/x.txt"),
+    ("dot-relative", ".\\DotH\\**", "DotH/x.txt"),
+]
+
+# (label, scope.out entry, why it can never match a workspace-relative path)
+_WIN_SEPARATOR_DISCLOSED_ROWS = [
+    ("drive-absolute", "C:\\Users\\example\\secrets.env", "drive-absolute"),
+    # DRIVE-RELATIVE is the form with no root at all: `C:secrets.env` means
+    # "secrets.env in the current directory OF DRIVE C:", which is neither
+    # absolute nor workspace-relative and resolves against per-drive state no
+    # receipt records. It looks the most like a relative path of any row here.
+    ("drive-relative", "C:secrets.env", "drive-relative"),
+    ("drive-relative-sub", "C:docs\\secrets.env", "drive-relative"),
+    ("unc-file", "\\\\server\\share\\secrets.env", "UNC (absolute)"),
+    ("unc-glob", "\\\\server\\share\\**", "UNC (absolute)"),
+    ("unc-extended", "\\\\?\\C:\\docs\\x.txt", "extended-length UNC"),
+    ("lone-separator", "\\", "names the root"),
+    ("traversal", "docs\\..\\secrets\\**", "'..' segment survives normalization"),
+    ("dot-only", ".\\", "normalizes to the workspace itself"),
+    # PROSE keeps its reading in the Windows spelling too: a spaced entry
+    # ending in a bare word is ambiguous by the established rule, and the
+    # normalization must not quietly promote it.
+    ("bare-final-segment", "My Documents\\archive", "spaced, ends in a bare word"),
+    ("prose-with-separators", "TCP\\IP tuning", "spaced, ends in a bare word"),
+]
+
+
+def test_windows_separator_form_table(workspace: Path) -> None:
+    """Every separator FORM binds or is disclosed -- none is silently inert."""
+    from custody_mission import (
+        _is_compared_entry, _is_matchable_pattern, _is_path_pattern,
+        uncompared_scope_entries,
+    )
+
+    # -- half one: the forms that must BIND ------------------------------
+    # Two missions, each in its OWN SUBDIRECTORY of the fixture. `workspace`
+    # already holds an active mission per half, and the second half must not
+    # be opened against `workspace.parent`: that reaches outside the fixture
+    # into the shared temp root, where it collides with whatever sibling test
+    # ran last. Caught by running this test under a mutation harness whose
+    # fixture was the temp root itself -- the escape is invisible while the
+    # fixture happens to be private.
+    m = open_mission(
+        workspace / "binds", "m-win-sep-binds",
+        "Windows separator forms that bind.",
+        scope_out=[entry for _, entry, _ in _WIN_SEPARATOR_BINDING_ROWS],
+    )
+    m.approve()
+    for i, (_, _, artifact) in enumerate(_WIN_SEPARATOR_BINDING_ROWS):
+        m.record_effect(artifact, "x", f"sep-{i}")
+    flagged = {f["artifact_path"] for f in m.scope_consistency()
+               if f["reason"] == "matches scope.out"}
+    for label, entry, artifact in _WIN_SEPARATOR_BINDING_ROWS:
+        check(f"sep-binds-{label}", artifact in flagged)
+        check(f"sep-compared-{label}", _is_compared_entry(entry))
+    latest, _ = m.store.load_latest()
+    check("sep-binding-rows-none-uncompared",
+          uncompared_scope_entries(latest["manifest"])["out"] == [])
+
+    # -- half two: the forms that must be DISCLOSED, never silent --------
+    m2 = open_mission(
+        workspace / "disclosed", "m-win-sep-disclosed",
+        "Windows separator forms that cannot match.",
+        scope_out=[entry for _, entry, _ in _WIN_SEPARATOR_DISCLOSED_ROWS],
+    )
+    m2.approve()
+    # Artifacts a reader would expect these entries to catch. Each is written,
+    # and each must draw NO finding -- the entries are inert. That is only
+    # acceptable because every one of them is named by the disclosure surface.
+    for i, artifact in enumerate(
+            ["secrets.env", "docs/secrets.env", "secrets/x.txt",
+             "My Documents/archive/x.txt", "TCP/IP tuning"]):
+        m2.record_effect(artifact, "x", f"sep-d-{i}")
+    check("sep-disclosed-rows-bind-nothing", m2.scope_consistency() == [])
+    latest2, _ = m2.store.load_latest()
+    declined = uncompared_scope_entries(latest2["manifest"])["out"]
+    check("sep-disclosed-rows-all-reported",
+          declined == [entry for _, entry, _ in _WIN_SEPARATOR_DISCLOSED_ROWS])
+    for label, entry, _why in _WIN_SEPARATOR_DISCLOSED_ROWS:
+        check(f"sep-disclosed-{label}", not _is_compared_entry(entry))
+
+    # -- separator invariance --------------------------------------------
+    # The change's own claim: classification and matching inspect ONE canonical
+    # spelling. A LIMITED control, and limited in a stated way -- it compares
+    # the predicate against itself, so it cannot catch a rule that is wrong for
+    # both spellings alike. The per-row verdicts above are the independent
+    # half; this only pins that `\\` and `/` never diverge.
+    for label, entry, _x in (_WIN_SEPARATOR_BINDING_ROWS
+                             + _WIN_SEPARATOR_DISCLOSED_ROWS):
+        fwd = entry.replace("\\", "/")
+        check(f"sep-invariant-{label}",
+              (_is_path_pattern(entry), _is_matchable_pattern(entry))
+              == (_is_path_pattern(fwd), _is_matchable_pattern(fwd)))
+
+
+# THE BARE MULTI-SEGMENT FORM -- the one cell of #157's product the table
+# above does not carry, and the only cell whose END-TO-END verdict this
+# change actually moves.
+#
+# #157 asked for the product separator x whitespace x wildcard x extension.
+# Walking it for the `\\` separator, every cell is asserted somewhere above
+# EXCEPT (whitespace=no, wildcard=no, extension=no, trailing=no) --
+# `Docs\archive`. `test_scope_entry_classification_table` carries its
+# predicate row (`docs\source` -> True); nothing carried its BINDING.
+#
+# That absence is not cosmetic, because a differential over the two
+# classifiers says this is the cell the fix moves. Measured, pre-fix vs
+# post-fix, over the separator corpus -- only four entries change verdict:
+#
+#   Case I\SECRETS.env      DISCLOSED -> BINDS   (case row, asserted below)
+#   Trail E\rel notes\      DISCLOSED -> BINDS   (trailing row, above)
+#   Docs\archive            DISCLOSED -> compared, EXACT-ONLY   <- unasserted
+#   a\b\c                   DISCLOSED -> compared, EXACT-ONLY   <- unasserted
+#
+# Every other row above was ALREADY compared before the fix -- carried by a
+# `/`, a `*`, an extension or the deleted `endswith("\\")` clause -- so the
+# rows that bind are largely enumeration and this is where the change lands.
+#
+# THE VERDICT IS A THIRD ONE, AND SAYING SO IS THE POINT. The form table
+# above divides entries into BINDS and DISCLOSED and states that no row may
+# be silently inert. Both remain true under that block's own definitions --
+# "silently inert" there means UNMATCHABLE-yet-compared, the class
+# `_is_matchable_pattern` demotes, and `Docs\archive` is matchable: it binds
+# the artifact `Docs/archive` exactly. But it does NOT bind anything beneath
+# that path, and it is not listed by `uncompared_scope_entries` either. An
+# operator who wrote it meaning the DIRECTORY is told nothing.
+#
+# That reading is CORRECT, not a defect, and the distinction is load-bearing:
+# #155's case table settled `docs` -> `docs` as the wanted behaviour and named
+# this exact class "matchable-but-wrong", stating that the disclosure surface
+# "is authoritative only for the unmatchable class". The subtree reading is
+# spelled with a trailing separator (`Docs\archive\`), which the row
+# `trailing-bare` above proves binds.
+#
+# So the honest price of the fix, asserted rather than narrated: for THIS
+# form the backslash spelling loses a disclosure it used to get for the wrong
+# reason. Pre-fix it was called prose and listed as uncompared -- not because
+# anything understood it, but because the classifier could not see a
+# separator. The forward-slash twin never had that listing. The rows below
+# pin BOTH spellings to the same behaviour, so the invariance the fix claims
+# is asserted end-to-end and not only through the predicate.
+#
+# WHAT A FUTURE READER MUST NOT CONCLUDE FROM THESE ROWS GOING RED. The
+# `-child-not-flagged` assertions pin SETTLED SEMANTICS (#155), not a bug
+# fence. If a later change deliberately gives a bare entry its subtree, they
+# go red and that red means "update this row and #155's table", not "a
+# regression appeared". They are here so that change has to be deliberate.
+
+# (label, scope.out entry, the artifact the entry names, a CHILD of it)
+_WIN_SEPARATOR_EXACT_ONLY_ROWS = [
+    ("bare-two-segment", "Docs\\archive", "Docs/archive", "Docs/archive/x.txt"),
+    ("bare-three-segment", "a\\b\\c", "a/b/c", "a/b/c/leaf.txt"),
+]
+
+
+def test_windows_bare_multi_segment_entry_names_exactly_one_path(
+        workspace: Path) -> None:
+    """A bare `Docs\\archive` is COMPARED, binds that path, and binds nothing
+    under it -- identically to `Docs/archive`.
+
+    Red under the pre-fix classifier (both `-compared-` and `-exact-flagged-`
+    go red: the entry falls back to prose, so the exclusion is dropped and the
+    write it names draws no finding), and red under the half-applied fix that
+    deletes the `endswith("\\\\")` clause without adding normalization.
+
+    The `-child-not-flagged` half is NOT red under either mutant. It is not a
+    control; it is a pinned reading, and it is asserted for the forward-slash
+    twin in the same breath so that no future edit can make one separator
+    spelling mean a subtree while the other means one file.
+    """
+    from custody_mission import _is_compared_entry, uncompared_scope_entries
+
+    def _mission(subdir: str, mission_id: str, entries, artifacts):
+        m = open_mission(
+            workspace / subdir, mission_id,
+            "Bare multi-segment separator forms.",
+            scope_out=entries)
+        m.approve()
+        for i, artifact in enumerate(artifacts):
+            m.record_effect(artifact, "x", "%s-%d" % (mission_id, i))
+        flagged = {f["artifact_path"] for f in m.scope_consistency()
+                   if f["reason"] == "matches scope.out"}
+        latest, _ = m.store.load_latest()
+        return flagged, uncompared_scope_entries(latest["manifest"])["out"]
+
+    for spelling, to_entry in (("win", lambda e: e),
+                               ("fwd", lambda e: e.replace("\\", "/"))):
+        entries = [to_entry(entry)
+                   for _, entry, _, _ in _WIN_SEPARATOR_EXACT_ONLY_ROWS]
+
+        # The entry is COMPARED -- this is what the fix moved, and it is the
+        # assertion that goes red without the normalization.
+        for (label, entry, _named, _child) in _WIN_SEPARATOR_EXACT_ONLY_ROWS:
+            check("sep-exact-%s-compared-%s" % (spelling, label),
+                  _is_compared_entry(to_entry(entry)))
+
+        # ...and it BINDS the artifact it names. A separate mission per half:
+        # `Docs/archive` cannot be both a file and a directory at once, so
+        # writing the named path and its child in one workspace is impossible.
+        flagged, declined = _mission(
+            "exact-" + spelling, "m-sep-exact-" + spelling, entries,
+            [named for _, _, named, _ in _WIN_SEPARATOR_EXACT_ONLY_ROWS])
+        check("sep-exact-%s-none-uncompared" % spelling, declined == [])
+        for (label, _entry, named, _child) in _WIN_SEPARATOR_EXACT_ONLY_ROWS:
+            check("sep-exact-%s-flagged-%s" % (spelling, label),
+                  named in flagged)
+
+        # ...and binds NOTHING beneath it, while saying nothing about that.
+        # Both halves of the price are asserted: no finding AND no disclosure.
+        child_flagged, child_declined = _mission(
+            "child-" + spelling, "m-sep-child-" + spelling, entries,
+            [child for _, _, _, child in _WIN_SEPARATOR_EXACT_ONLY_ROWS])
+        for (label, _entry, _named, child) in _WIN_SEPARATOR_EXACT_ONLY_ROWS:
+            check("sep-exact-%s-child-not-flagged-%s" % (spelling, label),
+                  child not in child_flagged)
+        check("sep-exact-%s-child-not-disclosed-either" % spelling,
+              child_declined == [])
+
+
+def test_windows_scope_case_insensitive_compare(workspace: Path) -> None:
+    """CASE-INSENSITIVE COMPARE, and the residue it does not cover.
+
+    On NT `_norm_path` folds both sides, so a scope entry and a receipt that
+    differ only in ASCII case name one file and the exclusion binds. That is
+    the row an operator relies on: nobody retypes a Windows path with the
+    original capitalization.
+
+    THE RESIDUE IS ASSERTED, NOT ASSUMED. `_ascii_case_fold` folds A-Z ONLY,
+    while NTFS's upcase table also folds Latin-1 and beyond -- so a scope.out
+    entry differing from the receipt in a NON-ASCII case pair names the same
+    file on disk and does NOT bind. It is pinned here as a KNOWN row rather
+    than repaired, because the repair is `str.casefold()` and that function's
+    docstring already measured what it costs: 1-to-many folding makes distinct
+    NTFS files compare equal, and one write then discharges another file's
+    obligation. Swapping an under-match for an over-match would be a new defect
+    of exactly the class this table exists to close.
+
+    The tie-break that chose under-matching was argued for the DISCHARGE
+    direction, where leaving an obligation outstanding is visible and
+    recoverable. On scope.out it inverts: an exclusion that binds nothing is
+    the false-CLEAN direction. Filed rather than silently inherited.
+    """
+    fold_is_live = os.name == "nt"
+    m = open_mission(
+        workspace, "m-win-case", "Windows case folding.",
+        scope_out=["Case I\\SECRETS.env", "Case J\\\u00c4rchive.env"],
+    )
+    m.approve()
+    m.record_effect("case i/secrets.env", "leak", "case-1")
+    m.record_effect("case j/\u00e4rchive.env", "leak", "case-2")
+    flagged = {f["artifact_path"] for f in m.scope_consistency()
+               if f["reason"] == "matches scope.out"}
+    check("win-case-ascii-fold-binds",
+          ("case i/secrets.env" in flagged) is fold_is_live)
+    check("win-case-non-ascii-residue-does-not-bind",
+          "case j/\u00e4rchive.env" not in flagged)
 
 
 def test_prose_scope_does_not_refuse_acceptance(workspace: Path) -> None:
@@ -5429,12 +6535,138 @@ def test_census_orphan_probe_failure_is_partial_not_absence(
     clean = census_missions.summarize([census_missions.census(workspace)])
     check("orphan-probe-clean-run-is-not-partial",
           clean["answers_are_partial"] is False)
+def test_blank_text_refusal_accumulator_is_bounded(_ws: Path) -> None:
+    """The REFUSAL path must not allocate in proportion to the input.
+
+    `--reason-file` has no size limit. The first version of this guard appended
+    one entry per character before de-duplicating, so refusing a large blank
+    file allocated ~4.3x the file's bytes and rising -- turning a documented
+    exit-2 refusal into an OOM (chatgpt-codex-connector on es#213). Only the
+    first `_MAX_REPORTED_BLANKS` DISTINCT code points are ever printed, so only
+    those may ever be held.
+
+    The oracle is the allocation the CALL makes: the input string is built
+    before tracing starts, so the traced peak is the guard's own. The old shape
+    peaks at ~8 bytes per character (~16 MB at n=2,000,000); the bound below is
+    two orders of magnitude under that, so it discriminates rather than merely
+    passing.
+    """
+    blanks = "\u0020\u00a0\u200b\u200e\u0007\u3164\u034f\ufe0f" \
+             "\u2060\u202e\u0001\u2800"
+    small = (blanks * ((100_000 // len(blanks)) + 1))[:100_000]
+    large = (blanks * ((2_000_000 // len(blanks)) + 1))[:2_000_000]
+
+    peaks = {}
+    for name, text in (("small", small), ("large", large)):
+        tracemalloc.start()
+        base = tracemalloc.get_traced_memory()[0]
+        raised = False
+        try:
+            _require_substantive_text(text, "cancel reason", "why")
+        except CustodyError:
+            raised = True
+        peaks[name] = tracemalloc.get_traced_memory()[1] - base
+        tracemalloc.stop()
+        check("blank-accumulator-%s-still-refuses" % name, raised)
+
+    check("blank-accumulator-large-input-allocation-bounded",
+          peaks["large"] < 100_000)
+    # 20x the input must not buy 20x the allocation.
+    check("blank-accumulator-allocation-does-not-scale-with-input",
+          peaks["large"] < max(peaks["small"], 1) * 4)
+
+
+def test_blank_text_refusal_message_names_first_distinct_codepoints(_ws: Path) -> None:
+    """Capping the accumulator must not change what the message says.
+
+    The diagnosis names the first `_MAX_REPORTED_BLANKS` DISTINCT code points
+    in order of first appearance, ASCII-only, with a trailing `...` only when a
+    further distinct code point was seen. Repetition is not a further distinct
+    code point, and the 9th distinct one is counted but never named.
+    """
+    twelve = "\u0020\u00a0\u200b\u200e\u0007\u3164\u034f\ufe0f" \
+             "\u2060\u202e\u0001\u2800"
+    exactly_eight = twelve[:8] * 40
+    try:
+        _require_substantive_text(exactly_eight, "cancel reason", "why")
+        check("blank-message-eight-distinct-refuses", False)
+    except CustodyError as exc:
+        msg = str(exc)
+        check("blank-message-eight-distinct-refuses", True)
+        check("blank-message-eight-distinct-no-ellipsis", "..." not in msg)
+        check("blank-message-eight-distinct-names-all-eight",
+              all(("U+%04X" % ord(c)) in msg for c in twelve[:8]))
+        check("blank-message-eight-distinct-counts-characters",
+              "%d character(s)" % len(exactly_eight) in msg)
+        check("blank-message-eight-distinct-is-ascii",
+              all(ord(c) < 128 for c in msg))
+
+    over_cap = twelve * 40
+    try:
+        _require_substantive_text(over_cap, "cancel reason", "why")
+        check("blank-message-over-cap-refuses", False)
+    except CustodyError as exc:
+        msg = str(exc)
+        check("blank-message-over-cap-refuses", True)
+        check("blank-message-over-cap-has-ellipsis", msg.endswith("..."))
+        check("blank-message-over-cap-names-first-eight",
+              all(("U+%04X" % ord(c)) in msg
+                  for c in twelve[:_MAX_REPORTED_BLANKS]))
+        check("blank-message-over-cap-omits-the-ninth",
+              ("U+%04X" % ord(twelve[_MAX_REPORTED_BLANKS])) not in msg)
+        check("blank-message-over-cap-preserves-first-appearance-order",
+              " ".join("U+%04X" % ord(c)
+                       for c in twelve[:_MAX_REPORTED_BLANKS]) in msg)
+        check("blank-message-over-cap-is-ascii",
+              all(ord(c) < 128 for c in msg))
+
+
+def test_authorize_sibling_refuses_blank_shaped_grant(
+        workspace: Path) -> None:
+    """The THIRD site of the blank-text class, not a second instance of a
+    fixed one.
+
+    `authorize_sibling` landed with es#173 after this work was first
+    written, and reached for `not text.strip()` -- the check measured as
+    open on 26 code points. It records an authority grant a human must
+    later read, so it takes the same predicate, and the mission must
+    survive the refusal rather than absorb an unreadable authorization."""
+    rel = "docs/x.txt"
+    a = open_mission(workspace, "a-owner", "own the artifact")
+    a.approve()
+    a.record_effect(rel, "one\n", "req-a1")
+    before = a.status()["revision"]
+    # Built from escapes, never literal characters, so this source file
+    # stays pure ASCII.
+    for label, grant in (("empty", ""), ("space", " "),
+                         ("nbsp", "\u00a0"), ("zwsp", "\u200b"),
+                         ("bom", "\ufeff"), ("vs16", "\ufe0f"),
+                         ("cgj", "\u034f")):
+        try:
+            a.authorize_sibling("b-writer", rel, grant)
+            check("sibling-grant-refuses-%s" % label, False)
+        except CustodyError:
+            check("sibling-grant-refuses-%s" % label, True)
+    check("sibling-grant-refusal-appends-nothing",
+          a.status()["revision"] == before)
+    # Negative control: a real grant still lands, so the guard refuses the
+    # class and not the verb.
+    a.authorize_sibling("b-writer", rel, "operator: b-writer may write it")
+    check("sibling-grant-accepts-real-text",
+          a.status()["revision"] > before)
 
 
 TESTS = [
+    test_blank_text_refusal_accumulator_is_bounded,
+    test_blank_text_refusal_message_names_first_distinct_codepoints,
+    test_authorize_sibling_refuses_blank_shaped_grant,
     test_scope_entry_classification_table,
     test_uncompared_scope_entries_are_reported,
     test_bare_filename_exclusion_is_enforced,
+    test_windows_scope_entries_with_spaces_bind_end_to_end,
+    test_windows_separator_form_table,
+    test_windows_bare_multi_segment_entry_names_exactly_one_path,
+    test_windows_scope_case_insensitive_compare,
     test_prose_scope_does_not_refuse_acceptance,
     test_unrelated_amendment_never_discharges_regardless_of_order,
     test_mixed_prose_and_path_scope_in_does_not_flag_everything,
@@ -5515,6 +6747,15 @@ TESTS = [
     test_note_cannot_forge_machine_state,
     test_receipt_ids_always_carry_a_derivable_path,
     test_effect_path_index_matches_per_id,
+    test_effect_path_index_agrees_after_readmission,
+    test_scope_consistency_reuses_single_effect_index,
+    test_scope_consistency_reuses_index_for_underivable_ids,
+    test_effect_path_index_invalidates_on_same_count_tail_rewrite,
+    test_resume_and_continuity_share_one_effect_index,
+    test_effect_path_index_does_not_retain_checkpoint_bytes,
+    test_effect_path_index_uses_set_membership,
+    test_census_receipts_does_not_rescan_the_chain_per_receipt,
+    test_census_still_reports_receipts_when_the_index_is_unbuildable,
     test_foreign_mission_receipt_is_not_this_missions_receipt,
     test_cross_workspace_receipt_cannot_silence_drift,
     test_backslash_effect_path_still_loads_its_own_receipt,
@@ -5542,12 +6783,15 @@ TESTS = [
     test_obligations_match_by_artifact_not_by_string,
     test_drift_marker_matches_by_artifact,
     test_superseded_receipt_never_shadows_the_current_one,
+    test_continuity_break_classification_never_rescans_the_chain,
     test_continuity_surfaces_unreceipted_mutation,
     test_continuity_is_silent_on_sanctioned_recovery,
     test_request_ids_are_never_reusable,
     test_reconcile_clears_exactly_one_marker,
     test_corrupt_receipt_degrades_to_drift,
     test_effect_duplicate_id_leaves_workspace_untouched,
+    test_failed_effect_removes_the_directories_it_created,
+    test_failed_mkdir_removes_the_ancestors_it_already_created,
     test_accept_requires_verifying_and_separation,
     test_fail_is_clearable,
     test_operator_tier,
@@ -5575,6 +6819,8 @@ TESTS = [
     test_census_does_not_count_unapproved_guards_as_armed,
     test_census_reports_partial_coverage_when_a_probe_fails,
     test_census_orphan_probe_failure_is_partial_not_absence,
+    test_discovery_stderr_escapes_control_characters,
+    test_no_contract_module_keeps_the_control_permissive_escaper,
 ]
 
 
