@@ -316,6 +316,14 @@ def render() -> dict:
     return template
 
 
+def _names_project_hooks(path: str) -> bool:
+    """True when `path`'s last two components are `.cursor/hooks.json`."""
+    parts = Path(path).parts
+    return (len(parts) >= 2
+            and parts[-2] == os.path.normcase(".cursor")
+            and parts[-1] == os.path.normcase("hooks.json"))
+
+
 def _git_probe(args: list[str], cwd: Path) -> subprocess.CompletedProcess | None:
     """Run a read-only git query; None when git itself cannot run."""
     try:
@@ -415,10 +423,19 @@ def _version_control_gate(destination: Path) -> tuple[str | None, str | None]:
     # repo/packages/app) loads packages/app/.cursor/hooks.json as the
     # project hooks file.  The destination is already known to sit inside
     # this worktree, so the final two segments decide.
-    destination_parts = Path(norm(str(destination))).parts
-    if len(destination_parts) >= 2 and \
-            destination_parts[-2] == os.path.normcase(".cursor") and \
-            destination_parts[-1] == os.path.normcase("hooks.json"):
+    #
+    # BOTH SPELLINGS decide, because they can disagree.  `norm` resolves
+    # symlinks, so a symlinked `.cursor` (`.cursor -> cursor-local`) lost
+    # the very component this comparison reads: the refusal never fired,
+    # the renderer wrote a committable `cursor-local/hooks.json`, and
+    # Cursor loaded it all the same through `.cursor/hooks.json` (Codex
+    # es#216 thread 3866510301).  The LOGICAL spelling is what Cursor
+    # reads; the RESOLVED one is what git indexes, and a `.cursor` reached
+    # through a symlinked PARENT only carries the component once resolved.
+    # Neither spelling subsumes the other, so either match refuses.
+    logical = os.path.normcase(os.path.normpath(str(destination)))
+    if _names_project_hooks(norm(str(destination))) or \
+            _names_project_hooks(logical):
         return (
             f"{destination} is a project-hooks file Cursor auto-loads "
             f"(.cursor/hooks.json at {rel_posix} in the worktree at "

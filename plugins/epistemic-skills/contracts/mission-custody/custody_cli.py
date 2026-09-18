@@ -32,33 +32,14 @@ import os
 import sys
 from pathlib import Path
 
-from custody_mission import CustodyError, Mission, uncompared_scope_entries
+from custody_mission import (
+    CustodyError, Mission, _display_safe, uncompared_scope_entries,
+)
 from custody_store import StoreError
 
 
 def _print_status(checkpoint: dict) -> None:
     print(json.dumps(checkpoint, indent=2, sort_keys=True, ensure_ascii=True))
-
-
-def _display_safe(text: str, *, preserve_printable_syntax: bool = False) -> str:
-    """Render terminal text without allowing control-character execution.
-
-    Raw fields use full JSON string escaping (minus the surrounding quotes).
-    A completed refusal message can also contain trusted printable syntax --
-    notably the JSON-quoted ``--scope-ack`` token that the acceptor must copy
-    exactly.  In that mode preserve printable ASCII quotes and backslashes,
-    while still JSON-escaping every control and non-ASCII code point.  Both
-    modes therefore prevent forged rows and ANSI execution and remain safe
-    on an ASCII-only console.  JSON document surfaces get the same guarantees
-    from ``_print_status``'s ``ensure_ascii=True``.
-    """
-    if preserve_printable_syntax:
-        return "".join(
-            char if " " <= char <= "~"
-            else json.dumps(char, ensure_ascii=True)[1:-1]
-            for char in text
-        )
-    return json.dumps(text, ensure_ascii=True)[1:-1]
 
 
 def _read_content(args: argparse.Namespace) -> str:
