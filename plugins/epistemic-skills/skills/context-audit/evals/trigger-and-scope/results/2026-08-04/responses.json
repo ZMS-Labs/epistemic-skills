@@ -165,7 +165,7 @@
     "KEEP:NAMED-INTEGRATION": [
      "proxy + CA bundle paths",
      "working directory and scratchpad path",
-     "homelab host names in relay skills"
+     "example deployment host names in relay skills"
     ],
     "KEEP:GOVERNANCE": [
      "Artifact never-publish rules",

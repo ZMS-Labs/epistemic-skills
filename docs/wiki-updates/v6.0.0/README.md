@@ -1,20 +1,24 @@
-# Wiki update for v6.0.0 — NOT PUBLISHED
+# Handbook source and publication
 
-**Status: prepared, not applied.** The live `ZMS-Labs/epistemic-skills.wiki`
-still serves v5.0.0-era content. This package exists so that gap is a
-*reproducible correction* rather than a promise.
+`pages/` is the complete committed handbook snapshot for v6.0.0. The published
+GitHub Wiki is a separate repository; changing this directory alone does not
+publish it. The `wiki-contract` workflow checks the snapshot on pull requests
+and the live wiki on its daily schedule.
 
-It is deliberately a **delta package**, not a 40-page rewrite: the v5.0.0
-package under `docs/wiki-updates/v5.0.0/` remains the base, and this applies the
-drift measured on top of it.
+Validate the snapshot before publishing:
 
-## Why this exists
+```bash
+python docs/wiki-updates/v6.0.0/check_wiki.py --self-test
+python docs/wiki-updates/v6.0.0/check_wiki.py docs/wiki-updates/v6.0.0/pages --links
+```
 
-Publication-gate finding **PG-08**. The v5.1.0 release recorded a post-tag
-handbook pass as a follow-up and it was never performed — "we will fix the wiki
-after the tag" is 0-for-1 in this project. So the correction ships as runnable
-code with a self-test, and the gap is recorded in the release note with an owner
-and an exit criterion.
+Copy the reviewed pages to a clean wiki checkout, inspect the diff, and run the
+same checker against that checkout before committing and pushing. Check the
+published wiki again after the push. `apply_v6_updates.py` is a limited migration
+helper; it does not replace the complete snapshot or verify publication.
+
+The sections below retain the original migration measurements. They describe
+the historical v5-to-v6 migration, not the current publication state.
 
 ## Measured drift (2026-08-20, by cloning the wiki)
 

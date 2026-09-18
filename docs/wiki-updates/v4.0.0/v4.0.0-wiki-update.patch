@@ -1,5 +1,5 @@
 From d4099f345df312064bc3e1c5838deb1f398c29d9 Mon Sep 17 00:00:00 2001
-From: Claude <noreply@anthropic.com>
+From: Claude <maintainer@example.org>
 Date: Tue, 4 Aug 2026 17:58:10 +0000
 Subject: [PATCH] =?UTF-8?q?v4.0.0:=20eleven-skill=20catalog=20=E2=80=94=20?=
  =?UTF-8?q?recon/resolve=20consolidation,=20historical=20banners,=20versio?=
@@ -8,9 +8,9 @@ MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 
-Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
+Co-Authored-By: Claude Fable 5 <maintainer@example.org>
 Claude-Session: https://claude.ai/code/session_01EBSZozu7WMUbfcyBxUiStz
-Signed-off-by: Claude <noreply@anthropic.com>
+Signed-off-by: Claude <maintainer@example.org>
 ---
  Architecture-and-Contracts.md             |  2 +
  Choosing-a-Skill.md                       | 21 ++++---

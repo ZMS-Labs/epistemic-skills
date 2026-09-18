@@ -137,7 +137,7 @@ optional probe jobs (owner: operator, per panel-2 CL-4).
   owner decision (allow-list the release actor or document the intended
   tag-creation path).
 - **Junction receipt (item-7 / P2-F executed evidence):** canonical
-  checkout `Y:\dev\epistemic-skills` detached at the tag; installer add +
+  checkout `/workspace/epistemic-skills` detached at the tag; installer add +
   `-Verify`: **15 junctions present on both surfaces** (`~/.zcode/skills`,
   `~/.agents/skills`), `manifest` linked, exit 0. The fresh-session skill
   list remains the final oracle (session-bound discovery) — es#178 carries

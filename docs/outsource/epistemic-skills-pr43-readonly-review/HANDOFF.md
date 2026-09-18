@@ -76,7 +76,7 @@ needed to verify a claim; do not broaden into a new whole-repository audit.
   `09-final-verification.md`, and a final frozen-subject Gauntlet run are absent.
 - `stdlib-checks` and CodeQL checks are green at the pinned head.
 - DCO is red because commit authors use the GitHub noreply identity while trailers use
-  `zachstern@gmail.com`.
+  `maintainer@example.org`.
 
 These are origin observations. Reproduce them from GitHub before citing them.
 

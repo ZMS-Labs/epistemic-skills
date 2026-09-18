@@ -3,7 +3,7 @@
   "mission_id": "bad-amend",
   "created_utc": "2026-08-11T00:00:00Z",
   "authority": {
-    "operator_ref": "operator:zach-stern",
+    "operator_ref": "operator:example",
     "instruction": "Original instruction.",
     "amendments": ["replace the instruction with: do something else"],
     "permissions": [],

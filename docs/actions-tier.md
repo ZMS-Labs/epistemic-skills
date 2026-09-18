@@ -1,34 +1,13 @@
-# GitHub Actions tier
+# Continuous integration
 
-**Tier: C** — in-repo checks (shared template does not apply)
-**Reviewed: 2026-09-02** · **Next review due: 2026-12-01**
+The repository defines its checks in `.github/workflows/`. Each workflow names
+the contract it validates; the status of one does not establish the others.
 
-2026-12-01 is when this posture must be re-checked, not a date on which
-anything was verified. Everything below was established on 2026-09-02.
-
-**These checks are advisory, not a merge gate.** Neither the ruleset nor classic
-branch protection requires any status-check context on the default branch, so a
-pull request can be merged while the jobs below are failing or have not run at
-all. They are worth reading before merging; nothing enforces that anyone did.
-
-## Why the shared template does not apply
-
-The org's Tier C gate templates (`tier-c-gate-python`, `-node`, `-mixed`) live in
-a **private** fleet repository in the same organisation. `epistemic-skills` is
-**public**, and GitHub does not permit a public repository to call a reusable
-workflow that lives in a private one. The template cannot be referenced from
-here at all, so the Tier C shape is implemented directly in this repo's own
-workflows.
-
-(That repository is deliberately not named here.
-`.github/scripts/check_public_content.py` rejects its name as
-`private-fleet-repo-name`, and the first draft of this document failed that
-check — which is the clean-room gate doing its job.)
-
-There is a second reason it would not fit even if it could be called: this
-repo's gates are not one build. They are seven independent contract oracles,
-several of which are the only thing standing between a claim and its evidence.
-A single consolidated job would hide which oracle failed.
+The branch-protection observation recorded here was verified on **2026-09-18**:
+no required status-check contexts were configured on the default branch at
+that time. Repository settings can change independently of source; inspect
+current settings before relying on enforcement. Workflow execution and merge
+protection are separate controls.
 
 ## What the gate runs
 
@@ -39,10 +18,10 @@ A single consolidated job would hide which oracle failed.
 | `mission-custody-contract.yml` | `contract`, `contract-macos` | ready PRs + push, path-filtered to the mission-custody contracts and their specs; the macOS job on dispatch only | 30 min each | the mission-custody contract, on Linux always and on macOS on demand |
 | `wiki-contract.yml` | `snapshot`, `live` | `snapshot` on ready PRs + push; `live` on a daily cron and dispatch | 10 / 15 min | that the committed handbook snapshot matches the package, and (daily) that the *published* wiki still does |
 | `openai-bundles.yml` | `build` | ready PRs + push, path-filtered; plus published releases and **`workflow_dispatch`** | 15 min | the OpenAI packaging bundles build. The push trigger is path-filtered and will not fire for a docs-only release candidate, so the manual dispatch is how `RELEASING.md`'s exact-candidate bundle evidence gets recorded — do not assume the automatic triggers cover it |
-| `release-security.yml` | `full-history-secret-scan` | ready PRs + push to `main` + dispatch | 15 min | no secret anywhere in the history |
-| `dco.yml` | `dco` | ready PRs (`pull_request_target`) | 5 min | every commit carries a real `Signed-off-by` name and email |
+| `release-security.yml` | `full-history-secret-scan` | ready PRs + push to `main` + dispatch | 15 min | no matches from the configured secret rules in scanned history |
+| `dco.yml` | `dco` | ready PRs (`pull_request_target`) | 5 min | author-matching sign-offs, subject to the documented DCO exceptions |
 
-## Tier C properties
+## Workflow behavior
 
 - **Draft-gated.** Every workflow above lists `ready_for_review` in its
   `pull_request` types, and every job carries a `draft == false` condition. As
@@ -76,7 +55,7 @@ A single consolidated job would hide which oracle failed.
 
 ## Required contexts
 
-The `main` ruleset enforces deletion and non-fast-forward protection only. It
+As verified on 2026-09-18, the `main` ruleset enforces deletion and non-fast-forward protection only. It
 requires **no status check contexts**, and classic branch protection is not
 configured (the endpoint returns 404). Check *both* endpoints before changing a
 job name here: classic protection is invisible to `/rules/branches`.

@@ -475,6 +475,69 @@ def _refuse_unrecordable_artifact_path(relpath) -> None:
             + f" in {relpath!r}")
 
 
+def _absent_ancestors(directory: Path) -> list[Path]:
+    """The ancestors of `directory`, DEEPEST FIRST, that do not exist yet.
+
+    Read BEFORE the mkdir that creates them, because afterwards the answer
+    is gone: `Path.mkdir(parents=True, exist_ok=True)` reports nothing
+    about what it made, and a directory found on the way back out cannot be
+    told apart from one a concurrent writer created in the meantime. An
+    ancestor whose existence cannot be decided (a stat that raises rather
+    than answering) is treated as ALREADY THERE -- a directory this call
+    cannot prove it created is not this call's to remove."""
+    absent: list[Path] = []
+    node = directory
+    while node != node.parent:
+        try:
+            if node.exists():
+                break
+        except OSError:
+            break
+        absent.append(node)
+        node = node.parent
+    return absent
+
+
+def _unwind_absent_ancestors(created: list[Path]) -> None:
+    """Remove the directories `_absent_ancestors` recorded, deepest first.
+
+    ONLY WHILE EMPTY, and only until the first that will not come away:
+    `rmdir` refuses a populated directory, so bytes the failed write did
+    leave behind -- or anything a concurrent writer put there -- stop the
+    unwind at that level, and every ancestor above it holds that level and
+    stops too. Removing a directory somebody else is now using would be a
+    worse mutation than the one being undone.
+
+    A level that IS NOT THERE is skipped rather than treated as a refusal.
+    `mkdir(parents=True)` builds the chain one level at a time and can fail
+    partway, so the deepest recorded levels may never have been created at
+    all -- and a level that does not exist holds nothing, shelters nobody's
+    data, and must not stop the unwind of the levels BELOW it that this call
+    really did create. Stopping there was the whole residue: a component
+    longer than NAME_MAX left `aa/` and `aa/bb/` standing because the rmdir
+    of the too-long name raised first. The ENOTEMPTY guarantee is unchanged
+    and is enforced by `rmdir` itself, not by this skip: an ancestor holding
+    a level that would not come away is non-empty and refuses in its turn.
+
+    Failures are swallowed because this runs on the way out of a `raise`:
+    the caller must see the error that failed the effect, not a cleanup
+    error standing in front of it."""
+    for directory in created:
+        try:
+            if not directory.exists():
+                continue
+        except OSError:
+            # Existence undecidable at this level. Skipping is the same
+            # conservative direction as above -- nothing is removed here --
+            # while still letting a level this call demonstrably created be
+            # unwound. A non-empty ancestor still refuses on its own rmdir.
+            continue
+        try:
+            directory.rmdir()
+        except OSError:
+            return
+
+
 def _store_identity(mission_dir: Path) -> str:
     """One store, possibly several names. `missions/alias -> missions/real`
     is two DIRECTORY NAMES over one store; every question about the store
@@ -1901,19 +1964,47 @@ class Mission:
                                      artifact_relpath)
         before_sha = sha256_file(target) if target.exists() else None
         data = content.encode("utf-8")
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_bytes(data)
-        receipt = {
-            "record": "receipt@1",
-            "mission_id": latest["mission_id"],
-            "request_id": request_id,
-            "actor": self.actor,
-            "utc": now_utc(),
-            "artifact_path": artifact_relpath.replace("\\", "/"),
-            "before_sha256": before_sha,
-            "after_sha256": sha256_bytes(data),
-        }
-        self.store.write_receipt(receipt)
+        # THE DIRECTORY IS PART OF THE EFFECT. Every precondition above
+        # already runs before this mkdir -- that ordering is the
+        # refuse-before-mutate discipline the idempotency guard established
+        # -- but ordering alone only covers the failures this verb PREDICTS.
+        # A `PermissionError` at `write_bytes`, or any failure at
+        # `write_receipt`, fails AFTER the directories exist, and the
+        # freshly created parents used to survive it with no receipt and no
+        # checkpoint: an unreceipted workspace mutation minted by the verb
+        # whose whole contract is "no effect without a receipt" (es#169).
+        # So the parents this call creates are recorded before the fact and
+        # unwound on the way out of any raise. What the unwind CANNOT undo
+        # it declines to touch: a write that landed bytes and then failed to
+        # receipt them leaves a non-empty directory, and the artifact's own
+        # bytes are not this cleanup's to delete.
+        # The mkdir is INSIDE the try. mkdir(parents=True) creates the chain one
+        # level at a time and can fail partway — a long component raises OSError
+        # [Errno 36] after the shallower parents already exist — so leaving it
+        # outside left exactly the residue this seam is about, and contradicted
+        # the sentence above about unwinding "on the way out of any raise".
+        # `created_parents` is still read BEFORE the mkdir, which is the part
+        # that has to happen first: Path.mkdir reports nothing about what it
+        # made, and re-deriving it afterwards cannot tell our directory from one
+        # a concurrent writer created in between.
+        created_parents = _absent_ancestors(target.parent)
+        try:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(data)
+            receipt = {
+                "record": "receipt@1",
+                "mission_id": latest["mission_id"],
+                "request_id": request_id,
+                "actor": self.actor,
+                "utc": now_utc(),
+                "artifact_path": artifact_relpath.replace("\\", "/"),
+                "before_sha256": before_sha,
+                "after_sha256": sha256_bytes(data),
+            }
+            self.store.write_receipt(receipt)
+        except BaseException:
+            _unwind_absent_ancestors(created_parents)
+            raise
         return receipt
 
     def _own_mission_id(self) -> str | None:

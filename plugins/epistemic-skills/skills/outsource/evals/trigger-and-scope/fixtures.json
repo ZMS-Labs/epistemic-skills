@@ -19,7 +19,7 @@
   },
   {
     "id": "capable-target-preflight-fires",
-    "scenario": "Operator says: send the failing-suite fix to the coding harness on the homelab — it has to check the code out, run the tests, and open the pull request itself. The GitHub remote is reachable and push-authorized. The named harness demonstrably holds a writable checkout, a runnable test shell, authenticated GitHub mutation actions, and isolated execution contexts, and its repository access is confirmed. No secrets are needed.",
+    "scenario": "Operator says: send the failing-suite fix to the coding harness on the example deployment — it has to check the code out, run the tests, and open the pull request itself. The GitHub remote is reachable and push-authorized. The named harness demonstrably holds a writable checkout, a runnable test shell, authenticated GitHub mutation actions, and isolated execution contexts, and its repository access is confirmed. No secrets are needed.",
     "trigger": "explicit",
     "expected_action": "publish-packet",
     "required_capabilities": [

@@ -11,6 +11,8 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / ".github/scripts"))
 
+from check_public_content import scan_text  # noqa: E402
+
 from v6_generate_candidate_packet import (  # noqa: E402
     blocking_from_matrix,
     build_promotion_packet,
@@ -246,9 +248,9 @@ def main() -> int:
 
     receipt = build_receipt(sha, "2026-08-18T00:00:00Z")
     blob = json.dumps(receipt)
-    forbidden = "zms-" + "homelab"
-    if forbidden in blob.lower():
-        raise AssertionError("candidate receipt must not name the private fleet overlay")
+    defects = scan_text(REPO_ROOT / "candidate-receipt.json", blob)
+    if defects:
+        raise AssertionError(f"candidate receipt contains private coordinates: {defects}")
     if receipt["parent_program"] != "ZMS-Labs/epistemic-skills#191":
         raise AssertionError(receipt["parent_program"])
 

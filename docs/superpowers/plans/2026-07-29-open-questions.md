@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Ship `open-questions` as the tenth discipline in the epistemic-skills collection, release v3.1.0, then bring the <private-fleet-repo> fleet layer up to date with all six missing skills.
+**Goal:** Ship `open-questions` as the tenth discipline in the epistemic-skills collection, release v3.1.0, then bring the <deployment-repository> fleet layer up to date with all six missing skills.
 
-**Architecture:** Three sequential phases. Phase A (feature PR, this repo): author the skill core and update every count-asserted integration surface, driven by the package integration test. Phase B (release PR, this repo): version bump per RELEASING.md. Phase C (fleet PR, <private-fleet-repo>): worktree-isolated core sync + LOCAL.md overlays + status table.
+**Architecture:** Three sequential phases. Phase A (feature PR, this repo): author the skill core and update every count-asserted integration surface, driven by the package integration test. Phase B (release PR, this repo): version bump per RELEASING.md. Phase C (fleet PR, <deployment-repository>): worktree-isolated core sync + LOCAL.md overlays + status table.
 
 **Tech Stack:** Plain markdown skill cores; Python stdlib integration test (`plugins/epistemic-skills/skills/outsource/tests/run_tests.py`); GitHub Actions CI (`.github/workflows/epistemic-flexibility.yml`); git worktrees for the fleet repo.
 
@@ -13,12 +13,12 @@
 - Spec: `docs/superpowers/specs/2026-07-29-open-questions-design.md` (approved 2026-07-29) — the skill's content authority.
 - All files authored **LF** (`.gitattributes` is `* text=auto eol=lf`); verify no CRLF before commit.
 - Canonical tree ONLY: `plugins/epistemic-skills/skills/...`. Root `skills/` and `agents/` are git symlinks (mode 120000) — NEVER create real root directories.
-- Every commit: `git commit --signoff`, author `SternOne <zachstern@gmail.com>` (DCO-enforced).
+- Every commit: `git commit --signoff`, author `SternOne <maintainer@example.org>` (DCO-enforced).
 - Frontmatter: exactly two keys (`name`, `description`), trigger-only SDO style, single-quoted YAML.
 - The skill core MUST end with the standard `## Local overlay` section.
 - Count literals are CI-asserted as exact substrings including markdown emphasis (`**eleven** skills` and `eleven skills` are distinct assertions). Update the test FIRST, then edit prose until the test passes.
 - Version numbers change ONLY in Phase B (RELEASING.md: version alignment happens in the release PR, not the feature PR). Count text inside manifest descriptions changes in Phase A.
-- <private-fleet-repo> currently has uncommitted work on `feat/pm-corpus-github-cutover`. Phase C uses `git worktree add` off `origin/main` — never stash, checkout, or pull in the existing working tree (RULE-028).
+- <deployment-repository> currently has uncommitted work on `feat/pm-corpus-github-cutover`. Phase C uses `git worktree add` off `origin/main` — never stash, checkout, or pull in the existing working tree (RULE-028).
 
 ---
 
@@ -362,7 +362,7 @@ https://claude.ai/code/session_011L3kh3mNct92BFDrfWKD5G"
 gh pr checks --watch && gh pr merge --squash
 ```
 
-## Phase C — Fleet-layer catch-up (<private-fleet-repo>)
+## Phase C — Fleet-layer catch-up (<deployment-repository>)
 
 ### Task C1: Safety gate + worktree
 
@@ -414,7 +414,7 @@ Required bindings per skill (keep each file short — pointers, not prose):
 - **continuity-verify**: durable anchors on this fleet = GitHub issues/PRs, session logs, memory directory; compaction summaries are the primary trigger.
 - **decision-ledger**: the fleet's durable sinks = ADRs (`/decide`), GitHub issues, session-log `[DECISION]` lines; do not duplicate rules.json content.
 
-Each ends with a `## Durability` section naming <private-fleet-repo> as canonical and the deploy cache path.
+Each ends with a `## Durability` section naming <deployment-repository> as canonical and the deploy cache path.
 
 ### Task C4: Status table + PR
 
@@ -427,7 +427,7 @@ Each ends with a `## Durability` section naming <private-fleet-repo> as canonica
 cd /y/dev/<private-fleet-checkout>-wt-fleet-catchup
 git add skills/ && git commit --signoff -m "feat(skills): fleet-layer catch-up — six epistemic-skills cores + LOCAL.md overlays (v3.1.0)"
 git push -u origin feat/epistemic-fleet-catchup
-gh pr create -R <private-fleet-repo> --title "feat: epistemic-skills fleet-layer catch-up (helix, write-goal, outsource, continuity-verify, decision-ledger, open-questions)" --body "Brings skills/ to parity with public v3.1.0. Byte-identical cores + fleet LOCAL.md overlays + status table refresh. Worktree-isolated; primary working tree untouched.
+gh pr create -R <deployment-repository> --title "feat: epistemic-skills fleet-layer catch-up (helix, write-goal, outsource, continuity-verify, decision-ledger, open-questions)" --body "Brings skills/ to parity with public v3.1.0. Byte-identical cores + fleet LOCAL.md overlays + status table refresh. Worktree-isolated; primary working tree untouched.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 

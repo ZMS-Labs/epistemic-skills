@@ -71,7 +71,7 @@
     "id": "explicit-spike-fires",
     "action": "run-prototype",
     "question": "Can the streaming parser process the 50MB fixture at or above the stream's arrival rate with bounded memory? Answer YES if a thin spike wiring the parser to the 50MB fixture completes end-to-end with sustained throughput >= the fixture's replay rate and memory stays flat; answer NO if throughput falls below the replay rate or memory grows with input consumed. Prediction registered before running; the observation is the measured MB/s and peak RSS over the full fixture.",
-    "throwaway_location": "/tmp/claude-0/-home-user-epistemic-skills/409df5b1-0751-5649-9dc1-0325ed7d698c/scratchpad/spike-streaming-parser-50mb",
+    "throwaway_location": "/tmp/example-run/spike-streaming-parser-50mb",
     "mergeable": false
   },
   {
@@ -81,7 +81,7 @@
     "variant": "logic-probe",
     "rationale": "Routing per resolve core in cost order: reading cannot settle it (an hour of argument over the design text has not converged); derivation is not cheaper here \u2014 the sunk hour of ordering argument IS the failed derivation path, and a 15-minute build makes the answer observable directly ('building cheaper than arguing'); no scholarly premise, so literature is out. Probe fires. This is a single yes/no behavioral question, not a comparative option fork, so no variants.",
     "question": "Can the cache invalidation ordering race \u2014 specifically, does any interleaving of a concurrent write/write-back with an invalidation, under the ordering the design specifies, leave a stale cache entry live after the invalidation completes? Answered YES (race exists) if the terminal-runnable state explorer, exhaustively enumerating interleavings of the modeled invalidate and update steps, reaches any terminal state where a reader observes stale data post-invalidation, with the offending interleaving printed as the observation. Answered NO (ordering is safe) if exhaustive enumeration over the modeled step set completes with zero such terminal states.",
-    "throwaway_location": "/tmp/claude-0/-home-user-epistemic-skills/409df5b1-0751-5649-9dc1-0325ed7d698c/scratchpad/probe-cache-invalidation-race/ \u2014 a session scratch directory outside the repository, declared at probe birth, structurally unmergeable; lifetime ends when the answer is recorded",
+    "throwaway_location": "/tmp/example-run/probe-cache-invalidation-race/ \u2014 a session scratch directory outside the repository, declared at probe birth, structurally unmergeable; lifetime ends when the answer is recorded",
     "mergeable": false,
     "disposal_declared_at_birth": true,
     "answer_capture_plan": "Before deletion, record the finding durably in the design thread's decision record (question, the winning/absent interleaving as observation, and the resulting ordering decision); then delete the scratch directory. Any production fix is rebuilt under normal discipline (tests, review) from the answer only \u2014 no probe line is promoted."

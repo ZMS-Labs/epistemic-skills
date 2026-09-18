@@ -7,7 +7,7 @@
    "evidence": [
     {
      "tier": "V",
-     "ref": "Y:/dev/_wt/epistemic-flex-v3/plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/validate_trace.py (full file, esp. lines 49-169: no cross-field check between `control` and `action`)"
+     "ref": "/workspace/_wt/epistemic-flex-v3/plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/validate_trace.py (full file, esp. lines 49-169: no cross-field check between `control` and `action`)"
     },
     {
      "tier": "V",
@@ -15,7 +15,7 @@
     },
     {
      "tier": "V",
-     "ref": "Y:/dev/_wt/epistemic-flex-v3/plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/behavioral/score_behavior.py lines 35-49, 74-99 (claim_matches / path_contains_any are literal case-insensitive substring tests, not semantic checks)"
+     "ref": "/workspace/_wt/epistemic-flex-v3/plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/behavioral/score_behavior.py lines 35-49, 74-99 (claim_matches / path_contains_any are literal case-insensitive substring tests, not semantic checks)"
     },
     {
      "tier": "V",
@@ -23,7 +23,7 @@
     },
     {
      "tier": "V",
-     "ref": "Y:/dev/_wt/epistemic-flex-v3/plugins/epistemic-skills/skills/using-epistemic-skills/reference/epistemic-flexibility.md:82 -- 'Additional narrative is not evidence and does not authorize `act`' -- the exact safeguard my two constructed traces show is not mechanically checked"
+     "ref": "/workspace/_wt/epistemic-flex-v3/plugins/epistemic-skills/skills/using-epistemic-skills/reference/epistemic-flexibility.md:82 -- 'Additional narrative is not evidence and does not authorize `act`' -- the exact safeguard my two constructed traces show is not mechanically checked"
     }
    ],
    "falsifier": {
@@ -41,11 +41,11 @@
    "evidence": [
     {
      "tier": "V",
-     "ref": "Y:/dev/_wt/epistemic-flex-v3/plugins/epistemic-skills/skills/decision-ledger/SKILL.md:112-117 -- 'Chain integrity... A malformed or unlinkable chain fails closed -- every entry on it is stale-by-construction and re-derived, never consumed as current.' (no hedge in this prose)"
+     "ref": "/workspace/_wt/epistemic-flex-v3/plugins/epistemic-skills/skills/decision-ledger/SKILL.md:112-117 -- 'Chain integrity... A malformed or unlinkable chain fails closed -- every entry on it is stale-by-construction and re-derived, never consumed as current.' (no hedge in this prose)"
     },
     {
      "tier": "V",
-     "ref": "Y:/dev/_wt/epistemic-flex-v3/plugins/epistemic-skills/skills/decision-ledger/reference/ledger-entry.schema.json:59 -- the only place the hedge 'store-level invariant, not schema-checkable' actually appears"
+     "ref": "/workspace/_wt/epistemic-flex-v3/plugins/epistemic-skills/skills/decision-ledger/reference/ledger-entry.schema.json:59 -- the only place the hedge 'store-level invariant, not schema-checkable' actually appears"
     },
     {
      "tier": "V",
@@ -53,11 +53,11 @@
     },
     {
      "tier": "V",
-     "ref": "Y:/dev/_wt/epistemic-flex-v3/plugins/epistemic-skills/skills/decision-ledger/reference/README.md:39-45 -- 'Never-instruct boundary held (human-enforced, not schema-checkable)... caught by this review, never claimed as schema-rejected'"
+     "ref": "/workspace/_wt/epistemic-flex-v3/plugins/epistemic-skills/skills/decision-ledger/reference/README.md:39-45 -- 'Never-instruct boundary held (human-enforced, not schema-checkable)... caught by this review, never claimed as schema-rejected'"
     },
     {
      "tier": "V",
-     "ref": "Y:/dev/_wt/epistemic-flex-v3/.github/workflows/epistemic-flexibility.yml -- lists 6 automated check steps; none references the never-instruct checklist item or chain-acyclicity"
+     "ref": "/workspace/_wt/epistemic-flex-v3/.github/workflows/epistemic-flexibility.yml -- lists 6 automated check steps; none references the never-instruct checklist item or chain-acyclicity"
     }
    ],
    "falsifier": {
@@ -75,11 +75,11 @@
    "evidence": [
     {
      "tier": "V",
-     "ref": "Y:/dev/_wt/epistemic-flex-v3/plugins/epistemic-skills/skills/using-epistemic-skills/reference/epistemic-flexibility.md:7 (definition sentence, agentive verbs) and :9 (disclaimer of feeling/mindfulness/intrinsic-values/therapeutic-alliance)"
+     "ref": "/workspace/_wt/epistemic-flex-v3/plugins/epistemic-skills/skills/using-epistemic-skills/reference/epistemic-flexibility.md:7 (definition sentence, agentive verbs) and :9 (disclaimer of feeling/mindfulness/intrinsic-values/therapeutic-alliance)"
     },
     {
      "tier": "V",
-     "ref": "Y:/dev/_wt/epistemic-flex-v3/plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/validate_trace.py:16-38 -- the actual mechanical cash-value of the five controls is five closed vocabularies and nonempty-string checks"
+     "ref": "/workspace/_wt/epistemic-flex-v3/plugins/epistemic-skills/skills/using-epistemic-skills/evals/epistemic-flexibility/validate_trace.py:16-38 -- the actual mechanical cash-value of the five controls is five closed vocabularies and nonempty-string checks"
     },
     {
      "tier": "I",
@@ -101,11 +101,11 @@
    "evidence": [
     {
      "tier": "V",
-     "ref": "Y:/dev/_wt/epistemic-flex-v3/plugins/epistemic-skills/skills/using-epistemic-skills/reference/epistemic-flexibility.md:3"
+     "ref": "/workspace/_wt/epistemic-flex-v3/plugins/epistemic-skills/skills/using-epistemic-skills/reference/epistemic-flexibility.md:3"
     },
     {
      "tier": "V",
-     "ref": "Y:/dev/_wt/epistemic-flex-v3/plugins/epistemic-skills/skills/write-goal/SKILL.md:63-74, 141-142, 229-236, 259-260, 284 -- authorized-priority/success-proxy/proxy-failure/acceptable-cost integrated with concrete worked examples and a rationalization-table entry"
+     "ref": "/workspace/_wt/epistemic-flex-v3/plugins/epistemic-skills/skills/write-goal/SKILL.md:63-74, 141-142, 229-236, 259-260, 284 -- authorized-priority/success-proxy/proxy-failure/acceptable-cost integrated with concrete worked examples and a rationalization-table entry"
     }
    ],
    "falsifier": {

@@ -54,7 +54,7 @@ def open_mission(workspace: Path, mission_id: str, instruction: str,
                   actor: str = "agent:worker", **kwargs) -> Mission:
     return Mission.open(
         workspace, mission_id=mission_id, instruction=instruction,
-        operator_ref="operator:zach", steward_ref="agent:worker",
+        operator_ref="operator:example", steward_ref="agent:worker",
         required_tier=required_tier, actor=actor, **kwargs)
 
 
@@ -684,8 +684,8 @@ def test_orphan_residue_is_reportable_after_the_mission_ends(
     Mission.load(root, actor="agent:worker").acknowledge_receipt_loss("req-1")
     Mission.load(root, actor="agent:worker").record_effect("a.txt", "aa", "r9")
     Mission.load(root, actor="agent:worker").begin_verification()
-    Mission.load(root, actor="operator:zach").record_verdict(
-        "PASS", "operator:zach", "operator-accepted", "done")
+    Mission.load(root, actor="operator:example").record_verdict(
+        "PASS", "operator:example", "operator-accepted", "done")
     receipt_path.write_text(saved, encoding="utf-8")   # residue, after the end
 
     report = census_missions.census(root)
@@ -1077,8 +1077,8 @@ def test_unreadable_root_is_never_reported_as_nothing_to_enforce(
     m.approve()
     m.record_effect("a.txt", "aa", "req-1")
     m.begin_verification()
-    Mission.load(done, actor="operator:zach").record_verdict(
-        "PASS", "operator:zach", "operator-accepted", "done")
+    Mission.load(done, actor="operator:example").record_verdict(
+        "PASS", "operator:example", "operator-accepted", "done")
     out_done = subprocess.run(
         [sys.executable, str(Path(__file__).parent / "census_missions.py"),
          str(done)], capture_output=True, text=True).stdout
@@ -2762,6 +2762,125 @@ def test_effect_duplicate_id_leaves_workspace_untouched(workspace: Path) -> None
           (workspace / "notes" / "a.md").read_text(encoding="utf-8") == "hello")
 
 
+def test_failed_effect_removes_the_directories_it_created(
+        workspace: Path) -> None:
+    """A write that mints no receipt must leave no directory behind.
+
+    `_write_effect` creates the target's parents and only then writes the
+    bytes and the receipt, so a `PermissionError` at the write -- the case
+    es#169 names -- left `esrm/deep/` standing with no receipt and no
+    checkpoint: an unreceipted workspace mutation from the verb whose whole
+    contract is "no effect without a receipt".
+
+    The failure is injected at `Path.write_bytes`, for this one target,
+    because that is the exact seam the issue names and no portable
+    filesystem trick reaches it: a read-only parent fails the MKDIR
+    instead, which creates nothing at all and so measures the ordering that
+    was already correct rather than the cleanup that was missing."""
+    m = open_mission(workspace, "m-mkdir", "Fail after the mkdir.")
+    m.approve()
+    cps_before = sorted((workspace / "missions" / "m-mkdir" / "checkpoints")
+                        .glob("*.json"))
+
+    real_write_bytes = Path.write_bytes
+    blocked = {str(workspace.resolve() / "esrm" / "deep" / "x.txt"),
+               str(workspace.resolve() / "esrm-keep" / "deep" / "y.txt")}
+
+    def refusing_write_bytes(self, data):
+        if str(self) in blocked:
+            raise PermissionError(13, "Permission denied")
+        return real_write_bytes(self, data)
+
+    # A directory the caller made itself, to prove the unwind removes only
+    # what THIS call created.
+    (workspace / "esrm-keep").mkdir()
+
+    Path.write_bytes = refusing_write_bytes
+    try:
+        try:
+            m.record_effect("esrm/deep/x.txt", "data", "req-mkdir")
+            check("failed-effect-propagates-the-write-error", False)
+        except PermissionError:
+            check("failed-effect-propagates-the-write-error", True)
+        try:
+            m.record_effect("esrm-keep/deep/y.txt", "data", "req-mkdir-2")
+            check("failed-effect-propagates-the-write-error-2", False)
+        except PermissionError:
+            check("failed-effect-propagates-the-write-error-2", True)
+    finally:
+        Path.write_bytes = real_write_bytes
+
+    check("failed-effect-minted-no-receipt",
+          not list((workspace / "missions" / "m-mkdir" / "receipts")
+                   .glob("*.json")))
+    check("failed-effect-committed-no-checkpoint",
+          sorted((workspace / "missions" / "m-mkdir" / "checkpoints")
+                 .glob("*.json")) == cps_before)
+    check("failed-effect-left-no-created-directory",
+          not (workspace / "esrm").exists())
+    check("failed-effect-removed-only-what-it-created",
+          (workspace / "esrm-keep").is_dir()
+          and not (workspace / "esrm-keep" / "deep").exists())
+
+    # CONTROL: the unwind is not always-on. A write that DOES receipt keeps
+    # the directories it made -- otherwise the fix would be deleting the
+    # workspace it is supposed to protect.
+    m.record_effect("esrm/deep/x.txt", "data", "req-mkdir-ok")
+    check("receipted-effect-keeps-its-directories",
+          (workspace / "esrm" / "deep" / "x.txt").exists())
+
+
+def test_failed_mkdir_removes_the_ancestors_it_already_created(
+        workspace: Path) -> None:
+    """The unwind must cover a FAILURE INSIDE THE MKDIR, not only after it.
+
+    The first cut of the es#169 fix left `target.parent.mkdir(parents=True)`
+    outside the try, so only a failure after the directories existed was
+    unwound. But mkdir(parents=True) builds the chain one level at a time
+    and can fail partway: a component longer than NAME_MAX raises OSError
+    [Errno 36] after the shallower parents are already on disk. That is the
+    same unreceipted residue the issue names, and the seam comment claimed
+    it was unwound "on the way out of any raise" while it was not.
+
+    No injection is needed here -- the filesystem itself supplies the
+    partial failure, which is why this case is worth having alongside the
+    injected-write one."""
+    m = open_mission(workspace, "m-mkdir-partial", "Fail inside the mkdir.")
+    m.approve()
+    cps_before = sorted(
+        (workspace / "missions" / "m-mkdir-partial" / "checkpoints")
+        .glob("*.json"))
+
+    too_long = "z" * 300  # > NAME_MAX (255) on every mainstream filesystem
+    try:
+        m.record_effect(f"aa/bb/{too_long}/x.txt", "data", "req-partial")
+        check("partial-mkdir-propagates-the-error", False)
+    except OSError:
+        check("partial-mkdir-propagates-the-error", True)
+
+    check("partial-mkdir-minted-no-receipt",
+          not list((workspace / "missions" / "m-mkdir-partial" / "receipts")
+                   .glob("*.json")))
+    check("partial-mkdir-committed-no-checkpoint",
+          sorted((workspace / "missions" / "m-mkdir-partial" / "checkpoints")
+                 .glob("*.json")) == cps_before)
+    # THE PROPERTY: `aa` and `aa/bb` were created by this call and must be gone.
+    check("partial-mkdir-left-no-created-ancestor",
+          not (workspace / "aa").exists())
+
+    # CONTROL: still only what THIS call created. A pre-existing ancestor on
+    # the failing path survives, so the assertion above cannot pass by an
+    # unwind that climbs out of its own scope.
+    (workspace / "cc").mkdir()
+    try:
+        m.record_effect(f"cc/dd/{too_long}/y.txt", "data", "req-partial-2")
+        check("partial-mkdir-propagates-the-error-2", False)
+    except OSError:
+        check("partial-mkdir-propagates-the-error-2", True)
+    check("partial-mkdir-kept-the-caller-s-own-directory",
+          (workspace / "cc").is_dir() and not (workspace / "cc" / "dd").exists())
+
+
 def test_accept_requires_verifying_and_separation(workspace: Path) -> None:
     m = open_mission(workspace, "m-accept", "Finish task.")
     m.approve()
@@ -2852,8 +2971,8 @@ def test_operator_tier(workspace: Path) -> None:
     except AcceptanceRefused:
         check("tier-insufficient-refused", True)
 
-    operator = Mission.load(workspace, actor="operator:zach")
-    operator.record_verdict("PASS", acceptor_id="operator:zach",
+    operator = Mission.load(workspace, actor="operator:example")
+    operator.record_verdict("PASS", acceptor_id="operator:example",
                              assurance_tier="operator-accepted",
                              reason="operator signed off")
     st = m.status()
@@ -3358,7 +3477,7 @@ _WIN_SEPARATOR_BINDING_ROWS = [
 
 # (label, scope.out entry, why it can never match a workspace-relative path)
 _WIN_SEPARATOR_DISCLOSED_ROWS = [
-    ("drive-absolute", "C:\\Users\\zachs\\secrets.env", "drive-absolute"),
+    ("drive-absolute", "C:\\Users\\example\\secrets.env", "drive-absolute"),
     # DRIVE-RELATIVE is the form with no root at all: `C:secrets.env` means
     # "secrets.env in the current directory OF DRIVE C:", which is neither
     # absolute nor workspace-relative and resolves against per-drive state no
@@ -6671,6 +6790,8 @@ TESTS = [
     test_reconcile_clears_exactly_one_marker,
     test_corrupt_receipt_degrades_to_drift,
     test_effect_duplicate_id_leaves_workspace_untouched,
+    test_failed_effect_removes_the_directories_it_created,
+    test_failed_mkdir_removes_the_ancestors_it_already_created,
     test_accept_requires_verifying_and_separation,
     test_fail_is_clearable,
     test_operator_tier,

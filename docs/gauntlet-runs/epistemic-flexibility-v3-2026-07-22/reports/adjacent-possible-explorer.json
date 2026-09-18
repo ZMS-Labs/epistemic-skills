@@ -7,7 +7,7 @@
    "evidence": [
     {
      "tier": "V",
-     "ref": "Y:/dev/_wt/epistemic-flex-v3 git diff --stat e1f6054 641ff2c: judge.py and lens.schema.json absent from the 53-file changed list"
+     "ref": "/workspace/_wt/epistemic-flex-v3 git diff --stat e1f6054 641ff2c: judge.py and lens.schema.json absent from the 53-file changed list"
     },
     {
      "tier": "V",

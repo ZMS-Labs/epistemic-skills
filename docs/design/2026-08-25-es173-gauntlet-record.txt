@@ -82,7 +82,7 @@
       {
         "id": "metatextual/F2",
         "verdict": "CONFIRMED",
-        "evidence": "All cited code re-derives at 488f252 (worktree Y:/dev/epistemic-skills/.worktrees/es173-design; git diff 488f252..c439118 touches only the design doc, so worktree core == shipped core). (1) receipt.schema.json:8 = \"additionalProperties\": false; verify_mission_custody.py:263-266 RECEIPT_FIELDS is a closed 8-field set without sibling_touch; validate_receipt (verify_mission_custody.py:511-513) calls _check_exact_fields (291-297), which appends \"{where}.{key}: unknown field\" (line 295). Independently re-executed read-only: valid receipt -> []; same receipt + sibling_touch -> ['receipt.sibling_touch: unknown field']. (2) Stronger than the finding: the shipped WRITER also refuses — custody_store.write_receipt (custody_store.py:209-213) and atomic_write_json (custody_store.py:81-84) both run validate_record (dispatch to validate_receipt at verify_mission_custody.py:455-467) and raise StoreError, so a sibling_touch receipt cannot even be minted; and receipt.schema.json:5 names verify_mission_custody.py as the contractual \"Validation authority\", defeating any 'the real reader is tolerant' counter (the only tolerant path, load_receipts at custody_store.py:220-224, is a bare json.loads with no authority role). (3) Grep across the mission-custody core: zero \"tolerant\"/skip-unknown matches; the only \"unknown field\" strings are the refusal appenders (verify_mission_custody.py:295,320) — the doctrine §6 leans on does not exist in the shipped core. (4) Design lines 161-165 defer the check to the gauntlet while §0 line 20 claims the core was \"read at 488f252\" — the fact is decidable in the frozen dossier and decides AGAINST the design: by its own conditional, \"this design forces contract@2\". CAVEAT (does not overturn): the literal fragment \"checkpoint@1 unchanged: no stored binding, no new required fields\" is itself TRUE — validate_checkpoint (verify_mission_custody.py:494-501) already accepts state.notes as a free string list, so sibling notes fit checkpoint@1 unchanged; the false claim is the next sentence of the same §6 bullet (\"additive receipt field sibling_touch ... within the existing tolerant-reader rules\"), which is what the finding's evidence actually attacks. The finding's substance — §6's record-impact bullet rests on a nonexistent tolerant-reader doctrine, and the document defers as open a fact already decidable (and false) in the frozen dossier — is confirmed on positive evidence."
+        "evidence": "All cited code re-derives at 488f252 (worktree /workspace/epistemic-skills/.worktrees/es173-design; git diff 488f252..c439118 touches only the design doc, so worktree core == shipped core). (1) receipt.schema.json:8 = \"additionalProperties\": false; verify_mission_custody.py:263-266 RECEIPT_FIELDS is a closed 8-field set without sibling_touch; validate_receipt (verify_mission_custody.py:511-513) calls _check_exact_fields (291-297), which appends \"{where}.{key}: unknown field\" (line 295). Independently re-executed read-only: valid receipt -> []; same receipt + sibling_touch -> ['receipt.sibling_touch: unknown field']. (2) Stronger than the finding: the shipped WRITER also refuses — custody_store.write_receipt (custody_store.py:209-213) and atomic_write_json (custody_store.py:81-84) both run validate_record (dispatch to validate_receipt at verify_mission_custody.py:455-467) and raise StoreError, so a sibling_touch receipt cannot even be minted; and receipt.schema.json:5 names verify_mission_custody.py as the contractual \"Validation authority\", defeating any 'the real reader is tolerant' counter (the only tolerant path, load_receipts at custody_store.py:220-224, is a bare json.loads with no authority role). (3) Grep across the mission-custody core: zero \"tolerant\"/skip-unknown matches; the only \"unknown field\" strings are the refusal appenders (verify_mission_custody.py:295,320) — the doctrine §6 leans on does not exist in the shipped core. (4) Design lines 161-165 defer the check to the gauntlet while §0 line 20 claims the core was \"read at 488f252\" — the fact is decidable in the frozen dossier and decides AGAINST the design: by its own conditional, \"this design forces contract@2\". CAVEAT (does not overturn): the literal fragment \"checkpoint@1 unchanged: no stored binding, no new required fields\" is itself TRUE — validate_checkpoint (verify_mission_custody.py:494-501) already accepts state.notes as a free string list, so sibling notes fit checkpoint@1 unchanged; the false claim is the next sentence of the same §6 bullet (\"additive receipt field sibling_touch ... within the existing tolerant-reader rules\"), which is what the finding's evidence actually attacks. The finding's substance — §6's record-impact bullet rests on a nonexistent tolerant-reader doctrine, and the document defers as open a fact already decidable (and false) in the frozen dossier — is confirmed on positive evidence."
       },
       {
         "id": "F3",
@@ -92,12 +92,12 @@
       {
         "id": "metatextual/F4",
         "verdict": "CONFIRMED",
-        "evidence": "Design §5.3 (docs/design/2026-08-25-es173-concurrent-missions-design.md:154-157 @ c439118) declares \"the scratch convention is retired for NEW missions by this design (open no longer refuses, so the pressure that created it is gone)\" — grounding \"gone\" solely on the open-refusal fix (§3 line 98; case rows 5/10). But the es#173 record shows two pressures: (A) second-mission-refused, which the design fixes, and (B) no-single-workspace-root, which it explicitly does not — §8 lines 210-211: \"No cross-WORKSPACE missions (out of es#173's scope; the scratch migration §5 is the bridge back, not a feature).\" The issue body (2026-08-13T21:09Z) attributes the convention's CREATION to pressure B: the session was \"matching the existing convention for missions that don't map to one repo root (scratch/custody-hook-livefire, scratch/es133-verify-a)\"; the first comment (21:12Z) says verbatim of the forcing case — \"the highest-consequence one in the estate's history,\" \"the decisive case\" — \"It spans authenticated GitHub checkouts, WSL, and homelab/k3s administrative surfaces. No single workspace root contains it — which is precisely why the session reached for a synthetic scratch workspace.\" The adjudication comment's Interim unblock (22:08Z) worked around it via \"a superroot that actually contains the checkouts\" — a real broader filesystem root that only covers checkout surfaces sharing an ancestor, not WSL/k3s surfaces. The shipped core at 488f252 (git diff 488f252..origin/main on the mission-custody dir is empty) makes the residual gap structural: Mission.open anchors the store at workspace/\"missions\"/mission_id (custody_mission.py:887, 943) and _resolve_artifact_path (custody_mission.py:1144-1158) refuses absolute paths (\"artifact path must be workspace-relative\") and workspace-escaping paths, so a mission with no common filesystem ancestor cannot receipt its artifacts in any real workspace; design §6 changes no path resolution. A future cross-surface mission therefore still has no real-repo home and will still reach for a scratch-shaped detached workspace — §5.3's \"the pressure that created it is gone\" retires only pressure A while claiming both, exactly as the finding states. Positive evidence on every cited element; the attacked claims (migration path, §5 retirement claim, §8 scope choice) are beyond the adjudicated floor and legitimately attackable."
+        "evidence": "Design §5.3 (docs/design/2026-08-25-es173-concurrent-missions-design.md:154-157 @ c439118) declares \"the scratch convention is retired for NEW missions by this design (open no longer refuses, so the pressure that created it is gone)\" — grounding \"gone\" solely on the open-refusal fix (§3 line 98; case rows 5/10). But the es#173 record shows two pressures: (A) second-mission-refused, which the design fixes, and (B) no-single-workspace-root, which it explicitly does not — §8 lines 210-211: \"No cross-WORKSPACE missions (out of es#173's scope; the scratch migration §5 is the bridge back, not a feature).\" The issue body (2026-08-13T21:09Z) attributes the convention's CREATION to pressure B: the session was \"matching the existing convention for missions that don't map to one repo root (scratch/custody-hook-livefire, scratch/es133-verify-a)\"; the first comment (21:12Z) says verbatim of the forcing case — \"the highest-consequence one in the estate's history,\" \"the decisive case\" — \"It spans authenticated GitHub checkouts, WSL, and example deployment/k3s administrative surfaces. No single workspace root contains it — which is precisely why the session reached for a synthetic scratch workspace.\" The adjudication comment's Interim unblock (22:08Z) worked around it via \"a superroot that actually contains the checkouts\" — a real broader filesystem root that only covers checkout surfaces sharing an ancestor, not WSL/k3s surfaces. The shipped core at 488f252 (git diff 488f252..origin/main on the mission-custody dir is empty) makes the residual gap structural: Mission.open anchors the store at workspace/\"missions\"/mission_id (custody_mission.py:887, 943) and _resolve_artifact_path (custody_mission.py:1144-1158) refuses absolute paths (\"artifact path must be workspace-relative\") and workspace-escaping paths, so a mission with no common filesystem ancestor cannot receipt its artifacts in any real workspace; design §6 changes no path resolution. A future cross-surface mission therefore still has no real-repo home and will still reach for a scratch-shaped detached workspace — §5.3's \"the pressure that created it is gone\" retires only pressure A while claiming both, exactly as the finding states. Positive evidence on every cited element; the attacked claims (migration path, §5 retirement claim, §8 scope choice) are beyond the adjudicated floor and legitimately attackable."
       },
       {
         "id": "F5",
         "verdict": "CONFIRMED",
-        "evidence": "Design doc lines 134-139 (worktree Y:/dev/epistemic-skills/.worktrees/es173-design, commit c439118) say verbatim: \"Fairness: no locks. Single-operator estate; the cost of a lock manager exceeds the cost it prevents. ... the operator remains the scheduler. The gauntlet should test whether visible-but-unserialised is sufficient at this estate's concurrency level (measured: 2–4 concurrent sessions, one operator).\" Line 209 makes the premise load-bearing: \"No scheduler, no locks, no queueing (§4 fairness rationale)\". (1) The \"2–4\" figure: grep of the full 226-line doc shows \"measured\" occurs only at line 138 — no method, log, or citation anywhere — while §0 (lines 22-30) cites file:line for every grounding claim (custody_mission.py:911-941, 1031-1034; custody_gate.py:305-314), and line 170 names census_missions.py as an existing enumeration instrument that is still not cited for the figure. The doc says \"measured:\", not the finding's \"estimated\" — stronger than the finding states: an explicit measurement claim with zero inline evidence, violating the estate's EVIDENCE-1 standard the doc elsewhere honors. (2) Doctrine contradiction: C:\\Users\\zachs\\.claude\\CLAUDE.md line 192 carries RULE-PC-003 verbatim as quoted (\"execute it immediately... Never ask 'do you want me to do X?'\"), and MEMORY.md's ACTIVE section holds 18 concurrently-open workstream bullets including the named es#133, manifest-efficacy+custody, PA-to-custodian, ESTATE, MAP #1474 — a fleet built to run without operator turn-by-turn gating, with 6+ mission-shaped streams open in the design's date window. (3) Axis defect: the doc's own case table (§7) quantifies over active missions (0/1/N) and sibling_touch fires on mission-lifetime overlap, yet the fairness sufficiency claim is indexed to concurrent SESSIONS — the 2–4 snapshot measures a different, smaller axis than the design's own product space, and mission-shaped work is multi-session by definition, putting the real overlap regime at the 6+ level. Caveat honestly noted: 2–4 sessions vs 6+ workstreams are distinct measures, so the workload contradicts the figure as a BOUND, not necessarily as a snapshot — exactly the finding's framing. The design's self-invitation to test sufficiency does not repair this: the question it poses is itself anchored to the uncited figure. Net: every factual anchor of the finding re-derives from the files; the operator-as-scheduler premise is offered as the sole conflict-PREVENTION mechanism (all other §4 machinery is post-hoc detection/attribution) while standing doctrine and the live workload show the operator neither sequences turn-by-turn nor is the concurrency plausibly capped at the uncited 2–4."
+        "evidence": "Design doc lines 134-139 (worktree /workspace/epistemic-skills/.worktrees/es173-design, commit c439118) say verbatim: \"Fairness: no locks. Single-operator estate; the cost of a lock manager exceeds the cost it prevents. ... the operator remains the scheduler. The gauntlet should test whether visible-but-unserialised is sufficient at this estate's concurrency level (measured: 2–4 concurrent sessions, one operator).\" Line 209 makes the premise load-bearing: \"No scheduler, no locks, no queueing (§4 fairness rationale)\". (1) The \"2–4\" figure: grep of the full 226-line doc shows \"measured\" occurs only at line 138 — no method, log, or citation anywhere — while §0 (lines 22-30) cites file:line for every grounding claim (custody_mission.py:911-941, 1031-1034; custody_gate.py:305-314), and line 170 names census_missions.py as an existing enumeration instrument that is still not cited for the figure. The doc says \"measured:\", not the finding's \"estimated\" — stronger than the finding states: an explicit measurement claim with zero inline evidence, violating the estate's EVIDENCE-1 standard the doc elsewhere honors. (2) Doctrine contradiction: C:\\Users\\example\\.claude\\CLAUDE.md line 192 carries RULE-PC-003 verbatim as quoted (\"execute it immediately... Never ask 'do you want me to do X?'\"), and MEMORY.md's ACTIVE section holds 18 concurrently-open workstream bullets including the named es#133, manifest-efficacy+custody, PA-to-custodian, ESTATE, MAP #1474 — a fleet built to run without operator turn-by-turn gating, with 6+ mission-shaped streams open in the design's date window. (3) Axis defect: the doc's own case table (§7) quantifies over active missions (0/1/N) and sibling_touch fires on mission-lifetime overlap, yet the fairness sufficiency claim is indexed to concurrent SESSIONS — the 2–4 snapshot measures a different, smaller axis than the design's own product space, and mission-shaped work is multi-session by definition, putting the real overlap regime at the 6+ level. Caveat honestly noted: 2–4 sessions vs 6+ workstreams are distinct measures, so the workload contradicts the figure as a BOUND, not necessarily as a snapshot — exactly the finding's framing. The design's self-invitation to test sufficiency does not repair this: the question it poses is itself anchored to the uncited figure. Net: every factual anchor of the finding re-derives from the files; the operator-as-scheduler premise is offered as the sole conflict-PREVENTION mechanism (all other §4 machinery is post-hoc detection/attribution) while standing doctrine and the live workload show the operator neither sequences turn-by-turn nor is the concurrency plausibly capped at the uncited 2–4."
       }
     ],
     "verdict": {
@@ -163,7 +163,7 @@
       "lastProgressAt": 1787627903082,
       "cached": true,
       "resultPreview": "{\"findings\":[{\"id\":\"C1-sibling-touch-receipt-field-unimplementable\",\"severity\":\"fatal\",\"claim\":\"The design's core coexistence mechanism — a structured `sibling_touch` field minted onto a receipt (design.md:124-125, '...the receipt B mints gains sibling_touch: [{mission: A, last_receipt: <id>}]') — cannot be written under the shipped schema validator at all, contradicting the design's own framing t…",
-      "promptPreview": "You are the CONSTRUCTIVE lens: find the strongest, simplest version of this design.\n\nGAUNTLET SUBJECT (FROZEN): docs/design/2026-08-25-es173-concurrent-missions-design.md\nat commit c439118b1f969b2a1064975c84a5ab80b6557de1, branch feat/es173-concurrent-missions,\nworktree Y:/dev/epistemic-skills/.worktrees/es173-design (read-only for you).\nThe SHIPPED CORE it must be judged against: plugins/epistemi…"
+      "promptPreview": "You are the CONSTRUCTIVE lens: find the strongest, simplest version of this design.\n\nGAUNTLET SUBJECT (FROZEN): docs/design/2026-08-25-es173-concurrent-missions-design.md\nat commit c439118b1f969b2a1064975c84a5ab80b6557de1, branch feat/es173-concurrent-missions,\nworktree /workspace/epistemic-skills/.worktrees/es173-design (read-only for you).\nThe SHIPPED CORE it must be judged against: plugins/epistemi…"
     },
     {
       "type": "workflow_agent",
@@ -178,7 +178,7 @@
       "lastProgressAt": 1787627903083,
       "cached": true,
       "resultPreview": "{\"findings\":[{\"id\":\"F1-EFFECT-BYPASSES-GATE\",\"severity\":\"fatal\",\"claim\":\"The design's headline union-guard claim ('guard evaluation is union over all active missions' armed guards for EVERY call, bound or not', design L69-71) is false as stated: 'call' only means calls routed through run_gate (the PreToolUse hook or the `gate` CLI verb). The lifecycle verbs the design binds hard -- effect, amend, …",
-      "promptPreview": "You are the ADVERSARIAL lens: break this design.\n\nGAUNTLET SUBJECT (FROZEN): docs/design/2026-08-25-es173-concurrent-missions-design.md\nat commit c439118b1f969b2a1064975c84a5ab80b6557de1, branch feat/es173-concurrent-missions,\nworktree Y:/dev/epistemic-skills/.worktrees/es173-design (read-only for you).\nThe SHIPPED CORE it must be judged against: plugins/epistemic-skills/contracts/\nmission-custody…"
+      "promptPreview": "You are the ADVERSARIAL lens: break this design.\n\nGAUNTLET SUBJECT (FROZEN): docs/design/2026-08-25-es173-concurrent-missions-design.md\nat commit c439118b1f969b2a1064975c84a5ab80b6557de1, branch feat/es173-concurrent-missions,\nworktree /workspace/epistemic-skills/.worktrees/es173-design (read-only for you).\nThe SHIPPED CORE it must be judged against: plugins/epistemic-skills/contracts/\nmission-custody…"
     },
     {
       "type": "workflow_agent",
@@ -193,7 +193,7 @@
       "lastProgressAt": 1787627903083,
       "cached": true,
       "resultPreview": "{\"findings\":[{\"id\":\"F1\",\"severity\":\"major\",\"claim\":\"Design §2's 'union ALWAYS, binding routes authority not exposure' is a semantic-axis change to the adjudicated model, framed as a mere strictness increase, and routed to gauntlet approval where the ruling's own vocabulary ('union fallback') implies operator re-adjudication is owed.\",\"evidence\":\"Verbatim 2026-08-15 operator ruling (gh issue view 1…",
-      "promptPreview": "You are the METATEXTUAL lens: attack the framing and premises.\n\nGAUNTLET SUBJECT (FROZEN): docs/design/2026-08-25-es173-concurrent-missions-design.md\nat commit c439118b1f969b2a1064975c84a5ab80b6557de1, branch feat/es173-concurrent-missions,\nworktree Y:/dev/epistemic-skills/.worktrees/es173-design (read-only for you).\nThe SHIPPED CORE it must be judged against: plugins/epistemic-skills/contracts/\nm…"
+      "promptPreview": "You are the METATEXTUAL lens: attack the framing and premises.\n\nGAUNTLET SUBJECT (FROZEN): docs/design/2026-08-25-es173-concurrent-missions-design.md\nat commit c439118b1f969b2a1064975c84a5ab80b6557de1, branch feat/es173-concurrent-missions,\nworktree /workspace/epistemic-skills/.worktrees/es173-design (read-only for you).\nThe SHIPPED CORE it must be judged against: plugins/epistemic-skills/contracts/\nm…"
     },
     {
       "type": "workflow_agent",
@@ -209,7 +209,7 @@
       "attempt": 1,
       "lastToolName": "StructuredOutput",
       "lastToolSummary": "constructive/C1-sibling-touch-receipt-field-unimplementable",
-      "promptPreview": "Verify ONE gauntlet finding against the actual code and design text. Default REFUTED.\n\nGAUNTLET SUBJECT (FROZEN): docs/design/2026-08-25-es173-concurrent-missions-design.md\nat commit c439118b1f969b2a1064975c84a5ab80b6557de1, branch feat/es173-concurrent-missions,\nworktree Y:/dev/epistemic-skills/.worktrees/es173-design (read-only for you).\nThe SHIPPED CORE it must be judged against: plugins/episte…",
+      "promptPreview": "Verify ONE gauntlet finding against the actual code and design text. Default REFUTED.\n\nGAUNTLET SUBJECT (FROZEN): docs/design/2026-08-25-es173-concurrent-missions-design.md\nat commit c439118b1f969b2a1064975c84a5ab80b6557de1, branch feat/es173-concurrent-missions,\nworktree /workspace/epistemic-skills/.worktrees/es173-design (read-only for you).\nThe SHIPPED CORE it must be judged against: plugins/episte…",
       "lastProgressAt": 1787628094739,
       "tokens": 95058,
       "toolCalls": 21,
@@ -230,7 +230,7 @@
       "attempt": 1,
       "lastToolName": "StructuredOutput",
       "lastToolSummary": "constructive/C2-sibling-note-not-reserved",
-      "promptPreview": "Verify ONE gauntlet finding against the actual code and design text. Default REFUTED.\n\nGAUNTLET SUBJECT (FROZEN): docs/design/2026-08-25-es173-concurrent-missions-design.md\nat commit c439118b1f969b2a1064975c84a5ab80b6557de1, branch feat/es173-concurrent-missions,\nworktree Y:/dev/epistemic-skills/.worktrees/es173-design (read-only for you).\nThe SHIPPED CORE it must be judged against: plugins/episte…",
+      "promptPreview": "Verify ONE gauntlet finding against the actual code and design text. Default REFUTED.\n\nGAUNTLET SUBJECT (FROZEN): docs/design/2026-08-25-es173-concurrent-missions-design.md\nat commit c439118b1f969b2a1064975c84a5ab80b6557de1, branch feat/es173-concurrent-missions,\nworktree /workspace/epistemic-skills/.worktrees/es173-design (read-only for you).\nThe SHIPPED CORE it must be judged against: plugins/episte…",
       "lastProgressAt": 1787628004329,
       "tokens": 74828,
       "toolCalls": 10,
@@ -251,7 +251,7 @@
       "attempt": 1,
       "lastToolName": "StructuredOutput",
       "lastToolSummary": "constructive/C3-case17-partial-mitigation-overclaimed",
-      "promptPreview": "Verify ONE gauntlet finding against the actual code and design text. Default REFUTED.\n\nGAUNTLET SUBJECT (FROZEN): docs/design/2026-08-25-es173-concurrent-missions-design.md\nat commit c439118b1f969b2a1064975c84a5ab80b6557de1, branch feat/es173-concurrent-missions,\nworktree Y:/dev/epistemic-skills/.worktrees/es173-design (read-only for you).\nThe SHIPPED CORE it must be judged against: plugins/episte…",
+      "promptPreview": "Verify ONE gauntlet finding against the actual code and design text. Default REFUTED.\n\nGAUNTLET SUBJECT (FROZEN): docs/design/2026-08-25-es173-concurrent-missions-design.md\nat commit c439118b1f969b2a1064975c84a5ab80b6557de1, branch feat/es173-concurrent-missions,\nworktree /workspace/epistemic-skills/.worktrees/es173-design (read-only for you).\nThe SHIPPED CORE it must be judged against: plugins/episte…",
       "lastProgressAt": 1787628058634,
       "tokens": 84250,
       "toolCalls": 10,
@@ -272,7 +272,7 @@
       "attempt": 1,
       "lastToolName": "StructuredOutput",
       "lastToolSummary": "F1-EFFECT-BYPASSES-GATE",
-      "promptPreview": "Verify ONE gauntlet finding against the actual code and design text. Default REFUTED.\n\nGAUNTLET SUBJECT (FROZEN): docs/design/2026-08-25-es173-concurrent-missions-design.md\nat commit c439118b1f969b2a1064975c84a5ab80b6557de1, branch feat/es173-concurrent-missions,\nworktree Y:/dev/epistemic-skills/.worktrees/es173-design (read-only for you).\nThe SHIPPED CORE it must be judged against: plugins/episte…",
+      "promptPreview": "Verify ONE gauntlet finding against the actual code and design text. Default REFUTED.\n\nGAUNTLET SUBJECT (FROZEN): docs/design/2026-08-25-es173-concurrent-missions-design.md\nat commit c439118b1f969b2a1064975c84a5ab80b6557de1, branch feat/es173-concurrent-missions,\nworktree /workspace/epistemic-skills/.worktrees/es173-design (read-only for you).\nThe SHIPPED CORE it must be judged against: plugins/episte…",
       "lastProgressAt": 1787628063375,
       "tokens": 87735,
       "toolCalls": 15,
@@ -293,7 +293,7 @@
       "attempt": 1,
       "lastToolName": "StructuredOutput",
       "lastToolSummary": "F2-SIBLING-TOUCH-LAUNDERS-DRIFT",
-      "promptPreview": "Verify ONE gauntlet finding against the actual code and design text. Default REFUTED.\n\nGAUNTLET SUBJECT (FROZEN): docs/design/2026-08-25-es173-concurrent-missions-design.md\nat commit c439118b1f969b2a1064975c84a5ab80b6557de1, branch feat/es173-concurrent-missions,\nworktree Y:/dev/epistemic-skills/.worktrees/es173-design (read-only for you).\nThe SHIPPED CORE it must be judged against: plugins/episte…",
+      "promptPreview": "Verify ONE gauntlet finding against the actual code and design text. Default REFUTED.\n\nGAUNTLET SUBJECT (FROZEN): docs/design/2026-08-25-es173-concurrent-missions-design.md\nat commit c439118b1f969b2a1064975c84a5ab80b6557de1, branch feat/es173-concurrent-missions,\nworktree /workspace/epistemic-skills/.worktrees/es173-design (read-only for you).\nThe SHIPPED CORE it must be judged against: plugins/episte…",
       "lastProgressAt": 1787628119475,
       "tokens": 93575,
       "toolCalls": 15,
@@ -314,7 +314,7 @@
       "attempt": 1,
       "lastToolName": "StructuredOutput",
       "lastToolSummary": "F3-NOTE-APPEND-VIOLATES-OWN-AUTHORITY-MODEL",
-      "promptPreview": "Verify ONE gauntlet finding against the actual code and design text. Default REFUTED.\n\nGAUNTLET SUBJECT (FROZEN): docs/design/2026-08-25-es173-concurrent-missions-design.md\nat commit c439118b1f969b2a1064975c84a5ab80b6557de1, branch feat/es173-concurrent-missions,\nworktree Y:/dev/epistemic-skills/.worktrees/es173-design (read-only for you).\nThe SHIPPED CORE it must be judged against: plugins/episte…",
+      "promptPreview": "Verify ONE gauntlet finding against the actual code and design text. Default REFUTED.\n\nGAUNTLET SUBJECT (FROZEN): docs/design/2026-08-25-es173-concurrent-missions-design.md\nat commit c439118b1f969b2a1064975c84a5ab80b6557de1, branch feat/es173-concurrent-missions,\nworktree /workspace/epistemic-skills/.worktrees/es173-design (read-only for you).\nThe SHIPPED CORE it must be judged against: plugins/episte…",
       "lastProgressAt": 1787628098748,
       "tokens": 88224,
       "toolCalls": 12,
@@ -335,7 +335,7 @@
       "attempt": 1,
       "lastToolName": "StructuredOutput",
       "lastToolSummary": "F4-RECORD-EPOCH-CLAIM-FALSIFIED",
-      "promptPreview": "Verify ONE gauntlet finding against the actual code and design text. Default REFUTED.\n\nGAUNTLET SUBJECT (FROZEN): docs/design/2026-08-25-es173-concurrent-missions-design.md\nat commit c439118b1f969b2a1064975c84a5ab80b6557de1, branch feat/es173-concurrent-missions,\nworktree Y:/dev/epistemic-skills/.worktrees/es173-design (read-only for you).\nThe SHIPPED CORE it must be judged against: plugins/episte…",
+      "promptPreview": "Verify ONE gauntlet finding against the actual code and design text. Default REFUTED.\n\nGAUNTLET SUBJECT (FROZEN): docs/design/2026-08-25-es173-concurrent-missions-design.md\nat commit c439118b1f969b2a1064975c84a5ab80b6557de1, branch feat/es173-concurrent-missions,\nworktree /workspace/epistemic-skills/.worktrees/es173-design (read-only for you).\nThe SHIPPED CORE it must be judged against: plugins/episte…",
       "lastProgressAt": 1787628042635,
       "tokens": 82673,
       "toolCalls": 14,
@@ -356,7 +356,7 @@
       "attempt": 1,
       "lastToolName": "StructuredOutput",
       "lastToolSummary": "F5-UNION-DISCOVERY-CORRUPT-SIBLING-AMBIGUITY",
-      "promptPreview": "Verify ONE gauntlet finding against the actual code and design text. Default REFUTED.\n\nGAUNTLET SUBJECT (FROZEN): docs/design/2026-08-25-es173-concurrent-missions-design.md\nat commit c439118b1f969b2a1064975c84a5ab80b6557de1, branch feat/es173-concurrent-missions,\nworktree Y:/dev/epistemic-skills/.worktrees/es173-design (read-only for you).\nThe SHIPPED CORE it must be judged against: plugins/episte…",
+      "promptPreview": "Verify ONE gauntlet finding against the actual code and design text. Default REFUTED.\n\nGAUNTLET SUBJECT (FROZEN): docs/design/2026-08-25-es173-concurrent-missions-design.md\nat commit c439118b1f969b2a1064975c84a5ab80b6557de1, branch feat/es173-concurrent-missions,\nworktree /workspace/epistemic-skills/.worktrees/es173-design (read-only for you).\nThe SHIPPED CORE it must be judged against: plugins/episte…",
       "lastProgressAt": 1787628058970,
       "tokens": 87034,
       "toolCalls": 10,
@@ -377,7 +377,7 @@
       "attempt": 1,
       "lastToolName": "StructuredOutput",
       "lastToolSummary": "F6-BINDING-ERGONOMICS-AUTOMATION",
-      "promptPreview": "Verify ONE gauntlet finding against the actual code and design text. Default REFUTED.\n\nGAUNTLET SUBJECT (FROZEN): docs/design/2026-08-25-es173-concurrent-missions-design.md\nat commit c439118b1f969b2a1064975c84a5ab80b6557de1, branch feat/es173-concurrent-missions,\nworktree Y:/dev/epistemic-skills/.worktrees/es173-design (read-only for you).\nThe SHIPPED CORE it must be judged against: plugins/episte…",
+      "promptPreview": "Verify ONE gauntlet finding against the actual code and design text. Default REFUTED.\n\nGAUNTLET SUBJECT (FROZEN): docs/design/2026-08-25-es173-concurrent-missions-design.md\nat commit c439118b1f969b2a1064975c84a5ab80b6557de1, branch feat/es173-concurrent-missions,\nworktree /workspace/epistemic-skills/.worktrees/es173-design (read-only for you).\nThe SHIPPED CORE it must be judged against: plugins/episte…",
       "lastProgressAt": 1787628054913,
       "tokens": 83652,
       "toolCalls": 8,
@@ -398,7 +398,7 @@
       "attempt": 1,
       "lastToolName": "StructuredOutput",
       "lastToolSummary": "F8-CASE-TABLE-STATUS-BLIND",
-      "promptPreview": "Verify ONE gauntlet finding against the actual code and design text. Default REFUTED.\n\nGAUNTLET SUBJECT (FROZEN): docs/design/2026-08-25-es173-concurrent-missions-design.md\nat commit c439118b1f969b2a1064975c84a5ab80b6557de1, branch feat/es173-concurrent-missions,\nworktree Y:/dev/epistemic-skills/.worktrees/es173-design (read-only for you).\nThe SHIPPED CORE it must be judged against: plugins/episte…",
+      "promptPreview": "Verify ONE gauntlet finding against the actual code and design text. Default REFUTED.\n\nGAUNTLET SUBJECT (FROZEN): docs/design/2026-08-25-es173-concurrent-missions-design.md\nat commit c439118b1f969b2a1064975c84a5ab80b6557de1, branch feat/es173-concurrent-missions,\nworktree /workspace/epistemic-skills/.worktrees/es173-design (read-only for you).\nThe SHIPPED CORE it must be judged against: plugins/episte…",
       "lastProgressAt": 1787628038920,
       "tokens": 79524,
       "toolCalls": 14,
@@ -419,7 +419,7 @@
       "attempt": 1,
       "lastToolName": "StructuredOutput",
       "lastToolSummary": "metatextual/F1",
-      "promptPreview": "Verify ONE gauntlet finding against the actual code and design text. Default REFUTED.\n\nGAUNTLET SUBJECT (FROZEN): docs/design/2026-08-25-es173-concurrent-missions-design.md\nat commit c439118b1f969b2a1064975c84a5ab80b6557de1, branch feat/es173-concurrent-missions,\nworktree Y:/dev/epistemic-skills/.worktrees/es173-design (read-only for you).\nThe SHIPPED CORE it must be judged against: plugins/episte…",
+      "promptPreview": "Verify ONE gauntlet finding against the actual code and design text. Default REFUTED.\n\nGAUNTLET SUBJECT (FROZEN): docs/design/2026-08-25-es173-concurrent-missions-design.md\nat commit c439118b1f969b2a1064975c84a5ab80b6557de1, branch feat/es173-concurrent-missions,\nworktree /workspace/epistemic-skills/.worktrees/es173-design (read-only for you).\nThe SHIPPED CORE it must be judged against: plugins/episte…",
       "lastProgressAt": 1787628053185,
       "tokens": 83786,
       "toolCalls": 9,
@@ -440,12 +440,12 @@
       "attempt": 1,
       "lastToolName": "StructuredOutput",
       "lastToolSummary": "metatextual/F2",
-      "promptPreview": "Verify ONE gauntlet finding against the actual code and design text. Default REFUTED.\n\nGAUNTLET SUBJECT (FROZEN): docs/design/2026-08-25-es173-concurrent-missions-design.md\nat commit c439118b1f969b2a1064975c84a5ab80b6557de1, branch feat/es173-concurrent-missions,\nworktree Y:/dev/epistemic-skills/.worktrees/es173-design (read-only for you).\nThe SHIPPED CORE it must be judged against: plugins/episte…",
+      "promptPreview": "Verify ONE gauntlet finding against the actual code and design text. Default REFUTED.\n\nGAUNTLET SUBJECT (FROZEN): docs/design/2026-08-25-es173-concurrent-missions-design.md\nat commit c439118b1f969b2a1064975c84a5ab80b6557de1, branch feat/es173-concurrent-missions,\nworktree /workspace/epistemic-skills/.worktrees/es173-design (read-only for you).\nThe SHIPPED CORE it must be judged against: plugins/episte…",
       "lastProgressAt": 1787628076294,
       "tokens": 88193,
       "toolCalls": 18,
       "durationMs": 169289,
-      "resultPreview": "{\"id\":\"metatextual/F2\",\"verdict\":\"CONFIRMED\",\"evidence\":\"All cited code re-derives at 488f252 (worktree Y:/dev/epistemic-skills/.worktrees/es173-design; git diff 488f252..c439118 touches only the design doc, so worktree core == shipped core). (1) receipt.schema.json:8 = \\\"additionalProperties\\\": false; verify_mission_custody.py:263-266 RECEIPT_FIELDS is a closed 8-field set without sibling_touch; …"
+      "resultPreview": "{\"id\":\"metatextual/F2\",\"verdict\":\"CONFIRMED\",\"evidence\":\"All cited code re-derives at 488f252 (worktree /workspace/epistemic-skills/.worktrees/es173-design; git diff 488f252..c439118 touches only the design doc, so worktree core == shipped core). (1) receipt.schema.json:8 = \\\"additionalProperties\\\": false; verify_mission_custody.py:263-266 RECEIPT_FIELDS is a closed 8-field set without sibling_touch; …"
     },
     {
       "type": "workflow_agent",
@@ -461,7 +461,7 @@
       "attempt": 1,
       "lastToolName": "StructuredOutput",
       "lastToolSummary": "F3",
-      "promptPreview": "Verify ONE gauntlet finding against the actual code and design text. Default REFUTED.\n\nGAUNTLET SUBJECT (FROZEN): docs/design/2026-08-25-es173-concurrent-missions-design.md\nat commit c439118b1f969b2a1064975c84a5ab80b6557de1, branch feat/es173-concurrent-missions,\nworktree Y:/dev/epistemic-skills/.worktrees/es173-design (read-only for you).\nThe SHIPPED CORE it must be judged against: plugins/episte…",
+      "promptPreview": "Verify ONE gauntlet finding against the actual code and design text. Default REFUTED.\n\nGAUNTLET SUBJECT (FROZEN): docs/design/2026-08-25-es173-concurrent-missions-design.md\nat commit c439118b1f969b2a1064975c84a5ab80b6557de1, branch feat/es173-concurrent-missions,\nworktree /workspace/epistemic-skills/.worktrees/es173-design (read-only for you).\nThe SHIPPED CORE it must be judged against: plugins/episte…",
       "lastProgressAt": 1787628067648,
       "tokens": 84534,
       "toolCalls": 15,
@@ -482,7 +482,7 @@
       "attempt": 1,
       "lastToolName": "StructuredOutput",
       "lastToolSummary": "metatextual/F4",
-      "promptPreview": "Verify ONE gauntlet finding against the actual code and design text. Default REFUTED.\n\nGAUNTLET SUBJECT (FROZEN): docs/design/2026-08-25-es173-concurrent-missions-design.md\nat commit c439118b1f969b2a1064975c84a5ab80b6557de1, branch feat/es173-concurrent-missions,\nworktree Y:/dev/epistemic-skills/.worktrees/es173-design (read-only for you).\nThe SHIPPED CORE it must be judged against: plugins/episte…",
+      "promptPreview": "Verify ONE gauntlet finding against the actual code and design text. Default REFUTED.\n\nGAUNTLET SUBJECT (FROZEN): docs/design/2026-08-25-es173-concurrent-missions-design.md\nat commit c439118b1f969b2a1064975c84a5ab80b6557de1, branch feat/es173-concurrent-missions,\nworktree /workspace/epistemic-skills/.worktrees/es173-design (read-only for you).\nThe SHIPPED CORE it must be judged against: plugins/episte…",
       "lastProgressAt": 1787628029869,
       "tokens": 85257,
       "toolCalls": 11,
@@ -503,12 +503,12 @@
       "attempt": 1,
       "lastToolName": "StructuredOutput",
       "lastToolSummary": "F5",
-      "promptPreview": "Verify ONE gauntlet finding against the actual code and design text. Default REFUTED.\n\nGAUNTLET SUBJECT (FROZEN): docs/design/2026-08-25-es173-concurrent-missions-design.md\nat commit c439118b1f969b2a1064975c84a5ab80b6557de1, branch feat/es173-concurrent-missions,\nworktree Y:/dev/epistemic-skills/.worktrees/es173-design (read-only for you).\nThe SHIPPED CORE it must be judged against: plugins/episte…",
+      "promptPreview": "Verify ONE gauntlet finding against the actual code and design text. Default REFUTED.\n\nGAUNTLET SUBJECT (FROZEN): docs/design/2026-08-25-es173-concurrent-missions-design.md\nat commit c439118b1f969b2a1064975c84a5ab80b6557de1, branch feat/es173-concurrent-missions,\nworktree /workspace/epistemic-skills/.worktrees/es173-design (read-only for you).\nThe SHIPPED CORE it must be judged against: plugins/episte…",
       "lastProgressAt": 1787628162571,
       "tokens": 79775,
       "toolCalls": 8,
       "durationMs": 155126,
-      "resultPreview": "{\"id\":\"F5\",\"verdict\":\"CONFIRMED\",\"evidence\":\"Design doc lines 134-139 (worktree Y:/dev/epistemic-skills/.worktrees/es173-design, commit c439118) say verbatim: \\\"Fairness: no locks. Single-operator estate; the cost of a lock manager exceeds the cost it prevents. ... the operator remains the scheduler. The gauntlet should test whether visible-but-unserialised is sufficient at this estate's concurren…"
+      "resultPreview": "{\"id\":\"F5\",\"verdict\":\"CONFIRMED\",\"evidence\":\"Design doc lines 134-139 (worktree /workspace/epistemic-skills/.worktrees/es173-design, commit c439118) say verbatim: \\\"Fairness: no locks. Single-operator estate; the cost of a lock manager exceeds the cost it prevents. ... the operator remains the scheduler. The gauntlet should test whether visible-but-unserialised is sufficient at this estate's concurren…"
     },
     {
       "type": "workflow_agent",
@@ -524,7 +524,7 @@
       "attempt": 1,
       "lastToolName": "StructuredOutput",
       "lastToolSummary": "CONDITIONAL",
-      "promptPreview": "You are the ARBITRATOR. Build the dissent-preserving Conflict Ledger and COMPUTE\nthe verdict — GO / CONDITIONAL / NO-GO — for implementing this design.\n\nGAUNTLET SUBJECT (FROZEN): docs/design/2026-08-25-es173-concurrent-missions-design.md\nat commit c439118b1f969b2a1064975c84a5ab80b6557de1, branch feat/es173-concurrent-missions,\nworktree Y:/dev/epistemic-skills/.worktrees/es173-design (read-only fo…",
+      "promptPreview": "You are the ARBITRATOR. Build the dissent-preserving Conflict Ledger and COMPUTE\nthe verdict — GO / CONDITIONAL / NO-GO — for implementing this design.\n\nGAUNTLET SUBJECT (FROZEN): docs/design/2026-08-25-es173-concurrent-missions-design.md\nat commit c439118b1f969b2a1064975c84a5ab80b6557de1, branch feat/es173-concurrent-missions,\nworktree /workspace/epistemic-skills/.worktrees/es173-design (read-only fo…",
       "lastProgressAt": 1787628392995,
       "tokens": 104787,
       "toolCalls": 8,

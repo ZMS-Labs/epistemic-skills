@@ -4,7 +4,7 @@
  "run_note": "Format-limited run: lenses cited [V <tree> `path`] style; the strict verifier parsed 6 V-tags, 0 verified (format mismatch, not fabrication). Two spot-checked manually and accurate; every load-bearing claim was re-executed by the judge (arbitration.md dispatcher re-verification register). Method precedent: bind the strict [V path:line] token format in the dispatch contract.",
  "reports": [
   {
-   "report_path": "Y:\\dev\\es-v6-gauntlet-run\\docs\\gauntlet-runs\\es-v6-rc2-gauntlet-kimi-2026-08-18\\reports\\chesterton-gate.md",
+   "report_path": "/workspace/es-v6-gauntlet-run\\docs\\gauntlet-runs\\es-v6-rc2-gauntlet-kimi-2026-08-18\\reports\\chesterton-gate.md",
    "total": 4,
    "verified": 0,
    "hallucinated": 4,
@@ -15,7 +15,7 @@
    "tag_results": []
   },
   {
-   "report_path": "Y:\\dev\\es-v6-gauntlet-run\\docs\\gauntlet-runs\\es-v6-rc2-gauntlet-kimi-2026-08-18\\reports\\cloud-native-purist.md",
+   "report_path": "/workspace/es-v6-gauntlet-run\\docs\\gauntlet-runs\\es-v6-rc2-gauntlet-kimi-2026-08-18\\reports\\cloud-native-purist.md",
    "total": 0,
    "verified": 0,
    "hallucinated": 0,
@@ -26,7 +26,7 @@
    "tag_results": []
   },
   {
-   "report_path": "Y:\\dev\\es-v6-gauntlet-run\\docs\\gauntlet-runs\\es-v6-rc2-gauntlet-kimi-2026-08-18\\reports\\human-automation-handoff-auditor-seat2.md",
+   "report_path": "/workspace/es-v6-gauntlet-run\\docs\\gauntlet-runs\\es-v6-rc2-gauntlet-kimi-2026-08-18\\reports\\human-automation-handoff-auditor-seat2.md",
    "total": 1,
    "verified": 0,
    "hallucinated": 1,
@@ -45,7 +45,7 @@
    ]
   },
   {
-   "report_path": "Y:\\dev\\es-v6-gauntlet-run\\docs\\gauntlet-runs\\es-v6-rc2-gauntlet-kimi-2026-08-18\\reports\\human-automation-handoff-auditor.md",
+   "report_path": "/workspace/es-v6-gauntlet-run\\docs\\gauntlet-runs\\es-v6-rc2-gauntlet-kimi-2026-08-18\\reports\\human-automation-handoff-auditor.md",
    "total": 0,
    "verified": 0,
    "hallucinated": 0,
@@ -56,7 +56,7 @@
    "tag_results": []
   },
   {
-   "report_path": "Y:\\dev\\es-v6-gauntlet-run\\docs\\gauntlet-runs\\es-v6-rc2-gauntlet-kimi-2026-08-18\\reports\\red-lines-gate.md",
+   "report_path": "/workspace/es-v6-gauntlet-run\\docs\\gauntlet-runs\\es-v6-rc2-gauntlet-kimi-2026-08-18\\reports\\red-lines-gate.md",
    "total": 0,
    "verified": 0,
    "hallucinated": 0,
@@ -67,7 +67,7 @@
    "tag_results": []
   },
   {
-   "report_path": "Y:\\dev\\es-v6-gauntlet-run\\docs\\gauntlet-runs\\es-v6-rc2-gauntlet-kimi-2026-08-18\\reports\\requirements-traceability-auditor.md",
+   "report_path": "/workspace/es-v6-gauntlet-run\\docs\\gauntlet-runs\\es-v6-rc2-gauntlet-kimi-2026-08-18\\reports\\requirements-traceability-auditor.md",
    "total": 1,
    "verified": 0,
    "hallucinated": 1,
@@ -78,7 +78,7 @@
    "tag_results": []
   },
   {
-   "report_path": "Y:\\dev\\es-v6-gauntlet-run\\docs\\gauntlet-runs\\es-v6-rc2-gauntlet-kimi-2026-08-18\\reports\\safety-hazard-auditor.md",
+   "report_path": "/workspace/es-v6-gauntlet-run\\docs\\gauntlet-runs\\es-v6-rc2-gauntlet-kimi-2026-08-18\\reports\\safety-hazard-auditor.md",
    "total": 0,
    "verified": 0,
    "hallucinated": 0,

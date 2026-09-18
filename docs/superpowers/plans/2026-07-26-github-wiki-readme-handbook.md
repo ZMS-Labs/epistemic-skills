@@ -19,7 +19,7 @@
 - Preserve the v3.0.0 no-credit boundaries: two genuine P0 failures, AGY quota failures as availability failures, Cursor `BLOCKED_EXTERNAL`, amended arbitrator certification `NOT_RUN`, and post-hoc `release_credit: none`.
 - Do not change skill behavior, triggers, schemas, scripts, evaluations, or the immutable v3.0.0 tag/Release.
 - Use `apply_patch` for main-repository and local wiki file edits.
-- Keep the user's original `Y:\dev\epistemic-skills` checkout and its unrelated local commit untouched.
+- Keep the user's original `/workspace/epistemic-skills` checkout and its unrelated local commit untouched.
 - Sign every authored Git commit with an author-matching DCO trailer.
 
 ---
@@ -88,7 +88,7 @@
 
 **Files:**
 - Create through GitHub UI: `Home.md` with temporary text `epistemic-skills handbook bootstrap`
-- Clone into: `Y:\dev\epistemic-skills.wiki`
+- Clone into: `/workspace/epistemic-skills.wiki`
 
 **Interfaces:**
 - Consumes: authenticated GitHub access with Wiki enabled on `ZMS-Labs/epistemic-skills`.
@@ -116,9 +116,9 @@ Expected: `https://github.com/ZMS-Labs/epistemic-skills/wiki/Home` renders and t
 Run:
 
 ```powershell
-git clone https://github.com/ZMS-Labs/epistemic-skills.wiki.git Y:\dev\epistemic-skills.wiki
-git -C Y:\dev\epistemic-skills.wiki status --short --branch
-git -C Y:\dev\epistemic-skills.wiki remote -v
+git clone https://github.com/ZMS-Labs/epistemic-skills.wiki.git /workspace/epistemic-skills.wiki
+git -C /workspace/epistemic-skills.wiki status --short --branch
+git -C /workspace/epistemic-skills.wiki remote -v
 ```
 
 Expected: a clean branch, one bootstrap `Home.md`, and the exact Wiki `origin` URL.
@@ -128,7 +128,7 @@ Expected: a clean branch, one bootstrap `Home.md`, and the exact Wiki `origin` U
 Run:
 
 ```powershell
-git -C Y:\dev\epistemic-skills.wiki log -1 --oneline
+git -C /workspace/epistemic-skills.wiki log -1 --oneline
 ```
 
 Expected: one GitHub-created initial page commit. Do not amend or rewrite it.
@@ -138,15 +138,15 @@ Expected: one GitHub-created initial page commit. Do not amend or rewrite it.
 ### Task 2: Build the Wiki foundation, navigation, and central-passage pages
 
 **Files:**
-- Replace: `Y:\dev\epistemic-skills.wiki\Home.md`
-- Create: `Y:\dev\epistemic-skills.wiki\_Sidebar.md`
-- Create: `Y:\dev\epistemic-skills.wiki\_Footer.md`
-- Create: `Y:\dev\epistemic-skills.wiki\Start-Here.md`
-- Create: `Y:\dev\epistemic-skills.wiki\Helix-Central-Passage.md`
-- Create: `Y:\dev\epistemic-skills.wiki\Choosing-a-Skill.md`
-- Create: `Y:\dev\epistemic-skills.wiki\Routine-Work-and-Proportionality.md`
-- Create: `Y:\dev\epistemic-skills.wiki\The-Epistemic-Arc.md`
-- Create: `Y:\dev\epistemic-skills.wiki\Core-Concepts.md`
+- Replace: `/workspace/epistemic-skills.wiki\Home.md`
+- Create: `/workspace/epistemic-skills.wiki\_Sidebar.md`
+- Create: `/workspace/epistemic-skills.wiki\_Footer.md`
+- Create: `/workspace/epistemic-skills.wiki\Start-Here.md`
+- Create: `/workspace/epistemic-skills.wiki\Helix-Central-Passage.md`
+- Create: `/workspace/epistemic-skills.wiki\Choosing-a-Skill.md`
+- Create: `/workspace/epistemic-skills.wiki\Routine-Work-and-Proportionality.md`
+- Create: `/workspace/epistemic-skills.wiki\The-Epistemic-Arc.md`
+- Create: `/workspace/epistemic-skills.wiki\Core-Concepts.md`
 
 **Interfaces:**
 - Consumes: released README; `using-epistemic-skills/SKILL.md`; `helix/SKILL.md`; `routine-fast-path.md`; `epistemic-flexibility.md` at tag `v3.0.0`.
@@ -205,7 +205,7 @@ Expected: a signed local Wiki commit; do not push yet.
 ### Task 3: Author all eleven skill guides
 
 **Files:**
-- Existing from Task 2: `Y:\dev\epistemic-skills.wiki\Helix-Central-Passage.md`
+- Existing from Task 2: `/workspace/epistemic-skills.wiki\Helix-Central-Passage.md`
 - Create the ten `Skill-*.md` files listed in File structure.
 
 **Interfaces:**
@@ -480,7 +480,7 @@ import re
 
 sets = [
     (Path.cwd(), [Path("README.md")], False),
-    (Path("Y:/dev/epistemic-skills.wiki"), sorted(Path("Y:/dev/epistemic-skills.wiki").glob("*.md")), True),
+    (Path("/workspace/epistemic-skills.wiki"), sorted(Path("/workspace/epistemic-skills.wiki").glob("*.md")), True),
 ]
 link = re.compile(r"(?<!!)\[[^\]]+\]\(([^)]+)\)")
 missing = []
@@ -513,7 +513,7 @@ Expected: zero missing local targets.
 Run:
 
 ```powershell
-rg -n 'tree/main|blob/main|--ref main|--branch main' README.md Y:\dev\epistemic-skills.wiki
+rg -n 'tree/main|blob/main|--ref main|--branch main' README.md /workspace/epistemic-skills.wiki
 ```
 
 Expected: any matches occur only in explicitly labeled maintainer/current-development prose; stable install commands contain `v3.0.0`.
@@ -543,7 +543,7 @@ Expected: no unbounded superiority, cross-provider, Cursor-compatibility, or cur
 ### Task 8: Publish and verify the complete Wiki
 
 **Files:**
-- Publish: all committed files in `Y:\dev\epistemic-skills.wiki`
+- Publish: all committed files in `/workspace/epistemic-skills.wiki`
 
 **Interfaces:**
 - Consumes: locally committed Wiki history passing Task 7.
@@ -666,8 +666,8 @@ Run:
 
 ```powershell
 gh api repos/ZMS-Labs/epistemic-skills/commits/main --jq .sha
-git -C Y:\dev\epistemic-skills.wiki rev-parse HEAD
-git -C Y:\dev\epistemic-skills.wiki rev-parse '@{upstream}'
+git -C /workspace/epistemic-skills.wiki rev-parse HEAD
+git -C /workspace/epistemic-skills.wiki rev-parse '@{upstream}'
 ```
 
 Expected: main and Wiki identities are explicit; Wiki local and upstream SHAs match.
@@ -677,8 +677,8 @@ Expected: main and Wiki identities are explicit; Wiki local and upstream SHAs ma
 Run:
 
 ```powershell
-git -C Y:\dev\epistemic-skills branch --show-current
-git -C Y:\dev\epistemic-skills status --short --branch
+git -C /workspace/epistemic-skills branch --show-current
+git -C /workspace/epistemic-skills status --short --branch
 ```
 
 Expected: the original user branch and its unrelated ahead commit remain unchanged.

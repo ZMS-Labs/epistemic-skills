@@ -68,7 +68,7 @@ def open_mission(workspace: Path, mission_id: str, instruction: str = "i",
                  actor: str = "agent:worker", **kwargs) -> Mission:
     return Mission.open(
         workspace, mission_id=mission_id, instruction=instruction,
-        operator_ref="operator:zach", steward_ref="agent:worker",
+        operator_ref="operator:example", steward_ref="agent:worker",
         required_tier="declared-role-separation", actor=actor, **kwargs)
 
 
