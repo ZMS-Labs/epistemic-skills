@@ -3,11 +3,12 @@
 The repository defines its checks in `.github/workflows/`. Each workflow names
 the contract it validates; the status of one does not establish the others.
 
-The branch-protection observation recorded here was verified on **2026-09-18**:
-no required status-check contexts were configured on the default branch at
-that time. Repository settings can change independently of source; inspect
-current settings before relying on enforcement. Workflow execution and merge
-protection are separate controls.
+The `main-ci-gate` ruleset (ID `23680011`), verified on **2026-09-18**, is active
+on `main`. It requires a pull request, resolved review threads, and the three
+strict status checks listed below, with no bypass actors. The existing
+organization rules continue to prohibit deletion and non-fast-forward updates.
+Repository settings can change independently of source; inspect current
+settings before relying on this dated observation.
 
 ## What the gate runs
 
@@ -24,7 +25,7 @@ protection are separate controls.
 ## Workflow behavior
 
 - **Draft-gated.** Every workflow above lists `ready_for_review` in its
-  `pull_request` types, and every job carries a `draft == false` condition. As
+  pull-request event types, and every job carries a `draft == false` condition. As
   `release-security.yml` records in place, the two halves are one mechanism:
   without `ready_for_review`, a PR marked ready would be mergeable having
   executed zero checks, because pressing merge needs no further `synchronize`.
@@ -55,7 +56,19 @@ protection are separate controls.
 
 ## Required contexts
 
-As verified on 2026-09-18, the `main` ruleset enforces deletion and non-fast-forward protection only. It
-requires **no status check contexts**, and classic branch protection is not
-configured (the endpoint returns 404). Check *both* endpoints before changing a
-job name here: classic protection is invisible to `/rules/branches`.
+As verified on 2026-09-18, `main-ci-gate` requires these exact contexts from
+GitHub Actions (integration ID `15368`):
+
+- `stdlib-checks`
+- `DCO`
+- `full-history-secret-scan`
+
+Strict checking requires the branch to be current with its base. Pull requests
+must resolve review threads; the required approving-review count is zero, so
+this is not a claim of mandatory independent approval. No bypass actors are
+configured. These merge controls supplement the existing deletion and
+non-fast-forward protections; release gates still require the broader evidence
+set in `RELEASING.md`.
+
+Check both rulesets and classic branch protection before renaming a required
+job; classic protection is not fully described by a ruleset listing.
