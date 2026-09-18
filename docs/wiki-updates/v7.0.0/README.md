@@ -5,8 +5,8 @@ publication. It is not a delta against the old v5 handbook. The GitHub Wiki is a
 separate repository; editing this directory does not publish it.
 
 As verified on 2026-09-18, the live wiki contains the corrected v6 snapshot at
-`4bfd64e4c26e9bee039cf3e56d8362d73986050f`. Its snapshot and live-link checks
-passed in [run 35387408694](https://github.com/ZMS-Labs/epistemic-skills/actions/runs/35387408694).
+`66683d5644e600030ad4a164ed8fd6be9dc7fcc3`. Its snapshot and live-link checks
+passed in [run 35391487428](https://github.com/ZMS-Labs/epistemic-skills/actions/runs/35391487428).
 The v7 snapshot has not yet been published. Its status changes only after a
 separate wiki push and live verification.
 

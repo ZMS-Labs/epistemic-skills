@@ -186,8 +186,8 @@ to the separate wiki and run its live link check. Historical version references
 remain pinned to the evidence they describe.
 
 The preceding v6 wiki publication is already live at
-`4bfd64e4c26e9bee039cf3e56d8362d73986050f`, with the snapshot and live checks
-passing in [run 35387408694](https://github.com/ZMS-Labs/epistemic-skills/actions/runs/35387408694).
+`66683d5644e600030ad4a164ed8fd6be9dc7fcc3`, with the snapshot and live checks
+passing in [run 35391487428](https://github.com/ZMS-Labs/epistemic-skills/actions/runs/35391487428).
 That proves the v6 publication only. It is not v7 candidate or publication
 evidence.
 
