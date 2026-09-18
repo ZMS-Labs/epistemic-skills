@@ -3,7 +3,7 @@
   "mission_id": "tracer-media-missing",
   "created_utc": "2026-08-11T00:00:00Z",
   "authority": {
-    "operator_ref": "operator:zach-stern",
+    "operator_ref": "operator:example",
     "instruction": "Reconcile the monitored-missing media backlog without re-grabbing over VPN.",
     "amendments": [],
     "permissions": [
@@ -41,7 +41,7 @@
         ],
         "path_globs": [
           "M:/Media/**",
-          "//10.10.10.107/Media/**"
+          "//192.0.2.10/Media/**"
         ]
       }
     ]

@@ -12,7 +12,7 @@
 
 ## Global Constraints
 
-- All work in worktree `Y:/dev/es-wt-stage-c-hook`, branch `agent/stage-c-custody-hook` (cut from ES main `2931d386`). Never touch the main checkout (RULE-028) or auditor worktrees.
+- All work in worktree `/workspace/es-wt-stage-c-hook`, branch `agent/stage-c-custody-hook` (cut from ES main `2931d386`). Never touch the main checkout (RULE-028) or auditor worktrees.
 - Contract dir referred to below as `MC/` = `plugins/epistemic-skills/contracts/mission-custody/`.
 - Stdlib only. Validation lives in `verify_mission_custody.py` (hand-rolled); `atomic_write_json` validates every write — a manifest carrying guard fields cannot be written until Task 1 lands.
 - **Case folding: NEVER `str.casefold()`** (ß→ss expansion retires custody of the wrong file — PR #122). Reuse `_ascii_case_fold` / `_normalize_relpath` from `custody_mission.py`.
@@ -94,7 +94,7 @@ def test_manifest_guard_rules_shape() -> None:
    "path_globs": []},
   {"name": "media-fs-moves", "tool_names": ["Bash", "Write", "Edit"],
    "command_regexes": ["\\b(mv|robocopy|rsync|Move-Item)\\b[^\\n]*[Mm]edia"],
-   "path_globs": ["M:/Media/**", "//10.10.10.107/Media/**"]}
+   "path_globs": ["M:/Media/**", "//192.0.2.10/Media/**"]}
 ]
 ```
 

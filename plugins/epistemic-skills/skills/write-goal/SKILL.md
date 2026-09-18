@@ -203,7 +203,7 @@ return-the-contract path is the expected outcome there.
 ```text
 Objective
 Achieve zero unexplained failures of the nightly backup job over 14 consecutive
-scheduled runs for the homelab NAS backup target. Preserve the existing backup
+scheduled runs for the example deployment NAS backup target. Preserve the existing backup
 schedule and retention policy.
 
 Completion proof

@@ -73,7 +73,7 @@ The public result needs only the fact that superseded commands were removed from
 the operator's private command estate. The public form should be:
 
 ```text
-<private-fleet-repo>@<commit>
+<deployment-repository>@<commit>
 ```
 
 The exact reciprocal coordinate may be preserved in the private repository or
@@ -154,11 +154,11 @@ different question.
 | Category | Disposition | Rationale |
 |---|---|---|
 | Direct user-specific profile/plugin path | **generalize** → `<user-home>/.claude/plugins/**/skills/*/SKILL.md` | scrub target under July policy |
-| Private fleet repository + commit coordinate | **generalize** → `<private-fleet-repo>@<commit>` | scrub target; reciprocal coordinate stays private |
+| Private fleet repository + commit coordinate | **generalize** → `<deployment-repository>@<commit>` | scrub target; reciprocal coordinate stays private |
 | Private fleet checkout directory name | **generalize** → `<private-fleet-checkout>/skills/` | scrub target |
 | Measured description-byte counts and drop counts | **retain** | public methodological evidence for D8; no private topology |
 | Named private slash-commands / estate command inventory | **relocate** if reintroduced; none remain after scrub pass | operator-specific; not needed for public method |
-| README estate lifecycle pointer | **generalize** → `<private-fleet-repo>/governance/estate.yaml` | public README must not name the private fleet repo |
+| README estate lifecycle pointer | **generalize** → `<deployment-repository>/governance/estate.yaml` | public README must not name the private fleet repo |
 | Historical plans/specs naming the private repo | **generalize** placeholders | keep procedural history without private identity |
 | Synthetic `C:/Users/example` test paths | **retain** | intentional RED seeds for the live-runner profile-bound rejection; `check_public_content.py` ignores the synthetic `example` username only |
 

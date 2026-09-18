@@ -27,7 +27,7 @@
  {
   "id": "explicit-break-down-foggy",
   "action": "chart-map",
-  "map_artifact": "WAYMAP-001 (/home/user/epistemic-skills/docs/wayfinding/WAYMAP-001.md)",
+  "map_artifact": "WAYMAP-001 (/workspace/epistemic-skills/docs/wayfinding/WAYMAP-001.md)",
   "nodes": [
    {
     "decision": "architecture-style",

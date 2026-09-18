@@ -80,8 +80,8 @@ Branch `audit/epistemic-suite-stress-test-2026-07-23-r2` was created from exact 
 | `9642ef8b705370ca6d1ceebd6e812a82744bcff4` | Correct README canonical-core count. |
 
 Every replacement commit carries sign-offs for both the GitHub noreply identity
-`SternOne <89846440+SternOne@users.noreply.github.com>` and the public profile email
-`SternOne <zachstern@gmail.com>`. DCO result for the opened replacement PR is recorded in report 09.
+`SternOne <maintainer@example.org>` and the public profile email
+`SternOne <maintainer@example.org>`. DCO result for the opened replacement PR is recorded in report 09.
 
 ## Scope control
 

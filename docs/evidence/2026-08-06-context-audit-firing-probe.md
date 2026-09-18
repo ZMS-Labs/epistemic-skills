@@ -231,7 +231,7 @@ its own hypothesis cannot represent that.
 ## Outcome — round 4: PREDICTION CONFIRMED, plus two corrections
 
 Eight superseded commands deleted (canonically in
-`<private-fleet-repo>@<commit>`, and removed from the local load path).
+`<deployment-repository>@<commit>`, and removed from the local load path).
 `/reload-skills` -> **100 skills**.
 
 **`epistemic-skills:context-audit` renders its description again.**

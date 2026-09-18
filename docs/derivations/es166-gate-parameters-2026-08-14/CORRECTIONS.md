@@ -91,7 +91,7 @@ The README claimed these records discharge the es#150 requirement for a *named
 owner*, while both records carried only the unassigned actor label
 `gate owner`. A prerequisite is not met by an artifact that describes the role
 and omits the person. The operator is now named as the principal
-(`operator:zach`, the `operator_ref` convention this contract's own fixtures
+(`operator:example`, the `operator_ref` convention this contract's own fixtures
 use), with the readout-preparing agent listed separately and explicitly not
 judging.
 

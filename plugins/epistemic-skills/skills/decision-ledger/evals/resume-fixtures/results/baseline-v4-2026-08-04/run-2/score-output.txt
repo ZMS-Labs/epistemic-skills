@@ -1,5 +1,5 @@
 # continuity-verify resume-fixtures battery
-# results-dir: /home/user/epistemic-skills/plugins/epistemic-skills/skills/decision-ledger/evals/resume-fixtures/results/baseline-v4-2026-08-04/run-2
+# results-dir: /workspace/epistemic-skills/plugins/epistemic-skills/skills/decision-ledger/evals/resume-fixtures/results/baseline-v4-2026-08-04/run-2
 # traps caught: 8/8 (threshold >= 7)   controls falsely flagged: 0/2 (threshold 0)
 
 | fixture | kind | result | per-claim |

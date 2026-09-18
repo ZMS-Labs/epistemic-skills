@@ -52,7 +52,7 @@
    "conflict": "Does the dossier's own VERIFIED-premises section accurately describe the DCO exhibit?",
    "parties": "compliance-litigator (F3) vs. dossier line 57",
    "ruling": "UPHELD",
-   "evidence_weight": "[V]: git log shows all four PR commits carry 'Signed-off-by: SternOne <zachstern@gmail.com>' with author identity SternOne@users.noreply \u2014 the DCO fail is an author/signoff email MISMATCH, which check_dco.py's test suite documents as by-design, not the absence the dossier states ('commits lack Signed-off-by').",
+   "evidence_weight": "[V]: git log shows all four PR commits carry 'Signed-off-by: SternOne <maintainer@example.org>' with author identity maintainer@example.org \u2014 the DCO fail is an author/signoff email MISMATCH, which check_dco.py's test suite documents as by-design, not the absence the dossier states ('commits lack Signed-off-by').",
    "justification": "A record used to certify audit-trail claims misdescribes the exhibit it cites \u2014 exactly the written-record-vs-exhibit discrepancy this lens exists to catch, in the auditors' own artifact.",
    "dissent_preserved": "Minor (P3); does not touch the design's mechanical soundness, but must be corrected before the dossier is cited elsewhere."
   },

@@ -39,12 +39,12 @@ Natural loopgen placement: **after** recon/decide, **before** gate/prove. Un-gat
 
 ## Territory already shipped (hidden context)
 
-A private fleet tracking item (private `<private-fleet-repo>` `skills/README.md`) already defines:
+A private fleet tracking item (private `<deployment-repository>` `skills/README.md`) already defines:
 
 | Layer | Where | Rule |
 |---|---|---|
 | **Core** | Public `ZMS-Labs/epistemic-skills` | Generic protocol; kept **byte-identical** to fleet copies |
-| **Overlay** | Private `<private-fleet-repo>` `skills/*/LOCAL.md` (+ fleet-only assets) | Bindings only; **never overrides** the protocol |
+| **Overlay** | Private `<deployment-repository>` `skills/*/LOCAL.md` (+ fleet-only assets) | Bindings only; **never overrides** the protocol |
 | **Deploy** | Device cache = core + overlay | Cache reset must not lose skills |
 
 Org pattern: few **public** method repos vs many **private** fleet products. Overlay lives in the private fleet repo (via a local worktree checkout), not in a public kitchen-sink monorepo.
@@ -106,7 +106,7 @@ Public (ZMS-Labs)
                                   (else document upstream loopgen in fleet index)
 
 Private (fleet)
-  <private-fleet-repo>/skills/  ← LOCAL.md overlays + fleet-only assets (already)
+  <deployment-repository>/skills/  ← LOCAL.md overlays + fleet-only assets (already)
   fleet ops commands            ← /release-class rituals (add when needed)
   private marketplace / index   ← lists public remotes + private paths
 

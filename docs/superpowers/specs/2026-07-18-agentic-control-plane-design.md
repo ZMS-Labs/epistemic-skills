@@ -87,7 +87,7 @@ PRIVATE, ZMS-OWNED
     Catalog, source locks, policy, private flows, adapters, materialization,
     installation auditing, and bounded conformance evidence.
 
-  <private-fleet-repo> and product repositories
+  <deployment-repository> and product repositories
     Domain/project LOCAL overlays, acceptance contracts, and real run records.
 
 UPSTREAM, PINNED
@@ -138,7 +138,7 @@ The eventual private control plane owns:
   release preparation;
 - conformance scenarios and references to their run artifacts.
 
-It does not own copied upstream/public method bodies, homelab-specific facts,
+It does not own copied upstream/public method bodies, example deployment-specific facts,
 product acceptance criteria, or unrestricted run telemetry.
 
 ## Upstream dependency set
@@ -181,7 +181,7 @@ Re-check repository state immediately before every commit.
 
 ### 2. Correct stale Gauntlet overlay state
 
-In the authoritative `<local-checkout>/<private-fleet-repo>` checkout:
+In the authoritative `<local-checkout>/<deployment-repository>` checkout:
 
 - replace the claim that issue `#164` is open with its resolved state;
 - remove the temporary "until #164 lands" instruction;

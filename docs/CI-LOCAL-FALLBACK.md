@@ -17,7 +17,9 @@ bash .github/scripts/run_local_ci.sh [REF]
    — naming both the commit and the tree it actually tested.
 2. Runs `.github/scripts/cleanroom_ci.sh` for the `epistemic-flexibility` workflow
    (stdlib checks extracted from `.github/workflows/epistemic-flexibility.yml`).
-3. Runs the focused `commission-watch-contract` steps when present on `REF`.
+3. Runs the focused `commission-watch-contract` steps from the current working
+   tree when that workflow is present. Use a clean checkout of `REF` when you
+   need both parts to describe the same revision.
 
 Use this **before** pushing when Actions is degraded. It is the standing substitute
 for “green on GitHub” only when Actions cannot assign runners; prefer Actions when
@@ -33,9 +35,10 @@ See the script header for remote URL override and detached-checkout behavior.
 
 ## Kubernetes Job (cluster path)
 
-`.github/ci/cleanroom-job.yaml` schedules the same clean-room harness on amd64.
-**Blocker (2026-08-06):** pods could not resolve `github.com` (cluster egress/DNS).
-Fix cluster DNS/egress or clone from an in-cluster mirror before relying on this path.
+The optional [Job example](../.github/ci/cleanroom-job.yaml) runs the harness on
+amd64 compute. It requires cluster access, DNS resolution, and outbound access
+to GitHub. Review its image, permissions, and resource limits before use. The
+repository does not depend on any particular cluster or deployment environment.
 
 ## What local CI does not provide
 
@@ -54,9 +57,9 @@ described the commit it is named for (it happened twice during v6.0.0 and was
 caught by hand both times). `docs/evidence/local-ci/` is `.gitignore`d for the
 same reason and is **not** a publication path.
 
-When substituting for a failed Actions assignment: paste the receipt body into
-a PR comment (it is small, and a comment is timestamped and attributable), and
-note the substitution in the PR body. A `-dirty` receipt is not a substitute for
+When substituting for a failed Actions assignment: share a sanitized receipt
+in the PR, removing hostnames, home directories, and other local identifiers.
+Note which checks it covers and which still require GitHub Actions. A `-dirty` receipt is not a substitute for
 green on a commit — re-run it on a clean tree first.
 
 Override the destination with `LOCAL_CI_RECEIPT_DIR` if you want the file

@@ -2,7 +2,7 @@
 
 > Persisted post-hoc by the dispatcher (the seat's final message, verbatim); the panel-2 arbitrator originally received it as dispatcher attribution — the non-persistence is the arbitrator's P4 finding, corrected here.
 
-**Evidence basis:** worktree at `Y:/dev/es-wt-v510` — HEAD is `66ef527`, a commit-identity twin of pinned `fcf1f75` (same parent `2890ae6`; **tree bit-identical: `f7803a4` both** — verified). All `[V]` anchors are my own live probes (GitHub API, raw wiki fetch) or reads at that tree, 2026-08-15 ~17:35–18:05Z.
+**Evidence basis:** worktree at `/workspace/es-wt-v510` — HEAD is `66ef527`, a commit-identity twin of pinned `fcf1f75` (same parent `2890ae6`; **tree bit-identical: `f7803a4` both** — verified). All `[V]` anchors are my own live probes (GitHub API, raw wiki fetch) or reads at that tree, 2026-08-15 ~17:35–18:05Z.
 
 ## Charter Q1 — discharge-set scorecard (acceptance criteria in arbitration.md)
 
