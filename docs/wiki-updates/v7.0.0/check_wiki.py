@@ -113,6 +113,11 @@ COUNT_NEAR = re.compile(
 COUNT_INDEFINITE = re.compile(
     r"\b(?:or\s+(?:more|fewer|less)|at\s+least|at\s+most|up\s+to|more\s+than|"
     r"fewer\s+than|no\s+more\s+than)\b", re.I)
+# Prefix thresholds fall before COUNT_NEAR's number-starting match. Anchor the
+# prefix to that boundary so unrelated earlier wording cannot hide a stale count.
+COUNT_THRESHOLD_PREFIX = re.compile(
+    r"(?:at\s+least|at\s+most|up\s+to|more\s+than|fewer\s+than|"
+    r"no\s+more\s+than)\s*$", re.I)
 COUNT_COMPOUND_TAIL = re.compile(
     r"^\s+(?:tree|trees|directory|directories|folder|folders|repo|repos|"
     r"path|paths|list|lists|table|tables|registry|registries)\b", re.I)
@@ -165,7 +170,9 @@ def check(wiki: Path, version: str, live: set[str], retired: dict[str, str],
             for m in COUNT_NEAR.finditer(ln):
                 # Not an inventory claim: a threshold, or a compound noun whose
                 # head is something other than skills/disciplines.
-                if COUNT_INDEFINITE.search(m.group(0)):
+                prefix = ln[max(0, m.start() - 40):m.start()]
+                if (COUNT_INDEFINITE.search(m.group(0))
+                        or COUNT_THRESHOLD_PREFIX.search(prefix)):
                     continue
                 if COUNT_COMPOUND_TAIL.match(ln[m.end():]):
                     continue
@@ -324,6 +331,10 @@ def self_test() -> int:
         ("a threshold is not an inventory claim",
          {"Home.md": good_pages["Home.md"]
           + "\nA routing record exists when two or more disciplines fire.\n"}, None),
+        ("prefix thresholds are not inventory claims",
+         {"Home.md": good_pages["Home.md"]
+          + "\nAt least two disciplines fire. Up to three skills participate. "
+          + "No more than four skills are needed.\n"}, None),
         ("a compound noun is not an inventory claim",
          {"Home.md": good_pages["Home.md"]
           + "\nKeep one canonical skills tree per harness.\n"}, None),
