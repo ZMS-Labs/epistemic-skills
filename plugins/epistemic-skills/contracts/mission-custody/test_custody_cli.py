@@ -688,7 +688,7 @@ def _blank_field_probe(ws: Path, field: str, text: str) -> tuple:
     if field == "instruction":
         return run("open", "--workspace", str(ws), "--actor", "agent:worker",
                    "--mission-id", mission_id, "--instruction", text,
-                   "--operator", "operator:zach",
+                   "--operator", "operator:example",
                    "--steward", "agent:worker"), checkpoints
     open_cli(ws, mission_id, "anchor the mission")
     run("approve", "--workspace", str(ws), "--actor", "agent:worker")
