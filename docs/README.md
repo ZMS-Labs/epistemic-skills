@@ -1,20 +1,37 @@
 # Documentation
 
-Start with the [project overview](../README.md) or the
-[handbook](https://github.com/ZMS-Labs/epistemic-skills/wiki).
-The [committed handbook snapshot](wiki-updates/v6.0.0/pages) is available for
-review alongside source changes.
+Start with the [project overview](../README.md) for the purpose and a first
+example, or the [current handbook](handbook/pages/Home.md) for practical use.
+The [published wiki](https://github.com/ZMS-Labs/epistemic-skills/wiki) presents
+the handbook as connected pages. The editable source is `docs/handbook/pages/`.
 
-| Need | Source |
+## Choose your next step
+
+| You want to… | Start here |
 | --- | --- |
-| Skill triggers and methods | [Canonical skill tree](../plugins/epistemic-skills/skills) |
-| Schemas and executable checks | [Contracts](../plugins/epistemic-skills/contracts) |
-| Contributing | [Contributor guide](../CONTRIBUTING.md) |
-| Release procedure | [Release guide](../RELEASING.md) |
-| Published versions and limitations | [Release records](release) |
-| Local verification | [Local CI guide](CI-LOCAL-FALLBACK.md) |
-| Continuous integration | [Workflow coverage](actions-tier.md) |
-| OpenAI bundle generation | [Packaging guide](CHATGPT-AND-OPENAI-PACKAGING.md) |
+| Use the methods on a real task | [Current handbook](handbook/pages/Home.md) |
+| Understand exactly what an agent is instructed to do | [Canonical skill tree](../plugins/epistemic-skills/skills) |
+| Make your first contribution | [Contributor guide](../CONTRIBUTING.md) |
+| Change a skill, adapter, contract, or documentation page | [Maintainer change map](MAINTAINING.md#change-map) |
+| Understand what validation can establish | [CI coverage](actions-tier.md) and [local checks](CI-LOCAL-FALLBACK.md) |
+| Inspect schemas and executable checks | [Contract guide](../plugins/epistemic-skills/contracts/README.md) |
+| Build the ChatGPT and OpenAI distributions | [Packaging guide](CHATGPT-AND-OPENAI-PACKAGING.md) |
+| Publish a version | [Release procedure](../RELEASING.md) |
+| Verify the released v7 source and outcomes | [Release notes](release/RELEASE-7.0.0.md) and [completed publication receipt](https://github.com/ZMS-Labs/epistemic-skills/releases/download/v7.0.0/publication-receipt.json) |
+
+## Current guidance and release records
+
+The current handbook can improve between releases. The
+[v7.0.0 handbook snapshot](wiki-updates/v7.0.0/pages/Home.md) records the pages
+shipped with that release; the [v6.0.0 snapshot](wiki-updates/v6.0.0/pages/Home.md)
+serves the same historical purpose. Edit current guidance in the handbook,
+not in a released snapshot.
+
+Release records answer a different question: what was checked on a particular
+candidate, and what eventually shipped? The [v7 requirement packet](release/v7-evidence.md)
+retains its pre-publication verdict. Use the completed publication receipt above
+for the final tagged commit and hosted outcomes. New evidence supplements that
+history instead of changing what an earlier run reported.
 
 ## Historical material
 

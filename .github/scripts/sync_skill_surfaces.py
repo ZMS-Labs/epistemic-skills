@@ -86,16 +86,12 @@ def count_surfaces() -> list[tuple[Path, list[tuple[str, str]]]]:
     ) + "."
     return [
         (REPO / "README.md", [
-            (rf"A collection of {ANY_WORD} agent skills", "A collection of {n} agent skills"),
-            (rf"- \[{ANY_WORD_CAP}-skill catalog\]\(#{ANY_WORD}-skill-catalog\)",
-             "- [{N}-skill catalog](#{slug}-skill-catalog)"),
-            (rf"## {ANY_WORD_CAP}-skill catalog", "## {N}-skill catalog"),
-            (rf"provides \*\*{ANY_WORD}\*\* skills: (?:one router|one entry point), \*\*{ANY_WORD}\*\* disciplines",
-             "provides **{n}** skills: one entry point, **{d}** disciplines"),
-            (rf"(?:one router, Helix, and|one entry point and) {ANY_WORD} disciplines",
-             "one entry point and {d} disciplines"),
+            (rf"package contains \*\*{ANY_WORD}\*\* skills:",
+             "package contains **{n}** skills:"),
+            (rf"usage guide and \*\*{ANY_WORD}\*\* disciplines",
+             "usage guide and **{d}** disciplines"),
+            (rf"### {ANY_WORD_CAP}-skill catalog", "### {N}-skill catalog"),
             (rf"canonical skill cores \({ANY_WORD}\)", "canonical skill cores ({n})"),
-            (rf"(?:router and|entry point and) {ANY_WORD} disciplines", "entry point and {d} disciplines"),
             # REMOVED 2026-08-06: a one-shot v4.0.0 -> v4.1.0 migration rule that
             # rewrote the per-RELEASE install-verification count from the CURRENT
             # glob. Two defects. (1) It contradicted this file's own stated intent
@@ -579,6 +575,14 @@ def self_test() -> int:
         assert tampered != text, "count tamper anchor not found"
         path.write_text(tampered, encoding="utf-8")
 
+    def tamper_readme_count(source: str, replacement: str):
+        def mutate(root: Path) -> None:
+            path = root / "README.md"
+            text = path.read_text(encoding="utf-8")
+            assert text.count(source) == 1, "README count tamper needs one anchor"
+            path.write_text(text.replace(source, replacement, 1), encoding="utf-8")
+        return mutate
+
     def tamper_metadata(root: Path) -> None:
         path = root / skills_rel / skills[0] / "SKILL.md"
         text = path.read_text(encoding="utf-8")
@@ -619,6 +623,21 @@ def self_test() -> int:
         ("map-schema-tamper", tamper_schema, ["MAP_SCHEMA_DRIFT"]),
         ("routing-hand-edit", tamper_routing, ["ROUTING_DRIFT"]),
         ("count-word-tamper", tamper_count, ["COUNT_DRIFT"]),
+        ("readme-total-count", tamper_readme_count(
+            f"package contains **{WORDS[n]}** skills:",
+            f"package contains **{WORDS[n - 1]}** skills:"), ["COUNT_DRIFT"]),
+        ("readme-discipline-count", tamper_readme_count(
+            f"usage guide and **{WORDS[n - len(NON_DISCIPLINES)]}** disciplines",
+            f"usage guide and **{WORDS[n - len(NON_DISCIPLINES) - 1]}** disciplines"), ["COUNT_DRIFT"]),
+        ("readme-catalog-count", tamper_readme_count(
+            f"### {WORDS[n].capitalize()}-skill catalog",
+            f"### {WORDS[n - 1].capitalize()}-skill catalog"), ["COUNT_DRIFT"]),
+        ("readme-tree-count", tamper_readme_count(
+            f"canonical skill cores ({WORDS[n]})",
+            f"canonical skill cores ({WORDS[n - 1]})"), ["COUNT_DRIFT"]),
+        ("readme-missing-count-anchor", tamper_readme_count(
+            f"package contains **{WORDS[n]}** skills:",
+            "package inventory:"), ["COUNT_PATTERN_MISSING"]),
         ("event-metadata-removal", tamper_metadata, ["EVENT_METADATA_MISSING"]),
         ("hands-to-phantom", tamper_hands_to, ["HANDS_TO_UNKNOWN"]),
         ("unregistered-new-skill", plant_new_skill,
