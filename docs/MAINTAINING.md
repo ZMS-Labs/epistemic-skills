@@ -110,3 +110,7 @@ For the completed v7 publication, the
 [public receipt](https://github.com/ZMS-Labs/epistemic-skills/releases/download/v7.0.0/publication-receipt.json)
 binds the source, checks, assets, and publication state. The earlier
 [requirement packet](release/v7-evidence.md) remains a pre-publication record.
+
+## Visual documentation quality
+
+For new or changed visual headings, Mermaid diagrams, flowcharts, sequences, screenshots and charts, follow the [ZMS Labs documentation standard](https://github.com/ZMS-Labs/.github/blob/main/docs/documentation-standard.md#use-visuals-to-explain). Verify labels, arrows, grouping, order and status against authoritative source; distinguish concepts, plans, implementation and observed evidence. Preserve authentic captures and product-local visual identity. Inspect the intended rendering at desktop and narrow widths, supported light/dark themes, readable labels and a useful text equivalent. Keep exact diagrams editable; generated artwork must remain clearly illustrative. Record the source scope, actual semantic/render checks and remaining limits. Use one bounded review and affected rechecks; no independent-model gate is required, and adoption does not certify historical visuals.
