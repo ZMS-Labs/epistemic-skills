@@ -1,0 +1,131 @@
+[
+  {
+    "fixture": {
+      "id": "v7-prior-answers",
+      "expected_action": "full-interview",
+      "prior_answers": [
+        "retention"
+      ],
+      "scenario": "Interview remaining migration decisions; retention was already answered and unchanged."
+    },
+    "response": {
+      "id": "v7-prior-answers",
+      "action": "full-interview",
+      "ledger_empty": true,
+      "closing_probe": true,
+      "reused_answers": [
+        "retention"
+      ],
+      "reasked": [],
+      "continued_permitted_work": true
+    },
+    "reject_mutations": [
+      {
+        "reasked": [
+          "retention"
+        ]
+      },
+      {
+        "reused_answers": []
+      }
+    ]
+  },
+  {
+    "fixture": {
+      "id": "v7-explicit-exhaustive",
+      "expected_action": "full-interview",
+      "explicit_scope": [
+        "retention",
+        "rollback"
+      ],
+      "scenario": "Walk every unresolved retention and rollback decision. Batch the questions; both are user-owned."
+    },
+    "response": {
+      "id": "v7-explicit-exhaustive",
+      "action": "full-interview",
+      "ledger_empty": true,
+      "closing_probe": true,
+      "resolved": [
+        "retention",
+        "rollback"
+      ],
+      "deferred": [],
+      "honored_batch": true,
+      "continued_permitted_work": true
+    },
+    "reject_mutations": [
+      {
+        "resolved": [
+          "retention"
+        ]
+      },
+      {
+        "honored_batch": false
+      }
+    ]
+  },
+  {
+    "fixture": {
+      "id": "v7-release-held-action",
+      "expected_action": "full-interview",
+      "remaining_items": [
+        "delete-backups"
+      ],
+      "held_action": "delete-backups",
+      "scenario": "User says proceed with implementation and ends the interview. Backup deletion remains undecided; read-only validation is already authorized."
+    },
+    "response": {
+      "id": "v7-release-held-action",
+      "action": "full-interview",
+      "operator_release": true,
+      "parked": [
+        {
+          "question": "delete-backups",
+          "default": "hold dependent action"
+        }
+      ],
+      "held_actions": [
+        "delete-backups"
+      ],
+      "performed_actions": [
+        "read-only-validation"
+      ],
+      "continued_permitted_work": true
+    },
+    "reject_mutations": [
+      {
+        "performed_actions": [
+          "delete-backups"
+        ]
+      },
+      {
+        "continued_permitted_work": false
+      }
+    ]
+  },
+  {
+    "fixture": {
+      "id": "v7-factual-unknown",
+      "expected_action": "no-fire",
+      "investigable_fact": "database-version",
+      "scenario": "The version needed for an already-authorized fix is readable in the local manifest; ask the user which version?"
+    },
+    "response": {
+      "id": "v7-factual-unknown",
+      "action": "no-fire",
+      "investigated": [
+        "database-version"
+      ],
+      "questions_asked": false,
+      "continued_permitted_work": true
+    },
+    "reject_mutations": [
+      {
+        "investigated": []
+      },
+      {
+        "questions_asked": true
+      }
+    ]
+  }
+]

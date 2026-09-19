@@ -32,6 +32,26 @@ def score(fixtures: list[dict], responses: list[dict]) -> dict:
             failures.append(f"{fid}: expected {expected}, got {action}")
         entries = row.get("new_entries", [])
         ref = row.get("existing_ref")
+        if expected == "resume":
+            for field in ("revision", "authority", "answer", "next_action"):
+                if row.get(field) != fixture[field]:
+                    failures.append(f"{fid}: continuation must preserve current {field}")
+            checked = row.get("rechecked", [])
+            if not isinstance(checked, list) or not all(isinstance(x, str) for x in checked) or not set(fixture["rechecked"]) <= set(checked):
+                failures.append(f"{fid}: next action lacks relevant re-anchoring")
+            for field in ("restarted_investigation", "asked_authority_again", "task_complete"):
+                if row.get(field) is not False:
+                    failures.append(f"{fid}: settled authorized repair must continue without {field}")
+            if entries:
+                failures.append(f"{fid}: resumption alone does not require new entries")
+            continue
+        if expected == "outcome-review":
+            for field in ("prediction", "observation", "source"):
+                if row.get(field) != fixture[field]:
+                    failures.append(f"{fid}: preserve separate original {field}")
+            if row.get("standing_guidance") is not False:
+                failures.append(f"{fid}: outcome data does not authorize standing guidance")
+            continue
         if expected == "no-op":
             if entries or ref is not None or row.get("visible_process"):
                 failures.append(f"{fid}: routine no-op must be silent and artifact-free")
@@ -40,6 +60,11 @@ def score(fixtures: list[dict], responses: list[dict]) -> dict:
                 failures.append(f"{fid}: adequate existing artifact is not resolvably anchored")
             if entries:
                 failures.append(f"{fid}: duplicate store created despite adequate existing artifact")
+            if fixture.get("requires_reanchor"):
+                if row.get("reanchored") is not True:
+                    failures.append(f"{fid}: ADR reuse does not waive resume re-anchoring")
+                if row.get("claims_jsonl_validation") is not False:
+                    failures.append(f"{fid}: ordinary ADR reuse does not prove JSONL mechanical checks")
         else:
             if ref is not None or len(entries) != 1:
                 failures.append(f"{fid}: uncovered consequential item requires exactly one new entry")

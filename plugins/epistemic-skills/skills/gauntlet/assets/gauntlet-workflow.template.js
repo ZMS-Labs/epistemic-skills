@@ -34,13 +34,14 @@ export const meta = {
 const A = (typeof args === 'string') ? JSON.parse(args) : (args || {})
 
 // finding-set@1 — evidence is tiered; falsifier is STRUCTURED (observable by
-// construction: method + threshold + timeframe), not a free string.
+// construction: method + decision criterion + timeframe), not a free string.
+// For value tradeoffs these identify authority/criteria/revisit conditions, not an invented empirical test.
 const FALSIFIER_SCHEMA = {
   type: 'object',
   properties: {
-    statement: { type: 'string' },   // what observation would prove this WRONG
+    statement: { type: 'string' },   // observation or authorized criterion change that revises it
     method:    { type: 'string' },   // how to obtain it (grep/probe/test/measurement)
-    threshold: { type: 'string' },   // the pass/fail line
+    threshold: { type: 'string' },   // empirical threshold or authorized decision criterion
     timeframe: { type: 'string' },   // when/for how long it must be observed
   },
   required: ['statement', 'method', 'threshold', 'timeframe'],
@@ -165,6 +166,11 @@ const reports = await parallel(A.panel.map(a => () =>
   }).then(r => ({ persona: a.persona, role: a.role, report: r }))
 )).then(rs => rs.filter(Boolean))
 
+if (!A.panel || A.panel.length < 3 || reports.length !== A.panel.length ||
+    reports.some(r => !r.report || !Array.isArray(r.report.findings))) {
+  throw new Error('INCOMPLETE-PANEL: missing examinations cannot establish GO; retain completed reports')
+}
+
 // ---- Phase: Verify (mechanical criticism; deterministic) ----
 phase('Verify')
 function falsifierOk(f) {
@@ -175,11 +181,12 @@ function evidenceWeight(ev) {
   return (ev || []).some(e => e.tier === 'V' || e.tier === 'I')
 }
 const verified = reports.map(r => {
-  const kept = (r.report.findings || []).filter(f => falsifierOk(f.falsifier))
-  const zeroWeight = kept.filter(f => !evidenceWeight(f.evidence)).map(f => f.id)
-  return { ...r, report: { ...r.report, findings: kept }, zero_weight_findings: zeroWeight }
+  const findings = r.report.findings
+  const incomplete = findings.filter(f => !falsifierOk(f.falsifier)).map(f => f.id)
+  const zeroWeight = findings.filter(f => !evidenceWeight(f.evidence)).map(f => f.id)
+  return { ...r, incomplete_findings: incomplete, zero_weight_findings: zeroWeight }
 })
-log(`verified ${verified.length} lens reports; malformed-falsifier findings struck; ` +
+log(`verified ${verified.length} lens reports; incomplete findings retained and flagged; ` +
     `${verified.reduce((n, v) => n + v.zero_weight_findings.length, 0)} H-only findings flagged zero-weight ` +
     `(run scripts/verify_evidence.py on saved reports for the [V] truth-check + Fingerprint)`)
 
@@ -193,6 +200,9 @@ if ((A.gates || []).length) {
           `Your gate card ({{PERSONA_SPEC}}):\n${g.cardText}\nApply your gate. Return structured output.`,
       { label: `gate:${g.persona}`, phase: 'Gate', agentType: 'gauntlet-arbitrator', schema: GATE_SCHEMA })
   ))).filter(Boolean)
+  if (gateResults.length !== A.gates.length || gateResults.some(g => !['PASS','BLOCK','PASS-WITH-NOTES'].includes(g.result))) {
+    throw new Error('INCOMPLETE-GATE: a missing required gate cannot establish GO')
+  }
   log(`gates: ${gateResults.map(g => `${g.gate}=${g.result}`).join(', ')}`)
 }
 
@@ -204,7 +214,7 @@ const verdict = await agent(
   (optionsBlock ? `Generated option sets (open question):\n${optionsBlock}\n` : '') +
   `Gate results (a BLOCK is categorical — it caps the verdict at NO-GO for that path regardless of weighing):\n` +
   JSON.stringify(gateResults, null, 1) +
-  `\nVerified independent lens reports (dissent to preserve, never average; H-only findings carry zero weight):\n` +
+  `\nLens reports (actual separation disclosed below; preserve dissent and flagged incomplete findings):\n` +
   JSON.stringify(verified, null, 1) +
   (A.judgeCardText ? `\nYour judge card ({{PERSONA_SPEC}}):\n${A.judgeCardText}` : '') +
   `\nBuild the Conflict Ledger with evidence weights + preserved dissent, assign P1-P4 with acceptance criteria, ` +
@@ -212,6 +222,17 @@ const verdict = await agent(
   `Docket mode was ${A.docketMode}; independence ${A.independence}. Return structured output.`,
   { label: 'arbitrate', phase: 'Arbitrate', agentType: 'gauntlet-arbitrator', schema: VERDICT_SCHEMA, effort: 'high' }
 )
+
+if (!verdict || !['GO','CONDITIONAL','NO-GO'].includes(verdict.verdict)) {
+  throw new Error('INCOMPLETE-ADJUDICATION: no supported review result')
+}
+if (verdict.verdict === 'GO' && verified.some(r => r.report.findings.some(
+    f => ['P1','P2'].includes(f.severity) && r.incomplete_findings.includes(f.id)))) {
+  throw new Error('INCOMPLETE-MATERIAL-FINDINGS: resolve flagged findings before GO')
+}
+if (gateResults.some(g => g.result === 'BLOCK') && verdict.verdict !== 'NO-GO') {
+  throw new Error('GATE-CONFLICT: required blocking gate cannot be voted away')
+}
 
 return { subject: A.subjectOneLine, docketMode: A.docketMode, selectionPath: A.selectionPath,
          optionSets, gates: gateResults,

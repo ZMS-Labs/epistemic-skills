@@ -29,6 +29,16 @@ The central standard is called **evidence-locked multimodal agentic UAT**. The n
 
 ---
 
+> Current skill profile: apply `../SKILL.md` triage before this full reference.
+> Routine reversible presentation edits use a bounded preview check. Executable
+> compiler/judge contracts are `uat-contract@2` in `schemas.md`: preregister expected
+> and disconfirming observations, record cited outcomes for every required channel,
+> and fail acceptance when persistence contradicts visible success. Unversioned
+> historical packets remain historical. Label direct checks direct; only actually
+> isolated actor/verifier work claims blinding. The operator's designated reviewer
+> controls acceptance; this reference adds no universal new actor, model-family,
+> approval, or publication requirement.
+
 # Part I — Research conclusion
 
 ## 1. Executive conclusion

@@ -49,6 +49,21 @@ def score(fixtures: list[dict], responses: list[dict]) -> dict:
         if action != expected:
             failures.append(f"{fid}: expected {expected}, got {action}")
             continue
+        # Additional v7 cases preserve earlier fixture meanings and outcomes.
+        prior = set(fixture.get("prior_answers", []))
+        if prior and (not prior <= set(row.get("reused_answers", [])) or prior & set(row.get("reasked", []))):
+            failures.append(f"{fid}: reuse prior answers without redundant questioning")
+        scope = set(fixture.get("explicit_scope", []))
+        if scope and (not scope <= set(row.get("resolved", [])) | set(row.get("deferred", [])) or not row.get("honored_batch")):
+            failures.append(f"{fid}: exhaust the requested scope and honor the requested batch")
+        held = fixture.get("held_action")
+        if held and (held not in row.get("held_actions", []) or held in row.get("performed_actions", [])):
+            failures.append(f"{fid}: interview release does not authorize the unresolved action")
+        fact = fixture.get("investigable_fact")
+        if fact and fact not in row.get("investigated", []):
+            failures.append(f"{fid}: investigate accessible factual unknowns")
+        if any((prior, scope, held, fact)) and row.get("continued_permitted_work") is not True:
+            failures.append(f"{fid}: resume independent permitted work")
         if expected == "no-fire":
             if row.get("questions_asked") or row.get("visible_process"):
                 failures.append(f"{fid}: no-fire must be silent — no interview, no process artifact")

@@ -2,17 +2,35 @@
 
 # Roster Group E — Generative & Counterfactual (pre-panel option generators + alternative-surfacing evaluators)
 
-generate_options cards run BEFORE the panel on open questions and emit `option-set@1` (3-5 materially distinct alternatives, always including the null/status-quo option) — generator runs never satisfy evaluator-panel diversity. Cards are base-tagged.
+Generative methods propose alternatives or syntheses for scrutiny. In an open-question Gauntlet the initial phase uses `option-set@1`, including a fair status-quo option; focused use may return a bounded candidate. Generation never supplies evaluator diversity.
+
+---
+
+## adjacent-possible-explorer  *(base-generative, generate_options)*
+**Method:** Nearby alternatives (family `adjacent-possible-explorer`, mode `default`)
+**Question:** Which feasible nearby alternative better serves the accepted outcome, if any?
+**Mechanism:** Recombining available capabilities can change costs or value without a full redesign; dominance is an empirical comparison, not a premise.
+**Evidence needed:** capability inventory of what exists in-hand, cost/value estimate of the sideways variant vs the proposal
+**Procedure:** Inventory available capabilities and retained requirements. Construct a nearby variant, identify its changed mechanism, assumptions and all-in costs, and compare it with the current proposal under the same criteria. Return the candidate and a discriminating observation; no better variant is a valid result.
+**Possible results:** candidate, no-material-finding, uncertainty
+**Revise when:** Revise or drop a variant if the like-for-like comparison removes its benefit, violates a retained requirement or reveals prohibitive transition cost.
+**Limits:** Searches feasible local variants; does not verify their dominance or authorize expanded scope. Evaluation is a separate contribution, not necessarily a separate agent.
+**Stop and return:** Return when the scoped question is answered, existing adequate evidence is confirmed, or the remaining material evidence gap is explicit. Acknowledge actual use and continue the authorized task; do not manufacture findings or authority.
+**Not to be confused with:** `opposite-steelman` — steelman advocates the explicitly-rejected branch; explorer searches the unexamined neighborhood; `first-principles-rederiver` — rederiver rebuilds from constraints ground-up; explorer perturbs the existing proposal locally
 
 ---
 
 ## analogical-historian  *(base-metatextual)*
-**Core heuristic:** This has been tried before — maybe not here, maybe not in this field, but the shape has recurred, and the outcome is on record. The proposal treats itself as novel; history treats it as an instance. The precedent knows how this ends.
-**Critique vector:** Find the closest prior art across domains — the company that built this, the protocol that tried this trade-off, the policy with this exact incentive structure — and report how it actually played out, including the failure the proposal is walking toward. Distinguish the true structural analogy (same forces) from the superficial one (same surface). Name the historical lesson this design is about to relearn the expensive way.
-**Bias to declare:** False analogy — "it failed before" may not transfer if the underlying forces differ; justify why the precedent's forces are actually present here.
-**Object of scrutiny:** precedent outcomes of the same structural shape: the closest prior art across domains and how it actually played out, structural vs superficial analogy discrimination
-**Falsifier shape:** the precedent's decisive force is absent here (method: force-by-force comparison; threshold: a load-bearing force differs; timeframe: analysis)
-**Not to be confused with:** `polymath-inquisitor` — inquisitor uses analogy to REFRAME the question; historian uses precedent to PREDICT the outcome; `second-order-forecaster` — forecaster derives consequences from mechanism; historian derives them from record
+**Method:** Historical comparison (family `analogical-historian`, mode `default`)
+**Question:** Which documented precedents inform this decision, and where does the analogy fail?
+**Mechanism:** Shared mechanisms can make precedents informative, while selection and decisive contextual differences can defeat transfer.
+**Evidence needed:** the named precedent with its documented outcome, the force-by-force mapping showing the analogy is structural, the divergence risks
+**Procedure:** Find sourced outcomes and a contrasting case where feasible. Map shared mechanisms and decisive differences. Report selection limits and the denominator or base rate when a defensible reference class exists. State transfer strength or no informative precedent.
+**Possible results:** finding, no-material-finding, uncertainty
+**Revise when:** Reduce or withdraw the analogy when source verification, contrasting outcomes or mechanism differences defeat the proposed transfer; do not infer a forecast probability from resemblance alone.
+**Limits:** Historical analogy supports conditional comparison; it does not by itself establish causation, generalizability or a forecast probability.
+**Stop and return:** Return when the scoped question is answered, existing adequate evidence is confirmed, or the remaining material evidence gap is explicit. Acknowledge actual use and continue the authorized task; do not manufacture findings or authority.
+**Not to be confused with:** `polymath-inquisitor` — Problem framing may use analogy to change the question; historical comparison checks documented outcomes and transfer limits.; `second-order-forecaster` — Downstream forecasting traces prospective mechanisms; historical comparison begins with sourced precedents.
 
 ---
 
@@ -23,51 +41,85 @@ generate_options cards run BEFORE the panel on open questions and emit `option-s
 ---
 
 ## constraint-negotiator  *(base-generative, generate_options)*
-**Core heuristic:** Half the constraints a design bows to are habit, budget-of-the-moment, or a vendor default — and the design's whole complexity often exists to serve one of them. The winning move is frequently to change the constraint set, not to optimize inside it.
-**Value vector:** For each binding constraint: classify it (law of nature / negotiable-at-cost / phantom), then price BOTH sides — the cost of removing or buying off the constraint versus the complexity cost of continuing to accommodate it. Surface the design that becomes obvious once a phantom constraint is named, and the case where removal is cheaper than the contortions built around retention. Every relaxation must come with a concrete, costed removal path.
-**Bias to declare:** May relax constraints that are genuinely binding or propose relaxing the immovable; require the costed removal path before crediting any relaxation, and weigh phantom-hunting against the constraints that are actually load-bearing.
-**Object of scrutiny:** the constraint set itself: per-constraint classification (physics / negotiable / phantom) with removal cost vs retention complexity priced on both sides
-**Falsifier shape:** the constraint proves load-bearing at stated cost (method: verify the constraint's source/contract/physics; threshold: removal path fails or costs more than retention; timeframe: verification)
+**Method:** Constraint change options (family `constraint-negotiator`, mode `default`)
+**Question:** Which constraint could be changed with authority, and how do removal costs compare with accommodation costs?
+**Mechanism:** An assumed or changeable constraint can impose avoidable complexity, while relaxing a binding obligation without authority can invalidate the option.
+**Evidence needed:** Constraint inventory with sources, owners, hardness, change authority and evidence status; removal and retention cost ranges; feasibility and actual cost evidence before recommending change
+**Procedure:** Inventory binding constraints with source, owner, hardness, change authority and evidence status. Distinguish physical constraints, obligations or values, resources and assumptions. Ask both what becomes possible if a constraint is relaxed and whether present accommodation costs exceed a feasible removal path. Compare cost ranges including transition and retained obligations. Label contingent relaxations hypothetical; require verified feasibility, actual cost evidence and appropriate authority before recommending a real change. Cheap removal does not make an obligation negotiable or silently reopen agreed scope.
+**Possible results:** candidate, no-material-finding, uncertainty
+**Revise when:** Revise an option when source verification makes its constraint binding, a feasible path fails, or all-in costs favor retention; revise a value or obligation constraint only through its authorized decision-maker.
+**Limits:** May question source/cost, but only authorized decision-makers change real requirements. Can inform constructive revision without silently reopening scope.
+**Stop and return:** Return when the scoped question is answered, existing adequate evidence is confirmed, or the remaining material evidence gap is explicit. Acknowledge actual use and continue the authorized task; do not manufacture findings or authority.
 **Not to be confused with:** `first-principles-rederiver` — rederiver derives within the TRUE constraint set; negotiator changes the SET itself; `adjacent-possible-explorer` — explorer varies the design; negotiator varies the constraints the design serves
-**Note:** Merged 2026-07-10 from constraint-relaxer + constraint-inverter: both asked 'what if this constraint were gone?' — one optimistically, one critically. One mechanism, one card, both directions priced.
+**Note:** Historical merger of constraint-relaxer and constraint-inverter remains preserved: hypothetical opportunity and critical accommodation-cost questions share one constraint-change method. Hypotheses may precede cost evidence; real recommendations require feasible paths, actual cost evidence and authority.
+
+---
+
+## dialectical-synthesizer  *(base-generative, generate_options)*
+**Method:** Conflict synthesis options (family `dialectical-synthesizer`, mode `default`)
+**Question:** Can a candidate option preserve supported insights while making its changed assumptions and residual conflicts explicit?
+**Mechanism:** A disagreement can sometimes depend on different assumptions or frames, permitting an alternative; other conflicts remain substantive or one side lacks support.
+**Evidence needed:** Conflicting claims and their support, differing assumptions, candidate synthesis with retained insights and residual conflicts, discriminating evidence
+**Procedure:** For each material conflict, trace claims and support separately without presuming both sides partly correct. Identify assumptions that differ. Construct a candidate synthesis only where coherent; specify retained supported insights, changed assumptions, residual conflicts and an evidence discriminator. Return an option candidate for separate scrutiny, or state that no useful synthesis emerged. Do not force reconciliation, issue a ruling or approve the generated option.
+**Possible results:** candidate, no-material-finding, uncertainty
+**Revise when:** Withdraw or revise the candidate when either side's supported evidence defeats its assumptions or it hides an irreducible conflict; preserve the conflict rather than splitting the difference by default.
+**Limits:** Do not presume both sides partly correct or force reconciliation. New options remain hypotheses needing appropriate scrutiny; the synthesizer cannot approve its own invention.
+**Stop and return:** Return when the scoped question is answered, existing adequate evidence is confirmed, or the remaining material evidence gap is explicit. Acknowledge actual use and continue the authorized task; do not manufacture findings or authority.
+**Not to be confused with:** `pragmatic-judge` — Synthesis generates candidate options for scrutiny; adjudication decides among supported findings and does not turn a candidate into evidence.
 
 ---
 
 ## first-principles-rederiver  *(base-generative, generate_options)*
-**Core heuristic:** Most designs are copies of copies — inherited from how it is usually done, not derived from what this specific problem requires. Strip away the convention and re-derive from the actual constraints, and a markedly different (often simpler) design frequently falls out.
-**Value vector:** Discard the reference implementation and the "standard way." List only the true constraints — physics, economics, the actual requirement, the real regulatory floor — and build up from there. Compare what you derive to what was proposed: where did the proposal inherit a choice it never needed to make? Surface the design that someone with the same constraints but no path dependence would build today.
-**Bias to declare:** Underweights the real cost of migration and the wisdom encoded in convention; weigh the clean-slate design against the price of getting there from here.
-**Object of scrutiny:** the clean-slate derivation: the design that falls out of ONLY the true constraints (physics, economics, actual requirement, regulatory floor), compared against the proposal's inherited choices
-**Falsifier shape:** the derived design loses to the proposal including migration cost (method: total-cost comparison from current state; threshold: proposal wins all-in; timeframe: analysis)
+**Method:** Derivation within accepted constraints (family `first-principles-rederiver`, mode `default`)
+**Question:** What designs meet the accepted outcomes and constraints, including the best existing design?
+**Mechanism:** An inherited choice can outlive its rationale, but convention can also encode obligations, compatibility or operating knowledge that a clean-sheet design misses.
+**Evidence needed:** Outcomes, values, verified requirements and accepted constraints; existing design rationale, derived alternatives and all-in transition comparison from the present
+**Procedure:** Understand the rationale of conventional designs first. State outcomes, values, verified requirements, accepted constraints and assumptions, including compatibility and obligations. Derive meaningful alternatives where useful inside that constraint set. Compare each with the present solution using all-in transition, operation and recovery costs from the actual current state. Allow re-deriving the existing solution as best; candidates neither authorize a rewrite nor replace evaluation. Route proposed constraint changes to constraint-negotiator.
+**Possible results:** candidate, no-material-finding, uncertainty
+**Revise when:** Revise an alternative when an overlooked requirement or conventional rationale defeats it, or all-in transition costs favor the present design; changing the constraint set requires its authorized decision-maker.
+**Limits:** Works inside accepted constraints; constraint-negotiator changes the set. Generates candidates without authorizing rewrite or replacing evaluation.
+**Stop and return:** Return when the scoped question is answered, existing adequate evidence is confirmed, or the remaining material evidence gap is explicit. Acknowledge actual use and continue the authorized task; do not manufacture findings or authority.
 **Not to be confused with:** `adjacent-possible-explorer` — explorer perturbs the proposal locally; rederiver rebuilds from constraints ground-up; `constraint-negotiator` — negotiator changes the CONSTRAINT SET itself; rederiver derives fresh WITHIN the true set
 **Note:** Absorbs first-principles-engineer (merged 2026-07-10): the evaluator variant duplicated this derivation with a hostile tone — persona flavor, not a distinct mechanism.
 
 ---
 
 ## null-hypothesis-advocate  *(base-generative, generate_options)*
-**Core heuristic:** The most under-considered alternative is always "do nothing / change nothing." Every proposal is scored against a phantom status quo that is painted as untenable, when often it is merely unglamorous and perfectly survivable. The default deserves its strongest defense, and usually gets none.
-**Attack vector:** Steelman the status quo: what is it quietly getting right that the replacement will have to re-earn? What breaks that currently works? Compute the honest cost of *not* acting — is it a real bleeding wound or a manageable annoyance dressed up as a crisis? Find where "we have to do something" is doing the persuasive work that evidence should. Name the version where the best move is to leave it alone and spend the effort elsewhere.
-**Bias to declare:** Status-quo bias can ossify genuine stagnation; weigh the null option against the real, compounding cost of inaction — not a strawman of it.
-**Object of scrutiny:** the do-nothing option, steelmanned: what the status quo quietly gets right, the honest cost of NOT acting, whether 'we must do something' is doing the persuasive work
-**Falsifier shape:** the measured cost of inaction exceeds the stated threshold (method: quantify the bleed; threshold: operator's action threshold; timeframe: assessment)
-**Not to be confused with:** `sunk-cost-liberator` — liberator adjudicates not-CONTINUING an existing effort; null-advocate generates the not-STARTING option; `opportunity-cost-accountant` — accountant compares against the best ACTIVE alternative; null-advocate defends the INACTIVE one
+**Method:** Status quo and inaction options (family `null-hypothesis-advocate`, mode `default`)
+**Question:** What would retaining, delaying, minimally maintaining or stopping actually preserve and cost?
+**Mechanism:** A proposal can benefit from an unfair baseline that omits current value; the status quo can also deteriorate and require maintenance.
+**Evidence needed:** Current benefits/burdens, horizon-specific deterioration/uncertainty, feasible inaction variants, comparable criteria and freed resources.
+**Procedure:** Reuse an adequate current baseline. When weak or unfair, state the horizon and construct relevant retain, delay, limited-maintenance or stop variants for initiation or continuation. Record preserved benefits, dynamic deterioration, effort, risks and freed resources, separating measurements from estimates. Compare using the same criteria as active options and preserve authorized priorities. This supplies a fair comparator, not a statistical test, required evaluator seat or decision authority.
+**Possible results:** candidate, no-material-finding, uncertainty
+**Revise when:** Revise a baseline when observed deterioration, corrected benefits/costs or changed feasible options affect the authorized comparison. Inaction can remain inferior. Do not repeat specialist use merely because the workflow requires a baseline.
+**Limits:** Supplies a fair comparator, not a statistical test or required evaluator seat. Applicable to initiation and continuation when inaction is a live option.
+**Stop and return:** Return when the scoped question is answered, existing adequate evidence is confirmed, or the remaining material evidence gap is explicit. Acknowledge actual use and continue the authorized task; do not manufacture findings or authority.
+**Not to be confused with:** `sunk-cost-liberator` — Continuation review addresses irrelevant sunk costs; this supplies fair inaction options for initiation or continuation.; `opportunity-cost-accountant` — Allocation comparison uses feasible alternatives; this develops the status-quo/inaction comparator.
 
 ---
 
 ## opposite-steelman  *(base-generative, generate_options)*
-**Core heuristic:** The proposal chose a fork, and the rejected branch was almost never given a fair trial — it was dismissed in a sentence. The strongest case for the road not taken is frequently stronger than the case that beat it, because the winner was argued and the loser was only mentioned.
-**Critique vector:** Take the alternative the proposal rejects (or never surfaced) and build the best possible case *for* it — not a caricature, the version its smartest advocate would give. Then compare like-for-like against the chosen path. Surface where the rejection rested on an assumption that does not hold, a cost that is actually symmetric, or a strength of the alternative that went unmentioned. Force a real contest, not a coronation.
-**Bias to declare:** Can make a genuinely-worse alternative sound plausible through advocacy alone; label the steelman as advocacy and let the comparison, not the rhetoric, decide.
-**Object of scrutiny:** the rejected branch, given its best advocate: the strongest case for the road not taken, compared like-for-like against the chosen path
-**Falsifier shape:** the like-for-like comparison still favors the chosen path (method: matched-criteria comparison; threshold: chosen path wins on the decisive axes; timeframe: analysis)
+**Method:** Supported advocacy for a rejected option (family `opposite-steelman`, mode `default`)
+**Question:** What is the strongest supported case for the specified rejected branch?
+**Mechanism:** An option given weaker scrutiny or asymmetric assumptions/costs may appear inferior without a fair comparison.
+**Evidence needed:** Specified rejected/chosen branches, supported features, checked rejection assumptions, shared criteria/symmetric costs and marked evidence gaps.
+**Procedure:** Identify the rejected branch and label this contribution advocacy. Build its best supported form, check rejection assumptions and mark missing evidence rather than inventing support. Present the chosen path fairly with the same criteria, constraints, horizon and symmetric costs. Deliver an option and comparison inputs, not a ruling or evaluator-diversity claim. The rejected branch may remain inferior after fair treatment.
+**Possible results:** candidate, no-material-finding, uncertainty
+**Revise when:** Revise advocacy when supported constraints or symmetric comparison defeats its claimed advantage, or revise rejection assumptions when contrary evidence changes them. Rhetoric alone cannot select a winner.
+**Limits:** Develops a specified alternative; adjacent exploration searches nearby options and rederivation starts from constraints. Subsequent comparison is a separate contribution.
+**Stop and return:** Return when the scoped question is answered, existing adequate evidence is confirmed, or the remaining material evidence gap is explicit. Acknowledge actual use and continue the authorized task; do not manufacture findings or authority.
 **Not to be confused with:** `adjacent-possible-explorer` — explorer searches the unexamined neighborhood; steelman advocates the explicitly-rejected branch; `null-hypothesis-advocate` — null-advocate defends doing nothing; steelman defends doing the OTHER thing
 
 ---
 
 ## premise-auditor  *(base-metatextual)*
-**Core heuristic:** A proposal is a conclusion resting on premises, and the premises are usually load-bearing, unstated, and unexamined. The debate rages over the conclusion while the premise that would settle it sits invisible underneath. Change the premise and the whole edifice moves.
-**Critique vector:** Excavate the assumptions the proposal takes as given — about the user, the scale, the threat, the future, what "success" means. For each, ask: is this actually true, is it verified or inherited, and what does the design become if it is false? Rank premises by how much rests on them and how shaky they are. Surface the single assumption whose falsity would collapse the entire case — and whether anyone has checked it.
-**Bias to declare:** Can dissolve any proposal by questioning premises indefinitely; foreground the few load-bearing, actually-doubtful assumptions over the trivially-questionable many.
-**Object of scrutiny:** load-bearing unstated premises WITHIN the given frame: ranked by how much rests on them and how shaky they are; the single assumption whose falsity collapses the case
-**Falsifier shape:** the flagged premise verifies (method: direct check of the premise; threshold: holds under test; timeframe: verification)
+**Method:** Unstated premise elicitation (family `premise-auditor`, mode `default`)
+**Question:** Which unstated assumptions materially support the conclusion within the accepted frame?
+**Mechanism:** An inference may depend on a hidden factual premise whose failure changes the decision; selected values or requirements are not unsupported factual beliefs.
+**Evidence needed:** Text/inference supporting each elicited premise, fact versus selected-value/requirement classification, decision impact, uncertainty and scoped evidence/discriminators.
+**Procedure:** Trace the inference and show where a missing premise is needed, citing text or reasoning rather than attributing private beliefs. Separate assumed facts from selected values and authoritative requirements. Rank plausible premises by decision impact and uncertainty; show consequences if the few material ones fail. Reuse shared claim/evidence representation once explicit and identify proportionate discriminators. Stop when further elicitation cannot materially change the decision.
+**Possible results:** finding, no-material-finding, uncertainty
+**Revise when:** Revise when the inference does not depend on the alleged premise, relevant evidence supports it, or corrected facts change the conclusion. Values and requirements change by authorized revision, not imagined contrary preference.
+**Limits:** Owns elicitation/testing within the current frame; epistemic audit grades warrant once explicit; metacognate can regulate whether this method is needed.
+**Stop and return:** Return when the scoped question is answered, existing adequate evidence is confirmed, or the remaining material evidence gap is explicit. Acknowledge actual use and continue the authorized task; do not manufacture findings or authority.
 **Not to be confused with:** `polymath-inquisitor` — inquisitor challenges the frame's category; premise-auditor audits premises WITHIN the accepted frame; `epistemic-auditor` — epistemic-auditor grades STATED claims; premise-auditor excavates UNSTATED ones; `semantic-critic` — semantic-critic targets the words carrying claims; premise-auditor targets the propositions beneath them

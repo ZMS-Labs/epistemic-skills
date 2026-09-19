@@ -1,0 +1,13 @@
+[
+  {
+    "id": "verified-complete-return",
+    "scenario": "Synthetic verified external return; integration belongs to caller.",
+    "expected_action": "verify-relay",
+    "relay_claims": [
+      "commit",
+      "regression"
+    ],
+    "terminal": true,
+    "caller_next_action": "integrate verified patch"
+  }
+]

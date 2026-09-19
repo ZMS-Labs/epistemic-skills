@@ -3,7 +3,8 @@
 `ledger.jsonl` records one JSON line per **live gauntlet run**. It supports audit,
 cost/yield review, and reproducibility. It never activates, withholds, retires, weights,
 or selects a lens; those decisions come from the two-state registry and claim evidence.
-Appending remains part of Step 8 so a completed run has a durable projection.
+Finalized review records support material verdicts. Aggregate ledger appending
+is optional unless the task's authorized evidence contract requires it.
 
 Aggregate observability: `python scripts/lens_stats.py` (add `--json` for machine
 output). **Real telemetry is git-ignored runtime state, not repo content** — this

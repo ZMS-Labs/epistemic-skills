@@ -12,7 +12,8 @@
 > **false-DONE** (declaring finished what is not) and **stale-state action**
 > (building on a premise that moved). This skill is memory→artifact
 > re-derivation before *continuing* work. It produces exactly one thing: a
-> state digest. It never does the resumed work itself.
+> state digest. The task owner consumes that digest and continues the still-authorized next step;
+> the method’s return does not complete the original task.
 
 ## The epistemic moment (membership test)
 
@@ -22,7 +23,7 @@ was true *before* — and must decide what is true *now* before acting. The
 companion moment to decision-ledger: that skill persists; this one distrusts
 and re-derives. Distinct from every sibling:
 
-- Not pre-work recon on unfamiliar territory (blindspot-pass — that maps
+- Not pre-work recon on unfamiliar territory (recon — that maps
   request→territory before *new* work; this one re-derives memory→artifact
   before *continuing* work).
 - Not a verdict on a frozen subject (gauntlet — its Step-0 re-anchor move is
@@ -41,7 +42,7 @@ Fire when any of these exists:
 - a resumed task's next step cites remembered state — "it's done", "branch Y
   is merged", "the tests pass", "the user approved Z".
 
-Not for fresh tasks with no prior-state claims — blindspot-pass owns those.
+Not for fresh tasks with no prior-state claims — recon owns those.
 
 ## The method (five steps)
 
@@ -77,7 +78,7 @@ Not for fresh tasks with no prior-state claims — blindspot-pass owns those.
    the acceptor and the risk taken (see step 5). If a contradiction or an
    unverifiable core claim changes what the task is, **re-scope the task** and
    say so — that is a successful pass, not a failure.
-5. **Hand off.** The digest feeds the router; the resumed work proceeds only
+5. **Hand off.** The digest returns to the task owner; the resumed work proceeds only
    on verified or explicitly-accepted-unverified state. Acceptance is
    authority-bound:
    - Self-acceptance of an unverified claim is permitted **only** at the
@@ -96,6 +97,15 @@ Not for fresh tasks with no prior-state claims — blindspot-pass owns those.
      → `rescope` to the bounded probe. `proceed` is permitted only on verified or
      authority-valid accepted state. More explanation does not upgrade a claim.
 
+Preserve settled decisions and prior answers while their premises hold. Recheck the
+revision, configuration, evidence and authority relevant to the next action; unrelated
+drift is not grounds to restart everything. Record the remaining action and owner in
+the existing task/handoff record. If an authorized repair was interrupted after a
+verified diagnosis, resume the pending patch and verify the original failure once its
+premises are current. Diagnosis alone is not completion of the repair. Cancellation
+or revised user instructions supersede prior continuation. Hold only the action that
+depends on a missing fact or authority; continue other permitted useful work.
+
 ## Stakes dial
 
 - **`standard` (default)** — re-anchor the load-bearing claims.
@@ -109,7 +119,7 @@ Not for fresh tasks with no prior-state claims — blindspot-pass owns those.
 ## Arc ordering
 
 On a post-interruption resumption this skill fires **first** — its digest
-feeds the router, which may then fire blindspot-pass for unfamiliar territory.
+returns to the task owner before any exploration of unfamiliar territory.
 The re-anchor move is extracted from gauntlet Step 0; gauntlet remains
 canonical for frozen subjects.
 
@@ -136,14 +146,14 @@ canonical for frozen subjects.
   ([`contracts/`](../../contracts/README.md)): check `valid_while`
   predicates at consume time; a stale receipt means re-run exactly the
   freshness-sensitive check, never stretch the window.
-- **The router** receives the digest (step 5); the resumed work proceeds only
+- **The task owner** receives the digest (step 5); the resumed work proceeds only
   on verified or explicitly-accepted-unverified state.
 - **write-goal** state, when a persistent goal exists, is inspected as one
   claim-class inside step 1 — not as a separate pass.
 
 ## Why this belongs (family resemblance)
 
-All six router invariants, demonstrated:
+Six discipline invariants:
 
 1. **Floors, not ceilings.** One re-derivation pass, sized to the stakes of
    the remembered claims. Trivial resumptions (the summary itself says nothing
@@ -155,7 +165,7 @@ All six router invariants, demonstrated:
    generalized to the agent's own trajectory.
 3. **Know where you stop.** Ends at a verified state digest plus a
    stale/unverified list (or a re-scoped task when re-derivation contradicts
-   the summary). Hands to the router; never does the resumed work itself.
+   the summary). Hands to the task owner, who continues the original authorized work.
 4. **Fail closed; degrade explicitly.** Missing evidence → claim marked
    unverified, never silently trusted. Unverifiable-core → the task re-scopes
    to re-establishing state, it does not proceed on faith.

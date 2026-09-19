@@ -36,13 +36,14 @@ import importlib.util
 import json
 import re
 import sys
+import subprocess
 import tempfile
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[3]
 SKILLS_DIR = REPO / "plugins" / "epistemic-skills" / "skills"
 
-WORDS = {12: "twelve", 13: "thirteen", 14: "fourteen", 15: "fifteen", 16: "sixteen"}
+WORDS = {12: "twelve", 13: "thirteen", 14: "fourteen", 15: "fifteen", 16: "sixteen", 17: "seventeen"}
 
 
 def live_skills() -> set[str]:
@@ -62,6 +63,25 @@ def current_version() -> str:
     data = json.loads((REPO / "plugins" / "epistemic-skills" / ".claude-plugin"
                        / "plugin.json").read_text(encoding="utf-8"))
     return data["version"]
+
+
+def source_expectations(ref: str | None) -> tuple[str, set[str]]:
+    """Historical snapshots use the manifest and inventory at their own Git ref."""
+    if ref is None:
+        return current_version(), live_skills()
+    def git(*args: str) -> str:
+        return subprocess.check_output(["git", "-C", str(REPO), *args], text=True,
+                                       encoding="utf-8")
+    commit = git("rev-parse", "--verify", f"{ref}^{{commit}}").strip()
+    manifest = json.loads(git("show", f"{commit}:plugins/epistemic-skills/.claude-plugin/plugin.json"))
+    prefix = "plugins/epistemic-skills/skills/"
+    files = git("ls-tree", "-r", "--name-only", commit, "--", prefix).splitlines()
+    names = {path[len(prefix):].split("/")[0] for path in files
+             if path.startswith(prefix) and path[len(prefix):].count("/") == 1
+             and path.endswith("/SKILL.md")}
+    if not names:
+        raise ValueError(f"empty skill inventory at {commit}")
+    return manifest["version"], names
 
 
 def page_slug(skill: str) -> str:
@@ -450,6 +470,7 @@ def main() -> int:
     ap.add_argument("wiki", nargs="?")
     ap.add_argument("--links", action="store_true", help="HTTP-resolve every repository URL")
     ap.add_argument("--self-test", action="store_true")
+    ap.add_argument("--source-ref", help="derive historical version and inventory from this Git ref")
     ap.add_argument("--source-root", type=Path, default=REPO,
                     help="derive expectations from this source checkout (default: this repository)")
     args = ap.parse_args()
@@ -466,7 +487,11 @@ def main() -> int:
     root = Path(args.wiki)
     if not root.is_dir():
         ap.error(f"not a directory: {root}")
-    fail = check(root, current_version(), live_skills(), retired_skills(), args.links)
+    try:
+        version, inventory = source_expectations(args.source_ref)
+    except (ValueError, subprocess.CalledProcessError) as error:
+        ap.error(f"cannot resolve source expectations: {error}")
+    fail = check(root, version, inventory, retired_skills(), args.links)
     for f in fail:
         print(f"  {f}")
     print(f"wiki gate: {'PASS' if not fail else f'FAIL ({len(fail)} defects)'}")

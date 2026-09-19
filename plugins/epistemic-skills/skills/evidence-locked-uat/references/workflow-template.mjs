@@ -6,7 +6,7 @@
 // embedded copy of scripts/judge.py, which is canonical — any harness runs that
 // stdlib script identically. The copy exists only because the Workflow tool
 // executes this file standalone; it is verified against scripts/judge.py by that
-// script's `--self-test` fixtures (including the INCONCLUSIVE synthesis paths and
+// skill's `scripts/test_observations.py` fixtures (including the INCONCLUSIVE synthesis paths and
 // id-drift single-orphan positional matching). Change judge.py FIRST, then port.
 export const meta = {
   name: 'evidence-locked-uat',
@@ -38,9 +38,10 @@ const CONTRACTS_SCHEMA = {
     contracts: {
       type: 'array', minItems: 1,
       items: {
-        type: 'object', required: ['id', 'user_goal', 'criticality', 'task_prompt', 'criteria'],
+        type: 'object', required: ['schema_version', 'id', 'user_goal', 'criticality', 'task_prompt', 'criteria'],
         additionalProperties: false,
         properties: {
+          schema_version: { enum: ['uat-contract@2'] },
           id: { type: 'string' },
           user_goal: { type: 'string' },
           criticality: { enum: ['critical', 'high', 'medium', 'low'] },
@@ -50,11 +51,13 @@ const CONTRACTS_SCHEMA = {
           criteria: {
             type: 'array', minItems: 1,
             items: {
-              type: 'object', required: ['id', 'statement', 'required_oracles'], additionalProperties: false,
+              type: 'object', required: ['id', 'statement', 'required_oracles', 'expected_observation', 'disconfirming_observation'], additionalProperties: false,
               properties: {
                 id: { type: 'string' },
                 statement: { type: 'string' },
-                required_oracles: { type: 'array', items: { enum: ORACLES } },
+                expected_observation: { type: 'string', minLength: 1 },
+                disconfirming_observation: { type: 'string', minLength: 1 },
+                required_oracles: { type: 'array', minItems: 1, uniqueItems: true, items: { enum: ORACLES } },
                 invariants: { type: 'array', items: { type: 'string' } },
                 timeout_ms: { type: 'number' },
               },
@@ -117,13 +120,20 @@ const ACTOR_SCHEMA = {
   },
 }
 
+const OBSERVATION_SCHEMA = {
+  type: 'object', required: ['result', 'evidence'], additionalProperties: false,
+  properties: {
+    result: { enum: ['observed', 'not-observed', 'unknown'] },
+    evidence: { type: 'array', items: { type: 'string', minLength: 1 } },
+  },
+}
 const VERIFY_SCHEMA = {
   type: 'object', required: ['criteria'], additionalProperties: false,
   properties: {
     criteria: {
       type: 'array', minItems: 1,
       items: {
-        type: 'object', required: ['criterion_id', 'status', 'evidence_for', 'evidence_against'],
+        type: 'object', required: ['criterion_id', 'status', 'evidence_for', 'evidence_against', 'expected_observation', 'disconfirming_observation', 'oracle_observations'],
         additionalProperties: false,
         properties: {
           criterion_id: { type: 'string' },
@@ -131,6 +141,18 @@ const VERIFY_SCHEMA = {
           evidence_for: { type: 'array', items: { type: 'string' } },
           evidence_against: { type: 'array', items: { type: 'string' } },
           uncertainty: { type: ['string', 'null'] },
+          expected_observation: OBSERVATION_SCHEMA,
+          disconfirming_observation: OBSERVATION_SCHEMA,
+          oracle_observations: {
+            type: 'array', items: {
+              type: 'object', required: ['oracle', 'result', 'evidence'], additionalProperties: false,
+              properties: {
+                oracle: { enum: ORACLES },
+                result: { enum: ['satisfied', 'violated', 'unknown'] },
+                evidence: { type: 'array', items: { type: 'string', minLength: 1 } },
+              },
+            },
+          },
         },
       },
     },
@@ -175,7 +197,7 @@ function actorPrompt(cs, runArgs) {
 }
 
 function verifierPrompt(cs, actorOut, runArgs) {
-  const contractForVerifier = { id: cs.contract.id, user_goal: cs.contract.user_goal, criticality: cs.contract.criticality, criteria: cs.contract.criteria, prohibited_side_effects: cs.contract.prohibited_side_effects || [], preconditions: cs.contract.preconditions || [] }
+  const contractForVerifier = { schema_version: cs.contract.schema_version, id: cs.contract.id, user_goal: cs.contract.user_goal, criticality: cs.contract.criticality, criteria: cs.contract.criteria, prohibited_side_effects: cs.contract.prohibited_side_effects || [], preconditions: cs.contract.preconditions || [] }
   return [
     'You are an INDEPENDENT UAT VERIFIER. You did not operate the application. Do not trust the actor\'s intention or implied success; no actor verdict exists and none may be inferred from completion. Default to INCONCLUSIVE when evidence is missing, stale, ambiguous, or contradictory — never PASS.',
     '',
@@ -191,6 +213,7 @@ function verifierPrompt(cs, actorOut, runArgs) {
     '3. Check the precommitted expectation against what the stable-after screenshot actually shows.',
     '4. Check required non-visual oracles where the contract demands them (persistence: does the post-reload screenshot still show the outcome? invariant: does any evidence contradict it?). A required oracle with no evidence present = INCONCLUSIVE for that criterion (or FAIL_TEST_HARNESS if the harness failed to capture it).',
     '4b. TRANSIENT STATES: a successful browser_wait_for on visible feedback text, recorded in the objective action log at act-time, is valid rendered/structural evidence for feedback too short-lived for screenshot latency (e.g. a 2-3s toast) when corroborated by at least one other channel (persistence, snapshot, invariant). A screenshot that misses an ephemeral toast is not by itself evidence of absence if the batched wait succeeded; conversely a FAILED wait for expected feedback is evidence of absence.',
+    'Record expected_observation and disconfirming_observation as observed/not-observed/unknown with evidence citations; not-observed requires an actual check, never silence. Record each required oracle in oracle_observations as satisfied/violated/unknown with citations. An observed disconfirmation or violated persistence oracle is FAIL_PRODUCT even if a success display was observed. Missing checks are INCONCLUSIVE.',
     '5. Cite evidence FOR and AGAINST every verdict (file paths + what they show). Seek contradictory evidence actively.',
     '6. Use only the verdict vocabulary. Missing screenshots for a rendered-ui criterion = INCONCLUSIVE, never PASS. Cross-channel contradiction = FAIL_PRODUCT or INCONCLUSIVE, never PASS.',
     '',
@@ -214,6 +237,7 @@ const compiled = await agent([
   'ORACLE CHANNELS AVAILABLE IN THIS HARNESS (Level 1): rendered-ui, accessibility-semantic (snapshot), persistence (reload/re-entry), invariant. Do NOT set required_oracles to network, business-state, or metamorphic unless the run explicitly provides a probe for them — a required oracle the harness cannot capture forces INCONCLUSIVE and is a contract defect.',
   'Irreversible or high-impact criteria SHOULD require three of the available channels. Note: at Level 1 all available channels are adjudicated by an LLM verifier from captured evidence; there is no deterministic programmatic oracle.',
   'Compile executable acceptance contracts: stable IDs, user goal, criticality, a task_prompt written for a user who knows NOTHING about the implementation, criterion-level statements with required oracles (critical criteria: rendered-ui plus at least one non-visual oracle; persistence criteria must name the persistence oracle), invariants, prohibited side effects. Mark inferred criteria provisional:true and record ambiguity_notes instead of improvising pass conditions.',
+  'Use schema_version uat-contract@2 on every contract. Before execution, preregister expected_observation and disconfirming_observation strings for every criterion. Both must be concrete observable outcomes; never rewrite them after seeing results. Include reload/re-entry in the actor task_prompt when needed for persistence without revealing verdict expectations.',
   'Write the contracts as YAML to ' + RUN.evidence_dir + '/contracts.yaml AND return them per schema.',
 ].join('\n'), { schema: CONTRACTS_SCHEMA, label: 'compile', phase: 'Compile' })
 
@@ -256,7 +280,50 @@ const results = await pipeline(
 
 phase('Judge')
 // Embedded copy of scripts/judge.py (canonical). Keep semantics line-for-line
-// identical; equivalence is exercised by judge.py --self-test.
+// identical; equivalence is exercised by scripts/test_observations.py.
+function observationVerdict(contract, criterion, row) {
+  const version = contract.schema_version
+  if (version === undefined) return row
+  const problems = []
+  let failed = false
+  if (version !== 'uat-contract@2') {
+    problems.push('unsupported contract version')
+  } else {
+    for (const field of ['expected_observation', 'disconfirming_observation']) {
+      if (typeof criterion[field] !== 'string' || !criterion[field].trim()) problems.push('missing preregistered ' + field)
+    }
+    const cited = (obs) => obs && Array.isArray(obs.evidence) && obs.evidence.length > 0 && obs.evidence.every((e) => typeof e === 'string' && e.trim())
+    for (const [field, passing] of [['expected_observation', 'observed'], ['disconfirming_observation', 'not-observed']]) {
+      const obs = row[field]
+      if (!cited(obs) || !['observed', 'not-observed'].includes(obs.result)) {
+        problems.push('missing/uncertain cited ' + field)
+      } else if (obs.result !== passing) {
+        failed = true
+        problems.push('contrary ' + field + ': ' + obs.evidence.join('; '))
+      }
+    }
+    const observations = Array.isArray(row.oracle_observations) ? row.oracle_observations : []
+    const required = criterion.required_oracles || []
+    if (!required.length) problems.push('missing required oracle channels')
+    for (const oracle of required) {
+      const matches = observations.filter((o) => o && o.oracle === oracle)
+      if (matches.some((o) => cited(o) && o.result === 'violated')) {
+        failed = true
+        problems.push('required oracle violated: ' + oracle)
+      }
+      if (matches.length !== 1 || !cited(matches[0]) || !['satisfied', 'violated'].includes(matches[0].result)) problems.push('missing/uncertain cited oracle: ' + oracle)
+    }
+  }
+  let status = row.status
+  if (failed) status = 'FAIL_PRODUCT'
+  else if (problems.length && status === 'PASS') status = 'INCONCLUSIVE'
+  if (!VERDICTS.includes(status)) {
+    status = 'INCONCLUSIVE'
+    problems.push('invalid verifier status')
+  }
+  return { ...row, status, evidence_against: [...(row.evidence_against || []), ...problems] }
+}
+
 const SEVERITY = ['FAIL_PRODUCT', 'FAIL_TEST_HARNESS', 'BLOCKED_ENVIRONMENT', 'FLAKY', 'INCONCLUSIVE', 'NOT_RUN']
 const byCase = new Map(results.filter(Boolean).map((r) => [r.cs.case_id, r]))
 const caseVerdicts = cases.map((cs, i) => {
@@ -282,14 +349,14 @@ const caseVerdicts = cases.map((cs, i) => {
     if (idx !== -1) {
       usedVerifierIdx.add(idx)
       matchedContractIds.add(cc.id)
-      completed.push(verifierRows[idx])
+      completed.push(observationVerdict(cs.contract, cc, verifierRows[idx]))
     }
   }
 
   // Positional single-orphan pairing pass (tolerates verifier id-drift/shortening).
   const unmatchedContract = contractCriteria.filter((cc) => !matchedContractIds.has(cc.id))
   const unmatchedVerifierIdx = verifierRows.map((_, ri) => ri).filter((ri) => !usedVerifierIdx.has(ri))
-  if (unmatchedContract.length === 1 && unmatchedVerifierIdx.length === 1) {
+  if (cs.contract.schema_version === undefined && unmatchedContract.length === 1 && unmatchedVerifierIdx.length === 1) {
     const cc = unmatchedContract[0]
     const ri = unmatchedVerifierIdx[0]
     const row = verifierRows[ri]
@@ -337,11 +404,13 @@ const allPass = caseVerdicts.length > 0 && caseVerdicts.every((v) => v.status ==
 // scripts/judge.py.
 const KNOWN_LIMITATIONS = [
   'Level 1: no pairwise coverage',
-  'verifier same-provider (independence is context/prompt-level only)',
+  'model/provider diversity is not established by the judge',
   'a11y = keyboard-path procedural only',
   'all oracle channels LLM-adjudicated at Level 1 (no deterministic programmatic oracle)',
   'feedback visible <~3s is below the harness\'s reliable detection threshold — ephemeral confirmations yield INCONCLUSIVE/predicted usability risk, not PASS',
 ]
+const contractVersions = [...new Set(compiled.contracts.map((c) => c.schema_version === undefined ? 'legacy-unversioned' : c.schema_version))].sort()
+if (contractVersions.includes('legacy-unversioned')) KNOWN_LIMITATIONS.push('historical unversioned contracts: observations were not enforced; not v2 acceptance')
 const gate = {
   release_decision: anyCriticalFail ? 'FAIL' : allPass ? 'PASS' : 'INCONCLUSIVE',
   run_id: RUN.run_id,
@@ -349,6 +418,8 @@ const gate = {
   calibration_status: 'uncalibrated',
   target: RUN.target_url,
   target_commit_sha: RUN.commit_sha,
+  verification_mode: 'blinded', // This template requires actually isolated actor/verifier contexts.
+  contract_versions: contractVersions,
   cases: caseVerdicts,
   coverage_omitted: coverageOmitted,
   known_limitations: KNOWN_LIMITATIONS,

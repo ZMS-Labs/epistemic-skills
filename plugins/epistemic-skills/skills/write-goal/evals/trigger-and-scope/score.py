@@ -109,7 +109,7 @@ def score(fixtures: list[dict], responses: object) -> dict:
             if row.get("started") or row.get("goal_created"):
                 failures.append(f"{fid}: drafting and activation are separate state changes — a draft is never started before approval")
             if not row.get("presented_for_approval"):
-                failures.append(f"{fid}: inferred fields require the draft to be presented for user approval")
+                failures.append(f"{fid}: material inferred success criteria require the draft to be presented for user approval")
             if "token_budget" in row and not fixture.get("budget_requested"):
                 failures.append(f"{fid}: token budgets are opt-in — never added for safety")
         elif expected == "start-goal":
@@ -155,6 +155,127 @@ def score(fixtures: list[dict], responses: object) -> dict:
             if present:
                 failures.append(f"{fid}: no-fire must be silent — goal-shape fields present: {present}")
     return {"pass": not failures, "failures": failures, "actions": dict(actions)}
+
+
+def score_adapter(fixtures: list[dict], responses: object) -> dict:
+    """Check synthetic surface response traces; never invokes a goal or runner.
+
+    Profile limits and expected payloads belong to the fixture oracle. This proves
+    scorer discrimination, not native tool behavior or semantic goal equivalence.
+    """
+    failures = []
+    if not isinstance(responses, list):
+        return {"pass": False, "failures": ["adapter responses must be an array"]}
+    by_id = {r["id"]: r for r in responses if isinstance(r, dict) and isinstance(r.get("id"), str)}
+    if len(by_id) != len(responses):
+        failures.append("adapter response ids missing or duplicated")
+    for f in fixtures:
+        fid = f["id"]
+        row = by_id.get(fid)
+        if row is None:
+            failures.append(f"{fid}: response missing")
+            continue
+        def fail(message):
+            failures.append(f"{fid}: {message}")
+        profile = f["profile"]
+        if row.get("profile_version") != profile["version"]:
+            fail("revalidate stale surface profile")
+        events = row.get("events")
+        if not isinstance(events, list) or not all(isinstance(e, dict) for e in events):
+            fail("events must be objects in an array")
+            continue
+        forbidden = (f.get("draft_only") or f.get("existing_active") or
+                     (f.get("reference_required") and not (f.get("access_now") and f.get("access_resume"))) or
+                     (f.get("persistence_required") and not f.get("persistence_supported")))
+        state_known = False
+        accepted = False
+        ambiguous = False
+        submissions = 0
+        readback = None
+        for e in events:
+            op = e.get("op")
+            if op == "inspect":
+                state_known = True
+                if e.get("state") == "empty":
+                    ambiguous = False
+                elif e.get("state") == "active":
+                    # A different/unmatched existing identity cannot justify retry.
+                    accepted = True
+            elif op == "submit":
+                submissions += 1
+                if forbidden:
+                    fail("activation prohibited by intent, existing state, or capability")
+                if not state_known or ambiguous or accepted:
+                    fail("inspect unresolved active state before submission; never duplicate")
+                payload = e.get("payload")
+                if not isinstance(payload, dict):
+                    fail("submitted payload must be an object")
+                    continue
+                expected_payload = (f.get("rejected_payload", f["expected_payload"])
+                                    if e.get("result") == "validation-rejected"
+                                    else f["expected_payload"])
+                if payload != expected_payload:
+                    fail("payload changed essential terms, completion fields, or optional budget")
+                if profile.get("wrapper"):
+                    wire = profile.get("prefix", "") + json.dumps(payload, ensure_ascii=profile.get("ensure_ascii", False), separators=(",", ":"))
+                else:
+                    wire = payload.get("objective", "")
+                if not isinstance(wire, str):
+                    fail("objective must be text")
+                    continue
+                unit = profile["unit"]
+                if unit == "codepoints":
+                    count = len(wire)
+                elif unit == "utf16":
+                    count = len(wire.encode("utf-16-le")) // 2
+                elif unit == "utf8":
+                    count = len(wire.encode("utf-8"))
+                else:
+                    fail("unknown counting unit; no character estimate for token limits")
+                    continue
+                if count > profile["limit"]:
+                    fail(f"submitted representation exceeds synthetic {unit} limit")
+                result = e.get("result")
+                if result == "accepted":
+                    accepted = True
+                elif result == "ambiguous":
+                    ambiguous = True
+                elif result != "validation-rejected":
+                    fail("unknown submission result")
+            elif op == "readback":
+                readback = e
+                ambiguous = False
+                accepted = e.get("state") == "active"
+            else:
+                fail("unknown trace operation")
+        if submissions > 2:
+            fail("synthetic retry bound exceeded")
+        if row.get("result") != f["expected_result"]:
+            fail("result overclaims or loses observed state")
+        result = row.get("result")
+        if result in ("active", "damaged"):
+            if not readback or not readback.get("identity") or readback.get("state") != "active":
+                fail("active state/identity requires readback")
+            else:
+                stored = readback.get("stored")
+                expected_stored = f["expected_payload"]
+                if profile.get("normalization") == "crlf-to-lf":
+                    expected_stored = {k: v.replace("\r\n", "\n") if isinstance(v, str) else v
+                                       for k, v in expected_stored.items()}
+                intact = stored == expected_stored
+                if (result == "active") != intact:
+                    fail("stored truncation or missing terms must be reported")
+            if row.get("verification") != "readback":
+                fail("report actual readback evidence")
+        elif result == "acknowledged":
+            if not accepted or readback or row.get("verification") != "acknowledgment":
+                fail("acknowledgment alone does not verify stored state")
+        elif result == "existing":
+            if not state_known or not any(e.get("identity") for e in events):
+                fail("inspect existing native identity")
+        if not forbidden and result in ("active", "acknowledged", "damaged") and submissions == 0:
+            fail("authorized native start requires submission evidence")
+    return {"pass": not failures, "failures": failures, "evidence": "synthetic-only"}
 
 
 def main() -> int:

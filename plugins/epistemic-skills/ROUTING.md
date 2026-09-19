@@ -20,6 +20,7 @@ regeneration that CI already requires.
 | `context-audit` | _(none)_ |
 | `decision-ledger` | _(none)_ |
 | `did-it-land` | `decision-ledger` |
+| `epistemic` | _(none)_ |
 | `evidence-locked-uat` | _(none)_ |
 | `gauntlet` | _(none)_ |
 | `health` | `triage`, `decision-ledger` |
@@ -27,6 +28,7 @@ regeneration that CI already requires.
 | `metacognate` | _(none)_ |
 | `open-questions` | _(none)_ |
 | `outsource` | _(none)_ |
+| `perspective` | _(none)_ |
 | `recon` | _(none)_ |
 | `resolve` | _(none)_ |
 | `triage` | `decision-ledger` |

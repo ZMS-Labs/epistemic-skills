@@ -1,6 +1,6 @@
 # epistemic-skills
 
-A collection of fifteen agent skills for checking assumptions, evaluating evidence,
+A collection of seventeen agent skills for checking assumptions, evaluating evidence,
 reviewing decisions, and verifying that work meets its acceptance criteria.
 Each skill combines a defined trigger and stopping rule with references,
 examples, and executable checks where a claim can be tested mechanically.
@@ -14,10 +14,13 @@ Thin integration manifests share one canonical skill tree across supported
 hosts. See [compatibility](#installation-and-compatibility) for the distinction
 between a packaged integration and verified runtime behavior.
 
-**Version 6.0.0.** Latest published [release](https://github.com/ZMS-Labs/epistemic-skills/releases/tag/v6.0.0)
-(2026-08-21). `main` includes subsequent fixes. The release's independent
-publication review did not approve publication; it shipped under a documented
-owner exception. See [release status and limitations](#trust-evidence-and-known-limits).
+**Version 7.0.0.** Seventeen canonical entries: the `epistemic` usage guide and
+sixteen substantive methods, including `perspective`. See the
+[release notes](docs/release/RELEASE-7.0.0.md),
+[current handbook](docs/wiki-updates/v7.0.0/pages/Home.md), and
+[verification evidence](docs/release/v7-evidence.md). The
+[versioned release](https://github.com/ZMS-Labs/epistemic-skills/releases/tag/v7.0.0)
+binds the published source and assets; package metadata alone is not publication.
 
 [![Release](https://img.shields.io/github/v/release/ZMS-Labs/epistemic-skills?display_name=tag)](https://github.com/ZMS-Labs/epistemic-skills/releases/latest)
 [![epistemic-flexibility](https://github.com/ZMS-Labs/epistemic-skills/actions/workflows/epistemic-flexibility.yml/badge.svg)](https://github.com/ZMS-Labs/epistemic-skills/actions/workflows/epistemic-flexibility.yml)
@@ -33,10 +36,10 @@ The README is the fast path into the project. The [GitHub Wiki](https://github.c
 - [Choose your path](#choose-your-path)
 - [Five-minute start](#five-minute-start)
 - [Routine work first](#routine-work-first)
-- [metacognate: the single entry point](#metacognate-the-single-entry-point)
+- [Using Epistemic Skills](#using-epistemic-skills)
 - [Choose by task](#choose-by-task)
 - [The epistemic arc](#the-epistemic-arc)
-- [Fifteen-skill catalog](#fifteen-skill-catalog)
+- [Seventeen-skill catalog](#seventeen-skill-catalog)
 - [Installation and compatibility](#installation-and-compatibility)
 - [Architecture and source policy](#architecture-and-source-policy)
 - [Coordination with epistemic-calibration](#coordination-with-epistemic-calibration)
@@ -48,7 +51,7 @@ The README is the fast path into the project. The [GitHub Wiki](https://github.c
 
 Most agent-skill collections organize **how work proceeds**: brainstorming, planning, implementation, debugging, review, and verification. epistemic-skills sits beneath that workflow layer and asks a different question: **what would make the target, decision, evidence, handoff, or acceptance claim trustworthy enough to bear load?**
 
-The package provides **fifteen** skills: one entry point, **fourteen** disciplines. Pairing them with a workflow-skill layer such as [superpowers](https://github.com/obra/superpowers) is a judgment the entry point makes at the moment it is needed, not a separate seat. Each method has a positive trigger, an output contract, and a stopping boundary.
+The package provides **seventeen** skills: one entry point, **sixteen** disciplines. The `epistemic` usage entry teaches discovery, actual method loading, visible use and continuation. Substantive methods can compose with a workflow package such as [superpowers](https://github.com/obra/superpowers) when applicable. Each method has a positive trigger, an output contract, and a stopping boundary.
 
 It is not:
 
@@ -71,26 +74,27 @@ Users and maintainers are equal first-class audiences:
 | [Routine Work and Proportionality](https://github.com/ZMS-Labs/epistemic-skills/wiki/Routine-Work-and-Proportionality) | [Testing and Evaluations](https://github.com/ZMS-Labs/epistemic-skills/wiki/Testing-and-Evaluations) |
 | [Workflow Recipes](https://github.com/ZMS-Labs/epistemic-skills/wiki/Workflow-Recipes) | [Evidence, Status, and Known Limitations](https://github.com/ZMS-Labs/epistemic-skills/wiki/Evidence-Status-and-Known-Limitations) |
 | [Installation and Harness Compatibility](https://github.com/ZMS-Labs/epistemic-skills/wiki/Installation-and-Harness-Compatibility) | [Contributing](https://github.com/ZMS-Labs/epistemic-skills/wiki/Contributing) |
-| [Skill Catalog](https://github.com/ZMS-Labs/epistemic-skills/wiki/Skill-Catalog) | [Release Process and Versioning](https://github.com/ZMS-Labs/epistemic-skills/wiki/Release-Process-and-Versioning) |
+| [Skill Catalog](https://github.com/ZMS-Labs/epistemic-skills/wiki/Skill-Catalog) | [Release Process and Versioning](docs/wiki-updates/v7.0.0/pages/Release-Process-and-Versioning.md) |
 | | [Security, Provenance, and DCO](https://github.com/ZMS-Labs/epistemic-skills/wiki/Security-Provenance-and-DCO) |
 
-The Wiki explains the released contracts. The versioned skill files take
-precedence when a summary differs. Its [committed snapshot](docs/wiki-updates/v6.0.0/pages)
-is checked for inventory, version, and link consistency by
-[`check_wiki.py`](docs/wiki-updates/v6.0.0/check_wiki.py).
+The live Wiki explains the released contracts. The
+[committed handbook](docs/wiki-updates/v7.0.0/pages/Home.md) describes v7; the
+[v6 snapshot](docs/wiki-updates/v6.0.0/pages) remains historical. Canonical skill
+files take precedence. The version-aware
+[`checker`](docs/wiki-updates/v6.0.0/check_wiki.py) validates each against its source.
 
 ## Five-minute start
 
 1. **Install one immutable copy.** Choose the native path for your harness under [Installation and compatibility](#installation-and-compatibility). Use the generic Agent Skills path only when no native plugin or extension exists.
 2. **Reload the harness or start a fresh task.** Trigger discovery and role registries are commonly session-bound.
-3. **Choose the entry point.** There is one: `metacognate`. It is the only skill you invoke by name; every other member fires on its own description. (One carve-out: `manifest`, the mission-custody seat, may also be invoked directly — on `manifest this` or `/manifest` — for mission lifecycle acts.) It applies the routine gate first, and declining is its most common correct outcome.
-4. **Verify the inventory and source.** v6.0.0 ships fifteen skills. Check that the host loads the expected descriptions from one installation.
+3. **Load the usage guide.** Invoke `epistemic` (Using Epistemic Skills), or directly invoke the substantive method you need. Check that the host loaded the selected installation.
+4. **Verify the inventory and source.** v7.0.0 ships seventeen canonical entries. Check that the host loads the expected descriptions from one installation.
 5. **Let routine work leave.** A local, reversible, directly checkable, non-precedential task should finish with its bounded check and no process-only artifact.
 
 For a harness without a native package surface, the complete generic install is:
 
 ```bash
-npx skills add https://github.com/ZMS-Labs/epistemic-skills/tree/v6.0.0/plugins/epistemic-skills/skills
+npx skills add https://github.com/ZMS-Labs/epistemic-skills/tree/v7.0.0/plugins/epistemic-skills/skills
 ```
 
 Do not run that command on top of a native plugin install. The [installation handbook](https://github.com/ZMS-Labs/epistemic-skills/wiki/Installation-and-Harness-Compatibility) includes verification and recovery details for every packaged harness.
@@ -108,44 +112,42 @@ For unfamiliar but routine-looking work, perform **two-read micro-recon**: inspe
 
 Routine work produces no entry-point record, blindspot report, formal record, ledger entry, UAT packet, or proof that other triggers were absent. Escalate only when the reads expose an observed mismatch, hidden coupling, unresolved scope, material fan-out risk, or another positive trigger.
 
-See the [routine-work guide](https://github.com/ZMS-Labs/epistemic-skills/wiki/Routine-Work-and-Proportionality) and the [released normative reference](https://github.com/ZMS-Labs/epistemic-skills/blob/v6.0.0/plugins/epistemic-skills/skills/metacognate/reference/routine-fast-path.md).
+See the [routine-work guide](https://github.com/ZMS-Labs/epistemic-skills/wiki/Routine-Work-and-Proportionality) and the [released normative reference](https://github.com/ZMS-Labs/epistemic-skills/blob/v7.0.0/plugins/epistemic-skills/skills/metacognate/reference/routine-fast-path.md).
 
-## metacognate: the single entry point
+## Using Epistemic Skills
 
-`metacognate` is the one skill you invoke by name. Every other member fires on its
-own `description`.
+The `epistemic` entry teaches how to discover, load and apply
+relevant methods. Every substantive skill remains directly invocable.
+`using-epistemic-skills` is a compatibility alias for `epistemic`; native alias
+invocation depends on verified host support. Otherwise use the canonical name.
 
 ```mermaid
 flowchart LR
-    W["Workflow-skill layer<br/>how work gets done"] <--> M["metacognate<br/>entry point and fourteen disciplines"]
+    E["epistemic: usage guidance"] --> A["Task-owning agent"]
+    D["Current skill descriptions"] --> A
+    A --> M["Relevant substantive methods"]
+    M --> A
+    A --> O["Authorized outcome and verification"]
 ```
 
-- **It carries a procedure, never an inventory.** No member list appears in it, and
-  none may be added. A seat that enumerates its members becomes a hand-maintained
-  projection of a directory, and every such projection here has drifted — one
-  shipped a description naming two skills that no longer existed.
-- **Tier 1 is iron**, scoped strictly to the irreversible: consent before an
-  irreversible act, an oracle adequate to its claim, no actor certifying its own
-  acceptance, and no hard gate overridable from the other side. These bind both
-  strands, including a workflow layer's own gates.
-- **Tier 2 is judgment**: what would have to be true for this to be right, and
-  which of those can I not currently answer? The unanswerable one names the work.
-  If all are answerable, engage nothing — **silence is a success state**.
-- **Pairing is a judgment at a moment, not a table.** Either strand may interrupt
-  the other, and control comes back to the point of interruption. That is why the
-  former `helix` pair table was replaced rather than renamed: a table maps stages,
-  but it cannot hand control back.
+Metacognate examines assumptions, evidence, confidence, success criteria and the
+approach itself. It can return a correction or confirm the current approach;
+it is no longer the exclusive entry or a mandatory dispatcher.
 
-*Replaced `using-epistemic-skills` and `helix` in v5.0.0. Both seats were deleted;
-their evaluation corpora were preserved at package level. See
-`docs/superpowers/specs/2026-08-06-epistemic-skills-v5-design.md`.*
+When a skill is actually used, briefly acknowledge its contribution. Reading or
+announcing a skill alone does not establish application. Reuse adequate evidence,
+preserve current user decisions and continue the authorized task after a method
+returns. Routine work does not require a process-only record.
+
+These changes apply to v7. Startup delivery and comparative benefit have
+separate evidence limits; see the release notes. The historical Helix coordinator and pair table remain retired.
 
 ## Choose by task
 
 | Task shape | Entry point | Expected result |
 |---|---|---|
 | Local, reversible, directly checkable, non-precedential change | Ordinary workflow | Change plus bounded check; no epistemic artifact |
-| Non-routine task, or the approach itself is uncertain | `metacognate` | The unanswerable condition, the discipline it names, and where to return; silent if the task clears the routine gate |
+| Assumptions, evidence, confidence or the approach need examination | `metacognate` | Supported conclusion, correction or uncertainty that informs the next action |
 | Need the state of a running system, or a health claim is about to bear load | `health` | Per-subject `OK`/`WARN`/`CRITICAL`/`UNKNOWN`; `UNKNOWN` never aggregates into `OK` |
 | A specific thing is broken and the cause is not established | `triage` | `CAUSE`/`NARROWED`/`UNKNOWN`/`NOT-BROKEN` with the discriminating observation |
 | A change is believed applied and something depends on it | `did-it-land` | `LANDED`/`REVERTED`/`UNVERIFIED` from a runtime observation, never a source read |
@@ -156,7 +158,7 @@ their evaluation corpora were preserved at package level. See
 | Claim depends on scholarly evidence or a research connector | `resolve` (literature) | Qualified evidence with reception, holdings, and degradation stated |
 | Operator explicitly asks to author or start a persistent goal | `write-goal` | Approved completion contract with proof, scope, blockers, and stop rule |
 | Consequential uncovered decision, assumption, or recurrent correction must survive | `decision-ledger` | Reused adequate artifact or a minimal ledger entry |
-| Work crosses to an external model, agent, or process | **outsource** | Target-readable immutable handoff packet and short pointer, or `BLOCKED` |
+| Work crosses to an external model, agent, or process | **outsource** | Target-readable handoff or verified terminal return, with caller continuation |
 | High-stakes or irreversible decision needs an adversarial gate | `gauntlet` | Conflict Ledger and computed GO / CONDITIONAL / NO-GO |
 | Material UI-facing work needs an acceptance claim | `evidence-locked-uat` | Actor evidence, blinded verification, and deterministic verdict |
 | Get every open decision answered by the operator before work continues | `open-questions` | Emptied-or-parked question ledger and a 4-field exit stamp |
@@ -174,7 +176,7 @@ flowchart LR
     Q -- no --> R{"Routine?<br/>all four tests"}
     CV --> R
     R -- yes --> B["Change + bounded check<br/>record-free exit"]
-    R -- no --> U["metacognate"]
+    R -- no --> U["Task owner applies relevant methods"]
 
     U -. "mismatch / coupling / fan-out" .-> BP["recon<br/>brief / initiative / candidate"]
     BP -. "material design fork" .-> FR["resolve<br/>derivation"]
@@ -200,27 +202,29 @@ remains awake between sessions.
 
 `resolve` (literature), `decision-ledger`, `outsource`, and `open-questions` are cross-cutting. Resume re-anchoring is `decision-ledger` resume mode (pre-arc). `context-audit` is maintenance-triggered outside the arc. Craft doctrine (`intent-traced-merge`, `agent-interface-design`) is read on demand — not a firing skill. Most tasks clear the routine gate or fire one discipline. See [The Epistemic Arc](https://github.com/ZMS-Labs/epistemic-skills/wiki/The-Epistemic-Arc) for handoff details and [Core Concepts](https://github.com/ZMS-Labs/epistemic-skills/wiki/Core-Concepts) for the five epistemic-flexibility controls.
 
-## Fifteen-skill catalog
+## Seventeen-skill catalog
 
-The package contains one entry point and fourteen disciplines. Each row links to
+The package contains one entry point and sixteen disciplines. Each row links to
 its canonical `SKILL.md`. Read the same path at a release tag for the released
 version of that contract.
 
 | Skill | Positive trigger | Purpose | Output |
 |---|---|---|---|
-| [`metacognate`](plugins/epistemic-skills/skills/metacognate/SKILL.md) | The approach is uncertain, a claim is about to bear load, an observation contradicts a tool, or work resumes from a summary | Decide how much process this deserves — usually none — and hand control back | The unanswerable condition and the discipline it names; silence when the routine gate clears |
+| [`epistemic`](plugins/epistemic-skills/skills/epistemic/SKILL.md) | Starting or resuming without suite usage guidance; explicit usage request | Discover, load, apply and visibly acknowledge relevant methods | Guidance and continuation; no separate planner or task ledger |
+| [`perspective`](plugins/epistemic-skills/skills/perspective/SKILL.md) | A focused or adaptive perspective can expose a consequential blind spot | Apply useful lenses and return to the task | Insight, improvement, finding or uncertainty; no compulsory panel |
+| [`metacognate`](plugins/epistemic-skills/skills/metacognate/SKILL.md) | Assumptions, evidence, confidence, success criteria or approach need examination | Examine the reasoning and challenge its decisive link | Supported conclusion, correction or material uncertainty; return to the task |
 | [`manifest`](plugins/epistemic-skills/skills/manifest/SKILL.md) | Work is mission-shaped — multi-session, consequential, cross-agent, or interruption-expensive — or the explicit phrase `manifest this` | Open, resume, advance, verify, or close a custodied mission: recorded authority, hash-chained checkpoints, drift re-anchoring, acceptance by a distinct acceptor | The mission's durable state under `missions/<id>/` (mission-custody@1 records), never the chat |
 | [`health`](plugins/epistemic-skills/skills/health/SKILL.md) | The state of a running system is wanted, or a health claim is about to bear load | Probe declared subjects against declared bounds, and say what could not be reached | Per-subject state; a roll-up carrying any `UNKNOWN` is at best `UNKNOWN` |
-| [`triage`](plugins/epistemic-skills/skills/triage/SKILL.md) | A specific subject is broken or degraded and the cause is not established | Eliminate candidates by observation, cheapest discriminator first, and stop at the cause | A verdict with the observation that ruled the alternatives out; the remedy is a separate act |
+| [`triage`](plugins/epistemic-skills/skills/triage/SKILL.md) | A specific subject is broken or degraded and the cause is not established | Eliminate candidates by observation, cheapest discriminator first, and stop at the cause | A verdict with discriminating evidence; continue authorized repair and verify the original failure |
 | [`did-it-land`](plugins/epistemic-skills/skills/did-it-land/SKILL.md) | A change is believed applied and something now depends on it being true | Observe the runtime, identify what actually loads, and re-check past the revert window | `LANDED`/`REVERTED`/`UNVERIFIED`; `UNVERIFIED` is the default |
 | [Commission Watch (`watch`)](plugins/epistemic-skills/skills/watch/SKILL.md) | A bound must be noticed between sessions, or an external observer must be commissioned or re-proved | Specify, commission, and proof-fire an external observer; the skill itself never persists | Validated `watch-commission@1`: `DECLARED`/`BLOCKED`/`INERT`/`PROVEN`/`SUSPECT` |
 | [`recon`](plugins/epistemic-skills/skills/recon/SKILL.md) | Territory must be mapped before effort commits: a fuzzy/contradicted brief, a large foggy effort, or an external project overlapping your own (three modes: brief / initiative / candidate) | Read, decompose, or harvest — understanding only, never a change | Rewritten request; decision map + fog-free tickets; or harvest record with per-level spend decisions |
 | [`resolve`](plugins/epistemic-skills/skills/resolve/SKILL.md) | A live question or material decision needs an instrument, not an opinion (three instruments: derivation / literature / probe) | Settle it with the cheapest sufficient instrument; the instrument produces evidence, never the downstream verdict | Derivation or `formal-rigor-record@2`; claim-evidence matrix; or recorded probe answer with the build disposed |
 | [`write-goal`](plugins/epistemic-skills/skills/write-goal/SKILL.md) | Explicit intent to author, refine, or start a durable goal | Bind operator intent to proof, scope, blockers, and stop rules | Approved goal contract; execution/certification remains downstream |
 | [`decision-ledger`](plugins/epistemic-skills/skills/decision-ledger/SKILL.md) | Uncovered consequential decision, assumption, or recurrent correction will bear future load | Reuse adequate durable records and persist only the gap | Existing artifact reference or `ledger-entry@1`; never a verdict |
-| [`outsource`](plugins/epistemic-skills/skills/outsource/SKILL.md) | Durable handoff to an external model, agent, or process | Make the repository carry complete context and provenance | Committed, pushed, target-readable packet plus short pointer, or `BLOCKED` |
+| [`outsource`](plugins/epistemic-skills/skills/outsource/SKILL.md) | Durable handoff to an external model, agent, or process | Make the repository carry complete context and provenance | Target-readable outbound packet, verified COMPLETE return, or `BLOCKED` |
 | [`gauntlet`](plugins/epistemic-skills/skills/gauntlet/SKILL.md) | High-stakes, one-way-door, high-blast-radius, risky pre-merge, or explicit adversarial gate | Multi-lens review of a frozen, truth-gated subject | Conflict Ledger and computed GO / CONDITIONAL / NO-GO |
-| [`evidence-locked-uat`](plugins/epistemic-skills/skills/evidence-locked-uat/SKILL.md) | Explicit UAT or material interaction/state/accessibility-sensitive UI acceptance | Separate actor, blinded verifier, and deterministic judge | Evidence packet and strict verdict; `INCONCLUSIVE` never becomes PASS |
+| [`evidence-locked-uat`](plugins/epistemic-skills/skills/evidence-locked-uat/SKILL.md) | Explicit UAT or material interaction/state/accessibility-sensitive UI acceptance | Observe expected and disconfirming outcomes; report actual actor/verifier separation | Evidence packet and strict verdict; `INCONCLUSIVE` never becomes PASS |
 | [`open-questions`](plugins/epistemic-skills/skills/open-questions/SKILL.md) | Operator asks to be interviewed until no open questions remain; un-best-guessable irreversible fork with operator present | Exhaustive serial clarification interview (docket + cascade modes); the auto-trigger runs fork-scoped only | Emptied-or-parked ledger + 4-field stamp; fork-scoped exit: lineage resolved, one closing offer, declined items deferred to the durable tracker with defaults |
 | [`context-audit`](plugins/epistemic-skills/skills/context-audit/SKILL.md) | Explicit audit request, detected cross-layer instruction conflict, or model-generation upgrade | Audit the assembled instruction context for conflicts, duplicates, and dead weight; classify-and-watch, never quota-cut | Cut list as diff, conflict ledger, re-baseline watch note; operator-gated class-by-class apply |
 
@@ -230,17 +234,17 @@ version of that contract.
 
 ### One copy, one version, one canonical tree
 
-Install with **exactly one mechanism per harness**. Native plugin **or** generic skill install—never both. For 6.0.0, replace an older untagged copy, reload, and verify both the skill count and source path. Duplicate copies create duplicate triggers and can silently mix contract versions.
+Install with **exactly one mechanism per harness**. Native plugin **or** generic skill install—never both. For 7.0.0, replace an older untagged copy, reload, and verify both the skill count and source path. Duplicate copies create duplicate triggers and can silently mix contract versions.
 
-| Harness | v6.0.0 surface | Required follow-through | Honest support boundary |
+| Harness | v7.0.0 surface | Required follow-through | Honest support boundary |
 |---|---|---|---|
 | Claude Code | Local marketplace from tagged checkout | Start a fresh task | Package discovery from one immutable checkout |
 | Codex | Tagged plugin marketplace | Render five Gauntlet roles; start a new task | Manifest does not itself register custom collaboration-agent types |
-| Cursor | Tagged local checkout or team marketplace | Reload window; verify the tag's full skill count (fifteen at v6.0.0) | Public listing unavailable; recorded behavioral epoch is `BLOCKED_EXTERNAL` |
+| Cursor | Tagged local checkout or team marketplace | Reload window; verify the tag's full skill count (seventeen at v7.0.0) | Public listing unavailable; recorded behavioral epoch is `BLOCKED_EXTERNAL` |
 | Gemini CLI | Tagged extension | Restart and validate extension | Uses root context and canonical symlinked tree |
 | Antigravity (`agy`) | Tagged native local plugin | Validate with `agy` | Choose native, Gemini link, or import—only one |
 | Kimi Code | Tagged repository plugin | `/reload` or new session | Plugin instructions map isolated-agent primitives |
-| ZCode | Tagged local checkout, junction-projected into `~/.zcode/skills` | Start a fresh session; verify the tag's full skill count (fifteen at v6.0.0) | Session bootstrap junctions `~/.claude/skills` only — skills riding as Claude *plugins* are not auto-imported; limited local discovery evidence; native plugin installation unverified |
+| ZCode | Tagged local checkout, junction-projected into `~/.zcode/skills` | Start a fresh session; verify the tag's full skill count (seventeen at v7.0.0) | Session bootstrap junctions `~/.claude/skills` only — skills riding as Claude *plugins* are not auto-imported; limited local discovery evidence; native plugin installation unverified |
 | ChatGPT / OpenAI | Generated bundle from the release (`packaging/openai/chatgpt-skill`) | Upload the generated zip per [the packaging guide](docs/CHATGPT-AND-OPENAI-PACKAGING.md) | Generated-artifact bridge: a snapshot of the released tree, not self-updating; the bundle carries no live execution |
 | Generic Agent Skills host | Tagged canonical skills URL | Reload host and verify source | Host must supply any runtime primitive the selected skill requires |
 
@@ -254,22 +258,22 @@ Full installation, migration, runtime-degradation, and troubleshooting guidance 
 ### Claude Code
 
 ```bash
-git clone --depth 1 --branch v6.0.0 https://github.com/ZMS-Labs/epistemic-skills.git /path/to/epistemic-skills-v6.0.0
+git clone --depth 1 --branch v7.0.0 https://github.com/ZMS-Labs/epistemic-skills.git /path/to/epistemic-skills-v7.0.0
 ```
 
 ```text
-/plugin marketplace add /absolute/path/to/epistemic-skills-v6.0.0
+/plugin marketplace add /absolute/path/to/epistemic-skills-v7.0.0
 /plugin install epistemic-skills@epistemic-skills
 ```
 
-Use one marketplace source only, then start a fresh task. Prefer the immutable `v6.0.0` tag for stable installs; `main` may include post-tag corrective documentation and contract hardening (see [successor progress](docs/release/SUCCESSOR-PROGRESS-104-105-2026-08-07.md)).
+Use one marketplace source only, then start a fresh task. Prefer the immutable `v7.0.0` tag for stable installs; `main` may include post-tag corrective documentation and contract hardening (see [successor progress](docs/release/SUCCESSOR-PROGRESS-104-105-2026-08-07.md)).
 
 ### Codex
 
 ```powershell
-codex plugin marketplace add ZMS-Labs/epistemic-skills --ref v6.0.0
+codex plugin marketplace add ZMS-Labs/epistemic-skills --ref v7.0.0
 codex plugin add epistemic-skills@epistemic-skills
-python "$HOME/.codex/plugins/cache/epistemic-skills/epistemic-skills/6.0.0/skills/gauntlet/scripts/render_codex_agents.py" --out "$HOME/.codex/agents"
+python "$HOME/.codex/plugins/cache/epistemic-skills/epistemic-skills/7.0.0/skills/gauntlet/scripts/render_codex_agents.py" --out "$HOME/.codex/agents"
 ```
 
 Start a new Codex task after rendering. The renderer converts the five canonical packaged Markdown roles into Codex's user-agent registry. The Gauntlet retains a hashed exact-role materialization fallback for tasks that started before registration.
@@ -281,9 +285,9 @@ Cursor packaging is present, but the plugin is **not publicly listed**. `/add-pl
 Windows local install:
 
 ```powershell
-git clone --depth 1 --branch v6.0.0 https://github.com/ZMS-Labs/epistemic-skills.git .\epistemic-skills-v6.0.0
-Set-Location .\epistemic-skills-v6.0.0
-if ((git describe --tags --exact-match) -ne 'v6.0.0') { throw 'expected v6.0.0' }
+git clone --depth 1 --branch v7.0.0 https://github.com/ZMS-Labs/epistemic-skills.git .\epistemic-skills-v7.0.0
+Set-Location .\epistemic-skills-v7.0.0
+if ((git describe --tags --exact-match) -ne 'v7.0.0') { throw 'expected v7.0.0' }
 New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.cursor\plugins\local" | Out-Null
 $src = (Resolve-Path .\plugins\epistemic-skills).Path
 $dest = Join-Path $env:USERPROFILE '.cursor\plugins\local\epistemic-skills'
@@ -294,19 +298,19 @@ cmd /c mklink /J "$dest" "$src"
 macOS/Linux local install:
 
 ```bash
-git clone --depth 1 --branch v6.0.0 https://github.com/ZMS-Labs/epistemic-skills.git ./epistemic-skills-v6.0.0
-cd ./epistemic-skills-v6.0.0
-test "$(git describe --tags --exact-match)" = v6.0.0
+git clone --depth 1 --branch v7.0.0 https://github.com/ZMS-Labs/epistemic-skills.git ./epistemic-skills-v7.0.0
+cd ./epistemic-skills-v7.0.0
+test "$(git describe --tags --exact-match)" = v7.0.0
 mkdir -p ~/.cursor/plugins/local
 ln -sfn "$(pwd)/plugins/epistemic-skills" ~/.cursor/plugins/local/epistemic-skills
 ```
 
-Run **Developer: Reload Window**, verify the tag's full skill count (fifteen at v6.0.0) under Customize → Skills, and do not also install them into `~/.cursor/skills/`.
+Run **Developer: Reload Window**, verify the tag's full skill count (seventeen at v7.0.0) under Customize → Skills, and do not also install them into `~/.cursor/skills/`.
 
 ### Gemini CLI
 
 ```bash
-gemini extensions install https://github.com/ZMS-Labs/epistemic-skills --ref v6.0.0 --consent
+gemini extensions install https://github.com/ZMS-Labs/epistemic-skills --ref v7.0.0 --consent
 # Local development only:
 gemini extensions link /path/to/epistemic-skills
 ```
@@ -316,9 +320,9 @@ Restart the session and run `gemini extensions validate` when validating a check
 ### Antigravity (`agy`)
 
 ```bash
-git clone --depth 1 --branch v6.0.0 https://github.com/ZMS-Labs/epistemic-skills.git /path/to/epistemic-skills-v6.0.0
-agy plugin install /path/to/epistemic-skills-v6.0.0
-agy plugin validate /path/to/epistemic-skills-v6.0.0
+git clone --depth 1 --branch v7.0.0 https://github.com/ZMS-Labs/epistemic-skills.git /path/to/epistemic-skills-v7.0.0
+agy plugin install /path/to/epistemic-skills-v7.0.0
+agy plugin validate /path/to/epistemic-skills-v7.0.0
 ```
 
 Use one of native `agy plugin install`, Gemini extension link, or `agy plugin import gemini`; do not combine them.
@@ -326,7 +330,7 @@ Use one of native `agy plugin install`, Gemini extension link, or `agy plugin im
 ### Kimi Code
 
 ```text
-/plugins install https://github.com/ZMS-Labs/epistemic-skills/tree/v6.0.0
+/plugins install https://github.com/ZMS-Labs/epistemic-skills/tree/v7.0.0
 # Local development only, from a clone:
 /plugins install /path/to/epistemic-skills
 ```
@@ -336,7 +340,7 @@ Run `/reload` or start a new session. `.kimi-plugin/plugin.json` points to the c
 ### Generic harness
 
 ```bash
-npx skills add https://github.com/ZMS-Labs/epistemic-skills/tree/v6.0.0/plugins/epistemic-skills/skills
+npx skills add https://github.com/ZMS-Labs/epistemic-skills/tree/v7.0.0/plugins/epistemic-skills/skills
 ```
 
 Use this only when the host has no native plugin or extension. Frontmatter `description` is the trigger; the body is the method. Compatibility means the host preserves the selected skill's capability, ordering, isolation, persistence, and fail-closed contracts—not merely that it can display Markdown.
@@ -348,7 +352,7 @@ One canonical tree contains all method files; thin harness manifests expose that
 ```text
 epistemic-skills/
 ├── plugins/epistemic-skills/
-│   ├── skills/<name>/SKILL.md           canonical skill cores (fifteen)
+│   ├── skills/<name>/SKILL.md           canonical skill cores (seventeen)
 │   ├── agents/                          five canonical Gauntlet roles
 │   ├── contracts/                       schemas + executable verifiers:
 │   │   ├── handoff-receipt / skill-run-ledger / calibration schemas
@@ -412,6 +416,12 @@ repository.
 
 ## Trust, evidence, and known limits
 
+The [v7 evidence packet](docs/release/v7-evidence.md) separates source checks,
+loaded context, exercised workflows and comparative benefit. Exact publication
+checks and the designated-reviewer GO are bound in the annotated tag and attached
+release receipt. Historical v6 results do not certify v7.
+
+
 v6.0.0 is published and available as a versioned source snapshot. Its
 [release notes](docs/release/RELEASE-6.0.0.md) and
 [publication record](docs/release/PUBLICATION-RECORD-6.0.0.md) disclose an
@@ -426,8 +436,8 @@ The [testing handbook](https://github.com/ZMS-Labs/epistemic-skills/wiki/Testing
 separates deterministic tests from behavioral evaluations.
 
 Historical audits and evaluations describe the revisions and conditions named
-in those records. Use them within that scope. The development branch contains
-post-release corrections; installing the v6.0.0 tag does not include them.
+in those records. Use them within that scope. The v6.0.0 tag retains its original contracts;
+installing it does not include the v7 changes.
 
 ### Behavioral evidence and remaining limits
 
@@ -482,7 +492,7 @@ Every pull-request commit must carry an author-matching DCO trailer:
 git commit --signoff
 ```
 
-A release additionally requires exact-head CI, DCO, CodeQL, full-history secret scanning with a positive control, provenance review, independent publication review, final Gauntlet, and tag/Release identity checks. See [Release Process and Versioning](https://github.com/ZMS-Labs/epistemic-skills/wiki/Release-Process-and-Versioning) and [Security, Provenance, and DCO](https://github.com/ZMS-Labs/epistemic-skills/wiki/Security-Provenance-and-DCO). When GitHub Actions cannot assign runners, use [local CI fallback](docs/CI-LOCAL-FALLBACK.md) and record a receipt.
+A release additionally requires exact-head CI, DCO, CodeQL, full-history secret scanning with a positive control, provenance review, the assigned reviewer’s bounded judgment under [current policy](RELEASING.md), and tag/Release identity checks. See [Release Process and Versioning](docs/wiki-updates/v7.0.0/pages/Release-Process-and-Versioning.md) and [Security, Provenance, and DCO](https://github.com/ZMS-Labs/epistemic-skills/wiki/Security-Provenance-and-DCO). When GitHub Actions cannot assign runners, use [local CI fallback](docs/CI-LOCAL-FALLBACK.md) and record a receipt.
 
 ### Maintainer map
 
@@ -491,7 +501,7 @@ A release additionally requires exact-head CI, DCO, CodeQL, full-history secret 
 - [Testing and Evaluations](https://github.com/ZMS-Labs/epistemic-skills/wiki/Testing-and-Evaluations)
 - [Evidence, Status, and Known Limitations](https://github.com/ZMS-Labs/epistemic-skills/wiki/Evidence-Status-and-Known-Limitations)
 - [Contributing](https://github.com/ZMS-Labs/epistemic-skills/wiki/Contributing)
-- [Release Process and Versioning](https://github.com/ZMS-Labs/epistemic-skills/wiki/Release-Process-and-Versioning)
+- [Release Process and Versioning](docs/wiki-updates/v7.0.0/pages/Release-Process-and-Versioning.md)
 - [Security, Provenance, and DCO](https://github.com/ZMS-Labs/epistemic-skills/wiki/Security-Provenance-and-DCO)
 - [Design History and Audits](https://github.com/ZMS-Labs/epistemic-skills/wiki/Design-History-and-Audits)
 

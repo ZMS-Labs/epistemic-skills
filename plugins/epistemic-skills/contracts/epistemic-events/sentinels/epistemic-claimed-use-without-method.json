@@ -1,0 +1,15 @@
+{
+  "id": "epistemic-claimed-use-without-method",
+  "skill": "epistemic",
+  "event_kind": "routing-decision",
+  "scenario": "A skill is named in a response, but its unavailable body was never loaded or applied. The response treats the announcement as successful application.",
+  "response": {
+    "verdict": "ACCEPT_ABSENCE_AS_SUCCESS",
+    "announced": true,
+    "body_loaded": false,
+    "method_applied": false
+  },
+  "expected_oracle": "REJECT",
+  "failure_class": "announcement-as-application",
+  "oracle_rule": "An announcement without the method cannot establish application. This synthetic marker control does not prove natural activation."
+}

@@ -81,8 +81,10 @@ def score(fixtures: list[dict], responses: list[dict]) -> dict:
             )
             if not recorded:
                 failures.append(f"{fid}: the answer must be recorded durably (question, observation, decision, record_ref) before disposal")
-            if not row.get("disposed"):
-                failures.append(f"{fid}: an answered prototype is a landmine — the build must be disposed")
+            if not row.get("disposed") and not row.get("archived_read_only"):
+                failures.append(f"{fid}: an answered prototype is a landmine — the build must be disposed or archived read-only")
+            if fixture.get("stubbed_seam") and row.get("production_verified") is not False:
+                failures.append(f"{fid}: a stubbed seam does not verify production behavior")
             if row.get("kept_mergeable"):
                 failures.append(f"{fid}: no line of the prototype may remain on a mergeable branch")
     return {"pass": not failures, "failures": failures, "actions": dict(actions)}

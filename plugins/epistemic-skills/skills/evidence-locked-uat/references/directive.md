@@ -56,7 +56,11 @@ E. Independent verifier: judges criteria without seeing the actor’s verdict.
 F. Judge: aggregates criterion verdicts and applies the release gate.
 G. Maintainer: proposes test repairs without changing product expectations.
 
-The actor MUST NOT certify its own work. The verifier MUST NOT be told the actor’s confidence or intended verdict before judging.
+Only claim blinded verification when actor and verifier contexts are isolated and the
+verifier is not told the actor's confidence or intended verdict. A scoped direct check
+is labeled direct and makes no blinding claim. Respect the operator's designated
+reviewer and acceptance authority; no different-model or fresh approval gate is
+universally required. The reference Workflow implements the blinded path.
 
 INPUTS TO LOCATE OR REQUEST FROM THE REPOSITORY/ENVIRONMENT
 - product requirements, user stories, acceptance criteria, PRD, designs, tickets;
@@ -81,11 +85,19 @@ For each requirement, create a contract with:
 - action intent, not a brittle coordinate script;
 - expected rendered outcome;
 - expected persisted/business outcome where applicable;
+- `schema_version: uat-contract@2` on the contract;
+- criterion-level `expected_observation` and `disconfirming_observation`, frozen before execution;
 - invariants and prohibited side effects;
 - required evidence channels;
 - persistence or refresh/re-entry checks;
 - severity and criticality;
 - ambiguity and assumptions.
+
+Verifier rows record cited expected/disconfirming observations and each required oracle
+per `schemas.md`. A witnessed disconfirmation or violated required persistence check
+is FAIL_PRODUCT even when a success message appeared; missing/uncertain observations
+are INCONCLUSIVE, never PASS. Historical unversioned packets retain their original
+aggregation and cannot be relabeled v2 compliant.
 
 Every critical criterion MUST require rendered UI evidence plus at least one independent nonvisual or relational oracle. Irreversible or high-impact criteria SHOULD require three distinct oracle types.
 

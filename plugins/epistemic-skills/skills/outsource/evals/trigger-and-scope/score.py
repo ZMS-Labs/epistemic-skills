@@ -135,6 +135,17 @@ def score(fixtures: list[dict], responses: object) -> dict:
                 failures.append(f"{fid}: every relayed claim is checked — missing {sorted(claims - checked)}")
             if not row.get("packet_updated"):
                 failures.append(f"{fid}: HANDOFF.md is updated with the verified current state before the next prompt")
+            if fixture.get("terminal"):
+                if row.get("relay_status") != "COMPLETE" or row.get("relay_closed") is not True:
+                    failures.append(f"{fid}: verified terminal return must close COMPLETE")
+                if row.get("open_requirements") != []:
+                    failures.append(f"{fid}: open or unknown requirements prevent COMPLETE")
+                if row.get("prompt_emitted") or row.get("outbound_created"):
+                    failures.append(f"{fid}: COMPLETE closes without another outbound prompt")
+                if row.get("caller_next_action") != fixture.get("caller_next_action"):
+                    failures.append(f"{fid}: preserve caller-owned next action")
+                if fixture.get("caller_next_action") and row.get("caller_task_complete") is not False:
+                    failures.append(f"{fid}: relay closure does not complete caller integration")
         elif expected == "report-blocked":
             if not row.get("blocked"):
                 failures.append(f"{fid}: a stop condition returns BLOCKED, never a ready-looking prompt")

@@ -1,0 +1,43 @@
+[
+  {
+    "id": "interrupted-authorized-repair",
+    "expected_action": "resume",
+    "scenario": "Cause proven before interruption; same relevant revision, patch pending.",
+    "revision": "r1",
+    "authority": "instruction-7",
+    "answer": "preserve API",
+    "next_action": "patch and verify original failure",
+    "rechecked": [
+      "source",
+      "authority"
+    ]
+  },
+  {
+    "id": "stale-relevant-state",
+    "expected_action": "resume",
+    "scenario": "Cause refers to r1; changed parser at r2 requires refreshing cause only.",
+    "revision": "r2",
+    "authority": "instruction-7",
+    "answer": "preserve API",
+    "next_action": "recheck cause against r2",
+    "rechecked": [
+      "source",
+      "authority",
+      "cause"
+    ]
+  },
+  {
+    "id": "original-prediction-disagrees",
+    "expected_action": "outcome-review",
+    "prediction": "no errors in ten runs",
+    "observation": "two errors in ten runs",
+    "source": "adr-3@r1"
+  },
+  {
+    "id": "adr-reuse-is-not-resume-proof",
+    "expected_action": "reuse",
+    "adequate_existing": true,
+    "recurrent_correction": false,
+    "requires_reanchor": true
+  }
+]

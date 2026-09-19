@@ -186,10 +186,18 @@ commissioned under.
   four-predicate coexistence check, and why the obvious scoring-rule shape is
   unsound. Read it before doing step 3, not from memory.
 
+## Return and evidence limits
+
+Return the harvest to the task owner. Declining the package while retaining a
+useful contract, interface pattern or idea is a complete valid outcome; no
+installation or trial is owed. Continue only already-authorized next work.
+
 ## Honest status
 
 This skill ships with **graded doctrine and a worked two-candidate provenance,
-and no behavioural-battery evidence of its own.** The first form of the method
+with historical directed behavioural fixtures.** The post-consolidation
+2026-08-04 candidate battery reported 14/14; this is one directed trial per
+fixture, not natural activation or comparative task benefit. The first form of the method
 was adversarially panelled and returned **NO-GO with 12 P1 findings**; those
 conditions are applied here. The revised form has produced one capability
 partition and two harvests in real use, but **has not itself been re-panelled**.

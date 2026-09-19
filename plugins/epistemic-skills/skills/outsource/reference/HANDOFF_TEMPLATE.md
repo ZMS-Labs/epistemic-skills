@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Schema | `outsource-handoff@1` |
-| State | `DRAFT` or `READY` |
+| State | `DRAFT`, `READY`, `PARTIAL`, `BLOCKED`, or verified `COMPLETE` |
 | Work ID | `<work-id>` |
 | Subject ref | `<stable task identifier>` |
 | Subject revision | `<request/scope revision>` |
@@ -63,6 +63,13 @@ attachments, or the originating chat.
 
 - `<unknown>` — impact: `<impact>`; owner: `<who resolves it>`; closure: `<hold, escalate, or probe>`
 
+### Next permitted action
+
+- **Action and owner:** `<remaining authorized step and executor, or NONE>`
+- **Authority:** `<resolvable instruction/grant; prior answers retained unless superseded>`
+- **Caller retains after relay closure:** `<integration/delivery work and owner, or NONE>`
+- **Terminal evidence:** `<verified return and requirement evidence, or NOT COMPLETE>`
+
 ## Decisions already made
 
 | Decision | Authority/source | Consequence | Revisit when |
@@ -80,7 +87,9 @@ attachments, or the originating chat.
 ### COMPLETE
 
 Every `MUST` requirement is satisfied with the named direct evidence; deliverables are reachable;
-no unresolved contradiction or authority gap remains.
+no unresolved contradiction or authority gap remains within the outsourced scope. The origin
+verifies this before closing the relay without another outbound prompt; caller-owned integration
+or delivery remains open until independently satisfied.
 
 ### PARTIAL
 

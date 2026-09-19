@@ -205,15 +205,35 @@ def report(legs) -> int:
 
 
 def self_test() -> int:
-    """Positive control: the shipped synthetic example verifies clean. Negative controls
-    (each on a tampered temp copy): an edited report => HASH-MISMATCH; a flipped
-    ruling-set verdict => VERDICT-MISMATCH; a forged registry sha => REGISTRY-DRIFT."""
+    """Preserve the historical example; its registry may legitimately have drifted.
+    Exercise full replay on a temporary synthetic current-registry control. This
+    is a mechanical fixture, not a new panel run or behavioral evidence."""
     fails = 0
     legs, drift = verify_run(EXAMPLE_RUN)
-    if any(l.failures for l in legs) or drift:
+    unexpected = [f for leg in legs for f in leg.failures
+                  if not (leg.name == "selector-replay" and drift
+                          and f.startswith("REGISTRY-DRIFT:"))]
+    if unexpected:
         fails += 1
-        print("self-test: FAIL — shipped example did not verify clean:", file=sys.stderr)
+        print("self-test: FAIL — historical example integrity:", file=sys.stderr)
         report(legs)
+
+    with tempfile.TemporaryDirectory() as td:
+        current = Path(td) / "synthetic-current-control"
+        shutil.copytree(EXAMPLE_RUN, current)
+        sp = current / "prompts" / "selection.json"
+        subject = json.loads(sp.read_text(encoding="utf-8"))["replay"]["subject_vector"]
+        sp.write_text(json.dumps(load_selector().run(subject), indent=2) + "\n", encoding="utf-8")
+        spec = importlib.util.spec_from_file_location("finalize_run", ROOT / "scripts" / "finalize_run.py")
+        finalizer = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(finalizer)
+        (current / "run-record.json").write_text(
+            json.dumps(finalizer.build_record(current), indent=2) + "\n", encoding="utf-8")
+        current_legs, current_drift = verify_run(current)
+        if current_drift or any(leg.failures for leg in current_legs):
+            fails += 1
+            print("self-test: FAIL — current synthetic replay:", file=sys.stderr)
+            report(current_legs)
 
     def tamper(mutate):
         td = tempfile.mkdtemp()
@@ -250,7 +270,7 @@ def self_test() -> int:
         print(f"self-test: FAIL — mutated registry not reported as drift: {fs}", file=sys.stderr)
 
     print(f"verify_run self-test: {'PASS' if fails == 0 else 'FAIL'}"
-          " (example verifies; hash/verdict/registry tampering each named)")
+          " (historical integrity, current synthetic replay, hash/verdict/registry tampering)")
     return 0 if fails == 0 else 1
 
 

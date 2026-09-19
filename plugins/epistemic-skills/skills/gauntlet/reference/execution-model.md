@@ -5,77 +5,44 @@
 > (FO "worth building?") was hand-orchestrated with fresh general-purpose agents
 > and hand-written per-lens prompts — which surfaced two structural fixes.
 
-## Two decisions, now standard
+## Execution contract
 
-> **Scope.** This document is the **Claude Code reference implementation** of the
-> harness-agnostic Step-5 contract (concurrent, context-isolated role-agents behind a
-> barrier). The *contract* is what binds; the Workflow-tool specifics below are one way to
-> meet it. Native custom-agent registration is preferred but not required: a harness
-> may materialize the exact canonical role into a replayable prompt binding (see
-> `runtime-role-binding.md`). On a harness without a parallel-subagent primitive, use
-> the degrade fallback (consecutive isolated agent calls) — the isolation, exact role
-> contract, and falsifier discipline are the invariants, not the Workflow API.
+This reference describes one Workflow implementation of separate initial
+examinations followed by evidence checking and adjudication. The authoritative
+method is `../SKILL.md`; a particular Workflow API is not a package dependency.
+Use the actual host's supported primitives and report what separation occurred.
 
-### 1. Orchestrate the panel as a dynamic Workflow (not consecutive subagents)
+Prefer isolated role calls on the same frozen dossier, with initial findings
+joined only after each pass finishes. Bind the canonical role and selected
+shared method either natively or with `scripts/materialize_role.py`. Parallel
+execution can reduce latency; sequential isolated calls can preserve the same
+initial information boundary. Without isolated calls, label same-context use
+explicitly. It cannot claim blinded or independent examination.
 
-The panel is a deterministic **fan-out → barrier → mechanical-criticism →
-arbitrate → verdict** — exactly the Workflow tool's shape. Standard for
-**depth ≥ standard**; manual consecutive subagents are the **degrade-only
-fallback** when Workflow is unavailable/unauthorized (disclose it in the
-summary as `orchestration: manual-degraded`).
+The owner designates the reviewer. A different model family is optional;
+model tiers within one family do not establish family diversity, and family
+diversity alone does not establish independent evidence. Shared prompts,
+evidence and inherited context remain sources of correlation. Role binding
+improves reproducibility but does not guarantee discipline or independence.
 
-Why it is the standard:
-- **Determinism** — the 8 steps are code, not recollection; the barrier before
-  arbitration is enforced, not remembered.
-- **Structured schemas** force every lens to return
-  `{findings[], falsifier-per-finding, hypothesis_vote, verdict}`; a finding
-  with no falsifier is rejected at the tool layer — the falsifiability contract
-  gets teeth for free.
-- **meter==log + replayable log come free** — the Workflow journal IS the
-  append-only record; `budget.spent()` IS the spend meter. Two of the four
-  DeepReason disciplines delivered natively instead of approximated.
-- **Resumable** — a gauntlet that dies mid-panel resumes from cache.
+## Reference Workflow
 
-Template: `assets/gauntlet-workflow.template.js`. The invoking skill (or the
-operator saying `/gauntlet`) is the Workflow opt-in.
+`assets/gauntlet-workflow.template.js` expresses fan-out, barrier, evidence checks,
+gates and adjudication. Use it only on a host that actually supports its APIs.
+The host journal and meter are evidence only when executed and captured. A
+shipped template is not a live deployment or a promise of resume support.
 
-### 2. Predefined role-agents, not fresh general-purpose agents
+Missing panel or required gate results leave the review incomplete. The template
+retains malformed findings instead of silently deleting them, and refuses GO
+while a material finding lacks its revision condition. A required gate's BLOCK
+cannot be voted away. Finalize and verify the material review record using the
+canonical scripts; template output alone does not establish factual correctness.
+The synthetic completion tests exercise this boundary, not an actual agent panel.
 
-Each lens is a **predefined agent type**, not a general-purpose agent
-hand-prompted each run:
-
-- **Five base-role agents** — `gauntlet-adversary`, `gauntlet-constructive`,
-  `gauntlet-metatextual`, `gauntlet-generator`, `gauntlet-arbitrator`
-  (`agents/`). Each has the base discipline (falsifier contract, `[V]`/`[I]`/`[H]`
-  evidence tiers, verbalized sampling, no-pre-arbitration) **baked into its
-  system prompt** and a **pinned model**.
-- **The personas stay as parameters** — the role agent receives the roster card
-  as `{{PERSONA_SPEC}}` (cards are generated views of `roster/registry.json`;
-  counts live only in the generated `roster/INDEX.md`). So it is *5 disciplined
-  roles × the registry*, not one agent file per persona, and not a fresh
-  improvised prompt each time.
-- **Model-family separation is enforced** — the arbitrator is pinned to the most
-  capable tier and, where configurable, a **different family than the lenses**
-  (arbitrator `opus`, lenses `sonnet` as the in-house default; cross-provider is
-  the ideal when wired). The arbitrator self-reports if it detects it shares a
-  family with the lenses.
-
-Benefit: reproducibility (a gauntlet discipline), guaranteed discipline (can't
-forget the falsifier contract), and guaranteed independence + family-separation —
-none of which a hand-crafted general-purpose prompt guarantees.
-
-## What stays MANUAL (do not "improve" into a team)
-
-**Structural independence of the lens phase is the source of the gauntlet's
-value** and must not be turned into an agent team. Lenses must NOT see each
-other's findings before arbitration — cross-talk collapses independent signal
-into consensus mush. (In the first live run, the most valuable moment — one lens
-killing a hypothesis another independently declared decisive — happened ONLY
-because they could not talk.) The Workflow's `parallel()` barrier gives exactly
-this: concurrent, isolated, joined only after all complete.
-
-Agent teams are acceptable ONLY at the **bounded-reinstatement** sub-round
-(arbitrator + one challenger, one round) — never for the panel.
+After initial comparison, use constructive synthesis for a revised candidate
+when useful. Recheck changed claims and their dependencies, preserve unaffected
+evidence and material dissent, and stop at the scoped closure condition. Budget
+exhaustion preserves unresolved findings; it does not certify success.
 
 ## Pipeline roles (replaces the "five groups" mental model)
 
@@ -87,14 +54,14 @@ evaluators inspect them. **Generator runs never satisfy evaluator-panel
 diversity.** Gates (`governance-lawyer`, `red-lines-arbitrator`) can block
 regardless of evidence weighing. The final judge is `pragmatic-judge` by default.
 
-**The premortem, done right, is this architecture** — independent participant
-narratives elicited before any cross-talk is exactly the `parallel()` barrier.
-That is why `premortem-facilitator` was retired as a lens: the protocol lives
-here, in the methodology, not in a persona card.
+Prospective failure analysis can elicit separate narratives before comparison.
+An AI-generated set of narratives is not evidence that actual stakeholders or
+independent human participants were consulted. Preserve that provenance limit.
+The retired premortem ID remains historical; the protocol belongs to the method.
 
 ## Depth → evaluator seats (judge always separate)
 
-quick 3 · standard 5 · deep 5 · max 7 + measurement bundle (Phase 3 — not yet
-built). Panel selection is deterministic: `scripts/select_lenses.py` (constraints
+quick 3 · standard 5 · deep 5 · max 7. The proposed measurement bundle is unbuilt and cannot count toward
+completed review coverage. Panel selection is deterministic: `scripts/select_lenses.py` (constraints
 + replay record). The Workflow `parallel()` fans out the selected panel; the
 arbitrator runs after the barrier.

@@ -102,6 +102,9 @@ def main() -> int:
     require(any("contract must be an object" in failure for failure in nonobject_contract["failures"]), nonobject_contract["failures"])
     require(any("goal_control must be an object" in failure for failure in nonobject_contract["failures"]), nonobject_contract["failures"])
 
+    from adapter_checks import check
+    check(scorer, ROOT)
+
     print("write-goal trigger-and-scope: PASS")
     return 0
 

@@ -123,6 +123,9 @@ def main() -> int:
     require(not notalist["pass"] and any("array of response objects" in f for f in notalist["failures"]),
             notalist["failures"])
 
+    from completion_checks import check
+    check(scorer, ROOT)
+
     print("outsource trigger-and-scope: PASS")
     return 0
 

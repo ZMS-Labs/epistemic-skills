@@ -1,6 +1,6 @@
 ---
 name: decision-ledger
-description: 'Use when a consequential decision, load-bearing assumption, or recurrent/operator correction was just made that later work will rely on, and no existing durable artifact already records it with resolvable provenance and a revisit condition. Observable anchors: a decision among ≥2 alternatives recorded in a plan, contract, or derivation artifact; an assumption about to bear load in a derivation, plan, or contract; an operator correction message that will guide future work. Do NOT fire for reversible self-contained choices, routine-work fast-path tasks, verdicts, consuming the ledger, or duplicating an adequate ADR/plan/issue/PR/goal/derivation record. Not gauntlet run telemetry — that is gauntlet''s runs/ledger.jsonl.'
+description: Use to persist consequential decisions, assumptions, or recurring corrections without an adequate durable home; resume work from prior-state claims; or compare an original prediction with an observed outcome. Reuse sufficient ADRs and task records, recheck load-bearing facts, and preserve provenance and revisit conditions. Records inform; they never authorize.
 metadata:
   event-kinds: [continuity-reanchor, ledger-revisit]
   eligible-when: [evaluation-case, revisit-trigger-fired, sampled-field-incident]
@@ -20,6 +20,11 @@ metadata:
 > description, goal contract, or derivation already is that home. It never
 > duplicates an adequate record merely to prove the skill fired.
 
+Acknowledge use and name the mode: **persist**, **resume**, or **outcome review**.
+Persist fills a consequential storage gap; resume re-anchors facts before the next
+step; outcome review compares predictions with observations. Artifact reuse satisfies
+only the information it actually contains for that mode, not every mode automatically.
+
 ## The epistemic moment (membership test)
 
 The instant an agent forms a decision, a load-bearing assumption, or receives
@@ -33,16 +38,16 @@ Distinct from every sibling:
 - Not a goal contract (write-goal names assumptions inside goals).
 - Not a per-run research record (evidence-research's record is scoped to one
   literature run).
-- Not pre-work recon (blindspot-pass) or a derivation (applying-formal-rigor) —
+- Not pre-work recon (recon) or a derivation (resolve derivation) —
   those may already produce the durable artifact this skill would otherwise add.
 
 ## Trigger (observable, not a vibe)
 
 A moment is **consequential** iff a named downstream consumer class will rely on
-it: continuity-verify on resumption, a gauntlet dossier, write-goal, a later
+it: resume mode, a gauntlet dossier, write-goal, a later
 plan/implementation stage, or a future session.
 
-Fire only when both are true:
+For **persist**, fire only when both are true:
 
 1. a consequential decision, assumption, or correction exists; and
 2. no existing durable artifact already gives that consumer:
@@ -66,7 +71,7 @@ against what actually happened. The method for this trigger is the
 [Outcome reviews](#outcome-reviews--the-anti-hindsight-boundary) section — the
 original prediction and the observed result recorded as separate untouched
 facts, lessons gated behind operator approval. This trigger typically fires in
-a *different session* than the decision did; continuity-verify's re-anchoring
+a *different session* than the decision did; resume mode’s re-anchoring
 pass and a work batch's completion/verification stage are its usual carriers.
 
 **Third trigger — resumption (the resume mode, pre-arc; consolidated from
@@ -78,9 +83,8 @@ artifact (this ledger's entries first, then files, git state, receipts) or
 stamped `(UNVERIFIED)`; an unverifiable approval escalates, never
 authorizes. The full method is
 [`reference/mode-resume.md`](reference/mode-resume.md) — its state digest
-feeds the router, and its double-fire order with reconnaissance is
-resume mode first, then recon for unfamiliar territory. The mode name
-continuity-verify survives for this trigger.
+returns to the task owner for the next authorized step. Re-anchor before
+exploring unfamiliar territory; do not restart settled work unnecessarily.
 
 ## No-op gate
 
@@ -94,8 +98,9 @@ Create no ledger artifact when any of these holds:
 - an assumption's load fully discharges within the current bounded check; or
 - an existing durable artifact satisfies the persistence fields above.
 
-The no-op is silent. Do not emit a ledger skip line; the absence of a
-consequential persistence gap is not itself a decision record.
+A non-engagement needs no skip line. An actually used mode receives a brief
+acknowledgment, including reuse; that acknowledgment is not a new decision record.
+These storage no-ops do not waive needed resume or outcome-review checks.
 
 ## The method
 
@@ -104,8 +109,13 @@ consequential persistence gap is not itself a decision record.
 Identify the named future consumer. Check whether an existing durable artifact
 already carries the required statement, provenance, and revisit condition.
 
-- If yes, hand the consumer that coordinate and stop. Do not create a parallel
-  source of truth.
+- If yes, hand the consumer that coordinate. Do not create a parallel source of
+  truth. Check adequacy for the particular need: rationale/provenance/revision and
+  revisit conditions for persistence; fresh load-bearing facts and authority for
+  resume; original prediction separately from observed result for outcome review.
+  An ADR's existence does not prove re-anchoring or the JSONL store's duplicate-ID,
+  cycle, dangling-reference, and unique-head checks. Improve a deficient existing
+  record when appropriate without rewriting the historical prediction.
 - If no, classify the missing record as `decision`, `assumption`, or
   `correction` and continue.
 - If none fits, this is not a ledger moment; stop.
@@ -258,7 +268,7 @@ entry count as success.
 
 ## Composition
 
-- **continuity-verify** consumes durable decision artifacts on resumption as
+- **Resume mode** consumes durable decision artifacts on resumption as
   prior judgment to *re-anchor, not to trust*. For ledger stores it walks the
   `supersedes` chain; for ADRs/plans/issues/PRs it checks the artifact's current
   coordinate and revisit condition. Absence is not evidence that no decisions
@@ -267,8 +277,8 @@ entry count as success.
   provenance.
 - **write-goal** may consume it as de-risked context.
 
-This skill never consumes its own ledger to make new decisions — that is the
-reader's job, with freshness checks.
+Resume and outcome-review modes consume prior judgments with freshness checks;
+the task owner makes the next decision and retains responsibility for continuation.
 
 ## Naming — not gauntlet's run ledger
 
@@ -286,7 +296,7 @@ cost is not evidence; duplicate stores are a defect, not extra rigor.
 
 ## Why this belongs (family resemblance)
 
-All six router invariants, demonstrated:
+Six discipline invariants:
 
 1. **Floors, not ceilings.** Only consequential uncovered persistence gaps create
    entries. Routine choices and adequate existing artifacts create nothing.
@@ -294,8 +304,8 @@ All six router invariants, demonstrated:
    as resolvable coordinates) and a revisit or falsification condition — never a
    bare conclusion.
 3. **Know where you stop.** Produces exactly one durable coordinate: an existing
-   artifact ref or a new append-only entry. Consumption belongs to
-   continuity-verify, gauntlet dossiers, write-goal, and future sessions.
+   artifact ref or a new append-only entry in persist mode. Resume returns a
+   re-anchored digest; outcome review preserves prediction and result separately.
 4. **Fail closed; degrade explicitly.** No durable home for a consequential gap
    → session-only plus a named durability gap; malformed chains fail closed.
 5. **Provenance and independence.** The record identifies what was decided and
@@ -320,14 +330,16 @@ All six router invariants, demonstrated:
 
 ## Evidence emission
 
-After each engagement, append one line to `runs/ledger.jsonl` under this skill:
+Only for an authorized evaluation or an existing task evidence contract, optionally
+append one line to `runs/ledger.jsonl` under this skill. Ordinary engagements need no
+separate run ledger:
 
 ```json
 {"schema":"skill-run@1","ts":"<iso8601>","skill":"<this-skill>","decision":"fired|declined","discipline_engaged":"<name-or-null>","action_changed":true|false}
 ```
 
-The append is part of this procedure. It is not a call to an external calibration
-service and it is not a `decision-ledger` entry. Schema:
+This optional telemetry is not proof of success, an external calibration call, or a
+`decision-ledger` entry. Schema:
 `plugins/epistemic-skills/contracts/skill-run-ledger.schema.json`.
 
 ## Local overlay

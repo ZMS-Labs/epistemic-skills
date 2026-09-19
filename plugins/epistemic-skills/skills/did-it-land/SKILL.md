@@ -10,7 +10,7 @@ metadata:
   sentinel-fixture: did-it-land-source-read-as-landed.json
 ---
 
-# did-it-land — the change is real on the runtime, or it is not real
+# Did It Land: observe the intended effect at its consumer
 
 > Writing a control is not installing one. The most expensive claim in this
 > whole practice is **"it is fixed"** made by an agent that read the file it
@@ -24,9 +24,9 @@ metadata:
 
 | Verdict | Meaning | Rule |
 |---|---|---|
-| `LANDED` | observed in effect at the runtime, after the revert window | requires a runtime observation, not a source read |
-| `REVERTED` | landed, then undone — by a reconciler, a cache, a rebuild, another writer | names what undid it |
-| `UNVERIFIED` | could not observe the runtime | **never** rendered as landed, never inferred from the diff |
+| `LANDED` | intended effect observed at the consumer within the stated scope and time | name the observation and separately state persistence coverage |
+| `REVERTED` | an observed effect was subsequently observed undone | show both observations; identify the writer only if supported |
+| `UNVERIFIED` | intended effect not established for the requested scope | distinguish observed absence from inability to observe |
 
 **`UNVERIFIED` is the default.** A change is not landed until observed landed.
 The burden runs the other way from ordinary work, because the failure is silent:
@@ -62,14 +62,17 @@ Does **not** fire when:
 3. **Observe at the runtime.** Ask the running system. Reading a file, a
    manifest, or a diff is a claim *about* the runtime, not an observation *of*
    it.
-4. **Check for an owner.** Something may reconcile, regenerate, or overwrite this
-   — a GitOps controller, a scheduled job, a generator, another writer. If an
-   owner exists and was not updated, the change is `REVERTED` on a timer even if
-   it is present right now.
-5. **Re-observe after the revert window.** A change observed once, immediately,
-   has not survived anything. Where an owner exists, observe again past its
-   reconcile interval.
-6. **Report the verdict with the observation**, never the intent.
+4. **Check persistence risk.** Identify a reconciler, generator, cache or other
+   writer that may overwrite the change. An unchanged source of authority creates
+   a future reversal risk; it does not establish that reversal already happened.
+5. **Observe the relevant persistence boundary.** Where the claim includes
+   survival of reconciliation or restart, re-observe after that event. If the
+   interval or event is unavailable, report the present observation and leave
+   persistence unverified. Do not wait indefinitely or predict an observed result.
+6. **Report current effect, persistence evidence and future risk separately.**
+   A change may be LANDED now with future overwrite risk. REVERTED requires an
+   observed undo after observed landing. Briefly acknowledge Did It Land and
+   return the result to the work that depends on it.
 
 ## Boundaries
 
@@ -77,10 +80,12 @@ Does **not** fire when:
   Those are records of intent to change, not evidence of change.
 - **Never accepts a green check as landing** unless the check itself observed the
   runtime. Most do not.
-- **Never repairs.** If it did not land, that is a finding; re-applying is a
-  separate act.
-- **Never reports `LANDED` for a subset.** Landed on one of three hosts is not
-  landed.
+- **Verification does not create repair authority.** Return a failed landing
+  observation to the task owner. Continue an already-authorized fix and verify it;
+  an assessment-only request ends at the finding.
+- **Scope every verdict.** LANDED on one checked consumer does not establish
+  the requested effect on three. Report covered and uncovered sets; the full
+  requested scope remains UNVERIFIED when coverage is partial.
 
 ## Anti-rationalizations
 
@@ -101,7 +106,7 @@ Does **not** fire when:
 |---|---|
 | runtime unreachable | `UNVERIFIED (unreachable)`; never `LANDED` |
 | no observable identified | `UNVERIFIED (no oracle)` — and that is a finding about the change, not about this skill |
-| owner exists, reconcile interval unknown | `UNVERIFIED (revert window unknown)`; do not claim survival you did not wait for |
+| owner exists, reconcile interval unknown | report observed current effect; persistence remains unverified and overwrite risk explicit |
 | observed in one place of several | `UNVERIFIED (partial)` with the covered and uncovered sets named |
 | the observation itself is the thing under test | escalate — a check verifying itself is the failure this skill exists to catch |
 
@@ -120,20 +125,21 @@ must include:
   passing on a stand-in path proves the control works on the stand-in and nothing
   about production.
 
-The last one is not hypothetical. In this estate a positive control passed while
-production was broken, because the control created a symlink and every production
-link was a Windows junction, for which the test returned False.
+For example, a control exercising a symbolic link does not establish behavior
+for a junction or another link type. Exercise the actual consuming path.
 
 ## Evidence emission
 
-After each engagement, append one line to `runs/ledger.jsonl` under this skill:
+When an authorized evaluation or existing task evidence contract collects
+engagement telemetry, use the local `runs/ledger.jsonl` format. Ordinary use
+requires no separate process artifact:
 
 ```json
 {"schema":"skill-run@1","ts":"<iso8601>","skill":"<this-skill>","decision":"fired|declined","discipline_engaged":"<name-or-null>","action_changed":true|false}
 ```
 
-The append is part of this procedure. It is not a call to an external calibration
-service and it is not a `decision-ledger` entry. Schema:
+Telemetry is private runtime evidence of engagement, not proof of the outcome
+or a replacement for a consequential decision record. Schema:
 `plugins/epistemic-skills/contracts/skill-run-ledger.schema.json`.
 
 ## Local overlay

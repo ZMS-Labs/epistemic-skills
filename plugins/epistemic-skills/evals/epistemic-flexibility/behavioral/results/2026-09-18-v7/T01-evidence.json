@@ -1,0 +1,69 @@
+{
+  "schema": "v7-sanitized-run-evidence@1",
+  "run": "T01",
+  "case": "B01",
+  "arm": "v6",
+  "status": "completed_host_precondition_failure",
+  "cli_exit_code": 0,
+  "elapsed_seconds": 55.797,
+  "subject_task_complete": false,
+  "case_artifacts_unchanged": true,
+  "requested_model": "gpt-5.6-sol",
+  "requested_reasoning": "medium",
+  "reported_serving_model": null,
+  "reported_inference_cost": null,
+  "usage_reported": {
+    "input_tokens": 291722,
+    "cached_input_tokens": 233728,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 1574,
+    "reasoning_output_tokens": 647
+  },
+  "observations": [
+    {
+      "id": "E1",
+      "source": "stdout.jsonl: item_0",
+      "kind": "host_warning",
+      "observation": "Host reported shortened skill descriptions because its skills context budget was exceeded."
+    },
+    {
+      "id": "E2",
+      "source": "stdout.jsonl: item_6 completed",
+      "kind": "actual_external_skill_load",
+      "observation": "codex_apps.read_mcp_resource successfully returned using-superpowers from a host skill resource outside the arm."
+    },
+    {
+      "id": "E3",
+      "source": "stdout.jsonl: item_7 completed",
+      "kind": "actual_external_skill_load",
+      "observation": "codex_apps.read_mcp_resource successfully returned systematic-debugging from a host skill resource outside the arm."
+    },
+    {
+      "id": "E4",
+      "source": "stdout.jsonl: item_8 completed",
+      "kind": "actual_external_skill_load",
+      "observation": "codex_apps.read_mcp_resource successfully returned test-driven-development from a host skill resource outside the arm."
+    },
+    {
+      "id": "E5",
+      "source": "stderr.txt: three exec_command router errors",
+      "kind": "host_execution_rejection",
+      "observation": "Three shell process creations were rejected as blocked by policy, including a local rg --files command. The trace does not prove the underlying policy cause."
+    },
+    {
+      "id": "E6",
+      "source": "final.txt and artifact hashes",
+      "kind": "incomplete_task",
+      "observation": "Subject reported that it could not inspect, reproduce, repair, or verify; both fixture artifacts remained unchanged. Its assertion that the workspace was read-only is not independently established."
+    }
+  ],
+  "interpretation": "The actual execution violates matched isolated-exposure and usable-local-tools preconditions. This invalidates comparative attribution; it is not scored as a baseline skill defect.",
+  "scores": {
+    "outcome": null,
+    "method_application": null,
+    "acknowledgment": null,
+    "unnecessary_process": null,
+    "authorization_scope": null,
+    "continuation": null
+  }
+}

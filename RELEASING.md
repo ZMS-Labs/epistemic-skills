@@ -56,59 +56,48 @@ Supported harness surfaces must either be exercised live or assigned an explicit
 verification tier in the release notes. Missing access may degrade the tier; it
 may not disappear from the record.
 
-### Independent judgment gate
+### Designated-reviewer judgment gate (v7 onward)
 
-The independent Gauntlet publication review is the judgment gate. A conforming
-release requires a recorded GO on the exact release candidate. If the owner elects
-to publish without it, the release is an **exception release** and the notes must
-say, before tag creation:
+The owner-designated reviewer judges the frozen candidate against accepted
+requirements and recorded evidence. The owner may designate the implementing
+agent. No independent panel or different model family is a release prerequisite.
+Report actual reviewer identity, shared context and evidence limits; a self-check
+does not become blinded or independent through a role label.
 
-- the gate was not run or did not reach GO;
-- no GO exists;
-- the owner's identity, date, scope, and exact authorization;
-- the evidence that remains available and what it cannot establish; and
-- any successor-release condition or revisit trigger.
+A conforming release requires a recorded GO on the exact candidate with material
+findings resolved. Preserve dissent and distinguish unmet requirements, user-owned
+tradeoffs and optional improvements. Recheck changed behavior and dependencies;
+preserve unaffected evidence. Budget exhaustion does not establish GO or require
+an unlimited review cycle. Publication authority and integrity gates remain
+separate. A historical v6 independent-review exception remains historical; this
+policy does not retroactively change it.
 
-A post-release review may add useful judgment evidence, but it cannot retroactively
-turn an exception release into a conforming release or manufacture a pre-publication
-GO.
+If the owner authorizes publication with an unmet current judgment gate, preserve
+that unmet gate and the authorization in an explicit exception record. Missing
+independence alone is not a v7 exception because it is no longer required.
 
-#### The exception route is standing, not emergency (D25)
+#### Standing exception route and historical D25 terms
 
-Until 2026-08-21 this document treated the exception as a one-off, and v6.0.0's
-own records went further and said a second use "would convert an exception into a
-practice. Do not." **That is superseded**, deliberately, by operator decision
-**D25**. The reasoning is recorded rather than assumed:
+An owner exception remains available for an actual unmet publication-judgment
+gate (gate 8). Before tagging, the committed release notes must identify the
+unmet requirement, actual review verdict or missing review, evidence limits,
+remaining material findings, and explicit owner authorization. Record the named
+cost and any accepted gap's owner, scope, revisit trigger, and exit criterion.
+The release notes, annotated tag message, and handbook entry must label the
+result an exception release; `WAIVED` or `UNMET` never becomes `GO`, and adverse
+verdicts remain in the evidence record.
 
-A repository maintained by one operator and one implementing agent lineage cannot
-manufacture the independence a conforming release requires. `KL-SELF-GO` says so
-plainly, and v6.0.0 proved it the expensive way: nine reviews, four publication
-NO-GOs, and an override at the end anyway. Treating the exception as forbidden did
-not produce independence — it produced a long detour to the same place, with the
-honesty of the outcome unchanged.
+No integrity gate is waivable. An accuracy defect is repaired rather than
+excused, and every applicable integrity gate still runs on the exact candidate.
+Missing independence alone creates neither an exception nor a standing
+cross-family review obligation under the v7 designated-reviewer policy.
 
-So the exception is a **first-class, permanently available route**, on these
-standing terms:
-
-1. **The five disclosures above are mandatory every time**, in the committed notes,
-   before tag creation. They are what makes an exception honest rather than silent.
-2. **The exception reaches RG-8 and nothing else.** No integrity gate is waivable
-   by any authority in this repository — not the owner's, not a decision record's.
-   An accuracy defect found under an exception is fixed, never excused.
-3. **The release is labelled an exception release** in its notes, its tag message,
-   and its handbook entry. It is never described as conforming, and its NO-GO
-   verdicts are never described as discharged, superseded, or resolved.
-4. **The named cost is stated, not softened.** An exception release ships without
-   the one thing the judgment gate exists to establish: that an actor which did not
-   build it thinks it should be published. Readers should trust the artifact on its
-   integrity evidence and discount the judgment evidence to zero.
-5. **Standing obligations survive.** `KL-SELF-GO` stays unretired, and any owed
-   cross-family consult carries forward with an owner, a trigger, and an exit
-   criterion until it is actually discharged.
-
-What this is **not**: a way to skip work. Every integrity gate still runs, and the
-disclosure burden is heavier than a conforming release's, because a conforming
-release can point at a GO and an exception release has to explain itself.
+**Historical v6 policy:** D25 made the exception route permanently available
+under the then-required independent-judgment gate. Its original five disclosures,
+`KL-SELF-GO` treatment, and carried cross-family obligations are preserved in the
+[immutable v6 release policy](https://github.com/ZMS-Labs/epistemic-skills/blob/9705f70aec1285597a6ef2a341cede80010c1dcb/RELEASING.md#the-exception-route-is-standing-not-emergency-d25).
+Those terms describe the v6 regime and its historical records; they do not impose
+independence requirements on v7 or retroactively change any v6 verdict.
 
 ## Release gate
 
@@ -175,15 +164,14 @@ candidate.
    - Installation source, loaded copy, cache behavior, reload requirements, and
      duplicate-install risks are tested where material.
    - The notes disclose absent qualifying results rather than implying coverage.
-8. **Independent publication judgment**
-   - The candidate is frozen before review.
-   - An independent Gauntlet publication review runs with isolated lens passes,
-     arbitration, a Conflict Ledger, and a computed verdict.
-   - A conforming release requires `GO` with no unresolved P1 or P2.
-   - `CONDITIONAL` is not GO. `NO-GO`, unresolved P1/P2, or an unrun gate holds a
-     conforming publication.
-   - Owner-authorized exception publication follows the explicit exception record
-     above and remains `WAIVED`/`UNMET`, never `MET`.
+8. **Designated-reviewer publication judgment**
+   - Freeze the candidate before review and record the designated reviewer.
+   - Judge requirement fulfillment, material findings and evidence limits.
+   - A conforming release requires `GO` with no unresolved material P1/P2.
+   - `CONDITIONAL`, `NO-GO` or an unperformed judgment holds conforming publication.
+   - No additional actor or model family is mandatory. State actual separation.
+   - Recheck only changed claims/dependencies after repair. Optional suggestions
+     do not reopen accepted scope; new material evidence can reopen affected claims.
 9. **Publication identity plan**
    - A **pre-authorization** is committed BEFORE the candidate is minted, naming
      the pull request to be merged, the version, the release-note path, the gate
@@ -225,25 +213,19 @@ candidate.
      author mismatch and a false attestation. A merge commit preserves the
      individually signed commits in history and is exempt under the DCO
      checker's `is_merge()` rule.
-5. **Run and record the independent Gauntlet publication gate.** Freeze the exact
-   candidate as the subject; retain the panel outputs, arbitration, Conflict
-   Ledger, and verdict under `docs/release/` or the version's Gauntlet run
-   directory.
-   - **Commit those artifacts AFTER the tag exists, not before.** The verdict is
-     produced at the candidate, so committing it beforehand would supersede the
-     commit it judges. Once the tag is created the candidate is immutable and
-     named, and later commits to the default branch cannot move it. The tag
-     object names the verdict's run id and path; the artifacts themselves land
-     on the branch afterwards and are reachable from the tag by name, not by
-     being inside the tagged tree.
-   - The tagged tree therefore does **not** contain its own verdict. That is a
-     property of any honest exact-SHA gate, not an omission: a tree cannot
-     contain a judgment of itself. Say so in the release notes rather than
-     letting a reader discover it and assume evidence was withheld.
+5. **Run and record the designated-reviewer publication judgment.** Freeze the
+   exact candidate and retain the requirement dispositions, material findings,
+   evidence references, reviewer identity and verdict. Gauntlet is available when
+   plural scrutiny is useful; it is not a universal prerequisite.
+   - Preserve the exact subject SHA. Review evidence may be attached to the
+     release/PR or committed after the candidate; do not imply a changed tree
+     is the unchanged subject of an earlier judgment.
+   - The tagged tree need not contain its own exact-SHA verdict. Link the
+     external or later evidence clearly from the release record.
 6. **Resolve the publication decision.**
    - `GO`: proceed as a conforming release.
-   - `CONDITIONAL` or `NO-GO`: fix forward, produce a new candidate, and rerun the
-     complete affected gate.
+   - `CONDITIONAL` or `NO-GO`: fix forward, produce a new candidate, and recheck changed behavior
+     and its affected dependencies while retaining unaffected evidence.
    - Owner exception: record `WAIVED`/`UNMET` and the authorization in the
      committed release notes **before** tagging. Do not describe the result as a
      GO or conforming release.
@@ -261,7 +243,11 @@ candidate.
      return GO, and the firing condition. It authorizes a determinate act.
    - **After** the gate returns GO, the owner records **in the annotated tag
      object** the verdict read (path and run id), the exact candidate SHA, their
-     own identity, and the disarm/re-arm timestamps. A tag names its target
+     own identity, and the disarm timestamp. The subsequent re-arm timestamp and
+     seeded rejection result belong in a publication receipt attached to the
+     Release or PR: they occur after tag push and cannot truthfully be embedded
+     in an already immutable tag. Never rewrite a tag to add those later facts.
+     A tag names its target
      without altering it, so the candidate is identical across the step-4
      checks, the step-5 verdict, the authorization, and the tag target.
    - A verdict without a resolvable subject still authorizes nothing: a `GO` for
@@ -277,8 +263,8 @@ candidate.
      rule exists to constrain.
    - **Disarming the rule is therefore the authorization act.** Remove the
      `creation` rule (or set the ruleset's enforcement to `disabled`), create and
-     push the tag, then **re-arm it in the same sitting**. Record the disarm and
-     re-arm alongside the authorization line.
+     push the tag, then **re-arm it in the same sitting**. Record the disarm with the tag authorization and the later re-arm in
+     the attached publication receipt, both bound to the same tag object and target.
    - Verify the rule is armed again before closing the release, with a seeded
      probe rather than by reading the config back. A release that ends with the
      gate left open has removed the control it was meant to satisfy.
@@ -310,7 +296,7 @@ Every release note should contain a table with at least these columns:
 | security + public content | `MET` / `UNMET` | commit SHA and history range | scan and review artifact | patterns and exclusions |
 | description-byte delta | signed byte count vs prior release | commit SHA | `check_description_budget.py --report` outputs at both releases | package-local only; the estate gate is retired (v5 design AMENDMENT 2026-08-18, hybrid Path 2) — `check_loaded_descriptions.py --require-capture` remains available on demand |
 | harness evidence | tier per harness | tag/commit | live run or tier record | unavailable surfaces |
-| independent publication judgment | `GO` / `CONDITIONAL` / `NO-GO` / `WAIVED` | frozen commit | Gauntlet artifact or owner authorization | independence limits |
+| designated-reviewer publication judgment | `GO` / `CONDITIONAL` / `NO-GO` / `WAIVED` | frozen commit | designated-reviewer record or owner exception | actual review/context limits |
 | publication identity | `MET` / `UNMET` | tag + release | API identity receipt | normalization rules |
 
 A row without an immutable evidence coordinate is not `MET` merely because the

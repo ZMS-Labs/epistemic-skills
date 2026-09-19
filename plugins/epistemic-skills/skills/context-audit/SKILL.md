@@ -22,8 +22,8 @@ reconciliation reasoning. This skill audits the assembly as the model receives
 it and emits a cut list as a diff, a conflict ledger, and a falsifiable
 re-baseline gate.
 
-The prior it operates under: as models strengthen, most accumulated instruction
-is deletion-eligible. Anthropic reports removing over 80% of Claude Code's
+Historical motivation: stronger models may make some accumulated instructions
+redundant; this is a hypothesis to test, not a presumption favoring deletion. Anthropic reports removing over 80% of Claude Code's
 system prompt for its 2026 models with no measurable eval loss (Shihipar,
 "The new rules of context engineering for Claude 5 generation models",
 2026-07-24). Direction is independently supported — long, complex agentic
@@ -40,16 +40,32 @@ reversible experiment under version control, never as a proven win.
 | Recon of the territory before work | blindspot-pass | Audits the *task's* unknowns; this skill audits the *instruction map* the agent carries into every task |
 | Designing the outbound channel | agent-interface-design | That skill shapes interfaces this agent authors for other minds; this one prunes the inbound instruction channel this agent consumes |
 | Persisting what the audit decides | decision-ledger | Every applied cut class and every conflict resolution is a recorded decision with a revisit condition |
-| Judging a high-stakes cut | gauntlet | A cut touching governance or safety-critical instruction layers escalates to adversarial review before apply |
+| Judging a high-stakes cut | gauntlet | Use the owner-designated review when needed for a consequential cut; audit alone grants no edit authority |
+
+## Entry, observation and authority
+
+Visibly acknowledge the scoped audit actually performed. Start with the
+affected instruction/load/version or precedence question and reusable evidence.
+Expand to interacting layers when needed; a full assembly inventory is for a
+full audit, not a prerequisite to resolving one mid-task conflict. Apply the
+actual instruction hierarchy immediately and continue authorized work. That
+operative resolution does not authorize a persistent source edit.
+
+Distinguish source bytes, installed copy/version/path, observed loaded
+description/body, and actual application. A correct source is not proof it
+loaded. Verify the consuming path before replacing a stale copy and preserve
+customizations. If assembled context or load order is unavailable, state the
+unobserved layers and audit only the accessible scope; never certify the unseen
+assembly. Maintain sources and regenerate projections only within authority.
 
 ## Protocol
 
 ### 1. Inventory the assembly
 
-Enumerate every layer the harness loads for this agent, in load order, with an
-approximate token count and a content hash per layer. The unit of audit is the
-assembled set — a layer you skip is a layer whose conflicts you certify
-blindly, so name skipped layers explicitly in the report.
+For the selected scope, enumerate observed layers and their source/install/load
+identity, precedence and versions where observable. Use hashes or token counts
+when they answer the question. For full audits, inventory the accessible assembly
+and explicitly name skipped or unavailable layers; do not certify unseen conflicts.
 
 Mark **generated and governance layers** (compiled rule projections, safety
 policy, consent text) as *report-only*: conflicts found there are routed
@@ -62,15 +78,17 @@ Cut classes:
 - **CONFLICT** — contradicts an instruction in another active layer. Must cite
   both locations verbatim. Costliest class: the model spends reasoning
   reconciling its operator before the task starts.
-- **DUPLICATE** — the same directive in two or more layers. Keep exactly one
-  authoritative location (prefer the most local, load-on-demand one — a tool
-  description over a system prompt); cut the copies.
+- **DUPLICATE** — the same directive in two or more layers. Nominate an
+  authoritative survivor only after verifying it is reachable and loaded
+  whenever needed, including recovery and resume. Locality alone cannot
+  justify deleting the only reliably loaded protection.
 - **OBVIOUS** — restates strong-model default behavior: persona theater,
   restated general knowledge, emphasis scaffolding (all-caps, "CRITICAL",
   emoji-as-emphasis), generic care/quality exhortations.
 - **MODEL-HANDLES-THIS-NOW** — a guardrail for an older model's failure mode
-  with no documented incident behind it. The one test, applied line by line:
-  *"Would a strong model behave worse without this line?"*
+  with no documented incident behind it. This is a candidate hypothesis,
+  not evidence of redundancy. Read origins and test the triggering condition;
+  missing incident records do not establish that a protection is unnecessary.
 - **OVER-VERIFY** — verification and self-check demands duplicated across
   layers. Vendor-reported for current frontier models (Shihipar 2026):
   explicit verification instructions cause over-verification — wasted tokens
@@ -97,71 +115,76 @@ cited origin, not remembering it:
 Per-layer readers can only nominate. CONFLICT and DUPLICATE are decided only
 after merging findings across all layers — this cross-layer pass is the reason
 the skill exists; a per-file audit that skips it is ordinary editing wearing
-this skill's name. For each conflict, propose a surviving text and location
-with a one-line rationale.
+this skill's name. For each conflict, distinguish immediate precedence resolution from proposed
+persistent maintenance, with source authority and a one-line rationale.
 
 ### 4. Report before apply
 
-Emit a durable report: baseline table (per-layer tokens before/after), the
-conflict ledger (both texts, both locations, proposed survivor), the cut list
-as a unified diff grouped by class, and the calibration ratio — instructions
-kept as gotchas versus instructions cut. The report is the artifact; the
-inline summary is a pointer to it.
+Return observed scope, conflicts and limits, inline for a bounded check. For
+authorized persistent maintenance, provide a reviewable diff with the relevant
+source/load identities, rationale, rollback path and regression conditions;
+reuse the task's existing record. Full audits may include a baseline table
+and conflict ledger. Token savings and cut ratios are costs, not proof of benefit.
 
-### 5. Apply class-by-class, operator-gated
+### 5. Apply within existing authority
 
-Order by value: CONFLICT → DUPLICATE → OVER-VERIFY → OBVIOUS →
-MODEL-HANDLES-THIS-NOW. One version-control commit per class, each cut batch
-carrying a one-line rationale. Never edit generated projections in place.
-An audit without version control has no rollback path and MUST stop at the
-report — apply is forbidden.
+Prioritize consequential conflicts, then justified duplication and simplification.
+Apply only authorized edits with a verified rollback path, grouping changes
+coherently rather than requiring one commit per class. Assessment-only requests
+end at findings. Preserve governance and consent protections; route source-owned
+changes upstream instead of editing generated projections in place. Existing
+maintenance authorization need not be requested again; a scope or authority gap
+holds only the affected edit.
 
 ### 6. Re-baseline gate (what makes the cut list falsifiable)
 
-Record a watch note: for the following sessions, any behavioral regression
-attributable to a cut line returns that line as **KEEP:GOTCHA citing the new
-incident**. A cut that survives the watch window is confirmed dead weight; a
-cut that comes back has minted a documented gotcha where an undocumented
-guardrail used to be — strictly better than before, either way.
+Record the removed instruction's trigger, expected behavior, regression check
+and actual exercised coverage. A regression attributable to a cut restores
+the protection as **KEEP:GOTCHA citing the new incident**. Report only `no
+regression observed under stated coverage`; unexercised recovery or safety
+conditions remain untested. A quiet period does not confirm dead weight.
+Do not promise a persistent observer unless one is actually commissioned.
 
 ## Extraction sub-mode
 
 For content that is *needed but oversized* in an always-loaded layer: move it
 to an on-demand artifact (a skill reference file, a command, a doc) and leave a
 pointer. Fidelity rules: the target exists before the source line is trimmed;
-pointers are verified to resolve after the move; the move is committed with
-before/after states. Extraction relocates cost; it does not remove conflict —
+pointers are verified to resolve and load when needed after the move; preserve
+recoverable before/after states under the authorized version-control workflow. Extraction relocates cost; it does not remove conflict —
 classify first, extract only what survives classification.
 
 ## Common rationalizations
 
 | Rationalization | Why it's wrong |
 |---|---|
-| "This rule has always been here, it must be load-bearing" | Age is not evidence. If no incident record backs it, it is MODEL-HANDLES-THIS-NOW until reading its origin proves otherwise. |
-| "I'll just audit the main instruction file" | Conflicts live BETWEEN layers. A single-file pass certifies the cross-layer conflicts unseen — that is the one failure this skill exists to prevent. |
+| "No recent incident means this protection is dead weight" | Neither age nor silence proves usefulness or redundancy. Read its origin and exercise its triggering condition; otherwise mark it untested. |
+| "I'll just audit the main instruction file" | Conflicts live BETWEEN layers. A scoped pass must name unobserved interactions; expand when those interactions bear on the finding. |
 | "More verification instructions can't hurt" | Vendor-reported evidence says they do on frontier models — over-verification burns tokens and degrades output — and duplicated demands are debt regardless. OVER-VERIFY is a cut class, not a virtue. |
-| "Deleting is risky, better to keep everything" | Cuts are version-controlled, watched, and reversible; permanent reconciliation cost on every future task is the unbounded risk. |
+| "Deleting is risky, better to keep everything" | Evaluate the protection and the proposed cut. Rollback reduces recovery cost, but does not prove a cut safe or a rare trigger exercised. |
 | "The 80% figure means we should cut 80%" | The magnitude is vendor-reported and estate-specific. The method is classify-and-watch, not a quota. |
 
 ## Handoff boundaries
 
-Ends at an applied (or report-only) audit with its re-baseline watch note
-recorded. Upstream: a model-generation upgrade or detected conflict triggers
+Ends at scoped observed findings and any authorized maintenance results, with
+coverage limits and regression conditions. Resume the original permitted task. Upstream: a model-generation upgrade or detected conflict triggers
 entry. Downstream: decision-ledger persists the cut decisions and revisit
-conditions; gauntlet takes any governance-adjacent cut before apply;
+conditions; the owner-designated review handles consequential proposed cuts;
 agent-interface-design owns fixing the tool-description side of any DUPLICATE
 whose surviving copy belongs in an interface.
 
 ## Evidence emission
 
-After each engagement, append one line to `runs/ledger.jsonl` under this skill:
+Only when authorized evaluation or an existing task evidence contract calls for it,
+append one line to `runs/ledger.jsonl` under this skill:
 
 ```json
 {"schema":"skill-run@1","ts":"<iso8601>","skill":"<this-skill>","decision":"fired|declined","discipline_engaged":"<name-or-null>","action_changed":true|false}
 ```
 
-The append is part of this procedure. It is not a call to an external calibration
-service and it is not a `decision-ledger` entry. Schema:
+Ordinary engagements require no separate run ledger. This optional telemetry
+records engagement, not successful application or task benefit. It is not an
+external calibration call or a `decision-ledger` entry. Schema:
 `plugins/epistemic-skills/contracts/skill-run-ledger.schema.json`.
 
 ## Local overlay

@@ -1,0 +1,467 @@
+[
+  {
+    "id": "codepoints-field",
+    "profile_version": "synthetic-1",
+    "events": [
+      {
+        "op": "inspect",
+        "state": "empty"
+      },
+      {
+        "op": "submit",
+        "payload": {
+          "objective": "A🚀"
+        },
+        "result": "accepted"
+      },
+      {
+        "op": "readback",
+        "identity": "synthetic-goal",
+        "state": "active",
+        "stored": {
+          "objective": "A🚀"
+        }
+      }
+    ],
+    "result": "active",
+    "verification": "readback"
+  },
+  {
+    "id": "codepoints-wrapper",
+    "profile_version": "synthetic-1",
+    "events": [
+      {
+        "op": "inspect",
+        "state": "empty"
+      },
+      {
+        "op": "submit",
+        "payload": {
+          "objective": "A🚀"
+        },
+        "result": "accepted"
+      },
+      {
+        "op": "readback",
+        "identity": "synthetic-goal",
+        "state": "active",
+        "stored": {
+          "objective": "A🚀"
+        }
+      }
+    ],
+    "result": "active",
+    "verification": "readback"
+  },
+  {
+    "id": "utf16-field",
+    "profile_version": "synthetic-1",
+    "events": [
+      {
+        "op": "inspect",
+        "state": "empty"
+      },
+      {
+        "op": "submit",
+        "payload": {
+          "objective": "A🚀"
+        },
+        "result": "accepted"
+      },
+      {
+        "op": "readback",
+        "identity": "synthetic-goal",
+        "state": "active",
+        "stored": {
+          "objective": "A🚀"
+        }
+      }
+    ],
+    "result": "active",
+    "verification": "readback"
+  },
+  {
+    "id": "utf16-wrapper",
+    "profile_version": "synthetic-1",
+    "events": [
+      {
+        "op": "inspect",
+        "state": "empty"
+      },
+      {
+        "op": "submit",
+        "payload": {
+          "objective": "A🚀"
+        },
+        "result": "accepted"
+      },
+      {
+        "op": "readback",
+        "identity": "synthetic-goal",
+        "state": "active",
+        "stored": {
+          "objective": "A🚀"
+        }
+      }
+    ],
+    "result": "active",
+    "verification": "readback"
+  },
+  {
+    "id": "utf8-field",
+    "profile_version": "synthetic-1",
+    "events": [
+      {
+        "op": "inspect",
+        "state": "empty"
+      },
+      {
+        "op": "submit",
+        "payload": {
+          "objective": "A🚀"
+        },
+        "result": "accepted"
+      },
+      {
+        "op": "readback",
+        "identity": "synthetic-goal",
+        "state": "active",
+        "stored": {
+          "objective": "A🚀"
+        }
+      }
+    ],
+    "result": "active",
+    "verification": "readback"
+  },
+  {
+    "id": "utf8-wrapper",
+    "profile_version": "synthetic-1",
+    "events": [
+      {
+        "op": "inspect",
+        "state": "empty"
+      },
+      {
+        "op": "submit",
+        "payload": {
+          "objective": "A🚀"
+        },
+        "result": "accepted"
+      },
+      {
+        "op": "readback",
+        "identity": "synthetic-goal",
+        "state": "active",
+        "stored": {
+          "objective": "A🚀"
+        }
+      }
+    ],
+    "result": "active",
+    "verification": "readback"
+  },
+  {
+    "id": "separate-completion",
+    "profile_version": "synthetic-1",
+    "events": [
+      {
+        "op": "inspect",
+        "state": "empty"
+      },
+      {
+        "op": "submit",
+        "payload": {
+          "objective": "Repair X; preserve Y; inspect act verify; stop on scope change",
+          "completion": "Reproduce failure, verify repair and source revision"
+        },
+        "result": "accepted"
+      },
+      {
+        "op": "readback",
+        "identity": "synthetic-goal",
+        "state": "active",
+        "stored": {
+          "objective": "Repair X; preserve Y; inspect act verify; stop on scope change",
+          "completion": "Reproduce failure, verify repair and source revision"
+        }
+      }
+    ],
+    "result": "active",
+    "verification": "readback"
+  },
+  {
+    "id": "draft-only",
+    "profile_version": "synthetic-1",
+    "events": [],
+    "result": "drafted",
+    "verification": "none"
+  },
+  {
+    "id": "existing-active",
+    "profile_version": "synthetic-1",
+    "events": [
+      {
+        "op": "inspect",
+        "state": "active",
+        "identity": "existing"
+      }
+    ],
+    "result": "existing",
+    "verification": "state"
+  },
+  {
+    "id": "inaccessible-reference",
+    "profile_version": "synthetic-1",
+    "events": [
+      {
+        "op": "inspect",
+        "state": "empty"
+      }
+    ],
+    "result": "unavailable",
+    "verification": "none"
+  },
+  {
+    "id": "resume-reference-inaccessible",
+    "profile_version": "synthetic-1",
+    "events": [
+      {
+        "op": "inspect",
+        "state": "empty"
+      }
+    ],
+    "result": "unavailable",
+    "verification": "none"
+  },
+  {
+    "id": "unsupported-persistence",
+    "profile_version": "synthetic-1",
+    "events": [
+      {
+        "op": "inspect",
+        "state": "empty"
+      }
+    ],
+    "result": "unavailable",
+    "verification": "none"
+  },
+  {
+    "id": "validation-rejection",
+    "profile_version": "synthetic-1",
+    "events": [
+      {
+        "op": "inspect",
+        "state": "empty"
+      },
+      {
+        "op": "submit",
+        "payload": {
+          "objective": "Repair X; proof: regression and revision; preserve Y; inspect act verify; stop on scope change",
+          "obsolete_surface_option": true
+        },
+        "result": "validation-rejected"
+      },
+      {
+        "op": "submit",
+        "payload": {
+          "objective": "Repair X; proof: regression and revision; preserve Y; inspect act verify; stop on scope change"
+        },
+        "result": "accepted"
+      },
+      {
+        "op": "readback",
+        "identity": "synthetic-goal",
+        "state": "active",
+        "stored": {
+          "objective": "Repair X; proof: regression and revision; preserve Y; inspect act verify; stop on scope change"
+        }
+      }
+    ],
+    "result": "active",
+    "verification": "readback"
+  },
+  {
+    "id": "ambiguous-submission",
+    "profile_version": "synthetic-1",
+    "events": [
+      {
+        "op": "inspect",
+        "state": "empty"
+      },
+      {
+        "op": "submit",
+        "payload": {
+          "objective": "Repair X; proof: regression and revision; preserve Y; inspect act verify; stop on scope change"
+        },
+        "result": "ambiguous"
+      },
+      {
+        "op": "readback",
+        "identity": "synthetic-goal",
+        "state": "active",
+        "stored": {
+          "objective": "Repair X; proof: regression and revision; preserve Y; inspect act verify; stop on scope change"
+        }
+      }
+    ],
+    "result": "active",
+    "verification": "readback"
+  },
+  {
+    "id": "stored-truncation",
+    "profile_version": "synthetic-1",
+    "events": [
+      {
+        "op": "inspect",
+        "state": "empty"
+      },
+      {
+        "op": "submit",
+        "payload": {
+          "objective": "Repair X; proof: regression and revision; preserve Y; inspect act verify; stop on scope change"
+        },
+        "result": "accepted"
+      },
+      {
+        "op": "readback",
+        "identity": "synthetic-goal",
+        "state": "active",
+        "stored": {
+          "objective": "Repair X"
+        }
+      }
+    ],
+    "result": "damaged",
+    "verification": "readback"
+  },
+  {
+    "id": "acknowledgment-only",
+    "profile_version": "synthetic-1",
+    "events": [
+      {
+        "op": "inspect",
+        "state": "empty"
+      },
+      {
+        "op": "submit",
+        "payload": {
+          "objective": "Repair X; proof: regression and revision; preserve Y; inspect act verify; stop on scope change"
+        },
+        "result": "accepted"
+      }
+    ],
+    "result": "acknowledged",
+    "verification": "acknowledgment"
+  },
+  {
+    "id": "stale-profile",
+    "profile_version": "synthetic-1",
+    "events": [
+      {
+        "op": "inspect",
+        "state": "empty"
+      },
+      {
+        "op": "submit",
+        "payload": {
+          "objective": "Repair X; proof: regression and revision; preserve Y; inspect act verify; stop on scope change"
+        },
+        "result": "accepted"
+      },
+      {
+        "op": "readback",
+        "identity": "synthetic-goal",
+        "state": "active",
+        "stored": {
+          "objective": "Repair X; proof: regression and revision; preserve Y; inspect act verify; stop on scope change"
+        }
+      }
+    ],
+    "result": "active",
+    "verification": "readback"
+  },
+  {
+    "id": "omitted-optional-budget",
+    "profile_version": "synthetic-1",
+    "events": [
+      {
+        "op": "inspect",
+        "state": "empty"
+      },
+      {
+        "op": "submit",
+        "payload": {
+          "objective": "Repair X; proof: regression and revision; preserve Y; inspect act verify; stop on scope change"
+        },
+        "result": "accepted"
+      },
+      {
+        "op": "readback",
+        "identity": "synthetic-goal",
+        "state": "active",
+        "stored": {
+          "objective": "Repair X; proof: regression and revision; preserve Y; inspect act verify; stop on scope change"
+        }
+      }
+    ],
+    "result": "active",
+    "verification": "readback"
+  },
+  {
+    "id": "escaped-prefix-wrapper",
+    "profile_version": "synthetic-1",
+    "events": [
+      {
+        "op": "inspect",
+        "state": "empty"
+      },
+      {
+        "op": "submit",
+        "payload": {
+          "objective": "A🚀"
+        },
+        "result": "accepted"
+      },
+      {
+        "op": "readback",
+        "identity": "synthetic-goal",
+        "state": "active",
+        "stored": {
+          "objective": "A🚀"
+        }
+      }
+    ],
+    "result": "active",
+    "verification": "readback"
+  },
+  {
+    "id": "documented-newline-normalization",
+    "profile_version": "synthetic-1",
+    "events": [
+      {
+        "op": "inspect",
+        "state": "empty"
+      },
+      {
+        "op": "submit",
+        "payload": {
+          "objective": "Repair X; preserve Y; inspect act verify; stop on scope change\r\nScope remains X",
+          "completion": "Reproduce failure, verify repair and source revision"
+        },
+        "result": "accepted"
+      },
+      {
+        "op": "readback",
+        "identity": "synthetic-goal",
+        "state": "active",
+        "stored": {
+          "objective": "Repair X; preserve Y; inspect act verify; stop on scope change\nScope remains X",
+          "completion": "Reproduce failure, verify repair and source revision"
+        }
+      }
+    ],
+    "result": "active",
+    "verification": "readback"
+  }
+]

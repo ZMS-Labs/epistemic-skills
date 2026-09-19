@@ -74,9 +74,9 @@ RETIRED = {
     "continuity-verify": "decision-ledger (resume mode)",
     "agent-interface-design": "reference/craft/ doctrine (no longer routed)",
     "intent-traced-merge": "reference/craft/ doctrine (no longer routed)",
-    # v5.0.0 — the loop release. Both seats deleted; metacognate replaces them.
-    "using-epistemic-skills": "metacognate (the sole entry point)",
-    "helix": "metacognate (Tier 2 pairing judgment, not a pair table)",
+    # v5.0.0 implementations deleted; v7 documents one usage-entry alias.
+    "using-epistemic-skills": "epistemic (compatibility alias only; no old directory)",
+    "helix": "current method applicability and task-owner continuation",
 }
 
 # Installer-facing surfaces: what a user reads or a package manager consumes when
@@ -136,6 +136,23 @@ def frontmatter_description(text: str) -> str:
     return match.group(1) if match else ""
 
 
+def documented_alias(line: str, name: str, live: set[str]) -> bool:
+    """Allow an explicit prose mapping, never a second installed skill/path."""
+    return (
+        name == "using-epistemic-skills"
+        and "epistemic" in live
+        and re.search(
+            r"`using-epistemic-skills` is a compatibility alias for `epistemic`",
+            line,
+        ) is not None
+    )
+
+
+def instruction_prose(line: str) -> str:
+    """A local heading anchor is navigation, not a skill invocation."""
+    return re.sub(r"\[([^\]]+)\]\(#[^)]+\)", r"\1", line)
+
+
 def check_firing_surfaces(defects: list[str]) -> None:
     for skill_md in sorted(SKILLS_DIR.glob("*/SKILL.md")):
         description = frontmatter_description(skill_md.read_text(encoding="utf-8"))
@@ -190,9 +207,12 @@ def check_firing_surfaces(defects: list[str]) -> None:
         except OSError:
             continue
         for number, line in enumerate(lines, 1):
+            line = instruction_prose(line)
             if historical.search(line):
                 continue
             for dead, survivor in RETIRED.items():
+                if documented_alias(line, dead, live_skills()):
+                    continue
                 if re.search(rf"(?<![a-z0-9-]){re.escape(dead)}(?![a-z0-9-])", line, re.I):
                     defects.append(
                         f"{name}:{number}: instructs an agent to use retired skill "
@@ -204,7 +224,7 @@ def check_firing_surfaces(defects: list[str]) -> None:
                 if not historical.search(line):
                     defects.append(
                         f"{name}:{number}: live routing prose names the deleted router seat "
-                        "— use metacognate / entry point wording"
+                        "— use epistemic usage-entry wording"
                     )
 
 
@@ -306,6 +326,25 @@ def check_bare_retired_paths(defects: list[str], root: Path = REPO) -> None:
 def self_test() -> int:
     """Planted RED controls for rule 3 (the tree-independent rule)."""
     failures = 0
+    for line, present in [
+        ("[Using Epistemic Skills](#using-epistemic-skills)", False),
+        ("[using-epistemic-skills](#usage)", True),
+        ("Invoke `using-epistemic-skills`.", True),
+    ]:
+        if ("using-epistemic-skills" in instruction_prose(line)) != present:
+            failures += 1
+            print(f"[FAIL] local navigation control: {line}")
+    alias = "`using-epistemic-skills` is a compatibility alias for `epistemic`."
+    alias_cases = [
+        (alias, {"epistemic"}, True),
+        (alias, {"metacognate"}, False),
+        ("Start with the `using-epistemic-skills` skill.", {"epistemic"}, False),
+        ("`using-epistemic-skills` is a second implementation.", {"epistemic"}, False),
+    ]
+    for line, live, expected in alias_cases:
+        if documented_alias(line, "using-epistemic-skills", live) != expected:
+            failures += 1
+            print(f"[FAIL] alias mapping guard: {line}")
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
         (root / "plugins" / "epistemic-skills").mkdir(parents=True)

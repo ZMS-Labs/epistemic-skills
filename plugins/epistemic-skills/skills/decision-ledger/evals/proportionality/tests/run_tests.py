@@ -36,6 +36,9 @@ def main() -> int:
     duplicate = scorer.score(fixtures, json.loads((ROOT / "examples" / "duplicate-store.json").read_text(encoding="utf-8")))
     require(any("duplicate" in failure.lower() for failure in duplicate["failures"]), duplicate["failures"])
 
+    from continuity_checks import check
+    check(scorer, ROOT)
+
     print("Decision Ledger proportionality: PASS")
     return 0
 

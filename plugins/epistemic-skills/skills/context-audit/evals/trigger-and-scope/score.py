@@ -8,7 +8,7 @@ import json
 from collections import Counter
 from pathlib import Path
 
-ACTIONS = {"full-audit", "report-only-audit", "no-fire"}
+ACTIONS = {"full-audit", "report-only-audit", "scoped-audit", "no-fire"}
 CUT_CLASSES = {"CONFLICT", "DUPLICATE", "OBVIOUS", "MODEL-HANDLES-THIS-NOW", "OVER-VERIFY"}
 KEEP_CLASSES = {
     "KEEP:GOTCHA",
@@ -62,6 +62,25 @@ def score(fixtures: list[dict], responses: list[dict]) -> dict:
         if expected == "no-fire":
             if any(row.get(field) for field in AUDIT_ARTIFACT_FIELDS):
                 failures.append(f"{fid}: no-fire must be silent — no inventory, no cut list, no report artifact")
+        elif expected == "scoped-audit":
+            if row.get("continued_permitted_work") is not True:
+                failures.append(f"{fid}: continue independent permitted work")
+            if fixture.get("stale_copy"):
+                if row.get("source_loaded") is not False or row.get("load_mismatch_reported") is not True:
+                    failures.append(f"{fid}: source correctness does not prove loaded copy correctness")
+                if row.get("customizations_preserved") is not True:
+                    failures.append(f"{fid}: preserve installed customizations")
+            if fixture.get("precedence_conflict"):
+                if row.get("precedence_resolved") is not True:
+                    failures.append(f"{fid}: resolve operative precedence")
+                if not fixture.get("maintenance_authorized") and row.get("persistent_edit") is not False:
+                    failures.append(f"{fid}: precedence resolution does not authorize persistent edits")
+            if fixture.get("assembly_available") is False:
+                if row.get("assembly_verified") is not False or not row.get("coverage_limits"):
+                    failures.append(f"{fid}: unavailable assembled context is an explicit coverage limit")
+            if fixture.get("rare_protection"):
+                if row.get("regression_status") != "untested" or row.get("trigger_exercised") is not False or not row.get("coverage_limits"):
+                    failures.append(f"{fid}: a quiet unexercised recovery path remains untested")
         elif expected == "report-only-audit":
             _audit_common(fid, row, failures)
             if row.get("applied") or row.get("cuts_applied"):
