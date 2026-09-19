@@ -33,10 +33,10 @@ The README is the fast path into the project. The [GitHub Wiki](https://github.c
 - [Choose your path](#choose-your-path)
 - [Five-minute start](#five-minute-start)
 - [Routine work first](#routine-work-first)
-- [metacognate: the single entry point](#metacognate-the-single-entry-point)
+- [Using Epistemic Skills](#using-epistemic-skills)
 - [Choose by task](#choose-by-task)
 - [The epistemic arc](#the-epistemic-arc)
-- [Fifteen-skill catalog](#fifteen-skill-catalog)
+- [Sixteen-skill catalog](#sixteen-skill-catalog)
 - [Installation and compatibility](#installation-and-compatibility)
 - [Architecture and source policy](#architecture-and-source-policy)
 - [Coordination with epistemic-calibration](#coordination-with-epistemic-calibration)
@@ -48,7 +48,7 @@ The README is the fast path into the project. The [GitHub Wiki](https://github.c
 
 Most agent-skill collections organize **how work proceeds**: brainstorming, planning, implementation, debugging, review, and verification. epistemic-skills sits beneath that workflow layer and asks a different question: **what would make the target, decision, evidence, handoff, or acceptance claim trustworthy enough to bear load?**
 
-The package provides **fifteen** skills: one entry point, **fourteen** disciplines. Pairing them with a workflow-skill layer such as [superpowers](https://github.com/obra/superpowers) is a judgment the entry point makes at the moment it is needed, not a separate seat. Each method has a positive trigger, an output contract, and a stopping boundary.
+The package provides **sixteen** skills: one entry point, **fifteen** disciplines. The `epistemic` usage entry teaches discovery, actual method loading, visible use and continuation. Substantive methods can compose with a workflow package such as [superpowers](https://github.com/obra/superpowers) when applicable. Each method has a positive trigger, an output contract, and a stopping boundary.
 
 It is not:
 
@@ -83,7 +83,7 @@ is checked for inventory, version, and link consistency by
 
 1. **Install one immutable copy.** Choose the native path for your harness under [Installation and compatibility](#installation-and-compatibility). Use the generic Agent Skills path only when no native plugin or extension exists.
 2. **Reload the harness or start a fresh task.** Trigger discovery and role registries are commonly session-bound.
-3. **Choose the entry point.** There is one: `metacognate`. It is the only skill you invoke by name; every other member fires on its own description. (One carve-out: `manifest`, the mission-custody seat, may also be invoked directly — on `manifest this` or `/manifest` — for mission lifecycle acts.) It applies the routine gate first, and declining is its most common correct outcome.
+3. **Use the guidance for your installed version.** This development tree adds `epistemic` (Using Epistemic Skills); any substantive method is directly invocable. The released v6.0.0 package still has its original entry behavior.
 4. **Verify the inventory and source.** v6.0.0 ships fifteen skills. Check that the host loads the expected descriptions from one installation.
 5. **Let routine work leave.** A local, reversible, directly checkable, non-precedential task should finish with its bounded check and no process-only artifact.
 
@@ -110,42 +110,41 @@ Routine work produces no entry-point record, blindspot report, formal record, le
 
 See the [routine-work guide](https://github.com/ZMS-Labs/epistemic-skills/wiki/Routine-Work-and-Proportionality) and the [released normative reference](https://github.com/ZMS-Labs/epistemic-skills/blob/v6.0.0/plugins/epistemic-skills/skills/metacognate/reference/routine-fast-path.md).
 
-## metacognate: the single entry point
+## Using Epistemic Skills
 
-`metacognate` is the one skill you invoke by name. Every other member fires on its
-own `description`.
+The development tree's `epistemic` entry teaches how to discover, load and apply
+relevant methods. Every substantive skill remains directly invocable.
+`using-epistemic-skills` is a compatibility alias for `epistemic`; native alias
+invocation depends on verified host support. Otherwise use the canonical name.
 
 ```mermaid
 flowchart LR
-    W["Workflow-skill layer<br/>how work gets done"] <--> M["metacognate<br/>entry point and fourteen disciplines"]
+    E["epistemic: usage guidance"] --> A["Task-owning agent"]
+    D["Current skill descriptions"] --> A
+    A --> M["Relevant substantive methods"]
+    M --> A
+    A --> O["Authorized outcome and verification"]
 ```
 
-- **It carries a procedure, never an inventory.** No member list appears in it, and
-  none may be added. A seat that enumerates its members becomes a hand-maintained
-  projection of a directory, and every such projection here has drifted — one
-  shipped a description naming two skills that no longer existed.
-- **Tier 1 is iron**, scoped strictly to the irreversible: consent before an
-  irreversible act, an oracle adequate to its claim, no actor certifying its own
-  acceptance, and no hard gate overridable from the other side. These bind both
-  strands, including a workflow layer's own gates.
-- **Tier 2 is judgment**: what would have to be true for this to be right, and
-  which of those can I not currently answer? The unanswerable one names the work.
-  If all are answerable, engage nothing — **silence is a success state**.
-- **Pairing is a judgment at a moment, not a table.** Either strand may interrupt
-  the other, and control comes back to the point of interruption. That is why the
-  former `helix` pair table was replaced rather than renamed: a table maps stages,
-  but it cannot hand control back.
+Metacognate examines assumptions, evidence, confidence, success criteria and the
+approach itself. It can return a correction or confirm the current approach;
+it is no longer the exclusive entry or a mandatory dispatcher.
 
-*Replaced `using-epistemic-skills` and `helix` in v5.0.0. Both seats were deleted;
-their evaluation corpora were preserved at package level. See
-`docs/superpowers/specs/2026-08-06-epistemic-skills-v5-design.md`.*
+When a skill is actually used, briefly acknowledge its contribution. Reading or
+announcing a skill alone does not establish application. Reuse adequate evidence,
+preserve current user decisions and continue the authorized task after a method
+returns. Routine work does not require a process-only record.
+
+These are development changes for v7, not claims about the immutable v6.0.0
+installation above. Startup delivery and comparative benefit require separate
+verification. The historical Helix coordinator and pair table remain retired.
 
 ## Choose by task
 
 | Task shape | Entry point | Expected result |
 |---|---|---|
 | Local, reversible, directly checkable, non-precedential change | Ordinary workflow | Change plus bounded check; no epistemic artifact |
-| Non-routine task, or the approach itself is uncertain | `metacognate` | The unanswerable condition, the discipline it names, and where to return; silent if the task clears the routine gate |
+| Assumptions, evidence, confidence or the approach need examination | `metacognate` | Supported conclusion, correction or uncertainty that informs the next action |
 | Need the state of a running system, or a health claim is about to bear load | `health` | Per-subject `OK`/`WARN`/`CRITICAL`/`UNKNOWN`; `UNKNOWN` never aggregates into `OK` |
 | A specific thing is broken and the cause is not established | `triage` | `CAUSE`/`NARROWED`/`UNKNOWN`/`NOT-BROKEN` with the discriminating observation |
 | A change is believed applied and something depends on it | `did-it-land` | `LANDED`/`REVERTED`/`UNVERIFIED` from a runtime observation, never a source read |
@@ -174,7 +173,7 @@ flowchart LR
     Q -- no --> R{"Routine?<br/>all four tests"}
     CV --> R
     R -- yes --> B["Change + bounded check<br/>record-free exit"]
-    R -- no --> U["metacognate"]
+    R -- no --> U["Task owner applies relevant methods"]
 
     U -. "mismatch / coupling / fan-out" .-> BP["recon<br/>brief / initiative / candidate"]
     BP -. "material design fork" .-> FR["resolve<br/>derivation"]
@@ -200,15 +199,16 @@ remains awake between sessions.
 
 `resolve` (literature), `decision-ledger`, `outsource`, and `open-questions` are cross-cutting. Resume re-anchoring is `decision-ledger` resume mode (pre-arc). `context-audit` is maintenance-triggered outside the arc. Craft doctrine (`intent-traced-merge`, `agent-interface-design`) is read on demand — not a firing skill. Most tasks clear the routine gate or fire one discipline. See [The Epistemic Arc](https://github.com/ZMS-Labs/epistemic-skills/wiki/The-Epistemic-Arc) for handoff details and [Core Concepts](https://github.com/ZMS-Labs/epistemic-skills/wiki/Core-Concepts) for the five epistemic-flexibility controls.
 
-## Fifteen-skill catalog
+## Sixteen-skill catalog
 
-The package contains one entry point and fourteen disciplines. Each row links to
+The package contains one entry point and fifteen disciplines. Each row links to
 its canonical `SKILL.md`. Read the same path at a release tag for the released
 version of that contract.
 
 | Skill | Positive trigger | Purpose | Output |
 |---|---|---|---|
-| [`metacognate`](plugins/epistemic-skills/skills/metacognate/SKILL.md) | The approach is uncertain, a claim is about to bear load, an observation contradicts a tool, or work resumes from a summary | Decide how much process this deserves — usually none — and hand control back | The unanswerable condition and the discipline it names; silence when the routine gate clears |
+| [`epistemic`](plugins/epistemic-skills/skills/epistemic/SKILL.md) | Starting or resuming without suite usage guidance; explicit usage request | Discover, load, apply and visibly acknowledge relevant methods | Guidance and continuation; no separate planner or task ledger |
+| [`metacognate`](plugins/epistemic-skills/skills/metacognate/SKILL.md) | Assumptions, evidence, confidence, success criteria or approach need examination | Examine the reasoning and challenge its decisive link | Supported conclusion, correction or material uncertainty; return to the task |
 | [`manifest`](plugins/epistemic-skills/skills/manifest/SKILL.md) | Work is mission-shaped — multi-session, consequential, cross-agent, or interruption-expensive — or the explicit phrase `manifest this` | Open, resume, advance, verify, or close a custodied mission: recorded authority, hash-chained checkpoints, drift re-anchoring, acceptance by a distinct acceptor | The mission's durable state under `missions/<id>/` (mission-custody@1 records), never the chat |
 | [`health`](plugins/epistemic-skills/skills/health/SKILL.md) | The state of a running system is wanted, or a health claim is about to bear load | Probe declared subjects against declared bounds, and say what could not be reached | Per-subject state; a roll-up carrying any `UNKNOWN` is at best `UNKNOWN` |
 | [`triage`](plugins/epistemic-skills/skills/triage/SKILL.md) | A specific subject is broken or degraded and the cause is not established | Eliminate candidates by observation, cheapest discriminator first, and stop at the cause | A verdict with the observation that ruled the alternatives out; the remedy is a separate act |
@@ -348,7 +348,7 @@ One canonical tree contains all method files; thin harness manifests expose that
 ```text
 epistemic-skills/
 ├── plugins/epistemic-skills/
-│   ├── skills/<name>/SKILL.md           canonical skill cores (fifteen)
+│   ├── skills/<name>/SKILL.md           canonical skill cores (sixteen)
 │   ├── agents/                          five canonical Gauntlet roles
 │   ├── contracts/                       schemas + executable verifiers:
 │   │   ├── handoff-receipt / skill-run-ledger / calibration schemas

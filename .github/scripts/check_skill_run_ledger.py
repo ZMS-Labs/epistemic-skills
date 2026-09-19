@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Intrinsic skill-run ledger contract check (v5 design D7; es#104 section 2).
 
-Every packaged skill must carry the intrinsic evidence-emission step in its
-own SKILL.md and ship a valid `runs/ledger.example.jsonl` exemplar. The one
+Every substantive skill must document the applicable evidence-emission format in its
+own SKILL.md and ship a valid `runs/ledger.example.jsonl` exemplar. The usage guide `epistemic` requires no run ledger. The other
 exception is `gauntlet`, whose richer Step-9 mechanism (finalize_run.py run
 record + derived ledger-v2 line) predates and supersedes the generic block;
 its SKILL.md must still name its own `runs/ledger.jsonl`.
@@ -98,7 +98,7 @@ def validate_line(schema: dict, raw: str, skill: str, where: str) -> list[str]:
 
 def check_tree(skills_root: Path, schema: dict) -> list[str]:
     problems: list[str] = []
-    skill_dirs = sorted(p for p in skills_root.iterdir() if p.is_dir())
+    skill_dirs = sorted(p.parent for p in skills_root.glob("*/SKILL.md"))
     if not skill_dirs:
         return [f"NO_SKILLS_FOUND: {skills_root}"]
     for skill_dir in skill_dirs:
@@ -107,6 +107,8 @@ def check_tree(skills_root: Path, schema: dict) -> list[str]:
         if not skill_md.is_file():
             problems.append(f"SKILL_MD_MISSING: {skill}")
             continue
+        if skill == "epistemic":
+            continue  # Usage guidance creates no mandatory process artifact.
         text = skill_md.read_text(encoding="utf-8")
         if skill == "gauntlet":
             if GAUNTLET_TOKEN not in text:
@@ -216,10 +218,10 @@ def main() -> int:
         for p in problems:
             print(f"skill-run ledger violation: {p}", file=sys.stderr)
         return 1
-    count = len([p for p in SKILLS_ROOT.iterdir() if p.is_dir()])
+    count = len(list(SKILLS_ROOT.glob("*/SKILL.md")))
     print(
-        f"skill-run ledger contract ok: {count} skills carry the intrinsic "
-        f"emission step (gauntlet via its Step-9 mechanism) and valid example lines"
+        f"skill-run ledger contract ok: {count} entries checked; substantive "
+        f"methods carry evidence formats and examples (usage guide exempt)"
     )
     return 0
 

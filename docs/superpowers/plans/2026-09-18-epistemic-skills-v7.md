@@ -10,7 +10,7 @@
 
 **Spec:** [Consolidated v7 design](../specs/2026-09-18-epistemic-skills-v7-design.md). Read it with the [per-skill assessment](../../audits/2026-09-18-v7-skill-assessment.md) and [member inventory](../../audits/2026-09-18-v7-lens-members.json).
 
-**Execution state:** NOT STARTED. This plan consolidates accepted requirements. File layout and pilot sizing below are conservative engineering defaults, not tested benefits. Checkboxes record implementation work, not design acceptance.
+**Execution state:** IN PROGRESS on `codex/v7-implementation`. This plan consolidates accepted requirements. File layout and pilot sizing below are conservative engineering defaults, not tested benefits. Checkboxes record implementation work, not design acceptance.
 
 ## Global constraints
 
@@ -49,7 +49,7 @@ The recommended first implementation slice is T1. Its done condition is a usable
 
 **Interface:** Current discovery descriptions identify applicability. The usage body establishes rules for reading and applying those methods; it produces no routing record or execution engine. `compare(packaged: dict[str, str], loaded: dict[str, str]) -> list[str]` retains its existing checker interface. Historical aliases resolve to one canonical identity only on verified host paths.
 
-- [ ] Add a failing regression to the existing loaded-description self-test, using the following cases. A one-word fragment must fail; intact and harmlessly wrapped text must pass under documented normalization.
+- [x] Add a failing regression to the existing loaded-description self-test, using the following cases. A one-word fragment must fail; intact and harmlessly wrapped text must pass under documented normalization.
 
 ```python
 expected = {"sample": "Use when investigating a reproducible failure."}
@@ -59,12 +59,12 @@ assert compare(expected, expected) == []
 assert compare(expected, {"sample": "Use when investigating a\nreproducible failure."}) == []
 ```
 
-- [ ] Replace substring acceptance with comparison after narrowly justified presentation normalization. Preserve words, punctuation and applicability/exclusion clauses; do not normalize away semantic differences. Keep missing/empty descriptions as failures. Include Unicode text and duplicate conflicting capture identities in the changed parser checks where they affect truthful comparison.
-- [ ] Author the usage skill from the accepted guide: discovery, current method loading, applicability, visible use, provider preference/fallback and return to the task owner. Explicit invocation is honored; routine response handling is not a new planner or checklist. Include canonical metadata for the new entry.
-- [ ] Refine metacognate's substantive method and remove sole-entry wording, mandatory dispatch and blanket policy conflicting with the owner's release-review decision. Preserve meaningful task-specific evidence and authorization requirements.
-- [ ] Update source inventory arithmetic so the usage entry is the non-discipline and metacognate is a substantive method. In `sync_skill_surfaces.py`, the intended final classification is `NON_DISCIPLINES = {"epistemic"}`. Preserve dynamically computed counts as Perspective is added in T4. Generate existing projections with the existing `--write` interface; do not hand-edit generated membership.
-- [ ] Adjust retired-name checks to distinguish the documented compatibility alias from a claimed second live implementation. Keep historical producer IDs/version validation intact.
-- [ ] Run the commands below, inspect the actual diff, and commit this coherent bundle. Text/source conformance does not establish natural activation; that is exercised in T7/T9.
+- [x] Replace substring acceptance with comparison after narrowly justified presentation normalization. Preserve words, punctuation and applicability/exclusion clauses; do not normalize away semantic differences. Keep missing/empty descriptions as failures. Include Unicode text and duplicate conflicting capture identities in the changed parser checks where they affect truthful comparison.
+- [x] Author the usage skill from the accepted guide: discovery, current method loading, applicability, visible use, provider preference/fallback and return to the task owner. Explicit invocation is honored; routine response handling is not a new planner or checklist. Include canonical metadata for the new entry.
+- [x] Refine metacognate's substantive method and remove sole-entry wording, mandatory dispatch and blanket policy conflicting with the owner's release-review decision. Preserve meaningful task-specific evidence and authorization requirements.
+- [x] Update source inventory arithmetic so the usage entry is the non-discipline and metacognate is a substantive method. In `sync_skill_surfaces.py`, the intended final classification is `NON_DISCIPLINES = {"epistemic"}`. Preserve dynamically computed counts as Perspective is added in T4. Generate existing projections with the existing `--write` interface; do not hand-edit generated membership.
+- [x] Adjust retired-name checks to distinguish the documented compatibility alias from a claimed second live implementation. Keep historical producer IDs/version validation intact.
+- [x] Run the commands below, inspect the actual diff, and commit this coherent bundle. Text/source conformance does not establish natural activation; that is exercised in T7/T9.
 
 ```text
 python .github/scripts/check_loaded_descriptions.py --self-test
@@ -78,6 +78,16 @@ python plugins/epistemic-skills/contracts/epistemic-events/test_epistemic_events
 ```
 
 **Done:** The usage entry is directly readable/invocable, metacognate has a distinct contract, membership agrees with actual files, and a damaged description cannot pass as intact. No host startup coverage is claimed yet.
+
+Implementation receipt (T1): the new checker regression failed on truncated and
+conflicting captures before repair, then passed. Loaded-description, alias,
+generator, inventory, event (17 tests), sentinel and ledger checks passed; source
+descriptions total 8,561 bytes against the unchanged 8,636-byte ceiling. Current
+entry documentation and generated projections agree on 16 entries pending
+Perspective. The usage guide is exempt from mandatory run ledgers; canonical
+membership uses SKILL.md files so retired cache directories cannot invent skills.
+Public-content and diff checks passed. This is source/contract evidence only;
+host delivery and comparative application remain T7/T9 work.
 
 ## T2: debugging and operational methods
 

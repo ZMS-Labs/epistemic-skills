@@ -217,7 +217,7 @@ def check_inventory(
         # Real telemetry (ledger.jsonl) is git-ignored runtime state; the repo
         # ships only the synthetic example. Either satisfies the intrinsic-ledger
         # requirement.
-        if not (path_exists(ledger_path) or path_exists(example_path)):
+        if skill != "epistemic" and not (path_exists(ledger_path) or path_exists(example_path)):
             violations.append(
                 f"MISSING_RUN_LEDGER: packaged skill {skill!r} lacks intrinsic "
                 f"{ledger_path} or {example_path}"

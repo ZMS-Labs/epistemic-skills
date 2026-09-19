@@ -59,9 +59,8 @@ FRONTMATTER = re.compile(r"\A---\r?\n(.*?)\r?\n---", re.S)
 GENERATED_BEGIN = "# BEGIN GENERATED SKILL INVENTORY"
 GENERATED_END = "# END GENERATED SKILL INVENTORY"
 
-# The entry point is not a discipline. Was {router, helix}; both seats were
-# deleted 2026-08-06 and replaced by metacognate, so the arithmetic is n-1.
-NON_DISCIPLINES = {"metacognate"}
+# The usage entry is not a substantive method. Metacognate is a discipline.
+NON_DISCIPLINES = {"epistemic"}
 
 WORDS = {
     9: "nine", 10: "ten",
@@ -735,7 +734,7 @@ def main(argv: list[str] | None = None) -> int:
     # single largest source of the enumeration tax — adding any skill forced an
     # edit to another skill's firing surface — and it is exactly the defect that
     # shipped in v4.0.0, where the router's description named two skills that no
-    # longer existed. metacognate replaces the seat and enumerates nothing, so
+    # longer existed. the usage entry enumerates nothing, so
     # there is no list to keep in sync and this check has nothing left to check.
 
     # Counts everywhere.
