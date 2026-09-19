@@ -45,12 +45,12 @@ historical v6 handbook and release-review outcomes retain their original meaning
 
 | Gate / evidence class | Candidate status | Limit |
 |---|---|---|
-| Source version and inventory | Prepared for 7.0.0 and 17 canonical entries | Final integrated check receipt pending |
-| Deterministic checks and bundles | T8 working-tree checks pass; final candidate pending | Working-tree tests do not certify a later candidate |
-| Privacy/security | T8 public-content and full-history scan pass | No inherited v6 scan credit |
+| Source version and inventory | 7.0.0 candidate; 17 canonical entries | Source candidate `42c467f`; unpublished |
+| Deterministic checks and bundles | Exact-source bundles pass; 81 workflow checks have expected-outcome receipts, including corrective checks | Hosted CI and platform parity remain unrun |
+| Privacy/security | Current public-content check and redacted full-history scan pass | Known-pattern checks; final publication identity remains separate |
 | Loaded-context and host workflows | Live Codex discovery recorded; model workflows unexercised | No universal startup or alias support claim |
-| Comparative task benefit | T9 evidence pending | No superiority claim |
-| Assigned release judgment | Pending | See current release policy and actual findings |
+| Comparative task benefit | Pilot stopped: one invalid baseline run, 31 undispatched, zero pairs | Host exposure/tool failures prevent any v6-v7 benefit inference |
+| Assigned release judgment | CONDITIONAL for publication; no unresolved material source finding in scoped review | No mandatory independent reviewer; hosted integrity gates remain outstanding |
 | Publication identity | Not performed | No v7 tag, release or Wiki publication claimed |
 
 The [current release policy](../../RELEASING.md) governs final review and publication.

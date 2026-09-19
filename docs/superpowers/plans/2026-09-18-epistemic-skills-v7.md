@@ -10,7 +10,7 @@
 
 **Spec:** [Consolidated v7 design](../specs/2026-09-18-epistemic-skills-v7-design.md). Read it with the [per-skill assessment](../../audits/2026-09-18-v7-skill-assessment.md) and [member inventory](../../audits/2026-09-18-v7-lens-members.json).
 
-**Execution state:** IN PROGRESS on `codex/v7-implementation`. This plan consolidates accepted requirements. File layout and pilot sizing below are conservative engineering defaults, not tested benefits. Checkboxes record implementation work, not design acceptance.
+**Execution state:** Implementation and local verification complete on `codex/v7-implementation`. T1-T8 are committed. The T9 comparison ended after its execution preconditions failed, with all outcomes retained and comparative claims withdrawn. Hosted verification and publication are outstanding. Checkboxes record implementation work and explicit dispositions, not automatic evidence that every planned experiment ran.
 
 ## Global constraints
 
@@ -398,8 +398,8 @@ are recorded with T9. No tag, external installation or publication occurred.
 
 **Interface:** Capture raw observable responses, tool actions and artifacts without giving both arms an intervention-shaped trace template. A private run record binds candidate, baseline, scenario, actual model/configuration, exposure, tools, time/cost and outcome evidence. Public summaries remove private context while preserving the comparison's limits.
 
-- [ ] Freeze the committed candidate and immutable v6.0.0 baseline, matched model/configuration and providers, actual entry/discovery exposure, inputs, outcome rubric and run budget. Record the actual runner and supported isolation mechanism. Provider and host selection must be grounded in availability; do not invent access or claim a forced load is natural activation.
-- [ ] Use the twelve core scenarios below, adapting existing artifacts rather than manufacturing a second evaluation framework. Prompts for natural activation must not name the desired method. Explicit skill/alias invocation and mechanical boundary checks remain separate.
+- [x] Freeze the committed candidate and immutable v6.0.0 baseline, matched model/configuration and providers, actual entry/discovery exposure, inputs, outcome rubric and run budget. Record the actual runner and supported isolation mechanism. Provider and host selection must be grounded in availability; do not invent access or claim a forced load is natural activation.
+- [x] Use the twelve core scenarios below, adapting existing artifacts rather than manufacturing a second evaluation framework. Prompts for natural activation must not name the desired method. Explicit skill/alias invocation and mechanical boundary checks remain separate.
 
 | Case | Task and primary observation |
 |---|---|
@@ -416,11 +416,12 @@ are recorded with T9. No tag, external installation or publication occurred.
 | B11 | Resolve a scoped instruction conflict and recover prior user decisions without a redundant interview or full-context overhaul. |
 | B12 | Reject visible success that fails persistence/acceptance; keep a routine presentation control appropriately bounded. |
 
-- [ ] Working pilot cap: 24 first runs (12 cases x two versions), plus one predetermined repeat of B01, B02, B08 and B09 in each version (eight runs), for at most 32 planned subject runs. Freeze the schedule before outcomes are observed. This is an exploratory bounded pilot, not a population reliability estimate or proof of all lenses/hosts. No automatic extra arms or repeated favorable-run search.
-- [ ] State existing runner per-run limits and capture actual completion/failure/timeout. If isolation, exposure or result capture is unavailable, stop that claim at its true evidence level and continue other verification. Keep native-goal cases simulated unless test-scoped real activation is explicitly authorized; never label simulation as live.
-- [ ] Score outcomes, method application, visible acknowledgment, unnecessary process, authorization/scope and continuation separately. Root reviews ambiguous evidence with the frozen rubric. Preserve all failures and scorer changes; apply a justified scorer correction consistently to both arms.
-- [ ] For a material failure, diagnose and repair the affected candidate or withdraw the affected claim. Record targeted corrected-candidate reruns separately and within the available campaign budget; do not replace unsuccessful unchanged-candidate trials with successful retries. Broader work requires a concrete new decision, not automatic evaluation expansion.
-- [ ] Run affected existing conformance tests and required hosted checks at the candidate revision. Summarize actual benefit or inconclusive results, remaining limitations and support claims. Do not claim all seventeen methods naturally activate based solely on this pilot.
+- [x] Working pilot cap: 24 first runs (12 cases x two versions), plus one predetermined repeat of B01, B02, B08 and B09 in each version (eight runs), for at most 32 planned subject runs. Freeze the schedule before outcomes are observed. This is an exploratory bounded pilot, not a population reliability estimate or proof of all lenses/hosts. No automatic extra arms or repeated favorable-run search.
+- [x] State existing runner per-run limits and capture actual completion/failure/timeout. If isolation, exposure or result capture is unavailable, stop that claim at its true evidence level and continue other verification. Keep native-goal cases simulated unless test-scoped real activation is explicitly authorized; never label simulation as live.
+- [x] Score outcomes, method application, visible acknowledgment, unnecessary process, authorization/scope and continuation separately. Root reviews ambiguous evidence with the frozen rubric. Preserve all failures and scorer changes; apply a justified scorer correction consistently to both arms.
+- [x] For a material failure, diagnose and repair the affected candidate or withdraw the affected claim. Record targeted corrected-candidate reruns separately and within the available campaign budget; do not replace unsuccessful unchanged-candidate trials with successful retries. Broader work requires a concrete new decision, not automatic evaluation expansion.
+- [x] Run affected existing conformance tests and summarize actual benefit or inconclusive results, remaining limitations and support claims. All 81 local workflow commands have expected-outcome receipts, including targeted corrections. No all-method natural-activation claim is made.
+- [ ] Run required hosted checks at the publication candidate revision. Outstanding: this branch remains local and unpublished; local results are not substituted for hosted CI or CodeQL.
 
 ```text
 python plugins/epistemic-skills/evals/epistemic-flexibility/run_tests.py
@@ -429,7 +430,21 @@ python plugins/epistemic-skills/evals/proportionality/run_tests.py
 python .github/scripts/check_public_content.py
 ```
 
-- [ ] Make the assigned-reviewer release judgment against the spec and evidence. No new mandatory reviewer family is needed. Respect applicable existing publication authority, preserve tags/history and distinguish prepared, committed, pushed, merged and released states. Attach any created PR to the task. Publication is not complete until the relevant hosted checks and actual published artifacts are verified.
+- [x] Make the assigned-reviewer release judgment against the spec and evidence. No new mandatory reviewer family is needed. Respect applicable existing publication authority, preserve tags/history and distinguish prepared, committed, pushed, merged and released states. Attach any created PR to the task. Publication is not complete until the relevant hosted checks and actual published artifacts are verified.
+
+Implementation receipt (T9): frozen candidate `7b74668` and v6 baseline, twelve
+prepared cases, fixed 32-slot schedule, rubric, runner and discovery evidence were
+recorded before inference. The explicitly authorized first baseline trial loaded
+out-of-arm host resources and could not run basic workspace commands. Its actual
+incomplete outcome is retained; 31 slots remain undispatched and all comparative
+scores are unknown. The allowed unavailable-isolation disposition closes this
+pilot without pretending all twelve cases ran. No candidate behavioral advantage
+is claimed. Final integration is `42c467f`; follow-up fixes are not relabeled as
+the unchanged pilot candidate. The final local checks and all R01-R22 dispositions
+are recorded. The designated publication judgment is CONDITIONAL solely for
+outstanding hosted integrity and publication steps; no extra reviewer is required.
+The unavailable comparison is a withdrawn support claim, not a mandatory rerun.
+See [the evidence packet](../../release/v7-evidence.md).
 
 **Done:** V7 has a traceable requirement disposition, honest scoped outcome evidence and a finite release judgment. Passing source tests alone cannot satisfy an unproved behavioral claim. A remaining limitation is not silently converted into success or a request for an endless new panel.
 
