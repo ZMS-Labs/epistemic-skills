@@ -97,3 +97,5 @@ Two limits worth knowing. The check runs against a pull request's commits, so it
 does not run against the commit a squash-merge actually creates — sign those off
 too. And GitHub's pull-request commits endpoint returns at most 250 commits; past
 that the check fails closed rather than certifying a range it cannot read.
+
+For diagrams, screenshots and other visual documentation, follow the [visual documentation quality guidance](docs/MAINTAINING.md#visual-documentation-quality).
