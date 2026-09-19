@@ -49,3 +49,12 @@ First live behavioral epoch: 2026-08-04, FAIL 8/14 — see
 `results/2026-08-04/RESULTS.md`. Trigger discipline scored clean (all six
 hard negatives silent, every expected fire fired); all six failures are one
 diagnosed battery-design divergence (register: issue #77).
+
+## V7 synthetic regression boundary (2026-09-18)
+
+The current scorer and its new cases exercise response-contract checks, not
+model behavior or native-host execution. Historical `results/` outputs retain
+their original verdicts and limitations. Changed v7 scoring does not rescore
+old failures as successes. Existing example self-tests remain compatibility
+checks; new cases cover only the documented v7 contract changes. No empirical
+activation or comparative task-benefit claim follows from these tests.

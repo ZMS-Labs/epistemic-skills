@@ -18,7 +18,8 @@ renders the downstream verdict itself.
 
 ## Instrument selection (the only routing this core does)
 
-Ask, in cost order:
+Select by the question, reusable evidence, required assurance and expected
+cost. The following list is a menu, not a fixed cost ranking:
 
 1. **Can reading settle it?** Ordinary reading of the artifact is the routine
    path, not this skill. (recon owns territory-mapping; a factual lookup is
@@ -32,18 +33,27 @@ Ask, in cost order:
 3. **Does it rest on published research?** A scholarly premise, "studies
    show…", an imminent scholarly-connector call, or citation verification →
    **literature** — read and follow [`literature/METHOD.md`](literature/METHOD.md)
-   (the evidence-research method: three-layer discovery/reception/holdings,
-   claim-evidence matrix, never a GO/NO-GO).
+   (bounded single-citation verification or broader synthesis as needed,
+   with primary content, reception/notices and honest coverage limits).
 4. **Is building cheaper than arguing?** A disposable build would answer it
    faster than further derivation, literature, or debate → **probe** — read
    and follow [`probe/METHOD.md`](probe/METHOD.md) (the throwaway-prototyping
    method: pre-registered question, disposal declared at birth,
-   capture-then-delete, never promote).
+   capture-then-delete or read-only evidence archive, never silently promote).
 
 Two instruments can fire in sequence (a derivation names an empirical
 premise → literature qualifies it → the derivation closes; a probe answers
 what neither could). Each instrument keeps its own boundary, artifact, and
 handoff exactly as its METHOD.md defines.
+
+## Return to the question owner
+
+Visibly acknowledge the instrument actually used and return the supported
+answer, counterexample or unresolved limit. Reuse adequate prior evidence;
+combine instruments only when another proof obligation remains. Resume the
+original authorized task, holding only claims or actions dependent on missing
+evidence or authority. A stub probe cannot prove production behavior, and a
+deposited paper cannot by itself establish a scientific claim.
 
 ## Shared invariants (all instruments)
 
@@ -60,18 +70,20 @@ handoff exactly as its METHOD.md defines.
 
 resolve consolidated the applying-formal-rigor, evidence-research, and
 throwaway-prototyping skills (v4.0.0, 2026-08-04); their full methods are
-the instrument METHOD.md files unchanged, with their reference material,
+the instrument METHOD.md files, with their reference material,
 evals, and committed epoch results intact in each instrument's subtree
 (evidence re-arms per `docs/policy/EVIDENCE-POLICY.md`).
 
 ## Evidence emission
 
-After each engagement, append one line to `runs/ledger.jsonl` under this skill:
+Only when authorized evaluation or an existing task evidence contract calls for it,
+append one line to `runs/ledger.jsonl` under this skill:
 
 ```json
 {"schema":"skill-run@1","ts":"<iso8601>","skill":"<this-skill>","decision":"fired|declined","discipline_engaged":"<name-or-null>","action_changed":true|false}
 ```
 
-The append is part of this procedure. It is not a call to an external calibration
-service and it is not a `decision-ledger` entry. Schema:
+Ordinary engagements require no separate run ledger. This optional telemetry
+records engagement, not successful application or task benefit. It is not an
+external calibration call or a `decision-ledger` entry. Schema:
 `plugins/epistemic-skills/contracts/skill-run-ledger.schema.json`.

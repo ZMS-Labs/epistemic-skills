@@ -72,18 +72,13 @@ def score(fixtures: list[dict], responses: list[dict]) -> dict:
                 failures.append(f"{fid}: no-fire must be silent — no report sections, no questions, no rewrite, no handoff")
         elif expected == "full-pass":
             sections = _id_set(row, "sections_present", fid, failures)
-            missing = SECTIONS - sections
-            if missing:
-                failures.append(f"{fid}: the report is exactly four sections — missing {sorted(missing)}")
             unknown = sections - SECTIONS
             if unknown:
-                failures.append(f"{fid}: unknown report sections {sorted(unknown)} — the four-section format is fixed")
+                failures.append(f"{fid}: unknown report sections {sorted(unknown)}")
             questions = row.get("questions", [])
             if not isinstance(questions, list):
                 failures.append(f"{fid}: questions must be an array of question records, got {type(questions).__name__}")
             else:
-                if not 3 <= len(questions) <= 5:
-                    failures.append(f"{fid}: the report carries 3-5 expert questions, got {len(questions)}")
                 for index, entry in enumerate(questions):
                     if not isinstance(entry, dict) or not _nonempty(entry.get("question")):
                         failures.append(f"{fid}: question {index} must be a record with a nonempty question")
@@ -92,8 +87,8 @@ def score(fixtures: list[dict], responses: list[dict]) -> dict:
             artifacts = row.get("artifacts_read")
             if isinstance(artifacts, bool) or not isinstance(artifacts, int):
                 failures.append(f"{fid}: artifacts_read must be an integer count, got {type(artifacts).__name__}")
-            elif artifacts < 2:
-                failures.append(f"{fid}: recon floor — a pass that inspects fewer than 2 real artifacts is not a pass (got {artifacts})")
+            elif artifacts < 1:
+                failures.append(f"{fid}: recon floor — a pass that inspects no real artifacts is not a pass (got {artifacts})")
             if not _nonempty(row.get("rewritten_request")):
                 failures.append(f"{fid}: the deliverable is a rewritten request, not a change — it must be nonempty")
             if not _nonempty(row.get("handoff")):

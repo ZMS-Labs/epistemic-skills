@@ -63,3 +63,12 @@ Second epoch (first against the consolidated recon subject): 2026-08-04
 v4 Tier-1, FAIL 12/14 — both failures question-count overruns (6 where the
 contract caps 5) over correct conduct; zero mode-selection failures; see
 `results/2026-08-04-v4-tier1/RESULTS.md`.
+
+## V7 synthetic regression boundary (2026-09-18)
+
+The current scorer and its new cases exercise response-contract checks, not
+model behavior or native-host execution. Historical `results/` outputs retain
+their original verdicts and limitations. Changed v7 scoring does not rescore
+old failures as successes. Existing example self-tests remain compatibility
+checks; new cases cover only the documented v7 contract changes. No empirical
+activation or comparative task-benefit claim follows from these tests.

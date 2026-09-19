@@ -4,8 +4,9 @@
 # Evidence Research — discover, interrogate, persist
 
 Establish a **verifiable scholarly record**, not a pile of plausible citations.
-Three layers, three different epistemic questions — **use them in tandem every
-run** (degrade explicitly when one is absent; never silently drop a layer):
+Three layers answer different epistemic questions. Use the capabilities needed
+for the claim and report missing coverage; a one-citation check does not require
+a landscape sweep or an external library operation:
 
 - **Consensus** answers *"what does the literature say about X?"* — question-led
   discovery over 200M+ papers with study-design filters. The unit of evidence is
@@ -21,7 +22,7 @@ run** (degrade explicitly when one is absent; never silently drop a layer):
   of evidence is the **library item** (keyed by DOI when possible).
 
 Consensus finds the witnesses; Scite runs the cross-examination; Zotero is the
-**durable substrate** the two session-bound engines feed. A paper alone tells
+**library substrate**, distinct from a durable repository evidence record. A paper alone tells
 you it exists; its reception tells you whether later work confirmed it,
 contradicted it, or merely name-dropped it; the library tells you whether this
 org has already paid for that judgment. **The single worst failure this skill
@@ -65,9 +66,9 @@ a run with nothing persisted.
   lookup, a known DOI, or a single fetch still requires this skill first. If a
   call is about to happen and this skill is not active, stop, load it, then
   continue.
-- **Live tool schema wins** — over this file, over memory, over the reference
-  profiles. Inspect the schema of **all three** layers every run; capabilities
-  drift. For Consensus, follow `reference/consensus-first-contact.md` until a
+- **Live tool schema wins** — over this file, memory and reference profiles.
+  Inspect schemas of the capabilities actually needed, reusing verified
+  current-session knowledge; refresh when the host, access or schema changes. For Consensus, follow `reference/consensus-first-contact.md` until a
   verified profile exists for the current harness. For Scite, follow
   `reference/scite-first-contact.md` until a verified profile exists for the
   current harness. For Zotero, follow
@@ -87,12 +88,15 @@ a run with nothing persisted.
 
 ## Modes
 
-Four modes, each with a reception dial **and** a holdings dial:
+Choose citation verification or a synthesis mode. Counts below are planning
+ranges, never filler quotas; expand only for a question or material evidence
+gap. Reception and holdings are separate from primary-content verification:
 
 | Mode | Paper count | Reception depth | Holdings depth | Cross-validate scope |
 |---|---|---|---|---|
-| `quick` | 3-5 (directional scan) | Top 3 load-bearing papers only | Check + deposit those same 3 papers | Matrix rows only (§7 applies uniformly across modes) |
-| `standard` | 8-12 (decision support) | Every paper entering the claim-evidence matrix | Check the matrix; deposit every matrix paper (DOI-keyed) | Matrix rows only (§7 applies uniformly across modes) |
+| `citation-check` | One specified citation | Relevant reception, corrections and notices | Reuse holdings if useful; deposit only when authorized | Verify identity and the exact claim in primary content |
+| `quick` | 3-5 (directional scan) | Top 3 load-bearing papers only | Check relevant holdings; deposit when authorized | Matrix rows only (§7 applies uniformly across modes) |
+| `standard` | 8-12 (decision support) | Every paper entering the claim-evidence matrix | Check the matrix; authorized deposits are DOI-keyed | Matrix rows only (§7 applies uniformly across modes) |
 | `deep` | 15-20 (high-stakes synthesis) | All matrix papers, **plus second-order**: for the 2-3 most load-bearing, read the contrasting citers themselves (methodological quibble vs. replication failure) | As `standard`, plus tag the run's collection with the decision/claim id | Matrix rows only (§7 applies uniformly across modes) |
 | `formal-support` | Component of a documented review | All layers' coverage limits recorded explicitly | Same as `standard`, scoped to the review | Matrix rows only, with coverage limits recorded explicitly (§7 + §2) |
 
@@ -109,14 +113,37 @@ If no answer is available, do not research for relief from uncertainty: stop at 
 terminal label (`saturated`, `capped-by-budget`, or `contested-stable`) and surface the gap.
 This gate never replaces literature when a scholarly premise is itself load-bearing.
 
-## Required flow
+## Bounded single-citation verification
+
+For one DOI, title or citation and a stated claim, use `citation-check`:
+
+1. Confirm paper identity/version against the publisher, repository or primary
+   record. Read the primary passage and relevant methods/results; metadata or
+   an abstract alone cannot prove the full paper supports the stated claim.
+2. Check relevant corrections, expressions of concern, retractions and
+   reception. Follow substantive contradictory or replication evidence that
+   could change the answer; do not manufacture a multi-paper review.
+3. Return supported / qualified / unsupported / unverified for the exact
+   claim, with source locations, verification depth and coverage/access limits.
+   No access to primary content means an explicit verification limit. Missing
+   reception is unverified, not absence of criticism.
+4. Persist the concise record only where requested or needed for task continuity.
+   Report artifact persistence and external library deposit separately. An
+   existing repository record can be durable with deposit skipped or pending.
+
+This path uses the relevant integrity checks below without requiring all
+eleven synthesis steps, all provider layers, eight separate outputs or a
+`saturated` landscape claim. Escalate to synthesis when the actual question
+requires breadth or material counterevidence makes the narrow answer inadequate.
+
+## Required synthesis flow
 
 ### 1. Frame
 Decision/claim, PICO/PECO/SPIDER/PCC or engineering frame, outcomes,
 timeframe, admissible designs. Choose and label the mode.
 
-### 2. Capability negotiation (all three layers, every run)
-Inspect live schemas. Record which engine / substrate variants exist in this
+### 2. Capability negotiation (relevant layers)
+Reuse valid session knowledge or inspect live schemas. Record relevant engine / substrate variants in this
 harness and what they can do (search-only? fetch? tallies? contexts?
 holdings search? DOI deposit? operator-mediated GUI only?). **Degrade
 explicitly, never silently:**
@@ -157,11 +184,14 @@ explicitly, never silently:**
   matrix row `holdings: UNVERIFIED (Zotero unavailable)` and record
   `deposit: SKIPPED` in the run record. Do **not** pretend a session-local
   markdown list is a library deposit. Continue Consensus + Scite; the
-  synthesis must name the durability gap.
+  synthesis must name the library gap and separately state artifact persistence.
 - Never fabricate a capability (fetch, tallies, full text, silent GUI drive,
-  API key) the live schema or LOCAL.md does not show.
+  API key) the live schema or LOCAL.md does not show. Missing providers limit
+  their capability, not independent authorized work. A primary publisher or
+  repository can establish content and notices without claiming equivalent
+  discovery breadth or citation-context coverage.
 
-### 3. Holdings check (Zotero leads) — before rediscovery
+### 3. Holdings check (when relevant and available) — before rediscovery
 Search the durable library for DOIs / exact titles / citekeys already held for
 this claim family. Record hits with item keys, tags, notes, and any at-rest
 reception columns. **Held items with curated notes are prior judgment** —
@@ -235,15 +265,15 @@ fields (§9).
 Dedupe preprint/journal versions, corrections, overlapping cohorts; shared
 cohorts are one evidence unit, not independent studies.
 
-**Deposit (Zotero, mandatory when available):** add every matrix paper by DOI
+**Deposit (Zotero, when authorized and relevant):** add every matrix paper by DOI
 into a run-scoped collection (name = claim/decision id + date). Tag with the
 mode and support relation. If only an operator-mediated GUI exists this turn,
 emit an explicit **operator deposit checklist** (DOI list + collection name)
-and record `deposit: OPERATOR_PENDING` — do not mark the run fully durable
+and record `deposit: OPERATOR_PENDING`; the library status remains pending
 until the checklist is confirmed. The checklist clears when the operator
 confirms completion: re-stamp the affected rows `holdings: deposited-this-run`
 and record the confirmation date in the run record. If the operator never
-confirms, the synthesis keeps the `session-ephemeral` label permanently.
+confirms, deposit remains pending. This does not erase a durable artifact elsewhere.
 
 ### 9. Claim-evidence matrix (extended schema)
 Per material claim, the standard columns (paper ID/title/URL/DOI/authors/year,
@@ -263,13 +293,15 @@ reception, **and holdings**. A finding whose key papers carry heavy,
 substantive contrasting reception is *contested* — say so. Association ≠
 causation. High-stakes clinical/legal/safety recommendations still cross-check
 an authoritative guideline outside both engines. A synthesis with
-`deposit: SKIPPED` or `OPERATOR_PENDING` must say the record is
-**session-ephemeral** until the library catches up.
+`deposit: SKIPPED` or `OPERATOR_PENDING` names that library limitation.
+Report artifact persistence independently: session-only, saved locally, or
+verified in the project's durable store, with its reference. A library deposit
+proves holdings, not primary-content verification or scientific validity.
 
 ### 11. Emit artifacts
-Eight outputs (framed question+mode, strategy+coverage limits,
-matrix, synthesis, counterevidence, limitations, citations, run record) with
-the run record logging **all three layers'** queries, IDs, tallies pulled,
+One proportional record covering framed question+mode, strategy+coverage limits,
+matrix, synthesis, counterevidence, limitations, citations and provenance, with
+the record logging the used layers' queries, IDs, tallies pulled,
 holdings hits, deposits, schema observations, degradations, and timestamps.
 Fail transparently; partial verified record beats gap-filling from memory.
 

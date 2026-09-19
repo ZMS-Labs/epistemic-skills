@@ -257,12 +257,12 @@ If custody code changes, run the affected existing `test_custody_*.py` modules a
 
 **Interface:** Recon returns the corrected map or scope; Resolve returns the evidence-supported answer/limit; open-questions returns resolved/deferred user decisions; context-audit returns observed instruction/load findings and authorized maintenance results. None creates a compulsory four-stage sequence.
 
-- [ ] Remove mandatory filler counts from recon while retaining decision-relevant context. Add a zero-residual-question control, preserve the candidate-harvest alternative to adopting an entire package, and correct stale historical evidence labels.
-- [ ] Replace Resolve's contradictory fixed cost ordering with question/evidence-based instrument selection. Add single-citation verification with primary content and relevant reception/notices. Preserve research breadth where needed; keep artifact persistence and external library deposit distinct.
-- [ ] Retain experimental artifacts as evidence where useful while preserving the authorized promotion boundary. Do not claim a stub probe or deposited paper settles a production or scientific claim.
-- [ ] Exercise open-questions with prior answers, explicit exhaustive interview, a released interview with a still-unresolved consequential action, and a factual unknown the agent can investigate. It must resume permitted work without inventing consent or asking routine reversible choices.
-- [ ] Exercise context-audit with a stale installed copy, a precedence conflict, unavailable assembled context and removal of a rarely used protection. Preserve the distinction between an immediate precedence resolution and an authorized persistent edit; state observed regression coverage accurately.
-- [ ] Update the existing scorers only where they enforce superseded format quotas or requirements. Keep old run outputs and explain why new scoring applies to new cases; do not rescore old failures as successes without a separately labeled analysis.
+- [x] Remove mandatory filler counts from recon while retaining decision-relevant context. Add a zero-residual-question control, preserve the candidate-harvest alternative to adopting an entire package, and correct stale historical evidence labels.
+- [x] Replace Resolve's contradictory fixed cost ordering with question/evidence-based instrument selection. Add single-citation verification with primary content and relevant reception/notices. Preserve research breadth where needed; keep artifact persistence and external library deposit distinct.
+- [x] Retain experimental artifacts as evidence where useful while preserving the authorized promotion boundary. Do not claim a stub probe or deposited paper settles a production or scientific claim.
+- [x] Exercise open-questions with prior answers, explicit exhaustive interview, a released interview with a still-unresolved consequential action, and a factual unknown the agent can investigate. It must resume permitted work without inventing consent or asking routine reversible choices.
+- [x] Exercise context-audit with a stale installed copy, a precedence conflict, unavailable assembled context and removal of a rarely used protection. Preserve the distinction between an immediate precedence resolution and an authorized persistent edit; state observed regression coverage accurately.
+- [x] Update the existing scorers only where they enforce superseded format quotas or requirements. Keep old run outputs and explain why new scoring applies to new cases; do not rescore old failures as successes without a separately labeled analysis.
 
 ```text
 python plugins/epistemic-skills/skills/recon/evals/brief-trigger-and-scope/tests/run_tests.py
@@ -276,6 +276,14 @@ python plugins/epistemic-skills/skills/context-audit/evals/trigger-and-scope/tes
 ```
 
 **Done:** Each method preserves its distinct work while reducing manufactured questions, reports, research breadth and unsupported context claims. Existing authorizations and protected instructions remain intact.
+
+Implementation receipt (T6): root reviewed the scoped method changes and worker
+evidence against R03/R04/R16/R17. All eight requested suites pass. Synthetic
+regressions discriminate zero-question framing, recovered answers and interview
+release, bounded citation verification, archived experimental evidence, and
+source-versus-loaded context limits. Historical run files and their failed
+outcomes remain unchanged. These are method and scorer checks; no host loading,
+scholarly connector exercise or comparative benefit is claimed here.
 
 ## T7: verify and implement actual host delivery
 

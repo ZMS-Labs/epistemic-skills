@@ -43,3 +43,12 @@ under-specification on `option-set-try-it-fires` (canonical option ids
 absent from the scenario text; since fixed for future epochs), with zero
 instrument-selection failures; see
 `results/2026-08-04-v4-tier1/RESULTS.md`.
+
+## V7 synthetic regression boundary (2026-09-18)
+
+The current scorer and its new cases exercise response-contract checks, not
+model behavior or native-host execution. Historical `results/` outputs retain
+their original verdicts and limitations. Changed v7 scoring does not rescore
+old failures as successes. Existing example self-tests remain compatibility
+checks; new cases cover only the documented v7 contract changes. No empirical
+activation or comparative task-benefit claim follows from these tests.

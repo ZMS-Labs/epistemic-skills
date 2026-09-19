@@ -89,6 +89,14 @@ def main() -> int:
     require(any("must be an array of question records" in failure for failure in report["failures"]), report["failures"])
     require(any("must be an integer count" in failure for failure in report["failures"]), report["failures"])
 
+    # Synthetic v7 scorer regression: a decisive observation can leave no questions.
+    resolved = dict(balanced_rows[0], sections_present=["landmines"], questions=[])
+    report = scorer.score([fixtures[0]], [resolved])
+    require(report["pass"], report["failures"])
+    six_relevant = dict(balanced_rows[0], questions=balanced_rows[0]["questions"] * 2)
+    report = scorer.score([fixtures[0]], [six_relevant])
+    require(report["pass"], report["failures"])
+
     print("blindspot-pass trigger-and-scope: PASS")
     return 0
 

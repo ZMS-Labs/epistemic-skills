@@ -64,3 +64,12 @@ First live behavioral epoch: 2026-08-04, PASS 14/14 — see
 Second epoch (first against the consolidated resolve subject): 2026-08-04
 v4 Tier-1, PASS 14/14 with zero instrument-selection failures — see
 `results/2026-08-04-v4-tier1/RESULTS.md`.
+
+## V7 synthetic regression boundary (2026-09-18)
+
+The current scorer and its new cases exercise response-contract checks, not
+model behavior or native-host execution. Historical `results/` outputs retain
+their original verdicts and limitations. Changed v7 scoring does not rescore
+old failures as successes. Existing example self-tests remain compatibility
+checks; new cases cover only the documented v7 contract changes. No empirical
+activation or comparative task-benefit claim follows from these tests.

@@ -1,0 +1,32 @@
+[
+  {
+    "fixture": {
+      "id": "v7-archive-stub-probe",
+      "expected_action": "record-and-dispose",
+      "stubbed_seam": true,
+      "scenario": "Retain the stub probe and observations in a labeled read-only evidence archive; the real service was not exercised."
+    },
+    "response": {
+      "id": "v7-archive-stub-probe",
+      "action": "record-and-dispose",
+      "answer": {
+        "question": "Does the local serializer preserve fields?",
+        "observation": "Local round trip succeeds; remote service stubbed.",
+        "decision": "Local serializer only; production integration unverified."
+      },
+      "record_ref": "docs/evidence/serializer.md",
+      "disposed": false,
+      "archived_read_only": true,
+      "kept_mergeable": false,
+      "production_verified": false
+    },
+    "reject_mutations": [
+      {
+        "archived_read_only": false
+      },
+      {
+        "production_verified": true
+      }
+    ]
+  }
+]

@@ -9,7 +9,7 @@ from collections import Counter
 from pathlib import Path
 
 ACTIONS = {"run-evidence", "precall-gate", "evidence-gate", "no-fire"}
-MODES = {"quick", "standard", "deep", "formal-support"}
+MODES = {"citation-check", "quick", "standard", "deep", "formal-support"}
 TERMINAL_STATES = {"saturated", "capped-by-budget", "contested-stable"}
 # Any of these present on a no-fire row is a process artifact — evidence of a
 # pass that was never asked for.
@@ -95,12 +95,21 @@ def score(fixtures: list[dict], responses: list[dict]) -> dict:
             mode = row.get("mode")
             if not isinstance(mode, str) or mode not in MODES:
                 failures.append(f"{fid}: mode must name one of quick/standard/deep/formal-support, got {mode!r}")
-            if not row.get("matrix_produced"):
+            if mode == "citation-check":
+                if row.get("primary_content_checked") is not True and not (row.get("claim_result") == "unverified" and row.get("coverage_limits")):
+                    failures.append(f"{fid}: inspect primary content before verifying the claim")
+                if row.get("notices_checked") is not True:
+                    failures.append(f"{fid}: check relevant notices")
+                if row.get("claim_result") not in {"supported", "qualified", "unsupported", "unverified"}:
+                    failures.append(f"{fid}: return an explicit claim result")
+                if fixture.get("citation_check") and row.get("artifact_persistence") != "repository":
+                    failures.append(f"{fid}: repository persistence is independent of skipped library deposit")
+            elif not row.get("matrix_produced"):
                 failures.append(f"{fid}: a firing run produces the claim-evidence matrix")
-            if not row.get("reception_checked_live"):
+            if not row.get("reception_checked_live") and not (mode == "citation-check" and row.get("claim_result") == "unverified" and row.get("coverage_limits")):
                 failures.append(f"{fid}: reception is [V]-grade only when pulled live this run — the reception pass must run against the live engine")
             terminal_state = row.get("terminal_state")
-            if not isinstance(terminal_state, str) or terminal_state not in TERMINAL_STATES:
+            if mode != "citation-check" and (not isinstance(terminal_state, str) or terminal_state not in TERMINAL_STATES):
                 failures.append(f"{fid}: every run exits with a terminal-state label — saturated / capped-by-budget / contested-stable, got {terminal_state!r}")
             support = _id_set(row, "support", fid, failures)
             retracted = set(fixture.get("retracted_dois", []))

@@ -15,7 +15,11 @@ disciplines:
    exhaustive.
 
 Formal theory establishes properties inside a model. It does not supply runtime
-facts, operator priorities, or a winner by itself.
+facts, operator priorities, or a winner by itself. Select this instrument when
+its proof obligation fits the question, not because it appears before literature
+or probe. Reuse applicable derivations; name changed assumptions that need a
+new check. Return the result and limits to the authorized task after applying
+the appropriate tier below.
 
 ## Trigger and proportionality gate
 

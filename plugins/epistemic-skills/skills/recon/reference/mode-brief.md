@@ -21,9 +21,10 @@
    nearest test/example. That is **micro-recon**, not this skill.
 2. If those reads expose a mismatch, hidden coupling, unresolved scope, or
    multiplication risk, run the full pass.
-3. Full report = **Landmines** (file:line) → **Hidden Context** (cited) → **What
-   Good Looks Like** (2–3 examples) → **Questions** (3–5, each with a best-guess
-   answer) → **Rewrite the request** → **Hand off**.
+3. Report decision-relevant **Landmines**, **Hidden Context**, useful examples
+   of **What Good Looks Like**, and residual **Questions**, then **Rewrite the
+   request** and **Return to the task owner**. No example or question quota;
+   zero residual questions is a valid result.
 
 ## Where this sits (the reflex, not a chore)
 
@@ -91,10 +92,10 @@ deliverable is a *rewritten request*, not a change.
    brief *asserts* about the territory (the brief is a map; check it). If the
    environment is degraded (a mount down, a mirror stale), verify the source-of-truth
    before trusting repo facts.
-   **Recon floor:** including the two micro-recon reads already performed, inspect at
-   least 2–3 real artifacts (files, prior incidents, or working examples). A full pass
-   that opens zero files is not a pass.
-   **Recon ceiling:** stop when the four report sections can support a rewritten
+   **Evidence floor:** inspect actual artifacts (files, incidents, or examples),
+   reusing the micro-recon reads. One decisive observation may settle the
+   framing; no extra reads are owed just to reach a count.
+   **Recon ceiling:** stop when the evidence can support a rewritten
    request. If additional reading is not changing the rewrite, hand off; if the search
    surface itself is unexpectedly broad, report that as a landmine rather than
    continuing indefinitely.
@@ -107,10 +108,9 @@ deliverable is a *rewritten request*, not a change.
    independently). The brief is a container of claims, not a source that self-verifies them.
    Carry unresolved items as explicit hypotheses or authorization gaps into the rewrite.
 
-2. **Report in exactly four sections** (this is the full-pass format). Every entry in
-   every section cites a concrete artifact — file:line, a doc, or a named prior
-   incident — or explicitly states "none found, and here's why the search came up
-   empty":
+2. **Report only relevant findings**, inline when sufficient. These categories
+   guide coverage rather than require headings or filler. Ground material claims
+   in concrete artifacts and disclose material search limits:
    - **Landmines** — the mistakes someone new to this territory typically makes, plus
      the repo-/domain-specific potholes you can see. Concrete, with file:line where
      it's a code landmine.
@@ -118,24 +118,23 @@ deliverable is a *rewritten request*, not a change.
      architecture choice, a convention, a prior incident, a dependency's real
      behavior). The things "everyone who's been here" knows and the brief omits.
      Cite the artifact each item is grounded in.
-   - **What good looks like** — 2–3 examples of this pattern *done well* in this
+   - **What good looks like** — useful examples of this pattern *done well* in this
      codebase/domain, so the target is concrete, not abstract. Cite each example's
      file:line or equivalent.
-   - **Questions you should be asking** — the 3–5 questions an expert would ask before
-     starting, **each with your current best-guess answer.** Best-guess answers are
-     mandatory: an unanswered question is a deferral; a best-guess is a falsifiable
-     claim the operator can correct in one word.
+   - **Questions you should be asking** — residual questions that could change
+     the work, each with evidence and a safe best guess (including holding an
+     unauthorized action). Zero is valid when findings resolve the framing.
+     Do not manufacture questions or limit material ones to a fixed count.
 
 3. **Rewrite the original request.** End with a rewritten version of the request that
    folds in what you found — the constraints made explicit, the real target named, the
    scope corrected. This rewritten request is what brainstorming / plan-writing /
    adversarial review / the dispatch then consume.
 
-4. **Hand off.** State which downstream skill or workflow stage should run next on the
-   rewritten request (usually brainstorming for a design, or straight to adversarial
-   review if the rewritten subject is now concrete enough to freeze). If recon revealed
-   the task is ill-posed or the wrong thing to build, say that — the highest-value
-   blindspot pass sometimes kills the dispatch.
+4. **Return.** Give the corrected request and any remaining limits to the task
+   owner. Resume already-authorized work where the corrected scope permits it;
+   name a further method only if its own trigger is present. If the task is
+   ill-posed or requires a materially different goal, expose that decision.
 
 ## Optional close-out bookend — the blast-radius quiz
 

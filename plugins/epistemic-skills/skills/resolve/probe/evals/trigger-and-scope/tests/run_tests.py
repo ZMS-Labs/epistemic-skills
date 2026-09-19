@@ -49,6 +49,14 @@ def main() -> int:
     require(any("expected run-prototype, got no-fire" in failure for failure in under["failures"]), under["failures"])
     require(any("recorded durably" in failure for failure in under["failures"]), under["failures"])
 
+    # Synthetic response-contract regressions; not a model or native-host trial.
+    for case in json.loads((ROOT / "v7-cases.json").read_text(encoding="utf-8")):
+        report = scorer.score([case["fixture"]], [case["response"]])
+        require(report["pass"], report["failures"])
+        for mutation in case["reject_mutations"]:
+            report = scorer.score([case["fixture"]], [dict(case["response"], **mutation)])
+            require(not report["pass"], f"{case['fixture']['id']}: unsafe mutation passed: {mutation}")
+
     print("throwaway-prototyping trigger-and-scope: PASS")
     return 0
 

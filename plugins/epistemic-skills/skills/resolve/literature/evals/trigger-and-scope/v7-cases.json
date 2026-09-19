@@ -1,0 +1,61 @@
+[
+  {
+    "fixture": {
+      "id": "v7-single-citation",
+      "expected_action": "run-evidence",
+      "citation_check": true,
+      "scenario": "Verify one specified study supports a claim. Primary results qualify its abstract; a correction and relevant reception are available. Save to the existing repository record; no library deposit requested."
+    },
+    "response": {
+      "id": "v7-single-citation",
+      "action": "run-evidence",
+      "mode": "citation-check",
+      "primary_content_checked": true,
+      "claim_result": "qualified",
+      "notices_checked": true,
+      "reception_checked_live": true,
+      "paper_count": 1,
+      "artifact_persistence": "repository",
+      "deposit": "SKIPPED"
+    },
+    "reject_mutations": [
+      {
+        "primary_content_checked": false
+      },
+      {
+        "notices_checked": false
+      },
+      {
+        "artifact_persistence": "session-ephemeral"
+      }
+    ]
+  },
+  {
+    "fixture": {
+      "id": "v7-citation-access-limit",
+      "expected_action": "run-evidence",
+      "scenario": "The citation identity resolves, but primary content and reception cannot be accessed."
+    },
+    "response": {
+      "id": "v7-citation-access-limit",
+      "action": "run-evidence",
+      "mode": "citation-check",
+      "primary_content_checked": false,
+      "claim_result": "unverified",
+      "notices_checked": true,
+      "reception_checked_live": false,
+      "coverage_limits": [
+        "primary content inaccessible",
+        "reception unavailable"
+      ]
+    },
+    "reject_mutations": [
+      {
+        "claim_result": "supported"
+      },
+      {
+        "coverage_limits": []
+      }
+    ]
+  }
+]

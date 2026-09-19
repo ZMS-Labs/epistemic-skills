@@ -27,15 +27,20 @@ Provenance: distilled from the "wayfinder" pattern in ConnorGriffin/skills
 
 ## Protocol
 
-1. **Chart the map.** One durable map artifact (in the project tracker — an
-   issue/document that owns the tree, not chat). Nodes are decisions, each
+Reuse prior answers and an adequate existing map. A resolved plan needs ordinary
+task breakdown, not a new discovery project. Zero open decisions is a valid
+return; do not invent nodes to justify this method. Keep a durable map when the
+initiative needs continuity, using its existing tracker or document.
+
+1. **Chart the map.** Reuse the initiative's decision map or make a proportional
+   one where continuity requires it. Nodes are decisions, each
    with: what it decides, what it blocks, its parent decisions, and the
    cheapest way to resolve it (derive / research / prototype / ask).
 2. **Compute the frontier.** A decision is *frontier* iff every decision it
    depends on is resolved. Only frontier decisions may be worked. Asking (or
    deciding) a non-frontier question wastes the answer: it will be re-litigated
    when its prerequisites land.
-3. **Resolve frontier decisions** by their cheapest adequate method, one
+3. **Route frontier decisions** to their cheapest adequate method, one
    region at a time. Record each resolution on the map with provenance.
    Recompute the frontier after every resolution — answers open and close
    branches.
@@ -69,7 +74,8 @@ Ends at a maintained map plus fog-free build tickets carrying the three-fact
 handoff. Downstream: the workflow layer's planning/execution skills own the
 tickets; open-questions conducts operator interviews for frontier decisions
 that need one; decision-ledger persists resolutions. Wayfinding never builds
-and never decides — it sequences.
+and never decides — it sequences. Return the map to the task owner and resume
+authorized fog-free work; unresolved decisions hold only dependent actions.
 
 ## Local overlay
 
