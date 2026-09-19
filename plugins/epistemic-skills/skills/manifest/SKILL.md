@@ -23,6 +23,11 @@ Exit 2 = usage error (argparse prints usage) or refusal (a CustodyError class
 name on stderr); exit 3 on `resume` = drift found — reconcile before anything
 else.
 
+Acknowledge use briefly. Reuse existing task records and authority; ordinary tasks do
+not need a mission merely because they have several steps. Before opening a mission,
+discover whether its required acceptance path is available. Do not invent a new actor
+identity to bypass separation or impose this mission tier on work outside custody.
+
 ## Modes
 
 1. **Open** — capture the operator instruction VERBATIM: `open --mission-id
@@ -31,8 +36,10 @@ else.
    [--tier declared-role-separation] [--hold-if RULE ...] [--stop-if RULE ...]
    [--escalate-if RULE ...] [--cost COST ...]`. An empty envelope field is
    unbounded, not safely defaulted — fill all four or `note` why the operator
-   left one empty. Then `approve` only after the operator confirms the whole
-   envelope (scope in/out, permissions, protected state, stop rules).
+   left one empty. Then `approve` only when the operator’s existing instruction or explicit
+   confirmation covers the whole envelope (scope in/out, permissions, protected
+   state, stop rules). Reuse a sufficient grant; resolve material gaps only.
+   The CLI transition records approval; it does not authenticate consent.
    **The envelope is ADVISORY AT RUN TIME: nothing blocks a tool call on it.**
    No envelope field reaches the runtime chokepoint, which is only ever handed
    `authority` itself — so only `authority.actuator_guards` can refuse an
@@ -67,7 +74,10 @@ else.
    invisible to resume. Non-file effects (API mutations, other repos, remote
    state) cannot be receipted: `note` them with their verification evidence.
    Update `frontier` whenever the true next action changes and before session
-   end — it is the next resume's anchor.
+   end — it is the next resume's anchor. Preserve outcome/proof, scope/authority,
+   completed effects and their evidence/revisions, unresolved questions and affected
+   actions, plus the next permitted action and owner. Link records that already own
+   these facts rather than creating another global task schema.
 4. **Amend** — when the operator grants authority the manifest does not carry,
    record it VERBATIM with `amend --text-file <file>` before acting on it, then
    continue. Amendments are append-only and never self-authored: this records a
@@ -103,16 +113,26 @@ else.
 
 ## Boundaries
 
-- Decline routine, one-step, in-session-checkable work (say so; no mission).
+- Decline ordinary work whose existing task record is sufficient; no mission.
 - Never select or invoke other skills by name from this seat; when a
   load-bearing condition blocks progress (an unverified claim, an unmapped
   territory, an irreversible fork), STATE THE CONDITION and the return point
-  (mission id + frontier) and let the surrounding stack answer it.
+  (mission id + frontier) and let the task owner answer it. The caller retains
+  the original outcome. Consume a sufficient return and continue the authorized
+  next step; a partial result holds only its dependent action while other useful
+  permitted work continues. A bounded method return never silently closes the task.
+  On resume, recheck facts that next step depends on. Preserve settled answers and
+  valid authority; unrelated changes do not restart the investigation. A new user
+  instruction or revocation supersedes continuation.
 - Custody enforcement is opt-in per mission: if the operator armed
   `actuator_guards` + `guard_mode` (the es#117 Stage-C hook), guarded
   actuators are mechanically gated -- a block names the rule and is
   discharged only by an operator-granted `amend`. If the mission carries no
-  guards, custody remains convention-held; say so honestly if asked.
+  guards, custody remains convention-held; say so honestly if asked. The current
+  gate assembles the union of guards from chain-verified, approved active missions.
+  Multiple active missions do not disarm it; unreadable or unverifiable members
+  degrade individually with disclosure while healthy siblings still enforce.
+  Receipt/chain integrity proves recorded effects, not outcome acceptance.
 - Degraded modes: core unavailable -> author a markdown mission manifest,
   label it session-bounded; store unwritable -> surface immediately; operator
   revocation -> stop consequential work, surface AUTHORITY_REVOKED.
@@ -121,12 +141,14 @@ else.
 
 ## Evidence emission
 
-After each engagement, append one line to `runs/ledger.jsonl` under this skill:
+Only for an authorized evaluation or an existing task evidence contract, optionally
+append one line to `runs/ledger.jsonl` under this skill. Ordinary engagements need no
+separate run ledger:
 
 ```json
 {"schema":"skill-run@1","ts":"<iso8601>","skill":"<this-skill>","decision":"fired|declined","discipline_engaged":"<name-or-null>","action_changed":true|false}
 ```
 
-The append is part of this procedure. It is not a call to an external calibration
-service and it is not a `decision-ledger` entry. Schema:
+This optional telemetry is not proof of success, an external calibration call, or a
+`decision-ledger` entry. Schema:
 `plugins/epistemic-skills/contracts/skill-run-ledger.schema.json`.

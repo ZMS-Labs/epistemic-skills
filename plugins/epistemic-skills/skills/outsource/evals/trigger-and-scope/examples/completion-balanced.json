@@ -1,0 +1,20 @@
+[
+  {
+    "id": "verified-complete-return",
+    "action": "verify-relay",
+    "stored_verbatim": true,
+    "relay_verified": true,
+    "claims_checked": [
+      "commit",
+      "regression"
+    ],
+    "packet_updated": true,
+    "relay_status": "COMPLETE",
+    "relay_closed": true,
+    "open_requirements": [],
+    "prompt_emitted": false,
+    "outbound_created": false,
+    "caller_next_action": "integrate verified patch",
+    "caller_task_complete": false
+  }
+]

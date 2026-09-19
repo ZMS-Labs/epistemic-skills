@@ -1,0 +1,56 @@
+[
+  {
+    "id": "interrupted-authorized-repair",
+    "action": "resume",
+    "revision": "r1",
+    "authority": "instruction-7",
+    "answer": "preserve API",
+    "next_action": "patch and verify original failure",
+    "rechecked": [
+      "source",
+      "authority"
+    ],
+    "restarted_investigation": false,
+    "asked_authority_again": false,
+    "task_complete": false,
+    "new_entries": []
+  },
+  {
+    "id": "stale-relevant-state",
+    "action": "resume",
+    "revision": "r2",
+    "authority": "instruction-7",
+    "answer": "preserve API",
+    "next_action": "recheck cause against r2",
+    "rechecked": [
+      "source",
+      "authority",
+      "cause"
+    ],
+    "restarted_investigation": false,
+    "asked_authority_again": false,
+    "task_complete": false,
+    "new_entries": []
+  },
+  {
+    "id": "original-prediction-disagrees",
+    "action": "outcome-review",
+    "prediction": "no errors in ten runs",
+    "observation": "two errors in ten runs",
+    "source": "adr-3@r1",
+    "standing_guidance": false
+  },
+  {
+    "id": "adr-reuse-is-not-resume-proof",
+    "action": "reuse",
+    "existing_ref": {
+      "coordinate": "adr-3@r1",
+      "subject_revision": "r1",
+      "future_consumer": "repair executor",
+      "revisit_condition": "source changes"
+    },
+    "new_entries": [],
+    "reanchored": true,
+    "claims_jsonl_validation": false
+  }
+]

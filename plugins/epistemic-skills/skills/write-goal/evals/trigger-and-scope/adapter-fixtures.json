@@ -1,0 +1,303 @@
+[
+  {
+    "id": "codepoints-field",
+    "scenario": "Synthetic Unicode field boundary.",
+    "profile": {
+      "unit": "codepoints",
+      "limit": 2,
+      "wrapper": false,
+      "version": "synthetic-1"
+    },
+    "expected_payload": {
+      "objective": "A🚀"
+    },
+    "expected_result": "active"
+  },
+  {
+    "id": "codepoints-wrapper",
+    "scenario": "Synthetic Unicode boundary with counted transport wrapper.",
+    "profile": {
+      "unit": "codepoints",
+      "limit": 18,
+      "wrapper": true,
+      "version": "synthetic-1"
+    },
+    "expected_payload": {
+      "objective": "A🚀"
+    },
+    "expected_result": "active"
+  },
+  {
+    "id": "utf16-field",
+    "scenario": "Synthetic Unicode field boundary.",
+    "profile": {
+      "unit": "utf16",
+      "limit": 3,
+      "wrapper": false,
+      "version": "synthetic-1"
+    },
+    "expected_payload": {
+      "objective": "A🚀"
+    },
+    "expected_result": "active"
+  },
+  {
+    "id": "utf16-wrapper",
+    "scenario": "Synthetic Unicode boundary with counted transport wrapper.",
+    "profile": {
+      "unit": "utf16",
+      "limit": 19,
+      "wrapper": true,
+      "version": "synthetic-1"
+    },
+    "expected_payload": {
+      "objective": "A🚀"
+    },
+    "expected_result": "active"
+  },
+  {
+    "id": "utf8-field",
+    "scenario": "Synthetic Unicode field boundary.",
+    "profile": {
+      "unit": "utf8",
+      "limit": 5,
+      "wrapper": false,
+      "version": "synthetic-1"
+    },
+    "expected_payload": {
+      "objective": "A🚀"
+    },
+    "expected_result": "active"
+  },
+  {
+    "id": "utf8-wrapper",
+    "scenario": "Synthetic Unicode boundary with counted transport wrapper.",
+    "profile": {
+      "unit": "utf8",
+      "limit": 21,
+      "wrapper": true,
+      "version": "synthetic-1"
+    },
+    "expected_payload": {
+      "objective": "A🚀"
+    },
+    "expected_result": "active"
+  },
+  {
+    "id": "separate-completion",
+    "scenario": "Synthetic native surface: separate-completion",
+    "profile": {
+      "unit": "utf8",
+      "limit": 400,
+      "wrapper": true,
+      "version": "synthetic-1"
+    },
+    "expected_payload": {
+      "objective": "Repair X; preserve Y; inspect act verify; stop on scope change",
+      "completion": "Reproduce failure, verify repair and source revision"
+    },
+    "expected_result": "active"
+  },
+  {
+    "id": "draft-only",
+    "scenario": "Synthetic native surface: draft-only",
+    "profile": {
+      "unit": "utf8",
+      "limit": 400,
+      "wrapper": true,
+      "version": "synthetic-1"
+    },
+    "expected_payload": {
+      "objective": "Repair X; proof: regression and revision; preserve Y; inspect act verify; stop on scope change"
+    },
+    "expected_result": "drafted",
+    "draft_only": true
+  },
+  {
+    "id": "existing-active",
+    "scenario": "Synthetic native surface: existing-active",
+    "profile": {
+      "unit": "utf8",
+      "limit": 400,
+      "wrapper": true,
+      "version": "synthetic-1"
+    },
+    "expected_payload": {
+      "objective": "Repair X; proof: regression and revision; preserve Y; inspect act verify; stop on scope change"
+    },
+    "expected_result": "existing",
+    "existing_active": true
+  },
+  {
+    "id": "inaccessible-reference",
+    "scenario": "Synthetic native surface: inaccessible-reference",
+    "profile": {
+      "unit": "utf8",
+      "limit": 400,
+      "wrapper": true,
+      "version": "synthetic-1"
+    },
+    "expected_payload": {
+      "objective": "Repair X; proof: regression and revision; preserve Y; inspect act verify; stop on scope change"
+    },
+    "expected_result": "unavailable",
+    "reference_required": true,
+    "access_now": false,
+    "access_resume": false
+  },
+  {
+    "id": "resume-reference-inaccessible",
+    "scenario": "Synthetic native surface: resume-reference-inaccessible",
+    "profile": {
+      "unit": "utf8",
+      "limit": 400,
+      "wrapper": true,
+      "version": "synthetic-1"
+    },
+    "expected_payload": {
+      "objective": "Repair X; proof: regression and revision; preserve Y; inspect act verify; stop on scope change"
+    },
+    "expected_result": "unavailable",
+    "reference_required": true,
+    "access_now": true,
+    "access_resume": false
+  },
+  {
+    "id": "unsupported-persistence",
+    "scenario": "Synthetic native surface: unsupported-persistence",
+    "profile": {
+      "unit": "utf8",
+      "limit": 400,
+      "wrapper": true,
+      "version": "synthetic-1"
+    },
+    "expected_payload": {
+      "objective": "Repair X; proof: regression and revision; preserve Y; inspect act verify; stop on scope change"
+    },
+    "expected_result": "unavailable",
+    "persistence_required": true,
+    "persistence_supported": false
+  },
+  {
+    "id": "validation-rejection",
+    "scenario": "Synthetic native surface: validation-rejection",
+    "profile": {
+      "unit": "utf8",
+      "limit": 400,
+      "wrapper": true,
+      "version": "synthetic-1"
+    },
+    "expected_payload": {
+      "objective": "Repair X; proof: regression and revision; preserve Y; inspect act verify; stop on scope change"
+    },
+    "expected_result": "active",
+    "rejected_payload": {
+      "objective": "Repair X; proof: regression and revision; preserve Y; inspect act verify; stop on scope change",
+      "obsolete_surface_option": true
+    }
+  },
+  {
+    "id": "ambiguous-submission",
+    "scenario": "Synthetic native surface: ambiguous-submission",
+    "profile": {
+      "unit": "utf8",
+      "limit": 400,
+      "wrapper": true,
+      "version": "synthetic-1"
+    },
+    "expected_payload": {
+      "objective": "Repair X; proof: regression and revision; preserve Y; inspect act verify; stop on scope change"
+    },
+    "expected_result": "active"
+  },
+  {
+    "id": "stored-truncation",
+    "scenario": "Synthetic native surface: stored-truncation",
+    "profile": {
+      "unit": "utf8",
+      "limit": 400,
+      "wrapper": true,
+      "version": "synthetic-1"
+    },
+    "expected_payload": {
+      "objective": "Repair X; proof: regression and revision; preserve Y; inspect act verify; stop on scope change"
+    },
+    "expected_result": "damaged"
+  },
+  {
+    "id": "acknowledgment-only",
+    "scenario": "Synthetic native surface: acknowledgment-only",
+    "profile": {
+      "unit": "utf8",
+      "limit": 400,
+      "wrapper": true,
+      "version": "synthetic-1"
+    },
+    "expected_payload": {
+      "objective": "Repair X; proof: regression and revision; preserve Y; inspect act verify; stop on scope change"
+    },
+    "expected_result": "acknowledged",
+    "readback_supported": false
+  },
+  {
+    "id": "stale-profile",
+    "scenario": "Synthetic native surface: stale-profile",
+    "profile": {
+      "unit": "utf8",
+      "limit": 400,
+      "wrapper": true,
+      "version": "synthetic-1"
+    },
+    "expected_payload": {
+      "objective": "Repair X; proof: regression and revision; preserve Y; inspect act verify; stop on scope change"
+    },
+    "expected_result": "active",
+    "cached_version": "synthetic-0"
+  },
+  {
+    "id": "omitted-optional-budget",
+    "scenario": "Synthetic native surface: omitted-optional-budget",
+    "profile": {
+      "unit": "utf8",
+      "limit": 400,
+      "wrapper": true,
+      "version": "synthetic-1"
+    },
+    "expected_payload": {
+      "objective": "Repair X; proof: regression and revision; preserve Y; inspect act verify; stop on scope change"
+    },
+    "expected_result": "active"
+  },
+  {
+    "id": "escaped-prefix-wrapper",
+    "scenario": "Synthetic ASCII-escaped JSON with a counted command prefix.",
+    "profile": {
+      "unit": "utf8",
+      "limit": 35,
+      "wrapper": true,
+      "version": "synthetic-1",
+      "ensure_ascii": true,
+      "prefix": "/goal "
+    },
+    "expected_payload": {
+      "objective": "A🚀"
+    },
+    "expected_result": "active"
+  },
+  {
+    "id": "documented-newline-normalization",
+    "scenario": "Synthetic surface documents CRLF to LF normalization only.",
+    "profile": {
+      "unit": "utf8",
+      "limit": 400,
+      "wrapper": true,
+      "version": "synthetic-1",
+      "normalization": "crlf-to-lf"
+    },
+    "expected_payload": {
+      "objective": "Repair X; preserve Y; inspect act verify; stop on scope change\r\nScope remains X",
+      "completion": "Reproduce failure, verify repair and source revision"
+    },
+    "expected_result": "active"
+  }
+]

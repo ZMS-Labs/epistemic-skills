@@ -71,3 +71,14 @@ discipline behavior):
 
 First live behavioral epoch: 2026-08-04, PASS 14/14 — see
 `results/2026-08-04/RESULTS.md` (register: issue #77).
+
+## Synthetic native surface profiles
+
+`adapter-fixtures.json` and `examples/adapter-balanced.json` add surface-specific
+response traces. `tests/run_tests.py` invokes `score_adapter` with Unicode code-point,
+UTF-16, UTF-8 and serialized-wrapper boundaries, separate completion fields, draft-only
+intent, existing state, external-reference access now/on resume, rejection, ambiguity,
+stored truncation, persistence limits, stale profiles and omitted optional budgets.
+Negative mutations must fail. These are synthetic scorer checks, not native-host
+activation, real product limits, or empirical behavioral results. Historical corpora
+retain their original scope.

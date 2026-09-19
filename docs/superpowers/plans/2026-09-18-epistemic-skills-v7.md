@@ -196,11 +196,11 @@ of the 99 available methods. Public-content and diff checks passed.
 
 **Interface:** Perspective returns a bounded insight/finding/improvement/uncertainty. Gauntlet returns reasoned adjudication of plural scrutiny. UAT's compiled criteria and verifier/judge evidence must carry expected and disconfirming observations. Historical contracts remain interpretable by their original version.
 
-- [ ] Author Perspective's method using the shared lens contract. Allow adaptation and several lenses for the scoped concern without silently escalating to Gauntlet. Return the result to the task owner and show actual use.
-- [ ] Update Gauntlet for existing proposals and open decisions, separate initial examinations where available, constructive revision, factual checks versus value tradeoffs, preservation of dissent, and targeted rechecks. Report actual shared context/model/reviewer limitations. Remove any universal different-family release prerequisite while preserving task-specific honest evidence distinctions.
-- [ ] Resolve the public-telemetry contradiction and stale roadmap claim identified in the assessment. Real private run telemetry stays private; sanitized public evidence retains meaningful coverage limits and the actual historical outcomes.
-- [ ] Add explicit expected/disconfirming observation fields to the current UAT compiler contract and evidence interpretation. Use an explicit contract version or compatibility path if historical inputs lack them; do not rewrite historical packets as newly compliant. Extend the judge's meaningful self-tests with a persistence failure that contradicts a visible success state, a missing disconfirmation observation and a routine presentation case.
-- [ ] Exercise a focused concern, a multi-consideration decision, and a revised candidate. Check that each gets the intended method and that material dissent survives. Validate the source/contract behavior with existing checks below; natural selection is separately evaluated in T9.
+- [x] Author Perspective's method using the shared lens contract. Allow adaptation and several lenses for the scoped concern without silently escalating to Gauntlet. Return the result to the task owner and show actual use.
+- [x] Update Gauntlet for existing proposals and open decisions, separate initial examinations where available, constructive revision, factual checks versus value tradeoffs, preservation of dissent, and targeted rechecks. Report actual shared context/model/reviewer limitations. Remove any universal different-family release prerequisite while preserving task-specific honest evidence distinctions.
+- [x] Resolve the public-telemetry contradiction and stale roadmap claim identified in the assessment. Real private run telemetry stays private; sanitized public evidence retains meaningful coverage limits and the actual historical outcomes.
+- [x] Add explicit expected/disconfirming observation fields to the current UAT compiler contract and evidence interpretation. Use an explicit contract version or compatibility path if historical inputs lack them; do not rewrite historical packets as newly compliant. Extend the judge's meaningful self-tests with a persistence failure that contradicts a visible success state, a missing disconfirmation observation and a routine presentation case.
+- [x] Exercise a focused concern, a multi-consideration decision, and a revised candidate. Check that each gets the intended method and that material dissent survives. Validate the source/contract behavior with existing checks below; natural selection is separately evaluated in T9.
 
 ```text
 python plugins/epistemic-skills/skills/gauntlet/tests/run_tests.py
@@ -213,6 +213,17 @@ python .github/scripts/check_skill_inventory.py
 
 **Done:** Perspective and Gauntlet have distinct exercised contracts; UAT can represent and evaluate contrary observations; exact history and actual review separation are preserved.
 
+Implementation receipt (T4): Perspective now consumes the shared library and
+returns bounded findings without a lens-count escalation. Gauntlet keeps plural
+adjudication, targeted revision, dissent and actual separation limits. Three
+synthetic Workflow regressions first reproduced false GO paths (missing panel,
+missing gate, dropped malformed material finding); all now pass with the clean
+control and full Gauntlet suite. Existing ruling-set controls preserve dissent
+kernels. UAT has an explicit v2 observation contract; ten Python/Workflow parity
+cases plus nineteen historical judge controls and routine triage pass. Historical
+packets remain labeled legacy. Root reviewed the focused, plural and revised-case
+contracts; natural method choice remains a T9 claim, not established here.
+
 ## T5: native goals and continuity ownership
 
 **Requirements:** R09-R12.
@@ -221,9 +232,9 @@ python .github/scripts/check_skill_inventory.py
 
 **Interface:** Goal authoring produces outcome, proof, scope, authority, inspect/act/verify loop and stop conditions. An authorized activation additionally yields the native identity/state and observed acknowledgment/readback limits. Existing mission/decision/relay artifacts retain authority over their respective facts. No generic goal runner or replacement global task schema is created.
 
-- [ ] Write the harness-contract procedure: inspect actual tool schema or installed help, existing goal state and capability surface; consult current official documentation only for unresolved facts; record scoped source/version and uncertainty. Cached profiles must be revalidated when relevant facts change.
-- [ ] Specify and exercise these synthetic adapter cases using the existing fixture machinery: character/byte/code-unit distinctions; counted serialization wrappers; separate completion fields; inaccessible external contract; draft-only instruction; existing active goal; validation rejection; ambiguous submission; stored truncation; unsupported persistence; omitted optional budget. Mark simulation separately from a live native tool run.
-- [ ] Use this concrete counting control in the payload tests, together with profile-specific limits; no test number becomes a claim about a real host.
+- [x] Write the harness-contract procedure: inspect actual tool schema or installed help, existing goal state and capability surface; consult current official documentation only for unresolved facts; record scoped source/version and uncertainty. Cached profiles must be revalidated when relevant facts change.
+- [x] Specify and exercise these synthetic adapter cases using the existing fixture machinery: character/byte/code-unit distinctions; counted serialization wrappers; separate completion fields; inaccessible external contract; draft-only instruction; existing active goal; validation rejection; ambiguous submission; stored truncation; unsupported persistence; omitted optional budget. Mark simulation separately from a live native tool run.
+- [x] Use this concrete counting control in the payload tests, together with profile-specific limits; no test number becomes a claim about a real host.
 
 ```python
 payload = "A" + chr(0x1F680)
@@ -232,10 +243,10 @@ assert len(payload.encode("utf-16-le")) // 2 == 3
 assert len(payload.encode("utf-8")) == 5
 ```
 
-- [ ] Preserve essential goal terms during compression. If a fuller contract is referenced, verify executor access now and on the claimed resume path. After ambiguous submission inspect state before retry; after a definite validation error correct representation within existing scope. Preserve actual pause/cancel/block/complete semantics and user opt-in budget rules.
-- [ ] Align manifest documentation with existing custody enforcement. Preserve next-action authority and evidence while avoiding ordinary-task mission creation. A bounded method return cannot silently close the caller's remaining work.
-- [ ] Make decision-ledger's persist/resume/outcome modes discoverable and preserve predictions separately from outcomes. Qualify reused ADRs by the information and provenance they actually hold.
-- [ ] Implement outsource's COMPLETE relay path in the existing workflow and tests; retain caller-owned integration work. Exercise interrupted authorized repair, stale relevant state, preserved prior answers/authority and completed external return. Ordinary local delegation remains available.
+- [x] Preserve essential goal terms during compression. If a fuller contract is referenced, verify executor access now and on the claimed resume path. After ambiguous submission inspect state before retry; after a definite validation error correct representation within existing scope. Preserve actual pause/cancel/block/complete semantics and user opt-in budget rules.
+- [x] Align manifest documentation with existing custody enforcement. Preserve next-action authority and evidence while avoiding ordinary-task mission creation. A bounded method return cannot silently close the caller's remaining work.
+- [x] Make decision-ledger's persist/resume/outcome modes discoverable and preserve predictions separately from outcomes. Qualify reused ADRs by the information and provenance they actually hold.
+- [x] Implement outsource's COMPLETE relay path in the existing workflow and tests; retain caller-owned integration work. Exercise interrupted authorized repair, stale relevant state, preserved prior answers/authority and completed external return. Ordinary local delegation remains available.
 
 ```text
 python plugins/epistemic-skills/skills/write-goal/evals/trigger-and-scope/tests/run_tests.py
@@ -248,6 +259,16 @@ python plugins/epistemic-skills/skills/outsource/evals/trigger-and-scope/tests/r
 If custody code changes, run the affected existing `test_custody_*.py` modules and then the current mission-custody workflow's relevant platform checks. Do not change custody code just to make its documentation sound simpler.
 
 **Done:** Native goal/loop behavior remains central and surface-aware; continuity records preserve their distinct purposes; a resumed task continues the right authorized step; a completed relay can actually terminate.
+
+Implementation receipt (T5): four scoped suites pass, including synthetic
+Unicode/encoding/wrapper boundaries, activation/readback states, continuity and
+COMPLETE relay controls. Root reviewed authority and termination semantics and
+clarified that draft wording approval alone does not authorize activation.
+Existing mission-custody enforcement already unions usable missions; the stale
+README now describes it. No native goal or external relay was activated. The
+broad package integration check's old metacognate tier assertions were removed;
+its final version/count checks are recorded with T8 integration. Historical
+resume trial outcomes, including the older failed corpus, remain unchanged.
 
 ## T6: framing, evidence, interviews and instruction context
 

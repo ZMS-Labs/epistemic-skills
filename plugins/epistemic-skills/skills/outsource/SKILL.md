@@ -1,6 +1,6 @@
 ---
 name: outsource
-description: Use when a workload should be handed to a different, superior, specialized, or operator-selected model, agent, or process; when the user asks to outsource, ask another model, prepare a copy/paste handoff, or create a repo-backed external relay. Do not use for ordinary same-harness subagent dispatch unless the user explicitly wants a durable GitHub handoff.
+description: Use for a durable, target-readable external handoff or returned relay that must survive the originating chat. Publish authorized packets at immutable references and verify returned evidence. Ordinary local delegation or a same-session question needs no repository relay.
 metadata:
   event-kinds: [handoff-verification]
   eligible-when: [evaluation-case, sampled-field-incident]
@@ -21,11 +21,14 @@ work and satisfy the completion contract from the short prompt plus the referenc
 ## Boundary
 
 This skill consumes a bounded workload, a repository, and any operator choice of target. It
-produces exactly two operator-facing outputs:
+acknowledges use briefly, then produces two operator-facing outputs for an outbound request:
 
 1. a short copy/paste prompt; and
 2. a receipt identifying the committed, GitHub-readable handoff packet that contains the full
    context and contract.
+
+A verified terminal return instead produces a completion receipt and any caller-owned
+remaining action; it does not manufacture another prompt.
 
 It does not perform the outsourced workload, choose a target over an operator's explicit choice,
 or certify the target's result. The target executes; the originating agent records the relay and
@@ -73,7 +76,7 @@ not. “Read the repo” without a context map fails this test.
 
 ## Output contract
 
-Return exactly these two blocks to the operator:
+For an outbound request, return these two blocks after the brief method acknowledgment:
 
 ```text
 PROMPT
@@ -150,7 +153,7 @@ missing, stop at `BLOCKED`; a local preview is not a usable outsource prompt.
 
 ### 6. Return the two outputs
 
-Emit only the `PROMPT` and `PACKET` blocks from the output contract. The repository contains all
+Emit the `PROMPT` and `PACKET` blocks from the outbound output contract. The repository contains all
 detail; the conversation carries only the pointer and readiness receipt.
 
 ## Relay loop
@@ -159,11 +162,24 @@ When the operator pastes a target response back:
 
 1. save it verbatim as the next `relay/NNNN-target.md` before interpreting it;
 2. verify its claimed commits, files, commands, tests, and unresolved items against live state;
-3. update `HANDOFF.md` with the verified current state, remaining requirements, and next request;
-4. store the next canonical outbound prompt template in `relay/NNNN-origin.md` with the literal
-   `{packet_commit}` token;
-5. commit and push the updated packet; and
-6. substitute the resulting commit and emit the new short prompt pointing at that exact commit.
+3. reconcile the response with its immutable source, current relevant state, requirement IDs,
+   and existing authority. Preserve prior answers and decisions while their premises apply;
+4. if all scoped requirements and returned evidence are verified, update `HANDOFF.md` to
+   `COMPLETE`, naming the verified return, evidence references, and remaining caller-owned
+   integration/delivery action and owner (or `NONE`). Commit and publish this closure under
+   existing authority, stating local versus pushed status accurately. Emit a completion
+   receipt with the closure coordinate. Do not create another `NNNN-origin.md` or prompt;
+5. otherwise update the verified state, open requirements and missing observation. Only if
+   external work remains, store the next canonical outbound prompt template with literal
+   `{packet_commit}`, publish when authorized, and emit its immutable pointer. A partial
+   or blocked return holds only dependent work; continue useful work already authorized.
+
+A COMPLETE target claim alone is not closure. If its revision or evidence no longer covers
+relevant state, re-verify the affected requirement without discarding unrelated valid work.
+The relay closing does not close the caller's remaining task: consume the return and resume
+its next permitted action. Dispatch proves neither target acceptance nor execution. Task
+ownership transfers only through explicit agreement supported by the receiving executor;
+new instructions or cancellation supersede the previous continuation.
 
 The target must return only this Markdown envelope, with no conversational preamble:
 
@@ -209,14 +225,16 @@ Return `BLOCKED` rather than a ready prompt when any of these is true:
 
 ## Evidence emission
 
-After each engagement, append one line to `runs/ledger.jsonl` under this skill:
+Only for an authorized evaluation or an existing task evidence contract, optionally
+append one line to `runs/ledger.jsonl` under this skill. Ordinary engagements need no
+separate run ledger:
 
 ```json
 {"schema":"skill-run@1","ts":"<iso8601>","skill":"<this-skill>","decision":"fired|declined","discipline_engaged":"<name-or-null>","action_changed":true|false}
 ```
 
-The append is part of this procedure. It is not a call to an external calibration
-service and it is not a `decision-ledger` entry. Schema:
+This optional telemetry is not proof of success, an external calibration call, or a
+`decision-ledger` entry. Schema:
 `plugins/epistemic-skills/contracts/skill-run-ledger.schema.json`.
 
 ## Local overlay

@@ -1,6 +1,6 @@
 ---
 name: write-goal
-description: Use when the user explicitly asks to create, write, define, refine, or start a goal; asks "what would count as done"; or needs a durable objective, proof standard, scope boundary, blocker policy, stop rule, or optional token budget before extended work — e.g. "write a goal for", "what would count as done", "define a completion contract". Do not auto-create goals from ordinary tasks, and do not execute or certify the goal inside this skill.
+description: Use when the user explicitly asks to author, refine, or start a goal or define what counts as done. Draft the completion contract; adapt an authorized start to the actual native goal or loop surface. Ordinary tasks do not authorize goals, and budgets remain opt-in.
 metadata:
   hands-to: [evidence-locked-uat, gauntlet]
   event-kinds: [goal-proof]
@@ -25,7 +25,7 @@ uncertainty handling, interruptibility, and cross-harness adapters.
 
 | Consumes | Produces | Does not do | Downstream |
 |---|---|---|---|
-| explicit user intent, de-risked context, and any evidence/design inputs | an approved, evidence-bound goal objective; optionally a started persistent goal | execute the work, judge its result, or call it complete | the runtime's goal executor, then independent verification (e.g. evidence-locked-uat for UI-facing work, gauntlet for irreversible commits; governing declaration: `metadata.hands-to`) |
+| explicit user intent, de-risked context, and any evidence/design inputs | an approved, evidence-bound goal objective; optionally a started persistent goal | execute the work, judge its result, or call it complete | the native executor, then the task's designated verification path (direct or separated as actually required; candidate methods in `metadata.hands-to`) |
 
 **Core invariant:** a goal is not complete merely because an easy-to-measure proxy
 moved. Completion requires the agreed proof bundle and its integrity guards.
@@ -36,9 +36,12 @@ Use this skill only when the user explicitly asks for goal authoring or persiste
 creation. An ordinary request such as "fix this bug" is not permission to create a
 persistent goal.
 
-Draft first. Start a goal only when the user explicitly asks to start/create it or
-approves the draft. If a runtime already has an unfinished goal, inspect it and do not
+Draft first. Start a goal only when the user explicitly authorizes activation, including
+approval that requests starting it. Approval of draft wording alone is not activation authority. If a runtime already has an unfinished goal, inspect it and do not
 replace it silently.
+
+Acknowledge use briefly: "I’m using write-goal to define the completion contract"
+(and mention native activation when authorized).
 
 ## 1. Classify the goal before specifying it
 
@@ -78,8 +81,9 @@ Keep the operator-authorized priority separate from the metric used to estimate 
   what must remain intact.
 
 A completion metric is evidence about the authorized priority, never a substitute for it.
-If the priority or acceptable cost is inferred rather than quoted, include it in the draft
-that requires user approval.
+Resolve material uncertainty about the priority or acceptable cost before activation.
+Conservative implementation details within explicit start authority do not require
+a second approval.
 
 ### Proof bundle
 
@@ -159,38 +163,32 @@ Check:
 - Is the target broad enough to survive one failed approach but narrow enough to stop?
 - Does the contract preserve user interrupt authority?
 
-Revise until the user approves it. Skip the review step only when the user's request
-already states, verbatim, an end state, proof bundle, boundaries, and stop rule; if any
-field must be inferred rather than quoted from the request, present the draft for
-approval.
+Draft-only requests end with the usable contract. For an explicitly authorized start,
+reuse already settled answers and authority; resolve only material inferred success
+criteria, scope changes, or tradeoffs. Do not demand verbatim specification of every
+implementation detail or repeat an approval already given.
 
 ## 4. Start the goal through the host adapter
 
-### Codex
+Use [reference/harness-contract.md](reference/harness-contract.md) before an authorized
+activation. Discover the selected surface from actual tool schema/capabilities or
+installed help, then current official documentation only for unresolved facts. Inspect
+existing state; preserve the authorized contract across native field/encoding limits,
+completion fields, and lifecycle semantics. Native execution is the intended result of
+an authorized start when a suitable mechanism exists; this skill does not run a second
+execution loop itself.
 
-1. Use `get_goal` if an unfinished goal may already exist.
-2. Use `request_user_input` for useful closed choices when available; use a concise plain
-   question only when explicit input is truly blocking.
-3. Call `create_goal` only after explicit start/create intent or approval.
-4. Pass the approved completion contract as `objective` without weakening it.
-5. Set `token_budget` only when the user explicitly requested a token budget.
+For a Codex surface exposing `get_goal`/`create_goal`, inspect state and the current
+schema, then map the contract into its actual fields. Omit `token_budget` unless the
+user requested it. For Kimi or any other harness, inspect its installed mechanism
+rather than assuming a product-wide command, limit, or completion field. Goal storage,
+repeated execution, scheduling, and resume persistence are separate capabilities.
 
-Codex's goal tool has no separate `completionCriterion` field. Put the end state, proof
-bundle, boundaries, blocker policy, and stop rule inside `objective`.
-
-### Kimi Code
-
-Use `AskUserQuestion` for material choices and `CreateGoal` after approval. Preserve the
-same completion contract. Use Kimi's separate completion-criterion field if the installed
-runtime exposes it; otherwise keep the criterion in the objective.
-
-### Other harnesses
-
-Meet the contract, not the tool name: inspect active-goal state, obtain consent, create one
-persistent objective, keep budgets opt-in, and preserve the proof and stop rules verbatim.
-If the harness has no persistent-goal primitive, return the approved contract without
-pretending it was started. Claude Code exposes no persistent-goal primitive; the
-return-the-contract path is the expected outcome there.
+Return the drafted contract or the observed native identity/state, plus the scope of
+acknowledgment/readback and any capability limit. Store the identity and contract
+coordinate in an existing task record when interruption makes it necessary. Activation
+is not outcome completion; native termination does not satisfy the proof bundle by
+itself. If no suitable primitive exists, retain the contract and name the limitation.
 
 ## Worked Example (rough intention → completion contract)
 
@@ -302,7 +300,7 @@ authority is required. Do not call uncertainty reduction the final product outco
 | declaring blocked after one obstacle | follow the runtime's real threshold and exhaust bounded in-scope alternatives |
 | adding a token budget "for safety" | budgets are opt-in and never redefine success |
 | starting before approval | drafting and activation are separate state changes |
-| weakening the contract to fit a host tool | encode the full contract in the objective string |
+| weakening the contract to fit a host tool | preserve essential terms; verify executor access to any fuller reference, including resume |
 
 ## Research basis and limits
 
@@ -312,14 +310,16 @@ it does not convert a context-sensitive contract into a universal formula.
 
 ## Evidence emission
 
-After each engagement, append one line to `runs/ledger.jsonl` under this skill:
+Only for an authorized evaluation or an existing task evidence contract, optionally
+append one line to `runs/ledger.jsonl` under this skill. Ordinary engagements need no
+separate run ledger:
 
 ```json
 {"schema":"skill-run@1","ts":"<iso8601>","skill":"<this-skill>","decision":"fired|declined","discipline_engaged":"<name-or-null>","action_changed":true|false}
 ```
 
-The append is part of this procedure. It is not a call to an external calibration
-service and it is not a `decision-ledger` entry. Schema:
+This optional telemetry is not proof of success, an external calibration call, or a
+`decision-ledger` entry. Schema:
 `plugins/epistemic-skills/contracts/skill-run-ledger.schema.json`.
 
 ## Local overlay

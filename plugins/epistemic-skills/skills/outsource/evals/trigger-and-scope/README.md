@@ -59,3 +59,11 @@ a silent coercion.
 First live behavioral epoch: 2026-08-04, FAIL 12/14 — both failures are
 capability-id vocabulary drift over behaviorally correct preflights; see
 `results/2026-08-04/RESULTS.md` (register: issue #77).
+
+## Synthetic terminal return
+
+`completion-fixtures.json` and `examples/completion-balanced.json` exercise the
+verified COMPLETE branch through the existing scorer and test runner. Negative
+mutations reject another outbound prompt, unverified/open requirements and premature
+completion of caller-owned integration. This is synthetic contract/scorer evidence,
+not a published relay or a measurement of agent behavior.
