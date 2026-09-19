@@ -52,6 +52,10 @@ jobs:
         run: python docs/wiki-updates/v6.0.0/check_wiki.py --self-test
       - name: Applier self-test (includes the blanket-rewrite regression guard)
         run: python docs/wiki-updates/v6.0.0/apply_v6_updates.py --self-test
+      - name: v7 publication staging guards and source links
+        run: |
+          python docs/wiki-updates/v7.0.0/stage_wiki.py --self-test
+          python docs/wiki-updates/v7.0.0/stage_wiki.py --check
       - name: Committed handbook snapshot matches the package
         run: |
           python docs/wiki-updates/v6.0.0/check_wiki.py docs/wiki-updates/v7.0.0/pages
@@ -72,5 +76,14 @@ jobs:
           fetch-depth: 0
       - name: Clone the published wiki (read-only)
         run: git clone --quiet --depth 1 https://github.com/${{ github.repository }}.wiki.git "$RUNNER_TEMP/wiki"
-      - name: Published v6 handbook matches its released source, and every link resolves
-        run: python docs/wiki-updates/v6.0.0/check_wiki.py "$RUNNER_TEMP/wiki" --source-ref v6.0.0 --links
+      - name: Published handbook matches the latest published release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          published_tag=$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq '.tag_name')
+          if [[ ! "$published_tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Latest published release has no supported version tag" >&2
+            exit 1
+          fi
+          git fetch --quiet origin "refs/tags/$published_tag:refs/tags/$published_tag"
+          python docs/wiki-updates/v6.0.0/check_wiki.py "$RUNNER_TEMP/wiki" --source-ref "$published_tag" --links

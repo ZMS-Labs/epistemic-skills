@@ -14,17 +14,13 @@ Thin integration manifests share one canonical skill tree across supported
 hosts. See [compatibility](#installation-and-compatibility) for the distinction
 between a packaged integration and verified runtime behavior.
 
-**Version 7.0.0 candidate, not yet released.** This source tree contains seventeen
-skills: the `epistemic` usage entry and sixteen substantive methods, including
-`perspective`. See the [candidate notes](docs/release/RELEASE-7.0.0.md),
+**Version 7.0.0.** Seventeen canonical entries: the `epistemic` usage guide and
+sixteen substantive methods, including `perspective`. See the
+[release notes](docs/release/RELEASE-7.0.0.md),
 [current handbook](docs/wiki-updates/v7.0.0/pages/Home.md), and
-[requirement evidence](docs/release/v7-evidence.md). Package version metadata
-identifies the prepared candidate; it does not establish a published tag.
-
-**Stable version 6.0.0.** Latest published [release](https://github.com/ZMS-Labs/epistemic-skills/releases/tag/v6.0.0)
-(2026-08-21). `main` includes subsequent fixes. The release's independent
-publication review did not approve publication; it shipped under a documented
-owner exception. See [release status and limitations](#trust-evidence-and-known-limits).
+[verification evidence](docs/release/v7-evidence.md). The
+[versioned release](https://github.com/ZMS-Labs/epistemic-skills/releases/tag/v7.0.0)
+binds the published source and assets; package metadata alone is not publication.
 
 [![Release](https://img.shields.io/github/v/release/ZMS-Labs/epistemic-skills?display_name=tag)](https://github.com/ZMS-Labs/epistemic-skills/releases/latest)
 [![epistemic-flexibility](https://github.com/ZMS-Labs/epistemic-skills/actions/workflows/epistemic-flexibility.yml/badge.svg)](https://github.com/ZMS-Labs/epistemic-skills/actions/workflows/epistemic-flexibility.yml)
@@ -81,7 +77,7 @@ Users and maintainers are equal first-class audiences:
 | [Skill Catalog](https://github.com/ZMS-Labs/epistemic-skills/wiki/Skill-Catalog) | [Release Process and Versioning](docs/wiki-updates/v7.0.0/pages/Release-Process-and-Versioning.md) |
 | | [Security, Provenance, and DCO](https://github.com/ZMS-Labs/epistemic-skills/wiki/Security-Provenance-and-DCO) |
 
-The live Wiki explains the released contracts. The candidate
+The live Wiki explains the released contracts. The
 [committed handbook](docs/wiki-updates/v7.0.0/pages/Home.md) describes v7; the
 [v6 snapshot](docs/wiki-updates/v6.0.0/pages) remains historical. Canonical skill
 files take precedence. The version-aware
@@ -91,14 +87,14 @@ files take precedence. The version-aware
 
 1. **Install one immutable copy.** Choose the native path for your harness under [Installation and compatibility](#installation-and-compatibility). Use the generic Agent Skills path only when no native plugin or extension exists.
 2. **Reload the harness or start a fresh task.** Trigger discovery and role registries are commonly session-bound.
-3. **Use the guidance for your installed version.** This development tree adds `epistemic` (Using Epistemic Skills); any substantive method is directly invocable. The released v6.0.0 package still has its original entry behavior.
-4. **Verify the inventory and source.** v6.0.0 ships fifteen skills. Check that the host loads the expected descriptions from one installation.
+3. **Load the usage guide.** Invoke `epistemic` (Using Epistemic Skills), or directly invoke the substantive method you need. Check that the host loaded the selected installation.
+4. **Verify the inventory and source.** v7.0.0 ships seventeen canonical entries. Check that the host loads the expected descriptions from one installation.
 5. **Let routine work leave.** A local, reversible, directly checkable, non-precedential task should finish with its bounded check and no process-only artifact.
 
 For a harness without a native package surface, the complete generic install is:
 
 ```bash
-npx skills add https://github.com/ZMS-Labs/epistemic-skills/tree/v6.0.0/plugins/epistemic-skills/skills
+npx skills add https://github.com/ZMS-Labs/epistemic-skills/tree/v7.0.0/plugins/epistemic-skills/skills
 ```
 
 Do not run that command on top of a native plugin install. The [installation handbook](https://github.com/ZMS-Labs/epistemic-skills/wiki/Installation-and-Harness-Compatibility) includes verification and recovery details for every packaged harness.
@@ -116,11 +112,11 @@ For unfamiliar but routine-looking work, perform **two-read micro-recon**: inspe
 
 Routine work produces no entry-point record, blindspot report, formal record, ledger entry, UAT packet, or proof that other triggers were absent. Escalate only when the reads expose an observed mismatch, hidden coupling, unresolved scope, material fan-out risk, or another positive trigger.
 
-See the [routine-work guide](https://github.com/ZMS-Labs/epistemic-skills/wiki/Routine-Work-and-Proportionality) and the [released normative reference](https://github.com/ZMS-Labs/epistemic-skills/blob/v6.0.0/plugins/epistemic-skills/skills/metacognate/reference/routine-fast-path.md).
+See the [routine-work guide](https://github.com/ZMS-Labs/epistemic-skills/wiki/Routine-Work-and-Proportionality) and the [released normative reference](https://github.com/ZMS-Labs/epistemic-skills/blob/v7.0.0/plugins/epistemic-skills/skills/metacognate/reference/routine-fast-path.md).
 
 ## Using Epistemic Skills
 
-The development tree's `epistemic` entry teaches how to discover, load and apply
+The `epistemic` entry teaches how to discover, load and apply
 relevant methods. Every substantive skill remains directly invocable.
 `using-epistemic-skills` is a compatibility alias for `epistemic`; native alias
 invocation depends on verified host support. Otherwise use the canonical name.
@@ -143,9 +139,8 @@ announcing a skill alone does not establish application. Reuse adequate evidence
 preserve current user decisions and continue the authorized task after a method
 returns. Routine work does not require a process-only record.
 
-These are development changes for v7, not claims about the immutable v6.0.0
-installation above. Startup delivery and comparative benefit require separate
-verification. The historical Helix coordinator and pair table remain retired.
+These changes apply to v7. Startup delivery and comparative benefit have
+separate evidence limits; see the release notes. The historical Helix coordinator and pair table remain retired.
 
 ## Choose by task
 
@@ -239,17 +234,17 @@ version of that contract.
 
 ### One copy, one version, one canonical tree
 
-Install with **exactly one mechanism per harness**. Native plugin **or** generic skill install—never both. For 6.0.0, replace an older untagged copy, reload, and verify both the skill count and source path. Duplicate copies create duplicate triggers and can silently mix contract versions.
+Install with **exactly one mechanism per harness**. Native plugin **or** generic skill install—never both. For 7.0.0, replace an older untagged copy, reload, and verify both the skill count and source path. Duplicate copies create duplicate triggers and can silently mix contract versions.
 
-| Harness | v6.0.0 surface | Required follow-through | Honest support boundary |
+| Harness | v7.0.0 surface | Required follow-through | Honest support boundary |
 |---|---|---|---|
 | Claude Code | Local marketplace from tagged checkout | Start a fresh task | Package discovery from one immutable checkout |
 | Codex | Tagged plugin marketplace | Render five Gauntlet roles; start a new task | Manifest does not itself register custom collaboration-agent types |
-| Cursor | Tagged local checkout or team marketplace | Reload window; verify the tag's full skill count (fifteen at v6.0.0) | Public listing unavailable; recorded behavioral epoch is `BLOCKED_EXTERNAL` |
+| Cursor | Tagged local checkout or team marketplace | Reload window; verify the tag's full skill count (seventeen at v7.0.0) | Public listing unavailable; recorded behavioral epoch is `BLOCKED_EXTERNAL` |
 | Gemini CLI | Tagged extension | Restart and validate extension | Uses root context and canonical symlinked tree |
 | Antigravity (`agy`) | Tagged native local plugin | Validate with `agy` | Choose native, Gemini link, or import—only one |
 | Kimi Code | Tagged repository plugin | `/reload` or new session | Plugin instructions map isolated-agent primitives |
-| ZCode | Tagged local checkout, junction-projected into `~/.zcode/skills` | Start a fresh session; verify the tag's full skill count (fifteen at v6.0.0) | Session bootstrap junctions `~/.claude/skills` only — skills riding as Claude *plugins* are not auto-imported; limited local discovery evidence; native plugin installation unverified |
+| ZCode | Tagged local checkout, junction-projected into `~/.zcode/skills` | Start a fresh session; verify the tag's full skill count (seventeen at v7.0.0) | Session bootstrap junctions `~/.claude/skills` only — skills riding as Claude *plugins* are not auto-imported; limited local discovery evidence; native plugin installation unverified |
 | ChatGPT / OpenAI | Generated bundle from the release (`packaging/openai/chatgpt-skill`) | Upload the generated zip per [the packaging guide](docs/CHATGPT-AND-OPENAI-PACKAGING.md) | Generated-artifact bridge: a snapshot of the released tree, not self-updating; the bundle carries no live execution |
 | Generic Agent Skills host | Tagged canonical skills URL | Reload host and verify source | Host must supply any runtime primitive the selected skill requires |
 
@@ -263,22 +258,22 @@ Full installation, migration, runtime-degradation, and troubleshooting guidance 
 ### Claude Code
 
 ```bash
-git clone --depth 1 --branch v6.0.0 https://github.com/ZMS-Labs/epistemic-skills.git /path/to/epistemic-skills-v6.0.0
+git clone --depth 1 --branch v7.0.0 https://github.com/ZMS-Labs/epistemic-skills.git /path/to/epistemic-skills-v7.0.0
 ```
 
 ```text
-/plugin marketplace add /absolute/path/to/epistemic-skills-v6.0.0
+/plugin marketplace add /absolute/path/to/epistemic-skills-v7.0.0
 /plugin install epistemic-skills@epistemic-skills
 ```
 
-Use one marketplace source only, then start a fresh task. Prefer the immutable `v6.0.0` tag for stable installs; `main` may include post-tag corrective documentation and contract hardening (see [successor progress](docs/release/SUCCESSOR-PROGRESS-104-105-2026-08-07.md)).
+Use one marketplace source only, then start a fresh task. Prefer the immutable `v7.0.0` tag for stable installs; `main` may include post-tag corrective documentation and contract hardening (see [successor progress](docs/release/SUCCESSOR-PROGRESS-104-105-2026-08-07.md)).
 
 ### Codex
 
 ```powershell
-codex plugin marketplace add ZMS-Labs/epistemic-skills --ref v6.0.0
+codex plugin marketplace add ZMS-Labs/epistemic-skills --ref v7.0.0
 codex plugin add epistemic-skills@epistemic-skills
-python "$HOME/.codex/plugins/cache/epistemic-skills/epistemic-skills/6.0.0/skills/gauntlet/scripts/render_codex_agents.py" --out "$HOME/.codex/agents"
+python "$HOME/.codex/plugins/cache/epistemic-skills/epistemic-skills/7.0.0/skills/gauntlet/scripts/render_codex_agents.py" --out "$HOME/.codex/agents"
 ```
 
 Start a new Codex task after rendering. The renderer converts the five canonical packaged Markdown roles into Codex's user-agent registry. The Gauntlet retains a hashed exact-role materialization fallback for tasks that started before registration.
@@ -290,9 +285,9 @@ Cursor packaging is present, but the plugin is **not publicly listed**. `/add-pl
 Windows local install:
 
 ```powershell
-git clone --depth 1 --branch v6.0.0 https://github.com/ZMS-Labs/epistemic-skills.git .\epistemic-skills-v6.0.0
-Set-Location .\epistemic-skills-v6.0.0
-if ((git describe --tags --exact-match) -ne 'v6.0.0') { throw 'expected v6.0.0' }
+git clone --depth 1 --branch v7.0.0 https://github.com/ZMS-Labs/epistemic-skills.git .\epistemic-skills-v7.0.0
+Set-Location .\epistemic-skills-v7.0.0
+if ((git describe --tags --exact-match) -ne 'v7.0.0') { throw 'expected v7.0.0' }
 New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.cursor\plugins\local" | Out-Null
 $src = (Resolve-Path .\plugins\epistemic-skills).Path
 $dest = Join-Path $env:USERPROFILE '.cursor\plugins\local\epistemic-skills'
@@ -303,19 +298,19 @@ cmd /c mklink /J "$dest" "$src"
 macOS/Linux local install:
 
 ```bash
-git clone --depth 1 --branch v6.0.0 https://github.com/ZMS-Labs/epistemic-skills.git ./epistemic-skills-v6.0.0
-cd ./epistemic-skills-v6.0.0
-test "$(git describe --tags --exact-match)" = v6.0.0
+git clone --depth 1 --branch v7.0.0 https://github.com/ZMS-Labs/epistemic-skills.git ./epistemic-skills-v7.0.0
+cd ./epistemic-skills-v7.0.0
+test "$(git describe --tags --exact-match)" = v7.0.0
 mkdir -p ~/.cursor/plugins/local
 ln -sfn "$(pwd)/plugins/epistemic-skills" ~/.cursor/plugins/local/epistemic-skills
 ```
 
-Run **Developer: Reload Window**, verify the tag's full skill count (fifteen at v6.0.0) under Customize → Skills, and do not also install them into `~/.cursor/skills/`.
+Run **Developer: Reload Window**, verify the tag's full skill count (seventeen at v7.0.0) under Customize → Skills, and do not also install them into `~/.cursor/skills/`.
 
 ### Gemini CLI
 
 ```bash
-gemini extensions install https://github.com/ZMS-Labs/epistemic-skills --ref v6.0.0 --consent
+gemini extensions install https://github.com/ZMS-Labs/epistemic-skills --ref v7.0.0 --consent
 # Local development only:
 gemini extensions link /path/to/epistemic-skills
 ```
@@ -325,9 +320,9 @@ Restart the session and run `gemini extensions validate` when validating a check
 ### Antigravity (`agy`)
 
 ```bash
-git clone --depth 1 --branch v6.0.0 https://github.com/ZMS-Labs/epistemic-skills.git /path/to/epistemic-skills-v6.0.0
-agy plugin install /path/to/epistemic-skills-v6.0.0
-agy plugin validate /path/to/epistemic-skills-v6.0.0
+git clone --depth 1 --branch v7.0.0 https://github.com/ZMS-Labs/epistemic-skills.git /path/to/epistemic-skills-v7.0.0
+agy plugin install /path/to/epistemic-skills-v7.0.0
+agy plugin validate /path/to/epistemic-skills-v7.0.0
 ```
 
 Use one of native `agy plugin install`, Gemini extension link, or `agy plugin import gemini`; do not combine them.
@@ -335,7 +330,7 @@ Use one of native `agy plugin install`, Gemini extension link, or `agy plugin im
 ### Kimi Code
 
 ```text
-/plugins install https://github.com/ZMS-Labs/epistemic-skills/tree/v6.0.0
+/plugins install https://github.com/ZMS-Labs/epistemic-skills/tree/v7.0.0
 # Local development only, from a clone:
 /plugins install /path/to/epistemic-skills
 ```
@@ -345,7 +340,7 @@ Run `/reload` or start a new session. `.kimi-plugin/plugin.json` points to the c
 ### Generic harness
 
 ```bash
-npx skills add https://github.com/ZMS-Labs/epistemic-skills/tree/v6.0.0/plugins/epistemic-skills/skills
+npx skills add https://github.com/ZMS-Labs/epistemic-skills/tree/v7.0.0/plugins/epistemic-skills/skills
 ```
 
 Use this only when the host has no native plugin or extension. Frontmatter `description` is the trigger; the body is the method. Compatibility means the host preserves the selected skill's capability, ordering, isolation, persistence, and fail-closed contracts—not merely that it can display Markdown.
@@ -421,10 +416,10 @@ repository.
 
 ## Trust, evidence, and known limits
 
-The v7 candidate’s [evidence packet](docs/release/v7-evidence.md) separates source
-checks, loaded context, exercised workflows and comparative benefit. Host coverage
-and final release judgment remain pending until recorded there; historical v6
-results do not certify this candidate.
+The [v7 evidence packet](docs/release/v7-evidence.md) separates source checks,
+loaded context, exercised workflows and comparative benefit. Exact publication
+checks and the designated-reviewer GO are bound in the annotated tag and attached
+release receipt. Historical v6 results do not certify v7.
 
 
 v6.0.0 is published and available as a versioned source snapshot. Its
@@ -441,8 +436,8 @@ The [testing handbook](https://github.com/ZMS-Labs/epistemic-skills/wiki/Testing
 separates deterministic tests from behavioral evaluations.
 
 Historical audits and evaluations describe the revisions and conditions named
-in those records. Use them within that scope. The development branch contains
-post-release corrections; installing the v6.0.0 tag does not include them.
+in those records. Use them within that scope. The v6.0.0 tag retains its original contracts;
+installing it does not include the v7 changes.
 
 ### Behavioral evidence and remaining limits
 

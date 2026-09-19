@@ -243,7 +243,11 @@ candidate.
      return GO, and the firing condition. It authorizes a determinate act.
    - **After** the gate returns GO, the owner records **in the annotated tag
      object** the verdict read (path and run id), the exact candidate SHA, their
-     own identity, and the disarm/re-arm timestamps. A tag names its target
+     own identity, and the disarm timestamp. The subsequent re-arm timestamp and
+     seeded rejection result belong in a publication receipt attached to the
+     Release or PR: they occur after tag push and cannot truthfully be embedded
+     in an already immutable tag. Never rewrite a tag to add those later facts.
+     A tag names its target
      without altering it, so the candidate is identical across the step-4
      checks, the step-5 verdict, the authorization, and the tag target.
    - A verdict without a resolvable subject still authorizes nothing: a `GO` for
@@ -259,8 +263,8 @@ candidate.
      rule exists to constrain.
    - **Disarming the rule is therefore the authorization act.** Remove the
      `creation` rule (or set the ruleset's enforcement to `disabled`), create and
-     push the tag, then **re-arm it in the same sitting**. Record the disarm and
-     re-arm alongside the authorization line.
+     push the tag, then **re-arm it in the same sitting**. Record the disarm with the tag authorization and the later re-arm in
+     the attached publication receipt, both bound to the same tag object and target.
    - Verify the rule is armed again before closing the release, with a seeded
      probe rather than by reading the config back. A release that ends with the
      gate left open has removed the control it was meant to satisfy.

@@ -1,4 +1,4 @@
-> **Applies to:** epistemic-skills v7.0.0 candidate (unreleased).
+> **Applies to:** epistemic-skills v7.0.0.
 > Source checks, loaded context, exercised workflows and comparative benefit are distinct.
 
 # Skill catalog

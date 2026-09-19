@@ -1,9 +1,9 @@
-> **Applies to:** epistemic-skills v7.0.0 candidate (unreleased).
+> **Applies to:** epistemic-skills v7.0.0.
 > Source checks, loaded context, exercised workflows and comparative benefit are distinct.
 
 # Testing and evidence
 
-The [current evidence packet](../../../release/v7-evidence.md) records R01-R22,
+The [current evidence packet](https://github.com/ZMS-Labs/epistemic-skills/blob/v7.0.0/docs/release/v7-evidence.md) records R01-R22,
 implementation revisions, affected checks, runtime coverage and unresolved limits.
 Source checks validate contracts; loaded-context evidence establishes what the
 host received; exercised workflows test behavior; comparative results evaluate

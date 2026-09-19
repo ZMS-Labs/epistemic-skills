@@ -1,6 +1,12 @@
 # V7 candidate evidence and requirement dispositions
 
-Evidence date: 2026-09-18. **Local candidate; unpublished.**
+Evidence date: 2026-09-18. **Pre-publication evidence snapshot.**
+
+This packet preserves the local state before release PR #250. Its conditional
+publication disposition and unrun-hosted statements describe that stage. Final
+exact-candidate checks, reviewer verdict and publication identity are recorded
+in the annotated v7.0.0 tag and its attached publication receipt; they do not
+retroactively change the observations below.
 
 The integrated source is `42c467fbbf6d082910875e361f0d2fd2d2e530dd`.
 The comparison froze the earlier `7b746681123b4fa6d5d85a0d26e58f38826faeb1`

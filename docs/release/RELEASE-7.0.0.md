@@ -1,57 +1,81 @@
-# Epistemic Skills 7.0.0 — prepared candidate
+# Epistemic Skills 7.0.0
 
-**Unreleased.** Package metadata is prepared for 7.0.0; this file does not claim a
-v7 tag or GitHub Release exists. The stable installation fallback remains
-[v6.0.0](https://github.com/ZMS-Labs/epistemic-skills/releases/tag/v6.0.0).
+V7 adds a shared usage guide and focused Perspective method, refines the existing
+fifteen methods, and improves the distinction between instructions, executable
+checks, observed behavior and unproved claims. There are seventeen canonical
+entries: `epistemic` plus sixteen substantive methods.
 
-The candidate contains seventeen canonical skills: `epistemic` usage guidance and
-sixteen substantive methods. `using-epistemic-skills` is a compatibility alias
-where the host supports it, not another skill. Every method remains directly
-invocable. Actually used methods receive a visible acknowledgment, and the
-agent continues the authorized task after a method returns.
+## What changed
 
-## Candidate changes
-
-- `epistemic` teaches discovery, actual loading, application and continuation.
-  Metacognate retains substantive examination of reasoning and approach.
-- `perspective` applies focused/adaptive lenses; Gauntlet preserves plural
-  scrutiny, reasoned adjudication and dissent. Existing lens IDs remain meaningful;
-  only the three approved additions enter the shared library.
-- Triage prefers available applicable systematic-debugging and retains a standalone
-  method, provider honesty, authorized repair and original-failure verification.
-- Resolve supports bounded citation checks; recon removes quota-driven filler.
-  Decision persistence and external relay reuse adequate records and preserve
-  continuity. Goal activation respects native limits, existing state and opt-in budgets.
-- UAT observes expected and disconfirming outcomes and reports actual separation.
-  Source checks do not fabricate blinded verification or comparative benefit.
-- Host delivery, public metadata, inventory and the current handbook are aligned
-  to candidate source. Runtime and comparative claims require separate evidence.
+- **Visible, proportionate use.** The usage entry teaches discovery, loading,
+  application, acknowledgment and continuation. Every method remains directly
+  invocable. Metacognate examines reasoning rather than acting as a dispatcher.
+- **Debugging that carries through.** Triage prefers available applicable
+  systematic-debugging, provides a standalone fallback, reuses adequate evidence,
+  and continues authorized repair through original-failure verification.
+- **Focused and plural review.** Perspective returns useful focused/adaptive
+  analysis. Gauntlet preserves plural scrutiny, reasoned adjudication and dissent.
+  The shared library accounts for all 102 original lens IDs and adds three methods;
+  six retired entries remain historical, leaving 99 available entries.
+- **Continuity and native goals.** Decision records preserve original predictions
+  and later outcomes; completed external relays can close without another prompt.
+  Write-goal adapts to actual native limits, state and lifecycle with opt-in budgets.
+- **Executable outcome checks.** Versioned UAT contracts include expected and
+  disconfirming observations. Failed persistence prevents acceptance. Watch proof
+  history is consistent across applicable states. Gauntlet's template rejects an
+  unsupported GO when panels, gates or material finding evidence are incomplete.
+- **Finite review and clear packaging.** The owner-designated reviewer may approve
+  a candidate without a mandatory extra model family. One canonical usage body,
+  host-specific fallbacks, aligned metadata and a current handbook accompany it.
 
 ## Migration and compatibility
 
-Use one install mechanism per host; preserve customizations. Reload or start a
-fresh task where host registries are session-bound and verify the loaded revision.
-Do not rewrite or restart existing native goals/loops simply because of upgrade.
-Until a real v7 tag is published, use the pinned v6 commands in the
-[README](../../README.md#installation-and-compatibility) for stable installation.
-Authorized candidate builds must record their actual committed source revision.
+This major version includes consumer-visible contract tightening since v6:
+empty permission values and incomplete evidence accepted by earlier contracts may
+now fail validation. UAT `uat-contract@2` supports executable observations;
+unversioned historical inputs retain explicit legacy semantics. Review validation
+errors against the relevant schema instead of rewriting historical evidence.
 
-## Evidence and limitations
+Install one versioned copy per host, preserve customizations, then reload or start
+a fresh task and verify the loaded descriptions/source. Do not restart or rewrite
+existing native goals or loops simply because of upgrade. The historical alias
+`using-epistemic-skills` maps to `epistemic` in documentation; native alias support
+is not established. Superpowers is preferred where applicable, not a dependency.
 
-The [R01-R22 evidence packet](v7-evidence.md) carries implementation dispositions,
-check receipts, host coverage and comparative findings. The
-[candidate handbook](../wiki-updates/v7.0.0/pages/Home.md) describes current use;
-historical v6 handbook and release-review outcomes retain their original meaning.
+See the [installation guide](../../README.md#installation-and-compatibility) and
+[handbook](../wiki-updates/v7.0.0/pages/Home.md). The v6 tag and its historical
+handbook remain unchanged.
 
-| Gate / evidence class | Candidate status | Limit |
-|---|---|---|
-| Source version and inventory | 7.0.0 candidate; 17 canonical entries | Source candidate `42c467f`; unpublished |
-| Deterministic checks and bundles | Exact-source bundles pass; 81 workflow checks have expected-outcome receipts, including corrective checks | Hosted CI and platform parity remain unrun |
-| Privacy/security | Current public-content check and redacted full-history scan pass | Known-pattern checks; final publication identity remains separate |
-| Loaded-context and host workflows | Live Codex discovery recorded; model workflows unexercised | No universal startup or alias support claim |
-| Comparative task benefit | Pilot stopped: one invalid baseline run, 31 undispatched, zero pairs | Host exposure/tool failures prevent any v6-v7 benefit inference |
-| Assigned release judgment | CONDITIONAL for publication; no unresolved material source finding in scoped review | No mandatory independent reviewer; hosted integrity gates remain outstanding |
-| Publication identity | Not performed | No v7 tag, release or Wiki publication claimed |
+## Evidence and limits
 
-The [current release policy](../../RELEASING.md) governs final review and publication.
-No missing evidence is converted into a pass by this prepared release-note file.
+The [requirement packet](v7-evidence.md) records R01-R22 and the pre-publication
+review; the [local receipt](v7-local-checks.json) preserves original failures,
+timeouts and corrective checks. All 81 local workflow commands have their expected
+outcomes after scoped corrections. The final publication subject and hosted
+outcomes are bound by the annotated tag and the attached
+[publication receipt](https://github.com/ZMS-Labs/epistemic-skills/releases/download/v7.0.0/publication-receipt.json).
+These notes alone do not assert that an unperformed publication step passed.
+
+| Gate | Status record | Exact subject / evidence | Limit |
+|---|---|---|---|
+| Version, links and package | Final result in publication receipt | Annotated v7.0.0 target; source/bundle and post-tag URL checks | A manifest is not an installation receipt |
+| Deterministic checks and CodeQL | Final hosted outcomes in tag and receipt | Required runs on the exact merge commit | Historical/local checks are retained separately |
+| Security, public content and provenance | Final outcomes in tag and receipt | Exact candidate and reachable history; scan controls; matching sign-offs | Known patterns, not universal absence proof |
+| Description bytes | 7,153; delta -1,483 from v6's 8,636 | Canonical package descriptions; report command | Package-local, not total host context headroom |
+| Host evidence | Explicit tiers in linked coverage | [Versioned host coverage](v7-host-coverage.md) | Discovery/serialization does not prove automatic use |
+| Designated review | Exact-candidate verdict in tag and receipt | Owner-designated implementing Codex agent | Shared implementation context; not blinded or independent |
+| Publication identity | Final assertions in receipt | Annotated tag, release body and generated assets | Verify the actual tag and receipt, not this prose alone |
+
+Live Codex CLI discovery observed all 17 canonical descriptions. Startup model
+consumption, native aliases and native-goal activation/readback remain unexercised.
+Other hosts retain their [declared verification tiers](v7-host-coverage.md).
+
+The bounded v6-v7 comparison stopped after one baseline subject encountered
+out-of-arm host skill loading and policy-blocked local tools. Thirty-one slots
+were not dispatched; zero valid pairs and zero candidate subjects were obtained.
+[All scheduled outcomes](../../plugins/epistemic-skills/evals/epistemic-flexibility/behavioral/results/2026-09-18-v7/RESULTS.md)
+remain recorded. V7 makes no comparative superiority or universal activation claim.
+
+Publication follows [the release policy](../../RELEASING.md) and the owner's
+[PR #250 authorization](PREAUTH-7.0.0.md). The tag is immutable; later corrections
+ship as new versions, and later evidence does not rewrite historical outcomes.
