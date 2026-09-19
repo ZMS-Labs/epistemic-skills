@@ -149,12 +149,12 @@ public-content and diff checks. No live external observer was commissioned.
 
 **Interface:** Both consumers read one canonical repertoire. Keep the existing physical registry location initially to avoid an unnecessary path migration. Generation, evaluation, gate and adjudication roles remain distinct; changed entries receive appropriate version/provenance updates. No separate copy of a card is created for Perspective.
 
-- [ ] Iterate all 102 assessed IDs and implement their `concrete_edits`, preserving original assessment evidence. Account for every retain/refine/combine/relocate/retired disposition in the task result with registry ID/version and source diff. Do not infer completion from counts alone.
-- [ ] For combined modes, preserve lookup identity, distinct mode questions and truthful diversity accounting. For historical retired entries, preserve replay and successor references. Resolve dialectical-synthesizer's contradictory ruling role and relocate adjacent-possible generation as assessed.
-- [ ] Add the three accepted methods with executable evidence procedures and honest limits: evidence-synthesis-auditor, stakeholder-representation-auditor, hermetic-reproducibility-auditor. Keep the other queued candidates unavailable.
-- [ ] Write the shared reference around question, evidence, procedure, possible result, revision condition, limits and stopping. Functional descriptions lead; persona aliases cannot imply authority, participation or independent evidence.
-- [ ] Update necessary schema/selector checks for role/mode boundaries. Add concrete controls: a generator cannot satisfy evaluator diversity; two modes of one mechanism do not become two independent confirmations; no material finding is a valid method outcome. Preserve historical schema interpretation where compatibility is claimed.
-- [ ] Verify that every source ID remains represented, then render and validate existing views. Inspect the actual semantic edits against the inventory; this code checks only ID retention.
+- [x] Iterate all 102 assessed IDs and implement their `concrete_edits`, preserving original assessment evidence. Account for every retain/refine/combine/relocate/retired disposition in the task result with registry ID/version and source diff. Do not infer completion from counts alone.
+- [x] For combined modes, preserve lookup identity, distinct mode questions and truthful diversity accounting. For historical retired entries, preserve replay and successor references. Resolve dialectical-synthesizer's contradictory ruling role and relocate adjacent-possible generation as assessed.
+- [x] Add the three accepted methods with executable evidence procedures and honest limits: evidence-synthesis-auditor, stakeholder-representation-auditor, hermetic-reproducibility-auditor. Keep the other queued candidates unavailable.
+- [x] Write the shared reference around question, evidence, procedure, possible result, revision condition, limits and stopping. Functional descriptions lead; persona aliases cannot imply authority, participation or independent evidence.
+- [x] Update necessary schema/selector checks for role/mode boundaries. Add concrete controls: a generator cannot satisfy evaluator diversity; two modes of one mechanism do not become two independent confirmations; no material finding is a valid method outcome. Preserve historical schema interpretation where compatibility is claimed.
+- [x] Verify that every source ID remains represented, then render and validate existing views. Inspect the actual semantic edits against the inventory; this code checks only ID retention.
 
 ```python
 import json
@@ -176,6 +176,17 @@ python plugins/epistemic-skills/skills/gauntlet/tests/run_tests.py
 ```
 
 **Done:** All 102 dispositions are accounted for, the three additions have usable methods, both consumers can share one library, and structural success is not represented as empirical validation of every lens.
+
+Implementation receipt (T3): all 102 original IDs are accounted for in the
+versioned implementation audit; 96 available methods were refined, six retired
+records preserve their original fields, and the three approved additions are
+available. Root reviewed procedures and revision conditions against the accepted
+member edits. Schema, generated views, 1,000 deterministic selection controls,
+role/mode boundaries and the full Gauntlet suite pass. The historical synthetic
+example retains its original registry pin and reports named registry drift; a
+temporary synthetic control exercises current replay without changing history.
+These checks establish structure and contract behavior, not empirical benefit
+of the 99 available methods. Public-content and diff checks passed.
 
 ## T4: Perspective, Gauntlet and evidence-locked acceptance
 

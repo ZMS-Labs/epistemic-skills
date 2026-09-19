@@ -393,6 +393,8 @@ def check_constraints(chosen, subj, pool):
             errs.append(f"mutex group {mg} co-selected without intentional contrast")
     if any(c["status"] != "available" for c in chosen):
         errs.append("non-available lens in evaluator panel")
+    if any(c.get("workflow_role") != "evaluate" for c in chosen):
+        errs.append("non-evaluator role in evaluator panel")
     if subj.get("domain_confidence") == "high":
         sd = canon_domains(subj.get("domains", []))
         available = any(canon_domains(e["domains"]) & sd for e in pool)

@@ -5,6 +5,13 @@ Every human-readable roster file and every count is **generated** from it by
 `scripts/render_roster.py`. Hand-editing a generated file is drift; the validator fails on it.
 Counts live in one place: `roster/INDEX.md` (generated).
 
+Perspective and Gauntlet consume this same registry. Read the shared
+[selection and method contract](../../../reference/lenses.md). Functional display
+names lead discovery; stable historical IDs preserve lookup. Current v2 entry
+schemas add explicit procedures, possible results (including no material finding),
+revision conditions, limits and stopping. Historical v1 snapshots retain their
+original interpretation and retired entries preserve their original replay fields.
+
 ## What counts as a distinct lens
 
 A lens is distinct only when it differs materially on **all** of:
@@ -17,25 +24,25 @@ co-selected only with a recorded intentional contrast.
 
 ## Workflow roles (the pipeline, replacing the old "five groups" mental model)
 
-1. **generate_options** — pre-panel, open questions only. 1-2 generators produce 3-5
-   materially distinct alternatives **always including the null/status-quo option**
-   (`option-set@1`). Their output feeds the DeepReason docket/hypothesis set; evaluators
-   then inspect the generated alternatives. **Generator runs never satisfy evaluator-panel
-   diversity.**
-2. **evaluate** — the panel seats. Only these count toward stance/capability diversity.
-3. **gate** — categorical/process checks that can block regardless of weighing
-   (`governance-lawyer` = panel-process conformance; `red-lines-arbitrator` = categorical
-   pre-optimization bounds).
-4. **adjudicate** — consumes the record. `pragmatic-judge` is the **default final judge**;
-   `bayesian-adjudicator` is the alternate **only when defensible priors/likelihoods exist**;
-   `dialectical-synthesizer` generates pre-judgment synthesis candidates and **never rules**;
-   `sovereign-ruler` rules only on values **recorded in the frozen dossier** — otherwise it
-   emits an operator-choice memo.
+1. **generate_options** proposes alternatives or syntheses for subsequent
+   scrutiny. Initial open-question Gauntlet generation uses `option-set@1` and
+   includes a fair status-quo option. Focused use may return a bounded candidate;
+   a constructive revision can examine an existing proposal. Generator work
+   never satisfies evaluator diversity.
+2. **evaluate** examines the subject. Only these methods count toward panel
+   diversity; two modes of one mechanism count as one unit even when contrasted.
+3. **gate** checks an actually applicable categorical or procedure requirement.
+   It creates no new approver, model-family mandate or legal authority.
+4. **adjudicate** weighs the record. `pragmatic-judge` and `bayesian-adjudicator`
+   are qualitative and probability-updating modes; the latter needs defensible
+   inputs, including explicitly elicited subjective inputs when appropriate.
+   `sovereign-ruler` applies recorded authorized values or exposes the missing
+   consequential tradeoff. `dialectical-synthesizer` is generation, emits an
+   option candidate and never rules on its own proposal.
 
-The old Group E is not a fifth evaluator stance; it is the option-generation phase.
-The premortem protocol (independent participant narratives before cross-talk) is a panel
-*methodology* — the gauntlet's independent-lens barrier implements it — not a lens
-(see `premortem-facilitator`, retired).
+A structured participant premortem can collect actual participant narratives
+before cross-talk when requested and available. Several model perspectives do
+not establish participant input or an equivalent empirical intervention.
 
 ## Output contracts (canonical, used by bases, agents, and the workflow schema)
 
@@ -55,9 +62,13 @@ The premortem protocol (independent participant narratives before cross-talk) is
 - **[I <- Vref]** — inference derived from cited verified evidence (names its [V] anchors).
 - **[H]** — unverified hypothesis; carries zero weight at arbitration.
 
-Accepted factual claims require [V] or [I]-anchored evidence. A falsifier must be
-structurally observable (method + threshold + timeframe), not merely a non-empty string —
-enforced by the validator on cards and by the workflow schema on findings.
+Accepted factual claims require [V] or [I]-anchored evidence. The historical
+v1 card contract uses method, threshold and timeframe fields. Current v2 methods
+state claim-specific revision conditions: evidence can defeat a factual claim;
+value criteria and requirements change through their actual authority. Use
+observable qualitative conditions when a numeric threshold would be fabricated.
+Gauntlet packet formatting is an additional workflow contract; it does not make
+a normative disagreement empirically false or a source tag adequate evidence.
 
 ## Lifecycle
 
@@ -153,3 +164,9 @@ keyword match can mis-rank but never seat a retired ID or a wrong-role card. Sta
 use one subject-seeded wildcard and max uses two; the run ledger is never a selector input.
 Runtime loads full card text only for selected ids: panel prompt tokens scale with panel
 size, not registry size.
+
+The shipped synthetic example preserves its original registry digest. After a
+registry revision, verification explicitly reports `REGISTRY-DRIFT`; this does
+not become a clean replay claim. Tests separately check its intact artifact and
+verdict bindings and exercise full current replay on a temporary synthetic
+control. Historical files are not re-stamped as new review evidence.

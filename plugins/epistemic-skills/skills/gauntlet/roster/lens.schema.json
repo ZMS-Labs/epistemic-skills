@@ -1,49 +1,333 @@
 {
- "$schema": "https://json-schema.org/draft/2020-12/schema",
- "$id": "epistemic-skills/plugins/gauntlet/skills/gauntlet/roster/lens.schema.json",
- "title": "Gauntlet lens registry entry",
- "description": "One diagnostic capability in the gauntlet roster. A lens is DISTINCT only when it has a materially different object of scrutiny, evidence signature, causal/failure mechanism, output+falsifier, and selection conditions. Persona flavor is not novelty. Validated by scripts/validate_roster.py (stdlib implementation of this subset — no external jsonschema dependency).",
- "type": "object",
- "required": ["schema_version", "id", "version", "status", "workflow_role", "stance", "base", "group",
-              "primary_capability", "domains", "subject_axes", "object_of_scrutiny", "required_evidence",
-              "causal_mechanism", "canonical_questions", "output_contract", "falsifier_template",
-              "positive_signals", "contraindications", "neighbors", "cost_class", "provenance", "card"],
- "properties": {
-  "schema_version": {"const": 1},
-  "id": {"type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"},
-  "version": {"type": "integer", "minimum": 1},
-  "status": {"enum": ["available", "retired"]},
-  "workflow_role": {
-   "description": "Pipeline role. generate_options runs PRE-panel on open questions (its runs never satisfy evaluator-panel diversity); evaluate is the panel seat; gate is a categorical/process check that can block regardless of weighing; adjudicate consumes the record. null only for retired entries.",
-   "enum": ["generate_options", "evaluate", "gate", "adjudicate", null]},
-  "final_judge": {"type": "boolean", "description": "adjudicate-role only: whether this card may hold the final judge seat (pragmatic-judge default; bayesian-adjudicator conditional alternate)."},
-  "stance": {"enum": ["adversarial", "constructive", "metatextual", "arbitral", "generative"]},
-  "base": {"enum": ["base-adversarial", "base-constructive", "base-metatextual", "base-arbitrator", "base-generative"]},
-  "group": {"type": "string"},
-  "primary_capability": {"type": ["string", "null"], "description": "Controlled capability-family vocabulary; panel diversity constraints count distinct families."},
-  "domains": {"type": "array", "items": {"type": "string"}},
-  "subject_axes": {"type": "array", "items": {"enum": ["fixed", "open"]}, "minItems": 1},
-  "object_of_scrutiny": {"type": ["string", "null"], "description": "EXCLUSIVE object this lens inspects. Two available lenses sharing an object must be merged, mutexed, or boundary-narrowed."},
-  "required_evidence": {"type": ["string", "null"], "description": "Evidence signature: what the lens must be able to obtain to run. Selector gates on availability."},
-  "causal_mechanism": {"type": ["string", "null"], "description": "The failure/causal mechanism this lens detects — the WHY behind its findings."},
-  "canonical_questions": {"type": "array", "items": {"type": "string"}},
-  "output_contract": {"enum": ["finding-set@1", "option-set@1", "ruling-set@1"]},
-  "falsifier_template": {"type": ["string", "null"], "description": "Observable falsifier shape: method + threshold + timeframe. Structurally observable, not merely a non-empty string."},
-  "positive_signals": {"type": "array", "items": {"type": "string"}},
-  "contraindications": {"type": "array", "items": {"type": "string"}},
-  "neighbors": {"type": "array", "items": {
-   "type": "object", "required": ["id", "boundary"],
-   "properties": {"id": {"type": "string"}, "boundary": {"type": "string", "description": "Explicit non-overlap boundary against this neighbor."}}}},
-  "mutex_group": {"type": "string", "description": "Mutual-exclusion/counter-mode group: peers may not both be selected unless an intentional contrast is recorded, and then count as ONE diversity unit."},
-  "cost_class": {"enum": ["light", "standard", "heavy"]},
-  "time_horizon": {"type": "string"},
-  "provenance": {"type": "string"},
-  "aliases": {"type": "array", "items": {"type": "string"}},
-  "superseded_by": {"type": "string", "description": "Required when status=retired. Retired IDs are never deleted — historical runs replay by ID+version."},
-  "notes": {"type": "string"},
-  "card": {"type": ["object", "null"], "required": ["heuristic", "vector", "vector_label", "bias"],
-   "properties": {"heuristic": {"type": "string"}, "vector": {"type": "string"},
-                  "vector_label": {"type": "string"}, "bias": {"type": "string"}},
-   "description": "The {{PERSONA_SPEC}} body. Preserved verbatim on retired entries for replay."}
- }
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "epistemic-skills/plugins/gauntlet/skills/gauntlet/roster/lens.schema.json",
+  "title": "Shared lens method registry entry",
+  "description": "One diagnostic capability in the gauntlet roster. A lens is DISTINCT only when it has a materially different object of scrutiny, evidence signature, causal/failure mechanism, output+falsifier, and selection conditions. Persona flavor is not novelty. Validated by scripts/validate_roster.py (stdlib implementation of this subset — no external jsonschema dependency).",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "id",
+    "version",
+    "status",
+    "workflow_role",
+    "stance",
+    "base",
+    "group",
+    "primary_capability",
+    "domains",
+    "subject_axes",
+    "object_of_scrutiny",
+    "required_evidence",
+    "causal_mechanism",
+    "canonical_questions",
+    "output_contract",
+    "falsifier_template",
+    "positive_signals",
+    "contraindications",
+    "neighbors",
+    "cost_class",
+    "provenance",
+    "card"
+  ],
+  "properties": {
+    "schema_version": {
+      "enum": [
+        1,
+        2
+      ]
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "status": {
+      "enum": [
+        "available",
+        "retired"
+      ]
+    },
+    "workflow_role": {
+      "description": "Functional role: generation proposes candidates, evaluation examines the subject, gates check actually applicable constraints, and adjudication weighs the record. Only evaluation counts toward panel diversity. null only for retired entries.",
+      "enum": [
+        "generate_options",
+        "evaluate",
+        "gate",
+        "adjudicate",
+        null
+      ]
+    },
+    "final_judge": {
+      "type": "boolean",
+      "description": "adjudicate-role only: whether this card may hold the final judge seat (pragmatic-judge default; bayesian-adjudicator conditional alternate)."
+    },
+    "stance": {
+      "enum": [
+        "adversarial",
+        "constructive",
+        "metatextual",
+        "arbitral",
+        "generative"
+      ]
+    },
+    "base": {
+      "enum": [
+        "base-adversarial",
+        "base-constructive",
+        "base-metatextual",
+        "base-arbitrator",
+        "base-generative"
+      ]
+    },
+    "group": {
+      "type": "string"
+    },
+    "primary_capability": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Controlled capability-family vocabulary; panel diversity constraints count distinct families."
+    },
+    "domains": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "subject_axes": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "fixed",
+          "open"
+        ]
+      },
+      "minItems": 1
+    },
+    "object_of_scrutiny": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "EXCLUSIVE object this lens inspects. Two available lenses sharing an object must be merged, mutexed, or boundary-narrowed."
+    },
+    "required_evidence": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Evidence signature: what the lens must be able to obtain to run. Selector gates on availability."
+    },
+    "causal_mechanism": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "The failure/causal mechanism this lens detects — the WHY behind its findings."
+    },
+    "canonical_questions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "output_contract": {
+      "enum": [
+        "finding-set@1",
+        "option-set@1",
+        "ruling-set@1"
+      ]
+    },
+    "falsifier_template": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Legacy field retained for consumers. Version 2 methods also state revision conditions, separating empirical observations from authorized value changes; no fabricated numeric threshold is required."
+    },
+    "positive_signals": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "contraindications": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "neighbors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "boundary"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "boundary": {
+            "type": "string",
+            "description": "Explicit non-overlap boundary against this neighbor."
+          }
+        }
+      }
+    },
+    "mutex_group": {
+      "type": "string",
+      "description": "Mutual-exclusion/counter-mode group: peers may not both be selected unless an intentional contrast is recorded, and then count as ONE diversity unit."
+    },
+    "cost_class": {
+      "enum": [
+        "light",
+        "standard",
+        "heavy"
+      ]
+    },
+    "time_horizon": {
+      "type": "string"
+    },
+    "provenance": {
+      "type": "string"
+    },
+    "aliases": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "superseded_by": {
+      "type": "string",
+      "description": "Required when status=retired. Retired IDs are never deleted — historical runs replay by ID+version."
+    },
+    "notes": {
+      "type": "string"
+    },
+    "card": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "required": [
+        "heuristic",
+        "vector",
+        "vector_label",
+        "bias"
+      ],
+      "properties": {
+        "heuristic": {
+          "type": "string"
+        },
+        "vector": {
+          "type": "string"
+        },
+        "vector_label": {
+          "type": "string"
+        },
+        "bias": {
+          "type": "string"
+        }
+      },
+      "description": "The {{PERSONA_SPEC}} body. Preserved verbatim on retired entries for replay."
+    },
+    "display_name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Functional discovery label; stable historical id remains the lookup coordinate."
+    },
+    "method_family": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Shared mechanism identity. Multiple modes do not create independent confirmation."
+    },
+    "mode": {
+      "type": "string",
+      "minLength": 1
+    },
+    "method": {
+      "type": "object",
+      "required": [
+        "procedure",
+        "results",
+        "revision_conditions",
+        "limits",
+        "stop"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "procedure": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "results": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "finding",
+              "no-material-finding",
+              "uncertainty",
+              "candidate",
+              "constraint-check",
+              "adjudication"
+            ]
+          }
+        },
+        "revision_conditions": {
+          "type": "string",
+          "minLength": 1
+        },
+        "limits": {
+          "type": "string",
+          "minLength": 1
+        },
+        "stop": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "shared_method_ref": {
+      "type": "string",
+      "description": "Optional current shared-discipline reference for a retired coordinate; original replay fields remain unchanged."
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "schema_version": {
+            "const": 2
+          },
+          "status": {
+            "const": "available"
+          }
+        },
+        "required": [
+          "schema_version",
+          "status"
+        ]
+      },
+      "then": {
+        "required": [
+          "display_name",
+          "method_family",
+          "mode",
+          "method"
+        ]
+      }
+    }
+  ]
 }

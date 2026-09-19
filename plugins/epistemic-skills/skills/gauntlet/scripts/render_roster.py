@@ -31,7 +31,7 @@ GROUP_FILES = {
     "arbitrators-and-specialists": ("arbitrators-and-specialists.md", "Roster Group D — Arbitrators, Gates & Specialists",
                     "Judges and gates use `bases/base-arbitrator.md`; specialists use the base named on their card."),
     "generative-counterfactual": ("generative-counterfactual.md", "Roster Group E — Generative & Counterfactual (pre-panel option generators + alternative-surfacing evaluators)",
-                    "generate_options cards run BEFORE the panel on open questions and emit `option-set@1` (3-5 materially distinct alternatives, always including the null/status-quo option) — generator runs never satisfy evaluator-panel diversity. Cards are base-tagged."),
+                    "Generative methods propose alternatives or syntheses for scrutiny. In an open-question Gauntlet the initial phase uses `option-set@1`, including a fair status-quo option; focused use may return a bounded candidate. Generation never supplies evaluator diversity."),
     "candidates": ("candidates.md", "Expansion frontier — available evaluators",
                     "Complete fingerprints whose provenance records the former admission lifecycle. They are available to the ordinary subject-seeded selector; provenance never changes claim weight."),
 }
@@ -62,12 +62,24 @@ def render_card(e):
         if c:
             lines.append(f"**Core heuristic (preserved for replay):** {c['heuristic']}")
         return "\n".join(lines)
-    c = e["card"]
-    lines.append(f"**Core heuristic:** {c['heuristic']}")
-    lines.append(f"**{c['vector_label']}:** {c['vector']}")
-    lines.append(f"**Bias to declare:** {c['bias']}")
-    lines.append(f"**Object of scrutiny:** {e['object_of_scrutiny']}")
-    lines.append(f"**Falsifier shape:** {e['falsifier_template']}")
+    if e.get("schema_version") == 2:
+        method = e["method"]
+        lines.append(f"**Method:** {e['display_name']} (family `{e['method_family']}`, mode `{e['mode']}`)")
+        lines.append(f"**Question:** {e['object_of_scrutiny']}")
+        lines.append(f"**Mechanism:** {e['causal_mechanism']}")
+        lines.append(f"**Evidence needed:** {e['required_evidence']}")
+        lines.append("**Procedure:** " + " ".join(method["procedure"]))
+        lines.append("**Possible results:** " + ", ".join(method["results"]))
+        lines.append(f"**Revise when:** {method['revision_conditions']}")
+        lines.append(f"**Limits:** {method['limits']}")
+        lines.append(f"**Stop and return:** {method['stop']}")
+    else:
+        c = e["card"]
+        lines.append(f"**Core heuristic:** {c['heuristic']}")
+        lines.append(f"**{c['vector_label']}:** {c['vector']}")
+        lines.append(f"**Bias to declare:** {c['bias']}")
+        lines.append(f"**Object of scrutiny:** {e['object_of_scrutiny']}")
+        lines.append(f"**Falsifier shape:** {e['falsifier_template']}")
     if e["neighbors"]:
         nb = "; ".join(f"`{n['id']}` — {n['boundary']}" for n in e["neighbors"])
         lines.append(f"**Not to be confused with:** {nb}")
@@ -110,17 +122,19 @@ def render_index(reg, entries):
     out.append("| role | count | meaning |")
     out.append("|---|---:|---|")
     meanings = {"evaluate": "panel evaluators (the only seats that count toward panel diversity)",
-                "generate_options": "pre-panel option generators (open questions; option-set@1)",
+                "generate_options": "candidate generation or synthesis; initial open-question Gauntlet phase uses option-set@1",
                 "gate": "categorical / process-conformance gates (can block regardless of weighing)",
-                "adjudicate": "judges + synthesis (consume the record; never count as evaluators)"}
+                "adjudicate": "evidence or value adjudication (consume the record; never count as evaluators)"}
     for r in ("evaluate", "generate_options", "gate", "adjudicate"):
         out.append(f"| {r} | {by_role.get(r, 0)} | {meanings[r]} |")
     out.append("")
     n_caps = len([c for c in caps if c])
     out.append(f"## Active evaluator capability families ({n_caps} unique diagnostic capability atoms)")
     out.append("")
+    names = {e["id"]: e.get("display_name", e["id"]) for e in entries}
     for cap in sorted(caps):
-        out.append(f"- **{cap}** ({len(caps[cap])}): {', '.join('`%s`' % i for i in sorted(caps[cap]))}")
+        labels = "; ".join(f"{names[i]} (`{i}`)" for i in sorted(caps[cap]))
+        out.append(f"- **{cap}** ({len(caps[cap])}): {labels}")
     out.append("")
     mutex = defaultdict(list)
     for e in available:

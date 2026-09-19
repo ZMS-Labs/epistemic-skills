@@ -7,14 +7,14 @@ Checks (all must pass; exit 0 clean / 1 violations / 2 invocation error):
      (superseded_by target must exist and be non-retired).
   3. Workflow-role coherence: role<->output_contract mapping; final_judge only on adjudicate;
      retired entries have role null; >=1 available final-judge adjudicate; >=1 available gate;
-     generators are open-axis.
+     generators support open questions (focused callers may also adapt fixed candidates).
   4. Neighbor refs resolve; mutex groups have >=2 members and symmetric awareness.
   5. Collision heuristics on AVAILABLE evaluators: canonical-question Jaccard >= 0.60,
      or same primary_capability + domain-overlap >= 0.70, or object-of-scrutiny token
      similarity >= 0.84 — every flagged pair must be merged, mutexed, neighbored
      (explicit boundary), or listed in COLLISION_WAIVERS with a reason.
-  6. Falsifier structural check: falsifier_template must name a method, a threshold,
-     and a timeframe (structurally observable, not merely non-empty).
+  6. Legacy v1 falsifier shape; v2 executable method fields and allowed results.
+     Revision conditions distinguish empirical evidence from authorized value changes.
   7. Generated-view freshness (delegates to render_roster.py --check).
   8. Lifecycle is deliberately two-state: available or retired. Historical admission
      notes remain provenance, not selection authority.
@@ -39,7 +39,7 @@ ID_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 # (boundary encoded on both cards). Format: (id_a, id_b): reason.
 COLLISION_WAIVERS = {
     ("protocol-archeologist", "chesterton-gate"):
-        "hard boundary enforced on both cards: archeologist reconstructs history with NO deletion in scope; gate adjudicates ONE proposed deletion",
+        "historical reconstruction supplies reusable evidence; removal review applies it to one proposed deletion without duplicating the research",
     ("cloud-native-purist", "local-first-survivalist"):
         "intentional counter-mode pair, mutex_group leverage-vs-sovereignty, counted as one diversity unit",
 }
@@ -65,6 +65,37 @@ def jaccard(a, b):
     return len(a & b) / len(a | b) if a | b else 0.0
 
 
+def validate_method(entry):
+    """Validate the v2 method shape, not the truth or benefit of its content."""
+    if entry.get("schema_version") != 2:
+        return []  # Legacy snapshots retain their original interpretation.
+    errors = []
+    for key in ("display_name", "method_family", "mode"):
+        if not isinstance(entry.get(key), str) or not entry[key].strip():
+            errors.append(f"METHOD_FIELD_REQUIRED: {key}")
+    method = entry.get("method")
+    if not isinstance(method, dict):
+        return errors + ["METHOD_REQUIRED: method must be an object"]
+    contract = json.loads((ROOT / "roster" / "lens.schema.json").read_text(encoding="utf-8"))["properties"]["method"]
+    for key in contract["required"]:
+        value = method.get(key)
+        if key in {"procedure", "results"}:
+            if not isinstance(value, list) or not value or any(not isinstance(item, str) or not item.strip() for item in value):
+                errors.append(f"METHOD_FIELD_REQUIRED: {key} must be nonempty text entries")
+        elif not isinstance(value, str) or not value.strip():
+            errors.append(f"METHOD_FIELD_REQUIRED: {key}")
+    allowed = contract["properties"]["results"]["items"]["enum"]
+    results = method.get("results")
+    if isinstance(results, list):
+        if any(item not in allowed for item in results):
+            errors.append("METHOD_RESULT_INVALID: unknown outcome")
+        if all(isinstance(item, str) for item in results) and len(results) != len(set(results)):
+            errors.append("METHOD_RESULT_INVALID: duplicate outcome")
+    if set(method) - set(contract["properties"]):
+        errors.append("METHOD_FIELD_INVALID: unknown method field")
+    return errors
+
+
 def main():
     errors, warnings = [], []
     try:
@@ -88,8 +119,8 @@ def main():
                 errors.append(f"{eid}: missing field {k}")
         if not ID_RE.match(eid):
             errors.append(f"{eid}: bad id format")
-        if e.get("schema_version") != 1:
-            errors.append(f"{eid}: schema_version != 1")
+        if e.get("schema_version") not in {1, 2}:
+            errors.append(f"{eid}: unsupported schema_version")
         if e.get("status") not in STATUSES:
             errors.append(f"{eid}: bad status {e.get('status')}")
         if e.get("stance") not in STANCES:
@@ -117,8 +148,8 @@ def main():
                 errors.append(f"{eid}: bad workflow_role {role}")
             elif e.get("output_contract") != ROLE_CONTRACT[role]:
                 errors.append(f"{eid}: role {role} requires contract {ROLE_CONTRACT[role]}, got {e.get('output_contract')}")
-            if role == "generate_options" and e.get("subject_axes") != ["open"]:
-                errors.append(f"{eid}: generate_options must be open-axis only")
+            if role == "generate_options" and "open" not in e.get("subject_axes", []):
+                errors.append(f"{eid}: generate_options must support open questions")
             for k in ("object_of_scrutiny", "required_evidence", "causal_mechanism", "falsifier_template",
                       "primary_capability"):
                 if not e.get(k):
@@ -129,10 +160,13 @@ def main():
             for k in ("heuristic", "vector", "vector_label", "bias"):
                 if not card.get(k):
                     errors.append(f"{eid}: card.{k} missing/empty")
+            errors.extend(f"{eid}: {error}" for error in validate_method(e))
             f = e.get("falsifier_template") or ""
-            if not (FALSIFIER_METHOD_RE.search(f) and FALSIFIER_THRESHOLD_RE.search(f)
-                    and FALSIFIER_TIMEFRAME_RE.search(f)):
-                errors.append(f"{eid}: falsifier_template not structurally observable (needs method:/threshold:/timeframe:)")
+            if e.get("schema_version") == 1 and not (
+                FALSIFIER_METHOD_RE.search(f) and FALSIFIER_THRESHOLD_RE.search(f)
+                and FALSIFIER_TIMEFRAME_RE.search(f)
+            ):
+                errors.append(f"{eid}: legacy falsifier_template needs method:/threshold:/timeframe:")
         if e.get("final_judge") is not None and role != "adjudicate":
             errors.append(f"{eid}: final_judge set on non-adjudicate role")
         for n in e.get("neighbors", []):
