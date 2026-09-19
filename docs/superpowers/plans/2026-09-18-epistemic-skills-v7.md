@@ -321,12 +321,12 @@ def load_usage_context(plugin_root: Path) -> str:
     return (plugin_root / "skills" / "epistemic" / "SKILL.md").read_text(encoding="utf-8")
 ```
 
-- [ ] Inventory the host surfaces already advertised by the repository. Record actual product/surface/version, installation path class, available entry hooks, context/reset semantics, native alias capability and observed native goal support. Use local authoritative schemas/help first and current official documentation for unresolved facts. No personal absolute paths or private machine details go into the public table.
-- [ ] Select the available current host as the first live exercise. For other advertised surfaces, implement only verified interfaces and label source-only, simulated, unavailable or actually exercised support accurately. Do not infer one host's support from another.
-- [ ] Implement supported early delivery and explicit fallback from the canonical source. Keep mission-custody hooks unchanged in meaning. Ensure duplicate copies/injections and missing entry files have observable, bounded outcomes; unsupported alias paths retain documentation-only mappings.
-- [ ] Test canonical body round-trip including Unicode/escaping, missing file behavior, source version disagreement, duplicate injection handling and startup/resume routing appropriate to the actual host. A synthetic hook payload test proves serialization and routing logic, not live context delivery.
-- [ ] Capture a live skill listing/context evidence where available and run the repaired checker with that capture. Separately observe an ordinary prompt invoking a relevant method and reporting its contribution. If full context is not visible, report the narrower observation.
-- [ ] Exercise native goal representation/readback through an explicitly authorized isolated test context, or report it as simulated/unavailable. This plan does not authorize creating persistent goals in the owner's active work merely to get a passing test.
+- [x] Inventory the host surfaces already advertised by the repository. Record actual product/surface/version, installation path class, available entry hooks, context/reset semantics, native alias capability and observed native goal support. Use local authoritative schemas/help first and current official documentation for unresolved facts. No personal absolute paths or private machine details go into the public table.
+- [x] Select the available current host as the first live exercise. For other advertised surfaces, implement only verified interfaces and label source-only, simulated, unavailable or actually exercised support accurately. Do not infer one host's support from another.
+- [x] Implement supported early delivery and explicit fallback from the canonical source. Keep mission-custody hooks unchanged in meaning. Ensure duplicate copies/injections and missing entry files have observable, bounded outcomes; unsupported alias paths retain documentation-only mappings.
+- [x] Test canonical body round-trip including Unicode/escaping, missing file behavior, source version disagreement, duplicate injection handling and startup/resume routing appropriate to the actual host. A synthetic hook payload test proves serialization and routing logic, not live context delivery.
+- [x] Capture a live skill listing/context evidence where available and run the repaired checker with that capture. Separately observe an ordinary prompt invoking a relevant method and reporting its contribution. If full context is not visible, report the narrower observation.
+- [x] Exercise native goal representation/readback through an explicitly authorized isolated test context, or report it as simulated/unavailable. This plan does not authorize creating persistent goals in the owner's active work merely to get a passing test.
 
 ```text
 python .github/scripts/check_loaded_descriptions.py --self-test
@@ -338,6 +338,16 @@ python plugins/epistemic-skills/reference/runtime-gate/test_hook.py
 For the live comparison, call the existing `check_loaded_descriptions.py --capture` interface with the actual capture file recorded for that run. Never substitute the generated package list as evidence of host loading.
 
 **Done:** The support table names what was actually delivered and exercised. Unsupported paths have usable truthful fallback guidance. No capability is advertised from a snippet, mock or startup banner alone.
+
+Implementation receipt (T7): documented Codex/Claude SessionStart interfaces
+now read one canonical usage body; six loader tests cover lifecycle, Unicode,
+fingerprint/missing-source and version-disagreement boundaries. Existing custody
+and runtime suites pass. A real credential-free Codex CLI app-server listing
+exposed all 17 canonical descriptions intact, plus six nested methods; the actual
+sanitized capture passes the repaired checker. Other hosts and native goals are
+labeled by observed capability and evidence tier. Model consumption at startup,
+ordinary-task application and native-goal readback were not exercised here; those
+support claims are withdrawn rather than inferred from source checks.
 
 ## T8: current documentation, packaging and release authority
 
