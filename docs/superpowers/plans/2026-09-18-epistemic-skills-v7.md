@@ -97,7 +97,7 @@ host delivery and comparative application remain T7/T9 work.
 
 **Interface:** Triage either incorporates the actual preferred provider or uses the standalone procedure. Both preserve one investigation and the original repair scope. Watch retains `validate_record(record: dict) -> list[str]`, with proof history absent or complete in every applicable state. Present landing, observed reversal and future persistence risk remain separate outputs.
 
-- [ ] Extend the existing watch test with these two corruptions of `valid-suspect-observed-failure.json`; confirm failure before repairing the validator.
+- [x] Extend the existing watch test with these two corruptions of `valid-suspect-observed-failure.json`; confirm failure before repairing the validator.
 
 ```python
 import copy
@@ -107,19 +107,20 @@ from pathlib import Path
 root = Path("plugins/epistemic-skills/contracts/watch-commission")
 validate_record = runpy.run_path(str(root / "verify_watch_commission.py"))["validate_record"]
 valid_suspect = json.loads((root / "examples/valid-suspect-observed-failure.json").read_text(encoding="utf-8"))
+valid_suspect.pop("_expected")  # Fixture annotation is not a contract field.
 assert validate_record(valid_suspect) == []
 bad_crossing = copy.deepcopy(valid_suspect)
 bad_crossing["proof"]["bound_crossed"] = False
 assert validate_record(bad_crossing)
 bad_history = copy.deepcopy(valid_suspect)
-del bad_history["reprove_after"]
+bad_history["reprove_after"] = None  # Missing key was already structurally rejected.
 assert validate_record(bad_history)
 ```
 
-- [ ] Apply the absent-or-complete proof-history invariant across applicable states without promoting SUSPECT to PROVEN. Retain valid absent history, complete history and receipted failure cases as controls.
-- [ ] Write the standalone investigation procedure: establish the failure/reproduction limit; separate observations from hypotheses; obtain a discriminating observation; apply the authorized repair; check the original failure and relevant regression. Integrate causal standards into an available adequate provider investigation. Do not duplicate it merely to produce a triage report.
-- [ ] Rewrite did-it-land's predicted reversal wording into explicit current effect and future-risk statements. Retain REVERTED only for observed undo. Tighten health coverage/unknowns and watch's real external-observer boundary.
-- [ ] Exercise the original-failure, known-diagnosis reuse, healthy-but-stale-consumer and predicted-versus-observed-reversal cases through the existing sentinel/scenario framework. Treat manual prose review and executed observations as different evidence.
+- [x] Apply the absent-or-complete proof-history invariant across applicable states without promoting SUSPECT to PROVEN. Retain valid absent history, complete history and receipted failure cases as controls.
+- [x] Write the standalone investigation procedure: establish the failure/reproduction limit; separate observations from hypotheses; obtain a discriminating observation; apply the authorized repair; check the original failure and relevant regression. Integrate causal standards into an available adequate provider investigation. Do not duplicate it merely to produce a triage report.
+- [x] Rewrite did-it-land's predicted reversal wording into explicit current effect and future-risk statements. Retain REVERTED only for observed undo. Tighten health coverage/unknowns and watch's real external-observer boundary.
+- [x] Exercise the original-failure, known-diagnosis reuse, healthy-but-stale-consumer and predicted-versus-observed-reversal cases through the existing sentinel/scenario framework. Treat manual prose review and executed observations as different evidence.
 
 ```text
 python plugins/epistemic-skills/contracts/watch-commission/test_watch_commission.py
@@ -128,6 +129,17 @@ python .github/scripts/score_sentinels.py
 ```
 
 **Done:** The proof-history defect has regression coverage, operational verdicts preserve their distinct meaning, and provider-present/provider-absent instructions lead to one adequate investigation with continuation.
+
+Implementation receipt (T2): two new watch regressions failed before repair;
+all 31 watch tests now pass, including complete and absent SUSPECT history and
+rejected partial history. A null/blank re-proof boundary was the reproduced gap;
+a missing top-level key was already structurally rejected. Ten synthetic
+operational response controls cover original-failure verification, diagnosis
+reuse, diagnosis-only scope and observed versus predicted reversal. Five negative
+controls failed before the scorer change; all now pass alongside the existing
+sentinel corpus. These are contract checks, not an agent-behavior trial. The four
+method edits passed description-budget, evidence-format, inventory-generation,
+public-content and diff checks. No live external observer was commissioned.
 
 ## T3: shared lens methods and complete disposition coverage
 

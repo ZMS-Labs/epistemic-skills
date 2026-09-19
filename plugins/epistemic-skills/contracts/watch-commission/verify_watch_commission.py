@@ -529,6 +529,22 @@ def validate_record(record: dict[str, Any]) -> list[str]:
             "a named failure requires detail, observed_at, and receipt_ref",
         )
 
+    # Current failure or disablement cannot weaken the prior-proof contract.
+    # DECLARED/BLOCKED forbid proof history; PROVEN requires complete proof below.
+    if state in {"INERT", "SUSPECT"}:
+        if not _proof_absent(proof) and not _proof_complete(proof):
+            _error(
+                errors,
+                "INCOMPLETE_PROOF_BUNDLE",
+                f"{state} proof history must be wholly absent or a complete historical proof",
+            )
+        if _proof_complete(proof) and not _is_non_empty_string(reprove_after):
+            _error(
+                errors,
+                "REPROOF_BOUNDARY_REQUIRED",
+                "historical successful proof requires reprove_after",
+            )
+
     if state == "DECLARED":
         if enabled is not False:
             _error(errors, "DECLARED_MUST_BE_DISABLED", "DECLARED observer must be disabled")
@@ -633,18 +649,6 @@ def validate_record(record: dict[str, Any]) -> list[str]:
             )
         if not _failure_empty(failure):
             _error(errors, "FAILURE_ONLY_VALID_FOR_SUSPECT", "INERT cannot carry a live failure")
-        if not _proof_absent(proof) and not _proof_complete(proof):
-            _error(
-                errors,
-                "INCOMPLETE_PROOF_BUNDLE",
-                "INERT proof history must be wholly absent or a complete historical proof",
-            )
-        if _proof_complete(proof) and not _is_non_empty_string(reprove_after):
-            _error(
-                errors,
-                "REPROOF_BOUNDARY_REQUIRED",
-                "historical successful proof requires reprove_after",
-            )
 
     elif state == "PROVEN":
         if not _block_evidence_empty(block_evidence):

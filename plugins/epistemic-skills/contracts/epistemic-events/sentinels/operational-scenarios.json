@@ -1,0 +1,151 @@
+{
+  "scope": "Synthetic response-contract controls only; not observed agent application or production behavior.",
+  "cases": [
+    {
+      "id": "repair-completion-needs-original-failure-check",
+      "skill": "triage",
+      "inputs": {
+        "repair_authorized": true
+      },
+      "response": {
+        "verdict": "CAUSE",
+        "discriminating_observation": "controlled cache bypass distinguishes stale cache from failed write",
+        "repair_performed": true,
+        "task_complete": true,
+        "original_failure_passed": false,
+        "regression_passed": true
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "authorized-repair-verified",
+      "skill": "triage",
+      "inputs": {
+        "repair_authorized": true
+      },
+      "response": {
+        "verdict": "CAUSE",
+        "discriminating_observation": "controlled cache bypass distinguishes stale cache from failed write",
+        "repair_performed": true,
+        "task_complete": true,
+        "original_failure_passed": true,
+        "regression_passed": true
+      },
+      "expected_oracle": "ACCEPT"
+    },
+    {
+      "id": "adequate-diagnosis-reused",
+      "skill": "triage",
+      "inputs": {
+        "diagnosis_adequate": true,
+        "repair_authorized": true
+      },
+      "response": {
+        "verdict": "CAUSE",
+        "discriminating_observation": "applicable inherited reproduction",
+        "repeated_diagnosis": false,
+        "repair_performed": true,
+        "task_complete": true,
+        "original_failure_passed": true,
+        "regression_passed": true
+      },
+      "expected_oracle": "ACCEPT"
+    },
+    {
+      "id": "adequate-diagnosis-repeated-without-new-basis",
+      "skill": "triage",
+      "inputs": {
+        "diagnosis_adequate": true,
+        "repair_authorized": true
+      },
+      "response": {
+        "verdict": "CAUSE",
+        "discriminating_observation": "applicable inherited reproduction",
+        "repeated_diagnosis": true,
+        "new_investigation_basis": null
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "diagnosis-only-does-not-authorize-repair",
+      "skill": "triage",
+      "inputs": {
+        "repair_authorized": false
+      },
+      "response": {
+        "verdict": "CAUSE",
+        "discriminating_observation": "failing boundary observed",
+        "repair_performed": true
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "diagnosis-only-return",
+      "skill": "triage",
+      "inputs": {
+        "repair_authorized": false
+      },
+      "response": {
+        "verdict": "CAUSE",
+        "discriminating_observation": "failing boundary observed",
+        "repair_performed": false
+      },
+      "expected_oracle": "ACCEPT"
+    },
+    {
+      "id": "healthy-service-stale-consumer",
+      "skill": "did-it-land",
+      "response": {
+        "verdict": "LANDED",
+        "evidence": {
+          "kind": "runtime-observation",
+          "health": "OK",
+          "intended_effect_observed": false
+        }
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "predicted-reversal-is-not-reverted",
+      "skill": "did-it-land",
+      "response": {
+        "verdict": "REVERTED",
+        "evidence": {
+          "kind": "runtime-observation",
+          "intended_effect_observed": true,
+          "undo_observed": false
+        },
+        "future_overwrite_risk": true
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "observed-current-landing-with-future-risk",
+      "skill": "did-it-land",
+      "response": {
+        "verdict": "LANDED",
+        "evidence": {
+          "kind": "runtime-observation",
+          "intended_effect_observed": true,
+          "undo_observed": false
+        },
+        "future_overwrite_risk": true,
+        "persistence": "unverified"
+      },
+      "expected_oracle": "ACCEPT"
+    },
+    {
+      "id": "observed-undo-after-landing",
+      "skill": "did-it-land",
+      "response": {
+        "verdict": "REVERTED",
+        "evidence": {
+          "kind": "runtime-observation",
+          "intended_effect_observed": true,
+          "undo_observed": true
+        }
+      },
+      "expected_oracle": "ACCEPT"
+    }
+  ]
+}

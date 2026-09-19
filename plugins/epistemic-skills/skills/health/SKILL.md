@@ -12,14 +12,8 @@ metadata:
 
 # health — the state of a running system, and the honesty of the answer
 
-> A health readout has exactly one way to be dangerous, and it is not being
-> wrong. It is being **green about something it never reached**. Every readout
-> this skill replaces would have reported a healthy system with a storage node
-> offline, because an unreachable probe returned nothing and nothing was counted
-> as fine.
->
-> This skill owns one decision: **is the subject in the state it should be — and
-> for each part of that answer, did we actually look?**
+> Is the subject in the state it should be, and which parts did we actually
+> observe? Missing observations remain visible rather than becoming green.
 
 ## The decision it owns
 
@@ -59,26 +53,27 @@ Does **not** fire when:
 
 ## Parameters, not siblings
 
-Scope and depth are arguments. They were six separate artifacts in the estate
-this was derived from; they were never six capabilities, because they share one
-trigger and one decision.
+Scope and depth are arguments. Declare what this assessment includes before
+reporting a roll-up; a glance cannot establish the state of unprobed subjects.
 
 | Parameter | Values | Effect |
 |---|---|---|
 | `scope` | `local` (default) · `all` | which subjects are probed |
 | `depth` | `glance` (default) · `full` | `glance` probes only what is cheap and local; `full` reaches every declared subject |
 
-**Subjects are resolved from a declared registry, never hardcoded.** A subject
-that the registry does not declare for this system is `not-applicable`, which is
-distinct from both `OK` and `UNKNOWN`. A new subject gains coverage by being
-registered, not by editing this file.
+**Use the declared subject registry or an explicit task-scoped subject set.**
+Do not hardcode an environment in this portable skill. Report included subjects,
+intentional exclusions and unresolved coverage. An applicable but unobserved
+subject is UNKNOWN; a genuinely irrelevant one is not-applicable. Mere absence
+from a registry does not prove irrelevance or complete coverage.
 
 ## Method
 
-1. **Resolve the subject set** from the registry for the chosen scope. If the
-   registry itself is unreachable, the entire run is `UNKNOWN` and says so — it
-   does not fall back to a remembered subject list.
-2. **Probe each subject**, recording for every one: the exact command, its exit
+1. **Resolve the subject set** from the registry or explicit requested scope.
+   If the required registry is unreachable, mark that coverage UNKNOWN. You may
+   still report observed named subjects, with the incomplete scope stated; do not
+   silently substitute a remembered list or claim system-wide coverage.
+2. **Probe each subject**, recording for every one: the exact command, observation time, its exit
    status, and the observed value. A probe that errors is `UNKNOWN` with the
    error; it is never retried into silence.
 3. **Classify against declared bounds.** A bound with no declared threshold
@@ -93,13 +88,23 @@ registered, not by editing this file.
 
 ## Boundaries
 
-- **Never repairs.** This skill reads. A remedy is a separate, consented act.
-- **Never attests to anything it did not probe this run.** No cached state, no
-  "it was fine this morning", no inference from a sibling subject.
+- **This assessment reads.** Return findings to the original task; already
+  authorized repair can continue through the appropriate investigation. Assessment
+  alone grants no repair authority.
+- **Distinguish fresh from inherited observations.** A dated prior reading is
+  evidence of that time, not an unqualified statement about the present. State
+  observation age and coverage; do not infer health from a sibling subject.
 - **Never converts an infrastructure failure into a policy verdict.** An
   unreachable subject is `UNKNOWN`, not a failing subject.
 - **Does not diagnose.** It hands an ordered list of subjects, and the
   observations behind them, to whatever settles cause.
+
+## Coverage and return
+
+Briefly acknowledge Health, state the scope/time and per-subject results, then
+return to the original task. Availability within bounds does not prove that a
+requested configuration reached its consumer. A healthy service can still use
+stale configuration; that separate landing claim needs its own observation.
 
 ## Composition
 
@@ -132,7 +137,7 @@ Every degradation is named in the output, never absorbed:
 
 | Condition | Behaviour |
 |---|---|
-| registry unreachable | whole run `UNKNOWN`; no remembered subject list |
+| required registry unreachable | scope coverage UNKNOWN; any named observations remain partial |
 | subject unreachable | that subject `UNKNOWN`; siblings continue |
 | credential failure | `UNKNOWN (auth)`, distinguished from unreachable — different remedy |
 | probe tool absent | `UNKNOWN (tool absent)`; an empty result from a missing binary is indistinguishable from a clean one |
@@ -153,14 +158,16 @@ probe path the real run uses, not a convenient stand-in.
 
 ## Evidence emission
 
-After each engagement, append one line to `runs/ledger.jsonl` under this skill:
+When an authorized evaluation or existing task evidence contract collects
+engagement telemetry, use the local `runs/ledger.jsonl` format. Ordinary use
+requires no separate process artifact:
 
 ```json
 {"schema":"skill-run@1","ts":"<iso8601>","skill":"<this-skill>","decision":"fired|declined","discipline_engaged":"<name-or-null>","action_changed":true|false}
 ```
 
-The append is part of this procedure. It is not a call to an external calibration
-service and it is not a `decision-ledger` entry. Schema:
+Telemetry is private runtime evidence of engagement, not proof of the outcome
+or a replacement for a consequential decision record. Schema:
 `plugins/epistemic-skills/contracts/skill-run-ledger.schema.json`.
 
 ## Local overlay

@@ -1,6 +1,6 @@
 ---
 name: triage
-description: Use when a specific thing is known broken or degraded and the cause is not yet established — a failed deploy, an unreachable service, a red check, a readout naming something wrong. Consumes an existing state readout rather than re-probing blind. Do NOT fire when you do not yet know whether anything is wrong (that is a health readout), when the cause is already established and you are applying the fix, or when the question is about a change you are making rather than a failure you are facing.
+description: Use when a specific failure or unexpected behavior needs causal investigation. Reuse an adequate known diagnosis. Do not run a second investigation merely to apply a fix, or use diagnosis-only authority to authorize repair.
 metadata:
   hands-to: [decision-ledger]
   event-kinds: [cause-verdict]
@@ -10,7 +10,7 @@ metadata:
   sentinel-fixture: triage-plausible-not-observed.json
 ---
 
-# triage — find the cause, and stop there
+# Triage: investigate the failure and return to the authorized task
 
 > The expensive failure in diagnosis is not missing the cause. It is **naming a
 > cause that was never observed** — a plausible story that fits the symptom,
@@ -55,43 +55,56 @@ Does **not** fire when:
 - the fault is deterministic and reproducible and one read of the error settles
   it — read it.
 
+## One investigation, with an explicit provider
+
+Prefer **Superpowers systematic-debugging** when available and applicable. Load
+its current instructions and integrate the causal standards here into that
+investigation. Briefly identify both methods actually used. If the provider is
+unavailable or inadequate for the case, read
+[standalone-debugging.md](reference/standalone-debugging.md) and use that procedure.
+Do not claim to have used Superpowers when only this fallback was available.
+The package remains usable without an external dependency.
+
+Do not repeat a completed adequate investigation to produce another report.
+Check that inherited observations concern this failure, revision and environment;
+name what was inherited and what was newly observed. Reopen only the part whose
+basis is stale, missing or contradicted.
+
 ## Method
 
-1. **Take the readout if one exists.** Do not re-probe from scratch. If no
-   readout exists, probe the minimum needed to bound the fault **and say that you
-   did** — a self-probed triage is not the same evidence as a consumed readout,
-   and the output must not blur them.
-2. **Enumerate candidate causes before observing.** Written down first, so the
-   first plausible one cannot quietly become the only one considered.
-3. **For each candidate, name the observation that would eliminate it.** If a
-   candidate has no such observation, it is unfalsifiable here — record it as
-   unexamined rather than pretending it was ruled out.
-4. **Order by cost, not by suspicion.** Cheapest discriminating observation
-   first. Suspicion decides what to test only when costs tie.
-5. **Observe at the level the fault lives.** A claim about a running system is
-   not settled by reading its source or its configuration; a claim about
-   committed state is not settled by reading a cache.
-6. **Stop at the cause.** Hand off. The remedy is a separate, consented act.
+1. **Establish the failure and scope.** Reuse the available readout and known
+   diagnosis. If no adequate observation exists, reproduce or probe the minimum
+   needed to bound the fault. State reproduction limits and whether evidence was
+   inherited or gathered now. A direct discriminating error can settle a small
+   investigation without manufactured alternatives.
+2. **Separate observations from hypotheses.** For each plausible live explanation,
+   identify evidence that would distinguish it from the others. Do not turn an
+   unfalsifiable explanation into an eliminated candidate.
+3. **Test the decisive difference.** Choose an informative, safe observation
+   with proportionate cost. Observe at the level of the failure: source text does
+   not settle a runtime claim, and a cache does not settle committed state.
+   Change one relevant variable when feasible and inspect the result before
+   adding another speculative fix.
+4. **State the causal verdict.** Use CAUSE, NARROWED, UNKNOWN or NOT-BROKEN and
+   name the evidence and remaining limits. A plausible explanation is not CAUSE.
+5. **Continue within the original authority.** For an authorized repair task,
+   apply the supported repair, check the original failure and relevant regression,
+   and complete remaining integration work. A causal verdict alone is not a fixed
+   system. For diagnosis-only work, return the verdict and stop at that boundary.
+   Existing repair authority carries forward; do not request it again merely
+   because this method reached a finding.
 
-## Boundaries
+## Boundaries and return
 
-- **Never repairs.** Naming the cause and fixing it are different acts with
-  different authority. This skill does the first.
-- **Never names a cause it did not observe.** "Probably X" is `NARROWED` with X
-  listed, not `CAUSE`.
-- **Never re-probes a subject a readout already covered** without saying why the
-  readout was insufficient.
-- **Never converts an unreachable subject into a failing one.** Could not look is
-  `UNKNOWN`, not a fault.
-
-## Composition
-
-- **health** produces the ordered subject list this consumes. It answers *what
-  state*; this answers *why*.
-- **decision-ledger** takes any consequential decision made off the back of a
-  verdict. The verdict is evidence, never a decision.
-- **The remedy is out of scope and deliberately unowned here.** Nothing in this
-  package applies fixes.
+- Investigative certainty does not expand authority. Destructive experiments or
+  repairs outside the current scope need their actual authorization.
+- A failed observation is a coverage limit; it does not establish a system fault.
+- NOT-BROKEN requires an adequate direct observation of the reported behavior;
+  a generic healthy readout cannot contradict a specific reproduced failure.
+- Return the verdict, provider actually used, discriminating observation, repair
+  status and verification limits to the task owner. Keep this brief for small work.
+- Health supplies state observations; decision-ledger preserves consequential
+  reasoning when its own trigger applies. Neither is a compulsory extra pass.
 
 ## Anti-rationalizations
 
@@ -100,7 +113,7 @@ Does **not** fire when:
 | "This explains the symptom, so it is the cause" | So do the three you did not write down. Which observation rules them out? |
 | "I know this system, it is always the disk" | Then the disk observation is cheap. Make it, and say what it showed. |
 | "The logs are consistent with X" | Consistent-with is not distinguishes-from. Name the observation that would differ if not-X. |
-| "I will just try the fix and see" | That is a remedy without a cause, and a green result after it proves nothing about why. |
+| "I will just try several fixes and see" | A controlled, authorized intervention can test a hypothesis. Several unexplained changes obscure what caused the result. |
 | "The config says it is set that way" | Configuration is a claim about a runtime. Observe the runtime. |
 | "I could not reach it, so it is down" | You could not reach it. `UNKNOWN`. |
 | "Narrowing to two is basically solved" | Then say `NARROWED` and name both. The wrong one of two is still wrong. |
@@ -112,7 +125,7 @@ Does **not** fire when:
 | no readout available | probe minimally, and label the output self-probed |
 | subject unreachable | `UNKNOWN (unreachable)`; never inferred as the fault |
 | fault not reproducible | say so explicitly; an intermittent fault with one observation is `NARROWED` at best |
-| observation would be destructive | stop and escalate; diagnosis never earns a destructive act |
+| observation would be destructive | use a safe alternative; otherwise hold that experiment pending actual scoped authority |
 | the readout itself is suspect | that becomes the subject — a lying instrument is a fault, and a common one |
 
 ## Oracle
@@ -129,14 +142,16 @@ rather than concluding `NOT-BROKEN`.
 
 ## Evidence emission
 
-After each engagement, append one line to `runs/ledger.jsonl` under this skill:
+When an authorized evaluation or existing task evidence contract collects
+engagement telemetry, use the local `runs/ledger.jsonl` format. Ordinary use
+requires no separate process artifact:
 
 ```json
 {"schema":"skill-run@1","ts":"<iso8601>","skill":"<this-skill>","decision":"fired|declined","discipline_engaged":"<name-or-null>","action_changed":true|false}
 ```
 
-The append is part of this procedure. It is not a call to an external calibration
-service and it is not a `decision-ledger` entry. Schema:
+Telemetry is private runtime evidence of engagement, not proof of the outcome
+or a replacement for a consequential decision record. Schema:
 `plugins/epistemic-skills/contracts/skill-run-ledger.schema.json`.
 
 ## Local overlay

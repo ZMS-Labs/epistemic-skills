@@ -139,8 +139,8 @@ These are conditions of commission, not preferences.
 10. **The production path is the proof path.** A formatter test, source read,
     dry parse, or direct test message that bypasses the real probe and delivery
     chain cannot establish `PROVEN`.
-11. **Trusted proof has an expiry boundary.** `PROVEN`, and `INERT` records that
-    retain a complete prior proof, name when or under what condition it must be
+11. **Trusted proof has an expiry boundary.** `PROVEN`, and `INERT` or `SUSPECT`
+    records that retain a complete prior proof, name when or under what condition it must be
     re-proved. A proof with no freshness boundary silently becomes permanent.
 12. **Noticing never implies fixing.** This discipline does not remediate. Any
     corrective action requires its own authority and workflow.
@@ -232,6 +232,12 @@ Do not fire when:
     decisions or outcomes when its own trigger fires.
 
 ## Output
+
+Briefly acknowledge Watch and its actual contribution, state what external
+mechanism was observed or remains blocked, and return to the authorized task.
+Commissioning authority already granted by the user carries forward; do not
+re-request it at each method step. A proof failure is retained as observed failure
+evidence even when there is no complete successful proof history.
 
 Every engagement that does not decline produces one complete
 `watch-commission@1` JSON record conforming to:
@@ -355,7 +361,7 @@ supposedly supports. The executable corpus must reject:
 - a proof crossing without durable scoped authorization;
 - an unsafe crossing performed for ceremony;
 - `PROVEN` or complete historical proof with no re-proof boundary;
-- partial proof history stored under `INERT`;
+- partial proof history stored under `INERT` or `SUSPECT`;
 - `SUSPECT` inferred only from possible failure modes rather than a receipted
   observed failure; and
 - a missing dependency omitted instead of represented as evidence-bearing
@@ -376,7 +382,9 @@ A corpus that merely rejects every record proves nothing.
 
 ## Evidence emission
 
-After each engagement, append one line to `runs/ledger.jsonl` under this skill:
+When an authorized evaluation or existing task evidence contract collects
+engagement telemetry, use the local `runs/ledger.jsonl` format. Ordinary use
+requires no separate process artifact:
 
 ```json
 {"schema":"skill-run@1","ts":"<iso8601>","skill":"watch","decision":"fired|declined","discipline_engaged":"watch|<name-or-null>","action_changed":true|false}

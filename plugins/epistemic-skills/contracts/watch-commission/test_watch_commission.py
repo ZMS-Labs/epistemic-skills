@@ -359,6 +359,34 @@ def test_suspect_with_a_receipted_observed_failure_is_valid() -> None:
     assert validate_record(record) == []
 
 
+def suspect_example() -> dict[str, object]:
+    record = json.loads((ROOT / "examples/valid-suspect-observed-failure.json").read_text(encoding="utf-8"))
+    record.pop("_expected")  # Fixture annotation is not a contract field.
+    return record
+
+
+def test_suspect_history_is_absent_or_complete() -> None:
+    record = suspect_example()
+    assert validate_record(record) == []
+    for field, value in record["proof"].items():
+        broken = copy.deepcopy(record)
+        broken["proof"][field] = False if isinstance(value, bool) else None
+        assert_rejected(broken, "INCOMPLETE_PROOF_BUNDLE")
+    record["proof"] = empty_proof()
+    record["reprove_after"] = None
+    assert validate_record(record) == []  # Failed initial proof has no prior success.
+
+
+def test_suspect_historical_proof_requires_reproof_boundary() -> None:
+    for value in (None, "", "   "):
+        record = suspect_example()
+        record["reprove_after"] = value
+        assert_rejected(record, "REPROOF_BOUNDARY_REQUIRED")
+    record = suspect_example()
+    del record["reprove_after"]
+    assert_rejected(record, "MISSING_FIELD")
+
+
 def test_bound_direction_is_closed() -> None:
     record = proven_record()
     bound = copy.deepcopy(record["bound"])

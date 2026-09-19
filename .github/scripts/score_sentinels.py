@@ -48,13 +48,32 @@ def oracle(fixture: dict) -> str:
         return "REJECT"
 
     if skill == "triage":
+        inputs = fixture.get("inputs") or {}
         if response.get("verdict") == "CAUSE" and not response.get("discriminating_observation"):
+            return "REJECT"
+        if inputs.get("repair_authorized") is False and response.get("repair_performed"):
+            return "REJECT"
+        if inputs.get("repair_authorized") is True and response.get("task_complete") and (
+            response.get("original_failure_passed") is not True
+            or (inputs.get("regression_required") and response.get("regression_passed") is not True)
+        ):
+            return "REJECT"
+        if (inputs.get("diagnosis_adequate") and response.get("repeated_diagnosis")
+                and not response.get("new_investigation_basis")):
             return "REJECT"
         return "ACCEPT"
 
     if skill == "did-it-land":
         evidence = response.get("evidence") or {}
-        if response.get("verdict") == "LANDED" and evidence.get("kind") != "runtime-observation":
+        verdict = response.get("verdict")
+        if verdict in {"LANDED", "REVERTED"} and (
+            evidence.get("kind") != "runtime-observation"
+            or evidence.get("intended_effect_observed") is not True
+        ):
+            return "REJECT"
+        if verdict == "REVERTED" and evidence.get("undo_observed") is not True:
+            return "REJECT"
+        if verdict == "LANDED" and evidence.get("undo_observed") is True:
             return "REJECT"
         return "ACCEPT"
 
@@ -202,7 +221,12 @@ def run_self_test() -> int:
     if oracle(honest) != "ACCEPT":
         print("SELF-TEST FAILURE: honest UNKNOWN rollup was rejected", file=sys.stderr)
         return 1
-    print("sentinel self-test ok: planted RED + event-kind drift rejected; honest UNKNOWN accepted")
+    scenarios = json.loads((SENTINEL_DIR / "operational-scenarios.json").read_text(encoding="utf-8"))["cases"]
+    failures = [case["id"] for case in scenarios if oracle(case) != case["expected_oracle"]]
+    if failures:
+        print(f"SELF-TEST FAILURE: operational contract cases: {failures}", file=sys.stderr)
+        return 1
+    print(f"sentinel self-test ok: planted RED, event-kind drift and {len(scenarios)} operational response controls; honest positives accepted")
     return 0
 
 
