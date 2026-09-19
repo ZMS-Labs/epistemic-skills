@@ -72,46 +72,32 @@ an unlimited review cycle. Publication authority and integrity gates remain
 separate. A historical v6 independent-review exception remains historical; this
 policy does not retroactively change it.
 
-If the owner publishes without satisfying current requirements, preserve the
-actual unmet gates and authorization in an explicit exception record. Missing
+If the owner authorizes publication with an unmet current judgment gate, preserve
+that unmet gate and the authorization in an explicit exception record. Missing
 independence alone is not a v7 exception because it is no longer required.
 
-#### The exception route is standing, not emergency (D25)
+#### Standing exception route and historical D25 terms
 
-Until 2026-08-21 this document treated the exception as a one-off, and v6.0.0's
-own records went further and said a second use "would convert an exception into a
-practice. Do not." **That is superseded**, deliberately, by operator decision
-**D25**. The reasoning is recorded rather than assumed:
+An owner exception remains available for an actual unmet publication-judgment
+gate (gate 8). Before tagging, the committed release notes must identify the
+unmet requirement, actual review verdict or missing review, evidence limits,
+remaining material findings, and explicit owner authorization. Record the named
+cost and any accepted gap's owner, scope, revisit trigger, and exit criterion.
+The release notes, annotated tag message, and handbook entry must label the
+result an exception release; `WAIVED` or `UNMET` never becomes `GO`, and adverse
+verdicts remain in the evidence record.
 
-A repository maintained by one operator and one implementing agent lineage cannot
-manufacture the independence a conforming release requires. `KL-SELF-GO` says so
-plainly, and v6.0.0 proved it the expensive way: nine reviews, four publication
-NO-GOs, and an override at the end anyway. Treating the exception as forbidden did
-not produce independence — it produced a long detour to the same place, with the
-honesty of the outcome unchanged.
+No integrity gate is waivable. An accuracy defect is repaired rather than
+excused, and every applicable integrity gate still runs on the exact candidate.
+Missing independence alone creates neither an exception nor a standing
+cross-family review obligation under the v7 designated-reviewer policy.
 
-So the exception is a **first-class, permanently available route**, on these
-standing terms:
-
-1. **The five disclosures above are mandatory every time**, in the committed notes,
-   before tag creation. They are what makes an exception honest rather than silent.
-2. **The exception reaches RG-8 and nothing else.** No integrity gate is waivable
-   by any authority in this repository — not the owner's, not a decision record's.
-   An accuracy defect found under an exception is fixed, never excused.
-3. **The release is labelled an exception release** in its notes, its tag message,
-   and its handbook entry. It is never described as conforming, and its NO-GO
-   verdicts are never described as discharged, superseded, or resolved.
-4. **The named cost is stated, not softened.** An exception release ships without
-   the one thing the judgment gate exists to establish: that an actor which did not
-   build it thinks it should be published. Readers should trust the artifact on its
-   integrity evidence and discount the judgment evidence to zero.
-5. **Standing obligations survive.** `KL-SELF-GO` stays unretired, and any owed
-   cross-family consult carries forward with an owner, a trigger, and an exit
-   criterion until it is actually discharged.
-
-What this is **not**: a way to skip work. Every integrity gate still runs, and the
-disclosure burden is heavier than a conforming release's, because a conforming
-release can point at a GO and an exception release has to explain itself.
+**Historical v6 policy:** D25 made the exception route permanently available
+under the then-required independent-judgment gate. Its original five disclosures,
+`KL-SELF-GO` treatment, and carried cross-family obligations are preserved in the
+[immutable v6 release policy](https://github.com/ZMS-Labs/epistemic-skills/blob/9705f70aec1285597a6ef2a341cede80010c1dcb/RELEASING.md#the-exception-route-is-standing-not-emergency-d25).
+Those terms describe the v6 regime and its historical records; they do not impose
+independence requirements on v7 or retroactively change any v6 verdict.
 
 ## Release gate
 

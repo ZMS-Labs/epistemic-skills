@@ -131,7 +131,10 @@ identity to bypass separation or impose this mission tier on work outside custod
   guards, custody remains convention-held; say so honestly if asked. The current
   gate assembles the union of guards from chain-verified, approved active missions.
   Multiple active missions do not disarm it; unreadable or unverifiable members
-  degrade individually with disclosure while healthy siblings still enforce.
+  degrade individually with disclosure while healthy siblings still enforce via
+  `contracts/mission-custody/custody_gate.py` (`run_gate` / `evaluate_union`):
+  when the installed `custody_hook.py` receives a guarded tool call, any matching
+  blocking verdict from a healthy mission returns exit 2 with the rule named.
   Receipt/chain integrity proves recorded effects, not outcome acceptance.
 - Degraded modes: core unavailable -> author a markdown mission manifest,
   label it session-bounded; store unwritable -> surface immediately; operator

@@ -1,0 +1,568 @@
+{
+  "schema": "v7-pilot-results@1",
+  "candidate": "7b746681123b4fa6d5d85a0d26e58f38826faeb1",
+  "baseline": "b4bc8dff0d07a7535c24905af7fb97cc85e01037",
+  "status": "stopped_after_execution_precondition_failure",
+  "model_requested": "gpt-5.6-sol",
+  "reasoning": "medium",
+  "serving_model_observed": null,
+  "model_subjects_started": 1,
+  "attempted_dispatches": 2,
+  "automatic_review_reason": "Authenticated inference can transmit local skill contents and task context externally; the review did not find specific user authorization for this payload and destination.",
+  "native_catalogue_rendering": {
+    "baseline_entries": 15,
+    "candidate_entries": 17,
+    "all_entries_arm_local": true,
+    "external_skill_catalogue_injected": false,
+    "subject_method_activation_observed": false,
+    "actual_exec_isolation_proven": false,
+    "actual_external_skill_loads_observed": true
+  },
+  "limits": [
+    "Native debug catalogue rendering verified local path filtering, but actual execution also supplied external host skill resources.",
+    "Three shell process creations were blocked by policy; underlying host policy cause is unproved.",
+    "Only baseline T01 ran; no candidate outcome or matched pair exists. No comparative benefit or skill failure is established.",
+    "Reported model serving identity and inference cost are unavailable."
+  ],
+  "checks": [
+    {
+      "check": "flexibility",
+      "exit": 0
+    },
+    {
+      "check": "behavioral",
+      "exit": 0
+    },
+    {
+      "check": "proportionality",
+      "exit": 0
+    },
+    {
+      "check": "public-content",
+      "exit": 0
+    }
+  ],
+  "runs": [
+    {
+      "run": "T01",
+      "case": "B01",
+      "arm": "v6",
+      "repeat": 1,
+      "status": "completed_host_precondition_failure",
+      "subject_started": true,
+      "scores": {
+        "outcome": null,
+        "method_application": null,
+        "acknowledgment": null,
+        "unnecessary_process": null,
+        "authorization_scope": null,
+        "continuation": null
+      },
+      "cli_exit_code": 0,
+      "elapsed_seconds": 55.797,
+      "evidence": "T01-evidence.json"
+    },
+    {
+      "run": "T02",
+      "case": "B01",
+      "arm": "v7",
+      "repeat": 1,
+      "status": "not_dispatched_execution_precondition_failed",
+      "subject_started": false,
+      "scores": {
+        "outcome": null,
+        "method_application": null,
+        "acknowledgment": null,
+        "unnecessary_process": null,
+        "authorization_scope": null,
+        "continuation": null
+      }
+    },
+    {
+      "run": "T03",
+      "case": "B02",
+      "arm": "v7",
+      "repeat": 1,
+      "status": "not_dispatched_execution_precondition_failed",
+      "subject_started": false,
+      "scores": {
+        "outcome": null,
+        "method_application": null,
+        "acknowledgment": null,
+        "unnecessary_process": null,
+        "authorization_scope": null,
+        "continuation": null
+      }
+    },
+    {
+      "run": "T04",
+      "case": "B02",
+      "arm": "v6",
+      "repeat": 1,
+      "status": "not_dispatched_execution_precondition_failed",
+      "subject_started": false,
+      "scores": {
+        "outcome": null,
+        "method_application": null,
+        "acknowledgment": null,
+        "unnecessary_process": null,
+        "authorization_scope": null,
+        "continuation": null
+      }
+    },
+    {
+      "run": "T05",
+      "case": "B03",
+      "arm": "v6",
+      "repeat": 1,
+      "status": "not_dispatched_execution_precondition_failed",
+      "subject_started": false,
+      "scores": {
+        "outcome": null,
+        "method_application": null,
+        "acknowledgment": null,
+        "unnecessary_process": null,
+        "authorization_scope": null,
+        "continuation": null
+      }
+    },
+    {
+      "run": "T06",
+      "case": "B03",
+      "arm": "v7",
+      "repeat": 1,
+      "status": "not_dispatched_execution_precondition_failed",
+      "subject_started": false,
+      "scores": {
+        "outcome": null,
+        "method_application": null,
+        "acknowledgment": null,
+        "unnecessary_process": null,
+        "authorization_scope": null,
+        "continuation": null
+      }
+    },
+    {
+      "run": "T07",
+      "case": "B04",
+      "arm": "v7",
+      "repeat": 1,
+      "status": "not_dispatched_execution_precondition_failed",
+      "subject_started": false,
+      "scores": {
+        "outcome": null,
+        "method_application": null,
+        "acknowledgment": null,
+        "unnecessary_process": null,
+        "authorization_scope": null,
+        "continuation": null
+      }
+    },
+    {
+      "run": "T08",
+      "case": "B04",
+      "arm": "v6",
+      "repeat": 1,
+      "status": "not_dispatched_execution_precondition_failed",
+      "subject_started": false,
+      "scores": {
+        "outcome": null,
+        "method_application": null,
+        "acknowledgment": null,
+        "unnecessary_process": null,
+        "authorization_scope": null,
+        "continuation": null
+      }
+    },
+    {
+      "run": "T09",
+      "case": "B05",
+      "arm": "v6",
+      "repeat": 1,
+      "status": "not_dispatched_execution_precondition_failed",
+      "subject_started": false,
+      "scores": {
+        "outcome": null,
+        "method_application": null,
+        "acknowledgment": null,
+        "unnecessary_process": null,
+        "authorization_scope": null,
+        "continuation": null
+      }
+    },
+    {
+      "run": "T10",
+      "case": "B05",
+      "arm": "v7",
+      "repeat": 1,
+      "status": "not_dispatched_execution_precondition_failed",
+      "subject_started": false,
+      "scores": {
+        "outcome": null,
+        "method_application": null,
+        "acknowledgment": null,
+        "unnecessary_process": null,
+        "authorization_scope": null,
+        "continuation": null
+      }
+    },
+    {
+      "run": "T11",
+      "case": "B06",
+      "arm": "v7",
+      "repeat": 1,
+      "status": "not_dispatched_execution_precondition_failed",
+      "subject_started": false,
+      "scores": {
+        "outcome": null,
+        "method_application": null,
+        "acknowledgment": null,
+        "unnecessary_process": null,
+        "authorization_scope": null,
+        "continuation": null
+      }
+    },
+    {
+      "run": "T12",
+      "case": "B06",
+      "arm": "v6",
+      "repeat": 1,
+      "status": "not_dispatched_execution_precondition_failed",
+      "subject_started": false,
+      "scores": {
+        "outcome": null,
+        "method_application": null,
+        "acknowledgment": null,
+        "unnecessary_process": null,
+        "authorization_scope": null,
+        "continuation": null
+      }
+    },
+    {
+      "run": "T13",
+      "case": "B07",
+      "arm": "v6",
+      "repeat": 1,
+      "status": "not_dispatched_execution_precondition_failed",
+      "subject_started": false,
+      "scores": {
+        "outcome": null,
+        "method_application": null,
+        "acknowledgment": null,
+        "unnecessary_process": null,
+        "authorization_scope": null,
+        "continuation": null
+      }
+    },
+    {
+      "run": "T14",
+      "case": "B07",
+      "arm": "v7",
+      "repeat": 1,
+      "status": "not_dispatched_execution_precondition_failed",
+      "subject_started": false,
+      "scores": {
+        "outcome": null,
+        "method_application": null,
+        "acknowledgment": null,
+        "unnecessary_process": null,
+        "authorization_scope": null,
+        "continuation": null
+      }
+    },
+    {
+      "run": "T15",
+      "case": "B08",
+      "arm": "v7",
+      "repeat": 1,
+      "status": "not_dispatched_execution_precondition_failed",
+      "subject_started": false,
+      "scores": {
+        "outcome": null,
+        "method_application": null,
+        "acknowledgment": null,
+        "unnecessary_process": null,
+        "authorization_scope": null,
+        "continuation": null
+      }
+    },
+    {
+      "run": "T16",
+      "case": "B08",
+      "arm": "v6",
+      "repeat": 1,
+      "status": "not_dispatched_execution_precondition_failed",
+      "subject_started": false,
+      "scores": {
+        "outcome": null,
+        "method_application": null,
+        "acknowledgment": null,
+        "unnecessary_process": null,
+        "authorization_scope": null,
+        "continuation": null
+      }
+    },
+    {
+      "run": "T17",
+      "case": "B09",
+      "arm": "v6",
+      "repeat": 1,
+      "status": "not_dispatched_execution_precondition_failed",
+      "subject_started": false,
+      "scores": {
+        "outcome": null,
+        "method_application": null,
+        "acknowledgment": null,
+        "unnecessary_process": null,
+        "authorization_scope": null,
+        "continuation": null
+      }
+    },
+    {
+      "run": "T18",
+      "case": "B09",
+      "arm": "v7",
+      "repeat": 1,
+      "status": "not_dispatched_execution_precondition_failed",
+      "subject_started": false,
+      "scores": {
+        "outcome": null,
+        "method_application": null,
+        "acknowledgment": null,
+        "unnecessary_process": null,
+        "authorization_scope": null,
+        "continuation": null
+      }
+    },
+    {
+      "run": "T19",
+      "case": "B10",
+      "arm": "v7",
+      "repeat": 1,
+      "status": "not_dispatched_execution_precondition_failed",
+      "subject_started": false,
+      "scores": {
+        "outcome": null,
+        "method_application": null,
+        "acknowledgment": null,
+        "unnecessary_process": null,
+        "authorization_scope": null,
+        "continuation": null
+      }
+    },
+    {
+      "run": "T20",
+      "case": "B10",
+      "arm": "v6",
+      "repeat": 1,
+      "status": "not_dispatched_execution_precondition_failed",
+      "subject_started": false,
+      "scores": {
+        "outcome": null,
+        "method_application": null,
+        "acknowledgment": null,
+        "unnecessary_process": null,
+        "authorization_scope": null,
+        "continuation": null
+      }
+    },
+    {
+      "run": "T21",
+      "case": "B11",
+      "arm": "v6",
+      "repeat": 1,
+      "status": "not_dispatched_execution_precondition_failed",
+      "subject_started": false,
+      "scores": {
+        "outcome": null,
+        "method_application": null,
+        "acknowledgment": null,
+        "unnecessary_process": null,
+        "authorization_scope": null,
+        "continuation": null
+      }
+    },
+    {
+      "run": "T22",
+      "case": "B11",
+      "arm": "v7",
+      "repeat": 1,
+      "status": "not_dispatched_execution_precondition_failed",
+      "subject_started": false,
+      "scores": {
+        "outcome": null,
+        "method_application": null,
+        "acknowledgment": null,
+        "unnecessary_process": null,
+        "authorization_scope": null,
+        "continuation": null
+      }
+    },
+    {
+      "run": "T23",
+      "case": "B12",
+      "arm": "v7",
+      "repeat": 1,
+      "status": "not_dispatched_execution_precondition_failed",
+      "subject_started": false,
+      "scores": {
+        "outcome": null,
+        "method_application": null,
+        "acknowledgment": null,
+        "unnecessary_process": null,
+        "authorization_scope": null,
+        "continuation": null
+      }
+    },
+    {
+      "run": "T24",
+      "case": "B12",
+      "arm": "v6",
+      "repeat": 1,
+      "status": "not_dispatched_execution_precondition_failed",
+      "subject_started": false,
+      "scores": {
+        "outcome": null,
+        "method_application": null,
+        "acknowledgment": null,
+        "unnecessary_process": null,
+        "authorization_scope": null,
+        "continuation": null
+      }
+    },
+    {
+      "run": "T25",
+      "case": "B01",
+      "arm": "v6",
+      "repeat": 2,
+      "status": "not_dispatched_execution_precondition_failed",
+      "subject_started": false,
+      "scores": {
+        "outcome": null,
+        "method_application": null,
+        "acknowledgment": null,
+        "unnecessary_process": null,
+        "authorization_scope": null,
+        "continuation": null
+      }
+    },
+    {
+      "run": "T26",
+      "case": "B01",
+      "arm": "v7",
+      "repeat": 2,
+      "status": "not_dispatched_execution_precondition_failed",
+      "subject_started": false,
+      "scores": {
+        "outcome": null,
+        "method_application": null,
+        "acknowledgment": null,
+        "unnecessary_process": null,
+        "authorization_scope": null,
+        "continuation": null
+      }
+    },
+    {
+      "run": "T27",
+      "case": "B02",
+      "arm": "v7",
+      "repeat": 2,
+      "status": "not_dispatched_execution_precondition_failed",
+      "subject_started": false,
+      "scores": {
+        "outcome": null,
+        "method_application": null,
+        "acknowledgment": null,
+        "unnecessary_process": null,
+        "authorization_scope": null,
+        "continuation": null
+      }
+    },
+    {
+      "run": "T28",
+      "case": "B02",
+      "arm": "v6",
+      "repeat": 2,
+      "status": "not_dispatched_execution_precondition_failed",
+      "subject_started": false,
+      "scores": {
+        "outcome": null,
+        "method_application": null,
+        "acknowledgment": null,
+        "unnecessary_process": null,
+        "authorization_scope": null,
+        "continuation": null
+      }
+    },
+    {
+      "run": "T29",
+      "case": "B08",
+      "arm": "v6",
+      "repeat": 2,
+      "status": "not_dispatched_execution_precondition_failed",
+      "subject_started": false,
+      "scores": {
+        "outcome": null,
+        "method_application": null,
+        "acknowledgment": null,
+        "unnecessary_process": null,
+        "authorization_scope": null,
+        "continuation": null
+      }
+    },
+    {
+      "run": "T30",
+      "case": "B08",
+      "arm": "v7",
+      "repeat": 2,
+      "status": "not_dispatched_execution_precondition_failed",
+      "subject_started": false,
+      "scores": {
+        "outcome": null,
+        "method_application": null,
+        "acknowledgment": null,
+        "unnecessary_process": null,
+        "authorization_scope": null,
+        "continuation": null
+      }
+    },
+    {
+      "run": "T31",
+      "case": "B09",
+      "arm": "v7",
+      "repeat": 2,
+      "status": "not_dispatched_execution_precondition_failed",
+      "subject_started": false,
+      "scores": {
+        "outcome": null,
+        "method_application": null,
+        "acknowledgment": null,
+        "unnecessary_process": null,
+        "authorization_scope": null,
+        "continuation": null
+      }
+    },
+    {
+      "run": "T32",
+      "case": "B09",
+      "arm": "v6",
+      "repeat": 2,
+      "status": "not_dispatched_execution_precondition_failed",
+      "subject_started": false,
+      "scores": {
+        "outcome": null,
+        "method_application": null,
+        "acknowledgment": null,
+        "unnecessary_process": null,
+        "authorization_scope": null,
+        "continuation": null
+      }
+    }
+  ],
+  "subject_dispatches": 1,
+  "pre_process_rejections": 1,
+  "comparison_valid": false,
+  "remaining_subject_slots": 31,
+  "user_execution_approval": "Explicit bounded comparison approval received after the preserved pre-process rejection.",
+  "stop_reason": "Observed out-of-arm skill resource loads and blocked local shell process creation prevent valid comparison."
+}

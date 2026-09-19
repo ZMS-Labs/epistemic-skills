@@ -305,5 +305,10 @@ jobs:
         run: python plugins/epistemic-skills/contracts/verify_calibration.py --self-test
       - name: Existing UAT judge
         run: python plugins/epistemic-skills/skills/evidence-locked-uat/scripts/judge.py --self-test
+      - name: UAT compiler and Python-JavaScript observation parity
+        # ubuntu-24.04 includes Node.js; fail visibly if the runner lacks it.
+        run: |
+          node --version
+          python plugins/epistemic-skills/skills/evidence-locked-uat/scripts/test_observations.py
       - name: Existing gauntlet tests
         run: python plugins/epistemic-skills/skills/gauntlet/tests/run_tests.py
