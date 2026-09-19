@@ -1,66 +1,104 @@
-# Local CI fallback (issue #95)
+# Local CI: useful checks, explicit limits
 
-When GitHub-hosted Actions is unavailable (minutes limits, assignment timeouts, or
-org policy), this repository supports **faithful local execution** of the same
-Python gates CI runs, without maintaining a second copy of the step list.
+Use local checks for fast feedback or when GitHub Actions cannot run. The
+clean-room harness extracts Python commands from `epistemic-flexibility.yml`
+so its step list follows that workflow. It reports which commands ran, failed,
+or were skipped. **Exit zero means the executed checks passed; it does not mean
+all hosted gates were reproduced.**
 
-## Default path (Linux or WSL)
+For a small change, start with the targeted checks in the
+[maintainer change map](MAINTAINING.md#change-map). The broader local wrapper is
+useful before pushing a substantial change or diagnosing a CI failure.
+
+## Run the wrapper on Linux or WSL
+
+Use Git, Bash, and Python 3.12 to match the main hosted Python baseline. The
+scripts use the available local interpreter; they do not install or pin it.
 
 ```bash
-bash .github/scripts/run_local_ci.sh [REF]
+bash .github/scripts/run_local_ci.sh HEAD
 ```
 
-`REF` defaults to `HEAD`. The wrapper:
+`REF` is an optional first argument and defaults to `HEAD`. The wrapper has two
+distinct inputs:
 
-1. Writes a receipt **outside the repository** —
-   `${LOCAL_CI_RECEIPT_DIR:-${TMPDIR:-/tmp}/epistemic-skills-local-ci}/<sha12>-tree-<tree12>[-dirty].md`
-   — naming both the commit and the tree it actually tested.
-2. Runs `.github/scripts/cleanroom_ci.sh` for the `epistemic-flexibility` workflow
-   (stdlib checks extracted from `.github/workflows/epistemic-flexibility.yml`).
-3. Runs the focused `commission-watch-contract` steps from the current working
-   tree when that workflow is present. Use a clean checkout of `REF` when you
-   need both parts to describe the same revision.
+| Part | What it reads | What it does |
+| --- | --- | --- |
+| Clean-room checks | A fresh detached checkout of the resolved `REF` commit | Extracts the Python commands from that revision's `epistemic-flexibility.yml`, executes supported commands, and reports skips |
+| Focused watch checks | The current working tree, when its watch workflow exists | Runs the watch contract tests and verifier, examples, sentinels, description budget, package structure checks, and `git diff --check` |
 
-Use this **before** pushing when Actions is degraded. It is the standing substitute
-for “green on GitHub” only when Actions cannot assign runners; prefer Actions when
-available for CodeQL, DCO API checks, and fork isolation.
+Use a clean checkout of `REF` so both parts describe the same revision. Changing
+`REF` alone does **not** switch the wrapper's working-tree portion to that ref.
+The watch portion is a selected set of commands, not an extraction of every step
+in `commission-watch-contract.yml`.
 
-## Clean-room only
+## Read the skip counts
+
+The clean-room summary accounts for every extracted Python command. It can
+finish successfully while reporting these exclusions:
+
+| Summary field | Why a command did not run |
+| --- | --- |
+| `ci-context` | It needs GitHub event or runner variables that the local process does not have. |
+| `missing-dep` | Its workflow block installs PyYAML, but the local interpreter cannot import it. The harness does not install it automatically. |
+| `need-args` | The command returned an argparse usage error because it requires arguments the harness did not supply. |
+
+These are uncovered checks, not successful checks. Read the command named next
+to each `SKIP`, and include any relevant gap when reporting the result. A failed
+executed check returns nonzero. The clean-room harness replicates Python script
+commands from one workflow; it does not reproduce action setup, every shell
+command, or the complete GitHub environment.
+
+## Clean-room checks only
 
 ```bash
 bash .github/scripts/cleanroom_ci.sh "$(git rev-parse HEAD)"
 ```
 
-See the script header for remote URL override and detached-checkout behavior.
+The standalone script defaults to `main` when no ref is supplied. A locally
+available commit is copied into a fresh detached checkout; otherwise the script
+clones the named remote branch or tag. Its second argument can override the
+remote URL. It also fetches remote `main` for checks that compare history, so
+network access is required. See the
+[script header](../.github/scripts/cleanroom_ci.sh) for temporary-directory
+configuration and checkout behavior.
 
-## Kubernetes Job (cluster path)
+The optional [Kubernetes Job example](../.github/ci/cleanroom-job.yaml) runs the
+harness on amd64 compute with cluster access, DNS, and outbound GitHub access.
+Review its image, permissions, and resources before use. No particular cluster
+or deployment environment is a project dependency.
 
-The optional [Job example](../.github/ci/cleanroom-job.yaml) runs the harness on
-amd64 compute. It requires cluster access, DNS resolution, and outbound access
-to GitHub. Review its image, permissions, and resource limits before use. The
-repository does not depend on any particular cluster or deployment environment.
+## What hosted checks still add
 
-## What local CI does not provide
+The local wrapper does not cover all mission-custody checks, OpenAI bundle
+packaging, wiki publication/link verification, full-history secret scanning,
+CodeQL, or the live pull-request DCO API check. It also does not provide another
+operator's environment or GitHub's fork isolation. Some individual checks can
+be run locally; the wrapper's success does not claim they were.
 
-- Cross-operator independence (same machine as the author).
-- CodeQL or other GitHub-only integrations.
-- **Self-hosted Actions runners on a public repo** without fork-PR protections —
-  not approved as a billing workaround (see issue #95).
+When Actions is unavailable, attach the bounded local result to the PR and
+identify the outstanding hosted checks. Local receipts do not automatically
+satisfy branch protection or replace the exact-candidate evidence required by
+[the release procedure](../RELEASING.md). The original fallback discussion is
+[issue #95](https://github.com/ZMS-Labs/epistemic-skills/issues/95); self-hosted
+runners on a public repository without fork-PR protections are not an approved
+billing workaround.
 
-## Receipts
+## Receipts and privacy
 
-The receipt lands **outside the repository**, at
-`${LOCAL_CI_RECEIPT_DIR:-${TMPDIR:-/tmp}/epistemic-skills-local-ci}/<sha12>-tree-<tree12>[-dirty].md`.
-That is deliberate: the file describes a WORKING TREE, not a commit, so a copy
-sitting inside the repo was one `git add -A` away from being committed as if it
-described the commit it is named for (it happened twice during v6.0.0 and was
-caught by hand both times). `docs/evidence/local-ci/` is `.gitignore`d for the
-same reason and is **not** a publication path.
+The wrapper writes outside the checkout by default:
 
-When substituting for a failed Actions assignment: share a sanitized receipt
-in the PR, removing hostnames, home directories, and other local identifiers.
-Note which checks it covers and which still require GitHub Actions. A `-dirty` receipt is not a substitute for
-green on a commit — re-run it on a clean tree first.
+```text
+${LOCAL_CI_RECEIPT_DIR:-${TMPDIR:-/tmp}/epistemic-skills-local-ci}/<sha12>-tree-<tree12>[-dirty].md
+```
 
-Override the destination with `LOCAL_CI_RECEIPT_DIR` if you want the file
-somewhere durable outside the checkout.
+The receipt records the resolved commit, a working-tree hash, host information,
+commands, and results. Remember that the clean-room portion tests the commit
+while the watch portion tests the working tree. A `-dirty` receipt cannot
+establish that the corresponding clean commit passed. Re-run in a clean
+checkout when commit-bound evidence is needed.
+
+Keep the original receipt local. When sharing it in a PR, remove hostnames,
+home directories, and other personal identifiers; retain command outcomes and
+skip counts. `docs/evidence/local-ci/` is ignored and is not a publication path.
+`LOCAL_CI_RECEIPT_DIR` can select another receipt directory outside the checkout.

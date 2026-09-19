@@ -3,6 +3,29 @@
 Contributions are accepted under the repository's
 `GPL-3.0-or-later` license and the Developer Certificate of Origin 1.1.
 
+## Start with one useful change
+
+A clearer explanation, a reproducible failure, a focused fixture, or a corrected
+host instruction is a useful contribution. Read the file and its nearest
+example or test, then make the smallest change that addresses the problem.
+
+1. Create a branch from current `main`. Use Git and Python 3.12 to match the main
+   Python workflow baseline; Linux or WSL is the closest local CI environment.
+2. Find the source and relevant check in the
+   [maintainer change map](docs/MAINTAINING.md#change-map). Skill instructions
+   live in the canonical package; current handbook prose lives in
+   `docs/handbook/pages/`.
+3. Run the checks relevant to the change and `git diff --check`. Inspect the
+   diff for unrelated edits, local paths, or personal information.
+4. Commit with `git commit --signoff`, open a pull request, and explain the
+   problem, resulting behavior, and checks you actually ran. Include any
+   untested boundary. Mark the PR ready when it can be reviewed; draft PRs do
+   not run the normal gate jobs.
+
+You do not need to run a release ceremony for a documentation correction.
+The [maintainer guide](docs/MAINTAINING.md) explains generated files and wiki
+publication; [CI coverage](docs/actions-tier.md) explains what hosted checks add.
+
 ## Ordinary contributions do not require the whole arc
 
 A contributor fixing a typo, changing local copy or styling, renaming a private
