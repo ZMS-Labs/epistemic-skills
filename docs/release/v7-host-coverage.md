@@ -100,3 +100,15 @@ Interface references inspected on the evidence date:
 [Claude Code hooks](https://code.claude.com/docs/en/hooks).
 Local `--help`, `--version`, feature listing, and generated app-server schemas
 were used before filling unresolved contract details from official references.
+
+## Publication-stage custody diagnostic
+
+The v7 release-branch run [35422446331](https://github.com/ZMS-Labs/epistemic-skills/actions/runs/35422446331)
+on `8854dd735b414997930e768bceead18f740e4868` passed the required Ubuntu
+custody contract job. Its dispatch-only macOS diagnostic reproduced issue #162:
+`distinct-real-file-untouched` and `distinct-both-files-tracked-separately`
+failed in the lifecycle suite on case-insensitive APFS; later macOS steps were
+skipped. This is observed unsupported behavior, not a successful platform tier.
+Do not rely on custody exclusion or distinct-file guarantees on case-insensitive
+POSIX filesystems. The final publication receipt binds the exact release rerun.
+This contract diagnostic supplies no model/host skill-application evidence.

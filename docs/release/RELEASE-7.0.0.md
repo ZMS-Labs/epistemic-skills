@@ -70,6 +70,18 @@ Live Codex CLI discovery observed all 17 canonical descriptions. Startup model
 consumption, native aliases and native-goal activation/readback remain unexercised.
 Other hosts retain their [declared verification tiers](v7-host-coverage.md).
 
+**Custody filesystem limitation (issue #162).** The dispatch-only macOS
+probe remains outside the required merge gate and reproduced the existing
+case-insensitive APFS limitation in [run 35422446331](https://github.com/ZMS-Labs/epistemic-skills/actions/runs/35422446331)
+on `8854dd735b414997930e768bceead18f740e4868`. Its lifecycle step failed
+`distinct-real-file-untouched` and `distinct-both-files-tracked-separately`;
+the required Ubuntu `contract` job passed. Later macOS steps were skipped,
+not passed. Custody filename-distinctness and exclusion guarantees are not
+supported on case-insensitive POSIX filesystems. This carries forward the
+measured v6 `KL-MACOS-162` boundary; the final tag receipt records the same
+required-job/diagnostic distinction on the exact release commit. Other skill
+instructions do not depend on claiming that unavailable filesystem guarantee.
+
 The bounded v6-v7 comparison stopped after one baseline subject encountered
 out-of-arm host skill loading and policy-blocked local tools. Thirty-one slots
 were not dispatched; zero valid pairs and zero candidate subjects were obtained.
