@@ -4,7 +4,7 @@ judge.py — canonical deterministic judge for evidence-locked UAT.
 
 This is THE judge. `references/workflow-template.mjs` (the Claude Code reference
 orchestration) embeds a line-for-line equivalent copy of this aggregation for the
-Workflow tool; the copy is verified against this script by the `--self-test`
+Workflow tool; the copy is verified against this script by `test_observations.py`
 fixtures. Any harness runs this script identically — no LLM role is involved in
 the gate decision.
 
@@ -57,7 +57,7 @@ TIER_PERSONAS = {
 # forgetful orchestrator cannot produce a clean-looking gate.json (fail-closed).
 KNOWN_LIMITATIONS = [
     'Level 1: no pairwise coverage',
-    'verifier same-provider (independence is context/prompt-level only)',
+    'model/provider diversity is not established by the judge',
     'a11y = keyboard-path procedural only',
     'all oracle channels LLM-adjudicated at Level 1 (no deterministic programmatic oracle)',
     'feedback visible <~3s is below the harness\'s reliable detection threshold — '
@@ -91,6 +91,63 @@ def coverage_omitted(contracts, tier):
             if c['case_id'] not in planned]
 
 
+CONTRACT_VERSION = 'uat-contract@2'
+
+
+def observation_verdict(contract, criterion, row):
+    """Interpret preregistered observations; a cited contrary outcome beats PASS.
+
+    This checks structured evidence interpretation, not image truth or blinding.
+    Unversioned packets retain historical aggregation and are labeled at the gate.
+    """
+    version = contract.get('schema_version')
+    if 'schema_version' not in contract:
+        return row
+    problems = []
+    failed = False
+    if version != CONTRACT_VERSION:
+        problems.append('unsupported contract version')
+    else:
+        for field in ('expected_observation', 'disconfirming_observation'):
+            if not isinstance(criterion.get(field), str) or not criterion[field].strip():
+                problems.append('missing preregistered ' + field)
+        def cited(obs):
+            return (isinstance(obs, dict) and isinstance(obs.get('evidence'), list)
+                    and bool(obs['evidence'])
+                    and all(isinstance(e, str) and e.strip() for e in obs['evidence']))
+        for field, passing in (('expected_observation', 'observed'),
+                               ('disconfirming_observation', 'not-observed')):
+            obs = row.get(field)
+            if not cited(obs) or obs.get('result') not in ('observed', 'not-observed'):
+                problems.append('missing/uncertain cited ' + field)
+            elif obs['result'] != passing:
+                failed = True
+                problems.append('contrary ' + field + ': ' + '; '.join(obs['evidence']))
+        observations = row.get('oracle_observations')
+        if not isinstance(observations, list):
+            observations = []
+        required = criterion.get('required_oracles') or []
+        if not required:
+            problems.append('missing required oracle channels')
+        for oracle in required:
+            matches = [o for o in observations if isinstance(o, dict) and o.get('oracle') == oracle]
+            if any(cited(o) and o.get('result') == 'violated' for o in matches):
+                failed = True
+                problems.append('required oracle violated: ' + oracle)
+            if len(matches) != 1 or not cited(matches[0]) or matches[0].get('result') not in ('satisfied', 'violated'):
+                problems.append('missing/uncertain cited oracle: ' + oracle)
+    status = row.get('status')
+    if failed:
+        status = 'FAIL_PRODUCT'
+    elif problems and status == 'PASS':
+        status = 'INCONCLUSIVE'
+    if status not in VERDICTS:
+        status = 'INCONCLUSIVE'
+        problems.append('invalid verifier status')
+    return {**row, 'status': status,
+            'evidence_against': list(row.get('evidence_against') or []) + problems}
+
+
 def judge_case(cs, actor_out, verify):
     """One case verdict. Ported line-for-line from workflow-template.mjs."""
     if verify is None:
@@ -115,12 +172,12 @@ def judge_case(cs, actor_out, verify):
         if idx != -1:
             used_verifier_idx.add(idx)
             matched_contract_ids.add(cc['id'])
-            completed.append(verifier_rows[idx])
+            completed.append(observation_verdict(cs['contract'], cc, verifier_rows[idx]))
 
     # Positional single-orphan pairing pass (tolerates verifier id-drift/shortening).
     unmatched_contract = [cc for cc in contract_criteria if cc['id'] not in matched_contract_ids]
     unmatched_verifier_idx = [ri for ri in range(len(verifier_rows)) if ri not in used_verifier_idx]
-    if len(unmatched_contract) == 1 and len(unmatched_verifier_idx) == 1:
+    if 'schema_version' not in cs['contract'] and len(unmatched_contract) == 1 and len(unmatched_verifier_idx) == 1:
         cc = unmatched_contract[0]
         ri = unmatched_verifier_idx[0]
         row = verifier_rows[ri]
@@ -170,8 +227,16 @@ def judge_case(cs, actor_out, verify):
 
 
 def judge(contracts, tier, run_id, target, commit_sha, actor_outputs, verifier_outputs,
-          calibration_status=CALIBRATION_UNCALIBRATED):
+          calibration_status=CALIBRATION_UNCALIBRATED, verification_mode='direct'):
     """Aggregate all case verdicts into the gate object (deterministic, no LLM)."""
+    if verification_mode not in ('direct', 'blinded'):
+        raise ValueError('verification_mode must be direct or blinded')
+    versions = sorted({c.get('schema_version', 'legacy-unversioned') for c in contracts})
+    limitations = list(KNOWN_LIMITATIONS)
+    if 'legacy-unversioned' in versions:
+        limitations.append('historical unversioned contracts: observations were not enforced; not v2 acceptance')
+    if verification_mode == 'direct':
+        limitations.append('direct check: no actor/verifier blinding claimed')
     cases = planned_cases(contracts, tier)
     case_verdicts = [
         judge_case(cs, actor_outputs.get(cs['case_id']), verifier_outputs.get(cs['case_id']))
@@ -190,7 +255,9 @@ def judge(contracts, tier, run_id, target, commit_sha, actor_outputs, verifier_o
         'target_commit_sha': commit_sha,
         'cases': case_verdicts,
         'coverage_omitted': coverage_omitted(contracts, tier),
-        'known_limitations': list(KNOWN_LIMITATIONS),
+        'known_limitations': limitations,
+        'contract_versions': versions,
+        'verification_mode': verification_mode,
     }
 
 
@@ -284,7 +351,7 @@ def self_test():
         check('F1 coverage_omitted lists non-smoke personas',
               gate['coverage_omitted'] == ['REQ-A-001--keyboard-only', 'REQ-A-001--novice-mobile'],
               json.dumps(gate['coverage_omitted']))
-        check('F1 known_limitations emitted by judge', gate['known_limitations'] == KNOWN_LIMITATIONS)
+        check('F1 known_limitations emitted by judge', gate['known_limitations'][:len(KNOWN_LIMITATIONS)] == KNOWN_LIMITATIONS)
 
         # F2: FAIL_PRODUCT on a high contract -> gate FAIL, even with a second PASS criterion.
         c = [_contract('REQ-B-001', 'high', 2)]
@@ -369,6 +436,8 @@ def main(argv=None):
     parser.add_argument('--commit-sha')
     parser.add_argument('--evidence-dir')
     parser.add_argument('--calibration-status', default=CALIBRATION_UNCALIBRATED)
+    parser.add_argument('--verification-mode', choices=['direct', 'blinded'], default='direct',
+                        help='blinded only with actual context isolation and withheld actor verdict')
     parser.add_argument('--output', help='gate.json path (default <evidence-dir>/gate.json; "-" for stdout)')
     args = parser.parse_args(argv)
 
@@ -388,7 +457,7 @@ def main(argv=None):
     contracts = contracts_doc['contracts']
     actor_outputs, verifier_outputs = load_evidence(args.evidence_dir, contracts, args.tier)
     gate = judge(contracts, args.tier, args.run_id, args.target, args.commit_sha,
-                 actor_outputs, verifier_outputs, args.calibration_status)
+                 actor_outputs, verifier_outputs, args.calibration_status, args.verification_mode)
 
     out = json.dumps(gate, indent=2, ensure_ascii=False) + '\n'
     output = args.output or str(Path(args.evidence_dir) / 'gate.json')

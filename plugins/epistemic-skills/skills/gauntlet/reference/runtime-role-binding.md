@@ -42,8 +42,9 @@ JSON beside the report so arbitration can verify the exact role, persona,
 dossier, and prompt hashes. The materializer treats dossier text as data and
 adds an explicit injection boundary.
 
-If neither native binding nor materialization can be completed, stop the panel.
-Do not label an improvised generic prompt as a gauntlet role.
+If neither native binding nor materialization can be completed, disclose the
+limit. An explicitly labeled same-context application may still examine distinct
+questions, but cannot claim isolated or blinded role execution.
 
 ## Register the native roles in Codex
 

@@ -16,7 +16,8 @@ falsifiability contract on every finding (SHIPPED — schema-enforced, structura
 falsifier check) · compiled mechanical checks / judge-token-free refutation
 (SHIPPED — verify_evidence.py, validate_roster.py, selector constraint fixtures)
 · arbitrator certification (historical battery **BUILT + RUN 2026-07-17: 10/10**;
-the amended seat-provenance-neutral battery is **NOT_RUN** — `evals/arbitrator-certification/`) · replayable spend-accounted log (`meter==log`)
+the amended seat-provenance-neutral battery **RAN 2026-08-04: 10/10 catch,
+8/10 verdict match** — `evals/arbitrator-certification/`) · replayable spend-accounted log (`meter==log`)
 (SHIPPED — Workflow journal + selection replay records).
 
 **Bundle A — Generation rigor (better findings):**
@@ -48,10 +49,11 @@ the amended seat-provenance-neutral battery is **NOT_RUN** — `evals/arbitrator
 
 ## Phases
 
-- **Phase 0 (largely done; two honest gaps):** the `/gauntlet` staple + docket
+- **Phase 0 (historical checks completed; behavioral coverage partial):** the `/gauntlet` staple + docket
   modes + depth dial + aliases + registry/selector/validator (2026-07-10).
   Status: historical arbitrator battery **BUILT + RUN** (2026-07-17, 10/10 planted-flaw
-  catch); amended seat-provenance-neutral battery **NOT_RUN**
+  catch); amended seat-provenance-neutral battery **RAN 2026-08-04: 10/10 catch,
+  8/10 verdict match**
   (`evals/arbitrator-certification/`); the past-subject behavioral regression battery has a
   **smoke subset run** (non-inferiority only; smoke notes are not shipped as a standalone
   file in this public package) with the full 24×4 sweep still unrun — no
@@ -68,3 +70,9 @@ the amended seat-provenance-neutral battery is **NOT_RUN** — `evals/arbitrator
 Each later phase = its own spec, gated by measured payoff on the battery. Design
 provenance: the 3-agent bake-off design docs (2026-07-07); the design doc is
 held in the operator's private repo and is not shipped in this package.
+
+V7 status: the shared method library and focused Perspective consumer refine
+the source contracts. They do not retroactively upgrade the historical battery
+or establish prompt superiority. See the current release evidence for executed
+v7 coverage. Generation/adjudication/measurement research phases above remain
+optional proposals, not prerequisites imposed on ordinary skill use.

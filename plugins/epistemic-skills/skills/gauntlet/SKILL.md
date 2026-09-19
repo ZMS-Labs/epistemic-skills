@@ -1,6 +1,6 @@
 ---
 name: gauntlet
-description: Use when approving architecture/design, before writing risky plan steps, at pre-merge for irreversible-infra or security changes, or as a verification escalation for high-stakes hard-to-verify claims. Auto-fires (triage-gated) at high-stakes, irreversible, one-way-door, or high-blast-radius decision points, and on explicit request ("gauntlet", "stress-test this", "sovereign gauntlet", "red-team-gauntlet", "deep-mode review", "GO/NO-GO review"). Do NOT use for reversible low-stakes work, lookups, ordinary code review, or deterministic/reproducible test-failure triage.
+description: Use for plural scrutiny and reasoned adjudication of a consequential proposal or open decision, or when explicitly requested. Use Perspective for a focused concern; skip routine reversible work, ordinary code review and reproducible-failure triage.
 metadata:
   event-kinds: [review-forecast]
   eligible-when: [preregistered-prediction, correction-or-supersession]
@@ -9,63 +9,52 @@ metadata:
   sentinel-fixture: gauntlet-dissent.json
 ---
 
-# The Gauntlet — consolidated adversarial-review staple
+# Gauntlet — plural scrutiny and adjudication
 
-A standing **adversarial-review reflex**. One staple with a depth
-dial, fusing three lineages into one:
+Examine a common proposal or open decision through distinct questions and
+evidence mechanisms, then adjudicate the material tensions. Constructive
+improvements and no-material-finding results are valid. The task owner receives
+the supported judgment, dissent and limits, then continues authorized work.
 
-- **Sovereign-Gauntlet** discipline — machine-readable lens registry
-  (`roster/registry.json`; counts live in generated `roster/INDEX.md`, never here)
-  with four workflow roles (generate_options → evaluate → gate → adjudicate),
-  tiered evidence (`[V path:line]` verified / `[I]` inference-from-verified /
-  `[H]` hypothesis) → Sovereign Fingerprint, dissent-preserving Conflict Ledger,
-  P1-P4 synthesis, GO/CONDITIONAL/NO-GO, Step-0 subject truth-gate.
-- **DeepReason** mechanics — conjecture a *distribution* of rival failure
-  modes/answers, each self-naming its falsifier; mechanical criticism refutes
-  the hand-wavy for free; computed acceptance (you cannot set a status);
-  append-only replayable record.
-- **Consolidation** — subsumes the old `/sovereign-gauntlet` and
-  `/red-team-gauntlet` as *depth modes* of this one skill.
-
-> **Provenance:** merged from a 3-agent bake-off (2026-07-07) — Cursor's
-> auto-firing MCP-wired skill as the spine, Codex's durable-plugin + labeled
-> docket-modes + role-boundary discipline, a consolidation pass + phased
-> self-measured roadmap.
+Use the [shared lens library](../../reference/lenses.md): generation,
+evaluation, gates and adjudication have different jobs. Perspective handles a
+focused or adaptive examination without a mandatory panel. Count alone does not
+define the boundary. This method retains the prior Gauntlet and DeepReason
+lineages; their historical aliases do not imply verified native host commands.
 
 ## Relationship to the other gates (READ FIRST)
 
 | Tool | Role | This skill's relation |
 |---|---|---|
 | **`/gauntlet`** (this) | Auto-fires (triage-gated) at high-stakes decision points; deep adversarial review | The staple |
-| `/sovereign-gauntlet`, `/red-team-gauntlet` | Old manual deep gauntlets | **Depth modes** of this skill (`--depth deep|max`); the old commands remain valid aliases |
+| `/sovereign-gauntlet`, `/red-team-gauntlet` | Old manual deep gauntlets | **Documented mappings** to this skill (`deep`/`max`); native alias support depends on the host |
 | An org-enforced infra-execution safety gate (if your environment runs one) | Independent review gate outside this skill | **SEPARATE and still required independently.** This skill does NOT satisfy an externally-enforced gate. Reconcile it in Step 8, never replace it. |
 
 DeepReason **expands the attack surface**; the gauntlet **renders the verdict**.
 DeepReason must NOT set GO/NO-GO, bypass evidence verification, satisfy the
 red-team gate, override P1/P2 semantics, or convert hypotheses into facts.
 
-## Auto-fire discipline (staple, not nag)
+## Applicability and proportionality
 
-A skill-triggering harness (e.g. superpowers' `using-superpowers`) makes this
-self-suggest. It **fires on a blast-radius
-trigger**, then Step-2 triage decides whether to run the full engine:
+Apply this method when a consequential decision benefits from plural scrutiny
+and adjudication, including an open choice before a proposal exists, or when
+explicitly requested. Relevant triggers include irreversible changes, security
+posture, difficult architecture or governance choices, material spend and
+high-stakes claims. A keyword alone is not sufficient. For one bounded concern,
+consider Perspective. Routine reversible edits and reproducible failures do not
+need this panel. Honor the user's actual review scope and designated reviewer.
 
-- **Triggers (consider firing):** irreversible / one-way-door; infra-class
-  (firewall, VLAN, DNS, DHCP, routing, switch-port); security posture; governance
-  or legal-charter; non-refundable spend; architecture commit; merging a
-  high-risk PR; a high-stakes claim that is hard to verify.
-- **Never fires on:** reversible low-stakes work, factual lookups, ordinary code
-  review, deterministic/reproducible test-failure triage.
-- Triage (Step 2) can still **skip** after firing (note the reason). Always
-  operator-overridable. Depth auto-scales to the trigger.
+Give a concise acknowledgment when using Gauntlet. A considered-but-inapplicable
+method does not require an absent-trigger report. Reuse adequate recent evidence
+and existing authorization; the method does not authorize an additional action.
 
 ## Cost model
 
-1. **Triage (always, cheap)** — stakes + falsifiable structure. Skip the heavy
+1. **Triage (within an actual review)** — stakes + falsifiable structure. Skip the heavy
    run when low-stakes or nothing could count as evidence against a claim.
 2. **Deep mode (if triage passes)** — DeepReason maps rival failure modes under
    a hard token budget (mode auto-selected + labeled; see Docket Modes).
-3. **Panel + verdict (if triage passes)** — independent lenses adjudicate
+3. **Panel + verdict (if triage passes)** — separate lens examinations inform adjudication of
    survivors against the frozen dossier; computed GO/CONDITIONAL/NO-GO.
 
 ## Depth dial
@@ -73,9 +62,8 @@ trigger**, then Step-2 triage decides whether to run the full engine:
 Evaluator seats only — **the judge is always a separate, additional seat** and
 generators/gates never count toward panel size or diversity:
 `quick` = 3 evaluators · `standard` = 5 (default) · `deep` = 5 · `max` = 7 +
-(leaner deep/max since 2026-07-14 — no dose-response measured; marginal seats
-add duplicates and false-high surface faster than unique basins) +
-the measurement bundle (Phase 3, NOT yet built — see roadmap). Old-command
+(no dose-response benefit established). The proposed measurement bundle remains
+unbuilt; it is not part of a completed review claim. Old-command
 aliases map: `/red-team-gauntlet`→`deep`, `/sovereign-gauntlet`→`max`.
 
 ## Checklist (copy and track)
@@ -95,7 +83,7 @@ aliases map: `/red-team-gauntlet`→`deep`, `/sovereign-gauntlet`→`max`.
       scripts/consult_packet.py — max depth / one-way-door; MANUAL HANDOFF default
       (build packet -> operator sends to GPT-5.6 Pro -> record); dissent escalates
 - [ ] Step 8 — Synthesize verdict + reconcile external safety gates + record
-- [ ] Step 9 — Append run record to runs/ledger.jsonl (lifecycle telemetry)
+- [ ] Step 9 — Retain review evidence; append private aggregate telemetry only when required
 ```
 
 ### Step 0 — Truth-gate (non-negotiable)
@@ -103,11 +91,12 @@ aliases map: `/red-team-gauntlet`→`deep`, `/sovereign-gauntlet`→`max`.
 Before any rigorous review: (1) live-verify every premise via probe/API/file
 read — NOT session memory or prior summaries; (2) stamp unverifiable claims
 `(UNVERIFIED)` inline; (3) if live data contradicts the brief, live data wins —
-log it; (4) if core facts can't be verified, **abort** ("subject not
-establishable in truth"). **Scholarly-evidence gate:** when peer-reviewed
-evidence is material to a premise or decision, use the `evidence-research`
-skill (Consensus + Scite) before freezing the
-dossier. Its reception pass feeds the freeze's uncertainty labels directly:
+log it; (4) if a load-bearing fact cannot be established, hold the dependent claim
+or verdict and state what observation would resolve it. Continue independent
+authorized work; a missing observation does not invalidate all other evidence. **Scholarly-evidence gate:** when peer-reviewed
+evidence is material to a premise or decision, use Resolve's literature method and the available appropriate scholarly
+connections before freezing the dossier. A missing external package is not a
+universal blocker; report the actual verification and reception limits. Its reception pass feeds the freeze's uncertainty labels directly:
 contrasting-heavy papers enter labeled `disputed`; retracted papers are
 excluded from support and listed in the dossier's exclusions. Attach its verified claim-evidence matrix
 and run record to `dossier.md`, preserving verification levels and limitations.
@@ -149,17 +138,20 @@ after the freeze, the pin mismatch makes the invalidation detectable
 (`verify_run.py` reports `EVIDENCE-ROOT-DRIFT`). Classify:
 **fixed-artifact gate** (a specific change/plan/artifact → lenses conjecture
 rival *failure modes*) vs **open-question** (no fixed answer → rival *answers*).
-If the subject moves, restart. If the environment is degraded (a mount down, a
+If the subject changes, freeze the new revision and recheck the affected
+claims and dependencies; preserve unaffected evidence with its original scope. If the environment is degraded (a mount down, a
 mirror stale), verify the source-of-truth before claiming repo facts.
 
 ### Step 2 — Triage
 
-(1) Irreversible / high-blast-radius / security-critical? (2) Can findings be
-stated with falsifiers ("wrong if <observable>")? If **no** to (1) → skip. If
-**no** to (2) → warn mechanical criticism will be weak; consider reframing the
-question. A skip reason must name which question failed and cite specific
-evidence, not an adjective: "gauntlet: skipped — <Q1|Q2> failed because <cited
-evidence, not adjective>."
+Identify the consequential decision and why distinct examinations could alter
+it. An explicit request can justify a scoped panel without an irreversible
+change. State assessable claims, authorized value criteria and unresolved
+tradeoffs. Empirical claims need observations that could change the assessment;
+value choices need decision criteria and revision conditions. Do not discard a
+material value conflict merely because it lacks a numeric falsifier. If no
+plural adjudication is needed, return a concise scoped assessment or use
+Perspective. Do not generate a formal skip report for routine tasks.
 
 ### Step 3 — Deep mode (DeepReason)
 
@@ -233,19 +225,20 @@ subjects attach `red-lines-arbitrator`; the final judge defaults to
 `pragmatic-judge` (`bayesian-adjudicator` only with defensible priors;
 `sovereign-ruler` only when operator values are recorded in the frozen dossier;
 `dialectical-synthesizer` proposes pre-judgment syntheses and never rules).
-The **judge seat must use a different model family than the lenses** when
-configurable. Show the panel for operator sign-off when they are in the loop;
-in autonomous flow, select without blocking.
+The owner-designated reviewer may adjudicate. Record actual model/context
+separation; a different model family is optional and does not guarantee
+independence. Selection does not require fresh approval when existing task
+authority covers it.
 
 ### Step 5 — Independent lens passes (STANDARD: concurrent isolated role-agents)
 
-**The contract (harness-agnostic).** Run the selected lenses as **concurrent,
-context-isolated sub-agent invocations behind a barrier before arbitration**, each
-dispatched as a **predefined role-agent** (adversary / constructive / metatextual),
-NOT a fresh general-purpose agent. The role agent carries the base discipline
+**The contract (harness-agnostic).** Obtain separate initial examinations of
+the same frozen subject where the host permits. Prefer isolated sub-agent calls
+with a barrier before findings are compared. Bind the applicable canonical role
+and selected method to each examination; native custom-agent registration is
+optional when the exact-role materializer is available. The role agent carries the base discipline
 (falsifier contract, `[V]`/`[I]`/`[H]` evidence tiers, verbalized sampling) in its
-system prompt; the roster card is injected as `{{PERSONA_SPEC}}`. Findings with no
-structurally-observable falsifier (method + threshold + timeframe) are rejected —
+system prompt; the roster card is injected as `{{PERSONA_SPEC}}`. Empirical findings without an observable revision condition are incomplete —
 enforce this with a structured-output schema (`finding-set@1`) if your harness has one,
 by explicit instruction otherwise. Every material finding also carries a
 `validation_kernel`: the real constraint, risk, or user need the current subject correctly
@@ -270,12 +263,15 @@ runtime does not support plugin-defined custom roles (or discovery fails), use
 dossier into a replayable `gauntlet-role-binding@1` record, then dispatch its `prompt`
 field to an isolated generic sub-agent. Record `role_binding: native-agent` or
 `role_binding: materialized-role`. This is an exact-role compatibility adapter, not an
-improvised substitute. If neither binding mode is possible, stop the panel. Runtime
+improvised substitute. If neither binding mode is possible, an explicitly labeled same-context
+sequence may apply the methods, with no claim of isolated or blinded review. Runtime
 matrix and commands: `reference/runtime-role-binding.md`.
 
-**Independence is the value — never make the lenses a team.** They must not see each
-other's findings before arbitration; the barrier keeps them concurrent + isolated. (Agent
-teams are allowed ONLY at Step-7 bounded reinstatement.)
+**Separation has limits.** Keep initial reports separate until comparison where
+possible. Shared model, source evidence or inherited context remains shared.
+Disclose same-context or sequential use; role names cannot create independence.
+After the initial passes, bounded constructive synthesis may propose a revised
+candidate. Recheck the changed claims without erasing the original objections.
 
 **Degrade fallback (`orchestration: manual-degraded`, disclose loudly):** when no
 concurrent-subagent primitive is available, run consecutive isolated agent calls with
@@ -295,9 +291,11 @@ mechanically verified (see `scripts/verify_evidence.py`). **Semantic note (2026-
 (the cited line exists and says this), NOT that the proposition is true — a real
 citation can still support a wrong claim; truth lives in the oracle-adequacy and
 falsifier checks, not the tag. Accepted factual claims require `[V]` or anchored `[I]` → Sovereign
-Fingerprint accuracy. (2) **Falsifier well-formedness:** for **P1/P2** findings, strike those whose
-falsifier lacks a named method, threshold, or timeframe (malformed, not merely
-wrong); for **P3/P4** minor findings a single "what observation would change this
+Fingerprint accuracy. (2) **Falsifier well-formedness:** for empirical **P1/P2** findings, require a named observation method, decision
+threshold where meaningful, and relevant timeframe. For normative tradeoffs,
+record the applicable authority/value criterion and what would change the
+choice. Missing support narrows a claim; it does not silently resolve the
+underlying uncertainty; for **P3/P4** minor findings a single "what observation would change this
 assessment?" line suffices — full structured falsifiers on minor observations
 generate boilerplate, not testability (external-review adjudication, 2026-07-14). Where a falsifier is mechanically checkable (grep/file/exit-code/
 threshold), run it — a deterministic refutation costs zero judge tokens.
@@ -350,10 +348,9 @@ ruling — no open-ended cycles. Calibration rulings (disagreement with a
 
 **When:** `max` depth OR a one-way-door / irreversible risk class — AND only with
 operator authorization (it needs a signed-in browser; never silent, never on the
-autonomous path). Skip otherwise. Rationale: Step 7's arbitrator is a
-same-model-family agent, so the highest-stakes verdicts lack a cross-*family* check; an
-independent read from a different model family supplies the grader-family independence the
-eval program treats as the gold standard for a certified result.
+autonomous path). Skip otherwise. An additional model family may expose different errors;
+neither a different vendor nor a separate role guarantees independent evidence.
+This is optional consultation, not a release prerequisite.
 
 **How (baked in — `scripts/consult_packet.py`):**
 1. `python scripts/consult_packet.py build --input run.json --stub resp.json` assembles a
@@ -361,12 +358,12 @@ eval program treats as the gold standard for a certified result.
    verdict + the Conflict Ledger's decisive tensions. It BLOCKS on any credential-like
    material (confidentiality boundary) and prints a deterministic `request_id`.
 2. **MANUAL HANDOFF is the default** (and preferred when the operator is available): the
-   operator pastes the block into a signed-in ChatGPT **GPT-5.6 Pro** chat, sends once,
+   operator pastes the block into a signed-in explicitly selected external review surface, sends once,
    and transcribes the reply into the `resp.json` stub. (An agent with its own browser
    control MAY automate the send following the `consult-chatgpt-pro` discipline —
    at-most-once, visible-UI-only — but manual is the standing default.)
 3. `python scripts/consult_packet.py record --run <id> --response resp.json` appends the
-   result to `runs/adjudications.jsonl`. The packet asks GPT-5.6 Pro to *attack* the
+   result to `runs/adjudications.jsonl`. The packet asks the reviewer to *attack* the
    verdict — find the strongest reason it is wrong — not restate it.
 
 **Before sending:** the dossier crosses a vendor trust boundary — check data
@@ -379,7 +376,7 @@ via `runs/adjudications.jsonl` — cross-vendor is not cross-independent (measur
 cross-family agreement ≈ within-model order-repeatability), so a DISSENT raises
 uncertainty and escalates; it is not an oracle. It **never mechanically overrides** the computed GO/CONDITIONAL/NO-GO — a
 DISSENT **escalates to the Sovereign** (operator decides), it does not flip the
-verdict. This keeps the verdict deterministic while adding an independent family
+verdict. This keeps the verdict deterministic while adding another perspective
 as a tripwire on exactly the calls where being wrong is unrecoverable.
 
 ### Step 8 — Synthesize verdict + record
@@ -396,17 +393,25 @@ known unknowns / untested behavior · evidence freshness · residual uncertainty
 A high-stakes GO without a coverage statement is incomplete, not passing.
 A CONDITIONAL is not a GO — the caller MUST surface the open P2 items as
 blocking follow-ups, not proceed as if resolved.
+**Closure:** distinguish unmet requirements, user-owned tradeoffs and optional
+improvements. Name each material finding's affected action and resolution
+condition. Budget exhaustion preserves unresolved findings and coverage limits;
+it never produces GO. New material evidence reopens only affected conclusions.
+Continue authorized implementation or return the assessment as requested; an
+optional improvement does not start another panel.
+
 **Honest labeling:** scores mean best-argued-in-the-bracket, not
 true; heavy refutation or an empty survivor set is *progress*, not damage.
 Append-only: every artifact path, engine log root, reports, arbitration, summary
 — state reconstructable from the run directory. Record the docket mode +
 `independence_mode` + which depth ran.
 
-### Step 9 — Append the run record (lifecycle telemetry, non-optional)
+### Step 9 — Retain the review record; optional private aggregation
 
-Finalize the run, then append one JSON line to `runs/ledger.jsonl` in this
-skill's directory — git-ignored runtime state; keep it in your durable private
-home, never commit it to this public repo (schema in `runs/README.md`):
+Finalize the material review record. If the task collects aggregate telemetry,
+append its derived line to a durable private `runs/ledger.jsonl`; it is optional
+for ordinary method use and never committed to this public repository (schema
+in `runs/README.md`). Keep the record needed to support the review's actual claims:
 
 ```
 python scripts/finalize_run.py --run-dir <run-dir> --ledger-line >> runs/ledger.jsonl
@@ -427,23 +432,24 @@ re-check: selector replay (registry drift reported explicitly), verdict
 re-derived from the ruling-set's P1/P2 fields, and the dossier→reports→
 arbitration→summary hash chain. The ledger is non-governing observability: it may
 show per-lens yield, duplication, or false-high patterns, but it never activates,
-withholds, retires, weights, or selects a lens. Commit the ledger line with the run;
-the run directory itself stays local-only (data axis:
+withholds, retires, weights, or selects a lens. Preserve raw telemetry and dossiers privately.
+Only a separately reviewed, sanitized public evidence artifact may be published
+under the task's existing authority (data axis:
 `runs/README.md`). A fully worked synthetic exemplar ships at
 `examples/example-run/`. Review anytime with `python scripts/lens_stats.py`.
 
-## When triage says skip
+## Visible return
 
-Do not run deep mode or panel. Note the reason in the format required by Step
-2: "gauntlet: skipped — <Q1|Q2> failed because <cited evidence, not
-adjective>."
+Briefly name Gauntlet's actual contribution, judgment, material dissent and
+coverage limits. A clean assessment may leave the proposal unchanged. Return to
+the original task; a completed panel is not completion of implementation or UAT.
 
 ## Local overlay
 
 If a `LOCAL.md` exists alongside this SKILL.md, read it after this file — it binds
 the protocol to the local environment (paths, registries, standing incidents,
-sibling-skill integrations, external gate mechanisms). An overlay may add bindings
-and examples; it never overrides the protocol.
+sibling-skill integrations, external gate mechanisms). Resolve conflicts through the host instruction hierarchy and the user's current
+scope; an overlay does not create authority or negate explicit decisions.
 
 ## Roadmap (phased, self-measured — honest status)
 
@@ -470,8 +476,8 @@ rigor, measurement bundle) remain designs. Each later piece is integrated only i
 ## Resources
 
 - **Execution model (STANDARD): `reference/execution-model.md`** — the orchestration
-  contract (concurrent isolated role-agents + barrier) and a Claude Code reference
-  implementation; the required way to run the panel at depth ≥ standard.
+  contract and a Claude Code reference implementation; record the actual
+  available isolation and role binding.
 - Panel Workflow template: `assets/gauntlet-workflow.template.js`
 - Role agents: `gauntlet-{adversary,constructive,metatextual,arbitrator}` — definitions in the sibling `agents/` directory (plugin root when installed as a plugin, so the harness registers them)
 - Runtime role binding: `reference/runtime-role-binding.md` · exact-role adapter: `scripts/materialize_role.py`
@@ -493,3 +499,13 @@ rigor, measurement bundle) remain designs. Each later piece is integrated only i
 - Evidence verifier: `scripts/verify_evidence.py`
 - Consensus scholarly-evidence boundary: `reference/consensus-integration.md`
 - Full integration roadmap: `reference/roadmap.md`
+
+## Evidence emission
+
+When an authorized evaluation collects engagement data, use the existing private
+`skill-run@1` format (`../../contracts/skill-run-ledger.schema.json`), separate
+from the detailed review record. Ordinary use needs no second ledger artifact.
+
+```json
+{"schema":"skill-run@1","ts":"<iso8601>","skill":"gauntlet","decision":"fired|declined","discipline_engaged":null,"action_changed":false}
+```

@@ -4,7 +4,7 @@ Derived from `standard.md` §9 (verdicts), §47 (contracts), §59 (evidence layo
 The Workflow script in `workflow-template.mjs` embeds these as JSON Schema constants —
 this file is the human-readable contract; keep the two in sync. The deterministic judge
 is `../scripts/judge.py` (canonical, stdlib Python, harness-agnostic); the `.mjs` embeds
-a verified copy of its aggregation for the Workflow tool.
+a copy checked by `scripts/test_observations.py` for the Workflow tool.
 
 These schemas begin only after UAT triage. A five-line routine presentation check is
 ordinary verification and MUST NOT be serialized into any schema below or assigned a UAT
@@ -26,7 +26,8 @@ run makes the aggregate FLAKY (reruns get a fresh run-id; both gates are retaine
 
 ```yaml
 contracts:
-  - id: REQ-<AREA>-<NNN>            # stable ID
+  - schema_version: uat-contract@2
+    id: REQ-<AREA>-<NNN>            # stable ID
     user_goal: "<what the user is trying to achieve>"
     criticality: critical|high|medium|low
     provisional: false               # true when inferred, not sourced from requirements
@@ -35,6 +36,8 @@ contracts:
     criteria:
       - id: REQ-<AREA>-<NNN>-C1
         statement: "<what must become visibly/persistently true>"
+        expected_observation: "<concrete intended observation, including reload when applicable>"
+        disconfirming_observation: "<concrete observation that refutes this criterion>"
         required_oracles: [rendered-ui, business-state]   # critical ⇒ rendered-ui + ≥1 non-visual
         invariants: ["<what must remain unchanged>"]
         timeout_ms: 5000
@@ -43,6 +46,12 @@ contracts:
 ```
 
 Oracle enum: `rendered-ui | accessibility-semantic | business-state | network | invariant | persistence | metamorphic`.
+
+New compiler output MUST use `uat-contract@2`. Unversioned historical contracts use
+legacy aggregation only: the gate lists `legacy-unversioned` in `contract_versions`
+and adds a historical limitation; it never rewrites the source packet or asserts v2
+compliance. Unknown versions cannot PASS. V2 IDs match exactly; positional orphan
+matching remains available only for historical unversioned contracts.
 
 ## Actor output (structured, per case) — NO VERDICT BY CONSTRUCTION
 
@@ -91,11 +100,23 @@ field; `completed` means "the actor finished attempting the task actions", not s
       "status": "PASS",
       "evidence_for": ["cases/<case>/screenshots/003-stable-after.png: new name visible in profile summary"],
       "evidence_against": [],
-      "uncertainty": null
+      "uncertainty": null,
+      "expected_observation": {"result": "observed", "evidence": ["reload.png: new name remains"]},
+      "disconfirming_observation": {"result": "not-observed", "evidence": ["reload.png: old name did not return"]},
+      "oracle_observations": [
+        {"oracle": "rendered-ui", "result": "satisfied", "evidence": ["after.png: new name visible"]},
+        {"oracle": "persistence", "result": "satisfied", "evidence": ["reload.png: new name remains"]}
+      ]
     }
   ]
 }
 ```
+
+Observation results are `observed | not-observed | unknown`; oracle results are
+`satisfied | violated | unknown`. Every required oracle needs exactly one cited
+observation. `not-observed` means checked and absent, never unchecked silence.
+The judge consumes these structured interpretations; it cannot inspect image truth,
+prove the cited files exist, or establish context isolation by itself.
 
 The verifier may not emit FLAKY (cross-run aggregate only).
 
@@ -103,8 +124,12 @@ The verifier may not emit FLAKY (cross-run aggregate only).
 
 Canonical implementation: `../scripts/judge.py` (stdlib Python; run it in any harness).
 The rules below are its contract; the `.mjs` embedded copy is verified against it by
-`judge.py --self-test`.
+`scripts/test_observations.py`; `judge.py --self-test` covers legacy aggregation.
 
+- V2 evidence: a cited expected observation absent, disconfirming observation present,
+  or required oracle violated forces FAIL_PRODUCT, including failed persistence after
+  visible success. Missing/unknown/uncited observations, missing preregistration, or an
+  unsupported contract version prevent PASS. More severe existing verdicts are retained.
 - Case status: any criterion FAIL_PRODUCT → FAIL_PRODUCT; else worst non-PASS criterion
   status (severity order: FAIL_TEST_HARNESS > BLOCKED_ENVIRONMENT > FLAKY > INCONCLUSIVE >
   NOT_RUN); else PASS.
@@ -112,7 +137,7 @@ The rules below are its contract; the `.mjs` embedded copy is verified against i
   every case is PASS; otherwise INCONCLUSIVE. No averaging, ever.
 - Completeness: every contract criterion must receive a verdict; a contract criterion with
   no verifier row is scored INCONCLUSIVE (never skipped). Unknown verifier ids are flagged,
-  and single-orphan pairs are matched positionally with the mismatch noted.
+  and historical unversioned single-orphan pairs are matched positionally with the mismatch noted.
 - Honesty fields are emitted BY the judge, not appended procedurally: `known_limitations`
   is a Level-1 constant, `coverage_omitted` is computed (full release-tier contract×persona
   matrix minus the cases this tier runs), and `target_commit_sha` is pinned in the gate.
@@ -128,11 +153,19 @@ The rules below are its contract; the `.mjs` embedded copy is verified against i
   "calibration_status": "uncalibrated",
   "target": "<base URL>",
   "target_commit_sha": "<target repo commit SHA under test>",
+  "contract_versions": ["uat-contract@2"],
+  "verification_mode": "direct | blinded",
   "cases": [ { "case_id": "…", "criticality": "…", "status": "…", "criteria": [ … ] } ],
   "coverage_omitted": ["<case-id in the full matrix this tier does not run>"],
   "known_limitations": ["Level 1 constant — see scripts/judge.py KNOWN_LIMITATIONS"]
 }
 ```
+
+`verification_mode` defaults to `direct` in the CLI. Set `--verification-mode blinded`
+only with actual context isolation and actor-verdict withholding. The reference
+Workflow requires that isolation and emits `blinded`. Neither mode grants release
+authority or requires a new approver; the operator's designated reviewer remains in
+control. Model/provider diversity is not established by the judge.
 
 ## manifest.json (normative)
 

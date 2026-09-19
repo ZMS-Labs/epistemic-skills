@@ -68,6 +68,11 @@ def main():
         print(f"[FAIL] shipped example ledger line: {e}")
         failures.append("example-ledger-line")
 
+    rc, out = sh(str(ROOT / "tests" / "test_workflow_completion.py"))
+    print(f"[{'PASS' if rc == 0 else 'FAIL'}] workflow completion: {out.splitlines()[-1] if out else ''}")
+    if rc != 0:
+        failures.append("workflow-completion")
+
     # targeted regressions
     sys.path.insert(0, str(ROOT / "scripts"))
     import importlib.util

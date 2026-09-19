@@ -1,6 +1,6 @@
 ---
 name: evidence-locked-uat
-description: Use when running or gating user-acceptance testing on a material UI-facing change — on explicit request ("run UAT on X", "/uat", "acceptance-test this") or before claiming a stateful, interaction-sensitive, accessibility-sensitive, persistent, or otherwise hard-to-observe user-facing surface complete. Do NOT fire for backend-only changes, docs, pure test refactors, or routine reversible/local/directly-checkable presentation changes whose bounded preview/test establishes the criterion without an acceptance packet.
+description: Use for material rendered interaction or outcome acceptance, or explicit UAT. Routine reversible presentation edits use a bounded preview check.
 metadata:
   event-kinds: [uat-verdict]
   eligible-when: [independently-resolvable-verdict]
@@ -13,9 +13,11 @@ metadata:
 
 Operationalizes the Autonomous Evidence-Locked UAT Standard (vendored in `references/`).
 The governing rule: **no acceptance claim is stronger than its weakest required evidence
-channel, and no acting agent may be its own acceptance authority.** The actor never
-certifies its own material acceptance work; a blinded verifier judges from evidence
-alone; the judge is deterministic script code.
+channel.** Respect the operator's designated reviewer and acceptance authority.
+Direct checks must be labeled direct; only actually isolated actor/verifier contexts
+with the actor's verdict withheld may claim blinding. No model-family diversity or
+fresh approval is universally required. The judge is deterministic script code.
+Briefly acknowledge each method actually used and what it contributed.
 
 ## Routine presentation check — not a UAT run
 
@@ -64,7 +66,7 @@ URL), STOP and report `BLOCKED_ENVIRONMENT` — do not substitute code reading f
 4. Ensure the target repo's `.gitignore` covers `artifacts/uat/**/screenshots/` (add if missing).
 5. Collect `requirement_sources` (PRD/spec/issue paths, the diff, any operator-facing E2E criterion) and a one-paragraph `change_summary`.
 6. Before the actor runs, compile each acceptance criterion into an **expected observation**
-   and a **disconfirming observation** in `contracts.yaml`. Record the criterion first;
+   and a **disconfirming observation** in each `uat-contract@2` criterion in `contracts.yaml`. Record the criterion first;
    neither actor nor verifier may rewrite it after seeing the result. A criterion whose
    failure observation cannot be stated is not yet testable and yields INCONCLUSIVE until
    repaired.
@@ -72,10 +74,13 @@ URL), STOP and report `BLOCKED_ENVIRONMENT` — do not substitute code reading f
 
 ## Step 2 — Run the Workflow
 
-Orchestrate the roles as context-isolated sub-agents in a per-case pipeline — each case
+For an authorized blinded run, orchestrate the roles as context-isolated sub-agents in a per-case pipeline — each case
 chains actor → blinded verifier, and cases run concurrently with one another (the verifier
 for case 1 can start while the actor for case 2 runs; blinding is preserved per-case). The
-separation of actor / verifier / judge is the mechanism, so they must not share context.
+separation of actor / verifier / judge is the blinding mechanism, so those roles must
+not share context. A task-scoped direct check may use the same observation contract
+and judge with `verification_mode: direct`; it cannot claim blinded acceptance.
+Use the existing designated reviewer; do not create another approval or actor gate.
 `references/workflow-template.mjs` is a Claude Code reference implementation (invoke the
 Workflow tool with its content as `script`); other harnesses meet the same contract with
 their own subagent primitive. Parameters:
@@ -89,7 +94,7 @@ their own subagent primitive. Parameters:
 }
 ```
 
-(Skill invocation is the Workflow opt-in.) Do not paraphrase or "improve" the role
+(Use the Workflow only within the task's authorization and custody boundaries.) Do not paraphrase or "improve" the role
 prompts — the information-permission boundaries in them are the mechanism. The evidence
 packet records the preregistered expected/disconfirming observations alongside the result;
 a passing observation may not retroactively narrow the criterion it was supposed to test.
@@ -100,7 +105,7 @@ a passing observation may not retroactively narrow the criterion it was supposed
    `scripts/judge.py` directly — it is the canonical deterministic judge and any harness
    runs it identically. The judge itself emits `coverage_omitted` (full release-tier
    contract×persona matrix minus the cases this tier runs), `known_limitations` (Level-1
-   constant: no pairwise coverage; verifier same-provider; a11y = keyboard-path procedural
+   constant: no pairwise coverage; model/provider diversity unproved; a11y = keyboard-path procedural
    only; all oracle channels LLM-adjudicated at Level 1, no deterministic programmatic
    oracle; feedback visible <~3s is below the harness's reliable detection threshold —
    ephemeral confirmations yield INCONCLUSIVE/predicted usability risk, not PASS), and
@@ -119,18 +124,19 @@ a passing observation may not retroactively narrow the criterion it was supposed
    first, critical failures and inconclusive criteria before passes, criterion table with
    evidence paths, predicted usability risks explicitly labeled "predicted", coverage
    achieved and omitted, assumptions, environment.
-4. Commit the JSON/YAML/MD artifacts (screenshots stay gitignored). On a PR, comment the
-   gate decision + summary link.
+4. Retain the JSON/YAML/MD artifacts (screenshots stay gitignored). Commit or publish
+   a summary only when the task authorizes that action.
 5. Report the verdict to the operator using ONLY the verdict vocabulary. INCONCLUSIVE is
    reported as INCONCLUSIVE — never rounded up to PASS, never papered over with prose.
 6. **Acceptor comprehension gate (anti-rubber-stamp).** Acceptance verifies the mind
    accepting, not only the work: whoever signs acceptance (operator or delegated
    acceptor) states in their own words, in the packet, (a) what changed and (b) what
    observable behavior breaks first if the change is wrong. A signature without that
-   statement is recorded as `ACCEPTED-UNREVIEWED` — a distinct, honest state that is
+   statement, when acceptance is in scope, is recorded as `ACCEPTED-UNREVIEWED` — a distinct, honest state that is
    never silently upgraded to accepted. Verifying the artifact is the actor/verifier's
    job; this gate exists because a change no acceptor can explain has not actually
-   been accepted, only waved through.
+   been accepted, only waved through. This records an authorized acceptance decision;
+   it does not require a new approver or additional approval for ordinary work.
 
 ## Retry / flake rule (Level 1)
 
@@ -149,7 +155,7 @@ trusting either result.
 | "The screenshot looks fine." | Pixels omit semantics, focus, persistence, and backend truth. | Triangulate visual, structural, and business evidence. |
 | "The screenshot file exists, so the UI rendered." | Artifact existence proves the capture ran, not that the surface rendered — a blank page screenshots successfully. | Inspect the artifact's content against the expected observation; existence is never evidence. |
 | "No one saw console errors, so there were none." | An unread error channel is an unexercised oracle; silence unobserved is not silence. | Capture the console/error channel on every actor run; a non-empty error set relevant to the exercised surface is a hard FAIL, not a footnote. |
-| Actor and judge are the same context. | Errors and assumptions are correlated; the model self-certifies. | Withhold actor verdict and use an independent verifier. |
+| A direct self-check is called blinded UAT. | Shared context can preserve actor assumptions. | Label it direct; claim blinding only with actual isolation and withheld actor verdict. |
 | Only final success is checked. | Accidental success, wrong actions, duplicates, and drift remain hidden. | Verify meaningful transitions and subgoals. |
 | Retry until green. | First-run failures disappear and false confidence rises. | Preserve first result; classify fail-then-pass as FLAKY. |
 | Treat browser console silence as success. | Many user-facing defects produce no console error. | Console is one corroborating channel, not the oracle. |
@@ -180,17 +186,19 @@ Full 26-row table: `references/standard.md` §61.
 - `references/workflow-template.mjs` — the Claude Code reference orchestration script
   (its embedded judge is a verified copy of `scripts/judge.py`).
 - `scripts/judge.py` — the canonical deterministic judge (stdlib Python, harness-agnostic;
-  `--self-test` exercises the aggregation semantics the `.mjs` copy must match).
+  `--self-test` covers historical aggregation; `test_observations.py` checks v2 and `.mjs` parity).
 
 ## Evidence emission
 
-After each engagement, append one line to `runs/ledger.jsonl` under this skill:
+For an authorized evaluation or applicable task evidence contract, append one line to
+`runs/ledger.jsonl` under this skill. Ordinary method use needs only the brief
+acknowledgment above, not a mandatory second ledger artifact:
 
 ```json
 {"schema":"skill-run@1","ts":"<iso8601>","skill":"<this-skill>","decision":"fired|declined","discipline_engaged":"<name-or-null>","action_changed":true|false}
 ```
 
-The append is part of this procedure. It is not a call to an external calibration
+The append is conditional on that evaluation or evidence contract. It is not a call to an external calibration
 service and it is not a `decision-ledger` entry. Schema:
 `plugins/epistemic-skills/contracts/skill-run-ledger.schema.json`.
 

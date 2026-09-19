@@ -179,6 +179,22 @@
       "sentinel_fixture": "outsource-relay.json"
     },
     {
+      "skill": "perspective",
+      "event_kinds": [
+        "review-forecast"
+      ],
+      "eligible_when": [
+        "preregistered-prediction",
+        "correction-or-supersession"
+      ],
+      "outcome_sources": [
+        "field-observation",
+        "supersession-chain"
+      ],
+      "collection_mode": "conditional",
+      "sentinel_fixture": "perspective-unexamined-assurance.json"
+    },
+    {
       "skill": "recon",
       "event_kinds": [
         "frontier-decision",
