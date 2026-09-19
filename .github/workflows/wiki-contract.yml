@@ -47,12 +47,15 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          fetch-depth: 0
       - name: Oracle self-test (planted RED controls)
         run: python docs/wiki-updates/v6.0.0/check_wiki.py --self-test
       - name: Applier self-test (includes the blanket-rewrite regression guard)
         run: python docs/wiki-updates/v6.0.0/apply_v6_updates.py --self-test
       - name: Committed handbook snapshot matches the package
-        run: python docs/wiki-updates/v6.0.0/check_wiki.py docs/wiki-updates/v6.0.0/pages
+        run: |
+          python docs/wiki-updates/v6.0.0/check_wiki.py docs/wiki-updates/v7.0.0/pages
+          python docs/wiki-updates/v6.0.0/check_wiki.py docs/wiki-updates/v6.0.0/pages --source-ref v6.0.0
 
   live:
     name: live
@@ -66,7 +69,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          fetch-depth: 0
       - name: Clone the published wiki (read-only)
         run: git clone --quiet --depth 1 https://github.com/${{ github.repository }}.wiki.git "$RUNNER_TEMP/wiki"
-      - name: Published handbook matches the package, and every link resolves
-        run: python docs/wiki-updates/v6.0.0/check_wiki.py "$RUNNER_TEMP/wiki" --links
+      - name: Published v6 handbook matches its released source, and every link resolves
+        run: python docs/wiki-updates/v6.0.0/check_wiki.py "$RUNNER_TEMP/wiki" --source-ref v6.0.0 --links

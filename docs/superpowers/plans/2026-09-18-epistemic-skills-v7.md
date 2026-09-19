@@ -357,11 +357,11 @@ support claims are withdrawn rather than inferred from source checks.
 
 **Interface:** Canonical skill metadata drives live inventory/count surfaces. The current release packet points to actual source revisions, checks, host coverage and limitations; it does not reinterpret historical assurance records as current.
 
-- [ ] Replace current sole-metacognate-entry guidance with the accepted usage entry, direct access and visible-use behavior. Present functional labels, ordinary examples and tested host coverage. Verify counts after both additions; alias documentation does not create a duplicate canonical entry.
-- [ ] Remove current policy dependencies on mandatory independent/cross-family release review. Keep historical v6 reviews, exception records, assurance packets and tests meaningful for their original subjects. A versioned old requirement can remain historical without gating v7.
-- [ ] Align README, package/host metadata, generated event surfaces, current handbook and release notes. Reuse handbook checker logic with the needed version awareness; do not edit old snapshots to make them describe v7. Check current links to actual source paths/tags instead of blindly replacing version strings.
-- [ ] Add current release evidence with requirements R01-R22, implementation revisions, affected checks, host exercise level, comparative findings and unresolved limitations. Preserve private telemetry outside public artifacts; publish sanitized evidence sufficient to assess each claim.
-- [ ] Run affected package/build checks, current handbook checks and the existing privacy/security workflow. Resolve misleading current claims before release; unrelated historical content is not a broad rewrite project.
+- [x] Replace current sole-metacognate-entry guidance with the accepted usage entry, direct access and visible-use behavior. Present functional labels, ordinary examples and tested host coverage. Verify counts after both additions; alias documentation does not create a duplicate canonical entry.
+- [x] Remove current policy dependencies on mandatory independent/cross-family release review. Keep historical v6 reviews, exception records, assurance packets and tests meaningful for their original subjects. A versioned old requirement can remain historical without gating v7.
+- [x] Align README, package/host metadata, generated event surfaces, current handbook and release notes. Reuse handbook checker logic with the needed version awareness; do not edit old snapshots to make them describe v7. Check current links to actual source paths/tags instead of blindly replacing version strings.
+- [x] Add current release evidence with requirements R01-R22, implementation revisions, affected checks, host exercise level, comparative findings and unresolved limitations. Preserve private telemetry outside public artifacts; publish sanitized evidence sufficient to assess each claim.
+- [x] Run affected package/build checks, current handbook checks and the existing privacy/security workflow. Resolve misleading current claims before release; unrelated historical content is not a broad rewrite project.
 
 ```text
 python .github/scripts/sync_skill_surfaces.py --self-test
@@ -379,6 +379,16 @@ python .github/scripts/test_openai_bundle_workflow.py
 Use the bundle builder's existing revision argument with the actual committed candidate. A test-only build must not claim a released tag exists. Check the current handbook snapshot with the version-aware interface implemented in this task, preserving the previous snapshot's validation.
 
 **Done:** The public product description matches the candidate, current policy reflects the assigned reviewer, packaging is coherent, and historical records/private data are handled honestly.
+
+Implementation receipt (T8): candidate metadata, generated inventory, current
+documentation and the 24-page v7 handbook agree on 17 canonical entries. The
+47-page v6 handbook validates against its original release source. Root applied
+the explicitly authorized designated-reviewer policy; historic judgments remain
+unchanged. Alias, inventory, JSON, privacy, package, bundle-fixture and handbook
+checks pass, including the broad outsource integration suite. Gitleaks 8.30.1
+and all four existing security-workflow positive/narrowness controls pass. The
+final committed build, requirement dispositions and bounded comparative outcome
+are recorded with T9. No tag, external installation or publication occurred.
 
 ## T9: bounded behavioral comparison and release judgment
 

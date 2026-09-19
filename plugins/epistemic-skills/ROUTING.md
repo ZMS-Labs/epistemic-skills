@@ -28,6 +28,7 @@ regeneration that CI already requires.
 | `metacognate` | _(none)_ |
 | `open-questions` | _(none)_ |
 | `outsource` | _(none)_ |
+| `perspective` | _(none)_ |
 | `recon` | _(none)_ |
 | `resolve` | _(none)_ |
 | `triage` | `decision-ledger` |

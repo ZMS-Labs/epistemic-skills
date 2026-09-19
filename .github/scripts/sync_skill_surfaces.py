@@ -80,8 +80,13 @@ ANY_WORD_CAP = "(?:" + "|".join(w.capitalize() for w in sorted(WORDS.values(), k
 
 
 def count_surfaces() -> list[tuple[Path, list[tuple[str, str]]]]:
+    full_collection = "The full collection in one install: " + " + ".join(
+        name + (" (the usage entry)" if name == "epistemic" else "")
+        for name in sorted(discovered_skills())
+    ) + "."
     return [
         (REPO / "README.md", [
+            (rf"A collection of {ANY_WORD} agent skills", "A collection of {n} agent skills"),
             (rf"- \[{ANY_WORD_CAP}-skill catalog\]\(#{ANY_WORD}-skill-catalog\)",
              "- [{N}-skill catalog](#{slug}-skill-catalog)"),
             (rf"## {ANY_WORD_CAP}-skill catalog", "## {N}-skill catalog"),
@@ -109,10 +114,12 @@ def count_surfaces() -> list[tuple[Path, list[tuple[str, str]]]]:
         (REPO / ".claude-plugin" / "marketplace.json", [
             (rf"One package, {ANY_WORD} self-triggering skills",
              "One package, {n} self-triggering skills"),
+            (r'The full collection in one install: [^"\n]+', full_collection),
         ]),
         (REPO / ".cursor-plugin" / "marketplace.json", [
             (rf"One package, {ANY_WORD} self-triggering skills",
              "One package, {n} self-triggering skills"),
+            (r'The full collection in one install: [^"\n]+', full_collection),
         ]),
         (REPO / ".cursor-plugin" / "plugin.json", [
             (rf"(?:a router plus|an entry point plus) {ANY_WORD} disciplines", "an entry point plus {d} disciplines"),

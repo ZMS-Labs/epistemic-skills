@@ -22,8 +22,9 @@ the installed version and observed behavior.
 Delivery fallback: this context file points to the canonical body; its presence
 is not proof the host imported that body. After startup, resume or context loss,
 explicitly read the installed `skills/epistemic/SKILL.md` if current guidance is
-missing. `using-epistemic-skills` is a documentation-only mapping here; invoke
-`epistemic` through the actual available skill interface. Install one source per
+missing. `using-epistemic-skills` is a compatibility alias for `epistemic`.
+Here that mapping is documentation-only; invoke the canonical name through
+the actual available skill interface. Install one source per
 host. If duplicate entries disagree, select the intended current installation
 before relying on either. See `docs/release/v7-host-coverage.md` for observed
 v7 candidate coverage and unexercised surfaces.

@@ -4,14 +4,14 @@
     "name": "ZMS Labs"
   },
   "metadata": {
-    "description": "Epistemic-discipline skills for agentic coding \u2014 how an agent knows things before, during, and after work. One package, sixteen self-triggering skills. Uses current skill applicability, visible method use and task-owner continuation.",
-    "version": "6.0.0"
+    "description": "Epistemic-discipline skills for agentic coding \u2014 how an agent knows things before, during, and after work. One package, seventeen self-triggering skills. Uses current skill applicability, visible method use and task-owner continuation.",
+    "version": "7.0.0"
   },
   "plugins": [
     {
       "name": "epistemic-skills",
       "source": "./plugins/epistemic-skills",
-      "description": "The full collection in one install: epistemic (the usage entry) + metacognate + context-audit + decision-ledger + did-it-land + evidence-locked-uat + gauntlet + health + manifest + open-questions + outsource + recon + resolve + triage + watch + write-goal."
+      "description": "The full collection in one install: context-audit + decision-ledger + did-it-land + epistemic (the usage entry) + evidence-locked-uat + gauntlet + health + manifest + metacognate + open-questions + outsource + perspective + recon + resolve + triage + watch + write-goal."
     }
   ]
 }

@@ -12,7 +12,7 @@ HERE = Path(__file__).resolve()
 SKILL_ROOT = HERE.parents[1]
 PACKAGE_ROOT = HERE.parents[3]
 REPO_ROOT = HERE.parents[5]
-EXPECTED_VERSION = "6.0.0"
+EXPECTED_VERSION = "7.0.0"
 
 # The newest tag an install recipe may point at. It tracks the newest PUBLISHED
 # tag, not EXPECTED_VERSION: pinning a tag that does not exist ships dead install
@@ -89,30 +89,17 @@ def check_live_surface_counts(skill_count: int) -> None:
                         f"{mp.name} (expected {want_for(m.group(2))!r}): "
                         f"...{s[max(0,m.start()-30):m.end()+40]}...")
     readme = read(REPO_ROOT / "README.md")
-    # Select mermaid node lines structurally -- inside a fenced ```mermaid block --
-    # rather than by a prose fragment. The previous selector keyed on "router and",
-    # a phrase the README stopped using; it matched zero lines and the check passed
-    # vacuously for as long as that was true. Two non-vacuity controls below make
-    # that failure mode loud instead of silent.
-    mermaid = []
+    # Validate any inventory counts a diagram actually advertises. V7 diagrams
+    # explain relationships and need not repeat the generated inventory count.
     in_block = False
-    for ln in readme.splitlines():
-        if ln.strip().startswith("```"):
-            in_block = ln.strip().startswith("```mermaid")
+    for line in readme.splitlines():
+        if line.strip().startswith("```"):
+            in_block = line.strip().startswith("```mermaid")
             continue
-        if in_block and "disciplines" in ln:
-            mermaid.append(ln)
-    require(mermaid, "README mermaid count check is vacuous: no fenced ```mermaid "
-                     "line mentions 'disciplines'. Either the diagram lost its count "
-                     "node or the selector drifted -- both mean this check guards nothing.")
-    checked = 0
-    for ln in mermaid:
-        found = [w for w in WORDS.values() if re.search(rf"\b{w}\b", ln.lower())]
-        checked += len(found)
-        for w in found:
-            require(w in ok_words, f"README mermaid node count stale: {ln.strip()}")
-    require(checked >= 1, "README mermaid count check is vacuous: the selected node "
-                          f"lines carry no spelled count at all: {mermaid!r}")
+        if in_block:
+            for match in count_re.finditer(line):
+                require(match.group(1).lower() == want_for(match.group(2)),
+                        f"README mermaid node count stale: {line.strip()}")
     gemini = read(REPO_ROOT / "GEMINI.md")
     for m in count_re.finditer(gemini):
         require(m.group(1).lower() == want_for(m.group(2)),
@@ -205,29 +192,15 @@ def main() -> int:
         "handoff template still requires an impossible self-embedded commit",
     )
 
-    # The router and helix seats were deleted 2026-08-06 and replaced by
-    # metacognate, which enumerates NOTHING. The old assertions here required the
-    # router description to list every discipline -- the single largest source of
-    # the enumeration tax. Their replacements assert the opposite property: that
-    # the entry point does NOT name members.
-    entry_root = PACKAGE_ROOT / "skills" / "metacognate"
-    entry = read(entry_root / "SKILL.md")
+    # Canonical membership is generated from real skill bodies. Epistemic is the
+    # usage entry; metacognate is a substantive method. Detailed entry prose is
+    # not duplicated here as brittle historical tier/phrase assertions.
+    entry_root = PACKAGE_ROOT / "skills" / "epistemic"
+    read(entry_root / "SKILL.md")
     _n = len(list((PACKAGE_ROOT / "skills").glob("*/SKILL.md")))
-    _d = _n - 1  # the entry point is not a discipline
+    _d = _n - 1
     require(_n in WORDS and _d in WORDS, f"no count word for {_n}/{_d}")
     _word, _nword = WORDS[_d], WORDS[_n]
-    require("Tier 1 — IRON" in entry, "entry point lost its iron tier")
-    require("Tier 2 — WISE" in entry, "entry point lost its judgment tier")
-    require("Silence is a success state" in entry, "entry point lost its routine fast path")
-    require("carries a procedure, never an inventory" in entry,
-            "entry point no longer forbids enumerating members")
-    members = [d.name for d in (PACKAGE_ROOT / "skills").glob("*/SKILL.md")]
-    named = [m for m in (set(members) - {"metacognate"}) if m in entry]
-    require(not named, f"entry point enumerates members, which is forbidden: {sorted(named)}")
-    require(
-        (entry_root / "reference" / "routine-fast-path.md").is_file(),
-        "routine fast-path reference is missing",
-    )
 
     # Relocated to package level with the rest of the corpora when helix was deleted.
     helix_eval = PACKAGE_ROOT / "evals" / "composition"
@@ -241,7 +214,7 @@ def main() -> int:
             "composition harness was retired but a .py harness is present again")
 
     readme = read(REPO_ROOT / "README.md")
-    require(f"**Version {EXPECTED_VERSION}.**" in readme, "README version is stale")
+    require(re.search(rf"\*\*Version {re.escape(EXPECTED_VERSION)}(?:[., ]|\*\*)", readme), "README version is stale")
     require(f"**{_nword}** skills" in readme, "README skill count is stale")
     require(f"**{_word}** disciplines" in readme, "README discipline count is stale")
     require("the tag's full skill count" in readme, "README harness success check is stale")

@@ -148,6 +148,11 @@ def documented_alias(line: str, name: str, live: set[str]) -> bool:
     )
 
 
+def instruction_prose(line: str) -> str:
+    """A local heading anchor is navigation, not a skill invocation."""
+    return re.sub(r"\[([^\]]+)\]\(#[^)]+\)", r"\1", line)
+
+
 def check_firing_surfaces(defects: list[str]) -> None:
     for skill_md in sorted(SKILLS_DIR.glob("*/SKILL.md")):
         description = frontmatter_description(skill_md.read_text(encoding="utf-8"))
@@ -202,6 +207,7 @@ def check_firing_surfaces(defects: list[str]) -> None:
         except OSError:
             continue
         for number, line in enumerate(lines, 1):
+            line = instruction_prose(line)
             if historical.search(line):
                 continue
             for dead, survivor in RETIRED.items():
@@ -320,6 +326,14 @@ def check_bare_retired_paths(defects: list[str], root: Path = REPO) -> None:
 def self_test() -> int:
     """Planted RED controls for rule 3 (the tree-independent rule)."""
     failures = 0
+    for line, present in [
+        ("[Using Epistemic Skills](#using-epistemic-skills)", False),
+        ("[using-epistemic-skills](#usage)", True),
+        ("Invoke `using-epistemic-skills`.", True),
+    ]:
+        if ("using-epistemic-skills" in instruction_prose(line)) != present:
+            failures += 1
+            print(f"[FAIL] local navigation control: {line}")
     alias = "`using-epistemic-skills` is a compatibility alias for `epistemic`."
     alias_cases = [
         (alias, {"epistemic"}, True),
