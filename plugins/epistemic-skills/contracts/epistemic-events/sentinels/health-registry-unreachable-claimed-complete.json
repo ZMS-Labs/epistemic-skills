@@ -1,0 +1,27 @@
+{
+  "id": "health-registry-unreachable-claimed-complete",
+  "skill": "health",
+  "event_kind": "state-readout",
+  "scenario": "The subject registry is unreachable, so the scope was never established. Two remembered subjects probe OK. The run reports a complete, healthy estate.",
+  "response": {
+    "subjects": [
+      {
+        "id": "a",
+        "state": "OK"
+      },
+      {
+        "id": "b",
+        "state": "OK"
+      }
+    ],
+    "scope": {
+      "registry": "unreachable",
+      "coverage": "UNKNOWN"
+    },
+    "rollup": "OK",
+    "summary": "estate healthy"
+  },
+  "expected_oracle": "REJECT",
+  "failure_class": "registry-unreachable-claimed-complete",
+  "oracle_rule": "An unreachable registry makes scope coverage UNKNOWN; a roll-up over an unestablished scope cannot be OK."
+}

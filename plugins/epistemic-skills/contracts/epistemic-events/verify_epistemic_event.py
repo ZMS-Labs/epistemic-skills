@@ -10,12 +10,17 @@ from typing import Any
 EVENT_RECORD = "epistemic-event@1"
 OUTCOME_RECORD = "epistemic-outcome@1"
 EVENT_KINDS = {
-    "bound-crossing", "landing-verdict", "cause-verdict", "state-readout", "routing-decision", "pairing-decision", "landmine-prediction",
+    "bound-crossing", "landing-verdict", "cause-verdict", "state-readout", "routing-decision", "landmine-prediction",
     "formal-prediction", "evidence-claim", "goal-proof",
     "handoff-verification", "review-forecast", "uat-verdict",
     "ledger-revisit", "continuity-reanchor", "interview-scope-decision",
-    "audit-cut-decision", "consumer-gate-outcome", "frontier-decision",
-    "probe-episode", "merge-ruling", "harvest-decision",
+    "audit-cut-decision", "frontier-decision",
+    "probe-episode", "harvest-decision",
+    # Retired-but-valid v1 vocabulary: pairing-decision, consumer-gate-outcome
+    # and merge-ruling were deliberately retained when their producing skills
+    # were consolidated, so stored epistemic-event@1 records that use them keep
+    # validating. Removing them requires a schema-version bump and a migration.
+    "pairing-decision", "consumer-gate-outcome", "merge-ruling",
 }
 OUTCOME_CLASSES = {
     "correct", "incorrect", "partial", "unresolved",

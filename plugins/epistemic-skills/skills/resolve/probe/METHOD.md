@@ -6,7 +6,7 @@
 Some decisions are cheapest to resolve empirically: build the thinnest thing
 that makes the answer observable, observe it, record the answer, then delete
 or archive the build read-only as experimental evidence. The prototype is an *instrument*, not a first draft. This is the
-constructive complement of blindspot-pass (which only reads) and the concrete
+constructive complement of recon's brief mode (which only reads) and the concrete
 form of the "bounded reversible probe" closure control: when evidence is
 insufficient and more prose will not close the uncertainty, a disposable
 build is the honest next move.
@@ -65,7 +65,7 @@ discriminator cannot separate the alternatives.
 | Slot | Skill | Relation |
 |---|---|---|
 | The question came from an option set | gauntlet (generator) | Its option-set contract names the cheapest discriminator; when that is a build, this skill runs it |
-| The question came from the decision map | wayfinding | A frontier decision whose cheapest resolution is "prototype" dispatches here; the answer resolves the node |
+| The question came from the decision map | recon (initiative mode) | A frontier decision whose cheapest resolution is "prototype" dispatches here; the answer resolves the node |
 | Recording the answer | decision-ledger | The capture in contract clause 3 is a ledger trigger — the prototype's finding is a consequential decision input |
 | The real build afterward | workflow layer (TDD, plans) | Owns the production implementation; receives the *answer*, never the code |
 
@@ -88,7 +88,7 @@ prototype found on a mergeable branch is a finding, not a shortcut.
 ## Handoff boundaries
 
 Ends at a recorded answer or limit plus a disposed or read-only archived build. Upstream: gauntlet
-option-sets and wayfinding frontier decisions supply questions. Downstream:
+option-sets and recon (initiative mode) frontier decisions supply questions. Downstream:
 decision-ledger holds the finding; the workflow layer builds the real thing
 from the answer.
 

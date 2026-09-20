@@ -32,6 +32,8 @@ Adapt a method to the actual case when needed. State consequential adaptations
 and their limits; do not silently add a permanent library member. Multiple modes
 of one method and repeated use of one source do not establish corroboration.
 
+Activation discipline: design-argued; no shipped trigger battery as of this change.
+
 ## Method
 
 1. **Bound the question.** Name the uncertainty or improvement sought and what

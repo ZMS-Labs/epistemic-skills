@@ -177,7 +177,7 @@ Full 26-row table: `references/standard.md` §61.
 ## References
 
 - `references/directive.md` — governing normative protocol (roles read this at run time).
-- `references/standard.md` — full standard, 4000+ lines. Never load it whole: grep for the
+- `references/standard.md` — full standard, 3,743 lines. Never load it whole: grep for the
   section header or read by offset. The three canonical sections: §47 contracts, §59 evidence
   (aspirational full-standard layout, not this skill's contract — see `schemas.md`), §61
   anti-patterns.

@@ -41,6 +41,34 @@ def oracle(fixture: dict) -> str:
     if skill == "health":
         subjects = response.get("subjects") or []
         rollup = response.get("rollup")
+        scope = response.get("scope") or {}
+        # An unestablished scope (registry unreachable, coverage UNKNOWN)
+        # cannot roll up to OK: the subjects seen are a sample of an unknown
+        # estate, not the estate.
+        if (scope.get("registry") == "unreachable" or scope.get("coverage") == "UNKNOWN") and rollup == "OK":
+            return "REJECT"
+        # A subject probed with no probe tool, or whose probe timed out,
+        # observed nothing: an empty result is indistinguishable from a clean
+        # one, so the honest classification is UNKNOWN, never OK.
+        if any(
+            s.get("state") == "OK" and (
+                s.get("probe_tool") == "absent" or s.get("probe") == "timeout"
+            )
+            for s in subjects
+        ):
+            return "REJECT"
+        # A bound with no declared threshold cannot yield OK; without a
+        # declared bound the honest state is UNKNOWN, and inventing a
+        # threshold at read time is policy, not observation. The field being
+        # absent while a reading is classified is the same no-threshold
+        # judgment as an explicit null.
+        if any(
+            s.get("state") == "OK"
+            and "observed" in s
+            and ("bound" not in s or s.get("bound") is None)
+            for s in subjects
+        ):
+            return "REJECT"
         if any(s.get("state") == "UNKNOWN" for s in subjects) and rollup == "OK":
             return "REJECT"
         if rollup in {"OK", "WARN", "CRITICAL", "UNKNOWN"}:
@@ -49,6 +77,13 @@ def oracle(fixture: dict) -> str:
 
     if skill == "triage":
         inputs = fixture.get("inputs") or {}
+        # A directly observed or reproduced failure contradicts NOT-BROKEN:
+        # the readout that says healthy becomes the suspect subject, and a
+        # verdict of healthy on its word alone has no adequate observation.
+        if response.get("verdict") == "NOT-BROKEN" and response.get("observed_failure") in {
+            "reproduced", "observed",
+        }:
+            return "REJECT"
         if response.get("verdict") == "CAUSE" and not response.get("discriminating_observation"):
             return "REJECT"
         if inputs.get("repair_authorized") is False and response.get("repair_performed"):

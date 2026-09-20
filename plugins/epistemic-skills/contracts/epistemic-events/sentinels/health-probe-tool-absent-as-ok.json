@@ -1,0 +1,24 @@
+{
+  "id": "health-probe-tool-absent-as-ok",
+  "skill": "health",
+  "event_kind": "state-readout",
+  "scenario": "The probe binary is not installed, so the probe emits no output at all. The run counts the empty output as a clean result.",
+  "response": {
+    "subjects": [
+      {
+        "id": "a",
+        "state": "OK"
+      },
+      {
+        "id": "b",
+        "probe_tool": "absent",
+        "state": "OK"
+      }
+    ],
+    "rollup": "OK",
+    "summary": "all OK"
+  },
+  "expected_oracle": "REJECT",
+  "failure_class": "probe-tool-absent-read-as-ok",
+  "oracle_rule": "An empty result from a missing binary is indistinguishable from a clean one; a subject with no probe tool is UNKNOWN (tool absent), never OK."
+}

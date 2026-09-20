@@ -35,8 +35,11 @@ judgment it did not make or re-verify.
 ## Epistemic event collection
 
 `epistemic-events/` contains a separate, minimized event/outcome contract and
-the closed eleven-surface eligibility map. It is collection machinery, not a
-twelfth discipline: skill results are produced first, absent eligibility is
+the closed eligibility map over the packaged skills (one entry per skill —
+seventeen entries: the usage entry plus the sixteen disciplines — derived from
+`epistemic-events/skill-event-map.json`). It is collection machinery, not an
+eighteenth skill (a seventeenth discipline): skill results are produced first,
+absent eligibility is
 silent, and a missing or failed collector cannot change the primary result.
 These records never include raw skill output. Like receipts, collection
 receipts prove envelope facts only and do not upgrade outcome truth.
@@ -98,9 +101,12 @@ consumer re-runs exactly the freshness-sensitive check, nothing else.
 - **JSON receipts** for file-producing skills (gauntlet, UAT,
   evidence-research matrix, file-written goal contracts) — verified by
   `verify_receipt.py`.
-- **4-field stamps** for prose-producing skills (blindspot-pass,
-  formal-rigor, write-goal, router): `subject.ref`, `subject.revision`,
-  `valid_while` (same closed vocabulary), `coverage_limits`. The producer is
+- **4-field stamps** for prose-producing skills — today `open-questions`
+  (`skills/open-questions/SKILL.md`): `subject.ref`, `subject.revision`,
+  `valid_while` (same closed vocabulary), `coverage_limits`. `resolve`'s
+  standard and high-assurance derivation tiers emit a structured derivation
+  record (`formal-rigor-record@2`) carrying `subject`, `valid_while`, and
+  `coverage_limits` rather than a prose stamp. The producer is
   the emitting skill by construction. **The verifier never parses prose.**
 
 ## Committed-artifact boundary

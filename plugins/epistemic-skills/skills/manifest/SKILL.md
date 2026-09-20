@@ -28,6 +28,8 @@ not need a mission merely because they have several steps. Before opening a miss
 discover whether its required acceptance path is available. Do not invent a new actor
 identity to bypass separation or impose this mission tier on work outside custody.
 
+Activation discipline: design-argued; no shipped trigger battery as of this change.
+
 ## Modes
 
 1. **Open** — capture the operator instruction VERBATIM: `open --mission-id
@@ -114,6 +116,9 @@ identity to bypass separation or impose this mission tier on work outside custod
 ## Boundaries
 
 - Decline ordinary work whose existing task record is sufficient; no mission.
+- Not the resume path outside missions: decision-ledger re-anchors decisions
+  and assumptions for work no mission custodies; this seat receipt-checks
+  custodied missions' artifacts only.
 - Never select or invoke other skills by name from this seat; when a
   load-bearing condition blocks progress (an unverified claim, an unmapped
   territory, an irreversible fork), STATE THE CONDITION and the return point

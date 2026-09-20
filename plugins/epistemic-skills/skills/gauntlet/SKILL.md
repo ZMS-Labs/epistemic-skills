@@ -26,8 +26,8 @@ lineages; their historical aliases do not imply verified native host commands.
 
 | Tool | Role | This skill's relation |
 |---|---|---|
-| **`/gauntlet`** (this) | Auto-fires (triage-gated) at high-stakes decision points; deep adversarial review | The staple |
-| `/sovereign-gauntlet`, `/red-team-gauntlet` | Old manual deep gauntlets | **Documented mappings** to this skill (`deep`/`max`); native alias support depends on the host |
+| **`gauntlet`** (this; the `/gauntlet` spelling is a historical slash-command alias) | Fires at high-stakes decision points via its applicability clause; deep adversarial review | The staple |
+| `/sovereign-gauntlet`, `/red-team-gauntlet` (historical slash-command aliases) | Old manual deep gauntlets | **Documented mappings** to this skill (`deep`/`max`); native alias support depends on the host |
 | An org-enforced infra-execution safety gate (if your environment runs one) | Independent review gate outside this skill | **SEPARATE and still required independently.** This skill does NOT satisfy an externally-enforced gate. Reconcile it in Step 8, never replace it. |
 
 DeepReason **expands the attack surface**; the gauntlet **renders the verdict**.

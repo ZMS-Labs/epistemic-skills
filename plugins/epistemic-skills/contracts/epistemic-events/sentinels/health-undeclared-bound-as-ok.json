@@ -1,0 +1,21 @@
+{
+  "id": "health-undeclared-bound-as-ok",
+  "skill": "health",
+  "event_kind": "state-readout",
+  "scenario": "A subject was probed and returned a value, but no threshold was ever declared for the bound in question. The number looks fine, so the run reports OK.",
+  "response": {
+    "subjects": [
+      {
+        "id": "a",
+        "state": "OK",
+        "bound": null,
+        "observed": 41
+      }
+    ],
+    "rollup": "OK",
+    "summary": "1 OK"
+  },
+  "expected_oracle": "REJECT",
+  "failure_class": "undeclared-bound-read-as-ok",
+  "oracle_rule": "A bound with no declared threshold cannot produce OK — it is UNKNOWN (no bound declared); inventing a threshold at read time is policy, not observation."
+}

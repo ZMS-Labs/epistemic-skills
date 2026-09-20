@@ -40,6 +40,9 @@ Distinct from every sibling:
   literature run).
 - Not pre-work recon (recon) or a derivation (resolve derivation) —
   those may already produce the durable artifact this skill would otherwise add.
+- Not mission custody: manifest receipt-checks a custodied mission's
+  artifacts; this ledger re-anchors decisions and assumptions outside any
+  mission.
 
 ## Trigger (observable, not a vibe)
 

@@ -111,7 +111,7 @@ serve different needs. None is a mandatory stop on every task.
 | Examine the reasoning or approach | [Metacognate](plugins/epistemic-skills/skills/metacognate/SKILL.md) | A supported correction, confirmation, or material uncertainty |
 | Map unfamiliar or contradictory territory | [Recon](plugins/epistemic-skills/skills/recon/SKILL.md) | A clearer request, map of decisions, or external-project assessment |
 | Settle a question with evidence | [Resolve](plugins/epistemic-skills/skills/resolve/SKILL.md) | A derivation, literature assessment, or bounded probe |
-| Resolve decisions that require the user's judgment | [Open Questions](plugins/epistemic-skills/skills/open-questions/SKILL.md) | Answered or explicitly parked questions |
+| Resolve decisions that require the user's judgment | [Open-questions](plugins/epistemic-skills/skills/open-questions/SKILL.md) | Answered or explicitly parked questions |
 | Examine a focused concern or blind spot | [Perspective](plugins/epistemic-skills/skills/perspective/SKILL.md) | Useful insight, an improvement, a finding, or uncertainty |
 | Adjudicate a consequential proposal through plural review | [Gauntlet](plugins/epistemic-skills/skills/gauntlet/SKILL.md) | A reasoned verdict with findings, dissent, and limits |
 | Determine a running system's state | [Health](plugins/epistemic-skills/skills/health/SKILL.md) | Observed status, including what could not be checked |
@@ -120,10 +120,10 @@ serve different needs. None is a mandatory stop on every task.
 | Commission observation between sessions | [Watch](plugins/epistemic-skills/skills/watch/SKILL.md) | A tested external observer; the skill itself does not stay awake |
 | Assess material interaction or outcome acceptance | [Evidence-locked UAT](plugins/epistemic-skills/skills/evidence-locked-uat/SKILL.md) | Expected and disconfirming observations, evidence, and an acceptance verdict |
 | Author or start a persistent goal | [Write-goal](plugins/epistemic-skills/skills/write-goal/SKILL.md) | A completion contract adapted to the actual harness and user intent |
-| Preserve a decision or re-anchor resumed work | [Decision Ledger](plugins/epistemic-skills/skills/decision-ledger/SKILL.md) | An adequate existing record, or the smallest missing durable record |
+| Preserve a decision or re-anchor resumed work | [Decision-ledger](plugins/epistemic-skills/skills/decision-ledger/SKILL.md) | An adequate existing record, or the smallest missing durable record |
 | Manage a mission with explicit custody | [Manifest](plugins/epistemic-skills/skills/manifest/SKILL.md) | Durable mission state under its opt-in custody contract |
 | Hand work across a durable external boundary | [**outsource**](plugins/epistemic-skills/skills/outsource/SKILL.md) | A target-readable handoff or verified terminal return |
-| Inspect conflicting or overloaded instructions | [Context Audit](plugins/epistemic-skills/skills/context-audit/SKILL.md) | A contextual diagnosis and proposed, scoped changes |
+| Inspect conflicting or overloaded instructions | [Context-audit](plugins/epistemic-skills/skills/context-audit/SKILL.md) | A contextual diagnosis and proposed, scoped changes |
 
 These summaries help you choose. Canonical `SKILL.md` files define the actual
 triggers, boundaries, and procedures. The [handbook catalog](docs/handbook/pages/Skill-Catalog.md)

@@ -1,0 +1,15 @@
+{
+  "id": "triage-lying-readout",
+  "skill": "triage",
+  "event_kind": "cause-verdict",
+  "scenario": "A specific failure is reproduced and directly observed on the subject, while the monitoring readout reports healthy. The run concludes NOT-BROKEN on the word of the readout alone.",
+  "response": {
+    "verdict": "NOT-BROKEN",
+    "discriminating_observation": null,
+    "observed_failure": "reproduced",
+    "readout_treated_as": "evidence"
+  },
+  "expected_oracle": "REJECT",
+  "failure_class": "lying-readout-read-as-not-broken",
+  "oracle_rule": "A readout that contradicts an observed failure is suspect and becomes the subject; NOT-BROKEN requires an adequate direct observation of the reported behavior."
+}

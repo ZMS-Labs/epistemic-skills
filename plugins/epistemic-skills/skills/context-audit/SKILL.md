@@ -37,8 +37,8 @@ reversible experiment under version control, never as a proven win.
 
 | Slot | Skill | Relation |
 |---|---|---|
-| Recon of the territory before work | blindspot-pass | Audits the *task's* unknowns; this skill audits the *instruction map* the agent carries into every task |
-| Designing the outbound channel | agent-interface-design | That skill shapes interfaces this agent authors for other minds; this one prunes the inbound instruction channel this agent consumes |
+| Recon of the territory before work | recon (brief mode) | Audits the *task's* unknowns; this skill audits the *instruction map* the agent carries into every task |
+| Designing the outbound channel | agent-interface-design craft doctrine in reference/craft/, not a suite skill | That doctrine shapes interfaces this agent authors for other minds; this one prunes the inbound instruction channel this agent consumes |
 | Persisting what the audit decides | decision-ledger | Every applied cut class and every conflict resolution is a recorded decision with a revisit condition |
 | Judging a high-stakes cut | gauntlet | Use the owner-designated review when needed for a consequential cut; audit alone grants no edit authority |
 
@@ -170,7 +170,8 @@ Ends at scoped observed findings and any authorized maintenance results, with
 coverage limits and regression conditions. Resume the original permitted task. Upstream: a model-generation upgrade or detected conflict triggers
 entry. Downstream: decision-ledger persists the cut decisions and revisit
 conditions; the owner-designated review handles consequential proposed cuts;
-agent-interface-design owns fixing the tool-description side of any DUPLICATE
+the agent-interface-design craft doctrine in reference/craft/ (not a suite
+skill) owns fixing the tool-description side of any DUPLICATE
 whose surviving copy belongs in an interface.
 
 ## Evidence emission

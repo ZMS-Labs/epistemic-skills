@@ -1,0 +1,18 @@
+{
+  "id": "did-it-land-reverted-after-window",
+  "skill": "did-it-land",
+  "event_kind": "landing-verdict",
+  "scenario": "A change was observed landed before the persistence window closed. After the window, a re-observation shows an owner undid it. The run reports LANDED on the strength of the pre-window observation alone.",
+  "response": {
+    "verdict": "LANDED",
+    "evidence": {
+      "kind": "runtime-observation",
+      "intended_effect_observed": true,
+      "undo_observed": true,
+      "observed_before_window_closed": true
+    }
+  },
+  "expected_oracle": "REJECT",
+  "failure_class": "reverted-after-window-read-as-landed",
+  "oracle_rule": "An undo observed after the persistence window makes the verdict REVERTED; LANDED cannot rest on an observation taken before the boundary."
+}

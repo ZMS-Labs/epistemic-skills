@@ -1,7 +1,7 @@
 <!-- recon mode: brief (the blindspot pass) — consolidated into recon (v4.0.0, 2026-08-04); this file is the mode's full method, formerly its standalone SKILL.md -->
 
 
-# Blindspot Pass — find the unknowns before they get expensive
+# recon (brief mode) — find the unknowns before they get expensive
 
 > **The map is not the territory.** A request is a *map*; the codebase and the real
 > world are the *territory*. Most expensive failures are territory the map didn't
@@ -31,12 +31,12 @@
 | Slot | Method | What it operates on |
 |---|---|---|
 | **Routine unfamiliarity** | two-read micro-recon | target artifact + nearest test/example → proceed or expose a positive trigger |
-| **Before there is a trustworthy subject** | **blindspot-pass** (this) | a materially fuzzy or contradicted *request* → recon → a rewritten, de-risked request |
+| **Before there is a trustworthy subject** | **brief mode** (this) | a materially fuzzy or contradicted *request* → recon → a rewritten, de-risked request |
 | Turning idea into design | brainstorming | a request you already understand → a design |
 | Reviewing a frozen thing | adversarial review (a red-team / gauntlet pass) | a locked subject → GO/CONDITIONAL/NO-GO |
 | Proving work is done | verification-before-completion | a claim → evidence |
 
-Adversarial review is *post-hoc scrutiny of a frozen subject*. Blindspot-pass is
+Adversarial review is *post-hoc scrutiny of a frozen subject*. Brief mode is
 *pre-work reconnaissance* after a cheaper look shows there is not yet a reliable
 subject to freeze. Rigorously reviewing the wrong subject is rigorous review of
 a map that doesn't match the territory; this is the guard against that. Two

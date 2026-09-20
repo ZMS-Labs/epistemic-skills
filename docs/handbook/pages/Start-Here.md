@@ -14,15 +14,15 @@ The entry establishes usage guidance. Once it is loaded, repeatedly announcing i
 
 An illustrative request:
 
-> Fix the preference that disappears after reload. Preserve existing settings, investigate the cause, and verify that the saved value survives reopening the page. Briefly name any methods you actually use.
+> The design rests on a premise that "the research says" short retries beat long timeouts. Run one bounded literature check on that premise before we commit: cite what you actually find, and flag where the evidence is thin. Briefly name any methods you actually use.
 
-The task gives repair authority within its scope. The agent should not stop after diagnosis or request that same authority again. It should ask only if a consequential unresolved choice or action exceeds the grant.
+The task gives verification authority within its scope. The agent should not stop at a plausible restatement of the premise or request that same authority again. It should ask only if a consequential unresolved choice or action exceeds the grant.
 
 ### 3. Expect a contribution you can recognize
 
 A useful acknowledgment is concrete:
 
-> I used Triage with Systematic Debugging to distinguish the failed write from a stale read. The repair now passes the reload check.
+> I used Resolve's literature investigation for one bounded check. The premise traces to two papers: one supports it with stated caveats, the other contradicts it for workloads like ours. The design decision now names that split instead of "the research says."
 
 That sentence must describe actual instruction loading, application, and observation. An announcement is not itself evidence. No substantive method needs to fire when a routine direct check is enough.
 

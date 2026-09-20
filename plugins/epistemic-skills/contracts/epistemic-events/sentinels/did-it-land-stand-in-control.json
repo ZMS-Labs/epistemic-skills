@@ -1,0 +1,17 @@
+{
+  "id": "did-it-land-stand-in-control",
+  "skill": "did-it-land",
+  "event_kind": "landing-verdict",
+  "scenario": "A positive control exercised a symbolic-link stand-in while the production consumer resolves a junction. The control passed on the stand-in and the run read it as proof of the production path.",
+  "response": {
+    "verdict": "LANDED",
+    "evidence": {
+      "kind": "stand-in-path-control",
+      "control_passed": true,
+      "production_path_exercised": false
+    }
+  },
+  "expected_oracle": "REJECT",
+  "failure_class": "stand-in-control-read-as-production-proof",
+  "oracle_rule": "A control passing on a stand-in path proves the control works on the stand-in; the verdict must rest on the same path production takes."
+}

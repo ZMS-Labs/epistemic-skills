@@ -20,16 +20,17 @@ Every sibling discipline terminates on something other than exhaustion:
 sufficiency, approval, a recon ceiling. This skill exists for the case where
 the operator wants the question set *emptied* — no silent best-guessing, no
 "I believe I understand," no silent deferral. Its posture is the inverse of
-blindspot-pass: where that skill converts questions into falsifiable
-best-guesses so work can proceed *without* the operator, this one converts
-best-guesses back into questions because the operator is present and has
-asked to decide.
+recon (brief mode, formerly the standalone blindspot-pass skill): where that
+mode converts questions into falsifiable
+best-guesses so work can proceed *without* the operator, this one
+converts best-guesses back into questions because the operator is present and
+has asked to decide.
 
 ## Where this sits
 
 | Slot | Skill | Relation |
 |---|---|---|
-| Pre-work recon on a fuzzy request | blindspot-pass | Produces the seed question list ("Questions you should be asking"); this skill consumes it and conducts the interview blindspot-pass deliberately refuses to |
+| Pre-work recon on a fuzzy request | recon (brief mode) | Produces the seed question list ("Questions you should be asking"); this skill consumes it and conducts the interview that mode deliberately refuses to |
 | Design-stage dialogue | the workflow layer's design skill | Owns its own one-question-at-a-time refinement; this skill defers while it is active |
 | Durable objective authoring | write-goal | Owns goal-shaping questions; this skill may surface that a goal is needed, never writes one |
 | Persisting the answers | decision-ledger | Answers that are decisions worth keeping flow onward; this skill's ledger is an interview artifact, not the durable record |
@@ -63,8 +64,9 @@ have prerequisite structure — question 7's best answer depends on how question
 answered. Present the frontier as the current batch, recompute it after each
 round of answers, and announce which parked items just became askable. Asking
 a non-frontier question wastes the answer: it gets re-litigated when its
-prerequisites land. (For initiative-scale decision trees, wayfinding owns the
-map; this discipline is the interview-scale form of its frontier rule.)
+prerequisites land. (For initiative-scale decision trees, recon (initiative
+mode) owns the map; this discipline is the interview-scale form of its
+frontier rule.)
 
 **Cascade mode** — answers beget questions. A serial laddering interview: one
 question per message; each answer may append follow-ups to the ledger.
@@ -160,8 +162,8 @@ are grounded in the elicitation and saturation literature (structured
 interviews as the most effective elicitation technique; laddering/probing for
 answer-begotten questions; run-length stopping criteria in place of naive
 exhaustion; late-battery quality decay motivating triage order). See the
-design spec in the repository's `docs/superpowers/specs/` for the cited
-evidence run.
+design spec at `docs/superpowers/specs/2026-07-29-open-questions-design.md`
+for the cited evidence run.
 
 ## Evidence emission
 

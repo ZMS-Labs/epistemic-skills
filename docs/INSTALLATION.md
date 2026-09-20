@@ -50,6 +50,12 @@ codex plugin add epistemic-skills@epistemic-skills
 python "$HOME/.codex/plugins/cache/epistemic-skills/epistemic-skills/7.0.0/skills/gauntlet/scripts/render_codex_agents.py" --out "$HOME/.codex/agents"
 ```
 
+**Cache path discovery:** the command pins the version segment (`7.0.0`). If
+your installed cache holds a different version, list
+`$HOME/.codex/plugins/cache/epistemic-skills/epistemic-skills/` and substitute
+the installed version directory before running the renderer; the harness loads
+from the version-pinned plugin cache, not from the marketplace clone.
+
 Start a new Codex task after rendering. The renderer converts the five canonical packaged Markdown roles into Codex's user-agent registry. The Gauntlet retains a hashed exact-role materialization fallback for tasks that started before registration.
 
 ### Cursor
