@@ -45,6 +45,8 @@ establishes usage rules; the task-owning agent remains responsible for the work.
    A gap holds only dependent actions or claims. Re-enter a method when new
    evidence or a changed condition warrants it, not to repeat completed work.
 
+Activation discipline: design-argued; no shipped trigger battery as of this change.
+
 ## Working with other packages
 
 Prefer available, applicable Superpowers systematic-debugging for debugging.

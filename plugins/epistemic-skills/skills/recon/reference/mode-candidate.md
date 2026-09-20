@@ -1,7 +1,7 @@
 <!-- recon mode: candidate (harvest-before-adopt) — consolidated into recon (v4.0.0, 2026-08-04); this file is the mode's full method, formerly its standalone SKILL.md -->
 
 
-# harvest-before-adopt — take the ideas first; the software is the expensive part
+# recon (candidate mode) — take the ideas first; the software is the expensive part
 
 An external project appears that does what your thing does. The reflex is to ask
 **"should we adopt it?"** — a question that is expensive to answer, often

@@ -49,6 +49,8 @@ Does **not** fire when:
 - nothing yet depends on it having landed;
 - you are still deciding *what* to change.
 
+Activation discipline: design-argued; no shipped trigger battery as of this change.
+
 ## Method
 
 1. **Name the observable before looking.** What, specifically, would be different

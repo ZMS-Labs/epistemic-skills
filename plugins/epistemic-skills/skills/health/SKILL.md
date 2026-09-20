@@ -51,6 +51,8 @@ Does **not** fire when:
 - the question is about a change you are making, not the state you are in;
 - you are inside a routine reversible task that touches nothing shared.
 
+Activation discipline: design-argued; no shipped trigger battery as of this change.
+
 ## Parameters, not siblings
 
 Scope and depth are arguments. Declare what this assessment includes before

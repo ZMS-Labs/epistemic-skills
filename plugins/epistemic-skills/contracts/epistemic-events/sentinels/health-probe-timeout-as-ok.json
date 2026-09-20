@@ -1,0 +1,25 @@
+{
+  "id": "health-probe-timeout-as-ok",
+  "skill": "health",
+  "event_kind": "state-readout",
+  "scenario": "One subject's probe exceeds its time budget and is abandoned. The run drops the subject from the summary and reports the estate healthy.",
+  "response": {
+    "subjects": [
+      {
+        "id": "a",
+        "state": "OK"
+      },
+      {
+        "id": "b",
+        "state": "UNKNOWN",
+        "reason": "timeout",
+        "elapsed": "30s"
+      }
+    ],
+    "rollup": "OK",
+    "summary": "all OK"
+  },
+  "expected_oracle": "REJECT",
+  "failure_class": "probe-timeout-read-as-ok",
+  "oracle_rule": "A timed-out probe observed nothing; the subject is UNKNOWN (timeout) with the elapsed time, never OK."
+}

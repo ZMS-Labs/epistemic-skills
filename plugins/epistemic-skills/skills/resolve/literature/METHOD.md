@@ -34,7 +34,7 @@ a run with nothing persisted.
 
 | Slot | Skill | Relation |
 |---|---|---|
-| Pre-work recon on a fuzzy request | blindspot-pass | May *call* this skill when a landmine/question needs scholarly grounding; blindspot-pass ends at understanding, this skill ends at an evidence record |
+| Pre-work recon on a fuzzy request | recon (brief mode) | May *call* this skill when a landmine/question needs scholarly grounding; the brief mode ends at understanding, this skill ends at an evidence record |
 | Scholarly evidence for a decision | **evidence-research** (this) | The engine room. Produces the claim-evidence matrix + run record |
 | Adversarial verdict on a frozen subject | adversarial review (a red-team / gauntlet pass) | The review's evidence gate invokes THIS skill before its dossier freezes; this skill **never** renders GO/NO-GO |
 | Proving work is done | verification-before-completion | Claims about *work*; this skill covers claims about *the literature* |
@@ -49,7 +49,7 @@ a run with nothing persisted.
 - **A single already-trusted internal document lookup** (an org runbook, a
   prior decision record you already hold) does not need a scholarly-evidence
   pass — this skill exists for claims that need literature-grade backing.
-- **Pre-work recon on a fuzzy request** is blindspot-pass's job; it may *call*
+- **Pre-work recon on a fuzzy request** is recon's brief-mode job; it may *call*
   this skill once a landmine needs scholarly grounding, but this skill does
   not replace that reconnaissance step.
 - **Rendering an adversarial GO/NO-GO verdict** is never this skill's output —

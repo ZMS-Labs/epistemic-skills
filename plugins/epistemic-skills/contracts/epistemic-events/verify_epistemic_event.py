@@ -10,12 +10,12 @@ from typing import Any
 EVENT_RECORD = "epistemic-event@1"
 OUTCOME_RECORD = "epistemic-outcome@1"
 EVENT_KINDS = {
-    "bound-crossing", "landing-verdict", "cause-verdict", "state-readout", "routing-decision", "pairing-decision", "landmine-prediction",
+    "bound-crossing", "landing-verdict", "cause-verdict", "state-readout", "routing-decision", "landmine-prediction",
     "formal-prediction", "evidence-claim", "goal-proof",
     "handoff-verification", "review-forecast", "uat-verdict",
     "ledger-revisit", "continuity-reanchor", "interview-scope-decision",
-    "audit-cut-decision", "consumer-gate-outcome", "frontier-decision",
-    "probe-episode", "merge-ruling", "harvest-decision",
+    "audit-cut-decision", "frontier-decision",
+    "probe-episode", "harvest-decision",
 }
 OUTCOME_CLASSES = {
     "correct", "incorrect", "partial", "unresolved",

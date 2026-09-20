@@ -1,5 +1,7 @@
 # V7 bounded comparative pilot preregistration
 
+Frozen at preregistration; outcome: results/2026-09-18-v7/RESULTS.md (stopped after execution precondition failure).
+
 Status: PREPARED; zero subject trials dispatched. Candidate and authenticated subject execution remain pending. This document, v7-cases.json, and v7-schedule.json must be committed before subject outcomes are observed. The candidate revision is then bound in the private campaign record and sanitized results manifest; no circular commit hash is embedded here.
 
 ## Comparison and fixed budget

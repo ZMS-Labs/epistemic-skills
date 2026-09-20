@@ -55,6 +55,8 @@ Does **not** fire when:
 - the fault is deterministic and reproducible and one read of the error settles
   it — read it.
 
+Activation discipline: design-argued; no shipped trigger battery as of this change.
+
 ## One investigation, with an explicit provider
 
 Prefer **Superpowers systematic-debugging** when available and applicable. Load
@@ -139,6 +141,13 @@ which is the assertion that matters and the one a naive suite omits.
 At least one fixture must plant a **lying readout** — a report that says healthy
 while the subject is broken — and assert the run treats the readout as suspect
 rather than concluding `NOT-BROKEN`.
+
+Shipped today: the plausible-cause and lying-readout sentinels
+(`contracts/epistemic-events/sentinels/triage-plausible-not-observed.json` and
+`triage-lying-readout.json`) plus the operational response controls in
+`operational-scenarios.json`. The full trigger-and-scope corpus this section
+specifies — one planted case per trigger clause and per degraded-operation row
+above — is specified but not yet shipped.
 
 ## Evidence emission
 

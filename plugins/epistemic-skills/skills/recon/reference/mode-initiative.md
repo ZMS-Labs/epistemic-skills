@@ -1,7 +1,7 @@
 <!-- recon mode: initiative (wayfinding) — consolidated into recon (v4.0.0, 2026-08-04); this file is the mode's full method, formerly its standalone SKILL.md -->
 
 
-# wayfinding — decompose by decisions, not tasks
+# recon (initiative mode) — decompose by decisions, not tasks
 
 A large effort under fog fails in a specific way: the fog gets pre-sliced into
 plausible-sounding build tickets, each silently encoding a guess about a
@@ -9,7 +9,7 @@ decision nobody has made. When the decision finally resolves the other way,
 the tickets are not just stale — they are *wrong in a way no one recorded*,
 and the work done against them is loss.
 
-Wayfinding decomposes by decisions first. The map is a dependency tree whose
+Initiative mode decomposes by decisions first. The map is a dependency tree whose
 nodes are **decisions** (tracked items in their own right), not tasks. Build
 tickets are minted only for regions where the fog is gone.
 
@@ -20,9 +20,9 @@ Provenance: distilled from the "wayfinder" pattern in ConnorGriffin/skills
 
 | Slot | Skill | Relation |
 |---|---|---|
-| One open decision, operator present | open-questions | Owns the interview for a single fork or a known finite docket; wayfinding builds the *map* of decisions and feeds ready frontier decisions to it |
-| Pre-work recon on one task | blindspot-pass | Recons a single brief's territory; wayfinding operates at initiative scale, and may dispatch blindspot-pass to de-fog one region |
-| The decisions themselves | applying-formal-rigor / gauntlet / throwaway-prototyping | A frontier decision resolves by derivation, adversarial review, or a built probe — wayfinding sequences them, never decides |
+| One open decision, operator present | open-questions | Owns the interview for a single fork or a known finite docket; initiative mode builds the *map* of decisions and feeds ready frontier decisions to it |
+| Pre-work recon on one task | recon (brief mode) | Recons a single brief's territory; initiative mode operates at initiative scale, and may dispatch the brief mode to de-fog one region |
+| The decisions themselves | applying-formal-rigor / gauntlet / throwaway-prototyping | A frontier decision resolves by derivation, adversarial review, or a built probe — initiative mode sequences them, never decides |
 | Persisting resolutions | decision-ledger | Every resolved node lands there (or in the tracker item itself) with provenance and a revisit condition |
 
 ## Protocol
@@ -48,7 +48,7 @@ initiative needs continuity, using its existing tracker or document.
    when no unresolved decision, anywhere upstream, could invalidate the
    ticket. Each ticket is a tracer-bullet vertical slice — it runs end-to-end,
    however thin — so the first build pass also tests the resolved decisions.
-5. **Handoff gate.** A build ticket leaves wayfinding only with three facts
+5. **Handoff gate.** A build ticket leaves initiative mode only with three facts
    attached: the decisions it depends on (resolved, linked), the observable
    behavior that proves the slice works, and the upstream decision whose
    reversal would invalidate it (or "none").
@@ -73,7 +73,7 @@ ancestor found = the ticket was minted from fog; pull it back to the map.
 Ends at a maintained map plus fog-free build tickets carrying the three-fact
 handoff. Downstream: the workflow layer's planning/execution skills own the
 tickets; open-questions conducts operator interviews for frontier decisions
-that need one; decision-ledger persists resolutions. Wayfinding never builds
+that need one; decision-ledger persists resolutions. Initiative mode never builds
 and never decides — it sequences. Return the map to the task owner and resume
 authorized fog-free work; unresolved decisions hold only dependent actions.
 

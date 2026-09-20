@@ -17,7 +17,7 @@ The suite has **seventeen skills: one usage entry and sixteen substantive discip
 | Understand the engineering choices | [Design rationale](Design-Rationale.md) |
 | Inspect what has actually been verified | [Testing and evidence](Testing-and-Evaluations.md) |
 | Install or resolve a host issue | [Installation](Installation-and-Harness-Compatibility.md) · [Troubleshooting](FAQ-and-Troubleshooting.md) |
-| Change the project responsibly | [Maintainer guide — current development](https://github.com/ZMS-Labs/epistemic-skills/blob/main/docs/MAINTAINING.md) |
+| Change the project responsibly | [Maintainer guide (editorial snapshot)](https://github.com/ZMS-Labs/epistemic-skills/blob/main/docs/MAINTAINING.md) |
 
 ### One small example
 

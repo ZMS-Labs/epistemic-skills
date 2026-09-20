@@ -1,7 +1,7 @@
 # Blast-radius quiz — optional close-out bookend
 
-> This is an optional close-out bookend, not part of the core blindspot pass. The
-> core pass (SKILL.md) runs *before* work starts; this runs *after*, at merge/close.
+> This is an optional close-out bookend, not part of the core recon pass. The
+> core pass (brief mode) runs *before* work starts; this runs *after*, at merge/close.
 
 The essay's *after* half. Use before merging/closing a non-trivial change when the
 operator (or a future you) needs to be sure the change is understood, not just green:

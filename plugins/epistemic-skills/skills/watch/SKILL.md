@@ -168,6 +168,8 @@ Do not fire when:
 - the request is to auto-remediate; or
 - the only proposed “mechanism” is the skill or current agent session.
 
+Activation discipline: design-argued; no shipped trigger battery as of this change.
+
 ## Method
 
 1. **Confirm that late notice changes an action.** Name the recipient and what

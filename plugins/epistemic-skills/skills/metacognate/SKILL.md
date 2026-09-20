@@ -28,6 +28,8 @@ stage has arrived. Reuse the current task, user decisions, observations and
 relevant prior reasoning; investigate missing facts rather than asking the user
 to reconstruct available context.
 
+Activation discipline: design-argued; no shipped trigger battery as of this change.
+
 ## Method
 
 1. **Recover the actual outcome.** What does the user need, and what would count

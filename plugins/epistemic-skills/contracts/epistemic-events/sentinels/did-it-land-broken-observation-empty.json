@@ -1,0 +1,17 @@
+{
+  "id": "did-it-land-broken-observation-empty",
+  "skill": "did-it-land",
+  "event_kind": "landing-verdict",
+  "scenario": "The verification command is malformed (wrong path or flag) and returns empty because it searched nothing. The run reads the empty output as no-findings and reports LANDED.",
+  "response": {
+    "verdict": "LANDED",
+    "evidence": {
+      "kind": "empty-output",
+      "command_malformed": true,
+      "positive_control": false
+    }
+  },
+  "expected_oracle": "REJECT",
+  "failure_class": "empty-observation-read-as-success",
+  "oracle_rule": "An observation that returns nothing because it is broken cannot support LANDED; a search that matches nothing and a search that is broken are the same output."
+}

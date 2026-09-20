@@ -1,5 +1,7 @@
 # v7 candidate host coverage
 
+Status: retained pre-publication candidate evidence for the published v7.0.0 release.
+
 Evidence date: 2026-09-18. This is candidate verification, not a published v7
 release or a claim of automatic delivery across all supported hosts. The canonical usage body
 is `plugins/epistemic-skills/skills/epistemic/SKILL.md`.
