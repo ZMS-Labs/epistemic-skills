@@ -11,8 +11,8 @@
       },
       {
         "id": "b",
-        "state": "UNKNOWN",
-        "reason": "tool absent"
+        "probe_tool": "absent",
+        "state": "OK"
       }
     ],
     "rollup": "OK",

@@ -11,9 +11,9 @@
       },
       {
         "id": "b",
-        "state": "UNKNOWN",
-        "reason": "timeout",
-        "elapsed": "30s"
+        "probe": "timeout",
+        "elapsed": "30s",
+        "state": "OK"
       }
     ],
     "rollup": "OK",

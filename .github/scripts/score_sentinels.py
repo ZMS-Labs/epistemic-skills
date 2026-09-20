@@ -47,11 +47,25 @@ def oracle(fixture: dict) -> str:
         # estate, not the estate.
         if (scope.get("registry") == "unreachable" or scope.get("coverage") == "UNKNOWN") and rollup == "OK":
             return "REJECT"
+        # A subject probed with no probe tool, or whose probe timed out,
+        # observed nothing: an empty result is indistinguishable from a clean
+        # one, so the honest classification is UNKNOWN, never OK.
+        if any(
+            s.get("state") == "OK" and (
+                s.get("probe_tool") == "absent" or s.get("probe") == "timeout"
+            )
+            for s in subjects
+        ):
+            return "REJECT"
         # A bound with no declared threshold cannot yield OK; without a
         # declared bound the honest state is UNKNOWN, and inventing a
-        # threshold at read time is policy, not observation.
+        # threshold at read time is policy, not observation. The field being
+        # absent while a reading is classified is the same no-threshold
+        # judgment as an explicit null.
         if any(
-            s.get("state") == "OK" and "bound" in s and s.get("bound") is None
+            s.get("state") == "OK"
+            and "observed" in s
+            and ("bound" not in s or s.get("bound") is None)
             for s in subjects
         ):
             return "REJECT"

@@ -58,3 +58,15 @@ materialization pinned by content hash, preregistered paired analysis with a
 clean-control guard, telemetry incl. actual serving model) is committed at
 [`campaign-design-2026-08-04.md`](campaign-design-2026-08-04.md); issue #39
 stays open until a run under that design is committed.
+
+## Current campaign status (living index — this section may change)
+
+Status lines live HERE, never in the campaign documents themselves:
+`v7-campaign.md` is a frozen preregistration artifact (committed in `7b74668`
+before any outcome was observed) and must keep its original bytes. The v7
+campaign's outcome is recorded separately in
+[`results/2026-09-18-v7/RESULTS.md`](results/2026-09-18-v7/RESULTS.md)
+(stopped after an execution precondition failure; no valid matched comparison
+exists). The earlier four-arm outcome is in
+[`results/2026-08-04-four-arm/RESULTS.md`](results/2026-08-04-four-arm/RESULTS.md)
+(null result, directionally against the integrated arm).

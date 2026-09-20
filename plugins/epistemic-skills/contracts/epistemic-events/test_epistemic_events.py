@@ -236,12 +236,13 @@ class EpistemicEventContractTests(unittest.TestCase):
             "must be accepted by the verifier; missing: "
             f"{sorted(mandated_kinds - set(MODULE.EVENT_KINDS))}",
         )
-        self.assertTrue(
-            retained_v1_vocabulary <= schema_kinds,
-            "retained v1 vocabulary: pairing-decision, consumer-gate-outcome "
-            "and merge-ruling must stay in the schema enum so stored "
-            "epistemic-event@1 records keep validating; removing them "
-            "requires a schema-version bump and a migration path",
+        self.assertEqual(
+            schema_kinds,
+            mandated_kinds | retained_v1_vocabulary,
+            "closed vocabulary: the schema enum must equal the map's mandated "
+            "kinds plus exactly the retained v1 vocabulary — anything else is "
+            "an unmandated, unretained kind that would let records no skill "
+            "produces and no contract retains validate silently",
         )
 
     def test_every_sentinel_fixture_is_rejected_by_the_scoring_oracle(self):
