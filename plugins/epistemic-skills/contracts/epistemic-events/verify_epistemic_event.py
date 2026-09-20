@@ -16,6 +16,11 @@ EVENT_KINDS = {
     "ledger-revisit", "continuity-reanchor", "interview-scope-decision",
     "audit-cut-decision", "frontier-decision",
     "probe-episode", "harvest-decision",
+    # Retired-but-valid v1 vocabulary: pairing-decision, consumer-gate-outcome
+    # and merge-ruling were deliberately retained when their producing skills
+    # were consolidated, so stored epistemic-event@1 records that use them keep
+    # validating. Removing them requires a schema-version bump and a migration.
+    "pairing-decision", "consumer-gate-outcome", "merge-ruling",
 }
 OUTCOME_CLASSES = {
     "correct", "incorrect", "partial", "unresolved",

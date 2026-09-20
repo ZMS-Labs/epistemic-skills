@@ -198,16 +198,24 @@ class EpistemicEventContractTests(unittest.TestCase):
         # supersession-parity pattern (verify_calibration.py self_test). A
         # producer validates events against the published JSON Schema; a
         # consumer runs the verifier; the skill-event map is the closed
-        # per-skill mandate. Where the three disagree, a producer gets a
+        # per-skill mandate. Where the surfaces disagree, a producer gets a
         # false PASS or a consumer refuses bytes a skill is mandated to emit.
-        # This asserts the three vocabularies are one set: the schema's
-        # event_kind enum, the verifier's EVENT_KINDS, and the union of every
-        # skill's mandated event_kinds.
+        #
+        # Parity is SUBSET-shaped, not three-way equality: every kind the map
+        # mandates must be accepted by the schema and the verifier (those two
+        # must remain one set), and the retired-but-valid v1 vocabulary
+        # (pairing-decision, consumer-gate-outcome, merge-ruling) must stay
+        # accepted so stored epistemic-event@1 records keep validating.
+        # Equality with the map's union would force removing the retained
+        # vocabulary and break consumers that revalidate stored events.
         #
         # HONEST SCOPE OF THIS ORACLE: it reads the schema and map documents,
-        # so it establishes that the three surfaces DECLARE the same closed
+        # so it establishes that the surfaces DECLARE a consistent closed
         # vocabulary — not that any JSON Schema implementation enforces it
         # (the same scope the calibration parity pin honestly claims).
+        retained_v1_vocabulary = {
+            "pairing-decision", "consumer-gate-outcome", "merge-ruling",
+        }
         with (ROOT / "epistemic-event.schema.json").open(encoding="utf-8") as handle:
             schema_kinds = set(json.load(handle)["properties"]["event_kind"]["enum"])
         mandated_kinds = {
@@ -222,14 +230,45 @@ class EpistemicEventContractTests(unittest.TestCase):
             "and the verifier EVENT_KINDS disagree: "
             f"{sorted(schema_kinds ^ set(MODULE.EVENT_KINDS))}",
         )
-        self.assertEqual(
-            set(MODULE.EVENT_KINDS),
-            mandated_kinds,
-            "verifier/map parity: verifier EVENT_KINDS must equal the union of the "
-            "skill-event map's mandated event_kinds, differing on: "
-            f"{sorted(set(MODULE.EVENT_KINDS) ^ mandated_kinds)}",
+        self.assertTrue(
+            mandated_kinds <= set(MODULE.EVENT_KINDS),
+            "verifier/map coverage: every skill-event-map mandated event_kind "
+            "must be accepted by the verifier; missing: "
+            f"{sorted(mandated_kinds - set(MODULE.EVENT_KINDS))}",
         )
-        self.assertEqual(schema_kinds, mandated_kinds)
+        self.assertTrue(
+            retained_v1_vocabulary <= schema_kinds,
+            "retained v1 vocabulary: pairing-decision, consumer-gate-outcome "
+            "and merge-ruling must stay in the schema enum so stored "
+            "epistemic-event@1 records keep validating; removing them "
+            "requires a schema-version bump and a migration path",
+        )
+
+    def test_every_sentinel_fixture_is_rejected_by_the_scoring_oracle(self):
+        # The corpus shape test proves every sentinel DECLARES
+        # expected_oracle == REJECT; this test executes each fixture through
+        # the production scoring oracle (.github/scripts/score_sentinels.py)
+        # and requires the actual verdict to match. A fixture the oracle
+        # accepts is a planted failure class the suite cannot detect, so the
+        # corpus and the oracle must move together.
+        oracle_path = ROOT.parents[3] / ".github" / "scripts" / "score_sentinels.py"
+        spec = importlib.util.spec_from_file_location("score_sentinels", oracle_path)
+        if spec is None or spec.loader is None:
+            raise RuntimeError("unable to load the scoring oracle module")
+        oracle_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(oracle_module)
+        for path in sorted(SENTINEL_DIR.glob("*.json")):
+            if path.name == "operational-scenarios.json":
+                continue
+            with path.open(encoding="utf-8") as handle:
+                fixture = json.load(handle)
+            self.assertEqual(
+                oracle_module.oracle(fixture),
+                fixture["expected_oracle"],
+                f"{path.name}: the scoring oracle does not produce the "
+                f"expected verdict; the planted failure class is not "
+                f"actually detected",
+            )
 
     def test_sentinel_corpus_files_follow_the_closed_sentinel_shape(self):
         by_skill = {}

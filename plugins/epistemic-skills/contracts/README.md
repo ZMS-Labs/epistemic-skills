@@ -35,10 +35,11 @@ judgment it did not make or re-verify.
 ## Epistemic event collection
 
 `epistemic-events/` contains a separate, minimized event/outcome contract and
-the closed seventeen-skill eligibility map (seventeen is derived from
-`epistemic-events/skill-event-map.json`, one entry per packaged skill). It is
-collection machinery, not an
-eighteenth discipline: skill results are produced first, absent eligibility is
+the closed eligibility map over the packaged skills (one entry per skill —
+seventeen entries: the usage entry plus the sixteen disciplines — derived from
+`epistemic-events/skill-event-map.json`). It is collection machinery, not an
+eighteenth skill (a seventeenth discipline): skill results are produced first,
+absent eligibility is
 silent, and a missing or failed collector cannot change the primary result.
 These records never include raw skill output. Like receipts, collection
 receipts prove envelope facts only and do not upgrade outcome truth.
