@@ -5,6 +5,15 @@
 
 # Epistemic Skills
 
+<!-- ZMS-ESTATE:BEGIN -->
+
+> **Obligation:** `best effort` · **Stage:** `building` · **Load-bearing:** `unknown — not yet observed`
+> **Purpose:** `governance_method`
+> **Canonical for:** epistemic-agent-skill-package
+> Estate authority: the ZMS fleet governance registry (private), `governance/estate.yaml`.
+
+<!-- ZMS-ESTATE:END -->
+
 Reusable methods for AI agents to examine assumptions, investigate failures,
 evaluate decisions, and verify that work achieved its intended result.
 *Epistemic* means concerned with what we know and how we know it.
