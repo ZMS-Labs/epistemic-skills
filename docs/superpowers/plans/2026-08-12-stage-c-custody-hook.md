@@ -1216,7 +1216,7 @@ git commit --signoff -m "feat(mission-custody): PreToolUse wiring for claude/kim
 Replace the line `- Stage C (enforcement) is gated on the tracer retro.` with:
 
 ```markdown
-- Stage C (enforcement): the tracer retro (2026-08-11, vanta
+- Stage C (enforcement): the tracer retro (2026-08-11, feature
   `mission/tracer-media-missing-record` @ `4540ddb`) ruled teeth IN, scoped to
   the successor mission's real actuators. Shipped as `custody_hook.py` +
   `gate` (design: `docs/superpowers/specs/2026-08-12-stage-c-custody-hook-design.md`).
