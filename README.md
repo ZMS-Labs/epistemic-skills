@@ -42,7 +42,7 @@ method when the task exposes a question that the ordinary check cannot settle.
 |---|---|
 | An explanation sounds plausible, but the bug keeps returning. | What observation distinguishes this cause from the alternatives? |
 | The configuration changed, but the application behaves the same. | Which artifact does the consumer actually load? |
-| A design review produces agreement without testing assumptions. | What would change the decision—and who examined that possibility? |
+| A design review produces agreement without testing assumptions. | What would change the decision, and who examined that possibility? |
 | Work resumes with a confident but stale summary. | Which remembered facts still hold, and what evidence supports them? |
 | Process consumes more effort than the task. | What is the smallest check that could change the next action? |
 
@@ -55,14 +55,14 @@ explain what the project has actually verified.
 **Illustrative scenario: a service still uses an old setting after a change.**
 This example explains the method; it is not a recorded performance result.
 
-> **Request:** “Fix the setting and verify that the service is using it.”
+> **Request:** "Fix the setting and verify that the service is using it."
 
 | Moment | Useful work |
 |---|---|
 | Investigate | Triage, with applicable Systematic Debugging, compares the file you edited with the file the process loads. A startup trace identifies a different configuration path. |
 | Repair | The agent corrects the supported cause within the original request's authority. Finding the cause is not the end of an authorized repair. |
 | Verify | Did-it-land checks the consumer's behavior after reload. If persistence through a restart was requested, it checks that separately. |
-| Explain | “I used Triage to identify the loaded configuration and Did-it-land to verify its effect. The service now reports the expected value after restart.” |
+| Explain | "I used Triage to identify the loaded configuration and Did-it-land to verify its effect. The service now reports the expected value after restart." |
 
 Only claim the observations actually made. If the runtime cannot be reached,
 report that limitation and leave the landing claim unverified.
@@ -71,10 +71,10 @@ report that limitation and leave the landing claim unverified.
 
 ## Five-minute start
 
-1. **Install one copy for your host.** Use the [installation guide](docs/INSTALLATION.md); avoid combining native and generic installs.
-2. **Reload or start a fresh task.** Verify the tag's full skill count and the source your host actually loaded.
-3. **Load `epistemic`, or invoke the method you need directly.** A substantive method does not require a separate setup ceremony.
-4. **Give it a real task.** Ask for the outcome, provide the relevant context, and retain your normal control over scope and authority.
+1. Install one copy for your host. Use the [installation guide](docs/INSTALLATION.md); avoid combining native and generic installs.
+2. Reload or start a fresh task. Verify the tag's full skill count and the source your host actually loaded.
+3. Load `epistemic`, or invoke the method you need directly. A substantive method does not require a separate setup ceremony.
+4. Give it a real task. Ask for the outcome, provide the relevant context, and retain your normal control over scope and authority.
 
 For a host without a native package surface:
 
@@ -164,7 +164,7 @@ The repository uses the [Agent Skills format](https://agentskills.io/specificati
 with thin adapters for Claude Code, Codex, Cursor, Gemini CLI, Antigravity, Kimi,
 ZCode, and generic hosts. ChatGPT/OpenAI bundles are generated snapshots.
 
-**Choose your host in the [installation guide](docs/INSTALLATION.md).**
+Choose your host in the [installation guide](docs/INSTALLATION.md).
 Use an immutable release, preserve customizations, reload, and verify the loaded
 source. Host packaging, discovery, startup delivery, and actual method application
 are different levels of evidence. The [host report](docs/release/v7-host-coverage.md)
@@ -201,7 +201,7 @@ change to its authoring location, generated surfaces, and relevant checks.
 | Required checks passed on the release candidate | [Hosted gate receipt](https://github.com/ZMS-Labs/epistemic-skills/releases/download/v7.0.0/exact-gates.json): deterministic, security, packaging, and CodeQL outcomes |
 | The designated reviewer approved the disclosed scope | [Review receipt](https://github.com/ZMS-Labs/epistemic-skills/releases/download/v7.0.0/designated-review.json): shared implementation context, not independent or blinded |
 | Host support has measured limits | [Coverage report](docs/release/v7-host-coverage.md): observed discovery and source checks are distinguished from unexercised model behavior |
-| Comparative superiority is unproved | The [v6–v7 pilot](plugins/epistemic-skills/evals/epistemic-flexibility/behavioral/results/2026-09-18-v7/RESULTS.md) produced zero valid pairs. The earlier four-arm experiment found no arm separation. |
+| Comparative superiority is unproved | The [v6-v7 pilot](plugins/epistemic-skills/evals/epistemic-flexibility/behavioral/results/2026-09-18-v7/RESULTS.md) produced zero valid pairs. The earlier four-arm experiment found no arm separation. |
 
 The known [macOS custody limitation](https://github.com/ZMS-Labs/epistemic-skills/issues/162)
 remains: do not rely on distinct-filename or exclusion guarantees on case-insensitive
