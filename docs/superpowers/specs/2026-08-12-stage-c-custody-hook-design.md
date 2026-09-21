@@ -6,7 +6,7 @@ Status: approved by operator (section-by-section, brainstorming session 2026-08-
 
 ## Provenance
 
-- Tracer retro (`tracer-media-missing`, RETRO.md on vanta branch
+- Tracer retro (`tracer-media-missing`, RETRO.md on the feature branch
   `mission/tracer-media-missing-record` @ `4540ddb`, ruling quoted in es#117):
   **"Build teeth (PreToolUse enforcement boundary earned)… scoped to the successor
   mission's real actuators (arr acquisition calls, filesystem moves), not built
