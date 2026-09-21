@@ -46,7 +46,7 @@ boundedness.
 
 - Skill: `manifest`
 - CLI: `plugins/epistemic-skills/contracts/mission-custody/custody_cli.py`
-- Stage C (enforcement): the tracer retro (2026-08-11, vanta
+- Stage C (enforcement): the tracer retro (2026-08-11, feature
   `mission/tracer-media-missing-record` @ `4540ddb`) ruled teeth IN, scoped to
   the successor mission's real actuators. Shipped as `custody_hook.py` +
   `gate` (design: `docs/superpowers/specs/2026-08-12-stage-c-custody-hook-design.md`).

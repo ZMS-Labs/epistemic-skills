@@ -11,6 +11,6 @@ When the task involves scholarly literature, "studies show", Consensus/Scite, or
 2. Org policy: see your organization's private evidence-library policy doc (tiers 0/1/2/3) if one exists.
 3. Holdings check + deposit (or explicit `OPERATOR_PENDING` / `UNVERIFIED`) — never silent skip.
 4. CLI: your organization's Zotero tooling, if configured (`doctor`, `deposit`, `watch` subcommands).
-5. Do **not** open Zotero for ordinary coding, gitops, UAT packets, or Vanta "consensus-pooled" naming.
+5. Do **not** open Zotero for ordinary coding, gitops, UAT packets, or project-specific consensus-pooled naming.
 
 If unsure whether literature is in play: ask once, or skip Zotero and say Tier 0.
