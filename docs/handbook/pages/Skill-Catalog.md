@@ -43,7 +43,7 @@ There are seventeen skills: the `epistemic` usage guide and sixteen methods. The
 | [Write Goal](Skill-Write-Goal.md) | What counts as done, and can your agent's app track it as a goal? | A written definition of done; a goal is switched on only when you allow it |
 | [Decision Ledger](Skill-Decision-Ledger.md) | Can the next session find this reasoning and recheck it? | One record the next session can use, reusing an existing one when it is enough |
 | [Manifest](Skill-Manifest.md) | Does this long job need a formal record that survives interruptions? | A mission record the next session can resume from; only someone other than the agent that did the work can accept it as done |
-| [Outsource](Skill-Outsource.md) | Can another agent or tool pick this up without this chat? | A fixed handoff packet it can work from, and a check of whatever comes back |
+| [Outsource](Skill-Outsource.md) | Can another agent or tool pick this up without this chat? | A fixed handoff packet it can work from, a check of whatever comes back, or — when ownership itself moves — a recorded acceptance and a completed handover |
 | [Context Audit](Skill-Context-Audit.md) | Are the agent's loaded instructions conflicting or stale? | A list of conflicts or duplicates and a proposed fix you can review |
 
 For close calls between similar methods, see [How the Pieces Fit](How-the-Pieces-Fit.md). For worked examples, see [Workflow Recipes](Workflow-Recipes.md).

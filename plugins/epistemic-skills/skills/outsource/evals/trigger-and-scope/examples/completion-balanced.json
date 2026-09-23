@@ -16,5 +16,17 @@
     "outbound_created": false,
     "caller_next_action": "integrate verified patch",
     "caller_task_complete": false
+  },
+  {
+    "id": "custody-acceptance-terminal",
+    "action": "verify-acceptance",
+    "stored_verbatim": true,
+    "acceptance_readback": true,
+    "readback_verified": true,
+    "transferred": true,
+    "divestiture_complete": true,
+    "origin_residual": "none",
+    "prompt_emitted": false,
+    "outbound_created": false
   }
 ]

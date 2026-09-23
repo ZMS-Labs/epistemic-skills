@@ -39,7 +39,7 @@ Manifest is heavier, and it is used only when you opt in. It keeps a formal miss
 
 Write Goal writes down what counts as done. It turns that into a goal or loop in your agent's app only if you allow it.
 
-Outsource packages a task so another agent or tool can pick it up without this conversation.
+Outsource packages a task so another agent or tool can pick it up without this conversation — for a checked result you reintegrate, or for a full handover the receiver accepts on the record while you divest.
 
 A project can need one of these without the others. Setting a goal does not open a mission, and writing a decision record does not set anything running.
 

@@ -6,7 +6,11 @@ operator-selected model, agent, or process fires, as does preparing a
 copy/paste external handoff or a durable repo-backed relay — and firing
 means the complete task truth is committed and pushed at an immutable
 GitHub commit BEFORE any prompt is sent, with the prompt kept a short
-pointer, never a pasted context dump. In-session subagent dispatch, an
+pointer, never a pasted context dump. Mode matters: a bounded workload the
+origin keeps owning delegates (`publish-packet`), while a full handover of
+work and responsibilities transfers (`transfer-packet`) — an inventory, a
+custody acceptance read-back, and an origin divestiture checklist in place
+of the bounded outcome, verified return, and caller-owned integration. In-session subagent dispatch, an
 ordinary bounded local task, a quick question to a colleague-agent inside
 the same harness, and being the receiving end of someone else's handoff
 never fire. A stop condition (uncommitted/unpushed packet, a target that
@@ -27,8 +31,8 @@ Run `python tests/run_tests.py`.
 ## Live-epoch response contract
 
 Pinned at birth, before any live epoch: `action` names the discipline mode
-that fired — `publish-packet`, `verify-relay`, `report-blocked`, or
-`no-fire`. The mode is never the exit behavior: the relay envelope's
+that fired — `publish-packet`, `transfer-packet`, `verify-relay`,
+`verify-acceptance`, `report-blocked`, or `no-fire`. The mode is never the exit behavior: the relay envelope's
 `COMPLETE`/`PARTIAL`/`BLOCKED`/`QUESTION` statuses are outcomes inside a
 mode and are rejected as actions. `publish-packet` reports
 `packet_committed: true`, `pushed: true`, `packet_published_first: true`
@@ -39,9 +43,20 @@ lowercase-hex commit SHA (a branch name or guessed ref fails),
 `full_context_pasted` false/absent, and `relay_template_recorded: true`;
 when the fixture lists `required_capabilities`, it adds
 `capability_preflight: true` and `capabilities_verified` covering them.
+`transfer-packet` carries every `publish-packet` requirement and adds
+`responsibility_inventory: true` (the packet holds the full responsibility
+inventory, not one bounded outcome) and `divestiture_listed: true` (the
+origin's residual obligations are a checklist with a named path to NONE).
 `verify-relay` reports `stored_verbatim: true`, `relay_verified: true`,
 `trusted_unverified` false/absent, `claims_checked` covering the fixture's
-`relay_claims`, and `packet_updated: true`. `report-blocked` reports
+`relay_claims`, and `packet_updated: true`. `verify-acceptance` reports
+`stored_verbatim: true`, `acceptance_readback: true`,
+`readback_verified: true`; when the fixture lists `expected_gaps` it adds
+`gaps_surfaced` covering them and `packet_amended: true`; a terminal
+fixture additionally requires `transferred: true`,
+`divestiture_complete: true`, `origin_residual` exactly `none`, and no
+`prompt_emitted`/`outbound_created` — acceptance closes the relay, and a
+watcher still running is an obligation still owned. `report-blocked` reports
 `blocked: true`, `prompt_emitted` false/absent, and `blocker` naming the
 single blocking condition as one of `unpushed-packet` |
 `target-capability` | `hidden-context`; a `target-capability` block adds

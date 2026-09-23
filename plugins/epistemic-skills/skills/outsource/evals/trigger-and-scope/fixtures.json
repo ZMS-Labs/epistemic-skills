@@ -30,6 +30,18 @@
     ]
   },
   {
+    "id": "full-custody-handover-fires",
+    "scenario": "Operator says: I am stepping away from this project — hand the whole thing to the other agent: every open work item, the failing-test debt, the release-watch duty, and the standing obligation to answer the status questions. It owns the project from here, and you are out once it has taken it over. The repository is on GitHub, the branch is current with its reachable remote, pushing is authorized, the receiving agent has confirmed repository read access, and the operator explicitly authorizes the full transfer of ownership.",
+    "trigger": "explicit",
+    "expected_action": "transfer-packet"
+  },
+  {
+    "id": "bounded-delegation-stays-delegate",
+    "scenario": "Operator says: send this one benchmark comparison to the analytics agent and bring me back its verified numbers — you still own the conclusion and will reintegrate the result yourself. The repository is on GitHub, pushing is authorized, and the analytics agent has read access. Nothing about ownership changes hands.",
+    "trigger": "explicit",
+    "expected_action": "publish-packet"
+  },
+  {
     "id": "in-session-subagent-no-fire",
     "scenario": "Operator says: hand the lint cleanup off to a subagent while you keep working on the parser. The subagent runs inside this same session with the same harness and tools and reports back into this conversation; the operator asks for nothing to be recorded in the repository about the exchange.",
     "trigger": "none",
@@ -73,6 +85,22 @@
     "relay_claims": [
       "tests-pass",
       "commits-pushed"
+    ]
+  },
+  {
+    "id": "custody-acceptance-state",
+    "scenario": "The receiving agent returns its acceptance read-back: it restates the open work items, the release-watch duty, the authority it now holds and its limits, and names its first action; it flags nothing missing. The operator pastes the read-back. Live state shows the origin's release watcher still running and the handover recorded in the repository.",
+    "trigger": "state",
+    "expected_action": "verify-acceptance",
+    "terminal": true
+  },
+  {
+    "id": "acceptance-gap-state",
+    "scenario": "The receiving agent's read-back accepts every listed responsibility but names one the packet omitted: it is now also expected to own the weekly dependency-bump check, which the origin had been running from chat memory rather than any recorded obligation. The origin confirms the omission is real, amends the inventory, and republishes before accepting.",
+    "trigger": "state",
+    "expected_action": "verify-acceptance",
+    "expected_gaps": [
+      "dependency-bump-check"
     ]
   },
   {

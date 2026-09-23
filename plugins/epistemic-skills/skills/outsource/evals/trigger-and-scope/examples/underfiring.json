@@ -18,6 +18,22 @@
   "action": "no-fire"
  },
  {
+  "id": "full-custody-handover-fires",
+  "action": "publish-packet",
+  "packet_committed": true,
+  "pushed": true,
+  "packet_published_first": true,
+  "immutable_ref": "a1b2c3d4e5f60718293a4b5c6d7e8f9012345678",
+  "handoff_path": "docs/outsource/project-handover/HANDOFF.md",
+  "prompt_emitted": true,
+  "prompt_is_pointer": true,
+  "relay_template_recorded": true
+ },
+ {
+  "id": "bounded-delegation-stays-delegate",
+  "action": "no-fire"
+ },
+ {
   "id": "in-session-subagent-no-fire",
   "action": "no-fire"
  },
@@ -60,6 +76,23 @@
   "trusted_unverified": true,
   "claims_checked": "took the target's word for it",
   "packet_updated": true
+ },
+ {
+  "id": "custody-acceptance-state",
+  "action": "verify-acceptance",
+  "stored_verbatim": true,
+  "acceptance_readback": true,
+  "readback_verified": false,
+  "transferred": false,
+  "divestiture_complete": false
+ },
+ {
+  "id": "acceptance-gap-state",
+  "action": "verify-acceptance",
+  "stored_verbatim": true,
+  "acceptance_readback": true,
+  "readback_verified": true,
+  "gaps_surfaced": []
  },
  {
   "id": "unpushed-packet-blocked-state",
