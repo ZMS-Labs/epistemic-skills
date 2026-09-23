@@ -91,7 +91,7 @@ replays the 14 and the 0 with only Python and Git.
 ## Five-minute start
 
 1. Install one copy for your host, meaning the AI tool the skills run in, such as Claude Code or Codex. Use the [installation guide](docs/INSTALLATION.md), and don't install the skills twice, once through the tool's own plugin system and again as a generic skills install.
-2. Reload the tool or start a new task. Check that every skill in the release appears, and that the tool loaded them from the copy you installed.
+2. Reload the tool or start a new task. Check the tag's full skill count, and that the tool loaded the skills from the copy you installed.
 3. Load `epistemic`, or call the method you need directly. Nothing else has to be set up first.
 4. Give it a real task. Say what outcome you want, give it the context it needs, and keep the control over scope and permissions you would normally keep.
 
