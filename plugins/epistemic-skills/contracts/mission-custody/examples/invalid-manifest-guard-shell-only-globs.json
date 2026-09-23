@@ -25,7 +25,7 @@
         ],
         "command_regexes": [],
         "path_globs": [
-          "M:/Media/**"
+          "E:/Media/**"
         ]
       }
     ]

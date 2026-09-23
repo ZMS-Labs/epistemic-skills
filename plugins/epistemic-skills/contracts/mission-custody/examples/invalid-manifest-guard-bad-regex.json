@@ -39,7 +39,7 @@
           "\\b(mv|robocopy|rsync|Move-Item)\\b[^\\n]*[Mm]edia"
         ],
         "path_globs": [
-          "M:/Media/**",
+          "E:/Media/**",
           "//192.0.2.10/Media/**"
         ]
       }

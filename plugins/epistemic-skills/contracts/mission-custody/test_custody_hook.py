@@ -350,7 +350,7 @@ def test_cursor_mcp_without_cwd_discovers_via_workspace_roots() -> None:
     with tempfile.TemporaryDirectory() as tmp:
         ws = Path(tmp)
         guards = [{"name": "no-arr-mutate", "tool_names": ["mcp__arr__mutate"],
-                   "command_regexes": [":8989/api"], "path_globs": []}]
+                   "command_regexes": [":8002/api"], "path_globs": []}]
         m = Mission.open(ws, "hook-mcp-roots", "i", "operator:t", "agent:t",
                          actor="agent:t", guard_mode="enforce",
                          actuator_guards=guards)
@@ -360,7 +360,7 @@ def test_cursor_mcp_without_cwd_discovers_via_workspace_roots() -> None:
 
         # NO cwd key at all -- exactly what beforeMCPExecution documents
         payload = {"tool_name": "mcp__arr__mutate",
-                   "tool_input": json.dumps({"url": "http://h:8989/api/v3/cmd"}),
+                   "tool_input": json.dumps({"url": "http://h:8002/api/v3/cmd"}),
                    "workspace_roots": [str(nested)]}
         check("hook-cursor-mcp-no-cwd-blocks-via-roots",
               run_hook("cursor", payload).returncode == 2)

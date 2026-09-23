@@ -162,7 +162,7 @@ def _guard_glob_regex(glob: str) -> "re.Pattern[str]":
     """Compile a guard path glob, honouring the trailing-separator
     directory marker (es#155, gate half).
 
-    'M:/Media/' normalized to an exact 'M:/Media' and bound NOTHING under
+    'E:/Media/' normalized to an exact 'E:/Media' and bound NOTHING under
     the directory -- for an ARMED guard that is a silent false-allow on the
     entire subtree the operator evidently meant. Expanded to the compiler's
     trailing-base form, the same directory-marker reading scope entries and

@@ -256,7 +256,7 @@ def test_manifest_guard_rules_shape() -> None:
     rec["authority"]["guard_mode"] = "audit"
     rec["authority"]["actuator_guards"] = [{
         "name": "arr", "tool_names": ["Bash"],
-        "command_regexes": ["7878"], "path_globs": []}]
+        "command_regexes": ["8001"], "path_globs": []}]
     check("manifest-guard-rules-inline-valid", validate_record(rec) == [])
     bad = copy.deepcopy(rec)
     bad["authority"]["actuator_guards"][0]["tool_names"] = []
@@ -277,7 +277,7 @@ def test_manifest_guard_inert_shapes_rejected() -> None:
     rec = copy.deepcopy(valid_manifest())
     rec["authority"]["actuator_guards"] = [{
         "name": "g", "tool_names": ["Bash"],
-        "command_regexes": [], "path_globs": ["M:/Media/**"]}]
+        "command_regexes": [], "path_globs": ["E:/Media/**"]}]
     check("guard-shell-only-globs-inert", validate_record(rec) != [])
 
     rec = copy.deepcopy(valid_manifest())
@@ -289,7 +289,7 @@ def test_manifest_guard_inert_shapes_rejected() -> None:
     rec = copy.deepcopy(valid_manifest())
     rec["authority"]["actuator_guards"] = [{
         "name": "g", "tool_names": ["mcp__sonarr__post"],
-        "command_regexes": [], "path_globs": ["M:/Media/**"]}]
+        "command_regexes": [], "path_globs": ["E:/Media/**"]}]
     check("guard-mcp-only-globs-inert", validate_record(rec) != [])
 
     rec = copy.deepcopy(valid_manifest())
@@ -320,12 +320,12 @@ def test_unhashable_guard_mode_returns_validation_error() -> None:
     rec = copy.deepcopy(valid_manifest())
     rec["authority"]["actuator_guards"] = [{
         "name": "g", "tool_names": ["Bash", "Write"],
-        "command_regexes": [], "path_globs": ["M:/Media/**"]}]
+        "command_regexes": [], "path_globs": ["E:/Media/**"]}]
     check("guard-mixed-tools-pass", validate_record(rec) == [])
     rec = copy.deepcopy(valid_manifest())
     rec["authority"]["actuator_guards"] = [{
         "name": "g", "tool_names": ["FutureTool"],
-        "command_regexes": [], "path_globs": ["M:/Media/**"]}]
+        "command_regexes": [], "path_globs": ["E:/Media/**"]}]
     check("guard-unknown-tools-pass", validate_record(rec) == [])
 
 
