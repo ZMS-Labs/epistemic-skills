@@ -4,15 +4,15 @@
 
 ### Do I have to run the skills in order?
 
-No. Load the usage entry when needed, then apply a substantive method when its conditions arise. Direct invocation is supported through the host's actual interface. [The catalog](Skill-Catalog.md) starts with human questions rather than a sequence.
+No. Load the usage guide when needed, then apply a method when its conditions arise. Direct invocation is supported through the host's actual interface. The [Skill Catalog](Skill-Catalog.md) is organized by the question each method answers.
 
 ### Does this require Superpowers?
 
-No external package is a required dependency. Triage prefers applicable, available Superpowers systematic-debugging and integrates its own causal standard into that investigation. If unavailable, it uses its shipped standalone procedure and identifies the provider actually used.
+No external package is a required dependency. [Superpowers](https://github.com/obra/superpowers) is a separate open-source skills library. When its systematic-debugging skill is available and applies, Triage uses it and brings its own standard for naming a cause into that investigation. If it is unavailable, Triage uses its own standalone procedure and says which one it actually used.
 
 ### The agent announces a skill but does not seem to use it.
 
-Ask which instructions it loaded, what evidence it examined, and what contribution followed. A name or startup message is not application. The usage entry calls for a concise contribution statement; a valid result may also be “the existing approach was adequate.”
+Ask which instructions it loaded, what evidence it examined, and what contribution followed. A name or startup message is not application. The usage guide calls for a concise contribution statement; a valid result may also be “the existing approach was adequate.”
 
 ### The installed version looks right, but behavior is old.
 
@@ -32,7 +32,7 @@ No. Ordinary review honors the user's designated reviewer and reports actual sep
 
 ### Is v7 proven better than v6?
 
-No. The bounded comparison produced zero valid pairs, so it supports no superiority claim. Required release checks passed; those checks establish their particular contracts, not universal task benefit. See [Testing and evidence](Testing-and-Evaluations.md).
+No. The bounded comparison produced zero valid pairs, so it supports no superiority claim. Required release checks passed; those checks establish their particular contracts, not universal task benefit. See [Testing and Evaluations](Testing-and-Evaluations.md).
 
 ### Can I use mission custody on a case-insensitive filesystem?
 

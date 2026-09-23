@@ -254,7 +254,8 @@
     {
       "path": "docs/release/RELEASE-5.1.0.md",
       "source_sha256": "731eab7452519b2e93034a9e924f4b56263f15c29bde527f1c09fb396e3dc2cc",
-      "public_copy_sha256": "16533df4d8e35b605842fe489f9d7fa8e053ceada9b5c2b4a193ec10c9b9acae"
+      "public_copy_sha256": "74e33a3264c3934dc80b2c8c1024cd114f8bc54e693fc626a946f971afcc39d5",
+      "note": "2026-09-22: second redaction; host-literal class descriptions replace the subnet, service ports and drive mapping, and a dated correction paragraph was added. 2026-09-23: dated corrections under the two SternOne dispositions note that the README now names Zach Stern."
     },
     {
       "path": "docs/superpowers/plans/2026-07-20-helix.md",

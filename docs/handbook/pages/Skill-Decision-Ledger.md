@@ -6,7 +6,7 @@
 
 Decision Ledger has three modes: persist a consequential decision, re-anchor prior claims when resuming, and compare an original prediction with its later outcome. A sufficient ADR, issue, plan, or goal contract can already be the right home.
 
-**Use it when:** A future consumer needs a decision or assumption that lacks durable provenance; resumed work depends on prior-state claims; or an outcome has become observable.
+**Use it when:** A future session or reader needs a decision or assumption that lacks durable provenance; resumed work depends on prior-state claims; or an outcome has become observable.
 
 **Use something simpler when:** A routine choice has no downstream consequence, or an existing artifact already satisfies the persistence need. Reuse does not waive a needed freshness check.
 

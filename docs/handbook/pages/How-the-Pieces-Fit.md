@@ -2,11 +2,14 @@
 
 # Different questions need different methods
 
-The suite is organized around decisions an agent must make, not around a compulsory workflow. A method returns its result to the task owner, who continues the authorized work. The map below shows relationships, not a required sequence.
+Each method answers a different question an agent runs into. A method hands its result back to whoever owns the task, and they carry on with the work they were asked to do. The map groups the methods by the kind of question they answer.
 
-![Method families: frame the question, examine a decision, verify an outcome, and carry work forward. Choose the method for the question; these are not mandatory stages.](https://raw.githubusercontent.com/ZMS-Labs/epistemic-skills/main/docs/assets/method-map.svg)
+<picture>
+  <source media="(max-width: 600px)" srcset="https://raw.githubusercontent.com/ZMS-Labs/epistemic-skills/main/docs/assets/method-map-mobile.svg">
+  <img src="https://raw.githubusercontent.com/ZMS-Labs/epistemic-skills/main/docs/assets/method-map.svg" alt="Method map in four groups. Frame the question: Metacognate, Recon, Resolve and Open Questions. Examine a decision: Perspective and Gauntlet. Verify an outcome: Health, Triage, Did It Land, Watch and Evidence-Locked UAT. Carry work forward: Write Goal, Decision Ledger, Manifest, Outsource and Context Audit. Epistemic is the shared usage guide. You can pick any method; the groups are not stages." width="1280">
+</picture>
 
-*The diagram is a current editorial documentation asset. [The catalog](Skill-Catalog.md) provides the full text equivalent and links to every method.*
+*The [Skill Catalog](Skill-Catalog.md) lists the same groups in text, with a link to every method.*
 
 ### Reflection, a lens, or a panel?
 
@@ -16,7 +19,7 @@ The suite is organized around decisions an agent must make, not around a compuls
 | **Perspective** | Apply a useful lens to a bounded concern | “What makes this migration reversible?” |
 | **Gauntlet** | Compare separate examinations and adjudicate material tensions | “Should this consequential migration proceed under these conditions?” |
 
-Perspective can adapt or use several lenses. Gauntlet adds a shared subject, plural scrutiny, evidence checking, and adjudication. Counting lenses does not create that distinction.
+Perspective can use one lens or several. Gauntlet adds more: every review looks at the same fixed version of the proposal or decision, the findings are checked against the evidence, and a final judgment weighs them against each other. Adding lenses to Perspective does not turn it into a Gauntlet.
 
 ### State, cause, effect, or continuity of observation?
 
@@ -30,8 +33,14 @@ Perspective can adapt or use several lenses. Gauntlet adds a shared subject, plu
 
 ### A record, a mission, or a goal?
 
-**Decision Ledger** makes consequential reasoning recoverable and rechecks prior claims. It should reuse adequate ADRs or task records. **Manifest** is a heavier opt-in custody contract with receipted effects and distinct-actor acceptance. **Write Goal** defines the completion contract and adapts authorized activation to a native goal or loop. **Outsource** packages a task so a remote target can work without the conversation.
+Decision Ledger keeps the reasoning behind an important decision where a later session can find it and recheck it. If a decision record, issue or plan already holds that reasoning, it reuses that record instead of starting a new one.
 
-A project can need one of these without needing the others. Native goals do not automatically create missions; a durable ADR does not automatically activate an executor.
+Manifest is heavier, and it is used only when you opt in. It keeps a formal mission record, with a receipt for each file change made through it, and someone other than the agent that did the work must accept the mission before it closes.
 
-See [Design rationale](Design-Rationale.md) for the tradeoffs and [worked examples](Workflow-Recipes.md) for concrete combinations.
+Write Goal writes down what counts as done. It turns that into a goal or loop in your agent's app only if you allow it.
+
+Outsource packages a task so another agent or tool can pick it up without this conversation.
+
+A project can need one of these without the others. Setting a goal does not open a mission, and writing a decision record does not set anything running.
+
+[Design Rationale](Design-Rationale.md) explains the tradeoffs, and [Workflow Recipes](Workflow-Recipes.md) shows the methods used together.
