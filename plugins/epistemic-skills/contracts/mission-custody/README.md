@@ -82,7 +82,7 @@ boundedness.
   (URLs, paths) are coverable by regex, crudely and deliberately over-broad.
   The haystack is `json.dumps` output: backslashes and quotes in arguments
   are JSON-escaped before your regex sees them, so prefer matching on
-  `host:port` substrings (e.g. `:7878/api`) over literal Windows paths.
+  `host:port` substrings (e.g. `:8001/api`) over literal Windows paths.
   Unknown tool names are the operator's responsibility: the validator refuses
   silently-inert shapes only for the known shell / fs-write / `mcp__` classes.
 

@@ -41,14 +41,14 @@ Two optional fields inside `authority`:
     {
       "name": "arr-api-mutations",
       "tool_names": ["Bash"],
-      "command_regexes": ["https?://[^\\s]*(7878|8989|8686|9696)[^\\s]*/api/"],
+      "command_regexes": ["https?://[^\\s]*(8001|8002|8003|8004)[^\\s]*/api/"],
       "path_globs": []
     },
     {
       "name": "media-fs-moves",
       "tool_names": ["Bash", "Write", "Edit"],
       "command_regexes": ["\\b(mv|robocopy|rsync|Move-Item)\\b[^\\n]*[Mm]edia"],
-      "path_globs": ["M:/Media/**", "//192.0.2.10/Media/**"]
+      "path_globs": ["E:/Media/**", "//192.0.2.10/Media/**"]
     }
   ]
 }

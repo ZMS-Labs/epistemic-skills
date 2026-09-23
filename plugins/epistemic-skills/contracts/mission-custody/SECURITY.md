@@ -96,7 +96,7 @@ Guard `path_globs` are matched against a **textual normalization** of the
 target path: `_guard_norm_path` lowercases, unifies slashes, and collapses
 `..` segments lexically. It never consults the filesystem. That keeps armed
 guards deterministic on paths that do not exist yet and lets the synthetic-
-drive fixtures (`M:/Media/...`) run on hosts that have no such drive — and it
+drive fixtures (`E:/Media/...`) run on hosts that have no such drive — and it
 opens a measured divergence between what the guard matches and where a write
 lands (gauntlet ruling R15, run `es-v6-candidate-freeze-2026-08-18`; probe
 evidence `docs/v6/evidence/r15-guard-lexical-probe-2026-08-18.md`):
@@ -133,8 +133,8 @@ directories that contain the symlinks as well as the target tree.
 
 A `path_globs` entry ending in `/` (or `\`) is a **directory marker**: it now
 matches the directory and everything under it. It previously normalized to an
-exact name and matched almost nothing — an armed guard declaring `M:/Media/`
-silently allowed every write under `M:/Media/`. The same reading covers the
+exact name and matched almost nothing — an armed guard declaring `E:/Media/`
+silently allowed every write under `E:/Media/`. The same reading covers the
 **workspace and root spellings**: `.`, `./`, `.\` and `./.` (previously inert
 — they normalized to the empty path and matched nothing) now match every
 target, and `/` (previously root-only) now matches every absolute target. A

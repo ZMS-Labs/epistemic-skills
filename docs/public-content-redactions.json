@@ -86,12 +86,14 @@
     {
       "path": "docs/gauntlet-runs/es-v510-publication-2026-08-15/arbitration.md",
       "source_sha256": "9413ff64a547be38f4a88d0b057b01e027b6a9aea87bdb3377d79ebea7a173ef",
-      "public_copy_sha256": "d5fcd26be2e7c2c59916bd033ba777f3c8edc3a85ad5ea38b32059ba260ad3f4"
+      "public_copy_sha256": "03c30dba22c1184ddc8907174258be854337ad7c24a175e5086f47e1ec7dab1c",
+      "note": "2026-09-23: second redaction; the private address prefix is described by class and the drive mapping is a placeholder. Files cited at the revisions this record names still show the original values."
     },
     {
       "path": "docs/gauntlet-runs/es-v510-publication-2026-08-15/panel2/reports/release-cutover-auditor.md",
       "source_sha256": "6c832c93600a1dae272f00e32500f88fa906ad379e69608c95932798e1f193bc",
-      "public_copy_sha256": "9488dfbc53aa1599475d25fa48beeccbd521cf8bde1c5af3419ef1f74c046983"
+      "public_copy_sha256": "18ed0b7f7efd40f31dbd5641817d3b84e1fb1982dd18f0fe266eae01d42b610e",
+      "note": "2026-09-23: second redaction; the private address prefix is described by class. Files cited at the revisions this record names still show the original values."
     },
     {
       "path": "docs/gauntlet-runs/es-v510-publication-2026-08-15/reports/causal-identification-auditor.md",
@@ -101,7 +103,8 @@
     {
       "path": "docs/gauntlet-runs/es-v510-publication-2026-08-15/reports/script-kiddie.md",
       "source_sha256": "25af88208a4b59b08bc06fff80a590bb454b25afc350ca58fdaad11b51a80333",
-      "public_copy_sha256": "f681ad9f36fd0401b3f50fdf517af2188c364e5d9317e6f725875c7957e372da"
+      "public_copy_sha256": "29e815544619fd22c06ae2fd5f52b4e070d00b530fba91c1d30096ab519cde3c",
+      "note": "2026-09-23: second redaction; the private address prefix is described by class, the service ports and drive mapping are placeholders, and the gloss naming the services behind those ports is generalized. Files cited at the revisions this record names still show the original values."
     },
     {
       "path": "docs/gauntlet-runs/es-v6-candidate-freeze-2026-08-18/REDACTIONS.md",
@@ -291,7 +294,8 @@
     {
       "path": "docs/superpowers/plans/2026-08-12-stage-c-custody-hook.md",
       "source_sha256": "c0e6b949fcc34e498dd3b1af25beb42c17e52f28c84a32f92beb35c04c438fe6",
-      "public_copy_sha256": "e72645d7375b178a334b669b0634424f706bb7fced6c213ab9801798b7e3eb28"
+      "public_copy_sha256": "834432de72bf6ecbe9f6ca64606267dbbe422dbf57afe3e2e7baa8b848869ab0",
+      "note": "2026-09-21: a historical branch reference was neutralized (6585eb3). 2026-09-23: second redaction; placeholder service ports and a placeholder drive mapping replace the original values in the examples."
     },
     {
       "path": "docs/superpowers/specs/2026-07-18-agentic-control-plane-design.md",
@@ -326,7 +330,8 @@
     {
       "path": "docs/superpowers/specs/2026-08-12-stage-c-custody-hook-design.md",
       "source_sha256": "cc6ba6f53b172178124e3fde706dd6fa0ce6231ef105e9e14130d174c5b2854c",
-      "public_copy_sha256": "378e51bcb1fc0794eba0521e432a5e050bafff217a999d300311356b83a2d5db"
+      "public_copy_sha256": "ab9854873019353894c211517e818ec30070a5740d1837da3b1a7559aee063e1",
+      "note": "2026-09-21: a historical branch reference was neutralized (6585eb3). 2026-09-23: second redaction; placeholder service ports and a placeholder drive mapping replace the original values in the examples."
     },
     {
       "path": "docs/v6/ES6-V6-CANDIDATE/evidence/public-content.json",
@@ -361,17 +366,20 @@
     {
       "path": "plugins/epistemic-skills/contracts/mission-custody/examples/invalid-manifest-guard-bad-mode.json",
       "source_sha256": "d92a3ccfc054d0879592d2303d62aa8c8d5881f80ee7eee13d7f488b571d8317",
-      "public_copy_sha256": "160e3f2732f69220e69b6cb90cc952def58dd2da67c82a8fe85d55ce275fe8c8"
+      "public_copy_sha256": "2eb5b427ffc60ea9d4e4b559bd9b65c4fb40f1f8926bd52ec8a943e52f39bb96",
+      "note": "2026-09-23: second redaction; placeholder service ports and a placeholder drive mapping replace the original values."
     },
     {
       "path": "plugins/epistemic-skills/contracts/mission-custody/examples/invalid-manifest-guard-bad-regex.json",
       "source_sha256": "f2d2967ca8b12ab95816287f12b8bf0b84b9baabe75a2c751b06e02e4ba297db",
-      "public_copy_sha256": "28122a605201114db8018e38e28a6b0c7e46811cae90ac0168ab0bfa484fc558"
+      "public_copy_sha256": "59c20eeeb3e0bd25694c8a88ec69f1a0db48d071a5c6575d47be6b12e9ee6d1b",
+      "note": "2026-09-23: second redaction; a placeholder drive mapping replaces the original value."
     },
     {
       "path": "plugins/epistemic-skills/contracts/mission-custody/examples/invalid-manifest-guard-empty-rule.json",
       "source_sha256": "80dcaaceac508adfb5c02fc0b83849d1e584f3892a1f510485d1ece395faee26",
-      "public_copy_sha256": "cb976f79223ebba1bdf44386a0935930c498cc8c76497bd7c940ba3142517800"
+      "public_copy_sha256": "74f887cdfefc031fde4b886e9a3f5390f95fb9cd1adef3fafef715619b9bdd5d",
+      "note": "2026-09-23: second redaction; a placeholder drive mapping replaces the original value."
     },
     {
       "path": "plugins/epistemic-skills/contracts/mission-custody/examples/invalid-manifest-guard-mode-without-guards.json",
@@ -381,12 +389,14 @@
     {
       "path": "plugins/epistemic-skills/contracts/mission-custody/examples/invalid-manifest-guard-shell-only-globs.json",
       "source_sha256": "9aa78a121c798d0b9c97cbf2497004f5c0ad96407acc590e5c67d1512aea837b",
-      "public_copy_sha256": "f6149ac0bc6a170a48b05bcef5ecc8608c98e74331b24175098d242b82f9a59c"
+      "public_copy_sha256": "88b9488c7e12354ff80c9f560d10ceee6b42f31804ea72f395d1b1b6aa1b94ad",
+      "note": "2026-09-23: second redaction; a placeholder drive mapping replaces the original value."
     },
     {
       "path": "plugins/epistemic-skills/contracts/mission-custody/examples/invalid-manifest-guard-unknown-field.json",
       "source_sha256": "13769cffbccb9e4d49602938d01dd34b310772ab1d60d0a7ac23ccdc23e3316e",
-      "public_copy_sha256": "bc2d65642b74659487f00a7007867a8c14f9654f98eb975d9973362bf544ba9e"
+      "public_copy_sha256": "948f35f14dcfa0a664abe51b66340094c55fec75ec2deff766fa65a766b8ca86",
+      "note": "2026-09-23: second redaction; placeholder service ports and a placeholder drive mapping replace the original values."
     },
     {
       "path": "plugins/epistemic-skills/contracts/mission-custody/examples/invalid-verdict-operator-tier-wrong-acceptor.json",
@@ -416,7 +426,8 @@
     {
       "path": "plugins/epistemic-skills/contracts/mission-custody/examples/valid-manifest-guards.json",
       "source_sha256": "595e586d3da23c63f3bcebced94c3d4a78adb926348e1984a99feb6fe056f966",
-      "public_copy_sha256": "dcccf54e318a354d2b7eb5e2f3dfae4711704239108f91d16d0000b00c1078e7"
+      "public_copy_sha256": "e9a912104fbc8ab55eb7b299948c32710a0c6737687baf704a227ae1c75bc848",
+      "note": "2026-09-23: second redaction; placeholder service ports and a placeholder drive mapping replace the original values."
     },
     {
       "path": "plugins/epistemic-skills/contracts/mission-custody/examples/valid-manifest-minimal.json",

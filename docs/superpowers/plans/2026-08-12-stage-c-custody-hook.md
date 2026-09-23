@@ -75,7 +75,7 @@ def test_manifest_guard_rules_shape() -> None:
     rec["authority"]["guard_mode"] = "audit"
     rec["authority"]["actuator_guards"] = [{
         "name": "arr", "tool_names": ["Bash"],
-        "command_regexes": ["7878"], "path_globs": []}]
+        "command_regexes": ["8001"], "path_globs": []}]
     check("manifest-guard-rules-inline-valid", validate_record(rec) == [])
     bad = copy.deepcopy(rec)
     bad["authority"]["actuator_guards"][0]["tool_names"] = []
@@ -90,11 +90,11 @@ def test_manifest_guard_rules_shape() -> None:
 "guard_mode": "audit",
 "actuator_guards": [
   {"name": "arr-api-mutations", "tool_names": ["Bash"],
-   "command_regexes": ["https?://[^\\s]*:(7878|8989|8686|9696)/api/"],
+   "command_regexes": ["https?://[^\\s]*:(8001|8002|8003|8004)/api/"],
    "path_globs": []},
   {"name": "media-fs-moves", "tool_names": ["Bash", "Write", "Edit"],
    "command_regexes": ["\\b(mv|robocopy|rsync|Move-Item)\\b[^\\n]*[Mm]edia"],
-   "path_globs": ["M:/Media/**", "//192.0.2.10/Media/**"]}
+   "path_globs": ["E:/Media/**", "//192.0.2.10/Media/**"]}
 ]
 ```
 
@@ -422,10 +422,10 @@ def check(name: str, cond: bool) -> None:
 
 GUARDS = [
     {"name": "arr-api", "tool_names": ["Bash"],
-     "command_regexes": [r":7878/api"], "path_globs": []},
+     "command_regexes": [r":8001/api"], "path_globs": []},
     {"name": "media-moves", "tool_names": ["Bash", "Write", "Edit"],
      "command_regexes": [r"\b(mv|robocopy)\b[^\n]*[Mm]edia"],
-     "path_globs": ["M:/Media/**"]},
+     "path_globs": ["E:/Media/**"]},
 ]
 
 
@@ -439,14 +439,14 @@ def auth(mode: str | None, guards=None) -> dict:
 
 
 def test_evaluate_inert() -> None:
-    call = {"tool_name": "Bash", "command": "curl :7878/api", "file_path": None}
+    call = {"tool_name": "Bash", "command": "curl :8001/api", "file_path": None}
     check("eval-inert-no-fields", evaluate(auth(None), call)["decision"] == "allow")
     check("eval-inert-guards-no-mode",
           evaluate(auth(None, GUARDS), call)["decision"] == "allow")
 
 
 def test_evaluate_modes() -> None:
-    call = {"tool_name": "Bash", "command": "curl :7878/api", "file_path": None}
+    call = {"tool_name": "Bash", "command": "curl :8001/api", "file_path": None}
     v = evaluate(auth("audit", GUARDS), call)
     check("eval-audit-allows-matched",
           v["decision"] == "allow" and v["matched"] and v["rule"] == "arr-api")
@@ -456,29 +456,29 @@ def test_evaluate_modes() -> None:
 
 
 def test_evaluate_tool_gate() -> None:
-    call = {"tool_name": "Read", "command": None, "file_path": "M:/Media/x.mkv"}
+    call = {"tool_name": "Read", "command": None, "file_path": "E:/Media/x.mkv"}
     v = evaluate(auth("enforce", GUARDS), call)
     check("eval-tool-not-in-rule", not v["matched"] and v["decision"] == "allow")
-    call = {"tool_name": "Write", "command": None, "file_path": "M:/Media/x.mkv"}
+    call = {"tool_name": "Write", "command": None, "file_path": "E:/Media/x.mkv"}
     v = evaluate(auth("enforce", GUARDS), call)
     check("eval-glob-match", v["matched"] and v["rule"] == "media-moves")
-    call = {"tool_name": "Write", "command": None, "file_path": "M:/Other/x.mkv"}
+    call = {"tool_name": "Write", "command": None, "file_path": "E:/Other/x.mkv"}
     check("eval-glob-no-match", not evaluate(auth("enforce", GUARDS), call)["matched"])
 
 
 def test_evaluate_case_fold_is_ascii_only() -> None:
     guards = [{"name": "g", "tool_names": ["Write"], "command_regexes": [],
-               "path_globs": ["M:/Media/STRASSE/**"]}]
+               "path_globs": ["E:/Media/STRASSE/**"]}]
     call = {"tool_name": "Write", "command": None,
-            "file_path": "M:/Media/strasse/x"}  # ß-folded spelling
+            "file_path": "E:/Media/strasse/x"}  # ß-folded spelling
     # NTFS folds A-Z only: 'strasse' (with eszett in the glob) must NOT match
     # a different codepoint sequence. Build both spellings explicitly:
-    glob_eszett = ["M:/Media/stra\u00dfe/**"]
+    glob_eszett = ["E:/Media/stra\u00dfe/**"]
     guards[0]["path_globs"] = glob_eszett
     check("eval-no-eszett-fold",
           not evaluate(auth("enforce", guards), call)["matched"])
     call_ascii = {"tool_name": "Write", "command": None,
-                  "file_path": "m:/media/stra\u00dfe/x"}
+                  "file_path": "e:/media/stra\u00dfe/x"}
     if sys.platform.startswith("win"):
         check("eval-ascii-fold-nt",
               evaluate(auth("enforce", guards), call_ascii)["matched"])
@@ -493,7 +493,7 @@ def test_run_gate_chain_untouched_and_log() -> None:
         m.approve()
         before = {p.name: sha256_file(p)
                   for p in sorted((ws / "missions" / "gate-it").rglob("*.json"))}
-        call = {"tool_name": "Bash", "command": "curl :7878/api", "file_path": None}
+        call = {"tool_name": "Bash", "command": "curl :8001/api", "file_path": None}
         v = run_gate(ws, call, actor="hook:custody-gate", session_id="s1",
                      harness="test")
         after = {p.name: sha256_file(p)

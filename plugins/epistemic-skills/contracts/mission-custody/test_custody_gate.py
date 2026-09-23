@@ -36,10 +36,10 @@ def check(name: str, cond: bool) -> None:
 
 GUARDS = [
     {"name": "arr-api", "tool_names": ["Bash"],
-     "command_regexes": [r":7878/api"], "path_globs": []},
+     "command_regexes": [r":8001/api"], "path_globs": []},
     {"name": "media-moves", "tool_names": ["Bash", "Write", "Edit"],
      "command_regexes": [r"\b(mv|robocopy)\b[^\n]*[Mm]edia"],
-     "path_globs": ["M:/Media/**"]},
+     "path_globs": ["E:/Media/**"]},
 ]
 
 
@@ -53,14 +53,14 @@ def auth(mode: str | None, guards=None) -> dict:
 
 
 def test_evaluate_inert() -> None:
-    call = {"tool_name": "Bash", "command": "curl :7878/api", "file_path": None}
+    call = {"tool_name": "Bash", "command": "curl :8001/api", "file_path": None}
     check("eval-inert-no-fields", evaluate(auth(None), call)["decision"] == "allow")
     check("eval-inert-guards-no-mode",
           evaluate(auth(None, GUARDS), call)["decision"] == "allow")
 
 
 def test_evaluate_modes() -> None:
-    call = {"tool_name": "Bash", "command": "curl :7878/api", "file_path": None}
+    call = {"tool_name": "Bash", "command": "curl :8001/api", "file_path": None}
     v = evaluate(auth("audit", GUARDS), call)
     check("eval-audit-allows-matched",
           v["decision"] == "allow" and v["matched"] and v["rule"] == "arr-api")
@@ -70,29 +70,29 @@ def test_evaluate_modes() -> None:
 
 
 def test_evaluate_tool_gate() -> None:
-    call = {"tool_name": "Read", "command": None, "file_path": "M:/Media/x.mkv"}
+    call = {"tool_name": "Read", "command": None, "file_path": "E:/Media/x.mkv"}
     v = evaluate(auth("enforce", GUARDS), call)
     check("eval-tool-not-in-rule", not v["matched"] and v["decision"] == "allow")
-    call = {"tool_name": "Write", "command": None, "file_path": "M:/Media/x.mkv"}
+    call = {"tool_name": "Write", "command": None, "file_path": "E:/Media/x.mkv"}
     v = evaluate(auth("enforce", GUARDS), call)
     check("eval-glob-match", v["matched"] and v["rule"] == "media-moves")
-    call = {"tool_name": "Write", "command": None, "file_path": "M:/Other/x.mkv"}
+    call = {"tool_name": "Write", "command": None, "file_path": "E:/Other/x.mkv"}
     check("eval-glob-no-match", not evaluate(auth("enforce", GUARDS), call)["matched"])
 
 
 def test_evaluate_case_fold_is_ascii_only() -> None:
     guards = [{"name": "g", "tool_names": ["Write"], "command_regexes": [],
-               "path_globs": ["M:/Media/STRASSE/**"]}]
+               "path_globs": ["E:/Media/STRASSE/**"]}]
     call = {"tool_name": "Write", "command": None,
-            "file_path": "M:/Media/strasse/x"}  # ß-folded spelling
+            "file_path": "E:/Media/strasse/x"}  # ß-folded spelling
     # NTFS folds A-Z only: 'strasse' (with eszett in the glob) must NOT match
     # a different codepoint sequence. Build both spellings explicitly:
-    glob_eszett = ["M:/Media/stra\u00dfe/**"]
+    glob_eszett = ["E:/Media/stra\u00dfe/**"]
     guards[0]["path_globs"] = glob_eszett
     check("eval-no-eszett-fold",
           not evaluate(auth("enforce", guards), call)["matched"])
     call_ascii = {"tool_name": "Write", "command": None,
-                  "file_path": "m:/media/stra\u00dfe/x"}
+                  "file_path": "e:/media/stra\u00dfe/x"}
     if sys.platform.startswith("win"):
         check("eval-ascii-fold-nt",
               evaluate(auth("enforce", guards), call_ascii)["matched"])
@@ -110,29 +110,29 @@ def test_glob_doublestar_zero_segments() -> None:
     check("glob-doublestar-many-segments",
           evaluate(auth("enforce", guards), call)["matched"])
     # trailing '/**' must match the base path itself
-    guards[0]["path_globs"] = ["M:/Media/**"]
-    call = {"tool_name": "Write", "command": None, "file_path": "M:/Media"}
+    guards[0]["path_globs"] = ["E:/Media/**"]
+    call = {"tool_name": "Write", "command": None, "file_path": "E:/Media"}
     check("glob-trailing-doublestar-base",
           evaluate(auth("enforce", guards), call)["matched"])
 
 
 def test_glob_parent_segment_resolves_for_guard_match() -> None:
-    """es#137: a guard on ``M:/Media/**`` must match a write whose lexical
+    """es#137: a guard on ``E:/Media/**`` must match a write whose lexical
     path carries a parent segment that resolves under Media."""
     guards = [{"name": "g", "tool_names": ["Write"], "command_regexes": [],
-               "path_globs": ["M:/Media/**"]}]
-    call = {"tool_name": "Write", "command": None, "file_path": "M:/Mediaevil/x"}
+               "path_globs": ["E:/Media/**"]}]
+    call = {"tool_name": "Write", "command": None, "file_path": "E:/Mediaevil/x"}
     check("glob-mediaevil-rejected",
           not evaluate(auth("enforce", guards), call)["matched"])
-    call = {"tool_name": "Write", "command": None, "file_path": "M:/Media/a/b/c.mkv"}
+    call = {"tool_name": "Write", "command": None, "file_path": "E:/Media/a/b/c.mkv"}
     check("glob-deep-still-matches",
           evaluate(auth("enforce", guards), call)["matched"])
     call = {"tool_name": "Write", "command": None,
-            "file_path": "M:/Other/../Media/x.mkv"}
+            "file_path": "E:/Other/../Media/x.mkv"}
     check("glob-dotdot-resolves-into-guarded-tree",
           evaluate(auth("enforce", guards), call)["matched"])
     call = {"tool_name": "Write", "command": None,
-            "file_path": "M:/Media/../etc/passwd"}
+            "file_path": "E:/Media/../etc/passwd"}
     check("glob-dotdot-outside-guarded-tree-not-matched",
           not evaluate(auth("enforce", guards), call)["matched"])
 
@@ -209,25 +209,25 @@ def test_block_reason_names_only_exits_that_work() -> None:
 
 
 def test_trailing_slash_guard_glob_binds_the_subtree() -> None:
-    """es#155's gate half: 'M:/Media/' compiled to an exact 'M:/Media' and
+    """es#155's gate half: 'E:/Media/' compiled to an exact 'E:/Media' and
     an armed guard silently allowed every write UNDER the directory the
     operator evidently declared. The trailing separator now reads as the
     directory marker scope entries and amendment tokens already use. This
     makes an armed guard MORE restrictive -- the disclosed, over-match-safe
     direction (a false block names its rule)."""
     guards = [{"name": "dir", "tool_names": ["Write"], "command_regexes": [],
-               "path_globs": ["M:/Media/"]}]
+               "path_globs": ["E:/Media/"]}]
     for label, path, expect in (
-            ("subtree-write-blocked", "M:/Media/a/b.mkv", True),
-            ("base-itself-matched", "M:/Media", True),
-            ("prefix-sibling-not-matched", "M:/Mediaevil/x", False)):
+            ("subtree-write-blocked", "E:/Media/a/b.mkv", True),
+            ("base-itself-matched", "E:/Media", True),
+            ("prefix-sibling-not-matched", "E:/Mediaevil/x", False)):
         call = {"tool_name": "Write", "command": None, "file_path": path}
         check(f"guard-dir-marker-{label}",
               evaluate(auth("enforce", guards), call)["matched"] is expect)
     win = [{"name": "dirwin", "tool_names": ["Write"], "command_regexes": [],
-            "path_globs": ["M:\\Media\\"]}]
+            "path_globs": ["E:\\Media\\"]}]
     call = {"tool_name": "Write", "command": None,
-            "file_path": "M:/Media/deep/file.mkv"}
+            "file_path": "E:/Media/deep/file.mkv"}
     check("guard-dir-marker-windows-spelling",
           evaluate(auth("enforce", win), call)["matched"])
     # THE ROOT is the one spelling normalization leaves with its separator
@@ -331,17 +331,17 @@ def test_glob_anchor_is_Z_not_dollar() -> None:
 
 def test_mcp_tool_input_serialized_match() -> None:
     guards = [{"name": "arr-mcp", "tool_names": ["mcp__sonarr__post"],
-               "command_regexes": ["7878"], "path_globs": []}]
+               "command_regexes": ["8001"], "path_globs": []}]
     call = {"tool_name": "mcp__sonarr__post", "command": None,
             "file_path": None,
-            "tool_input": {"url": "http://203.0.113.10:7878/api/v3/series",
+            "tool_input": {"url": "http://203.0.113.10:8001/api/v3/series",
                            "method": "POST"}}
     v = evaluate(auth("enforce", guards), call)
     check("eval-mcp-serialized-args-block",
           v["decision"] == "block" and v["rule"] == "arr-mcp")
     safe = {"tool_name": "mcp__sonarr__post", "command": None,
             "file_path": None,
-            "tool_input": {"url": "http://203.0.113.10:8989/api/v3/series"}}
+            "tool_input": {"url": "http://203.0.113.10:8002/api/v3/series"}}
     check("eval-mcp-no-match-allows",
           not evaluate(auth("enforce", guards), safe)["matched"])
 
@@ -354,11 +354,11 @@ def test_run_gate_mcp_end_to_end() -> None:
                          actuator_guards=[{
                              "name": "arr-mcp",
                              "tool_names": ["mcp__sonarr__post"],
-                             "command_regexes": ["7878"], "path_globs": []}])
+                             "command_regexes": ["8001"], "path_globs": []}])
         m.approve()
         v = run_gate(ws, {"tool_name": "mcp__sonarr__post", "command": None,
                           "file_path": None,
-                          "tool_input": {"url": "http://h:7878/api"}},
+                          "tool_input": {"url": "http://h:8001/api"}},
                      actor="hook:custody-gate")
         check("run-gate-mcp-blocks", v["decision"] == "block")
         entry = json.loads(
@@ -376,7 +376,7 @@ def test_run_gate_chain_untouched_and_log() -> None:
         m.approve()
         before = {p.name: sha256_file(p)
                   for p in sorted((ws / "missions" / "gate-it").rglob("*.json"))}
-        call = {"tool_name": "Bash", "command": "curl :7878/api", "file_path": None}
+        call = {"tool_name": "Bash", "command": "curl :8001/api", "file_path": None}
         v = run_gate(ws, call, actor="hook:custody-gate", session_id="s1",
                      harness="test")
         after = {p.name: sha256_file(p)
@@ -416,7 +416,7 @@ def test_run_gate_log_failure_keeps_verdict() -> None:
         (ws / "missions" / "gate-logfail" / "guard-log.jsonl").mkdir()
         buf = io.StringIO()
         with contextlib.redirect_stderr(buf):
-            v = run_gate(ws, {"tool_name": "Bash", "command": "curl :7878/api",
+            v = run_gate(ws, {"tool_name": "Bash", "command": "curl :8001/api",
                               "file_path": None}, actor="hook:custody-gate")
         check("run-gate-log-failure-keeps-block",
               v["decision"] == "block" and v["matched"])
@@ -436,7 +436,7 @@ def test_run_gate_multiple_active_evaluates_the_union() -> None:
                          actuator_guards=GUARDS)
         m.approve()
         shutil.copytree(m.store.mission_dir, ws / "missions" / "gate-multi-2")
-        v = run_gate(ws, {"tool_name": "Bash", "command": "curl :7878/api",
+        v = run_gate(ws, {"tool_name": "Bash", "command": "curl :8001/api",
                           "file_path": None}, actor="hook:custody-gate")
         check("run-gate-multi-active-blocks", v["decision"] == "block")
         check("run-gate-multi-active-names-both-missions",
@@ -463,7 +463,7 @@ def test_union_excludes_unaddressable_mission_dirs() -> None:
         shutil.copytree(m.store.mission_dir, ws / "missions" / ".backup")
         buf = io.StringIO()
         with contextlib.redirect_stderr(buf):
-            v = run_gate(ws, {"tool_name": "Bash", "command": "curl :7878/api",
+            v = run_gate(ws, {"tool_name": "Bash", "command": "curl :8001/api",
                               "file_path": None}, actor="hook:custody-gate")
         check("union-illegal-dir-still-blocks-on-the-legal-mission",
               v["decision"] == "block")
@@ -488,7 +488,7 @@ def test_all_degraded_union_discloses_on_stderr_too() -> None:
         (broken / "r00000001.json").write_text("{not json", encoding="utf-8")
         buf = io.StringIO()
         with contextlib.redirect_stderr(buf):
-            v = run_gate(ws, {"tool_name": "Bash", "command": "curl :7878/api",
+            v = run_gate(ws, {"tool_name": "Bash", "command": "curl :8001/api",
                               "file_path": None}, actor="hook:custody-gate")
         check("all-degraded-allows", v["decision"] == "allow")
         check("all-degraded-reason-discloses",
@@ -604,7 +604,7 @@ def test_run_gate_legacy_blank_declaration_still_enforces() -> None:
         with tempfile.TemporaryDirectory() as tmp:
             ws = Path(tmp)
             _armed_legacy_blank_mission(ws, f"gate-legacy-{index}", position)
-            call = {"tool_name": "Bash", "command": "curl :7878/api",
+            call = {"tool_name": "Bash", "command": "curl :8001/api",
                     "file_path": None}
             buf = io.StringIO()
             with contextlib.redirect_stderr(buf):
@@ -741,7 +741,7 @@ def test_environmental_read_failure_degrades_the_union_it_does_not_abort() -> No
         custody_store.MissionStore.load_latest = refusing_load
         try:
             verdict = run_gate(
-                ws, {"tool_name": "Bash", "command": "curl :7878/api/v3",
+                ws, {"tool_name": "Bash", "command": "curl :8001/api/v3",
                      "file_path": None}, actor="hook:custody-gate")
         finally:
             custody_store.MissionStore.load_latest = real_load
@@ -764,7 +764,7 @@ def test_environmental_read_failure_degrades_the_union_it_does_not_abort() -> No
                                guard_mode="enforce", actuator_guards=GUARDS)
         healthy.approve()
         verdict = run_gate(
-            ws, {"tool_name": "Bash", "command": "curl :7878/api/v3",
+            ws, {"tool_name": "Bash", "command": "curl :8001/api/v3",
                  "file_path": None}, actor="hook:custody-gate")
         check("clean-union-still-blocks", verdict["decision"] == "block")
         check("clean-union-claims-no-degradation",
@@ -808,7 +808,7 @@ def test_verification_reread_oserror_degrades_the_union() -> None:
         try:
             try:
                 verdict = run_gate(
-                    ws, {"tool_name": "Bash", "command": "curl :7878/api/v3",
+                    ws, {"tool_name": "Bash", "command": "curl :8001/api/v3",
                          "file_path": None}, actor="hook:custody-gate")
             except PermissionError:
                 pass
@@ -835,7 +835,7 @@ def test_verification_reread_oserror_degrades_the_union() -> None:
                                guard_mode="enforce", actuator_guards=GUARDS)
         healthy.approve()
         verdict = run_gate(
-            ws, {"tool_name": "Bash", "command": "curl :7878/api/v3",
+            ws, {"tool_name": "Bash", "command": "curl :8001/api/v3",
                  "file_path": None}, actor="hook:custody-gate")
         check("reread-control-still-blocks", verdict["decision"] == "block")
         check("reread-control-claims-no-degradation",
@@ -877,7 +877,7 @@ def test_union_degradation_stderr_escapes_control_characters() -> None:
         try:
             with contextlib.redirect_stderr(buf):
                 verdict = run_gate(
-                    ws, {"tool_name": "Bash", "command": "curl :7878/api",
+                    ws, {"tool_name": "Bash", "command": "curl :8001/api",
                          "file_path": None}, actor="hook:custody-gate")
         finally:
             Mission.status = real_status
