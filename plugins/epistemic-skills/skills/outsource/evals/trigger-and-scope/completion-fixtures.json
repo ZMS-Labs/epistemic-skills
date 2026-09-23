@@ -9,5 +9,11 @@
     ],
     "terminal": true,
     "caller_next_action": "integrate verified patch"
+  },
+  {
+    "id": "custody-acceptance-terminal",
+    "scenario": "Synthetic verified acceptance read-back; divestiture completes the transfer.",
+    "expected_action": "verify-acceptance",
+    "terminal": true
   }
 ]

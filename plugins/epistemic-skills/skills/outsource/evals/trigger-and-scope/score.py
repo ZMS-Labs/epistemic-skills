@@ -9,7 +9,7 @@ import re
 from collections import Counter
 from pathlib import Path
 
-ACTIONS = {"publish-packet", "verify-relay", "report-blocked", "no-fire"}
+ACTIONS = {"publish-packet", "transfer-packet", "verify-relay", "verify-acceptance", "report-blocked", "no-fire"}
 BLOCKERS = {"unpushed-packet", "target-capability", "hidden-context"}
 SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 # docs/outsource/<work-id>/HANDOFF.md where <work-id> is a short lowercase
@@ -48,6 +48,41 @@ def _id_set(row: dict, field: str, fid: str, failures: list) -> set:
         )
         return set()
     return set(value)
+
+
+def _check_published_pointer(row: dict, fixture: dict, fid: str, failures: list) -> None:
+    """Checks shared by every outbound packet mode (delegate and transfer):
+    repo-first publication, immutable pointer, pointer-only prompt, relay
+    template capture, and capability preflight."""
+    if not row.get("packet_committed"):
+        failures.append(f"{fid}: the packet must be committed — the repo is the memory, not the chat")
+    if not row.get("pushed"):
+        failures.append(f"{fid}: only a pushed commit is target-readable GitHub state")
+    if not row.get("packet_published_first"):
+        failures.append(f"{fid}: the packet is committed and pushed BEFORE any prompt is sent")
+    ref = row.get("immutable_ref")
+    if not (isinstance(ref, str) and SHA_RE.fullmatch(ref)):
+        failures.append(
+            f"{fid}: the pointer names an immutable 40-character commit SHA, "
+            f"never a mutable branch or a locally guessed ref"
+        )
+    path = row.get("handoff_path")
+    if not (isinstance(path, str) and HANDOFF_RE.fullmatch(path)):
+        failures.append(f"{fid}: the packet lives at docs/outsource/<work-id>/HANDOFF.md — one predictable location")
+    if not row.get("prompt_emitted"):
+        failures.append(f"{fid}: publishing ends with the short copy/paste prompt and the readiness receipt")
+    if not row.get("prompt_is_pointer") or row.get("full_context_pasted"):
+        failures.append(f"{fid}: the prompt is the pointer — the handoff body is never pasted into it")
+    if not row.get("relay_template_recorded"):
+        failures.append(f"{fid}: the canonical outbound prompt template is stored in relay/NNNN-origin.md before dispatch")
+    required = fixture.get("required_capabilities", [])
+    if required:
+        if not row.get("capability_preflight"):
+            failures.append(f"{fid}: dispatch is gated on target capability preflight before any READY pointer")
+        verified = _id_set(row, "capabilities_verified", fid, failures)
+        missing = sorted(set(required) - verified)
+        if missing:
+            failures.append(f"{fid}: capability preflight must verify every required check — missing {missing}")
 
 
 def score(fixtures: list[dict], responses: object) -> dict:
@@ -93,35 +128,52 @@ def score(fixtures: list[dict], responses: object) -> dict:
                     f"no process artifact ({', '.join(artifacts)} set)"
                 )
         elif expected == "publish-packet":
-            if not row.get("packet_committed"):
-                failures.append(f"{fid}: the packet must be committed — the repo is the memory, not the chat")
-            if not row.get("pushed"):
-                failures.append(f"{fid}: only a pushed commit is target-readable GitHub state")
-            if not row.get("packet_published_first"):
-                failures.append(f"{fid}: the packet is committed and pushed BEFORE any prompt is sent")
-            ref = row.get("immutable_ref")
-            if not (isinstance(ref, str) and SHA_RE.fullmatch(ref)):
+            _check_published_pointer(row, fixture, fid, failures)
+        elif expected == "transfer-packet":
+            _check_published_pointer(row, fixture, fid, failures)
+            if not row.get("responsibility_inventory"):
                 failures.append(
-                    f"{fid}: the pointer names an immutable 40-character commit SHA, "
-                    f"never a mutable branch or a locally guessed ref"
+                    f"{fid}: a transfer packet carries the full responsibility inventory, "
+                    f"not one bounded outcome"
                 )
-            path = row.get("handoff_path")
-            if not (isinstance(path, str) and HANDOFF_RE.fullmatch(path)):
-                failures.append(f"{fid}: the packet lives at docs/outsource/<work-id>/HANDOFF.md — one predictable location")
-            if not row.get("prompt_emitted"):
-                failures.append(f"{fid}: publishing ends with the short copy/paste prompt and the readiness receipt")
-            if not row.get("prompt_is_pointer") or row.get("full_context_pasted"):
-                failures.append(f"{fid}: the prompt is the pointer — the handoff body is never pasted into it")
-            if not row.get("relay_template_recorded"):
-                failures.append(f"{fid}: the canonical outbound prompt template is stored in relay/NNNN-origin.md before dispatch")
-            required = fixture.get("required_capabilities", [])
-            if required:
-                if not row.get("capability_preflight"):
-                    failures.append(f"{fid}: dispatch is gated on target capability preflight before any READY pointer")
-                verified = _id_set(row, "capabilities_verified", fid, failures)
-                missing = sorted(set(required) - verified)
+            if not row.get("divestiture_listed"):
+                failures.append(
+                    f"{fid}: the origin's residual obligations are listed as a divestiture "
+                    f"checklist with a named path to NONE"
+                )
+        elif expected == "verify-acceptance":
+            if not row.get("stored_verbatim"):
+                failures.append(f"{fid}: the acceptance read-back is saved verbatim as relay/NNNN-target.md before it bears load")
+            if not row.get("acceptance_readback"):
+                failures.append(f"{fid}: a transfer return contains the receiver's ownership read-back (outsource-acceptance@1)")
+            if not row.get("readback_verified"):
+                failures.append(
+                    f"{fid}: acceptance is a claim — the origin verifies the read-back "
+                    f"against the responsibility inventory"
+                )
+            expected_gaps = set(fixture.get("expected_gaps", []))
+            if expected_gaps:
+                surfaced = _id_set(row, "gaps_surfaced", fid, failures)
+                missing = sorted(expected_gaps - surfaced)
                 if missing:
-                    failures.append(f"{fid}: capability preflight must verify every required check — missing {missing}")
+                    failures.append(f"{fid}: every gap the read-back names is recorded — missing {missing}")
+                if not row.get("packet_amended"):
+                    failures.append(
+                        f"{fid}: a surfaced gap is answered by amending and republishing "
+                        f"the packet, not by arguing it away"
+                    )
+            if fixture.get("terminal"):
+                if not row.get("transferred"):
+                    failures.append(f"{fid}: a verified read-back closes the transfer — state becomes TRANSFERRED")
+                if not row.get("divestiture_complete"):
+                    failures.append(
+                        f"{fid}: acceptance transfers the work; divestiture completes the "
+                        f"transfer — a watcher still running is an obligation still owned"
+                    )
+                if row.get("origin_residual") != "none":
+                    failures.append(f"{fid}: transfer completes only at origin residual NONE")
+                if row.get("prompt_emitted") or row.get("outbound_created"):
+                    failures.append(f"{fid}: acceptance closes the relay without another outbound prompt")
         elif expected == "verify-relay":
             if not row.get("stored_verbatim"):
                 failures.append(f"{fid}: a returned relay is saved verbatim as relay/NNNN-target.md before it bears load")

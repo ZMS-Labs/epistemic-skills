@@ -155,6 +155,7 @@ def main() -> int:
     require(skill.startswith("---\nname: outsource\n"), "invalid skill frontmatter/name")
     for phrase in (
         "docs/outsource/<work-id>/HANDOFF.md",
+        "## Modes: delegate or transfer",
         "## Context-erasure test",
         "## Output contract",
         "## Workflow",
@@ -163,6 +164,11 @@ def main() -> int:
         "https://github.com/<owner>/<repo>/blob/<commit>/docs/outsource/<work-id>/HANDOFF.md",
         "canonical outbound prompt template",
         "{packet_commit}",
+        "reference/TRANSFER_TEMPLATE.md",
+        "responsibility inventory",
+        "divestiture checklist",
+        "outsource-acceptance@1",
+        "TRANSFERRED",
     ):
         require(phrase in skill, f"SKILL.md missing contract phrase: {phrase}")
     require(
@@ -190,6 +196,34 @@ def main() -> int:
         "Prepared commit | `<40-character Git commit>`" not in template,
         "handoff template still requires an impossible self-embedded commit",
     )
+    require("| Mode | `delegate` |" in template,
+            "delegate template does not declare its mode")
+
+    transfer = read(SKILL_ROOT / "reference" / "TRANSFER_TEMPLATE.md")
+    for heading in (
+        "# Outsource transfer:",
+        "## Transfer intent",
+        "## Responsibility inventory",
+        "## Inventory sweep",
+        "## Repository and source",
+        "## Context map",
+        "## Custody acceptance contract",
+        "## Authority and boundaries",
+        "## Origin divestiture checklist",
+        "## Acceptance response contract",
+        "## Context-erasure audit",
+    ):
+        require(heading in transfer, f"transfer template missing heading: {heading}")
+    require(
+        "Packet commit | `supplied by the immutable prompt URL after publication`" in transfer,
+        "transfer template does not use the prompt URL as the packet commit coordinate",
+    )
+    require("| Mode | `transfer` |" in transfer,
+            "transfer template does not declare its mode")
+    require("origin residual obligations: `NONE`" in transfer,
+            "transfer template lacks the residual-NONE exit condition")
+    require("schema: outsource-acceptance@1" in transfer,
+            "transfer template does not define the acceptance envelope")
 
     # Canonical membership is generated from real skill bodies. Epistemic is the
     # usage entry; metacognate is a substantive method. Detailed entry prose is

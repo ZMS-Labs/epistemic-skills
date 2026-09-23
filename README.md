@@ -156,7 +156,7 @@ one task can use more than one method.
 | Write down or start a lasting goal | [Write Goal](plugins/epistemic-skills/skills/write-goal/SKILL.md): a definition of done, fitted to your tool and to what you asked for |
 | Record a decision, or recheck old notes when picking work back up | [Decision Ledger](plugins/epistemic-skills/skills/decision-ledger/SKILL.md): a record you already have that covers it, or the smallest new record that is missing |
 | Run a long job with a formal record of who authorized it and what it may touch | [Manifest](plugins/epistemic-skills/skills/manifest/SKILL.md): the job's state kept in that record, which the project calls custody, under rules you opt into |
-| Hand work to someone or something outside this session | [Outsource](plugins/epistemic-skills/skills/outsource/SKILL.md): a handoff the recipient can read on its own, or a checked result when the work comes back |
+| Hand work to someone or something outside this session | [Outsource](plugins/epistemic-skills/skills/outsource/SKILL.md): a handoff the recipient can read on its own, a checked result when delegated work comes back, or a completed handover when ownership itself moves — acceptance on record and the giver divested |
 | Sort out conflicting or overloaded instructions | [Context Audit](plugins/epistemic-skills/skills/context-audit/SKILL.md): a diagnosis of the instructions and proposed changes with a clear scope |
 
 These summaries help you choose. Each method's `SKILL.md` is its canonical text,

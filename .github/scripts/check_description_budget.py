@@ -79,7 +79,13 @@ SKILLS_ROOT = REPO_ROOT / "plugins" / "epistemic-skills" / "skills"
 # — spend the bytes", recorded in the mission-custody build ledger and PR
 # #113) before the skill landed — the deliberate-spend gate this ceiling
 # exists to force.
-CEILING_BYTES = 8636
+#
+# 2026-09-23: +78 bytes for the outsource delegate/transfer mode split (the
+# description now names both modes so full-handover requests can fire). No
+# new skill; the v7.0.0 release left 1483 bytes of slack, and this change
+# spends 78 of it, so the ceiling tightens to the measured 7231 rather than
+# keeping refillable slack.
+CEILING_BYTES = 7231
 
 FRONTMATTER = re.compile(r"\A---\r?\n(.*?)\r?\n---", re.S)
 # `description:` runs until the next top-level YAML key or end of frontmatter,

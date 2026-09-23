@@ -12,10 +12,12 @@ ROOT = Path(__file__).resolve().parents[1]
 EXPECTED_IDS = [
     "explicit-superior-model-fires", "copy-paste-review-handoff-fires",
     "beyond-origin-surface-fires", "capable-target-preflight-fires",
+    "full-custody-handover-fires", "bounded-delegation-stays-delegate",
     "in-session-subagent-no-fire", "self-handoff-local-task-no-fire",
     "colleague-agent-question-no-fire", "inbound-target-work-no-fire",
     "packet-before-prompt-state", "pointer-not-paste-state",
-    "relay-claim-verified-state", "unpushed-packet-blocked-state",
+    "relay-claim-verified-state", "custody-acceptance-state",
+    "acceptance-gap-state", "unpushed-packet-blocked-state",
     "readonly-target-preflight-blocked-state", "hidden-chat-context-blocked-state",
 ]
 
@@ -52,7 +54,8 @@ def main() -> int:
     # Balanced example passes with the expected mode census.
     balanced = scorer.score(fixtures, json.loads((ROOT / "examples" / "balanced.json").read_text(encoding="utf-8")))
     require(balanced["pass"], balanced["failures"])
-    require(balanced["actions"] == {"publish-packet": 6, "no-fire": 4, "report-blocked": 3, "verify-relay": 1},
+    require(balanced["actions"] == {"publish-packet": 7, "no-fire": 4, "report-blocked": 3, "verify-relay": 1,
+                                    "transfer-packet": 1, "verify-acceptance": 2},
             balanced["actions"])
 
     # Every parody fails for its named polarity.
@@ -64,9 +67,17 @@ def main() -> int:
     require(sum("expected no-fire" in failure for failure in over["failures"]) == 4, over["failures"])
     require(sum("expected report-blocked, got publish-packet" in failure for failure in over["failures"]) == 3,
             over["failures"])
+    # Mode escalation is an over-fire: custody transfer applied to a
+    # retained-ownership delegation.
+    require(any("expected publish-packet, got transfer-packet" in failure for failure in over["failures"]),
+            over["failures"])
+    # Acceptance closes the relay; a post-acceptance outbound prompt is ceremony.
+    require(any("without another outbound prompt" in failure for failure in over["failures"]),
+            over["failures"])
 
     under = scorer.score(fixtures, json.loads((ROOT / "examples" / "underfiring.json").read_text(encoding="utf-8")))
     require(sum("expected publish-packet" in failure for failure in under["failures"]) >= 3, under["failures"])
+    require(any("expected transfer-packet" in failure for failure in under["failures"]), under["failures"])
     require(any("40-character commit SHA" in failure for failure in under["failures"]), under["failures"])
     require(any("never pasted into it" in failure for failure in under["failures"]), under["failures"])
     require(any("before re-verification" in failure for failure in under["failures"]), under["failures"])
@@ -101,6 +112,43 @@ def main() -> int:
     workless = [dict(balanced_rows[0], handoff_path="docs/outsource/HANDOFF.md")]
     pathreport = scorer.score(fixtures, workless)
     require(any("docs/outsource/<work-id>/HANDOFF.md" in f for f in pathreport["failures"]), pathreport["failures"])
+
+    # Transfer-mode polarity: a transfer packet missing its inventory or
+    # divestiture list is a delegation wearing transfer's name.
+    for strip, needle in (("responsibility_inventory", "responsibility inventory"),
+                          ("divestiture_listed", "divestiture")):
+        warped = []
+        for row in balanced_rows:
+            row = dict(row)
+            if row["id"] == "full-custody-handover-fires":
+                row.pop(strip, None)
+            warped.append(row)
+        report = scorer.score(fixtures, warped)
+        require(any(needle in f for f in report["failures"]), report["failures"])
+
+    # Transfer-mode polarity: acceptance without divestiture, or with a
+    # residual obligation, does not close.
+    for patch in ({"transferred": False}, {"divestiture_complete": False},
+                  {"origin_residual": "release watcher still running"}):
+        warped = []
+        for row in balanced_rows:
+            row = dict(row)
+            if row["id"] == "custody-acceptance-state":
+                row.update(patch)
+            warped.append(row)
+        report = scorer.score(fixtures, warped)
+        require(not report["pass"], (patch, report["failures"]))
+
+    # Transfer-mode polarity: a gap the read-back names must be surfaced and
+    # answered by an amended packet, not dropped.
+    warped = []
+    for row in balanced_rows:
+        row = dict(row)
+        if row["id"] == "acceptance-gap-state":
+            row["gaps_surfaced"] = []
+        warped.append(row)
+    report = scorer.score(fixtures, warped)
+    require(any("missing ['dependency-bump-check']" in f for f in report["failures"]), report["failures"])
 
     # Fail-closed on unhashable off-contract types: a list action, a list id,
     # and non-string entries inside a list field name the violation, never crash.

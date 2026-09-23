@@ -3,6 +3,7 @@
 | Field | Value |
 |---|---|
 | Schema | `outsource-handoff@1` |
+| Mode | `delegate` |
 | State | `DRAFT`, `READY`, `PARTIAL`, `BLOCKED`, or verified `COMPLETE` |
 | Work ID | `<work-id>` |
 | Subject ref | `<stable task identifier>` |
