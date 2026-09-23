@@ -23,12 +23,12 @@ flowchart LR
 | [v7.0.0 release policy](https://github.com/ZMS-Labs/epistemic-skills/blob/v7.0.0/RELEASING.md) | Rules governing this publication |
 | [Pre-publication implementation packet](https://github.com/ZMS-Labs/epistemic-skills/blob/v7.0.0/docs/release/v7-evidence.md) | Earlier implementation evidence and the then-open gates |
 
-The release notes match their committed source. Annotated tags remain fixed. Later documentation improvements belong to the current handbook and wiki history; they do not change the released code or rewrite old evidence.
+The v7.0.0 release notes match their committed source. Annotated tags remain fixed. Later documentation improvements belong to the current handbook and wiki history; they do not change the released code or rewrite old evidence.
 
 ### Documentation can improve between releases
 
-This handbook explains v7.0.0 behavior while allowing clearer examples and navigation after publication. Canonical method links stay pinned to that release. Links labeled **current development** point to maintained repository documents that may evolve. The wiki is a separate Git repository, so publication and live verification are distinct from a source commit.
+This handbook explains v7.0.0 behavior while allowing clearer examples and navigation after publication. Canonical method links stay pinned to that release. Links to other repository documents, such as the maintainer guide and the release policy, point to those documents as they stood at the source commit named in the footer; newer versions may exist on the main branch. The wiki is a separate Git repository, so publication and live verification are distinct from a source commit.
 
-An updated handbook does not prove a user's installation upgraded. Installation, loaded context, and exercised behavior require their own observations. See [installation](Installation-and-Harness-Compatibility.md) and [the evidence guide](Testing-and-Evaluations.md).
+An updated handbook does not prove a user's installation upgraded. Installation, loaded context, and exercised behavior require their own observations. See [Installation and Harness Compatibility](Installation-and-Harness-Compatibility.md) and [Testing and Evaluations](Testing-and-Evaluations.md).
 
-Future releases follow the [release policy — current development](https://github.com/ZMS-Labs/epistemic-skills/blob/main/RELEASING.md), with their own source identity and evidence.
+Future releases follow the [release policy](https://github.com/ZMS-Labs/epistemic-skills/blob/main/RELEASING.md), with their own source identity and evidence.

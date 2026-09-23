@@ -2,7 +2,7 @@
 
 # Three worked examples
 
-These scenarios are **illustrative teaching examples, not reports of executed trials**. The observations below show what useful evidence could look like. They do not assert that a real application was tested or that a particular repair will fit another system.
+These scenarios are illustrative teaching examples, not reports of executed trials. They show what useful evidence could look like, and a repair that fits one of them may not fit your system.
 
 ## 1. A setting that disappears after reload
 
@@ -13,7 +13,7 @@ These scenarios are **illustrative teaching examples, not reports of executed tr
 | Step | Useful work | What it establishes |
 |---|---|---|
 | Bound the failure | Reproduce the save and reload on the affected revision with a disposable test account | The behavior, scope, and safe observation target |
-| Investigate | Triage applies available Superpowers systematic-debugging, or its named standalone fallback | One investigation with explicit causal standards |
+| Investigate | Triage applies the systematic-debugging skill from [Superpowers](https://github.com/obra/superpowers), a separate open-source skills library, when it is available, or its own named standalone fallback | One investigation with explicit causal standards |
 | Distinguish explanations | In this example, a direct read after save returns the old value, and the request omits the setting field | Evidence of a write-path problem rather than only stale rendering |
 | Repair within authority | Correct the request mapping and check relevant neighboring settings | The scoped implementation change |
 | Verify the user outcome | Save, reload, and observe the persisted value through the actual consumer | Evidence supporting the original completion criterion |

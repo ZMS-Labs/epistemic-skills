@@ -109,6 +109,9 @@ code, custody tests, two SKILL.md touch-ups), plus the current-tree
 - `operator:SternOne` appears as an `--actor` string in the new custody
   tests. Disposition: accepted — `SternOne` is the operator's designated
   public callsign, deliberately not a personal name.
+  Correction (September 2026): `SternOne` is Zach Stern's GitHub account,
+  and the README now names him. The disposition above is kept as it was
+  recorded at release.
 - `.gitleaks.toml` and the new "digest allowlist is narrow" CI step embed a
   synthetic SHA-256 fixture. Disposition: accepted — synthetic test data,
   admitted only by line-anchored allowlist regexes whose narrowness the new
@@ -133,9 +136,9 @@ the panel record); findings and dispositions:
   the 19-file PR diff): the mission-custody guard fixtures
   (`examples/invalid-manifest-guard-*.json`, `valid-manifest-guards.json`),
   `test_custody_gate.py`, and two `docs/superpowers/` custody-hook
-  documents. Content: `10.10.10.x` host literals with `*arr`-service ports
-  (7878/8989/8686/9696), the UNC path `//192.0.2.10/Media` paired with
-  its drive mapping `M:/Media`, and `192.0.2.10` test endpoints.
+  documents. Content: private-range host literals and service ports in
+  test fixtures, a network share path with its drive mapping, and test
+  endpoints.
   Disposition: **accepted as test/fixture data, operator-informed.** These
   are private-range literals with no credential, no hostname-to-service
   mapping beyond port conventions, and they have been public on `main`
@@ -145,6 +148,10 @@ the panel record); findings and dispositions:
   the suite for zero exposure delta. The durable guard — extending
   `check_public_content.py` with RFC1918/UNC/email patterns, each with a
   RED seed — is a recorded post-tag work item.
+  Correction (September 2026): the private-range host literals in those
+  files were later replaced with documentation-range examples, and this
+  record now describes them by class only. The disposition above is kept as
+  it was recorded at release; Git history was not rewritten.
 - **Personal name + email, 11 tree files** (10 predate v5.0.0 and ship in
   its tree; one — the 2026-08-11 mission-custody-contracts plan document —
   is new in this window). Disposition: git-history DCO trailers are the
@@ -153,6 +160,9 @@ the panel record); findings and dispositions:
   callsign `SternOne` is the required form going forward, and historical
   plan documents are not rewritten. No credential accompanies any
   occurrence.
+  Correction (September 2026): the README now names Zach Stern, so
+  `SternOne` is no longer required in place of his name. Email addresses
+  stay out of the tree, and the public-content check blocks them.
 - **No credentials, tokens, telemetry, or public-range endpoints** were
   found anywhere in the window; the gitleaks full-history scan with its
   positive control (item 6, first half) covers the credential class

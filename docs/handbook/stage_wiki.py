@@ -132,21 +132,31 @@ def validate_links(pages, docs_ref=None):
                 break
 
 
+def redirect_sentence(destination):
+    """The sentence that sends a retired page's reader to its destination."""
+    if not destination.startswith('https:'):
+        return f'For current guidance, see [{destination.replace("-", " ")}]({destination}).'
+    if destination.endswith('/CONTRIBUTING.md'):
+        return f'For current guidance, see [the contributing guide]({destination}).'
+    if destination == BASE + '/releases':
+        return f'For the current version and its history, see [the list of releases]({destination}).'
+    raise RuntimeError(f'legacy redirect has no reviewed label: {destination}')
+
+
 def plan(pages, existing, docs_ref):
     output = {}
-    banner = (f'> **Applies to:** epistemic-skills {TAG}.\n'
-              f'> **Editorial source:** [documentation commit {docs_ref[:12]}]'
-              f'({BASE}/tree/{docs_ref}/docs/handbook/pages). '
-              'Documentation improvements do not change the released skill contracts.\n')
+    # The version and the documentation source are stated once, in _Footer.md,
+    # which keeps the exact "**Applies to:** epistemic-skills vX" marker that
+    # check_wiki RULE 2 reads. Pages carry no per-page banner.
     for name, source in pages.items():
         if not PAGE_NAME.fullmatch(name):
             raise RuntimeError(f'invalid handbook page name: {name}')
         body = pin_current_links(source, docs_ref)
-        # Replace the source banner, not any historical version references.
+        # Remove the source banner, not any historical version references.
         body = re.sub(r'^> \*\*Applies to:\*\*[^\n]*\n(?:\n)?', '', body, count=1)
         body = LINK.sub(lambda m: "[{}]({})".format(m[1], re.sub(r"\.md(?=#|$)", "", m[2]))
                         if not urlsplit(m[2]).scheme else m[0], body)
-        output[name] = banner + '\n' + body
+        output[name] = body
     redirects = dict(release_staging.REDIRECTS)
     redirects.update({
         'Architecture-and-Contracts': 'How-the-Pieces-Fit',
@@ -162,14 +172,13 @@ def plan(pages, existing, docs_ref):
         destination = redirects[slug]
         if not destination.startswith('https:') and destination + '.md' not in output:
             raise RuntimeError(f'legacy redirect {name} has no current destination')
-        output[name] = (banner + f'\n# {slug.replace("-", " ")}\n\n'
-                        f'This older address now points to [current guidance]({destination}). '
-                        'It does not define the current skill contract.\n\n'
-                        f'[Historical v6 snapshot]({BASE}/blob/{TAG}/docs/wiki-updates/v6.0.0/pages/{name}) '
-                        'preserves the earlier guidance; the wiki Git history also remains intact.\n')
+        output[name] = (f'# {slug.replace("-", " ")}\n\n'
+                        f'Retired page from the v6 handbook. {redirect_sentence(destination)} '
+                        f'The [v6 snapshot]({BASE}/blob/{TAG}/docs/wiki-updates/v6.0.0/pages/{name}) '
+                        "keeps the original text, and the wiki's Git history is intact.\n")
     sections = {
         'Start here': ['Home', 'Start-Here', 'Core-Concepts'],
-        'Use the skills': ['Workflow-Recipes', 'Skill-Catalog', 'How-the-Pieces-Fit'],
+        'Use the skills': ['Skill-Catalog', 'How-the-Pieces-Fit', 'Workflow-Recipes'],
         'Understand the design': ['Design-Rationale', 'Glossary'],
         'Install and troubleshoot': ['Installation-and-Harness-Compatibility', 'FAQ-and-Troubleshooting'],
         'Maintain and verify': ['Maintainer-Guide', 'Testing-and-Evaluations', 'Release-Process-and-Versioning'],
@@ -182,9 +191,11 @@ def plan(pages, existing, docs_ref):
         if links:
             sidebar.append(f'**{heading}**\n\n' + '\n'.join(links))
     output['_Sidebar.md'] = '\n\n'.join(sidebar) + '\n'
-    output['_Footer.md'] = (f'Handbook describes [{TAG}]({BASE}/releases/tag/{TAG}). '
-                            f'Editorial source: [{docs_ref[:12]}]({BASE}/tree/{docs_ref}/docs/handbook/pages). '
-                            f'[Released contracts]({BASE}/tree/{TAG}/plugins/epistemic-skills/skills).\n')
+    # Keep "epistemic-skills {TAG}" outside link brackets: check_wiki RULE 2 reads it.
+    output['_Footer.md'] = (f'**Applies to:** epistemic-skills {TAG}. '
+                            f'[Release notes]({BASE}/releases/tag/{TAG}) · '
+                            f'[Source for these pages]({BASE}/tree/{docs_ref}/docs/handbook/pages) · '
+                            f'[The skills as released]({BASE}/tree/{TAG}/plugins/epistemic-skills/skills)\n')
     return output
 
 

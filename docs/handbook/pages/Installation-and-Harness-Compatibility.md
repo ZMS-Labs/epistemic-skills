@@ -9,7 +9,7 @@ Use the [v7.0.0 installation instructions](https://github.com/ZMS-Labs/epistemic
 1. Choose one installation mechanism for the host. Preserve customized existing instructions or handlers.
 2. Record the selected release and installed location. Use the host's documented trust and reload process.
 3. Observe discovery or loading where the host exposes it. A correct manifest is insufficient to establish either.
-4. Load `epistemic` explicitly if automatic entry delivery is unavailable or unverified.
+4. Load `epistemic`, the usage guide, explicitly if its automatic delivery is unavailable or unverified.
 5. Try a bounded real task and inspect the method's actual contribution. Installing does not by itself establish successful application.
 
 ### v7 coverage, honestly scoped
@@ -25,4 +25,4 @@ Use the [v7.0.0 installation instructions](https://github.com/ZMS-Labs/epistemic
 
 The [dated v7 host record](https://github.com/ZMS-Labs/epistemic-skills/blob/v7.0.0/docs/release/v7-host-coverage.md) supplies the detailed versions and test scope. Its pre-publication status is historical; final publication is recorded separately. Host versions and interfaces may change after that observation.
 
-Native goals and loops are inspected at use time. An upgrade does not silently activate or replace a goal. See [Write Goal](Skill-Write-Goal.md) and [troubleshooting](FAQ-and-Troubleshooting.md).
+Native goals and loops are inspected at use time. An upgrade does not silently activate or replace a goal. See [Write Goal](Skill-Write-Goal.md) and [FAQ and Troubleshooting](FAQ-and-Troubleshooting.md).

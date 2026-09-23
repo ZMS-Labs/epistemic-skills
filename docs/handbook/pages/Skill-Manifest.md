@@ -18,6 +18,6 @@ Manifest records an explicitly bounded mission: authority, scope, protected stat
 
 **Boundary:** This opt-in custody contract requires a distinct accepting actor and cannot be bypassed with a renamed identity. Recorded authority alone does not enforce tool permissions: runtime blocking depends on installed, armed guards. Case-insensitive POSIX custody limits remain documented.
 
-[Decision Ledger](Skill-Decision-Ledger.md) preserves reasoning more lightly; [Write Goal](Skill-Write-Goal.md) defines done. See [known limitations](Testing-and-Evaluations.md).
+[Decision Ledger](Skill-Decision-Ledger.md) preserves reasoning more lightly; [Write Goal](Skill-Write-Goal.md) defines done. See the known limits in [Testing and Evaluations](Testing-and-Evaluations.md).
 
 [Read the canonical v7.0.0 method](https://github.com/ZMS-Labs/epistemic-skills/blob/v7.0.0/plugins/epistemic-skills/skills/manifest/SKILL.md) · [All methods](Skill-Catalog.md)

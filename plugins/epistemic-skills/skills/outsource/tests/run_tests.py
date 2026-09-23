@@ -219,7 +219,7 @@ def main() -> int:
     require("the tag's full skill count" in readme, "README harness success check is stale")
     require(f"canonical skill cores ({_nword})" in readme, "README layout inventory count is stale")
     require("canonical skill cores (sixteen)" not in readme, "README still advertises the pre-consolidation count")
-    require("**outsource**" in readme, "README skill table lacks outsource")
+    require("](plugins/epistemic-skills/skills/outsource/SKILL.md)" in readme, "README skill table lacks outsource")
     require("## Routine work first" in readme, "README does not present the routine path first")
 
     contributing = read(REPO_ROOT / "CONTRIBUTING.md")

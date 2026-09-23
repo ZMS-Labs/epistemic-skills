@@ -26,4 +26,4 @@ These terms name practical distinctions used throughout the handbook.
 
 A receipt's existence does not make every claim inside it true. A lens name does not create professional credentials. A copied instruction does not prove the host loaded or applied it.
 
-[Core concepts](Core-Concepts.md) explains the reasoning behind these distinctions.
+[Core Concepts](Core-Concepts.md) explains the reasoning behind these distinctions.

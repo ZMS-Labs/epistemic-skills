@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib.util
 from pathlib import Path
+import re
 import subprocess
 import tempfile
 import unittest
@@ -97,13 +98,50 @@ class PublicationGuards(unittest.TestCase):
                  'How-the-Pieces-Fit.md': '# How the pieces fit\n'}
         output = publisher.plan(pages, {'Glossary.md', 'Architecture-and-Contracts.md'}, SHA)
         self.assertIn('Actual definitions.', output['Glossary.md'])
-        self.assertNotIn('older address', output['Glossary.md'])
+        self.assertNotIn('Retired page', output['Glossary.md'])
         self.assertIn('(Glossary#evidence)', output['Home.md'])
         self.assertIn('(How-the-Pieces-Fit)', output['Architecture-and-Contracts.md'])
         self.assertIn(SHA, output['_Footer.md'])
         self.assertIn('[Glossary](Glossary)', output['_Sidebar.md'])
         with patch.object(publisher, 'command', return_value=''):
             publisher.validate_links(output, SHA)
+
+    def test_pages_carry_no_banner_and_footer_keeps_the_version_marker(self):
+        source = '> **Applies to:** epistemic-skills v7.0.0.\n\n# Home\n\nBody.\n'
+        output = publisher.plan({'Home.md': source}, set(), SHA)
+        self.assertEqual(output['Home.md'], '# Home\n\nBody.\n')
+        # The exact marker check_wiki RULE 2 reads must survive, outside link text.
+        marker = re.compile(r'\*\*Applies to:\*\*\s+epistemic-skills\s+v(\d+\.\d+\.\d+)')
+        self.assertEqual(marker.findall(output['_Footer.md']), [publisher.TAG[1:]])
+        self.assertIn(f'/tree/{SHA}/docs/handbook/pages', output['_Footer.md'])
+        self.assertIn(f'/tree/{publisher.TAG}/plugins/epistemic-skills/skills', output['_Footer.md'])
+        self.assertNotIn('Editorial source', output['_Footer.md'])
+
+    def test_retired_pages_name_their_destination(self):
+        pages = {name + '.md': f'# {name}\n' for name in
+                 ('Home', 'How-the-Pieces-Fit', 'Start-Here', 'Design-Rationale', 'Testing-and-Evaluations')}
+        output = publisher.plan(pages, {'The-Epistemic-Arc.md', 'Contributing.md', 'Version-History.md'}, SHA)
+        arc = output['The-Epistemic-Arc.md']
+        self.assertTrue(arc.startswith('# The Epistemic Arc\n\nRetired page from the v6 handbook. '))
+        self.assertIn('see [How the Pieces Fit](How-the-Pieces-Fit).', arc)
+        self.assertIn('/blob/v7.0.0/docs/wiki-updates/v6.0.0/pages/The-Epistemic-Arc.md', arc)
+        self.assertIn(f'[the contributing guide]({publisher.BASE}/blob/{SHA}/CONTRIBUTING.md)',
+                      output['Contributing.md'])
+        self.assertIn(f'its history, see [the list of releases]({publisher.BASE}/releases).',
+                      output['Version-History.md'])
+        for stub in (arc, output['Contributing.md'], output['Version-History.md']):
+            self.assertNotIn('Applies to', stub)
+        with self.assertRaisesRegex(RuntimeError, 'no reviewed label'):
+            publisher.redirect_sentence('https://example.invalid/elsewhere')
+
+    def test_skill_catalog_leads_the_use_section(self):
+        pages = {name + '.md': f'# {name}\n' for name in
+                 ('Home', 'Skill-Catalog', 'How-the-Pieces-Fit', 'Workflow-Recipes')}
+        sidebar = publisher.plan(pages, set(), SHA)['_Sidebar.md']
+        section = sidebar.split('**Use the skills**\n\n', 1)[1].split('\n\n', 1)[0]
+        self.assertEqual(section.splitlines(), ['- [Skill Catalog](Skill-Catalog)',
+                                                '- [How the Pieces Fit](How-the-Pieces-Fit)',
+                                                '- [Workflow Recipes](Workflow-Recipes)'])
 
     def test_dirty_wiki_cannot_reach_a_write(self):
         with tempfile.TemporaryDirectory() as tmp:
