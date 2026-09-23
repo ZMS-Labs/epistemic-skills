@@ -17,14 +17,15 @@ the handbook as connected pages. The editable source is `docs/handbook/pages/`.
 | Inspect schemas and executable checks | [Contract guide](../plugins/epistemic-skills/contracts/README.md) |
 | Build the ChatGPT and OpenAI distributions | [Packaging guide](CHATGPT-AND-OPENAI-PACKAGING.md) |
 | Publish a version | [Release procedure](../RELEASING.md) |
-| Verify the released v7 source and outcomes | [Release notes](release/RELEASE-7.0.0.md) and [completed publication receipt](https://github.com/ZMS-Labs/epistemic-skills/releases/download/v7.0.0/publication-receipt.json) |
+| Verify the released v7.1 source and outcomes | [Release notes](release/RELEASE-7.1.0.md) and [completed publication receipt](https://github.com/ZMS-Labs/epistemic-skills/releases/download/v7.1.0/publication-receipt.json) |
 
 ## Current guidance and release records
 
 The current handbook can improve between releases. The
-[v7.0.0 handbook snapshot](wiki-updates/v7.0.0/pages/Home.md) records the pages
-shipped with that release; the [v6.0.0 snapshot](wiki-updates/v6.0.0/pages/Home.md)
-serves the same historical purpose. Edit current guidance in the handbook,
+[v7.1.0 handbook snapshot](wiki-updates/v7.1.0/pages/Home.md) records the pages
+published for that release; the [v7.0.0 snapshot](wiki-updates/v7.0.0/pages/Home.md)
+and the [v6.0.0 snapshot](wiki-updates/v6.0.0/pages/Home.md)
+serve the same historical purpose. Edit current guidance in the handbook,
 not in a released snapshot.
 
 Release records answer a different question: what was checked on a particular

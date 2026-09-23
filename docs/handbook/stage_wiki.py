@@ -18,7 +18,7 @@ from urllib.parse import unquote, urlsplit
 
 REPO = Path(__file__).resolve().parents[2]
 PAGES = 'docs/handbook/pages'
-TAG = 'v7.0.0'
+TAG = 'v7.1.0'
 BASE = 'https://github.com/ZMS-Labs/epistemic-skills'
 RAW = 'https://raw.githubusercontent.com/ZMS-Labs/epistemic-skills'
 LINK = re.compile(r'\[([^\]]+)\]\(([^)]+)\)')
@@ -31,7 +31,18 @@ release_staging = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(release_staging)
 command = release_staging.command
 clean_wiki = release_staging.clean_wiki
-validate_publication = release_staging.validate_publication
+
+
+def validate_publication(release, remote_refs, expected):
+    """Same contract as the release snapshot's validator, bound to THIS
+    handbook's release: the named GitHub Release must be published and the
+    annotated tag must peel to the expected source commit. Defined locally
+    because the imported module's copy is pinned to its own v7.0.0 tag."""
+    if release.get('tagName') != TAG or release.get('isDraft') is not False or not release.get('publishedAt'):
+        raise RuntimeError(f'{TAG} GitHub Release is not published')
+    refs = dict(line.split()[::-1] for line in remote_refs.splitlines() if line.strip())
+    if refs.get(f'refs/tags/{TAG}^{{}}') != expected:
+        raise RuntimeError('published annotated tag does not peel to the expected source commit')
 
 
 def validate_docs_ref(docs_ref):
