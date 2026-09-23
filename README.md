@@ -35,8 +35,8 @@ shows one recorded use.
 [![Checks](https://github.com/ZMS-Labs/epistemic-skills/actions/workflows/epistemic-flexibility.yml/badge.svg)](https://github.com/ZMS-Labs/epistemic-skills/actions/workflows/epistemic-flexibility.yml)
 [![License](https://img.shields.io/github/license/ZMS-Labs/epistemic-skills)](LICENSE)
 
-**Version 7.0.0.** The package contains **seventeen** skills: the `epistemic`
-usage guide and **sixteen** disciplines. The [published release](https://github.com/ZMS-Labs/epistemic-skills/releases/tag/v7.0.0)
+**Version 7.1.0.** The package contains **seventeen** skills: the `epistemic`
+usage guide and **sixteen** disciplines. The [published release](https://github.com/ZMS-Labs/epistemic-skills/releases/tag/v7.1.0)
 includes versioned source, generated bundles, and verification receipts.
 *Discipline* is this project's word for one of the methods.
 
@@ -98,7 +98,7 @@ replays the 14 and the 0 with only Python and Git.
 For a tool without its own plugin system:
 
 ```bash
-npx skills add https://github.com/ZMS-Labs/epistemic-skills/tree/v7.0.0/plugins/epistemic-skills/skills
+npx skills add https://github.com/ZMS-Labs/epistemic-skills/tree/v7.1.0/plugins/epistemic-skills/skills
 ```
 
 Example request after installation:
@@ -162,7 +162,7 @@ one task can use more than one method.
 These summaries help you choose. Each method's `SKILL.md` is its canonical text,
 meaning the one agreed version: it sets when the method applies, its limits and
 its steps. The links above go to the development branch, which can include
-changes made after v7.0.0; the [v7.0.0 tag](https://github.com/ZMS-Labs/epistemic-skills/tree/v7.0.0/plugins/epistemic-skills/skills)
+changes made after v7.1.0; the [v7.1.0 tag](https://github.com/ZMS-Labs/epistemic-skills/tree/v7.1.0/plugins/epistemic-skills/skills)
 holds the released text. The [handbook catalog](docs/handbook/pages/Skill-Catalog.md)
 adds examples and comparisons for each method.
 
