@@ -124,7 +124,7 @@ class PublicationGuards(unittest.TestCase):
         arc = output['The-Epistemic-Arc.md']
         self.assertTrue(arc.startswith('# The Epistemic Arc\n\nRetired page from the v6 handbook. '))
         self.assertIn('see [How the Pieces Fit](How-the-Pieces-Fit).', arc)
-        self.assertIn('/blob/v7.0.0/docs/wiki-updates/v6.0.0/pages/The-Epistemic-Arc.md', arc)
+        self.assertIn(f'/blob/{publisher.TAG}/docs/wiki-updates/v6.0.0/pages/The-Epistemic-Arc.md', arc)
         self.assertIn(f'[the contributing guide]({publisher.BASE}/blob/{SHA}/CONTRIBUTING.md)',
                       output['Contributing.md'])
         self.assertIn(f'its history, see [the list of releases]({publisher.BASE}/releases).',
@@ -166,7 +166,7 @@ class PublicationGuards(unittest.TestCase):
 
     def test_release_guards_remain_in_force(self):
         good = {'tagName': publisher.TAG, 'isDraft': False, 'publishedAt': '2026-09-19T00:00:00Z'}
-        refs = SHA + ' refs/tags/v7.0.0\n' + SHA + ' refs/tags/v7.0.0^{}'
+        refs = SHA + f' refs/tags/{publisher.TAG}\n' + SHA + f' refs/tags/{publisher.TAG}^{{}}'
         publisher.validate_publication(good, refs, SHA)
         for release, remote, expected in (({**good, 'isDraft': True}, refs, SHA),
                                           (good, refs.splitlines()[0], SHA),
