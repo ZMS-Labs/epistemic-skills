@@ -4,7 +4,7 @@
 
 **Distinguish an observed cause from a plausible story.**
 
-Triage investigates one known failure using evidence that would differ between competing explanations. When applicable Superpowers systematic-debugging is available, the agent loads and uses it within the same investigation. A standalone procedure is available otherwise.
+Triage investigates one known failure using evidence that would differ between competing explanations. When the systematic-debugging skill from [Superpowers](https://github.com/obra/superpowers), a separate open-source skills library, is available and applies, the agent loads and uses it within the same investigation. A standalone procedure is available otherwise.
 
 **Use it when:** Behavior is wrong or unexpected and the cause is not yet adequately established.
 

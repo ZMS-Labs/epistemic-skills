@@ -2,43 +2,48 @@
 
 # Pick the question, then the method
 
-The package contains seventeen skills: the `epistemic` usage entry and sixteen disciplines. These groups help navigation; they are not mandatory stages or fixed combinations.
+There are seventeen skills: the `epistemic` usage guide and sixteen methods. The groups below match the method map on [How the Pieces Fit](How-the-Pieces-Fit.md) and only make the list easier to scan. You can use any method on its own, in any order.
 
-### Begin and examine the reasoning
+### Start with the usage guide
 
-| Method | The question it helps answer | Useful result |
+| Method | The question it helps answer | What you get back |
 |---|---|---|
-| [Epistemic](Skill-Epistemic.md) | How should this suite be used here? | Loaded usage guidance and visible, proportionate application |
-| [Metacognate](Skill-Metacognate.md) | Is our reasoning aimed at the right outcome? | A corrected assumption, check, or confidence statement |
-| [Perspective](Skill-Perspective.md) | What does another focused angle reveal? | An insight, improvement, or bounded finding |
-| [Gauntlet](Skill-Gauntlet.md) | What judgment survives plural scrutiny? | An adjudicated result with dissent and coverage |
+| [Epistemic](Skill-Epistemic.md) | How do I use this suite on this task? | The agent loads the instructions that apply and tells you briefly what each method added |
 
-### Understand and settle uncertainty
+### Frame the question
 
-| Method | The question it helps answer | Useful result |
+| Method | The question it helps answer | What you get back |
 |---|---|---|
-| [Recon](Skill-Recon.md) | What territory and dependencies are we missing? | A corrected brief or decision map |
-| [Resolve](Skill-Resolve.md) | Which evidence can settle this question? | A derivation, literature result, or probe answer |
-| [Open Questions](Skill-Open-Questions.md) | Which consequential choices need the user? | Resolved decisions and explicit held actions |
-| [Context Audit](Skill-Context-Audit.md) | Are the loaded instructions conflicting or stale? | A scoped diagnosis and reviewable maintenance change |
+| [Metacognate](Skill-Metacognate.md) | Is our reasoning aimed at the right outcome? | A corrected assumption, a better check, a clearer statement of confidence, or a note that the approach holds |
+| [Recon](Skill-Recon.md) | What are we missing about this task before we start? | A corrected brief, a map of the decisions ahead, or a record of what an outside project could offer |
+| [Resolve](Skill-Resolve.md) | What kind of evidence could settle this question? | An answer or a named limit, worked out by reasoning, found in published research, or tested with a small throwaway probe |
+| [Open Questions](Skill-Open-Questions.md) | Which decisions belong to the user? | An interview, then a list of what was decided, deferred, dropped, or is still on hold |
 
-### Observe, diagnose, and verify
+### Examine a decision
 
-| Method | The question it helps answer | Useful result |
+| Method | The question it helps answer | What you get back |
 |---|---|---|
-| [Health](Skill-Health.md) | What state is the system in now? | Observations against bounds, including unknowns |
-| [Triage](Skill-Triage.md) | What caused this particular failure? | A causal verdict and its distinguishing evidence |
-| [Did It Land](Skill-Did-It-Land.md) | Did the intended effect reach the consumer? | A scoped landing result and persistence limits |
-| [Watch](Skill-Watch.md) | Who notices a bound crossing between sessions? | A proven external observation and alert path |
-| [Evidence-Locked UAT](Skill-Evidence-Locked-UAT.md) | Does the material user-facing outcome meet its criteria? | Acceptance tied to observations and coverage |
+| [Perspective](Skill-Perspective.md) | What does one focused angle show, such as whether this can be undone? | A supported finding or improvement, a confirmation that the approach is adequate, or a named gap in the evidence |
+| [Gauntlet](Skill-Gauntlet.md) | Does an important decision hold up when several separate reviews examine it? | GO, CONDITIONAL, or NO-GO, with disagreements kept and the limits of the review stated |
 
-### Keep work recoverable
+### Verify an outcome
 
-| Method | The question it helps answer | Useful result |
+| Method | The question it helps answer | What you get back |
 |---|---|---|
-| [Decision Ledger](Skill-Decision-Ledger.md) | Can the next consumer recover and recheck this reasoning? | One adequate durable reference or resumed-state check |
-| [Manifest](Skill-Manifest.md) | Does this mission need formal custody across interruptions? | Receipted mission state and acceptance boundaries |
-| [Write Goal](Skill-Write-Goal.md) | What counts as done, and how can the host represent it? | A completion contract; activation only when authorized |
-| [Outsource](Skill-Outsource.md) | Can an external target work without this chat? | An immutable handoff packet and verified return |
+| [Health](Skill-Health.md) | What state is the system in right now? | OK, WARN, CRITICAL, or UNKNOWN for each thing checked, with what was seen |
+| [Triage](Skill-Triage.md) | What caused this failure? | A verdict (cause found, narrowed, unknown, or not broken) with the observation that tells the explanations apart |
+| [Did It Land](Skill-Did-It-Land.md) | Did the change take effect where it is used? | LANDED, REVERTED, or UNVERIFIED, for the place and time that were checked |
+| [Watch](Skill-Watch.md) | Who will notice if a limit is crossed after this session ends? | A record of where the watch stands. It is marked PROVEN only after a running check has sent a safe test alert through the real path to the person who agreed to receive it |
+| [Evidence-Locked UAT](Skill-Evidence-Locked-UAT.md) | Does what the user sees and does meet criteria set before testing? (UAT is user acceptance testing.) | An acceptance result tied to what was observed, with what was left out |
 
-For close calls, see [How the pieces fit](How-the-Pieces-Fit.md). For execution examples, see [Workflow recipes](Workflow-Recipes.md).
+### Carry work forward
+
+| Method | The question it helps answer | What you get back |
+|---|---|---|
+| [Write Goal](Skill-Write-Goal.md) | What counts as done, and can your agent's app track it as a goal? | A written definition of done; a goal is switched on only when you allow it |
+| [Decision Ledger](Skill-Decision-Ledger.md) | Can the next session find this reasoning and recheck it? | One record the next session can use, reusing an existing one when it is enough |
+| [Manifest](Skill-Manifest.md) | Does this long job need a formal record that survives interruptions? | A mission record the next session can resume from; only someone other than the agent that did the work can accept it as done |
+| [Outsource](Skill-Outsource.md) | Can another agent or tool pick this up without this chat? | A fixed handoff packet it can work from, and a check of whatever comes back |
+| [Context Audit](Skill-Context-Audit.md) | Are the agent's loaded instructions conflicting or stale? | A list of conflicts or duplicates and a proposed fix you can review |
+
+For close calls between similar methods, see [How the Pieces Fit](How-the-Pieces-Fit.md). For worked examples, see [Workflow Recipes](Workflow-Recipes.md).

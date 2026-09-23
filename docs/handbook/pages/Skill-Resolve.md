@@ -4,7 +4,7 @@
 
 **Choose the evidence method that can actually settle the question.**
 
-Resolve selects among a derivation, literature investigation, or disposable probe. The choice follows the question, existing evidence, assurance need, and cost. These are instruments with different strengths, not a fixed ladder from light to heavy.
+Resolve selects among a derivation, literature investigation, or disposable probe. The choice follows the question, existing evidence, assurance need, and cost.
 
 **Use it when:** A live correctness, research, or empirical question cannot be settled by an ordinary bounded read or check.
 

@@ -32,7 +32,7 @@ Briefly state actual skill use and its contribution, then continue the original 
 |---|---|
 | “The tool exited successfully.” | What effect did the consumer exhibit? |
 | “The report sounds convincing.” | Which observation distinguishes this explanation? |
-| “We saved the decision.” | Can the next consumer find its basis and know when to revisit it? |
+| “We saved the decision.” | Can the next session or reader find its basis and know when to revisit it? |
 | “No alert arrived.” | Was the full observation and delivery path proved? |
 
-[Glossary](Glossary.md) · [How the pieces fit](How-the-Pieces-Fit.md) · [Worked examples](Workflow-Recipes.md)
+[Glossary](Glossary.md) · [How the Pieces Fit](How-the-Pieces-Fit.md) · [Workflow Recipes](Workflow-Recipes.md)
