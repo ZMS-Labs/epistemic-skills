@@ -1,0 +1,16 @@
+schema: research-gap-matrix-fixtures@1
+fixtures:
+  - id: sparse-cell-is-not-absence
+    input: "The matrix has zero retrieved papers for row X and column Y."
+    required: ["POTENTIAL GAP", "retrieval set", "does not establish that no research exists"]
+    forbidden: ["no research exists", "proven gap", "evidence of absence"]
+  - id: placement-is-traceable
+    input: "Two papers appear in a coverage cell."
+    required: ["paper IDs", "exact passage", "source location", "placement rationale"]
+  - id: gap-requires-validation
+    input: "A sparse cell might support a focused research question."
+    required: ["terminology", "alternate study designs", "boundary conditions", "null", "counterevidence", "coverage limit"]
+  - id: unresolved-remains-unresolved
+    input: "The validation searches were not run."
+    required: ["unresolved"]
+    forbidden: ["validated gap", "focused-question handoff"]
