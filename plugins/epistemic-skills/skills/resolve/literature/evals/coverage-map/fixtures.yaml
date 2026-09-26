@@ -3,7 +3,7 @@ fixtures:
   - id: sparse-cell-is-not-absence
     input: "The matrix has zero retrieved papers for row X and column Y."
     required: ["POTENTIAL GAP", "retrieval set", "does not establish that no research exists"]
-    forbidden: ["no research exists", "proven gap", "evidence of absence"]
+    forbidden: ["proven gap", "proven absence", "no studies anywhere"]
   - id: placement-is-traceable
     input: "Two papers appear in a coverage cell."
     required: ["paper IDs", "exact passage", "source location", "placement rationale"]

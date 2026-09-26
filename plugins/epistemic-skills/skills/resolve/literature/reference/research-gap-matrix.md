@@ -32,18 +32,23 @@ research exists. Use `POTENTIAL GAP` until validation is complete.
 ```yaml
 row: pediatric population
 column: randomized treatment comparison
+retrieval_count: 2
 paper_ids: [P-003, P-011]
 coverage_level: sparse
 status: POTENTIAL GAP
 placement_evidence:
   - paper_id: P-003
+    rationale: "The study includes children and compares randomized treatments."
     verification: full-text
     location: "Methods, population definition"
     passage: "..."
 validation_queries:
-  - "pediatric treatment randomized trial alternate terminology"
-  - "children intervention null result"
+  - query: "pediatric treatment randomized trial alternate terminology"
+    result: "No additional paper in the current retrieval set."
+  - query: "children intervention null result"
+    result: "One adjacent study requires classification."
 interpretation: unresolved ambiguity
+residual_coverage_limit: "Adjacent study and alternate indexes not yet checked."
 ```
 
 ## Validation gate
@@ -56,7 +61,8 @@ limits.
 
 The result must distinguish `plausible substantive gap`,
 `retrieval/design limitation`, and `unresolved ambiguity`. If the checks
-were not run, the cell remains `unresolved`.
+were not run, the sparse or empty cell stays `POTENTIAL GAP`, its
+interpretation is `unresolved ambiguity`, and it has no `next_question`.
 
 ## Handoff contract
 

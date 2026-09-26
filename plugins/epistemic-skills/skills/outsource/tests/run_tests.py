@@ -12,13 +12,13 @@ HERE = Path(__file__).resolve()
 SKILL_ROOT = HERE.parents[1]
 PACKAGE_ROOT = HERE.parents[3]
 REPO_ROOT = HERE.parents[5]
-EXPECTED_VERSION = "7.1.0"
+EXPECTED_VERSION = "7.2.0"
 
 # Current installation target. Preparation kept v6 until publication was
 # authorized; the v7 release PR rotates these surfaces together. The release
 # gate verifies each pinned path in source before tagging and HTTP reachability
 # after publication. A source match alone does not prove the tag exists.
-INSTALL_REF_PIN = "v7.1.0"
+INSTALL_REF_PIN = "v7.2.0"
 _REF = re.compile(r"github\.com/ZMS-Labs/epistemic-skills/(?:tree|blob)/(v[0-9]+\.[0-9]+\.[0-9]+)")
 
 

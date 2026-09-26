@@ -330,15 +330,17 @@ fields:
 
 - `dimensions`: the pre-registered row and column dimensions;
 - `cells`: one record per considered intersection;
-- `papers`: paper IDs placed in the cell;
+- `retrieval_count`: number of retrieved papers placed in the cell;
+- `paper_ids`: paper IDs placed in the cell;
 - `coverage_level`: `dense`, `moderate`, `sparse`, or `empty`;
 - `status`: `covered`, `POTENTIAL GAP`, or `unresolved`;
-- `placement_evidence`: exact passages and source locations, with the
+- `placement_evidence`: classification rationale, exact passages and source locations, with the
   verification level (abstract vs full text);
 - `validation_queries`: terminology, adjacent-scope, design, boundary,
-  null-result, and counterevidence searches actually run;
-- `interpretation`: substantive possibility, retrieval/design limitation,
+  null-result, and counterevidence searches actually run, with their results;
+- `interpretation`: plausible substantive gap, retrieval/design limitation,
   unresolved ambiguity, or not assessed; and
+- `residual_coverage_limit`: what the searches and indexes still could not cover; and
 - `next_question`: present only when the validated cell is handed forward.
 
 `POTENTIAL GAP` is not a claim-evidence row and cannot be cited as proof of
