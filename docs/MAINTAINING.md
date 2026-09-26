@@ -106,10 +106,10 @@ tag or replacing its assets. A new package release follows
   evidence linked to the affected record. Preserve old outcomes; follow the
   release policy for changes to package contents or published assets.
 
-For the completed v7.1 publication, the
-[public receipt](https://github.com/ZMS-Labs/epistemic-skills/releases/download/v7.1.0/publication-receipt.json)
-binds the source, checks, assets, and publication state; the v7.0.0
-[receipt](https://github.com/ZMS-Labs/epistemic-skills/releases/download/v7.0.0/publication-receipt.json)
+For the v7.2 publication, the
+[public receipt](https://github.com/ZMS-Labs/epistemic-skills/releases/download/v7.2.0/publication-receipt.json)
+binds the source, checks, assets, and publication state; the v7.1.0
+[receipt](https://github.com/ZMS-Labs/epistemic-skills/releases/download/v7.1.0/publication-receipt.json)
 remains the prior support point's record. The earlier v7
 [requirement packet](release/v7-evidence.md) remains a pre-publication record.
 

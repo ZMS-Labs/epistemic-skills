@@ -18,7 +18,7 @@ from urllib.parse import unquote, urlsplit
 
 REPO = Path(__file__).resolve().parents[2]
 PAGES = 'docs/handbook/pages'
-TAG = 'v7.1.0'
+TAG = 'v7.2.0'
 BASE = 'https://github.com/ZMS-Labs/epistemic-skills'
 RAW = 'https://raw.githubusercontent.com/ZMS-Labs/epistemic-skills'
 LINK = re.compile(r'\[([^\]]+)\]\(([^)]+)\)')
@@ -232,7 +232,7 @@ def main():
     ap.add_argument('--self-test', action='store_true')
     ap.add_argument('--wiki', type=Path)
     ap.add_argument('--docs-ref', help='full documentation commit SHA already published on origin/main')
-    ap.add_argument('--expected-release-sha', help='exact published v7.0.0 release commit')
+    ap.add_argument('--expected-release-sha', help='exact published release commit')
     ap.add_argument('--apply', action='store_true', help='stage only; default prints a verified plan')
     args = ap.parse_args()
     if args.self_test:
@@ -266,7 +266,7 @@ def main():
     validate_publication(release, refs, sha)
     manifest = json.loads(command('git', 'show', f'{sha}:plugins/epistemic-skills/.claude-plugin/plugin.json'))
     if manifest.get('version') != TAG[1:]:
-        raise RuntimeError('tagged manifest is not v7.0.0')
+        raise RuntimeError(f'tagged manifest is not {TAG}')
     pages = committed_pages(args.docs_ref)
     validate_links(pages, args.docs_ref)
     output = plan(pages, {p.name for p in wiki.glob('*.md')}, args.docs_ref)
