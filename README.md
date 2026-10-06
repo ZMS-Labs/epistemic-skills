@@ -26,7 +26,7 @@ Each method defines when it helps, what useful result it returns, and when to st
 No benefit has been shown yet: a comparison of versions 6 and 7 produced no
 usable pairs of runs, and an earlier exploratory experiment of 72 trials across
 four groups found no measurable difference between them. [Evidence and limits](#trust-evidence-and-known-limits)
-links the receipts, and the [case study](https://zms-labs.github.io/showcase/case-studies/epistemic-skills/)
+links the receipts, and the [case study](https://sternone.net/case-studies/epistemic-skills/)
 shows one recorded use.
 
 **[Start here](#five-minute-start)** · **[Explore the methods](#choose-by-task)** · **[Read the handbook](https://github.com/ZMS-Labs/epistemic-skills/wiki)** · **[Understand the design](docs/handbook/pages/Design-Rationale.md)** · **[Contribute](CONTRIBUTING.md)**
@@ -83,7 +83,7 @@ had 28 files, and its file list disagreed with 14 of them because of a
 line-ending mismatch between the working copy and the files Git stored. After
 the fix none disagreed, and all 28 files fetched from the live site matched
 their committed fingerprints (SHA-256 hashes). It is one task, not a measured improvement. The
-[case study](https://zms-labs.github.io/showcase/case-studies/epistemic-skills/#walkthrough)
+[case study](https://sternone.net/case-studies/epistemic-skills/#walkthrough)
 walks through it, and `python scripts/replay_manifest_case.py`, run in a full
 clone of the [showcase repository](https://github.com/ZMS-Labs/showcase),
 replays the 14 and the 0 with only Python and Git.
