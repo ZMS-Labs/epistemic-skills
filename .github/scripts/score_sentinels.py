@@ -86,6 +86,35 @@ def oracle(fixture: dict) -> str:
             return "REJECT"
         if response.get("verdict") == "CAUSE" and not response.get("discriminating_observation"):
             return "REJECT"
+        for field in ("fault_control_passed", "mutation_applied", "expected_failure_observed",
+                      "original_restored", "observations_retained"):
+            value = response.get(field)
+            if value is not None and type(value) is not bool:
+                return "REJECT"
+        # Any applied mutation needs cleanup, including unsuccessful controls.
+        if response.get("mutation_applied") is True and (
+            response.get("original_restored") is not True
+            or response.get("observations_retained") is not True
+        ):
+            return "REJECT"
+        # A claimed injected-fault success needs evidence that the mutation
+        # landed on the artifact/path actually exercised, plus restoration.
+        # Honest invalid/UNKNOWN/NARROWED controls make no success claim; ordinary
+        # diagnoses do not need a mutation campaign.
+        if response.get("fault_control_passed") is True and (
+            response.get("mutation_applied") is not True
+            or not all(
+                isinstance(response.get(key), str) and response[key].strip()
+                for key in ("application_evidence", "mutated_artifact", "exercised_artifact",
+                            "mutated_path", "exercised_path")
+            )
+            or response.get("mutated_artifact") != response.get("exercised_artifact")
+            or response.get("mutated_path") != response.get("exercised_path")
+            or response.get("expected_failure_observed") is not True
+            or response.get("original_restored") is not True
+            or response.get("observations_retained") is not True
+        ):
+            return "REJECT"
         if inputs.get("repair_authorized") is False and response.get("repair_performed"):
             return "REJECT"
         if inputs.get("repair_authorized") is True and response.get("task_complete") and (

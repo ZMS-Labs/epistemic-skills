@@ -87,6 +87,14 @@ basis is stale, missing or contradicted.
    not settle a runtime claim, and a cache does not settle committed state.
    Change one relevant variable when feasible and inspect the result before
    adding another speculative fix.
+
+   When an intentionally injected fault proves a check can fail, first verify
+   the mutation landed in the artifact and path actually exercised, using an
+   observed diff/content check and invocation evidence. Observe the intended
+   failure, restore the original state and retain the observations. An unapplied
+   mutation or a failure on another path is an invalid control; report that limit
+   honestly as NARROWED or UNKNOWN when causal evidence is missing. Use this
+   technique when informative; it does not require a campaign for every diagnosis.
 4. **State the causal verdict.** Use CAUSE, NARROWED, UNKNOWN or NOT-BROKEN and
    name the evidence and remaining limits. A plausible explanation is not CAUSE.
 5. **Continue within the original authority.** For an authorized repair task,

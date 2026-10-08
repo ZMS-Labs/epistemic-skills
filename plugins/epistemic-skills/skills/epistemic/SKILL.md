@@ -49,6 +49,12 @@ Activation discipline: design-argued; no shipped trigger battery as of this chan
 
 ## Working with other packages
 
+Use one selected development workflow for a task. A complementary method answers
+a distinct unresolved question: reuse adequate design, plan, test and review
+artifacts and scoped approvals, then return to the same interrupted phase.
+Do not add another dispatcher, compulsory phase chain or completion authority.
+Permission, evidence and stopping gates remain binding.
+
 Prefer available, applicable Superpowers systematic-debugging for debugging.
 Load and apply its actual procedure, integrating Triage's causal standards into
 one investigation. When unavailable, use the standalone investigation in

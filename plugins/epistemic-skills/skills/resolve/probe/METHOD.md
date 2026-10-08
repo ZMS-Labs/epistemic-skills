@@ -53,6 +53,13 @@ discriminator cannot separate the alternatives.
 
 - **Logic probe** — a terminal-runnable state explorer for a behavioral or
   algorithmic question (fastest loop; no UI).
+- **Human-drivable state explorer** — optional when interaction helps answer
+  the named question: a self-contained explorer with visible current state,
+  freeplay and resettable guided scenarios where useful. Label simulated
+  boundaries. Retain the answer and observations; dispose of the complete build
+  or archive it read-only as experimental evidence. Its reducer is not
+  automatically promoted, the prototype is not mergeable, and a simulated seam
+  establishes no production claim. A UI is not required for every probe.
 - **Comparative variants** — N thin builds of rival options, differing on the
   decision axis only. Distinctness gate: variants differing only in
   cosmetics are ONE variant. (Feeds gauntlet option-sets: a built option is
