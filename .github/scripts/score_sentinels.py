@@ -86,6 +86,24 @@ def oracle(fixture: dict) -> str:
             return "REJECT"
         if response.get("verdict") == "CAUSE" and not response.get("discriminating_observation"):
             return "REJECT"
+        # A claimed injected-fault success needs evidence that the mutation
+        # landed on the artifact/path actually exercised, plus restoration.
+        # Honest invalid/UNKNOWN/NARROWED controls make no success claim; ordinary
+        # diagnoses do not need a mutation campaign.
+        if response.get("fault_control_passed") is True and (
+            response.get("mutation_applied") is not True
+            or not all(
+                isinstance(response.get(key), str) and response[key].strip()
+                for key in ("application_evidence", "mutated_artifact", "exercised_artifact",
+                            "mutated_path", "exercised_path")
+            )
+            or response.get("mutated_artifact") != response.get("exercised_artifact")
+            or response.get("mutated_path") != response.get("exercised_path")
+            or response.get("expected_failure_observed") is not True
+            or response.get("original_restored") is not True
+            or response.get("observations_retained") is not True
+        ):
+            return "REJECT"
         if inputs.get("repair_authorized") is False and response.get("repair_performed"):
             return "REJECT"
         if inputs.get("repair_authorized") is True and response.get("task_complete") and (

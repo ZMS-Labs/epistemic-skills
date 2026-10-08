@@ -146,6 +146,226 @@
         }
       },
       "expected_oracle": "ACCEPT"
+    },
+    {
+      "id": "applied-fault-control",
+      "skill": "triage",
+      "inputs": {
+        "fault_control_used": true
+      },
+      "response": {
+        "verdict": "NARROWED",
+        "discriminating_observation": "The injected branch fails only after its source mutation is observed.",
+        "fault_control_passed": true,
+        "mutation_applied": true,
+        "application_evidence": "Observed diff at the source consumed by the fixture.",
+        "mutated_artifact": "scratch/checker.py",
+        "exercised_artifact": "scratch/checker.py",
+        "mutated_path": "classify",
+        "exercised_path": "classify",
+        "expected_failure_observed": true,
+        "original_restored": true,
+        "observations_retained": true
+      },
+      "expected_oracle": "ACCEPT"
+    },
+    {
+      "id": "unapplied-fault-cannot-pass",
+      "skill": "triage",
+      "inputs": {
+        "fault_control_used": true
+      },
+      "response": {
+        "verdict": "NARROWED",
+        "discriminating_observation": "The injected branch fails only after its source mutation is observed.",
+        "fault_control_passed": true,
+        "mutation_applied": false,
+        "application_evidence": "Observed diff at the source consumed by the fixture.",
+        "mutated_artifact": "scratch/checker.py",
+        "exercised_artifact": "scratch/checker.py",
+        "mutated_path": "classify",
+        "exercised_path": "classify",
+        "expected_failure_observed": true,
+        "original_restored": true,
+        "observations_retained": true
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "wrong-artifact-fault-cannot-pass",
+      "skill": "triage",
+      "inputs": {
+        "fault_control_used": true
+      },
+      "response": {
+        "verdict": "NARROWED",
+        "discriminating_observation": "The injected branch fails only after its source mutation is observed.",
+        "fault_control_passed": true,
+        "mutation_applied": true,
+        "application_evidence": "Observed diff at the source consumed by the fixture.",
+        "mutated_artifact": "scratch/checker.py",
+        "exercised_artifact": "scratch/other.py",
+        "mutated_path": "classify",
+        "exercised_path": "classify",
+        "expected_failure_observed": true,
+        "original_restored": true,
+        "observations_retained": true
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "wrong-path-fault-cannot-pass",
+      "skill": "triage",
+      "inputs": {
+        "fault_control_used": true
+      },
+      "response": {
+        "verdict": "NARROWED",
+        "discriminating_observation": "The injected branch fails only after its source mutation is observed.",
+        "fault_control_passed": true,
+        "mutation_applied": true,
+        "application_evidence": "Observed diff at the source consumed by the fixture.",
+        "mutated_artifact": "scratch/checker.py",
+        "exercised_artifact": "scratch/checker.py",
+        "mutated_path": "classify",
+        "exercised_path": "scan",
+        "expected_failure_observed": true,
+        "original_restored": true,
+        "observations_retained": true
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-application-without-evidence",
+      "skill": "triage",
+      "inputs": {
+        "fault_control_used": true
+      },
+      "response": {
+        "verdict": "NARROWED",
+        "discriminating_observation": "The injected branch fails only after its source mutation is observed.",
+        "fault_control_passed": true,
+        "mutation_applied": true,
+        "application_evidence": null,
+        "mutated_artifact": "scratch/checker.py",
+        "exercised_artifact": "scratch/checker.py",
+        "mutated_path": "classify",
+        "exercised_path": "classify",
+        "expected_failure_observed": true,
+        "original_restored": true,
+        "observations_retained": true
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-without-expected-failure",
+      "skill": "triage",
+      "inputs": {
+        "fault_control_used": true
+      },
+      "response": {
+        "verdict": "NARROWED",
+        "discriminating_observation": "The injected branch fails only after its source mutation is observed.",
+        "fault_control_passed": true,
+        "mutation_applied": true,
+        "application_evidence": "Observed diff at the source consumed by the fixture.",
+        "mutated_artifact": "scratch/checker.py",
+        "exercised_artifact": "scratch/checker.py",
+        "mutated_path": "classify",
+        "exercised_path": "classify",
+        "expected_failure_observed": false,
+        "original_restored": true,
+        "observations_retained": true
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-without-restoration",
+      "skill": "triage",
+      "inputs": {
+        "fault_control_used": true
+      },
+      "response": {
+        "verdict": "NARROWED",
+        "discriminating_observation": "The injected branch fails only after its source mutation is observed.",
+        "fault_control_passed": true,
+        "mutation_applied": true,
+        "application_evidence": "Observed diff at the source consumed by the fixture.",
+        "mutated_artifact": "scratch/checker.py",
+        "exercised_artifact": "scratch/checker.py",
+        "mutated_path": "classify",
+        "exercised_path": "classify",
+        "expected_failure_observed": true,
+        "original_restored": false,
+        "observations_retained": true
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-without-retained-observations",
+      "skill": "triage",
+      "inputs": {
+        "fault_control_used": true
+      },
+      "response": {
+        "verdict": "NARROWED",
+        "discriminating_observation": "The injected branch fails only after its source mutation is observed.",
+        "fault_control_passed": true,
+        "mutation_applied": true,
+        "application_evidence": "Observed diff at the source consumed by the fixture.",
+        "mutated_artifact": "scratch/checker.py",
+        "exercised_artifact": "scratch/checker.py",
+        "mutated_path": "classify",
+        "exercised_path": "classify",
+        "expected_failure_observed": true,
+        "original_restored": true,
+        "observations_retained": false
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "unapplied-control-honestly-unknown",
+      "skill": "triage",
+      "inputs": {
+        "fault_control_used": true
+      },
+      "response": {
+        "verdict": "UNKNOWN",
+        "discriminating_observation": null,
+        "fault_control_passed": false,
+        "mutation_applied": false,
+        "application_evidence": null,
+        "mutated_artifact": "scratch/checker.py",
+        "exercised_artifact": "scratch/checker.py",
+        "mutated_path": "classify",
+        "exercised_path": "classify",
+        "expected_failure_observed": true,
+        "original_restored": true,
+        "observations_retained": true
+      },
+      "expected_oracle": "ACCEPT"
+    },
+    {
+      "id": "wrong-path-control-honestly-narrowed",
+      "skill": "triage",
+      "inputs": {
+        "fault_control_used": true
+      },
+      "response": {
+        "verdict": "NARROWED",
+        "discriminating_observation": "The injected branch fails only after its source mutation is observed.",
+        "fault_control_passed": false,
+        "mutation_applied": true,
+        "application_evidence": "Observed diff at the source consumed by the fixture.",
+        "mutated_artifact": "scratch/checker.py",
+        "exercised_artifact": "scratch/checker.py",
+        "mutated_path": "classify",
+        "exercised_path": "scan",
+        "expected_failure_observed": true,
+        "original_restored": true,
+        "observations_retained": true
+      },
+      "expected_oracle": "ACCEPT"
     }
   ]
 }

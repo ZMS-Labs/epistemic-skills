@@ -37,6 +37,20 @@ def score(fixtures: list[dict], responses: list[dict]) -> dict:
         if action != expected:
             failures.append(f"{fid}: expected {expected}, got {action}")
             continue
+        if fixture.get("state_explorer"):
+            if not _nonempty(row.get("visible_state")) or row.get("freeplay") is not True:
+                failures.append(f"{fid}: the human-drivable explorer needs visible state and freeplay")
+            if fixture.get("guided_scenarios_useful") and (
+                not row.get("guided_scenarios") or row.get("resettable") is not True
+            ):
+                failures.append(f"{fid}: useful guided scenarios must be resettable")
+            seams = row.get("simulated_boundaries")
+            if fixture.get("stubbed_seam") and (
+                not isinstance(seams, list) or not seams or not all(_nonempty(s) for s in seams)
+            ):
+                failures.append(f"{fid}: simulated boundaries must be labeled")
+            if row.get("promoted") or row.get("mergeable") or row.get("kept_mergeable"):
+                failures.append(f"{fid}: the complete explorer remains disposable, never automatically promoted or mergeable")
         if expected == "run-prototype":
             if not _nonempty(row.get("question")):
                 failures.append(f"{fid}: the one named question must be pre-registered before building")

@@ -28,5 +28,73 @@
         "production_verified": true
       }
     ]
+  },
+  {
+    "fixture": {
+      "id": "v7-disposable-state-explorer",
+      "expected_action": "record-and-dispose",
+      "state_explorer": true,
+      "guided_scenarios_useful": true,
+      "stubbed_seam": true,
+      "scenario": "Answer one transition question with a disposable human-drivable explorer; remote queue simulated."
+    },
+    "response": {
+      "id": "v7-disposable-state-explorer",
+      "action": "record-and-dispose",
+      "answer": {
+        "question": "Does reset restore the idle state?",
+        "observation": "Freeplay and resettable guided cancel/reset scenarios restore idle locally.",
+        "decision": "Local transition only; the remote queue was simulated."
+      },
+      "record_ref": "docs/evidence/synthetic-explorer.md",
+      "disposed": false,
+      "archived_read_only": true,
+      "kept_mergeable": false,
+      "mergeable": false,
+      "promoted": false,
+      "production_verified": false,
+      "visible_state": "idle",
+      "freeplay": true,
+      "guided_scenarios": [
+        "cancel",
+        "reset"
+      ],
+      "resettable": true,
+      "simulated_boundaries": [
+        "remote queue: simulated"
+      ]
+    },
+    "reject_mutations": [
+      {
+        "promoted": true
+      },
+      {
+        "mergeable": true
+      },
+      {
+        "kept_mergeable": true
+      },
+      {
+        "production_verified": true
+      },
+      {
+        "archived_read_only": false
+      },
+      {
+        "visible_state": ""
+      },
+      {
+        "freeplay": false
+      },
+      {
+        "guided_scenarios": []
+      },
+      {
+        "resettable": false
+      },
+      {
+        "simulated_boundaries": []
+      }
+    ]
   }
 ]
