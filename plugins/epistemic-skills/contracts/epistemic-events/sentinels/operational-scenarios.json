@@ -628,6 +628,766 @@
         "observations_retained": false
       },
       "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-fault-control-passed-string-true",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "fault_control_passed": "true"
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-fault-control-passed-string-false",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "fault_control_passed": "false"
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-fault-control-passed-string-empty",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "fault_control_passed": ""
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-fault-control-passed-integer-zero",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "fault_control_passed": 0
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-fault-control-passed-integer-one",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "fault_control_passed": 1
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-fault-control-passed-float-zero",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "fault_control_passed": 0.0
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-fault-control-passed-float-one",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "fault_control_passed": 1.0
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-fault-control-passed-empty-list",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "fault_control_passed": []
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-fault-control-passed-nonempty-list",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "fault_control_passed": [
+          true
+        ]
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-fault-control-passed-empty-mapping",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "fault_control_passed": {}
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-fault-control-passed-nonempty-mapping",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "fault_control_passed": {
+          "synthetic": true
+        }
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-mutation-applied-string-true",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "mutation_applied": "true"
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-mutation-applied-string-false",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "mutation_applied": "false"
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-mutation-applied-string-empty",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "mutation_applied": ""
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-mutation-applied-integer-zero",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "mutation_applied": 0
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-mutation-applied-integer-one",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "mutation_applied": 1
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-mutation-applied-float-zero",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "mutation_applied": 0.0
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-mutation-applied-float-one",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "mutation_applied": 1.0
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-mutation-applied-empty-list",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "mutation_applied": []
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-mutation-applied-nonempty-list",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "mutation_applied": [
+          true
+        ]
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-mutation-applied-empty-mapping",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "mutation_applied": {}
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-mutation-applied-nonempty-mapping",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "mutation_applied": {
+          "synthetic": true
+        }
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-expected-failure-observed-string-true",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "expected_failure_observed": "true"
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-expected-failure-observed-string-false",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "expected_failure_observed": "false"
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-expected-failure-observed-string-empty",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "expected_failure_observed": ""
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-expected-failure-observed-integer-zero",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "expected_failure_observed": 0
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-expected-failure-observed-integer-one",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "expected_failure_observed": 1
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-expected-failure-observed-float-zero",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "expected_failure_observed": 0.0
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-expected-failure-observed-float-one",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "expected_failure_observed": 1.0
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-expected-failure-observed-empty-list",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "expected_failure_observed": []
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-expected-failure-observed-nonempty-list",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "expected_failure_observed": [
+          true
+        ]
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-expected-failure-observed-empty-mapping",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "expected_failure_observed": {}
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-expected-failure-observed-nonempty-mapping",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "expected_failure_observed": {
+          "synthetic": true
+        }
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-original-restored-string-true",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "original_restored": "true"
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-original-restored-string-false",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "original_restored": "false"
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-original-restored-string-empty",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "original_restored": ""
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-original-restored-integer-zero",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "original_restored": 0
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-original-restored-integer-one",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "original_restored": 1
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-original-restored-float-zero",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "original_restored": 0.0
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-original-restored-float-one",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "original_restored": 1.0
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-original-restored-empty-list",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "original_restored": []
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-original-restored-nonempty-list",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "original_restored": [
+          true
+        ]
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-original-restored-empty-mapping",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "original_restored": {}
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-original-restored-nonempty-mapping",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "original_restored": {
+          "synthetic": true
+        }
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-observations-retained-string-true",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "observations_retained": "true"
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-observations-retained-string-false",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "observations_retained": "false"
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-observations-retained-string-empty",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "observations_retained": ""
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-observations-retained-integer-zero",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "observations_retained": 0
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-observations-retained-integer-one",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "observations_retained": 1
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-observations-retained-float-zero",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "observations_retained": 0.0
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-observations-retained-float-one",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "observations_retained": 1.0
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-observations-retained-empty-list",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "observations_retained": []
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-observations-retained-nonempty-list",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "observations_retained": [
+          true
+        ]
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-observations-retained-empty-mapping",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "observations_retained": {}
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flag-observations-retained-nonempty-mapping",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "observations_retained": {
+          "synthetic": true
+        }
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "fault-flags-honestly-unknown-absent",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN"
+      },
+      "expected_oracle": "ACCEPT"
+    },
+    {
+      "id": "fault-flags-honestly-unknown-null",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "fault_control_passed": null,
+        "mutation_applied": null,
+        "expected_failure_observed": null,
+        "original_restored": null,
+        "observations_retained": null
+      },
+      "expected_oracle": "ACCEPT"
+    },
+    {
+      "id": "fault-flags-honestly-unknown-false",
+      "skill": "triage",
+      "response": {
+        "verdict": "UNKNOWN",
+        "fault_control_passed": false,
+        "mutation_applied": false,
+        "expected_failure_observed": false,
+        "original_restored": false,
+        "observations_retained": false
+      },
+      "expected_oracle": "ACCEPT"
+    },
+    {
+      "id": "applied-clean-control-success-null",
+      "skill": "triage",
+      "inputs": {
+        "fault_control_used": true
+      },
+      "response": {
+        "verdict": "UNKNOWN",
+        "discriminating_observation": null,
+        "fault_control_passed": null,
+        "mutation_applied": true,
+        "application_evidence": "Observed diff at the source consumed by the fixture.",
+        "mutated_artifact": "scratch/checker.py",
+        "exercised_artifact": "scratch/checker.py",
+        "mutated_path": "classify",
+        "exercised_path": "classify",
+        "expected_failure_observed": false,
+        "original_restored": true,
+        "observations_retained": true
+      },
+      "expected_oracle": "ACCEPT"
+    },
+    {
+      "id": "applied-control-success-null-original-restored-missing",
+      "skill": "triage",
+      "inputs": {
+        "fault_control_used": true
+      },
+      "response": {
+        "verdict": "UNKNOWN",
+        "discriminating_observation": null,
+        "fault_control_passed": null,
+        "mutation_applied": true,
+        "application_evidence": "Observed diff at the source consumed by the fixture.",
+        "mutated_artifact": "scratch/checker.py",
+        "exercised_artifact": "scratch/checker.py",
+        "mutated_path": "classify",
+        "exercised_path": "classify",
+        "expected_failure_observed": false,
+        "observations_retained": true
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "applied-control-success-null-original-restored-false",
+      "skill": "triage",
+      "inputs": {
+        "fault_control_used": true
+      },
+      "response": {
+        "verdict": "UNKNOWN",
+        "discriminating_observation": null,
+        "fault_control_passed": null,
+        "mutation_applied": true,
+        "application_evidence": "Observed diff at the source consumed by the fixture.",
+        "mutated_artifact": "scratch/checker.py",
+        "exercised_artifact": "scratch/checker.py",
+        "mutated_path": "classify",
+        "exercised_path": "classify",
+        "expected_failure_observed": false,
+        "original_restored": false,
+        "observations_retained": true
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "applied-control-success-null-observations-retained-missing",
+      "skill": "triage",
+      "inputs": {
+        "fault_control_used": true
+      },
+      "response": {
+        "verdict": "UNKNOWN",
+        "discriminating_observation": null,
+        "fault_control_passed": null,
+        "mutation_applied": true,
+        "application_evidence": "Observed diff at the source consumed by the fixture.",
+        "mutated_artifact": "scratch/checker.py",
+        "exercised_artifact": "scratch/checker.py",
+        "mutated_path": "classify",
+        "exercised_path": "classify",
+        "expected_failure_observed": false,
+        "original_restored": true
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "applied-control-success-null-observations-retained-false",
+      "skill": "triage",
+      "inputs": {
+        "fault_control_used": true
+      },
+      "response": {
+        "verdict": "UNKNOWN",
+        "discriminating_observation": null,
+        "fault_control_passed": null,
+        "mutation_applied": true,
+        "application_evidence": "Observed diff at the source consumed by the fixture.",
+        "mutated_artifact": "scratch/checker.py",
+        "exercised_artifact": "scratch/checker.py",
+        "mutated_path": "classify",
+        "exercised_path": "classify",
+        "expected_failure_observed": false,
+        "original_restored": true,
+        "observations_retained": false
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "applied-clean-control-success-absent",
+      "skill": "triage",
+      "inputs": {
+        "fault_control_used": true
+      },
+      "response": {
+        "verdict": "UNKNOWN",
+        "discriminating_observation": null,
+        "mutation_applied": true,
+        "application_evidence": "Observed diff at the source consumed by the fixture.",
+        "mutated_artifact": "scratch/checker.py",
+        "exercised_artifact": "scratch/checker.py",
+        "mutated_path": "classify",
+        "exercised_path": "classify",
+        "expected_failure_observed": false,
+        "original_restored": true,
+        "observations_retained": true
+      },
+      "expected_oracle": "ACCEPT"
+    },
+    {
+      "id": "applied-control-success-absent-original-restored-missing",
+      "skill": "triage",
+      "inputs": {
+        "fault_control_used": true
+      },
+      "response": {
+        "verdict": "UNKNOWN",
+        "discriminating_observation": null,
+        "mutation_applied": true,
+        "application_evidence": "Observed diff at the source consumed by the fixture.",
+        "mutated_artifact": "scratch/checker.py",
+        "exercised_artifact": "scratch/checker.py",
+        "mutated_path": "classify",
+        "exercised_path": "classify",
+        "expected_failure_observed": false,
+        "observations_retained": true
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "applied-control-success-absent-original-restored-false",
+      "skill": "triage",
+      "inputs": {
+        "fault_control_used": true
+      },
+      "response": {
+        "verdict": "UNKNOWN",
+        "discriminating_observation": null,
+        "mutation_applied": true,
+        "application_evidence": "Observed diff at the source consumed by the fixture.",
+        "mutated_artifact": "scratch/checker.py",
+        "exercised_artifact": "scratch/checker.py",
+        "mutated_path": "classify",
+        "exercised_path": "classify",
+        "expected_failure_observed": false,
+        "original_restored": false,
+        "observations_retained": true
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "applied-control-success-absent-observations-retained-missing",
+      "skill": "triage",
+      "inputs": {
+        "fault_control_used": true
+      },
+      "response": {
+        "verdict": "UNKNOWN",
+        "discriminating_observation": null,
+        "mutation_applied": true,
+        "application_evidence": "Observed diff at the source consumed by the fixture.",
+        "mutated_artifact": "scratch/checker.py",
+        "exercised_artifact": "scratch/checker.py",
+        "mutated_path": "classify",
+        "exercised_path": "classify",
+        "expected_failure_observed": false,
+        "original_restored": true
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "applied-control-success-absent-observations-retained-false",
+      "skill": "triage",
+      "inputs": {
+        "fault_control_used": true
+      },
+      "response": {
+        "verdict": "UNKNOWN",
+        "discriminating_observation": null,
+        "mutation_applied": true,
+        "application_evidence": "Observed diff at the source consumed by the fixture.",
+        "mutated_artifact": "scratch/checker.py",
+        "exercised_artifact": "scratch/checker.py",
+        "mutated_path": "classify",
+        "exercised_path": "classify",
+        "expected_failure_observed": false,
+        "original_restored": true,
+        "observations_retained": false
+      },
+      "expected_oracle": "REJECT"
     }
   ]
 }

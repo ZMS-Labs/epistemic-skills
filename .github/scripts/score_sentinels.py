@@ -86,6 +86,11 @@ def oracle(fixture: dict) -> str:
             return "REJECT"
         if response.get("verdict") == "CAUSE" and not response.get("discriminating_observation"):
             return "REJECT"
+        for field in ("fault_control_passed", "mutation_applied", "expected_failure_observed",
+                      "original_restored", "observations_retained"):
+            value = response.get(field)
+            if value is not None and type(value) is not bool:
+                return "REJECT"
         # Any applied mutation needs cleanup, including unsuccessful controls.
         if response.get("mutation_applied") is True and (
             response.get("original_restored") is not True
