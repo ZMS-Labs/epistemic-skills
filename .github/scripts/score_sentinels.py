@@ -86,6 +86,12 @@ def oracle(fixture: dict) -> str:
             return "REJECT"
         if response.get("verdict") == "CAUSE" and not response.get("discriminating_observation"):
             return "REJECT"
+        # Any applied mutation needs cleanup, including unsuccessful controls.
+        if response.get("mutation_applied") is True and (
+            response.get("original_restored") is not True
+            or response.get("observations_retained") is not True
+        ):
+            return "REJECT"
         # A claimed injected-fault success needs evidence that the mutation
         # landed on the artifact/path actually exercised, plus restoration.
         # Honest invalid/UNKNOWN/NARROWED controls make no success claim; ordinary

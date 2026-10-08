@@ -366,6 +366,268 @@
         "observations_retained": true
       },
       "expected_oracle": "ACCEPT"
+    },
+    {
+      "id": "applied-unsuccessful-control-honestly-unknown",
+      "skill": "triage",
+      "inputs": {
+        "fault_control_used": true
+      },
+      "response": {
+        "verdict": "UNKNOWN",
+        "discriminating_observation": null,
+        "fault_control_passed": false,
+        "mutation_applied": true,
+        "application_evidence": "Observed diff at the source consumed by the fixture.",
+        "mutated_artifact": "scratch/checker.py",
+        "exercised_artifact": "scratch/checker.py",
+        "mutated_path": "classify",
+        "exercised_path": "classify",
+        "expected_failure_observed": false,
+        "original_restored": true,
+        "observations_retained": true
+      },
+      "expected_oracle": "ACCEPT"
+    },
+    {
+      "id": "unsuccessful-applied-control-original-restored-missing",
+      "skill": "triage",
+      "inputs": {
+        "fault_control_used": true
+      },
+      "response": {
+        "verdict": "UNKNOWN",
+        "discriminating_observation": null,
+        "fault_control_passed": false,
+        "mutation_applied": true,
+        "application_evidence": "Observed diff at the source consumed by the fixture.",
+        "mutated_artifact": "scratch/checker.py",
+        "exercised_artifact": "scratch/checker.py",
+        "mutated_path": "classify",
+        "exercised_path": "classify",
+        "expected_failure_observed": false,
+        "observations_retained": true
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "unsuccessful-applied-control-original-restored-null",
+      "skill": "triage",
+      "inputs": {
+        "fault_control_used": true
+      },
+      "response": {
+        "verdict": "UNKNOWN",
+        "discriminating_observation": null,
+        "fault_control_passed": false,
+        "mutation_applied": true,
+        "application_evidence": "Observed diff at the source consumed by the fixture.",
+        "mutated_artifact": "scratch/checker.py",
+        "exercised_artifact": "scratch/checker.py",
+        "mutated_path": "classify",
+        "exercised_path": "classify",
+        "expected_failure_observed": false,
+        "original_restored": null,
+        "observations_retained": true
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "unsuccessful-applied-control-original-restored-integer-one",
+      "skill": "triage",
+      "inputs": {
+        "fault_control_used": true
+      },
+      "response": {
+        "verdict": "UNKNOWN",
+        "discriminating_observation": null,
+        "fault_control_passed": false,
+        "mutation_applied": true,
+        "application_evidence": "Observed diff at the source consumed by the fixture.",
+        "mutated_artifact": "scratch/checker.py",
+        "exercised_artifact": "scratch/checker.py",
+        "mutated_path": "classify",
+        "exercised_path": "classify",
+        "expected_failure_observed": false,
+        "original_restored": 1,
+        "observations_retained": true
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "unsuccessful-applied-control-original-restored-string-true",
+      "skill": "triage",
+      "inputs": {
+        "fault_control_used": true
+      },
+      "response": {
+        "verdict": "UNKNOWN",
+        "discriminating_observation": null,
+        "fault_control_passed": false,
+        "mutation_applied": true,
+        "application_evidence": "Observed diff at the source consumed by the fixture.",
+        "mutated_artifact": "scratch/checker.py",
+        "exercised_artifact": "scratch/checker.py",
+        "mutated_path": "classify",
+        "exercised_path": "classify",
+        "expected_failure_observed": false,
+        "original_restored": "true",
+        "observations_retained": true
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "unsuccessful-applied-control-original-restored-false",
+      "skill": "triage",
+      "inputs": {
+        "fault_control_used": true
+      },
+      "response": {
+        "verdict": "UNKNOWN",
+        "discriminating_observation": null,
+        "fault_control_passed": false,
+        "mutation_applied": true,
+        "application_evidence": "Observed diff at the source consumed by the fixture.",
+        "mutated_artifact": "scratch/checker.py",
+        "exercised_artifact": "scratch/checker.py",
+        "mutated_path": "classify",
+        "exercised_path": "classify",
+        "expected_failure_observed": false,
+        "original_restored": false,
+        "observations_retained": true
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "unsuccessful-applied-control-observations-retained-missing",
+      "skill": "triage",
+      "inputs": {
+        "fault_control_used": true
+      },
+      "response": {
+        "verdict": "UNKNOWN",
+        "discriminating_observation": null,
+        "fault_control_passed": false,
+        "mutation_applied": true,
+        "application_evidence": "Observed diff at the source consumed by the fixture.",
+        "mutated_artifact": "scratch/checker.py",
+        "exercised_artifact": "scratch/checker.py",
+        "mutated_path": "classify",
+        "exercised_path": "classify",
+        "expected_failure_observed": false,
+        "original_restored": true
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "unsuccessful-applied-control-observations-retained-null",
+      "skill": "triage",
+      "inputs": {
+        "fault_control_used": true
+      },
+      "response": {
+        "verdict": "UNKNOWN",
+        "discriminating_observation": null,
+        "fault_control_passed": false,
+        "mutation_applied": true,
+        "application_evidence": "Observed diff at the source consumed by the fixture.",
+        "mutated_artifact": "scratch/checker.py",
+        "exercised_artifact": "scratch/checker.py",
+        "mutated_path": "classify",
+        "exercised_path": "classify",
+        "expected_failure_observed": false,
+        "original_restored": true,
+        "observations_retained": null
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "unsuccessful-applied-control-observations-retained-integer-one",
+      "skill": "triage",
+      "inputs": {
+        "fault_control_used": true
+      },
+      "response": {
+        "verdict": "UNKNOWN",
+        "discriminating_observation": null,
+        "fault_control_passed": false,
+        "mutation_applied": true,
+        "application_evidence": "Observed diff at the source consumed by the fixture.",
+        "mutated_artifact": "scratch/checker.py",
+        "exercised_artifact": "scratch/checker.py",
+        "mutated_path": "classify",
+        "exercised_path": "classify",
+        "expected_failure_observed": false,
+        "original_restored": true,
+        "observations_retained": 1
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "unsuccessful-applied-control-observations-retained-string-true",
+      "skill": "triage",
+      "inputs": {
+        "fault_control_used": true
+      },
+      "response": {
+        "verdict": "UNKNOWN",
+        "discriminating_observation": null,
+        "fault_control_passed": false,
+        "mutation_applied": true,
+        "application_evidence": "Observed diff at the source consumed by the fixture.",
+        "mutated_artifact": "scratch/checker.py",
+        "exercised_artifact": "scratch/checker.py",
+        "mutated_path": "classify",
+        "exercised_path": "classify",
+        "expected_failure_observed": false,
+        "original_restored": true,
+        "observations_retained": "true"
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "unsuccessful-applied-control-observations-retained-false",
+      "skill": "triage",
+      "inputs": {
+        "fault_control_used": true
+      },
+      "response": {
+        "verdict": "UNKNOWN",
+        "discriminating_observation": null,
+        "fault_control_passed": false,
+        "mutation_applied": true,
+        "application_evidence": "Observed diff at the source consumed by the fixture.",
+        "mutated_artifact": "scratch/checker.py",
+        "exercised_artifact": "scratch/checker.py",
+        "mutated_path": "classify",
+        "exercised_path": "classify",
+        "expected_failure_observed": false,
+        "original_restored": true,
+        "observations_retained": false
+      },
+      "expected_oracle": "REJECT"
+    },
+    {
+      "id": "unsuccessful-applied-control-both-cleanup-false",
+      "skill": "triage",
+      "inputs": {
+        "fault_control_used": true
+      },
+      "response": {
+        "verdict": "UNKNOWN",
+        "discriminating_observation": null,
+        "fault_control_passed": false,
+        "mutation_applied": true,
+        "application_evidence": "Observed diff at the source consumed by the fixture.",
+        "mutated_artifact": "scratch/checker.py",
+        "exercised_artifact": "scratch/checker.py",
+        "mutated_path": "classify",
+        "exercised_path": "classify",
+        "expected_failure_observed": false,
+        "original_restored": false,
+        "observations_retained": false
+      },
+      "expected_oracle": "REJECT"
     }
   ]
 }

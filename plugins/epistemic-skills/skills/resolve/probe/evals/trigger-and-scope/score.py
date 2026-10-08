@@ -40,8 +40,12 @@ def score(fixtures: list[dict], responses: list[dict]) -> dict:
         if fixture.get("state_explorer"):
             if not _nonempty(row.get("visible_state")) or row.get("freeplay") is not True:
                 failures.append(f"{fid}: the human-drivable explorer needs visible state and freeplay")
+            guided = row.get("guided_scenarios")
             if fixture.get("guided_scenarios_useful") and (
-                not row.get("guided_scenarios") or row.get("resettable") is not True
+                not isinstance(guided, list)
+                or not guided
+                or not all(_nonempty(scenario) for scenario in guided)
+                or row.get("resettable") is not True
             ):
                 failures.append(f"{fid}: useful guided scenarios must be resettable")
             seams = row.get("simulated_boundaries")

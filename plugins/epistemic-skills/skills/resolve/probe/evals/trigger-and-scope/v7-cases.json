@@ -94,6 +94,64 @@
       },
       {
         "simulated_boundaries": []
+      },
+      {
+        "guided_scenarios": "reset"
+      },
+      {
+        "guided_scenarios": 1
+      },
+      {
+        "guided_scenarios": true
+      },
+      {
+        "guided_scenarios": false
+      },
+      {
+        "guided_scenarios": {
+          "scenario": "reset"
+        }
+      },
+      {
+        "guided_scenarios": null
+      },
+      {
+        "guided_scenarios": [
+          null
+        ]
+      },
+      {
+        "guided_scenarios": [
+          1
+        ]
+      },
+      {
+        "guided_scenarios": [
+          true
+        ]
+      },
+      {
+        "guided_scenarios": [
+          ""
+        ]
+      },
+      {
+        "guided_scenarios": [
+          "   "
+        ]
+      },
+      {
+        "guided_scenarios": [
+          [
+            "reset"
+          ]
+        ]
+      },
+      {
+        "guided_scenarios": [
+          "reset",
+          null
+        ]
       }
     ]
   }
