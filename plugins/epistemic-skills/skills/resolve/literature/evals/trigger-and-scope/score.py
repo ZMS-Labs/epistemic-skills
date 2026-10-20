@@ -10,10 +10,14 @@ from pathlib import Path
 
 ACTIONS = {"run-evidence", "precall-gate", "evidence-gate", "no-fire"}
 MODES = {"citation-check", "quick", "standard", "deep", "formal-support"}
+INCOMPLETE_STATES = {"pending", "failed", "AMBIGUOUS"}
 TERMINAL_STATES = {"saturated", "capped-by-budget", "contested-stable"}
 # Any of these present on a no-fire row is a process artifact — evidence of a
 # pass that was never asked for.
 PROCESS_FIELDS = (
+    "provider_status",
+    "coverage_limits",
+    "primary_content_checked",
     "mode",
     "matrix_produced",
     "reception_checked_live",
@@ -95,7 +99,23 @@ def score(fixtures: list[dict], responses: list[dict]) -> dict:
             mode = row.get("mode")
             if not isinstance(mode, str) or mode not in MODES:
                 failures.append(f"{fid}: mode must name one of quick/standard/deep/formal-support, got {mode!r}")
-            if mode == "citation-check":
+            terminal_state = row.get("terminal_state")
+            expected_state = fixture.get("expected_terminal_state")
+            incomplete = expected_state in INCOMPLETE_STATES or (
+                expected_state == "capped-by-budget" and fixture.get("provider_status") == "quota-exhausted")
+            if expected_state is not None and terminal_state != expected_state:
+                failures.append(f"{fid}: expected terminal-state label {expected_state!r}, got {terminal_state!r}")
+            if incomplete:
+                if row.get("provider_status") != fixture.get("provider_status"):
+                    failures.append(f"{fid}: provider status must match retained observations")
+                if row.get("run_record_produced") is not True or not _nonempty(row.get("coverage_limits")):
+                    failures.append(f"{fid}: incomplete outcome requires a run record and explicit coverage limits")
+                claimed = _id_set(row, "support", fid, failures) | _id_set(row, "disputed", fid, failures)
+                if claimed and not (row.get("matrix_produced") is True
+                                    and row.get("primary_content_checked") is True
+                                    and row.get("reception_checked_live") is True):
+                    failures.append(f"{fid}: incomplete discovery cannot promote unchecked papers to support or disputed evidence")
+            if mode == "citation-check" and not incomplete:
                 if row.get("primary_content_checked") is not True and not (row.get("claim_result") == "unverified" and row.get("coverage_limits")):
                     failures.append(f"{fid}: inspect primary content before verifying the claim")
                 if row.get("notices_checked") is not True:
@@ -104,12 +124,11 @@ def score(fixtures: list[dict], responses: list[dict]) -> dict:
                     failures.append(f"{fid}: return an explicit claim result")
                 if fixture.get("citation_check") and row.get("artifact_persistence") != "repository":
                     failures.append(f"{fid}: repository persistence is independent of skipped library deposit")
-            elif not row.get("matrix_produced"):
+            elif not incomplete and not row.get("matrix_produced"):
                 failures.append(f"{fid}: a firing run produces the claim-evidence matrix")
-            if not row.get("reception_checked_live") and not (mode == "citation-check" and row.get("claim_result") == "unverified" and row.get("coverage_limits")):
+            if not incomplete and not row.get("reception_checked_live") and not (mode == "citation-check" and row.get("claim_result") == "unverified" and row.get("coverage_limits")):
                 failures.append(f"{fid}: reception is [V]-grade only when pulled live this run — the reception pass must run against the live engine")
-            terminal_state = row.get("terminal_state")
-            if mode != "citation-check" and (not isinstance(terminal_state, str) or terminal_state not in TERMINAL_STATES):
+            if not incomplete and mode != "citation-check" and (not isinstance(terminal_state, str) or terminal_state not in TERMINAL_STATES):
                 failures.append(f"{fid}: every run exits with a terminal-state label — saturated / capped-by-budget / contested-stable, got {terminal_state!r}")
             support = _id_set(row, "support", fid, failures)
             retracted = set(fixture.get("retracted_dois", []))

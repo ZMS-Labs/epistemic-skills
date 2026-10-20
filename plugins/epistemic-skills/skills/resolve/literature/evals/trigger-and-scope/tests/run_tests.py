@@ -116,6 +116,40 @@ def main() -> int:
             report = scorer.score([case["fixture"]], [dict(case["response"], **mutation)])
             require(not report["pass"], f"{case['fixture']['id']}: unsafe mutation passed: {mutation}")
 
+    # Incomplete provider outcomes have positive and fail-closed negative controls.
+    for case in json.loads((ROOT / "v7.3-thread-cases.json").read_text()):
+        report = scorer.score([case["fixture"]], [case["response"]])
+        require(report["pass"], report["failures"])
+        for mutation in case["reject_mutations"]:
+            report = scorer.score([case["fixture"]], [dict(case["response"], **mutation)])
+            require(not report["pass"], f"unsafe incomplete mutation passed: {mutation}")
+        # A response cannot evade a complete fixture's evidence requirements
+        # merely by relabeling itself as an incomplete Thread.
+        ordinary = dict(case["fixture"])
+        ordinary.pop("expected_terminal_state")
+        ordinary.pop("provider_status")
+        require(not scorer.score([ordinary], [case["response"]])["pass"],
+                "incomplete outcome bypassed a complete fixture")
+
+    # Partial verified holdings remain usable, but all evidence gates survive.
+    case = json.loads((ROOT / "v7.3-thread-cases.json").read_text())[0]
+    fixture = dict(case["fixture"], retracted_dois=["10.5555/retracted"],
+                   contested_dois=["10.5555/contested"])
+    partial = dict(case["response"], matrix_produced=True,
+                   primary_content_checked=True, reception_checked_live=True,
+                   support=["10.5555/verified"], disputed=["10.5555/contested"],
+                   excluded_from_support=["10.5555/retracted"])
+    require(scorer.score([fixture], [partial])["pass"], "verified partial evidence rejected")
+    for mutation in ({"primary_content_checked": False}, {"reception_checked_live": False},
+                     {"excluded_from_support": []}, {"disputed": []},
+                     {"support": ["10.5555/retracted"]}, {"support": ["10.5555/contested"]}):
+        require(not scorer.score([fixture], [dict(partial, **mutation)])["pass"],
+                f"incomplete evidence gate bypassed: {mutation}")
+    for field in ("provider_status", "coverage_limits", "primary_content_checked"):
+        fixture = {"id": "silent", "expected_action": "no-fire"}
+        require(not scorer.score([fixture], [{"id": "silent", "action": "no-fire", field: True}])["pass"],
+                f"incomplete process field leaked into no-fire: {field}")
+
     print("evidence-research trigger-and-scope: PASS")
     return 0
 

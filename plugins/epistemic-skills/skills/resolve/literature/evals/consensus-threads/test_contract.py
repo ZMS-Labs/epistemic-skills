@@ -8,7 +8,9 @@ LITERATURE = Path(__file__).resolve().parents[2]
 class ThreadsContract(unittest.TestCase):
     def test_incomplete_runs_do_not_claim_convergence(self):
         text = (LITERATURE / 'METHOD.md').read_text()
-        for marker in ('`pending`', '`failed`', '`ambiguous`', 'not convergence labels'):
+        self.assertIn('Completed or terminated discovery exits', text)
+        self.assertNotIn('`ambiguous`', text)
+        for marker in ('`pending`', '`failed`', '`AMBIGUOUS`', 'not convergence labels'):
             self.assertIn(marker, text)
 
     def test_release_records_bind_current_authority_and_evidence_fields(self):

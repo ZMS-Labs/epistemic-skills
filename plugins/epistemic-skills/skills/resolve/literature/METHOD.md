@@ -230,11 +230,11 @@ holdings check did not close.
 convergence; unexposed searches or unchecked coverage remain unverified.
 A run converges when the
 counterevidence and boundary-condition query families surface no new relevant DOIs
-beyond the mode's reception dial. Completed discovery exits with a terminal-state label —
+beyond the mode's reception dial. Completed or terminated discovery exits with a terminal-state label —
 `saturated` / `capped-by-budget` / `contested-stable` — recorded in the run record.
 An incomplete provider interaction instead records `pending` (still running at
 this invocation's polling bound), `failed` (reported provider failure), or
-`ambiguous` (dispatch effect unresolved), with IDs and retained observations.
+`AMBIGUOUS` (dispatch effect unresolved), with IDs and retained observations.
 These are not convergence labels; do not infer saturation, stability or exhausted
 budget from them. Return the incomplete outcome under the Thread lifecycle
 contract, without automatic redispatch or a self-chained follow-up.
