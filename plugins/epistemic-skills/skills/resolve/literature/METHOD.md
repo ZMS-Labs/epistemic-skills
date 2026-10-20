@@ -110,7 +110,7 @@ too weak), or the first operator-overridden escalation (trigger too strong).
 decision another paper could change, (2) what observation would end the search, and (3)
 whether a bounded reversible experiment is now more discriminating than more literature.
 If no answer is available, do not research for relief from uncertainty: stop at the current
-terminal label (`saturated`, `capped-by-budget`, or `contested-stable`) and surface the gap.
+run-state label (including an incomplete Thread state below) and surface the gap.
 This gate never replaces literature when a scholarly premise is itself load-bearing.
 
 The literature mode is an evidence-depth dial, separate from a provider's
@@ -230,8 +230,14 @@ holdings check did not close.
 convergence; unexposed searches or unchecked coverage remain unverified.
 A run converges when the
 counterevidence and boundary-condition query families surface no new relevant DOIs
-beyond the mode's reception dial. Every run exits with a terminal-state label —
+beyond the mode's reception dial. Completed discovery exits with a terminal-state label —
 `saturated` / `capped-by-budget` / `contested-stable` — recorded in the run record.
+An incomplete provider interaction instead records `pending` (still running at
+this invocation's polling bound), `failed` (reported provider failure), or
+`ambiguous` (dispatch effect unresolved), with IDs and retained observations.
+These are not convergence labels; do not infer saturation, stability or exhausted
+budget from them. Return the incomplete outcome under the Thread lifecycle
+contract, without automatic redispatch or a self-chained follow-up.
 `capped-by-budget` is an honest label, not a silent exit. (Labels are the floor — no
 longitudinal reception-stability requirement.) *Revisit gate:* the first run that exits
 `capped-by-budget` twice on the same question family (the reception dial is
