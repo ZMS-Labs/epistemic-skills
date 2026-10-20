@@ -7,9 +7,13 @@
 ## Epistemic role (why Consensus is in the triad)
 
 Consensus answers *"what does the literature say about X?"* — question-led
-discovery over 200M+ papers with study-design filters. The unit of evidence is
-the **paper**, and the surface is **session-bound**: unlike the library layer,
-nothing Consensus returns persists unless the run deposits it.
+discovery with study-design filters and optional research-agent synthesis. The unit
+of evidence is the **paper**, and retrieved content needs an explicit local
+evidence record. Threads can persist in the provider account; that does not prove a local artifact or library deposit.
+
+For current tool selection and Threads constraints, read
+[`consensus-threads.md`](consensus-threads.md). The older ZCode profile is
+historical host evidence, not the current cross-host inventory.
 
 ## Access modes (negotiate every run)
 
@@ -36,10 +40,10 @@ LOCAL.md does not show.
 
 ## First-contact protocol
 
-On the first session where Consensus tools appear: load the full live schema,
-probe with a cheap known-answer query, record response shape, filters,
-server-shipped instructions, and auth/rate-limit behavior — then rewrite this
-file into `consensus-profile.md` (observed profile, dated, with the same
-"not permanent configuration — re-check live" header `scite-profile.md`
-uses). Keep this file's protocol section at the bottom for the next drift
-event, and commit + push.
+On first contact, inspect the needed live schemas and record their date,
+parameters and connector instructions. Only run a capacity-checked probe when
+an actual research task requires and authorizes it. Record any observed
+response shape, filters, auth and rate-limit behavior separately from schema
+observations. Update `consensus-profile.md` through the canonical repository
+workflow, preserving dated historical observations and the "re-check live"
+header. Publication and deployment require separate authority.

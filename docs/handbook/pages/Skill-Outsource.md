@@ -1,4 +1,4 @@
-> **Applies to:** epistemic-skills v7.2.0.
+> **Applies to:** epistemic-skills v7.3.0.
 
 # Outsource
 
@@ -24,4 +24,4 @@ The skill has two modes, picked by what you actually asked for. **Delegate** sen
 
 [Decision Ledger](Skill-Decision-Ledger.md) supports continuity; [Manifest](Skill-Manifest.md) adds a mission contract when that tier is actually needed — consequential work should sit in one before it is transferred anywhere.
 
-[Read the canonical v7.2.0 method](https://github.com/ZMS-Labs/epistemic-skills/blob/v7.2.0/plugins/epistemic-skills/skills/outsource/SKILL.md) · [All methods](Skill-Catalog.md)
+[Read the canonical v7.3.0 method](https://github.com/ZMS-Labs/epistemic-skills/blob/v7.3.0/plugins/epistemic-skills/skills/outsource/SKILL.md) · [All methods](Skill-Catalog.md)

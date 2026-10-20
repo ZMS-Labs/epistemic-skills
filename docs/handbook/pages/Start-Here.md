@@ -1,4 +1,4 @@
-> **Applies to:** epistemic-skills v7.2.0.
+> **Applies to:** epistemic-skills v7.3.0.
 
 # Start with a real task
 
@@ -6,7 +6,7 @@ You do not need to memorize the catalog or run the suite in order. Install the s
 
 ### 1. Install it and load the usage guide
 
-Follow the [install steps in the README](https://github.com/ZMS-Labs/epistemic-skills/blob/v7.2.0/README.md#installation-and-compatibility). [Installation and Harness Compatibility](Installation-and-Harness-Compatibility.md) shows what has been checked for each tool.
+Follow the [install steps in the README](https://github.com/ZMS-Labs/epistemic-skills/blob/v7.3.0/README.md#installation-and-compatibility). [Installation and Harness Compatibility](Installation-and-Harness-Compatibility.md) shows what has been checked for each tool.
 
 Then ask your agent to load `epistemic`, the suite's usage guide. If your agent can't find the skill on its own, ask it to read the installed `SKILL.md` file for `epistemic` directly. Each tool calls skills a little differently, so there is no single slash command that works everywhere. Once the guide is loaded, the agent doesn't need to keep announcing it.
 

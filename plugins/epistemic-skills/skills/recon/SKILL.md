@@ -51,6 +51,13 @@ method — this core never substitutes for them.
   harvest record with per-level spend decisions (candidate) — handed to
   brainstorming/plans, the workflow layer, or the adopt decision.
 
+For a scholarly premise that needs external research, hand the bounded question
+to `resolve` → [`literature/METHOD.md`](../resolve/literature/METHOD.md), including
+its Consensus capability and capacity checks. Product announcements and provider
+syntheses do not establish candidate runtime behavior. Candidate-mode harvest,
+spend and no-execution gates still govern; Threads do not authorize a candidate
+run, adoption or monitoring.
+
 ## Handoffs
 
 Acknowledge Recon's actual contribution visibly. Return the corrected map,

@@ -1,4 +1,4 @@
-> **Applies to:** epistemic-skills v7.2.0.
+> **Applies to:** epistemic-skills v7.3.0.
 
 # Metacognate
 
@@ -20,4 +20,4 @@ Metacognate examines the approach, assumptions, evidence, confidence, and meanin
 
 [Perspective](Skill-Perspective.md) adds a focused external angle; [Resolve](Skill-Resolve.md) gathers the evidence a live question needs.
 
-[Read the canonical v7.2.0 method](https://github.com/ZMS-Labs/epistemic-skills/blob/v7.2.0/plugins/epistemic-skills/skills/metacognate/SKILL.md) · [All methods](Skill-Catalog.md)
+[Read the canonical v7.3.0 method](https://github.com/ZMS-Labs/epistemic-skills/blob/v7.3.0/plugins/epistemic-skills/skills/metacognate/SKILL.md) · [All methods](Skill-Catalog.md)

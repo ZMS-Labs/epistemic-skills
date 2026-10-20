@@ -69,6 +69,16 @@ shows how to describe partial verification without implying more than was observ
 For an ordinary typo correction, a rendered review and link check are sufficient;
 new model trials are not a routine documentation requirement.
 
+## Candidate versus published support
+
+The proposed 7.3 release has its own
+[installation and release-time alignment checklist](release/7.3-CANDIDATE-INSTALLATION.md).
+Current handbook source and its publisher target 7.3 prospectively. Offline
+checks inspect current source paths without inventing a future tag; publication
+still requires the actual annotated tag, published release and public committed
+docs reference. Immutable 7.2 snapshots and receipts retain their original scope.
+A passing offline check does not establish remote publication.
+
 ## Publish handbook improvements
 
 The wiki is a separate Git repository. A merged source change does not update it

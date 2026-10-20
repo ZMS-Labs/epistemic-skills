@@ -1,4 +1,4 @@
-> **Applies to:** epistemic-skills v7.2.0.
+> **Applies to:** epistemic-skills v7.3.0.
 
 # Did It Land
 
@@ -20,4 +20,4 @@ Did It Land follows a change beyond the edited source to its consumer: the loade
 
 [Health](Skill-Health.md) checks current operating state; [Evidence-Locked UAT](Skill-Evidence-Locked-UAT.md) evaluates material user-facing acceptance.
 
-[Read the canonical v7.2.0 method](https://github.com/ZMS-Labs/epistemic-skills/blob/v7.2.0/plugins/epistemic-skills/skills/did-it-land/SKILL.md) · [All methods](Skill-Catalog.md)
+[Read the canonical v7.3.0 method](https://github.com/ZMS-Labs/epistemic-skills/blob/v7.3.0/plugins/epistemic-skills/skills/did-it-land/SKILL.md) · [All methods](Skill-Catalog.md)

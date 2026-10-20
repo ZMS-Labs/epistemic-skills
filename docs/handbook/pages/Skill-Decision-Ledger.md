@@ -1,4 +1,4 @@
-> **Applies to:** epistemic-skills v7.2.0.
+> **Applies to:** epistemic-skills v7.3.0.
 
 # Decision Ledger
 
@@ -20,4 +20,4 @@ Decision Ledger has three modes: persist a consequential decision, re-anchor pri
 
 [Manifest](Skill-Manifest.md) adds mission custody; [Write Goal](Skill-Write-Goal.md) defines the completion contract.
 
-[Read the canonical v7.2.0 method](https://github.com/ZMS-Labs/epistemic-skills/blob/v7.2.0/plugins/epistemic-skills/skills/decision-ledger/SKILL.md) · [All methods](Skill-Catalog.md)
+[Read the canonical v7.3.0 method](https://github.com/ZMS-Labs/epistemic-skills/blob/v7.3.0/plugins/epistemic-skills/skills/decision-ledger/SKILL.md) · [All methods](Skill-Catalog.md)

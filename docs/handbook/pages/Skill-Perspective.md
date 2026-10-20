@@ -1,4 +1,4 @@
-> **Applies to:** epistemic-skills v7.2.0.
+> **Applies to:** epistemic-skills v7.3.0.
 
 # Perspective
 
@@ -20,4 +20,4 @@ Perspective brings a different question to the current work: can this be reverse
 
 [Metacognate](Skill-Metacognate.md) examines the reasoning itself; [Gauntlet](Skill-Gauntlet.md) adjudicates a consequential common subject.
 
-[Read the canonical v7.2.0 method](https://github.com/ZMS-Labs/epistemic-skills/blob/v7.2.0/plugins/epistemic-skills/skills/perspective/SKILL.md) · [All methods](Skill-Catalog.md)
+[Read the canonical v7.3.0 method](https://github.com/ZMS-Labs/epistemic-skills/blob/v7.3.0/plugins/epistemic-skills/skills/perspective/SKILL.md) · [All methods](Skill-Catalog.md)
