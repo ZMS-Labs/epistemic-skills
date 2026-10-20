@@ -5,7 +5,16 @@
 > `https://mcp.consensus.app/mcp`, API-key Bearer header). Live tool schema wins
 > over this file. Capabilities drift; auth state changes per session.
 
-## Headline findings
+## Current scope of this historical record
+
+The observations below describe the 2026-08-15 ZCode surface only. They do
+not describe the current dot connector: its 2026-10-20 schema inspection shows
+search, fetch and four Thread tools. Read [the current operational contract](consensus-threads.md)
+before calls; do not generalize the old single-tool, Enterprise-only full-text,
+authentication or response-format observations to another host. No new live
+research probe was run for this update.
+
+## Historical headline findings
 
 1. **Single-tool surface**: `mcp__consensus__search` is the only tool.
 2. **Auth = static API-key Bearer** (ZCode config `headers.Authorization`).
@@ -52,7 +61,9 @@ chunks (Enterprise-only).
 
 1. Load the full live tool schema; record tool names, parameters, server-shipped
    instructions verbatim in intent.
-2. Probe with a cheap known-answer query; record response shape, filters,
-   auth/rate-limit behavior.
+2. Only when an actual research task needs a runtime probe and capacity is
+   authorized, run a cheap known-answer query; record response shape, filters,
+   auth/rate-limit behavior. Schema-only maintenance needs no research run.
 3. Rewrite this profile (dated, "re-check live" header retained).
-4. Commit + push (canonical skills repo), redeploy the skill cache.
+4. Record source observations through the canonical repository workflow.
+   Push, publication and cache deployment require their own authority.

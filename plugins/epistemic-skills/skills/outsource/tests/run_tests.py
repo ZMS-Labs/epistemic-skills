@@ -12,14 +12,12 @@ HERE = Path(__file__).resolve()
 SKILL_ROOT = HERE.parents[1]
 PACKAGE_ROOT = HERE.parents[3]
 REPO_ROOT = HERE.parents[5]
-EXPECTED_VERSION = "7.2.0"
+EXPECTED_VERSION = "7.3.0"
 
-# Current installation target. Preparation kept v6 until publication was
-# authorized; the v7 release PR rotates these surfaces together. The release
-# gate verifies each pinned path in source before tagging and HTTP reachability
-# after publication. A source match alone does not prove the tag exists.
-INSTALL_REF_PIN = "v7.2.0"
-_REF = re.compile(r"github\.com/ZMS-Labs/epistemic-skills/(?:tree|blob)/(v[0-9]+\.[0-9]+\.[0-9]+)")
+# Candidate marketplace follows the existing rolling channel, not an absent tag.
+# Immutable release refs are a separate publication gate under RELEASING.md.
+ROLLING_SOURCE = "https://github.com/ZMS-Labs/epistemic-skills"
+
 
 
 def require(condition: bool, message: str) -> None:
@@ -422,32 +420,10 @@ def main() -> int:
         text = json.dumps(data).lower()
         require("outsource" in text, f"manifest does not advertise outsource: {path}")
 
-    # The loop above checks package `version` FIELDS. It is structurally blind
-    # to a stale install REF, which is how .kimi-plugin/marketplace.json kept
-    # pointing at tree/v3.4.0 across three major versions: it carries
-    # "version": "2" (a SCHEMA version), so it was never in the tuple, and no
-    # check looked at refs at all. Versions and refs drift independently -- a
-    # field names this tree, a ref names a tag that must already exist.
-    ref_bearing = (
-        REPO_ROOT / ".kimi-plugin" / "marketplace.json",
-        REPO_ROOT / ".claude-plugin" / "marketplace.json",
-        REPO_ROOT / ".cursor-plugin" / "marketplace.json",
-        REPO_ROOT / "gemini-extension.json",
-        REPO_ROOT / "plugin.json",
-    )
-    seen_refs = 0
-    for path in ref_bearing:
-        if not path.is_file():
-            continue
-        for found in _REF.findall(read(path)):
-            seen_refs += 1
-            require(
-                found == INSTALL_REF_PIN,
-                f"stale install ref in {path}: {found} (expected {INSTALL_REF_PIN})",
-            )
-    # Narrowness control: a pattern that matches nothing passes vacuously and
-    # would have "verified" the very drift it exists to catch.
-    require(seen_refs >= 1, "install-ref check matched no refs at all; it is vacuous")
+    # Exact source-field assertion: no vacuous regex match can hide a stale tag.
+    marketplace = json.loads(read(REPO_ROOT / ".kimi-plugin" / "marketplace.json"))
+    require(marketplace["plugins"][0]["source"] == ROLLING_SOURCE,
+            "candidate Kimi source must follow the rolling repository, not an old or nonexistent tag")
 
     require(
         "outsource" in json.loads(read(REPO_ROOT / "plugin.json"))["description"].lower(),

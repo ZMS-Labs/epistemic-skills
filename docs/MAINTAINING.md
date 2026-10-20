@@ -69,6 +69,16 @@ shows how to describe partial verification without implying more than was observ
 For an ordinary typo correction, a rendered review and link check are sufficient;
 new model trials are not a routine documentation requirement.
 
+## Candidate versus published support
+
+The local 7.3 candidate has its own
+[installation and release-time alignment checklist](release/7.3-CANDIDATE-INSTALLATION.md).
+`docs/handbook/pages/` and the handbook publisher currently describe the published
+7.2 support point. Their 7.2 references are not claims that the local candidate
+has been released. Keep that published contract intact until the candidate's
+release preparation explicitly rotates it; a passing published-handbook check
+is not a passing 7.3 release-alignment gate.
+
 ## Publish handbook improvements
 
 The wiki is a separate Git repository. A merged source change does not update it

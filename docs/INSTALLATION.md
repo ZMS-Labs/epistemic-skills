@@ -1,6 +1,18 @@
 # Installation and compatibility
 
-These instructions describe **v7.2.0**. They preserve the released installation
+## Unreleased 7.3.0 source candidate
+
+For this candidate, use the prepared local source tree and
+[the candidate installation and promotion checklist](release/7.3-CANDIDATE-INSTALLATION.md).
+No 7.3 tag, release asset or installed-host qualification is asserted. Do not run
+an install command against `v7.3.0` until publication has been verified.
+The candidate Kimi marketplace follows the repository's rolling default branch;
+that remote branch carries these changes only after an authorized merge. A
+rolling URL is not a pin to this local candidate. Use local source for review.
+
+## Published 7.2.0 installation reference
+
+The instructions below describe **v7.2.0**. They preserve the released installation
 paths; packaged support and observed host behavior are separate. Consult the
 [host coverage](release/v7-host-coverage.md) before relying on automatic loading.
 For a quick route into the project, return to the [README](../README.md).

@@ -9,8 +9,8 @@ for the claim and report missing coverage; a one-citation check does not require
 a landscape sweep or an external library operation:
 
 - **Consensus** answers *"what does the literature say about X?"* — question-led
-  discovery over 200M+ papers with study-design filters. The unit of evidence is
-  the **paper**.
+  discovery and optional research-agent synthesis with study-design
+  filters. The unit of evidence is the **paper**.
 - **Scite** answers *"how has the literature received this paper/claim?"* — Smart
   Citations classify each citing statement as **supporting / contrasting /
   mentioning**, with the quoting context and retraction/editorial-notice
@@ -113,6 +113,12 @@ If no answer is available, do not research for relief from uncertainty: stop at 
 terminal label (`saturated`, `capped-by-budget`, or `contested-stable`) and surface the gap.
 This gate never replaces literature when a scholarly premise is itself load-bearing.
 
+The literature mode is an evidence-depth dial, separate from a provider's
+research mode. Before any Consensus call, read
+[`reference/consensus-threads.md`](reference/consensus-threads.md) for tool
+selection, full-brief dispatch, capacity, polling and exact-document handling.
+An internal escalation never independently authorizes provider Deep or spending.
+
 ## Bounded single-citation verification
 
 For one DOI, title or citation and a stated claim, use `citation-check`:
@@ -208,14 +214,21 @@ were empty. An empty library is a real state: record `holdings: empty` and
 proceed to discover.
 
 ### 4. Discover (Consensus leads)
-Multi-query sweep for nontrivial questions: broad landscape → exact
+For an available, authorized Consensus Thread, delegate the whole scholarly
+question once under `reference/consensus-threads.md`; include the search families
+below in that brief. Do not precede dispatch with an intermediate sweep or use
+self-chained follow-ups. Preserve its document, then apply the verification and
+reception steps to its evidence. With search-only access or an explicitly
+requested paper lookup, use a bounded multi-query sweep as needed: broad landscape → exact
 intervention/outcome → design-targeted → counterevidence/nulls/harms →
 boundary conditions. Broad-to-narrow; filters only when the question (or
 connector rules) warrant. Record every query, filters, counts, IDs. `Top N of
 M` is a plan cap, not scarcity evidence. Prefer new discovery for gaps the
 holdings check did not close.
 
-**Convergence criterion (when the sweep is done):** a run converges when the
+**Convergence criterion (when discovery is done):** A Thread being idle is not
+convergence; unexposed searches or unchecked coverage remain unverified.
+A run converges when the
 counterevidence and boundary-condition query families surface no new relevant DOIs
 beyond the mode's reception dial. Every run exits with a terminal-state label —
 `saturated` / `capped-by-budget` / `contested-stable` — recorded in the run record.
@@ -276,11 +289,14 @@ For every load-bearing paper (per the mode's dial):
   single score.
 
 ### 6. Counter-evidence (Scite's contrasting citations lead)
-The counterevidence *search* stays (Consensus query for nulls/
-harms/contradictions), and is now paired with the stronger tool: the
-`contrasting` citation set of each load-bearing paper IS the pre-classified
-contradiction literature. Chase both. If they disagree (search finds critics
-the citations miss, or vice versa), record it as a coverage note.
+Pair discovery for nulls/harms/contradictions with the `contrasting` citation
+set of each load-bearing paper. On the Thread path, include that discovery
+family in the original brief and accept it only to the extent the returned
+evidence exposes its coverage. Missing coverage is a recorded limit, not
+authority for an automatic refinement or self-chained follow-up. On the
+search-only path, run the bounded counterevidence query family directly.
+Independent primary-source and reception verification still applies to both
+paths. If discovery and citation contexts disagree, record the coverage note.
 
 ### 7. Cross-validate (Consensus ↔ Scite; Zotero as third witness)
 - DOI-confirm each matrix paper in the second engine (kills single-index
@@ -410,6 +426,8 @@ which may re-invoke this skill — never a silent amendment.
 
 ## Reference files
 
+- `reference/consensus-threads.md` — current dispatch, mode, capacity, lifecycle,
+  document/citation preservation and evidence boundaries for Threads and search.
 - `reference/consensus-first-contact.md` — Consensus discovery engine:
   epistemic role, access modes, degradation labels, and the first-contact
   protocol to follow until a verified `consensus-profile.md` exists.

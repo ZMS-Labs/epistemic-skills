@@ -35,8 +35,12 @@ shows one recorded use.
 [![Checks](https://github.com/ZMS-Labs/epistemic-skills/actions/workflows/epistemic-flexibility.yml/badge.svg)](https://github.com/ZMS-Labs/epistemic-skills/actions/workflows/epistemic-flexibility.yml)
 [![License](https://img.shields.io/github/license/ZMS-Labs/epistemic-skills)](LICENSE)
 
-**Version 7.2.0.** The package contains **seventeen** skills: the `epistemic`
-usage guide and **sixteen** disciplines. The [published release](https://github.com/ZMS-Labs/epistemic-skills/releases/tag/v7.2.0)
+**Version 7.3.0 candidate.** The package contains **seventeen** skills: the `epistemic`
+usage guide and **sixteen** disciplines. This local source candidate adds
+[bounded Consensus Threads research](docs/release/RELEASE-7.3.0.md); it is not
+a published or installed 7.3 release. For local review, use the
+[candidate installation checklist](docs/release/7.3-CANDIDATE-INSTALLATION.md).
+The [published 7.2 release](https://github.com/ZMS-Labs/epistemic-skills/releases/tag/v7.2.0)
 includes versioned source, generated bundles, and verification receipts.
 *Discipline* is this project's word for one of the methods.
 
