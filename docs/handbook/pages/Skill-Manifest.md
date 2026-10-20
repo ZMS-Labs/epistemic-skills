@@ -1,4 +1,4 @@
-> **Applies to:** epistemic-skills v7.2.0.
+> **Applies to:** epistemic-skills v7.3.0.
 
 # Manifest
 
@@ -20,4 +20,4 @@ Manifest records an explicitly bounded mission: authority, scope, protected stat
 
 [Decision Ledger](Skill-Decision-Ledger.md) preserves reasoning more lightly; [Write Goal](Skill-Write-Goal.md) defines done. See the known limits in [Testing and Evaluations](Testing-and-Evaluations.md).
 
-[Read the canonical v7.2.0 method](https://github.com/ZMS-Labs/epistemic-skills/blob/v7.2.0/plugins/epistemic-skills/skills/manifest/SKILL.md) · [All methods](Skill-Catalog.md)
+[Read the canonical v7.3.0 method](https://github.com/ZMS-Labs/epistemic-skills/blob/v7.3.0/plugins/epistemic-skills/skills/manifest/SKILL.md) · [All methods](Skill-Catalog.md)

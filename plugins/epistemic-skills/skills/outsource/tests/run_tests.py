@@ -14,9 +14,9 @@ PACKAGE_ROOT = HERE.parents[3]
 REPO_ROOT = HERE.parents[5]
 EXPECTED_VERSION = "7.3.0"
 
-# Candidate marketplace follows the existing rolling channel, not an absent tag.
-# Immutable release refs are a separate publication gate under RELEASING.md.
-ROLLING_SOURCE = "https://github.com/ZMS-Labs/epistemic-skills"
+# Prospective release target: this checks source alignment, not tag existence.
+# Remote reachability remains a post-publication gate under RELEASING.md.
+RELEASE_SOURCE = f"https://github.com/ZMS-Labs/epistemic-skills/tree/v{EXPECTED_VERSION}"
 
 
 
@@ -422,8 +422,8 @@ def main() -> int:
 
     # Exact source-field assertion: no vacuous regex match can hide a stale tag.
     marketplace = json.loads(read(REPO_ROOT / ".kimi-plugin" / "marketplace.json"))
-    require(marketplace["plugins"][0]["source"] == ROLLING_SOURCE,
-            "candidate Kimi source must follow the rolling repository, not an old or nonexistent tag")
+    require(marketplace["plugins"][0]["source"] == RELEASE_SOURCE,
+            "Kimi source must match the proposed release target; existence is checked after publication")
 
     require(
         "outsource" in json.loads(read(REPO_ROOT / "plugin.json"))["description"].lower(),

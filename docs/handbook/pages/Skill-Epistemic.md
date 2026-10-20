@@ -1,4 +1,4 @@
-> **Applies to:** epistemic-skills v7.2.0.
+> **Applies to:** epistemic-skills v7.3.0.
 
 # Epistemic
 
@@ -20,4 +20,4 @@ Begin with the usage guide, then let the task determine which methods matter. Th
 
 [Start Here](Start-Here.md) · [Metacognate](Skill-Metacognate.md)
 
-[Read the canonical v7.2.0 method](https://github.com/ZMS-Labs/epistemic-skills/blob/v7.2.0/plugins/epistemic-skills/skills/epistemic/SKILL.md) · [All methods](Skill-Catalog.md)
+[Read the canonical v7.3.0 method](https://github.com/ZMS-Labs/epistemic-skills/blob/v7.3.0/plugins/epistemic-skills/skills/epistemic/SKILL.md) · [All methods](Skill-Catalog.md)

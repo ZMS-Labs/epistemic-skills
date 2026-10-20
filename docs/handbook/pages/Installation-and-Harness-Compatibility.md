@@ -1,8 +1,8 @@
-> **Applies to:** epistemic-skills v7.2.0.
+> **Applies to:** epistemic-skills v7.3.0.
 
 # Install once, verify what your host actually loads
 
-Use the [v7.2.0 installation instructions](https://github.com/ZMS-Labs/epistemic-skills/blob/v7.2.0/README.md#installation-and-compatibility) for the immutable release and the [published release assets](https://github.com/ZMS-Labs/epistemic-skills/releases/tag/v7.2.0) for generated bundles. The [publication receipt](https://github.com/ZMS-Labs/epistemic-skills/releases/download/v7.2.0/publication-receipt.json) binds the tag, source, checks, and artifacts.
+Use the [v7.3.0 installation instructions](https://github.com/ZMS-Labs/epistemic-skills/blob/v7.3.0/README.md#installation-and-compatibility) for the immutable release and the [published release assets](https://github.com/ZMS-Labs/epistemic-skills/releases/tag/v7.3.0) for generated bundles. The [publication receipt](https://github.com/ZMS-Labs/epistemic-skills/releases/download/v7.3.0/publication-receipt.json) binds the tag, source, checks, and artifacts.
 
 ### What to verify
 

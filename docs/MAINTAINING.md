@@ -71,13 +71,13 @@ new model trials are not a routine documentation requirement.
 
 ## Candidate versus published support
 
-The local 7.3 candidate has its own
+The proposed 7.3 release has its own
 [installation and release-time alignment checklist](release/7.3-CANDIDATE-INSTALLATION.md).
-`docs/handbook/pages/` and the handbook publisher currently describe the published
-7.2 support point. Their 7.2 references are not claims that the local candidate
-has been released. Keep that published contract intact until the candidate's
-release preparation explicitly rotates it; a passing published-handbook check
-is not a passing 7.3 release-alignment gate.
+Current handbook source and its publisher target 7.3 prospectively. Offline
+checks inspect current source paths without inventing a future tag; publication
+still requires the actual annotated tag, published release and public committed
+docs reference. Immutable 7.2 snapshots and receipts retain their original scope.
+A passing offline check does not establish remote publication.
 
 ## Publish handbook improvements
 

@@ -1,4 +1,4 @@
-> **Applies to:** epistemic-skills v7.2.0.
+> **Applies to:** epistemic-skills v7.3.0.
 
 # Watch
 
@@ -20,4 +20,4 @@ Watch defines the condition that matters, the external mechanism that checks it,
 
 [Health](Skill-Health.md) observes now; [Triage](Skill-Triage.md) investigates a reported failure.
 
-[Read the canonical v7.2.0 method](https://github.com/ZMS-Labs/epistemic-skills/blob/v7.2.0/plugins/epistemic-skills/skills/watch/SKILL.md) · [All methods](Skill-Catalog.md)
+[Read the canonical v7.3.0 method](https://github.com/ZMS-Labs/epistemic-skills/blob/v7.3.0/plugins/epistemic-skills/skills/watch/SKILL.md) · [All methods](Skill-Catalog.md)

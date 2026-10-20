@@ -17,6 +17,26 @@ SHA = 'a' * 40
 
 
 class PublicationGuards(unittest.TestCase):
+    def test_offline_release_target_checks_current_path_without_future_tag(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            target = root / 'docs' / 'guide.md'
+            target.parent.mkdir()
+            target.write_text('candidate source\n', encoding='utf-8')
+            pages = {'Home.md': f'[guide]({publisher.BASE}/blob/{publisher.TAG}/docs/guide.md)'}
+            with patch.object(publisher, 'REPO', root), patch.object(
+                    publisher, 'command', side_effect=RuntimeError('future tag absent')):
+                publisher.validate_links(pages)
+                target.unlink()
+                with self.assertRaisesRegex(RuntimeError, 'missing current source target'):
+                    publisher.validate_links(pages)
+
+    def test_publication_release_target_still_requires_real_tag(self):
+        pages = {'Home.md': f'[guide]({publisher.BASE}/blob/{publisher.TAG}/docs/guide.md)'}
+        with patch.object(publisher, 'command', side_effect=RuntimeError('tag absent')):
+            with self.assertRaisesRegex(RuntimeError, 'missing source target'):
+                publisher.validate_links(pages, SHA)
+
     def test_requires_exact_documentation_identity(self):
         for ref in ('main', 'HEAD', SHA[:12], SHA + ':docs/handbook', 'A' * 40):
             with self.subTest(ref=ref), self.assertRaises(RuntimeError):

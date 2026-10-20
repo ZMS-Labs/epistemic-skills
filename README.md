@@ -35,12 +35,13 @@ shows one recorded use.
 [![Checks](https://github.com/ZMS-Labs/epistemic-skills/actions/workflows/epistemic-flexibility.yml/badge.svg)](https://github.com/ZMS-Labs/epistemic-skills/actions/workflows/epistemic-flexibility.yml)
 [![License](https://img.shields.io/github/license/ZMS-Labs/epistemic-skills)](LICENSE)
 
-**Version 7.3.0 candidate.** The package contains **seventeen** skills: the `epistemic`
-usage guide and **sixteen** disciplines. This local source candidate adds
-[bounded Consensus Threads research](docs/release/RELEASE-7.3.0.md); it is not
-a published or installed 7.3 release. For local review, use the
-[candidate installation checklist](docs/release/7.3-CANDIDATE-INSTALLATION.md).
-The [published 7.2 release](https://github.com/ZMS-Labs/epistemic-skills/releases/tag/v7.2.0)
+**Version 7.3.0.** The package contains **seventeen** skills: the `epistemic`
+usage guide and **sixteen** disciplines. It adds
+[bounded Consensus Threads research](docs/release/RELEASE-7.3.0.md). Verify
+publication against the actual tag, Release and attached receipts; source
+version text alone does not prove publication or installation. For local review,
+use the [candidate checklist](docs/release/7.3-CANDIDATE-INSTALLATION.md).
+The [previously published 7.2 release](https://github.com/ZMS-Labs/epistemic-skills/releases/tag/v7.2.0)
 includes versioned source, generated bundles, and verification receipts.
 *Discipline* is this project's word for one of the methods.
 
@@ -101,8 +102,10 @@ replays the 14 and the 0 with only Python and Git.
 
 For a tool without its own plugin system:
 
+The following command targets the proposed 7.3 release; use it only after publication is verified.
+
 ```bash
-npx skills add https://github.com/ZMS-Labs/epistemic-skills/tree/v7.2.0/plugins/epistemic-skills/skills
+npx skills add https://github.com/ZMS-Labs/epistemic-skills/tree/v7.3.0/plugins/epistemic-skills/skills
 ```
 
 Example request after installation:

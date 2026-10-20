@@ -1,4 +1,4 @@
-> **Applies to:** epistemic-skills v7.2.0.
+> **Applies to:** epistemic-skills v7.3.0.
 
 # Triage
 
@@ -20,4 +20,4 @@ Triage investigates one known failure using evidence that would differ between c
 
 [Health](Skill-Health.md) establishes the state of a system; [Did It Land](Skill-Did-It-Land.md) verifies that the repair reached the intended consumer.
 
-[Read the canonical v7.2.0 method](https://github.com/ZMS-Labs/epistemic-skills/blob/v7.2.0/plugins/epistemic-skills/skills/triage/SKILL.md) · [All methods](Skill-Catalog.md)
+[Read the canonical v7.3.0 method](https://github.com/ZMS-Labs/epistemic-skills/blob/v7.3.0/plugins/epistemic-skills/skills/triage/SKILL.md) · [All methods](Skill-Catalog.md)

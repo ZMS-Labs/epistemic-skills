@@ -1,4 +1,4 @@
-> **Applies to:** epistemic-skills v7.2.0.
+> **Applies to:** epistemic-skills v7.3.0.
 
 # Why the project is shaped this way
 
@@ -30,4 +30,4 @@ Tests can check schemas, routing, refusal conditions, generated artifacts, and k
 
 The v7 comparison produced zero valid pairs, so nothing measured yet shows that v7 helps agents finish tasks more often. The table above gives the reason for each choice, and [Testing and Evaluations](Testing-and-Evaluations.md) has the evidence so far.
 
-For the source architecture and maintenance map, use [the maintainer guide](https://github.com/ZMS-Labs/epistemic-skills/blob/main/docs/MAINTAINING.md). Canonical behavior remains defined by the [v7.2.0 skill tree](https://github.com/ZMS-Labs/epistemic-skills/blob/v7.2.0/plugins/epistemic-skills/skills).
+For the source architecture and maintenance map, use [the maintainer guide](https://github.com/ZMS-Labs/epistemic-skills/blob/main/docs/MAINTAINING.md). Canonical behavior remains defined by the [v7.3.0 skill tree](https://github.com/ZMS-Labs/epistemic-skills/blob/v7.3.0/plugins/epistemic-skills/skills).

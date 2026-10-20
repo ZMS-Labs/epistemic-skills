@@ -1,4 +1,4 @@
-> **Applies to:** epistemic-skills v7.2.0.
+> **Applies to:** epistemic-skills v7.3.0.
 
 # Gauntlet
 
@@ -20,4 +20,4 @@ Gauntlet examines a common, versioned subject through distinct evaluative questi
 
 [Perspective](Skill-Perspective.md) handles focused examination; [Resolve](Skill-Resolve.md) can supply missing decision evidence.
 
-[Read the canonical v7.2.0 method](https://github.com/ZMS-Labs/epistemic-skills/blob/v7.2.0/plugins/epistemic-skills/skills/gauntlet/SKILL.md) · [All methods](Skill-Catalog.md)
+[Read the canonical v7.3.0 method](https://github.com/ZMS-Labs/epistemic-skills/blob/v7.3.0/plugins/epistemic-skills/skills/gauntlet/SKILL.md) · [All methods](Skill-Catalog.md)

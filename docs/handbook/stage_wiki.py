@@ -18,7 +18,7 @@ from urllib.parse import unquote, urlsplit
 
 REPO = Path(__file__).resolve().parents[2]
 PAGES = 'docs/handbook/pages'
-TAG = 'v7.2.0'
+TAG = 'v7.3.0'
 BASE = 'https://github.com/ZMS-Labs/epistemic-skills'
 RAW = 'https://raw.githubusercontent.com/ZMS-Labs/epistemic-skills'
 LINK = re.compile(r'\[([^\]]+)\]\(([^)]+)\)')
@@ -139,7 +139,10 @@ def validate_links(pages, docs_ref=None):
                     elif not (REPO / path).exists():
                         raise RuntimeError(f'{name}: missing current source target {path}')
                 elif ref == TAG:
-                    require_source_path(TAG, path, name)
+                    if docs_ref:
+                        require_source_path(TAG, path, name)
+                    elif not (REPO / path).exists():
+                        raise RuntimeError(f'{name}: missing current source target {path}')
                 break
 
 
@@ -210,12 +213,12 @@ def plan(pages, existing, docs_ref):
     return output
 
 
-def check_structure(pages):
+def check_structure(pages, source_ref=TAG):
     with tempfile.TemporaryDirectory() as tmp:
         for name, body in pages.items():
             (Path(tmp) / name).write_text(body, encoding='utf-8')
         return command(sys.executable, str(REPO / 'docs/wiki-updates/v6.0.0/check_wiki.py'),
-                       tmp, '--source-ref', TAG)
+                       tmp, '--source-ref', source_ref)
 
 
 def apply_plan(wiki, output):
@@ -243,11 +246,11 @@ def main():
             ap.error('--check cannot be combined with publication arguments')
         pages = local_pages()
         validate_links(pages)
-        print(check_structure(pages))
+        print(check_structure(pages, 'HEAD'))
         if args.wiki:
             wiki = clean_wiki(args.wiki)
             output = plan(pages, {p.name for p in wiki.glob('*.md')}, '0' * 40)
-            print(check_structure(output))
+            print(check_structure(output, 'HEAD'))
             print(f'Complete wiki preview: {len(output)} pages; destination unchanged')
         print(f'Current handbook: PASS ({len(pages)} pages); publication requires a committed public docs ref')
         return 0

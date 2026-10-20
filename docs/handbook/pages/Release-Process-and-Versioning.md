@@ -1,4 +1,4 @@
-> **Applies to:** epistemic-skills v7.2.0.
+> **Applies to:** epistemic-skills v7.3.0.
 
 # Follow the identity from source to publication
 
@@ -20,8 +20,8 @@ flowchart LR
 | [Publication receipt](https://github.com/ZMS-Labs/epistemic-skills/releases/download/v7.2.0/publication-receipt.json) | Exact commit, tag identity, checks, asset hashes, and publication observations |
 | [Designated review](https://github.com/ZMS-Labs/epistemic-skills/releases/download/v7.2.0/designated-review.json) | Judgment, actual reviewer/context relationship, and scope |
 | [Exact gate results](https://github.com/ZMS-Labs/epistemic-skills/releases/download/v7.2.0/exact-gates.json) | Required jobs and explicitly disclosed diagnostics |
-| [v7.2.0 release policy](https://github.com/ZMS-Labs/epistemic-skills/blob/v7.2.0/RELEASING.md) | Rules governing this publication |
-| [Pre-publication authorization](https://github.com/ZMS-Labs/epistemic-skills/blob/v7.2.0/docs/release/PREAUTH-7.2.0.md) | Owner authorization, firing condition, and reviewer designation recorded before the candidate existed |
+| [v7.3.0 release policy](https://github.com/ZMS-Labs/epistemic-skills/blob/v7.3.0/RELEASING.md) | Rules governing this publication |
+| [Pre-publication authorization](https://github.com/ZMS-Labs/epistemic-skills/blob/v7.3.0/docs/release/PREAUTH-7.2.0.md) | Owner authorization, firing condition, and reviewer designation recorded before the candidate existed |
 | [v7.1.0 release](https://github.com/ZMS-Labs/epistemic-skills/releases/tag/v7.1.0) | The previous support point; its records remain unchanged |
 
 Released notes match their committed sources. Annotated tags remain fixed. Later documentation improvements belong to the current handbook and wiki history; they do not change the released code or rewrite old evidence.

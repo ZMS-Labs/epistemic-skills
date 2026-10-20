@@ -1,4 +1,4 @@
-> **Applies to:** epistemic-skills v7.2.0.
+> **Applies to:** epistemic-skills v7.3.0.
 
 # Health
 
@@ -20,4 +20,4 @@ Health compares a declared set of running subjects against explicit bounds. It r
 
 [Triage](Skill-Triage.md) investigates a known failure; [Did It Land](Skill-Did-It-Land.md) checks a change; [Watch](Skill-Watch.md) commissions observation between sessions.
 
-[Read the canonical v7.2.0 method](https://github.com/ZMS-Labs/epistemic-skills/blob/v7.2.0/plugins/epistemic-skills/skills/health/SKILL.md) · [All methods](Skill-Catalog.md)
+[Read the canonical v7.3.0 method](https://github.com/ZMS-Labs/epistemic-skills/blob/v7.3.0/plugins/epistemic-skills/skills/health/SKILL.md) · [All methods](Skill-Catalog.md)

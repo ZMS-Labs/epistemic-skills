@@ -1,4 +1,4 @@
-> **Applies to:** epistemic-skills v7.2.0.
+> **Applies to:** epistemic-skills v7.3.0.
 
 # Reusable methods for AI agents
 
@@ -8,6 +8,8 @@
 </picture>
 
 Epistemic Skills is a set of written methods for AI agents: the AI tools that carry out a multi-step task on their own. The methods help an agent investigate a failure, compare options and check whether a change worked. “Epistemic” means concerned with knowledge: what supports a conclusion, where uncertainty remains, and what would change our mind.
+
+Version 7.3 adds bounded Consensus research Threads for scholarly synthesis, with exact document preservation and independent primary-source checks. Publication status comes from the actual tag, Release and attached receipts; handbook source alone does not establish it.
 
 There are seventeen skills: one usage guide and sixteen methods for specific jobs. Use the one that fits the question in front of you, and only as deeply as the task needs. Routine work still gets to be routine.
 
@@ -34,4 +36,4 @@ Triage did one job inside the task, and the agent mentioned it in a sentence bef
 | Install it or fix a setup problem | [Installation and Harness Compatibility](Installation-and-Harness-Compatibility.md) · [FAQ and Troubleshooting](FAQ-and-Troubleshooting.md) |
 | Maintain or change the project | [Maintainer guide](https://github.com/ZMS-Labs/epistemic-skills/blob/main/docs/MAINTAINING.md) |
 
-[v7.2.0 release notes](https://github.com/ZMS-Labs/epistemic-skills/releases/tag/v7.2.0) · [Publication record (JSON file)](https://github.com/ZMS-Labs/epistemic-skills/releases/download/v7.2.0/publication-receipt.json) · [Core Concepts](Core-Concepts.md)
+[7.3 release preparation](https://github.com/ZMS-Labs/epistemic-skills/blob/main/docs/release/RELEASE-7.3.0.md) · [Previous 7.2 publication record (JSON file)](https://github.com/ZMS-Labs/epistemic-skills/releases/download/v7.2.0/publication-receipt.json) · [Core Concepts](Core-Concepts.md)
