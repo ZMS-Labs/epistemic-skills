@@ -45,8 +45,8 @@ forward.
 
 This committed note describes the source and required evidence; it does not
 claim a later tag, asset or handbook publication has already succeeded. The
-release candidate is the final merge commit of PR #267 and its reviewed
-pre-publication follow-up. The original PR #267 merge is superseded. Exact-candidate results,
+release candidate is the final merge commit of PR #267 and reviewed
+pre-publication follow-up PR #268. The original PR #267 merge is superseded. Exact-candidate results,
 publication judgment and actual tag/Release/assets identity must be recorded
 against that SHA in the annotated tag and attached publication receipts.
 
