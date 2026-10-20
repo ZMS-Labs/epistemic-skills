@@ -163,6 +163,13 @@ def main() -> int:
         require(not scorer.score([fixture], [dict(unchecked, **mutation)])["pass"],
                 f"incomplete citation falsely verified: {mutation}")
 
+    for limits in ("Provider unfinished", ["Provider unfinished", "No verified results"]):
+        row = dict(unchecked, coverage_limits=limits)
+        require(scorer.score([fixture], [row])["pass"], "established coverage-limit shape rejected")
+    for limits in ([], [""], ["valid", " "], [None], {"reason": "unfinished"}, True):
+        row = dict(unchecked, coverage_limits=limits)
+        require(not scorer.score([fixture], [row])["pass"], f"invalid limits accepted: {limits}")
+
     print("evidence-research trigger-and-scope: PASS")
     return 0
 

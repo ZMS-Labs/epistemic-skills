@@ -81,7 +81,7 @@ The current response contract additionally permits `pending`, `failed` and
 `AMBIGUOUS` when the fixture's observed provider state supports that outcome.
 `capped-by-budget` also applies when quota ends discovery before completion.
 For these cases, report `provider_status` (`running`, `failed`, `unknown`, or
-`quota-exhausted`), `run_record_produced: true` and nonempty `coverage_limits`.
+`quota-exhausted`), `run_record_produced: true` and nonempty `coverage_limits` (a string or an array of nonempty strings).
 Retain available IDs, dispatch/poll observations and missing-ID uncertainty in
 the run record. A matrix or live reception pass is not invented when no result
 exists. Any partial support/disputed DOI claims still require a matrix, primary

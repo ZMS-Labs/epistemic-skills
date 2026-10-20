@@ -34,7 +34,10 @@ PROCESS_FIELDS = (
 
 
 def _nonempty(value: object) -> bool:
-    return isinstance(value, str) and bool(value.strip())
+    if isinstance(value, str):
+        return bool(value.strip())
+    return (isinstance(value, list) and bool(value)
+            and all(isinstance(item, str) and bool(item.strip()) for item in value))
 
 
 def _id_set(row: dict, field: str, fid: str, failures: list) -> set:
@@ -116,7 +119,7 @@ def score(fixtures: list[dict], responses: list[dict]) -> dict:
                                     and row.get("reception_checked_live") is True):
                     failures.append(f"{fid}: incomplete discovery cannot promote unchecked papers to support or disputed evidence")
             if mode == "citation-check":
-                if row.get("primary_content_checked") is not True and not (row.get("claim_result") == "unverified" and row.get("coverage_limits")):
+                if row.get("primary_content_checked") is not True and not (row.get("claim_result") == "unverified" and _nonempty(row.get("coverage_limits"))):
                     failures.append(f"{fid}: inspect primary content before verifying the claim")
                 if row.get("notices_checked") is not True and not (incomplete and row.get("claim_result") == "unverified" and _nonempty(row.get("coverage_limits"))):
                     failures.append(f"{fid}: check relevant notices")
@@ -128,7 +131,7 @@ def score(fixtures: list[dict], responses: list[dict]) -> dict:
                     failures.append(f"{fid}: repository persistence is independent of skipped library deposit")
             elif not incomplete and not row.get("matrix_produced"):
                 failures.append(f"{fid}: a firing run produces the claim-evidence matrix")
-            if not incomplete and not row.get("reception_checked_live") and not (mode == "citation-check" and row.get("claim_result") == "unverified" and row.get("coverage_limits")):
+            if not incomplete and not row.get("reception_checked_live") and not (mode == "citation-check" and row.get("claim_result") == "unverified" and _nonempty(row.get("coverage_limits"))):
                 failures.append(f"{fid}: reception is [V]-grade only when pulled live this run — the reception pass must run against the live engine")
             if not incomplete and mode != "citation-check" and (not isinstance(terminal_state, str) or terminal_state not in TERMINAL_STATES):
                 failures.append(f"{fid}: every run exits with a terminal-state label — saturated / capped-by-budget / contested-stable, got {terminal_state!r}")
