@@ -12,6 +12,8 @@ import unicodedata
 from datetime import datetime, timezone
 from pathlib import Path
 
+from custody_identity import IdentityRefused, check_context, pending_reason
+
 from custody_store import (
     EpochSkew, MissionStore, StoreError, atomic_write_json, sha256_bytes,
     sha256_file,
@@ -1359,6 +1361,52 @@ class Mission:
             tuple[dict[str, str], dict[str, str]],
         ] | None = None
 
+    def _pending_identity_reason(self) -> str | None:
+        # Scratch lives in the shared workspace. A different mission's fresh
+        # probe cannot resolve an interrupted probe's custody. Do not filter
+        # this union by approval, readable chain, epoch, or acknowledgement.
+        reason = pending_reason(self.store.mission_dir)
+        if reason:
+            return f"{reason}; store={self.store.mission_dir}"
+        try:
+            for entry in sorted((self.workspace / "missions").iterdir()):
+                # Explicit stat: Path.is_dir may suppress permission/I/O
+                # failures, silently omitting a potentially pending sibling.
+                if stat.S_ISDIR(entry.stat().st_mode):
+                    reason = pending_reason(entry)
+                    if reason:
+                        return f"{reason}; store={entry}"
+        except OSError as exc:
+            return (f"UNKNOWN: pending probe discovery unreadable "
+                    f"({type(exc).__name__}); investigation required")
+        return None
+
+    def _require_identity_contexts(self, parents: list[Path]) -> None:
+        # No cache: root evidence never qualifies a descendant, or a later
+        # write. UNKNOWN is blocking; the witnesses do not certify identity.
+        try:
+            reason = self._pending_identity_reason()
+            if reason:
+                raise IdentityRefused(reason)
+            seen = set()
+            for parent in [self.workspace.resolve(), *parents]:
+                parent = Path(parent)
+                if parent in seen:
+                    continue
+                seen.add(parent)
+                result = check_context(self.store.mission_dir, parent, _same_artifact)
+                if result != "NO_MISMATCH_OBSERVED":
+                    raise IdentityRefused(f"{result}: filesystem/comparator witness disagrees")
+            reason = self._pending_identity_reason()
+            if reason:
+                raise IdentityRefused(reason)
+        except IdentityRefused as exc:
+            raise CustodyError(f"identity safeguard: {exc}") from exc
+        except (OSError, ValueError, RuntimeError) as exc:
+            raise CustodyError(
+                f"identity safeguard: UNKNOWN: context resolution failed "
+                f"({type(exc).__name__})") from exc
+
     # -- construction -----------------------------------------------------
 
     @classmethod
@@ -1962,49 +2010,24 @@ class Mission:
         # check while `write_bytes` truncates the RECORD itself.
         _refuse_store_aliased_target(self.workspace, target,
                                      artifact_relpath)
+        self._require_identity_contexts([target.parent])
         before_sha = sha256_file(target) if target.exists() else None
         data = content.encode("utf-8")
-        # THE DIRECTORY IS PART OF THE EFFECT. Every precondition above
-        # already runs before this mkdir -- that ordering is the
-        # refuse-before-mutate discipline the idempotency guard established
-        # -- but ordering alone only covers the failures this verb PREDICTS.
-        # A `PermissionError` at `write_bytes`, or any failure at
-        # `write_receipt`, fails AFTER the directories exist, and the
-        # freshly created parents used to survive it with no receipt and no
-        # checkpoint: an unreceipted workspace mutation minted by the verb
-        # whose whole contract is "no effect without a receipt" (es#169).
-        # So the parents this call creates are recorded before the fact and
-        # unwound on the way out of any raise. What the unwind CANNOT undo
-        # it declines to touch: a write that landed bytes and then failed to
-        # receipt them leaves a non-empty directory, and the artifact's own
-        # bytes are not this cleanup's to delete.
-        # The mkdir is INSIDE the try. mkdir(parents=True) creates the chain one
-        # level at a time and can fail partway — a long component raises OSError
-        # [Errno 36] after the shallower parents already exist — so leaving it
-        # outside left exactly the residue this seam is about, and contradicted
-        # the sentence above about unwinding "on the way out of any raise".
-        # `created_parents` is still read BEFORE the mkdir, which is the part
-        # that has to happen first: Path.mkdir reports nothing about what it
-        # made, and re-deriving it afterwards cannot tell our directory from one
-        # a concurrent writer created in between.
-        created_parents = _absent_ancestors(target.parent)
-        try:
-            target.parent.mkdir(parents=True, exist_ok=True)
-            target.write_bytes(data)
-            receipt = {
-                "record": "receipt@1",
-                "mission_id": latest["mission_id"],
-                "request_id": request_id,
-                "actor": self.actor,
-                "utc": now_utc(),
-                "artifact_path": artifact_relpath.replace("\\", "/"),
-                "before_sha256": before_sha,
-                "after_sha256": sha256_bytes(data),
-            }
-            self.store.write_receipt(receipt)
-        except BaseException:
-            _unwind_absent_ancestors(created_parents)
-            raise
+        # The approved #162 availability restriction requires an existing
+        # measured parent. Do not recreate a directory that vanished after
+        # preflight or infer permission to create descendants from its root.
+        target.write_bytes(data)
+        receipt = {
+            "record": "receipt@1",
+            "mission_id": latest["mission_id"],
+            "request_id": request_id,
+            "actor": self.actor,
+            "utc": now_utc(),
+            "artifact_path": artifact_relpath.replace("\\", "/"),
+            "before_sha256": before_sha,
+            "after_sha256": sha256_bytes(data),
+        }
+        self.store.write_receipt(receipt)
         return receipt
 
     def _own_mission_id(self) -> str | None:
@@ -2352,6 +2375,7 @@ class Mission:
         if latest["status"] != "draft":
             raise IllegalTransition(
                 f"cannot approve: status is {latest['status']!r}, expected 'draft'")
+        self._require_identity_contexts([])
         new = self._write_next(latest, path, status="active", note="approved")
         return new["revision"]
 
@@ -2621,6 +2645,8 @@ class Mission:
             self._refuse_store_target(preflight_target, artifact_relpath)
             _refuse_store_aliased_target(self.workspace, preflight_target,
                                          artifact_relpath)
+        self._require_identity_contexts(
+            [self._resolve_artifact_path(artifact_relpath).parent])
         # Only now -- with the union verdict in hand -- does anything touch
         # the chain. The fresh-quarantine checkpoints used to land BEFORE
         # evaluation, so a blocked effect mutated the chain while its
@@ -3119,6 +3145,8 @@ class Mission:
         return new["revision"]
 
     def resume(self) -> list[str]:
+        reason = self._pending_identity_reason()
+        identity_findings = [f"IDENTITY-UNKNOWN: {reason}"] if reason else []
         latest, path = self.store.load_latest()
         self._verify_manifest(latest)
         if latest["status"] in ("completed", "cancelled"):
@@ -3290,7 +3318,7 @@ class Mission:
                          if m.startswith("DRIFT-SIBLING:")
                          and m not in live_sibling]
         if not findings and not stale_skew and not stale_sibling:
-            return []
+            return identity_findings
 
         def _marker_key(rel: str) -> str:
             key = _normalize_relpath(rel)
@@ -3391,7 +3419,7 @@ class Mission:
         # The discharge markers ride the RETURN, not unresolved_verdicts:
         # callers (and the CLI) must see the event, but nothing is left to
         # reconcile and the status has already transitioned.
-        return findings + discharged
+        return findings + discharged + identity_findings
 
     def reconcile(self, artifact_relpath: str, content: str, request_id: str) -> dict:
         latest, path = self.store.load_latest()
@@ -3857,6 +3885,21 @@ class Mission:
             raise AcceptanceRefused(f"invalid acceptance-verdict: {errors[:3]}")
 
         if verdict == "PASS":
+            try:
+                parents = []
+                for request_id in latest["receipt_ids"]:
+                    receipt = self._load_receipt(request_id)
+                    if receipt is not None:
+                        parents.append(self._resolve_artifact_path(receipt["artifact_path"]).parent)
+                self._require_identity_contexts(parents)
+            except CustodyError as exc:
+                # Keep acceptance's typed refusal contract, including known
+                # mismatch and unknown probe results; neither becomes PASS.
+                raise AcceptanceRefused(str(exc)) from exc
+            except (OSError, ValueError, RuntimeError) as exc:
+                raise AcceptanceRefused(
+                    f"identity safeguard: UNKNOWN: acceptance context "
+                    f"resolution failed ({type(exc).__name__})") from exc
             required_tier = manifest["acceptance"]["required_tier"]
             if not _tier_meets(assurance_tier, required_tier):
                 raise AcceptanceRefused(
@@ -4158,6 +4201,9 @@ class Mission:
         return new["revision"]
 
     def status(self) -> dict:
+        reason = self._pending_identity_reason()
+        if reason:
+            print(_display_safe(f"identity safeguard: {reason}; {self.store.mission_dir}"), file=sys.stderr)
         latest, _ = self.store.load_latest()
         self._verify_manifest(latest)
         return latest

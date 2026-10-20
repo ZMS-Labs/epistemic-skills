@@ -23,7 +23,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 
-from custody_mission import Mission, _same_artifact  # noqa: E402
+from custody_mission import CustodyError, Mission, _display_safe, _same_artifact  # noqa: E402
 
 
 def main() -> int:
@@ -54,8 +54,17 @@ def main() -> int:
             operator_ref="operator:probe", steward_ref="agent:probe",
             required_tier="declared-role-separation", actor="agent:probe",
             scope_out=["secrets.env"])
-        m.approve()
-        m.record_effect("SECRETS.env", "leak", "probe-1")
+        try:
+            m.approve()
+            m.record_effect("SECRETS.env", "leak", "probe-1")
+        except CustodyError as exc:
+            if not str(exc).startswith("identity safeguard:"):
+                raise
+            print("managed-operation-refusal: " + _display_safe(str(exc)))
+            print("VERDICT: SAFEGUARD REFUSED -- the measured comparison "
+                  "mismatch remains; the managed operation refused. This "
+                  "does not certify filesystem support or close es#162.")
+            return 0
         same_file = (ws / "secrets.env").exists()
         findings = [(f["artifact_path"], f["reason"])
                     for f in m.scope_consistency()]

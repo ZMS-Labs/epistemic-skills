@@ -18,6 +18,60 @@ epoch with a documented migration. Acceptance tiers are closed:
 `operator-accepted`, `declared-role-separation` — no `externally-proven` tier
 exists until evidence could support one.
 
+## Bounded filesystem identity refusal (#162)
+
+The managed API/CLI checks finite filesystem/comparator witness pairs before
+approval, effects (including draft effects and `reconcile`) and PASS. A known
+mismatch or UNKNOWN refuses. Root agreement does not qualify descendants:
+effects check their existing target parent again at the write seam; PASS also
+checks the parents of readable receipted artifacts. This is a refusal safeguard,
+not a full identity algorithm, Unicode support certification or a solution to
+arbitrary path-replacement races. The read-only hook keeps its separate scope.
+
+Availability is intentionally reduced. Missing target parents are not created;
+read-only/unmeasurable contexts and platforms without the implemented POSIX
+descriptor-relative primitives refuse. Legacy records retain their formats and
+remain readable, but legacy operations can now refuse. No override, cached
+qualification or ancestor fallback is supplied. Existing acceptance and guard
+checks still apply when these finite witnesses show no mismatch.
+
+Before scratch effects in the actual directory, the probe exclusively creates
+`identity-probe.pending.json` inside the mission store and syncs its file and
+parent directory. Only normally completed measurement and verified cleanup,
+followed by a directory sync, permit clearing that record. Scratch creation and
+cleanup are temporary filesystem effects. Early refusal leaves artifact bytes,
+receipts, checkpoints and verdicts unchanged. A late refusal can retain a fresh
+quarantine acknowledgement already committed; it does not write an artifact or
+receipt and must not be described as a zero-checkpoint event.
+
+An existing record of any content (including invalid JSON or a symlink) is an
+UNKNOWN latch across the workspace mission union, including unapproved or
+unreadable-chain siblings. Unreadable pending-record discovery also refuses. `status` reports it on stderr; `resume` includes an
+`IDENTITY-UNKNOWN` finding without inventing a checkpoint obligation. The
+existing artifact drift scan is not relied on to discover scratch residue.
+Interrupted probes, replacements and cleanup failures preserve uncertain
+entries and block future managed effects/PASS. A crash after cleanup but before
+record clearing can safely block despite having no scratch left. Diagnostic
+reads and ordinary non-artifact repair/cancel routes remain available.
+
+The record contains a context and scratch prefix for investigation, **not
+permission to delete entries or adopt them into custody**. No automatic recovery
+or deletion command is provided. Do not clear the latch merely because a PID,
+filename or remembered inode appears familiar; resolve under explicit operator
+authority after inspecting the actual context. File/parent sync ordering assumes
+the filesystem honors its persistence primitives; failed or unavailable syncs
+refuse, and no power-loss/hardware-failure guarantee is asserted. Ownership
+checks before unlink are bounded observations, not atomic replacement defenses.
+
+Run `python test_custody_identity.py` for native witness refusals and explicitly
+injected lifecycle/error regressions. Legacy successful-write fixtures prepare
+their target parents explicitly; managed effects never create them. Legacy
+acceptance behavior requires a context with no observed witness mismatch. The
+local validation also exercises those control flows with explicitly simulated
+compatible measurements; simulation is not a production override and does not
+qualify Linux, NTFS or per-directory modes. Native legacy suites on an aliasing
+Mac context still refuse, as the accepted conservative policy requires.
+
 ## ENFORCEMENT STATUS -- what actually refuses, and what only informs
 
 Every field below is either a CONTROL (a machine evaluates it and refuses) or a

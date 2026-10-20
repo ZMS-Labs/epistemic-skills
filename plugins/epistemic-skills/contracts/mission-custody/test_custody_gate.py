@@ -154,7 +154,9 @@ def test_guard_match_is_lexical_symlinked_parent_diverges() -> None:
     if os.name == "nt":
         print("  skip guard-lexical pin (POSIX-scoped: NT realpath collapses lexically; the divergence does not exist there)")
         return
-    root = Path(tempfile.mkdtemp(prefix="custody-r15-"))
+    # Compare paths in one spelling domain: macOS temp roots may use /var
+    # while realpath returns /private/var. The symlink/.. behavior is unchanged.
+    root = Path(tempfile.mkdtemp(prefix="custody-r15-")).resolve()
     try:
         (root / "guarded" / "sub").mkdir(parents=True)
         link = root / "link"

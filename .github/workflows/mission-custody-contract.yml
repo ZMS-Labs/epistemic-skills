@@ -68,6 +68,8 @@ jobs:
         run: python -m py_compile plugins/epistemic-skills/contracts/mission-custody/verify_mission_custody.py
       - name: Custody store unit tests
         run: python plugins/epistemic-skills/contracts/mission-custody/test_custody_store.py
+      - name: Bounded filesystem identity refusal and crash-latch regressions
+        run: python plugins/epistemic-skills/contracts/mission-custody/test_custody_identity.py
       - name: Custody mission lifecycle unit tests
         run: python plugins/epistemic-skills/contracts/mission-custody/test_custody_mission.py
       - name: Custody CLI black-box tests

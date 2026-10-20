@@ -121,6 +121,7 @@ def test_load_refuses_zero_and_multiple(workspace: Path) -> None:
 def test_effect_writes_receipt_and_artifact(workspace: Path) -> None:
     m = open_mission(workspace, "m-effect", "Write notes.")
     m.approve()
+    m._resolve_artifact_path("notes/a.md").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     receipt = m.record_effect("notes/a.md", "hello", "req-1")
     target = workspace / "notes" / "a.md"
     check("effect-artifact-exists", target.exists())
@@ -150,6 +151,7 @@ def test_effect_refuses_escape(workspace: Path) -> None:
 def test_resume_detects_drift_and_reconcile_clears(workspace: Path) -> None:
     m = open_mission(workspace, "m-drift", "Track drift.")
     m.approve()
+    m._resolve_artifact_path("notes/a.md").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("notes/a.md", "hello", "req-1")
     target = workspace / "notes" / "a.md"
     target.write_text("tampered", encoding="utf-8")
@@ -206,6 +208,7 @@ def test_amend_records_authority_append_only(workspace: Path) -> None:
 
     # the mission keeps working normally under the amended envelope
     m.note("proceeding under the amendment")
+    m._resolve_artifact_path("notes/a.md").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("notes/a.md", "hello", "req-1")
     check("amend-mission-continues", m.resume() == [])
     m.amend_authority("also fix Plex")
@@ -287,6 +290,7 @@ def test_resume_missing_receipt_is_drift(workspace: Path) -> None:
     binds the id to a caller-chosen path (round-2 finding A: forgery)."""
     m = open_mission(workspace, "m-receiptless", "Guard the receipts.")
     m.approve()
+    m._resolve_artifact_path("notes/a.md").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("notes/a.md", "hello", "req-1")
     for p in m.store.receipts_dir.glob("*.json"):
         p.unlink()
@@ -351,6 +355,7 @@ def test_restored_receipt_survives_acknowledge(workspace: Path) -> None:
     the stale marker clears and coverage simply continues."""
     m = open_mission(workspace, "m-restored", "Never destroy a healthy receipt.")
     m.approve()
+    m._resolve_artifact_path("notes/a.md").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("notes/a.md", "correct content", "req-1")
     original_receipt = m.store.receipt_path("req-1").read_text(encoding="utf-8")
     m.store.receipt_path("req-1").unlink()
@@ -384,6 +389,7 @@ def test_retirement_survives_hostile_request_ids(workspace: Path) -> None:
     tricky = 'req-1; not-the-real-tail (covered "lie.md")'
     m = open_mission(workspace, "m-tricky-id", "Encode ids, do not split them.")
     m.approve()
+    m._resolve_artifact_path("notes/a.md").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("notes/a.md", "real content", tricky)
     m.store.receipt_path(tricky).unlink()
     m.resume()
@@ -419,6 +425,7 @@ def test_note_cannot_forge_machine_state(workspace: Path) -> None:
             check(f"note-forgery-refused[{forgery[:20]}]", True)
 
     # the id a forged retirement tried to poison is still usable
+    m._resolve_artifact_path("notes/legit.md").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("notes/legit.md", "legit", "never-lost")
     check("note-forgery-id-still-usable",
           "never-lost" in m.status()["receipt_ids"])
@@ -431,6 +438,7 @@ def test_receipt_ids_always_carry_a_derivable_path(workspace: Path) -> None:
     recorded path becomes underivable and loss recovery degrades silently."""
     m = open_mission(workspace, "m-note-contract", "Pin the note contract.")
     m.approve()
+    m._resolve_artifact_path("notes/a.md").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("notes/a.md", "aa", "req-effect")
     (workspace / "notes" / "a.md").write_text("tampered", encoding="utf-8")
     m.resume()
@@ -1838,6 +1846,7 @@ def test_backslash_effect_path_still_loads_its_own_receipt(
     operator's trust on nothing."""
     m = open_mission(workspace, "m-backslash", "Windows-spelled path.")
     m.approve()
+    m._resolve_artifact_path("dir\\file.txt").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("dir\\file.txt", "hello", "req-bs")
 
     check("backslash-receipt-loads", m._load_receipt("req-bs") is not None)
@@ -1903,6 +1912,7 @@ def test_effect_path_index_matches_per_id(workspace: Path) -> None:
     reconciliation, a retired id, and an id admitted with no parseable note."""
     m = open_mission(workspace, "m-index", "Index equals per-id lookup.")
     m.approve()
+    m._resolve_artifact_path("notes/a.md").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("notes/a.md", "aa", "req-a")
     m.record_effect("notes/b.md", "bb", "req-b")
     (workspace / "notes" / "a.md").write_text("tampered", encoding="utf-8")
@@ -1963,6 +1973,7 @@ def test_effect_path_index_agrees_after_readmission(workspace: Path) -> None:
     invariant that must not be."""
     m = open_mission(workspace, "m-readmit", "Re-admitted noteless id.")
     m.approve()
+    m._resolve_artifact_path("docs/a.md").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("docs/a.md", "aa", "req-a")
 
     def bare(note: str, *, add=None, ids=None) -> None:
@@ -2007,6 +2018,7 @@ def test_scope_consistency_reuses_single_effect_index(workspace: Path) -> None:
     )
     m.approve()
     for i in range(40):
+        m._resolve_artifact_path(f"docs/{i}.txt").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
         m.record_effect(f"docs/{i}.txt", str(i), f"req-{i}")
 
     original_index = m._effect_path_index
@@ -2046,6 +2058,7 @@ def test_scope_consistency_reuses_index_for_underivable_ids(
     )
     m.approve()
     for i in range(40):
+        m._resolve_artifact_path(f"docs/{i}.txt").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
         m.record_effect(f"docs/{i}.txt", str(i), f"req-{i}")
 
     index_calls = 0
@@ -2069,6 +2082,7 @@ def test_effect_path_index_invalidates_on_same_count_tail_rewrite(
         scope_in=["docs/**"],
     )
     m.approve()
+    m._resolve_artifact_path("docs/a.txt").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("docs/a.txt", "x", "req-a")
     check("scope-tail-cache-warmed",
           m._effect_path_index().get("req-a") == "docs/a.txt")
@@ -2115,6 +2129,7 @@ def test_resume_and_continuity_share_one_effect_index(
     )
     m.approve()
     for i in range(16):
+        m._resolve_artifact_path("docs/shared.txt").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
         m.record_effect("docs/shared.txt", str(i), f"req-{i}")
 
     original_index = m._effect_indexes
@@ -2150,6 +2165,7 @@ def test_effect_path_index_does_not_retain_checkpoint_bytes(
     )
     m.approve()
     for i in range(12):
+        m._resolve_artifact_path(f"docs/{i}.txt").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
         m.record_effect(f"docs/{i}.txt", str(i), f"req-{i}")
 
     original_read_bytes = Path.read_bytes
@@ -2200,6 +2216,7 @@ def test_effect_path_index_uses_set_membership(workspace: Path) -> None:
     )
     m.approve()
     for i in range(effect_count):
+        m._resolve_artifact_path(f"docs/{i}.txt").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
         m.record_effect(f"docs/{i}.txt", str(i), f"req-{i}")
 
     original_loads = json.loads
@@ -2283,6 +2300,7 @@ def test_census_receipts_does_not_rescan_the_chain_per_receipt(
     m = open_mission(workspace, "m-census-io", "Bounded census chain reads.")
     m.approve()
     for i in range(effect_count):
+        m._resolve_artifact_path(f"docs/{i}.txt").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
         m.record_effect(f"docs/{i}.txt", str(i), f"req-{i}")
     latest, _ = m.store.load_latest()
     checkpoints = len(m.store.checkpoint_paths())
@@ -2311,6 +2329,7 @@ def test_census_still_reports_receipts_when_the_index_is_unbuildable(
     still reported."""
     m = open_mission(workspace, "m-census-blind", "Index build fails.")
     m.approve()
+    m._resolve_artifact_path("docs/a.txt").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("docs/a.txt", "a", "req-a")
     m.record_effect("docs/b.txt", "b", "req-b")
     latest, _ = m.store.load_latest()
@@ -2337,6 +2356,7 @@ def test_forged_restored_receipt_is_not_trusted(workspace: Path) -> None:
     receipt wearing the id's name -- retire, never affirm coverage."""
     m = open_mission(workspace, "m-forged", "Do not trust a planted receipt.")
     m.approve()
+    m._resolve_artifact_path("notes/real-secret.md").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("notes/real-secret.md", "the real secret", "req-9")
     genuine = json.loads(
         m.store.receipt_path("req-9").read_text(encoding="utf-8"))
@@ -2394,34 +2414,50 @@ def test_distinct_files_never_share_an_obligation(workspace: Path) -> None:
         check(f"normalization-not-overreaching[{distinct}]",
               not _same_artifact(distinct, "notes/a.md"))
 
+    # The lexical Unicode regression above is host-independent. The end-to-end
+    # regression needs TWO physical files: APFS may alias the Unicode pair
+    # (es#162). Prove coexistence without clobbering the first probe file.
+    real_name, decoy_name = "straße.txt", "strasse.txt"
+    with tempfile.TemporaryDirectory(dir=workspace) as probe_dir:
+        probe = Path(probe_dir)
+        (probe / real_name).write_text("sentinel", encoding="utf-8")
+        try:
+            with (probe / decoy_name).open("x", encoding="utf-8") as handle:
+                handle.write("distinct")
+        except FileExistsError:
+            print("LIMITED es#162: Unicode pair aliases on this filesystem; "
+                  "two-file custody uses independent ASCII names. "
+                  "Filesystem-aware custody remains unqualified.")
+            real_name, decoy_name = "custody-real.txt", "custody-decoy.txt"
+
     # end to end: covering a different file must not discharge the obligation
     m = open_mission(workspace, "m-distinct", "Distinct files stay distinct.")
     m.approve()
-    m.record_effect("straße.txt", "the real content", "id-true")
+    m.record_effect(real_name, "the real content", "id-true")
     m.store.receipt_path("id-true").unlink()
     m.resume()
     m.acknowledge_receipt_loss("id-true")
     check("distinct-recover-raised",
           m.status()["state"]["unresolved_verdicts"]
-          == ["RECOVER:straße.txt"])
+          == [f"RECOVER:{real_name}"])
 
-    m.record_effect("strasse.txt", "unrelated decoy", "id-decoy")
+    m.record_effect(decoy_name, "unrelated decoy", "id-decoy")
     st = m.status()
     check("distinct-decoy-did-not-discharge",
-          st["state"]["unresolved_verdicts"] == ["RECOVER:straße.txt"]
+          st["state"]["unresolved_verdicts"] == [f"RECOVER:{real_name}"]
           and st["status"] == "reopened")
     check("distinct-real-file-untouched",
-          (workspace / "straße.txt").read_text(encoding="utf-8")
+          (workspace / real_name).read_text(encoding="utf-8")
           == "the real content")
 
     # and both files are independently covered once each is genuinely written
-    m.record_effect("straße.txt", "recovered for real", "id-true-2")
+    m.record_effect(real_name, "recovered for real", "id-true-2")
     st2 = m.status()
     check("distinct-real-recovery-discharges",
           st2["state"]["unresolved_verdicts"] == [] and st2["status"] == "active")
-    (workspace / "strasse.txt").write_text("tampered", encoding="utf-8")
+    (workspace / decoy_name).write_text("tampered", encoding="utf-8")
     check("distinct-both-files-tracked-separately",
-          m.resume() == ["strasse.txt"])
+          m.resume() == [decoy_name])
 
 
 def test_obligations_match_by_artifact_not_by_string(workspace: Path) -> None:
@@ -2434,6 +2470,7 @@ def test_obligations_match_by_artifact_not_by_string(workspace: Path) -> None:
     obligation markers had not."""
     m = open_mission(workspace, "m-case", "Match artifacts, not strings.")
     m.approve()
+    m._resolve_artifact_path("Sub/Dir/File.TXT").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("Sub/Dir/File.TXT", "original", "req-1")
     m.store.receipt_path("req-1").unlink()
     m.resume()
@@ -2464,6 +2501,7 @@ def test_drift_marker_matches_by_artifact(workspace: Path) -> None:
     the artifact it is covering, not for a byte-identical spelling of it."""
     m = open_mission(workspace, "m-case-drift", "Drift matches artifacts too.")
     m.approve()
+    m._resolve_artifact_path("Notes/A.md").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("Notes/A.md", "aa", "req-1")
     (workspace / "Notes" / "A.md").write_text("tampered", encoding="utf-8")
     check("case-drift-detected", m.resume() == ["Notes/A.md"])
@@ -2486,6 +2524,7 @@ def test_superseded_receipt_never_shadows_the_current_one(workspace: Path) -> No
     both reviewers of PR #119 (epistemic-skills#120)."""
     m = open_mission(workspace, "m-supersede", "One artifact, one receipt.")
     m.approve()
+    m._resolve_artifact_path("notes/a.md").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("notes/a.md", "v1", "req-1")
     (workspace / "notes" / "a.md").write_text("tampered", encoding="utf-8")
     check("supersede-drift-detected", m.resume() == ["notes/a.md"])
@@ -2534,6 +2573,7 @@ def test_continuity_break_classification_never_rescans_the_chain(
     m = open_mission(workspace, "m-break-scan", "Many real breaks.")
     m.approve()
     target = workspace / "notes" / "a.md"
+    m._resolve_artifact_path("notes/a.md").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("notes/a.md", "v0", "req-0")
     for i in range(1, 9):
         # Tamper out of band, then re-effect WITHOUT resuming: each pair is a
@@ -2581,6 +2621,7 @@ def test_continuity_surfaces_unreceipted_mutation(workspace: Path) -> None:
     artifact hash before and after its own write -- and nothing read it."""
     m = open_mission(workspace, "m-continuity", "Surface the unseen gap.")
     m.approve()
+    m._resolve_artifact_path("notes/a.md").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("notes/a.md", "v1", "req-1")
     m.record_effect("notes/a.md", "v2", "req-2")
     check("continuity-clean-chain", m.continuity_breaks() == [])
@@ -2689,6 +2730,7 @@ def test_reconcile_clears_exactly_one_marker(workspace: Path) -> None:
     marker only through acknowledge_receipt_loss."""
     m = open_mission(workspace, "m-two-markers", "Keep obligations separate.")
     m.approve()
+    m._resolve_artifact_path("notes/a.md").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("notes/a.md", "aa", "req-a")
     m.record_effect("notes/b.md", "bb", "req-b")
     (workspace / "notes" / "a.md").write_text("tampered", encoding="utf-8")
@@ -2728,6 +2770,7 @@ def test_corrupt_receipt_degrades_to_drift(workspace: Path) -> None:
     deletes the corrupt file (forensic evidence) and never wedges."""
     m = open_mission(workspace, "m-corrupt-receipt", "Survive mangled receipts.")
     m.approve()
+    m._resolve_artifact_path("notes/a.md").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("notes/a.md", "hello", "req-1")
     m.store.receipt_path("req-1").write_text("{not json", encoding="utf-8")
 
@@ -2750,6 +2793,7 @@ def test_effect_duplicate_id_leaves_workspace_untouched(workspace: Path) -> None
     """Idempotency refusal must fire BEFORE the workspace mutates."""
     m = open_mission(workspace, "m-dup-effect", "Refuse before writing.")
     m.approve()
+    m._resolve_artifact_path("notes/a.md").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("notes/a.md", "hello", "req-1")
     try:
         m.record_effect("notes/b.md", "evil", "req-1")
@@ -2762,123 +2806,73 @@ def test_effect_duplicate_id_leaves_workspace_untouched(workspace: Path) -> None
           (workspace / "notes" / "a.md").read_text(encoding="utf-8") == "hello")
 
 
-def test_failed_effect_removes_the_directories_it_created(
+def test_missing_parent_refuses_before_effect_and_preserves_existing_dirs(
         workspace: Path) -> None:
-    """A write that mints no receipt must leave no directory behind.
+    """#162 supersedes mkdir/unwind: absent parents refuse before artifact I/O.
 
-    `_write_effect` creates the target's parents and only then writes the
-    bytes and the receipt, so a `PermissionError` at the write -- the case
-    es#169 names -- left `esrm/deep/` standing with no receipt and no
-    checkpoint: an unreceipted workspace mutation from the verb whose whole
-    contract is "no effect without a receipt".
-
-    The failure is injected at `Path.write_bytes`, for this one target,
-    because that is the exact seam the issue names and no portable
-    filesystem trick reaches it: a read-only parent fails the MKDIR
-    instead, which creates nothing at all and so measures the ordering that
-    was already correct rather than the cleanup that was missing."""
-    m = open_mission(workspace, "m-mkdir", "Fail after the mkdir.")
+    Keep the es#169 existing-directory write-error control: a failed artifact
+    write must not delete directories the caller explicitly prepared.
+    """
+    m = open_mission(workspace, "m-mkdir", "Refuse missing parents.")
     m.approve()
-    cps_before = sorted((workspace / "missions" / "m-mkdir" / "checkpoints")
-                        .glob("*.json"))
-
+    cps_before = m.store.checkpoint_paths()
+    (workspace / "esrm-keep").mkdir()
     real_write_bytes = Path.write_bytes
-    blocked = {str(workspace.resolve() / "esrm" / "deep" / "x.txt"),
-               str(workspace.resolve() / "esrm-keep" / "deep" / "y.txt")}
+    attempts = []
 
     def refusing_write_bytes(self, data):
-        if str(self) in blocked:
-            raise PermissionError(13, "Permission denied")
-        return real_write_bytes(self, data)
-
-    # A directory the caller made itself, to prove the unwind removes only
-    # what THIS call created.
-    (workspace / "esrm-keep").mkdir()
+        attempts.append(self)
+        raise PermissionError(13, "Permission denied")
 
     Path.write_bytes = refusing_write_bytes
     try:
+        for rel in ("esrm/deep/x.txt", "esrm-keep/deep/y.txt"):
+            try:
+                m.record_effect(rel, "data", "req-absent")
+                check("missing-parent-is-refused-" + rel, False)
+            except CustodyError as exc:
+                check("missing-parent-is-refused-" + rel, "UNKNOWN" in str(exc))
+        check("missing-parent-never-attempts-artifact-write", attempts == [])
+        check("missing-parent-created-no-hierarchy", not (workspace / "esrm").exists())
+        check("missing-parent-preserves-caller-directory",
+              (workspace / "esrm-keep").is_dir()
+              and not (workspace / "esrm-keep/deep").exists())
+        # Existing-parent write failures retain the original loud I/O failure
+        # and leave the caller's directories alone; no automatic cleanup.
+        (workspace / "present/deep").mkdir(parents=True)
         try:
-            m.record_effect("esrm/deep/x.txt", "data", "req-mkdir")
-            check("failed-effect-propagates-the-write-error", False)
+            m.record_effect("present/deep/x.txt", "data", "req-denied")
+            check("existing-parent-write-denial-propagates", False)
         except PermissionError:
-            check("failed-effect-propagates-the-write-error", True)
-        try:
-            m.record_effect("esrm-keep/deep/y.txt", "data", "req-mkdir-2")
-            check("failed-effect-propagates-the-write-error-2", False)
-        except PermissionError:
-            check("failed-effect-propagates-the-write-error-2", True)
+            check("existing-parent-write-denial-propagates", True)
     finally:
         Path.write_bytes = real_write_bytes
-
-    check("failed-effect-minted-no-receipt",
-          not list((workspace / "missions" / "m-mkdir" / "receipts")
-                   .glob("*.json")))
-    check("failed-effect-committed-no-checkpoint",
-          sorted((workspace / "missions" / "m-mkdir" / "checkpoints")
-                 .glob("*.json")) == cps_before)
-    check("failed-effect-left-no-created-directory",
-          not (workspace / "esrm").exists())
-    check("failed-effect-removed-only-what-it-created",
-          (workspace / "esrm-keep").is_dir()
-          and not (workspace / "esrm-keep" / "deep").exists())
-
-    # CONTROL: the unwind is not always-on. A write that DOES receipt keeps
-    # the directories it made -- otherwise the fix would be deleting the
-    # workspace it is supposed to protect.
-    m.record_effect("esrm/deep/x.txt", "data", "req-mkdir-ok")
-    check("receipted-effect-keeps-its-directories",
-          (workspace / "esrm" / "deep" / "x.txt").exists())
+    check("refused-effects-minted-no-receipt", m.store.load_receipts() == [])
+    check("refused-effects-committed-no-checkpoint", m.store.checkpoint_paths() == cps_before)
+    check("existing-directory-was-not-deleted", (workspace / "present/deep").is_dir())
+    m.record_effect("present/deep/x.txt", "data", "req-existing-ok")
+    check("explicit-existing-parent-control-writes", (workspace / "present/deep/x.txt").read_text() == "data")
 
 
-def test_failed_mkdir_removes_the_ancestors_it_already_created(
+def test_overlong_missing_parent_refuses_without_creating_ancestors(
         workspace: Path) -> None:
-    """The unwind must cover a FAILURE INSIDE THE MKDIR, not only after it.
-
-    The first cut of the es#169 fix left `target.parent.mkdir(parents=True)`
-    outside the try, so only a failure after the directories existed was
-    unwound. But mkdir(parents=True) builds the chain one level at a time
-    and can fail partway: a component longer than NAME_MAX raises OSError
-    [Errno 36] after the shallower parents are already on disk. That is the
-    same unreceipted residue the issue names, and the seam comment claimed
-    it was unwound "on the way out of any raise" while it was not.
-
-    No injection is needed here -- the filesystem itself supplies the
-    partial failure, which is why this case is worth having alongside the
-    injected-write one."""
-    m = open_mission(workspace, "m-mkdir-partial", "Fail inside the mkdir.")
+    """#162 rejects an unmeasurable hierarchy without partial mkdir effects."""
+    m = open_mission(workspace, "m-mkdir-partial", "Refuse unmeasurable parents.")
     m.approve()
-    cps_before = sorted(
-        (workspace / "missions" / "m-mkdir-partial" / "checkpoints")
-        .glob("*.json"))
-
-    too_long = "z" * 300  # > NAME_MAX (255) on every mainstream filesystem
-    try:
-        m.record_effect(f"aa/bb/{too_long}/x.txt", "data", "req-partial")
-        check("partial-mkdir-propagates-the-error", False)
-    except OSError:
-        check("partial-mkdir-propagates-the-error", True)
-
-    check("partial-mkdir-minted-no-receipt",
-          not list((workspace / "missions" / "m-mkdir-partial" / "receipts")
-                   .glob("*.json")))
-    check("partial-mkdir-committed-no-checkpoint",
-          sorted((workspace / "missions" / "m-mkdir-partial" / "checkpoints")
-                 .glob("*.json")) == cps_before)
-    # THE PROPERTY: `aa` and `aa/bb` were created by this call and must be gone.
-    check("partial-mkdir-left-no-created-ancestor",
-          not (workspace / "aa").exists())
-
-    # CONTROL: still only what THIS call created. A pre-existing ancestor on
-    # the failing path survives, so the assertion above cannot pass by an
-    # unwind that climbs out of its own scope.
+    cps_before = m.store.checkpoint_paths()
+    too_long = "z" * 300
     (workspace / "cc").mkdir()
-    try:
-        m.record_effect(f"cc/dd/{too_long}/y.txt", "data", "req-partial-2")
-        check("partial-mkdir-propagates-the-error-2", False)
-    except OSError:
-        check("partial-mkdir-propagates-the-error-2", True)
-    check("partial-mkdir-kept-the-caller-s-own-directory",
-          (workspace / "cc").is_dir() and not (workspace / "cc" / "dd").exists())
+    for rel in (f"aa/bb/{too_long}/x.txt", f"cc/dd/{too_long}/y.txt"):
+        try:
+            m.record_effect(rel, "data", "req-partial")
+            check("overlong-parent-refuses-" + rel[:5], False)
+        except CustodyError as exc:
+            check("overlong-parent-refuses-" + rel[:5], "UNKNOWN" in str(exc))
+    check("overlong-parent-minted-no-receipt", m.store.load_receipts() == [])
+    check("overlong-parent-committed-no-checkpoint", m.store.checkpoint_paths() == cps_before)
+    check("overlong-parent-created-no-ancestor", not (workspace / "aa").exists())
+    check("overlong-parent-preserved-caller-directory",
+          (workspace / "cc").is_dir() and not (workspace / "cc/dd").exists())
 
 
 def test_accept_requires_verifying_and_separation(workspace: Path) -> None:
@@ -2942,6 +2936,7 @@ def test_fail_is_clearable(workspace: Path) -> None:
     check("fail-marker-present",
           any(marker.startswith("FAIL:") for marker in st["state"]["unresolved_verdicts"]))
 
+    m._resolve_artifact_path("notes/fix.md").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("notes/fix.md", "patched", "req-fix-1")
     m.clear_fail("missing edge case", "req-fix-1")
     st2 = m.status()
@@ -3180,8 +3175,11 @@ def test_scope_consistency_and_acceptance_boundary(workspace: Path) -> None:
     m = open_mission(workspace, "m-scope", "Bounded work.",
                      scope_in=["docs/**"], scope_out=["secrets/**"])
     m.approve()
+    m._resolve_artifact_path("docs/a.md").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("docs/a.md", "in scope", "sc-1")
+    m._resolve_artifact_path("src/b.py").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("src/b.py", "outside scope.in", "sc-2")
+    m._resolve_artifact_path("secrets/c.env").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("secrets/c.env", "matches scope.out", "sc-3")
 
     findings = m.scope_consistency()
@@ -3359,9 +3357,13 @@ def test_windows_scope_entries_with_spaces_bind_end_to_end(
         scope_out=["My Documents\\secrets.env", "docs\\release notes\\**"],
     )
     m.approve()
+    m._resolve_artifact_path("Allowed Work/ordinary.txt").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("Allowed Work/ordinary.txt", "ok", "win-1")
+    m._resolve_artifact_path("My Documents/secrets.env").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("My Documents/secrets.env", "leak", "win-2")
+    m._resolve_artifact_path("docs/release notes/key.txt").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("docs/release notes/key.txt", "leak", "win-3")
+    m._resolve_artifact_path("elsewhere/other.txt").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("elsewhere/other.txt", "stray", "win-4")
 
     findings = {
@@ -3520,6 +3522,7 @@ def test_windows_separator_form_table(workspace: Path) -> None:
     )
     m.approve()
     for i, (_, _, artifact) in enumerate(_WIN_SEPARATOR_BINDING_ROWS):
+        m._resolve_artifact_path(artifact).parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
         m.record_effect(artifact, "x", f"sep-{i}")
     flagged = {f["artifact_path"] for f in m.scope_consistency()
                if f["reason"] == "matches scope.out"}
@@ -3543,6 +3546,7 @@ def test_windows_separator_form_table(workspace: Path) -> None:
     for i, artifact in enumerate(
             ["secrets.env", "docs/secrets.env", "secrets/x.txt",
              "My Documents/archive/x.txt", "TCP/IP tuning"]):
+        m2._resolve_artifact_path(artifact).parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
         m2.record_effect(artifact, "x", f"sep-d-{i}")
     check("sep-disclosed-rows-bind-nothing", m2.scope_consistency() == [])
     latest2, _ = m2.store.load_latest()
@@ -3650,6 +3654,7 @@ def test_windows_bare_multi_segment_entry_names_exactly_one_path(
             scope_out=entries)
         m.approve()
         for i, artifact in enumerate(artifacts):
+            m._resolve_artifact_path(artifact).parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
             m.record_effect(artifact, "x", "%s-%d" % (mission_id, i))
         flagged = {f["artifact_path"] for f in m.scope_consistency()
                    if f["reason"] == "matches scope.out"}
@@ -3719,7 +3724,9 @@ def test_windows_scope_case_insensitive_compare(workspace: Path) -> None:
         scope_out=["Case I\\SECRETS.env", "Case J\\\u00c4rchive.env"],
     )
     m.approve()
+    m._resolve_artifact_path("case i/secrets.env").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("case i/secrets.env", "leak", "case-1")
+    m._resolve_artifact_path("case j/\u00e4rchive.env").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("case j/\u00e4rchive.env", "leak", "case-2")
     flagged = {f["artifact_path"] for f in m.scope_consistency()
                if f["reason"] == "matches scope.out"}
@@ -3739,6 +3746,7 @@ def test_prose_scope_does_not_refuse_acceptance(workspace: Path) -> None:
                      scope_in=["monitored-missing reconciliation"],
                      scope_out=["indexer changes"])
     m.approve()
+    m._resolve_artifact_path("notes/a.md").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("notes/a.md", "ordinary work", "pr-1")
     check("prose-scope-flags-nothing", m.scope_consistency() == [])
     m.begin_verification()
@@ -3761,6 +3769,7 @@ def test_unrelated_amendment_never_discharges_regardless_of_order(
     m = open_mission(workspace, "m-order", "Ordered work.", scope_in=["docs/**"])
     m.approve()
     m.amend_authority("operator: unrelated cost allowance")   # amendment FIRST
+    m._resolve_artifact_path("src/late.py").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("src/late.py", "drift AFTER it", "ord-1")  # drift SECOND
     m.amend_authority("operator: you may restart the pod")     # and one AFTER
     m.begin_verification()
@@ -3791,6 +3800,7 @@ def test_mixed_prose_and_path_scope_in_does_not_flag_everything(
                      scope_in=["src/**", "monitored-missing reconciliation"],
                      scope_out=["secrets.env", "VPN configuration"])
     m.approve()
+    m._resolve_artifact_path("docs/notes.md").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("docs/notes.md", "covered by the prose entry", "mx-1")
     m.record_effect("README.md", "also covered by prose", "mx-2")
     check("mixed-scope-in-flags-nothing-outside", m.scope_consistency() == [])
@@ -3817,6 +3827,7 @@ def test_scope_ack_is_the_only_discharge(workspace: Path) -> None:
     m = open_mission(workspace, "m-ack", "Ack required.", scope_in=["docs/**"])
     m.approve()
     m.amend_authority("operator: you may write src/early.py")
+    m._resolve_artifact_path("src/early.py").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("src/early.py", "authorised in advance", "pre-1")
     m.begin_verification()
     acceptor = Mission.load(workspace, actor="agent:acceptor")
@@ -3893,7 +3904,7 @@ def test_scope_ack_is_normalised_like_the_findings(workspace: Path) -> None:
     receipt. "./secrets.env" and a trailing space both refused, and because
     `_norm_path` folds case only on NT, an ack captured in a runbook was
     platform-specific."""
-    spellings = ["secrets.env", "./secrets.env", "secrets.env ", ".\secrets.env"]
+    spellings = ["secrets.env", "./secrets.env", "secrets.env ", r".\secrets.env"]
     for i, spelling in enumerate(spellings):
         # a fresh workspace per spelling: reusing one store would collide on
         # revision ordering and mask the thing under test
@@ -4137,6 +4148,7 @@ def test_identity_is_one_visible_line(workspace: Path) -> None:
     m = open_mission(workspace, "m-forge-id", "Forge.",
                      scope_out=["secrets/**"])
     m.approve()
+    m._resolve_artifact_path("secrets/x.env").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("secrets/x.env", "TOKEN", "fid-1")
     m.begin_verification()
     try:
@@ -4205,8 +4217,10 @@ def test_unmatchable_patterns_are_disclosed_not_silently_inert(
     # The unmatchable excludes fire on nothing (they always did); the real glob
     # still fires. Writing to the excluded path must still be caught.
     m.approve()
+    m._resolve_artifact_path("notes/ok.md").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("notes/ok.md", "not excluded by anything", "in-1")
     check("unmatchable-excludes-flag-nothing", m.scope_consistency() == [])
+    m._resolve_artifact_path("docs/inside.md").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("docs/inside.md", "matches the real exclude", "in-2")
     check("real-exclude-still-fires",
           [f["artifact_path"] for f in m.scope_consistency()] == ["docs/inside.md"])
@@ -4362,7 +4376,9 @@ def test_partial_scope_ack_does_not_discharge_the_rest(workspace: Path) -> None:
     acknowledged, so an ack list is checked per path, never as a token gesture."""
     m = open_mission(workspace, "m-partial", "Two drifts.", scope_in=["docs/**"])
     m.approve()
+    m._resolve_artifact_path("src/one.py").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("src/one.py", "drift a", "pa-1")
+    m._resolve_artifact_path("etc/two.conf").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("etc/two.conf", "drift b", "pa-2")
     m.begin_verification()
     acceptor = Mission.load(workspace, actor="agent:acceptor")
@@ -4435,6 +4451,7 @@ def test_later_amendment_must_name_the_drift_it_discharges(workspace: Path) -> N
     ALLOW writes "the chain is clean" over work no grant covers."""
     m = open_mission(workspace, "m-attrib", "Attributed.", scope_in=["docs/**"])
     m.approve()
+    m._resolve_artifact_path("src/late.py").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("src/late.py", "drift", "att-1")          # drift FIRST
     m.amend_authority("operator: budget raised to 50 dollars")  # later, unrelated
     m.begin_verification()
@@ -4820,6 +4837,7 @@ def test_ordinary_artifact_is_not_multiply_linked(workspace: Path) -> None:
     false positive."""
     m = open_mission(workspace, "m-plain", "Plain.", scope_in=["docs/**"])
     m.approve()
+    m._resolve_artifact_path("docs/plain.md").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("docs/plain.md", "x", "pl-1")
     check("ordinary-artifact-nlink-is-1",
           os.stat(workspace / "docs" / "plain.md").st_nlink == 1)
@@ -4840,6 +4858,7 @@ def test_link_count_is_none_when_the_artifact_is_gone(workspace: Path) -> None:
     surface that acceptance depends on."""
     m = open_mission(workspace, "m-gone", "Gone.", scope_out=["secrets/**"])
     m.approve()
+    m._resolve_artifact_path("docs/gone.md").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("docs/gone.md", "x", "gn-1")
     (workspace / "docs" / "gone.md").unlink()
     check("link-count-none-when-absent", m._link_count("docs/gone.md") is None)
@@ -4887,6 +4906,7 @@ def test_exclusion_match_does_not_shadow_the_inclusion_check(
     m2 = open_mission(workspace / "ws4", "m-row4", "One path, both ways.",
                       scope_in=["docs/**"], scope_out=["secrets/**"])
     m2.approve()
+    m2._resolve_artifact_path("secrets/c.env").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m2.record_effect("secrets/c.env", "TOKEN=x", "r4-1")
     row4 = m2.scope_consistency()
     check("path-violating-both-ways-reported-once",
@@ -4986,6 +5006,7 @@ def test_forged_receipt_path_cannot_dodge_scope(workspace: Path) -> None:
     into scope and let PASS through."""
     m = open_mission(workspace, "m-forge", "Bounded.", scope_in=["docs/**"])
     m.approve()
+    m._resolve_artifact_path("src/b.py").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("src/b.py", "out of scope", "fg-1")
     receipt_path = m.store.receipt_path("fg-1")
     record = json.loads(receipt_path.read_text(encoding="utf-8"))
@@ -5003,6 +5024,7 @@ def test_empty_scope_declares_nothing_and_flags_nothing(workspace: Path) -> None
     existing mission's ability to close."""
     m = open_mission(workspace, "m-noscope", "Unbounded work.")
     m.approve()
+    m._resolve_artifact_path("anything/at/all.md").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("anything/at/all.md", "x", "ns-1")
     check("empty-scope-flags-nothing", m.scope_consistency() == [])
     m.begin_verification()
@@ -5064,7 +5086,9 @@ def test_terminal_dot_spelling_agrees_with_the_resolver(
     m = open_mission(workspace, "m-dot", "Dotted.",
                      scope_in=["docs/*.txt"], scope_out=["secrets/**/."])
     m.approve()
+    m._resolve_artifact_path("docs/x.txt/.").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("docs/x.txt/.", "in scope", "dot-1")
+    m._resolve_artifact_path("secrets/leak.env").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("secrets/leak.env", "excluded", "dot-2")
     findings = [(f["artifact_path"], f["reason"])
                 for f in m.scope_consistency()]
@@ -5087,6 +5111,7 @@ def test_whole_workspace_include_is_disclosed_not_wedged(
     m = open_mission(workspace, "m-dotslash", "Everything in scope.",
                      scope_in=["./"])
     m.approve()
+    m._resolve_artifact_path("anything/x.py").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("anything/x.py", "work", "ds-1")
     check("dot-slash-include-flags-nothing", m.scope_consistency() == [])
     latest, _ = m.store.load_latest()
@@ -5214,6 +5239,7 @@ def test_slash_twin_cannot_be_discharged_by_the_newline_files_recipe(
         return
     m = open_mission(workspace, "m-twin", "Twinned.", scope_in=["docs/**"])
     m.approve()
+    m._resolve_artifact_path("safe.txt/n").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("safe.txt/n", "nested", "tw-1")
     # HISTORICAL record: the newline twin predates the es#153 guard
     record_effect_as_historical(m, "safe.txt\n", "newline", "tw-2")
@@ -5307,6 +5333,7 @@ def test_link_count_probes_only_inside_the_workspace(
     claim about a directory, which is what the S_ISREG gate refuses."""
     m = open_mission(workspace, "m-probe", "Probed.", scope_in=["docs/**"])
     m.approve()
+    m._resolve_artifact_path("docs/real.md").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("docs/real.md", "x", "pr-1")
     receipt_path = m.store.receipt_path("pr-1")
     record = json.loads(receipt_path.read_text(encoding="utf-8"))
@@ -5345,6 +5372,7 @@ def test_symlink_loop_cannot_crash_acceptance(workspace: Path) -> None:
     or completes on the merits, it never crashes."""
     m = open_mission(workspace, "m-loop", "Looped.", scope_in=["docs/**"])
     m.approve()
+    m._resolve_artifact_path("docs/x.txt").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("docs/x.txt", "x", "lp-1")
     # replace docs/ with half of a docs <-> other loop AFTER the write
     shutil.rmtree(workspace / "docs")
@@ -5680,6 +5708,7 @@ def test_effect_refuses_line_structure_in_artifact_paths(
     else:
         print("skip ingest-accepts-quotes (':'/'\"' illegal in NTFS names)")
     for label, fine in battery:
+        m._resolve_artifact_path(fine).parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
         try:
             m.record_effect(fine, "x", f"ok-{label}")
             check(f"ingest-accepts-{label}", True)
@@ -5741,9 +5770,13 @@ def test_trailing_slash_scope_entry_binds_the_subtree(
     m = open_mission(workspace, "m-dirslash", "Dir marker.",
                      scope_in=["docs/"], scope_out=["secrets/", "keys\\"])
     m.approve()
+    m._resolve_artifact_path("docs/inside.txt").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("docs/inside.txt", "fine", "ds2-1")
+    m._resolve_artifact_path("secrets/a.txt").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("secrets/a.txt", "leak", "ds2-2")
+    m._resolve_artifact_path("keys/k.pem").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("keys/k.pem", "leak", "ds2-3")
+    m._resolve_artifact_path("secretsfile.txt").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("secretsfile.txt", "adjacent", "ds2-4")
     findings = [(f["artifact_path"], f["reason"])
                 for f in m.scope_consistency()]
@@ -5784,6 +5817,7 @@ def test_sibling_receipt_must_be_admitted_by_the_sibling_chain(
     rel = "docs/x.txt"
     a = open_mission(workspace, "a-owner", "own the artifact")
     a.approve()
+    a._resolve_artifact_path(rel).parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     a.record_effect(rel, "one\n", "req-a1")
     b = open_mission(workspace, "b-writer", "the sibling")
     b.approve()
@@ -5810,6 +5844,7 @@ def test_chain_admitted_sibling_receipt_still_reclassifies(
     rel = "docs/x.txt"
     a = open_mission(workspace, "a-owner", "own the artifact")
     a.approve()
+    a._resolve_artifact_path(rel).parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     a.record_effect(rel, "one\n", "req-a1")
     b = open_mission(workspace, "b-writer", "the sibling")
     b.approve()
@@ -5830,6 +5865,7 @@ def test_negating_amendment_does_not_authorize_a_sibling(
     rel = "docs/x.txt"
     a = open_mission(workspace, "a-owner", "own the artifact")
     a.approve()
+    a._resolve_artifact_path(rel).parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     a.record_effect(rel, "one\n", "req-a1")
     b = open_mission(workspace, "b-writer", "the sibling")
     b.approve()
@@ -5851,6 +5887,7 @@ def test_scan_skips_a_symlinked_alias_of_this_mission_store(
     rel = "docs/x.txt"
     a = open_mission(workspace, "a-owner", "own the artifact")
     a.approve()
+    a._resolve_artifact_path(rel).parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     a.record_effect(rel, "one\n", "req-a1")
     a.record_effect(rel, "two\n", "req-a2")
     try:
@@ -5920,6 +5957,7 @@ def test_open_time_unreadable_acknowledgement_is_the_canonical_spelling(
     m = open_mission(workspace, "m-live", "live",
                      acknowledge_unreadable=["x-broken"])
     m.approve()
+    m._resolve_artifact_path("docs/a.txt").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     try:
         m.record_effect("docs/a.txt", "x", "req-1")
         check("open-time-unreadable-ack-discharges-effect", True)
@@ -5951,6 +5989,7 @@ def test_acknowledge_sibling_rechecks_immediately_before_the_write(
     rel = "docs/x.txt"
     a = open_mission(workspace, "a-owner", "own the artifact")
     a.approve()
+    a._resolve_artifact_path(rel).parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     a.record_effect(rel, "one\n", "req-a1")
     b = open_mission(workspace, "b-writer", "the sibling")
     b.approve()
@@ -6088,12 +6127,14 @@ def test_effect_cannot_write_into_any_mission_store(workspace: Path) -> None:
     m = open_mission(root, "m-self", "Do the thing.")
     m.approve()
     m = Mission.load(root, actor="agent:worker", mission_id="m-self")
+    m._resolve_artifact_path("notes/ok.md").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("notes/ok.md", "fine", "req-ok")
     check("effect-still-writes-ordinary-artifacts",
           (root / "notes" / "ok.md").read_text(encoding="utf-8") == "fine")
     m.record_effect("missionsummary.md", "fine", "req-lookalike")
     check("effect-allows-a-lookalike-sibling-name",
           (root / "missionsummary.md").exists())
+    m._resolve_artifact_path("docs/missions/plan.md").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("docs/missions/plan.md", "fine", "req-nested")
     check("effect-allows-a-nested-missions-directory",
           (root / "docs" / "missions" / "plan.md").exists())
@@ -6317,6 +6358,7 @@ def test_effect_refuses_a_hardlinked_store_alias(workspace: Path) -> None:
     # artifact writes, and an in-place REWRITE of an artifact this mission
     # already receipted works: the refusal is about shared inodes, not
     # existing files.
+    m._resolve_artifact_path("notes/plain.md").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("notes/plain.md", "fine", "req-plain")
     check("hardlink-control-writes-a-fresh-artifact",
           (workspace / "notes" / "plain.md").exists())
@@ -6417,6 +6459,7 @@ def test_containment_is_validated_before_acknowledgements_commit(
     # CONTROL: the same fresh acknowledgement with a LEGAL target commits
     # the quarantine and the effect -- the reorder changed ordering, not
     # the acknowledgement contract.
+    m._resolve_artifact_path("notes/ok.txt").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     m.record_effect("notes/ok.txt", "fine", "req-ok",
                     acknowledge_unreadable=[".junk"])
     check("fresh-ack-with-a-legal-target-still-commits",
@@ -6634,6 +6677,7 @@ def test_authorize_sibling_refuses_blank_shaped_grant(
     rel = "docs/x.txt"
     a = open_mission(workspace, "a-owner", "own the artifact")
     a.approve()
+    a._resolve_artifact_path(rel).parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     a.record_effect(rel, "one\n", "req-a1")
     before = a.status()["revision"]
     # Built from escapes, never literal characters, so this source file
@@ -6790,8 +6834,8 @@ TESTS = [
     test_reconcile_clears_exactly_one_marker,
     test_corrupt_receipt_degrades_to_drift,
     test_effect_duplicate_id_leaves_workspace_untouched,
-    test_failed_effect_removes_the_directories_it_created,
-    test_failed_mkdir_removes_the_ancestors_it_already_created,
+    test_missing_parent_refuses_before_effect_and_preserves_existing_dirs,
+    test_overlong_missing_parent_refuses_without_creating_ancestors,
     test_accept_requires_verifying_and_separation,
     test_fail_is_clearable,
     test_operator_tier,

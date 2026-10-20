@@ -96,6 +96,7 @@ def test_three_subprocess_kill_resume_repair_proof() -> None:
         r = run("approve", "--workspace", str(ws), "--actor", "agent:worker")
         check("a-approve-exit-0", r.returncode == 0)
 
+        (ws / ("notes/proof.md").replace("\\", "/")).parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
         r = run("effect", "--workspace", str(ws), "--actor", "agent:worker",
                  "--path", "notes/proof.md", "--content", "state-1",
                  "--request-id", "req-a1")
@@ -200,6 +201,7 @@ def test_three_subprocess_kill_resume_repair_proof() -> None:
         check("c-fail-marker-present",
               "FAIL:missing section" in st["state"]["unresolved_verdicts"])
 
+        (ws / ("notes/proof.md").replace("\\", "/")).parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
         r = run("effect", "--workspace", str(ws), "--actor", "agent:worker",
                  "--path", "notes/proof.md", "--content", "state-2-remediated",
                  "--request-id", "req-c1")

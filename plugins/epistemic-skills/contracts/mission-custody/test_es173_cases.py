@@ -1066,6 +1066,7 @@ def test_refuter_f5_draft_guards_invisible_elsewhere(workspace: Path) -> None:
                  bound_mission="m-other")
     check("F5-other-bound-gate-unaffected", v["decision"] == "allow")
     other = load_bound(workspace, "m-other", actor="agent:other")
+    other._resolve_artifact_path("secrets/x.env").parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
     receipt = other.record_effect("secrets/x.env", "s", "req-o1")
     check("F5-sibling-effect-unaffected",
           receipt["after_sha256"] is not None)

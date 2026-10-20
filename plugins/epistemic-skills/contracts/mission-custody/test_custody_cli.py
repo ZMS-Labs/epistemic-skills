@@ -48,6 +48,7 @@ def test_open_approve_effect_status_roundtrip() -> None:
         r = run("approve", "--workspace", str(ws), "--actor", "agent:worker")
         check("approve-exit-0", r.returncode == 0)
 
+        (ws / ("notes/a.md").replace("\\", "/")).parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
         r = run("effect", "--workspace", str(ws), "--actor", "agent:worker",
                  "--path", "notes/a.md", "--content", "hello",
                  "--request-id", "req-1")
@@ -68,6 +69,7 @@ def test_resume_detects_drift_exit_3() -> None:
         ws = Path(td)
         open_cli(ws, "m-cli-drift", "Track drift.")
         run("approve", "--workspace", str(ws), "--actor", "agent:worker")
+        (ws / ("notes/a.md").replace("\\", "/")).parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
         run("effect", "--workspace", str(ws), "--actor", "agent:worker",
             "--path", "notes/a.md", "--content", "hello", "--request-id", "req-1")
         (ws / "notes" / "a.md").write_text("tampered", encoding="utf-8")
@@ -141,6 +143,7 @@ def test_full_lifecycle_via_cli() -> None:
                  "--tier", "declared-role-separation", "--reason", "missing case")
         check("full-fail-exit-0", r.returncode == 0)
 
+        (ws / ("notes/fix.md").replace("\\", "/")).parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
         run("effect", "--workspace", str(ws), "--actor", "agent:worker",
             "--path", "notes/fix.md", "--content", "patched",
             "--request-id", "req-fix-1")
@@ -228,11 +231,13 @@ def test_continuity_warning_is_ascii_safe() -> None:
         rel = f"notes/r{e_acute}sum{e_acute}.md"
         open_cli(ws, "m-cli-cont", "Exercise continuity warning output.")
         run("approve", "--workspace", str(ws), "--actor", "agent:worker")
+        (ws / (rel).replace("\\", "/")).parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
         run("effect", "--workspace", str(ws), "--actor", "agent:worker",
             "--path", rel, "--content", "x", "--request-id", "cont-1")
         # An unreceipted write BETWEEN two receipted events is the break.
         (ws / "notes" / f"r{e_acute}sum{e_acute}.md").write_text(
             "y", encoding="utf-8")
+        (ws / (rel).replace("\\", "/")).parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
         run("effect", "--workspace", str(ws), "--actor", "agent:worker",
             "--path", rel, "--content", "z", "--request-id", "cont-2")
 
@@ -890,6 +895,7 @@ def test_display_safe_drift_and_error_output() -> None:
         run("approve", "--workspace", str(ws), "--actor", "agent:worker")
 
         non_ascii_path = f"notes/r{e_acute}sum{e_acute}.md"
+        (ws / (non_ascii_path).replace("\\", "/")).parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
         run("effect", "--workspace", str(ws), "--actor", "agent:worker",
             "--path", non_ascii_path, "--content", "hello",
             "--request-id", "req-ascii-1")
@@ -1047,6 +1053,7 @@ def test_refusal_preserves_scope_ack_recipe() -> None:
             "--actor", "agent:worker", "--scope-out", "secrets/**",
             "--workspace", str(ws))
         run("approve", "--actor", "agent:worker", "--workspace", str(ws))
+        (ws / (path).replace("\\", "/")).parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
         run("effect", "--path", path, "--content", "x",
             "--request-id", "r1", "--actor", "agent:worker",
             "--workspace", str(ws))
@@ -1138,6 +1145,7 @@ def test_success_output_confirms_the_write() -> None:
         body = 'a "quoted" $body with `backticks` and\nnewlines\n'
         src = ws / "body-src.md"
         src.write_text(body, encoding="utf-8")
+        (ws / ("notes/from-file.md").replace("\\", "/")).parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
         r = run("effect", "--workspace", str(ws), "--actor", "agent:worker",
                  "--path", "notes/from-file.md", "--content-file", str(src),
                  "--request-id", "req-file-1")
@@ -1149,6 +1157,7 @@ def test_success_output_confirms_the_write() -> None:
               receipt["record"] == "receipt@1"
               and receipt["request_id"] == "req-file-1")
 
+        (ws / ("notes/x.md").replace("\\", "/")).parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
         r = run("effect", "--workspace", str(ws), "--actor", "agent:worker",
                  "--path", "notes/x.md", "--content", "inline",
                  "--content-file", str(src), "--request-id", "req-both")
@@ -1214,6 +1223,7 @@ def test_resume_missing_receipt_via_cli() -> None:
         ws = Path(td)
         open_cli(ws, "m-cli-lostrec", "Guard receipts.")
         run("approve", "--workspace", str(ws), "--actor", "agent:worker")
+        (ws / ("notes/a.md").replace("\\", "/")).parent.mkdir(parents=True, exist_ok=True)  # Explicit #162 fixture parent.
         run("effect", "--workspace", str(ws), "--actor", "agent:worker",
             "--path", "notes/a.md", "--content", "hello", "--request-id", "req-1")
         mission_dir = ws / "missions" / "m-cli-lostrec"

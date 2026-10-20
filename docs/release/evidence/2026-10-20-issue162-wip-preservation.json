@@ -1,0 +1,262 @@
+{
+  "record": "issue162-wip-preservation@1",
+  "recorded_utc": "2026-10-20T17:41:35.343408+00:00",
+  "purpose": "WIP durable GitHub preservation; no main merge, deployment, release or issue closure",
+  "source_base": "6f31811a173967568513d5deec316199c2df7669",
+  "source_branch": "codex/macos-custody-diagnosis",
+  "validated_source_files": [
+    {
+      "path": ".github/workflows/mission-custody-contract.yml",
+      "sha256": "2af6b2101714557abe930c7161af59c1d56f181b3d98aaf5024ee178419dcbc3"
+    },
+    {
+      "path": "plugins/epistemic-skills/contracts/mission-custody/README.md",
+      "sha256": "647ecd2ffd70be98f1639d183c0b1cbe337d62c0f5d87e793f00392629aa9de4"
+    },
+    {
+      "path": "plugins/epistemic-skills/contracts/mission-custody/custody_mission.py",
+      "sha256": "90c61ad76eb4ee3ab802bb4119bc39ea7e6e9c2abde2a25c140de31154599f38"
+    },
+    {
+      "path": "plugins/epistemic-skills/contracts/mission-custody/probe_case_insensitivity.py",
+      "sha256": "a7d67020eecd41b8545af9659d33961eac7d2498801efec81a9eca8e015642bb"
+    },
+    {
+      "path": "plugins/epistemic-skills/contracts/mission-custody/test_custody_cli.py",
+      "sha256": "1e19b1c07c49849cdfbc887b33a42e0820c68baa79a3cfc1f295154f0a62afd6"
+    },
+    {
+      "path": "plugins/epistemic-skills/contracts/mission-custody/test_custody_gate.py",
+      "sha256": "37fa499a622bccd4a1ea750dfcd621a67b876e8a7ba1a7a3f6fca79338a990a7"
+    },
+    {
+      "path": "plugins/epistemic-skills/contracts/mission-custody/test_custody_mission.py",
+      "sha256": "7a3cdb092e63d1f0ee7ab7366d807f3d6a33a8cb15e2a50186bb841d300aa326"
+    },
+    {
+      "path": "plugins/epistemic-skills/contracts/mission-custody/test_custody_process_proof.py",
+      "sha256": "fab7b27374cd3f39454063940d51cc590503b063e52e7e0a8253165cb3d8b3cd"
+    },
+    {
+      "path": "plugins/epistemic-skills/contracts/mission-custody/test_es173_cases.py",
+      "sha256": "71f8f195a91d2997d6148bf918675b4b16ca1ae1703bebd2bdf4d373a8ec3255"
+    },
+    {
+      "path": "docs/release/evidence/2026-10-20-issue162-local-safeguard.md",
+      "sha256": "1f0ea5c3f7068866b02e443a17a24600953e2ef9fe0a69304b55e6c6173c93b9"
+    },
+    {
+      "path": "docs/release/evidence/2026-10-20-macos-custody-followup.md",
+      "sha256": "63ac17fd7195ca699b12d089c83c24bc77d8433b5caa67b806c27277258bdc47"
+    },
+    {
+      "path": "plugins/epistemic-skills/contracts/mission-custody/custody_identity.py",
+      "sha256": "213c5f2a5f46397fcec8fb5a64e064c23190fab2061f5ef95c2fd62cb6113950"
+    },
+    {
+      "path": "plugins/epistemic-skills/contracts/mission-custody/test_custody_identity.py",
+      "sha256": "f4004ef3117220e92738b753a85e265de1b2dff1843ee57e6a5583b7660755b8"
+    }
+  ],
+  "source_hashes_match_final_seal": true,
+  "historical_local_seal_sha256": "857f854676f9023c217233c00260a94d0181a8375ad057e83e7fe0bba445e3e6",
+  "historical_continuation_receipt_sha256": "cc8659a9fc5853ceeecfaa9d320989bc0f8e9c9faf9e4e26070f228a733e640c",
+  "archived_code": [
+    {
+      "path": "docs/release/evidence/issue162-validation-tools/issue162-adapt-cli-fixtures.py",
+      "source_filename": "issue162-adapt-cli-fixtures.py",
+      "original_sha256": "f3f0c6a93f91fa6384db8ba970184c306bf08d9b4f6dced1e4808a72807f123a",
+      "stored_sha256": "f3f0c6a93f91fa6384db8ba970184c306bf08d9b4f6dced1e4808a72807f123a",
+      "transformation": null,
+      "archival_only": true
+    },
+    {
+      "path": "docs/release/evidence/issue162-validation-tools/issue162-adapt-fixture-parents.py",
+      "source_filename": "issue162-adapt-fixture-parents.py",
+      "original_sha256": "3c266077d89b52e231e33c039616ed5f91233d3626d7a1888451c153b21a073e",
+      "stored_sha256": "3c266077d89b52e231e33c039616ed5f91233d3626d7a1888451c153b21a073e",
+      "transformation": null,
+      "archival_only": true
+    },
+    {
+      "path": "docs/release/evidence/issue162-validation-tools/issue162-argon-focused-validation.py",
+      "source_filename": "issue162-argon-focused-validation.py",
+      "original_sha256": "d7fc3dd980a8f743829853bfbd7eaff8249fea0021a326416304f974176d90ba",
+      "stored_sha256": "d7fc3dd980a8f743829853bfbd7eaff8249fea0021a326416304f974176d90ba",
+      "transformation": null,
+      "archival_only": true
+    },
+    {
+      "path": "docs/release/evidence/issue162-validation-tools/issue162-classify-native-cascades.py",
+      "source_filename": "issue162-classify-native-cascades.py",
+      "original_sha256": "d7c2ca2491fbce074089c9a92e4407b5916450df5f234132d96062227861c595",
+      "stored_sha256": "d7c2ca2491fbce074089c9a92e4407b5916450df5f234132d96062227861c595",
+      "transformation": null,
+      "archival_only": true
+    },
+    {
+      "path": "docs/release/evidence/issue162-validation-tools/issue162-complete-observed-fixtures.py",
+      "source_filename": "issue162-complete-observed-fixtures.py",
+      "original_sha256": "5d0b82b0be6562905f4aad509777add441245001d242352e7105d25dacc081d0",
+      "stored_sha256": "5d0b82b0be6562905f4aad509777add441245001d242352e7105d25dacc081d0",
+      "transformation": null,
+      "archival_only": true
+    },
+    {
+      "path": "docs/release/evidence/issue162-validation-tools/issue162-continuation-matrix.py",
+      "source_filename": "issue162-continuation-matrix.py",
+      "original_sha256": "0b52377b091ac5018f9aa3ed166ea14a34d79e4f88efd07cf9e52527552fb108",
+      "stored_sha256": "0b52377b091ac5018f9aa3ed166ea14a34d79e4f88efd07cf9e52527552fb108",
+      "transformation": null,
+      "archival_only": true
+    },
+    {
+      "path": "docs/release/evidence/issue162-validation-tools/issue162-diagnose-legacy.py",
+      "source_filename": "issue162-diagnose-legacy.py",
+      "original_sha256": "1d0437c347fa47b885b0614b1ca9e2b77dc3d5fbd14ef89e8ddec3c600e16316",
+      "stored_sha256": "1d0437c347fa47b885b0614b1ca9e2b77dc3d5fbd14ef89e8ddec3c600e16316",
+      "transformation": null,
+      "archival_only": true
+    },
+    {
+      "path": "docs/release/evidence/issue162-validation-tools/issue162-existing-filesystem-assessment.py",
+      "source_filename": "issue162-existing-filesystem-assessment.py",
+      "original_sha256": "c655cdc2e6ce338c997b35db886a365737f6bbe9093a7506ca3ac171a7b6bc9c",
+      "stored_sha256": "9579326452dfbb77c7bce2cb7ec7eae1c98cda716a0b6ad546d663ecbb2dd6d3",
+      "transformation": "Only hardcoded private workspace/session-temp paths replaced with cwd/gettempdir; archival copy not rerun or newly qualified.",
+      "archival_only": true
+    },
+    {
+      "path": "docs/release/evidence/issue162-validation-tools/issue162-freeze-continuation.py",
+      "source_filename": "issue162-freeze-continuation.py",
+      "original_sha256": "79b731419e76df35786c72956d8c977061570d21bb0be15ae3f4f93bc82d6bc3",
+      "stored_sha256": "79b731419e76df35786c72956d8c977061570d21bb0be15ae3f4f93bc82d6bc3",
+      "transformation": null,
+      "archival_only": true
+    },
+    {
+      "path": "docs/release/evidence/issue162-validation-tools/issue162-freeze.py",
+      "source_filename": "issue162-freeze.py",
+      "original_sha256": "100343492e420f3b666f3b0572af8142469a52907dba1ab374a8933f778dc199",
+      "stored_sha256": "100343492e420f3b666f3b0572af8142469a52907dba1ab374a8933f778dc199",
+      "transformation": null,
+      "archival_only": true
+    },
+    {
+      "path": "docs/release/evidence/issue162-validation-tools/issue162-mac-parity-lock.py",
+      "source_filename": "issue162-mac-parity-lock.py",
+      "original_sha256": "00d8b7a426e7ffedb3f8003ba49bcbb3effd32bacb4b99af3e5c1d49b5592fe7",
+      "stored_sha256": "00d8b7a426e7ffedb3f8003ba49bcbb3effd32bacb4b99af3e5c1d49b5592fe7",
+      "transformation": null,
+      "archival_only": true
+    },
+    {
+      "path": "docs/release/evidence/issue162-validation-tools/issue162-mac-py312-parity-lock.py",
+      "source_filename": "issue162-mac-py312-parity-lock.py",
+      "original_sha256": "5222c9d950ac2c0cff0db2fdc2734b71b43573055accbef2c2790e95f8d0a683",
+      "stored_sha256": "5222c9d950ac2c0cff0db2fdc2734b71b43573055accbef2c2790e95f8d0a683",
+      "transformation": null,
+      "archival_only": true
+    },
+    {
+      "path": "docs/release/evidence/issue162-validation-tools/issue162-run-compatible-simulation.py",
+      "source_filename": "issue162-run-compatible-simulation.py",
+      "original_sha256": "1c74d973aeb8dcbdff7adcf4e455e6fd942a0622cdbf8dfcede8c0cb8e16b884",
+      "stored_sha256": "1c74d973aeb8dcbdff7adcf4e455e6fd942a0622cdbf8dfcede8c0cb8e16b884",
+      "transformation": null,
+      "archival_only": true
+    },
+    {
+      "path": "docs/release/evidence/issue162-validation-tools/issue162-run-suites.py",
+      "source_filename": "issue162-run-suites.py",
+      "original_sha256": "a9b9511b1d7ca4f912f9c89818f7a24829d3bd30f714c03b1ec89e4a657f9792",
+      "stored_sha256": "a9b9511b1d7ca4f912f9c89818f7a24829d3bd30f714c03b1ec89e4a657f9792",
+      "transformation": null,
+      "archival_only": true
+    },
+    {
+      "path": "docs/release/evidence/issue162-validation-tools/issue162-simulate-legacy-suites.py",
+      "source_filename": "issue162-simulate-legacy-suites.py",
+      "original_sha256": "814aec600e53539aae27be24d6787366301a2cc5024117566cd10f299da4e0e9",
+      "stored_sha256": "814aec600e53539aae27be24d6787366301a2cc5024117566cd10f299da4e0e9",
+      "transformation": null,
+      "archival_only": true
+    },
+    {
+      "path": "docs/release/evidence/issue162-validation-tools/issue162-verify-fixture-assertions.py",
+      "source_filename": "issue162-verify-fixture-assertions.py",
+      "original_sha256": "ceebc88bc9c5c6b566bd3b7a2e7d874b3568343dd726a2a1d13a4e3c6f7e2d92",
+      "stored_sha256": "ceebc88bc9c5c6b566bd3b7a2e7d874b3568343dd726a2a1d13a4e3c6f7e2d92",
+      "transformation": null,
+      "archival_only": true
+    },
+    {
+      "path": "docs/release/evidence/issue162-validation-tools/macos-custody-isolated-repro.py",
+      "source_filename": "macos-custody-isolated-repro.py",
+      "original_sha256": "5d8ca35de555640398e6d38770451000cc6e4ff917464195d938127b4457b721",
+      "stored_sha256": "5d8ca35de555640398e6d38770451000cc6e4ff917464195d938127b4457b721",
+      "transformation": null,
+      "archival_only": true
+    },
+    {
+      "path": "docs/release/evidence/issue162-validation-tools/validate_macos_custody_patch.py",
+      "source_filename": "validate_macos_custody_patch.py",
+      "original_sha256": "0bc64176a4c9cf1a54dd84dea365cb392c25acf5ecfb97a39e41f73d306e51df",
+      "stored_sha256": "0bc64176a4c9cf1a54dd84dea365cb392c25acf5ecfb97a39e41f73d306e51df",
+      "transformation": null,
+      "archival_only": true
+    },
+    {
+      "path": "docs/release/evidence/issue162-validation-tools/patches/macos-custody-followup.patch.gz",
+      "original_sha256": "d2712bee7e0bd5e4dab1b06992873630be4ee37624c13170cea0f680fd21d821",
+      "stored_sha256": "572743f4ac2ccc4a8683bcee5510b2dc35373dc12fda6bfaf671fd9f4a7f9443",
+      "transformation": "Deterministic gzip wrapper; uncompressed patch bytes exact. Preserves required patch context whitespace.",
+      "archival_only": true,
+      "uncompressed_sha256": "d2712bee7e0bd5e4dab1b06992873630be4ee37624c13170cea0f680fd21d821"
+    },
+    {
+      "path": "docs/release/evidence/issue162-validation-tools/patches/issue162-local-safeguard.patch.gz",
+      "original_sha256": "d536dc6a8294b16c3c77388fcb9891b3d0fda8634ad6d7fe34f52cd4b8762d0d",
+      "stored_sha256": "af9c8a2ecadcb59b57b86e814952184e81f28756028d914614f552944f6fffac",
+      "transformation": "Deterministic gzip wrapper; uncompressed patch bytes exact. Preserves required patch context whitespace.",
+      "archival_only": true,
+      "uncompressed_sha256": "d536dc6a8294b16c3c77388fcb9891b3d0fda8634ad6d7fe34f52cd4b8762d0d"
+    },
+    {
+      "path": "docs/release/evidence/issue162-validation-tools/patches/issue162-validated-local-safeguard.patch.gz",
+      "original_sha256": "b7accae1f2827c7db94e3e3e82ea30cedd74ddc656d6dcc4e5bd142acb56d643",
+      "stored_sha256": "f618be2eebf232f9fc52ce44b543fecad9b87ddf1fe33494a0735c1d6ce2367d",
+      "transformation": "Deterministic gzip wrapper; uncompressed patch bytes exact. Preserves required patch context whitespace.",
+      "archival_only": true,
+      "uncompressed_sha256": "b7accae1f2827c7db94e3e3e82ea30cedd74ddc656d6dcc4e5bd142acb56d643"
+    },
+    {
+      "path": "docs/release/evidence/issue162-validation-tools/patches/issue162-combined-local-candidate.patch.gz",
+      "original_sha256": "dcd4b95190afb3d2b2204ee3327ef94aea3e1ba96a53eb3adbcacb9730aa22fd",
+      "stored_sha256": "419f98046ebcc3c8efa1382a40a826860723e011e5baf787e95fd2a0592ee4d0",
+      "transformation": "Deterministic gzip wrapper; uncompressed patch bytes exact. Preserves required patch context whitespace.",
+      "archival_only": true,
+      "uncompressed_sha256": "dcd4b95190afb3d2b2204ee3327ef94aea3e1ba96a53eb3adbcacb9730aa22fd"
+    },
+    {
+      "path": "docs/release/evidence/issue162-validation-tools/issue162-preservation-audit.py",
+      "source_filename": "issue162-preservation-audit.py",
+      "original_sha256": "b8b4f43b2d1cb718584b7d4ceac81326e5803dbf5a983a509b1ff5e7196a40a4",
+      "stored_sha256": "b8b4f43b2d1cb718584b7d4ceac81326e5803dbf5a983a509b1ff5e7196a40a4",
+      "transformation": null,
+      "archival_only": true
+    }
+  ],
+  "validation_summary": {
+    "focused_tests": 26,
+    "parity": "passed Python3.12.14 and3.14.7 with exact pinned versions",
+    "compatible_measurement_simulation_checks": 2299,
+    "native_legacy_refusals": 208,
+    "native_compatible_platform_qualified": false,
+    "hosted_ci_claimed": false,
+    "completed_tests_rerun_for_preservation": false
+  },
+  "review": "Independent continuation review found no material findings; parity independently rerun in both isolated environments before preservation",
+  "privacy": "Technical source and public-source evidence only; private path removed from one archival helper; local raw records/environments excluded",
+  "remaining_gate": "Native compatible-platform and hosted CI evidence plus separate integration authorization; code-preservation authorization does not grant merge/deploy authority"
+}
