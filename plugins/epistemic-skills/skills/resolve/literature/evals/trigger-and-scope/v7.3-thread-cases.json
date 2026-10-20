@@ -1,0 +1,197 @@
+[
+  {
+    "fixture": {
+      "id": "thread-pending",
+      "expected_action": "run-evidence",
+      "expected_terminal_state": "pending",
+      "provider_status": "running"
+    },
+    "response": {
+      "id": "thread-pending",
+      "action": "run-evidence",
+      "mode": "standard",
+      "terminal_state": "pending",
+      "provider_status": "running",
+      "run_record_produced": true,
+      "coverage_limits": "No verified scholarly result available; retained invocation observations.",
+      "matrix_produced": false,
+      "reception_checked_live": false,
+      "support": [],
+      "disputed": []
+    },
+    "reject_mutations": [
+      {
+        "terminal_state": "saturated"
+      },
+      {
+        "provider_status": "idle"
+      },
+      {
+        "coverage_limits": ""
+      },
+      {
+        "run_record_produced": false
+      },
+      {
+        "support": [
+          "10.5555/unverified"
+        ]
+      },
+      {
+        "disputed": [
+          "10.5555/unverified"
+        ]
+      },
+      {
+        "mode": "bogus"
+      }
+    ]
+  },
+  {
+    "fixture": {
+      "id": "thread-failed",
+      "expected_action": "run-evidence",
+      "expected_terminal_state": "failed",
+      "provider_status": "failed"
+    },
+    "response": {
+      "id": "thread-failed",
+      "action": "run-evidence",
+      "mode": "standard",
+      "terminal_state": "failed",
+      "provider_status": "failed",
+      "run_record_produced": true,
+      "coverage_limits": "No verified scholarly result available; retained invocation observations.",
+      "matrix_produced": false,
+      "reception_checked_live": false,
+      "support": [],
+      "disputed": []
+    },
+    "reject_mutations": [
+      {
+        "terminal_state": "saturated"
+      },
+      {
+        "provider_status": "idle"
+      },
+      {
+        "coverage_limits": ""
+      },
+      {
+        "run_record_produced": false
+      },
+      {
+        "support": [
+          "10.5555/unverified"
+        ]
+      },
+      {
+        "disputed": [
+          "10.5555/unverified"
+        ]
+      },
+      {
+        "mode": "bogus"
+      }
+    ]
+  },
+  {
+    "fixture": {
+      "id": "thread-AMBIGUOUS",
+      "expected_action": "run-evidence",
+      "expected_terminal_state": "AMBIGUOUS",
+      "provider_status": "unknown"
+    },
+    "response": {
+      "id": "thread-AMBIGUOUS",
+      "action": "run-evidence",
+      "mode": "standard",
+      "terminal_state": "AMBIGUOUS",
+      "provider_status": "unknown",
+      "run_record_produced": true,
+      "coverage_limits": "No verified scholarly result available; retained invocation observations.",
+      "matrix_produced": false,
+      "reception_checked_live": false,
+      "support": [],
+      "disputed": []
+    },
+    "reject_mutations": [
+      {
+        "terminal_state": "saturated"
+      },
+      {
+        "provider_status": "idle"
+      },
+      {
+        "coverage_limits": ""
+      },
+      {
+        "run_record_produced": false
+      },
+      {
+        "support": [
+          "10.5555/unverified"
+        ]
+      },
+      {
+        "disputed": [
+          "10.5555/unverified"
+        ]
+      },
+      {
+        "mode": "bogus"
+      },
+      {
+        "terminal_state": "ambiguous"
+      }
+    ]
+  },
+  {
+    "fixture": {
+      "id": "thread-capped-by-budget",
+      "expected_action": "run-evidence",
+      "expected_terminal_state": "capped-by-budget",
+      "provider_status": "quota-exhausted"
+    },
+    "response": {
+      "id": "thread-capped-by-budget",
+      "action": "run-evidence",
+      "mode": "standard",
+      "terminal_state": "capped-by-budget",
+      "provider_status": "quota-exhausted",
+      "run_record_produced": true,
+      "coverage_limits": "No verified scholarly result available; retained invocation observations.",
+      "matrix_produced": false,
+      "reception_checked_live": false,
+      "support": [],
+      "disputed": []
+    },
+    "reject_mutations": [
+      {
+        "terminal_state": "saturated"
+      },
+      {
+        "provider_status": "idle"
+      },
+      {
+        "coverage_limits": ""
+      },
+      {
+        "run_record_produced": false
+      },
+      {
+        "support": [
+          "10.5555/unverified"
+        ]
+      },
+      {
+        "disputed": [
+          "10.5555/unverified"
+        ]
+      },
+      {
+        "mode": "bogus"
+      }
+    ]
+  }
+]

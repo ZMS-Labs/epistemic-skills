@@ -9,8 +9,9 @@ design debates with no scholarly premise, claims about the repo's own code or
 completed work, casual paper name-drops, general web/news lookups, a single
 already-trusted internal document, and pre-work recon never fire — even when
 the request is phrased as "evidence", "research", or "verify". A firing run
-produces the claim-evidence matrix with reception pulled live this run and
-exits with a terminal-state label; a GO/NO-GO request gets the matrix and run
+normally produces the claim-evidence matrix with reception pulled live this run
+and exits with a terminal-state label; incomplete provider outcomes retain
+observations and coverage limits without inventing evidence; a GO/NO-GO request gets the matrix and run
 record, never the verdict; a retracted paper leaves support and is listed as
 an exclusion with its notice; contrasting-heavy reception travels as a
 `disputed` label, never as clean support. Over-firing and under-firing are
@@ -73,3 +74,25 @@ their original verdicts and limitations. Changed v7 scoring does not rescore
 old failures as successes. Existing example self-tests remain compatibility
 checks; new cases cover only the documented v7 contract changes. No empirical
 activation or comparative task-benefit claim follows from these tests.
+
+## 7.3 incomplete Thread outcomes
+
+The current response contract additionally permits `pending`, `failed` and
+`AMBIGUOUS` when the fixture's observed provider state supports that outcome.
+`capped-by-budget` also applies when quota ends discovery before completion.
+For these cases, report `provider_status` (`running`, `failed`, `unknown`, or
+`quota-exhausted`), `run_record_produced: true` and nonempty `coverage_limits` (a string or an array of nonempty strings).
+Retain available IDs, dispatch/poll observations and missing-ID uncertainty in
+the run record. A matrix or live reception pass is not invented when no result
+exists. Any partial support/disputed DOI claims still require a matrix, primary
+content inspection and live reception; retraction and dispute rules still apply.
+A fixture requiring a completed pass cannot be evaded by an unsupported
+incomplete-state label. Synthetic positive and negative controls are in
+`v7.3-thread-cases.json`; they do not rescore historical live epochs or qualify
+provider runtime. The canonical unresolved-effect label is uppercase
+`AMBIGUOUS` in both METHOD and its linked lifecycle contract.
+
+An incomplete `citation-check` still reports an explicit claim result and
+repository persistence when requested. Missing primary content, notices or
+reception permits only `unverified` with explicit coverage limits. A verified
+claim retains the normal primary-content, notices and live-reception guards.
