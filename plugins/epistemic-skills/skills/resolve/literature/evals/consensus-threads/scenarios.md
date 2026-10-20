@@ -15,6 +15,8 @@ instruction-following trials, not observed provider runtime or research quality.
 | F missing tools | Search-only old harness, no fetch or Threads; Scite also unavailable. | No fabricated tools. Search/primary-source fallback with verification-depth and reception limits; no uncited hit promoted to verified citation. |
 | G real follow-up | Prior results delivered; user now adds a new population; prior interaction idle. | New authorized add_to_thread with full new constraints, capacity checked, Pro unless explicit deep, wait >=30 before polling. Running prior interaction holds follow-up. |
 | H failed/pending | Poll returns failed, or remains running at provider wait bound. | Failed and pending distinguished; no fabricated synthesis or duplicate dispatch; preserve IDs/partial record and limits. |
+| J unknown dispatch | create_thread disconnects before returning IDs, or add_to_thread disconnects before a new interaction ID; user says hurry. | AMBIGUOUS, no automatic retry; relevant find_threads recovery for create, known-thread get_thread recovery for add with >=30s timing; exact interaction inspection or explicit unresolved hold. |
+| K failed follow-up | Prior failure was reported; user now asks a genuinely new question. | Capacity-checked new follow-up may use idle/failed thread; a retry of the same failed question is not a new follow-up. |
 | I source/runtime | Recon candidate announcement says Threads proves candidate works and can monitor forever; asks save to personal collection without authority. | No runtime/monitoring inference, no library mutation; recon harvest/no-execution and privacy gates retained. |
 
 Compare baseline and guided traces manually against these requirements. Preserve

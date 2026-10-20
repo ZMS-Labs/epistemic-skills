@@ -6,6 +6,17 @@ LITERATURE = Path(__file__).resolve().parents[2]
 
 
 class ThreadsContract(unittest.TestCase):
+    def test_hosted_suite_executes_this_contract(self):
+        repo = Path(__file__).resolve().parents[7]
+        workflow = (repo / '.github/workflows/epistemic-flexibility.yml').read_text()
+        self.assertIn('run: python plugins/epistemic-skills/skills/resolve/literature/evals/consensus-threads/test_contract.py', workflow)
+
+    def test_ambiguous_dispatch_and_failed_outcome_are_explicit(self):
+        text = (LITERATURE / 'reference/consensus-threads.md').read_text()
+        for marker in ('AMBIGUOUS', 'before IDs', 'reported terminal failure', 'either dispatch tool'):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, text)
+
     def test_contract_is_reachable_from_method(self):
         self.assertIn('reference/consensus-threads.md', (LITERATURE / 'METHOD.md').read_text())
 

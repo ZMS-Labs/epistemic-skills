@@ -65,6 +65,17 @@ work may continue. Current pricing is a lookup, not a permanent constant here.
    and dispatch time; share the returned Consensus link when present. Restrict
    payloads to authorized, scrubbed research content. Do not request library
    mutations (save/create/rename) without the corresponding authority.
+   If either dispatch tool (`create_thread` or `add_to_thread`) fails or
+   disconnects **before IDs** for its new interaction are returned, its effect
+   may be unknown. Record `AMBIGUOUS`; do not automatically repeat the dispatch
+   or assume no variable-cost work started. For a new Thread, use a bounded
+   relevant `find_threads` lookup when available and inspect the exact candidate,
+   not an unrelated or merely similar result. For an ambiguous follow-up, use
+   its already-known thread ID with `get_thread`, waiting at least 30 seconds
+   after the dispatch attempt and between polls; inspect interactions for the
+   submitted brief/time without creating another interaction. If the effect
+   cannot be established, report unknown/pending with retained IDs, brief and
+   timestamp, and hold redispatch. No idempotency guarantee is assumed.
 2. Wait **at least 30 seconds** after dispatch and between every `get_thread`
    poll, including after a new interaction. Record timestamps. Use any longer
    provider backoff; faster polling only returns cached running state. Observe
@@ -87,8 +98,10 @@ work may continue. Current pricing is a lookup, not a permanent constant here.
    A timeout is pending, not failed. Reuse IDs rather than starting duplicate
    work. Use `find_threads` only to recover a relevant prior Thread, within
    existing privacy and access authority; do not enumerate unrelated history.
-5. `add_to_thread` is only for a **genuinely new user follow-up after results
-   were delivered**, with the prior interaction `idle` or `failed`. Never use
+5. `add_to_thread` is only for a **genuinely new user follow-up after the prior
+   outcome was delivered**: completed results or a reported terminal failure,
+   with the prior interaction `idle` or `failed`. A user asking to retry the
+   same failed task is not a new follow-up under this rule. Never use
    it for your own next step, omitted harms search or refinement within the
    original task. No self-chaining. An incomplete result becomes a recorded
    evidence limit, not an automatic new interaction.
