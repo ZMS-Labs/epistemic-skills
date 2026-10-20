@@ -115,13 +115,15 @@ def score(fixtures: list[dict], responses: list[dict]) -> dict:
                                     and row.get("primary_content_checked") is True
                                     and row.get("reception_checked_live") is True):
                     failures.append(f"{fid}: incomplete discovery cannot promote unchecked papers to support or disputed evidence")
-            if mode == "citation-check" and not incomplete:
+            if mode == "citation-check":
                 if row.get("primary_content_checked") is not True and not (row.get("claim_result") == "unverified" and row.get("coverage_limits")):
                     failures.append(f"{fid}: inspect primary content before verifying the claim")
-                if row.get("notices_checked") is not True:
+                if row.get("notices_checked") is not True and not (incomplete and row.get("claim_result") == "unverified" and _nonempty(row.get("coverage_limits"))):
                     failures.append(f"{fid}: check relevant notices")
                 if row.get("claim_result") not in {"supported", "qualified", "unsupported", "unverified"}:
                     failures.append(f"{fid}: return an explicit claim result")
+                if incomplete and row.get("claim_result") != "unverified" and row.get("reception_checked_live") is not True:
+                    failures.append(f"{fid}: incomplete citation cannot verify a claim without live reception")
                 if fixture.get("citation_check") and row.get("artifact_persistence") != "repository":
                     failures.append(f"{fid}: repository persistence is independent of skipped library deposit")
             elif not incomplete and not row.get("matrix_produced"):

@@ -91,3 +91,8 @@ incomplete-state label. Synthetic positive and negative controls are in
 `v7.3-thread-cases.json`; they do not rescore historical live epochs or qualify
 provider runtime. The canonical unresolved-effect label is uppercase
 `AMBIGUOUS` in both METHOD and its linked lifecycle contract.
+
+An incomplete `citation-check` still reports an explicit claim result and
+repository persistence when requested. Missing primary content, notices or
+reception permits only `unverified` with explicit coverage limits. A verified
+claim retains the normal primary-content, notices and live-reception guards.

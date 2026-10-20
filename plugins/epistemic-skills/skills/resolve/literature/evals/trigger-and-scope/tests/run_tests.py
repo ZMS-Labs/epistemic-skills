@@ -150,6 +150,19 @@ def main() -> int:
         require(not scorer.score([fixture], [{"id": "silent", "action": "no-fire", field: True}])["pass"],
                 f"incomplete process field leaked into no-fire: {field}")
 
+    case = json.loads((ROOT / "v7.3-thread-cases.json").read_text())[0]
+    fixture = dict(case["fixture"], citation_check=True)
+    unchecked = dict(case["response"], mode="citation-check", claim_result="unverified",
+                     primary_content_checked=False, notices_checked=False,
+                     artifact_persistence="repository")
+    require(scorer.score([fixture], [unchecked])["pass"], "honest incomplete citation rejected")
+    for mutation in ({"claim_result": "supported"}, {"claim_result": "qualified"},
+                     {"claim_result": "unsupported"}, {"artifact_persistence": "none"},
+                     {"claim_result": "supported", "primary_content_checked": True,
+                      "notices_checked": True}):
+        require(not scorer.score([fixture], [dict(unchecked, **mutation)])["pass"],
+                f"incomplete citation falsely verified: {mutation}")
+
     print("evidence-research trigger-and-scope: PASS")
     return 0
 
