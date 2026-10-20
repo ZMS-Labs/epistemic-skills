@@ -45,7 +45,8 @@ forward.
 
 This committed note describes the source and required evidence; it does not
 claim a later tag, asset or handbook publication has already succeeded. The
-release candidate is the merge commit of PR #267. Exact-candidate results,
+release candidate is the final merge commit of PR #267 and reviewed
+pre-publication follow-up PR #268. The original PR #267 merge is superseded. Exact-candidate results,
 publication judgment and actual tag/Release/assets identity must be recorded
 against that SHA in the annotated tag and attached publication receipts.
 
@@ -56,15 +57,15 @@ That exception is to the fleet execution route, not to the repository integrity
 or designated-reviewer judgment gates. It is not direct human execution or
 broker conformance. Protected-tag changes require separate action-time approval.
 
-| Gate | Status before candidate merge | Evidence and limits |
-|---|---|---|
-| Version and links | Prepared; final result pending | Manifest/integration/handbook checks; prospective tag paths checked offline, remote tag not presumed |
-| Deterministic and CodeQL | Exact candidate pending | PR checks are necessary but do not certify the later merge SHA |
-| Security and public content | Exact candidate pending | Required full-history positive controls and public-content checks must bind the candidate |
-| Description bytes | Unchanged descriptions | Final report must compare exact candidate with 7.2 |
-| Harness evidence | Source/package tier; runtime unverified | No new installed-host or Consensus research run; prior host limits carry forward |
-| Publication judgment | Pending frozen candidate | Source review is not automatically exact-candidate release GO |
-| Publication identity | Pending | Annotated tag, Release/body, assets, protection restoration and handbook verified separately |
+| Gate | Status | Exact subject | Evidence | Limits |
+|---|---|---|---|---|
+| Version and links | Prepared; exact-candidate result pending | Final 7.3 merge candidate; SHA in attached receipt | Manifest/integration/handbook checks in exact-gates.json | Prospective tag paths checked offline; remote tag not presumed |
+| Deterministic and CodeQL | Exact candidate pending | Final 7.3 merge candidate; SHA in exact-gates.json | Exact-candidate workflow run IDs in attached receipt | PR checks do not certify the later merge SHA |
+| Security and public content | Exact candidate pending | Final merge candidate and complete history | Full-history positive controls and public-content review in attached receipt | Optional Codex Security scan unperformed; no coverage claim |
+| Description bytes | Unchanged descriptions; final comparison pending | Final candidate versus v7.2.0 | Both description-budget reports in attached receipt | Package-local bytes only |
+| Harness evidence | Source/package tier; runtime unverified | Final 7.3 candidate | Tier table below and dated source validation record | No new installed-host or Consensus research run; prior host limits carry forward |
+| Publication judgment | Pending frozen candidate | Final candidate SHA in designated-review.json | Exact-candidate judgment and independent review in attached receipt | Actual reviewer/context limits must accompany verdict |
+| Publication identity | Pending | Annotated v7.3.0 tag, Release and assets | API observations and hashes in publication-receipt.json | Protection restoration and handbook verified separately |
 
 The v7 comparative-superiority null and unusable-pair results remain unchanged.
 The known macOS custody limitation (#162) also carries forward; no guarantee
