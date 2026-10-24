@@ -1,0 +1,17 @@
+{
+ "scorer": "/home/hatch/workspace/epistemic-skills-evidence/plugins/epistemic-skills/skills/context-audit/evals/trigger-and-scope/score.py",
+ "exit_code": 1,
+ "report": {
+  "pass": false,
+  "failures": [
+   "midtask-layer-conflict: expected full-audit, got report-only-audit",
+   "duplicate-most-local-survives: survivor must be one of the duplicate's locations, got 'always-loaded system prompt'",
+   "governance-projection-conflict: expected full-audit, got report-only-audit"
+  ],
+  "actions": {
+   "full-audit": 5,
+   "report-only-audit": 3,
+   "no-fire": 6
+  }
+ }
+}

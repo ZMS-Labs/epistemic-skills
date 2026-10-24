@@ -1,0 +1,147 @@
+[
+ {
+  "action": "report-only-audit",
+  "applied": false,
+  "apply_order": [],
+  "classification": "CONFLICT",
+  "cross_layer_merge": true,
+  "cut_list": [
+   {
+    "classification": "CONFLICT",
+    "locations": [
+     "project instruction file: always-squash-merge",
+     "loaded command definition: never-squash"
+    ],
+    "origin_read": false
+   }
+  ],
+  "id": "midtask-layer-conflict",
+  "layers_inventoried": true,
+  "origin_read": false,
+  "projection_edited": false,
+  "report_emitted": true,
+  "routed_upstream": false,
+  "survivor": null
+ },
+ {
+  "action": "full-audit",
+  "applied": false,
+  "cross_layer_merge": true,
+  "id": "explicit-prune-instructions",
+  "layers_inventoried": true,
+  "report_emitted": true
+ },
+ {
+  "action": "no-fire",
+  "id": "hard-neg-intradoc-contradictions"
+ },
+ {
+  "action": "report-only-audit",
+  "applied": false,
+  "apply_order": [],
+  "classification": "CONFLICT",
+  "cross_layer_merge": true,
+  "cut_list": [
+   "CONFLICT"
+  ],
+  "id": "governance-projection-conflict",
+  "layers_inventoried": true,
+  "origin_read": false,
+  "projection_edited": false,
+  "report_emitted": true,
+  "routed_upstream": true,
+  "survivor": null
+ },
+ {
+  "action": "no-fire",
+  "id": "new-agent-interface"
+ },
+ {
+  "action": "full-audit",
+  "applied": false,
+  "apply_order": [],
+  "classification": "MODEL-HANDLES-THIS-NOW",
+  "cross_layer_merge": true,
+  "cut_list": [
+   "MODEL-HANDLES-THIS-NOW"
+  ],
+  "id": "model-upgrade-stale-guardrails",
+  "layers_inventoried": true,
+  "origin_read": false,
+  "projection_edited": false,
+  "report_emitted": true,
+  "routed_upstream": false,
+  "survivor": null
+ },
+ {
+  "action": "no-fire",
+  "id": "hard-neg-system-prompt-tuning"
+ },
+ {
+  "action": "full-audit",
+  "applied": false,
+  "apply_order": [],
+  "classification": "KEEP:GOTCHA",
+  "cross_layer_merge": true,
+  "cut_list": [],
+  "id": "keep-gotcha-with-origin",
+  "layers_inventoried": true,
+  "origin_read": true,
+  "report_emitted": true
+ },
+ {
+  "action": "full-audit",
+  "applied": true,
+  "apply_order": [
+   "CONFLICT",
+   "DUPLICATE",
+   "OVER-VERIFY",
+   "OBVIOUS",
+   "MODEL-HANDLES-THIS-NOW"
+  ],
+  "cross_layer_merge": true,
+  "id": "explicit-claudemd-audit",
+  "layers_inventoried": true,
+  "report_emitted": true,
+  "version_control": true
+ },
+ {
+  "action": "no-fire",
+  "id": "single-task-prompt-tuning"
+ },
+ {
+  "action": "report-only-audit",
+  "applied": false,
+  "apply_order": [],
+  "cross_layer_merge": true,
+  "id": "no-version-control-report-only",
+  "layers_inventoried": true,
+  "report_emitted": true,
+  "version_control": false
+ },
+ {
+  "action": "no-fire",
+  "id": "single-doc-prose"
+ },
+ {
+  "action": "full-audit",
+  "applied": false,
+  "apply_order": [],
+  "classification": "DUPLICATE",
+  "cross_layer_merge": true,
+  "cut_list": [
+   "DUPLICATE"
+  ],
+  "id": "duplicate-most-local-survives",
+  "layers_inventoried": true,
+  "origin_read": false,
+  "projection_edited": false,
+  "report_emitted": true,
+  "routed_upstream": false,
+  "survivor": "always-loaded system prompt"
+ },
+ {
+  "action": "no-fire",
+  "id": "task-brief-recon"
+ }
+]
