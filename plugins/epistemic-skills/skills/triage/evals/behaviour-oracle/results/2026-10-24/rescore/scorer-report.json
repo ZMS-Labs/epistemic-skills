@@ -1,0 +1,23 @@
+{
+ "scorer": "plugins/epistemic-skills/skills/triage/evals/behaviour-oracle/score.py",
+ "scorer_note": "Ground-truth correction (2026-10-24, Codex P2): fixtures clause-check-red-cause-unknown and degraded-observation-would-be-destructive re-pinned NARROWED -> UNKNOWN (no eliminating observation occurs in either scenario, per triage SKILL.md verdict definitions); two scenarios now disclose canonical cause/candidate labels. Scorer code unmodified. Inputs: corrected fixtures.json + the epoch's preserved frozen responses, unmodified.",
+ "responses": "../responses.json",
+ "exit_code": 1,
+ "report": {
+  "pass": false,
+  "failures": [
+   "clause-known-broken-eliminates-one: the observation eliminated 'connection pool exhausted'; the verdict must name what was eliminated and by what observation",
+   "clause-observation-contradicts-assertion: expected NARROWED, got UNKNOWN",
+   "degraded-no-readout-self-probed: expected NARROWED, got UNKNOWN",
+   "degraded-fault-not-reproducible: expected NARROWED, got UNKNOWN",
+   "core-plausible-cause-not-observed: expected NARROWED, got UNKNOWN",
+   "control-discriminating-observation-cause: expected cause 'application publish path rejects the new schema field', got 'application-side publish failure: serialization error on the new schema field added by the deploy'"
+  ],
+  "verdicts": {
+   "NARROWED": 2,
+   "UNKNOWN": 8,
+   "CAUSE": 1,
+   "NOT-BROKEN": 1
+  }
+ }
+}
