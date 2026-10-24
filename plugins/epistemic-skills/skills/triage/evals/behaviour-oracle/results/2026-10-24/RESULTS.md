@@ -132,3 +132,23 @@ pins exactly (`control-discriminating-observation-cause`,
 failures were recorded against strings the dispatched scenarios never
 supplied, and are instrument-attributable in that specific respect —
 see the battery revision note in the corpus README.
+
+**Further correction (2026-10-24, post-epoch).** One of the four
+cases named above as standing — `degraded-no-readout-self-probed` —
+carries the identical defect, established by a follow-up adjudication
+applying the same principle (the case was also named in Codex's
+finding on PR #281's thread). The fixture pinned NARROWED with
+`expected_eliminated: []`, and its scenario states that nothing
+distinguishes a full disk, a permissions change, or a storage-backend
+outage: the single minimal probe — a test export failing with a
+storage-write error — eliminates no candidate. The supported verdict
+is UNKNOWN, which is what the subject returned, with the
+`evidence_basis: "self-probed"` label the fixture requires. For this
+case too the (a) characterisation is **withdrawn**: the failure was
+the fixture's, not the subject's. Three UNKNOWN-where-NARROWED cases
+now stand as recorded: `clause-observation-contradicts-assertion`,
+`core-plausible-cause-not-observed`, and
+`degraded-fault-not-reproducible`. The fixture is re-pinned for
+future epochs, and the subordinate re-score in `rescore/` has been
+extended to all three corrected fixtures (**7/12**; the epoch
+verdict is not replaced).

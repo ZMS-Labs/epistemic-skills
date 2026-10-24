@@ -87,6 +87,20 @@ responses under the corrected fixtures passes 6/12 and is recorded
 at `plugins/epistemic-skills/skills/triage/evals/behaviour-oracle/results/2026-10-24/rescore/`;
 it replaces no epoch verdict.
 
+**Third fixture (follow-up adjudication, same principle; lands with
+this note).** `degraded-no-readout-self-probed` — also named in
+Codex's finding on PR #281's thread — pinned NARROWED with
+`expected_eliminated: []` while its scenario states nothing
+distinguishes the candidates (a full disk, a permissions change, a
+storage-backend outage); the one probe, a test export failing with a
+storage-write error, eliminates none of them. It is re-pinned
+UNKNOWN on the identical rule; the balanced example and the suite's
+verdict-count assertion follow (NARROWED 5 / UNKNOWN 5). The
+(a)-conduct characterisation of this case is withdrawn in the same
+dated correction to the E6 record, and the subordinate re-score
+under the fully corrected fixtures moves from 6/12 to **7/12**. It
+replaces no epoch verdict.
+
 ## C7 — Behaviour-oracle: canonical labels disclosed
 
 `c51f259` (same commit as C6). The positive control's

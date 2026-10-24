@@ -85,17 +85,20 @@ here for future epochs; expected values otherwise unchanged:
    control; the candidate labels (a)/(b)/(c) for the known-broken
    case), in the same way the health battery's scenarios state their
    canonical subject names.
-2. **Two ground truths corrected.** `clause-check-red-cause-unknown`
+2. **Three ground truths corrected.** `clause-check-red-cause-unknown`
    and `degraded-observation-would-be-destructive` were re-pinned from
    NARROWED to UNKNOWN: neither scenario contains an observation that
    eliminates any candidate, and under the verdict definitions
-   NARROWED requires one. See the correction appended to the E6 epoch
-   record and the subordinate re-score under
+   NARROWED requires one. `degraded-no-readout-self-probed` was
+   re-pinned in the same cycle on the identical ground: it pinned
+   NARROWED with `expected_eliminated: []`, and its scenario states
+   nothing distinguishes the candidates. See the corrections appended
+   to the E6 epoch record and the subordinate re-score under
    `results/2026-10-24/rescore/`.
 
-The committed E6 epoch ran under the **prior** revision. Its two
+The committed E6 epoch ran under the **prior** revision. Its three
 mis-pinned verdict failures and its exact-string naming failures are
-instrument-attributable as detailed in that correction; no E6 verdict
+instrument-attributable as detailed in those corrections; no E6 verdict
 was re-issued — the re-score is a separate, subordinate record.
 
 ## Status
