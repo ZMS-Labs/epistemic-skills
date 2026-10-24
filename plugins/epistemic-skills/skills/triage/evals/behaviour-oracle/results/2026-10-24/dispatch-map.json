@@ -1,0 +1,50 @@
+{
+ "0a1c03ba5d05": {
+  "fixture_id": "core-plausible-cause-not-observed",
+  "holdout": true
+ },
+ "172216dc7bc5": {
+  "fixture_id": "clause-check-red-cause-unknown",
+  "holdout": false
+ },
+ "204a12cd9b0d": {
+  "fixture_id": "control-report-wrong-not-broken",
+  "holdout": false
+ },
+ "25740334e695": {
+  "fixture_id": "degraded-observation-would-be-destructive",
+  "holdout": false
+ },
+ "573103f144a6": {
+  "fixture_id": "clause-known-broken-eliminates-one",
+  "holdout": false
+ },
+ "6b7f017d5de4": {
+  "fixture_id": "degraded-fault-not-reproducible",
+  "holdout": true
+ },
+ "7095b5c2d30d": {
+  "fixture_id": "control-discriminating-observation-cause",
+  "holdout": false
+ },
+ "8b40d9d67f2e": {
+  "fixture_id": "degraded-lying-readout",
+  "holdout": false
+ },
+ "90acf60951bc": {
+  "fixture_id": "clause-observation-contradicts-assertion",
+  "holdout": false
+ },
+ "ab0e207ea50f": {
+  "fixture_id": "degraded-no-readout-self-probed",
+  "holdout": false
+ },
+ "bcd5ef609e30": {
+  "fixture_id": "clause-readout-named-wrong-cause-unknown",
+  "holdout": true
+ },
+ "ded6b80e8b3f": {
+  "fixture_id": "degraded-subject-unreachable",
+  "holdout": false
+ }
+}
