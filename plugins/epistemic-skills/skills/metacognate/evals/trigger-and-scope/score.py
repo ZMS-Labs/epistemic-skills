@@ -55,9 +55,9 @@ def score(fixtures: list[dict], responses: object) -> dict:
             failures.append(f"{fid}: expected {expected}, got {action}")
             continue
         if expected == "no-fire":
-            present = [field for field in EXAMINE_FIELDS if field in row]
+            present = sorted(str(key) for key in row if key not in ("id", "action"))
             if present:
-                failures.append(f"{fid}: no-fire must be silent — examination fields present: {present}")
+                failures.append(f"{fid}: no-fire must be silent — no examination fields, no explanation, nothing beyond id and action; present: {present}")
             continue
         # expected == "examine"
         if not _nonempty(row.get("outcome_named")):

@@ -64,9 +64,9 @@ def score(fixtures: list[dict], responses: object) -> dict:
             failures.append(f"{fid}: expected {expected}, got {action}")
             continue
         if expected == "no-fire":
-            present = [field for field in METHOD_FIELDS if field in row]
+            present = sorted(str(key) for key in row if key not in ("id", "action"))
             if present:
-                failures.append(f"{fid}: no-fire must be silent — method fields present: {present}")
+                failures.append(f"{fid}: no-fire must be silent — no method fields, no explanation, nothing beyond id and action; present: {present}")
             continue
         # expected == "use-method"
         method = row.get("method")
