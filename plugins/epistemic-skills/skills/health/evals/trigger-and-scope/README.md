@@ -21,6 +21,28 @@ Every `readout` fixture pins `expected_subjects` — the per-subject states
 the scenario's stated probe outcomes determine — and the roll-up follows
 from them by the aggregation rule. No fire in this battery is shape-only.
 
+## Revision — canonical subject names stated in the scenarios (2026-10-24, issue #278)
+
+The first live epoch (E4, `results/2026-10-24/`) failed 10/13 on one
+mechanism, diagnosed in its record as a battery-design defect: subjects
+reported the probe-determined states and the UNKNOWN rollup exactly
+right but named the degraded subjects as the scenario prose names them
+("backup system", "metrics pipeline", "storage pool"), where
+`expected_subjects` pins short canonical names ("backup", "metrics",
+"storage") the scenarios never stated — the scorer penalised the
+scenario's own naming. The FAIL stands as scored, against the battery
+revision that produced it.
+
+This revision applies the epoch record's own prescription: every
+readout scenario now states the battery's naming convention and the
+canonical names for its subjects, in the same form the
+`registry-unreachable-coverage-unknown` fixture already used for
+`registry-coverage`. Nothing else changed — the scorer, the pinned
+states, the roll-up expectations, the clause texts, and the holdout set
+are untouched, and the health SKILL is unchanged. The revised battery
+has **no live epoch yet**: any claim from it awaits a fresh
+preregistered epoch, and no E4 result transfers to this revision.
+
 ## Claim
 
 A live-epoch pass on this battery would support one claim only: that the
