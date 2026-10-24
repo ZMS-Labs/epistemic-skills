@@ -89,6 +89,18 @@ def main() -> int:
     }])
     require(any("unknown verdict 'case-closed'" in failure for failure in unknown_verdict["failures"]), unknown_verdict["failures"])
 
+
+    # Regression (2026-10-24, Codex P2): an "explanation" field on a no-fire
+    # row is a silence breach - the scorer must reject any key beyond id and
+    # action on no-fire rows, not only the battery's enumerated fields.
+    explained = json.loads((ROOT / "examples" / "balanced.json").read_text(encoding="utf-8"))
+    for row in explained:
+        if isinstance(row, dict) and row.get("action") == "no-fire":
+            row["explanation"] = "No applicable trigger; staying silent."
+    explained_report = scorer.score(fixtures, explained)
+    require(not explained_report["pass"], "no-fire rows carrying an explanation field unexpectedly passed")
+    require(any("no-fire must be silent" in failure for failure in explained_report["failures"]), explained_report["failures"])
+
     print("metacognate trigger-and-scope: PASS")
     return 0
 
