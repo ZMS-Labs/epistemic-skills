@@ -87,6 +87,16 @@ def main() -> int:
     require(any("requires persistence observed" in failure for failure in reverted_unobserved["failures"]), reverted_unobserved["failures"])
     landed_no_observation = mutated(scorer, fixtures, balanced, "deploy-fix-called-done-landed", consumer_observation=None)
     require(any("LANDED requires consumer_observation nonempty" in failure for failure in landed_no_observation["failures"]), landed_no_observation["failures"])
+    # Regression (2026-10-24, Codex P2): REVERTED is evidence-bearing like
+    # LANDED - a null consumer_observation must fail it too.
+    reverted_no_observation = mutated(scorer, fixtures, balanced, "observed-effect-reverted-by-reconciler", consumer_observation=None)
+    require(any("REVERTED requires consumer_observation nonempty" in failure for failure in reverted_no_observation["failures"]), reverted_no_observation["failures"])
+    # Regression (2026-10-24, Codex P2): a response whose id is outside the
+    # fixture inventory must fail, never be silently ignored.
+    extra_rows = copy.deepcopy(balanced) + [{"id": "nonexistent-trial", "action": "garbage"}]
+    extra_report = scorer.score(fixtures, extra_rows)
+    require(not extra_report["pass"], "an extra response with an unknown id unexpectedly passed")
+    require(any("not in the fixture inventory" in failure for failure in extra_report["failures"]), extra_report["failures"])
     noisy_negative = mutated(scorer, fixtures, balanced, "nofire-nothing-depends-yet", verdict="LANDED")
     require(any("no-fire must be silent" in failure for failure in noisy_negative["failures"]), noisy_negative["failures"])
 
