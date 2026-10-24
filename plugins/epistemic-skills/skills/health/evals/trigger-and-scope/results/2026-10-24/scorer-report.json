@@ -1,0 +1,19 @@
+{
+ "scorer": "/home/hatch/workspace/epistemic-skills-evidence/plugins/epistemic-skills/skills/health/evals/trigger-and-scope/score.py",
+ "exit_code": 1,
+ "report": {
+  "pass": false,
+  "failures": [
+   "credential-failure-unknown: subjects must match the probe-determined states exactly \u2014 expected {'api': 'OK', 'backup': 'UNKNOWN'}, got {'backup system': 'UNKNOWN', 'api': 'OK'}",
+   "credential-failure-unknown: ordered_subjects ties must follow fixture order \u2014 got ['backup system', 'api']",
+   "probe-tool-absent-unknown: subjects must match the probe-determined states exactly \u2014 expected {'api': 'OK', 'metrics': 'UNKNOWN'}, got {'metrics pipeline': 'UNKNOWN', 'api': 'OK'}",
+   "probe-tool-absent-unknown: ordered_subjects ties must follow fixture order \u2014 got ['metrics pipeline', 'api']",
+   "bound-undeclared-unknown: subjects must match the probe-determined states exactly \u2014 expected {'api': 'OK', 'storage': 'UNKNOWN'}, got {'storage pool': 'UNKNOWN', 'api': 'OK'}",
+   "bound-undeclared-unknown: ordered_subjects ties must follow fixture order \u2014 got ['storage pool', 'api']"
+  ],
+  "actions": {
+   "readout": 9,
+   "no-fire": 4
+  }
+ }
+}

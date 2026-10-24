@@ -1,0 +1,214 @@
+[
+ {
+  "action": "readout",
+  "id": "general-state-all-ok",
+  "ordered_subjects": [
+   "api",
+   "database",
+   "job-queue"
+  ],
+  "rollup": "OK",
+  "subjects": [
+   {
+    "name": "api",
+    "state": "OK"
+   },
+   {
+    "name": "database",
+    "state": "OK"
+   },
+   {
+    "name": "job-queue",
+    "state": "OK"
+   }
+  ]
+ },
+ {
+  "action": "no-fire",
+  "id": "routine-reversible-nothing-shared-no-fire"
+ },
+ {
+  "action": "readout",
+  "id": "feels-wrong-unnamed-unreachable",
+  "ordered_subjects": [
+   "worker",
+   "api"
+  ],
+  "rollup": "UNKNOWN",
+  "subjects": [
+   {
+    "name": "api",
+    "state": "OK"
+   },
+   {
+    "name": "worker",
+    "state": "UNKNOWN"
+   }
+  ]
+ },
+ {
+  "action": "readout",
+  "id": "probe-tool-absent-unknown",
+  "ordered_subjects": [
+   "metrics pipeline",
+   "api"
+  ],
+  "rollup": "UNKNOWN",
+  "subjects": [
+   {
+    "name": "metrics pipeline",
+    "state": "UNKNOWN"
+   },
+   {
+    "name": "api",
+    "state": "OK"
+   }
+  ]
+ },
+ {
+  "action": "readout",
+  "id": "credential-failure-unknown",
+  "ordered_subjects": [
+   "backup system",
+   "api"
+  ],
+  "rollup": "UNKNOWN",
+  "subjects": [
+   {
+    "name": "backup system",
+    "state": "UNKNOWN"
+   },
+   {
+    "name": "api",
+    "state": "OK"
+   }
+  ]
+ },
+ {
+  "action": "no-fire",
+  "id": "one-metric-one-command-no-fire"
+ },
+ {
+  "action": "no-fire",
+  "id": "change-question-not-state-no-fire"
+ },
+ {
+  "action": "readout",
+  "id": "bound-undeclared-unknown",
+  "ordered_subjects": [
+   "storage pool",
+   "api"
+  ],
+  "rollup": "UNKNOWN",
+  "subjects": [
+   {
+    "name": "storage pool",
+    "state": "UNKNOWN"
+   },
+   {
+    "name": "api",
+    "state": "OK"
+   }
+  ]
+ },
+ {
+  "action": "readout",
+  "id": "claim-about-to-bear-load",
+  "ordered_subjects": [
+   "cache",
+   "api",
+   "database"
+  ],
+  "rollup": "UNKNOWN",
+  "subjects": [
+   {
+    "name": "api",
+    "state": "WARN"
+   },
+   {
+    "name": "cache",
+    "state": "UNKNOWN"
+   },
+   {
+    "name": "database",
+    "state": "OK"
+   }
+  ]
+ },
+ {
+  "action": "readout",
+  "id": "before-change-blast-radius-warn",
+  "ordered_subjects": [
+   "disk",
+   "api",
+   "database"
+  ],
+  "rollup": "WARN",
+  "subjects": [
+   {
+    "name": "api",
+    "state": "OK"
+   },
+   {
+    "name": "disk",
+    "state": "WARN"
+   },
+   {
+    "name": "database",
+    "state": "OK"
+   }
+  ]
+ },
+ {
+  "action": "no-fire",
+  "id": "known-broken-cause-wanted-no-fire"
+ },
+ {
+  "action": "readout",
+  "id": "registry-unreachable-coverage-unknown",
+  "ordered_subjects": [
+   "registry-coverage",
+   "api",
+   "database"
+  ],
+  "rollup": "UNKNOWN",
+  "subjects": [
+   {
+    "name": "api",
+    "state": "OK"
+   },
+   {
+    "name": "database",
+    "state": "OK"
+   },
+   {
+    "name": "registry-coverage",
+    "state": "UNKNOWN"
+   }
+  ]
+ },
+ {
+  "action": "readout",
+  "id": "after-power-event-critical",
+  "ordered_subjects": [
+   "worker",
+   "api",
+   "database"
+  ],
+  "rollup": "CRITICAL",
+  "subjects": [
+   {
+    "name": "api",
+    "state": "OK"
+   },
+   {
+    "name": "worker",
+    "state": "CRITICAL"
+   },
+   {
+    "name": "database",
+    "state": "OK"
+   }
+  ]
+ }
+]
