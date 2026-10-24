@@ -1,0 +1,88 @@
+[
+ {
+  "action": "no-fire",
+  "id": "queue-library-change-question"
+ },
+ {
+  "action": "investigate",
+  "discriminating_observation": "The new template file is present on the staging host",
+  "eliminated": [
+   "missing-template cause"
+  ],
+  "id": "deploy-check-red-two-causes-left",
+  "named_cause": null,
+  "provider": "standalone-debugging",
+  "verdict": "NARROWED"
+ },
+ {
+  "action": "no-fire",
+  "id": "future-cert-expiry-watch-request"
+ },
+ {
+  "action": "no-fire",
+  "id": "cause-known-remedy-underway"
+ },
+ {
+  "action": "investigate",
+  "discriminating_observation": "Config readback on the worker host shows the deployed env file still sets DRY_RUN=true, and a worker restarted without that env file processed a test charge normally while the worker with the file skipped real charges as if dry-run were on.",
+  "id": "metrics-doc-contradicted-by-trace",
+  "named_cause": "The deployed env file on the worker host still sets DRY_RUN=true from the March drill",
+  "provider": "standalone-debugging",
+  "verdict": "CAUSE"
+ },
+ {
+  "action": "no-fire",
+  "id": "vague-unease-no-subject-health-first"
+ },
+ {
+  "action": "no-fire",
+  "id": "deploy-landed-verification-no-failure"
+ },
+ {
+  "action": "investigate",
+  "discriminating_observation": "Packet capture from the last late episode shows the provider sent on time, eliminating provider-side delay, but no observation yet distinguishes the ingress queue from the signature-verification worker as the holding point.",
+  "eliminated": [
+   "provider-side delay"
+  ],
+  "id": "intermittent-webhook-narrowed",
+  "named_cause": null,
+  "provider": "standalone-debugging",
+  "verdict": "NARROWED"
+ },
+ {
+  "action": "investigate",
+  "discriminating_observation": null,
+  "id": "unreachable-license-server-unknown",
+  "named_cause": null,
+  "provider": "standalone-debugging",
+  "verdict": "UNKNOWN"
+ },
+ {
+  "action": "investigate",
+  "discriminating_observation": "Three live jobs observed end to end had first-label times of 4.1s, 3.8s and 4.3s, all inside the printer's specified 5s warm-up bound, with no queue backlog present.",
+  "id": "reported-print-delay-within-bounds",
+  "named_cause": null,
+  "provider": "standalone-debugging",
+  "verdict": "NOT-BROKEN"
+ },
+ {
+  "action": "investigate",
+  "discriminating_observation": "With the new reranker disabled for one test cohort and nothing else changed, that cohort's p95 returned to 310ms from 4s while the control cohort stayed at 4s; disk and index-shard readings were identical across cohorts.",
+  "id": "search-latency-reranker-isolated",
+  "named_cause": "the new reranker introduced in the morning release",
+  "provider": "standalone-debugging",
+  "verdict": "CAUSE"
+ },
+ {
+  "action": "no-fire",
+  "id": "deterministic-config-parse-error"
+ },
+ {
+  "action": "investigate",
+  "discriminating_observation": null,
+  "id": "readout-flags-cache-cause-unobserved",
+  "named_cause": null,
+  "provider": "standalone-debugging",
+  "verdict": "UNKNOWN"
+ }
+]

@@ -1,0 +1,54 @@
+{
+ "154b16750fae": {
+  "fixture_id": "queue-library-change-question",
+  "holdout": false
+ },
+ "1581ff4fda09": {
+  "fixture_id": "deploy-check-red-two-causes-left",
+  "holdout": false
+ },
+ "21bff845410e": {
+  "fixture_id": "future-cert-expiry-watch-request",
+  "holdout": false
+ },
+ "2c2d4e069d3e": {
+  "fixture_id": "cause-known-remedy-underway",
+  "holdout": false
+ },
+ "4631acb5b25a": {
+  "fixture_id": "metrics-doc-contradicted-by-trace",
+  "holdout": false
+ },
+ "4e207f7a2ed6": {
+  "fixture_id": "vague-unease-no-subject-health-first",
+  "holdout": false
+ },
+ "521f62656337": {
+  "fixture_id": "deploy-landed-verification-no-failure",
+  "holdout": false
+ },
+ "523b30e94838": {
+  "fixture_id": "intermittent-webhook-narrowed",
+  "holdout": false
+ },
+ "a3071a3d153e": {
+  "fixture_id": "unreachable-license-server-unknown",
+  "holdout": true
+ },
+ "a6b4adf05b61": {
+  "fixture_id": "reported-print-delay-within-bounds",
+  "holdout": false
+ },
+ "aaef58cb4b98": {
+  "fixture_id": "search-latency-reranker-isolated",
+  "holdout": true
+ },
+ "dea0306f9cab": {
+  "fixture_id": "deterministic-config-parse-error",
+  "holdout": true
+ },
+ "fb68e3d6a5e0": {
+  "fixture_id": "readout-flags-cache-cause-unobserved",
+  "holdout": false
+ }
+}
