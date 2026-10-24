@@ -1,0 +1,14 @@
+{
+ "scorer": "/home/hatch/workspace/epistemic-skills-evidence/plugins/epistemic-skills/skills/manifest/evals/trigger-and-scope/score.py",
+ "exit_code": 0,
+ "report": {
+  "pass": true,
+  "failures": [],
+  "actions": {
+   "open-mission": 4,
+   "resume-mission": 2,
+   "verify-mission": 3,
+   "no-fire": 4
+  }
+ }
+}

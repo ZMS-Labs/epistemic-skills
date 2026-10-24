@@ -1,0 +1,54 @@
+{
+ "15185269afb6": {
+  "fixture_id": "resume-clean-after-interruption",
+  "holdout": false
+ },
+ "31dc07659085": {
+  "fixture_id": "verify-self-acceptance-refused",
+  "holdout": false
+ },
+ "4ca41ed6e541": {
+  "fixture_id": "open-acceptance-path-unavailable",
+  "holdout": false
+ },
+ "63dddbe24300": {
+  "fixture_id": "nofire-routine-one-step-lookup",
+  "holdout": false
+ },
+ "6a290eda7204": {
+  "fixture_id": "open-cross-agent-handoff-relay",
+  "holdout": true
+ },
+ "7df128fac5a5": {
+  "fixture_id": "open-multisession-schema-migration",
+  "holdout": false
+ },
+ "86f6778f0f8d": {
+  "fixture_id": "verify-scope-crossing-unacknowledged",
+  "holdout": false
+ },
+ "871e09d109c6": {
+  "fixture_id": "explicit-manifest-this",
+  "holdout": false
+ },
+ "91d347968d91": {
+  "fixture_id": "verify-close-different-acceptor",
+  "holdout": false
+ },
+ "caec9e19c85b": {
+  "fixture_id": "resume-drift-found",
+  "holdout": true
+ },
+ "ced038137e37": {
+  "fixture_id": "nofire-resume-never-custodied",
+  "holdout": false
+ },
+ "f7d8e4144982": {
+  "fixture_id": "nofire-multistep-ticket-sufficient",
+  "holdout": false
+ },
+ "fc47822e5af7": {
+  "fixture_id": "nofire-reanchor-decisions-decision-ledger",
+  "holdout": true
+ }
+}

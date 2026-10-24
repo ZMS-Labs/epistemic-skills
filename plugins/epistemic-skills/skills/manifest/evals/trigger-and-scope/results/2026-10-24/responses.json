@@ -1,0 +1,104 @@
+[
+ {
+  "action": "resume-mission",
+  "continued": true,
+  "drift_status": "clean",
+  "id": "resume-clean-after-interruption",
+  "mission_id": "archive-rebuild-2026"
+ },
+ {
+  "accepted": false,
+  "acceptor_is_actor": true,
+  "action": "verify-mission",
+  "id": "verify-self-acceptance-refused"
+ },
+ {
+  "acceptance_path_checked": true,
+  "action": "open-mission",
+  "blocked_reason": "Acceptance path unavailable: the only qualified acceptor, the compliance officer who must sign the closing pack, is on leave for six weeks with no delegate, and no other acceptance path can be arranged before the work would have to start.",
+  "envelope": {
+   "permissions": "Coordinate the escrow closing within the operator-granted scope",
+   "protected": "The closing pack and its required compliance sign-off",
+   "scope_in": "Month-long escrow-closing coordination spanning three firms, through to the closing pack",
+   "scope_out": "Work outside the escrow-closing coordination for those three firms"
+  },
+  "id": "open-acceptance-path-unavailable",
+  "instruction_verbatim": true,
+  "mission_opened": false
+ },
+ {
+  "action": "no-fire",
+  "id": "nofire-routine-one-step-lookup"
+ },
+ {
+  "acceptance_path_checked": true,
+  "action": "open-mission",
+  "envelope": {
+   "permissions": "Agents may advance the review within the declared scope, record durable checkpoints and evidence, and transfer custody to the next agent in the relay",
+   "protected": "The evidence pack, the verbatim operator instruction, and final acceptance by the platform lead as the named acceptor",
+   "scope_in": "Vendor-security review relay across three agents in different time zones over ten days, including evidence pack assembly, durable checkpoints, and cross-agent handoffs",
+   "scope_out": "Sending any intermediate or final answer to the vendor before final acceptance, and work outside the vendor-security review"
+  },
+  "id": "open-cross-agent-handoff-relay",
+  "instruction_verbatim": true,
+  "mission_opened": true
+ },
+ {
+  "acceptance_path_checked": true,
+  "action": "open-mission",
+  "envelope": {
+   "permissions": "Two designated agents may perform staged migration steps within the authorized envelope and record effects for weekend handoff",
+   "protected": "Billing ledger data integrity, authorization records, completed-stage receipts, and rollback capability during freeze window",
+   "scope_in": "Migrate billing ledger from Postgres 14 to 16 in stages over three weeks, with freeze window and rollback decision point, with handoff proof of authorization and completed stages",
+   "scope_out": "Work outside the billing ledger migration, unrelated databases, or customer-visible changes beyond the staged migration plan"
+  },
+  "id": "open-multisession-schema-migration",
+  "instruction_verbatim": true,
+  "mission_opened": true
+ },
+ {
+  "accepted": false,
+  "acceptor_is_actor": false,
+  "action": "verify-mission",
+  "id": "verify-scope-crossing-unacknowledged",
+  "scope_acknowledged": false
+ },
+ {
+  "acceptance_path_checked": true,
+  "action": "open-mission",
+  "envelope": {
+   "permissions": "Open and advance a custodied mission for the records-retention overhaul within the declared scope",
+   "protected": "Existing records, retention state, and repositories outside the authorized overhaul changes",
+   "scope_in": "Multi-month records-retention overhaul spanning the four repositories in scope, coordinated with the two other agents",
+   "scope_out": "Work outside the records-retention overhaul, including repositories and agents not in scope"
+  },
+  "id": "explicit-manifest-this",
+  "instruction_verbatim": true,
+  "mission_opened": true
+ },
+ {
+  "accepted": true,
+  "acceptor_is_actor": false,
+  "action": "verify-mission",
+  "id": "verify-close-different-acceptor"
+ },
+ {
+  "action": "resume-mission",
+  "continued": false,
+  "drift_status": "drift-found",
+  "id": "resume-drift-found",
+  "mission_id": "payments-cutover"
+ },
+ {
+  "action": "no-fire",
+  "id": "nofire-resume-never-custodied"
+ },
+ {
+  "action": "no-fire",
+  "id": "nofire-multistep-ticket-sufficient"
+ },
+ {
+  "action": "no-fire",
+  "id": "nofire-reanchor-decisions-decision-ledger"
+ }
+]
