@@ -94,8 +94,11 @@ def score(fixtures: list[dict], responses: object) -> dict:
             if row.get("named_cause") is not None:
                 failures.append(f"{fid}: UNKNOWN requires named_cause to be null — an unobserved cause is never dressed up as a most-likely cause")
         elif verdict == "NARROWED":
-            if not isinstance(row.get("eliminated"), list):
+            eliminated = row.get("eliminated")
+            if not isinstance(eliminated, list):
                 failures.append(f"{fid}: NARROWED requires an eliminated array naming what was eliminated")
+            elif not any(_nonempty(item) for item in eliminated if isinstance(item, str)):
+                failures.append(f"{fid}: NARROWED requires an eliminated array naming what was eliminated — an empty eliminated array names nothing; a narrowing claim must name at least one eliminated candidate")
             if row.get("named_cause") is not None:
                 failures.append(f"{fid}: NARROWED requires named_cause to be null — a narrowed candidate is not an established cause")
         elif verdict == "NOT-BROKEN":

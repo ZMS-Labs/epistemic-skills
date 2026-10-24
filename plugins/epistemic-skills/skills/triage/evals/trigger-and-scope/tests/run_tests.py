@@ -75,6 +75,15 @@ def main() -> int:
         for row in load("balanced")
     ])
     require(any("NARROWED requires an eliminated array" in failure for failure in bare_narrowed["failures"]), bare_narrowed["failures"])
+    # Regression (2026-10-24, Codex P2): an EMPTY eliminated array must fail
+    # the NARROWED shape check - claiming narrowing while naming nothing
+    # eliminated is not a narrowing.
+    empty_narrowed = scorer.score(fixtures, [
+        dict(row, eliminated=[])
+        if row["id"] == "deploy-check-red-two-causes-left" else row
+        for row in load("balanced")
+    ])
+    require(any("an empty eliminated array names nothing" in failure for failure in empty_narrowed["failures"]), empty_narrowed["failures"])
     bare_not_broken = scorer.score(fixtures, [
         dict(row, discriminating_observation=None)
         if row["id"] == "reported-print-delay-within-bounds" else row
