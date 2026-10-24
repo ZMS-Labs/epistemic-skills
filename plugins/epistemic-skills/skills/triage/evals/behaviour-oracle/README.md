@@ -71,6 +71,33 @@ Pinned before the first live epoch, per
   tune prompts, skills, or dispatch text against them; they are scored
   with the rest and reported separately in the epoch record.
 
+## Battery revision (2026-10-24, post-E6)
+
+Two defects found by review after the first live epoch (E6), corrected
+here for future epochs; expected values otherwise unchanged:
+
+1. **Undisclosed exact strings.** The positive control pinned
+   `expected_cause` and `clause-known-broken-eliminates-one` pinned
+   `expected_eliminated` as exact strings the dispatched scenarios
+   never supplied, so the scorer measured guessing a hidden label as
+   much as causal identification. Both scenarios now disclose the
+   canonical labels a response must use (the cause label for the
+   control; the candidate labels (a)/(b)/(c) for the known-broken
+   case), in the same way the health battery's scenarios state their
+   canonical subject names.
+2. **Two ground truths corrected.** `clause-check-red-cause-unknown`
+   and `degraded-observation-would-be-destructive` were re-pinned from
+   NARROWED to UNKNOWN: neither scenario contains an observation that
+   eliminates any candidate, and under the verdict definitions
+   NARROWED requires one. See the correction appended to the E6 epoch
+   record and the subordinate re-score under
+   `results/2026-10-24/rescore/`.
+
+The committed E6 epoch ran under the **prior** revision. Its two
+mis-pinned verdict failures and its exact-string naming failures are
+instrument-attributable as detailed in that correction; no E6 verdict
+was re-issued — the re-score is a separate, subordinate record.
+
 ## Status
 
 Unrun as of 2026-10-24: no live epoch has run against this corpus. The
