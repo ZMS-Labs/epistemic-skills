@@ -1,7 +1,7 @@
 [
   {
     "id": "general-state-all-ok",
-    "scenario": "Operator asks: is everything OK with the home-lab services right now? Declared scope is three subjects. Probes completed just now: the api responded within its declared latency bound; the database responded within its declared bound; the job-queue responded within its declared bound. No probe errored.",
+    "scenario": "Operator asks: is everything OK with the home-lab services right now? Declared scope is three subjects. Probes completed just now: the api responded within its declared latency bound; the database responded within its declared bound; the job-queue responded within its declared bound. No probe errored. Per this battery's convention, subjects are reported under their short canonical names \u2014 here: `api`, `database`, `job-queue`.",
     "trigger": "explicit",
     "expected_action": "readout",
     "clause": "you want the current state of a running system, at any scope;",
@@ -14,7 +14,7 @@
   },
   {
     "id": "before-change-blast-radius-warn",
-    "scenario": "A network reconfiguration with real blast radius across the shared cluster starts in ten minutes, and the operator wants a before-picture of the three in-scope subjects. Probes completed just now: the api responded within its declared bound; disk usage measured 82% against a declared soft bound of 80% and a declared hard bound of 95%; the database responded within its declared bound.",
+    "scenario": "A network reconfiguration with real blast radius across the shared cluster starts in ten minutes, and the operator wants a before-picture of the three in-scope subjects. Probes completed just now: the api responded within its declared bound; disk usage measured 82% against a declared soft bound of 80% and a declared hard bound of 95%; the database responded within its declared bound. Per this battery's convention, subjects are reported under their short canonical names \u2014 here: `api`, `database`, `disk`.",
     "trigger": "state",
     "expected_action": "readout",
     "clause": "a change with real blast radius is imminent and you want a before-picture;",
@@ -27,7 +27,7 @@
   },
   {
     "id": "after-power-event-critical",
-    "scenario": "The rack lost power and every host restarted twenty minutes ago; the operator asks what state the services are in now. Probes completed just now: the api responded within its declared bound; the required worker service is down — connection refused and the process is absent, outside its declared hard bound; the database responded within its declared bound.",
+    "scenario": "The rack lost power and every host restarted twenty minutes ago; the operator asks what state the services are in now. Probes completed just now: the api responded within its declared bound; the required worker service is down \u2014 connection refused and the process is absent, outside its declared hard bound; the database responded within its declared bound. Per this battery's convention, subjects are reported under their short canonical names \u2014 here: `api`, `database`, `worker`.",
     "trigger": "state",
     "expected_action": "readout",
     "clause": "something has just restarted, lost power, or been reconfigured;",
@@ -40,7 +40,7 @@
   },
   {
     "id": "claim-about-to-bear-load",
-    "scenario": "A teammate is about to shift production traffic back onto the service on the strength of an earlier 'it is fine', and a current readout is needed before that health claim bears load. Probes completed just now: api latency measured above its declared soft bound but below its declared hard bound; the cache probe timed out after 5 seconds with no response, so the cache was not observed; the database responded within its declared bound.",
+    "scenario": "A teammate is about to shift production traffic back onto the service on the strength of an earlier 'it is fine', and a current readout is needed before that health claim bears load. Probes completed just now: api latency measured above its declared soft bound but below its declared hard bound; the cache probe timed out after 5 seconds with no response, so the cache was not observed; the database responded within its declared bound. Per this battery's convention, subjects are reported under their short canonical names \u2014 here: `api`, `cache`, `database`.",
     "trigger": "auto",
     "expected_action": "readout",
     "clause": "a health claim is about to bear load",
@@ -53,7 +53,7 @@
   },
   {
     "id": "feels-wrong-unnamed-unreachable",
-    "scenario": "The operator says something feels wrong since this morning but cannot yet name the subject, and asks for a readout of the declared scope. Probes completed just now: the api responded within its declared bound; the worker host was unreachable — the probe got no response at all from the host, so the worker was not observed.",
+    "scenario": "The operator says something feels wrong since this morning but cannot yet name the subject, and asks for a readout of the declared scope. Probes completed just now: the api responded within its declared bound; the worker host was unreachable \u2014 the probe got no response at all from the host, so the worker was not observed. Per this battery's convention, subjects are reported under their short canonical names \u2014 here: `api`, `worker`.",
     "trigger": "auto",
     "expected_action": "readout",
     "clause": "something feels wrong and you cannot yet name the subject;",
@@ -65,7 +65,7 @@
   },
   {
     "id": "credential-failure-unknown",
-    "scenario": "The operator asks for the current state of the backup system and the api before tonight's backup window. Probes completed just now: the backup probe failed with a credential failure — the stored credential was rejected (auth) — so no backup observation was obtained; the api responded within its declared bound.",
+    "scenario": "The operator asks for the current state of the backup system and the api before tonight's backup window. Probes completed just now: the backup probe failed with a credential failure \u2014 the stored credential was rejected (auth) \u2014 so no backup observation was obtained; the api responded within its declared bound. Per this battery's convention, subjects are reported under their short canonical names \u2014 here: `api`, `backup`.",
     "trigger": "explicit",
     "expected_action": "readout",
     "clause": "unreachable, credential failure, tool absent, timeout",
@@ -77,7 +77,7 @@
   },
   {
     "id": "probe-tool-absent-unknown",
-    "scenario": "After an agent-tooling update, the operator asks for a readout of the metrics pipeline and the api. Probes attempted just now: the metrics probe could not run because its probe tool is absent from the host — the command was not found — so no metrics observation exists; the api responded within its declared bound.",
+    "scenario": "After an agent-tooling update, the operator asks for a readout of the metrics pipeline and the api. Probes attempted just now: the metrics probe could not run because its probe tool is absent from the host \u2014 the command was not found \u2014 so no metrics observation exists; the api responded within its declared bound. Per this battery's convention, subjects are reported under their short canonical names \u2014 here: `api`, `metrics`.",
     "trigger": "state",
     "expected_action": "readout",
     "clause": "probe tool absent",
@@ -89,7 +89,7 @@
   },
   {
     "id": "bound-undeclared-unknown",
-    "scenario": "The operator asks for the state of the storage pool and the api. Probes completed just now: the storage probe returned a usage value, but no bound or threshold for storage has ever been declared, so there is nothing to judge the value against; the api responded within its declared bound.",
+    "scenario": "The operator asks for the state of the storage pool and the api. Probes completed just now: the storage probe returned a usage value, but no bound or threshold for storage has ever been declared, so there is nothing to judge the value against; the api responded within its declared bound. Per this battery's convention, subjects are reported under their short canonical names \u2014 here: `api`, `storage`.",
     "trigger": "explicit",
     "expected_action": "readout",
     "clause": "bound undeclared",
@@ -101,7 +101,7 @@
   },
   {
     "id": "registry-unreachable-coverage-unknown",
-    "scenario": "The operator asks for a system-wide readout. Resolving the subject set failed just now: the declared subject registry is unreachable, so coverage cannot be established. Two named subjects were still probed directly: the api responded within its declared bound; the database responded within its declared bound. Per this battery's convention, the unestablished coverage is represented as a subject named registry-coverage.",
+    "scenario": "The operator asks for a system-wide readout. Resolving the subject set failed just now: the declared subject registry is unreachable, so coverage cannot be established. Two named subjects were still probed directly: the api responded within its declared bound; the database responded within its declared bound. Per this battery's convention, the unestablished coverage is represented as a subject named registry-coverage. Per this battery's convention, subjects are reported under their short canonical names \u2014 here: `api`, `database`, `registry-coverage`.",
     "trigger": "state",
     "expected_action": "readout",
     "clause": "If the required registry is unreachable, mark that coverage UNKNOWN.",
