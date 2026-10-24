@@ -1,0 +1,87 @@
+[
+ {
+  "id": "guide-question-how-to-use-suite",
+  "action": "use-method",
+  "method": "epistemic",
+  "instructions_loaded": true,
+  "claimed_use": true,
+  "contribution": "The guide answered the suite question directly: methods are found from current discovery descriptions, their actual instructions are loaded before use, a substantive skill may be invoked directly with no guide prerequisite, and setup is not repeated when guidance is already loaded."
+ },
+ {
+  "id": "midwork-failure-needs-triage",
+  "action": "use-method",
+  "method": "triage",
+  "instructions_loaded": true,
+  "claimed_use": true,
+  "contribution": "Triage distinguished the stale cached template from the failing write by reproducing the empty-file failure against each explanation before any repair, so only the failing write was patched."
+ },
+ {
+  "id": "explicit-skill-request-honoured-directly",
+  "action": "use-method",
+  "method": "recon",
+  "instructions_loaded": true,
+  "claimed_use": true,
+  "contribution": "Recon mapped the billing migration's territory before planning and named the undocumented webhook consumer as its largest unknown."
+ },
+ {
+  "id": "instructions-unavailable-limit-stated",
+  "action": "use-method",
+  "method": "resolve",
+  "instructions_loaded": false,
+  "claimed_use": false,
+  "limit_stated": true,
+  "contribution": "Resolve returned no material finding: its instructions were unavailable in this session, that limit was stated, and the conflicting residency statements were instead checked directly against the signed vendor contracts."
+ },
+ {
+  "id": "claimed-fix-checked-at-consumer",
+  "action": "use-method",
+  "method": "did-it-land",
+  "instructions_loaded": true,
+  "claimed_use": true,
+  "contribution": "Did It Land observed the receipt service still running its pre-change configuration, so the flag change had not taken effect at the consumer despite the success log."
+ },
+ {
+  "id": "method-returns-no-material-finding",
+  "action": "use-method",
+  "method": "context-audit",
+  "instructions_loaded": true,
+  "claimed_use": true,
+  "contribution": "Context-Audit returned no material finding: the assembled layers were inventoried and no conflict, duplicate or stale guardrail was found to cut."
+ },
+ {
+  "id": "complementary-method-distinct-question",
+  "action": "use-method",
+  "method": "perspective",
+  "instructions_loaded": true,
+  "claimed_use": true,
+  "contribution": "Perspective examined the settled throttle design from the overriding on-call operator's position and surfaced that the override path needs a visible remaining-cooldown indicator."
+ },
+ {
+  "id": "midwork-decision-persisted",
+  "action": "use-method",
+  "method": "decision-ledger",
+  "instructions_loaded": true,
+  "claimed_use": true,
+  "contribution": "Decision Ledger persisted the append-only event-format choice once, where later sessions working on the audit trail can find it instead of re-deriving it."
+ },
+ {
+  "id": "guidance-already-loaded-work-resumes",
+  "action": "no-fire"
+ },
+ {
+  "id": "routine-work-no-applicable-trigger",
+  "action": "no-fire"
+ },
+ {
+  "id": "narrate-every-nonapplication",
+  "action": "no-fire"
+ },
+ {
+  "id": "second-dispatcher-added-alongside",
+  "action": "no-fire"
+ },
+ {
+  "id": "guide-asked-to-create-task-ledger",
+  "action": "no-fire"
+ }
+]

@@ -1,0 +1,147 @@
+[
+  {
+    "id": "general-state-all-ok",
+    "scenario": "Operator asks: is everything OK with the home-lab services right now? Declared scope is three subjects. Probes completed just now: the api responded within its declared latency bound; the database responded within its declared bound; the job-queue responded within its declared bound. No probe errored.",
+    "trigger": "explicit",
+    "expected_action": "readout",
+    "clause": "you want the current state of a running system, at any scope;",
+    "holdout": false,
+    "expected_subjects": {
+      "api": "OK",
+      "database": "OK",
+      "job-queue": "OK"
+    }
+  },
+  {
+    "id": "before-change-blast-radius-warn",
+    "scenario": "A network reconfiguration with real blast radius across the shared cluster starts in ten minutes, and the operator wants a before-picture of the three in-scope subjects. Probes completed just now: the api responded within its declared bound; disk usage measured 82% against a declared soft bound of 80% and a declared hard bound of 95%; the database responded within its declared bound.",
+    "trigger": "state",
+    "expected_action": "readout",
+    "clause": "a change with real blast radius is imminent and you want a before-picture;",
+    "holdout": false,
+    "expected_subjects": {
+      "api": "OK",
+      "database": "OK",
+      "disk": "WARN"
+    }
+  },
+  {
+    "id": "after-power-event-critical",
+    "scenario": "The rack lost power and every host restarted twenty minutes ago; the operator asks what state the services are in now. Probes completed just now: the api responded within its declared bound; the required worker service is down — connection refused and the process is absent, outside its declared hard bound; the database responded within its declared bound.",
+    "trigger": "state",
+    "expected_action": "readout",
+    "clause": "something has just restarted, lost power, or been reconfigured;",
+    "holdout": false,
+    "expected_subjects": {
+      "api": "OK",
+      "database": "OK",
+      "worker": "CRITICAL"
+    }
+  },
+  {
+    "id": "claim-about-to-bear-load",
+    "scenario": "A teammate is about to shift production traffic back onto the service on the strength of an earlier 'it is fine', and a current readout is needed before that health claim bears load. Probes completed just now: api latency measured above its declared soft bound but below its declared hard bound; the cache probe timed out after 5 seconds with no response, so the cache was not observed; the database responded within its declared bound.",
+    "trigger": "auto",
+    "expected_action": "readout",
+    "clause": "a health claim is about to bear load",
+    "holdout": false,
+    "expected_subjects": {
+      "api": "WARN",
+      "cache": "UNKNOWN",
+      "database": "OK"
+    }
+  },
+  {
+    "id": "feels-wrong-unnamed-unreachable",
+    "scenario": "The operator says something feels wrong since this morning but cannot yet name the subject, and asks for a readout of the declared scope. Probes completed just now: the api responded within its declared bound; the worker host was unreachable — the probe got no response at all from the host, so the worker was not observed.",
+    "trigger": "auto",
+    "expected_action": "readout",
+    "clause": "something feels wrong and you cannot yet name the subject;",
+    "holdout": false,
+    "expected_subjects": {
+      "api": "OK",
+      "worker": "UNKNOWN"
+    }
+  },
+  {
+    "id": "credential-failure-unknown",
+    "scenario": "The operator asks for the current state of the backup system and the api before tonight's backup window. Probes completed just now: the backup probe failed with a credential failure — the stored credential was rejected (auth) — so no backup observation was obtained; the api responded within its declared bound.",
+    "trigger": "explicit",
+    "expected_action": "readout",
+    "clause": "unreachable, credential failure, tool absent, timeout",
+    "holdout": true,
+    "expected_subjects": {
+      "api": "OK",
+      "backup": "UNKNOWN"
+    }
+  },
+  {
+    "id": "probe-tool-absent-unknown",
+    "scenario": "After an agent-tooling update, the operator asks for a readout of the metrics pipeline and the api. Probes attempted just now: the metrics probe could not run because its probe tool is absent from the host — the command was not found — so no metrics observation exists; the api responded within its declared bound.",
+    "trigger": "state",
+    "expected_action": "readout",
+    "clause": "probe tool absent",
+    "holdout": false,
+    "expected_subjects": {
+      "api": "OK",
+      "metrics": "UNKNOWN"
+    }
+  },
+  {
+    "id": "bound-undeclared-unknown",
+    "scenario": "The operator asks for the state of the storage pool and the api. Probes completed just now: the storage probe returned a usage value, but no bound or threshold for storage has ever been declared, so there is nothing to judge the value against; the api responded within its declared bound.",
+    "trigger": "explicit",
+    "expected_action": "readout",
+    "clause": "bound undeclared",
+    "holdout": false,
+    "expected_subjects": {
+      "api": "OK",
+      "storage": "UNKNOWN"
+    }
+  },
+  {
+    "id": "registry-unreachable-coverage-unknown",
+    "scenario": "The operator asks for a system-wide readout. Resolving the subject set failed just now: the declared subject registry is unreachable, so coverage cannot be established. Two named subjects were still probed directly: the api responded within its declared bound; the database responded within its declared bound. Per this battery's convention, the unestablished coverage is represented as a subject named registry-coverage.",
+    "trigger": "state",
+    "expected_action": "readout",
+    "clause": "If the required registry is unreachable, mark that coverage UNKNOWN.",
+    "holdout": true,
+    "expected_subjects": {
+      "api": "OK",
+      "database": "OK",
+      "registry-coverage": "UNKNOWN"
+    }
+  },
+  {
+    "id": "known-broken-cause-wanted-no-fire",
+    "scenario": "The nightly backup job is already known broken — it failed last night and the failure is confirmed. The operator asks: find out why it is failing. The cause is what is wanted, not a state readout; diagnosis consumes health output rather than being replaced by it.",
+    "trigger": "none",
+    "expected_action": "no-fire",
+    "clause": "a specific subject is already known broken and you want the cause",
+    "holdout": false
+  },
+  {
+    "id": "one-metric-one-command-no-fire",
+    "scenario": "The operator asks: what is the database's current connection count? That single number is readable with one direct command, and nothing else about the system's state is in question.",
+    "trigger": "none",
+    "expected_action": "no-fire",
+    "clause": "one number you could read with one command would answer it",
+    "holdout": true
+  },
+  {
+    "id": "change-question-not-state-no-fire",
+    "scenario": "The operator asks: while you rewrite the deploy script, should the new version use blue-green or canary releases? The question is about the change being designed, not about the current state of any running system.",
+    "trigger": "none",
+    "expected_action": "no-fire",
+    "clause": "the question is about a change you are making, not the state you are in;",
+    "holdout": false
+  },
+  {
+    "id": "routine-reversible-nothing-shared-no-fire",
+    "scenario": "The operator is renaming a local variable inside a single unshared script — a routine, fully reversible edit that touches nothing shared — and asks for the rename to be carried out.",
+    "trigger": "none",
+    "expected_action": "no-fire",
+    "clause": "you are inside a routine reversible task that touches nothing shared.",
+    "holdout": false
+  }
+]

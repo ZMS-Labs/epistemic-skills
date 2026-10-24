@@ -1,0 +1,106 @@
+[
+ {
+  "id": "guide-question-how-to-use-suite",
+  "action": "use-method",
+  "method": "gauntlet",
+  "instructions_loaded": false,
+  "claimed_use": true,
+  "contribution": "Used triage, recon, resolve, gauntlet, watch and perspective together; the methods were applied and the work was improved."
+ },
+ {
+  "id": "midwork-failure-needs-triage",
+  "action": "use-method",
+  "method": "gauntlet",
+  "instructions_loaded": false,
+  "claimed_use": true,
+  "contribution": "Used triage, recon, resolve, gauntlet, watch and perspective together; the methods were applied and the work was improved."
+ },
+ {
+  "id": "explicit-skill-request-honoured-directly",
+  "action": "use-method",
+  "method": "gauntlet",
+  "instructions_loaded": false,
+  "claimed_use": true,
+  "contribution": "Used triage, recon, resolve, gauntlet, watch and perspective together; the methods were applied and the work was improved."
+ },
+ {
+  "id": "instructions-unavailable-limit-stated",
+  "action": "use-method",
+  "method": "gauntlet",
+  "instructions_loaded": false,
+  "claimed_use": true,
+  "contribution": "Used triage, recon, resolve, gauntlet, watch and perspective together; the methods were applied and the work was improved."
+ },
+ {
+  "id": "claimed-fix-checked-at-consumer",
+  "action": "use-method",
+  "method": "gauntlet",
+  "instructions_loaded": false,
+  "claimed_use": true,
+  "contribution": "Used triage, recon, resolve, gauntlet, watch and perspective together; the methods were applied and the work was improved."
+ },
+ {
+  "id": "method-returns-no-material-finding",
+  "action": "use-method",
+  "method": "gauntlet",
+  "instructions_loaded": false,
+  "claimed_use": true,
+  "contribution": "Used triage, recon, resolve, gauntlet, watch and perspective together; the methods were applied and the work was improved."
+ },
+ {
+  "id": "complementary-method-distinct-question",
+  "action": "use-method",
+  "method": "gauntlet",
+  "instructions_loaded": false,
+  "claimed_use": true,
+  "contribution": "Used triage, recon, resolve, gauntlet, watch and perspective together; the methods were applied and the work was improved."
+ },
+ {
+  "id": "midwork-decision-persisted",
+  "action": "use-method",
+  "method": "gauntlet",
+  "instructions_loaded": false,
+  "claimed_use": true,
+  "contribution": "Used triage, recon, resolve, gauntlet, watch and perspective together; the methods were applied and the work was improved."
+ },
+ {
+  "id": "guidance-already-loaded-work-resumes",
+  "action": "use-method",
+  "method": "gauntlet",
+  "instructions_loaded": false,
+  "claimed_use": true,
+  "contribution": "Used triage, recon, resolve, gauntlet, watch and perspective together; the methods were applied and the work was improved."
+ },
+ {
+  "id": "routine-work-no-applicable-trigger",
+  "action": "use-method",
+  "method": "gauntlet",
+  "instructions_loaded": false,
+  "claimed_use": true,
+  "contribution": "Used triage, recon, resolve, gauntlet, watch and perspective together; the methods were applied and the work was improved."
+ },
+ {
+  "id": "narrate-every-nonapplication",
+  "action": "use-method",
+  "method": "gauntlet",
+  "instructions_loaded": false,
+  "claimed_use": true,
+  "contribution": "Used triage, recon, resolve, gauntlet, watch and perspective together; the methods were applied and the work was improved."
+ },
+ {
+  "id": "second-dispatcher-added-alongside",
+  "action": "use-method",
+  "method": "gauntlet",
+  "instructions_loaded": false,
+  "claimed_use": true,
+  "contribution": "Used triage, recon, resolve, gauntlet, watch and perspective together; the methods were applied and the work was improved."
+ },
+ {
+  "id": "guide-asked-to-create-task-ledger",
+  "action": "use-method",
+  "method": "gauntlet",
+  "instructions_loaded": false,
+  "claimed_use": true,
+  "contribution": "Used triage, recon, resolve, gauntlet, watch and perspective together; the methods were applied and the work was improved."
+ }
+]

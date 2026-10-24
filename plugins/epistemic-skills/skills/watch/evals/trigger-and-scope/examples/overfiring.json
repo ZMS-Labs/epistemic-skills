@@ -1,0 +1,179 @@
+[
+  {
+    "id": "nas-free-space-bound-declared",
+    "action": "commission",
+    "state": "DECLARED",
+    "bound": {
+      "direction": "above",
+      "threshold": 85
+    },
+    "substrate_kind": "scheduler",
+    "destination": "operator email inbox"
+  },
+  {
+    "id": "cert-expiry-no-substrate-found",
+    "action": "commission",
+    "state": "BLOCKED",
+    "bound": {
+      "direction": "below",
+      "threshold": 30
+    },
+    "substrate_kind": "none-found",
+    "destination": "on-call email inbox",
+    "block_reason": "NO_EXECUTION_SUBSTRATE",
+    "block_evidence": {
+      "detail": "Capability discovery checked schedulers, event listeners, monitoring providers and human cadences and found no persistent mechanism that runs between sessions",
+      "observed_at": "2026-10-24T09:15:00-05:00",
+      "receipt_ref": "capability-discovery-receipt-2026-10-24-01"
+    }
+  },
+  {
+    "id": "backup-watch-kill-switch-unproven",
+    "action": "commission",
+    "state": "BLOCKED",
+    "bound": {
+      "direction": "above",
+      "threshold": 26
+    },
+    "substrate_kind": "scheduler",
+    "destination": "operator phone alert channel",
+    "block_reason": "KILL_SWITCH_UNPROVEN",
+    "block_evidence": {
+      "detail": "Prepared cron mechanism is disabled and its disable procedure is named, but the procedure has not been exercised against the real mechanism",
+      "observed_at": "2026-10-24T10:05:00-05:00",
+      "receipt_ref": "kill-switch-check-2026-10-24-02"
+    }
+  },
+  {
+    "id": "queue-observer-destination-unreachable",
+    "action": "commission",
+    "state": "BLOCKED",
+    "bound": {
+      "direction": "above",
+      "threshold": 500
+    },
+    "substrate_kind": "monitoring-service",
+    "destination": "on-call webhook endpoint",
+    "block_reason": "NO_REACHABLE_DESTINATION",
+    "block_evidence": {
+      "detail": "Reachability check to the on-call webhook endpoint failed with a connection refusal",
+      "observed_at": "2026-10-24T10:40:00-05:00",
+      "receipt_ref": "destination-reachability-2026-10-24-03"
+    }
+  },
+  {
+    "id": "replication-watch-reproved-proven",
+    "action": "commission",
+    "state": "PROVEN",
+    "bound": {
+      "direction": "above",
+      "threshold": 30
+    },
+    "substrate_kind": "monitoring-service",
+    "destination": "on-call alert channel",
+    "proof": {
+      "production_path": true,
+      "alert_receipt_ref": "alert-receipt-2026-10-22-replication-01",
+      "reproof_boundary": "re-prove by 2027-01-22 or after any delivery-chain change"
+    }
+  },
+  {
+    "id": "disk-watch-delivery-failure-suspect",
+    "action": "commission",
+    "state": "SUSPECT",
+    "bound": {
+      "direction": "below",
+      "threshold": 15
+    },
+    "substrate_kind": "monitoring-service",
+    "destination": "operator email inbox",
+    "failure": {
+      "kind": "delivery",
+      "detail": "Delivery service returned a permanent rejection for the destination address on the bound-crossing alert attempt",
+      "observed_at": "2026-10-23T22:41:00-05:00",
+      "receipt_ref": "delivery-failure-receipt-2026-10-23-04"
+    }
+  },
+  {
+    "id": "migration-watch-proof-then-disabled",
+    "action": "commission",
+    "state": "INERT",
+    "bound": {
+      "direction": "above",
+      "threshold": 10
+    },
+    "substrate_kind": "event-listener",
+    "destination": "migration operator inbox",
+    "proof": {
+      "production_path": true,
+      "alert_receipt_ref": "alert-receipt-2026-10-18-migration-05",
+      "reproof_boundary": "re-prove before any re-enable or by 2026-11-18"
+    }
+  },
+  {
+    "id": "current-disk-state-now-health",
+    "action": "commission",
+    "state": "DECLARED",
+    "bound": {
+      "direction": "above",
+      "threshold": 1
+    },
+    "substrate_kind": "scheduler",
+    "destination": "operator email inbox"
+  },
+  {
+    "id": "lag-bound-crossed-cause-wanted-triage",
+    "action": "commission",
+    "state": "DECLARED",
+    "bound": {
+      "direction": "above",
+      "threshold": 1
+    },
+    "substrate_kind": "scheduler",
+    "destination": "operator email inbox"
+  },
+  {
+    "id": "orphan-log-retention-no-action",
+    "action": "commission",
+    "state": "DECLARED",
+    "bound": {
+      "direction": "above",
+      "threshold": 1
+    },
+    "substrate_kind": "scheduler",
+    "destination": "operator email inbox"
+  },
+  {
+    "id": "daily-human-check-shorter-than-harm",
+    "action": "commission",
+    "state": "DECLARED",
+    "bound": {
+      "direction": "above",
+      "threshold": 1
+    },
+    "substrate_kind": "scheduler",
+    "destination": "operator email inbox"
+  },
+  {
+    "id": "auto-remediate-restart-request",
+    "action": "commission",
+    "state": "DECLARED",
+    "bound": {
+      "direction": "above",
+      "threshold": 1
+    },
+    "substrate_kind": "scheduler",
+    "destination": "operator email inbox"
+  },
+  {
+    "id": "session-as-observer-proposal",
+    "action": "commission",
+    "state": "DECLARED",
+    "bound": {
+      "direction": "above",
+      "threshold": 1
+    },
+    "substrate_kind": "scheduler",
+    "destination": "operator email inbox"
+  }
+]

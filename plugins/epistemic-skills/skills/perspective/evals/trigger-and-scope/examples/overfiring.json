@@ -1,0 +1,106 @@
+[
+  {
+    "id": "focused-cache-assumption-fires",
+    "action": "apply-lens",
+    "finding": "insight",
+    "lens": "general examination lens",
+    "lenses_applied": 1,
+    "question": "What does a different lens show here?"
+  },
+  {
+    "id": "explicit-different-lens-tradeoff-fires",
+    "action": "apply-lens",
+    "finding": "insight",
+    "lens": "general examination lens",
+    "lenses_applied": 1,
+    "question": "What does a different lens show here?"
+  },
+  {
+    "id": "several-lenses-bounded-no-adjudication",
+    "action": "apply-lens",
+    "finding": "insight",
+    "lens": "general examination lens",
+    "lenses_applied": 2,
+    "question": "What does a different lens show here?"
+  },
+  {
+    "id": "settled-evidence-no-fire",
+    "action": "apply-lens",
+    "finding": "insight",
+    "lens": "general examination lens",
+    "lenses_applied": 1,
+    "question": "What does a different lens show here?"
+  },
+  {
+    "id": "routine-work-no-fire",
+    "action": "apply-lens",
+    "finding": "insight",
+    "lens": "general examination lens",
+    "lenses_applied": 1,
+    "question": "What does a different lens show here?"
+  },
+  {
+    "id": "gauntlet-adjudication-no-fire",
+    "action": "apply-lens",
+    "finding": "insight",
+    "lens": "general examination lens",
+    "lenses_applied": 1,
+    "question": "What does a different lens show here?"
+  },
+  {
+    "id": "adjacent-issue-no-fire",
+    "action": "apply-lens",
+    "finding": "insight",
+    "lens": "general examination lens",
+    "lenses_applied": 1,
+    "question": "What does a different lens show here?"
+  },
+  {
+    "id": "reversibility-single-lens-fires",
+    "action": "apply-lens",
+    "finding": "insight",
+    "lens": "general examination lens",
+    "lenses_applied": 1,
+    "question": "What does a different lens show here?"
+  },
+  {
+    "id": "metric-fitness-lens-fires",
+    "action": "apply-lens",
+    "finding": "insight",
+    "lens": "general examination lens",
+    "lenses_applied": 1,
+    "question": "What does a different lens show here?"
+  },
+  {
+    "id": "implementation-not-authorized-no-fire",
+    "action": "apply-lens",
+    "finding": "insight",
+    "lens": "general examination lens",
+    "lenses_applied": 1,
+    "question": "What does a different lens show here?"
+  },
+  {
+    "id": "evidence-unavailable-limit-fires",
+    "action": "apply-lens",
+    "finding": "insight",
+    "lens": "general examination lens",
+    "lenses_applied": 1,
+    "question": "What does a different lens show here?"
+  },
+  {
+    "id": "no-material-finding-fires",
+    "action": "apply-lens",
+    "finding": "insight",
+    "lens": "general examination lens",
+    "lenses_applied": 1,
+    "question": "What does a different lens show here?"
+  },
+  {
+    "id": "approval-verdict-no-fire",
+    "action": "apply-lens",
+    "finding": "insight",
+    "lens": "general examination lens",
+    "lenses_applied": 1,
+    "question": "What does a different lens show here?"
+  }
+]

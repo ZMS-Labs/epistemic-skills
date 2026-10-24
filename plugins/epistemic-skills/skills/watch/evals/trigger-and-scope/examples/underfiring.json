@@ -1,0 +1,54 @@
+[
+  {
+    "id": "nas-free-space-bound-declared",
+    "action": "no-fire"
+  },
+  {
+    "id": "cert-expiry-no-substrate-found",
+    "action": "no-fire"
+  },
+  {
+    "id": "backup-watch-kill-switch-unproven",
+    "action": "no-fire"
+  },
+  {
+    "id": "queue-observer-destination-unreachable",
+    "action": "no-fire"
+  },
+  {
+    "id": "replication-watch-reproved-proven",
+    "action": "no-fire"
+  },
+  {
+    "id": "disk-watch-delivery-failure-suspect",
+    "action": "no-fire"
+  },
+  {
+    "id": "migration-watch-proof-then-disabled",
+    "action": "no-fire"
+  },
+  {
+    "id": "current-disk-state-now-health",
+    "action": "no-fire"
+  },
+  {
+    "id": "lag-bound-crossed-cause-wanted-triage",
+    "action": "no-fire"
+  },
+  {
+    "id": "orphan-log-retention-no-action",
+    "action": "no-fire"
+  },
+  {
+    "id": "daily-human-check-shorter-than-harm",
+    "action": "no-fire"
+  },
+  {
+    "id": "auto-remediate-restart-request",
+    "action": "no-fire"
+  },
+  {
+    "id": "session-as-observer-proposal",
+    "action": "no-fire"
+  }
+]

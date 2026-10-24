@@ -1,0 +1,106 @@
+[
+ {
+  "id": "deploy-fix-called-done-landed",
+  "action": "verify-landing",
+  "verdict": "LANDED",
+  "artifact_resolved": "the merged PR and its green CI run",
+  "consumer_observation": null,
+  "persistence": "observed"
+ },
+ {
+  "id": "merge-believed-applied-landed",
+  "action": "verify-landing",
+  "verdict": "LANDED",
+  "artifact_resolved": "the merged PR and its green CI run",
+  "consumer_observation": null,
+  "persistence": "observed"
+ },
+ {
+  "id": "config-edit-runtime-loads-cache",
+  "action": "verify-landing",
+  "verdict": "LANDED",
+  "artifact_resolved": "the merged PR and its green CI run",
+  "consumer_observation": null,
+  "persistence": "observed"
+ },
+ {
+  "id": "green-check-source-only-oracle",
+  "action": "verify-landing",
+  "verdict": "LANDED",
+  "artifact_resolved": "the merged PR and its green CI run",
+  "consumer_observation": null,
+  "persistence": "observed"
+ },
+ {
+  "id": "artifact-distributed-to-consumer-landed",
+  "action": "verify-landing",
+  "verdict": "LANDED",
+  "artifact_resolved": "the merged PR and its green CI run",
+  "consumer_observation": null,
+  "persistence": "observed"
+ },
+ {
+  "id": "guard-hook-installed-and-firing",
+  "action": "verify-landing",
+  "verdict": "LANDED",
+  "artifact_resolved": "the merged PR and its green CI run",
+  "consumer_observation": null,
+  "persistence": "observed"
+ },
+ {
+  "id": "observed-effect-reverted-by-reconciler",
+  "action": "verify-landing",
+  "verdict": "LANDED",
+  "artifact_resolved": "the merged PR and its green CI run",
+  "consumer_observation": null,
+  "persistence": "observed"
+ },
+ {
+  "id": "runtime-unreachable-unverified",
+  "action": "verify-landing",
+  "verdict": "LANDED",
+  "artifact_resolved": "the merged PR and its green CI run",
+  "consumer_observation": null,
+  "persistence": "observed"
+ },
+ {
+  "id": "partial-coverage-one-of-three-consumers",
+  "action": "verify-landing",
+  "verdict": "LANDED",
+  "artifact_resolved": "the merged PR and its green CI run",
+  "consumer_observation": null,
+  "persistence": "observed"
+ },
+ {
+  "id": "nofire-local-reversible-preview-edit",
+  "action": "verify-landing",
+  "verdict": "LANDED",
+  "artifact_resolved": "the merged PR and its green CI run",
+  "consumer_observation": null,
+  "persistence": "observed"
+ },
+ {
+  "id": "nofire-nothing-depends-yet",
+  "action": "verify-landing",
+  "verdict": "LANDED",
+  "artifact_resolved": "the merged PR and its green CI run",
+  "consumer_observation": null,
+  "persistence": "observed"
+ },
+ {
+  "id": "nofire-still-deciding-what-to-change",
+  "action": "verify-landing",
+  "verdict": "LANDED",
+  "artifact_resolved": "the merged PR and its green CI run",
+  "consumer_observation": null,
+  "persistence": "observed"
+ },
+ {
+  "id": "nofire-health-state-question",
+  "action": "verify-landing",
+  "verdict": "LANDED",
+  "artifact_resolved": "the merged PR and its green CI run",
+  "consumer_observation": null,
+  "persistence": "observed"
+ }
+]

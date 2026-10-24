@@ -1,0 +1,54 @@
+[
+ {
+  "id": "open-multisession-schema-migration",
+  "action": "no-fire"
+ },
+ {
+  "id": "open-cross-agent-handoff-relay",
+  "action": "no-fire"
+ },
+ {
+  "id": "explicit-manifest-this",
+  "action": "no-fire"
+ },
+ {
+  "id": "open-acceptance-path-unavailable",
+  "action": "no-fire"
+ },
+ {
+  "id": "resume-clean-after-interruption",
+  "action": "no-fire"
+ },
+ {
+  "id": "resume-drift-found",
+  "action": "no-fire"
+ },
+ {
+  "id": "verify-close-different-acceptor",
+  "action": "no-fire"
+ },
+ {
+  "id": "verify-self-acceptance-refused",
+  "action": "no-fire"
+ },
+ {
+  "id": "verify-scope-crossing-unacknowledged",
+  "action": "no-fire"
+ },
+ {
+  "id": "nofire-routine-one-step-lookup",
+  "action": "no-fire"
+ },
+ {
+  "id": "nofire-multistep-ticket-sufficient",
+  "action": "no-fire"
+ },
+ {
+  "id": "nofire-reanchor-decisions-decision-ledger",
+  "action": "no-fire"
+ },
+ {
+  "id": "nofire-resume-never-custodied",
+  "action": "no-fire"
+ }
+]

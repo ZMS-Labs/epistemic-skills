@@ -1,0 +1,116 @@
+[
+ {
+  "id": "guide-question-how-to-use-suite",
+  "scenario": "A new operator opens a session and asks: how do I use Epistemic Skills on a real task — how are methods found, loaded and applied, and do I have to go through the guide every time?",
+  "trigger": "explicit",
+  "expected_action": "use-method",
+  "clause": "explicitly asked how to use the suite",
+  "holdout": false,
+  "expected_method": "epistemic",
+  "guide_question": true
+ },
+ {
+  "id": "midwork-failure-needs-triage",
+  "scenario": "Midway through repairing an export job that intermittently writes empty files, the agent holds two rival explanations — a stale cached template and a failing write — and is about to patch both at once without distinguishing them.",
+  "trigger": "auto",
+  "expected_action": "use-method",
+  "clause": "Use a substantive method when its conditions arise during work, not only at startup.",
+  "holdout": true,
+  "expected_method": "triage"
+ },
+ {
+  "id": "explicit-skill-request-honoured-directly",
+  "scenario": "Operator says: use Recon on this unfamiliar billing-codebase migration before we plan anything — map the territory and its unknowns first.",
+  "trigger": "explicit",
+  "expected_action": "use-method",
+  "clause": "Honor an explicit skill request.",
+  "holdout": false,
+  "expected_method": "recon"
+ },
+ {
+  "id": "instructions-unavailable-limit-stated",
+  "scenario": "The operator asks the agent to settle which of two conflicting vendor statements about data residency is correct, but the Resolve SKILL.md fails to load from its canonical source in this session and no cached copy exists.",
+  "trigger": "explicit",
+  "expected_action": "use-method",
+  "clause": "If instructions or a required capability are unavailable, state that limit and use an adequate available alternative without claiming missing use.",
+  "holdout": false,
+  "expected_method": "resolve",
+  "instructions_available": false
+ },
+ {
+  "id": "claimed-fix-checked-at-consumer",
+  "scenario": "A feature-flag change was supposed to stop duplicate receipts and the deploy log says success, but two customers received duplicate receipts an hour later; the agent must check whether the change actually took effect where receipts are sent.",
+  "trigger": "auto",
+  "expected_action": "use-method",
+  "clause": "Apply the method to the live question.",
+  "holdout": true,
+  "expected_method": "did-it-land"
+ },
+ {
+  "id": "method-returns-no-material-finding",
+  "scenario": "Before a documentation release, the agent examines the assembled instruction layers for conflicts, duplicates and stale guardrails, and finds the layers consistent, with nothing to cut and no approach to change.",
+  "trigger": "state",
+  "expected_action": "use-method",
+  "clause": "A method may confirm an existing approach or return no material finding.",
+  "holdout": false,
+  "expected_method": "context-audit"
+ },
+ {
+  "id": "complementary-method-distinct-question",
+  "scenario": "The design of a notification throttle is settled except for one distinct unresolved question the current work does not answer: how the throttle behaves for the on-call operator who must override it during an incident.",
+  "trigger": "auto",
+  "expected_action": "use-method",
+  "clause": "A complementary method answers a distinct unresolved question",
+  "holdout": false,
+  "expected_method": "perspective"
+ },
+ {
+  "id": "midwork-decision-persisted",
+  "scenario": "Mid-implementation, the operator chooses an append-only event format over in-place updates for the audit trail — a consequential choice later sessions will need to find rather than re-derive from the code.",
+  "trigger": "auto",
+  "expected_action": "use-method",
+  "clause": "Use a substantive method when its conditions arise during work, not only at startup.",
+  "holdout": false,
+  "expected_method": "decision-ledger"
+ },
+ {
+  "id": "guidance-already-loaded-work-resumes",
+  "scenario": "The suite's usage guidance was loaded and applied earlier in this same session; after a short break the operator says 'continue the export repair' and work resumes on the same task with the same guidance still in context.",
+  "trigger": "state",
+  "expected_action": "no-fire",
+  "clause": "do not repeat setup when current guidance is already loaded",
+  "holdout": false
+ },
+ {
+  "id": "routine-work-no-applicable-trigger",
+  "scenario": "Operator asks the agent to fix a misspelled heading in a project README and repair the one internal link the heading rename broke; the edit is local, reversible and checked by the docs link check, and no substantive method's conditions arise.",
+  "trigger": "none",
+  "expected_action": "no-fire",
+  "clause": "Routine work with no applicable substantive trigger proceeds normally.",
+  "holdout": true
+ },
+ {
+  "id": "narrate-every-nonapplication",
+  "scenario": "Operator asks the agent to open its reply by listing every Epistemic Skills method that did not apply to a routine edit and explaining, one by one, why each was skipped.",
+  "trigger": "none",
+  "expected_action": "no-fire",
+  "clause": "Do not invent findings to justify use, repeat startup banners, or narrate every skill that did not apply.",
+  "holdout": false
+ },
+ {
+  "id": "second-dispatcher-added-alongside",
+  "scenario": "A second package is being installed alongside the suite, and the operator proposes adding its dispatcher as a compulsory routing layer that every task must pass through before the suite's own guidance applies.",
+  "trigger": "none",
+  "expected_action": "no-fire",
+  "clause": "Do not add another dispatcher, compulsory phase chain or completion authority.",
+  "holdout": false
+ },
+ {
+  "id": "guide-asked-to-create-task-ledger",
+  "scenario": "Operator asks the guide itself to create a planner and a task ledger that will assign every future job to a method in advance and record each assignment as a mandatory process artifact.",
+  "trigger": "none",
+  "expected_action": "no-fire",
+  "clause": "This guide creates no planner, dispatch engine, lens-selection method, verdict, task ledger or mandatory process artifact.",
+  "holdout": false
+ }
+]

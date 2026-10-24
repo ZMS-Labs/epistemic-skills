@@ -1,0 +1,54 @@
+[
+  {
+    "id": "general-state-all-ok",
+    "action": "no-fire"
+  },
+  {
+    "id": "before-change-blast-radius-warn",
+    "action": "no-fire"
+  },
+  {
+    "id": "after-power-event-critical",
+    "action": "no-fire"
+  },
+  {
+    "id": "claim-about-to-bear-load",
+    "action": "no-fire"
+  },
+  {
+    "id": "feels-wrong-unnamed-unreachable",
+    "action": "no-fire"
+  },
+  {
+    "id": "credential-failure-unknown",
+    "action": "no-fire"
+  },
+  {
+    "id": "probe-tool-absent-unknown",
+    "action": "no-fire"
+  },
+  {
+    "id": "bound-undeclared-unknown",
+    "action": "no-fire"
+  },
+  {
+    "id": "registry-unreachable-coverage-unknown",
+    "action": "no-fire"
+  },
+  {
+    "id": "known-broken-cause-wanted-no-fire",
+    "action": "no-fire"
+  },
+  {
+    "id": "one-metric-one-command-no-fire",
+    "action": "no-fire"
+  },
+  {
+    "id": "change-question-not-state-no-fire",
+    "action": "no-fire"
+  },
+  {
+    "id": "routine-reversible-nothing-shared-no-fire",
+    "action": "no-fire"
+  }
+]

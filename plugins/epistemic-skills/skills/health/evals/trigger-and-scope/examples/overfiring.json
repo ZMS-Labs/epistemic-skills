@@ -1,0 +1,254 @@
+[
+  {
+    "id": "general-state-all-ok",
+    "action": "readout",
+    "ordered_subjects": [
+      "api",
+      "database",
+      "job-queue"
+    ],
+    "rollup": "OK",
+    "subjects": [
+      {
+        "name": "api",
+        "state": "OK"
+      },
+      {
+        "name": "database",
+        "state": "OK"
+      },
+      {
+        "name": "job-queue",
+        "state": "OK"
+      }
+    ]
+  },
+  {
+    "id": "before-change-blast-radius-warn",
+    "action": "readout",
+    "ordered_subjects": [
+      "disk",
+      "api",
+      "database"
+    ],
+    "rollup": "WARN",
+    "subjects": [
+      {
+        "name": "api",
+        "state": "OK"
+      },
+      {
+        "name": "disk",
+        "state": "WARN"
+      },
+      {
+        "name": "database",
+        "state": "OK"
+      }
+    ]
+  },
+  {
+    "id": "after-power-event-critical",
+    "action": "readout",
+    "ordered_subjects": [
+      "worker",
+      "api",
+      "database"
+    ],
+    "rollup": "CRITICAL",
+    "subjects": [
+      {
+        "name": "api",
+        "state": "OK"
+      },
+      {
+        "name": "worker",
+        "state": "CRITICAL"
+      },
+      {
+        "name": "database",
+        "state": "OK"
+      }
+    ]
+  },
+  {
+    "id": "claim-about-to-bear-load",
+    "action": "readout",
+    "ordered_subjects": [
+      "cache",
+      "api",
+      "database"
+    ],
+    "rollup": "UNKNOWN",
+    "subjects": [
+      {
+        "name": "api",
+        "state": "WARN"
+      },
+      {
+        "name": "cache",
+        "state": "UNKNOWN"
+      },
+      {
+        "name": "database",
+        "state": "OK"
+      }
+    ]
+  },
+  {
+    "id": "feels-wrong-unnamed-unreachable",
+    "action": "readout",
+    "ordered_subjects": [
+      "worker",
+      "api"
+    ],
+    "rollup": "UNKNOWN",
+    "subjects": [
+      {
+        "name": "api",
+        "state": "OK"
+      },
+      {
+        "name": "worker",
+        "state": "UNKNOWN"
+      }
+    ]
+  },
+  {
+    "id": "credential-failure-unknown",
+    "action": "readout",
+    "ordered_subjects": [
+      "backup",
+      "api"
+    ],
+    "rollup": "UNKNOWN",
+    "subjects": [
+      {
+        "name": "backup",
+        "state": "UNKNOWN"
+      },
+      {
+        "name": "api",
+        "state": "OK"
+      }
+    ]
+  },
+  {
+    "id": "probe-tool-absent-unknown",
+    "action": "readout",
+    "ordered_subjects": [
+      "metrics",
+      "api"
+    ],
+    "rollup": "UNKNOWN",
+    "subjects": [
+      {
+        "name": "metrics",
+        "state": "UNKNOWN"
+      },
+      {
+        "name": "api",
+        "state": "OK"
+      }
+    ]
+  },
+  {
+    "id": "bound-undeclared-unknown",
+    "action": "readout",
+    "ordered_subjects": [
+      "storage",
+      "api"
+    ],
+    "rollup": "UNKNOWN",
+    "subjects": [
+      {
+        "name": "storage",
+        "state": "UNKNOWN"
+      },
+      {
+        "name": "api",
+        "state": "OK"
+      }
+    ]
+  },
+  {
+    "id": "registry-unreachable-coverage-unknown",
+    "action": "readout",
+    "ordered_subjects": [
+      "registry-coverage",
+      "api",
+      "database"
+    ],
+    "rollup": "UNKNOWN",
+    "subjects": [
+      {
+        "name": "registry-coverage",
+        "state": "UNKNOWN"
+      },
+      {
+        "name": "api",
+        "state": "OK"
+      },
+      {
+        "name": "database",
+        "state": "OK"
+      }
+    ]
+  },
+  {
+    "id": "known-broken-cause-wanted-no-fire",
+    "action": "readout",
+    "ordered_subjects": [
+      "system"
+    ],
+    "rollup": "OK",
+    "subjects": [
+      {
+        "name": "system",
+        "state": "OK"
+      }
+    ]
+  },
+  {
+    "id": "one-metric-one-command-no-fire",
+    "action": "readout",
+    "ordered_subjects": [
+      "system"
+    ],
+    "rollup": "OK",
+    "subjects": [
+      {
+        "name": "system",
+        "state": "OK"
+      }
+    ]
+  },
+  {
+    "id": "change-question-not-state-no-fire",
+    "action": "readout",
+    "ordered_subjects": [
+      "system"
+    ],
+    "rollup": "OK",
+    "subjects": [
+      {
+        "name": "system",
+        "state": "OK"
+      }
+    ]
+  },
+  {
+    "id": "routine-reversible-nothing-shared-no-fire",
+    "action": "readout",
+    "ordered_subjects": [
+      "system"
+    ],
+    "rollup": "OK",
+    "subjects": [
+      {
+        "name": "system",
+        "state": "OK"
+      }
+    ]
+  }
+]

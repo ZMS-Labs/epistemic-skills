@@ -1,0 +1,54 @@
+[
+ {
+  "id": "guide-question-how-to-use-suite",
+  "action": "no-fire"
+ },
+ {
+  "id": "midwork-failure-needs-triage",
+  "action": "no-fire"
+ },
+ {
+  "id": "explicit-skill-request-honoured-directly",
+  "action": "no-fire"
+ },
+ {
+  "id": "instructions-unavailable-limit-stated",
+  "action": "no-fire"
+ },
+ {
+  "id": "claimed-fix-checked-at-consumer",
+  "action": "no-fire"
+ },
+ {
+  "id": "method-returns-no-material-finding",
+  "action": "no-fire"
+ },
+ {
+  "id": "complementary-method-distinct-question",
+  "action": "no-fire"
+ },
+ {
+  "id": "midwork-decision-persisted",
+  "action": "no-fire"
+ },
+ {
+  "id": "guidance-already-loaded-work-resumes",
+  "action": "no-fire"
+ },
+ {
+  "id": "routine-work-no-applicable-trigger",
+  "action": "no-fire"
+ },
+ {
+  "id": "narrate-every-nonapplication",
+  "action": "no-fire"
+ },
+ {
+  "id": "second-dispatcher-added-alongside",
+  "action": "no-fire"
+ },
+ {
+  "id": "guide-asked-to-create-task-ledger",
+  "action": "no-fire"
+ }
+]

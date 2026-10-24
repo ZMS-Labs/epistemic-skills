@@ -1,0 +1,119 @@
+[
+  {
+    "id": "deploy-fix-called-done-landed",
+    "scenario": "The checkout 500-error fix was deployed an hour ago. The release lead is about to tell Support the incident is done, and Support will close customer tickets on that basis. The scenario's evidence: after the deploy, the production checkout endpoint was exercised through the repaired path and returned the new confirmation payload.",
+    "trigger": "auto",
+    "expected_action": "verify-landing",
+    "clause": "a fix is about to be called done and something depends on that",
+    "holdout": false,
+    "expected_verdict": "LANDED"
+  },
+  {
+    "id": "merge-believed-applied-landed",
+    "scenario": "A pull request raising the worker rate limit to 600 requests/minute was merged to main, and the scheduler team now plans capacity on the new limit being live. The scenario's evidence: the running worker's effective-limits endpoint was queried after the merge and reports 600 requests/minute.",
+    "trigger": "auto",
+    "expected_action": "verify-landing",
+    "clause": "a deploy, merge, config edit, guard, hook, or migration is believed applied",
+    "holdout": false,
+    "expected_verdict": "LANDED"
+  },
+  {
+    "id": "config-edit-runtime-loads-cache",
+    "scenario": "An operator edited the timeout in the repository checkout from 30 to 90 seconds and announced the service now times out at 90. The scenario's evidence: the daemon does not load that checkout file — it loads a cached config bundle generated last week — and its effective-config endpoint still reports timeout_seconds=30.",
+    "trigger": "auto",
+    "expected_action": "verify-landing",
+    "clause": "after a deploy, a config edit, a guard or hook installation, a merge, or a fix about to be called done",
+    "holdout": true,
+    "expected_verdict": "UNVERIFIED"
+  },
+  {
+    "id": "green-check-source-only-oracle",
+    "scenario": "CI is green on the feature-flag change and the team wants to call it shipped. The scenario's evidence: the green check only greps the source tree for the new flag's text; no one has queried the running system, and no runtime observation exists.",
+    "trigger": "auto",
+    "expected_action": "verify-landing",
+    "clause": "a check is green but its oracle only read source",
+    "holdout": false,
+    "source_only_evidence": true,
+    "expected_verdict": "UNVERIFIED"
+  },
+  {
+    "id": "artifact-distributed-to-consumer-landed",
+    "scenario": "Plugin bundle 4.2 is believed distributed to its consumer, the design workstation, and the designer is about to start client work that needs its new export action. The scenario's evidence: the workstation app reports bundle 4.2 active, the export action succeeds, and after an app restart the bundle is still loaded.",
+    "trigger": "auto",
+    "expected_action": "verify-landing",
+    "clause": "an artifact is believed distributed to the place that consumes it.",
+    "holdout": false,
+    "expected_verdict": "LANDED"
+  },
+  {
+    "id": "guard-hook-installed-and-firing",
+    "scenario": "A deploy-blocking hook is believed installed and in force on the production pipeline, and the release manager is about to rely on it to stop bad deploys. The scenario's evidence: a harmless test event sent through the production path was blocked and logged by the hook exactly as designed.",
+    "trigger": "auto",
+    "expected_action": "verify-landing",
+    "clause": "guard, hook, or migration is believed applied",
+    "holdout": false,
+    "expected_verdict": "LANDED"
+  },
+  {
+    "id": "observed-effect-reverted-by-reconciler",
+    "scenario": "A DNS record change was observed live at the authoritative resolver at 10:00, and traffic shifted to the new host. At 10:20 the zone reconciler ran, and the scenario's evidence is a second observation after that window: the resolver returns the old record again, and traffic is back on the old host.",
+    "trigger": "state",
+    "expected_action": "verify-landing",
+    "clause": "an observed effect was subsequently observed undone",
+    "holdout": true,
+    "reverted_after_window": true,
+    "expected_verdict": "REVERTED"
+  },
+  {
+    "id": "runtime-unreachable-unverified",
+    "scenario": "A firmware deploy is believed applied to an isolated plant gateway, and operations wants to rely on its new alarm behaviour. The scenario's evidence: the gateway has been unreachable since the deploy window — a network partition — so no observation of the running system is possible at all.",
+    "trigger": "state",
+    "expected_action": "verify-landing",
+    "clause": "`UNVERIFIED` is the default.",
+    "holdout": false,
+    "runtime_unreachable": true,
+    "expected_verdict": "UNVERIFIED"
+  },
+  {
+    "id": "partial-coverage-one-of-three-consumers",
+    "scenario": "A feature-flag change was requested for three regional consumers, and the release lead wants a global 'landed' claim. The scenario's evidence: the us-east consumer was observed with the flag enabled; the eu-west and ap-south consumers were never observed.",
+    "trigger": "state",
+    "expected_action": "verify-landing",
+    "clause": "LANDED on one checked consumer does not establish the requested effect on three.",
+    "holdout": false,
+    "partial_coverage": true,
+    "expected_verdict": "UNVERIFIED"
+  },
+  {
+    "id": "nofire-local-reversible-preview-edit",
+    "scenario": "An operator nudges the spacing on a settings page in a local preview: the rendered page updates in the same breath, the edit is trivially reversible, and a bounded preview check is all the verification this routine presentation change gets. No deploy is claimed and nothing downstream relies on a landing claim.",
+    "trigger": "none",
+    "expected_action": "no-fire",
+    "clause": "the change is local, reversible, and observable in the same breath as making it",
+    "holdout": false
+  },
+  {
+    "id": "nofire-nothing-depends-yet",
+    "scenario": "An experimental flag is written into a sandboxed staging branch that nobody runs and nothing reads. The operator is just parking the idea for later; no one will act on the flag having landed, because it has not been shipped anywhere.",
+    "trigger": "none",
+    "expected_action": "no-fire",
+    "clause": "nothing yet depends on it having landed",
+    "holdout": false
+  },
+  {
+    "id": "nofire-still-deciding-what-to-change",
+    "scenario": "The team is in a design discussion about the retry problem: raise the retry limit, or add a queue and leave retries alone? No change has been made or approved, and the operator asks the responder to sit in on the trade-off discussion only.",
+    "trigger": "none",
+    "expected_action": "no-fire",
+    "clause": "you are still deciding *what* to change.",
+    "holdout": true
+  },
+  {
+    "id": "nofire-health-state-question",
+    "scenario": "After an overnight power event, the operator asks: is everything OK with the cluster? They want the current state of the running system — which services are up, degraded, or unreachable. No specific change is believed applied, and no landing claim is about to bear load.",
+    "trigger": "none",
+    "expected_action": "no-fire",
+    "clause": "Use when a change is believed applied and something now depends on it being true",
+    "holdout": false
+  }
+]

@@ -1,0 +1,139 @@
+[
+ {
+  "id": "open-multisession-schema-migration",
+  "action": "open-mission",
+  "instruction_verbatim": true,
+  "envelope": {
+   "scope_in": "staged Postgres 14-to-16 billing-ledger migration in the named clusters",
+   "scope_out": "application feature changes and customer contract amendments",
+   "permissions": "run staged migrations and roll back inside the named freeze windows",
+   "protected": "production ledger data and the pre-migration snapshot"
+  },
+  "acceptance_path_checked": true,
+  "mission_opened": true
+ },
+ {
+  "id": "open-cross-agent-handoff-relay",
+  "action": "open-mission",
+  "instruction_verbatim": true,
+  "envelope": {
+   "scope_in": "the vendor-security evidence pack and the three-agent review relay",
+   "scope_out": "contract terms with the vendor and any product change",
+   "permissions": "request evidence from the vendor and hand the review between the three named agents",
+   "protected": "the vendor's confidential evidence and the submitted final pack"
+  },
+  "acceptance_path_checked": true,
+  "mission_opened": true
+ },
+ {
+  "id": "explicit-manifest-this",
+  "action": "open-mission",
+  "instruction_verbatim": true,
+  "envelope": {
+   "scope_in": "the records-retention overhaul across the four named repositories",
+   "scope_out": "retention-policy decisions and destruction of any record",
+   "permissions": "edit retention configuration and documentation in the four named repositories",
+   "protected": "records under legal hold and the retention schedule itself"
+  },
+  "acceptance_path_checked": true,
+  "mission_opened": true
+ },
+ {
+  "id": "open-acceptance-path-unavailable",
+  "action": "open-mission",
+  "instruction_verbatim": true,
+  "envelope": {
+   "scope_in": "coordination of the escrow closing across the three named firms",
+   "scope_out": "legal advice on the escrow terms and movement of escrow funds",
+   "permissions": "schedule closing steps and exchange closing documents with the three firms",
+   "protected": "escrow funds and the signed closing pack"
+  },
+  "acceptance_path_checked": true,
+  "mission_opened": false,
+  "blocked_reason": "the only qualified acceptor is unavailable for six weeks with no delegate — no acceptance path exists"
+ },
+ {
+  "id": "resume-clean-after-interruption",
+  "action": "resume-mission",
+  "mission_id": "archive-rebuild-2026",
+  "drift_status": "clean",
+  "continued": true
+ },
+ {
+  "id": "resume-drift-found",
+  "action": "resume-mission",
+  "mission_id": "payments-cutover",
+  "drift_status": "drift-found",
+  "continued": false
+ },
+ {
+  "id": "verify-close-different-acceptor",
+  "action": "verify-mission",
+  "accepted": true,
+  "acceptor_is_actor": false
+ },
+ {
+  "id": "verify-self-acceptance-refused",
+  "action": "verify-mission",
+  "accepted": false,
+  "acceptor_is_actor": true
+ },
+ {
+  "id": "verify-scope-crossing-unacknowledged",
+  "action": "verify-mission",
+  "accepted": false,
+  "acceptor_is_actor": false
+ },
+ {
+  "id": "nofire-routine-one-step-lookup",
+  "action": "open-mission",
+  "instruction_verbatim": true,
+  "envelope": {
+   "scope_in": "the requested work, whatever it is",
+   "scope_out": "nothing",
+   "permissions": "do the work",
+   "protected": "nothing"
+  },
+  "acceptance_path_checked": true,
+  "mission_opened": true
+ },
+ {
+  "id": "nofire-multistep-ticket-sufficient",
+  "action": "open-mission",
+  "instruction_verbatim": true,
+  "envelope": {
+   "scope_in": "the requested work, whatever it is",
+   "scope_out": "nothing",
+   "permissions": "do the work",
+   "protected": "nothing"
+  },
+  "acceptance_path_checked": true,
+  "mission_opened": true
+ },
+ {
+  "id": "nofire-reanchor-decisions-decision-ledger",
+  "action": "open-mission",
+  "instruction_verbatim": true,
+  "envelope": {
+   "scope_in": "the requested work, whatever it is",
+   "scope_out": "nothing",
+   "permissions": "do the work",
+   "protected": "nothing"
+  },
+  "acceptance_path_checked": true,
+  "mission_opened": true
+ },
+ {
+  "id": "nofire-resume-never-custodied",
+  "action": "open-mission",
+  "instruction_verbatim": true,
+  "envelope": {
+   "scope_in": "the requested work, whatever it is",
+   "scope_out": "nothing",
+   "permissions": "do the work",
+   "protected": "nothing"
+  },
+  "acceptance_path_checked": true,
+  "mission_opened": true
+ }
+]

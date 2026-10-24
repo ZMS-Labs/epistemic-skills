@@ -1,0 +1,197 @@
+[
+ {
+  "id": "open-multisession-schema-migration",
+  "action": "open-mission",
+  "instruction_verbatim": true,
+  "envelope": {
+   "scope_in": "",
+   "scope_out": "",
+   "permissions": "",
+   "protected": ""
+  },
+  "acceptance_path_checked": true,
+  "mission_opened": true,
+  "accepted": true,
+  "acceptor_is_actor": true
+ },
+ {
+  "id": "open-cross-agent-handoff-relay",
+  "action": "open-mission",
+  "instruction_verbatim": true,
+  "envelope": {
+   "scope_in": "",
+   "scope_out": "",
+   "permissions": "",
+   "protected": ""
+  },
+  "acceptance_path_checked": true,
+  "mission_opened": true,
+  "accepted": true,
+  "acceptor_is_actor": true
+ },
+ {
+  "id": "explicit-manifest-this",
+  "action": "open-mission",
+  "instruction_verbatim": true,
+  "envelope": {
+   "scope_in": "",
+   "scope_out": "",
+   "permissions": "",
+   "protected": ""
+  },
+  "acceptance_path_checked": true,
+  "mission_opened": true,
+  "accepted": true,
+  "acceptor_is_actor": true
+ },
+ {
+  "id": "open-acceptance-path-unavailable",
+  "action": "open-mission",
+  "instruction_verbatim": true,
+  "envelope": {
+   "scope_in": "",
+   "scope_out": "",
+   "permissions": "",
+   "protected": ""
+  },
+  "acceptance_path_checked": true,
+  "mission_opened": true,
+  "accepted": true,
+  "acceptor_is_actor": true
+ },
+ {
+  "id": "resume-clean-after-interruption",
+  "action": "open-mission",
+  "instruction_verbatim": true,
+  "envelope": {
+   "scope_in": "",
+   "scope_out": "",
+   "permissions": "",
+   "protected": ""
+  },
+  "acceptance_path_checked": true,
+  "mission_opened": true,
+  "accepted": true,
+  "acceptor_is_actor": true
+ },
+ {
+  "id": "resume-drift-found",
+  "action": "open-mission",
+  "instruction_verbatim": true,
+  "envelope": {
+   "scope_in": "",
+   "scope_out": "",
+   "permissions": "",
+   "protected": ""
+  },
+  "acceptance_path_checked": true,
+  "mission_opened": true,
+  "accepted": true,
+  "acceptor_is_actor": true
+ },
+ {
+  "id": "verify-close-different-acceptor",
+  "action": "open-mission",
+  "instruction_verbatim": true,
+  "envelope": {
+   "scope_in": "",
+   "scope_out": "",
+   "permissions": "",
+   "protected": ""
+  },
+  "acceptance_path_checked": true,
+  "mission_opened": true,
+  "accepted": true,
+  "acceptor_is_actor": true
+ },
+ {
+  "id": "verify-self-acceptance-refused",
+  "action": "open-mission",
+  "instruction_verbatim": true,
+  "envelope": {
+   "scope_in": "",
+   "scope_out": "",
+   "permissions": "",
+   "protected": ""
+  },
+  "acceptance_path_checked": true,
+  "mission_opened": true,
+  "accepted": true,
+  "acceptor_is_actor": true
+ },
+ {
+  "id": "verify-scope-crossing-unacknowledged",
+  "action": "open-mission",
+  "instruction_verbatim": true,
+  "envelope": {
+   "scope_in": "",
+   "scope_out": "",
+   "permissions": "",
+   "protected": ""
+  },
+  "acceptance_path_checked": true,
+  "mission_opened": true,
+  "accepted": true,
+  "acceptor_is_actor": true
+ },
+ {
+  "id": "nofire-routine-one-step-lookup",
+  "action": "open-mission",
+  "instruction_verbatim": true,
+  "envelope": {
+   "scope_in": "",
+   "scope_out": "",
+   "permissions": "",
+   "protected": ""
+  },
+  "acceptance_path_checked": true,
+  "mission_opened": true,
+  "accepted": true,
+  "acceptor_is_actor": true
+ },
+ {
+  "id": "nofire-multistep-ticket-sufficient",
+  "action": "open-mission",
+  "instruction_verbatim": true,
+  "envelope": {
+   "scope_in": "",
+   "scope_out": "",
+   "permissions": "",
+   "protected": ""
+  },
+  "acceptance_path_checked": true,
+  "mission_opened": true,
+  "accepted": true,
+  "acceptor_is_actor": true
+ },
+ {
+  "id": "nofire-reanchor-decisions-decision-ledger",
+  "action": "open-mission",
+  "instruction_verbatim": true,
+  "envelope": {
+   "scope_in": "",
+   "scope_out": "",
+   "permissions": "",
+   "protected": ""
+  },
+  "acceptance_path_checked": true,
+  "mission_opened": true,
+  "accepted": true,
+  "acceptor_is_actor": true
+ },
+ {
+  "id": "nofire-resume-never-custodied",
+  "action": "open-mission",
+  "instruction_verbatim": true,
+  "envelope": {
+   "scope_in": "",
+   "scope_out": "",
+   "permissions": "",
+   "protected": ""
+  },
+  "acceptance_path_checked": true,
+  "mission_opened": true,
+  "accepted": true,
+  "acceptor_is_actor": true
+ }
+]

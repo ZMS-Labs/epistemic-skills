@@ -1,0 +1,106 @@
+[
+ {
+  "id": "evidence-conflicts-migration-assertion",
+  "action": "examine",
+  "outcome_named": "Success",
+  "decisive_assumption": "The current assumption may be wrong",
+  "discriminating_observation": "Evidence to the contrary",
+  "verdict": "approach-corrected"
+ },
+ {
+  "id": "proxy-signups-stand-for-retention",
+  "action": "examine",
+  "outcome_named": "Success",
+  "decisive_assumption": "The current assumption may be wrong",
+  "discriminating_observation": "Evidence to the contrary",
+  "verdict": "approach-corrected"
+ },
+ {
+  "id": "confidence-outruns-single-friendly-pilot",
+  "action": "examine",
+  "outcome_named": "Success",
+  "decisive_assumption": "The current assumption may be wrong",
+  "discriminating_observation": "Evidence to the contrary",
+  "verdict": "approach-corrected"
+ },
+ {
+  "id": "uncertain-assumption-changes-cache-choice",
+  "action": "examine",
+  "outcome_named": "Success",
+  "decisive_assumption": "The current assumption may be wrong",
+  "discriminating_observation": "Evidence to the contrary",
+  "verdict": "approach-corrected"
+ },
+ {
+  "id": "explicit-reflection-request-pricing",
+  "action": "examine",
+  "outcome_named": "Success",
+  "decisive_assumption": "The current assumption may be wrong",
+  "discriminating_observation": "Evidence to the contrary",
+  "verdict": "approach-corrected"
+ },
+ {
+  "id": "sound-approach-survives-challenge",
+  "action": "examine",
+  "outcome_named": "Success",
+  "decisive_assumption": "The current assumption may be wrong",
+  "discriminating_observation": "Evidence to the contrary",
+  "verdict": "approach-corrected"
+ },
+ {
+  "id": "routine-directly-checkable-spelling-fix",
+  "action": "examine",
+  "outcome_named": "Success",
+  "decisive_assumption": "The current assumption may be wrong",
+  "discriminating_observation": "Evidence to the contrary",
+  "verdict": "approach-corrected"
+ },
+ {
+  "id": "settled-choice-no-new-evidence",
+  "action": "examine",
+  "outcome_named": "Success",
+  "decisive_assumption": "The current assumption may be wrong",
+  "discriminating_observation": "Evidence to the contrary",
+  "verdict": "approach-corrected"
+ },
+ {
+  "id": "resume-stage-arrives-with-certain-basis",
+  "action": "examine",
+  "outcome_named": "Success",
+  "decisive_assumption": "The current assumption may be wrong",
+  "discriminating_observation": "Evidence to the contrary",
+  "verdict": "approach-corrected"
+ },
+ {
+  "id": "reconstruct-context-available-in-task",
+  "action": "examine",
+  "outcome_named": "Success",
+  "decisive_assumption": "The current assumption may be wrong",
+  "discriminating_observation": "Evidence to the contrary",
+  "verdict": "approach-corrected"
+ },
+ {
+  "id": "check-does-not-exercise-the-claim",
+  "action": "examine",
+  "outcome_named": "Success",
+  "decisive_assumption": "The current assumption may be wrong",
+  "discriminating_observation": "Evidence to the contrary",
+  "verdict": "approach-corrected"
+ },
+ {
+  "id": "settled-choice-basis-changed-by-new-fees",
+  "action": "examine",
+  "outcome_named": "Success",
+  "decisive_assumption": "The current assumption may be wrong",
+  "discriminating_observation": "Evidence to the contrary",
+  "verdict": "approach-corrected"
+ },
+ {
+  "id": "no-report-for-a-nonapplication",
+  "action": "examine",
+  "outcome_named": "Success",
+  "decisive_assumption": "The current assumption may be wrong",
+  "discriminating_observation": "Evidence to the contrary",
+  "verdict": "approach-corrected"
+ }
+]

@@ -1,0 +1,112 @@
+[
+  {
+    "id": "deploy-check-red-two-causes-left",
+    "action": "investigate",
+    "verdict": "NARROWED",
+    "discriminating_observation": "Confirmed the new invoice template file is present on the staging host, eliminating a missing-template cause",
+    "named_cause": null,
+    "provider": "superpowers-systematic-debugging",
+    "eliminated": [
+      "missing invoice template"
+    ]
+  },
+  {
+    "id": "search-latency-reranker-isolated",
+    "action": "investigate",
+    "verdict": "CAUSE",
+    "discriminating_observation": "With only the reranker disabled, the test cohort's p95 returned to 310ms while the control cohort stayed at 4s, with disk and index-shard readings identical across cohorts",
+    "named_cause": "the new reranker introduced in the morning release",
+    "provider": "superpowers-systematic-debugging"
+  },
+  {
+    "id": "readout-flags-cache-cause-unobserved",
+    "action": "investigate",
+    "verdict": "UNKNOWN",
+    "discriminating_observation": null,
+    "named_cause": null,
+    "provider": "standalone-debugging"
+  },
+  {
+    "id": "metrics-doc-contradicted-by-trace",
+    "action": "investigate",
+    "verdict": "CAUSE",
+    "discriminating_observation": "A worker restarted without the deployed env file processed a test charge normally, while workers using that env file skipped charges as if dry-run were on",
+    "named_cause": "stale DRY_RUN=true in the deployed env file",
+    "provider": "superpowers-systematic-debugging"
+  },
+  {
+    "id": "unreachable-license-server-unknown",
+    "action": "investigate",
+    "verdict": "UNKNOWN",
+    "discriminating_observation": null,
+    "named_cause": null,
+    "provider": "standalone-debugging"
+  },
+  {
+    "id": "reported-print-delay-within-bounds",
+    "action": "investigate",
+    "verdict": "NOT-BROKEN",
+    "discriminating_observation": "Observed three live jobs end to end: first-label times were 4.1s, 3.8s and 4.3s, inside the specified 5s warm-up bound, with no queue backlog present",
+    "named_cause": null,
+    "provider": "standalone-debugging"
+  },
+  {
+    "id": "intermittent-webhook-narrowed",
+    "action": "investigate",
+    "verdict": "NARROWED",
+    "discriminating_observation": "Packet capture from the last late episode shows the provider sent the webhook on time",
+    "named_cause": null,
+    "provider": "superpowers-systematic-debugging",
+    "eliminated": [
+      "provider-side sending delay"
+    ]
+  },
+  {
+    "id": "vague-unease-no-subject-health-first",
+    "action": "investigate",
+    "verdict": "UNKNOWN",
+    "discriminating_observation": null,
+    "named_cause": null,
+    "provider": "standalone-debugging"
+  },
+  {
+    "id": "cause-known-remedy-underway",
+    "action": "investigate",
+    "verdict": "UNKNOWN",
+    "discriminating_observation": null,
+    "named_cause": null,
+    "provider": "standalone-debugging"
+  },
+  {
+    "id": "queue-library-change-question",
+    "action": "investigate",
+    "verdict": "UNKNOWN",
+    "discriminating_observation": null,
+    "named_cause": null,
+    "provider": "standalone-debugging"
+  },
+  {
+    "id": "deterministic-config-parse-error",
+    "action": "investigate",
+    "verdict": "UNKNOWN",
+    "discriminating_observation": null,
+    "named_cause": null,
+    "provider": "standalone-debugging"
+  },
+  {
+    "id": "deploy-landed-verification-no-failure",
+    "action": "investigate",
+    "verdict": "UNKNOWN",
+    "discriminating_observation": null,
+    "named_cause": null,
+    "provider": "standalone-debugging"
+  },
+  {
+    "id": "future-cert-expiry-watch-request",
+    "action": "investigate",
+    "verdict": "UNKNOWN",
+    "discriminating_observation": null,
+    "named_cause": null,
+    "provider": "standalone-debugging"
+  }
+]

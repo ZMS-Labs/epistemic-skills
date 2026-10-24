@@ -1,0 +1,54 @@
+[
+  {
+    "id": "deploy-check-red-two-causes-left",
+    "action": "no-fire"
+  },
+  {
+    "id": "search-latency-reranker-isolated",
+    "action": "no-fire"
+  },
+  {
+    "id": "readout-flags-cache-cause-unobserved",
+    "action": "no-fire"
+  },
+  {
+    "id": "metrics-doc-contradicted-by-trace",
+    "action": "no-fire"
+  },
+  {
+    "id": "unreachable-license-server-unknown",
+    "action": "no-fire"
+  },
+  {
+    "id": "reported-print-delay-within-bounds",
+    "action": "no-fire"
+  },
+  {
+    "id": "intermittent-webhook-narrowed",
+    "action": "no-fire"
+  },
+  {
+    "id": "vague-unease-no-subject-health-first",
+    "action": "no-fire"
+  },
+  {
+    "id": "cause-known-remedy-underway",
+    "action": "no-fire"
+  },
+  {
+    "id": "queue-library-change-question",
+    "action": "no-fire"
+  },
+  {
+    "id": "deterministic-config-parse-error",
+    "action": "no-fire"
+  },
+  {
+    "id": "deploy-landed-verification-no-failure",
+    "action": "no-fire"
+  },
+  {
+    "id": "future-cert-expiry-watch-request",
+    "action": "no-fire"
+  }
+]
