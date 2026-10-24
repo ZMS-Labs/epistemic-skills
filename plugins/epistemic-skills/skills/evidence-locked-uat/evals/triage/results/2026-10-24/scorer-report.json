@@ -1,5 +1,5 @@
 {
- "scorer": "/home/hatch/workspace/epistemic-skills-evidence/plugins/epistemic-skills/skills/evidence-locked-uat/evals/triage/score.py",
+ "scorer": "plugins/epistemic-skills/skills/evidence-locked-uat/evals/triage/score.py",
  "exit_code": 0,
  "report": {
   "failures": [],
