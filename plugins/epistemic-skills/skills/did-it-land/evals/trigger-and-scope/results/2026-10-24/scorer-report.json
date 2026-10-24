@@ -1,0 +1,12 @@
+{
+ "scorer": "/home/hatch/workspace/epistemic-skills-evidence/plugins/epistemic-skills/skills/did-it-land/evals/trigger-and-scope/score.py",
+ "exit_code": 0,
+ "report": {
+  "pass": true,
+  "failures": [],
+  "actions": {
+   "verify-landing": 9,
+   "no-fire": 4
+  }
+ }
+}
