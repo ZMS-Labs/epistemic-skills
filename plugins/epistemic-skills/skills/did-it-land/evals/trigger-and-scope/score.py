@@ -86,9 +86,9 @@ def score(fixtures: list[dict], responses: object) -> dict:
         if expected == "verify-landing":
             _check_verify(fid, fixture, row, failures)
         elif expected == "no-fire":
-            present = [field for field in SILENT_FIELDS if field in row]
+            present = sorted(str(key) for key in row if key not in ("id", "action"))
             if present:
-                failures.append(f"{fid}: no-fire must be silent — landing fields present: {present}")
+                failures.append(f"{fid}: no-fire must be silent — no landing fields, no explanation, nothing beyond id and action; present: {present}")
     return {"pass": not failures, "failures": failures, "actions": dict(actions)}
 
 
