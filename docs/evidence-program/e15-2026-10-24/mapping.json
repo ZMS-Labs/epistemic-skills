@@ -1,0 +1,1361 @@
+{
+ "epoch": "E15",
+ "unsealed": "2026-10-24",
+ "key_derivation": "sha256(scenario-id + '|' + replicate + '|' + arm + '|' + salt), first 12 hex",
+ "salt": "0f04e9adff93012699d6c80382cada09",
+ "note": "Sealed by the dispatcher before scoring; committed only after both scorer reports were committed (see scorer-a-report.json / scorer-b-report.json in this directory and their commit).",
+ "mapping": {
+  "b9452c54f024": {
+   "scenario": "D1",
+   "arm": "skill",
+   "replicate": 1,
+   "skill": "did-it-land"
+  },
+  "42efa64c83d0": {
+   "scenario": "D1",
+   "arm": "skill",
+   "replicate": 2,
+   "skill": "did-it-land"
+  },
+  "a9b21134ca7a": {
+   "scenario": "D1",
+   "arm": "skill",
+   "replicate": 3,
+   "skill": "did-it-land"
+  },
+  "7060a231d2d1": {
+   "scenario": "D1",
+   "arm": "noskill",
+   "replicate": 1,
+   "skill": "did-it-land"
+  },
+  "dceada9d7d56": {
+   "scenario": "D1",
+   "arm": "noskill",
+   "replicate": 2,
+   "skill": "did-it-land"
+  },
+  "1279448b5832": {
+   "scenario": "D1",
+   "arm": "noskill",
+   "replicate": 3,
+   "skill": "did-it-land"
+  },
+  "bca115b978a3": {
+   "scenario": "D2",
+   "arm": "skill",
+   "replicate": 1,
+   "skill": "did-it-land"
+  },
+  "a4e0f47ad7d9": {
+   "scenario": "D2",
+   "arm": "skill",
+   "replicate": 2,
+   "skill": "did-it-land"
+  },
+  "e9f6346c0741": {
+   "scenario": "D2",
+   "arm": "skill",
+   "replicate": 3,
+   "skill": "did-it-land"
+  },
+  "14bc70133bcf": {
+   "scenario": "D2",
+   "arm": "noskill",
+   "replicate": 1,
+   "skill": "did-it-land"
+  },
+  "dedd5e8d622d": {
+   "scenario": "D2",
+   "arm": "noskill",
+   "replicate": 2,
+   "skill": "did-it-land"
+  },
+  "72dad9a26269": {
+   "scenario": "D2",
+   "arm": "noskill",
+   "replicate": 3,
+   "skill": "did-it-land"
+  },
+  "d5da50a6f1e2": {
+   "scenario": "D3",
+   "arm": "skill",
+   "replicate": 1,
+   "skill": "did-it-land"
+  },
+  "fb5a583ad4d6": {
+   "scenario": "D3",
+   "arm": "skill",
+   "replicate": 2,
+   "skill": "did-it-land"
+  },
+  "ecb0c9a680bd": {
+   "scenario": "D3",
+   "arm": "skill",
+   "replicate": 3,
+   "skill": "did-it-land"
+  },
+  "e3cefe297f41": {
+   "scenario": "D3",
+   "arm": "noskill",
+   "replicate": 1,
+   "skill": "did-it-land"
+  },
+  "c80951170035": {
+   "scenario": "D3",
+   "arm": "noskill",
+   "replicate": 2,
+   "skill": "did-it-land"
+  },
+  "53daeb48b799": {
+   "scenario": "D3",
+   "arm": "noskill",
+   "replicate": 3,
+   "skill": "did-it-land"
+  },
+  "92edb5665c80": {
+   "scenario": "D4",
+   "arm": "skill",
+   "replicate": 1,
+   "skill": "did-it-land"
+  },
+  "d57cd0cd2c13": {
+   "scenario": "D4",
+   "arm": "skill",
+   "replicate": 2,
+   "skill": "did-it-land"
+  },
+  "226bfc489c32": {
+   "scenario": "D4",
+   "arm": "skill",
+   "replicate": 3,
+   "skill": "did-it-land"
+  },
+  "530d29942899": {
+   "scenario": "D4",
+   "arm": "noskill",
+   "replicate": 1,
+   "skill": "did-it-land"
+  },
+  "55f4a138880d": {
+   "scenario": "D4",
+   "arm": "noskill",
+   "replicate": 2,
+   "skill": "did-it-land"
+  },
+  "ebe403931d2a": {
+   "scenario": "D4",
+   "arm": "noskill",
+   "replicate": 3,
+   "skill": "did-it-land"
+  },
+  "4523ab808274": {
+   "scenario": "D5",
+   "arm": "skill",
+   "replicate": 1,
+   "skill": "did-it-land"
+  },
+  "105b553ff759": {
+   "scenario": "D5",
+   "arm": "skill",
+   "replicate": 2,
+   "skill": "did-it-land"
+  },
+  "93f06f62fef2": {
+   "scenario": "D5",
+   "arm": "skill",
+   "replicate": 3,
+   "skill": "did-it-land"
+  },
+  "ede2a061abb6": {
+   "scenario": "D5",
+   "arm": "noskill",
+   "replicate": 1,
+   "skill": "did-it-land"
+  },
+  "61ee56081eee": {
+   "scenario": "D5",
+   "arm": "noskill",
+   "replicate": 2,
+   "skill": "did-it-land"
+  },
+  "c533a0389576": {
+   "scenario": "D5",
+   "arm": "noskill",
+   "replicate": 3,
+   "skill": "did-it-land"
+  },
+  "8d2a1f926622": {
+   "scenario": "D6",
+   "arm": "skill",
+   "replicate": 1,
+   "skill": "did-it-land"
+  },
+  "58a06a4bf040": {
+   "scenario": "D6",
+   "arm": "skill",
+   "replicate": 2,
+   "skill": "did-it-land"
+  },
+  "c06d14f36364": {
+   "scenario": "D6",
+   "arm": "skill",
+   "replicate": 3,
+   "skill": "did-it-land"
+  },
+  "2e0826dd3668": {
+   "scenario": "D6",
+   "arm": "noskill",
+   "replicate": 1,
+   "skill": "did-it-land"
+  },
+  "1435bc184f11": {
+   "scenario": "D6",
+   "arm": "noskill",
+   "replicate": 2,
+   "skill": "did-it-land"
+  },
+  "24261f90ae8f": {
+   "scenario": "D6",
+   "arm": "noskill",
+   "replicate": 3,
+   "skill": "did-it-land"
+  },
+  "8f04ef6ee8aa": {
+   "scenario": "T1",
+   "arm": "skill",
+   "replicate": 1,
+   "skill": "triage"
+  },
+  "c5ea5408e973": {
+   "scenario": "T1",
+   "arm": "skill",
+   "replicate": 2,
+   "skill": "triage"
+  },
+  "f2694ac306ee": {
+   "scenario": "T1",
+   "arm": "skill",
+   "replicate": 3,
+   "skill": "triage"
+  },
+  "2584e9dc862d": {
+   "scenario": "T1",
+   "arm": "noskill",
+   "replicate": 1,
+   "skill": "triage"
+  },
+  "17c4cf25bfc8": {
+   "scenario": "T1",
+   "arm": "noskill",
+   "replicate": 2,
+   "skill": "triage"
+  },
+  "aca6e84dcbef": {
+   "scenario": "T1",
+   "arm": "noskill",
+   "replicate": 3,
+   "skill": "triage"
+  },
+  "472d568b55b5": {
+   "scenario": "T2",
+   "arm": "skill",
+   "replicate": 1,
+   "skill": "triage"
+  },
+  "02405c33369a": {
+   "scenario": "T2",
+   "arm": "skill",
+   "replicate": 2,
+   "skill": "triage"
+  },
+  "13d0ad7b548e": {
+   "scenario": "T2",
+   "arm": "skill",
+   "replicate": 3,
+   "skill": "triage"
+  },
+  "d9951843b76c": {
+   "scenario": "T2",
+   "arm": "noskill",
+   "replicate": 1,
+   "skill": "triage"
+  },
+  "62cad3c946b1": {
+   "scenario": "T2",
+   "arm": "noskill",
+   "replicate": 2,
+   "skill": "triage"
+  },
+  "5cf154b53637": {
+   "scenario": "T2",
+   "arm": "noskill",
+   "replicate": 3,
+   "skill": "triage"
+  },
+  "44cee9279590": {
+   "scenario": "T3",
+   "arm": "skill",
+   "replicate": 1,
+   "skill": "triage"
+  },
+  "c600f0facd64": {
+   "scenario": "T3",
+   "arm": "skill",
+   "replicate": 2,
+   "skill": "triage"
+  },
+  "68dabf1bd3d2": {
+   "scenario": "T3",
+   "arm": "skill",
+   "replicate": 3,
+   "skill": "triage"
+  },
+  "74f668cac4aa": {
+   "scenario": "T3",
+   "arm": "noskill",
+   "replicate": 1,
+   "skill": "triage"
+  },
+  "ab19226706dd": {
+   "scenario": "T3",
+   "arm": "noskill",
+   "replicate": 2,
+   "skill": "triage"
+  },
+  "df0560d6b1a2": {
+   "scenario": "T3",
+   "arm": "noskill",
+   "replicate": 3,
+   "skill": "triage"
+  },
+  "343c4f9e9496": {
+   "scenario": "T4",
+   "arm": "skill",
+   "replicate": 1,
+   "skill": "triage"
+  },
+  "209d173906f6": {
+   "scenario": "T4",
+   "arm": "skill",
+   "replicate": 2,
+   "skill": "triage"
+  },
+  "fb95953b25d5": {
+   "scenario": "T4",
+   "arm": "skill",
+   "replicate": 3,
+   "skill": "triage"
+  },
+  "4a9290530e97": {
+   "scenario": "T4",
+   "arm": "noskill",
+   "replicate": 1,
+   "skill": "triage"
+  },
+  "5f4ae26c1613": {
+   "scenario": "T4",
+   "arm": "noskill",
+   "replicate": 2,
+   "skill": "triage"
+  },
+  "6db48e75e3e5": {
+   "scenario": "T4",
+   "arm": "noskill",
+   "replicate": 3,
+   "skill": "triage"
+  },
+  "bdbff8c541cd": {
+   "scenario": "T5",
+   "arm": "skill",
+   "replicate": 1,
+   "skill": "triage"
+  },
+  "4c580dabd898": {
+   "scenario": "T5",
+   "arm": "skill",
+   "replicate": 2,
+   "skill": "triage"
+  },
+  "ff1568516022": {
+   "scenario": "T5",
+   "arm": "skill",
+   "replicate": 3,
+   "skill": "triage"
+  },
+  "563d7701af2f": {
+   "scenario": "T5",
+   "arm": "noskill",
+   "replicate": 1,
+   "skill": "triage"
+  },
+  "3babcdabe2bd": {
+   "scenario": "T5",
+   "arm": "noskill",
+   "replicate": 2,
+   "skill": "triage"
+  },
+  "6c993a5191da": {
+   "scenario": "T5",
+   "arm": "noskill",
+   "replicate": 3,
+   "skill": "triage"
+  },
+  "ef93a56425ac": {
+   "scenario": "T6",
+   "arm": "skill",
+   "replicate": 1,
+   "skill": "triage"
+  },
+  "71c8147fd139": {
+   "scenario": "T6",
+   "arm": "skill",
+   "replicate": 2,
+   "skill": "triage"
+  },
+  "9faf4a436657": {
+   "scenario": "T6",
+   "arm": "skill",
+   "replicate": 3,
+   "skill": "triage"
+  },
+  "b868ad4ae7f4": {
+   "scenario": "T6",
+   "arm": "noskill",
+   "replicate": 1,
+   "skill": "triage"
+  },
+  "39e566e3fb2e": {
+   "scenario": "T6",
+   "arm": "noskill",
+   "replicate": 2,
+   "skill": "triage"
+  },
+  "fd516d902b85": {
+   "scenario": "T6",
+   "arm": "noskill",
+   "replicate": 3,
+   "skill": "triage"
+  }
+ },
+ "per_response_totals": {
+  "b9452c54f024": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    2.0,
+    1.0,
+    2.0
+   ],
+   "total": 9.0
+  },
+  "42efa64c83d0": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    2.0,
+    1.5,
+    2.0
+   ],
+   "total": 9.5
+  },
+  "a9b21134ca7a": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    2.0,
+    1.5,
+    2.0
+   ],
+   "total": 9.5
+  },
+  "7060a231d2d1": {
+   "criteria_mean": [
+    2.0,
+    1.5,
+    2.0,
+    0.0,
+    2.0
+   ],
+   "total": 7.5
+  },
+  "dceada9d7d56": {
+   "criteria_mean": [
+    2.0,
+    1.5,
+    2.0,
+    0.0,
+    2.0
+   ],
+   "total": 7.5
+  },
+  "1279448b5832": {
+   "criteria_mean": [
+    2.0,
+    1.5,
+    2.0,
+    0.0,
+    2.0
+   ],
+   "total": 7.5
+  },
+  "bca115b978a3": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    2.0,
+    1.0,
+    2.0
+   ],
+   "total": 9.0
+  },
+  "a4e0f47ad7d9": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0
+   ],
+   "total": 10.0
+  },
+  "e9f6346c0741": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    2.0,
+    1.0,
+    2.0
+   ],
+   "total": 9.0
+  },
+  "14bc70133bcf": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    2.0,
+    1.0,
+    1.5
+   ],
+   "total": 8.5
+  },
+  "dedd5e8d622d": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    2.0,
+    1.0,
+    1.0
+   ],
+   "total": 8.0
+  },
+  "72dad9a26269": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    2.0,
+    1.0,
+    1.0
+   ],
+   "total": 8.0
+  },
+  "d5da50a6f1e2": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0
+   ],
+   "total": 10.0
+  },
+  "fb5a583ad4d6": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0
+   ],
+   "total": 10.0
+  },
+  "ecb0c9a680bd": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0
+   ],
+   "total": 10.0
+  },
+  "e3cefe297f41": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    1.5,
+    0.0,
+    1.5
+   ],
+   "total": 7.0
+  },
+  "c80951170035": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    1.5,
+    1.0,
+    1.5
+   ],
+   "total": 8.0
+  },
+  "53daeb48b799": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    1.5,
+    0.0,
+    2.0
+   ],
+   "total": 7.5
+  },
+  "92edb5665c80": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    2.0,
+    1.0,
+    2.0
+   ],
+   "total": 9.0
+  },
+  "d57cd0cd2c13": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0
+   ],
+   "total": 10.0
+  },
+  "226bfc489c32": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0
+   ],
+   "total": 10.0
+  },
+  "530d29942899": {
+   "criteria_mean": [
+    2.0,
+    1.0,
+    2.0,
+    1.0,
+    2.0
+   ],
+   "total": 8.0
+  },
+  "55f4a138880d": {
+   "criteria_mean": [
+    2.0,
+    1.0,
+    2.0,
+    1.0,
+    2.0
+   ],
+   "total": 8.0
+  },
+  "ebe403931d2a": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    2.0,
+    1.0,
+    2.0
+   ],
+   "total": 9.0
+  },
+  "4523ab808274": {
+   "criteria_mean": [
+    2.0,
+    1.5,
+    2.0,
+    2.0,
+    2.0
+   ],
+   "total": 9.5
+  },
+  "105b553ff759": {
+   "criteria_mean": [
+    2.0,
+    1.5,
+    2.0,
+    2.0,
+    2.0
+   ],
+   "total": 9.5
+  },
+  "93f06f62fef2": {
+   "criteria_mean": [
+    2.0,
+    1.5,
+    2.0,
+    2.0,
+    2.0
+   ],
+   "total": 9.5
+  },
+  "ede2a061abb6": {
+   "criteria_mean": [
+    2.0,
+    1.0,
+    2.0,
+    1.5,
+    1.0
+   ],
+   "total": 7.5
+  },
+  "61ee56081eee": {
+   "criteria_mean": [
+    2.0,
+    1.0,
+    2.0,
+    2.0,
+    1.0
+   ],
+   "total": 8.0
+  },
+  "c533a0389576": {
+   "criteria_mean": [
+    2.0,
+    1.0,
+    2.0,
+    1.5,
+    1.0
+   ],
+   "total": 7.5
+  },
+  "8d2a1f926622": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0
+   ],
+   "total": 10.0
+  },
+  "58a06a4bf040": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0
+   ],
+   "total": 10.0
+  },
+  "c06d14f36364": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    2.0,
+    1.0,
+    2.0
+   ],
+   "total": 9.0
+  },
+  "2e0826dd3668": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    2.0,
+    0.0,
+    2.0
+   ],
+   "total": 8.0
+  },
+  "1435bc184f11": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    2.0,
+    0.0,
+    2.0
+   ],
+   "total": 8.0
+  },
+  "24261f90ae8f": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    2.0,
+    0.0,
+    2.0
+   ],
+   "total": 8.0
+  },
+  "8f04ef6ee8aa": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0
+   ],
+   "total": 10.0
+  },
+  "c5ea5408e973": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0
+   ],
+   "total": 10.0
+  },
+  "f2694ac306ee": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0
+   ],
+   "total": 10.0
+  },
+  "2584e9dc862d": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    1.5,
+    2.0,
+    2.0
+   ],
+   "total": 9.5
+  },
+  "17c4cf25bfc8": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    1.5,
+    2.0,
+    2.0
+   ],
+   "total": 9.5
+  },
+  "aca6e84dcbef": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    1.5,
+    2.0,
+    2.0
+   ],
+   "total": 9.5
+  },
+  "472d568b55b5": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0
+   ],
+   "total": 10.0
+  },
+  "02405c33369a": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0
+   ],
+   "total": 10.0
+  },
+  "13d0ad7b548e": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0
+   ],
+   "total": 10.0
+  },
+  "d9951843b76c": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0
+   ],
+   "total": 10.0
+  },
+  "62cad3c946b1": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0
+   ],
+   "total": 10.0
+  },
+  "5cf154b53637": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0
+   ],
+   "total": 10.0
+  },
+  "44cee9279590": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0
+   ],
+   "total": 10.0
+  },
+  "c600f0facd64": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0
+   ],
+   "total": 10.0
+  },
+  "68dabf1bd3d2": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0
+   ],
+   "total": 10.0
+  },
+  "74f668cac4aa": {
+   "criteria_mean": [
+    1.0,
+    2.0,
+    1.0,
+    2.0,
+    2.0
+   ],
+   "total": 8.0
+  },
+  "ab19226706dd": {
+   "criteria_mean": [
+    1.0,
+    2.0,
+    1.0,
+    2.0,
+    2.0
+   ],
+   "total": 8.0
+  },
+  "df0560d6b1a2": {
+   "criteria_mean": [
+    1.0,
+    2.0,
+    1.0,
+    2.0,
+    2.0
+   ],
+   "total": 8.0
+  },
+  "343c4f9e9496": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0
+   ],
+   "total": 10.0
+  },
+  "209d173906f6": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0
+   ],
+   "total": 10.0
+  },
+  "fb95953b25d5": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    1.0
+   ],
+   "total": 9.0
+  },
+  "4a9290530e97": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0
+   ],
+   "total": 10.0
+  },
+  "5f4ae26c1613": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0
+   ],
+   "total": 10.0
+  },
+  "6db48e75e3e5": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0
+   ],
+   "total": 10.0
+  },
+  "bdbff8c541cd": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0
+   ],
+   "total": 10.0
+  },
+  "4c580dabd898": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0
+   ],
+   "total": 10.0
+  },
+  "ff1568516022": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0
+   ],
+   "total": 10.0
+  },
+  "563d7701af2f": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0
+   ],
+   "total": 10.0
+  },
+  "3babcdabe2bd": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0
+   ],
+   "total": 10.0
+  },
+  "6c993a5191da": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0
+   ],
+   "total": 10.0
+  },
+  "ef93a56425ac": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0
+   ],
+   "total": 10.0
+  },
+  "71c8147fd139": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0
+   ],
+   "total": 10.0
+  },
+  "9faf4a436657": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0
+   ],
+   "total": 10.0
+  },
+  "b868ad4ae7f4": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0
+   ],
+   "total": 10.0
+  },
+  "39e566e3fb2e": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0
+   ],
+   "total": 10.0
+  },
+  "fd516d902b85": {
+   "criteria_mean": [
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0
+   ],
+   "total": 10.0
+  }
+ },
+ "per_scenario": {
+  "D1": {
+   "skill_scores": [
+    9.0,
+    9.5,
+    9.5
+   ],
+   "noskill_scores": [
+    7.5,
+    7.5,
+    7.5
+   ],
+   "skill_mean": 9.33,
+   "noskill_mean": 7.5,
+   "lead": 1.83,
+   "led": true
+  },
+  "D2": {
+   "skill_scores": [
+    9.0,
+    10.0,
+    9.0
+   ],
+   "noskill_scores": [
+    8.5,
+    8.0,
+    8.0
+   ],
+   "skill_mean": 9.33,
+   "noskill_mean": 8.17,
+   "lead": 1.17,
+   "led": true
+  },
+  "D3": {
+   "skill_scores": [
+    10.0,
+    10.0,
+    10.0
+   ],
+   "noskill_scores": [
+    7.0,
+    8.0,
+    7.5
+   ],
+   "skill_mean": 10.0,
+   "noskill_mean": 7.5,
+   "lead": 2.5,
+   "led": true
+  },
+  "D4": {
+   "skill_scores": [
+    9.0,
+    10.0,
+    10.0
+   ],
+   "noskill_scores": [
+    8.0,
+    8.0,
+    9.0
+   ],
+   "skill_mean": 9.67,
+   "noskill_mean": 8.33,
+   "lead": 1.33,
+   "led": true
+  },
+  "D5": {
+   "skill_scores": [
+    9.5,
+    9.5,
+    9.5
+   ],
+   "noskill_scores": [
+    7.5,
+    8.0,
+    7.5
+   ],
+   "skill_mean": 9.5,
+   "noskill_mean": 7.67,
+   "lead": 1.83,
+   "led": true
+  },
+  "D6": {
+   "skill_scores": [
+    10.0,
+    10.0,
+    9.0
+   ],
+   "noskill_scores": [
+    8.0,
+    8.0,
+    8.0
+   ],
+   "skill_mean": 9.67,
+   "noskill_mean": 8.0,
+   "lead": 1.67,
+   "led": true
+  },
+  "T1": {
+   "skill_scores": [
+    10.0,
+    10.0,
+    10.0
+   ],
+   "noskill_scores": [
+    9.5,
+    9.5,
+    9.5
+   ],
+   "skill_mean": 10.0,
+   "noskill_mean": 9.5,
+   "lead": 0.5,
+   "led": false
+  },
+  "T2": {
+   "skill_scores": [
+    10.0,
+    10.0,
+    10.0
+   ],
+   "noskill_scores": [
+    10.0,
+    10.0,
+    10.0
+   ],
+   "skill_mean": 10.0,
+   "noskill_mean": 10.0,
+   "lead": 0.0,
+   "led": false
+  },
+  "T3": {
+   "skill_scores": [
+    10.0,
+    10.0,
+    10.0
+   ],
+   "noskill_scores": [
+    8.0,
+    8.0,
+    8.0
+   ],
+   "skill_mean": 10.0,
+   "noskill_mean": 8.0,
+   "lead": 2.0,
+   "led": true
+  },
+  "T4": {
+   "skill_scores": [
+    10.0,
+    10.0,
+    9.0
+   ],
+   "noskill_scores": [
+    10.0,
+    10.0,
+    10.0
+   ],
+   "skill_mean": 9.67,
+   "noskill_mean": 10.0,
+   "lead": -0.33,
+   "led": false
+  },
+  "T5": {
+   "skill_scores": [
+    10.0,
+    10.0,
+    10.0
+   ],
+   "noskill_scores": [
+    10.0,
+    10.0,
+    10.0
+   ],
+   "skill_mean": 10.0,
+   "noskill_mean": 10.0,
+   "lead": 0.0,
+   "led": false
+  },
+  "T6": {
+   "skill_scores": [
+    10.0,
+    10.0,
+    10.0
+   ],
+   "noskill_scores": [
+    10.0,
+    10.0,
+    10.0
+   ],
+   "skill_mean": 10.0,
+   "noskill_mean": 10.0,
+   "lead": 0.0,
+   "led": false
+  }
+ },
+ "led_counts": {
+  "triage": 1,
+  "did-it-land": 6
+ }
+}
