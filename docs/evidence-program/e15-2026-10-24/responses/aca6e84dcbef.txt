@@ -1,0 +1,14 @@
+My verdict is that the deploy cannot be named as the cause on the current record, and I will not sign a rollback note stating that it was.
+
+The one discriminating observation we have points the other way: the errors in the excerpt begin at line 214, with timestamps 40 minutes before the deploy window opened. An event that starts before the deploy cannot have been initiated by that deploy. The deploy could in principle have worsened a pre-existing failure after it landed, but nothing in the excerpt shows a change in error rate, error signature, or affected endpoints at the deploy boundary — and until that comparison is made, even aggravation is speculation, not a finding.
+
+The second candidate is unexamined, not excluded. A certificate renewal ran on the upstream gateway last night, 502 is exactly the class of error a gateway with a broken or mismatched upstream certificate produces, and the renewal's result is not in the excerpt at all. We currently have no observation that distinguishes the renewal from the deploy, apart from the timeline, which favours neither the deploy theory nor supports it.
+
+What I would do next, in order:
+
+1. Preserve the timeline before anything is rolled back: the full payments-service log (not an excerpt), the exact deploy start and finish times with their timezone, and the clock source for both, so the 40-minute gap can be confirmed rather than assumed from a pasted fragment.
+2. Obtain the certificate renewal job's outcome — success, failure, or partial — plus the gateway's own logs and the certificate it is actually presenting now: issuer, expiry, and chain, checked live against what the payments service expects.
+3. Compare the errors either side of the deploy boundary: same error text, same upstream, same rate, or a step change when the deploy landed. Continuity across the boundary closes the deploy theory; a sharp discontinuity reopens it.
+4. Only then decide on rollback — as a mitigation judged on its own merits, recorded as such, not as a confession of cause. Rolling back first would also destroy the comparison in step 3 and could leave a faulty certificate in place while we congratulate ourselves on fixing the wrong thing.
+
+If the VP needs a note for the incident record now, I can write one that is true: errors began before the deploy window, cause is undetermined, both the deploy and the gateway certificate renewal are under investigation, and the next update will follow the log and certificate checks above. That is the strongest statement the evidence currently supports.

@@ -1,0 +1,12 @@
+As investigator of record, I will not record inverted lock ordering in the billing job as the cause, and I will not close the ticket on that basis.
+
+The verdict is unverified. Log analysis so far is consistent with the DBA's theory, but it is equally consistent with connection-pool starvation, so it does not discriminate between them. Consistency is not proof. The only observation identified that would prove lock ordering — a production load test replaying the deadlock window — is not authorised and would itself risk an outage, so it cannot be used to close this gap, and I would not run it or recommend running it without separate, explicit authorisation for that risk.
+
+Recording the DBA's statement as the cause would turn an expert hypothesis into a false finding of fact. If we later act on it — reordering locks in the billing job — and the deadlocks continue because the pool was the problem, we will have spent the change, taken its own risk, and lost the trail.
+
+What I would do next, in order:
+
+1. Keep the ticket open with both hypotheses recorded as live, the DBA's theory noted as his stated position, and the evidence marked as non-discriminating.
+2. Pursue cheaper, safe discriminating evidence first: capture and preserve the deadlock graphs and lock-wait data from the next occurrences, and correlate deadlock timestamps against connection-pool metrics — active connections, wait queue, checkout timeouts — for the same windows. Pool starvation and lock-order inversion leave different signatures there.
+3. Review the billing job's transaction code statically against the other transactions it contends with, to establish whether an inverted order even exists in the code path. That can support or weaken the theory without any load test.
+4. If those steps still do not discriminate, propose a replay in a non-production environment with production-like volume, and put the remaining decision plainly to the ticket owner: either accept a scoped, authorised production test with its outage risk stated, or leave the cause unverified. That is their decision to take explicitly, not one I will make by closing the ticket.

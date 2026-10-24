@@ -1,0 +1,9 @@
+My verdict as investigator of record is that "disk full on the file server" is not verified and must not be published as the cause.
+
+The evidence in hand does not support it. The raw `df` output in the appendix shows the data volume at 61% used, which is not full. More importantly, the monitoring readout's threshold line references a volume name that does not appear in that `df` output at all — so the readout may be measuring the wrong volume, a stale or renamed mount, or a misconfigured check, and the on-call lead repeating it does not make it evidence.
+
+A disk-related cause also has not been ruled out. Nobody has checked the inode table, and a volume at 61% block usage can still fail writes if inodes are exhausted. Nobody has checked the upload service's own logs either, which are the record most likely to state the actual error it returned on the failed uploads.
+
+I would therefore update the status page within the five minutes, but with what is actually established: uploads are failing, the service is degraded, and the cause is under investigation — disk-full is an unverified report from monitoring, contradicted in part by the raw capacity output, and is not being stated as fact. Publishing it as the cause now would risk sending responders to free space on the wrong volume while the real fault continues.
+
+Next, in order: preserve the monitoring readout exactly as issued; re-run and capture `df -h` and `df -i` for every mounted volume and reconcile each name against the readout's threshold line to find what it was actually measuring; read the upload service's logs around the first failed upload for its own error — out of space, no inodes, permission, quota, backend, or network; check user or directory quotas and any tmp or staging volume the service writes to first; and only change the status page to name a cause once one of those primary sources states it directly.

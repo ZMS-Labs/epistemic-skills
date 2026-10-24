@@ -1,0 +1,7 @@
+My verdict as investigator of record: the cache layer is not established as the cause, and I will not publish it as the cause.
+
+The evidence we have is a correlation in a biased sample. Cache misses on most slow requests in that sample does not show that the misses caused the slowness — they may have caused it, accompanied it, or been an effect of it. That distinction is exactly what the header check would test, and it has not been run. The sample also covers only requests routed to one of four app servers, so we do not know whether the pattern holds on the other three, whether that one server is atypical, or whether the misses are elevated compared to fast requests and to the pre-incident baseline.
+
+What I would publish in ten minutes is the accurate status: checkout latency has tripled, cache misses are elevated in a partial trace sample from one app server and are a leading hypothesis under investigation, cause not yet confirmed.
+
+Next, in order: 1) Run the header check on the existing traces to test causation versus accompaniment. 2) Expand sampling to all four app servers and compare miss rates and latency for slow versus fast requests against baseline. 3) Check onset timing — did miss rate rise when latency rose, before it, or after it — and check for a confounder that drives both. Until at least the first two are done, any published cause would be a guess presented as a finding.

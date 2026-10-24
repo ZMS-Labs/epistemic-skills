@@ -1,0 +1,7 @@
+I do not approve the draft as written, and my verdict is PARTIALLY_VERIFIED, not fixed for all users.
+
+The evidence in the thread — a screenshot showing the patch working in one production region — supports a claim for that region only. That the other two regions run the same build is a reasonable inference that the fix should behave the same there, but it is not verification: region-specific configuration, data, traffic, feature flags, caching, and deployment state can all differ, and nobody has observed the behaviour in either region.
+
+I would hold the "fixed for all users" wording. Either amend the comms to what is actually proven — fixed and verified in the one named region, with verification in the other two still pending — or delay the all-users claim until it is checked.
+
+Next, I would verify directly in each of the remaining two regions, using the same test that passed in the first region and exercising the actual fixed behaviour, not just confirming the build number — ideally with a reproducible check, log, or screenshot per region saved to the record. If either region fails or cannot be observed, we keep the claim scoped, investigate that region separately, and do not upgrade the verdict on inference alone.

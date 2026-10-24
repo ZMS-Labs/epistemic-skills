@@ -1,0 +1,7 @@
+Verdict: I cannot record "disk full on the file server" as the cause — it is unverified and contradicted by the only primary evidence we have.
+
+The monitoring readout and the on-call lead agree, but they are not independent sources; the lead is repeating the readout. The raw `df` in the appendix shows the data volume at 61%, which is not full. More importantly, the readout's threshold line references a volume name that does not appear in that `df` output at all, so the readout may be alerting on the wrong volume, a stale or misconfigured check, or a volume we have not actually inspected.
+
+For the status page update due now, I would publish the symptom only, not that cause: uploads are failing, impact is confirmed, cause is under investigation. Publishing "disk full" would be presenting a readout's label as a verified finding when the underlying data do not support it.
+
+Next, in order: 1) Run and record `df` and `df -i` on the file server for all volumes, including the exact volume named in the readout — disk exhaustion can be inode exhaustion even at 61% capacity, and that table has not been checked. 2) Read the upload service's own logs for the failure window to see the actual error it returned. 3) Trace the monitoring check to its source to confirm which host and volume it is actually measuring and whether its threshold line matches reality. Until one of those primary checks confirms exhaustion, the cause remains unknown.

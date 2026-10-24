@@ -1,0 +1,5 @@
+My verdict as investigator of record is: not confirmed — unverified. A merged pull request and green CI prove that the hotfix was integrated and passed pre-production checks; they prove nothing about the production checkout path. No one has exercised that path since the deploy, and this thread contains no production observation of any kind — no live checkout, no production logs, metrics, or version confirmation tied to the deployed service.
+
+The incident cannot close on this evidence.
+
+What I would do next is observe the effect where it matters: confirm the deployed production version actually contains the hotfix, exercise the production checkout path end-to-end (or review a real post-deploy checkout that did), and check production logs and error rates for the failure the hotfix was meant to fix. Only if that production observation shows the checkout succeeding as intended would I record the fix as verified and support closing the incident; if it fails or cannot be observed, the incident stays open and the deploy itself becomes the next thing to investigate.

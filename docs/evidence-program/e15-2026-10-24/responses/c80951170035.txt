@@ -1,0 +1,9 @@
+Verdict: I do not approve the comms draft as written. "Fixed for all users" is not supported by the evidence we have.
+
+What we have is verification in one of three production regions, evidenced by a screenshot in the thread. That establishes, at most, that the patched behaviour was observed once, in that region. It does not establish the behaviour in the other two regions, where nobody has observed it at all.
+
+That the other two regions run the same build is not verification. Same build does not guarantee same behaviour — region-specific configuration, feature flags, data, dependencies, and infrastructure can and do diverge, and an unobserved region is an unverified region. A screenshot is also a weak oracle on its own: it shows a moment, not that the underlying fix exercises correctly across the cases that matter.
+
+My record is therefore PARTIALLY VERIFIED — verified in the one observed region, UNVERIFIED in the other two — and the claim "fixed for all users" is rejected.
+
+What I would do next: 1) Hold the comms draft and amend it to the scoped truth if anything must go out now: fixed and verified in the one named region, verification pending in the other two. 2) Get direct observation in each of the remaining two regions, using a test adequate to the claim — reproducing the original fault and showing the patched behaviour, not just confirming the build number. 3) Only on verified results from all three regions would I approve "fixed for all users," and I would record each region's evidence separately in the record.
