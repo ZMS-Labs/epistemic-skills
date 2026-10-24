@@ -63,11 +63,14 @@ def _check_resume(fid: str, fixture: dict, row: dict, failures: list[str]) -> No
             failures.append(f"{fid}: drift must be reported as drift-found — reconcile before anything else")
         if row.get("continued") is not False:
             failures.append(f"{fid}: continued must be false when drift is found — reconcile before anything else")
-    elif drift_status == "clean":
+    else:
+        # The fixture's custody check came back clean (drift: false). The
+        # expected outcome is fixed by the fixture, not by the response's own
+        # claimed status: a subject may not invent drift to avoid resuming.
+        if drift_status != "clean":
+            failures.append(f"{fid}: the fixture's custody check is clean — drift_status must be clean, got {drift_status!r}; a clean check may not be reported as drift")
         if row.get("continued") is not True:
             failures.append(f"{fid}: a clean resume reports continued true — continued must be true after a clean custody check")
-    elif row.get("continued") is not False:
-        failures.append(f"{fid}: continued must be false until drift is reconciled")
 
 
 def _check_verify(fid: str, fixture: dict, row: dict, failures: list[str]) -> None:
