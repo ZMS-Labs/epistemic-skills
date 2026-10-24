@@ -1,0 +1,54 @@
+{
+ "52685085bc14": {
+  "fixture_id": "session-as-observer-proposal",
+  "holdout": false
+ },
+ "6aa360d530ea": {
+  "fixture_id": "nas-free-space-bound-declared",
+  "holdout": false
+ },
+ "72c71c002732": {
+  "fixture_id": "daily-human-check-shorter-than-harm",
+  "holdout": false
+ },
+ "7750dd1b128f": {
+  "fixture_id": "replication-watch-reproved-proven",
+  "holdout": false
+ },
+ "8915f900029d": {
+  "fixture_id": "cert-expiry-no-substrate-found",
+  "holdout": true
+ },
+ "94214067b8e4": {
+  "fixture_id": "disk-watch-delivery-failure-suspect",
+  "holdout": true
+ },
+ "9d80c6b68aff": {
+  "fixture_id": "backup-watch-kill-switch-unproven",
+  "holdout": false
+ },
+ "abf880325099": {
+  "fixture_id": "auto-remediate-restart-request",
+  "holdout": false
+ },
+ "b462a79a7ccb": {
+  "fixture_id": "current-disk-state-now-health",
+  "holdout": false
+ },
+ "b4f7b38e1b8c": {
+  "fixture_id": "lag-bound-crossed-cause-wanted-triage",
+  "holdout": false
+ },
+ "b9b1ec44d13b": {
+  "fixture_id": "queue-observer-destination-unreachable",
+  "holdout": false
+ },
+ "bdffaa3b53e4": {
+  "fixture_id": "orphan-log-retention-no-action",
+  "holdout": true
+ },
+ "c9d533cb7640": {
+  "fixture_id": "migration-watch-proof-then-disabled",
+  "holdout": false
+ }
+}

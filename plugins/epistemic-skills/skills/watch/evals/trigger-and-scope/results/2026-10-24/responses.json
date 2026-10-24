@@ -1,0 +1,137 @@
+[
+ {
+  "action": "no-fire",
+  "id": "session-as-observer-proposal"
+ },
+ {
+  "action": "commission",
+  "bound": {
+   "direction": "above",
+   "threshold": "85%"
+  },
+  "destination": "inbox",
+  "id": "nas-free-space-bound-declared",
+  "state": "DECLARED",
+  "substrate_kind": "monitoring service"
+ },
+ {
+  "action": "no-fire",
+  "id": "daily-human-check-shorter-than-harm"
+ },
+ {
+  "action": "commission",
+  "bound": {
+   "direction": "above",
+   "threshold": "replication-lag threshold"
+  },
+  "destination": "named production alert destination",
+  "id": "replication-watch-reproved-proven",
+  "proof": {
+   "alert_receipt_ref": "alert-receipt:replication-lag-watch-reproof",
+   "production_path": true,
+   "reproof_boundary": "Re-prove within 90 days of this production-path crossing, before liveness becomes an assumption again"
+  },
+  "state": "PROVEN",
+  "substrate_kind": "monitoring service"
+ },
+ {
+  "action": "commission",
+  "block_evidence": {
+   "detail": "Capability discovery checked the environment's schedulers, event listeners, monitoring providers, and human cadences and found none that can run between sessions",
+   "observed_at": "2026-10-24",
+   "receipt_ref": "capability-discovery-receipt-2026-10-24"
+  },
+  "block_reason": "NO_EXECUTION_SUBSTRATE",
+  "bound": {
+   "direction": "below",
+   "threshold": "30 days"
+  },
+  "destination": "payments endpoint on-call team",
+  "id": "cert-expiry-no-substrate-found",
+  "state": "BLOCKED",
+  "substrate_kind": "scheduler"
+ },
+ {
+  "action": "commission",
+  "bound": {
+   "direction": "below",
+   "threshold": 15
+  },
+  "destination": "media volume alert recipient",
+  "failure": {
+   "detail": "Commissioned external watch attempted to deliver a bound-crossing alert for the media volume free-space bound, but the delivery service returned a permanent rejection for the destination address",
+   "kind": "delivery",
+   "observed_at": "2026-10-24T16:01:45-05:00",
+   "receipt_ref": "delivery-receipt:media-volume-bound-crossing-alert-permanent-rejection"
+  },
+  "id": "disk-watch-delivery-failure-suspect",
+  "state": "SUSPECT",
+  "substrate_kind": "monitoring service"
+ },
+ {
+  "action": "commission",
+  "block_evidence": {
+   "detail": "Cron-scheduler mechanism for backup-age checks is prepared in a disabled state with a named disable procedure, but the disable path has not yet been exercised against the real mechanism",
+   "observed_at": "2026-10-24T16:01:45-05:00",
+   "receipt_ref": "block-evidence:9d80c6b68aff/kill-switch-unproven-check"
+  },
+  "block_reason": "KILL_SWITCH_UNPROVEN",
+  "bound": {
+   "direction": "above",
+   "threshold": "24 hours"
+  },
+  "destination": "colleague",
+  "id": "backup-watch-kill-switch-unproven",
+  "state": "BLOCKED",
+  "substrate_kind": "cron scheduler"
+ },
+ {
+  "action": "no-fire",
+  "id": "auto-remediate-restart-request"
+ },
+ {
+  "action": "no-fire",
+  "id": "current-disk-state-now-health"
+ },
+ {
+  "action": "no-fire",
+  "id": "lag-bound-crossed-cause-wanted-triage"
+ },
+ {
+  "action": "commission",
+  "block_evidence": {
+   "detail": "Reachability check to the on-call webhook endpoint failed with a connection refusal during commissioning; the existing monitoring service has never completed an end-to-end proof.",
+   "observed_at": "during commissioning",
+   "receipt_ref": "dated reachability receipt retained"
+  },
+  "block_reason": "NO_REACHABLE_DESTINATION",
+  "bound": {
+   "direction": "above",
+   "threshold": "order-ingest queue depth threshold"
+  },
+  "destination": "on-call webhook endpoint",
+  "id": "queue-observer-destination-unreachable",
+  "state": "BLOCKED",
+  "substrate_kind": "monitoring service"
+ },
+ {
+  "action": "no-fire",
+  "id": "orphan-log-retention-no-action"
+ },
+ {
+  "action": "commission",
+  "bound": {
+   "direction": "above",
+   "threshold": 0
+  },
+  "destination": "migration operator alert endpoint",
+  "id": "migration-watch-proof-then-disabled",
+  "proof": {
+   "alert_receipt_ref": "receipt: staged-error-batch alert delivered and retained",
+   "production_path": true,
+   "reproof_boundary": "re-prove before any re-enablement or future migration window"
+  },
+  "state": "INERT",
+  "substrate_kind": "monitoring service"
+ }
+]
