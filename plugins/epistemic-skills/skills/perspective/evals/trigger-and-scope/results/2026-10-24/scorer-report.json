@@ -1,0 +1,14 @@
+{
+ "scorer": "/home/hatch/workspace/epistemic-skills-evidence/plugins/epistemic-skills/skills/perspective/evals/trigger-and-scope/score.py",
+ "exit_code": 1,
+ "report": {
+  "pass": false,
+  "failures": [
+   "metric-fitness-lens-fires: expected finding adjustment, got remaining-uncertainty"
+  ],
+  "actions": {
+   "apply-lens": 7,
+   "no-fire": 6
+  }
+ }
+}
