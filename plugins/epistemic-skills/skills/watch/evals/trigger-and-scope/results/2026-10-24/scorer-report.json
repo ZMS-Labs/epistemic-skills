@@ -1,5 +1,5 @@
 {
- "scorer": "/home/hatch/workspace/epistemic-skills-evidence/plugins/epistemic-skills/skills/watch/evals/trigger-and-scope/score.py",
+ "scorer": "plugins/epistemic-skills/skills/watch/evals/trigger-and-scope/score.py",
  "exit_code": 0,
  "report": {
   "pass": true,
