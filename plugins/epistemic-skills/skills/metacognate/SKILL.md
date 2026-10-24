@@ -51,6 +51,13 @@ Activation discipline: design-argued; no shipped trigger battery as of this chan
    or no-change result. Continue the authorized work from the point this result
    informs. Reopen settled reasoning only when a relevant condition changes.
 
+## Owned reference: the routine-work fast path
+
+This skill owns `reference/routine-fast-path.md`, the suite-wide routine-work
+gate. Other skills gate on it (evidence-locked-uat's routine-work gate and
+decision-ledger's no-op gate both apply it), so changes to that file are
+suite-level changes, not local edits.
+
 ## Evidence and authority
 
 A source check does not establish a runtime effect; an action receipt does not

@@ -180,7 +180,7 @@ Only when authorized evaluation or an existing task evidence contract calls for 
 append one line to `runs/ledger.jsonl` under this skill:
 
 ```json
-{"schema":"skill-run@1","ts":"<iso8601>","skill":"<this-skill>","decision":"fired|declined","discipline_engaged":"<name-or-null>","action_changed":true|false}
+{"schema":"skill-run@1","ts":"<iso8601>","skill":"context-audit","decision":"fired|declined","discipline_engaged":"<name-or-null>","action_changed":true|false}
 ```
 
 Ordinary engagements require no separate run ledger. This optional telemetry

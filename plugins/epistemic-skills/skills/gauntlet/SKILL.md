@@ -81,7 +81,7 @@ aliases map: `/red-team-gauntlet`→`deep`, `/sovereign-gauntlet`→`max`.
 - [ ] Step 7 — Arbitrate + bounded reinstatement (one round)
 - [ ] Step 7b — (optional, gated) External cross-family adjudication via
       scripts/consult_packet.py — max depth / one-way-door; MANUAL HANDOFF default
-      (build packet -> operator sends to GPT-5.6 Pro -> record); dissent escalates
+      (build packet -> operator sends to an external frontier model the operator designates -> record); dissent escalates
 - [ ] Step 8 — Synthesize verdict + reconcile external safety gates + record
 - [ ] Step 9 — Retain review evidence; append private aggregate telemetry only when required
 ```
