@@ -1,0 +1,84 @@
+[
+ {
+  "action": "full-interview",
+  "id": "explicit-phrase-full",
+  "visible_process": false
+ },
+ {
+  "action": null,
+  "id": "design-dialogue-defers",
+  "visible_process": false
+ },
+ {
+  "action": "fork-scoped-walk",
+  "deferred": [
+   "unrelated open questions elsewhere in the task"
+  ],
+  "id": "irreversible-fork-present-fork-scoped",
+  "offers_made": 1,
+  "operator_release": false,
+  "parked": [
+   "unrelated open questions elsewhere in the task \u2014 deferred after exactly one closing offer went unanswered, tracked with their safe defaults or held dependent actions, not dropped and not walked"
+  ],
+  "visible_process": false
+ },
+ {
+  "action": "park-and-proceed",
+  "id": "reversible-fork-absent-park",
+  "visible_process": false
+ },
+ {
+  "action": null,
+  "id": "fuzzy-brief-no-fire",
+  "visible_process": false
+ },
+ {
+  "action": "full-interview",
+  "id": "explicit-mid-execution-full",
+  "operator_release": false,
+  "parked": [],
+  "visible_process": false
+ },
+ {
+  "action": "hold-escalate",
+  "id": "irreversible-fork-absent-hold",
+  "visible_process": false
+ },
+ {
+  "action": "auto-fire-fork-scoped-walk",
+  "id": "fork-offer-accepted-walked",
+  "operator_release": false,
+  "parked": [],
+  "visible_process": false
+ },
+ {
+  "action": "fork-scoped-walk",
+  "closing_offer_made": 1,
+  "deferred": [
+   {
+    "disposition": "identified with its safe default applied or dependent action held, tracked for continuity",
+    "item": "material unrelated question 1",
+    "status": "deferred-not-dropped"
+   },
+   {
+    "disposition": "identified with its safe default applied or dependent action held, tracked for continuity",
+    "item": "material unrelated question 2",
+    "status": "deferred-not-dropped"
+   }
+  ],
+  "fork_lineage_resolved": true,
+  "id": "fork-offer-declined-deferred",
+  "offer_declined": true,
+  "parked": [],
+  "resume_original_task": true,
+  "unrelated_material_questions_surfaced": 2,
+  "visible_process": false
+ },
+ {
+  "action": "full-interview",
+  "id": "explicit-release-parks",
+  "operator_release": true,
+  "parked": 2,
+  "visible_process": false
+ }
+]
