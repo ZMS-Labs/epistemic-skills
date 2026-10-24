@@ -1,5 +1,5 @@
 {
- "scorer": "/home/hatch/workspace/epistemic-skills-evidence/plugins/epistemic-skills/skills/triage/evals/behaviour-oracle/score.py",
+ "scorer": "plugins/epistemic-skills/skills/triage/evals/behaviour-oracle/score.py",
  "exit_code": 1,
  "report": {
   "pass": false,

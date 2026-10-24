@@ -1,8 +1,8 @@
 {
- "scorer": "/home/hatch/workspace/epistemic-skills-evidence/plugins/epistemic-skills/skills/open-questions/evals/trigger-and-scope/score.py",
+ "scorer": "plugins/epistemic-skills/skills/open-questions/evals/trigger-and-scope/score.py",
  "exit_code": 1,
  "report": {
   "raw_stdout": "",
-  "stderr": "Traceback (most recent call last):\n  File \"/home/hatch/workspace/epistemic-skills-evidence/plugins/epistemic-skills/skills/open-questions/evals/trigger-and-scope/score.py\", line 139, in <module>\n    raise SystemExit(main())\n                     ^^^^^^\n  File \"/home/hatch/workspace/epistemic-skills-evidence/plugins/epistemic-skills/skills/open-questions/evals/trigger-and-scope/score.py\", line 133, in main\n    report = score(fixtures, responses)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/hatch/workspace/epistemic-skills-evidence/plugins/epistemic-skills/skills/open-questions/evals/trigger-and-scope/score.py\", line 87, in score\n    parked_ids = {item.get(\"question\") for item in parked if isinstance(item, dict)}\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: 'int' object is not iterable\n"
+  "stderr": "Traceback (most recent call last):\n  File \"plugins/epistemic-skills/skills/open-questions/evals/trigger-and-scope/score.py\", line 139, in <module>\n    raise SystemExit(main())\n                     ^^^^^^\n  File \"plugins/epistemic-skills/skills/open-questions/evals/trigger-and-scope/score.py\", line 133, in main\n    report = score(fixtures, responses)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"plugins/epistemic-skills/skills/open-questions/evals/trigger-and-scope/score.py\", line 87, in score\n    parked_ids = {item.get(\"question\") for item in parked if isinstance(item, dict)}\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: 'int' object is not iterable\n"
  }
 }
