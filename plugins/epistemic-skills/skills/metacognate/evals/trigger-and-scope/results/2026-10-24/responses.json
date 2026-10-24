@@ -1,0 +1,90 @@
+[
+ {
+  "action": "no-fire",
+  "id": "no-report-for-a-nonapplication"
+ },
+ {
+  "action": "examine",
+  "decisive_assumption": "A successful pilot with a tenant that used none of the legacy authentication paths is representative evidence that the integration will generalise to the other tenants and their authentication paths.",
+  "discriminating_observation": "Test the integration against tenants using each legacy authentication path relied on by the wider tenant base; failure or incompatibility on any such path would show the generalisation does not hold.",
+  "id": "confidence-outruns-single-friendly-pilot",
+  "outcome_named": "The integration actually works for all 140 tenants, including those relying on legacy authentication paths, not merely that it succeeded for one friendly pilot tenant.",
+  "verdict": "confidence-recalibrated"
+ },
+ {
+  "action": "examine",
+  "decisive_assumption": "That a 15% rise in week-one signups indicates the onboarding redesign succeeded at retaining customers, i.e. signups are a valid proxy for day-90 activity",
+  "discriminating_observation": "Track the redesigned cohort to day 90: if week-one signups rise 15% while day-90 active rate is unchanged or falls, the signup criterion is shown wrong as a measure of success",
+  "id": "proxy-signups-stand-for-retention",
+  "outcome_named": "Customers still active at day 90, not week-one signups rising 15%",
+  "verdict": "question-reframed"
+ },
+ {
+  "action": "examine",
+  "decisive_assumption": "That customers' current buying behaviour and price sensitivity will remain essentially unchanged after the change, so the projected revenue from the new price will actually materialise",
+  "discriminating_observation": "A real price-exposure test or comparable cohort showing conversion, churn, or order volume falling enough to offset the higher price would show the approach wrong; a forecast or argument that merely restates the same assumption would not",
+  "id": "explicit-reflection-request-pricing",
+  "outcome_named": "A pricing change that actually improves long-term profit and retention, not merely a higher price or a short-term revenue lift used as a convenient proxy for success",
+  "verdict": "confidence-recalibrated"
+ },
+ {
+  "action": "no-fire",
+  "id": "routine-directly-checkable-spelling-fix"
+ },
+ {
+  "action": "examine",
+  "decisive_assumption": "That report queries repeat across users enough to determine which design wins \u2014 repeat traffic would favour a read-through cache, while non-repeating queries would reverse that choice",
+  "discriminating_observation": "Measure actual report queries over a representative period and compute the cross-user repeat rate and would-be cache-hit rate; low repetition would show a cache-based approach wrong, and high repetition would show nightly precomputation unnecessary or inferior",
+  "id": "uncertain-assumption-changes-cache-choice",
+  "outcome_named": "Acceptable latency for the reports users actually request, achieved by the design that fits the real query pattern \u2014 not merely selecting one of the two proposed designs",
+  "verdict": "approach-corrected"
+ },
+ {
+  "action": "no-fire",
+  "id": "resume-stage-arrives-with-certain-basis"
+ },
+ {
+  "action": "examine",
+  "decisive_assumption": "The existing append-only audit log's records and proven capacity are sufficient to serve as the reporting source without a new store",
+  "discriminating_observation": "A replay that fails to reproduce a report exactly, a required report field missing from log records, or measured write volume approaching or exceeding the log's proven capacity would show keeping the log is wrong",
+  "id": "sound-approach-survives-challenge",
+  "outcome_named": "Accurate, complete reports for the new feature generated from existing records, not merely retaining the familiar append-only log as a convenient proxy for reporting capability",
+  "verdict": "approach-retained"
+ },
+ {
+  "action": "no-fire",
+  "id": "settled-choice-no-new-evidence"
+ },
+ {
+  "action": "examine",
+  "decisive_assumption": "That per-batch provider fees remain low enough at the volume now crossed that monthly batching remains the cost-effective invoicing approach on which the settled choice rested",
+  "discriminating_observation": "Recompute total provider fees for monthly batches under the notice's new tenfold fee schedule at the crossed threshold, compared with alternative batch sizes or frequencies; if monthly batching now costs materially more, the settled approach is wrong",
+  "id": "settled-choice-basis-changed-by-new-fees",
+  "outcome_named": "Collect payments at the lowest total cost at the operator's current volume, not merely preserve the settled monthly batch invoicing cadence",
+  "verdict": "approach-corrected"
+ },
+ {
+  "action": "examine",
+  "decisive_assumption": "Mocked gateway timeout responses faithfully exercise the same timeout-and-retry behaviour as a real gateway timeout, so passing mocked tests prove the retry logic is idempotent",
+  "discriminating_observation": "An integration test in which a real or faithfully simulated gateway timeout is followed by a retry results in a second charge at the gateway, showing the retry created a duplicate despite the mocked tests passing",
+  "id": "check-does-not-exercise-the-claim",
+  "outcome_named": "No duplicate charges occur when a real payment gateway timeout is followed by a retry, as distinct from a green unit suite standing in as a proxy for that result",
+  "verdict": "approach-corrected"
+ },
+ {
+  "action": "examine",
+  "decisive_assumption": "Matching source and target row counts at 48,210 imply no record was altered in transit \u2014 that count equality proves content preservation.",
+  "discriminating_observation": "A field-by-field comparison of migrated accounts against their source records showing value changes despite equal counts \u2014 e.g. the 30-account spot check already finding five truncated middle names and two dates shifted by a day.",
+  "id": "evidence-conflicts-migration-assertion",
+  "outcome_named": "Every migrated customer record is preserved field-for-field faithfully \u2014 names, dates, and other values intact \u2014 not merely that the target contains the same number of rows as the source.",
+  "verdict": "question-reframed"
+ },
+ {
+  "action": "examine",
+  "decisive_assumption": "That the governing acceptance criteria are unavailable or genuinely unknown and must be supplied by the operator, rather than already present but unread in the context",
+  "discriminating_observation": "Reading the task brief and the linked specification already in context and finding the acceptance criteria stated there, which would show the ask-the-operator approach wrong",
+  "id": "reconstruct-context-available-in-task",
+  "outcome_named": "Complete the export feature to the acceptance criteria already governing it, as written in the task brief and linked specification, without making the operator restate available context",
+  "verdict": "approach-corrected"
+ }
+]
