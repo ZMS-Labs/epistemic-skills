@@ -42,6 +42,25 @@ def main() -> int:
     require(any("deferred with tracker_ref" in failure or "coverage_limits" in failure for failure in lost["failures"]), lost["failures"])
     require(any("parks EVERY remaining ledger item" in failure for failure in lost["failures"]), lost["failures"])
 
+    # Regression for issue #277 (E11 scorer crash): a response carrying
+    # `parked` as an integer count must score as a per-fixture shape
+    # failure, never raise — one mistyped field must not void an epoch.
+    import copy
+
+    count = scorer.score(fixtures, json.loads((ROOT / "examples" / "parked-as-count.json").read_text(encoding="utf-8")))
+    require(not count["pass"], "parked-as-count unexpectedly passed")
+    require(count["failures"] and all(f.startswith("explicit-release-parks:") for f in count["failures"]), count["failures"])
+    require(any("parked must be a list" in failure for failure in count["failures"]), count["failures"])
+    require(sum(count["actions"].values()) == 10, count["actions"])  # every fixture still scored
+
+    count2_rows = copy.deepcopy(json.loads((ROOT / "examples" / "balanced.json").read_text(encoding="utf-8")))
+    for row in count2_rows:
+        if row["id"] == "reversible-fork-absent-park":
+            row["parked"] = 1
+    count2 = scorer.score(fixtures, count2_rows)
+    require(not count2["pass"], "park-and-proceed parked-as-count unexpectedly passed")
+    require(any(f.startswith("reversible-fork-absent-park:") and "parked must be a list" in f for f in count2["failures"]), count2["failures"])
+
     # Synthetic response-contract regressions; not a model or native-host trial.
     for case in json.loads((ROOT / "v7-cases.json").read_text(encoding="utf-8")):
         report = scorer.score([case["fixture"]], [case["response"]])

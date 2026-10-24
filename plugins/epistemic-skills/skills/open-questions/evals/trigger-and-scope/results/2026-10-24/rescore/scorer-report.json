@@ -1,0 +1,29 @@
+{
+ "scorer": "/home/hatch/workspace/epistemic-skills-evidence/plugins/epistemic-skills/skills/open-questions/evals/trigger-and-scope/score.py",
+ "scorer_note": "Fixed scorer (issue #277): non-list `parked` scores as a per-fixture shape failure instead of raising TypeError. All other scoring logic unmodified.",
+ "responses": "../responses.json",
+ "exit_code": 1,
+ "report": {
+  "pass": false,
+  "failures": [
+   "explicit-phrase-full: full interview terminates on empty ledger plus closing probe, or operator release",
+   "explicit-mid-execution-full: full interview terminates on empty ledger plus closing probe, or operator release",
+   "fuzzy-brief-no-fire: unknown action None",
+   "design-dialogue-defers: unknown action None",
+   "reversible-fork-absent-park: park-and-proceed must announce parked items with defaults",
+   "irreversible-fork-absent-hold: irreversible un-best-guessable fork must escalate, never apply a default",
+   "irreversible-fork-present-fork-scoped: unknown action 'fork-scoped-walk'",
+   "fork-offer-declined-deferred: unknown action 'fork-scoped-walk'",
+   "fork-offer-accepted-walked: unknown action 'auto-fire-fork-scoped-walk'",
+   "explicit-release-parks: operator release parks each remaining item, named, with its default \u2014 parked must be a list of identified items, not a count or other non-list value"
+  ],
+  "actions": {
+   "full-interview": 3,
+   "null": 2,
+   "park-and-proceed": 1,
+   "hold-escalate": 1,
+   "fork-scoped-walk": 2,
+   "auto-fire-fork-scoped-walk": 1
+  }
+ }
+}
