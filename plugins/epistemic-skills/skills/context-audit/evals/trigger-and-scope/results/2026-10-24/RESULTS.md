@@ -26,10 +26,14 @@ extraction anomalies, no missing responses.
 **Model note (deviation, recorded per dispatch contract §7):** the
 preregistration named model family claude-fable-5; subjects in this
 harness ran as isolated subagents of the coordinating runtime (model:
-Muse Wonder). The same-family caveat applies — and for a second epoch
-it matters doubly: epoch 1 and epoch 2 subjects are the same model
-family in the same harness, so epoch-to-epoch movement is not
-cross-model replication.
+Muse Wonder). Same model family and harness as epoch 1's subjects is
+**not** the case here — epoch 1 (`results/2026-08-04/RESULTS.md`) ran
+claude-fable-5 in the Claude Code harness — so epoch-to-epoch
+movement mixes a model/harness change with the epoch change and
+cannot be read as within-model improvement or as cross-model
+replication of either model. (Corrected 2026-10-24: this note
+originally asserted the two epochs shared a model family and harness;
+see the correction section at the end of this record.)
 
 ## Results — baseline-comparable line (14 fixtures)
 
@@ -75,12 +79,34 @@ remaining failures are two recurrences of the epoch-1 mode divergence
 on fixtures that leave version control unstated, plus one genuine
 survivor-selection error. Nothing here rehabilitates the battery's
 known design tension (the epoch-1 record's diagnosis stands and is
-corroborated, not resolved); equally, the improvement is real movement
-on the comparable line, not a changed ruler — fixtures and scorer are
-byte-identical to epoch 1.
+corroborated, not resolved). The 8/14 → 11/14 difference is movement
+on the comparable line under an unchanged ruler — fixtures and scorer
+are byte-identical to epoch 1 — but it is **not** within-model
+improvement: the epochs ran different model families in different
+harnesses (see the corrected model note), so the difference mixes the
+model/harness change with any epoch effect and is reported
+descriptively only.
 
 ## Honest limits
 
-N=1 per fixture, one harness, single repetition per epoch; two epochs
-from the same model family do not estimate a population rate or a
-trend. Declared-response scoring only.
+N=1 per fixture, single repetition per epoch; the two epochs ran
+different model families in different harnesses, so together they do
+not estimate a population rate, a trend, or a within-model change.
+Declared-response scoring only.
+
+## Correction (2026-10-24, post-epoch)
+
+Review (Codex P2, raised on PR #281's thread against this file)
+identified a false statement in this record as originally written:
+the model note asserted that epoch 1 and epoch 2 subjects were "the
+same model family in the same harness". They were not. The epoch 1
+record (`results/2026-08-04/RESULTS.md`) states its subjects ran as
+claude-fable-5 in the Claude Code harness; this epoch's subjects ran
+as Muse Wonder subagents of the coordinating runtime. The model
+note, the Reading's improvement framing, and the Honest limits line
+have been corrected above to state the model/harness change and its
+consequence: the 8/14 → 11/14 difference mixes that change with the
+epoch change and cannot be interpreted as within-model improvement.
+The epoch's per-fixture results and FAIL outcome are unchanged. The
+correction matches the wording the E12 (outsource) second-epoch
+record used for the same confound.
