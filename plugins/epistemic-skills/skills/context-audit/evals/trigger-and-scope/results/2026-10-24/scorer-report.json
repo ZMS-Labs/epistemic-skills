@@ -1,5 +1,5 @@
 {
- "scorer": "/home/hatch/workspace/epistemic-skills-evidence/plugins/epistemic-skills/skills/context-audit/evals/trigger-and-scope/score.py",
+ "scorer": "plugins/epistemic-skills/skills/context-audit/evals/trigger-and-scope/score.py",
  "exit_code": 1,
  "report": {
   "pass": false,
