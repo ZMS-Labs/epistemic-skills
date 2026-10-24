@@ -1,0 +1,13 @@
+{
+ "scorer": "/home/hatch/workspace/epistemic-skills-evidence/plugins/epistemic-skills/skills/evidence-locked-uat/evals/triage/score.py",
+ "exit_code": 0,
+ "report": {
+  "failures": [],
+  "pass": true,
+  "routes": {
+   "blocked-environment": 1,
+   "routine-check": 1,
+   "uat": 2
+  }
+ }
+}
