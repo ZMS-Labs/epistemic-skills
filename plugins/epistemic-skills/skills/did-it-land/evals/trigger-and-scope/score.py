@@ -36,6 +36,8 @@ def _check_verify(fid: str, fixture: dict, row: dict, failures: list[str]) -> No
         failures.append(f"{fid}: persistence must be one of observed, unverified, not-applicable, got {persistence!r}")
     if verdict == "LANDED" and not _nonempty(observation):
         failures.append(f"{fid}: LANDED requires consumer_observation nonempty — observed at the runtime, not read from source")
+    if verdict == "REVERTED" and not _nonempty(observation):
+        failures.append(f"{fid}: REVERTED requires consumer_observation nonempty — it must describe both the observed landing and the observed undo; null is reserved for cases with no runtime observation")
     if fixture.get("source_only_evidence") and verdict != "UNVERIFIED":
         failures.append(f"{fid}: source-only evidence requires verdict UNVERIFIED — source, diff, commit, PR, green source-only check, and exit-0 are records of intent, not observations of effect")
     if fixture.get("reverted_after_window"):
@@ -64,6 +66,10 @@ def score(fixtures: list[dict], responses: object) -> dict:
     }
     if len(by_id) != len(responses):
         failures.append("response ids missing or duplicated")
+    fixture_ids = {fixture["id"] for fixture in fixtures}
+    for rid in sorted(by_id):
+        if rid not in fixture_ids:
+            failures.append(f"{rid}: response id is not in the fixture inventory — an extra response is never silently ignored")
     actions: Counter = Counter()
     for fixture in fixtures:
         fid = fixture["id"]
