@@ -68,7 +68,7 @@
   },
   {
     "id": "metric-fitness-lens-fires",
-    "scenario": "A team is about to judge a search-quality change by its click-through dashboard, but whether that metric actually measures search quality has never been examined. The agent examines the metric's fitness for this one decision through a single lens before the change is judged.",
+    "scenario": "A team is about to judge a search-quality change by its click-through dashboard, but whether that metric actually measures search quality has never been examined. The agent examines the metric's fitness for this one decision through a single lens before the change is judged. The examination finds a concrete defect: the dashboard counts clicks from the team's own uptime-monitoring bots, which follow result links on a fixed schedule, so a share of the click-through movement the team would be judging is bot traffic rather than searcher behaviour \u2014 and the bot segment is identifiable in the logs and can be excluded before the change is judged.",
     "trigger": "auto",
     "expected_action": "apply-lens",
     "clause": "Select by functional question and evidence mechanism",
