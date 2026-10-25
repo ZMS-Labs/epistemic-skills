@@ -263,3 +263,50 @@ committed subordinate report — the same three failures, the
 subordinate re-score stands at **9/12** and needed no
 regeneration; the epoch outcome (FAIL 4/12) and response record
 are unmodified.
+
+## C13 — Triage trigger-and-scope: the #282 bars ported to the trigger scorer
+
+Fifth correction round (the adjudication of PRs #273–#281 against
+Dot's full thread census, 2026-10-24; eight Codex threads recorded
+concede-and-record — confirmed open, no fix claimed in that stack).
+C11/C12 enforced the verdict-shape bars in the **behaviour-oracle**
+scorer; the **trigger-and-scope** scorer — byte-identical across
+the four held tips — was never given the mirror rules. Three
+shapes passed it, each reproduced at head `70f5925` before this
+fix: a **NARROWED** response with `discriminating_observation:
+null` on either NARROWED fixture (C5 enforced only the
+eliminated-candidate prong here; the observation prong is C11's
+rule); an **UNKNOWN** response naming an eliminated candidate
+(`eliminated: ["service process crashed"]` on
+`unreachable-license-server-unknown`); and a **NOT-BROKEN**
+response with a non-null `named_cause` on
+`reported-print-delay-within-bounds`. **Fix:** the trigger scorer
+now requires a nonempty discriminating observation on NARROWED,
+fails an UNKNOWN response naming any eliminated candidate, and
+fails a NOT-BROKEN response naming a cause — the C11/C12 rules
+with their rationale clauses, in this scorer's sentence forms;
+the battery README's response-contract statement states all three
+bars. The nuance Dot named on #282 is preserved, as in C12: an
+observation that eliminates nothing remains compatible with
+UNKNOWN, so `discriminating_observation` is not barred on
+UNKNOWN — the regressions prove both directions (observation plus
+an eliminated candidate fails; the same observation alone, and an
+empty `eliminated` array, pass) and cover the mutations for every
+NARROWED and UNKNOWN fixture and the NOT-BROKEN control.
+**Audit:** every verdict was checked against every assertion
+field in both directions, mirroring the C11/C12 audits. CAUSE
+already requires its observation and its name, and carrying
+`eliminated` is no gap (its definition disclaims none); NARROWED's
+`named_cause` bar already stood (with the C5 eliminated prong);
+UNKNOWN's `named_cause` bar already stood. One case stays flagged
+for adjudication, not enforced — the same disposition C12
+recorded: `eliminated` on NOT-BROKEN is arguable both ways, and
+Dot ruled it not a blocker on #282. **Frozen-response check:**
+E5's preserved responses (`results/2026-10-24/responses.json`)
+violate no new rule — every NARROWED row carries its observation,
+no UNKNOWN row names an eliminated candidate (the two UNKNOWN
+rows carry no `eliminated` key at all), and the NOT-BROKEN row
+carries `named_cause: null` — and the re-score under the revised
+scorer is mechanically identical to the committed scorer report
+(`pass: true`, no failures, actions investigate 7 / no-fire 6):
+**E5's PASS (13/13) stands**, and the epoch record is unmodified.
