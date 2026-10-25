@@ -53,9 +53,55 @@ Activation discipline: design-argued; no shipped trigger battery as of this chan
    additional examination would not affect the authorized action. Report a
    limit instead of turning exhaustion into assurance.
 5. **Return and continue.** Briefly acknowledge Perspective and the lens used,
-   the insight, adjustment, supported finding, no-material-finding result or
-   remaining uncertainty, and its consequence. Continue the original authorized
-   task. Assessment alone does not authorize implementation.
+   declare the finding (per Output below: `insight`, `adjustment`,
+   `supported-finding`, `no-material-finding` or `remaining-uncertainty`),
+   and state its consequence. Continue the original authorized task.
+   Assessment alone does not authorize implementation.
+
+## Output: the declared finding
+
+Every consideration of this method ends in exactly one of two discipline
+modes:
+
+- **`apply-lens`** — a lens was applied to a bounded question. The application
+  declares the four fields below.
+- **`no-fire`** — the method did not apply. A no-fire is **silent**: no lens,
+  no question, no finding is declared. A declared field on a non-application
+  is over-firing, not generosity.
+
+An application declares:
+
+- **`lens`** — the lens or method applied.
+- **`question`** — the bounded question the lens was applied to.
+- **`lenses_applied`** — the count of lenses actually applied, at least one.
+  Several lenses may be applied to one bounded question; a focused
+  reversibility question takes a single narrow lens.
+- **`finding`** — exactly one of the five values below, quoted verbatim. A
+  paraphrase or a coinage outside this vocabulary is a contract violation
+  even when the examination itself was sound.
+
+| Finding | The lens's examination found |
+|---|---|
+| `insight` | Something material that was not in view, surfaced by the lens. |
+| `adjustment` | The lens's evidence supports a concrete change — to the subject, the plan, the measure it is judged by, or the next action. |
+| `supported-finding` | The evidence through the lens supports the proposition under examination. |
+| `no-material-finding` | The lens was applied on the available evidence and the concern did not stand: nothing material was found. |
+| `remaining-uncertainty` | The lens cannot settle the bounded question — the evidence it needs is unavailable, or the question outruns what the lens can determine. The limit is reported, not converted into assurance. |
+
+**Boundary rules for the finding.** Where the lens's evidence supports a
+concrete change, the finding is `adjustment`. `remaining-uncertainty` is
+reserved for what the lens cannot settle; it is never the resting place of
+an examination whose evidence already points at a change. The distinction
+from `no-material-finding` is whether the examination could run: a lens that
+inspected the available evidence and found the concern empty reports
+`no-material-finding`; a lens whose needed evidence does not exist reports
+`remaining-uncertainty`, applied as far as the available evidence allows.
+
+**Lens count is not adjudication.** An application never carries a verdict
+or an adjudication, under any value. Where what is actually requested is
+plural examination plus adjudication of a common subject, or an approval
+verdict, that is not a Perspective application at all — it does not fire
+here.
 
 ## Limits and evidence
 
