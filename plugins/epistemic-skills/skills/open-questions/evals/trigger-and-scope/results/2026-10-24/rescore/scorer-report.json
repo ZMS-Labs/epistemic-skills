@@ -1,5 +1,5 @@
 {
- "scorer": "/home/hatch/workspace/epistemic-skills-evidence/plugins/epistemic-skills/skills/open-questions/evals/trigger-and-scope/score.py",
+ "scorer": "plugins/epistemic-skills/skills/open-questions/evals/trigger-and-scope/score.py",
  "scorer_note": "Fixed scorer (issue #277): non-list `parked` scores as a per-fixture shape failure instead of raising TypeError. All other scoring logic unmodified.",
  "responses": "../responses.json",
  "exit_code": 1,
