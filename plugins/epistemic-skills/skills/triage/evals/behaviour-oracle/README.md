@@ -204,6 +204,49 @@ identical to the committed subordinate record: the same three
 failures, 9/12. The epoch record and the response record are
 unmodified, and the subordinate record needed no regeneration.
 
+## Battery revision (2026-10-25 — C14)
+
+A fifth defect, found by job 10 — an independent Claude-family check
+of the C11/C12 scorer, run by a different route and model than the
+ones that wrote those fixes: `expected_eliminated` was enforced as a
+**lower bound only**. A NARROWED response could therefore claim
+eliminations the named observation does not support — up to every
+candidate in the scenario, including the fixture's own
+`forbidden_cause` — and pass, although the response contract defines
+`eliminated` as the candidates eliminated *by the one observation
+named*: a candidate is eliminated only by an observation that rules
+it out. Corrected here, for future epochs:
+
+1. **The forbidden candidate may not be claimed as eliminated.** If
+   any `eliminated` entry names the fixture's `forbidden_cause`
+   (case-insensitive), the row fails, under any verdict.
+2. **For NARROWED, the pinned eliminated set is exact.** `eliminated`
+   must name exactly the fixture's `expected_eliminated` — the
+   candidates the scenario's discriminating observation rules out —
+   no more (the pre-existing membership check already barred fewer).
+   The exact-set rule is scoped to NARROWED: it is the verdict whose
+   eliminated set the scenario determines. It is deliberately **not**
+   extended to CAUSE, whose `eliminated` the C12 audit adjudicated
+   non-determined (a CAUSE row lists the candidates its observation
+   ruled out on the way to the cause), nor to NOT-BROKEN, where
+   `eliminated` stands flagged for adjudication under C12, not
+   enforced.
+
+The trigger-and-scope scorer was checked for the same shape and does
+not carry it: that battery pins no `expected_eliminated` and no
+`forbidden_cause`, and its scorer performs no eliminated-set
+comparison at all — its NARROWED/UNKNOWN bars are the field-level
+rules C5/C13 enforce. There is no lower-bound-only enforcement there
+to tighten.
+
+E6's frozen responses re-score with the **same reading — 9/12, the
+same three fixtures fail** — and one added failure line: the frozen
+known-broken response's `"b"` entry is now also named as an
+elimination the observation does not make, beside its pre-existing
+label-content miss. No frozen row names a forbidden candidate as
+eliminated. The epoch record and the response record are unmodified;
+the subordinate re-score record carries the regeneration note.
+
 ## Status
 
 Unrun as of 2026-10-24: no live epoch has run against this corpus. The

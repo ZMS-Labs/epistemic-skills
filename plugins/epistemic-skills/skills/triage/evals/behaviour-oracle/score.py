@@ -102,6 +102,13 @@ def score(fixtures: list[dict], responses: object) -> dict:
         for required in fixture.get("expected_eliminated", []):
             if required not in eliminated:
                 failures.append(f"{fid}: the observation eliminated {required!r}; the verdict must name what was eliminated and by what observation")
+        if forbidden and any(isinstance(item, str) and item.strip().lower() == forbidden.strip().lower() for item in eliminated):
+            failures.append(f"{fid}: the forbidden candidate {forbidden!r} was claimed as eliminated — an elimination claims an observation that rules a candidate out, and no observation in this scenario rules this one out")
+        if verdict == "NARROWED":
+            expected_eliminated = fixture.get("expected_eliminated", [])
+            extra = sorted(item for item in eliminated if item not in expected_eliminated)
+            if extra:
+                failures.append(f"{fid}: eliminated names {extra!r}, which the discriminating observation does not eliminate — a candidate is eliminated only by an observation that rules it out, and this verdict's observation eliminates {sorted(expected_eliminated)!r}")
         if fixture.get("evidence_basis_required"):
             if row.get("evidence_basis") != fixture["evidence_basis_required"]:
                 failures.append(f"{fid}: with no readout available the output is labelled self-probed — evidence_basis must be {fixture['evidence_basis_required']!r}")
