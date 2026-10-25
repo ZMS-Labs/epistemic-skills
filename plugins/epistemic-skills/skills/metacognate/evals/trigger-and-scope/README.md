@@ -51,6 +51,27 @@ quotation from the skill. Adopting this vocabulary, or any verdict
 vocabulary, into the skill text itself is a separate proposed change and is
 NOT made here; this battery does not edit `SKILL.md`.
 
+**Amendment (2026-10-25).** The separate proposed change described
+above has since been made — by the skill's own change process, not by
+this battery: per Zach's P1 decision (2026-10-25), the contract below
+was adopted into metacognate's `SKILL.md` as its output section
+(§"Output: the declared outcome"), including the boundary rules the
+E2 epoch's failed seams taught. The paragraph above stands as the
+record of the position before adoption and is not rewritten. What
+the amendment changes is the frame for reading results: epochs run
+**before** the adoption (including E2) measured conformance to this
+battery-defined contract only, and are still reported that way;
+epochs run **after** it measure the skill as written, because the
+contract is now the skill's own text. One cost is recorded plainly:
+the adoption burns this battery's three marked holdout fixtures —
+`proxy-signups-stand-for-retention`,
+`sound-approach-survives-challenge`, and
+`settled-choice-no-new-evidence` — whose scenarios are now answered
+by skill text their subjects may read; replacement holdouts must be
+authored by a non-editor and stay sealed until their epoch runs
+(the sealed-holdout rule adopted 2026-10-25). The adoption packet is
+`wo3-adoption-packet.md` in the evidence program's Phase 2 files.
+
 - `action` names the **discipline mode that fired**: `examine` (the
   approach, assumptions, evidence, confidence or success criteria were
   actually examined) or `no-fire`.
