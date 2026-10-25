@@ -101,6 +101,15 @@ def main() -> int:
     require(not explained_report["pass"], "no-fire rows carrying an explanation field unexpectedly passed")
     require(any("no-fire must be silent" in failure for failure in explained_report["failures"]), explained_report["failures"])
 
+
+    # Regression (2026-10-24, Dot review of the held branches): a response
+    # whose id is outside the fixture inventory must fail by name, never be
+    # silently ignored - the omission did-it-land's scorer was fixed for
+    # (C4) was still present here.
+    extra_rows = json.loads((ROOT / "examples" / "balanced.json").read_text(encoding="utf-8")) + [{"id": "nonexistent-trial", "action": "garbage"}]
+    extra_report = scorer.score(fixtures, extra_rows)
+    require(not extra_report["pass"], "an extra response with an unknown id unexpectedly passed")
+    require(any("response id not in fixtures" in failure for failure in extra_report["failures"]), extra_report["failures"])
     print("metacognate trigger-and-scope: PASS")
     return 0
 

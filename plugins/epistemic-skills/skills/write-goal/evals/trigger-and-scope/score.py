@@ -85,6 +85,10 @@ def score(fixtures: list[dict], responses: object) -> dict:
     }
     if len(by_id) != len(responses):
         failures.append("response ids missing or duplicated")
+    fixture_ids = {fixture["id"] for fixture in fixtures}
+    for rid in sorted(by_id):
+        if rid not in fixture_ids:
+            failures.append(f"{rid}: response id not in fixtures")
     actions: Counter = Counter()
     for fixture in fixtures:
         fid = fixture["id"]
@@ -169,6 +173,10 @@ def score_adapter(fixtures: list[dict], responses: object) -> dict:
     by_id = {r["id"]: r for r in responses if isinstance(r, dict) and isinstance(r.get("id"), str)}
     if len(by_id) != len(responses):
         failures.append("adapter response ids missing or duplicated")
+    fixture_ids = {fixture["id"] for fixture in fixtures}
+    for rid in sorted(by_id):
+        if rid not in fixture_ids:
+            failures.append(f"{rid}: adapter response id not in fixtures")
     for f in fixtures:
         fid = f["id"]
         row = by_id.get(fid)
