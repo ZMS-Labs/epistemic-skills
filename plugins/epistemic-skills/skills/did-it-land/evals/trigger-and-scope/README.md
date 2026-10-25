@@ -73,13 +73,15 @@ discipline behavior):
   `verdict` must equal it. LANDED requires `consumer_observation` nonempty
   (observed at the runtime, not read from source) and `artifact_resolved`
   nonempty. A fixture carrying `source_only_evidence: true` requires
-  UNVERIFIED — source, diff, commit, PR, green source-only check, and
-  exit-0 are records of intent, not observations of effect. A fixture
-  carrying `reverted_after_window: true` requires REVERTED and
-  `persistence: "observed"`. A fixture carrying `runtime_unreachable: true`
-  requires UNVERIFIED. A fixture carrying `partial_coverage: true` requires
-  UNVERIFIED — LANDED on one consumer does not establish the requested
-  scope.
+  UNVERIFIED and `consumer_observation` null — source, diff, commit, PR,
+  green source-only check, and exit-0 are records of intent, not
+  observations of effect. A fixture carrying `reverted_after_window: true`
+  requires REVERTED and `persistence: "observed"`. A fixture carrying
+  `runtime_unreachable: true` requires UNVERIFIED and
+  `consumer_observation` null — no observation of the running system is
+  possible, so a named one is invented. A fixture carrying
+  `partial_coverage: true` requires UNVERIFIED — LANDED on one consumer
+  does not establish the requested scope.
 
 ## Status
 
