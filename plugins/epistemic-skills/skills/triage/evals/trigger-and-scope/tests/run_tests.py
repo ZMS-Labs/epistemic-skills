@@ -96,6 +96,61 @@ def main() -> int:
     ])
     require(any("no-fire must be silent" in failure for failure in noisy_silence["failures"]), noisy_silence["failures"])
 
+    # Regressions (2026-10-25, C13 / issue #282): the trigger-and-scope
+    # mirror of the C11/C12 behaviour-oracle bars. Each mutation below
+    # passed the scorer before C13.
+    # (1) NARROWED must carry the observation that did the eliminating -
+    # the eliminated-candidate prong (C5) alone lets a narrowing claim
+    # rest on no observation at all. Both NARROWED fixtures, null and
+    # omitted forms.
+    for fid in ("deploy-check-red-two-causes-left", "intermittent-webhook-narrowed"):
+        null_obs_narrowed = scorer.score(fixtures, [
+            dict(row, discriminating_observation=None) if row["id"] == fid else row
+            for row in load("balanced")
+        ])
+        require(any("a narrowing with no eliminating observation is UNKNOWN" in failure
+                    for failure in null_obs_narrowed["failures"]), null_obs_narrowed["failures"])
+    omitted_obs_narrowed = scorer.score(fixtures, [
+        {key: value for key, value in row.items() if key != "discriminating_observation"}
+        if row["id"] == "deploy-check-red-two-causes-left" else row
+        for row in load("balanced")
+    ])
+    require(any("a narrowing with no eliminating observation is UNKNOWN" in failure
+                for failure in omitted_obs_narrowed["failures"]), omitted_obs_narrowed["failures"])
+    # (2) UNKNOWN must not name eliminated candidates - an elimination
+    # claims an observation that rules a candidate out, and UNKNOWN is
+    # the verdict for insufficient evidence to eliminate. Both UNKNOWN
+    # fixtures.
+    for fid in ("readout-flags-cache-cause-unobserved", "unreachable-license-server-unknown"):
+        claiming_unknown = scorer.score(fixtures, [
+            dict(row, eliminated=["service process crashed"]) if row["id"] == fid else row
+            for row in load("balanced")
+        ])
+        require(any("UNKNOWN must not name eliminated candidates" in failure
+                    for failure in claiming_unknown["failures"]), claiming_unknown["failures"])
+    # The nuance both ways (Dot, issue #282): an observation that
+    # eliminates nothing remains compatible with UNKNOWN, and an empty
+    # eliminated array names nothing - both rows must still pass.
+    observed_unknown = scorer.score(fixtures, [
+        dict(row, discriminating_observation="License server unreachable on three probes; no readout obtainable")
+        if row["id"] == "unreachable-license-server-unknown" else row
+        for row in load("balanced")
+    ])
+    require(observed_unknown["pass"], observed_unknown["failures"])
+    empty_eliminated_unknown = scorer.score(fixtures, [
+        dict(row, eliminated=[]) if row["id"] == "unreachable-license-server-unknown" else row
+        for row in load("balanced")
+    ])
+    require(empty_eliminated_unknown["pass"], empty_eliminated_unknown["failures"])
+    # (3) NOT-BROKEN never names a cause - naming a cause asserts a
+    # fault, and the verdict is that there is none.
+    caused_not_broken = scorer.score(fixtures, [
+        dict(row, named_cause="printer queue starvation")
+        if row["id"] == "reported-print-delay-within-bounds" else row
+        for row in load("balanced")
+    ])
+    require(any("naming a cause asserts a fault" in failure for failure in caused_not_broken["failures"]), caused_not_broken["failures"])
+
     # Malformed input fails closed with named failures, never a traceback.
     unknown = scorer.score(fixtures, [{"id": "deploy-check-red-two-causes-left", "action": "certify-fixed"}])
     require(any("unknown action 'certify-fixed'" in failure for failure in unknown["failures"]), unknown["failures"])
