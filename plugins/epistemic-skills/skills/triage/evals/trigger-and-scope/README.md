@@ -69,12 +69,20 @@ discipline behavior):
   the cause were something else, and it rules the alternatives out.
 - `UNKNOWN` requires `named_cause` null or absent: a cause that could not
   be observed is never dressed up as a most-likely cause, and an unreachable
-  subject is `UNKNOWN`, never inferred as the fault.
-- `NARROWED` requires the `eliminated` array present and `named_cause`
-  null: a narrowed candidate is not an established cause, however plausible.
-- `NOT-BROKEN` requires `discriminating_observation` nonempty: an adequate
-  direct observation of the reported behaviour itself, not a generic healthy
-  readout.
+  subject is `UNKNOWN`, never inferred as the fault. It must not name
+  eliminated candidates either: an elimination claims an observation that
+  rules a candidate out, and `UNKNOWN` is the verdict for insufficient
+  evidence to eliminate. An observation that eliminates nothing remains
+  compatible with `UNKNOWN`, so `discriminating_observation` is not barred.
+- `NARROWED` requires the `eliminated` array present, a nonempty
+  `discriminating_observation`, and `named_cause` null: the observation is
+  the one that eliminated a candidate — a narrowing with no eliminating
+  observation is `UNKNOWN` — and a narrowed candidate is not an established
+  cause, however plausible.
+- `NOT-BROKEN` requires `discriminating_observation` nonempty and
+  `named_cause` null or absent: an adequate direct observation of the
+  reported behaviour itself, not a generic healthy readout; naming a cause
+  asserts a fault, and the verdict is that there is none.
 - The trial is a SIMULATION: no probes, no file writes, no mutations. The
   deliverable is the response object, which reports the investigation and
   verdict the scenario's stated evidence state supports — every fixture's

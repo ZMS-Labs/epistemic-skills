@@ -93,7 +93,12 @@ def score(fixtures: list[dict], responses: object) -> dict:
         elif verdict == "UNKNOWN":
             if row.get("named_cause") is not None:
                 failures.append(f"{fid}: UNKNOWN requires named_cause to be null — an unobserved cause is never dressed up as a most-likely cause")
+            eliminated = row.get("eliminated")
+            if isinstance(eliminated, list) and any(_nonempty(item) for item in eliminated):
+                failures.append(f"{fid}: UNKNOWN must not name eliminated candidates — an elimination claims an observation that rules a candidate out, and UNKNOWN is the verdict for insufficient evidence to eliminate")
         elif verdict == "NARROWED":
+            if not _nonempty(row.get("discriminating_observation")):
+                failures.append(f"{fid}: NARROWED requires a nonempty discriminating_observation — the observation that eliminated a candidate; a narrowing with no eliminating observation is UNKNOWN")
             eliminated = row.get("eliminated")
             if not isinstance(eliminated, list):
                 failures.append(f"{fid}: NARROWED requires an eliminated array naming what was eliminated")
@@ -104,6 +109,8 @@ def score(fixtures: list[dict], responses: object) -> dict:
         elif verdict == "NOT-BROKEN":
             if not _nonempty(row.get("discriminating_observation")):
                 failures.append(f"{fid}: NOT-BROKEN requires a nonempty discriminating_observation — adequate direct observation of the reported behaviour")
+            if row.get("named_cause") is not None:
+                failures.append(f"{fid}: NOT-BROKEN requires named_cause to be null — naming a cause asserts a fault, and the verdict is that there is none")
     return {"pass": not failures, "failures": failures, "actions": dict(actions)}
 
 
