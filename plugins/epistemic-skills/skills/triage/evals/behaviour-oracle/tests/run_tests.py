@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import copy
 import importlib.util
 import json
 from pathlib import Path
@@ -33,6 +34,11 @@ def main() -> int:
     require(len({f["id"] for f in fixtures}) == len(fixtures), "fixture ids not unique")
     require(all(f["expected_verdict"] in scorer.VERDICTS for f in fixtures), "expected_verdict outside the verdict vocabulary")
     require(sum(1 for f in fixtures if f.get("holdout")) == 3, "holdout subset must be exactly 3 fixtures")
+    # No NARROWED case may be shape-only: every NARROWED fixture pins the
+    # eliminated candidate its scenario's observation eliminates, with the
+    # canonical label disclosed in the scenario text (Dot P2, 2026-10-24 -
+    # both degraded NARROWED fixtures previously pinned []).
+    require(all(f.get("expected_eliminated") for f in fixtures if f["expected_verdict"] == "NARROWED"), "a NARROWED fixture pins no expected_eliminated")
 
     balanced = scorer.score(fixtures, json.loads((ROOT / "examples" / "balanced.json").read_text(encoding="utf-8")))
     require(balanced["pass"], balanced["failures"])
@@ -82,6 +88,42 @@ def main() -> int:
     extra_report = scorer.score(fixtures, extra_rows)
     require(not extra_report["pass"], "an extra response with an unknown id unexpectedly passed")
     require(any("response id not in fixtures" in failure for failure in extra_report["failures"]), extra_report["failures"])
+
+    # Regression (2026-10-24, Dot P2 on the handoff-2 verification): the
+    # scorer accepted a NARROWED response with `eliminated` and
+    # `discriminating_observation` omitted entirely whenever the fixture
+    # pinned no expected_eliminated - which was both degraded NARROWED
+    # fixtures. NARROWED now requires at least one eliminated candidate
+    # and the observation that eliminated it (the contract C5 enforces in
+    # the triage trigger scorer); omitted, empty, and blank values all
+    # fail, for every NARROWED fixture.
+    balanced_rows = json.loads((ROOT / "examples" / "balanced.json").read_text(encoding="utf-8"))
+
+    def mutated(rows: list, fid: str, key: str, value: object, omit: bool) -> list:
+        rows = copy.deepcopy(rows)
+        for row in rows:
+            if row["id"] == fid:
+                if omit:
+                    row.pop(key, None)
+                else:
+                    row[key] = value
+        return rows
+
+    narrowed_ids = [f["id"] for f in fixtures if f["expected_verdict"] == "NARROWED"]
+    require(narrowed_ids == ["clause-known-broken-eliminates-one", "degraded-fault-not-reproducible", "degraded-lying-readout"], narrowed_ids)
+    for fid in narrowed_ids:
+        for key, value, omit, fragment in [
+            ("eliminated", None, True, "NARROWED requires at least one eliminated candidate"),
+            ("eliminated", [], False, "NARROWED requires at least one eliminated candidate"),
+            ("eliminated", [""], False, "NARROWED requires at least one eliminated candidate"),
+            ("eliminated", ["   "], False, "must not contain empty ids"),
+            ("discriminating_observation", None, True, "NARROWED requires a discriminating observation"),
+            ("discriminating_observation", "", False, "NARROWED requires a discriminating observation"),
+            ("discriminating_observation", "   ", False, "NARROWED requires a discriminating observation"),
+        ]:
+            report = scorer.score(fixtures, mutated(balanced_rows, fid, key, value, omit))
+            require(not report["pass"], f"{fid}: NARROWED with {key} {'omitted' if omit else repr(value)} unexpectedly passed")
+            require(any(fragment in failure for failure in report["failures"]), report["failures"])
     print("triage behaviour-oracle: PASS")
     return 0
 

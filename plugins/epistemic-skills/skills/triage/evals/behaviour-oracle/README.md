@@ -59,8 +59,10 @@ Pinned before the first live epoch, per
   hypothesis, and naming it as the cause is the failure this corpus
   plants), `discriminating_observation` (the observation that would have
   come out differently under an alternative — required nonempty for
-  `CAUSE` and `NOT-BROKEN`), `eliminated` (array of bare candidate ids
-  eliminated, with the eliminating observation being the one named above).
+  `CAUSE`, `NARROWED`, and `NOT-BROKEN`), `eliminated` (array of bare
+  candidate ids eliminated, with the eliminating observation being the
+  one named above; required nonempty for `NARROWED` — a narrowing that
+  names nothing it eliminated is `UNKNOWN`).
 - Degraded cases carry their labels: `evidence_basis: "self-probed"` when
   no readout existed; `qualifier: "unreachable"` on an unreachable
   `UNKNOWN`; `not_reproducible_stated: true` when the fault could not be
@@ -114,6 +116,45 @@ The committed E6 epoch ran under the **prior** revision. Its five
 mis-pinned verdict failures and its exact-string naming failures are
 instrument-attributable as detailed in those corrections; no E6 verdict
 was re-issued — the re-score is a separate, subordinate record.
+
+## Battery revision (2026-10-24, post-handoff-2 — C11)
+
+A third defect, found by Dot's independent verification of the held
+branches after the revision above: the scorer did not **enforce** the
+contract the revision adjudicated. Both surviving NARROWED fixtures
+pinned `expected_eliminated: []`, so the eliminated-candidate check
+compared against an empty pin, and no rule required a NARROWED
+response to carry a `discriminating_observation` at all — a NARROWED
+response could omit both fields entirely and pass on both degraded
+cases. Corrected here, for future epochs:
+
+1. **The scorer enforces the NARROWED contract.** Every NARROWED
+   response must name at least one eliminated candidate and a
+   nonempty discriminating observation — the observation that
+   eliminated it; empty ids in `eliminated` are rejected. (The same
+   requirement has stood in the triage trigger scorer since C5;
+   this battery was the remaining instance.) The suite carries
+   omitted/empty/blank-value regressions for every NARROWED fixture.
+2. **The two degraded fixtures pin their eliminated candidates**,
+   with the canonical labels disclosed in their scenarios per the
+   C7 rule: `degraded-fault-not-reproducible` pins
+   `"persistent rendering bug"` (the persistent-fault candidate its
+   eleven clean reloads eliminate); `degraded-lying-readout` pins
+   `"not-broken"` (the no-fault candidate its direct reproduction
+   eliminates — the label the E6 subject itself used). No NARROWED
+   case in this corpus is shape-only any longer.
+3. **The balanced example is repaired** so the synthetic
+   correct-response set complies with the contract it demonstrates;
+   its three NARROWED rows now carry their eliminated candidates and
+   observations.
+
+E6's frozen responses re-score **unchanged** under the revised
+scorer and fixtures — the same three failures, 9/12 in the
+subordinate re-score: the frozen lying-readout response already
+named `not-broken` with its observation, the fault-not-reproducible
+failure is a verdict mismatch the new checks sit behind, and the
+known-broken failure is the pre-existing label-content miss. The
+epoch record and the response record are unmodified.
 
 ## Status
 

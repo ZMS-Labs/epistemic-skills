@@ -55,6 +55,26 @@ was regenerated once more against the fully corrected fixtures; the
 scorer in this round also gained rejection of response ids outside
 the fixture inventory, which the frozen responses do not exercise.
 
+**Sixth correction (2026-10-24, third correction round — Dot's P2
+on the handoff-2 verification).** The scorer did not enforce the
+NARROWED response contract the earlier corrections adjudicated:
+with both surviving NARROWED fixtures pinning
+`expected_eliminated: []`, a NARROWED response could omit
+`eliminated` and `discriminating_observation` entirely and pass on
+both degraded cases. The scorer now requires every NARROWED
+response to name at least one eliminated candidate and its
+discriminating observation (and rejects empty ids in `eliminated`),
+and both fixtures pin `expected_eliminated` with canonical labels
+disclosed in their scenarios — `"persistent rendering bug"` for
+`degraded-fault-not-reproducible`, `"not-broken"` (the no-fault
+candidate) for `degraded-lying-readout`. The re-score below was
+regenerated once against the revised scorer and fixtures and is
+**unchanged — 9/12, the same three failures**: the frozen
+lying-readout response already named `not-broken` with its
+observation, the fault-not-reproducible failure is a verdict
+mismatch ahead of the new checks, and the known-broken failure is
+the pre-existing label-content miss.
+
 **What this record is not.** It is not a re-run of E6 and it does not
 alter E6's record: the epoch's outcome stands as recorded in
 `../RESULTS.md` — **FAIL, 4/12** — per the program rule against silent
