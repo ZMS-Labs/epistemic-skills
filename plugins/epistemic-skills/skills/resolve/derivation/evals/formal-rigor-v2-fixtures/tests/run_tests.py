@@ -287,6 +287,18 @@ def main() -> int:
     passed = score.score_fixture(inventory["ot-01-pure-preference-skip"], skip)
     require(passed["structural_pass"], f"valid skip fixture failed: {passed['failures']}")
 
+    # Regression (2026-10-24, Dot review of the held branches): an assessment
+    # naming a claim outside the fixture must fail by name, never be silently
+    # ignored.
+    extra_assessment = copy.deepcopy(skip)
+    extra_assessment["claim_assessments"] = skip["claim_assessments"] + [
+        {"id": "c99-no-such-claim", "state": "established", "derivation_ids": []}]
+    failed = score.score_fixture(inventory["ot-01-pure-preference-skip"], extra_assessment)
+    require(not failed["structural_pass"] and "S6" in failed["dimensions_failed"],
+            "assessment for an unknown claim was not rejected")
+    require(any("not in the fixture" in failure["reason"] for failure in failed["failures"]),
+            failed["failures"])
+
     inflated = dict(skip, invocation="high-assurance", skip_reason=None, record=minimal_record())
     failed = score.score_fixture(inventory["ot-01-pure-preference-skip"], inflated)
     require(not failed["structural_pass"] and "S1" in failed["dimensions_failed"], "tier inflation was not rejected")
