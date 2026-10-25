@@ -163,6 +163,38 @@ def main() -> int:
     report = scorer.score(fixtures, named_not_broken)
     require(not report["pass"], "NOT-BROKEN with a named cause unexpectedly passed")
     require(any("NOT-BROKEN never names a cause" in failure for failure in report["failures"]), report["failures"])
+
+    # Regression (2026-10-25, C14 - job 10, an independent Claude-family
+    # check of the C11/C12 scorer): expected_eliminated was enforced as a
+    # lower bound only, so a NARROWED response could claim eliminations
+    # the named observation does not support - up to every candidate in
+    # the scenario, including the fixture's own forbidden cause - and
+    # pass. The row below is job 10's reproduced instance verbatim in
+    # its eliminated list: the observation eliminates the pool
+    # candidate only; the scenario states no observation distinguishes
+    # (a) from (c), and (a) is the fixture's forbidden cause. The scorer
+    # now bars the forbidden candidate from `eliminated` under any
+    # verdict, and for NARROWED enforces the pinned eliminated set
+    # exactly - the candidates the one discriminating observation
+    # rules out, no more.
+    job10 = mutated(balanced_rows, "clause-known-broken-eliminates-one", "eliminated",
+                    ["connection pool exhausted", "payment provider token endpoint slow", "bad deploy at 08:40"], False)
+    report = scorer.score(fixtures, job10)
+    require(not report["pass"], "job-10 row: NARROWED claiming every candidate eliminated unexpectedly passed")
+    require(any("was claimed as eliminated" in failure for failure in report["failures"]), report["failures"])
+    require(any("does not eliminate" in failure for failure in report["failures"]), report["failures"])
+
+    extra_only = mutated(balanced_rows, "clause-known-broken-eliminates-one", "eliminated",
+                         ["connection pool exhausted", "bad deploy at 08:40"], False)
+    report = scorer.score(fixtures, extra_only)
+    require(not report["pass"], "NARROWED with an unsupported extra elimination unexpectedly passed")
+    require(any("does not eliminate" in failure for failure in report["failures"]), report["failures"])
+
+    forbidden_extra = mutated(balanced_rows, "degraded-lying-readout", "eliminated",
+                              ["not-broken", "payment provider outage"], False)
+    report = scorer.score(fixtures, forbidden_extra)
+    require(not report["pass"], "NARROWED claiming the forbidden candidate eliminated unexpectedly passed")
+    require(any("was claimed as eliminated" in failure for failure in report["failures"]), report["failures"])
     print("triage behaviour-oracle: PASS")
     return 0
 
