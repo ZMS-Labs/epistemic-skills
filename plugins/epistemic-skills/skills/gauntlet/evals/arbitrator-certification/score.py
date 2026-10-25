@@ -96,6 +96,10 @@ def main(argv=None) -> int:
         vm_n += vm
         rows.append((cid, caught, vm, why))
 
+    unknown_outputs = sorted(set(outputs) - set(gt))
+    for cid in unknown_outputs:
+        rows.append((cid, False, False, "output id is not in the battery - an extra output is never silently ignored"))
+
     total = len(gt)
     print(f"# Certified-arbitrator battery")
     print(f"# PRIMARY (planted-flaw catch): {caught_n}/{total}   SECONDARY (verdict-match): {vm_n}/{total}\n")
@@ -104,9 +108,10 @@ def main(argv=None) -> int:
     for cid, caught, vm, why in rows:
         print(f"| {cid} | {'PASS' if caught else 'FAIL'} | {'=' if vm else 'x'} | {why} |")
     threshold = 9
+    certified = caught_n >= threshold and not unknown_outputs
     print(f"\ncertification threshold (catch): >= {threshold}/{total}")
-    print(f"RESULT: {'CERTIFIED at standard rigor' if caught_n >= threshold else 'NOT CERTIFIED'} — catch {caught_n}/{total}, verdict-match {vm_n}/{total}")
-    return 0 if caught_n >= threshold else 1
+    print(f"RESULT: {'CERTIFIED at standard rigor' if certified else 'NOT CERTIFIED'} — catch {caught_n}/{total}, verdict-match {vm_n}/{total}")
+    return 0 if certified else 1
 
 
 if __name__ == "__main__":
