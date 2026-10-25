@@ -130,3 +130,58 @@ results and outcome unchanged.
   exists downstream as PR #281, which states the canonical names in
   the nine readout scenarios. E4's FAIL stands against the prior
   battery revision; the revised battery has no live epoch yet.
+
+## C9 — Unknown response ids rejected across the battery family
+
+Second correction round (Dot's review of the held branches). The C4
+fix covered did-it-land only; Dot found the same omission — a response
+row whose id is outside the fixture inventory silently ignored — in
+the epistemic, metacognate, and manifest scorers, and reportedly in
+health and perspective. A full audit found it in **twenty** scorers.
+Nineteen are fixed: the seventeen list-shaped scorers (epistemic,
+metacognate, perspective, health, manifest, context-audit,
+open-questions, outsource, evidence-locked-uat triage, triage
+behaviour-oracle, write-goal `score` and `score_adapter`,
+decision-ledger proportionality, recon brief/candidate/initiative,
+resolve literature, resolve probe) now fail unknown ids by name,
+matching the triage/watch/did-it-land form, each with a regression in
+its battery suite; the gauntlet arbitrator-certification scorer (an
+outputs dict, not a list) names unknown case ids as FAIL rows and
+blocks certification, with a new regression suite; and the resolve
+formal-rigor scorer fails assessments naming claims outside the
+fixture (S6), with a regression. **Frozen-response check:** the
+preserved responses of E1–E5, E7–E10, E12, and E13 re-score under the
+fixed scorers byte-identically in outcome — same pass/fail and the
+same failure lists as the recorded scorer reports; E14's preserved
+control trials re-score identically (per-trial catch 25/30, majority
+8/10); E6's subordinate re-score is regenerated under C10. E11's
+preserved responses reproduce the recorded scorer crash exactly —
+that defect is the open-questions `parked` normalisation fixed on
+PR #280's branch, not this one.
+
+**Adjudicated NOT defective:** decision-ledger's resume-fixtures
+scorer. Its digests enumerate claims extracted from scenario
+artifacts, and extra claim ids beyond the planted ground-truth subset
+are the battery's contract (46 committed digests carry them; the
+enumeration-calibration line of work depends on the behaviour).
+Rejecting them would falsify committed results, so that scorer is
+unchanged. The two `reference/craft` trigger-and-scope copies carry
+the same list-shaped omission; they are frozen reference snapshots,
+not program batteries, and are flagged here rather than edited.
+
+## C10 — Behaviour-oracle: two further ground truths corrected
+
+Same round; see the second adjudication appended to the E6 epoch
+record. A full audit of the remaining NARROWED pins against the C6
+principle re-pinned two more fixtures
+(`clause-observation-contradicts-assertion`,
+`core-plausible-cause-not-observed`) from NARROWED to UNKNOWN: in
+neither scenario does any observation eliminate a candidate. The two
+surviving NARROWED pins with `expected_eliminated: []`
+(`degraded-lying-readout`, `degraded-fault-not-reproducible`) were
+adjudicated standing, with reasons in the battery README. The E6
+interpretation is amended (five of the six UNKNOWN-where-NARROWED
+failures withdrawn as instrument-attributable; one stands as
+conduct), the battery's verdict-count assertion follows (NARROWED 3 /
+UNKNOWN 7), and the subordinate re-score is regenerated: **9/12**.
+The epoch outcome (FAIL 4/12) and response record are unmodified.
