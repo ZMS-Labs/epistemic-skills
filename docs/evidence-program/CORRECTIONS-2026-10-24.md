@@ -311,7 +311,7 @@ scorer is mechanically identical to the committed scorer report
 (`pass: true`, no failures, actions investigate 7 / no-fire 6):
 **E5's PASS (13/13) stands**, and the epoch record is unmodified.
 
-## C14 — Behaviour-oracle: unsupported eliminations barred; the pinned set is exact for NARROWED
+## C14 — Behaviour-oracle: unsupported eliminations barred; the pinned set enforced exactly for NARROWED (conformance to the pinned oracle)
 
 Fifth correction round for this scorer (2026-10-25; job 10 — an
 independent Claude-family verification of the C11/C12 enforcements,
@@ -328,25 +328,37 @@ named* (a candidate is eliminated only by an observation that rules
 it out), the scenario states no observation distinguishing (a) from
 (c), and the list includes the fixture's own `forbidden_cause`. The
 same assertion-carrying-field class as the job-1 holes C11/C12
-closed, one field over. **Fix:** the scorer now (1) fails any row
-whose `eliminated` names the fixture's `forbidden_cause`
-(case-insensitive), under any verdict; and (2) for **NARROWED**,
+closed, one field over. **Fix:** for **NARROWED**, the scorer now
 fails any `eliminated` entry outside the fixture's pinned
-`expected_eliminated` — the pinned set is exact where the scenario
-determines it, and NARROWED is the verdict whose eliminated set the
-scenario always determines (the suite requires every NARROWED
-fixture to pin it). **Scope discipline:** the exact-set rule is not
-extended to CAUSE — its `eliminated` is adjudicated non-determined
-in C12 (the frozen CAUSE response lists the candidates its
-observation ruled out on the way) — nor to NOT-BROKEN, where
-`eliminated` remains flagged for adjudication under C12, not
-enforced. The job-10 row is carried verbatim as a regression,
-alongside an extra-elimination-only mutation and a
-forbidden-candidate mutation on `degraded-lying-readout`. The
+`expected_eliminated`. The enforcement is **conformance to the
+pinned oracle**: it establishes that a response matches the pin,
+not that the pin is semantically valid. Pin validity is
+adjudicated separately, fixture by fixture, and is unresolved for
+at least one corpus pin (the rendering fixture, whose oracle is
+under adjudication). NARROWED is the verdict for which the suite
+requires every fixture to pin the set, which is what makes the
+conformance check total for this verdict. A universal bar on claiming the fixture's
+`forbidden_cause` as eliminated was built with this correction and
+**withdrawn on review (2026-10-25)**: the record defines
+`forbidden_cause` as a named-cause bar only, and one verification
+job does not authorize extending the field's role; the job-10 row
+is rejected by the exact-set rule alone. **Scope discipline:** the
+exact-set rule is not extended to CAUSE — its `eliminated` is
+adjudicated non-determined in C12 (the frozen CAUSE response lists
+the candidates its observation ruled out on the way; a CAUSE row
+carrying the forbidden candidate in `eliminated` is carried in the
+tests as a labelled control — not mechanically barred) — nor to
+NOT-BROKEN, where `eliminated` remains flagged for adjudication
+under C12, not enforced. The job-10 row is carried verbatim as a
+regression, alongside an extra-elimination-only mutation and the
+same forbidden-candidate mutation on `degraded-lying-readout`,
+which now fails on the exact-set line only. The
 alternative fix shape job 10 suggested — a subset check against a
 disclosed candidate list — was not adopted: exact-set enforcement
-is strictly stronger for the one verdict whose set is determined,
-and it needs no new fixture field. **Trigger-and-scope check:** that
+is strictly stronger, and it needs no new fixture field.
+Exact-set enforcement constrains NARROWED responses to the pinned
+set; this is an oracle-conformance choice, not proof that every
+scenario determines its pin. **Trigger-and-scope check:** that
 scorer pins no `expected_eliminated` and no `forbidden_cause` and
 performs no eliminated-set comparison at all, so the lower-bound
 shape does not exist there; recorded, not fixed. **Frozen-response
