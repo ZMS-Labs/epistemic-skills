@@ -75,6 +75,23 @@ observation, the fault-not-reproducible failure is a verdict
 mismatch ahead of the new checks, and the known-broken failure is
 the pre-existing label-content miss.
 
+**Seventh correction (2026-10-25 — C14).** Job 10, an independent
+Claude-family check of the C11/C12 scorer, found a further bypass of
+the same class: `expected_eliminated` was enforced as a lower bound
+only, so a NARROWED response could claim eliminations the named
+observation does not support — up to every candidate in the scenario,
+including the fixture's own `forbidden_cause` — and pass. The scorer
+now bars the forbidden candidate from `eliminated` under any verdict
+and enforces the pinned eliminated set **exactly** for NARROWED: the
+candidates the one discriminating observation rules out, no more.
+The re-score below was regenerated once against the revised scorer
+and is **unchanged in reading — 9/12, the same three fixtures fail**
+— with one added failure line: the frozen known-broken response's
+`"b"` entry is now also named as an elimination the observation does
+not make, alongside its pre-existing label-content miss. No frozen
+row names a forbidden candidate as eliminated. The epoch record and
+the response record are unmodified.
+
 **What this record is not.** It is not a re-run of E6 and it does not
 alter E6's record: the epoch's outcome stands as recorded in
 `../RESULTS.md` — **FAIL, 4/12** — per the program rule against silent

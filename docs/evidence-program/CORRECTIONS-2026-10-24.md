@@ -310,3 +310,57 @@ carries `named_cause: null` — and the re-score under the revised
 scorer is mechanically identical to the committed scorer report
 (`pass: true`, no failures, actions investigate 7 / no-fire 6):
 **E5's PASS (13/13) stands**, and the epoch record is unmodified.
+
+## C14 — Behaviour-oracle: unsupported eliminations barred; the pinned set is exact for NARROWED
+
+Fifth correction round for this scorer (2026-10-25; job 10 — an
+independent Claude-family verification of the C11/C12 enforcements,
+run through the Anthropic route by a model that wrote none of the
+fixes; its Part A predictions matched local ground truth 12/12, and
+its Part B divergence claim **reproduced locally**). The scorer
+enforced `expected_eliminated` as a **lower bound only**: a NARROWED
+response for `clause-known-broken-eliminates-one` listing all three
+scenario candidates as eliminated — `["connection pool exhausted",
+"payment provider token endpoint slow", "bad deploy at 08:40"]` —
+passed with zero failures, although the contract defines
+`eliminated` as the candidates eliminated *by the one observation
+named* (a candidate is eliminated only by an observation that rules
+it out), the scenario states no observation distinguishing (a) from
+(c), and the list includes the fixture's own `forbidden_cause`. The
+same assertion-carrying-field class as the job-1 holes C11/C12
+closed, one field over. **Fix:** the scorer now (1) fails any row
+whose `eliminated` names the fixture's `forbidden_cause`
+(case-insensitive), under any verdict; and (2) for **NARROWED**,
+fails any `eliminated` entry outside the fixture's pinned
+`expected_eliminated` — the pinned set is exact where the scenario
+determines it, and NARROWED is the verdict whose eliminated set the
+scenario always determines (the suite requires every NARROWED
+fixture to pin it). **Scope discipline:** the exact-set rule is not
+extended to CAUSE — its `eliminated` is adjudicated non-determined
+in C12 (the frozen CAUSE response lists the candidates its
+observation ruled out on the way) — nor to NOT-BROKEN, where
+`eliminated` remains flagged for adjudication under C12, not
+enforced. The job-10 row is carried verbatim as a regression,
+alongside an extra-elimination-only mutation and a
+forbidden-candidate mutation on `degraded-lying-readout`. The
+alternative fix shape job 10 suggested — a subset check against a
+disclosed candidate list — was not adopted: exact-set enforcement
+is strictly stronger for the one verdict whose set is determined,
+and it needs no new fixture field. **Trigger-and-scope check:** that
+scorer pins no `expected_eliminated` and no `forbidden_cause` and
+performs no eliminated-set comparison at all, so the lower-bound
+shape does not exist there; recorded, not fixed. **Frozen-response
+check:** E6's preserved responses re-score under the revised scorer
+with the same three fixtures failing — the subordinate re-score
+stands at **9/12** — and exactly one added failure line: the frozen
+known-broken response's `"b"` entry is now also named as an
+elimination the observation does not make, beside its pre-existing
+label-content miss. The subordinate record was regenerated once with
+the delta stated in its note. No frozen row names a forbidden
+candidate as eliminated. The epoch outcome (FAIL 4/12) and the
+response record are unmodified. (Job 10's second claim — that any
+nonempty string satisfies `discriminating_observation` — was
+reproduced and adjudicated a limitation, not a hole: the contract's
+stated requirement for the field is "required nonempty", and the
+semantic adequacy of observation content is not mechanically
+decidable. Recorded here; no rule added.)
