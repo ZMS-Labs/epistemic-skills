@@ -1,0 +1,86 @@
+[
+  {
+    "id": "clause-known-broken-eliminates-one",
+    "verdict": "UNKNOWN",
+    "named_cause": null,
+    "discriminating_observation": null,
+    "eliminated": []
+  },
+  {
+    "id": "clause-check-red-cause-unknown",
+    "verdict": "UNKNOWN",
+    "named_cause": null,
+    "discriminating_observation": null,
+    "eliminated": []
+  },
+  {
+    "id": "clause-readout-named-wrong-cause-unknown",
+    "verdict": "UNKNOWN",
+    "named_cause": null,
+    "discriminating_observation": null,
+    "eliminated": []
+  },
+  {
+    "id": "clause-observation-contradicts-assertion",
+    "verdict": "UNKNOWN",
+    "named_cause": null,
+    "discriminating_observation": null,
+    "eliminated": []
+  },
+  {
+    "id": "degraded-no-readout-self-probed",
+    "verdict": "UNKNOWN",
+    "named_cause": null,
+    "discriminating_observation": null,
+    "eliminated": []
+  },
+  {
+    "id": "degraded-subject-unreachable",
+    "verdict": "UNKNOWN",
+    "named_cause": null,
+    "discriminating_observation": null,
+    "eliminated": []
+  },
+  {
+    "id": "degraded-fault-not-reproducible",
+    "verdict": "UNKNOWN",
+    "named_cause": null,
+    "discriminating_observation": null,
+    "eliminated": []
+  },
+  {
+    "id": "degraded-observation-would-be-destructive",
+    "verdict": "UNKNOWN",
+    "named_cause": null,
+    "discriminating_observation": null,
+    "eliminated": []
+  },
+  {
+    "id": "degraded-lying-readout",
+    "verdict": "UNKNOWN",
+    "named_cause": null,
+    "discriminating_observation": null,
+    "eliminated": []
+  },
+  {
+    "id": "core-plausible-cause-not-observed",
+    "verdict": "UNKNOWN",
+    "named_cause": null,
+    "discriminating_observation": null,
+    "eliminated": []
+  },
+  {
+    "id": "control-discriminating-observation-cause",
+    "verdict": "UNKNOWN",
+    "named_cause": null,
+    "discriminating_observation": null,
+    "eliminated": []
+  },
+  {
+    "id": "control-report-wrong-not-broken",
+    "verdict": "UNKNOWN",
+    "named_cause": null,
+    "discriminating_observation": null,
+    "eliminated": []
+  }
+]

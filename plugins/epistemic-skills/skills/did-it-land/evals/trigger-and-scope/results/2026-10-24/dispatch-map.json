@@ -1,0 +1,54 @@
+{
+ "1e619a0767f4": {
+  "fixture_id": "guard-hook-installed-and-firing",
+  "holdout": false
+ },
+ "33a4f9cd21c5": {
+  "fixture_id": "nofire-health-state-question",
+  "holdout": false
+ },
+ "533c43be6cc3": {
+  "fixture_id": "observed-effect-reverted-by-reconciler",
+  "holdout": true
+ },
+ "579e3ab8c10e": {
+  "fixture_id": "deploy-fix-called-done-landed",
+  "holdout": false
+ },
+ "7fc57040227d": {
+  "fixture_id": "partial-coverage-one-of-three-consumers",
+  "holdout": false
+ },
+ "a19cb3fc2fcc": {
+  "fixture_id": "nofire-local-reversible-preview-edit",
+  "holdout": false
+ },
+ "c22b2dae1d1f": {
+  "fixture_id": "merge-believed-applied-landed",
+  "holdout": false
+ },
+ "c9c8c667c18d": {
+  "fixture_id": "runtime-unreachable-unverified",
+  "holdout": false
+ },
+ "cc9489810081": {
+  "fixture_id": "nofire-nothing-depends-yet",
+  "holdout": false
+ },
+ "e65f4f29580a": {
+  "fixture_id": "nofire-still-deciding-what-to-change",
+  "holdout": true
+ },
+ "e83831c6ae50": {
+  "fixture_id": "artifact-distributed-to-consumer-landed",
+  "holdout": false
+ },
+ "ee39ebd984c8": {
+  "fixture_id": "green-check-source-only-oracle",
+  "holdout": false
+ },
+ "ee6d02bebda7": {
+  "fixture_id": "config-edit-runtime-loads-cache",
+  "holdout": true
+ }
+}

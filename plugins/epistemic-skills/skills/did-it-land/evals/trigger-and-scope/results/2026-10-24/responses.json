@@ -1,0 +1,90 @@
+[
+ {
+  "action": "verify-landing",
+  "artifact_resolved": "deployed hook on the production pipeline",
+  "consumer_observation": "A harmless test event sent through the production path was blocked and logged by the hook exactly as designed",
+  "id": "guard-hook-installed-and-firing",
+  "persistence": "unverified",
+  "verdict": "LANDED"
+ },
+ {
+  "action": "no-fire",
+  "id": "nofire-health-state-question"
+ },
+ {
+  "action": "verify-landing",
+  "artifact_resolved": "live DNS record served by the authoritative resolver",
+  "consumer_observation": "At 10:00 the authoritative resolver returned the new record and traffic shifted to the new host; after the 10:20 zone reconciler ran, a second observation showed the resolver returning the old record again and traffic back on the old host.",
+  "id": "observed-effect-reverted-by-reconciler",
+  "persistence": "observed",
+  "verdict": "REVERTED"
+ },
+ {
+  "action": "verify-landing",
+  "artifact_resolved": "deployed production checkout service",
+  "consumer_observation": "Production checkout endpoint was exercised through the repaired path after the deploy and returned the new confirmation payload.",
+  "id": "deploy-fix-called-done-landed",
+  "persistence": "unverified",
+  "verdict": "LANDED"
+ },
+ {
+  "action": "verify-landing",
+  "artifact_resolved": "the deployed feature-flag configuration loaded by the regional consumers",
+  "consumer_observation": "us-east consumer was observed with the flag enabled; the eu-west and ap-south consumers were never observed",
+  "id": "partial-coverage-one-of-three-consumers",
+  "persistence": "unverified",
+  "verdict": "UNVERIFIED"
+ },
+ {
+  "action": "no-fire",
+  "id": "nofire-local-reversible-preview-edit"
+ },
+ {
+  "action": "verify-landing",
+  "artifact_resolved": "the running worker service as queried via its effective-limits endpoint, not the merged repository source",
+  "consumer_observation": "The running worker's effective-limits endpoint was queried after the merge and reports 600 requests/minute",
+  "id": "merge-believed-applied-landed",
+  "persistence": "unverified",
+  "verdict": "LANDED"
+ },
+ {
+  "action": "verify-landing",
+  "artifact_resolved": "deployed firmware image on the isolated plant gateway, not the source repository",
+  "consumer_observation": null,
+  "id": "runtime-unreachable-unverified",
+  "persistence": "unverified",
+  "verdict": "UNVERIFIED"
+ },
+ {
+  "action": "no-fire",
+  "id": "nofire-nothing-depends-yet"
+ },
+ {
+  "action": "no-fire",
+  "id": "nofire-still-deciding-what-to-change"
+ },
+ {
+  "action": "verify-landing",
+  "artifact_resolved": "plugin bundle 4.2 loaded by the design workstation app",
+  "consumer_observation": "The workstation app reports bundle 4.2 active and the new export action succeeds, and after an app restart the bundle is still loaded",
+  "id": "artifact-distributed-to-consumer-landed",
+  "persistence": "observed",
+  "verdict": "LANDED"
+ },
+ {
+  "action": "verify-landing",
+  "artifact_resolved": "the deployed copy loaded by the running system, rather than the source tree grepped by CI",
+  "consumer_observation": null,
+  "id": "green-check-source-only-oracle",
+  "persistence": "unverified",
+  "verdict": "UNVERIFIED"
+ },
+ {
+  "action": "verify-landing",
+  "artifact_resolved": "cached config bundle generated last week (not the repository checkout file)",
+  "consumer_observation": "effective-config endpoint still reports timeout_seconds=30, not 90",
+  "id": "config-edit-runtime-loads-cache",
+  "persistence": "unverified",
+  "verdict": "UNVERIFIED"
+ }
+]

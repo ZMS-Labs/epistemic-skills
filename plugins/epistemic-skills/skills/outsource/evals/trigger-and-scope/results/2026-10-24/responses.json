@@ -1,0 +1,208 @@
+[
+ {
+  "action": "publish-packet",
+  "full_context_pasted": false,
+  "handoff_path": "docs/outsource/migration-design-review/HANDOFF.md",
+  "id": "copy-paste-review-handoff-fires",
+  "immutable_ref": "0123456789abcdef0123456789abcdef01234567",
+  "mode": "delegate",
+  "packet_committed": true,
+  "packet_published_first": true,
+  "prompt_emitted": true,
+  "prompt_is_pointer": true,
+  "pushed": true,
+  "relay_template_recorded": true
+ },
+ {
+  "action": "publish-packet",
+  "full_context_pasted": false,
+  "handoff_path": "docs/outsource/schema-migration/HANDOFF.md",
+  "id": "pointer-not-paste-state",
+  "immutable_ref": "0123456789abcdef0123456789abcdef01234567",
+  "packet_committed": true,
+  "packet_published_first": true,
+  "prompt_emitted": true,
+  "prompt_is_pointer": true,
+  "pushed": true,
+  "relay_template_recorded": true
+ },
+ {
+  "action": "report-blocked",
+  "blocked": true,
+  "blocker": "hidden-context",
+  "id": "hidden-chat-context-blocked-state",
+  "prompt_emitted": false
+ },
+ {
+  "action": "no-fire",
+  "id": "colleague-agent-question-no-fire"
+ },
+ {
+  "action": "publish-packet",
+  "capabilities_verified": [
+   "writable-checkout",
+   "runnable-test-shell",
+   "authenticated-github-mutation",
+   "isolated-execution-contexts",
+   "repository-access"
+  ],
+  "capability_preflight": true,
+  "full_context_pasted": false,
+  "handoff_path": "docs/outsource/failing-suite-fix/HANDOFF.md",
+  "id": "capable-target-preflight-fires",
+  "immutable_ref": "0123456789abcdef0123456789abcdef01234567",
+  "packet_committed": true,
+  "packet_published_first": true,
+  "prompt_emitted": true,
+  "prompt_is_pointer": true,
+  "pushed": true,
+  "relay_template_recorded": true
+ },
+ {
+  "action": "no-fire",
+  "id": "in-session-subagent-no-fire"
+ },
+ {
+  "action": "publish-packet",
+  "capabilities_verified": [
+   "repository-read-access",
+   "writable-checkout",
+   "runnable-test-shell",
+   "authenticated-github-mutation-actions",
+   "isolated-execution-contexts"
+  ],
+  "capability_preflight": true,
+  "full_context_pasted": false,
+  "handoff_path": "docs/outsource/gpu-load-test/HANDOFF.md",
+  "id": "beyond-origin-surface-fires",
+  "immutable_ref": "1234567890abcdef1234567890abcdef12345678",
+  "packet_committed": true,
+  "packet_published_first": true,
+  "prompt_emitted": true,
+  "prompt_is_pointer": true,
+  "pushed": true,
+  "relay_template_recorded": true
+ },
+ {
+  "action": "publish-packet",
+  "full_context_pasted": false,
+  "handoff_path": "docs/outsource/index-rebuild/HANDOFF.md",
+  "id": "packet-before-prompt-state",
+  "immutable_ref": "0123456789abcdef0123456789abcdef01234567",
+  "packet_committed": true,
+  "packet_published_first": true,
+  "prompt_emitted": true,
+  "prompt_is_pointer": true,
+  "pushed": true,
+  "relay_template_recorded": true
+ },
+ {
+  "action": "verify-relay",
+  "claims_checked": [
+   "status-complete",
+   "all-tests-pass",
+   "commits-pushed"
+  ],
+  "id": "relay-claim-verified-state",
+  "packet_updated": true,
+  "relay_verified": true,
+  "stored_verbatim": true,
+  "trusted_unverified": false
+ },
+ {
+  "acceptance_readback": true,
+  "action": "verify-acceptance",
+  "gaps_surfaced": [
+   "weekly-dependency-bump-check"
+  ],
+  "id": "acceptance-gap-state",
+  "packet_amended": true,
+  "readback_verified": true,
+  "stored_verbatim": true
+ },
+ {
+  "action": "no-fire",
+  "id": "inbound-target-work-no-fire"
+ },
+ {
+  "action": "report-blocked",
+  "blocked": true,
+  "blocker": "target-capability",
+  "capabilities_failed": [
+   "shell",
+   "writable-checkout",
+   "code-checkout",
+   "test-execution",
+   "branch-commit-push",
+   "pull-request",
+   "isolated-execution"
+  ],
+  "capability_preflight": true,
+  "id": "readonly-target-preflight-blocked-state",
+  "prompt_emitted": false
+ },
+ {
+  "action": "publish-packet",
+  "capabilities_verified": [
+   "repository-read-access",
+   "prose-output"
+  ],
+  "capability_preflight": true,
+  "full_context_pasted": false,
+  "handoff_path": "docs/outsource/architecture-audit/HANDOFF.md",
+  "id": "explicit-superior-model-fires",
+  "immutable_ref": "0123456789abcdef0123456789abcdef01234567",
+  "packet_committed": true,
+  "packet_published_first": true,
+  "prompt_emitted": true,
+  "prompt_is_pointer": true,
+  "pushed": true,
+  "relay_template_recorded": true
+ },
+ {
+  "acceptance_readback": true,
+  "action": "verify-acceptance",
+  "id": "custody-acceptance-state",
+  "readback_verified": true,
+  "stored_verbatim": true
+ },
+ {
+  "action": "transfer-packet",
+  "divestiture_listed": true,
+  "full_context_pasted": false,
+  "handoff_path": "docs/outsource/project-transfer/HANDOFF.md",
+  "id": "full-custody-handover-fires",
+  "immutable_ref": "0123456789abcdef0123456789abcdef01234567",
+  "packet_committed": true,
+  "packet_published_first": true,
+  "prompt_emitted": true,
+  "prompt_is_pointer": true,
+  "pushed": true,
+  "relay_template_recorded": true,
+  "responsibility_inventory": true
+ },
+ {
+  "action": "publish-packet",
+  "full_context_pasted": false,
+  "handoff_path": "docs/outsource/benchmark-comparison/HANDOFF.md",
+  "id": "bounded-delegation-stays-delegate",
+  "immutable_ref": "0123456789abcdef0123456789abcdef01234567",
+  "packet_committed": true,
+  "packet_published_first": true,
+  "prompt_emitted": true,
+  "prompt_is_pointer": true,
+  "pushed": true,
+  "relay_template_recorded": true
+ },
+ {
+  "action": "no-fire",
+  "id": "self-handoff-local-task-no-fire"
+ },
+ {
+  "action": "report-blocked",
+  "blocked": true,
+  "blocker": "unpushed-packet",
+  "id": "unpushed-packet-blocked-state",
+  "prompt_emitted": false
+ }
+]

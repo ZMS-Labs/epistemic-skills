@@ -1,0 +1,74 @@
+{
+ "004a7bda2421": {
+  "fixture_id": "copy-paste-review-handoff-fires",
+  "holdout": false
+ },
+ "20ebb3fab765": {
+  "fixture_id": "pointer-not-paste-state",
+  "holdout": false
+ },
+ "223deddfa21a": {
+  "fixture_id": "hidden-chat-context-blocked-state",
+  "holdout": false
+ },
+ "305a3f41775a": {
+  "fixture_id": "colleague-agent-question-no-fire",
+  "holdout": false
+ },
+ "3879aa5ddc95": {
+  "fixture_id": "capable-target-preflight-fires",
+  "holdout": false
+ },
+ "3cb1834ee86a": {
+  "fixture_id": "in-session-subagent-no-fire",
+  "holdout": false
+ },
+ "570052dd53f0": {
+  "fixture_id": "beyond-origin-surface-fires",
+  "holdout": false
+ },
+ "6b8e4c156354": {
+  "fixture_id": "packet-before-prompt-state",
+  "holdout": false
+ },
+ "6eea3b7b1b45": {
+  "fixture_id": "relay-claim-verified-state",
+  "holdout": false
+ },
+ "a5527ef3ce23": {
+  "fixture_id": "acceptance-gap-state",
+  "holdout": false
+ },
+ "a9d4c0c714c8": {
+  "fixture_id": "inbound-target-work-no-fire",
+  "holdout": false
+ },
+ "b14a99976e8f": {
+  "fixture_id": "readonly-target-preflight-blocked-state",
+  "holdout": false
+ },
+ "c98efcea62fe": {
+  "fixture_id": "explicit-superior-model-fires",
+  "holdout": false
+ },
+ "cd2e55429c37": {
+  "fixture_id": "custody-acceptance-state",
+  "holdout": false
+ },
+ "d3254663f670": {
+  "fixture_id": "full-custody-handover-fires",
+  "holdout": false
+ },
+ "dd8124628046": {
+  "fixture_id": "bounded-delegation-stays-delegate",
+  "holdout": false
+ },
+ "ed823babf21d": {
+  "fixture_id": "self-handoff-local-task-no-fire",
+  "holdout": false
+ },
+ "f64c9ca96bcf": {
+  "fixture_id": "unpushed-packet-blocked-state",
+  "holdout": false
+ }
+}

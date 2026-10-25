@@ -1,0 +1,82 @@
+[
+ {
+  "action": "apply-lens",
+  "finding": "remaining-uncertainty",
+  "id": "evidence-unavailable-limit-fires",
+  "lens": "usability",
+  "lenses_applied": 1,
+  "question": "Does the new onboarding flow confuse first-time users?"
+ },
+ {
+  "action": "no-fire",
+  "id": "routine-work-no-fire"
+ },
+ {
+  "action": "apply-lens",
+  "finding": "remaining-uncertainty",
+  "id": "explicit-different-lens-tradeoff-fires",
+  "lens": "operational-risk",
+  "lenses_applied": 1,
+  "question": "How do keeping the in-house scheduler and adopting the hosted scheduler compare on operational risk?"
+ },
+ {
+  "action": "apply-lens",
+  "finding": "insight",
+  "id": "several-lenses-bounded-no-adjudication",
+  "lens": "multiple lenses on release-freeze duration: reversibility and cost of undo, failure/risk exposure, and operational impact",
+  "lenses_applied": 3,
+  "question": "What are the distinct angles on shortening the release freeze from two weeks to three days?"
+ },
+ {
+  "action": "no-fire",
+  "id": "approval-verdict-no-fire"
+ },
+ {
+  "action": "no-fire",
+  "id": "adjacent-issue-no-fire"
+ },
+ {
+  "action": "apply-lens",
+  "finding": "remaining-uncertainty",
+  "id": "metric-fitness-lens-fires",
+  "lens": "Measurement fitness: construct fit",
+  "lenses_applied": 1,
+  "question": "Does click-through rate cover search quality well enough to judge this search-quality change?"
+ },
+ {
+  "action": "no-fire",
+  "id": "implementation-not-authorized-no-fire"
+ },
+ {
+  "action": "apply-lens",
+  "finding": "remaining-uncertainty",
+  "id": "focused-cache-assumption-fires",
+  "lens": "Behavioral assumptions",
+  "lenses_applied": 1,
+  "question": "Does observed evidence support the assumption that shoppers do not notice a product price that is up to five minutes stale?"
+ },
+ {
+  "action": "apply-lens",
+  "finding": "no-material-finding",
+  "id": "no-material-finding-fires",
+  "lens": "failure-mode",
+  "lenses_applied": 1,
+  "question": "Might the new retry policy silently amplify load on the partner API beyond its stated limits?"
+ },
+ {
+  "action": "no-fire",
+  "id": "settled-evidence-no-fire"
+ },
+ {
+  "action": "no-fire",
+  "id": "gauntlet-adjudication-no-fire"
+ },
+ {
+  "action": "apply-lens",
+  "finding": "remaining-uncertainty",
+  "id": "reversibility-single-lens-fires",
+  "lens": "reversibility-analyst",
+  "lenses_applied": 1,
+  "question": "If the database migration goes wrong, can it be rolled back, and what would undoing it cost?"
+ }
+]

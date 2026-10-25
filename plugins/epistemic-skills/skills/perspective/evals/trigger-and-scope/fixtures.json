@@ -1,0 +1,112 @@
+[
+  {
+    "id": "focused-cache-assumption-fires",
+    "scenario": "Midway through planning a checkout change, the plan rests on the assumption that shoppers never notice a product price that is up to five minutes stale. No measurement has ever tested that assumption, and the deploy decision turns on it. The agent pauses the planning to examine just that one assumption through a single evidence-based lens before continuing.",
+    "trigger": "auto",
+    "expected_action": "apply-lens",
+    "clause": "a focused concern, assumption or tradeoff would benefit from a different evidence-based lens",
+    "holdout": false
+  },
+  {
+    "id": "explicit-different-lens-tradeoff-fires",
+    "scenario": "Operator says: before we decide between keeping the in-house scheduler and adopting the hosted one, look at that tradeoff through a different lens than cost — I want the operational-risk view, explicitly. The decision itself stays with the operator; only the examination is requested.",
+    "trigger": "explicit",
+    "expected_action": "apply-lens",
+    "clause": "Use when a focused concern, assumption or tradeoff would benefit from a different evidence-based lens, or on explicit request.",
+    "holdout": false
+  },
+  {
+    "id": "several-lenses-bounded-no-adjudication",
+    "scenario": "Operator asks: examine the proposal to shorten the release freeze from two weeks to three days through several lenses — I want the distinct angles on this one bounded question, not a ruling. The decision stays with me and no verdict is requested or wanted.",
+    "trigger": "explicit",
+    "expected_action": "apply-lens",
+    "clause": "Several lenses may be useful; their number does not turn this method into Gauntlet.",
+    "holdout": true,
+    "min_lenses": 2
+  },
+  {
+    "id": "settled-evidence-no-fire",
+    "scenario": "A benchmark run yesterday already measured the new parser against the old one on the production corpus and settled that it is faster and output-identical; the report is in hand. The agent is asked to proceed with the parser swap on the strength of that existing result.",
+    "trigger": "none",
+    "expected_action": "no-fire",
+    "clause": "reuse that result rather than manufacture another investigation",
+    "holdout": false
+  },
+  {
+    "id": "routine-work-no-fire",
+    "scenario": "Operator asks for a routine patch-version bump of a logging dependency and a typo fix in its changelog entry — ordinary maintenance with no open concern, assumption, or tradeoff in play.",
+    "trigger": "none",
+    "expected_action": "no-fire",
+    "clause": "Do not convene a panel for routine work or treat lens count as adjudication.",
+    "holdout": false
+  },
+  {
+    "id": "gauntlet-adjudication-no-fire",
+    "scenario": "A consequential proposal to replace the fleet's authentication provider is contested by three reviewers with conflicting evidence. The operator asks for the competing examinations to be weighed against each other and a reasoned GO / NO-GO judgment rendered on the single common proposal.",
+    "trigger": "none",
+    "expected_action": "no-fire",
+    "clause": "Gauntlet adds plural scrutiny and reasoned adjudication of a common subject.",
+    "holdout": true
+  },
+  {
+    "id": "adjacent-issue-no-fire",
+    "scenario": "While fixing the assigned invoice-export bug, the agent notices the reporting module's architecture looks dated and would be interesting to re-examine. Nothing in the assignment concerns reporting, and no one has asked about it.",
+    "trigger": "none",
+    "expected_action": "no-fire",
+    "clause": "Do not infer a new assignment from an interesting adjacent issue.",
+    "holdout": false
+  },
+  {
+    "id": "reversibility-single-lens-fires",
+    "scenario": "The only open question before a database migration is narrow: if it goes wrong, can it be rolled back, and what would undoing it cost? Nothing else about the migration is in doubt, and no broader examination is needed.",
+    "trigger": "auto",
+    "expected_action": "apply-lens",
+    "clause": "A focused reversibility question may need only rollback feasibility and the cost of undo.",
+    "holdout": false,
+    "min_lenses": 1,
+    "max_lenses": 1
+  },
+  {
+    "id": "metric-fitness-lens-fires",
+    "scenario": "A team is about to judge a search-quality change by its click-through dashboard, but whether that metric actually measures search quality has never been examined. The agent examines the metric's fitness for this one decision through a single lens before the change is judged.",
+    "trigger": "auto",
+    "expected_action": "apply-lens",
+    "clause": "Select by functional question and evidence mechanism",
+    "holdout": false,
+    "expected_finding": "adjustment"
+  },
+  {
+    "id": "implementation-not-authorized-no-fire",
+    "scenario": "An earlier lens pass suggested consolidating two internal tools. The operator now says: go ahead and carry out that consolidation. No separate implementation task has been authorized or scoped; the only basis offered for acting is the perspective assessment itself.",
+    "trigger": "none",
+    "expected_action": "no-fire",
+    "clause": "Assessment alone does not authorize implementation.",
+    "holdout": false
+  },
+  {
+    "id": "evidence-unavailable-limit-fires",
+    "scenario": "Asked to examine whether the new onboarding flow confuses first-time users through a usability lens, the agent finds no session recordings, no support-ticket access, and no users available to observe — the evidence the lens needs does not exist in this environment. The bounded question still stands and the lens is applied as far as the available evidence allows.",
+    "trigger": "state",
+    "expected_action": "apply-lens",
+    "clause": "Report a limit instead of turning exhaustion into assurance.",
+    "holdout": true,
+    "expected_finding": "remaining-uncertainty"
+  },
+  {
+    "id": "no-material-finding-fires",
+    "scenario": "A reviewer worries the new retry policy might silently amplify load on a partner API. The agent examines that single concern through a failure-mode lens: the policy's caps, backoff, and circuit breaker are inspected against the partner's stated limits, and nothing in them exceeds those limits.",
+    "trigger": "auto",
+    "expected_action": "apply-lens",
+    "clause": "supported finding, no-material-finding result or remaining uncertainty",
+    "holdout": false,
+    "expected_finding": "no-material-finding"
+  },
+  {
+    "id": "approval-verdict-no-fire",
+    "scenario": "Operator says: take a quick look at this vendor proposal from another angle and then give me your verdict — approved or not approved — so we can sign it today. What is requested is an approval decision on the proposal, not an examination returned to the work.",
+    "trigger": "none",
+    "expected_action": "no-fire",
+    "clause": "A useful change of perspective is not an approval verdict, a complete review or an independent expert's opinion.",
+    "holdout": false
+  }
+]

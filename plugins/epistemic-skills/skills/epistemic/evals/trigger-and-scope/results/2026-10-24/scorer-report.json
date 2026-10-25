@@ -1,0 +1,12 @@
+{
+ "scorer": "plugins/epistemic-skills/skills/epistemic/evals/trigger-and-scope/score.py",
+ "exit_code": 0,
+ "report": {
+  "pass": true,
+  "failures": [],
+  "actions": {
+   "use-method": 8,
+   "no-fire": 5
+  }
+ }
+}

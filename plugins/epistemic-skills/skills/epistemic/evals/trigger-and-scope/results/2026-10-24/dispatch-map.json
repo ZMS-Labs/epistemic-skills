@@ -1,0 +1,54 @@
+{
+ "078f57bc6c01": {
+  "fixture_id": "guide-question-how-to-use-suite",
+  "holdout": false
+ },
+ "11c1d33028da": {
+  "fixture_id": "explicit-skill-request-honoured-directly",
+  "holdout": false
+ },
+ "1323df470c35": {
+  "fixture_id": "narrate-every-nonapplication",
+  "holdout": false
+ },
+ "1f1b9421f073": {
+  "fixture_id": "midwork-decision-persisted",
+  "holdout": false
+ },
+ "51786f6255c0": {
+  "fixture_id": "guidance-already-loaded-work-resumes",
+  "holdout": false
+ },
+ "715969107b29": {
+  "fixture_id": "complementary-method-distinct-question",
+  "holdout": false
+ },
+ "7b0c2cd1627b": {
+  "fixture_id": "routine-work-no-applicable-trigger",
+  "holdout": true
+ },
+ "87827cda6270": {
+  "fixture_id": "method-returns-no-material-finding",
+  "holdout": false
+ },
+ "a34e2f948fac": {
+  "fixture_id": "second-dispatcher-added-alongside",
+  "holdout": false
+ },
+ "b653bf03e3a3": {
+  "fixture_id": "midwork-failure-needs-triage",
+  "holdout": true
+ },
+ "bdde34e6169b": {
+  "fixture_id": "instructions-unavailable-limit-stated",
+  "holdout": false
+ },
+ "d06c0a0a2d46": {
+  "fixture_id": "claimed-fix-checked-at-consumer",
+  "holdout": true
+ },
+ "db74e9a20c54": {
+  "fixture_id": "guide-asked-to-create-task-ledger",
+  "holdout": false
+ }
+}

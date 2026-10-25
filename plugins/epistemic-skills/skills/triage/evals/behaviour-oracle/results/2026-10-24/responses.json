@@ -1,0 +1,98 @@
+[
+ {
+  "discriminating_observation": null,
+  "eliminated": [],
+  "id": "core-plausible-cause-not-observed",
+  "named_cause": null,
+  "verdict": "UNKNOWN"
+ },
+ {
+  "discriminating_observation": "",
+  "eliminated": [],
+  "id": "clause-check-red-cause-unknown",
+  "named_cause": null,
+  "verdict": "UNKNOWN"
+ },
+ {
+  "discriminating_observation": "Running the user's exact saved report directly returned 1,847 rows complete, and the export file matched the on-screen count; the 100-row figure is the preview pane's documented display limit visible in the same screen the user screenshotted, which would not be the case if the export itself truncated at 100 rows.",
+  "eliminated": [],
+  "id": "control-report-wrong-not-broken",
+  "named_cause": null,
+  "verdict": "NOT-BROKEN"
+ },
+ {
+  "discriminating_observation": "",
+  "eliminated": [],
+  "id": "degraded-observation-would-be-destructive",
+  "named_cause": null,
+  "observation_plan": "safe-alternative",
+  "verdict": "UNKNOWN"
+ },
+ {
+  "discriminating_observation": "Pool observed directly during a latency spike: 12 of 200 connections in use, no waiters \u2014 if the pool were exhausted, usage would have been at or near capacity with waiters present.",
+  "eliminated": [
+   "b"
+  ],
+  "id": "clause-known-broken-eliminates-one",
+  "named_cause": null,
+  "verdict": "NARROWED"
+ },
+ {
+  "discriminating_observation": "",
+  "eliminated": [],
+  "id": "degraded-fault-not-reproducible",
+  "named_cause": null,
+  "not_reproducible_stated": true,
+  "verdict": "UNKNOWN"
+ },
+ {
+  "discriminating_observation": "A document with a unique token published directly to the index appeared in search within seconds, while the same token submitted through the application never appeared and the application's publish call returned a serialization error naming the new schema field the deploy added; the direct-to-index result would have failed if the index or query path were at fault.",
+  "eliminated": [
+   "index-fault",
+   "query-fault"
+  ],
+  "id": "control-discriminating-observation-cause",
+  "named_cause": "application-side publish failure: serialization error on the new schema field added by the deploy",
+  "verdict": "CAUSE"
+ },
+ {
+  "discriminating_observation": "Direct reproduction three times: the payment endpoint returns 502 on a valid test transaction, contradicting the dashboard's green '100% success' across the whole window; this would have come out differently if the system were healthy as the dashboard claims",
+  "eliminated": [
+   "not-broken"
+  ],
+  "id": "degraded-lying-readout",
+  "named_cause": null,
+  "readout_suspect": true,
+  "verdict": "NARROWED"
+ },
+ {
+  "discriminating_observation": "",
+  "eliminated": [],
+  "id": "clause-observation-contradicts-assertion",
+  "named_cause": null,
+  "verdict": "UNKNOWN"
+ },
+ {
+  "discriminating_observation": null,
+  "eliminated": [],
+  "evidence_basis": "self-probed",
+  "id": "degraded-no-readout-self-probed",
+  "named_cause": null,
+  "verdict": "UNKNOWN"
+ },
+ {
+  "discriminating_observation": null,
+  "eliminated": [],
+  "id": "clause-readout-named-wrong-cause-unknown",
+  "named_cause": null,
+  "verdict": "UNKNOWN"
+ },
+ {
+  "discriminating_observation": null,
+  "eliminated": [],
+  "id": "degraded-subject-unreachable",
+  "named_cause": null,
+  "qualifier": "unreachable",
+  "verdict": "UNKNOWN"
+ }
+]

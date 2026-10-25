@@ -1,0 +1,116 @@
+[
+  {
+    "id": "open-multisession-schema-migration",
+    "scenario": "Over the next three weeks, two agents will migrate the billing ledger from Postgres 14 to 16 in stages, with a freeze window, a rollback decision point, and customer-visible downtime if a stage is botched; whoever picks the work up after each weekend must be able to prove what was authorized and what already ran. The operator names an independent reviewer who is available to accept the finished work.",
+    "trigger": "auto",
+    "expected_action": "open-mission",
+    "clause": "Use when work is mission-shaped — multi-session, consequential, cross-agent, or interruption-expensive",
+    "holdout": false,
+    "acceptance_available": true
+  },
+  {
+    "id": "open-cross-agent-handoff-relay",
+    "scenario": "A vendor-security review will pass between three agents in different time zones over ten days: each handoff loses the chat thread, the evidence pack is expensive to rebuild, and a wrong intermediate answer goes to the vendor. The operator wants the whole relay to survive any single agent disappearing mid-review, and names the platform lead as the acceptor who will review the final pack.",
+    "trigger": "auto",
+    "expected_action": "open-mission",
+    "clause": "multi-session, consequential, cross-agent, or interruption-expensive",
+    "holdout": true,
+    "acceptance_available": true
+  },
+  {
+    "id": "explicit-manifest-this",
+    "scenario": "Operator says, about a multi-month records-retention overhaul spanning four repositories and two other agents: 'manifest this — I want it custodied from the start, with my instruction on record word for word.' A records manager is named and available to accept the completed overhaul.",
+    "trigger": "explicit",
+    "expected_action": "open-mission",
+    "clause": "or on the explicit phrase \"manifest this\"",
+    "holdout": false,
+    "acceptance_available": true
+  },
+  {
+    "id": "open-acceptance-path-unavailable",
+    "scenario": "An operator asks for custody of a month-long escrow-closing coordination spanning three firms. The only qualified acceptor, the compliance officer who must sign the closing pack, is on leave for six weeks with no delegate, and no other acceptance path can be arranged before the work would have to start.",
+    "trigger": "state",
+    "expected_action": "open-mission",
+    "clause": "Before opening a mission, discover whether its required acceptance path is available.",
+    "holdout": false,
+    "acceptance_available": false
+  },
+  {
+    "id": "resume-clean-after-interruption",
+    "scenario": "The custodied mission 'archive-rebuild-2026' stopped on Friday when its session ended. On Monday the operator says: pick that mission up again. The custody resume runs and exits clean — no receipted artifact has changed — and the operator waves the responder on without adding any new instruction.",
+    "trigger": "state",
+    "expected_action": "resume-mission",
+    "clause": "Treat chat and memory as untrusted until it exits 0.",
+    "holdout": false,
+    "drift": false
+  },
+  {
+    "id": "resume-drift-found",
+    "scenario": "The custodied mission 'payments-cutover' is resumed after an interruption, and the custody resume exits 3: the receipted cutover runbook's hash no longer matches the file on disk, and chat in the meantime cheerfully insists nothing was touched. The next planned step depends on that runbook.",
+    "trigger": "state",
+    "expected_action": "resume-mission",
+    "clause": "On exit 3: reconcile each drifted artifact",
+    "holdout": true,
+    "drift": true
+  },
+  {
+    "id": "verify-close-different-acceptor",
+    "scenario": "The custodied mission 'invoice-archive-sweep' reports its work complete. The operator asks a different agent — one that performed none of the mission's work — to run the acceptance review and close it. No receipted artifact crossed the mission's declared scope boundary.",
+    "trigger": "state",
+    "expected_action": "verify-mission",
+    "clause": "acceptance by a DIFFERENT actor",
+    "holdout": false,
+    "self_acceptance": false,
+    "scope_crossings_unacknowledged": false
+  },
+  {
+    "id": "verify-self-acceptance-refused",
+    "scenario": "The agent that performed all of the custodied mission 'log-retention-fix' work announces the work is done and moves to accept it itself and close the mission, arguing it checked everything carefully as it went.",
+    "trigger": "state",
+    "expected_action": "verify-mission",
+    "clause": "Never accept work you performed; the core refuses it",
+    "holdout": false,
+    "self_acceptance": true
+  },
+  {
+    "id": "verify-scope-crossing-unacknowledged",
+    "scenario": "Acceptance review of the custodied mission 'docs-consolidation' finds receipted artifacts at two paths outside the mission's declared scope. The acceptor has not acknowledged either crossing — no scope acknowledgement is on record — and asks whether the mission can be accepted as a PASS anyway.",
+    "trigger": "state",
+    "expected_action": "verify-mission",
+    "clause": "a PASS is refused until the acceptor acknowledges each finding explicitly",
+    "holdout": false,
+    "scope_crossings_unacknowledged": true
+  },
+  {
+    "id": "nofire-routine-one-step-lookup",
+    "scenario": "Operator asks: who is on call today? Read the name off the team roster page and report it back. The answer is checkable in this session and nothing else depends on how it is recorded.",
+    "trigger": "none",
+    "expected_action": "no-fire",
+    "clause": "Do NOT fire for routine one-step work checkable in-session.",
+    "holdout": false
+  },
+  {
+    "id": "nofire-multistep-ticket-sufficient",
+    "scenario": "Operator asks for a five-step vendor invoice reconciliation: pull the invoices, match them to purchase orders, flag mismatches, draft the summary, and file it. The existing ticket already records the steps, their status, and the owner, and nothing about the work is cross-agent or hard to reconstruct if the session ends.",
+    "trigger": "none",
+    "expected_action": "no-fire",
+    "clause": "ordinary tasks do not need a mission merely because they have several steps.",
+    "holdout": false
+  },
+  {
+    "id": "nofire-reanchor-decisions-decision-ledger",
+    "scenario": "Work that no mission has ever custodied: a pricing decision made last month is about to be relied on again, and the operator asks to re-anchor it first — recover the original assumption, its provenance, and the condition that would reopen it — before the next planning step uses it.",
+    "trigger": "none",
+    "expected_action": "no-fire",
+    "clause": "decision-ledger re-anchors decisions and assumptions for work no mission custodies",
+    "holdout": true
+  },
+  {
+    "id": "nofire-resume-never-custodied",
+    "scenario": "Operator says: resume the logo colour exploration from last week. That exploration was never opened as a mission — it exists only as an ordinary chat thread and a folder of drafts — but the operator uses the word 'resume' and expects the responder to know custody is not involved.",
+    "trigger": "none",
+    "expected_action": "no-fire",
+    "clause": "this seat receipt-checks custodied missions' artifacts only.",
+    "holdout": false
+  }
+]

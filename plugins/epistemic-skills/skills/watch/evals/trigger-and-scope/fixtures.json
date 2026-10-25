@@ -1,0 +1,116 @@
+[
+  {
+    "id": "nas-free-space-bound-declared",
+    "scenario": "The NAS data volume sits at 71% used and fills about 2% a week; if it crosses 85% between agent sessions, nightly backups start failing, and nothing currently observes it. The operator commissions a watch: bound, probe, destination inbox, kill-switch requirement, and proof plan are all specified in the request, but no external mechanism has been prepared or searched for yet.",
+    "trigger": "explicit",
+    "expected_action": "commission",
+    "expected_state": "DECLARED",
+    "clause": "a bound matters between agent runs and nothing currently observes it",
+    "holdout": false
+  },
+  {
+    "id": "cert-expiry-no-substrate-found",
+    "scenario": "A public TLS certificate for the payments endpoint expires in 30 days; the first natural symptom of a missed renewal would be a customer-facing outage. Capability discovery checked the environment's schedulers, event listeners, monitoring providers, and human cadences and found none that can run between sessions; the dated discovery receipt is retained.",
+    "trigger": "auto",
+    "expected_action": "commission",
+    "expected_state": "BLOCKED",
+    "expected_block_reason": "NO_EXECUTION_SUBSTRATE",
+    "clause": "the first natural symptom would otherwise be an outage, loss, or material",
+    "holdout": true
+  },
+  {
+    "id": "backup-watch-kill-switch-unproven",
+    "scenario": "A colleague saw this morning's green health readout for the backup system and is about to assume they would be told if nightly backups start failing. A cron-scheduler mechanism for backup-age checks has been prepared in a disabled state and its disable procedure is named, but nobody has yet exercised that disable path against the real mechanism.",
+    "trigger": "auto",
+    "expected_action": "commission",
+    "expected_state": "BLOCKED",
+    "expected_block_reason": "KILL_SWITCH_UNPROVEN",
+    "clause": "someone is about to infer from a green health readout that they would be told",
+    "holdout": false
+  },
+  {
+    "id": "queue-observer-destination-unreachable",
+    "scenario": "An existing monitoring service watches the order-ingest queue depth but has never completed an end-to-end proof. During commissioning, the reachability check to its named alert destination, the on-call webhook endpoint, failed with a connection refusal and the dated reachability receipt is retained.",
+    "trigger": "state",
+    "expected_action": "commission",
+    "expected_state": "BLOCKED",
+    "expected_block_reason": "NO_REACHABLE_DESTINATION",
+    "clause": "an external observer exists but has never completed an end-to-end proof",
+    "holdout": false
+  },
+  {
+    "id": "replication-watch-reproved-proven",
+    "scenario": "A database replication-lag watch was proof-fired once, 90 days ago, old enough that its liveness had become an assumption. This week a bounded, reversible production-path crossing was run: the real probe detected a staged lag spike, the production delivery path placed the alert at the named destination, the alert receipt was retained, and continued operation of the external monitoring service is authorized.",
+    "trigger": "state",
+    "expected_action": "commission",
+    "expected_state": "PROVEN",
+    "clause": "a prior proof is old enough that liveness has become an assumption",
+    "holdout": false
+  },
+  {
+    "id": "disk-watch-delivery-failure-suspect",
+    "scenario": "The media volume's free-space bound matters between runs, and its commissioned external watch attempted to deliver a bound-crossing alert, but the delivery service returned a permanent rejection for the destination address; the failed attempt, its observation time, and a delivery receipt were all recorded.",
+    "trigger": "state",
+    "expected_action": "commission",
+    "expected_state": "SUSPECT",
+    "clause": "a bound matters between agent runs and nothing currently observes it",
+    "holdout": true
+  },
+  {
+    "id": "migration-watch-proof-then-disabled",
+    "scenario": "For a one-weekend data migration, a temporary external watch on the import-error count mattered between sessions. It completed a safe production-path proof — the real probe detected a staged error batch and the alert arrived at the named destination, receipt retained — and, once the migration window closed, the mechanism was deliberately disabled rather than left running, with continued operation not authorized.",
+    "trigger": "explicit",
+    "expected_action": "commission",
+    "expected_state": "INERT",
+    "clause": "a bound matters between agent runs and nothing currently observes it",
+    "holdout": false
+  },
+  {
+    "id": "current-disk-state-now-health",
+    "scenario": "An operator asks: how full is the media volume right now, before tonight's recording starts? They want the current state in this session, not something commissioned to notice a future crossing.",
+    "trigger": "none",
+    "expected_action": "no-fire",
+    "clause": "the user wants the current state now",
+    "holdout": false
+  },
+  {
+    "id": "lag-bound-crossed-cause-wanted-triage",
+    "scenario": "Replication lag is already known to have crossed its bound: it is measured at 240 seconds right now. The operator wants the cause of that crossing investigated, not a new observer commissioned.",
+    "trigger": "none",
+    "expected_action": "no-fire",
+    "clause": "the bound is already known crossed and the cause is wanted",
+    "holdout": false
+  },
+  {
+    "id": "orphan-log-retention-no-action",
+    "scenario": "An archive bucket of orphaned debug logs grows slowly, and the operator notes that if they learned about it a month late they would do nothing differently: no cleanup, escalation, or purchase would change. No recipient has agreed to act on such an alert.",
+    "trigger": "none",
+    "expected_action": "no-fire",
+    "clause": "learning late would change no action",
+    "holdout": true
+  },
+  {
+    "id": "daily-human-check-shorter-than-harm",
+    "scenario": "A technician physically checks the generator fuel gauge every morning on a documented round. Fuel depletion severe enough to matter would take at least three days to develop, so the human check reliably lands well before any harm.",
+    "trigger": "none",
+    "expected_action": "no-fire",
+    "clause": "a human reliably observes the condition on a cadence shorter than the harm",
+    "holdout": false
+  },
+  {
+    "id": "auto-remediate-restart-request",
+    "scenario": "An operator asks: set something up that automatically restarts the API service whenever its memory use exceeds 90%, so nobody has to be woken up. The request is for automatic corrective action, not for noticing and alerting.",
+    "trigger": "none",
+    "expected_action": "no-fire",
+    "clause": "the request is to auto-remediate",
+    "holdout": false
+  },
+  {
+    "id": "session-as-observer-proposal",
+    "scenario": "An operator proposes that this chat session, following the watch skill's instructions, should itself check the mail queue every hour after the session ends and speak up if it grows. No scheduler, listener, monitoring service, or human cadence is proposed — the session is the only proposed mechanism.",
+    "trigger": "none",
+    "expected_action": "no-fire",
+    "clause": "the only proposed “mechanism” is the skill or current agent session",
+    "holdout": false
+  }
+]

@@ -1,0 +1,82 @@
+[
+  {
+    "id": "focused-cache-assumption-fires",
+    "action": "apply-lens",
+    "finding": "insight",
+    "lens": "assumption-testing lens",
+    "lenses_applied": 1,
+    "question": "Does the assumption that shoppers never notice a price up to five minutes stale hold?"
+  },
+  {
+    "id": "explicit-different-lens-tradeoff-fires",
+    "action": "apply-lens",
+    "finding": "adjustment",
+    "lens": "operational-risk lens",
+    "lenses_applied": 1,
+    "question": "What operational risks distinguish keeping the in-house scheduler from adopting the hosted one?"
+  },
+  {
+    "id": "several-lenses-bounded-no-adjudication",
+    "action": "apply-lens",
+    "finding": "insight",
+    "lens": "release-risk, reversibility, and measurement-fitness lenses",
+    "lenses_applied": 3,
+    "question": "What does shortening the release freeze from two weeks to three days change, risk, and make harder to undo?"
+  },
+  {
+    "id": "settled-evidence-no-fire",
+    "action": "no-fire"
+  },
+  {
+    "id": "routine-work-no-fire",
+    "action": "no-fire"
+  },
+  {
+    "id": "gauntlet-adjudication-no-fire",
+    "action": "no-fire"
+  },
+  {
+    "id": "adjacent-issue-no-fire",
+    "action": "no-fire"
+  },
+  {
+    "id": "reversibility-single-lens-fires",
+    "action": "apply-lens",
+    "finding": "supported-finding",
+    "lens": "reversibility lens",
+    "lenses_applied": 1,
+    "question": "Can the database migration be rolled back, and what would undoing it cost?"
+  },
+  {
+    "id": "metric-fitness-lens-fires",
+    "action": "apply-lens",
+    "finding": "adjustment",
+    "lens": "measurement-fitness lens",
+    "lenses_applied": 1,
+    "question": "Does the click-through metric measure the search quality this decision cares about?"
+  },
+  {
+    "id": "implementation-not-authorized-no-fire",
+    "action": "no-fire"
+  },
+  {
+    "id": "evidence-unavailable-limit-fires",
+    "action": "apply-lens",
+    "finding": "remaining-uncertainty",
+    "lens": "usability-evidence lens",
+    "lenses_applied": 1,
+    "question": "Does the new onboarding flow confuse first-time users?"
+  },
+  {
+    "id": "no-material-finding-fires",
+    "action": "apply-lens",
+    "finding": "no-material-finding",
+    "lens": "failure-mode lens",
+    "lenses_applied": 1,
+    "question": "Can the new retry policy silently amplify load on the partner API beyond its stated limits?"
+  },
+  {
+    "id": "approval-verdict-no-fire",
+    "action": "no-fire"
+  }
+]

@@ -209,6 +209,9 @@ def score_fixture(truth: dict, response: dict) -> dict:
     assessments = response.get("claim_assessments", [])
     by_id = {a.get("id"): a for a in assessments if isinstance(a, dict)}
     if len(by_id) != len(assessments): fail(failures, "S6", "claim ids missing or duplicated")
+    known_claim_ids = {claim.get("id") for claim in truth.get("claims", [])}
+    for assessment_id in by_id:
+        if assessment_id not in known_claim_ids: fail(failures, "S6", f"assessment names claim {assessment_id!r} which is not in the fixture")
     for claim in truth.get("claims", []):
         actual = by_id.get(claim["id"])
         if actual is None: fail(failures, "S6", f"claim {claim['id']} omitted")

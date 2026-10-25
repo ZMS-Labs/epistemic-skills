@@ -1,0 +1,94 @@
+[
+ {
+  "action": "use-method",
+  "claimed_use": true,
+  "contribution": "The epistemic guide answered the how-to-use question: methods are found via the host's skill listing and applicability clauses, the actual SKILL.md is loaded before applying a method to the live question, use is made visible with a brief acknowledgment, and the guide is not a prerequisite every time \u2014 substantive skills can be used directly and setup is not repeated when guidance is already loaded.",
+  "id": "guide-question-how-to-use-suite",
+  "instructions_loaded": true,
+  "limit_stated": false,
+  "method": "epistemic"
+ },
+ {
+  "action": "use-method",
+  "claimed_use": true,
+  "contribution": "Recon in initiative mode maps the unfamiliar billing-codebase migration before planning: charting a decision-dependency map instead of pre-slicing fog into build tickets, computing the frontier of decisions whose prerequisites are resolved, and minting tickets only from fog-free regions.",
+  "id": "explicit-skill-request-honoured-directly",
+  "instructions_loaded": true,
+  "limit_stated": false,
+  "method": "recon"
+ },
+ {
+  "action": "no-fire",
+  "id": "narrate-every-nonapplication"
+ },
+ {
+  "action": "use-method",
+  "claimed_use": true,
+  "contribution": "Decision Ledger in persist mode: the operator's consequential choice of an append-only event format over in-place updates for the audit trail is identified as needing one durable, outcome-shaped record with resolvable provenance and a revisit condition \u2014 reusing an adequate existing ADR/plan/issue artifact if present, otherwise a single ledger entry \u2014 so future sessions can find the decision rather than re-derive it from the code.",
+  "id": "midwork-decision-persisted",
+  "instructions_loaded": true,
+  "limit_stated": false,
+  "method": "decision-ledger"
+ },
+ {
+  "action": "no-fire",
+  "id": "guidance-already-loaded-work-resumes"
+ },
+ {
+  "action": "use-method",
+  "claimed_use": true,
+  "contribution": "Perspective bounded the examination to the single remaining question and applied an on-call operator/incident lens to the throttle's override behavior, preserving the settled design and returning the override concern to the original work without treating the lens as approval or adjudication.",
+  "id": "complementary-method-distinct-question",
+  "instructions_loaded": true,
+  "limit_stated": false,
+  "method": "perspective"
+ },
+ {
+  "action": "no-fire",
+  "id": "routine-work-no-applicable-trigger"
+ },
+ {
+  "action": "use-method",
+  "claimed_use": true,
+  "contribution": "Context-audit examined the assembled instruction layers for conflicts, duplicates and stale guardrails and returned no material finding: the layers were consistent, with nothing to cut and no approach to change.",
+  "id": "method-returns-no-material-finding",
+  "instructions_loaded": true,
+  "limit_stated": false,
+  "method": "context-audit"
+ },
+ {
+  "action": "no-fire",
+  "id": "second-dispatcher-added-alongside"
+ },
+ {
+  "action": "use-method",
+  "claimed_use": true,
+  "contribution": "Triage distinguished hypotheses from cause: it held the repair to a NARROWED verdict, requiring a discriminating observation that would differ between a stale cached template and a failing write \u2014 changing one variable and inspecting the result \u2014 before patching either, rather than patching both at once.",
+  "id": "midwork-failure-needs-triage",
+  "instructions_loaded": true,
+  "limit_stated": false,
+  "method": "triage"
+ },
+ {
+  "action": "use-method",
+  "claimed_use": false,
+  "contribution": "Resolve returned no material finding: its instructions could not be loaded, so it did not settle which vendor statement about data residency is correct.",
+  "id": "instructions-unavailable-limit-stated",
+  "instructions_loaded": false,
+  "limit_stated": true,
+  "method": "resolve"
+ },
+ {
+  "action": "use-method",
+  "claimed_use": true,
+  "contribution": "Did It Land reframes the deploy log as a record of intent, not landing evidence: it names the observable at the receipt-sending consumer (no duplicate receipts after the flag change), requires observing the running receipt path rather than the log, and holds the verdict UNVERIFIED \u2014 duplicates an hour later contradict a LANDED claim for that consumer.",
+  "id": "claimed-fix-checked-at-consumer",
+  "instructions_loaded": true,
+  "limit_stated": false,
+  "method": "did-it-land"
+ },
+ {
+  "action": "no-fire",
+  "id": "guide-asked-to-create-task-ledger"
+ }
+]

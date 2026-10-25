@@ -1,0 +1,24 @@
+{
+ "scorer": "plugins/epistemic-skills/skills/outsource/evals/trigger-and-scope/score.py",
+ "exit_code": 1,
+ "report": {
+  "pass": false,
+  "failures": [
+   "capable-target-preflight-fires: capability preflight must verify every required check \u2014 missing ['github-mutation', 'isolated-context', 'test-shell']",
+   "relay-claim-verified-state: every relayed claim is checked \u2014 missing ['tests-pass']",
+   "custody-acceptance-state: a verified read-back closes the transfer \u2014 state becomes TRANSFERRED",
+   "custody-acceptance-state: acceptance transfers the work; divestiture completes the transfer \u2014 a watcher still running is an obligation still owned",
+   "custody-acceptance-state: transfer completes only at origin residual NONE",
+   "acceptance-gap-state: every gap the read-back names is recorded \u2014 missing ['dependency-bump-check']",
+   "readonly-target-preflight-blocked-state: every failed capability check is named \u2014 missing ['github-mutation', 'isolated-context', 'test-shell']"
+  ],
+  "actions": {
+   "publish-packet": 7,
+   "transfer-packet": 1,
+   "no-fire": 4,
+   "verify-relay": 1,
+   "verify-acceptance": 2,
+   "report-blocked": 3
+  }
+ }
+}

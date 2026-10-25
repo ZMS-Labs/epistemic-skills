@@ -1,0 +1,113 @@
+[
+ {
+  "id": "evidence-conflicts-migration-assertion",
+  "scenario": "The migration lead asserts the customer import preserved every record because source and target row counts match at 48,210, but a spot check of 30 migrated accounts shows five with truncated middle names and two with dates shifted by a day.",
+  "trigger": "auto",
+  "expected_action": "examine",
+  "clause": "evidence conflicts with an assertion",
+  "holdout": false,
+  "expected_verdict": "approach-corrected"
+ },
+ {
+  "id": "proxy-signups-stand-for-retention",
+  "scenario": "The growth lead proposes declaring the onboarding redesign a success if week-one signups rise 15%, although the operator's actual need is customers still active at day 90, and signup copy can be made more aggressive without changing retention at all.",
+  "trigger": "state",
+  "expected_action": "examine",
+  "clause": "a proxy is about to stand for success",
+  "holdout": true,
+  "expected_verdict": "question-reframed"
+ },
+ {
+  "id": "confidence-outruns-single-friendly-pilot",
+  "scenario": "After one enterprise pilot with a friendly design partner succeeded, the lead states the integration is certain to generalise to all 140 tenants and wants the rollout scheduled with no broader check, although the pilot tenant used none of the legacy authentication paths the others rely on.",
+  "trigger": "auto",
+  "expected_action": "examine",
+  "clause": "confidence outruns its basis",
+  "holdout": false,
+  "expected_verdict": "confidence-recalibrated"
+ },
+ {
+  "id": "uncertain-assumption-changes-cache-choice",
+  "scenario": "The team must choose between a read-through cache and nightly precomputation for report latency; the choice turns on whether report queries repeat across users, which nobody has measured and which would reverse the right choice.",
+  "trigger": "state",
+  "expected_action": "examine",
+  "clause": "an uncertain assumption could change what to do",
+  "holdout": false,
+  "expected_verdict": "approach-corrected"
+ },
+ {
+  "id": "explicit-reflection-request-pricing",
+  "scenario": "Operator says: before we commit to this pricing change, stop and examine how our reasoning about it could be misleading — I want the reflection itself, not just the decision.",
+  "trigger": "explicit",
+  "expected_action": "examine",
+  "clause": "Explicit reflection requests also qualify.",
+  "holdout": false
+ },
+ {
+  "id": "sound-approach-survives-challenge",
+  "scenario": "A reviewer challenges the plan to keep the existing append-only audit log for a new reporting feature; re-examination finds the log's records already carry every field the reports need, write volume is measured at a tenth of the log's proven capacity, and a replay test reproduces a report exactly.",
+  "trigger": "auto",
+  "expected_action": "examine",
+  "clause": "If the existing approach is adequate, retain it.",
+  "holdout": true,
+  "expected_verdict": "approach-retained"
+ },
+ {
+  "id": "routine-directly-checkable-spelling-fix",
+  "scenario": "Operator asks the agent to correct a misspelled product name on one settings page and run the page's existing snapshot test, which directly shows the rendered text.",
+  "trigger": "none",
+  "expected_action": "no-fire",
+  "clause": "Skip routine directly checkable work",
+  "holdout": false
+ },
+ {
+  "id": "settled-choice-no-new-evidence",
+  "scenario": "Last week the operator chose Postgres over a document store for the billing service after reviewing the trade-offs; today, with no new evidence about the workload, a teammate suggests reopening the choice before routine schema work proceeds.",
+  "trigger": "none",
+  "expected_action": "no-fire",
+  "clause": "Skip routine directly checkable work and settled user choices unless new evidence changes their basis.",
+  "holdout": true
+ },
+ {
+  "id": "resume-stage-arrives-with-certain-basis",
+  "scenario": "Work resumes at the deployment stage of a data migration whose rollback was rehearsed and whose source counts and field-level checks were verified yesterday; the migration's basis has not changed, and the only new fact is that the deployment stage has arrived.",
+  "trigger": "state",
+  "expected_action": "no-fire",
+  "clause": "A resume or consequential act warrants reflection when its basis is uncertain, not merely because that stage has arrived.",
+  "holdout": false
+ },
+ {
+  "id": "reconstruct-context-available-in-task",
+  "scenario": "The agent is unsure which acceptance criteria govern the export feature and is about to ask the operator to restate them, although the criteria are written in the task brief and the linked specification already in its context.",
+  "trigger": "none",
+  "expected_action": "no-fire",
+  "clause": "investigate missing facts rather than asking the user to reconstruct available context",
+  "holdout": false
+ },
+ {
+  "id": "check-does-not-exercise-the-claim",
+  "scenario": "A team claims the new retry logic prevents duplicate charges because the unit suite is green, but every retry test mocks the payment gateway's timeout response, so no test has ever exercised a real timeout followed by a retry.",
+  "trigger": "auto",
+  "expected_action": "examine",
+  "clause": "Does the proposed check exercise the asserted behavior?",
+  "holdout": false,
+  "expected_verdict": "approach-corrected"
+ },
+ {
+  "id": "settled-choice-basis-changed-by-new-fees",
+  "scenario": "The operator had settled on monthly batch invoicing, but a payment-provider notice received today raises per-batch fees tenfold above a threshold the operator's volume has just crossed, changing the cost basis on which that settled choice was made.",
+  "trigger": "auto",
+  "expected_action": "examine",
+  "clause": "Reopen settled reasoning only when a relevant condition changes.",
+  "holdout": false,
+  "expected_verdict": "approach-corrected"
+ },
+ {
+  "id": "no-report-for-a-nonapplication",
+  "scenario": "After a routine, directly checkable edit, the operator's assistant asks the agent to file a short reflection report recording that Metacognate was considered and did not apply, so the file shows the consideration happened.",
+  "trigger": "none",
+  "expected_action": "no-fire",
+  "clause": "No report is required for a method that did not apply.",
+  "holdout": false
+ }
+]

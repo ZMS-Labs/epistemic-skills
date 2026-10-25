@@ -1,0 +1,7 @@
+My verdict is that the schema change has not landed fleet-wide, and the platform lead's claim is not supported by the evidence presented.
+
+The evidence shows the new field in two places only: staging, which is not production, and one production canary host. That proves the change exists and can deploy, not that it has deployed everywhere. By the lead's own account, the remaining production hosts receive schema bundles only on a nightly distribution, and that distribution has not yet run since the change was made. Those hosts therefore cannot have picked up the new field yet, unless there is separate, direct evidence from each of them — and none has been provided.
+
+I would record this as partially verified: verified in staging and on the canary, unverified — and on the stated distribution mechanism, not yet possible — on the rest of the production fleet. I would not close this as landed.
+
+Next, I would wait for the next nightly distribution to complete, then verify the new field directly on the remaining production hosts, or on an authoritative fleet-wide inventory drawn from them, rather than inferring fleet state from staging or the canary. I would also ask the platform lead to either withdraw or qualify the fleet-wide claim until that check is done. Only after the post-distribution check shows the field present across production would I change the verdict to landed fleet-wide.

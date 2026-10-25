@@ -1,0 +1,42 @@
+{
+ "1ded8d785cfc": {
+  "fixture_id": "explicit-phrase-full",
+  "holdout": false
+ },
+ "6da23131217f": {
+  "fixture_id": "design-dialogue-defers",
+  "holdout": false
+ },
+ "92e4ed19feb7": {
+  "fixture_id": "irreversible-fork-present-fork-scoped",
+  "holdout": false
+ },
+ "9a3512eb173c": {
+  "fixture_id": "reversible-fork-absent-park",
+  "holdout": false
+ },
+ "9cb2d5a5cc34": {
+  "fixture_id": "fuzzy-brief-no-fire",
+  "holdout": false
+ },
+ "a5646667912d": {
+  "fixture_id": "explicit-mid-execution-full",
+  "holdout": false
+ },
+ "cd2a9c0a1683": {
+  "fixture_id": "irreversible-fork-absent-hold",
+  "holdout": false
+ },
+ "d398ffd0cbe7": {
+  "fixture_id": "fork-offer-accepted-walked",
+  "holdout": false
+ },
+ "e783955491ff": {
+  "fixture_id": "fork-offer-declined-deferred",
+  "holdout": false
+ },
+ "ec3c1144333c": {
+  "fixture_id": "explicit-release-parks",
+  "holdout": false
+ }
+}

@@ -1,0 +1,86 @@
+[
+ {
+  "id": "evidence-conflicts-migration-assertion",
+  "action": "examine",
+  "outcome_named": "Every migrated customer record preserved intact, not merely present in the target",
+  "decisive_assumption": "Equal source and target row counts imply no record content was altered in transit",
+  "discriminating_observation": "A field-level comparison of migrated records showing truncated names or shifted dates — as the 30-account spot check already shows — proves content was altered despite matching counts",
+  "verdict": "approach-corrected"
+ },
+ {
+  "id": "proxy-signups-stand-for-retention",
+  "action": "examine",
+  "outcome_named": "Customers still active at day 90, not week-one signup volume",
+  "decisive_assumption": "A 15% rise in week-one signups will carry through to customers retained at day 90",
+  "discriminating_observation": "Day-90 retention for the new cohort staying flat while signups rise would show the proxy detached from the outcome",
+  "verdict": "question-reframed"
+ },
+ {
+  "id": "confidence-outruns-single-friendly-pilot",
+  "action": "examine",
+  "outcome_named": "The integration working across all 140 tenants, including those on legacy authentication paths",
+  "decisive_assumption": "One friendly pilot tenant exercised the conditions the other 139 tenants present",
+  "discriminating_observation": "A tenant on a legacy authentication path failing the integration would show the pilot was unrepresentative of the rollout population",
+  "verdict": "confidence-recalibrated"
+ },
+ {
+  "id": "uncertain-assumption-changes-cache-choice",
+  "action": "examine",
+  "outcome_named": "Report latency within the operator's target at the lower operating cost",
+  "decisive_assumption": "Report queries repeat across users often enough for a shared read-through cache to hit",
+  "discriminating_observation": "Query logs showing most report queries are unique per user would make the cache miss and favour nightly precomputation instead",
+  "verdict": "approach-corrected"
+ },
+ {
+  "id": "explicit-reflection-request-pricing",
+  "action": "examine",
+  "outcome_named": "A pricing change that raises revenue without driving away the existing small-team segment",
+  "decisive_assumption": "Small-team demand is insensitive to the proposed tier boundary",
+  "discriminating_observation": "Churn or downgrade signals from small teams in a trial cohort would show the boundary cuts the segment the change must keep",
+  "verdict": "approach-corrected"
+ },
+ {
+  "id": "sound-approach-survives-challenge",
+  "action": "examine",
+  "outcome_named": "Reports reproducible from the existing audit log without building a second store",
+  "decisive_assumption": "The existing log carries every field and write volume the new reports need",
+  "discriminating_observation": "A report field missing from log records, or a replay failing to reproduce a report exactly, would show the log insufficient",
+  "verdict": "approach-retained"
+ },
+ {
+  "id": "routine-directly-checkable-spelling-fix",
+  "action": "no-fire"
+ },
+ {
+  "id": "settled-choice-no-new-evidence",
+  "action": "no-fire"
+ },
+ {
+  "id": "resume-stage-arrives-with-certain-basis",
+  "action": "no-fire"
+ },
+ {
+  "id": "reconstruct-context-available-in-task",
+  "action": "no-fire"
+ },
+ {
+  "id": "check-does-not-exercise-the-claim",
+  "action": "examine",
+  "outcome_named": "No duplicate charges when a payment attempt times out and is then retried",
+  "decisive_assumption": "Mocked gateway timeout responses behave like the gateway's real timeouts on the retry path",
+  "discriminating_observation": "A duplicate charge in a test driven by a real or recorded gateway timeout would show the retry path unsafe despite the green mocked suite",
+  "verdict": "approach-corrected"
+ },
+ {
+  "id": "settled-choice-basis-changed-by-new-fees",
+  "action": "examine",
+  "outcome_named": "Invoicing cost held within the operator's stated budget at current volume",
+  "decisive_assumption": "Per-batch provider fees remain negligible at the operator's current invoicing volume",
+  "discriminating_observation": "The provider's new fee schedule applied to current volume showing batch cost above the budget would show the settled choice's basis has changed",
+  "verdict": "approach-corrected"
+ },
+ {
+  "id": "no-report-for-a-nonapplication",
+  "action": "no-fire"
+ }
+]

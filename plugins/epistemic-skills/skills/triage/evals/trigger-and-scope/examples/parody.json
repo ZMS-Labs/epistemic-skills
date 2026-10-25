@@ -1,0 +1,106 @@
+[
+  {
+    "id": "deploy-check-red-two-causes-left",
+    "action": "investigate",
+    "verdict": "CAUSE",
+    "discriminating_observation": null,
+    "named_cause": "the usual disk problem",
+    "provider": "standalone-debugging"
+  },
+  {
+    "id": "search-latency-reranker-isolated",
+    "action": "investigate",
+    "verdict": "CAUSE",
+    "discriminating_observation": null,
+    "named_cause": "the usual disk problem",
+    "provider": "standalone-debugging"
+  },
+  {
+    "id": "readout-flags-cache-cause-unobserved",
+    "action": "investigate",
+    "verdict": "CAUSE",
+    "discriminating_observation": null,
+    "named_cause": "the usual disk problem",
+    "provider": "standalone-debugging"
+  },
+  {
+    "id": "metrics-doc-contradicted-by-trace",
+    "action": "investigate",
+    "verdict": "CAUSE",
+    "discriminating_observation": null,
+    "named_cause": "the usual disk problem",
+    "provider": "standalone-debugging"
+  },
+  {
+    "id": "unreachable-license-server-unknown",
+    "action": "investigate",
+    "verdict": "CAUSE",
+    "discriminating_observation": null,
+    "named_cause": "the usual disk problem",
+    "provider": "standalone-debugging"
+  },
+  {
+    "id": "reported-print-delay-within-bounds",
+    "action": "investigate",
+    "verdict": "CAUSE",
+    "discriminating_observation": null,
+    "named_cause": "the usual disk problem",
+    "provider": "standalone-debugging"
+  },
+  {
+    "id": "intermittent-webhook-narrowed",
+    "action": "investigate",
+    "verdict": "CAUSE",
+    "discriminating_observation": null,
+    "named_cause": "the usual disk problem",
+    "provider": "standalone-debugging"
+  },
+  {
+    "id": "vague-unease-no-subject-health-first",
+    "action": "investigate",
+    "verdict": "CAUSE",
+    "discriminating_observation": null,
+    "named_cause": "the usual disk problem",
+    "provider": "standalone-debugging"
+  },
+  {
+    "id": "cause-known-remedy-underway",
+    "action": "investigate",
+    "verdict": "CAUSE",
+    "discriminating_observation": null,
+    "named_cause": "the usual disk problem",
+    "provider": "standalone-debugging"
+  },
+  {
+    "id": "queue-library-change-question",
+    "action": "investigate",
+    "verdict": "CAUSE",
+    "discriminating_observation": null,
+    "named_cause": "the usual disk problem",
+    "provider": "standalone-debugging"
+  },
+  {
+    "id": "deterministic-config-parse-error",
+    "action": "investigate",
+    "verdict": "CAUSE",
+    "discriminating_observation": null,
+    "named_cause": "the usual disk problem",
+    "provider": "standalone-debugging"
+  },
+  {
+    "id": "deploy-landed-verification-no-failure",
+    "action": "investigate",
+    "verdict": "CAUSE",
+    "discriminating_observation": null,
+    "named_cause": "the usual disk problem",
+    "provider": "standalone-debugging"
+  },
+  {
+    "id": "future-cert-expiry-watch-request",
+    "action": "investigate",
+    "verdict": "CAUSE",
+    "discriminating_observation": null,
+    "named_cause": "the usual disk problem",
+    "provider": "standalone-debugging"
+  }
+]

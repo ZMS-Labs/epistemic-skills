@@ -1,0 +1,113 @@
+[
+  {
+    "id": "deploy-check-red-two-causes-left",
+    "scenario": "The 14:05 deploy of the invoicing service to staging failed its smoke check: invoice PDFs return 502. The investigator confirmed the new template file is present on the staging host, eliminating a missing-template cause, but has not yet run an observation that distinguishes an upstream renderer timeout from a bad gateway route; both remain live.",
+    "trigger": "auto",
+    "expected_action": "investigate",
+    "expected_verdict": "NARROWED",
+    "clause": "a check went red, a deploy failed, a service is unreachable",
+    "holdout": false
+  },
+  {
+    "id": "search-latency-reranker-isolated",
+    "scenario": "Operators report the catalogue search service is degraded: p95 latency rose from 300ms to 4s after the morning release. With the new reranker disabled for one test cohort and nothing else changed, that cohort's p95 returned to 310ms while the control cohort stayed at 4s; disk and index-shard readings were identical across cohorts.",
+    "trigger": "explicit",
+    "expected_action": "investigate",
+    "expected_verdict": "CAUSE",
+    "clause": "a specific subject is known broken, degraded, or behaving unexpectedly",
+    "holdout": true
+  },
+  {
+    "id": "readout-flags-cache-cause-unobserved",
+    "scenario": "The morning state readout flagged that the session cache hit ratio collapsed from 92% to 41% overnight, and the cause is not yet known. The investigator's first probe failed on expired read credentials, so no candidate — a redeploy, a TTL change, or a traffic shift — has been observed enough to eliminate any of them.",
+    "trigger": "state",
+    "expected_action": "investigate",
+    "expected_verdict": "UNKNOWN",
+    "clause": "a state readout named something wrong and the cause is not yet known",
+    "holdout": false
+  },
+  {
+    "id": "metrics-doc-contradicted-by-trace",
+    "scenario": "The runbook asserts the billing worker's dry-run flag is off in production, but a live trace shows the worker skipping real charges as if dry-run were on. Config readback on the worker host shows the deployed env file still sets DRY_RUN=true from a March drill, and a worker restarted without that env file processed a test charge normally.",
+    "trigger": "auto",
+    "expected_action": "investigate",
+    "expected_verdict": "CAUSE",
+    "clause": "an observation contradicts what a tool or document asserts",
+    "holdout": false
+  },
+  {
+    "id": "unreachable-license-server-unknown",
+    "scenario": "The licence-validation service is unreachable from every probe the investigator tried during this session: connection attempts time out and no host readout can be obtained. No observation of the service, its host, or its network path was possible.",
+    "trigger": "state",
+    "expected_action": "investigate",
+    "expected_verdict": "UNKNOWN",
+    "clause": "a service is unreachable",
+    "holdout": true
+  },
+  {
+    "id": "reported-print-delay-within-bounds",
+    "scenario": "A user reports the label printer 'takes a minute' to start every job and asks for the report to be investigated. The investigator observed three live jobs end to end: first-label times were 4.1s, 3.8s and 4.3s, all inside the printer's specified 5s warm-up bound, with no queue backlog present.",
+    "trigger": "explicit",
+    "expected_action": "investigate",
+    "expected_verdict": "NOT-BROKEN",
+    "clause": "a specific subject is known broken, degraded, or behaving unexpectedly",
+    "holdout": false
+  },
+  {
+    "id": "intermittent-webhook-narrowed",
+    "scenario": "Payment webhooks from one provider intermittently arrive up to an hour late, roughly one day in five. A packet capture from the last late episode shows the provider sent on time, eliminating provider-side delay, but no observation yet distinguishes the ingress queue from the signature-verification worker as the holding point.",
+    "trigger": "auto",
+    "expected_action": "investigate",
+    "expected_verdict": "NARROWED",
+    "clause": "a specific subject is known broken, degraded, or behaving unexpectedly",
+    "holdout": false
+  },
+  {
+    "id": "vague-unease-no-subject-health-first",
+    "scenario": "An operator says 'the homelab feels off this morning — is anything wrong?' No subject is named, no check is red, and no readout has been taken yet; they want a current-state picture before concluding that anything is broken.",
+    "trigger": "none",
+    "expected_action": "no-fire",
+    "clause": "you do not yet know whether anything is wrong",
+    "holdout": false
+  },
+  {
+    "id": "cause-known-remedy-underway",
+    "scenario": "Yesterday's investigation established with a discriminating observation that the backup job failed because its target volume was full. The operator is now mid-way through expanding that volume and asks for the remaining expansion steps to be finished, not for the failure to be investigated again.",
+    "trigger": "none",
+    "expected_action": "no-fire",
+    "clause": "the cause is already established and you are applying the remedy",
+    "holdout": false
+  },
+  {
+    "id": "queue-library-change-question",
+    "scenario": "Planning next quarter's refactor, an operator asks whether the team should replace its job-queue library with a newer one and what the migration risks are. No service is failing; the question is about a change under consideration.",
+    "trigger": "none",
+    "expected_action": "no-fire",
+    "clause": "the question is about a change you are making rather than a failure you face",
+    "holdout": false
+  },
+  {
+    "id": "deterministic-config-parse-error",
+    "scenario": "Every run of the report generator stops with the same parser error: 'line 12: expected a colon after timezone'. The fault reproduces deterministically on the same input file, and the named line has not yet been read.",
+    "trigger": "none",
+    "expected_action": "no-fire",
+    "clause": "the fault is deterministic and reproducible",
+    "holdout": true
+  },
+  {
+    "id": "deploy-landed-verification-no-failure",
+    "scenario": "A fix merged an hour ago and the operator asks: confirm the running API now returns the new field order the fix intended. No user has reported a failure and no check is red; the question is whether a change just made took effect at runtime.",
+    "trigger": "none",
+    "expected_action": "no-fire",
+    "clause": "the question is about a change you are making rather than a failure you face",
+    "holdout": false
+  },
+  {
+    "id": "future-cert-expiry-watch-request",
+    "scenario": "A TLS certificate expires in 47 days and the operator asks for something that will notice and alert them if it is still unrenewed 7 days before expiry. Nothing is currently broken, degraded, or behaving unexpectedly; the request is to commission future noticing between sessions, not to investigate a failure.",
+    "trigger": "none",
+    "expected_action": "no-fire",
+    "clause": "a specific subject is known broken, degraded, or behaving unexpectedly",
+    "holdout": false
+  }
+]

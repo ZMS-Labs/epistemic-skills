@@ -1,0 +1,12 @@
+{
+ "scorer": "plugins/epistemic-skills/skills/triage/evals/trigger-and-scope/score.py",
+ "exit_code": 0,
+ "report": {
+  "pass": true,
+  "failures": [],
+  "actions": {
+   "investigate": 7,
+   "no-fire": 6
+  }
+ }
+}

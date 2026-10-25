@@ -1,0 +1,106 @@
+[
+ {
+  "id": "deploy-fix-called-done-landed",
+  "action": "verify-landing",
+  "verdict": "LANDED",
+  "artifact_resolved": "the production container image built from release 2026.10.24-3 that the checkout service actually runs",
+  "consumer_observation": "production checkout endpoint exercised through the repaired path returned 200 with the new confirmation payload",
+  "persistence": "unverified"
+ },
+ {
+  "id": "merge-believed-applied-landed",
+  "action": "verify-landing",
+  "verdict": "LANDED",
+  "artifact_resolved": "the worker binary built from the merged commit that the running scheduler actually loads",
+  "consumer_observation": "the running worker's effective-limits endpoint reports 600 requests/minute",
+  "persistence": "unverified"
+ },
+ {
+  "id": "config-edit-runtime-loads-cache",
+  "action": "verify-landing",
+  "verdict": "UNVERIFIED",
+  "artifact_resolved": "the cached config bundle the daemon actually loads, not the edited checkout file",
+  "consumer_observation": "the daemon's effective-config endpoint still reports timeout_seconds=30, the old value",
+  "persistence": "unverified"
+ },
+ {
+  "id": "green-check-source-only-oracle",
+  "action": "verify-landing",
+  "verdict": "UNVERIFIED",
+  "artifact_resolved": "the built image the production service runs, resolved from the deployment rather than the source tree",
+  "consumer_observation": null,
+  "persistence": "unverified"
+ },
+ {
+  "id": "artifact-distributed-to-consumer-landed",
+  "action": "verify-landing",
+  "verdict": "LANDED",
+  "artifact_resolved": "plugin bundle 4.2 installed in the workstation app's extensions directory, the copy the app loads",
+  "consumer_observation": "the workstation app reports bundle 4.2 active and the new export action succeeds, including after an app restart",
+  "persistence": "observed"
+ },
+ {
+  "id": "guard-hook-installed-and-firing",
+  "action": "verify-landing",
+  "verdict": "LANDED",
+  "artifact_resolved": "the deploy hook registered in the production pipeline's hook directory, the copy the pipeline invokes",
+  "consumer_observation": "a harmless test event sent through the production path was blocked and logged by the hook as designed",
+  "persistence": "unverified"
+ },
+ {
+  "id": "observed-effect-reverted-by-reconciler",
+  "action": "verify-landing",
+  "verdict": "REVERTED",
+  "artifact_resolved": "the DNS zone served by the authoritative resolver",
+  "consumer_observation": "the resolver returned the new record at 10:00 and the old record again at 10:20, after the reconciler ran",
+  "persistence": "observed"
+ },
+ {
+  "id": "runtime-unreachable-unverified",
+  "action": "verify-landing",
+  "verdict": "UNVERIFIED",
+  "artifact_resolved": "the OTA firmware image in slot B of the plant gateway, the slot its boot configuration loads",
+  "consumer_observation": null,
+  "persistence": "unverified"
+ },
+ {
+  "id": "partial-coverage-one-of-three-consumers",
+  "action": "verify-landing",
+  "verdict": "UNVERIFIED",
+  "artifact_resolved": "the feature-flag configuration served to the three regional consumers",
+  "consumer_observation": "the us-east consumer reports the flag enabled; eu-west and ap-south were not observed",
+  "persistence": "unverified"
+ },
+ {
+  "id": "nofire-local-reversible-preview-edit",
+  "action": "verify-landing",
+  "verdict": "LANDED",
+  "artifact_resolved": "the deployed copy the runtime loads",
+  "consumer_observation": "the runtime was observed showing the intended effect",
+  "persistence": "observed"
+ },
+ {
+  "id": "nofire-nothing-depends-yet",
+  "action": "verify-landing",
+  "verdict": "LANDED",
+  "artifact_resolved": "the deployed copy the runtime loads",
+  "consumer_observation": "the runtime was observed showing the intended effect",
+  "persistence": "observed"
+ },
+ {
+  "id": "nofire-still-deciding-what-to-change",
+  "action": "verify-landing",
+  "verdict": "LANDED",
+  "artifact_resolved": "the deployed copy the runtime loads",
+  "consumer_observation": "the runtime was observed showing the intended effect",
+  "persistence": "observed"
+ },
+ {
+  "id": "nofire-health-state-question",
+  "action": "verify-landing",
+  "verdict": "LANDED",
+  "artifact_resolved": "the deployed copy the runtime loads",
+  "consumer_observation": "the runtime was observed showing the intended effect",
+  "persistence": "observed"
+ }
+]

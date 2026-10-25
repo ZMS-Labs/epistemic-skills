@@ -1,0 +1,54 @@
+[
+ {
+  "id": "deploy-fix-called-done-landed",
+  "action": "no-fire"
+ },
+ {
+  "id": "merge-believed-applied-landed",
+  "action": "no-fire"
+ },
+ {
+  "id": "config-edit-runtime-loads-cache",
+  "action": "no-fire"
+ },
+ {
+  "id": "green-check-source-only-oracle",
+  "action": "no-fire"
+ },
+ {
+  "id": "artifact-distributed-to-consumer-landed",
+  "action": "no-fire"
+ },
+ {
+  "id": "guard-hook-installed-and-firing",
+  "action": "no-fire"
+ },
+ {
+  "id": "observed-effect-reverted-by-reconciler",
+  "action": "no-fire"
+ },
+ {
+  "id": "runtime-unreachable-unverified",
+  "action": "no-fire"
+ },
+ {
+  "id": "partial-coverage-one-of-three-consumers",
+  "action": "no-fire"
+ },
+ {
+  "id": "nofire-local-reversible-preview-edit",
+  "action": "no-fire"
+ },
+ {
+  "id": "nofire-nothing-depends-yet",
+  "action": "no-fire"
+ },
+ {
+  "id": "nofire-still-deciding-what-to-change",
+  "action": "no-fire"
+ },
+ {
+  "id": "nofire-health-state-question",
+  "action": "no-fire"
+ }
+]

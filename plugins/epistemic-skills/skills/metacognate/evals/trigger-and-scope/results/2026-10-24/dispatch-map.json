@@ -1,0 +1,54 @@
+{
+ "0a9f27639595": {
+  "fixture_id": "no-report-for-a-nonapplication",
+  "holdout": false
+ },
+ "2d00275334d5": {
+  "fixture_id": "confidence-outruns-single-friendly-pilot",
+  "holdout": false
+ },
+ "2f5de0156a8c": {
+  "fixture_id": "proxy-signups-stand-for-retention",
+  "holdout": true
+ },
+ "3c2cc443b176": {
+  "fixture_id": "explicit-reflection-request-pricing",
+  "holdout": false
+ },
+ "4040b6d71a29": {
+  "fixture_id": "routine-directly-checkable-spelling-fix",
+  "holdout": false
+ },
+ "48a2df3e17dd": {
+  "fixture_id": "uncertain-assumption-changes-cache-choice",
+  "holdout": false
+ },
+ "5c6f2c8671a8": {
+  "fixture_id": "resume-stage-arrives-with-certain-basis",
+  "holdout": false
+ },
+ "7b5ea814c4e0": {
+  "fixture_id": "sound-approach-survives-challenge",
+  "holdout": true
+ },
+ "7efb86c1d1ba": {
+  "fixture_id": "settled-choice-no-new-evidence",
+  "holdout": true
+ },
+ "81b30ded4c26": {
+  "fixture_id": "settled-choice-basis-changed-by-new-fees",
+  "holdout": false
+ },
+ "ba00bff92a66": {
+  "fixture_id": "check-does-not-exercise-the-claim",
+  "holdout": false
+ },
+ "cfb93b45dddc": {
+  "fixture_id": "evidence-conflicts-migration-assertion",
+  "holdout": false
+ },
+ "ec2f1ab4b98f": {
+  "fixture_id": "reconstruct-context-available-in-task",
+  "holdout": false
+ }
+}

@@ -1,0 +1,11 @@
+Verdict: NARROWED — not CAUSE.
+
+As investigator of record, using Triage with its standalone systematic-debugging procedure (no applicable Superpowers provider was available for this case), I will not record inverted lock ordering in the billing job as the cause, and the ticket should not close on that basis.
+
+The evidence so far does not discriminate. Log analysis is consistent with the DBA's lock-ordering theory, and it is equally consistent with connection-pool starvation. Consistent-with is not distinguishes-from: no observation has yet been made that would have come out differently if the cause were pool starvation rather than lock ordering, or vice versa. The DBA's theory remains a live hypothesis, not an observed cause, and naming it as the cause would leave the real fault in place if it is the other candidate.
+
+The two live candidates, neither eliminated, are: (1) inverted lock ordering in the billing job, and (2) connection-pool starvation. Nothing in the inherited log analysis eliminates either.
+
+What I would do next is seek a safe, discriminating observation at the level of the failure, rather than the unauthorised production load test. That test is the only proposed observation said to prove lock ordering, it is not authorised, and it would itself risk an outage, so I am holding it pending actual scoped authority and will not run it under diagnosis-only authority. Instead, I would capture, for the next deadlock window and retrospectively where the records exist, the database deadlock graph and lock-wait chains — which resources were held and awaited, in which order, by which sessions — together with connection-pool state at the same timestamps: active connections, waiting checkouts, and checkout timeouts. A cyclic lock wait in opposite acquisition order across the billing job's resources would distinguish lock ordering from pool starvation; pool exhaustion with sessions waiting for a connection before issuing work, and no such lock cycle, would distinguish the reverse.
+
+This is diagnosis only: no repair is authorised or applied on this verdict. The record should show NARROWED, both hypotheses named, the discriminating observation still outstanding, and the load test held, not performed.

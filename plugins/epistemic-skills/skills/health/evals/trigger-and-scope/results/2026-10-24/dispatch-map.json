@@ -1,0 +1,54 @@
+{
+ "11920d0cafe3": {
+  "fixture_id": "general-state-all-ok",
+  "holdout": false
+ },
+ "123d68f2843f": {
+  "fixture_id": "routine-reversible-nothing-shared-no-fire",
+  "holdout": false
+ },
+ "14e40037d2b8": {
+  "fixture_id": "feels-wrong-unnamed-unreachable",
+  "holdout": false
+ },
+ "35ecfb891cd7": {
+  "fixture_id": "probe-tool-absent-unknown",
+  "holdout": false
+ },
+ "696826422970": {
+  "fixture_id": "credential-failure-unknown",
+  "holdout": true
+ },
+ "830a7f62399a": {
+  "fixture_id": "one-metric-one-command-no-fire",
+  "holdout": true
+ },
+ "9070f428b7c2": {
+  "fixture_id": "change-question-not-state-no-fire",
+  "holdout": false
+ },
+ "a0676d66bc35": {
+  "fixture_id": "bound-undeclared-unknown",
+  "holdout": false
+ },
+ "a7d066605ed2": {
+  "fixture_id": "claim-about-to-bear-load",
+  "holdout": false
+ },
+ "ac02e84a1554": {
+  "fixture_id": "before-change-blast-radius-warn",
+  "holdout": false
+ },
+ "af8cfe76af20": {
+  "fixture_id": "known-broken-cause-wanted-no-fire",
+  "holdout": false
+ },
+ "ebf155a6582a": {
+  "fixture_id": "registry-unreachable-coverage-unknown",
+  "holdout": true
+ },
+ "f0cfec4f4c65": {
+  "fixture_id": "after-power-event-critical",
+  "holdout": false
+ }
+}

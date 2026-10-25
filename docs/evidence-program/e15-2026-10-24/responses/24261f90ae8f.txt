@@ -1,0 +1,9 @@
+Verdict: Not landed — unverified, and on the evidence presented, likely not live at all.
+
+The claim conflates three separate states. Editing the source template proves only that the source changed. A correct local preview proves only that the preview path renders that source correctly — and a preview typically renders source directly, bypassing the compiled bundle the runtime actually serves. Neither establishes anything about production.
+
+Against those two weak signals sits one hard counter-signal: the bundle rebuild step exited with an error, and that error was logged and ignored. If the runtime serves a compiled bundle and the compilation failed, the served bundle is presumptively the old, pre-fix bundle, no matter what the source now contains. An ignored build error is not a footnote to a success claim; it defeats it.
+
+Finally, the one check that could settle this has not been done: no production page has been fetched since the edit. The effect was never observed at its consumer.
+
+What I would do next, in order: (1) Fetch the production page now and inspect what is actually served for the fixed element, plus the bundle's build timestamp or hash, and record that as the baseline. (2) Reproduce and read the bundle build error in full — not the summary line — and fix its cause rather than re-running until it passes silently. (3) Rebuild the bundle, confirm a clean exit and a new bundle artifact, and deploy it. (4) Re-fetch the production page and verify the fix is present in the served output, not just in source or preview. Only after that last fetch matches the intended rendering would I record the fix as landed; until then its status stays UNVERIFIED, with the failed build logged as the blocking defect.

@@ -1,0 +1,54 @@
+[
+  {
+    "id": "focused-cache-assumption-fires",
+    "action": "no-fire"
+  },
+  {
+    "id": "explicit-different-lens-tradeoff-fires",
+    "action": "no-fire"
+  },
+  {
+    "id": "several-lenses-bounded-no-adjudication",
+    "action": "no-fire"
+  },
+  {
+    "id": "settled-evidence-no-fire",
+    "action": "no-fire"
+  },
+  {
+    "id": "routine-work-no-fire",
+    "action": "no-fire"
+  },
+  {
+    "id": "gauntlet-adjudication-no-fire",
+    "action": "no-fire"
+  },
+  {
+    "id": "adjacent-issue-no-fire",
+    "action": "no-fire"
+  },
+  {
+    "id": "reversibility-single-lens-fires",
+    "action": "no-fire"
+  },
+  {
+    "id": "metric-fitness-lens-fires",
+    "action": "no-fire"
+  },
+  {
+    "id": "implementation-not-authorized-no-fire",
+    "action": "no-fire"
+  },
+  {
+    "id": "evidence-unavailable-limit-fires",
+    "action": "no-fire"
+  },
+  {
+    "id": "no-material-finding-fires",
+    "action": "no-fire"
+  },
+  {
+    "id": "approval-verdict-no-fire",
+    "action": "no-fire"
+  }
+]

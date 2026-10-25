@@ -1,0 +1,58 @@
+{
+ "03b881c1e0a4": {
+  "fixture_id": "midtask-layer-conflict",
+  "holdout": false
+ },
+ "084af00042dc": {
+  "fixture_id": "explicit-prune-instructions",
+  "holdout": false
+ },
+ "0b62d15202a8": {
+  "fixture_id": "hard-neg-intradoc-contradictions",
+  "holdout": false
+ },
+ "1df5ba28177b": {
+  "fixture_id": "governance-projection-conflict",
+  "holdout": false
+ },
+ "526c481acad6": {
+  "fixture_id": "new-agent-interface",
+  "holdout": false
+ },
+ "5cfdbd69e27c": {
+  "fixture_id": "model-upgrade-stale-guardrails",
+  "holdout": false
+ },
+ "6065a1a7dc1c": {
+  "fixture_id": "hard-neg-system-prompt-tuning",
+  "holdout": false
+ },
+ "63aa63d12327": {
+  "fixture_id": "keep-gotcha-with-origin",
+  "holdout": false
+ },
+ "79a0c355ce06": {
+  "fixture_id": "explicit-claudemd-audit",
+  "holdout": false
+ },
+ "7bc72bd28e38": {
+  "fixture_id": "single-task-prompt-tuning",
+  "holdout": false
+ },
+ "9097e6328b8e": {
+  "fixture_id": "no-version-control-report-only",
+  "holdout": false
+ },
+ "b21e05bc1999": {
+  "fixture_id": "single-doc-prose",
+  "holdout": false
+ },
+ "c397eea21f7d": {
+  "fixture_id": "duplicate-most-local-survives",
+  "holdout": false
+ },
+ "c4255b661110": {
+  "fixture_id": "task-brief-recon",
+  "holdout": false
+ }
+}

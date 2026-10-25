@@ -1,0 +1,145 @@
+[
+  {
+    "id": "nas-free-space-bound-declared",
+    "action": "commission",
+    "state": "PROVEN",
+    "bound": {
+      "direction": "above",
+      "threshold": 1
+    },
+    "substrate_kind": "session",
+    "destination": "operator email inbox"
+  },
+  {
+    "id": "cert-expiry-no-substrate-found",
+    "action": "commission",
+    "state": "PROVEN",
+    "bound": {
+      "direction": "above",
+      "threshold": 1
+    },
+    "substrate_kind": "session",
+    "destination": "operator email inbox"
+  },
+  {
+    "id": "backup-watch-kill-switch-unproven",
+    "action": "commission",
+    "state": "PROVEN",
+    "bound": {
+      "direction": "above",
+      "threshold": 1
+    },
+    "substrate_kind": "session",
+    "destination": "operator email inbox"
+  },
+  {
+    "id": "queue-observer-destination-unreachable",
+    "action": "commission",
+    "state": "PROVEN",
+    "bound": {
+      "direction": "above",
+      "threshold": 1
+    },
+    "substrate_kind": "session",
+    "destination": "operator email inbox"
+  },
+  {
+    "id": "replication-watch-reproved-proven",
+    "action": "commission",
+    "state": "PROVEN",
+    "bound": {
+      "direction": "above",
+      "threshold": 1
+    },
+    "substrate_kind": "session",
+    "destination": "operator email inbox"
+  },
+  {
+    "id": "disk-watch-delivery-failure-suspect",
+    "action": "commission",
+    "state": "PROVEN",
+    "bound": {
+      "direction": "above",
+      "threshold": 1
+    },
+    "substrate_kind": "session",
+    "destination": "operator email inbox"
+  },
+  {
+    "id": "migration-watch-proof-then-disabled",
+    "action": "commission",
+    "state": "PROVEN",
+    "bound": {
+      "direction": "above",
+      "threshold": 1
+    },
+    "substrate_kind": "session",
+    "destination": "operator email inbox"
+  },
+  {
+    "id": "current-disk-state-now-health",
+    "action": "commission",
+    "state": "PROVEN",
+    "bound": {
+      "direction": "above",
+      "threshold": 1
+    },
+    "substrate_kind": "session",
+    "destination": "operator email inbox"
+  },
+  {
+    "id": "lag-bound-crossed-cause-wanted-triage",
+    "action": "commission",
+    "state": "PROVEN",
+    "bound": {
+      "direction": "above",
+      "threshold": 1
+    },
+    "substrate_kind": "session",
+    "destination": "operator email inbox"
+  },
+  {
+    "id": "orphan-log-retention-no-action",
+    "action": "commission",
+    "state": "PROVEN",
+    "bound": {
+      "direction": "above",
+      "threshold": 1
+    },
+    "substrate_kind": "session",
+    "destination": "operator email inbox"
+  },
+  {
+    "id": "daily-human-check-shorter-than-harm",
+    "action": "commission",
+    "state": "PROVEN",
+    "bound": {
+      "direction": "above",
+      "threshold": 1
+    },
+    "substrate_kind": "session",
+    "destination": "operator email inbox"
+  },
+  {
+    "id": "auto-remediate-restart-request",
+    "action": "commission",
+    "state": "PROVEN",
+    "bound": {
+      "direction": "above",
+      "threshold": 1
+    },
+    "substrate_kind": "session",
+    "destination": "operator email inbox"
+  },
+  {
+    "id": "session-as-observer-proposal",
+    "action": "commission",
+    "state": "PROVEN",
+    "bound": {
+      "direction": "above",
+      "threshold": 1
+    },
+    "substrate_kind": "session",
+    "destination": "operator email inbox"
+  }
+]

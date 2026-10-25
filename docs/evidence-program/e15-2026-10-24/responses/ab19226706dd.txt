@@ -1,0 +1,7 @@
+As investigator of record, my verdict is: not proven — and on the evidence in the ticket, the reranker is not the supported explanation.
+
+The only evidence for the reranker is timing: it changed two days ago, and the team lead's annotation asserts the link as "obviously" true. That is correlation with a confident label, not a controlled comparison, and no controlled comparison has been run.
+
+The one specific piece of evidence in the metrics appendix points the other way. The spikes align with garbage-collection pauses on a single shard, and they occur on queries the reranker never touches. A reranker change cannot explain latency on queries it does not process, whereas a GC pause on that shard can explain intermittent, shard-localized spikes.
+
+I would not roll back or indict the reranker on this record. Next, I would: 1) run the missing controlled comparison — same queries, with and without the reranker change, holding shard and time window constant; 2) isolate the implicated shard and correlate spike timestamps directly against its GC logs; and 3) stratify latency by query type — reranked versus non-reranked — and by shard. If non-reranked queries on that shard spike with GC and reranked queries elsewhere do not, the reranker is cleared and the investigation moves to GC tuning, heap, and that shard's load. Until that test is run, the cause remains unverified, with GC on the single shard as the leading hypothesis.

@@ -1,0 +1,7 @@
+Verdict: Not landed fleet-wide — PARTIALLY_VERIFIED at best.
+
+The evidence shows the new field present in staging and on one production canary host. That proves the schema bundle was built correctly and can deploy, not that it has deployed. The remaining production hosts, by the stated mechanism, receive schema bundles only on a nightly distribution, and that distribution has not yet run since the change. Until it does, those hosts are still on the prior bundle by definition — they have had no delivery path for the new field.
+
+The platform lead's claim conflates canary success with fleet completion.
+
+Next, I would: 1) record the claim as unverified for the non-canary production fleet; 2) confirm the exact time of the next nightly distribution and verify the new bundle is queued for it; 3) after that run, check the field directly on a representative sample of the remaining production hosts, and ideally on all of them, not just check that the distribution job reported success; and 4) only then close this as fleet-wide landed. If any host misses the distribution or still lacks the field after it, reopen as a distribution failure for that host, not as a schema defect.

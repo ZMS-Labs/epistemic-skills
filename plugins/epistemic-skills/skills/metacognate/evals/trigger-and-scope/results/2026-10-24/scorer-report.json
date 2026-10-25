@@ -1,0 +1,15 @@
+{
+ "scorer": "plugins/epistemic-skills/skills/metacognate/evals/trigger-and-scope/score.py",
+ "exit_code": 1,
+ "report": {
+  "pass": false,
+  "failures": [
+   "evidence-conflicts-migration-assertion: expected verdict approach-corrected, got question-reframed",
+   "reconstruct-context-available-in-task: expected no-fire, got examine"
+  ],
+  "actions": {
+   "examine": 9,
+   "no-fire": 4
+  }
+ }
+}

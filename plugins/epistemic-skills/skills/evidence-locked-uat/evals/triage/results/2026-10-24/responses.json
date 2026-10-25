@@ -1,0 +1,66 @@
+[
+ {
+  "artifacts": [],
+  "id": "routine-presentation",
+  "packet_required": false,
+  "pipeline": [],
+  "route": "routine-check",
+  "routine_check": [
+   "scope: literal helper copy change only, reversible and local",
+   "target: local rendered preview",
+   "actions: rendered the preview and compared the helper copy against the intended text",
+   "observed: helper copy displays as intended in the local rendered preview",
+   "result: bounded check establishes the claim; no UAT packet required"
+  ],
+  "verdict": null
+ },
+ {
+  "artifacts": [
+   "blocked-environment-record"
+  ],
+  "id": "unreachable-material-target",
+  "packet_required": false,
+  "pipeline": [],
+  "route": "blocked-environment",
+  "routine_check": [],
+  "verdict": "BLOCKED_ENVIRONMENT"
+ },
+ {
+  "artifacts": [
+   "run_id",
+   "contracts",
+   "evidence_dir",
+   "manifest"
+  ],
+  "id": "explicit-uat-request",
+  "packet_required": true,
+  "pipeline": [
+   "contract-writer",
+   "actor",
+   "verifier",
+   "judge"
+  ],
+  "route": "uat",
+  "routine_check": [],
+  "verdict": null
+ },
+ {
+  "artifacts": [
+   "run_id",
+   "contracts",
+   "evidence_dir",
+   "manifest"
+  ],
+  "id": "stateful-keyboard",
+  "packet_required": true,
+  "pipeline": [
+   "contract-writer",
+   "actor",
+   "verifier",
+   "judge"
+  ],
+  "route": "uat",
+  "routine_check": [],
+  "verdict": null
+ }
+]

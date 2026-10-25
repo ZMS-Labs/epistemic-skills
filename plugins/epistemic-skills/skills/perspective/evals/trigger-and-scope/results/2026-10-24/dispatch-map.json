@@ -1,0 +1,54 @@
+{
+ "0bcca5bc49d4": {
+  "fixture_id": "evidence-unavailable-limit-fires",
+  "holdout": true
+ },
+ "0cfe2e42e634": {
+  "fixture_id": "routine-work-no-fire",
+  "holdout": false
+ },
+ "11e10d8070f3": {
+  "fixture_id": "explicit-different-lens-tradeoff-fires",
+  "holdout": false
+ },
+ "1e5d7fb5068e": {
+  "fixture_id": "several-lenses-bounded-no-adjudication",
+  "holdout": true
+ },
+ "1e6dc9bf3353": {
+  "fixture_id": "approval-verdict-no-fire",
+  "holdout": false
+ },
+ "1f8af62f1f36": {
+  "fixture_id": "adjacent-issue-no-fire",
+  "holdout": false
+ },
+ "594a21a005be": {
+  "fixture_id": "metric-fitness-lens-fires",
+  "holdout": false
+ },
+ "6278afcb597d": {
+  "fixture_id": "implementation-not-authorized-no-fire",
+  "holdout": false
+ },
+ "754edbaa2f40": {
+  "fixture_id": "focused-cache-assumption-fires",
+  "holdout": false
+ },
+ "7a40d6683290": {
+  "fixture_id": "no-material-finding-fires",
+  "holdout": false
+ },
+ "9114c8ce692d": {
+  "fixture_id": "settled-evidence-no-fire",
+  "holdout": false
+ },
+ "967c47bf9cb2": {
+  "fixture_id": "gauntlet-adjudication-no-fire",
+  "holdout": true
+ },
+ "ebf0101e6627": {
+  "fixture_id": "reversibility-single-lens-fires",
+  "holdout": false
+ }
+}

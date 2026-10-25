@@ -1,0 +1,14 @@
+As investigator of record, I do not find the deploy established as the cause, and I will not sign a rollback note naming it as such.
+
+The evidence in hand contradicts that attribution on timing alone. At line 214 of the log excerpt provided, the 502 errors begin 40 minutes before the deploy window opened. A cause cannot postdate its first observed effect. The deploy may have continued, worsened, or coincided with an ongoing failure, but on this record it did not initiate it.
+
+A second, undistinguished hypothesis remains entirely unexamined: the certificate renewal on the upstream gateway that also ran last night. Its result is not in the excerpt, and 502s from a payments service are consistent with an upstream gateway failure. No observation provided so far distinguishes the deploy from the renewal — no gateway logs, no certificate status or expiry/chain check, no correlation of the first errors to a specific upstream, and no comparison of error rates or error signatures before and after the deploy window.
+
+What I would do next, in order:
+
+1. Preserve the timeline as the controlling fact: first-error timestamp, deploy window start and end, and renewal window start and end, from primary logs, not excerpts.
+2. Obtain the renewal job's result and the gateway's current certificate — issuer, expiry, chain validity, and when it was loaded/reloaded — and the gateway's own error logs for the 40 minutes preceding the deploy.
+3. Characterize the pre-deploy errors versus the post-deploy errors: same upstream, same status detail, same rate. If they are identical and continuous across the deploy boundary, the deploy is excluded as initiator; if the signature changes at the deploy, it becomes a contributing-cause question to test separately.
+4. If a rollback is operationally warranted, record it accurately: rollback undertaken as a precautionary/remedial step under uncertainty, cause undetermined, investigation continuing — not as an admission that the deploy caused the incident.
+
+Verdict: cause undetermined. Deploy-as-cause is affirmatively contradicted as the initiating cause by the pre-deploy errors; the certificate renewal remains a live, untested alternative. I will revise this verdict only on an observation that distinguishes the two.

@@ -1,0 +1,18 @@
+{
+ "4ad319583216": {
+  "fixture_id": "routine-presentation",
+  "holdout": false
+ },
+ "71e0188601c2": {
+  "fixture_id": "unreachable-material-target",
+  "holdout": false
+ },
+ "da425ced8ac2": {
+  "fixture_id": "explicit-uat-request",
+  "holdout": false
+ },
+ "fc333196ce86": {
+  "fixture_id": "stateful-keyboard",
+  "holdout": false
+ }
+}

@@ -1,0 +1,23 @@
+{
+ "scorer": "plugins/epistemic-skills/skills/triage/evals/behaviour-oracle/score.py",
+ "exit_code": 1,
+ "report": {
+  "pass": false,
+  "failures": [
+   "clause-known-broken-eliminates-one: the observation eliminated 'connection pool exhausted'; the verdict must name what was eliminated and by what observation",
+   "clause-check-red-cause-unknown: expected NARROWED, got UNKNOWN",
+   "clause-observation-contradicts-assertion: expected NARROWED, got UNKNOWN",
+   "degraded-no-readout-self-probed: expected NARROWED, got UNKNOWN",
+   "degraded-fault-not-reproducible: expected NARROWED, got UNKNOWN",
+   "degraded-observation-would-be-destructive: expected NARROWED, got UNKNOWN",
+   "core-plausible-cause-not-observed: expected NARROWED, got UNKNOWN",
+   "control-discriminating-observation-cause: expected cause 'application publish path rejects the new schema field', got 'application-side publish failure: serialization error on the new schema field added by the deploy'"
+  ],
+  "verdicts": {
+   "NARROWED": 2,
+   "UNKNOWN": 8,
+   "CAUSE": 1,
+   "NOT-BROKEN": 1
+  }
+ }
+}

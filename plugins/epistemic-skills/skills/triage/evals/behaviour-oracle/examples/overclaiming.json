@@ -1,0 +1,86 @@
+[
+  {
+    "id": "clause-known-broken-eliminates-one",
+    "verdict": "CAUSE",
+    "named_cause": "payment provider token endpoint slow",
+    "discriminating_observation": null,
+    "eliminated": []
+  },
+  {
+    "id": "clause-check-red-cause-unknown",
+    "verdict": "CAUSE",
+    "named_cause": "tax rounding change",
+    "discriminating_observation": null,
+    "eliminated": []
+  },
+  {
+    "id": "clause-readout-named-wrong-cause-unknown",
+    "verdict": "CAUSE",
+    "named_cause": "worker crashed",
+    "discriminating_observation": null,
+    "eliminated": []
+  },
+  {
+    "id": "clause-observation-contradicts-assertion",
+    "verdict": "CAUSE",
+    "named_cause": "drain job failing",
+    "discriminating_observation": null,
+    "eliminated": []
+  },
+  {
+    "id": "degraded-no-readout-self-probed",
+    "verdict": "CAUSE",
+    "named_cause": "disk full",
+    "discriminating_observation": null,
+    "eliminated": []
+  },
+  {
+    "id": "degraded-subject-unreachable",
+    "verdict": "CAUSE",
+    "named_cause": "inventory service crashed",
+    "discriminating_observation": null,
+    "eliminated": []
+  },
+  {
+    "id": "degraded-fault-not-reproducible",
+    "verdict": "CAUSE",
+    "named_cause": "rendering bug",
+    "discriminating_observation": null,
+    "eliminated": []
+  },
+  {
+    "id": "degraded-observation-would-be-destructive",
+    "verdict": "CAUSE",
+    "named_cause": "poison message at queue head",
+    "discriminating_observation": null,
+    "eliminated": []
+  },
+  {
+    "id": "degraded-lying-readout",
+    "verdict": "NOT-BROKEN",
+    "named_cause": "payment provider outage",
+    "discriminating_observation": null,
+    "eliminated": []
+  },
+  {
+    "id": "core-plausible-cause-not-observed",
+    "verdict": "CAUSE",
+    "named_cause": "new caching layer",
+    "discriminating_observation": null,
+    "eliminated": []
+  },
+  {
+    "id": "control-discriminating-observation-cause",
+    "verdict": "CAUSE",
+    "named_cause": "application publish path rejects the new schema field",
+    "discriminating_observation": null,
+    "eliminated": []
+  },
+  {
+    "id": "control-report-wrong-not-broken",
+    "verdict": "CAUSE",
+    "named_cause": "export truncates at 100 rows",
+    "discriminating_observation": null,
+    "eliminated": []
+  }
+]
