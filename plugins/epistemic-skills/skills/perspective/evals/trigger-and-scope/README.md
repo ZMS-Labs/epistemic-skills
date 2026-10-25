@@ -33,6 +33,29 @@ this battery. Results from this battery must always be reported as
 conformance to that battery-defined contract — never as evidence about
 the skill as written.
 
+**Amendment (2026-10-25).** The separate proposed change described
+above has since been made — by the skill's own change process, not
+by this battery: per Zach's P1 decision (2026-10-25), the contract
+below was adopted into perspective's `SKILL.md` as its output section
+(§"Output: the declared finding"), including the boundary rule the
+E3 epoch's failed seam taught. The note above stands as the record
+of the position before adoption and is not rewritten. What the
+amendment changes is the frame for reading results: epochs run
+**before** the adoption (including E3) measured conformance to this
+battery-defined contract only, and results from those epochs must
+still be reported that way — never as evidence about the skill as
+written; epochs run **after** it measure the skill as written,
+because the contract is now the skill's own text. One cost is
+recorded plainly: the adoption burns this battery's three marked
+holdout fixtures — `several-lenses-bounded-no-adjudication`,
+`gauntlet-adjudication-no-fire`, and
+`evidence-unavailable-limit-fires` — whose scenarios are now
+answered by skill text their subjects may read; replacement holdouts
+must be authored by a non-editor and stay sealed until their epoch
+runs (the sealed-holdout rule adopted 2026-10-25). The adoption
+packet is `wo3-adoption-packet.md` in the evidence program's
+Phase 2 files.
+
 ## Pinned expectations
 
 Three of the seven `apply-lens` fixtures pin `expected_finding`, and the
