@@ -172,17 +172,20 @@ def main() -> int:
     # pass. The row below is job 10's reproduced instance verbatim in
     # its eliminated list: the observation eliminates the pool
     # candidate only; the scenario states no observation distinguishes
-    # (a) from (c), and (a) is the fixture's forbidden cause. The scorer
-    # now bars the forbidden candidate from `eliminated` under any
-    # verdict, and for NARROWED enforces the pinned eliminated set
+    # (a) from (c), and (a) is the fixture's forbidden cause. For
+    # NARROWED the scorer now enforces the pinned eliminated set
     # exactly - the candidates the one discriminating observation
-    # rules out, no more.
+    # rules out, no more. (A universal bar on claiming the forbidden
+    # candidate as eliminated was built with this correction and
+    # withdrawn on review, 2026-10-25: the record defines
+    # forbidden_cause as a named-cause bar, and the extension is not
+    # carried. The job-10 row is rejected by the exact-set rule alone.)
     job10 = mutated(balanced_rows, "clause-known-broken-eliminates-one", "eliminated",
                     ["connection pool exhausted", "payment provider token endpoint slow", "bad deploy at 08:40"], False)
     report = scorer.score(fixtures, job10)
     require(not report["pass"], "job-10 row: NARROWED claiming every candidate eliminated unexpectedly passed")
-    require(any("was claimed as eliminated" in failure for failure in report["failures"]), report["failures"])
     require(any("does not eliminate" in failure for failure in report["failures"]), report["failures"])
+    require(not any("was claimed as eliminated" in failure for failure in report["failures"]), report["failures"])
 
     extra_only = mutated(balanced_rows, "clause-known-broken-eliminates-one", "eliminated",
                          ["connection pool exhausted", "bad deploy at 08:40"], False)
@@ -190,11 +193,36 @@ def main() -> int:
     require(not report["pass"], "NARROWED with an unsupported extra elimination unexpectedly passed")
     require(any("does not eliminate" in failure for failure in report["failures"]), report["failures"])
 
+    # The same mutation on the lying-readout fixture (its extra entry is
+    # that fixture's forbidden cause) fails on the exact-set line only:
+    # no forbidden-in-eliminated bar exists in the narrowed scorer.
     forbidden_extra = mutated(balanced_rows, "degraded-lying-readout", "eliminated",
                               ["not-broken", "payment provider outage"], False)
     report = scorer.score(fixtures, forbidden_extra)
-    require(not report["pass"], "NARROWED claiming the forbidden candidate eliminated unexpectedly passed")
-    require(any("was claimed as eliminated" in failure for failure in report["failures"]), report["failures"])
+    require(not report["pass"], "NARROWED with an unsupported extra elimination unexpectedly passed")
+    require(any("does not eliminate" in failure for failure in report["failures"]), report["failures"])
+    require(not any("was claimed as eliminated" in failure for failure in report["failures"]), report["failures"])
+
+    # Control - CAUSE carrying the forbidden candidate in `eliminated`
+    # is not mechanically barred: CAUSE's eliminated is adjudicated
+    # non-determined (C12), no fixture pins it, and the narrowed scorer
+    # enforces no eliminated rule on a CAUSE row. Labelled control, not
+    # a gap: enforcement follows the pins.
+    cause_fixture = [{
+        "id": "c14-cause-control",
+        "expected_verdict": "CAUSE",
+        "expected_cause": "application publish path rejects the new schema field",
+        "forbidden_cause": "index service down",
+    }]
+    cause_row = [{
+        "id": "c14-cause-control",
+        "verdict": "CAUSE",
+        "named_cause": "application publish path rejects the new schema field",
+        "discriminating_observation": "A token published directly to the index appeared in search within seconds; the same token through the application never appeared and the publish call returned a serialization error naming the new schema field.",
+        "eliminated": ["index service down"],
+    }]
+    report = scorer.score(cause_fixture, cause_row)
+    require(report["pass"], f"CAUSE control (not mechanically barred) unexpectedly failed: {report['failures']}")
     print("triage behaviour-oracle: PASS")
     return 0
 
