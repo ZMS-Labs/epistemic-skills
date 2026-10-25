@@ -113,6 +113,8 @@ def score(fixtures: list[dict], responses: object) -> dict:
             threshold = bound.get("threshold")
             if "threshold" not in bound or threshold is None or (isinstance(threshold, str) and not threshold.strip()):
                 failures.append(f"{fid}: bound.threshold must be present")
+            elif isinstance(threshold, (list, dict)):
+                failures.append(f"{fid}: bound.threshold must be a scalar or string, got {type(threshold).__name__}")
         substrate = row.get("substrate_kind")
         if not _nonempty(substrate):
             failures.append(f"{fid}: substrate_kind must be a nonempty string naming the external observer kind")
