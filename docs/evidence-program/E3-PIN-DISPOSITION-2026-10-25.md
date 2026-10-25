@@ -77,3 +77,17 @@ E3 record annotated to name the pin defect (the 12/13 stands as run; the
 revised row starts a new line, never a restated pass). It is the only option
 that both repairs the battery's internal consistency and preserves a
 determining test of the exact verdict boundary E3 exists to measure.
+
+## Decision and execution (2026-10-25)
+
+Zach decided **Option 1** on 2026-10-25. The re-pin is executed as a
+separate prepared change (not folded into the successor stack): the
+`metric-fitness-lens-fires` scenario now states the examination's
+outcome — the dashboard counts clicks from the team's own
+uptime-monitoring bots on a fixed schedule, and that segment is
+identifiable in the logs and excludable — so the pinned finding
+`adjustment` follows from stated evidence under the battery's own
+pinning principle (lens evidence supporting a concrete change). No
+other fixture field changed. E3's 12/13 stands as run; the revised
+row starts a new line and is never a restated pass. The perspective
+trigger-and-scope suite passes with the revised fixture.
