@@ -105,6 +105,23 @@ def main() -> int:
     from adapter_checks import check
     check(scorer, ROOT)
 
+
+    # Regression (2026-10-24, Dot review of the held branches): a response
+    # whose id is outside the fixture inventory must fail by name, never be
+    # silently ignored - the omission did-it-land's scorer was fixed for
+    # (C4) was still present here.
+    extra_rows = json.loads((ROOT / "examples" / "balanced.json").read_text(encoding="utf-8")) + [{"id": "nonexistent-trial", "action": "garbage"}]
+    extra_report = scorer.score(fixtures, extra_rows)
+    require(not extra_report["pass"], "an extra response with an unknown id unexpectedly passed")
+    require(any("response id not in fixtures" in failure for failure in extra_report["failures"]), extra_report["failures"])
+
+    # Regression (2026-10-24, Dot review): the adapter scorer carries the
+    # same obligation - an adapter response id outside the fixture
+    # inventory fails by name.
+    extra_adapter_rows = json.loads((ROOT / "examples" / "adapter-balanced.json").read_text(encoding="utf-8")) + [{"id": "nonexistent-trial"}]
+    extra_adapter_report = scorer.score_adapter(fixtures, extra_adapter_rows)
+    require(not extra_adapter_report["pass"], "an extra adapter response with an unknown id unexpectedly passed")
+    require(any("adapter response id not in fixtures" in failure for failure in extra_adapter_report["failures"]), extra_adapter_report["failures"])
     print("write-goal trigger-and-scope: PASS")
     return 0
 
