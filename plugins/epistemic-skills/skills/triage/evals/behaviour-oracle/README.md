@@ -85,18 +85,32 @@ here for future epochs; expected values otherwise unchanged:
    control; the candidate labels (a)/(b)/(c) for the known-broken
    case), in the same way the health battery's scenarios state their
    canonical subject names.
-2. **Three ground truths corrected.** `clause-check-red-cause-unknown`
+2. **Five ground truths corrected.** `clause-check-red-cause-unknown`
    and `degraded-observation-would-be-destructive` were re-pinned from
    NARROWED to UNKNOWN: neither scenario contains an observation that
    eliminates any candidate, and under the verdict definitions
    NARROWED requires one. `degraded-no-readout-self-probed` was
    re-pinned in the same cycle on the identical ground: it pinned
    NARROWED with `expected_eliminated: []`, and its scenario states
-   nothing distinguishes the candidates. See the corrections appended
+   nothing distinguishes the candidates. A second adjudication round
+   in the same cycle applied the principle to the two remaining
+   NARROWED pins with no eliminating observation and re-pinned both:
+   `clause-observation-contradicts-assertion` (the direct query is
+   consistent with every candidate explanation of the disagreement,
+   including the replica candidate under which the primary queue
+   drains normally) and `core-plausible-cause-not-observed` (its
+   scenario states no observation was made that would come out
+   differently under one candidate than the others). The two surviving
+   NARROWED pins with `expected_eliminated: []` were adjudicated, not
+   overlooked: `degraded-lying-readout`'s direct reproduction
+   eliminates the no-fault candidate, and
+   `degraded-fault-not-reproducible`'s eleven clean reloads eliminate
+   the persistent-fault candidate (the skill's degraded-operation
+   table caps that class at NARROWED). See the corrections appended
    to the E6 epoch record and the subordinate re-score under
    `results/2026-10-24/rescore/`.
 
-The committed E6 epoch ran under the **prior** revision. Its three
+The committed E6 epoch ran under the **prior** revision. Its five
 mis-pinned verdict failures and its exact-string naming failures are
 instrument-attributable as detailed in those corrections; no E6 verdict
 was re-issued — the re-score is a separate, subordinate record.
