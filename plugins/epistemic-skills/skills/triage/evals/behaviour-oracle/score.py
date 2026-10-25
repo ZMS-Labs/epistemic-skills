@@ -30,6 +30,8 @@ def _id_set(row: dict, field: str, fid: str, failures: list) -> set:
     if bad:
         failures.append(f"{fid}: {field} must contain only bare string ids")
         return {item for item in value if isinstance(item, str)}
+    if any(not item.strip() for item in value):
+        failures.append(f"{fid}: {field} must not contain empty ids")
     return set(value)
 
 
@@ -87,6 +89,11 @@ def score(fixtures: list[dict], responses: object) -> dict:
         if verdict == "NOT-BROKEN" and not _nonempty(row.get("discriminating_observation")):
             failures.append(f"{fid}: NOT-BROKEN requires an adequate direct observation of the reported behavior — a generic readout cannot contradict a specific failure")
         eliminated = _id_set(row, "eliminated", fid, failures)
+        if verdict == "NARROWED":
+            if not _nonempty(row.get("discriminating_observation")):
+                failures.append(f"{fid}: NARROWED requires a discriminating observation — the observation that eliminated a candidate; a narrowing with no eliminating observation is UNKNOWN")
+            if not any(_nonempty(item) for item in eliminated):
+                failures.append(f"{fid}: NARROWED requires at least one eliminated candidate — name the candidate the observation eliminated")
         for required in fixture.get("expected_eliminated", []):
             if required not in eliminated:
                 failures.append(f"{fid}: the observation eliminated {required!r}; the verdict must name what was eliminated and by what observation")
