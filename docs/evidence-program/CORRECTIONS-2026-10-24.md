@@ -364,3 +364,27 @@ reproduced and adjudicated a limitation, not a hole: the contract's
 stated requirement for the field is "required nonempty", and the
 semantic adequacy of observation content is not mechanically
 decidable. Recorded here; no rule added.)
+
+## C15 — E15 record: the blinding claim corrected (dated correction filed)
+
+The Codex finding on PR #273 (thread `PRRT_kwDOTbMRbs6v9v3v`)
+established from the preserved artefacts that E15's scorer-visible
+response files contain explicit treatment-arm identifiers, and that
+scorer A's rationale for `93f06f62fef2` quotes one — so RESULTS.md's
+sentence "Neither scorer saw the mapping, the other scorer's
+scores, or any arm information" is accurate only for the mapping and
+the other scorer's report, not for arm identity. No C1–C14 entry
+recorded the deviation. **Correction filed:**
+`docs/evidence-program/e15-2026-10-24/CORRECTION-2026-10-25.md`
+stands beside RESULTS.md, dated 2026-10-25, stating the deviation,
+the verbatim evidence, and the corrected description — blinding was
+**partial**: sound as to arm assignments by construction of the
+key/mapping protocol, not extended to arm information contained in
+the response texts themselves. RESULTS.md and every other epoch
+record are unmodified; no score is re-derived; there is no evidence
+either scorer used arm identity in scoring. E15's pre-registered
+readings (did-it-land SUPPORTED 6/6; triage NULL 1/6) stand as
+recorded, with the qualification attached wherever they are cited.
+The prospective remedy is WO-2's: blinding as an enforced instrument
+property (dispatch-side redaction, a logged redaction pass, and a
+mechanical scorer-input audit), never assumed again.
