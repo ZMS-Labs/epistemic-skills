@@ -338,7 +338,7 @@ append one line to `runs/ledger.jsonl` under this skill. Ordinary engagements ne
 separate run ledger:
 
 ```json
-{"schema":"skill-run@1","ts":"<iso8601>","skill":"<this-skill>","decision":"fired|declined","discipline_engaged":"<name-or-null>","action_changed":true|false}
+{"schema":"skill-run@1","ts":"<iso8601>","skill":"outsource","decision":"fired|declined","discipline_engaged":"<name-or-null>","action_changed":true|false}
 ```
 
 This optional telemetry is not proof of success, an external calibration call, or a

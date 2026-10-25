@@ -36,7 +36,7 @@ Distinct from every sibling:
 
 - Not a verdict on a frozen subject (gauntlet).
 - Not a goal contract (write-goal names assumptions inside goals).
-- Not a per-run research record (evidence-research's record is scoped to one
+- Not a per-run research record (resolve's literature record is scoped to one
   literature run).
 - Not pre-work recon (recon) or a derivation (resolve derivation) —
   those may already produce the durable artifact this skill would otherwise add.
@@ -248,7 +248,7 @@ Two-stage rule: the *outcome record* is appended freely (it is data), but a
 *generalized lesson* ("we should always/never X") becomes durable guidance
 only after explicit operator approval — an agent may propose the lesson in
 the outcome record, never promote it to standing guidance on its own. This
-also covers throwaway-prototyping's capture step: the prototype's question,
+also covers resolve's probe capture step: the prototype's question,
 observation, and answer land here as an outcome-shaped entry before the
 build is disposed.
 
@@ -338,7 +338,7 @@ append one line to `runs/ledger.jsonl` under this skill. Ordinary engagements ne
 separate run ledger:
 
 ```json
-{"schema":"skill-run@1","ts":"<iso8601>","skill":"<this-skill>","decision":"fired|declined","discipline_engaged":"<name-or-null>","action_changed":true|false}
+{"schema":"skill-run@1","ts":"<iso8601>","skill":"decision-ledger","decision":"fired|declined","discipline_engaged":"<name-or-null>","action_changed":true|false}
 ```
 
 This optional telemetry is not proof of success, an external calibration call, or a

@@ -78,6 +78,9 @@ Activation discipline: design-argued; no shipped trigger battery as of this chan
 
 ## Boundaries
 
+- **Not UAT.** If the question is formal acceptance of a material rendered
+  interaction or outcome, that is `evidence-locked-uat`. This skill answers
+  only whether a change's intended effect is present at its consumer.
 - **Never infers landing from the diff, the commit, the PR, or the log line.**
   Those are records of intent to change, not evidence of change.
 - **Never accepts a green check as landing** unless the check itself observed the
@@ -137,7 +140,7 @@ engagement telemetry, use the local `runs/ledger.jsonl` format. Ordinary use
 requires no separate process artifact:
 
 ```json
-{"schema":"skill-run@1","ts":"<iso8601>","skill":"<this-skill>","decision":"fired|declined","discipline_engaged":"<name-or-null>","action_changed":true|false}
+{"schema":"skill-run@1","ts":"<iso8601>","skill":"did-it-land","decision":"fired|declined","discipline_engaged":"<name-or-null>","action_changed":true|false}
 ```
 
 Telemetry is private runtime evidence of engagement, not proof of the outcome

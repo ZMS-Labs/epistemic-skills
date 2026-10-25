@@ -164,7 +164,7 @@ engagement telemetry, use the local `runs/ledger.jsonl` format. Ordinary use
 requires no separate process artifact:
 
 ```json
-{"schema":"skill-run@1","ts":"<iso8601>","skill":"<this-skill>","decision":"fired|declined","discipline_engaged":"<name-or-null>","action_changed":true|false}
+{"schema":"skill-run@1","ts":"<iso8601>","skill":"triage","decision":"fired|declined","discipline_engaged":"<name-or-null>","action_changed":true|false}
 ```
 
 Telemetry is private runtime evidence of engagement, not proof of the outcome

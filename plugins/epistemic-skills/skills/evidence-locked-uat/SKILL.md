@@ -171,8 +171,11 @@ Full 26-row table: `references/standard.md` §61.
 - **Downstream recorders:** hand any evidence-consuming step the evidence packet
   path, not ad-hoc screenshots. Routine presentation checks are not evidence
   packets and must not be presented as blinded UAT.
-- Sibling skills: `verification-before-completion` covers claims about work in
-  general; this skill is the material UI-facing acceptance case.
+- External companion (not part of this suite): Superpowers'
+  `verification-before-completion` covers claims about work in general; this
+  skill is the material UI-facing acceptance case. If the question is only
+  whether a change's effect is present at its consumer, that is `did-it-land`,
+  not UAT.
 
 ## References
 
@@ -195,7 +198,7 @@ For an authorized evaluation or applicable task evidence contract, append one li
 acknowledgment above, not a mandatory second ledger artifact:
 
 ```json
-{"schema":"skill-run@1","ts":"<iso8601>","skill":"<this-skill>","decision":"fired|declined","discipline_engaged":"<name-or-null>","action_changed":true|false}
+{"schema":"skill-run@1","ts":"<iso8601>","skill":"evidence-locked-uat","decision":"fired|declined","discipline_engaged":"<name-or-null>","action_changed":true|false}
 ```
 
 The append is conditional on that evaluation or evidence contract. It is not a call to an external calibration

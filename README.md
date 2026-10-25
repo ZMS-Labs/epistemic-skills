@@ -169,7 +169,7 @@ one task can use more than one method.
 These summaries help you choose. Each method's `SKILL.md` is its canonical text,
 meaning the one agreed version: it sets when the method applies, its limits and
 its steps. The links above go to the development branch, which can include
-changes made after v7.2.0; the [v7.2.0 tag](https://github.com/ZMS-Labs/epistemic-skills/tree/v7.2.0/plugins/epistemic-skills/skills)
+changes made after v7.3.0; the [v7.3.0 tag](https://github.com/ZMS-Labs/epistemic-skills/tree/v7.3.0/plugins/epistemic-skills/skills)
 holds the released text. The [handbook catalog](docs/handbook/pages/Skill-Catalog.md)
 adds examples and comparisons for each method.
 

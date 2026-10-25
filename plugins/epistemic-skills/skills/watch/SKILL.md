@@ -389,7 +389,7 @@ engagement telemetry, use the local `runs/ledger.jsonl` format. Ordinary use
 requires no separate process artifact:
 
 ```json
-{"schema":"skill-run@1","ts":"<iso8601>","skill":"watch","decision":"fired|declined","discipline_engaged":"watch|<name-or-null>","action_changed":true|false}
+{"schema":"skill-run@1","ts":"<iso8601>","skill":"watch","decision":"fired|declined","discipline_engaged":"<name-or-null>","action_changed":true|false}
 ```
 
 The append records use of the discipline. It does not prove that an external
