@@ -32,6 +32,17 @@ First live behavioral epoch: 2026-08-04, FAIL 8/10 — see
 `results/2026-08-04/RESULTS.md` for the record, methodology, and the two
 diagnosed reporting-contract failures (register: issue #77).
 
+Second live epoch: 2026-10-24 (E11), FAIL — the shipped scorer crashed
+on one response carrying `parked` as an integer count and produced no
+fixture verdicts; the crash is the epoch's recorded result
+(`results/2026-10-24/RESULTS.md`). Scorer robustness fix (issue #277):
+a non-list `parked` now scores as a per-fixture shape failure instead of
+raising, at both sites that iterate it; regression coverage in
+`tests/run_tests.py` with `examples/parked-as-count.json`. The fixed
+scorer's reading of E11's frozen responses is recorded at
+`results/2026-10-24/rescore/` — an instrument-repair record; it does
+not re-run or alter the epoch.
+
 ## V7 synthetic regression boundary (2026-09-18)
 
 The current scorer and its new cases exercise response-contract checks, not

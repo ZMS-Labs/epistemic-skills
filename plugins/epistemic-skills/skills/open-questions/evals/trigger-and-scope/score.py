@@ -28,6 +28,22 @@ def _identified(entry: object, *, needs_tracker: bool) -> bool:
     return True
 
 
+def _parked_items(row: dict) -> tuple[list | None, bool]:
+    """Return ``(items, malformed)`` for a response's ``parked`` field.
+
+    The response contract defines ``parked`` as a list of identified item
+    objects. A subject may instead report an integer count (or another
+    non-list form) — a reporting-shape fault, characterised (b) in the
+    E11 epoch record. That fault must be scored as a per-fixture failure,
+    never raised: before this fix the scorer iterated the raw value and
+    a single mistyped field crashed the run, voiding every fixture's
+    verdict (issue #277)."""
+    parked = row.get("parked", [])
+    if isinstance(parked, list):
+        return parked, False
+    return None, True
+
+
 def score(fixtures: list[dict], responses: list[dict]) -> dict:
     failures: list[str] = []
     by_id = {row.get("id"): row for row in responses if isinstance(row, dict)}
@@ -72,8 +88,10 @@ def score(fixtures: list[dict], responses: list[dict]) -> dict:
             if row.get("questions_asked") or row.get("visible_process"):
                 failures.append(f"{fid}: no-fire must be silent — no interview, no process artifact")
         elif expected == "park-and-proceed":
-            parked = row.get("parked", [])
-            if not parked:
+            parked, parked_malformed = _parked_items(row)
+            if parked_malformed:
+                failures.append(f"{fid}: parked must be a list of identified items, not a count or other non-list value")
+            elif not parked:
                 failures.append(f"{fid}: park-and-proceed must announce parked items with defaults")
             elif not all(_identified(item, needs_tracker=False) for item in parked):
                 failures.append(f"{fid}: every parked item names its question and carries a best-guess default")
@@ -86,13 +104,16 @@ def score(fixtures: list[dict], responses: list[dict]) -> dict:
             exhausted = row.get("closing_probe") and row.get("ledger_empty")
             released = row.get("operator_release")
             if released:
-                parked = row.get("parked", [])
-                remaining = set(fixture.get("remaining_items", []))
-                parked_ids = {item.get("question") for item in parked if isinstance(item, dict)}
-                if remaining and not remaining <= parked_ids:
-                    failures.append(f"{fid}: operator release parks EVERY remaining ledger item — missing {sorted(remaining - parked_ids)}")
-                if not all(_identified(item, needs_tracker=False) for item in parked):
-                    failures.append(f"{fid}: operator release parks each remaining item, named, with its default")
+                parked, parked_malformed = _parked_items(row)
+                if parked_malformed:
+                    failures.append(f"{fid}: operator release parks each remaining item, named, with its default — parked must be a list of identified items, not a count or other non-list value")
+                else:
+                    remaining = set(fixture.get("remaining_items", []))
+                    parked_ids = {item.get("question") for item in parked if isinstance(item, dict)}
+                    if remaining and not remaining <= parked_ids:
+                        failures.append(f"{fid}: operator release parks EVERY remaining ledger item — missing {sorted(remaining - parked_ids)}")
+                    if not all(_identified(item, needs_tracker=False) for item in parked):
+                        failures.append(f"{fid}: operator release parks each remaining item, named, with its default")
             elif not exhausted:
                 failures.append(f"{fid}: full interview terminates on empty ledger plus closing probe, or operator release")
         elif expected == "fork-interview":
