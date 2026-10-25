@@ -124,6 +124,45 @@ def main() -> int:
             report = scorer.score(fixtures, mutated(balanced_rows, fid, key, value, omit))
             require(not report["pass"], f"{fid}: NARROWED with {key} {'omitted' if omit else repr(value)} unexpectedly passed")
             require(any(fragment in failure for failure in report["failures"]), report["failures"])
+
+    # Regression (2026-10-24, issue #282 - an independent-model
+    # challenge of the frozen scorer, reproduced locally by Dot and
+    # classified a blocking P2 on the held branches): the mirror image
+    # of the C11 defect. C11 enforced what a verdict must carry;
+    # nothing enforced what a verdict must NOT carry. An UNKNOWN
+    # response naming eliminated candidates passed, contradicting
+    # UNKNOWN's own definition - insufficient evidence to eliminate -
+    # and a NOT-BROKEN response naming a cause passed, contradicting
+    # the verdict itself. Both are now barred. The nuance Dot named
+    # stands: an observation that eliminates nothing remains
+    # compatible with UNKNOWN, so only the eliminated list is barred
+    # there - proven below in both directions.
+    unknown_ids = [f["id"] for f in fixtures if f["expected_verdict"] == "UNKNOWN"]
+    require(unknown_ids == [
+        "clause-check-red-cause-unknown", "clause-readout-named-wrong-cause-unknown",
+        "clause-observation-contradicts-assertion", "degraded-no-readout-self-probed",
+        "degraded-subject-unreachable", "degraded-observation-would-be-destructive",
+        "core-plausible-cause-not-observed",
+    ], unknown_ids)
+    for fid in unknown_ids:
+        report = scorer.score(fixtures, mutated(balanced_rows, fid, "eliminated", ["a candidate the evidence does not eliminate"], False))
+        require(not report["pass"], f"{fid}: UNKNOWN with a nonempty eliminated list unexpectedly passed")
+        require(any("UNKNOWN must not name eliminated candidates" in failure for failure in report["failures"]), report["failures"])
+    # UNKNOWN + observation + eliminated fails on the eliminated list;
+    # UNKNOWN + the same observation alone still passes.
+    both = mutated(balanced_rows, "clause-check-red-cause-unknown", "discriminating_observation", "the failure output only: expected 104.10, got 104.09", False)
+    both = mutated(both, "clause-check-red-cause-unknown", "eliminated", ["tax rounding change"], False)
+    report = scorer.score(fixtures, both)
+    require(not report["pass"], "UNKNOWN with an observation and an eliminated candidate unexpectedly passed")
+    require(any("UNKNOWN must not name eliminated candidates" in failure for failure in report["failures"]), report["failures"])
+    observation_only = mutated(balanced_rows, "clause-check-red-cause-unknown", "discriminating_observation", "the failure output only: expected 104.10, got 104.09", False)
+    report = scorer.score(fixtures, observation_only)
+    require(report["pass"], report["failures"])
+
+    named_not_broken = mutated(balanced_rows, "control-report-wrong-not-broken", "named_cause", "export service truncates at 100 rows", False)
+    report = scorer.score(fixtures, named_not_broken)
+    require(not report["pass"], "NOT-BROKEN with a named cause unexpectedly passed")
+    require(any("NOT-BROKEN never names a cause" in failure for failure in report["failures"]), report["failures"])
     print("triage behaviour-oracle: PASS")
     return 0
 
