@@ -1,5 +1,7 @@
 # Intent-Traced Merge trigger-and-scope fixtures
 
+> **Warning — known scorer defect (C9, recorded 2026-10-24):** this frozen reference copy of the trigger-and-scope scorer silently ignores response rows whose id is outside the fixture inventory — an extra row, even with an invalid action, does not fail the score. Do not rely on it to reject out-of-inventory responses; the program batteries carry the fix, this snapshot deliberately does not.
+
 This battery tests the trigger discipline and the classification contract:
 non-trivial conflict hunks (semantic overlap, ambiguous textual resolution,
 divergent-decision branches) are traced to both origins, ruled explicitly,
