@@ -54,15 +54,20 @@ Pinned before the first live epoch, per
 
 - Each response is one object per fixture: `id`, `verdict` (exactly one of
   `CAUSE`, `NARROWED`, `UNKNOWN`, `NOT-BROKEN`), `named_cause` (the cause
-  named as established — required for `CAUSE`, and **null for `NARROWED`
-  and `UNKNOWN`**: a candidate that merely fits the symptom is a
+  named as established — required for `CAUSE`, and **null for `NARROWED`,
+  `UNKNOWN`, and `NOT-BROKEN`**: a candidate that merely fits the symptom is a
   hypothesis, and naming it as the cause is the failure this corpus
-  plants), `discriminating_observation` (the observation that would have
+  plants; for `NOT-BROKEN` the bar is the verdict itself — naming a
+  cause asserts a fault, and the verdict is that there is none), `discriminating_observation` (the observation that would have
   come out differently under an alternative — required nonempty for
   `CAUSE`, `NARROWED`, and `NOT-BROKEN`), `eliminated` (array of bare
   candidate ids eliminated, with the eliminating observation being the
   one named above; required nonempty for `NARROWED` — a narrowing that
-  names nothing it eliminated is `UNKNOWN`).
+  names nothing it eliminated is `UNKNOWN` — and **empty for `UNKNOWN`**:
+  a candidate is eliminated only by an observation that rules it out,
+  and `UNKNOWN` is the verdict for insufficient evidence to eliminate;
+  an observation that eliminates nothing remains compatible with
+  `UNKNOWN` and is not barred).
 - Degraded cases carry their labels: `evidence_basis: "self-probed"` when
   no readout existed; `qualifier: "unreachable"` on an unreachable
   `UNKNOWN`; `not_reproducible_stated: true` when the fault could not be
@@ -155,6 +160,49 @@ named `not-broken` with its observation, the fault-not-reproducible
 failure is a verdict mismatch the new checks sit behind, and the
 known-broken failure is the pre-existing label-content miss. The
 epoch record and the response record are unmodified.
+
+## Battery revision (2026-10-24, post-handoff-3 — C12)
+
+A fourth defect, the mirror image of C11: a capped independent-model
+challenge of the frozen scorer (issue #282) found verdicts carrying
+assertions their definitions disclaim, and Dot's local reproduction
+of both instances classified the gap a blocking P2 on the held
+branches. C11 enforced what a verdict must carry; nothing enforced
+what a verdict must **not** carry. Corrected here, for future epochs:
+
+1. **UNKNOWN names no eliminated candidates.** A response with
+   verdict `UNKNOWN` and a nonempty `eliminated` list now fails: a
+   candidate is eliminated only by an observation that rules it out,
+   and `UNKNOWN` is the verdict for insufficient evidence to
+   eliminate. The observation field is deliberately **not** barred
+   on `UNKNOWN` — an observation that eliminates nothing remains
+   compatible with the verdict — and the suite proves the nuance in
+   both directions (observation plus an eliminated candidate fails;
+   the same observation alone passes).
+2. **NOT-BROKEN names no cause.** A `NOT-BROKEN` response carrying
+   a non-null `named_cause` now fails: naming a cause asserts a
+   fault, and the verdict is that there is none. The response
+   contract above is clarified to state the bar.
+3. **The same-direction audit.** Every verdict was checked against
+   every assertion field. `CAUSE` carrying `eliminated` is not a
+   gap: nothing in its definition disclaims eliminations, and the
+   frozen `CAUSE` response itself lists candidates its observation
+   ruled out on the way. The fixture-gated label fields
+   (`evidence_basis`, `qualifier`, the degraded-condition flags,
+   `observation_plan`) are enforced whenever a fixture pins them,
+   for any verdict. One case is flagged, not enforced: `eliminated`
+   on `NOT-BROKEN` is arguable both ways — ruling out the reported
+   fault is close to the verdict's own substance, and this corpus
+   itself uses `not-broken` as an eliminated *candidate* label
+   under `NARROWED` — so it awaits adjudication rather than a rule.
+
+E6's frozen responses re-score **unchanged** under the revised
+scorer — no frozen row violates either new rule (every `UNKNOWN`
+row carries `eliminated: []`; the `NOT-BROKEN` row carries
+`named_cause: null`), and the re-score report body is mechanically
+identical to the committed subordinate record: the same three
+failures, 9/12. The epoch record and the response record are
+unmodified, and the subordinate record needed no regeneration.
 
 ## Status
 

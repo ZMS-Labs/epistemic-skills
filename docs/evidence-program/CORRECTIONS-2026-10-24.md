@@ -219,3 +219,47 @@ scorer and fixtures are unchanged — the same three failures, the
 subordinate re-score stands at **9/12** (its wrapper note is
 extended to record this round); the epoch outcome (FAIL 4/12) and
 response record are unmodified.
+
+## C12 — Behaviour-oracle: verdicts must not carry disclaimed assertions
+
+Fourth correction round (issue #282: a capped independent-model
+challenge of the frozen scorer — the trial job run against the
+handoff-3 pin — with both instances reproduced locally by Dot,
+whose blocking P2 on the four held tips rests on that reproduction;
+2026-10-24). The mirror image of C11: C11 enforced what a verdict
+must carry, and its audit checked the verdicts for missing
+requirements; nothing enforced what a verdict must **not** carry.
+An **UNKNOWN** response with a nonempty `eliminated` list passed,
+contradicting UNKNOWN's definition — insufficient evidence to
+eliminate — and a **NOT-BROKEN** response with a non-null
+`named_cause` passed, although naming a cause asserts a fault and
+the verdict is that there is none. **Fix:** the scorer now fails an
+UNKNOWN response naming any eliminated candidate, and a NOT-BROKEN
+response naming a cause; the battery README's response-contract
+statement is clarified to state both bars. The nuance Dot named is
+preserved: an observation that eliminates nothing remains
+compatible with UNKNOWN, so `discriminating_observation` is not
+barred on UNKNOWN — the regressions prove both directions
+(observation plus an eliminated candidate fails; the same
+observation alone passes), cover the eliminated mutation for every
+UNKNOWN fixture, and the named-cause mutation for the NOT-BROKEN
+control; both fail on the handoff-3 code state and pass on the
+revised scorer. **Audit:** every verdict was checked against every
+assertion field in this direction. CAUSE carrying `eliminated` is
+not a gap — its definition disclaims no eliminations, and the
+frozen CAUSE response itself lists the candidates its observation
+ruled out; the fixture-gated label fields (`evidence_basis`,
+`qualifier`, the degraded-condition flags, `observation_plan`) are
+enforced whenever a fixture pins them, for any verdict. One case
+is flagged for adjudication, not enforced: `eliminated` on
+NOT-BROKEN is arguable both ways — ruling out the reported fault
+is close to the verdict's own substance, and the corpus uses
+`not-broken` as an eliminated *candidate* label under NARROWED.
+**Frozen-response check:** no preserved response violates either
+new rule (every UNKNOWN row carries `eliminated: []`; the
+NOT-BROKEN row carries `named_cause: null`), and the re-score
+under the revised scorer is mechanically identical to the
+committed subordinate report — the same three failures, the
+subordinate re-score stands at **9/12** and needed no
+regeneration; the epoch outcome (FAIL 4/12) and response record
+are unmodified.
