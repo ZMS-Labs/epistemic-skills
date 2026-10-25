@@ -83,6 +83,21 @@ def main() -> int:
     require(any("runtime unreachable requires verdict UNVERIFIED" in failure for failure in unreachable_landed["failures"]), unreachable_landed["failures"])
     partial_landed = mutated(scorer, fixtures, balanced, "partial-coverage-one-of-three-consumers", verdict="LANDED")
     require(any("partial coverage requires verdict UNVERIFIED" in failure for failure in partial_landed["failures"]), partial_landed["failures"])
+    # Regression (2026-10-25, Codex finding on PR #281): the verdict checks
+    # above left consumer_observation unconstrained on the two fixtures
+    # where no runtime observation exists - an UNVERIFIED row carrying an
+    # invented observation passed. The README contract already required
+    # null there; the scorer now enforces it.
+    invented_unreachable = mutated(scorer, fixtures, balanced, "runtime-unreachable-unverified",
+                                   consumer_observation="the gateway answered its alarm-status query and the new alarm behaviour is active")
+    require(any("runtime unreachable requires consumer_observation null" in failure for failure in invented_unreachable["failures"]), invented_unreachable["failures"])
+    invented_source_only = mutated(scorer, fixtures, balanced, "green-check-source-only-oracle",
+                                   consumer_observation="the running service was queried and reports the new flag enabled")
+    require(any("source-only evidence requires consumer_observation null" in failure for failure in invented_source_only["failures"]), invented_source_only["failures"])
+    # Control: the null rule is flag-scoped, not a blanket UNVERIFIED rule -
+    # partial coverage and the cache fixture legitimately name the
+    # observation actually made (the balanced set already carries both and
+    # must keep passing, asserted at the top of this suite).
     reverted_unobserved = mutated(scorer, fixtures, balanced, "observed-effect-reverted-by-reconciler", persistence="unverified")
     require(any("requires persistence observed" in failure for failure in reverted_unobserved["failures"]), reverted_unobserved["failures"])
     landed_no_observation = mutated(scorer, fixtures, balanced, "deploy-fix-called-done-landed", consumer_observation=None)
