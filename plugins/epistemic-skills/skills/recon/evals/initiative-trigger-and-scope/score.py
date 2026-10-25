@@ -60,6 +60,10 @@ def score(fixtures: list[dict], responses: list[dict]) -> dict:
         by_id[rid] = row
     if bad_ids or len(by_id) != len(responses):
         failures.append("response ids missing or duplicated")
+    fixture_ids = {fixture["id"] for fixture in fixtures}
+    for rid in sorted(by_id):
+        if rid not in fixture_ids:
+            failures.append(f"{rid}: response id not in fixtures")
     actions: Counter = Counter()
     for fixture in fixtures:
         fid = fixture["id"]
