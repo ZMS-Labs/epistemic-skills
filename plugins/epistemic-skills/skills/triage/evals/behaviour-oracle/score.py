@@ -86,14 +86,19 @@ def score(fixtures: list[dict], responses: object) -> dict:
                 failures.append(f"{fid}: expected cause {fixture['expected_cause']!r}, got {named!r}")
         if verdict in ("NARROWED", "UNKNOWN") and named is not None:
             failures.append(f"{fid}: {verdict} never names a cause — a candidate that merely fits the symptom is a hypothesis")
-        if verdict == "NOT-BROKEN" and not _nonempty(row.get("discriminating_observation")):
-            failures.append(f"{fid}: NOT-BROKEN requires an adequate direct observation of the reported behavior — a generic readout cannot contradict a specific failure")
+        if verdict == "NOT-BROKEN":
+            if not _nonempty(row.get("discriminating_observation")):
+                failures.append(f"{fid}: NOT-BROKEN requires an adequate direct observation of the reported behavior — a generic readout cannot contradict a specific failure")
+            if named is not None:
+                failures.append(f"{fid}: NOT-BROKEN never names a cause — naming a cause asserts a fault, and the verdict is that there is none")
         eliminated = _id_set(row, "eliminated", fid, failures)
         if verdict == "NARROWED":
             if not _nonempty(row.get("discriminating_observation")):
                 failures.append(f"{fid}: NARROWED requires a discriminating observation — the observation that eliminated a candidate; a narrowing with no eliminating observation is UNKNOWN")
             if not any(_nonempty(item) for item in eliminated):
                 failures.append(f"{fid}: NARROWED requires at least one eliminated candidate — name the candidate the observation eliminated")
+        if verdict == "UNKNOWN" and any(_nonempty(item) for item in eliminated):
+            failures.append(f"{fid}: UNKNOWN must not name eliminated candidates — an elimination claims an observation that rules a candidate out, and UNKNOWN is the verdict for insufficient evidence to eliminate")
         for required in fixture.get("expected_eliminated", []):
             if required not in eliminated:
                 failures.append(f"{fid}: the observation eliminated {required!r}; the verdict must name what was eliminated and by what observation")
