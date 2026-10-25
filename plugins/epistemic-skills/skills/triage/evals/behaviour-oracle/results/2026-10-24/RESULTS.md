@@ -152,3 +152,32 @@ now stand as recorded: `clause-observation-contradicts-assertion`,
 future epochs, and the subordinate re-score in `rescore/` has been
 extended to all three corrected fixtures (**7/12**; the epoch
 verdict is not replaced).
+
+**Further correction (2026-10-24, second adjudication round).** Dot's
+review of the held branches re-raised the NARROWED/UNKNOWN
+inconsistency, and a full audit of the corpus's remaining NARROWED
+pins against the principle applied above — NARROWED requires at least
+one candidate eliminated by the scenario's stated evidence — found
+two more mis-pins among the three cases the earlier corrections left
+standing. In `clause-observation-contradicts-assertion` the direct
+query is consistent with every candidate explanation of the
+disagreement, including the replica candidate under which the primary
+queue drains normally; no candidate is eliminated. In
+`core-plausible-cause-not-observed` the scenario states the
+investigator made no observation that would come out differently
+under one candidate than the others; no candidate is eliminated. For
+both cases the (a) characterisation is **withdrawn**: the failures
+were the fixtures', not the subjects' — both subjects returned the
+supported verdict, UNKNOWN. The fixtures are re-pinned for future
+epochs. Of the six UNKNOWN-where-NARROWED cases in the original
+record, exactly one now stands as (a) conduct:
+`degraded-fault-not-reproducible` (holdout), whose eleven clean
+reloads eliminate the persistent-fault candidate and whose class the
+skill's degraded-operation table caps at NARROWED. The holdout line
+above is amended accordingly: `core-plausible-cause-not-observed`
+moves from FAIL-as-conduct to instrument-attributable. The audit also
+adjudicated `degraded-lying-readout` (a PASS in this epoch): its
+direct reproduction eliminates the no-fault candidate, so its
+NARROWED pin stands. The subordinate re-score in `rescore/` has been
+regenerated against all five corrected fixtures (**9/12**; the epoch
+verdict is not replaced).

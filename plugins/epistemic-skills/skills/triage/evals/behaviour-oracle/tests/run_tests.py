@@ -36,12 +36,14 @@ def main() -> int:
 
     balanced = scorer.score(fixtures, json.loads((ROOT / "examples" / "balanced.json").read_text(encoding="utf-8")))
     require(balanced["pass"], balanced["failures"])
-    # Counts reflect the 2026-10-24 ground-truth corrections: three
+    # Counts reflect the 2026-10-24 ground-truth corrections: five
     # fixtures whose scenarios contain no eliminating observation
     # (clause-check-red-cause-unknown, degraded-observation-would-be-
-    # destructive, degraded-no-readout-self-probed) are pinned UNKNOWN,
-    # not NARROWED, per triage's verdict definitions.
-    require(balanced["verdicts"] == {"NARROWED": 5, "UNKNOWN": 5, "CAUSE": 1, "NOT-BROKEN": 1}, balanced["verdicts"])
+    # destructive, degraded-no-readout-self-probed,
+    # clause-observation-contradicts-assertion,
+    # core-plausible-cause-not-observed) are pinned UNKNOWN, not
+    # NARROWED, per triage's verdict definitions.
+    require(balanced["verdicts"] == {"NARROWED": 3, "UNKNOWN": 7, "CAUSE": 1, "NOT-BROKEN": 1}, balanced["verdicts"])
 
     over = scorer.score(fixtures, json.loads((ROOT / "examples" / "overclaiming.json").read_text(encoding="utf-8")))
     require(not over["pass"], "overclaiming parody unexpectedly passed")
