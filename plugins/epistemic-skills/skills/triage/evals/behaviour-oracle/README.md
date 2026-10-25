@@ -217,20 +217,27 @@ candidate in the scenario, including the fixture's own
 named*: a candidate is eliminated only by an observation that rules
 it out. Corrected here, for future epochs:
 
-1. **The forbidden candidate may not be claimed as eliminated.** If
-   any `eliminated` entry names the fixture's `forbidden_cause`
-   (case-insensitive), the row fails, under any verdict.
-2. **For NARROWED, the pinned eliminated set is exact.** `eliminated`
-   must name exactly the fixture's `expected_eliminated` — the
-   candidates the scenario's discriminating observation rules out —
-   no more (the pre-existing membership check already barred fewer).
-   The exact-set rule is scoped to NARROWED: it is the verdict whose
-   eliminated set the scenario determines. It is deliberately **not**
-   extended to CAUSE, whose `eliminated` the C12 audit adjudicated
-   non-determined (a CAUSE row lists the candidates its observation
-   ruled out on the way to the cause), nor to NOT-BROKEN, where
-   `eliminated` stands flagged for adjudication under C12, not
-   enforced.
+**For NARROWED, the pinned eliminated set is exact.** `eliminated`
+must name exactly the fixture's `expected_eliminated` — no more
+(the pre-existing membership check already barred fewer). This is
+a **conformance rule against the pinned oracle**: the scorer
+checks the response against the fixture's pinned set. It does not
+establish that any pin is semantically valid — pin validity is a
+separate question, adjudicated fixture by fixture, and is
+currently unresolved for at least one pin in this corpus (the
+rendering fixture). Exact-set conformance and pin validity are
+different claims; this battery enforces only the first. The rule
+is scoped to NARROWED: it is the verdict for which every fixture
+pins the set, which is what makes the conformance check total. It is deliberately **not**
+extended to CAUSE, whose `eliminated` the C12 audit adjudicated
+non-determined (a CAUSE row lists the candidates its observation
+ruled out on the way to the cause), nor to NOT-BROKEN, where
+`eliminated` stands flagged for adjudication under C12, not
+enforced. A universal bar on claiming the fixture's
+`forbidden_cause` as eliminated was built with this correction and
+**withdrawn on review (2026-10-25)**: the record defines
+`forbidden_cause` as a named-cause bar, and the extension is not
+carried — the job-10 row is rejected by the exact-set rule alone.
 
 The trigger-and-scope scorer was checked for the same shape and does
 not carry it: that battery pins no `expected_eliminated` and no

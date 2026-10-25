@@ -102,8 +102,6 @@ def score(fixtures: list[dict], responses: object) -> dict:
         for required in fixture.get("expected_eliminated", []):
             if required not in eliminated:
                 failures.append(f"{fid}: the observation eliminated {required!r}; the verdict must name what was eliminated and by what observation")
-        if forbidden and any(isinstance(item, str) and item.strip().lower() == forbidden.strip().lower() for item in eliminated):
-            failures.append(f"{fid}: the forbidden candidate {forbidden!r} was claimed as eliminated — an elimination claims an observation that rules a candidate out, and no observation in this scenario rules this one out")
         if verdict == "NARROWED":
             expected_eliminated = fixture.get("expected_eliminated", [])
             extra = sorted(item for item in eliminated if item not in expected_eliminated)
