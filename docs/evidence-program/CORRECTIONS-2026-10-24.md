@@ -185,3 +185,37 @@ failures withdrawn as instrument-attributable; one stands as
 conduct), the battery's verdict-count assertion follows (NARROWED 3 /
 UNKNOWN 7), and the subordinate re-score is regenerated: **9/12**.
 The epoch outcome (FAIL 4/12) and response record are unmodified.
+
+## C11 — Behaviour-oracle: the NARROWED contract enforced
+
+Third correction round (Dot's independent verification of the four
+held branches after handoff 2, 2026-10-24). One P2 stood on all
+four tips: the behaviour-oracle scorer accepted a **NARROWED**
+response with `eliminated` and `discriminating_observation` omitted
+entirely for `degraded-fault-not-reproducible` and
+`degraded-lying-readout`. Both fixtures pinned
+`expected_eliminated: []`, so the only eliminated-candidate check
+compared against an empty pin, and no rule required a NARROWED
+response to carry the observation that did the eliminating — the
+contract the C5 fix enforces in the triage trigger scorer, missing
+here; the battery README stated the reasons and nothing enforced
+them. **Fix:** the scorer now requires every NARROWED response to
+name at least one eliminated candidate and a nonempty
+discriminating observation, and rejects empty ids in `eliminated`;
+both degraded fixtures pin `expected_eliminated` with canonical
+labels their scenarios now disclose (`"persistent rendering bug"`;
+`"not-broken"` — the no-fault candidate, the label the epoch
+subject itself used); the balanced example's three NARROWED rows
+are repaired to comply with the contract they demonstrate;
+omitted/empty/blank-value regressions cover the mutations for every
+NARROWED fixture, and the suite asserts no NARROWED fixture pins an
+empty `expected_eliminated`. **Audit:** the same omission pattern
+was checked across this scorer's verdicts — CAUSE already requires
+the cause's name and a discriminating observation, NOT-BROKEN
+already requires the observation, UNKNOWN asserts nothing and
+requires nothing; NARROWED was the only gap. **Frozen-response
+check:** E6's preserved responses re-scored under the revised
+scorer and fixtures are unchanged — the same three failures, the
+subordinate re-score stands at **9/12** (its wrapper note is
+extended to record this round); the epoch outcome (FAIL 4/12) and
+response record are unmodified.
