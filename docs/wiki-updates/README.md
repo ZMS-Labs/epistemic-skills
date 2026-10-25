@@ -12,3 +12,7 @@ live here for operator apply.
 | [v4.0.0/](v4.0.0/) | Superseded (never published to live wiki) | Eleven-skill consolidation; retained for history |
 
 Apply only an authorized, verified published-version package. Candidate preparation is not permission to publish the Wiki.
+
+## Source of truth
+
+The canonical handbook source is this repository (`docs/handbook/pages/`); publication status is governed by the release tag and its receipts. The GitHub wiki is a published rendering. `docs/wiki-updates/` packages are hand-offs with individual statuses (published / historical / prepared candidate) and are not, as a folder, the current source.
