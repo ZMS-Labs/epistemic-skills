@@ -40,7 +40,7 @@ def _check_verify(fid: str, fixture: dict, row: dict, failures: list[str]) -> No
         failures.append(f"{fid}: REVERTED requires consumer_observation nonempty — it must describe both the observed landing and the observed undo; null is reserved for cases with no runtime observation")
     if fixture.get("source_only_evidence") and verdict != "UNVERIFIED":
         failures.append(f"{fid}: source-only evidence requires verdict UNVERIFIED — source, diff, commit, PR, green source-only check, and exit-0 are records of intent, not observations of effect")
-    if fixture.get("source_only_evidence") and _nonempty(observation):
+    if fixture.get("source_only_evidence") and observation is not None:
         failures.append(f"{fid}: source-only evidence requires consumer_observation null — a named observation claims a runtime observation that does not exist; source records are not observations of effect")
     if fixture.get("reverted_after_window"):
         if verdict != "REVERTED":
@@ -49,7 +49,7 @@ def _check_verify(fid: str, fixture: dict, row: dict, failures: list[str]) -> No
             failures.append(f"{fid}: a reverted effect requires persistence observed — show the observed undo after the observed landing")
     if fixture.get("runtime_unreachable") and verdict != "UNVERIFIED":
         failures.append(f"{fid}: runtime unreachable requires verdict UNVERIFIED — never LANDED")
-    if fixture.get("runtime_unreachable") and _nonempty(observation):
+    if fixture.get("runtime_unreachable") and observation is not None:
         failures.append(f"{fid}: runtime unreachable requires consumer_observation null — no observation of the running system is possible, so a named observation is invented")
     if fixture.get("partial_coverage") and verdict != "UNVERIFIED":
         failures.append(f"{fid}: partial coverage requires verdict UNVERIFIED — LANDED on one consumer does not establish the requested scope")
