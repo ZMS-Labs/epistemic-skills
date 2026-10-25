@@ -100,6 +100,23 @@ def main() -> int:
         for row in balanced_rows
     ])
     require(any("bound.direction must be one of" in failure for failure in bad_direction["failures"]), bad_direction["failures"])
+    # Regression (2026-10-25, correction C17): the battery contract admits a
+    # threshold that is "any scalar or string" — a list or dict threshold
+    # passed the presence check. Non-scalar thresholds must fail on the
+    # scalar line; scalar and string controls must still pass.
+    for nonscalar in ([], {}):
+        bad_threshold = scorer.score(fixtures, [
+            dict(row, bound={"direction": "above", "threshold": nonscalar})
+            if row["id"] == "nas-free-space-bound-declared" else row
+            for row in balanced_rows
+        ])
+        require(any("bound.threshold must be a scalar or string" in failure for failure in bad_threshold["failures"]), bad_threshold["failures"])
+    string_threshold = scorer.score(fixtures, [
+        dict(row, bound={"direction": "above", "threshold": "90 percent"})
+        if row["id"] == "nas-free-space-bound-declared" else row
+        for row in balanced_rows
+    ])
+    require(string_threshold["pass"], string_threshold["failures"])
     noisy_silence = scorer.score(fixtures, mutate(balanced_rows, "current-disk-state-now-health", state="DECLARED"))
     require(any("no-fire must be silent" in failure for failure in noisy_silence["failures"]), noisy_silence["failures"])
 

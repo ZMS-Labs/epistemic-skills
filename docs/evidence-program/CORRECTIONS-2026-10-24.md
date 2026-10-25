@@ -445,3 +445,27 @@ recorded did-it-land epoch were scored under the prior instrument
 versions and are unmodified; no recorded verdict is re-derived. A
 fresh post-publication epoch against the revised scorer remains the
 proof step for the program record.
+
+## C17 — watch trigger-and-scope: bound.threshold enforced as a scalar or string (2026-10-25)
+
+A post-merge review finding on PR #273, independently re-verified
+against current main and this branch before any fix: the watch
+battery's response contract requires `bound.threshold` present as
+"any scalar or string", but the scorer's presence check rejected
+only a missing key, `null`, and blank strings — a threshold given as
+a **list or dict** (`[]`, `{}`) **passed**. Demonstrated test-first:
+the balanced response set with the `nas-free-space-bound-declared`
+row's threshold replaced by `[]` and by `{}` scored pass:true under
+the prior scorer. **Fix:** a non-scalar threshold now fails on a
+named line (`bound.threshold must be a scalar or string`); the
+presence failure for missing/null/blank is unchanged. **Scope
+discipline:** no numeric-range or value rules were added — the
+contract admits any scalar or string, and valid controls (numeric
+`85`, the string `"90 percent"`) still pass; both non-scalar shapes
+are carried as regressions in the suite. **Frozen-response check:**
+the recorded 2026-10-24 epoch responses re-score under the fixed
+scorer **unchanged** — pass, no failures, matching the recorded
+report exactly — and the full repository sweep passes on the fixed
+tree. **Epochs stand as recorded:** the watch epoch was scored under
+the prior instrument version and is unmodified; no recorded verdict
+is re-derived.
