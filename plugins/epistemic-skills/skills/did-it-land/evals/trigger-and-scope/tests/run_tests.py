@@ -94,6 +94,25 @@ def main() -> int:
     invented_source_only = mutated(scorer, fixtures, balanced, "green-check-source-only-oracle",
                                    consumer_observation="the running service was queried and reports the new flag enabled")
     require(any("source-only evidence requires consumer_observation null" in failure for failure in invented_source_only["failures"]), invented_source_only["failures"])
+    # Regression (2026-10-25, C16 tightening): the null rule is literal -
+    # an empty or whitespace-only string is a present non-null value and
+    # fails, and so does any non-string value (which additionally trips the
+    # generic string-or-null type check). Only literal null or an absent
+    # key satisfies the rule on these two fixtures.
+    for bad_observation in ("", " ", 0, False, {}, []):
+        for fid, needle in (
+            ("runtime-unreachable-unverified", "runtime unreachable requires consumer_observation null"),
+            ("green-check-source-only-oracle", "source-only evidence requires consumer_observation null"),
+        ):
+            tightened = mutated(scorer, fixtures, balanced, fid, consumer_observation=bad_observation)
+            require(any(needle in failure for failure in tightened["failures"]),
+                    (fid, bad_observation, tightened["failures"]))
+    absent_key = copy.deepcopy(balanced)
+    for row in absent_key:
+        if row["id"] in ("runtime-unreachable-unverified", "green-check-source-only-oracle"):
+            row.pop("consumer_observation", None)
+    require(scorer.score(fixtures, absent_key)["pass"],
+            "an absent consumer_observation key must satisfy the null rule")
     # Control: the null rule is flag-scoped, not a blanket UNVERIFIED rule -
     # partial coverage and the cache fixture legitimately name the
     # observation actually made (the balanced set already carries both and
